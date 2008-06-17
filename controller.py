@@ -5,6 +5,9 @@ from time import sleep
 from reference_time import reference_time 
 from ec_globals import dummy_mode
 
+import Pyro.core
+import Pyro.naming
+
 """ Ecoconnect Controller with Implicit Scheduling
 
 This program creates and manages vmodel objects, which represent
@@ -32,36 +35,47 @@ they are not satisfied.
 # handled within the uber-vmodels.
 """
 
-# initial reference time
-cycle_time = reference_time( 2008, 05, 31, 12 )
-	
+cycle_time = reference_time( "2008053112" )
+    
+daemon = Pyro.core.Daemon()
+ns = Pyro.naming.NameServerLocator().getNS()
+daemon.useNameServer(ns)
+
+
 models = []
 def create_models():
-	del models[:]
-	models.append( downloader( cycle_time ))
-	models.append( topnet( cycle_time ))
-	models.append( ricom( cycle_time ))
-	models.append( nwp_global( cycle_time ))
-	models.append( globalwave120( cycle_time ))
-	models.append( nzwave12( cycle_time ))
-	models.append( nzlam12( cycle_time ))
+    del models[:]
+    models.append( downloader( cycle_time )) # runs immediately
+    models.append( topnet( cycle_time ))
+    models.append( ricom( cycle_time ))
+    models.append( nwp_global( cycle_time ))
+    models.append( globalwave120( cycle_time ))
+    models.append( nzwave12( cycle_time ))
+    models.append( nzlam12( cycle_time ))
+
+    for model in models:
+        uri = daemon.connect( model, model.identity() )
 
 create_models()
 
 while True:
-	finished = []
-	for model in models:
-		model.get_satisfaction( models )
-		model.run_if_satisfied()
-		finished.append( model.finished )
+    print " "
+    #print "handling requests ..."
+    daemon.handleRequests(3.0)
+    #print "interacting ..."
+    finished = []
+    for model in models:
+        model.get_satisfaction( models )
+        model.run_if_satisfied()
+        finished.append( model.finished )
 
-	print ""
-	if not False in finished:
-		print "all finished for " + cycle_time.to_str()
-		cycle_time.increment()
-		print "NEW REFERENCE TIME: " + cycle_time.to_str()
-		print ""
-		create_models()
+    #print "checking finished"
+    if not False in finished:
+        print "all finished for " + cycle_time.to_str()
+        cycle_time.increment()
+        print "NEW REFERENCE TIME: " + cycle_time.to_str()
+        print ""
+        create_models()
 
-	sleep(5)
-
+    #print "sleeping 2" 
+    sleep(2)
