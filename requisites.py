@@ -4,9 +4,9 @@ postrequisites (usually output filenames), each of which is in a state of
 "satisfied" or "not satisfied".  Each requisite starts out in a "not
 satisfied" state.
 
-E.g. prerequisites for modelx could include "filename_<reference_time>.foo" (a
-postprequisite of modely), and "modelz postprocessing finished" (a
-postrequisite of modelz.  
+E.g. prerequisites for taskx could include "filename_<reference_time>.foo" (a
+postprequisite of tasky), and "taskz postprocessing finished" (a
+postrequisite of taskz.  
 """
 
 class requisites:

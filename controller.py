@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from vmodels import *
+from vtasks import *
 from time import sleep
 from reference_time import reference_time 
 from ec_globals import dummy_mode
@@ -8,31 +8,22 @@ from ec_globals import dummy_mode
 import Pyro.core
 import Pyro.naming
 
-""" Ecoconnect Controller with Implicit Scheduling
+"""
+Ecoconnect Controller with Implicit Scheduling
 
-This program creates and manages vmodel objects, which represent
-external ecoconnect "models", can launch their external models when
-certain prerequisite conditions are satisfied, and which update their
-internal state to reflect the status of the external model. Vmodels
-interact in order to satisfy each other's prerequisites, which may
-include conditions such as: 
+This program creates and manages vtask objects, which represent
+external ecoconnect tasks (see next para), can launch the external
+tasks when certain prerequisite conditions are satisfied, and which
+update their internal state to reflect the status of the external task.
+Vtasks interact in order to satisfy each other's prerequisites, which
+may include conditions such as: 
  * file foo_<reference_time>.nc completed 
- * task foo finished successfully"
+ * sub-task foo finished successfully"
 
-This method works if objects are instantiated for multiple reference
-times at once, but there seems to be little point in doing that, and it
-could make reporting system status messier.
-
-To do each reference time separately means that vmodels can't have
-prerequisites that depend on previous cycles: We assume therefore that
-each real model checks for these prerequisite files and cold starts if 
-they are not satisfied.
-
-Model postprocessing tasks could be handled by separate vmodels if they need
-to have their own prerequisites (e.g. "don't start ricom postprocessing until
-after nztide postprocessing completes, even if ricom completes before nztide").
-Otherwise a hierarchy of prerequisites may be needed for postprocessing tasks
-handled within the uber-vmodels.
+A vtask should represent a distinct "schedulable task unit": it can be
+[physical model M + all postprocessing for M] or [physical model N] or
+[all postprocessing for model P] or [postprocessing for scientific
+monitoring of model Q], etc., depending on schedulding requirements.
 """
 
 cycle_time = reference_time( "2008053112" )
@@ -46,21 +37,21 @@ ns = Pyro.naming.NameServerLocator().getNS()
 daemon.useNameServer(ns)
 
 
-models = []
-def create_models():
-    del models[:]
-    models.append( downloader( cycle_time )) # runs immediately
-    models.append( topnet( cycle_time ))
-    models.append( ricom( cycle_time ))
-    models.append( nwp_global( cycle_time ))
-    models.append( globalwave120( cycle_time ))
-    models.append( nzwave12( cycle_time ))
-    models.append( nzlam12( cycle_time ))
+tasks = []
+def create_tasks():
+    del tasks[:]
+    tasks.append( downloader( cycle_time )) # runs immediately
+    tasks.append( topnet( cycle_time ))
+    tasks.append( ricom( cycle_time ))
+    tasks.append( nwp_global( cycle_time ))
+    tasks.append( globalwave120( cycle_time ))
+    tasks.append( nzwave12( cycle_time ))
+    tasks.append( nzlam12( cycle_time ))
 
-    for model in models:
-        uri = daemon.connect( model, model.identity() )
+    for task in tasks:
+        uri = daemon.connect( task, task.identity() )
 
-create_models()
+create_tasks()
 
 while True:
     print " "
@@ -68,10 +59,10 @@ while True:
     daemon.handleRequests(3.0)
     #print "interacting ..."
     finished = []
-    for model in models:
-        model.get_satisfaction( models )
-        model.run_if_satisfied()
-        finished.append( model.finished )
+    for task in tasks:
+        task.get_satisfaction( tasks )
+        task.run_if_satisfied()
+        finished.append( task.finished )
 
     #print "checking finished"
     if not False in finished:
@@ -79,7 +70,7 @@ while True:
         cycle_time.increment()
         print "NEW REFERENCE TIME: " + cycle_time.to_str()
         print ""
-        create_models()
+        create_tasks()
 
     #print "sleeping 2" 
     sleep(2)
