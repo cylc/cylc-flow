@@ -28,15 +28,19 @@ prerequisites that depend on previous cycles: We assume therefore that
 each real model checks for these prerequisite files and cold starts if 
 they are not satisfied.
 
-# Model postprocessing tasks could be handled by separate vmodels if they need
-# to have their own prerequisites (e.g. "don't start ricom postprocessing until
-# after nztide postprocessing completes, even if ricom completes before nztide").
-# Otherwise a hierarchy of prerequisites may be needed for postprocessing tasks
-# handled within the uber-vmodels.
+Model postprocessing tasks could be handled by separate vmodels if they need
+to have their own prerequisites (e.g. "don't start ricom postprocessing until
+after nztide postprocessing completes, even if ricom completes before nztide").
+Otherwise a hierarchy of prerequisites may be needed for postprocessing tasks
+handled within the uber-vmodels.
 """
 
 cycle_time = reference_time( "2008053112" )
     
+# Start the pyro nameserver before running this program. There are
+# various ways to do this, with various options.  
+# See http://pyro.sourceforge.net/manual/5-nameserver.html
+
 daemon = Pyro.core.Daemon()
 ns = Pyro.naming.NameServerLocator().getNS()
 daemon.useNameServer(ns)
