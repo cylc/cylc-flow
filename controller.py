@@ -9,21 +9,14 @@ import Pyro.core
 import Pyro.naming
 
 """
-Ecoconnect Controller with Implicit Scheduling
+========= ECOCONNECT CONTROLLER WITH IMPLICIT SCHEDULING ===============
 
-This program creates and manages vtask objects, which represent
-external ecoconnect tasks (see next para), can launch the external
-tasks when certain prerequisite conditions are satisfied, and which
-update their internal state to reflect the status of the external task.
-Vtasks interact in order to satisfy each other's prerequisites, which
-may include conditions such as: 
- * file foo_<reference_time>.nc completed 
- * sub-task foo finished successfully"
+The controller creates and manages vtask objects that represent external
+ecoconnect tasks (defined below). A vtask can launch its external task
+when its task-specific prerequisite conditions are satisfied, after which
+its internal state is updated to reflect progress of the external task.  
 
-A vtask should represent a distinct "schedulable task unit": it can be
-[physical model M + all postprocessing for M] or [physical model N] or
-[all postprocessing for model P] or [postprocessing for scientific
-monitoring of model Q], etc., depending on schedulding requirements.
+See repository documentation for more information.
 """
 
 cycle_time = reference_time( "2008053112" )

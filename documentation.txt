@@ -1,0 +1,125 @@
+======== MULTIFLIGHT ECOCONNECT CONTROLLER WITH IMPLICIT SEQUENCING =========
+
+Ecoconnect has somewhat complicated model sequencing logic because each
+downstream model takes input from one or more upstream models.  Coding to
+enforce the resulting non-linear sequence (e.g. via a finite state machine) is
+messy and it's not easy to be flexible with respect to insertion and deletion
+of models from the system. The "implicit scheduling" idea allows us to avoid
+coding the model sequencing at all.
+
+---------- Implicit Sequencing ----------
+
+First let's generalise "model" to "task" so we can schedule postprocessing
+tasks, for instance, separately from their parent models. And instead of
+"input files" we'll refer more generally to "prerequisites" that have to be
+satisfied before a task can run, and "postrequisites" that are satisfied as
+the task runs (e.g. "file foo completed"). 
+
+Each external task is represented in the controller by a Virtual Task (vtask)
+object that knows how to launch its external task when its prerequisites are
+satisfied, how to satisfy its postrequisites according to messages received
+from its remote task, and how to interrogate another vtask to see if any of
+its unsatisfied prerequisites can be satisfied by the other's satisfied
+postrequisites.  The model sequencing thus "sorts itself out" implicitly if
+the vtasks can interact with each other to determine when they can run. 
+
+---------- Vtask Management ----------
+
+This method will result in correct task sequencing regardless of how many
+vtasks, for any number of different reference times, are in play at once.
+That said, however, it is probably sensible to manage vtask creation and
+destruction in such a way as to retain the idea of a "current reference time",
+in order to simplify monitoring and alerting, archiving, system support and
+restarts, and ingestion into the Ecoconnect product database.  
+
+Otherwise, if we instantiate, say, a whole years worth of vtasks at once, then
+all vtasks with no prerequisites (e.g. the tide model?) will all start running
+at once.  Another way around this might be to impose some artificial
+prerequisites, e.g. foo(T) can only run if downloader(T) is finished, even if
+foo(T) does not need any of the downloader's file postrequisites.
+
+:--Simple Scheme --:
+
+Let vtasks live for a single cycle, increment the reference time cycle
+finishes (not when the downloader reports new files):
+
+ * create all vtasks(T) only.
+ * when all vtasks(T) are "finished": 
+       destroy them, increment reference time, create vtasks(T+1)
+
+This scheme is very easy to implement and to understand, and it does
+everything we need.  The only deficiency that I can think of is that it
+doesn't run tasks from multiple reference times simultaneously and therefore
+doesn't provide maximum throughput in (non real time) catchup mode.  E.g.
+nzlam(T+1) can start, in principle, as soon as nzlam(T) is finished regardless
+of post processing and downstream models for time T. As soon as we allow this,
+however, the concept of "current reference time" gets a bit fuzzy, and the
+system becomes a lot harder to "grok" ...
+
+
+... if there is significant postprocessing that affects no one's
+prerequisites, then we could create all vtasks(T+1) as soon as all vtasks(T)
+have reached "ready for next cycle" rather than "finished".  Vtasks(T) can be
+destroyed once they've *all* reached "finished" (prior to that finished ones
+still have to live in case they're required to satisfy some other vtask's
+prerequisites).
+
+... Treating vtasks individually (rather than RT-based batch creation) allows
+for true "multiflight" behaviour:
+ * foo(T+1) can be created when foo(T) has reached "finished" (or "ready for
+     next cycle")
+ * foo(T) can be destroyed when *all* vtasks(T) are "finished"
+
+
+
+---------- Notes ----------
+
+If we don't have explicit intercycle prerequisites, then it would be best to
+have RT-based batches of vtasks because vtasks(T) don't need to interact with
+vtasks(T+1) etc.
+
+For a vtask of type foo, we don't need to treat "foo(T1) ready/finished"
+as an explicit vtask prerequisite for foo(T2), although we could,
+because we only instantiate foo(T2) if *all* T1 vtasks are
+ready/finished. 
+
+Vtasks with no prerequisites will start their tasks running immediately.
+E.g. a Met Office downloader, once instantiated, will immediately start
+the external process that watches for incoming files of the right
+reference time.
+
+Note that, for file prerequisites, a vtask doesn't need to know the file's
+location or check for its existence because this has to be done by the
+external task anyway, and it will report errors back to the controller. 
+
+Downloader external task requirements:
+ (1) reference time specific: downloader(T) only watches for incoming T files.
+ (2) waits, if a file(T) has not been downloaded yet
+ (3) reports a file(T) is ready if the download has *completed* OR the file
+already exists (i.e. it was downloaded some time ago).
+
+
+Startup config file example?:
+
+2008060818: nzlam12        # start here, nzlam12 only ...
+
+2008061000:                # transition to all tasks (default) here
+
+2008071000: STOP           # end here
+
+=================================
+CURRENT REFERENCE TIME
+possible definitions:
+
+(1) RT of latest files to be downloaded (doesn't work for catchup mode?)
+(2) RT of latest vfile batch (what if not creating in RT batches?)
+(3) RT at leading edge of vtask creation (could be way ahead, e.g. downloader
+in catchup mode, or tide model with no prereqs?)
+
+====================
+
+Vtasks should have a "ready for next cycle" state in addition to a "finished"
+state so that science models can (potentially) start a new cycle while the
+previous cycle's post processing tasks are carrying on. ... OR: do we handle
+this purely by task splitting (i.e. model and its postpro are separate
+vtasks).
