@@ -29,6 +29,18 @@ daemon = Pyro.core.Daemon()
 ns = Pyro.naming.NameServerLocator().getNS()
 daemon.useNameServer(ns)
 
+class system_status( Pyro.core.ObjBase ):
+
+    def __init__( self ):
+        Pyro.core.ObjBase.__init__(self)
+        self.status = "fine and dandy"
+    
+    def report( self ):
+        return self.status
+
+status = system_status() 
+
+uri = daemon.connect( status, "system_status" )
 
 tasks = []
 def create_tasks():
