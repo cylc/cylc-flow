@@ -11,10 +11,18 @@ import Pyro.naming
 """
 ========= ECOCONNECT CONTROLLER WITH IMPLICIT SCHEDULING ===============
 
-The controller creates and manages vtask objects that represent external
-ecoconnect tasks (defined below). A vtask can launch its external task
-when its task-specific prerequisite conditions are satisfied, after which
-its internal state is updated to reflect progress of the external task.  
+This program manages VTASK OBJECTS that represent external EcoConnect
+tasks (a "task" is any set of processes that, as a group, we want
+separate scheduling control over). A vtask has a set of task-specific
+prerequisites (e.g. existence of a particular input file) that have to
+be satisfied before the external task can run, a set of task-specific
+"postrequisites" (e.g.  completion of a particular output file) that
+will be satisfied by the task as it runs, and it can communicate with
+other vtasks to find out anyone else's completed postrequisites satisfy
+any of its prerequisites.  A vtask can launch its external task when all
+its prerequisites are satisfied, after which its internal state
+(including the list of completed postrequisites) is updated by the
+external task using Python Remote Objects (Pyro). 
 
 See repository documentation for more information.
 """
