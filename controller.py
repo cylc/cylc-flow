@@ -3,7 +3,6 @@
 from vtasks_dummy import *
 from time import sleep
 from reference_time import reference_time 
-from spinner import spinner
 
 import Pyro.core
 import Pyro.naming
@@ -15,7 +14,7 @@ import os
 """
 
 cycle_time = reference_time( "2008053112" )
-    
+
 # Start the pyro nameserver before running this program. There are
 # various ways to do this, with various options.  
 # See http://pyro.sourceforge.net/manual/5-nameserver.html
@@ -28,10 +27,20 @@ class system_status( Pyro.core.ObjBase ):
 
     def __init__( self ):
         Pyro.core.ObjBase.__init__(self)
-        self.status = "fine and dandy"
+        self.status = []
+
+    def reset( self ):
+        self.temp_status = []
     
     def report( self ):
         return self.status
+
+    def update( self, str ):
+        self.temp_status.append( str )
+
+    def update_finished( self ):
+        self.status = self.temp_status
+
 
 status = system_status() 
 
@@ -55,35 +64,35 @@ def create_tasks():
 
 create_tasks()
 
-spnr = spinner()
+# Launch any tasks now that have no prerequisites.  Thereafter, things
+# happen only as a result of task state changes via pyro messages.
+for task in tasks:
+    task.run_if_satisfied()
 
-while True:
+def process_tasks():
 
-    #print " "
-    print "handling pyro requests ..."
-    daemon.handleRequests(3.0)
-    print "... done"
-    #status = []
     finished = []
+    status.reset()
 
-    os.system("clear")
-    print ""
-    print cycle_time.to_str(), spnr.spin()
-    print ""
+    status.update( cycle_time.to_str() )
+    #print cycle_time.to_str(), spnr.spin()
+
     for task in tasks:
         task.get_satisfaction( tasks )
         task.run_if_satisfied()
-        #status.append( task.get_status() )
-        print task.get_status()
+        #print task.get_status()
+        status.update( task.get_status() )
         finished.append( task.finished )
 
-    print ""
-    #print "checking finished"
+    status.update_finished() 
+
     if not False in finished:
         cycle_time.increment()
         print "NEW REFERENCE TIME: " + cycle_time.to_str()
-        print ""
         create_tasks()
 
-    #print "sleeping 2" 
-    sleep(2)
+
+    return 1
+
+# process tasks each time a request is handled
+daemon.requestLoop( process_tasks )

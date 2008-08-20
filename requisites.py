@@ -40,7 +40,7 @@ class requisites:
     def set_next_satisfied( self ):
         for req in self.ordered_list:
             if not self.satisfied[req]:
-                # print "setting " + req + " satisfied"
+                print "setting " + req + " satisfied"
                 self.satisfied[ req ] = True
                 break
 
