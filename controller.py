@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+from system_status import system_status
 from vtasks_dummy import *
 from time import sleep
 from reference_time import reference_time 
@@ -23,27 +24,7 @@ daemon = Pyro.core.Daemon()
 ns = Pyro.naming.NameServerLocator().getNS()
 daemon.useNameServer(ns)
 
-class system_status( Pyro.core.ObjBase ):
-
-    def __init__( self ):
-        Pyro.core.ObjBase.__init__(self)
-        self.status = []
-
-    def reset( self ):
-        self.temp_status = []
-    
-    def report( self ):
-        return self.status
-
-    def update( self, str ):
-        self.temp_status.append( str )
-
-    def update_finished( self ):
-        self.status = self.temp_status
-
-
 status = system_status() 
-
 uri = daemon.connect( status, "system_status" )
 
 tasks = []
