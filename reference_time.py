@@ -27,4 +27,3 @@ class reference_time:
 
     def to_str( self ): 
         return self.reftime.strftime( "%Y%m%d%H" )
-

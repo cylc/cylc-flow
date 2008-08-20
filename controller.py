@@ -3,7 +3,6 @@
 from vtasks import *
 from time import sleep
 from reference_time import reference_time 
-from ec_globals import dummy_mode
 
 import Pyro.core
 import Pyro.naming

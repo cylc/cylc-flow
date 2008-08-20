@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-global dummy_mode, period
+global period
 
-dummy_mode = True
 period = 6

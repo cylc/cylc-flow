@@ -45,5 +45,3 @@ class requisites:
 				for postreq in postreqs.satisfied.keys():
 					if postreq == prereq and postreqs.satisfied[postreq]:
 						self.set_satisfied( prereq )
-		
-	
