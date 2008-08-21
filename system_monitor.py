@@ -14,13 +14,15 @@ status = Pyro.core.getProxyForURI("PYRONAME://" + "system_status" )
 while True:
     os.system( "clear" )
     char = foo.spin()
+    indent = "    "
+    indent2 = "        "
     print 
-    print char + " System Monitor " + char
+    print indent + char + " System Monitor " + char
     print 
-    print status.report()[0] 
+    print indent2 + status.report()[0] 
     print
 
     for line in status.report()[1:]:
-         print line
+         print indent2 + line
 
     sleep(1)

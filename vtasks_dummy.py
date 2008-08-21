@@ -4,26 +4,26 @@
 Virtual Task classes for the Ecoconnect Controller.
 See documentation in vtask-base.py
 
-This file defines a set of seven dummy tasks, A,B,C,D,E,F, and Z
+This file defines a set of seven dummy tasks, A,B,C,D,E,F, and G
 with the following input/output dependencies:
 
-                             (E)--1--2--3--X
+                             (F)--1--2--3--X
                               |       
                       (D)--1--2--3--X
                        |         |
-            (A)--1--2--X        (F)--1--2--3--X
+            (A)--1--2--X        (G)--1--2--3--X
                  |  |            |
                  | (C)--1--2--3--X
                  |         |
-                 |        (Z)--1--2--X
+                 |        (E)--1--2--X
                  |         |       
                 (B)--1--2--3--X   
 
-If they produce their postrequisites (1,2,3,4,X) at the same rate,
+If they run (and generate their postrequisites) at the same rate,
 they should start executing in the following order: 
 
              |   |  |  |   |   |  |
-             A   B  C  D  (Z)  E  F
+             A   B  C  D   E   F  G 
 """
 
 from vtask_base import vtask
@@ -110,12 +110,12 @@ class E( vtask ):
 
     def __init__( self, ref_time ):
         self.prerequisites = requisites( [
-                "file D_2_" + ref_time.to_str() + " completed"] )
+                "file C_2_" + ref_time.to_str() + " completed",
+                "file B_3_" + ref_time.to_str() + " completed" ] )
 
         self.postrequisites = requisites( [ 
                  "file E_1_" + ref_time.to_str() + " completed",
                  "file E_2_" + ref_time.to_str() + " completed",
-                 "file E_3_" + ref_time.to_str() + " completed",
                  "task E completed for " + ref_time.to_str()  ] )
 
         vtask.__init__( self, ref_time )
@@ -128,8 +128,7 @@ class F( vtask ):
 
     def __init__( self, ref_time ):
         self.prerequisites = requisites( [
-                "file D_3_" + ref_time.to_str() + " completed",
-                "task C completed for " + ref_time.to_str() ] )
+                "file D_2_" + ref_time.to_str() + " completed"] )
 
         self.postrequisites = requisites( [ 
                  "file F_1_" + ref_time.to_str() + " completed",
@@ -140,19 +139,20 @@ class F( vtask ):
         vtask.__init__( self, ref_time )
 
 
-class Z( vtask ):
-    "dummy task Z"
+class G( vtask ):
+    "dummy task G"
 
-    name = "Z"
+    name = "G"
 
     def __init__( self, ref_time ):
         self.prerequisites = requisites( [
-                "file C_2_" + ref_time.to_str() + " completed",
-                "file B_3_" + ref_time.to_str() + " completed" ] )
+                "file D_3_" + ref_time.to_str() + " completed",
+                "task C completed for " + ref_time.to_str() ] )
 
         self.postrequisites = requisites( [ 
-                 "file Z_1_" + ref_time.to_str() + " completed",
-                 "file Z_2_" + ref_time.to_str() + " completed",
-                 "task Z completed for " + ref_time.to_str()  ] )
+                 "file G_1_" + ref_time.to_str() + " completed",
+                 "file G_2_" + ref_time.to_str() + " completed",
+                 "file G_3_" + ref_time.to_str() + " completed",
+                 "task G completed for " + ref_time.to_str()  ] )
 
         vtask.__init__( self, ref_time )

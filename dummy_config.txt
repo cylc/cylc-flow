@@ -1,0 +1,10 @@
+# EcoConnect controller config file
+
+# Line Format: YYYYMMDDHH [task list]
+
+2008081818 A B C
+
+2008081906 A B C D E 
+2008081912 all
+
+2008082000 stop

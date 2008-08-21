@@ -2,7 +2,7 @@
 
 from system_status import system_status
 from reference_time import reference_time 
-from vtasks_dummy import *
+from vtask_config import vtask_config
 
 import Pyro.core
 import Pyro.naming
@@ -10,29 +10,40 @@ import sys
 
 """
 ========= ECOCONNECT CONTROLLER WITH IMPLICIT SCHEDULING ===============
+                    Hilary Oliver, NIWA, 2008
          See repository documentation for more information.
 """
 
+task_list = []
+
 def create_tasks():
-    del task_list[:]
-    task_list.append( A( reference_time )) 
-    task_list.append( B( reference_time ))
-    task_list.append( C( reference_time ))
-    task_list.append( D( reference_time )) 
 
-    task_list.append( Z( reference_time )) 
+    global reference_time
+    global task_list
+    global god
 
-    task_list.append( E( reference_time ))
-    task_list.append( F( reference_time ))
-
+    task_list = god.create_tasks( reference_time )
     for task in task_list:
         uri = daemon.connect( task, task.identity() )
 
 
-
 def process_tasks():
+
+    global reference_time
+    global task_list
+    global status
+
     finished = []
     status.reset()
+
+    if len( task_list ) == 0:
+        create_tasks()
+
+    if len( task_list ) == 0:
+        # still no tasks means we've reached the end
+        print "No tasks created for ", reference_time.to_str()
+        print "STOPPING NOW"
+        sys.exit(0)
 
     status.update( reference_time.to_str() )
 
@@ -47,7 +58,7 @@ def process_tasks():
     if not False in finished:
         reference_time.increment()
         print "NEW REFERENCE TIME: " + reference_time.to_str()
-        create_tasks()
+        del task_list[:]
 
     return 1  # required return value for the pyro requestLoop call
 
@@ -60,27 +71,37 @@ ns = Pyro.naming.NameServerLocator().getNS()
 daemon.useNameServer(ns)
 
 # one command line argument: initial reference time 
-if len( sys.argv ) != 2:
-    print "USAGE:", sys.argv[0], "<REFERENCE_TIME>"
+n_args = len( sys.argv ) - 1
+if n_args < 1 or n_args > 2 :
+    print "USAGE:", sys.argv[0], "<REFERENCE_TIME> [<config file>]"
     sys.exit(1)
 
 reference_time = reference_time( sys.argv[1] )
+
+if n_args == 2:
+    config_file = sys.argv[2]
+else:
+    config_file = None
     
 print 
-print "*** EcoConnect Controller Task Manager Startup ***"
-print "    Initial Reference Time " + reference_time.to_str()
+print "*** EcoConnect Controller Startup ***"
+print "  Initial Reference Time " + reference_time.to_str()
+if config_file is None:
+    print "   (no config file; using all tasks)"
+else:
+    print "  task control by " + config_file 
 print
 
 # create a system status monitor and connect it to the pyro nameserver
 status = system_status()
 uri = daemon.connect( status, "system_status" )
 
-# create initial task objects and connect them to the pyro nameserver
-task_list = []
-create_tasks()
+# initialize the task creator 
+god = vtask_config( config_file )
 
-# Process once to start one or more tasks that have no prerequisites
-# (otherwise nothing will happen; subsequently things only happen only
+# Process once to start any tasks that have no prerequisites
+# We need at least one of this to start the system rolling 
+# (i.e. the downloader).  Thereafter things only happen only
 # when a running task gets a message via pyro). 
 process_tasks()
 
