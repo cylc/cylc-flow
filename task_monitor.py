@@ -9,15 +9,15 @@ from time import sleep
 
 foo = spinner()
 
-status = Pyro.core.getProxyForURI("PYRONAME://" + "system_status" )
+status = Pyro.core.getProxyForURI("PYRONAME://" + "status" )
 
 while True:
     os.system( "clear" )
     char = foo.spin()
-    indent = "    "
+    indent = "     "
     indent2 = "        "
     print 
-    print indent + char + " System Monitor " + char
+    print indent + char + " Task Monitor " + char
     print 
     print indent2 + status.report()[0] 
     print

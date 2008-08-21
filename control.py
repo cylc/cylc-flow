@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from system_status import system_status
+from status import status
 from reference_time import reference_time 
 from vtask_config import vtask_config
 
@@ -93,8 +93,8 @@ ns = Pyro.naming.NameServerLocator().getNS()
 daemon.useNameServer(ns)
 
 # create a system status monitor and connect it to the pyro nameserver
-status = system_status()
-uri = daemon.connect( status, "system_status" )
+status = status()
+uri = daemon.connect( status, "status" )
 
 # print startup information
 print
@@ -111,7 +111,7 @@ if config_file is None:
 
 task_list = []
 
-# initialize the task creator 
+# initialize the task creator (parse config file)
 god = vtask_config( config_file )
 
 # Process once to start any tasks that have no prerequisites

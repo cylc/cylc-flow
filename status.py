@@ -1,8 +1,12 @@
 #!/usr/bin/python
 
+"""
+Class to keep record of current control system status
+"""
+
 import Pyro.core
 
-class system_status( Pyro.core.ObjBase ):
+class status( Pyro.core.ObjBase ):
 
     def __init__( self ):
         Pyro.core.ObjBase.__init__(self)
