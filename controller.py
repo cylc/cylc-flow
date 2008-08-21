@@ -58,7 +58,6 @@ def process_tasks():
 
     if not False in finished:
         reference_time.increment()
-        print "NEW REFERENCE TIME: " + reference_time.to_str()
         del task_list[:]
 
     return 1  # required return value for the pyro requestLoop call

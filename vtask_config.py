@@ -56,7 +56,7 @@ class vtask_config:
             self.task_lists[ ref_time ] = foo
 
         print "-----------------------------------"
-        print
+
         # get ordered list of keys for the dict
         tmp = {}
         for rt in self.task_lists.keys():
@@ -115,17 +115,24 @@ class vtask_config:
                 print "ERROR: unknown task", task
 
         consistent = True
-        print "Task list for " + reference_time.to_str() + ":"
+        print
+        print "Reference Time: " + reference_time.to_str()
         print in_utero
+        print
         for task in birth:
             if not task.will_get_satisfaction( birth ):
-                print "   WARNING: " + task.identity() + " will not run"
+                print "   " + task.identity() + " has ummatched prerequisites!"
                 consistent = False
 
         if not consistent:
             print
-            print "ERROR: some pre-requisites can not be satisfied by the task list" 
-            print
-            sys.exit(1)
+            print "WARNING: one or more task's have pre-requisites that are not"
+            print "         matched by other tasks' post-requisites."
+            print "THESE TASKS WILL NEVER RUN unless their prerequisites are"
+            print "         are satisfied by other means."
+            print "TO DO: provide manual Pyro access to tasks for this purpose"
+            print "         (e.g. for when it's known that a task completed in a"
+            print "         previous run) and/or ability to set tasks \"(done)\""
+            print "         via the config file."
 
         return birth
