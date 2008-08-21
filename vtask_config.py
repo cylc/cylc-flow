@@ -27,7 +27,10 @@ class vtask_config:
         self.config_supplied = True
         cfile = open( filename, 'r' )
 
+        print "-----------------------------------"
         for line in cfile:
+
+            print line,
 
             # skip full line comments
             if re.compile( "^#" ).match( line ):
@@ -52,7 +55,8 @@ class vtask_config:
             # add to task_list dict
             self.task_lists[ ref_time ] = foo
 
-
+        print "-----------------------------------"
+        print
         # get ordered list of keys for the dict
         tmp = {}
         for rt in self.task_lists.keys():
@@ -109,5 +113,19 @@ class vtask_config:
                 birth.append( G( reference_time ))
             else:
                 print "ERROR: unknown task", task
+
+        consistent = True
+        print "Task list for " + reference_time.to_str() + ":"
+        print in_utero
+        for task in birth:
+            if not task.will_get_satisfaction( birth ):
+                print "   WARNING: " + task.identity() + " will not run"
+                consistent = False
+
+        if not consistent:
+            print
+            print "ERROR: some pre-requisites can not be satisfied by the task list" 
+            print
+            sys.exit(1)
 
         return birth

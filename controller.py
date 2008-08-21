@@ -16,7 +16,6 @@ import threading
          See repository documentation for more information.
 """
 
-task_list = []
 
 def create_tasks():
 

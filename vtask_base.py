@@ -20,6 +20,7 @@ from reference_time import reference_time
 from requisites import requisites
 
 import os
+from copy import deepcopy
 import Pyro.core
 
 class vtask( Pyro.core.ObjBase ):
@@ -61,16 +62,26 @@ class vtask( Pyro.core.ObjBase ):
     def set_finished( self ):
         self.running = False
         self.finished = True
-        self.status = "finished"
+        self.status = "(done)"
 
     def set_satisfied( self, message ):
         print self.identity(), ": ", message
         self.postrequisites.set_satisfied( message )
         # TO DO: SHOULD WE CHECK THIS IS A KNOWN POSTREQUISITE?
 
-    def get_satisfaction( self, other_tasks ):
-        for other_task in other_tasks:
-            self.prerequisites.satisfy_me( other_task.postrequisites )
+    def get_satisfaction( self, tasks ):
+        for task in tasks:
+            self.prerequisites.satisfy_me( task.postrequisites )
+
+    def will_get_satisfaction( self, tasks ):
+        temp_prereqs = deepcopy( self.prerequisites )
+        for task in tasks:
+            temp_prereqs.will_satisfy_me( task.postrequisites )
+
+        if not temp_prereqs.all_satisfied(): 
+            return False
+        else:
+            return True
 
     def is_complete( self ):
         if self.postrequisites.all_satisfied():

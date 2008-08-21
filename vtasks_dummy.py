@@ -36,9 +36,10 @@ import Pyro.core
 class A( vtask ):
     "dummy task A"
 
-    name = "A"
-
     def __init__( self, ref_time ):
+
+        self.name = "A"
+
         self.prerequisites = requisites( [] )
 
         self.postrequisites = requisites( [ 
@@ -52,9 +53,10 @@ class A( vtask ):
 class B( vtask ):
     "dummy task B"
 
-    name = "B"
-
     def __init__( self, ref_time ):
+
+        self.name = 'B'
+
         self.prerequisites = requisites( [
                 "file A_1_" + ref_time.to_str() + " completed"] )
 
@@ -70,9 +72,10 @@ class B( vtask ):
 class C( vtask ):
     "dummy task C"
 
-    name = "C"
-
     def __init__( self, ref_time ):
+
+        self.name = 'C'
+
         self.prerequisites = requisites( [
                 "file A_2_" + ref_time.to_str() + " completed"] )
 
@@ -88,9 +91,10 @@ class C( vtask ):
 class D( vtask ):
     "dummy task D"
 
-    name = "D"
-
     def __init__( self, ref_time ):
+
+        self.name = 'D'
+
         self.prerequisites = requisites( [
                 "task A completed for " + ref_time.to_str() ] )
 
@@ -106,9 +110,10 @@ class D( vtask ):
 class E( vtask ):
     "dummy task E"
 
-    name = "E"
-
     def __init__( self, ref_time ):
+
+        self.name = 'E'
+
         self.prerequisites = requisites( [
                 "file C_2_" + ref_time.to_str() + " completed",
                 "file B_3_" + ref_time.to_str() + " completed" ] )
@@ -124,9 +129,10 @@ class E( vtask ):
 class F( vtask ):
     "dummy task F"
 
-    name = "F"
-
     def __init__( self, ref_time ):
+
+        self.name = 'F'
+
         self.prerequisites = requisites( [
                 "file D_2_" + ref_time.to_str() + " completed"] )
 
@@ -142,9 +148,10 @@ class F( vtask ):
 class G( vtask ):
     "dummy task G"
 
-    name = "G"
-
     def __init__( self, ref_time ):
+
+        self.name = 'G'
+
         self.prerequisites = requisites( [
                 "file D_3_" + ref_time.to_str() + " completed",
                 "task C completed for " + ref_time.to_str() ] )
