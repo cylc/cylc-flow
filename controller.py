@@ -8,6 +8,8 @@ import Pyro.core
 import Pyro.naming
 import sys
 
+import threading
+
 """
 ========= ECOCONNECT CONTROLLER WITH IMPLICIT SCHEDULING ===============
                     Hilary Oliver, NIWA, 2008
@@ -63,15 +65,11 @@ def process_tasks():
     return 1  # required return value for the pyro requestLoop call
 
 
-# Start the pyro nameserver before running this program. 
-# See http://pyro.sourceforge.net/manual/5-nameserver.html
-# for other ways to do this.
-daemon = Pyro.core.Daemon()
-ns = Pyro.naming.NameServerLocator().getNS()
-daemon.useNameServer(ns)
+#========( MAIN PROGRAM )===============================================
 
-# one command line argument: initial reference time 
+# check command line arguments
 n_args = len( sys.argv ) - 1
+
 if n_args < 1 or n_args > 2 :
     print "USAGE:", sys.argv[0], "<REFERENCE_TIME> [<config file>]"
     sys.exit(1)
@@ -82,19 +80,38 @@ if n_args == 2:
     config_file = sys.argv[2]
 else:
     config_file = None
-    
-print 
-print "*** EcoConnect Controller Startup ***"
-print "  Initial Reference Time " + reference_time.to_str()
-if config_file is None:
-    print "   (no config file; using all tasks)"
-else:
-    print "  task control by " + config_file 
-print
+
+# Start a Pyro nameserver in its own thread
+# (alternatively, run the 'pyro-ns' script as a separate process)
+ns_starter = Pyro.naming.NameServerStarter()
+ns_thread = threading.Thread( target = ns_starter.start )
+ns_thread.setDaemon(True)
+ns_thread.start()
+ns_starter.waitUntilStarted(10)
+
+# locate the Pyro nameserver
+daemon = Pyro.core.Daemon()
+ns = Pyro.naming.NameServerLocator().getNS()
+daemon.useNameServer(ns)
 
 # create a system status monitor and connect it to the pyro nameserver
 status = system_status()
 uri = daemon.connect( status, "system_status" )
+
+# print startup information
+print
+print "-----------------------------------"
+print "------ EcoConnect Controller ------"
+print "follow tasks with system_monitor.py"
+print "-----------------------------------"
+print
+print "Initial Reference Time " + reference_time.to_str()
+print
+if config_file is None:
+    print "No config file, using ALL tasks"
+    print
+
+task_list = []
 
 # initialize the task creator 
 god = vtask_config( config_file )
