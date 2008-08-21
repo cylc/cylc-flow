@@ -15,7 +15,7 @@ while True:
     os.system( "clear" )
     char = foo.spin()
     print 
-    print char + " System Status Monitor " + char
+    print char + " System Monitor " + char
     print 
     print status.report()[0] 
     print

@@ -36,16 +36,13 @@ class vtask( Pyro.core.ObjBase ):
 
     def run_if_satisfied( self ):
         if self.finished:
-            #print self.name + ": (finished)"
             self.running = False
         elif self.running:
             pass
-            #print self.name + ": RUNNING"
         elif self.prerequisites.all_satisfied():
             self.run()
         else:
             pass
-            #print self.name + ": (waiting)"
 
     def get_status( self ):
         return self.name + ": " + self.status
@@ -57,7 +54,6 @@ class vtask( Pyro.core.ObjBase ):
         # run the external task (but don't wait for it!)
         # NOTE: apparently os.system has been superseded by the
         # subprocess module.
-        #print self.name + ": launching " + self.ref_time.to_str()
         os.system( "./run_task.py " + self.name + " " + self.ref_time.to_str() + "&" )
         self.running = True
         self.status = "RUNNING"
@@ -67,11 +63,10 @@ class vtask( Pyro.core.ObjBase ):
         self.finished = True
         self.status = "finished"
 
-    def dummy_all_postrequisites( self ): # use with dummy models
-        self.postrequisites.set_all_satisfied()
-
-    def dummy_next_postrequisite( self ): # use with dummy models
-        self.postrequisites.set_next_satisfied()
+    def set_satisfied( self, message ):
+        print self.identity(), ": ", message
+        self.postrequisites.set_satisfied( message )
+        # TO DO: SHOULD WE CHECK THIS IS A KNOWN POSTREQUISITE?
 
     def get_satisfaction( self, other_tasks ):
         for other_task in other_tasks:
@@ -83,3 +78,5 @@ class vtask( Pyro.core.ObjBase ):
         else:
             return False
 
+    def get_postrequisites( self ):
+        return self.postrequisites.get_list()

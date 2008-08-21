@@ -1,13 +1,11 @@
 #!/usr/bin/python
 
 from system_status import system_status
-from time import sleep
 from reference_time import reference_time 
 from vtasks_dummy import *
 
 import Pyro.core
 import Pyro.naming
-import os
 import sys
 
 """
@@ -51,7 +49,7 @@ def process_tasks():
         print "NEW REFERENCE TIME: " + reference_time.to_str()
         create_tasks()
 
-    return 1
+    return 1  # required return value for the pyro requestLoop call
 
 
 # Start the pyro nameserver before running this program. 
@@ -89,7 +87,7 @@ process_tasks()
 # process tasks again each time a request is handled
 daemon.requestLoop( process_tasks )
 
-# NOTE: this seems the easies way to handle incoming pyro calls
+# NOTE: this seems the easiest way to handle incoming pyro calls
 # AND run our task processing at the same time, but I might be 
 # using requestLoop's "condition" argument in an unorthodox way.
 # See pyro docs, as there are other ways to do this, if necessary.

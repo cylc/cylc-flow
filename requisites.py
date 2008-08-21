@@ -1,19 +1,21 @@
 """ 
-A class that holds a list of prerequisites (usually input filenames) or
-postrequisites (usually output filenames), each of which is in a state of
-"satisfied" or "not satisfied".  Each requisite starts out in a "not
-satisfied" state.
+A class that holds a list of 
 
-E.g. prerequisites for taskx could include "filename_<reference_time>.foo" (a
-postprequisite of tasky), and "taskz postprocessing finished" (a
-postrequisite of taskz.  
+PREREQUISITES,
+  usually of the form "input file X required", or
+
+POSTREQUISITES,
+  usually of the form "output file Y completed" 
+  
+Each requisite is in a state of "satisfied" or "not satisfied".  
+satisfied" state.
 """
 
 class requisites:
 
     def __init__( self, reqs ):
         self.satisfied = {}
-        self.ordered_list = reqs  # for set_next_satisfied sequential order
+        self.ordered_list = reqs  
         for req in reqs:
             self.satisfied[req] = False
 
@@ -32,24 +34,17 @@ class requisites:
     def set_satisfied( self, req ):
         self.satisfied[ req ] = True
 
-    def set_all_satisfied( self ):
-        for req in self.satisfied.keys():
-            #print "setting " + req + " satisfied"
-            self.satisfied[ req ] = True
-
-    def set_next_satisfied( self ):
-        for req in self.ordered_list:
-            if not self.satisfied[req]:
-                print "setting " + req + " satisfied"
-                self.satisfied[ req ] = True
-                break
+    def get_list( self ):
+        return self.ordered_list
 
     def satisfy_me( self, postreqs ):
-        # can postreqs satisfy any of my prequisites?
+        # can another's postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
             if not self.satisfied[ prereq ]:
-                # if not already satisfied
+                # if my prerequisite is not already satisfied
                 for postreq in postreqs.satisfied.keys():
+                    # compare it with each of the other's postreqs
                     if postreq == prereq and postreqs.satisfied[postreq]:
+                        # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
