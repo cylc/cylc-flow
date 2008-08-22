@@ -7,9 +7,8 @@ task names for particular transitional reference times).
 """
 
 from reference_time import reference_time
-from dummy_tasks import *
-from status import status
-from shared import pyro_daemon
+from dummy_task_defs import *
+from shared import pyro_daemon, state
 
 import re
 import sys
@@ -22,10 +21,6 @@ class task_manager:
 
         print "Initialising Task Manager"
     
-        # create a system status monitor and connect it to the pyro nameserver
-        self.state = status()
-        uri = pyro_daemon.connect( self.state, "state" )
-
         self.ordered_ref_times = []
         self.config_task_lists = {}
         self.task_list = []
@@ -129,7 +124,8 @@ class task_manager:
 
         consistent = True
         print
-        print "Task List for " + self.cycle_time.to_str() + ":"
+        print "NEW REFERENCE TIME " + self.cycle_time.to_str() + ",",
+        print "Task List:"
         for task_name in in_utero:
             print " + " + task_name
 
@@ -183,7 +179,7 @@ class task_manager:
     def process_tasks( self ):
         
         finished = []
-        self.state.reset()
+        state.reset()
 
         if len( self.task_list ) == 0:
             self.create_tasks()
@@ -194,18 +190,18 @@ class task_manager:
             print "STOPPING NOW"
             sys.exit(0)
 
-        self.state.update( self.cycle_time.to_str() )
+        state.update( self.cycle_time.to_str() )
 
         for task in self.task_list:
             task.get_satisfaction( self.task_list )
             task.run_if_satisfied()
-            self.state.update( task.get_status() )
+            state.update( task.get_status() )
             finished.append( task.finished )
 
-        self.state.update_finished() 
+        state.update_finished() 
 
         if not False in finished:
             self.cycle_time.increment()
             del self.task_list[:]
 
-        return 1  # required return value for the pyro requestLoop call
+        return 1  # return 1 to keep the pyro requestLoop going

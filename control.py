@@ -7,7 +7,7 @@
 """
 
 from task_manager import task_manager
-from shared import pyro_daemon
+from shared import pyro_daemon, state
 
 import Pyro.core
 import Pyro.naming
@@ -55,6 +55,9 @@ ns = Pyro.naming.NameServerLocator().getNS()
 pyro_daemon.useNameServer(ns)
 
 print
+
+# connect the system status monitor to the pyro nameserver
+uri = pyro_daemon.connect( state, "state" )
 
 # initialise the task manager
 god = task_manager( initial_reference_time, task_config_file )

@@ -1,6 +1,0 @@
-# config file for dummy tasks
-
-2008081818 A B   D
-2008081906 A B C D   F G
-2008081912 all
-2008082000 stop
