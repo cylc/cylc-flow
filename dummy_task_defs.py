@@ -36,7 +36,7 @@ import Pyro.core
 class A( task ):
     "dummy task A"
 
-    def __init__( self, ref_time ):
+    def __init__( self, ref_time, set_finished ):
 
         self.name = "A"
 
@@ -47,13 +47,13 @@ class A( task ):
                  "file A_2_" + ref_time.to_str() + " completed",
                  "task A completed for " + ref_time.to_str()  ] )
 
-        task.__init__( self, ref_time )
+        task.__init__( self, ref_time, set_finished )
 
 
 class B( task ):
     "dummy task B"
 
-    def __init__( self, ref_time ):
+    def __init__( self, ref_time, set_finished ):
 
         self.name = 'B'
 
@@ -66,13 +66,13 @@ class B( task ):
                  "file B_3_" + ref_time.to_str() + " completed",
                  "task B completed for " + ref_time.to_str()  ] )
 
-        task.__init__( self, ref_time )
+        task.__init__( self, ref_time, set_finished )
 
 
 class C( task ):
     "dummy task C"
 
-    def __init__( self, ref_time ):
+    def __init__( self, ref_time, set_finished ):
 
         self.name = 'C'
 
@@ -85,13 +85,13 @@ class C( task ):
                  "file C_3_" + ref_time.to_str() + " completed",
                  "task C completed for " + ref_time.to_str()  ] )
 
-        task.__init__( self, ref_time )
+        task.__init__( self, ref_time, set_finished )
 
 
 class D( task ):
     "dummy task D"
 
-    def __init__( self, ref_time ):
+    def __init__( self, ref_time, set_finished ):
 
         self.name = 'D'
 
@@ -104,13 +104,13 @@ class D( task ):
                  "file D_3_" + ref_time.to_str() + " completed",
                  "task D completed for " + ref_time.to_str()  ] )
 
-        task.__init__( self, ref_time )
+        task.__init__( self, ref_time, set_finished )
 
 
 class E( task ):
     "dummy task E"
 
-    def __init__( self, ref_time ):
+    def __init__( self, ref_time, set_finished ):
 
         self.name = 'E'
 
@@ -123,13 +123,13 @@ class E( task ):
                  "file E_2_" + ref_time.to_str() + " completed",
                  "task E completed for " + ref_time.to_str()  ] )
 
-        task.__init__( self, ref_time )
+        task.__init__( self, ref_time, set_finished )
 
 
 class F( task ):
     "dummy task F"
 
-    def __init__( self, ref_time ):
+    def __init__( self, ref_time, set_finished ):
 
         self.name = 'F'
 
@@ -142,13 +142,13 @@ class F( task ):
                  "file F_3_" + ref_time.to_str() + " completed",
                  "task F completed for " + ref_time.to_str()  ] )
 
-        task.__init__( self, ref_time )
+        task.__init__( self, ref_time, set_finished )
 
 
 class G( task ):
     "dummy task G"
 
-    def __init__( self, ref_time ):
+    def __init__( self, ref_time, set_finished ):
 
         self.name = 'G'
 
@@ -162,4 +162,4 @@ class G( task ):
                  "file G_3_" + ref_time.to_str() + " completed",
                  "task G completed for " + ref_time.to_str()  ] )
 
-        task.__init__( self, ref_time )
+        task.__init__( self, ref_time, set_finished )

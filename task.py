@@ -28,12 +28,14 @@ class task( Pyro.core.ObjBase ):
     
     name = "task base class"
 
-    def __init__( self, ref_time ):
+    def __init__( self, ref_time, setfin ):
         Pyro.core.ObjBase.__init__(self)
         self.ref_time = ref_time
         self.running = False  # TO DO: get rid of logical status vars in favour of one string?
         self.finished = False
         self.status = "waiting"
+
+	if setfin: self.set_finished()
 
     def run_if_satisfied( self ):
         if self.finished:
@@ -65,6 +67,9 @@ class task( Pyro.core.ObjBase ):
         self.running = False
         self.finished = True
         self.status = "(done)"
+	# the following is redundant, except when initialising 
+	# in a "finished" state:
+	self.postrequisites.set_all_satisfied()
 
     def set_satisfied( self, message ):
         print self.identity() +  ": " + message

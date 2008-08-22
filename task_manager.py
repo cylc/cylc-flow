@@ -47,20 +47,24 @@ class task_manager:
             if re.compile( "^\s*$" ).match( line ):
                 continue
 
-            # line format: "YYYYMMDDHH [task list]"
+            # line format: "YYYYMMDDHH task1 task2 task3:finished [etc.]"
             tokens = line.split()
             ref_time = reference_time( tokens[0] )
-            foo = tokens[1:]
+            the_rest = tokens[1:]
 
             # check tasks are known
-            for task in foo:
+            for taskx in the_rest:
+		task = taskx
+		if re.compile( "^.*:").match( taskx ):
+			task = taskx.split(':')[0]
+	
                 if not task in task_manager.all_tasks:
                     if task != "stop" and task != "all":
                         print "ERROR: unknown task ", task
                         sys.exit(1)
 
             # add to task_list dict
-            self.config_task_lists[ ref_time ] = foo
+            self.config_task_lists[ ref_time ] = the_rest
 
         print
 
@@ -104,22 +108,29 @@ class task_manager:
 
         self.task_list = []
         for task_name in in_utero:
+	    set_finished = False
+	    if re.compile( "^.*:").match( task_name ):
+		task_name = task_name.split(':')[0]
+		set_finished = True
+                print "WARNING: creating " + task_name + "in finished state"
+	
             if task_name == 'A':
-                self.task_list.append( A( self.cycle_time )) 
+                self.task_list.append( A( self.cycle_time, set_finished )) 
             elif task_name == 'B':
-                self.task_list.append( B( self.cycle_time ))
+                self.task_list.append( B( self.cycle_time, set_finished ))
             elif task_name == 'C':
-                self.task_list.append( C( self.cycle_time ))
+                self.task_list.append( C( self.cycle_time, set_finished ))
             elif task_name == 'D':
-                self.task_list.append( D( self.cycle_time )) 
+                self.task_list.append( D( self.cycle_time, set_finished )) 
             elif task_name == 'E':
-                self.task_list.append( E( self.cycle_time )) 
+                self.task_list.append( E( self.cycle_time, set_finished )) 
             elif task_name == 'F':
-                self.task_list.append( F( self.cycle_time ))
+                self.task_list.append( F( self.cycle_time, set_finished ))
             elif task_name == 'G':
-                self.task_list.append( G( self.cycle_time ))
+                self.task_list.append( G( self.cycle_time, set_finished ))
             else:
                 print "ERROR: unknown task name", task_name
+		sys.exit(1)
                 # TO DO: handle errors
 
         consistent = True

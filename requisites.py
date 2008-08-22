@@ -34,6 +34,10 @@ class requisites:
     def set_satisfied( self, req ):
         self.satisfied[ req ] = True
 
+    def set_all_satisfied( self ):
+	for req in self.ordered_list:
+       	    self.satisfied[ req ] = True
+
     def get_list( self ):
         return self.ordered_list
 
