@@ -1,5 +1,5 @@
 
-=============== MULTIFLIGHT CONTROLLER WITH IMPLICIT SEQUENCING =============
+=============== ECOCONNECT CONTROLLER WITH IMPLICIT SEQUENCING =============
 
 DEFINITION of "TASK": any set of processes that, as a group, we want separate
 scheduling control over.  This includes, but is not restricted to, "single
@@ -52,17 +52,17 @@ system that emerges naturally through the interaction of simple "task objects"
 that only know their own attributes, rather than a fundamental property of the
 system that has to been known in advance and thence enforced. 
 
-Let each EcoConnect task be represented by a VTASK (Virtual Task) object,
-which has a set of task-specific prerequisites (e.g. "input file X is ready")
-that have to be satisfied before the external task can run, and a set of
-task-specific "postrequisites" (e.g. "output file Y is complete") that will be
-completed by the task as it runs. Also, a vtask knows how to communicate with
-other vtasks to find out anyone else's completed postrequisites can satisfy
-its own prerequisites (note that a vtask doesn't need to know in advance *who*
-will satisfy its prerequisites).  Finally, a vtask can launch its external
-task when all its prerequisites are satisfied, and thereafter updates its
-internal state according to messages received from the external task (e.g.
-notification of completed postrequisites). Vtask <-> task network
+Let each EcoConnect task be represented by a TASK OBJECT, which has a set of
+task-specific prerequisites (e.g. "input file X is ready") that have to be
+satisfied before the external task can run, and a set of task-specific
+"postrequisites" (e.g. "output file Y is complete") that will be completed by
+the task as it runs. Also, a task knows how to communicate with other tasks
+to find out anyone else's completed postrequisites can satisfy its own
+prerequisites (note that a task doesn't need to know in advance *who* will
+satisfy its prerequisites).  Finally, a task can launch its external task
+when all its prerequisites are satisfied, and thereafter updates its internal
+state according to messages received from the external task (e.g.
+notification of completed postrequisites). task object <-> real task network
 communication is achieved with Python Remote Objects (Pyro). 
 
 Another description, taken from an explanatory email:
@@ -85,20 +85,20 @@ real tasks necessarily have to do that anyway, and can rely on our strict
 EcoConnect input/output directory rules for file locations. 
 
 
----------- Vtask Management ----------
+---------- Task Management ----------
 
-When to create and destroy vtasks is to some degree arbitrary because correct
+When to create and destroy tasks is to some degree arbitrary because correct
 task sequencing (in the sense that no task will run before its prerequisites
-are satisfied) will result no matter how many vtasks are "in play" at once, so
-long as all co-dependent vtasks coexist, at any one time, so that they can
+are satisfied) will result no matter how many tasks are "in play" at once, so
+long as all co-dependent tasks coexist, at any one time, so that they can
 interact to match pre/post-requisites. 
 
 A single reference time batching scheme is probably the easiest method to
 understand and implement: 
 
- * Create a single batch of vtasks(T) for the initial reference time T
- * Let the vtasks(T) interact until all reach the finished state
- * Increment the reference time, create vtasks(T+1), and destroy vtasks(T)
+ * Create a single batch of tasks(T) for the initial reference time T
+ * Let the tasks(T) interact until all reach the finished state
+ * Increment the reference time, create tasks(T+1), and destroy tasks(T)
 
 Advantages:
  * simplicity
@@ -117,11 +117,11 @@ and take longer than all the downstream runs and postprocessing on pa, so we
 could in principle start the T+1 cycle on kupe before processing on pa
 (for T) has completed.  
 
-There are various ways in which we could change vtask management to allow
-cycle overlap.  For example, we could create all vtasks(T+1) as soon as
+There are various ways in which we could change task management to allow
+cycle overlap.  For example, we could create all tasks(T+1) as soon as
 nzwave(T) has finished on kupe, or create each foo(T+1) individually as
 soon as its predecessor foo(T) is finished, or even create multiple cycle's
-worth of vtasks all at once.  However, doing any of this would require careful
+worth of tasks all at once.  However, doing any of this would require careful
 consideration of any complications, for example:
   * do we need to ensure that no T+1 processing occurs on pa before
     all T processing has finished there, so that no T products are delayed?
@@ -136,8 +136,8 @@ nztide(T) depend on nzlam(T) or similar).
 
 Poor Man's Overlap?
 
-We could create new vtasks(T+1) as soon as all vtasks(T) prerequisites are
-satisfied, rather than waiting until all vtasks(T) are finished.  This would
+We could create new tasks(T+1) as soon as all tasks(T) prerequisites are
+satisfied, rather than waiting until all tasks(T) are finished.  This would
 allow some cycle overlap (but as above, we may want to avoid having any new
 tasks delay completion of the old cycle).
  
