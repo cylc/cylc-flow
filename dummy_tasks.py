@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
 """
-Virtual Task classes for the Ecoconnect Controller.
-See documentation in vtask-base.py
+Dummy Task classes for the Ecoconnect Controller.
+See documentation in task.py
 
 This file defines a set of seven dummy tasks, A,B,C,D,E,F, and G
 with the following input/output dependencies:
@@ -26,14 +26,14 @@ they should start executing in the following order:
              A   B  C  D   E   F  G 
 """
 
-from vtask_base import vtask
+from task import task
 from reference_time import reference_time
 from requisites import requisites
 
 import os
 import Pyro.core
 
-class A( vtask ):
+class A( task ):
     "dummy task A"
 
     def __init__( self, ref_time ):
@@ -47,10 +47,10 @@ class A( vtask ):
                  "file A_2_" + ref_time.to_str() + " completed",
                  "task A completed for " + ref_time.to_str()  ] )
 
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
 
-class B( vtask ):
+class B( task ):
     "dummy task B"
 
     def __init__( self, ref_time ):
@@ -66,10 +66,10 @@ class B( vtask ):
                  "file B_3_" + ref_time.to_str() + " completed",
                  "task B completed for " + ref_time.to_str()  ] )
 
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
 
-class C( vtask ):
+class C( task ):
     "dummy task C"
 
     def __init__( self, ref_time ):
@@ -85,10 +85,10 @@ class C( vtask ):
                  "file C_3_" + ref_time.to_str() + " completed",
                  "task C completed for " + ref_time.to_str()  ] )
 
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
 
-class D( vtask ):
+class D( task ):
     "dummy task D"
 
     def __init__( self, ref_time ):
@@ -104,10 +104,10 @@ class D( vtask ):
                  "file D_3_" + ref_time.to_str() + " completed",
                  "task D completed for " + ref_time.to_str()  ] )
 
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
 
-class E( vtask ):
+class E( task ):
     "dummy task E"
 
     def __init__( self, ref_time ):
@@ -123,10 +123,10 @@ class E( vtask ):
                  "file E_2_" + ref_time.to_str() + " completed",
                  "task E completed for " + ref_time.to_str()  ] )
 
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
 
-class F( vtask ):
+class F( task ):
     "dummy task F"
 
     def __init__( self, ref_time ):
@@ -142,10 +142,10 @@ class F( vtask ):
                  "file F_3_" + ref_time.to_str() + " completed",
                  "task F completed for " + ref_time.to_str()  ] )
 
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
 
-class G( vtask ):
+class G( task ):
     "dummy task G"
 
     def __init__( self, ref_time ):
@@ -162,4 +162,4 @@ class G( vtask ):
                  "file G_3_" + ref_time.to_str() + " completed",
                  "task G completed for " + ref_time.to_str()  ] )
 
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )

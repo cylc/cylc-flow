@@ -21,10 +21,17 @@ if n_args < 1 or n_args > 2 :
     print "USAGE:", sys.argv[0], "<REFERENCE_TIME> [<config file>]"
     sys.exit(1)
 
+initial_reference_time = sys.argv[1]
+task_config_file = None
+if n_args == 2: task_config_file = sys.argv[2]
+
 print
-print "*** EcoConnect Controller ***"
+print "      _________________________ "
+print "      .                       . "
+print "      . EcoConnect Controller . "
+print "      _________________________ "
 print
-print "Use task_monitor.py to track progress"
+print "Use [task_monitor.py] for remote monitoring"
 print
 print "Initial Reference Time " + sys.argv[1] 
 print
@@ -43,14 +50,14 @@ ns_thread = threading.Thread( target = ns_starter.start )
 ns_thread.setDaemon(True)
 ns_thread.start()
 ns_starter.waitUntilStarted(10)
-
 # locate the Pyro nameserver
 ns = Pyro.naming.NameServerLocator().getNS()
 pyro_daemon.useNameServer(ns)
 
 print
 
-# initialize the task creator (parse config file)
-god = task_manager( sys.argv[1], sys.argv[2] )
+# initialise the task manager
+god = task_manager( initial_reference_time, task_config_file )
 
+# start processing
 god.run()

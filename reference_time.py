@@ -5,11 +5,9 @@ Ecoconnect REFERENCE_TIME (YYYYMMDDHH) handling
 """
 
 import datetime
-from ec_globals import period
+from shared import cycle_period
 
 class reference_time:
-
-    cycle_period = period 
 
     def __init__( self, rt ): 
         # string: "YYYYMMDDHH"

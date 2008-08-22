@@ -7,7 +7,7 @@ task names for particular transitional reference times).
 """
 
 from reference_time import reference_time
-from vtasks_dummy import *
+from dummy_tasks import *
 from status import status
 from shared import pyro_daemon
 
@@ -139,7 +139,12 @@ class task_manager:
                 print "   " + task.identity() + " has ummatched prerequisites!"
                 consistent = False
 
-        if not consistent:
+        if consistent:
+            print "Verified task list is self-consistent: i.e. all task"
+            print "prerequisites are matched by other's postrequisites" 
+            print
+
+        else:
             print
             print "WARNING: one or more task's have pre-requisites that are not"
             print "         matched by other tasks' post-requisites."
@@ -149,7 +154,9 @@ class task_manager:
             print "         (e.g. for when it's known that a task completed in a"
             print "         previous run) and/or ability to set tasks \"(done)\""
             print "         via the config file."
+            print
 
+        # connect each tasks to the pyro daemon, for remote access
         for task in self.task_list:
             uri = pyro_daemon.connect( task, task.identity() )
 

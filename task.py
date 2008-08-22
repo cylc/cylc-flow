@@ -1,18 +1,18 @@
 #!/usr/bin/python
 
 """
-Virtual task base class for the Ecoconnect Controller.
+Task base class for the Ecoconnect Controller.
 
-A vtask represents a particular group of external tasks, for a single
+A "task" represents a particular group of external jobs, for a single
 reference time, that we want separate scheduling control over (as a
-group).  Each vtask has certain prerequisites that must be satisfied
+group).  Each task has certain prerequisites that must be satisfied
 before it can launch its external task, and certain postrequisites that
 are created or achieved as the task runs, and which may be prerequisites
-for other vtasks.  A vtask must maintain an accurate representation of
+for other tasks.  A task must maintain an accurate representation of
 the task's state as it follows through to the end of processing for its
 reference time.  
 
-vtasks communicate with each other in order to sort out inter-task
+tasks communicate with each other in order to sort out inter-task
 dependencies (i.e. match postrequisites with prerequisites).
 """
 
@@ -23,10 +23,10 @@ import os
 from copy import deepcopy
 import Pyro.core
 
-class vtask( Pyro.core.ObjBase ):
-    "ecoconnect vtask base class"
+class task( Pyro.core.ObjBase ):
+    "ecoconnect task base class"
     
-    name = "vtask base class"
+    name = "task base class"
 
     def __init__( self, ref_time ):
         Pyro.core.ObjBase.__init__(self)
@@ -55,6 +55,8 @@ class vtask( Pyro.core.ObjBase ):
         # run the external task (but don't wait for it!)
         # NOTE: apparently os.system has been superseded by the
         # subprocess module.
+        print self.identity() + ": Launching external task ",
+        print "[run_task.py " + self.name + " " + self.ref_time.to_str() + "]"
         os.system( "./run_task.py " + self.name + " " + self.ref_time.to_str() + "&" )
         self.running = True
         self.status = "RUNNING"
@@ -65,7 +67,7 @@ class vtask( Pyro.core.ObjBase ):
         self.status = "(done)"
 
     def set_satisfied( self, message ):
-        print self.identity(), ": ", message
+        print self.identity() +  ": " + message
         self.postrequisites.set_satisfied( message )
         # TO DO: SHOULD WE CHECK THIS IS A KNOWN POSTREQUISITE?
 

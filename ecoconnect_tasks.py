@@ -1,23 +1,24 @@
 #!/usr/bin/python
 
 """
-Virtual task classes for the Ecoconnect Controller.
-See documentation in vtask-base.py
+Task classes for the Ecoconnect Controller.
+See documentation in task.py
 """
 
-from vtask_base import vtask
+from task import task
 from reference_time import reference_time
 from requisites import requisites
 
 import os
 import Pyro.core
 
-class downloader( vtask ):
+class downloader( task ):
     "Met Office file downloader task class"
 
-    name = "downloader"
-
     def __init__( self, ref_time ):
+
+        self.name = "downloader"
+
         self.prerequisites = requisites( [] )
 
         self.postrequisites = requisites( [ 
@@ -27,14 +28,15 @@ class downloader( vtask ):
                  "lbc_" + ref_time.to_str() + ".um",
                  "bgerr" + ref_time.to_str() + ".um" ])
 
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
     
-class nzlam12( vtask ):
+class nzlam12( task ):
 
-    name = "nzlam12"
-    
     def __init__( self, ref_time ):
+
+        self.name = "nzlam12"
+
         self.prerequisites = requisites( [ 
                  "obstore_" + ref_time.to_str() + ".um",
                  "lbc_" + ref_time.to_str() + ".um",
@@ -45,54 +47,59 @@ class nzlam12( vtask ):
                   "sls_" + ref_time.to_str() + ".nc",   
                   "met_" + ref_time.to_str() + ".nc" ])
         
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
         
 
-class nzwave12( vtask ):
-
-    name = "nzwave12"
+class nzwave12( task ):
     
     def __init__( self, ref_time ):
+
+        self.name = "nzwave12"
+
         self.prerequisites = requisites( [ 
                  "sls_" + ref_time.to_str() + ".nc" ])
 
         self.postrequisites = requisites(["a", "b", "c"])
         
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
 
-class ricom( vtask ):
+class ricom( task ):
 
-    name = "ricom"
     
     def __init__( self, ref_time ):
+
+        self.name = "ricom"
+
         self.prerequisites = requisites( [ 
                  "sls_" + ref_time.to_str() + ".nc" ])
 
         self.postrequisites = requisites(["d", "e", "f"])
         
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
-        
 
-class topnet( vtask ):
+class topnet( task ):
 
-    name = "topnet"
     
     def __init__( self, ref_time ):
+
+        self.name = "topnet"
+
         self.prerequisites = requisites( [ 
                  "tn_" + ref_time.to_str() + ".nc" ])
 
         self.postrequisites = requisites(["g", "h", "i"])
         
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
 
 
-class nwp_global( vtask ):
+class nwp_global( task ):
 
-    name = "nwp_global"
-    
     def __init__( self, ref_time ):
+
+        self.name = "nwp_global"
+
         self.prerequisites = requisites( [ 
                  "10mwind_" + ref_time.to_str() + ".um",
                  "seaice_" + ref_time.to_str() + ".um" ] )
@@ -101,19 +108,20 @@ class nwp_global( vtask ):
                      "10mwind_" + ref_time.to_str() + ".nc",
                  "seaice_" + ref_time.to_str() + ".nc" ] )
     
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
         
 
-class globalwave120( vtask ):
+class globalwave120( task ):
 
-    name = "globalwave120"
-    
     def __init__( self, ref_time ):
+
+        self.name = "globalwave120"
+
         self.prerequisites = requisites( [ 
                  "10mwind_" + ref_time.to_str() + ".nc",
                  "seaice_" + ref_time.to_str() + ".nc" ] )
 
         self.postrequisites = requisites(["j", "k", "l"])
         
-        vtask.__init__( self, ref_time )
+        task.__init__( self, ref_time )
         
