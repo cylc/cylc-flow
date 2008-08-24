@@ -54,10 +54,10 @@ class task_manager:
 
             # check tasks are known
             for taskx in the_rest:
-		task = taskx
-		if re.compile( "^.*:").match( taskx ):
-			task = taskx.split(':')[0]
-	
+                task = taskx
+                if re.compile( "^.*:").match( taskx ):
+                    task = taskx.split(':')[0]
+
                 if not task in task_manager.all_tasks:
                     if task != "stop" and task != "all":
                         print "ERROR: unknown task ", task
@@ -108,12 +108,12 @@ class task_manager:
 
         self.task_list = []
         for task_name in in_utero:
-	    set_finished = False
-	    if re.compile( "^.*:").match( task_name ):
-		task_name = task_name.split(':')[0]
-		set_finished = True
+            set_finished = False
+            if re.compile( "^.*:").match( task_name ):
+                task_name = task_name.split(':')[0]
+                set_finished = True
                 print "WARNING: creating " + task_name + "in finished state"
-	
+
             if task_name == 'A':
                 self.task_list.append( A( self.cycle_time, set_finished )) 
             elif task_name == 'B':
@@ -130,7 +130,7 @@ class task_manager:
                 self.task_list.append( G( self.cycle_time, set_finished ))
             else:
                 print "ERROR: unknown task name", task_name
-		sys.exit(1)
+                sys.exit(1)
                 # TO DO: handle errors
 
         consistent = True

@@ -35,7 +35,7 @@ class task( Pyro.core.ObjBase ):
         self.finished = False
         self.status = "waiting"
 
-	if setfin: self.set_finished()
+        if setfin: self.set_finished()
 
     def run_if_satisfied( self ):
         if self.finished:
@@ -67,9 +67,9 @@ class task( Pyro.core.ObjBase ):
         self.running = False
         self.finished = True
         self.status = "(done)"
-	# the following is redundant, except when initialising 
-	# in a "finished" state:
-	self.postrequisites.set_all_satisfied()
+        # the following is redundant, except when initialising 
+        # in a "finished" state:
+        self.postrequisites.set_all_satisfied()
 
     def set_satisfied( self, message ):
         print self.identity() +  ": " + message
