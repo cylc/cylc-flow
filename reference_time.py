@@ -5,9 +5,9 @@ Ecoconnect REFERENCE_TIME (YYYYMMDDHH) handling
 """
 
 import datetime
-from shared import cycle_period
 
 class reference_time:
+
 
     def __init__( self, rt ): 
         # string: "YYYYMMDDHH"
@@ -15,11 +15,26 @@ class reference_time:
                     int(rt[0:4]), int(rt[4:6]), 
                     int(rt[6:8]), int(rt[8:10]))
 
-    def increment( self, hours = cycle_period ): 
+    def increment( self ): 
+        # change to the next reference time in cycle_times
+        # (not necessarily a constant increment)
+
+        # 0, 3, 6, 12, 18 
+
+        hour = int( self.get_hour() )
+        if hour == 0 or hour == 3:
+            delta = 3
+        else:
+            delta = 6
+
+        tmp = datetime.timedelta( 0, 0, 0, 0, 0, delta, 0 ) 
+        self.reftime += tmp
+
+    def add( self, hours ): 
         tmp = datetime.timedelta( 0, 0, 0, 0, 0, hours, 0 ) 
         self.reftime += tmp
 
-    def decrement( self, hours = cycle_period ): 
+    def subtract( self, hours ): 
         tmp = datetime.timedelta( 0, 0, 0, 0, 0, hours, 0 ) 
         self.reftime -= tmp
 

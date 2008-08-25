@@ -32,6 +32,7 @@ from requisites import requisites
 
 import os
 import Pyro.core
+from copy import deepcopy
 
 class A( task ):
     "dummy task A"
@@ -42,12 +43,14 @@ class A( task ):
 
         self.valid_hours = [ "00", "06", "12", "18" ]
 
+        time = ref_time.to_str()
+
         self.prerequisites = requisites( [] )
 
         self.postrequisites = requisites( [ 
-                 "file A_1_" + ref_time.to_str() + " completed",
-                 "file A_2_" + ref_time.to_str() + " completed",
-                 "task A completed for " + ref_time.to_str()  ] )
+                 "file A_1_" + time + " completed",
+                 "file A_2_" + time + " completed",
+                 "task A completed for " + time  ] )
 
         task.__init__( self, ref_time, set_finished )
 
@@ -61,14 +64,16 @@ class B( task ):
 
         self.valid_hours = [ "00", "06", "12", "18" ]
 
+        time = ref_time.to_str()
+
         self.prerequisites = requisites( [
-                "file A_1_" + ref_time.to_str() + " completed"] )
+                "file A_1_" + time + " completed"] )
 
         self.postrequisites = requisites( [ 
-                 "file B_1_" + ref_time.to_str() + " completed",
-                 "file B_2_" + ref_time.to_str() + " completed",
-                 "file B_3_" + ref_time.to_str() + " completed",
-                 "task B completed for " + ref_time.to_str()  ] )
+                 "file B_1_" + time + " completed",
+                 "file B_2_" + time + " completed",
+                 "file B_3_" + time + " completed",
+                 "task B completed for " + time  ] )
 
         task.__init__( self, ref_time, set_finished )
 
@@ -82,14 +87,16 @@ class C( task ):
 
         self.name = 'C'
 
+        time = ref_time.to_str()
+
         self.prerequisites = requisites( [
-                "file A_2_" + ref_time.to_str() + " completed"] )
+                "file A_2_" + time + " completed"] )
 
         self.postrequisites = requisites( [ 
-                 "file C_1_" + ref_time.to_str() + " completed",
-                 "file C_2_" + ref_time.to_str() + " completed",
-                 "file C_3_" + ref_time.to_str() + " completed",
-                 "task C completed for " + ref_time.to_str()  ] )
+                 "file C_1_" + time + " completed",
+                 "file C_2_" + time + " completed",
+                 "file C_3_" + time + " completed",
+                 "task C completed for " + time  ] )
 
         task.__init__( self, ref_time, set_finished )
 
@@ -103,14 +110,16 @@ class D( task ):
 
         self.name = 'D'
 
+        time = ref_time.to_str()
+
         self.prerequisites = requisites( [
-                "task A completed for " + ref_time.to_str() ] )
+                "task A completed for " + time ] )
 
         self.postrequisites = requisites( [ 
-                 "file D_1_" + ref_time.to_str() + " completed",
-                 "file D_2_" + ref_time.to_str() + " completed",
-                 "file D_3_" + ref_time.to_str() + " completed",
-                 "task D completed for " + ref_time.to_str()  ] )
+                 "file D_1_" + time + " completed",
+                 "file D_2_" + time + " completed",
+                 "file D_3_" + time + " completed",
+                 "task D completed for " + time  ] )
 
         task.__init__( self, ref_time, set_finished )
 
@@ -124,14 +133,16 @@ class E( task ):
 
         self.name = 'E'
 
+        time = ref_time.to_str()
+
         self.prerequisites = requisites( [
-                "file C_2_" + ref_time.to_str() + " completed",
-                "file B_3_" + ref_time.to_str() + " completed" ] )
+                "file C_2_" + time + " completed",
+                "file B_3_" + time + " completed" ] )
 
         self.postrequisites = requisites( [ 
-                 "file E_1_" + ref_time.to_str() + " completed",
-                 "file E_2_" + ref_time.to_str() + " completed",
-                 "task E completed for " + ref_time.to_str()  ] )
+                 "file E_1_" + time + " completed",
+                 "file E_2_" + time + " completed",
+                 "task E completed for " + time  ] )
 
         task.__init__( self, ref_time, set_finished )
 
@@ -145,14 +156,16 @@ class F( task ):
 
         self.name = 'F'
 
+        time = ref_time.to_str()
+
         self.prerequisites = requisites( [
-                "file D_2_" + ref_time.to_str() + " completed"] )
+                "file D_2_" + time + " completed"] )
 
         self.postrequisites = requisites( [ 
-                 "file F_1_" + ref_time.to_str() + " completed",
-                 "file F_2_" + ref_time.to_str() + " completed",
-                 "file F_3_" + ref_time.to_str() + " completed",
-                 "task F completed for " + ref_time.to_str()  ] )
+                 "file F_1_" + time + " completed",
+                 "file F_2_" + time + " completed",
+                 "file F_3_" + time + " completed",
+                 "task F completed for " + time  ] )
 
         task.__init__( self, ref_time, set_finished )
 
@@ -166,14 +179,42 @@ class G( task ):
 
         self.name = 'G'
 
+        time = ref_time.to_str()
+
         self.prerequisites = requisites( [
-                "file D_3_" + ref_time.to_str() + " completed",
-                "task C completed for " + ref_time.to_str() ] )
+                "file D_3_" + time + " completed",
+                "task C completed for " + time ] )
 
         self.postrequisites = requisites( [ 
-                 "file G_1_" + ref_time.to_str() + " completed",
-                 "file G_2_" + ref_time.to_str() + " completed",
-                 "file G_3_" + ref_time.to_str() + " completed",
-                 "task G completed for " + ref_time.to_str()  ] )
+                 "file G_1_" + time + " completed",
+                 "file G_2_" + time + " completed",
+                 "file G_3_" + time + " completed",
+                 "task G completed for " + time  ] )
+
+        task.__init__( self, ref_time, set_finished )
+
+
+class H( task ):
+    "dummy task H"
+
+    def __init__( self, ref_time, set_finished ):
+
+        self.valid_hours = [ "03" ]
+
+        self.name = 'H'
+
+        time = ref_time.to_str()
+        prev_reftime = deepcopy( ref_time )
+        prev_reftime.subtract( 3 )
+        prev_time = prev_reftime.to_str()
+
+        self.prerequisites = requisites( [
+                "task C completed for " + prev_time ] )
+
+        self.postrequisites = requisites( [ 
+                 "file H_1_" + time + " completed",
+                 "file H_2_" + time + " completed",
+                 "file H_3_" + time + " completed",
+                 "task H completed for " + time  ] )
 
         task.__init__( self, ref_time, set_finished )

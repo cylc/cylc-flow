@@ -15,7 +15,7 @@ import sys
 
 class task_manager:
 
-    all_tasks = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G' ]
+    all_tasks = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' ]
 
     def __init__( self, reftime, filename = None ):
 
@@ -27,17 +27,18 @@ class task_manager:
 
         self.cycle_time = reference_time( reftime )
 
+        # return now if no config file supplied
         if filename is None:
             self.config_supplied = False
             return
 
         self.config_supplied = True
+
+        print
+        print "Parsing Task Config File ..."
+
         cfile = open( filename, 'r' )
-
-        print "user task config file:"
         for line in cfile:
-
-            print "  +  " + line,
 
             # skip full line comments
             if re.compile( "^#" ).match( line ):
@@ -46,6 +47,8 @@ class task_manager:
             # skip blank lines
             if re.compile( "^\s*$" ).match( line ):
                 continue
+
+            print " + ", line,
 
             # line format: "YYYYMMDDHH task1 task2 task3:finished [etc.]"
             tokens = line.split()
@@ -66,7 +69,7 @@ class task_manager:
             # add to task_list dict
             self.config_task_lists[ ref_time ] = the_rest
 
-        print
+        cfile.close()
 
         # get ordered list of keys for the dict
         tmp = {}
@@ -98,81 +101,83 @@ class task_manager:
                  if self.cycle_time.is_greaterthan_or_equalto( rt ):
                      in_utero = self.config_task_lists[ rt ]
                      break
-
+       
         if in_utero[0] == 'all':
             in_utero = task_manager.all_tasks
 
+        print
+        print "** NEW REFERENCE TIME " + self.cycle_time.to_str() + " **"
+        print "Initial Task Config for this cycle:"
+        print in_utero
+
         if in_utero[0] == 'stop':
-            print "> STOP requested for", self.cycle_time.to_str()
-            in_utero = []
+            print
+            print "STOP requested for", self.cycle_time.to_str()
+            sys.exit(0)
 
         self.task_list = []
         for task_name in in_utero:
-            set_finished = False
+            initial_state = None
             if re.compile( "^.*:").match( task_name ):
-                task_name = task_name.split(':')[0]
-                set_finished = True
-                print "WARNING: creating " + task_name + " in finished state"
+                [task_name, initial_state] = task_name.split(':')
+                print "  + Creating " + task_name + " in " + initial_state + " state"
 
+            # TO DO: can I automate this based on list of valid tasks?
             if task_name == 'A':
-                self.task_list.append( A( self.cycle_time, set_finished )) 
+                self.task_list.append( A( self.cycle_time, initial_state )) 
             elif task_name == 'B':
-                self.task_list.append( B( self.cycle_time, set_finished ))
+                self.task_list.append( B( self.cycle_time, initial_state ))
             elif task_name == 'C':
-                self.task_list.append( C( self.cycle_time, set_finished ))
+                self.task_list.append( C( self.cycle_time, initial_state ))
             elif task_name == 'D':
-                self.task_list.append( D( self.cycle_time, set_finished )) 
+                self.task_list.append( D( self.cycle_time, initial_state )) 
             elif task_name == 'E':
-                self.task_list.append( E( self.cycle_time, set_finished )) 
+                self.task_list.append( E( self.cycle_time, initial_state )) 
             elif task_name == 'F':
-                self.task_list.append( F( self.cycle_time, set_finished ))
+                self.task_list.append( F( self.cycle_time, initial_state ))
             elif task_name == 'G':
-                self.task_list.append( G( self.cycle_time, set_finished ))
+                self.task_list.append( G( self.cycle_time, initial_state ))
+            elif task_name == 'H':
+                self.task_list.append( H( self.cycle_time, initial_state ))
             else:
                 print "ERROR: unknown task name", task_name
                 sys.exit(1)
                 # TO DO: handle errors
 
+        hour = self.cycle_time.get_hour()
         for task in self.task_list:
-           if self.cycle_time.get_hour() not in task.get_valid_hours():
-               print "Removing " + task.identity() + " (wrong cycle time)"
+           if hour not in task.get_valid_hours():
+               print "  + Removing " + task.name + " (not valid for " + hour + ")"
                self.task_list.remove( task )
 
-        print
-
-        print "NEW REFERENCE TIME " + self.cycle_time.to_str() + ",",
-        print "Task List:"
+        print "Final Task List:"
         for task in self.task_list:
             print " + " + task.name
 
-        print
-
-        consistent = True
+        # check that all tasks can have their prerequisites satisfied
+        dead_soldiers = []
         for task in self.task_list:
             if not task.will_get_satisfaction( self.task_list ):
-                print "   " + task.identity() + " has ummatched prerequisites!"
-                consistent = False
+                dead_soldiers.append( task )
 
-        if consistent:
-            print "Verified task list is self-consistent: i.e. all task"
-            print "prerequisites are matched by other's postrequisites" 
-            print
-
+        print
+        if len( dead_soldiers ) == 0:
+            print "Verified task list is self-consistent."
         else:
+            print "ERROR: THIS TASK LIST IS NOT SELF-CONSISTENT, i.e. one"
+            print "or more tasks have pre-requisites that are not matched"
+            print "by others post-requisites, THEREFORE THEY WILL NOT RUN"
+            for soldier in dead_soldiers:
+                print " + ", soldier.identity()
+
             print
-            print "WARNING: one or more task's have pre-requisites that are not"
-            print "         matched by other tasks' post-requisites."
-            print "THESE TASKS WILL NEVER RUN unless their prerequisites are"
-            print "         are satisfied by other means."
-            print "TO DO: provide manual Pyro access to tasks for this purpose"
-            print "         (e.g. for when it's known that a task completed in a"
-            print "         previous run) and/or ability to set tasks \"(done)\""
-            print "         via the config file."
-            print
+            sys.exit(1)
 
         # connect each tasks to the pyro daemon, for remote access
         for task in self.task_list:
             uri = pyro_daemon.connect( task, task.identity() )
+
+        print
 
 
     def run( self ):
@@ -195,21 +200,19 @@ class task_manager:
 
 
     def process_tasks( self ):
-        
+        # this function gets called every time a pyro event comes in
+
         finished = []
         state.reset()
 
+        # if no tasks present, then we've incremented reference time and
+        # deleted the old tasks (see below)
         if len( self.task_list ) == 0:
             self.create_tasks()
 
-        if len( self.task_list ) == 0:
-            # still no tasks means we've reached the end
-            print "No tasks created for ", self.cycle_time.to_str()
-            print "STOPPING NOW"
-            sys.exit(0)
-
         state.update( self.cycle_time.to_str() )
 
+        # task interaction to satisfy prerequisites
         for task in self.task_list:
             task.get_satisfaction( self.task_list )
             task.run_if_satisfied()
@@ -218,6 +221,8 @@ class task_manager:
 
         state.update_finished() 
 
+        # if all tasks finished, increment reference time and delete the
+        # old tasks
         if not False in finished:
             self.cycle_time.increment()
             del self.task_list[:]

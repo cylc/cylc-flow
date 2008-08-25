@@ -26,12 +26,10 @@ task_config_file = None
 if n_args == 2: task_config_file = sys.argv[2]
 
 print
-print "      _________________________ "
-print "      .                       . "
-print "      . EcoConnect Controller . "
-print "      _________________________ "
-print
-print "Use [task_monitor.py] for remote monitoring"
+print "_____________________________________ "
+print "      .                       ."
+print "      . EcoConnect Controller ."
+print "_____________________________________ "
 print
 print "Initial Reference Time " + sys.argv[1] 
 print

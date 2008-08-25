@@ -20,6 +20,7 @@ from reference_time import reference_time
 from requisites import requisites
 
 import os
+import sys
 from copy import deepcopy
 import Pyro.core
 
@@ -28,14 +29,22 @@ class task( Pyro.core.ObjBase ):
     
     name = "task base class"
 
-    def __init__( self, ref_time, setfin ):
+    def __init__( self, ref_time, initial_state ):
         Pyro.core.ObjBase.__init__(self)
         self.ref_time = ref_time
         self.running = False  # TO DO: get rid of logical status vars in favour of one string?
         self.finished = False
         self.status = "waiting"
 
-        if setfin: self.set_finished()
+        if initial_state is None: 
+            pass
+        elif initial_state == "finished":
+            self.set_finished()
+        elif initial_state == "ready":
+            self.set_ready()
+        else:
+            print "ERROR: unknown initial task state " + initial_state
+            sys.exit(1)
 
     def run_if_satisfied( self ):
         if self.finished:
@@ -57,7 +66,7 @@ class task( Pyro.core.ObjBase ):
         # run the external task (but don't wait for it!)
         # NOTE: apparently os.system has been superseded by the
         # subprocess module.
-        print self.identity() + ": Launching external task ",
+        print self.identity() + ": RUN EXTERNAL TASK",
         print "[run_task.py " + self.name + " " + self.ref_time.to_str() + "]"
         os.system( "./run_task.py " + self.name + " " + self.ref_time.to_str() + "&" )
         self.running = True
@@ -70,6 +79,12 @@ class task( Pyro.core.ObjBase ):
         # the following is redundant, except when initialising 
         # in a "finished" state:
         self.postrequisites.set_all_satisfied()
+
+    def set_ready( self ):
+        self.running = False
+        self.finished = False
+        self.status = "waiting"
+        self.prerequisites.set_all_satisfied()
 
     def set_satisfied( self, message ):
         print self.identity() +  ": " + message

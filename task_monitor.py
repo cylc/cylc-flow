@@ -9,20 +9,32 @@ from time import sleep
 
 foo = spinner()
 
-state = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+indent = "     "
+indent2 = "        "
 
-while True:
+def heading():
     os.system( "clear" )
     char = foo.spin()
-    indent = "     "
-    indent2 = "        "
     print 
     print indent + char + " Task Monitor " + char
-    print 
-    print indent2 + state.report()[0] 
     print
 
-    for line in state.report()[1:]:
-         print indent2 + line
+while True:
+    try:
+        state = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
 
-    sleep(1)
+        while True:
+            heading()
+            print indent2 + state.report()[0] 
+            print
+
+            for line in state.report()[1:]:
+                print indent2 + line
+
+            sleep(0.5)
+
+    except:
+        heading()
+        print indent + "(no connection)"
+
+    sleep(0.5)  

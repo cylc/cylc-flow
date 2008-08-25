@@ -19,38 +19,20 @@ sometimes merge (multiple inputs) back together.
 
 ---------- Explicit Sequencing ----------
 
-Writing code to explicitly enforce the correct non-linear "sequence" is the
-the obvious way to do this, but the resulting program will inevitably(?) be
-fragile and inflexible with respect to insertion and deletion of models,
-mid-cycle startup, maintenance and extensibility, etc. 
+This is the usual approach: write a program to explicitly enforce the correct
+non-linear "sequence", which has been figured out in in advance by taking into
+account all intertask dependencies in the system.  It is relatively easy to
+understand, but the resulting program will inevitably(?) be fragile and
+inflexible with respect to insertion and deletion of models, mid-cycle
+startup, maintenance and extensibility, etc. 
 
 
 ---------- Implicit Sequencing ----------
 
-Snooker Analogy (this is how the idea originally occurred to me)
-
-The traditional explicit sequencing approach, above, is somewhat analagous to
-programming a snooker game by calculating in advance the individual
-trajectories of all balls as they respond to particular initial conditions,
-and then writing code to explicitly enforce the known trajectories. This is
-difficult to program, and very inflexible (imagine adding or removing balls,
-or adjusting initial conditions).  Object oriented design, on the other hand,
-is very well suited to this kind of problem: write a "ball" class to define
-the attributes and behavior of generic "ball" objects: a ball knows its own
-position and velocity, how interrogate other balls as to their position and
-velocity, how to adjust its velocity according to collision physics if any
-overlap is found, and how to update its position given its current velocity.
-Now simply instantiate as many balls as you like and let them interact: the
-correct trajectories emerge naturally at run time.  This approach is simple to
-program, and ridiculously flexible.
-
-
-Task Sequencing
-
-Like the ball trajectories, our task sequence can be seen as a property of the
-system that emerges naturally through the interaction of simple "task objects"
-that only know their own attributes, rather than a fundamental property of the
-system that has to been known in advance and thence enforced. 
+The non-linear task sequence can be seen as a property of the system that
+emerges naturally through the interaction of simple "task objects" which only
+know their own attributes, rather than a fundamental property of the whole
+system that has to be figured out in advance and then rigorously enforced. 
 
 Let each EcoConnect task be represented by a TASK OBJECT, which has a set of
 task-specific prerequisites (e.g. "input file X is ready") that have to be
