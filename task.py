@@ -67,8 +67,8 @@ class task( Pyro.core.ObjBase ):
         # NOTE: apparently os.system has been superseded by the
         # subprocess module.
         print self.identity() + ": RUN EXTERNAL TASK",
-        print "[run_task.py " + self.name + " " + self.ref_time.to_str() + "]"
-        os.system( "./run_task.py " + self.name + " " + self.ref_time.to_str() + "&" )
+        print "[ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "]"
+        os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "&" )
         self.running = True
         self.status = "RUNNING"
 

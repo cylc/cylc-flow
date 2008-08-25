@@ -26,23 +26,23 @@ task_config_file = None
 if n_args == 2: task_config_file = sys.argv[2]
 
 print
-print "_____________________________________ "
-print "      .                       ."
-print "      . EcoConnect Controller ."
-print "_____________________________________ "
+print "__________________________________________________________"
+print "      .                                           ."
+print "      . EcoConnect Implicit Scheduling Controller ."
+print "__________________________________________________________"
 print
 print "Initial Reference Time " + sys.argv[1] 
-print
+
 if n_args == 1:
-    print "No task config file: will run ALL tasks"
     print
+    print "No task config file: will run ALL tasks"
 
-
-print "Starting Pyro Nameserver ..."
 print
+print "Starting Pyro Nameserver ..."
 
 # Start a Pyro nameserver in its own thread
 # (alternatively, run the 'pyro-ns' script as a separate process)
+print
 ns_starter = Pyro.naming.NameServerStarter()
 ns_thread = threading.Thread( target = ns_starter.start )
 ns_thread.setDaemon(True)
@@ -51,8 +51,6 @@ ns_starter.waitUntilStarted(10)
 # locate the Pyro nameserver
 ns = Pyro.naming.NameServerLocator().getNS()
 pyro_daemon.useNameServer(ns)
-
-print
 
 # connect the system status monitor to the pyro nameserver
 uri = pyro_daemon.connect( state, "state" )

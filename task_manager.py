@@ -19,6 +19,7 @@ class task_manager:
 
     def __init__( self, reftime, filename = None ):
 
+        print
         print "Initialising Task Manager"
     
         self.ordered_ref_times = []
