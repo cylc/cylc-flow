@@ -112,7 +112,7 @@ class task_manager:
             if re.compile( "^.*:").match( task_name ):
                 task_name = task_name.split(':')[0]
                 set_finished = True
-                print "WARNING: creating " + task_name + "in finished state"
+                print "WARNING: creating " + task_name + " in finished state"
 
             if task_name == 'A':
                 self.task_list.append( A( self.cycle_time, set_finished )) 
@@ -133,14 +133,21 @@ class task_manager:
                 sys.exit(1)
                 # TO DO: handle errors
 
-        consistent = True
-        print
-        print "NEW REFERENCE TIME " + self.cycle_time.to_str() + ",",
-        print "Task List:"
-        for task_name in in_utero:
-            print " + " + task_name
+        for task in self.task_list:
+           if self.cycle_time.get_hour() not in task.get_valid_hours():
+               print "Removing " + task.identity() + " (wrong cycle time)"
+               self.task_list.remove( task )
 
         print
+
+        print "NEW REFERENCE TIME " + self.cycle_time.to_str() + ",",
+        print "Task List:"
+        for task in self.task_list:
+            print " + " + task.name
+
+        print
+
+        consistent = True
         for task in self.task_list:
             if not task.will_get_satisfaction( self.task_list ):
                 print "   " + task.identity() + " has ummatched prerequisites!"

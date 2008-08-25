@@ -40,6 +40,8 @@ class A( task ):
 
         self.name = "A"
 
+        self.valid_hours = [ "00", "06", "12", "18" ]
+
         self.prerequisites = requisites( [] )
 
         self.postrequisites = requisites( [ 
@@ -57,6 +59,8 @@ class B( task ):
 
         self.name = 'B'
 
+        self.valid_hours = [ "00", "06", "12", "18" ]
+
         self.prerequisites = requisites( [
                 "file A_1_" + ref_time.to_str() + " completed"] )
 
@@ -73,6 +77,8 @@ class C( task ):
     "dummy task C"
 
     def __init__( self, ref_time, set_finished ):
+
+        self.valid_hours = [ "00", "06", "12", "18" ]
 
         self.name = 'C'
 
@@ -93,6 +99,8 @@ class D( task ):
 
     def __init__( self, ref_time, set_finished ):
 
+        self.valid_hours = [ "00", "06", "12", "18" ]
+
         self.name = 'D'
 
         self.prerequisites = requisites( [
@@ -111,6 +119,8 @@ class E( task ):
     "dummy task E"
 
     def __init__( self, ref_time, set_finished ):
+
+        self.valid_hours = [ "00", "12" ]
 
         self.name = 'E'
 
@@ -131,6 +141,8 @@ class F( task ):
 
     def __init__( self, ref_time, set_finished ):
 
+        self.valid_hours = [ "06", "18" ]
+
         self.name = 'F'
 
         self.prerequisites = requisites( [
@@ -149,6 +161,8 @@ class G( task ):
     "dummy task G"
 
     def __init__( self, ref_time, set_finished ):
+
+        self.valid_hours = [ "00", "06", "12", "18" ]
 
         self.name = 'G'
 

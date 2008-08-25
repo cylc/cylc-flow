@@ -58,3 +58,6 @@ class reference_time:
             return True
         else:
             return False
+
+    def get_hour( self ):
+        return self.to_str()[8:10]

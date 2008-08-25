@@ -98,3 +98,6 @@ class task( Pyro.core.ObjBase ):
 
     def get_postrequisites( self ):
         return self.postrequisites.get_list()
+
+    def get_valid_hours( self ):
+        return self.valid_hours
