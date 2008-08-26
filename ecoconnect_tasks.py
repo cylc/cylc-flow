@@ -12,7 +12,7 @@ from requisites import requisites
 import os
 import Pyro.core
 
-class downloader( task ):
+class downloader( task_base ):
     "Met Office file downloader task class"
 
     def __init__( self, ref_time ):
@@ -28,10 +28,10 @@ class downloader( task ):
                  "lbc_" + ref_time.to_str() + ".um",
                  "bgerr" + ref_time.to_str() + ".um" ])
 
-        task.__init__( self, ref_time )
+        task_base.__init__( self, ref_time )
 
     
-class nzlam12( task ):
+class nzlam12( task_base ):
 
     def __init__( self, ref_time ):
 
@@ -47,10 +47,10 @@ class nzlam12( task ):
                   "sls_" + ref_time.to_str() + ".nc",   
                   "met_" + ref_time.to_str() + ".nc" ])
         
-        task.__init__( self, ref_time )
+        task_base.__init__( self, ref_time )
         
 
-class nzwave12( task ):
+class nzwave12( task_base ):
     
     def __init__( self, ref_time ):
 
@@ -61,10 +61,10 @@ class nzwave12( task ):
 
         self.postrequisites = requisites(["a", "b", "c"])
         
-        task.__init__( self, ref_time )
+        task_base.__init__( self, ref_time )
 
 
-class ricom( task ):
+class ricom( task_base ):
 
     
     def __init__( self, ref_time ):
@@ -76,10 +76,10 @@ class ricom( task ):
 
         self.postrequisites = requisites(["d", "e", "f"])
         
-        task.__init__( self, ref_time )
+        task_base.__init__( self, ref_time )
 
 
-class topnet( task ):
+class topnet( task_base ):
 
     
     def __init__( self, ref_time ):
@@ -91,10 +91,10 @@ class topnet( task ):
 
         self.postrequisites = requisites(["g", "h", "i"])
         
-        task.__init__( self, ref_time )
+        task_base.__init__( self, ref_time )
 
 
-class nwp_global( task ):
+class nwp_global( task_base ):
 
     def __init__( self, ref_time ):
 
@@ -108,10 +108,10 @@ class nwp_global( task ):
                      "10mwind_" + ref_time.to_str() + ".nc",
                  "seaice_" + ref_time.to_str() + ".nc" ] )
     
-        task.__init__( self, ref_time )
+        task_base.__init__( self, ref_time )
         
 
-class globalwave120( task ):
+class globalwave120( task_base ):
 
     def __init__( self, ref_time ):
 
@@ -123,5 +123,5 @@ class globalwave120( task ):
 
         self.postrequisites = requisites(["j", "k", "l"])
         
-        task.__init__( self, ref_time )
+        task_base.__init__( self, ref_time )
         

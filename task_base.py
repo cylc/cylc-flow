@@ -25,7 +25,7 @@ from copy import deepcopy
 import Pyro.core
 
 
-class task( Pyro.core.ObjBase ):
+class task_base( Pyro.core.ObjBase ):
     "ecoconnect task base class"
     
     name = "task base class"
@@ -38,6 +38,7 @@ class task( Pyro.core.ObjBase ):
         if initial_state is None: 
             pass
         elif initial_state == "finished":
+            self.postrequisites.set_all_satisfied()
             self.state = "finished"
         elif initial_state == "ready":
             # waiting, but ready to go
@@ -72,8 +73,6 @@ class task( Pyro.core.ObjBase ):
 
     def set_finished( self ):
         self.state = "finished"
-        # redundant, except when initialising in a "finished" state:
-        self.postrequisites.set_all_satisfied()
 
     def set_satisfied( self, message ):
         print self.identity() +  ": " + message
@@ -106,8 +105,11 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
-    def get_postrequisites( self ):
+    def get_postrequisite_list( self ):
         return self.postrequisites.get_list()
+
+    def get_postrequisites( self ):
+        return self.postrequisites.get_requisites()
 
     def get_valid_hours( self ):
         return self.valid_hours

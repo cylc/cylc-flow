@@ -7,7 +7,7 @@ task names for particular transitional reference times).
 """
 
 from reference_time import reference_time
-from dummy_task_defs import *
+from dummy_tasks import *
 from shared import pyro_daemon, state
 
 import re
@@ -204,23 +204,21 @@ class task_manager:
         # this function gets called every time a pyro event comes in
 
         finished = []
-        state.reset()
+        #state.reset()
 
         # if no tasks present, then we've incremented reference time and
         # deleted the old tasks (see below)
         if len( self.task_list ) == 0:
             self.create_tasks()
 
-        state.update( self.cycle_time.to_str() )
 
         # task interaction to satisfy prerequisites
         for task in self.task_list:
             task.get_satisfaction( self.task_list )
             task.run_if_satisfied()
-            state.update( task.get_state() )
             finished.append( task.is_finished() )
 
-        state.update_finished() 
+        state.update( self.task_list )
 
         # if all tasks finished, increment reference time and delete the
         # old tasks

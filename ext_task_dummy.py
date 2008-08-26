@@ -34,7 +34,7 @@ if len( sys.argv ) != 3:
 task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
 
 # set each postrequisite satisfied in turn
-for message in task.get_postrequisites():
+for message in task.get_postrequisite_list():
     sleep(5)
     task.set_satisfied( message )
 

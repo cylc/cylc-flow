@@ -10,13 +10,17 @@ from time import sleep
 foo = spinner()
 
 indent = "     "
-indent2 = "        "
+
+def sorted_keys( d, func = None ):
+    keys = d.keys()
+    keys.sort( func )
+    return keys
 
 def heading():
     os.system( "clear" )
     char = foo.spin()
     print 
-    print indent + char + " Task Monitor " + char
+    print indent + char + " System Monitor " + char
     print
 
 while True:
@@ -25,16 +29,15 @@ while True:
 
         while True:
             heading()
-            print indent2 + state.report()[0] 
-            print
 
-            for line in state.report()[1:]:
-                print indent2 + line
+            status = state.get_status()
+            for task in sorted_keys( status ):
+                print task + ": " + status[ task ]
 
-            sleep(0.5)
+            sleep(1)
 
     except:
         heading()
         print indent + "(no connection)"
 
-    sleep(0.5)  
+    sleep(1)  

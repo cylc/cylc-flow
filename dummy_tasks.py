@@ -26,7 +26,7 @@ they should start executing in the following order:
              A   B  C  D   E   F  G 
 """
 
-from task import task
+from task_base import task_base
 from reference_time import reference_time
 from requisites import requisites
 
@@ -34,7 +34,7 @@ import os
 import Pyro.core
 from copy import deepcopy
 
-class A( task ):
+class A( task_base ):
     "dummy task A"
 
     def __init__( self, ref_time, set_finished ):
@@ -52,10 +52,10 @@ class A( task ):
                  "file A_2_" + time + " completed",
                  "task A completed for " + time  ] )
 
-        task.__init__( self, ref_time, set_finished )
+        task_base.__init__( self, ref_time, set_finished )
 
 
-class B( task ):
+class B( task_base ):
     "dummy task B"
 
     def __init__( self, ref_time, set_finished ):
@@ -75,10 +75,10 @@ class B( task ):
                  "file B_3_" + time + " completed",
                  "task B completed for " + time  ] )
 
-        task.__init__( self, ref_time, set_finished )
+        task_base.__init__( self, ref_time, set_finished )
 
 
-class C( task ):
+class C( task_base ):
     "dummy task C"
 
     def __init__( self, ref_time, set_finished ):
@@ -98,10 +98,10 @@ class C( task ):
                  "file C_3_" + time + " completed",
                  "task C completed for " + time  ] )
 
-        task.__init__( self, ref_time, set_finished )
+        task_base.__init__( self, ref_time, set_finished )
 
 
-class D( task ):
+class D( task_base ):
     "dummy task D"
 
     def __init__( self, ref_time, set_finished ):
@@ -121,10 +121,10 @@ class D( task ):
                  "file D_3_" + time + " completed",
                  "task D completed for " + time  ] )
 
-        task.__init__( self, ref_time, set_finished )
+        task_base.__init__( self, ref_time, set_finished )
 
 
-class E( task ):
+class E( task_base ):
     "dummy task E"
 
     def __init__( self, ref_time, set_finished ):
@@ -144,10 +144,10 @@ class E( task ):
                  "file E_2_" + time + " completed",
                  "task E completed for " + time  ] )
 
-        task.__init__( self, ref_time, set_finished )
+        task_base.__init__( self, ref_time, set_finished )
 
 
-class F( task ):
+class F( task_base ):
     "dummy task F"
 
     def __init__( self, ref_time, set_finished ):
@@ -167,10 +167,10 @@ class F( task ):
                  "file F_3_" + time + " completed",
                  "task F completed for " + time  ] )
 
-        task.__init__( self, ref_time, set_finished )
+        task_base.__init__( self, ref_time, set_finished )
 
 
-class G( task ):
+class G( task_base ):
     "dummy task G"
 
     def __init__( self, ref_time, set_finished ):
@@ -191,10 +191,10 @@ class G( task ):
                  "file G_3_" + time + " completed",
                  "task G completed for " + time  ] )
 
-        task.__init__( self, ref_time, set_finished )
+        task_base.__init__( self, ref_time, set_finished )
 
 
-class H( task ):
+class H( task_base ):
     "dummy task H"
 
     def __init__( self, ref_time, set_finished ):
@@ -217,4 +217,4 @@ class H( task ):
                  "file H_3_" + time + " completed",
                  "task H completed for " + time  ] )
 
-        task.__init__( self, ref_time, set_finished )
+        task_base.__init__( self, ref_time, set_finished )

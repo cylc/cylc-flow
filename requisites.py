@@ -41,6 +41,9 @@ class requisites:
     def get_list( self ):
         return self.ordered_list
 
+    def get_requisites( self ):
+        return self.satisfied
+
     def satisfy_me( self, postreqs ):
         # can another's completed postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
