@@ -1,11 +1,12 @@
 #!/usr/bin/python
 
 """
-Class to keep record of current control system status
+Class to keep record of current control system status, for Pyro access
+by the external monitoring program, system_monitor.py
 """
 
 import Pyro.core
-from string import ljust 
+from string import ljust, rjust 
 
 
 class system_status( Pyro.core.ObjBase ):
@@ -32,15 +33,17 @@ class system_status( Pyro.core.ObjBase ):
                 else:
                     prog += "-"
 
-            frac = "[" + str( n_done ) + "/" + str( n_total ) + "]"
+            frac = str( n_done ) + "/" + str( n_total )
 
             st = task.state
             if st == "running":
                 st = "RUNNING"
             if st == "finished":
-                st = "(done)"
+                st = "...done"
+            if st == "waiting":
+                st = "wait..."
 
-            self.status[ task.identity() ] = ljust( st, 8 ) + " " + ljust( frac, 6 ) + " " + prog 
+            self.status[ task.identity() ] = ljust( st, 8 ) + " " + " " + rjust( frac,5 ) + " " + prog
 
     def get_status( self ):
         return self.status

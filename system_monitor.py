@@ -6,6 +6,7 @@ import Pyro.core
 
 from spinner import spinner
 from time import sleep
+from string import ljust
 
 foo = spinner()
 
@@ -32,12 +33,12 @@ while True:
 
             status = state.get_status()
             for task in sorted_keys( status ):
-                print task + ": " + status[ task ]
+                print ljust( task, 15) + " " + status[ task ]
 
             sleep(1)
 
     except:
         heading()
-        print indent + "(no connection)"
+        print "Connection to nameserver failed ..."
 
     sleep(1)  
