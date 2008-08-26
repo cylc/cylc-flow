@@ -24,6 +24,7 @@ import sys
 from copy import deepcopy
 import Pyro.core
 
+
 class task( Pyro.core.ObjBase ):
     "ecoconnect task base class"
     
@@ -32,59 +33,47 @@ class task( Pyro.core.ObjBase ):
     def __init__( self, ref_time, initial_state ):
         Pyro.core.ObjBase.__init__(self)
         self.ref_time = ref_time
-        self.running = False  # TO DO: get rid of logical status vars in favour of one string?
-        self.finished = False
-        self.status = "waiting"
+        self.state = "waiting"
 
         if initial_state is None: 
             pass
         elif initial_state == "finished":
-            self.set_finished()
+            self.state = "finished"
         elif initial_state == "ready":
-            self.set_ready()
+            # waiting, but ready to go
+            self.prerequisites.set_all_satisfied()
         else:
             print "ERROR: unknown initial task state " + initial_state
             sys.exit(1)
 
     def run_if_satisfied( self ):
-        if self.finished:
-            self.running = False
-        elif self.running:
+        if self.state == "finished":
+            # already finished
+            pass
+        elif self.state == "running":
+            # already running
             pass
         elif self.prerequisites.all_satisfied():
-            self.run()
+            # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+            # TO DO: the subprocess module might be better than os.system?
+            print self.identity() + ": RUN EXTERNAL TASK",
+            print "[ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "]"
+            os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "&" )
+            self.state = "running"
         else:
+            # still waiting
             pass
 
-    def get_status( self ):
-        return self.name + ": " + self.status
+    def get_state( self ):
+        return self.name + ": " + self.state
 
     def identity( self ):
         return self.name + "_" + self.ref_time.to_str()
 
-    def run( self ):
-        # run the external task (but don't wait for it!)
-        # NOTE: apparently os.system has been superseded by the
-        # subprocess module.
-        print self.identity() + ": RUN EXTERNAL TASK",
-        print "[ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "]"
-        os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "&" )
-        self.running = True
-        self.status = "RUNNING"
-
     def set_finished( self ):
-        self.running = False
-        self.finished = True
-        self.status = "(done)"
-        # the following is redundant, except when initialising 
-        # in a "finished" state:
+        self.state = "finished"
+        # redundant, except when initialising in a "finished" state:
         self.postrequisites.set_all_satisfied()
-
-    def set_ready( self ):
-        self.running = False
-        self.finished = False
-        self.status = "waiting"
-        self.prerequisites.set_all_satisfied()
 
     def set_satisfied( self, message ):
         print self.identity() +  ": " + message
@@ -105,8 +94,14 @@ class task( Pyro.core.ObjBase ):
         else:
             return True
 
-    def is_complete( self ):
+    def is_complete( self ):  # not needed?
         if self.postrequisites.all_satisfied():
+            return True
+        else:
+            return False
+
+    def is_finished( self ): 
+        if self.state == "finished":
             return True
         else:
             return False

@@ -217,8 +217,8 @@ class task_manager:
         for task in self.task_list:
             task.get_satisfaction( self.task_list )
             task.run_if_satisfied()
-            state.update( task.get_status() )
-            finished.append( task.finished )
+            state.update( task.get_state() )
+            finished.append( task.is_finished() )
 
         state.update_finished() 
 
