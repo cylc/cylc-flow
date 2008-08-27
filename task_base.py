@@ -22,6 +22,7 @@ from requisites import requisites
 import os
 import sys
 from copy import deepcopy
+from time import strftime
 import Pyro.core
 
 
@@ -57,7 +58,7 @@ class task_base( Pyro.core.ObjBase ):
         elif self.prerequisites.all_satisfied():
             # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
             # TO DO: the subprocess module might be better than os.system?
-            print self.identity() + ": RUN EXTERNAL TASK",
+            print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " RUN EXTERNAL TASK",
             print "[ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "]"
             os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "&" )
             self.state = "running"
@@ -71,11 +72,14 @@ class task_base( Pyro.core.ObjBase ):
     def identity( self ):
         return self.name + "_" + self.ref_time.to_str()
 
+    def display( self ):
+        return self.name + "(" + self.ref_time.to_str() + ")"
+
     def set_finished( self ):
         self.state = "finished"
 
     def set_satisfied( self, message ):
-        print self.identity() +  ": " + message
+        print  strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " " + message
         self.postrequisites.set_satisfied( message )
         # TO DO: SHOULD WE CHECK THIS IS A KNOWN POSTREQUISITE?
 
