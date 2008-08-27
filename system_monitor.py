@@ -29,8 +29,9 @@ def sorted_keys( d, func = None ):
 def heading():
     os.system( "clear" )
     char = foo.spin()
+
     print 
-    print indent + char + " System Monitor " + char
+    print indent + "\033[34m" + char + " System Monitor " + char + "\033[0m"
     print
 
 while True:
@@ -73,13 +74,22 @@ while True:
 
                 prog = ljust( prog, max_total_len +1 )
 
+                ctrl_start = ctrl_end = "\033[0m"
+                if state == "running":
+                    ctrl_start = "\033[31m"        # red
+                elif state == "waiting":
+                    ctrl_start = "\033[32m"        # green
+                elif state == "finished":
+                    ctrl_start = "\033[0m"         # default
+
                 state = ljust( state, max_state_len + 1 )
 
                 name = ljust( name, max_name_len + 1 )
 
                 frac = rjust( complete + "/" + total, 2 * max_total_len + 1 )
-                
-                lines.append( " " + name + "(" + reftime + ") " + state + " " + frac + " " + prog )
+
+
+                lines.append( ctrl_start + " " + name + "(" + reftime + ") " + state + " " + frac + " " + prog + ctrl_end )
 
             heading()
             for line in lines:
