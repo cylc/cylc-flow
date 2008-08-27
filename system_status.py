@@ -3,6 +3,16 @@
 """
 Class to keep record of current control system status, for Pyro access
 by the external monitoring program, system_monitor.py
+
+Current implementation: 
+    system_status[ <task_identity> ] = [ <state>, <n_completed>, <n_total>]
+
+where 
+  <task_identity> = <task_name>_<reference_time> (uniquely identifies tasks)
+  <state> = waiting, running, or finished
+  <n_completed> = number of postrequisites completed so far
+  <n_totoal> = total number of postrequisites for this task
+all values strings
 """
 
 import Pyro.core
@@ -17,33 +27,19 @@ class system_status( Pyro.core.ObjBase ):
 
     def update( self, task_list ):
         self.status = {}
+
         for task in task_list:
+
             postreqs = task.get_postrequisites()
             keys = postreqs.keys()
+
             n_total = len( keys )
-            n_done = 0
+            n_completed = 0
             for key in keys:
                 if postreqs[ key ]:
-                    n_done += 1
+                    n_completed += 1
 
-            prog = ""
-            for k in range( 1, n_total + 1):
-                if k <= n_done:
-                    prog += "|"
-                else:
-                    prog += "-"
-
-            frac = str( n_done ) + "/" + str( n_total )
-
-            st = task.state
-            if st == "running":
-                st = "RUNNING"
-            if st == "finished":
-                st = "...done"
-            if st == "waiting":
-                st = "wait..."
-
-            self.status[ task.identity() ] = ljust( st, 8 ) + " " + " " + rjust( frac,5 ) + " " + prog
+            self.status[ task.identity() ] = [ task.state, str( n_completed), str( n_total ) ] 
 
     def get_status( self ):
         return self.status

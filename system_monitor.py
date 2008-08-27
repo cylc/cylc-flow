@@ -1,12 +1,21 @@
 #!/usr/bin/python
 
+"""
+Simple system monitor program.
+
+It connects to the controller's "state" system_status object via the
+Pyro nameserver, and displays the contents therein in a terminal.
+
+See system_status.py for class documentation.
+"""
+
 import os
 import sys
 import Pyro.core
 
 from spinner import spinner
 from time import sleep
-from string import ljust
+from string import ljust, rjust, split
 
 foo = spinner()
 
@@ -26,14 +35,55 @@ def heading():
 
 while True:
     try:
-        state = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+        remote = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
 
         while True:
-            heading()
 
-            status = state.get_status()
-            for task in sorted_keys( status ):
-                print ljust( task, 15) + " " + status[ task ]
+            status = remote.get_status()
+
+            max_name_len = 0
+            max_state_len = 0
+            max_total_len = 0
+            lines = []
+
+            for task_id in sorted_keys( status ):
+                [name, reftime] = split( task_id, "_" )
+                [state, complete, total] = status[ task_id ]
+
+                if len( name ) > max_name_len:
+                    max_name_len = len( name )
+
+                if len( total ) > max_total_len:
+                    max_total_len = len( total )
+
+                if len( state ) > max_state_len:
+                    max_state_len = len( state )
+
+            for task_id in sorted_keys( status ):
+
+                [name, reftime] = split( task_id, "_" )
+                [state, complete, total] = status[ task_id ]
+
+                prog = ""
+                for k in range( 1, int(total) + 1):
+                    if k <= int(complete):
+                        prog += "|"
+                    else:
+                        prog += "-"
+
+                prog = ljust( prog, max_total_len +1 )
+
+                state = ljust( state, max_state_len + 1 )
+
+                name = ljust( name, max_name_len + 1 )
+
+                frac = rjust( complete + "/" + total, 2 * max_total_len + 1 )
+                
+                lines.append( " " + name + "(" + reftime + ") " + state + " " + frac + " " + prog )
+
+            heading()
+            for line in lines:
+                print line
 
             sleep(1)
 
