@@ -4,26 +4,28 @@
 Dummy Task classes for the Ecoconnect Controller.
 See documentation in task.py
 
-This file defines a set of seven dummy tasks, A,B,C,D,E,F, and G
-with the following input/output dependencies:
+This file defines a set of dummy tasks with dependencies defined such
+that they should execute in the following "sequence":
 
                              (F)--1--2--3--X
-                              |       
+                              |
                       (D)--1--2--3--X
                        |         |
             (A)--1--2--X        (G)--1--2--3--X
                  |  |            |
                  | (C)--1--2--3--X
+                 |         |     |
+                 |         |    (H)--1--2--3--4--X
                  |         |
                  |        (E)--1--2--X
-                 |         |       
-                (B)--1--2--3--X   
+                 |         |
+                (B)--1--2--3--X
 
-If they run (and generate their postrequisites) at the same rate,
-they should start executing in the following order: 
+If the tasks run (and generate their postrequisites) at the same rate,
+they should begin executing in the following order: 
 
-             |   |  |  |   |   |  |
-             A   B  C  D   E   F  G 
+             |   |  |  |   |   |  ||
+             A   B  C  D   E   F  GH
 """
 
 from task_base import task_base
@@ -215,6 +217,7 @@ class H( task_base ):
                  "file H_1_" + time + " completed",
                  "file H_2_" + time + " completed",
                  "file H_3_" + time + " completed",
+                 "file H_4_" + time + " completed",
                  "task H completed for " + time  ] )
 
         task_base.__init__( self, ref_time, set_finished )
