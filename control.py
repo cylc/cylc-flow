@@ -55,8 +55,9 @@ pyro_daemon.useNameServer(ns)
 # connect the system status monitor to the pyro nameserver
 uri = pyro_daemon.connect( state, "state" )
 
-# initialise the task manager
+# initialise the task manager and connect to pyro nameserver
 god = task_manager( initial_reference_time, task_config_file )
+uri = pyro_daemon.connect( god, "god" )
 
 # start processing
 god.run()

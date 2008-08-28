@@ -10,10 +10,13 @@ from reference_time import reference_time
 from dummy_tasks import *
 from shared import pyro_daemon, state
 
+from copy import deepcopy
+
 import re
 import sys
+import Pyro.core
 
-class task_manager:
+class task_manager ( Pyro.core.ObjBase ):
 
     all_tasks = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' ]
 
@@ -21,12 +24,12 @@ class task_manager:
 
         print
         print "Initialising Task Manager"
-    
-        self.ordered_ref_times = []
-        self.config_task_lists = {}
-        self.task_list = []
 
+        Pyro.core.ObjBase.__init__(self)
+    
         self.cycle_time = reference_time( reftime )
+
+        self.task_list = []
 
         # return now if no config file supplied
         if filename is None:
@@ -34,9 +37,16 @@ class task_manager:
             return
 
         self.config_supplied = True
+        self.parse_config_file( filename )
+
+    def parse_config_file( self, filename ):
 
         print
         print "Parsing Task Config File ..."
+
+        self.ordered_ref_times = []
+
+        config_task_lists = {}
 
         cfile = open( filename, 'r' )
         for line in cfile:
@@ -67,10 +77,13 @@ class task_manager:
                         print "ERROR: unknown task ", task
                         sys.exit(1)
 
-            # add to task_list dict
-            self.config_task_lists[ ref_time ] = the_rest
+            # add task list to the dict
+            config_task_lists[ ref_time ] = the_rest
 
         cfile.close()
+
+        # replace configured task dict
+        self.config_task_lists = deepcopy( config_task_lists )
 
         # get ordered list of keys for the dict
         tmp = {}
