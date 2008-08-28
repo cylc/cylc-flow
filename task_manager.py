@@ -30,14 +30,10 @@ class task_manager ( Pyro.core.ObjBase ):
         self.cycle_time = reference_time( reftime )
 
         self.task_list = []
+        self.ordered_ref_times = []
 
-        # return now if no config file supplied
-        if filename is None:
-            self.config_supplied = False
-            return
-
-        self.config_supplied = True
-        self.parse_config_file( filename )
+        if filename is not None:
+            self.parse_config_file( filename )
 
     def parse_config_file( self, filename ):
 
@@ -98,11 +94,9 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def create_tasks( self ):
 
-        if not self.config_supplied:
-            in_utero = task_manager.all_tasks
+        in_utero = ['all']
 
-        else:
-
+        if len( self.ordered_ref_times ) > 0:
             if self.cycle_time.is_lessthan( self.ordered_ref_times[-1] ):
                 print
                 print "WARNING: current reference time (" + self.cycle_time.to_str() + ") is EARLIER than"
@@ -111,10 +105,10 @@ class task_manager ( Pyro.core.ObjBase ):
                 print
                 in_utero = task_manager.all_tasks
 
-            for rt in self.ordered_ref_times:
-                 if self.cycle_time.is_greaterthan_or_equalto( rt ):
-                     in_utero = self.config_task_lists[ rt ]
-                     break
+        for rt in self.ordered_ref_times:
+            if self.cycle_time.is_greaterthan_or_equalto( rt ):
+               in_utero = self.config_task_lists[ rt ]
+               break
        
         if in_utero[0] == 'all':
             in_utero = task_manager.all_tasks
