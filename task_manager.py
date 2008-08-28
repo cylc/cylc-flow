@@ -159,10 +159,15 @@ class task_manager ( Pyro.core.ObjBase ):
                 # TO DO: handle errors
 
         hour = self.cycle_time.get_hour()
+
+        remove = []
         for task in self.task_list:
-           if hour not in task.get_valid_hours():
-               print "  + Removing " + task.name + " (not valid for " + hour + ")"
-               self.task_list.remove( task )
+            if hour not in task.get_valid_hours():
+               remove.append( task )
+
+        for task in remove:
+            print "  + Removing " + task.name + " (not valid for " + hour + ")"
+            self.task_list.remove( task )
 
         print "Final Task List:"
         for task in self.task_list:
