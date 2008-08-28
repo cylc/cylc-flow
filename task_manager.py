@@ -27,6 +27,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         Pyro.core.ObjBase.__init__(self)
     
+        # newest cycle time
         self.cycle_time = reference_time( reftime )
 
         self.task_list = []
@@ -119,11 +120,11 @@ class task_manager ( Pyro.core.ObjBase ):
         print in_utero
 
         if in_utero[0] == 'stop':
-            print
-            print "STOP requested for", self.cycle_time.to_str()
-            sys.exit(0)
+            print "STOP requested; NOT creating new tasks"
+            return
 
-        self.task_list = []
+        hour = self.cycle_time.get_hour()
+        #self.task_list = []
         for task_name in in_utero:
             initial_state = None
             if re.compile( "^.*:").match( task_name ):
@@ -131,41 +132,38 @@ class task_manager ( Pyro.core.ObjBase ):
                 print "  + Creating " + task_name + " in " + initial_state + " state"
 
             # TO DO: can I automate this based on list of valid tasks?
+            task = None
             if task_name == 'A':
-                self.task_list.append( A( self.cycle_time, initial_state )) 
+                task = A( self.cycle_time, initial_state ) 
             elif task_name == 'B':
-                self.task_list.append( B( self.cycle_time, initial_state ))
+                task = B( self.cycle_time, initial_state )
             elif task_name == 'C':
-                self.task_list.append( C( self.cycle_time, initial_state ))
+                task = C( self.cycle_time, initial_state )
             elif task_name == 'D':
-                self.task_list.append( D( self.cycle_time, initial_state )) 
+                task = D( self.cycle_time, initial_state ) 
             elif task_name == 'E':
-                self.task_list.append( E( self.cycle_time, initial_state )) 
+                task = E( self.cycle_time, initial_state ) 
             elif task_name == 'F':
-                self.task_list.append( F( self.cycle_time, initial_state ))
+                task = F( self.cycle_time, initial_state )
             elif task_name == 'G':
-                self.task_list.append( G( self.cycle_time, initial_state ))
+                task = G( self.cycle_time, initial_state )
             elif task_name == 'H':
-                self.task_list.append( H( self.cycle_time, initial_state ))
+                task = H( self.cycle_time, initial_state )
             else:
                 print "ERROR: unknown task name", task_name
                 sys.exit(1)
                 # TO DO: handle errors
 
-        hour = self.cycle_time.get_hour()
-
-        remove = []
-        for task in self.task_list:
             if hour not in task.get_valid_hours():
-               remove.append( task )
+                print "  + Removing " + task.name + " (not valid for " + hour + ")"
+            else:
+                self.task_list.append( task )
+                # connect new task to the pyro daemon
+                uri = pyro_daemon.connect( task, task.identity() )
 
-        for task in remove:
-            print "  + Removing " + task.name + " (not valid for " + hour + ")"
-            self.task_list.remove( task )
-
-        print "Final Task List:"
+        print "New Task List:"
         for task in self.task_list:
-            print " + " + task.name
+            print " + " + task.identity()
 
         # check that all tasks can have their prerequisites satisfied
         dead_soldiers = []
@@ -186,9 +184,6 @@ class task_manager ( Pyro.core.ObjBase ):
             print
             sys.exit(1)
 
-        # connect each tasks to the pyro daemon, for remote access
-        for task in self.task_list:
-            uri = pyro_daemon.connect( task, task.identity() )
 
         print
 
@@ -215,27 +210,52 @@ class task_manager ( Pyro.core.ObjBase ):
     def process_tasks( self ):
         # this function gets called every time a pyro event comes in
 
-        finished = []
-        #state.reset()
+        finished = {}
 
         # if no tasks present, then we've incremented reference time and
         # deleted the old tasks (see below)
         if len( self.task_list ) == 0:
             self.create_tasks()
 
+        if len( self.task_list ) == 0:
+            print "ALL TASKS DONE"
+            sys.exit(0)
 
         # task interaction to satisfy prerequisites
+        create_new = False
         for task in self.task_list:
             task.get_satisfaction( self.task_list )
             task.run_if_satisfied()
-            finished.append( task.is_finished() )
+            if task.ref_time.to_str() not in finished.keys():
+                finished[ task.ref_time.to_str() ] = [ task.is_finished() ]
+            else:
+                finished[ task.ref_time.to_str() ].append( task.is_finished() )
+
+            if task.identity() == "B_" + self.cycle_time.to_str():
+                if task.state == "finished":
+                    print
+                    print "SPECIAL FINISHED " + task.identity()
+                    create_new = True
+
+        if create_new:
+            self.cycle_time.increment()
+            self.create_tasks()
 
         state.update( self.task_list )
 
-        # if all tasks finished, increment reference time and delete the
-        # old tasks
-        if not False in finished:
-            self.cycle_time.increment()
-            del self.task_list[:]
+        # delete all tasks for a given ref time if they've all finished 
+        remove = []
+        for rt in finished.keys():
+            if False not in finished[rt]:
+                for task in self.task_list:
+                    if task.ref_time.to_str() == rt:
+                        remove.append( task )
+
+        if len( remove ) > 0:
+            print
+            print "removing spent tasks"
+            for task in remove:
+                print " + " + task.identity()
+                self.task_list.remove( task )
 
         return 1  # return 1 to keep the pyro requestLoop going

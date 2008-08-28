@@ -8,7 +8,6 @@ import datetime
 
 class reference_time:
 
-
     def __init__( self, rt ): 
         # string: "YYYYMMDDHH"
         self.reftime = datetime.datetime( 
@@ -16,19 +15,30 @@ class reference_time:
                     int(rt[6:8]), int(rt[8:10]))
 
     def increment( self ): 
-        # change to the next reference time in cycle_times
-        # (not necessarily a constant increment)
+        # change to the next reference time 
+        # (doesn't necessarily have to be a constant increment)
 
+        # 0, 6, 12, 18 
+
+        #hour = int( self.get_hour() )
         # 0, 3, 6, 12, 18 
-
-        hour = int( self.get_hour() )
-        if hour == 0 or hour == 3:
-            delta = 3
-        else:
-            delta = 6
+        #if hour == 0 or hour == 3:
+        #    delta = 3
+        #else:
+        delta = 6
 
         tmp = datetime.timedelta( 0, 0, 0, 0, 0, delta, 0 ) 
         self.reftime += tmp
+
+    def decrement( self ): 
+        # change to the previous reference time
+
+        # 0, 6, 12, 18 
+
+        delta = 6
+
+        tmp = datetime.timedelta( 0, 0, 0, 0, 0, delta, 0 ) 
+        self.reftime -= tmp
 
     def add( self, hours ): 
         tmp = datetime.timedelta( 0, 0, 0, 0, 0, hours, 0 ) 

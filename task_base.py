@@ -33,7 +33,8 @@ class task_base( Pyro.core.ObjBase ):
 
     def __init__( self, ref_time, initial_state ):
         Pyro.core.ObjBase.__init__(self)
-        self.ref_time = ref_time
+        # don't just keep a reference to input reference time object
+        self.ref_time = deepcopy( ref_time )
         self.state = "waiting"
 
         if initial_state is None: 
@@ -48,6 +49,8 @@ class task_base( Pyro.core.ObjBase ):
             print "ERROR: unknown initial task state " + initial_state
             sys.exit(1)
 
+        self.no_previous_instance = True
+
     def run_if_satisfied( self ):
         if self.state == "finished":
             # already finished
@@ -55,7 +58,7 @@ class task_base( Pyro.core.ObjBase ):
         elif self.state == "running":
             # already running
             pass
-        elif self.prerequisites.all_satisfied():
+        elif self.prerequisites.all_satisfied() and self.no_previous_instance:
             # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
             # TO DO: the subprocess module might be better than os.system?
             print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " RUN EXTERNAL TASK",
@@ -84,6 +87,18 @@ class task_base( Pyro.core.ObjBase ):
         # TO DO: SHOULD WE CHECK THIS IS A KNOWN POSTREQUISITE?
 
     def get_satisfaction( self, tasks ):
+
+        # don't bother settling prerequisites if a previous instance
+        # of me hasn't finished yet 
+        self.no_previous_instance = True
+        for task in tasks:
+            if task.name == self.name:
+                if task.state != "finished":
+                    if task.ref_time.is_lessthan( self.ref_time ):
+                        self.no_previous_instance = False
+                        print self.identity() + " blocked by " + task.identity()
+                        return
+
         for task in tasks:
             self.prerequisites.satisfy_me( task.postrequisites )
 

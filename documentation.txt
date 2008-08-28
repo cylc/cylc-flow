@@ -130,13 +130,3 @@ Must be reference time specific: downloader(T) only watches for incoming T files
 and reports ready if the download has *completed* OR if the file already
 exists (i.e. was downloaded some time ago).
 
-
-=====================================
-
-Startup config file example?:
-
-2008060818: nzlam12, ricom        # start here, nzlam12 and ricom only 
-
-2008061000:                # transition to all tasks (default) here
-
-2008071000: STOP           # end here

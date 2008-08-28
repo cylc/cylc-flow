@@ -36,8 +36,49 @@ import os
 import Pyro.core
 from copy import deepcopy
 
+"""
+Thoughts on task management to allow cycle overlap
+
+0/ task zero is the special task that provides initial input to get a
+cycle started (e.g. the downloader). It must be able to start running
+immediately, or else nothing will start.  
+
+1/ no task can start IF any previous instance of itself exists that
+isn't in a "finished" state. This prevents successive tasks instances
+from running out of order.  This can be handle automatically rather than
+as explicitly defined prerequisites?  Tasks run if no previous instance
+exists, to handle startup, and models that don't run every cycle.
+
+I think this is necessary when cycle overlap is allowed. E.g. consider a
+task E in two successive cycles when a very computational intensive task
+that E does not depend on is omitted from the second cycle: the E(T2)
+*could* be ready to go before E(T1)??? 
+
+3/ if task zero depends on a SPECIAL previous task (nzwave), this will
+determine the amount of overlap (if it depends on the final previous
+task there will be no overlap)
+
+4/ task manager creates a new batch(T+1) as soon as task zero(T)
+completes.  They will be in the "waiting" state until task zero(T+1)
+goes off.  T-based batch creation prevents tasks with no prerequisites
+(nztide) from running off ahead (otherwise all task would also need to
+depend on task zero?). It is also convenient from a config file 
+perspective (we need to be able to specify T-based batches for 
+each cycle).
+
+5/ task manager deletes all tasks(T) when they are all finished (we 
+can do this because of the IF in 1/ above)
+"""
+
 class A( task_base ):
-    "dummy task A"
+    "dummy task zero"
+
+    """
+    this task provides initial input to get things going:
+    it starts running immediately (no prequisites except
+    its previous instance) and it completes when it's outputs
+    are generated for use by the downstream tasks.
+    """
 
     def __init__( self, ref_time, set_finished ):
 
@@ -45,11 +86,22 @@ class A( task_base ):
 
         self.valid_hours = [ "00", "06", "12", "18" ]
 
+        #prev_time = ref_time.decrement().to_str()
         time = ref_time.to_str()
 
         self.prerequisites = requisites( [] )
 
         self.postrequisites = requisites( [ 
+                 "foo 1",
+                 "foo 2",
+                 "foo 3",
+                 "foo 4",
+                 "foo 5",
+                 "foo 6",
+                 "foo 7",
+                 "foo 8",
+                 "foo 9",
+                 "foo 10",
                  "file A_1_" + time + " completed",
                  "file A_2_" + time + " completed",
                  "task A completed for " + time  ] )
@@ -206,12 +258,12 @@ class H( task_base ):
         self.name = 'H'
 
         time = ref_time.to_str()
-        prev_reftime = deepcopy( ref_time )
-        prev_reftime.subtract( 3 )
-        prev_time = prev_reftime.to_str()
+        #prev_reftime = deepcopy( ref_time )
+        #prev_reftime.subtract( 3 )
+        #prev_time = prev_reftime.to_str()
 
         self.prerequisites = requisites( [
-                "task C completed for " + prev_time ] )
+                "task C completed for " + time ] )
 
         self.postrequisites = requisites( [ 
                  "file H_1_" + time + " completed",
