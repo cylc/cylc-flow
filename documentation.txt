@@ -73,60 +73,48 @@ When to create and destroy tasks is to some degree arbitrary because correct
 task sequencing (in the sense that no task will run before its prerequisites
 are satisfied) will result no matter how many tasks are "in play" at once, so
 long as all co-dependent tasks coexist, at any one time, so that they can
-interact to match pre/post-requisites. 
+interact to match pre/post-requisites. However, we have decided on the
+following scheme, which achieves our needs without undue complexity: 
 
-A single reference time batching scheme is probably the easiest method to
-understand and implement: 
+TASK ZERO:
+This task (the "downloader"!) is special in that it provides the initial
+input to get the whole system started: it must be able to start running
+immediately (i.e. have no prerequisites, except that previous instances
+of itself must be finished), or else nothing will start.  
+(the downloader's external task should watche for incoming for cycle T and
+reports back ready if the download has completed OR if the files already exist
+because they were downloaded some time ago).
 
- * Create a single batch of tasks(T) for the initial reference time T
- * Let the tasks(T) interact until all reach the finished state
- * Increment the reference time, create tasks(T+1), and destroy tasks(T)
+INTER-CYCLE DEPENDENCIES:
+Having each task foo(T) depend explicitly on its previous instance
+foo(T-1) finishing prevents successive instances of the same task from
+running simultaneously, or out of order, but it complicates system
+startup (when there are no previous tasks) and means finished tasks have
+to stay around longer (so that foo(T-1) can tell foo(T) it is finished). 
 
-Advantages:
- * simplicity
- * concept of "current reference time" is retained
- * no explicit intercycle dependencies or artificial prerequisites required
-   because multiple cycles never overlap
+Instead we can do this: No task can start "running" IF any previous
+instance of itself still exists that isn't in a "finished" state (i.e. a
+task can start if a previous "finished" instance exists, or if no
+previous instance exists).  This prevents running out of order, but
+system startup is no longer a special case, and tasks can die as soon as
+all of their same-cycle peers are finished.
 
-=====================================
+CYCLE OVERLAP:
+Define a specific prerequisite P_o which, when satisfied, determines
+when the next cycle can start up if it is able: e.g. "nzwave finished
+on kupe" (i.e. this determines the amount of overlap between cycles).
 
-Cycle Overlap
+TASK CREATION:
+The task manager creates a complete new BATCH of tasks(T) as soon as overlap
+time is reached (i.e. P_o is satisfied).  T-based batch creation, as opposed
+to e.g. creating a new foo(T) as soon as foo(T-1) is finished, is convenient
+from a config file and system restart perspective, and it prevents tasks with
+no prerequisites (nztide) from running off ahead without having to impose any
+"artificial prerequisites" (e.g. making nztide(T) depend on nzlam(T)). 
 
-The basic management scheme above doesn't allow successive cycles to overlap,
-which would provide faster throughput in catchup mode (where the initial input
-files already exist for multiple cycles).  The wave and nwp models run on kupe
-and take longer than all the downstream runs and postprocessing on pa, so we
-could in principle start the T+1 cycle on kupe before processing on pa
-(for T) has completed.  
-
-There are various ways in which we could change task management to allow
-cycle overlap.  For example, we could create all tasks(T+1) as soon as
-nzwave(T) has finished on kupe, or create each foo(T+1) individually as
-soon as its predecessor foo(T) is finished, or even create multiple cycle's
-worth of tasks all at once.  However, doing any of this would require careful
-consideration of any complications, for example:
-  * do we need to ensure that no T+1 processing occurs on pa before
-    all T processing has finished there, so that no T products are delayed?
-  * how to easily restart the controller if several different cyles were
-    partially complete when the system went down?
-  
-Note that explicit intercycle dependencies might be needed (i.e. foo(T+1) waits
-on foo(T)), and "artificial prequisites" can be used to prevent
-prerequisiteless tasks like nztide running ahead of everything else (e.g. make
-nztide(T) depend on nzlam(T) or similar).
+TASK DELETION:
+Thanks to the way we're handling intercycle dependencies, above, the
+task manager can delete foo(T) when all tasks(T) are finished.
 
 
-Poor Man's Overlap?
-
-We could create new tasks(T+1) as soon as all tasks(T) prerequisites are
-satisfied, rather than waiting until all tasks(T) are finished.  This would
-allow some cycle overlap (but as above, we may want to avoid having any new
-tasks delay completion of the old cycle).
- 
-=====================================
-Downloader External Task 
-
-Must be reference time specific: downloader(T) only watches for incoming T files,
-and reports ready if the download has *completed* OR if the file already
-exists (i.e. was downloaded some time ago).
 
