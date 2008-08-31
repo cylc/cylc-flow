@@ -96,7 +96,7 @@ class task_base( Pyro.core.ObjBase ):
                 if task.state != "finished":
                     if task.ref_time.is_lessthan( self.ref_time ):
                         self.no_previous_instance = False
-                        print self.identity() + " blocked by " + task.identity()
+                        #print self.identity() + " blocked by " + task.identity()
                         return
 
         for task in tasks:

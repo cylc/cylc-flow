@@ -10,6 +10,7 @@ from reference_time import reference_time
 from dummy_tasks import *
 from shared import pyro_daemon, state
 from class_from_module import class_from_module
+from task_config import task_config
 
 from copy import deepcopy
 
@@ -25,119 +26,43 @@ class task_manager ( Pyro.core.ObjBase ):
 
         Pyro.core.ObjBase.__init__(self)
     
-        # newest cycle time
         self.cycle_time = reference_time( reftime )
 
+        self.config = task_config( filename )
+
         self.task_list = []
-        self.ordered_ref_times = []
-
-        if filename is not None:
-            self.parse_config_file( filename )
-
-    def parse_config_file( self, filename ):
-
-        print
-        print "Parsing Task Config File ..."
-
-        self.ordered_ref_times = []
-
-        config_task_lists = {}
-
-        cfile = open( filename, 'r' )
-        for line in cfile:
-
-            # skip full line comments
-            if re.compile( "^#" ).match( line ):
-                continue
-
-            # skip blank lines
-            if re.compile( "^\s*$" ).match( line ):
-                continue
-
-            print " + ", line,
-
-            # line format: "YYYYMMDDHH task1 task2 task3:finished [etc.]"
-            tokens = line.split()
-            ref_time = reference_time( tokens[0] )
-            the_rest = tokens[1:]
-
-            # check tasks are known
-            for taskx in the_rest:
-                task = taskx
-                if re.compile( "^.*:").match( taskx ):
-                    task = taskx.split(':')[0]
-
-                if not task in task_manager.all_tasks:
-                    if task != "stop" and task != "all":
-                        print "ERROR: unknown task ", task
-                        sys.exit(1)
-
-            # add task list to the dict
-            config_task_lists[ ref_time ] = the_rest
-
-        cfile.close()
-
-        # replace configured task dict
-        self.config_task_lists = deepcopy( config_task_lists )
-
-        # get ordered list of keys for the dict
-        tmp = {}
-        for rt in self.config_task_lists.keys():
-            i_rt = rt.to_int() 
-            tmp[ i_rt ] = rt
-
-        o_i_rt = sorted( tmp.keys(), reverse = True )
-        for rt in o_i_rt:
-            self.ordered_ref_times.append( tmp[ rt ] )
 
 
     def create_tasks( self ):
 
-        in_utero = ['all']
-
-        if len( self.ordered_ref_times ) > 0:
-            if self.cycle_time.is_lessthan( self.ordered_ref_times[-1] ):
-                print
-                print "WARNING: current reference time (" + self.cycle_time.to_str() + ") is EARLIER than"
-                print "         first configured reference time (" + self.ordered_ref_times[-1].to_str() + "). I will"
-                print "         instantiate ALL tasks for this reference time."
-                print
-                in_utero = task_manager.all_tasks
-
-        for rt in self.ordered_ref_times:
-            if self.cycle_time.is_greaterthan_or_equalto( rt ):
-               in_utero = self.config_task_lists[ rt ]
-               break
-       
-        if in_utero[0] == 'all':
-            in_utero = task_manager.all_tasks
-
         print
         print "** NEW REFERENCE TIME " + self.cycle_time.to_str() + " **"
-        print "Initial Task Config for this cycle:"
-        print in_utero
 
-        if in_utero[0] == 'stop':
-            print "STOP requested; NOT creating new tasks"
-            return
+        #print "Initial Task Config for this cycle:"
+
+        # get configured task list fo this cycle
+        task_list = self.config.get_config( self.cycle_time.to_str() )
+
+        if task_list[0] == 'stop':
+           print "STOP requested; NOT creating new tasks"
+           return
 
         hour = self.cycle_time.get_hour()
-        #self.task_list = []
-        for task_name in in_utero:
-            initial_state = None
-            if re.compile( "^.*:").match( task_name ):
+        for task_name in task_list:
+           initial_state = None
+           if re.compile( "^.*:").match( task_name ):
                 [task_name, initial_state] = task_name.split(':')
                 print "  + Creating " + task_name + " in " + initial_state + " state"
 
-            task = class_from_module( "dummy_tasks", task_name )( self.cycle_time, initial_state )
-            # TO DO: handle errors
+           task = class_from_module( "dummy_tasks", task_name )( self.cycle_time, initial_state )
+           # TO DO: handle errors
 
-            if hour not in task.get_valid_hours():
-                print "  + Removing " + task.name + " (not valid for " + hour + ")"
-            else:
-                self.task_list.append( task )
-                # connect new task to the pyro daemon
-                uri = pyro_daemon.connect( task, task.identity() )
+           if hour not in task.get_valid_hours():
+               print "  + " + task.name + " not valid for " + hour 
+           else:
+               self.task_list.append( task )
+               # connect new task to the pyro daemon
+               uri = pyro_daemon.connect( task, task.identity() )
 
         print "New Task List:"
         for task in self.task_list:
