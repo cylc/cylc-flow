@@ -9,6 +9,7 @@ task names for particular transitional reference times).
 from reference_time import reference_time
 from dummy_tasks import *
 from shared import pyro_daemon, state
+from class_from_module import class_from_module
 
 from copy import deepcopy
 
@@ -131,28 +132,8 @@ class task_manager ( Pyro.core.ObjBase ):
                 [task_name, initial_state] = task_name.split(':')
                 print "  + Creating " + task_name + " in " + initial_state + " state"
 
-            # TO DO: can I automate this based on list of valid tasks?
-            task = None
-            if task_name == 'A':
-                task = A( self.cycle_time, initial_state ) 
-            elif task_name == 'B':
-                task = B( self.cycle_time, initial_state )
-            elif task_name == 'C':
-                task = C( self.cycle_time, initial_state )
-            elif task_name == 'D':
-                task = D( self.cycle_time, initial_state ) 
-            elif task_name == 'E':
-                task = E( self.cycle_time, initial_state ) 
-            elif task_name == 'F':
-                task = F( self.cycle_time, initial_state )
-            elif task_name == 'G':
-                task = G( self.cycle_time, initial_state )
-            elif task_name == 'H':
-                task = H( self.cycle_time, initial_state )
-            else:
-                print "ERROR: unknown task name", task_name
-                sys.exit(1)
-                # TO DO: handle errors
+            task = class_from_module( "dummy_tasks", task_name )( self.cycle_time, initial_state )
+            # TO DO: handle errors
 
             if hour not in task.get_valid_hours():
                 print "  + Removing " + task.name + " (not valid for " + hour + ")"
