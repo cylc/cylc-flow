@@ -18,9 +18,6 @@ import sys
 import Pyro.core
 
 class task_manager ( Pyro.core.ObjBase ):
-
-    all_tasks = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' ]
-
     def __init__( self, reftime, filename = None ):
 
         print

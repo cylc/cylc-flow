@@ -36,6 +36,7 @@ import os
 import Pyro.core
 from copy import deepcopy
 
+all_task_names = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' ]
 
 class A( task_base ):
     "dummy task zero"
