@@ -62,6 +62,14 @@ class task_manager ( Pyro.core.ObjBase ):
            else:
                self.task_list.append( task )
                # connect new task to the pyro daemon
+
+               # if using an external pyro nameserver, unregister
+               # objects from previous runs first:
+               #try:
+               #    pyro_daemon.disconnect( task )
+               #except NamingError:
+               #    pass
+
                uri = pyro_daemon.connect( task, task.identity() )
 
         print "New Task List:"
@@ -160,5 +168,8 @@ class task_manager ( Pyro.core.ObjBase ):
             for task in remove:
                 print " + " + task.identity()
                 self.task_list.remove( task )
+                pyro_daemon.disconnect( task )
+
+        del remove
 
         return 1  # return 1 to keep the pyro requestLoop going

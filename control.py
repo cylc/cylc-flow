@@ -49,8 +49,8 @@ ns_thread.setDaemon(True)
 ns_thread.start()
 ns_starter.waitUntilStarted(10)
 # locate the Pyro nameserver
-ns = Pyro.naming.NameServerLocator().getNS()
-pyro_daemon.useNameServer(ns)
+pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
+pyro_daemon.useNameServer(pyro_nameserver)
 
 # connect the system status monitor to the pyro nameserver
 uri = pyro_daemon.connect( state, "state" )

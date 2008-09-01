@@ -60,11 +60,6 @@ class A( task_base ):
         self.prerequisites = requisites( [] )
 
         self.postrequisites = requisites( [ 
-                 "foo 1",
-                 "foo 2",
-                 "foo 3",
-                 "foo 4",
-                 "foo 5",
                  "file A_1_" + time + " completed",
                  "file A_2_" + time + " completed",
                  "task A completed for " + time  ] )
