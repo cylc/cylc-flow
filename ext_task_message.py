@@ -28,13 +28,19 @@ message = sys.argv[3]
 # (which is generally more useful than my own error message!)
 
 # connect to the task object inside the control program
-#try:
-task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
-#except:
-# nameserver not found, or object not registered with it?
-#    print "ERROR: failed to connect to pyro nameserver"
+try:
+    task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
+    task.incoming( message )
+except:
+    # nameserver not found, or object not registered with it?
+    print "ERROR: failed to connect to " + task_name + "_" + ref_time
+    print "Trying dead letter box"
 
-#try:
-task.incoming( message )
-#except:
-#    print "ERROR: failed to send message"
+    try:
+        dead_box = Pyro.core.getProxyForURI("PYRONAME://" + "dead_letter_box" )
+        dead_box.incoming( message )
+    except:
+        # nameserver not found, or object not registered with it?
+        print "ERROR: failed to connect to pyro nameserver"
+        sys.exit(1)
+

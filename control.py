@@ -8,6 +8,7 @@
 
 from task_manager import task_manager
 from shared import pyro_daemon, state
+from dead_letter_box import dead_letter_box
 
 import Pyro.core
 import Pyro.naming
@@ -54,6 +55,10 @@ pyro_daemon.useNameServer(pyro_nameserver)
 
 # connect the system status monitor to the pyro nameserver
 uri = pyro_daemon.connect( state, "state" )
+
+# dead letter box for use by external tasks
+dead_letter_box = dead_letter_box()
+uri = pyro_daemon.connect( dead_letter_box, "dead_letter_box" )
 
 # initialise the task manager and connect to pyro nameserver
 god = task_manager( initial_reference_time, task_config_file )
