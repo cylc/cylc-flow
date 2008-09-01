@@ -33,7 +33,7 @@ class task_base( Pyro.core.ObjBase ):
 
     def __init__( self, ref_time, initial_state ):
         Pyro.core.ObjBase.__init__(self)
-        # don't just keep a reference to input reference time object
+        # don't keep a reference to the input object
         self.ref_time = deepcopy( ref_time )
         self.state = "waiting"
 
@@ -80,11 +80,6 @@ class task_base( Pyro.core.ObjBase ):
 
     def set_finished( self ):
         self.state = "finished"
-
-    def set_satisfied( self, message ):
-        print  strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " " + message
-        self.postrequisites.set_satisfied( message )
-        # TO DO: SHOULD WE CHECK THIS IS A KNOWN POSTREQUISITE?
 
     def get_satisfaction( self, tasks ):
 
@@ -134,4 +129,19 @@ class task_base( Pyro.core.ObjBase ):
         return self.valid_hours
 
     def incoming( self, message ):
-        print  strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " " + "RECEIVED MESSAGE: " + message
+        # receive all incoming pyro messages for this task 
+
+        warning = ""
+        if self.state != "running":
+            warning = " WARNING: message received for a non-running task: "
+
+        if self.postrequisites.requisite_exists( message ):
+            if self.postrequisites.is_satisfied( message ):
+                warning = " WARNING: this postrequisite is already satisfied: "
+
+            self.postrequisites.set_satisfied( message )
+
+        else:
+            warning = "  WARNING: recieved unexpected message: "
+
+        print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + warning + message

@@ -8,8 +8,12 @@ POSTREQUISITES,
   usually of the form "output file Y completed" 
   
 Each requisite is in a state of "satisfied" or "not satisfied".  
-satisfied" state.
+
+All prerequisites must be matched by someone else's postrequisites, but
+there may be extra postrequisites, to be used for monitoring progress.
 """
+
+import sys
 
 class requisites:
 
@@ -26,13 +30,23 @@ class requisites:
             return True
 
     def is_satisfied( self, req ):
-        if satisfied[ req ]:
+        if self.satisfied[ req ]:
             return True
         else:
             return False
 
     def set_satisfied( self, req ):
-        self.satisfied[ req ] = True
+        if req in self.ordered_list:
+            self.satisfied[ req ] = True
+        else:
+            print "ERROR: unknown requisite: " + req
+            sys.exit(1)
+
+    def requisite_exists( self, req ):
+        if req in self.ordered_list:
+            return True
+        else:
+            return False
 
     def set_all_satisfied( self ):
         for req in self.ordered_list:

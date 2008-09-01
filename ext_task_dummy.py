@@ -36,7 +36,7 @@ task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
 # set each postrequisite satisfied in turn
 for message in task.get_postrequisite_list():
     sleep(5)
-    task.set_satisfied( message )
+    task.incoming( message )
 
 # finished simulating the external task
 task.set_finished()
