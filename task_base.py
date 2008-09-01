@@ -132,3 +132,6 @@ class task_base( Pyro.core.ObjBase ):
 
     def get_valid_hours( self ):
         return self.valid_hours
+
+    def incoming( self, message ):
+        print  strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " " + "RECEIVED MESSAGE: " + message
