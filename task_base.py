@@ -37,6 +37,9 @@ class task_base( Pyro.core.ObjBase ):
         self.ref_time = deepcopy( ref_time )
         self.state = "waiting"
 
+        # default host info (used to decide when to overlap the next cycle)
+        self.runs_on_kupe = False
+
         if initial_state is None: 
             pass
         elif initial_state == "finished":

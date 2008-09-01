@@ -132,27 +132,49 @@ class task_manager ( Pyro.core.ObjBase ):
             print "ALL TASKS DONE"
             sys.exit(0)
 
+
+        # what's finished for current cycle time
+        finished_on_kupe = []
+        finished_not_on_kupe = []
+
         # task interaction to satisfy prerequisites
-        create_new = False
         for task in self.task_list:
-            task.get_satisfaction( self.task_list )
-            task.run_if_satisfied()
+            task.get_satisfaction( self.task_list ) # INTERACTION
+            task.run_if_satisfied()                 # RUN IF READY
+
             if task.ref_time.to_str() not in finished.keys():
                 finished[ task.ref_time.to_str() ] = [ task.is_finished() ]
             else:
                 finished[ task.ref_time.to_str() ].append( task.is_finished() )
 
-            if task.identity() == "B_" + self.cycle_time.to_str():
-                if task.state == "finished":
-                    print
-                    print "SPECIAL FINISHED " + task.identity()
-                    create_new = True
+            if task.ref_time.to_str() == self.cycle_time.to_str():
+                if task.runs_on_kupe: 
+                    finished_on_kupe.append( task.is_finished() )
+                else:
+                    finished_not_on_kupe.append( task.is_finished() )
 
-        if create_new:
+        # start the next cyle now IF:
+        #  (i) one or more tasks run on kupe AND they're all finished (overlap) 
+        #  (ii) no tasks run on kupe AND all tasks are finished (no overlap)
+
+        start_next = False
+        if len( finished_on_kupe ) > 0 :
+            if False not in finished_on_kupe:
+                print ""
+                print "Kupe tasks finished: start cycle overlap"
+                print ""
+                start_next = True
+
+        elif len( finished_not_on_kupe ) > 0:
+            if False not in finished_not_on_kupe:
+                print ""
+                print "Cycle finished, starting next"
+                print ""
+                start_next = True
+
+        if start_next:
             self.cycle_time.increment()
             self.create_tasks()
-
-        state.update( self.task_list )
 
         # delete all tasks for a given ref time if they've all finished 
         remove = []
@@ -171,5 +193,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 pyro_daemon.disconnect( task )
 
         del remove
+
+        state.update( self.task_list )
 
         return 1  # return 1 to keep the pyro requestLoop going

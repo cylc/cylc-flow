@@ -39,7 +39,7 @@ from copy import deepcopy
 all_task_names = [ 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H' ]
 
 class A( task_base ):
-    "dummy task zero"
+    "dummy task A"
 
     """
     this task provides initial input to get things going:
@@ -66,6 +66,8 @@ class A( task_base ):
 
         task_base.__init__( self, ref_time, set_finished )
 
+        self.runs_on_kupe = True
+
 
 class B( task_base ):
     "dummy task B"
@@ -88,6 +90,8 @@ class B( task_base ):
                  "task B completed for " + time  ] )
 
         task_base.__init__( self, ref_time, set_finished )
+
+        self.runs_on_kupe = True
 
 
 class C( task_base ):
