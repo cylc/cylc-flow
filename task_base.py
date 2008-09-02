@@ -31,14 +31,14 @@ class task_base( Pyro.core.ObjBase ):
     
     name = "task base class"
 
+    # default host info (used to decide when to overlap the next cycle)
+    runs_on_kupe = False
+
     def __init__( self, ref_time, initial_state ):
         Pyro.core.ObjBase.__init__(self)
         # don't keep a reference to the input object
         self.ref_time = deepcopy( ref_time )
         self.state = "waiting"
-
-        # default host info (used to decide when to overlap the next cycle)
-        self.runs_on_kupe = False
 
         if initial_state is None: 
             pass
@@ -116,6 +116,12 @@ class task_base( Pyro.core.ObjBase ):
         else:
             return False
 
+    def is_running( self ): 
+        if self.state == "running":
+            return True
+        else:
+            return False
+
     def is_finished( self ): 
         if self.state == "finished":
             return True
@@ -134,7 +140,7 @@ class task_base( Pyro.core.ObjBase ):
     def incoming( self, message ):
         # receive all incoming pyro messages for this task 
 
-        warning = ""
+        warning = " "
         if self.state != "running":
             warning = " WARNING: message received for a non-running task: "
 
@@ -145,6 +151,6 @@ class task_base( Pyro.core.ObjBase ):
             self.postrequisites.set_satisfied( message )
 
         else:
-            warning = "  WARNING: recieved unexpected message: "
+            warning = " WARNING: recieved unexpected message: "
 
         print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + warning + message

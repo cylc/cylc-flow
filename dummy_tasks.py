@@ -48,6 +48,8 @@ class A( task_base ):
     are generated for use by the downstream tasks.
     """
 
+    runs_on_kupe = True
+
     def __init__( self, ref_time, set_finished ):
 
         self.name = "A"
@@ -66,11 +68,12 @@ class A( task_base ):
 
         task_base.__init__( self, ref_time, set_finished )
 
-        self.runs_on_kupe = True
 
 
 class B( task_base ):
     "dummy task B"
+
+    runs_on_kupe = True
 
     def __init__( self, ref_time, set_finished ):
 
@@ -91,7 +94,6 @@ class B( task_base ):
 
         task_base.__init__( self, ref_time, set_finished )
 
-        self.runs_on_kupe = True
 
 
 class C( task_base ):

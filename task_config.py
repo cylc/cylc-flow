@@ -68,13 +68,9 @@ class task_config:
                         sys.exit(1)
 
             # add task list to the dict
-            #config[ ref_time ] = the_rest
             self.config[ ref_time ] = the_rest
 
         cfile.close()
-
-        # replace configured task dict
-        #self.config = deepcopy( config)
 
     def get_ordered_keys( self ):
 
@@ -113,5 +109,8 @@ class task_config:
        
         if list[0] == 'all':
             list = all_task_names
+
+        if list[0] == 'stop':
+            list = []
 
         return list

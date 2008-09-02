@@ -38,13 +38,13 @@ class task_manager ( Pyro.core.ObjBase ):
         print
         print "** NEW REFERENCE TIME " + self.cycle_time.to_str() + " **"
 
-        #print "Initial Task Config for this cycle:"
+        # print "Initial Task Config for this cycle:"
 
-        # get configured task list fo this cycle
+        # get configured task list for this cycle
         task_list = self.config.get_config( self.cycle_time.to_str() )
 
-        if task_list[0] == 'stop':
-           print "STOP requested; NOT creating new tasks"
+        if len( task_list ) == 0:
+           print "NO new tasks configured"
            return
 
         hour = self.cycle_time.get_hour()
@@ -133,9 +133,9 @@ class task_manager ( Pyro.core.ObjBase ):
             sys.exit(0)
 
 
-        # what's finished for current cycle time
-        finished_on_kupe = []
-        finished_not_on_kupe = []
+        # lists to determine what's finished for current cycle time
+        all_finished = []
+        still_running_on_kupe = False
 
         # task interaction to satisfy prerequisites
         for task in self.task_list:
@@ -148,33 +148,9 @@ class task_manager ( Pyro.core.ObjBase ):
                 finished[ task.ref_time.to_str() ].append( task.is_finished() )
 
             if task.ref_time.to_str() == self.cycle_time.to_str():
-                if task.runs_on_kupe: 
-                    finished_on_kupe.append( task.is_finished() )
-                else:
-                    finished_not_on_kupe.append( task.is_finished() )
-
-        # start the next cyle now IF:
-        #  (i) one or more tasks run on kupe AND they're all finished (overlap) 
-        #  (ii) no tasks run on kupe AND all tasks are finished (no overlap)
-
-        start_next = False
-        if len( finished_on_kupe ) > 0 :
-            if False not in finished_on_kupe:
-                print ""
-                print "Kupe tasks finished: start cycle overlap"
-                print ""
-                start_next = True
-
-        elif len( finished_not_on_kupe ) > 0:
-            if False not in finished_not_on_kupe:
-                print ""
-                print "Cycle finished, starting next"
-                print ""
-                start_next = True
-
-        if start_next:
-            self.cycle_time.increment()
-            self.create_tasks()
+                all_finished.append( task.is_finished() )
+                if task.runs_on_kupe and task.is_running():
+                    still_running_on_kupe = True
 
         # delete all tasks for a given ref time if they've all finished 
         remove = []
@@ -193,7 +169,57 @@ class task_manager ( Pyro.core.ObjBase ):
                 pyro_daemon.disconnect( task )
 
         del remove
+   
+        # WE CAN START THE NEXT CYCLE NOW IF:
+        #  All tasks this cycle are finished,
+        #    OR
+        #  We can overlap this cycle with the next.
+
+        # The usefulness of overlapping depends on the assumption that
+        # the first few tasks run on kupe and take longer to execute
+        # than the remaining tasks on pa, i.e. the start of the next
+        # cycle will not compete with the current cycle.
+
+        # So, we can overlap cycles IF: 
+        #  One or more kupe tasks are configured for the next cycle
+        #    AND
+        #  No tasks still running on kupe this cycle
+
+        
+        start_next_cycle = False
+
+        if len( all_finished ) > 0 and False not in all_finished:
+            #print "Current cycle finished"
+            start_next_cycle = True
+
+        elif not still_running_on_kupe:
+            #print "No current cycle tasks still running on kupe"
+            next_rt = deepcopy( self.cycle_time )
+            next_rt.increment()
+            next_task_list = self.config.get_config( next_rt.to_str() )
+            if self.any_kupe_tasks( next_task_list ):
+                #print "Next cycle has tasks for kupe"
+                start_next_cycle = True
+
+        if start_next_cycle:
+            print "Starting next cycle"
+            self.cycle_time.increment()
+            self.create_tasks()
 
         state.update( self.task_list )
 
         return 1  # return 1 to keep the pyro requestLoop going
+
+
+    def any_kupe_tasks( self, task_name_list ):
+        # do any of the supplied tasks run on kupe?
+        # (used in determining task overlap)
+
+        for task_name in task_name_list:
+           if re.compile( "^.*:").match( task_name ):
+                [task_name, initial_state] = task_name.split(':')
+
+           if class_from_module( "dummy_tasks", task_name ).runs_on_kupe:
+               return True
+ 
+        return False
