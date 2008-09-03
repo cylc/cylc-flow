@@ -68,15 +68,15 @@ while True:
                     else:
                         prog += "-"
 
-                prog = ljust( prog, max_total_len +1 )
+                prog = ljust( prog, max_total_len +4 )
 
                 ctrl_start = ctrl_end = "\033[0m"
                 if state == "running":
-                    ctrl_start = "\033[31m"        # red
+                    ctrl_start = "\033[0;37;41m"   # white on red
                 elif state == "waiting":
-                    ctrl_start = "\033[32m"        # green
+                    ctrl_start = "\033[34m"        # blue
                 elif state == "finished":
-                    ctrl_start = "\033[0m"         # default
+                    ctrl_start = "\033[0m"         # black
 
                 state = ljust( state, max_state_len + 1 )
                 name = ljust( name, max_name_len + 1 )
@@ -95,7 +95,7 @@ while True:
             print_heading()
 
             for rt in reftimes:
-                print "\033[35m ** " + rt + " ** \033[0m"
+                print "  \033[31m** " + rt + " **\033[0m"  # red
                 print ""
 
                 for line in lines[rt]:

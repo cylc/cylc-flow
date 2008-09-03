@@ -1,0 +1,8 @@
+
+TO DO LIST
+
+* proper exception handling
+
+* dump state regularly to ease restarting
+
+
