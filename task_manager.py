@@ -32,6 +32,9 @@ class task_manager ( Pyro.core.ObjBase ):
 
         self.task_list = []
 
+    def parse_config_file( self, filename ):
+
+        self.config.parse_file( filename )
 
     def create_tasks( self ):
 
