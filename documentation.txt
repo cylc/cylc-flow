@@ -1,9 +1,9 @@
 
 =============== ECOCONNECT CONTROLLER WITH IMPLICIT SEQUENCING =============
 
-DEFINITION of "TASK": any set of processes that, as a group, we want separate
-scheduling control over.  This includes, but is not restricted to, "single
-science model plus its post-processing jobs".
+"TASK": any set of processes that, as a group, we want separate scheduling
+control over.  This includes, but is not restricted to, "a science model 
+plus its post-processing".
 
 
 ---------- EcoConnect Model Sequencing ----------
@@ -19,45 +19,45 @@ sometimes merge (multiple inputs) back together.
 
 ---------- Explicit Sequencing ----------
 
-This is the usual approach: write a program to explicitly enforce the correct
-non-linear "sequence", which has been figured out in in advance by taking into
-account all intertask dependencies in the system.  It is relatively easy to
-understand, but the resulting program will inevitably(?) be fragile and
-inflexible with respect to insertion and deletion of models, mid-cycle
-startup, maintenance and extensibility, etc. 
+This treats the actual sequence of tasks as fundamental: work out the correct
+sequence in advance, taking into account all intertask dependencies, and write
+a program to explicitly enforce it.  This is relatively easy to understand,
+and is probably the most obvious method to try, but the resulting program will
+inevitably(?) be fragile and inflexible with respect to insertion and deletion
+of models, mid-cycle startup, maintenance, and extensibility, etc. 
 
 
 ---------- Implicit Sequencing ----------
 
-The non-linear task sequence can be seen as a property of the system that
-emerges naturally through the interaction of simple "task objects" which only
-know their own attributes, rather than a fundamental property of the whole
-system that has to be figured out in advance and then rigorously enforced. 
+This treats the prerequisites (e.g. input files) and postrequisites (e.g.
+output files) of individual tasks as fundamental, and allows tasks to interact
+in such a way that correct sequencing just emerges naturally at run time.  
 
-Let each EcoConnect task be represented by a TASK OBJECT, which has a set of
-task-specific prerequisites (e.g. "input file X is ready") that have to be
-satisfied before the external task can run, and a set of task-specific
-"postrequisites" (e.g. "output file Y is complete") that will be completed by
-the task as it runs. Also, a task knows how to communicate with other tasks
-to find out anyone else's completed postrequisites can satisfy its own
-prerequisites (note that a task doesn't need to know in advance *who* will
-satisfy its prerequisites).  Finally, a task can launch its external task
-when all its prerequisites are satisfied, and thereafter updates its internal
-state according to messages received from the external task (e.g.
-notification of completed postrequisites). task object <-> real task network
-communication is achieved with Python Remote Objects (Pyro). 
+Let each external task be represented by a TASK OBJECT inside the controller.
+A task object has a list of task-specific prerequisites (e.g. "input file X
+is ready") that have to be satisfied before the corresponding external task
+can run, and a set of task-specific "postrequisites" (e.g. "output file Y is
+complete") that will be completed by the task as it runs.  A task object can
+launch its external task when all its prerequisites are satisfied, and
+after that updates its internal state according to messages received from the
+external task (e.g. notification of completed postrequisites). The Python
+Remote Objects module (Pyro) allows
+direct communication between an external task and the object that represents
+it in the controller.
+ Now we enable
+the task objects to interact: each task can ask all the other tasks, "can you
+satisfy any of my prequisites with your completed postrequisites?".
+completed postrequisites can satisfy task A's  anyone's completed postrequisites can
+satisfy its own prerequisites (tasks do not need to know in advance *who* will
+satisfy their prerequisites).  
+Here's another way of putting it, from an email: 
 
-Another description, taken from an explanatory email:
-
-...the important thing about the "object oriented controller" is that it only
+The important thing about the "object oriented controller" is that it only
 knows about individual tasks and their prerequisites and outputs, without
 reference to who supplies the inputs or who uses the outputs, i.e. there is no
 sequencing logic at all.  Task objects "talk amongst themselves" to match
 prerequisites and outputs so that correct sequencing just emerges naturally at
-run time.  What could be simpler than that?  This is an absolutely minimal
-treatment of the problem, it is maximally flexible with respect to addition
-and subtraction of models, mid-cycle startup, etc., and it is easy to
-implement
+run time.  
 
 Note that the pre- and post-requisites are just *messages* indicating that
 some condition has been satisfied.  In the case of messages like "file foo is
