@@ -4,6 +4,8 @@
 Dummy Task classes for the Ecoconnect Controller.
 See documentation in task.py
 
+TASK NAMES MUST NOT CONTAIN UNDERSCORES
+
 This file defines a set of dummy tasks with dependencies defined such
 that they should execute in the following "sequence":
 
@@ -52,7 +54,7 @@ class A( task_base ):
 
     def __init__( self, ref_time, set_finished ):
 
-        self.name = "A"
+        self.name = "A:kupe"
 
         self.valid_hours = [ "00", "06", "12", "18" ]
 
@@ -77,7 +79,7 @@ class B( task_base ):
 
     def __init__( self, ref_time, set_finished ):
 
-        self.name = 'B'
+        self.name = 'B:kupe'
 
         self.valid_hours = [ "00", "06", "12", "18" ]
 
