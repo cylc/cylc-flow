@@ -41,11 +41,16 @@ class task_base( Pyro.core.ObjBase ):
         self.state = "waiting"
         self.latest_message = "waiting"
 
+        # initial states:
+        #   waiting
+        #   running
+        #   finishd
+        # (deliberate spelling error for equal word lengths: nicer for display)
         if initial_state is None: 
             pass
-        elif initial_state == "finished":
+        elif initial_state == "finishd":  
             self.postrequisites.set_all_satisfied()
-            self.state = "finished"
+            self.state = "finishd"
         elif initial_state == "ready":
             # waiting, but ready to go
             self.prerequisites.set_all_satisfied()
@@ -56,7 +61,7 @@ class task_base( Pyro.core.ObjBase ):
         self.no_previous_instance = True
 
     def run_if_satisfied( self ):
-        if self.state == "finished":
+        if self.state == "finishd":
             # already finished
             pass
         elif self.state == "running":
@@ -84,7 +89,7 @@ class task_base( Pyro.core.ObjBase ):
         return self.name + "(" + self.ref_time.to_str() + ")"
 
     def set_finished( self ):
-        self.state = "finished"
+        self.state = "finishd"
         self.incoming( "finished" )
 
     def get_satisfaction( self, tasks ):
@@ -94,7 +99,7 @@ class task_base( Pyro.core.ObjBase ):
         self.no_previous_instance = True
         for task in tasks:
             if task.name == self.name:
-                if task.state != "finished":
+                if task.state != "finishd":
                     if task.ref_time.is_lessthan( self.ref_time ):
                         self.no_previous_instance = False
                         #print self.identity() + " blocked by " + task.identity()
@@ -126,7 +131,7 @@ class task_base( Pyro.core.ObjBase ):
             return False
 
     def is_finished( self ): 
-        if self.state == "finished":
+        if self.state == "finishd":
             return True
         else:
             return False
