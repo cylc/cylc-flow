@@ -5,14 +5,15 @@ Class to keep record of current control system status, for Pyro access
 by the external monitoring program, system_monitor.py
 
 Current implementation: 
-    system_status[ <task_identity> ] = [ <state>, <n_completed>, <n_total>]
+    system_status[ <task_identity> ] = [ <state>, <n_completed>, <n_total>, <latest>]
 
-where 
+Where 
   <task_identity> = <task_name>_<reference_time> (uniquely identifies tasks)
   <state> = waiting, running, or finished
   <n_completed> = number of postrequisites completed so far
-  <n_totoal> = total number of postrequisites for this task
-all values strings
+  <n_total> = total number of postrequisites for this task
+  <latest> = message most recently received from the external task
+All values are strings
 """
 
 import Pyro.core
@@ -39,7 +40,8 @@ class system_status( Pyro.core.ObjBase ):
                 if postreqs[ key ]:
                     n_completed += 1
 
-            self.status[ task.identity() ] = [ task.state, str( n_completed), str( n_total ) ] 
+            latest = task.get_latest_message()
+            self.status[ task.identity() ] = [ task.state, str( n_completed), str( n_total ), latest ] 
 
     def get_status( self ):
         return self.status

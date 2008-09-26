@@ -39,6 +39,7 @@ class task_base( Pyro.core.ObjBase ):
         # don't keep a reference to the input object
         self.ref_time = deepcopy( ref_time )
         self.state = "waiting"
+        self.latest_message = "waiting"
 
         if initial_state is None: 
             pass
@@ -68,6 +69,7 @@ class task_base( Pyro.core.ObjBase ):
             print "[ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "]"
             os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "&" )
             self.state = "running"
+            self.incoming( "started" )
         else:
             # still waiting
             pass
@@ -83,6 +85,7 @@ class task_base( Pyro.core.ObjBase ):
 
     def set_finished( self ):
         self.state = "finished"
+        self.incoming( "finished" )
 
     def get_satisfaction( self, tasks ):
 
@@ -134,11 +137,16 @@ class task_base( Pyro.core.ObjBase ):
     def get_postrequisites( self ):
         return self.postrequisites.get_requisites()
 
+    def get_latest_message( self ):
+        return self.latest_message
+
     def get_valid_hours( self ):
         return self.valid_hours
 
     def incoming( self, message ):
         # receive all incoming pyro messages for this task 
+
+        self.latest_message = message
 
         warning = " "
         if self.state != "running":
@@ -151,6 +159,6 @@ class task_base( Pyro.core.ObjBase ):
             self.postrequisites.set_satisfied( message )
 
         else:
-            warning = " WARNING: recieved unexpected message: "
+            warning = " WARNING: received non-postrequisite message: "
 
         print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + warning + message
