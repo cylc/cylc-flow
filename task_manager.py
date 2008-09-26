@@ -7,7 +7,7 @@ task names for particular transitional reference times).
 """
 
 from reference_time import reference_time
-from dummy_tasks import *
+from tasks_dummy import *
 from shared import pyro_daemon, state
 from class_from_module import class_from_module
 from task_config import task_config
@@ -57,7 +57,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 [task_name, initial_state] = task_name.split(':')
                 print "  + Creating " + task_name + " in " + initial_state + " state"
 
-           task = class_from_module( "dummy_tasks", task_name )( self.cycle_time, initial_state )
+           task = class_from_module( "tasks_dummy", task_name )( self.cycle_time, initial_state )
            # TO DO: handle errors
 
            if hour not in task.get_valid_hours():
@@ -222,7 +222,7 @@ class task_manager ( Pyro.core.ObjBase ):
            if re.compile( "^.*:").match( task_name ):
                 [task_name, initial_state] = task_name.split(':')
 
-           if class_from_module( "dummy_tasks", task_name ).runs_on_kupe:
+           if class_from_module( "tasks_dummy", task_name ).runs_on_kupe:
                return True
  
         return False

@@ -13,7 +13,7 @@ After each configured transitional time the status quo is maintained
 until the next transitional time, if any, is reached. 
 """
 
-from dummy_tasks import all_task_names
+from tasks_dummy import all_task_names
 
 import re
 
