@@ -39,7 +39,7 @@ class task_base( Pyro.core.ObjBase ):
         # don't keep a reference to the input object
         self.ref_time = deepcopy( ref_time )
         self.state = "waiting"
-        self.latest_message = "waiting"
+        self.latest_message = ""
 
         # initial states:
         #   waiting
@@ -74,7 +74,6 @@ class task_base( Pyro.core.ObjBase ):
             print "[ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "]"
             os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "&" )
             self.state = "running"
-            self.incoming( "started" )
         else:
             # still waiting
             pass
@@ -90,7 +89,6 @@ class task_base( Pyro.core.ObjBase ):
 
     def set_finished( self ):
         self.state = "finishd"
-        self.incoming( "finished" )
 
     def get_satisfaction( self, tasks ):
 
