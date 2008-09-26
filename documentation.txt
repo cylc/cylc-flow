@@ -73,48 +73,55 @@ When to create and destroy tasks is to some degree arbitrary because correct
 task sequencing (in the sense that no task will run before its prerequisites
 are satisfied) will result no matter how many tasks are "in play" at once, so
 long as all co-dependent tasks coexist, at any one time, so that they can
-interact to match pre/post-requisites. However, we have decided on the
+interact to match pre/post-requisites. However, I have decided on the
 following scheme, which achieves our needs without undue complexity: 
 
-TASK ZERO:
-This task (the "downloader"!) is special in that it provides the initial
-input to get the whole system started: it must be able to start running
-immediately (i.e. have no prerequisites, except that previous instances
-of itself must be finished), or else nothing will start.  
-(the downloader's external task should watche for incoming for cycle T and
-reports back ready if the download has completed OR if the files already exist
-because they were downloaded some time ago).
+TASK ZERO: 
+This task (the "downloader"!) is special in that it provides the initial input
+to get the whole system started. It must be able to start running immediately,
+i.e. have no prerequisites (except that previous instances of itself must be
+finished) or else nothing will run at all. The downloader's external task
+should watch for incoming files for cycle T and report back ready when the
+download has completed OR if the files already exist because they were
+downloaded previously.
 
 INTER-CYCLE DEPENDENCIES:
-Having each task foo(T) depend explicitly on its previous instance
-foo(T-1) finishing prevents successive instances of the same task from
-running simultaneously, or out of order, but it complicates system
-startup (when there are no previous tasks) and means finished tasks have
-to stay around longer (so that foo(T-1) can tell foo(T) it is finished). 
+Having each task foo(T) depend explicitly on its previous instance foo(T-1)
+finishing prevents successive instances of the same task from running
+simultaneously, or out of order, but it complicates system startup (there
+are no previous tasks at this time) and means finished tasks have to stay
+around longer (so that foo(T-1) can tell foo(T) it is finished). 
 
-Instead we can do this: No task can start "running" IF any previous
-instance of itself still exists that isn't in a "finished" state (i.e. a
-task can start if a previous "finished" instance exists, or if no
-previous instance exists).  This prevents running out of order, but
-system startup is no longer a special case, and tasks can die as soon as
-all of their same-cycle peers are finished.
+Instead we can do this: a task can start "running" only if (a) no previous
+instance of itself exists, OR (b) any previous instance of itself that still
+exists is in a "finished" state.  This prevents running out of order but
+system startup is no longer a special case, and tasks can die as soon as all
+of their same-cycle peers are finished.
 
 CYCLE OVERLAP:
-Define a specific prerequisite P_o which, when satisfied, determines
-when the next cycle can start up if it is able: e.g. "nzwave finished
-on kupe" (i.e. this determines the amount of overlap between cycles).
+The usefulness of cycle overlap depends on the assumption that the first M
+tasks in a cycle run on a different machine (kupe) and take longer to execute
+than the remaining N tasks. Therefore M(T+1;kupe) can run at the same time
+as N(T;pa) without delaying completion of N(T;pa) by resource contention. 
+
+Let each task know if it runs on kupe, then the new T+1 cycle can start IF:
+  (a) all tasks(T) have finished,
+    OR
+  (b) (i) all kupe tasks have finished for T
+        AND 
+      (ii) at least one kupe task is configured for T+1.
+
+Note that without b_ii a task foo(T+1) would compete with remaining tasks(T)
+as soon as foo(T) is finished.
 
 TASK CREATION:
-The task manager creates a complete new BATCH of tasks(T) as soon as overlap
-time is reached (i.e. P_o is satisfied).  T-based batch creation, as opposed
-to e.g. creating a new foo(T) as soon as foo(T-1) is finished, is convenient
-from a config file and system restart perspective, and it prevents tasks with
-no prerequisites (nztide) from running off ahead without having to impose any
-"artificial prerequisites" (e.g. making nztide(T) depend on nzlam(T)). 
+The task manager creates a complete new BATCH of tasks(T) as soon as allowed
+by the above cycle overlap conditions.  Batch(T) creation, as opposed to e.g.
+creating each new foo(T) as soon as foo(T-1) is finished, is convenient from a
+config file and system restart perspective, and it prevents tasks with no
+prerequisites (nztide) from running off ahead without having to impose any
+"artificial prerequisites" such as "nztide(T) depends on nzlam(T)". 
 
 TASK DELETION:
-Thanks to the way we're handling intercycle dependencies, above, the
-task manager can delete foo(T) when all tasks(T) are finished.
-
-
-
+Thanks to the way we're handling intercycle dependencies, above, the task
+manager can delete foo(T) when all tasks(T) are finished.
