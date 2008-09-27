@@ -44,9 +44,10 @@ while True:
 
     #try: 
     
-        reftimes_old = []
-        len_refimes_old = {}
-        n_blank_lines = 0
+    # disable blank lines scrolling transition
+    #    reftimes_old = []
+    #    len_refimes_old = {}
+    #    n_blank_lines = 0
 
         remote = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
 
@@ -111,36 +112,39 @@ while True:
             reftimes = lines.keys()
             reftimes.sort( key = int )
 
-            # If a reference time block has disappeared, insert a
-            # decreasing number of blank lines in its place so that the
-            # monitor display smoothly transitions to the next state.
-            # Otherwise the sudden move to the top of the screen makes
-            # it hard to keep track of which block is which.  The
-            # following code assumes (a) all tasks for a given reference
-            # time are deleted at once, and (b) the earliest reference
-            # time always gets deleted first.
+    
+            # disable blank lines scrolling transition
+            #
+            ## If a reference time block has disappeared, insert a
+            ## decreasing number of blank lines in its place so that the
+            ## monitor display smoothly transitions to the next state.
+            ## Otherwise the sudden move to the top of the screen makes
+            ## it hard to keep track of which block is which.  The
+            ## following code assumes (a) all tasks for a given reference
+            ## time are deleted at once, and (b) the earliest reference
+            ## time always gets deleted first.
 
-            n_lost_lines = 0
-            for rt in reftimes_old:
-                if rt not in reftimes:
-                    n_lost_lines += ( len_reftimes_old[rt] + 4 )
+            #n_lost_lines = 0
+            #for rt in reftimes_old:
+            #    if rt not in reftimes:
+            #        n_lost_lines += ( len_reftimes_old[rt] + 4 )
 
-            reftimes_old = reftimes
-            len_reftimes_old = {}
-            for rt in reftimes:
-                len_reftimes_old[rt] = len( lines[rt] )
+            #reftimes_old = reftimes
+            #len_reftimes_old = {}
+            #for rt in reftimes:
+            #    len_reftimes_old[rt] = len( lines[rt] )
 
-            if n_lost_lines > 0:
-                n_blank_lines = n_lost_lines
+            #if n_lost_lines > 0:
+            #    n_blank_lines = n_lost_lines
 
             print_heading()
 
-            if n_blank_lines > 0:
-                for k in range( 1, n_blank_lines ):
-                    print ""
-                n_blank_lines -= 1
+            #if n_blank_lines > 0:
+            #    for k in range( 1, n_blank_lines ):
+            #        print ""
+            #    n_blank_lines -= 1
 
-            # blank lines calc finished
+            ## blank lines calc finished
 
             for rt in reftimes:
                 print "  \033[1;35m** " + rt + " **\033[0m"  # magenta
