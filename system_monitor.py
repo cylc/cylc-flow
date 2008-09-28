@@ -31,7 +31,6 @@ def print_heading():
 
     print 
     print "\033[1;34m " + char + " System Monitor " + char + "\033[0m"
-    print
 
 while True:
     # the following "try" ... "except" block allows the system monitor
@@ -52,6 +51,7 @@ while True:
             max_name_len = 0
             max_state_len = 0
             max_total_len = 0
+            max_prog_len = 0
             lines = {}
 
             for task_id in status.keys():
@@ -63,6 +63,9 @@ while True:
 
                 if len( total ) > max_total_len:
                     max_total_len = len( total )
+
+                if int( total ) > max_prog_len:
+                    max_prog_len = int( total )
 
                 if len( state ) > max_state_len:
                     max_state_len = len( state )
@@ -79,7 +82,7 @@ while True:
                     else:
                         prog += "-"
 
-                prog = ljust( prog, max_total_len +4 )
+                prog = ljust( prog, max_prog_len + 1 )
 
                 name = ljust( name, max_name_len + 1 )
                 frac = rjust( complete + "/" + total, 2 * max_total_len + 1 )
@@ -95,12 +98,12 @@ while True:
                 elif state == "waiting":
                     state = ljust( state, max_state_len + 1 )
                     foo_start = "\033[31m"        # red
-                    line = foo_start + "  o " + name + "  " + state + " " + frac + " " + prog + " " + latest + ctrl_end
+                    line = foo_start + "  o " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
 
                 elif state == "finishd":
                     state = ljust( state, max_state_len + 1 )
                     foo_start = "\033[0m"         # black
-                    line = foo_start + "  o " + name + "  " + state + " " + frac + " " + prog + " " + latest + ctrl_end
+                    line = foo_start + "  o " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
 
                 else:
                     line = "!ERROR!"
@@ -124,8 +127,6 @@ while True:
                 #lines[rt].sort()
                 for line in lines[rt]:
                     print line
-
-                print ""
 
             sleep(1)
 
