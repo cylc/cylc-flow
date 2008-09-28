@@ -1,15 +1,181 @@
 #!/usr/bin/python
 
-# Task names must not contain underscores. 
-# The 'name' attribute, not the class name itself(?), that is.
+"""
+Task base class for the Ecoconnect Controller.
 
-from task_base import task_base
+A "task" represents a particular group of external jobs, for a single
+reference time, that we want separate scheduling control over (as a
+group).  Each task has certain prerequisites that must be satisfied
+before it can launch its external task, and certain postrequisites that
+are created or achieved as the task runs, and which may be prerequisites
+for other tasks.  A task must maintain an accurate representation of
+the task's state as it follows through to the end of processing for its
+reference time.  
+
+tasks communicate with each other in order to sort out inter-task
+dependencies (i.e. match postrequisites with prerequisites).
+
+Task names must not contain underscores at the moment (the 'name'
+attribute, not the class name itself, that is).
+"""
+
 import reference_time
 from requisites import requisites
 
 import os
-import Pyro.core
+import sys
 from copy import deepcopy
+from time import strftime
+import Pyro.core
+
+
+class task_base( Pyro.core.ObjBase ):
+    "ecoconnect task base class"
+    
+    name = "task base class"
+
+    # default host info (used to decide when to overlap the next cycle)
+    runs_on_kupe = False
+
+    def __init__( self, initial_state ):
+        Pyro.core.ObjBase.__init__(self)
+        self.state = "waiting"
+        self.latest_message = ""
+        self.abdicated = False # True => my successor has been created
+
+        # initial states:
+        #   waiting
+        #   running
+        #   finishd
+        # (deliberate spelling error for equal word lengths: nicer for display)
+        if initial_state is None: 
+            pass
+        elif initial_state == "finishd":  
+            self.postrequisites.set_all_satisfied()
+            self.state = "finishd"
+        elif initial_state == "ready":
+            # waiting, but ready to go
+            self.prerequisites.set_all_satisfied()
+        else:
+            print "ERROR: unknown initial task state " + initial_state
+            sys.exit(1)
+
+        self.no_previous_instance = True
+
+    def run_if_satisfied( self ):
+        if self.state == "finishd":
+            # already finished
+            pass
+        elif self.state == "running":
+            # already running
+            pass
+        elif self.prerequisites.all_satisfied() and self.no_previous_instance:
+            # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+            # TO DO: the subprocess module might be better than os.system?
+            print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " RUN EXTERNAL TASK",
+            print "[ext_task_dummy.py " + self.name + " " + self.ref_time + "]"
+            os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time + "&" )
+            self.state = "running"
+        else:
+            # still waiting
+            pass
+
+    def get_state( self ):
+        return self.name + ": " + self.state
+
+    def identity( self ):
+        return self.name + "_" + self.ref_time
+
+    def display( self ):
+        return self.name + "(" + self.ref_time + ")"
+
+    def set_finished( self ):
+        # could do this automatically off the "name finished for ref_time" message
+        self.state = "finishd"
+
+    def abdicate( self ):
+        if self.state == "finishd" and not self.abdicated:
+            self.abdicated = True
+            return True
+        else:
+            return False
+
+    def get_satisfaction( self, tasks ):
+
+        # don't bother settling prerequisites if a previous instance
+        # of me hasn't finished yet NOT NEEDED UNDER NEW TASK
+        # MANAGEMENT SCHEME
+        self.no_previous_instance = True
+        for task in tasks:
+            if task.name == self.name:
+                if task.state != "finishd":
+                    if int( task.ref_time ) < int( self.ref_time ):
+                        self.no_previous_instance = False
+                        #print self.identity() + " blocked by " + task.identity()
+                        return
+
+        for task in tasks:
+            self.prerequisites.satisfy_me( task.postrequisites )
+
+    def will_get_satisfaction( self, tasks ):
+        temp_prereqs = deepcopy( self.prerequisites )
+        for task in tasks:
+            temp_prereqs.will_satisfy_me( task.postrequisites )
+
+        if not temp_prereqs.all_satisfied(): 
+            return False
+        else:
+            return True
+
+    def is_complete( self ):  # not needed?
+        if self.postrequisites.all_satisfied():
+            return True
+        else:
+            return False
+
+    def is_running( self ): 
+        if self.state == "running":
+            return True
+        else:
+            return False
+
+    def is_finished( self ): 
+        if self.state == "finishd":
+            return True
+        else:
+            return False
+
+    def get_postrequisite_list( self ):
+        return self.postrequisites.get_list()
+
+    def get_postrequisites( self ):
+        return self.postrequisites.get_requisites()
+
+    def get_latest_message( self ):
+        return self.latest_message
+
+    def get_valid_hours( self ):
+        return self.valid_hours
+
+    def incoming( self, message ):
+        # receive all incoming pyro messages for this task 
+
+        self.latest_message = message
+
+        warning = " "
+        if self.state != "running":
+            warning = " WARNING: message received for a non-running task: "
+
+        if self.postrequisites.requisite_exists( message ):
+            if self.postrequisites.is_satisfied( message ):
+                warning = " WARNING: this postrequisite is already satisfied: "
+
+            self.postrequisites.set_satisfied( message )
+
+        else:
+            warning = " WARNING: received non-postrequisite message: "
+
+        print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + warning + message
 
 all_task_names = [ 'downloader', 'nwpglobal', 'globalprep', 'globalwave',
                    'nzlam', 'nzlampost', 'nzwave', 'ricom', 'nztide', 
@@ -274,20 +440,36 @@ class nztide( task_base ):
 class topnet( task_base ):
  
     name = "topnet"
-    ref_time_increment = 12
-    valid_hours = [ "06", "18" ]
+    ref_time_increment = 1
+    valid_hours = [ "00", "01", "02", "03", "04", "05", "06", "07",
+                    "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18",
+                    "19", "20", "21", "22", "23"  ]
    
     def __init__( self, ref_time, initial_state ):
 
         self.ref_time = ref_time
+        hour = ref_time[8:10]
+
+        if hour == "00" or hour == "06" or hour == "12" or hour == "18":
+            time = ref_time
+        elif hour == "01" or hour == "07" or hour == "13" or hour == "19":
+            time = reference_time.decrement( ref_time, 1 )
+        elif hour == "02" or hour == "08" or hour == "14" or hour == "20":
+            time = reference_time.decrement( ref_time, 2 )
+        elif hour == "03" or hour == "09" or hour == "15" or hour == "21":
+            time = reference_time.decrement( ref_time, 3 )
+        elif hour == "04" or hour == "10" or hour == "14" or hour == "22":
+            time = reference_time.decrement( ref_time, 4 )
+        elif hour == "05" or hour == "11" or hour == "15" or hour == "23":
+            time = reference_time.decrement( ref_time, 5 )
 
         self.prerequisites = requisites([ 
-                 "file tn_" + ref_time + ".nc ready" ])
+                "file tn_" + time + ".nc ready" ])
 
         self.postrequisites = requisites([ 
-                self.name + " started for " + ref_time,
-                "file topnet_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
+                self.name + " started for " + time,
+                "file topnet_" + time + ".nc ready",
+                self.name + " finished for " + time
                 ])
         
         task_base.__init__( self, initial_state )
