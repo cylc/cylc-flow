@@ -7,7 +7,7 @@ task names for particular transitional reference times).
 """
 
 import reference_time
-from task_definitions import *
+from tasks import *
 from shared import pyro_daemon, state
 from class_from_module import class_from_module
 from task_config import task_config
@@ -49,7 +49,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 [task_name, initial_state] = task_name.split(':')
                 print "  + Creating " + task_name + " in " + initial_state + " state"
 
-           task = class_from_module( "task_definitions", task_name )( self.initial_ref_time, initial_state )
+           task = class_from_module( "tasks", task_name )( self.initial_ref_time, initial_state )
 
            if hour not in task.get_valid_hours():
                print "  + " + task.name + " not valid for " + hour 
@@ -117,28 +117,28 @@ class task_manager ( Pyro.core.ObjBase ):
     def process_tasks( self ):
         # this function gets called every time a pyro event comes in
 
-        #finished = {}
+        finished = {}
 
         if len( self.task_list ) == 0:
             print "ALL TASKS DONE"
             sys.exit(0)
 
         # lists to determine what's finished for each ref time
-        #all_finished = []
-        #still_running_on_kupe = False
+        all_finished = []
 
         # task interaction to satisfy prerequisites
         for task in self.task_list:
             task.get_satisfaction( self.task_list ) # INTERACTION
             task.run_if_satisfied()                 # RUN IF READY
 
+            # create a new task foo(T+1) if foo(T) just finished
             if task.abdicate():
                 task_name = task.name
                 next_rt = reference_time.increment( task.ref_time, task.ref_time_increment )
                 print "  + Creating " + task_name + " for " + next_rt
                 # TO DO: for initial state, consult task_config
                 statex = None
-                new_task = class_from_module( "task_definitions", task_name )( next_rt, statex )
+                new_task = class_from_module( "tasks", task_name )( next_rt, statex )
          
                 if new_task.ref_time[8:10] not in new_task.get_valid_hours():
                     print "  + " + new_task.name + " not valid for " + hour 
@@ -155,41 +155,38 @@ class task_manager ( Pyro.core.ObjBase ):
 
                     uri = pyro_daemon.connect( new_task, new_task.identity() )
 
+            # if there is a running downloader, delete any batch(T) of
+            # tasks that are (a) all finished, and (b) older than the
+            # downloader.
 
-            #if task.ref_time not in finished.keys():
-            #    finished[ task.ref_time ] = [ task.is_finished() ]
-            #else:
-            #    finished[ task.ref_time ].append( task.is_finished() )
+            if task.ref_time not in finished.keys():
+                finished[ task.ref_time ] = [ task.is_finished() ]
+            else:
+                finished[ task.ref_time ].append( task.is_finished() )
 
-            #if task.ref_time == self.cycle_time:
-            #    all_finished.append( task.is_finished() )
-            #    if task.runs_on_kupe and task.is_running():
-            #        still_running_on_kupe = True
+            if task.name == "downloader" and task.is_running():
+                downloader_time = task.ref_time
 
         # delete all tasks for a given ref time if they've all finished 
-        #remove = []
-        #for rt in finished.keys():
-        #    if False not in finished[rt]:
-        #        for task in self.task_list:
-        #            if task.ref_time == rt:
-        #                remove.append( task )
+        remove = []
+        for rt in finished.keys():
+            if int( rt ) < int( downloader_time ):
+                if False not in finished[rt]:
+                    for task in self.task_list:
+                        if task.ref_time == rt:
+                            remove.append( task )
 
-        #if len( remove ) > 0:
-        #    print
-        #    print "removing spent tasks"
-        #    for task in remove:
-        #        print " + " + task.identity()
-        #        self.task_list.remove( task )
-        #        pyro_daemon.disconnect( task )
+        if len( remove ) > 0:
+            print
+            print "removing spent tasks"
+            for task in remove:
+                print " + " + task.identity()
+                self.task_list.remove( task )
+                pyro_daemon.disconnect( task )
 
-        #del remove
+        del remove
    
         #    next_task_list = self.config.get_config( next_rt )
-
-        #if start_next_cycle:
-        #    print "Starting next cycle"
-        #    self.cycle_time.increment()
-        #    self.create_tasks()
 
         state.update( self.task_list )
 
@@ -204,7 +201,7 @@ class task_manager ( Pyro.core.ObjBase ):
            if re.compile( "^.*:").match( task_name ):
                 [task_name, initial_state] = task_name.split(':')
 
-           if class_from_module( "task_definitions", task_name ).runs_on_kupe:
+           if class_from_module( "tasks", task_name ).runs_on_kupe:
                return True
  
         return False
