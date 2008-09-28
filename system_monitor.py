@@ -31,24 +31,18 @@ def print_heading():
 
     print 
     print "\033[1;34m " + char + " System Monitor " + char + "\033[0m"
-    print "current task objects"
     print
 
 while True:
-    # uncomment the following "try" and "except" code to allow the
-    # system monitor to keep trying if it can't find the pyro
-    # nameserver. This means the the monitor doesn't die when the
-    # controller is killed and restarted, but on the other hand bugs in
-    # the monitor aren't distinguishable from no nameserver found...
-    # could be done better, no doubt.
+    # the following "try" ... "except" block allows the system monitor
+    # to keep trying if it can't find the pyro nameserver. This means
+    # the the monitor doesn't die when the controller is killed and
+    # restarted, but on the other hand bugs in the monitor aren't
+    # distinguishable from no nameserver found... 
+    # ... could be done better I suspect.
 
-    #try: 
+    try: 
     
-    # disable blank lines scrolling transition
-    #    reftimes_old = []
-    #    len_refimes_old = {}
-    #    n_blank_lines = 0
-
         remote = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
 
         while True:
@@ -87,21 +81,29 @@ while True:
 
                 prog = ljust( prog, max_total_len +4 )
 
-                ctrl_start = ctrl_end = ctrl_foo_start = ctrl_bar_start = "\033[0m"
-                if state == "running":
-                    ctrl_start = "\033[1;37;44m"   # bold white on blue
-                    ctrl_foo_start = "\033[1;34m"  # bold blue
-                    ctrl_bar_start = "\033[0;34m"  # blue
-                elif state == "waiting":
-                    ctrl_start = "\033[31m"        # red
-                    ctrl_bar_start = "\033[31m"    # red
-                elif state == "finished":
-                    ctrl_start = "\033[0m"         # black
-
-                state = ljust( state, max_state_len + 1 )
                 name = ljust( name, max_name_len + 1 )
                 frac = rjust( complete + "/" + total, 2 * max_total_len + 1 )
-                line = ctrl_start + " " + name + state + ctrl_end + " " + ctrl_foo_start + frac + " " + prog + ctrl_end + " " + ctrl_bar_start + latest + ctrl_end
+
+                ctrl_end = "\033[0m"
+
+                if state == "running":
+                    state = ljust( state, max_state_len + 1 )
+                    foo_start = "\033[1;37;44m"   # bold white on blue
+                    bar_start = "\033[1;34m"  # bold blue
+                    line = bar_start + "  o " + ctrl_end + foo_start + name + ctrl_end + " " + bar_start + state + " " + frac + " " + prog + " " + latest + ctrl_end
+
+                elif state == "waiting":
+                    state = ljust( state, max_state_len + 1 )
+                    foo_start = "\033[31m"        # red
+                    line = foo_start + "  o " + name + "  " + state + " " + frac + " " + prog + " " + latest + ctrl_end
+
+                elif state == "finishd":
+                    state = ljust( state, max_state_len + 1 )
+                    foo_start = "\033[0m"         # black
+                    line = foo_start + "  o " + name + "  " + state + " " + frac + " " + prog + " " + latest + ctrl_end
+
+                else:
+                    line = "!ERROR!"
 
                 if reftime in lines.keys(): 
                     lines[ reftime ].append( line )
@@ -112,45 +114,14 @@ while True:
             reftimes = lines.keys()
             reftimes.sort( key = int )
 
-    
-            # disable blank lines scrolling transition
-            #
-            ## If a reference time block has disappeared, insert a
-            ## decreasing number of blank lines in its place so that the
-            ## monitor display smoothly transitions to the next state.
-            ## Otherwise the sudden move to the top of the screen makes
-            ## it hard to keep track of which block is which.  The
-            ## following code assumes (a) all tasks for a given reference
-            ## time are deleted at once, and (b) the earliest reference
-            ## time always gets deleted first.
-
-            #n_lost_lines = 0
-            #for rt in reftimes_old:
-            #    if rt not in reftimes:
-            #        n_lost_lines += ( len_reftimes_old[rt] + 4 )
-
-            #reftimes_old = reftimes
-            #len_reftimes_old = {}
-            #for rt in reftimes:
-            #    len_reftimes_old[rt] = len( lines[rt] )
-
-            #if n_lost_lines > 0:
-            #    n_blank_lines = n_lost_lines
-
             print_heading()
 
-            #if n_blank_lines > 0:
-            #    for k in range( 1, n_blank_lines ):
-            #        print ""
-            #    n_blank_lines -= 1
-
-            ## blank lines calc finished
-
             for rt in reftimes:
-                print "  \033[1;34m** " + rt + " **\033[0m"  # blue
-                print ""
+                print "\033[1;31m" + "__________" + "\033[0m"  # red
+                print "\033[1;31m" + rt + "\033[0m"  # red
+                #print ""
 
-                lines[rt].sort()
+                #lines[rt].sort()
                 for line in lines[rt]:
                     print line
 
@@ -158,8 +129,8 @@ while True:
 
             sleep(1)
 
-    #except:
-    #    print_heading()
-    #    print "Connection to nameserver failed ..."
+    except:
+        print_heading()
+        print "Connection to nameserver failed ..."
 
-    #sleep(1)  
+    sleep(1)  
