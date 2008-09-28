@@ -28,7 +28,7 @@ from copy import deepcopy
 from time import strftime
 import Pyro.core
 
-
+#----------------------------------------------------------------------
 class task_base( Pyro.core.ObjBase ):
     "ecoconnect task base class"
     
@@ -177,10 +177,12 @@ class task_base( Pyro.core.ObjBase ):
 
         print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + warning + message
 
+#----------------------------------------------------------------------
 all_task_names = [ 'downloader', 'nwpglobal', 'globalprep', 'globalwave',
                    'nzlam', 'nzlampost', 'nzwave', 'ricom', 'nztide', 
                    'topnet', 'mos' ]
 
+#----------------------------------------------------------------------
 class downloader( task_base ):
     "Met Office input file download task"
 
@@ -240,6 +242,7 @@ class downloader( task_base ):
         task_base.__init__( self, initial_state )
 
 
+#----------------------------------------------------------------------
 class nzlam( task_base ):
 
     name = "nzlam"
@@ -277,6 +280,7 @@ class nzlam( task_base ):
         task_base.__init__( self, initial_state )
 
 
+#----------------------------------------------------------------------
 class nzlampost( task_base ):
 
     name = "nzlampost"
@@ -303,6 +307,7 @@ class nzlampost( task_base ):
         task_base.__init__( self, initial_state )
 
 
+#----------------------------------------------------------------------
 class globalprep( task_base ):
     name = "globalprep"
     ref_time_increment = 24
@@ -326,6 +331,7 @@ class globalprep( task_base ):
         task_base.__init__( self, initial_state )
  
  
+#----------------------------------------------------------------------
 class globalwave( task_base ):
 
     name = "globalwave"
@@ -349,6 +355,7 @@ class globalwave( task_base ):
         task_base.__init__( self, initial_state )
  
     
+#----------------------------------------------------------------------
 class nzwave( task_base ):
     
     name = "nzwave"
@@ -370,6 +377,8 @@ class nzwave( task_base ):
         
         task_base.__init__( self, initial_state )
 
+
+#----------------------------------------------------------------------
 class ricom( task_base ):
     
     name = "ricom"
@@ -392,6 +401,7 @@ class ricom( task_base ):
         task_base.__init__( self, initial_state )
 
 
+#----------------------------------------------------------------------
 class mos( task_base ):
     
     name = "mos"
@@ -414,6 +424,7 @@ class mos( task_base ):
         task_base.__init__( self, initial_state )
 
 
+#----------------------------------------------------------------------
 class nztide( task_base ):
     
     name = "nztide"
@@ -437,44 +448,29 @@ class nztide( task_base ):
         task_base.__init__( self, initial_state )
 
 
+#----------------------------------------------------------------------
 class topnet( task_base ):
  
     name = "topnet"
     ref_time_increment = 1
-    valid_hours = [ "00", "01", "02", "03", "04", "05", "06", "07",
-                    "08", "09", "10", "11", "12", "13", "14", "15", "16", "17", "18",
-                    "19", "20", "21", "22", "23"  ]
-   
+    valid_hours = [ "06", "18" ]   
     def __init__( self, ref_time, initial_state ):
 
         self.ref_time = ref_time
-        hour = ref_time[8:10]
-
-        if hour == "00" or hour == "06" or hour == "12" or hour == "18":
-            time = ref_time
-        elif hour == "01" or hour == "07" or hour == "13" or hour == "19":
-            time = reference_time.decrement( ref_time, 1 )
-        elif hour == "02" or hour == "08" or hour == "14" or hour == "20":
-            time = reference_time.decrement( ref_time, 2 )
-        elif hour == "03" or hour == "09" or hour == "15" or hour == "21":
-            time = reference_time.decrement( ref_time, 3 )
-        elif hour == "04" or hour == "10" or hour == "14" or hour == "22":
-            time = reference_time.decrement( ref_time, 4 )
-        elif hour == "05" or hour == "11" or hour == "15" or hour == "23":
-            time = reference_time.decrement( ref_time, 5 )
 
         self.prerequisites = requisites([ 
-                "file tn_" + time + ".nc ready" ])
+                "file tn_" + ref_time + ".nc ready" ])
 
         self.postrequisites = requisites([ 
-                self.name + " started for " + time,
-                "file topnet_" + time + ".nc ready",
-                self.name + " finished for " + time
+                self.name + " started for " + ref_time,
+                "file topnet_" + ref_time + ".nc ready",
+                self.name + " finished for " + ref_time
                 ])
         
         task_base.__init__( self, initial_state )
 
 
+#----------------------------------------------------------------------
 class nwpglobal( task_base ):
 
     name = "nwpglobal"
