@@ -6,8 +6,8 @@ creation according to the resulting configuration parameters (lists of
 task names for particular transitional reference times).
 """
 
-from reference_time import reference_time
-from tasks_dummy import *
+import reference_time
+from task_definitions import *
 from shared import pyro_daemon, state
 from class_from_module import class_from_module
 from task_config import task_config
@@ -19,46 +19,37 @@ import sys
 import Pyro.core
 
 class task_manager ( Pyro.core.ObjBase ):
-    def __init__( self, reftime, filename = None ):
+    def __init__( self, ref_time, filename = None ):
 
         print
         print "Initialising Task Manager"
 
         Pyro.core.ObjBase.__init__(self)
     
-        self.cycle_time = reference_time( reftime )
+        self.initial_ref_time = ref_time
 
         self.config = task_config( filename )
 
         self.task_list = []
 
     def parse_config_file( self, filename ):
-
         self.config.parse_file( filename )
 
-    def create_tasks( self ):
-
-        print
-        print "** NEW REFERENCE TIME " + self.cycle_time.to_str() + " **"
-
-        # print "Initial Task Config for this cycle:"
-
-        # get configured task list for this cycle
-        task_list = self.config.get_config( self.cycle_time.to_str() )
+    def create_initial_tasks( self ):
+        task_list = self.config.get_config( self.initial_ref_time )
 
         if len( task_list ) == 0:
-           print "NO new tasks configured"
-           return
+           print "ERROR no tasks configured for " + self.initial_ref_time
+           sys.exit( 1 )
 
-        hour = self.cycle_time.get_hour()
+        hour = self.initial_ref_time[8:10]
         for task_name in task_list:
            initial_state = None
            if re.compile( "^.*:").match( task_name ):
                 [task_name, initial_state] = task_name.split(':')
                 print "  + Creating " + task_name + " in " + initial_state + " state"
 
-           task = class_from_module( "tasks_dummy", task_name )( self.cycle_time, initial_state )
-           # TO DO: handle errors
+           task = class_from_module( "task_definitions", task_name )( self.initial_ref_time, initial_state )
 
            if hour not in task.get_valid_hours():
                print "  + " + task.name + " not valid for " + hour 
@@ -75,11 +66,13 @@ class task_manager ( Pyro.core.ObjBase ):
 
                uri = pyro_daemon.connect( task, task.identity() )
 
-        print "New Task List:"
+        print "Initial Task List:"
         for task in self.task_list:
             print " + " + task.identity()
 
-        # check that all tasks can have their prerequisites satisfied
+    def check_for_dead_soldiers( self ):
+        # check that all existing tasks can have their prerequisites
+        # satisfied by other existing tasks
         dead_soldiers = []
         for task in self.task_list:
             if not task.will_get_satisfaction( self.task_list ):
@@ -98,16 +91,16 @@ class task_manager ( Pyro.core.ObjBase ):
             print
             sys.exit(1)
 
-
         print
 
 
     def run( self ):
 
         # Process once to start any tasks that have no prerequisites
-        # We need at least one of this to start the system rolling 
+        # We need at least one of these to start the system rolling 
         # (i.e. the downloader).  Thereafter things only happen only
         # when a running task gets a message via pyro). 
+        self.create_initial_tasks()
         self.process_tasks()
 
         # process tasks again each time a request is handled
@@ -124,90 +117,79 @@ class task_manager ( Pyro.core.ObjBase ):
     def process_tasks( self ):
         # this function gets called every time a pyro event comes in
 
-        finished = {}
-
-        # if no tasks present, then we've incremented reference time and
-        # deleted the old tasks (see below)
-        if len( self.task_list ) == 0:
-            self.create_tasks()
+        #finished = {}
 
         if len( self.task_list ) == 0:
             print "ALL TASKS DONE"
             sys.exit(0)
 
-
-        # lists to determine what's finished for current cycle time
-        all_finished = []
-        still_running_on_kupe = False
+        # lists to determine what's finished for each ref time
+        #all_finished = []
+        #still_running_on_kupe = False
 
         # task interaction to satisfy prerequisites
         for task in self.task_list:
             task.get_satisfaction( self.task_list ) # INTERACTION
             task.run_if_satisfied()                 # RUN IF READY
 
-            if task.ref_time.to_str() not in finished.keys():
-                finished[ task.ref_time.to_str() ] = [ task.is_finished() ]
-            else:
-                finished[ task.ref_time.to_str() ].append( task.is_finished() )
+            if task.abdicate():
+                task_name = task.name
+                next_rt = reference_time.increment( task.ref_time, task.ref_time_increment )
+                print "  + Creating " + task_name + " for " + next_rt
+                # TO DO: for initial state, consult task_config
+                statex = None
+                new_task = class_from_module( "task_definitions", task_name )( next_rt, statex )
+         
+                if new_task.ref_time[8:10] not in new_task.get_valid_hours():
+                    print "  + " + new_task.name + " not valid for " + hour 
+                else:
+                    self.task_list.append( new_task )
+                    # connect new task to the pyro daemon
 
-            if task.ref_time.to_str() == self.cycle_time.to_str():
-                all_finished.append( task.is_finished() )
-                if task.runs_on_kupe and task.is_running():
-                    still_running_on_kupe = True
+                    # if using an external pyro nameserver, unregister
+                    # objects from previous runs first:
+                    #try:
+                    #    pyro_daemon.disconnect( new_task )
+                    #except NamingError:
+                    #    pass
+
+                    uri = pyro_daemon.connect( new_task, new_task.identity() )
+
+
+            #if task.ref_time not in finished.keys():
+            #    finished[ task.ref_time ] = [ task.is_finished() ]
+            #else:
+            #    finished[ task.ref_time ].append( task.is_finished() )
+
+            #if task.ref_time == self.cycle_time:
+            #    all_finished.append( task.is_finished() )
+            #    if task.runs_on_kupe and task.is_running():
+            #        still_running_on_kupe = True
 
         # delete all tasks for a given ref time if they've all finished 
-        remove = []
-        for rt in finished.keys():
-            if False not in finished[rt]:
-                for task in self.task_list:
-                    if task.ref_time.to_str() == rt:
-                        remove.append( task )
+        #remove = []
+        #for rt in finished.keys():
+        #    if False not in finished[rt]:
+        #        for task in self.task_list:
+        #            if task.ref_time == rt:
+        #                remove.append( task )
 
-        if len( remove ) > 0:
-            print
-            print "removing spent tasks"
-            for task in remove:
-                print " + " + task.identity()
-                self.task_list.remove( task )
-                pyro_daemon.disconnect( task )
+        #if len( remove ) > 0:
+        #    print
+        #    print "removing spent tasks"
+        #    for task in remove:
+        #        print " + " + task.identity()
+        #        self.task_list.remove( task )
+        #        pyro_daemon.disconnect( task )
 
-        del remove
+        #del remove
    
-        # WE CAN START THE NEXT CYCLE NOW IF:
-        #  All tasks this cycle are finished,
-        #    OR
-        #  We can overlap this cycle with the next.
+        #    next_task_list = self.config.get_config( next_rt )
 
-        # The usefulness of overlapping depends on the assumption that
-        # the first few tasks run on kupe and take longer to execute
-        # than the remaining tasks on pa, i.e. the start of the next
-        # cycle will not compete with the current cycle.
-
-        # So, we can overlap cycles IF: 
-        #  One or more kupe tasks are configured for the next cycle
-        #    AND
-        #  No tasks still running on kupe this cycle
-
-        
-        start_next_cycle = False
-
-        if len( all_finished ) > 0 and False not in all_finished:
-            #print "Current cycle finished"
-            start_next_cycle = True
-
-        elif not still_running_on_kupe:
-            #print "No current cycle tasks still running on kupe"
-            next_rt = deepcopy( self.cycle_time )
-            next_rt.increment()
-            next_task_list = self.config.get_config( next_rt.to_str() )
-            if self.any_kupe_tasks( next_task_list ):
-                #print "Next cycle has tasks for kupe"
-                start_next_cycle = True
-
-        if start_next_cycle:
-            print "Starting next cycle"
-            self.cycle_time.increment()
-            self.create_tasks()
+        #if start_next_cycle:
+        #    print "Starting next cycle"
+        #    self.cycle_time.increment()
+        #    self.create_tasks()
 
         state.update( self.task_list )
 
@@ -222,7 +204,7 @@ class task_manager ( Pyro.core.ObjBase ):
            if re.compile( "^.*:").match( task_name ):
                 [task_name, initial_state] = task_name.split(':')
 
-           if class_from_module( "tasks_dummy", task_name ).runs_on_kupe:
+           if class_from_module( "task_definitions", task_name ).runs_on_kupe:
                return True
  
         return False

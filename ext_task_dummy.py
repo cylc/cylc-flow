@@ -33,16 +33,10 @@ if len( sys.argv ) != 3:
 # connect to the task object inside the control program
 task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
 
-# send startup message
-task.incoming( "external task started" )
-
 # set each postrequisite satisfied in turn
 for message in task.get_postrequisite_list():
     sleep(5)
     task.incoming( message )
-
-# send finished message 
-task.incoming( "external task finished" )
 
 # finished simulating the external task
 task.set_finished()

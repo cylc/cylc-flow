@@ -147,7 +147,7 @@ while True:
             ## blank lines calc finished
 
             for rt in reftimes:
-                print "  \033[1;35m** " + rt + " **\033[0m"  # magenta
+                print "  \033[1;34m** " + rt + " **\033[0m"  # blue
                 print ""
 
                 lines[rt].sort()

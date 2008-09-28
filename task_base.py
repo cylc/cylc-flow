@@ -16,7 +16,7 @@ tasks communicate with each other in order to sort out inter-task
 dependencies (i.e. match postrequisites with prerequisites).
 """
 
-from reference_time import reference_time
+import reference_time
 from requisites import requisites
 
 import os
@@ -24,7 +24,6 @@ import sys
 from copy import deepcopy
 from time import strftime
 import Pyro.core
-
 
 class task_base( Pyro.core.ObjBase ):
     "ecoconnect task base class"
@@ -34,12 +33,11 @@ class task_base( Pyro.core.ObjBase ):
     # default host info (used to decide when to overlap the next cycle)
     runs_on_kupe = False
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, initial_state ):
         Pyro.core.ObjBase.__init__(self)
-        # don't keep a reference to the input object
-        self.ref_time = deepcopy( ref_time )
         self.state = "waiting"
         self.latest_message = ""
+        self.abdicated = False # True => my successor has been created
 
         # initial states:
         #   waiting
@@ -71,8 +69,8 @@ class task_base( Pyro.core.ObjBase ):
             # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
             # TO DO: the subprocess module might be better than os.system?
             print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " RUN EXTERNAL TASK",
-            print "[ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "]"
-            os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time.to_str() + "&" )
+            print "[ext_task_dummy.py " + self.name + " " + self.ref_time + "]"
+            os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time + "&" )
             self.state = "running"
         else:
             # still waiting
@@ -82,23 +80,32 @@ class task_base( Pyro.core.ObjBase ):
         return self.name + ": " + self.state
 
     def identity( self ):
-        return self.name + "_" + self.ref_time.to_str()
+        return self.name + "_" + self.ref_time
 
     def display( self ):
-        return self.name + "(" + self.ref_time.to_str() + ")"
+        return self.name + "(" + self.ref_time + ")"
 
     def set_finished( self ):
+        # could do this automatically off the "name finished for ref_time" message
         self.state = "finishd"
+
+    def abdicate( self ):
+        if self.state == "finishd" and not self.abdicated:
+            self.abdicated = True
+            return True
+        else:
+            return False
 
     def get_satisfaction( self, tasks ):
 
         # don't bother settling prerequisites if a previous instance
-        # of me hasn't finished yet 
+        # of me hasn't finished yet NOT NEEDED UNDER NEW TASK
+        # MANAGEMENT SCHEME
         self.no_previous_instance = True
         for task in tasks:
             if task.name == self.name:
                 if task.state != "finishd":
-                    if task.ref_time.is_lessthan( self.ref_time ):
+                    if int( task.ref_time ) < int( self.ref_time ):
                         self.no_previous_instance = False
                         #print self.identity() + " blocked by " + task.identity()
                         return
