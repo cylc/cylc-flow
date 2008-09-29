@@ -21,6 +21,7 @@ attribute, not the class name itself, that is).
 
 import reference_time
 from requisites import requisites
+from time import sleep
 
 import os
 import sys
@@ -62,7 +63,7 @@ class task_base( Pyro.core.ObjBase ):
 
         self.no_previous_instance = True
 
-    def run_if_satisfied( self ):
+    def run_if_ready( self ):
         if self.state == "finishd":
             # already finished
             pass
@@ -72,7 +73,7 @@ class task_base( Pyro.core.ObjBase ):
         elif self.prerequisites.all_satisfied() and self.no_previous_instance:
             # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
             # TO DO: the subprocess module might be better than os.system?
-            print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " RUN EXTERNAL TASK",
+            print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " RUN",
             print "[task_dummy.py " + self.name + " " + self.ref_time + "]"
             os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
             self.state = "running"
@@ -103,16 +104,16 @@ class task_base( Pyro.core.ObjBase ):
     def get_satisfaction( self, tasks ):
 
         # don't bother settling prerequisites if a previous instance
-        # of me hasn't finished yet NOT NEEDED UNDER NEW TASK
-        # MANAGEMENT SCHEME
-        self.no_previous_instance = True
-        for task in tasks:
-            if task.name == self.name:
-                if task.state != "finishd":
-                    if int( task.ref_time ) < int( self.ref_time ):
-                        self.no_previous_instance = False
-                        #print self.identity() + " blocked by " + task.identity()
-                        return
+        # of me hasn't finished yet 
+        # NOT NEEDED UNDER NEW TASK MANAGEMENT SCHEME
+        #self.no_previous_instance = True
+        #for task in tasks:
+        #    if task.name == self.name:
+        #        if task.state != "finishd":
+        #            if int( task.ref_time ) < int( self.ref_time ):
+        #                self.no_previous_instance = False
+        #                #print self.identity() + " blocked by " + task.identity()
+        #                return
 
         for task in tasks:
             self.prerequisites.satisfy_me( task.postrequisites )

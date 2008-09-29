@@ -22,6 +22,7 @@ import sys
 import Pyro.core
 
 from time import sleep
+from shared import run_mode
 
 # command line arguments
 if len( sys.argv ) != 3:
@@ -33,10 +34,21 @@ if len( sys.argv ) != 3:
 # connect to the task object inside the control program
 task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
 
+task.incoming( "waiting for incoming files ...")
+if task_name == "downloader" and run_mode == 1:
+    # simulate real time mode by delaying downloader
+    # input until previous tasks have all finished.
+    system_status = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+    while True:
+        if int( system_status.get_time_of_oldest_running_task() ) < int( ref_time ):
+            sleep(1)
+        else:
+            break
+
 # set each postrequisite satisfied in turn
 for message in task.get_postrequisite_list():
-    sleep(5)
     task.incoming( message )
+    sleep(4)
 
 # finished simulating the external task
 task.set_finished()

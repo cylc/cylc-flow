@@ -129,8 +129,8 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # task interaction to satisfy prerequisites
         for task in self.task_list:
-            task.get_satisfaction( self.task_list ) # INTERACTION
-            task.run_if_satisfied()                 # RUN IF READY
+            task.get_satisfaction( self.task_list )
+            task.run_if_ready()
 
             # create a new task foo(T+1) if foo(T) just finished
             if task.abdicate():

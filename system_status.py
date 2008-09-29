@@ -17,7 +17,7 @@ All values are strings
 """
 
 import Pyro.core
-from string import ljust, rjust 
+import string
 
 
 class system_status( Pyro.core.ObjBase ):
@@ -45,3 +45,15 @@ class system_status( Pyro.core.ObjBase ):
 
     def get_status( self ):
         return self.status
+
+    def get_time_of_oldest_running_task( self ):
+        reftimes = []
+        for task_id in self.status.keys():
+            [name, reftime] = string.split( task_id, "_" )
+            [state, complete, total, latest ] = self.status[ task_id ]
+
+            if state == "running":
+                reftimes.append( reftime )
+
+        reftimes.sort( key = int )
+        return reftimes[0]
