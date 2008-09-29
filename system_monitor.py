@@ -93,17 +93,17 @@ while True:
                     state = ljust( state, max_state_len + 1 )
                     foo_start = "\033[1;37;44m"   # bold white on blue
                     bar_start = "\033[1;34m"  # bold blue
-                    line = bar_start + "  o " + ctrl_end + foo_start + name + ctrl_end + " " + bar_start + state + " " + frac + " " + prog + " " + latest + ctrl_end
+                    line = bar_start + "  > " + ctrl_end + foo_start + name + ctrl_end + " " + bar_start + state + " " + frac + " " + prog + " " + latest + ctrl_end
 
                 elif state == "waiting":
                     state = ljust( state, max_state_len + 1 )
                     foo_start = "\033[31m"        # red
-                    line = foo_start + "  o " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
+                    line = foo_start + "  > " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
 
                 elif state == "finishd":
                     state = ljust( state, max_state_len + 1 )
                     foo_start = "\033[0m"         # black
-                    line = foo_start + "  o " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
+                    line = foo_start + "  > " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
 
                 else:
                     line = "!ERROR!"
