@@ -30,7 +30,7 @@ def print_heading():
     char = foo.spin()
 
     print 
-    print "\033[1;34m " + char + " System Monitor " + char + "\033[0m"
+    print "\033[1;34m" + char + " EcoConnect System Monitor " + char + "\033[0m"
 
 while True:
     # the following "try" ... "except" block allows the system monitor

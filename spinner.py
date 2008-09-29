@@ -8,7 +8,8 @@ class for printing a spinner to terminal
 class spinner:
 
     def __init__( self ):
-        self.str = "\|/-"
+        #self.str = "\|/-"
+        self.str = ".oOo"
         self.cindex = 0;
 
     def spin( self ):
@@ -18,4 +19,3 @@ class spinner:
         foo = self.str[self.cindex]
         self.cindex = self.cindex + 1
         return foo
-

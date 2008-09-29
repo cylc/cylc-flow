@@ -26,15 +26,13 @@ import re
 import sys
 import Pyro.core
 
-""" Class to parse an EcoConnect controller config file and handle task
-   creation according to the resulting configuration parameters (lists of
-   task names for particular transitional reference times)."""
-
+"""Class to parse an EcoConnect controller config file and handle task
+creation according to the resulting configuration parameters (lists of
+task names for particular transitional reference times)."""
 
 class task_manager ( Pyro.core.ObjBase ):
-    def __init__( self, ref_time, filename = None ):
 
-        print
+    def __init__( self, ref_time, filename = None ):
         print "Initialising Task Manager"
 
         Pyro.core.ObjBase.__init__(self)
@@ -45,12 +43,10 @@ class task_manager ( Pyro.core.ObjBase ):
 
         self.task_list = []
 
-        print
         print "Starting Pyro Nameserver ..."
 
         # Start a Pyro nameserver in its own thread
         # (alternatively, run the 'pyro-ns' script as a separate process)
-        print
         ns_starter = Pyro.naming.NameServerStarter()
         ns_thread = threading.Thread( target = ns_starter.start )
         ns_thread.setDaemon(True)
@@ -75,6 +71,8 @@ class task_manager ( Pyro.core.ObjBase ):
     def parse_config_file( self, filename ):
         self.config.parse_file( filename )
 
+    def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
+           return class_from_module( "tasks", task_name )( ref_time, state )
 
     def create_initial_tasks( self ):
         task_list = self.config.get_config( self.initial_ref_time )
@@ -90,7 +88,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 [task_name, initial_state] = task_name.split(':')
                 print "  + Creating " + task_name + " in " + initial_state + " state"
 
-           task = class_from_module( "tasks", task_name )( self.initial_ref_time, initial_state )
+           task = self.create_task_by_name( task_name, self.initial_ref_time, initial_state )
 
            if hour not in task.get_valid_hours():
                print "  + " + task.name + " not valid for " + hour 
@@ -180,7 +178,8 @@ class task_manager ( Pyro.core.ObjBase ):
                 print "  + Creating " + task_name + " for " + next_rt
                 # TO DO: for initial state, consult task_config
                 statex = None
-                new_task = class_from_module( "tasks", task_name )( next_rt, statex )
+
+                new_task = self.create_task_by_name( task_name, next_rt, statex )
          
                 new_hour = task.ref_time[8:10]
                 if new_hour not in new_task.get_valid_hours():
