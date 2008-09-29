@@ -125,6 +125,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # lists to determine what's finished for each ref time
         all_finished = []
+        running_ref_times = []
 
         # task interaction to satisfy prerequisites
         for task in self.task_list:
@@ -156,22 +157,24 @@ class task_manager ( Pyro.core.ObjBase ):
 
                     uri = pyro_daemon.connect( new_task, new_task.identity() )
 
-            # if there is a running downloader, delete any batch(T) of
-            # tasks that are (a) all finished, and (b) older than the
-            # downloader.
+            # delete any reference-time-batch of tasks that are (a) all
+            # finished, and (b) older than the oldest running task.
 
             if task.ref_time not in finished.keys():
                 finished[ task.ref_time ] = [ task.is_finished() ]
             else:
                 finished[ task.ref_time ].append( task.is_finished() )
 
-            if task.name == "downloader" and task.is_running():
-                downloader_time = task.ref_time
+            if task.is_running():
+                running_ref_times.append( task.ref_time )
 
         # delete all tasks for a given ref time if they've all finished 
+        running_ref_times.sort( key = int )
+        oldest_running_ref_time = running_ref_times[0]
+        
         remove = []
         for rt in finished.keys():
-            if int( rt ) < int( downloader_time ):
+            if int( rt ) < int( oldest_running_ref_time ):
                 if False not in finished[rt]:
                     for task in self.task_list:
                         if task.ref_time == rt:
