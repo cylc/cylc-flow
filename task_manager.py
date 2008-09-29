@@ -140,8 +140,9 @@ class task_manager ( Pyro.core.ObjBase ):
                 statex = None
                 new_task = class_from_module( "tasks", task_name )( next_rt, statex )
          
-                if new_task.ref_time[8:10] not in new_task.get_valid_hours():
-                    print "  + " + new_task.name + " not valid for " + hour 
+                new_hour = task.ref_time[8:10]
+                if new_hour not in new_task.get_valid_hours():
+                    print "  + " + new_task.name + " not valid for " + new_hour
                 else:
                     self.task_list.append( new_task )
                     # connect new task to the pyro daemon
