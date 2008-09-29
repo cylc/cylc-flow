@@ -73,8 +73,8 @@ class task_base( Pyro.core.ObjBase ):
             # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
             # TO DO: the subprocess module might be better than os.system?
             print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + " RUN EXTERNAL TASK",
-            print "[ext_task_dummy.py " + self.name + " " + self.ref_time + "]"
-            os.system( "./ext_task_dummy.py " + self.name + " " + self.ref_time + "&" )
+            print "[task_dummy.py " + self.name + " " + self.ref_time + "]"
+            os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
             self.state = "running"
         else:
             # still waiting
