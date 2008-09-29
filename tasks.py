@@ -35,9 +35,6 @@ class task_base( Pyro.core.ObjBase ):
     
     name = "task base class"
 
-    # default host info (used to decide when to overlap the next cycle)
-    runs_on_kupe = False
-
     def __init__( self, initial_state ):
         Pyro.core.ObjBase.__init__(self)
         self.state = "waiting"

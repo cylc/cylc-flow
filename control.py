@@ -3,11 +3,13 @@
 """
 ========= ECOCONNECT CONTROLLER WITH IMPLICIT SCHEDULING ===============
                     Hilary Oliver, NIWA, 2008
-         See repository documentation for more information.
+                   See repository documentation
 """
 
 from task_manager import task_manager
-from shared import pyro_daemon, state
+from system_status import system_status
+import dclock
+import shared
 from dead_letter_box import dead_letter_box
 
 import Pyro.core
@@ -51,18 +53,25 @@ ns_thread.start()
 ns_starter.waitUntilStarted(10)
 # locate the Pyro nameserver
 pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
-pyro_daemon.useNameServer(pyro_nameserver)
+shared.pyro_daemon = Pyro.core.Daemon()
+shared.pyro_daemon.useNameServer(pyro_nameserver)
 
 # connect the system status monitor to the pyro nameserver
-uri = pyro_daemon.connect( state, "state" )
+shared.state = system_status()
+uri = shared.pyro_daemon.connect( shared.state, "state" )
 
 # dead letter box for use by external tasks
 dead_letter_box = dead_letter_box()
-uri = pyro_daemon.connect( dead_letter_box, "dead_letter_box" )
+uri = shared.pyro_daemon.connect( dead_letter_box, "dead_letter_box" )
+
+if shared.run_mode == 1:
+    # dummy mode clock in its own thread
+    shared.dummy_clock = dclock.dclock( sys.argv[1] )
+    shared.dummy_clock.start()
 
 # initialise the task manager and connect to pyro nameserver
 god = task_manager( initial_reference_time, task_config_file )
-uri = pyro_daemon.connect( god, "god" )
+uri = shared.pyro_daemon.connect( god, "god" )
 
 # start processing
 god.run()

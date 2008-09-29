@@ -8,7 +8,7 @@ task names for particular transitional reference times).
 
 import reference_time
 from tasks import *
-from shared import pyro_daemon, state
+import shared 
 from class_from_module import class_from_module
 from task_config import task_config
 
@@ -60,11 +60,11 @@ class task_manager ( Pyro.core.ObjBase ):
                # if using an external pyro nameserver, unregister
                # objects from previous runs first:
                #try:
-               #    pyro_daemon.disconnect( task )
+               #    shared.pyro_daemon.disconnect( task )
                #except NamingError:
                #    pass
 
-               uri = pyro_daemon.connect( task, task.identity() )
+               uri = shared.pyro_daemon.connect( task, task.identity() )
 
         print "Initial Task List:"
         for task in self.task_list:
@@ -104,7 +104,7 @@ class task_manager ( Pyro.core.ObjBase ):
         self.process_tasks()
 
         # process tasks again each time a request is handled
-        pyro_daemon.requestLoop( self.process_tasks )
+        shared.pyro_daemon.requestLoop( self.process_tasks )
 
         # NOTE: this seems the easiest way to handle incoming pyro calls
         # AND run our task processing at the same time, but I might be 
@@ -151,11 +151,11 @@ class task_manager ( Pyro.core.ObjBase ):
                     # if using an external pyro nameserver, unregister
                     # objects from previous runs first:
                     #try:
-                    #    pyro_daemon.disconnect( new_task )
+                    #    shared.pyro_daemon.disconnect( new_task )
                     #except NamingError:
                     #    pass
 
-                    uri = pyro_daemon.connect( new_task, new_task.identity() )
+                    uri = shared.pyro_daemon.connect( new_task, new_task.identity() )
 
             # delete any reference-time-batch of tasks that are (a) all
             # finished, and (b) older than the oldest running task.
@@ -186,26 +186,14 @@ class task_manager ( Pyro.core.ObjBase ):
             for task in remove:
                 print " + " + task.identity()
                 self.task_list.remove( task )
-                pyro_daemon.disconnect( task )
+                shared.pyro_daemon.disconnect( task )
 
         del remove
    
         #    next_task_list = self.config.get_config( next_rt )
 
-        state.update( self.task_list )
+        shared.state.update( self.task_list )
+
+        self.check_for_dead_soldiers()
 
         return 1  # return 1 to keep the pyro requestLoop going
-
-
-    def any_kupe_tasks( self, task_name_list ):
-        # do any of the supplied tasks run on kupe?
-        # (used in determining task overlap)
-
-        for task_name in task_name_list:
-           if re.compile( "^.*:").match( task_name ):
-                [task_name, initial_state] = task_name.split(':')
-
-           if class_from_module( "tasks", task_name ).runs_on_kupe:
-               return True
- 
-        return False
