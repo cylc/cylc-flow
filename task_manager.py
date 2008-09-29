@@ -11,7 +11,10 @@ from tasks import *
 import shared 
 from class_from_module import class_from_module
 from task_config import task_config
+from dead_letter_box import dead_letter_box
+import threading
 
+from system_status import system_status
 from copy import deepcopy
 
 import re
@@ -31,6 +34,33 @@ class task_manager ( Pyro.core.ObjBase ):
         self.config = task_config( filename )
 
         self.task_list = []
+
+        print
+        print "Starting Pyro Nameserver ..."
+
+        # Start a Pyro nameserver in its own thread
+        # (alternatively, run the 'pyro-ns' script as a separate process)
+        print
+        ns_starter = Pyro.naming.NameServerStarter()
+        ns_thread = threading.Thread( target = ns_starter.start )
+        ns_thread.setDaemon(True)
+        ns_thread.start()
+        ns_starter.waitUntilStarted(10)
+        # locate the Pyro nameserver
+        pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
+        self.pyro_daemon = Pyro.core.Daemon()
+        self.pyro_daemon.useNameServer(pyro_nameserver)
+
+        #uri = self.pyro_daemon.connect( god, "god" )
+
+        # connect the system status monitor to the pyro nameserver
+        self.state = system_status()
+        uri = self.pyro_daemon.connect( self.state, "state" )
+
+        # dead letter box for use by external tasks
+        self.dead_letter_box = dead_letter_box()
+        uri = self.pyro_daemon.connect( self.dead_letter_box, "dead_letter_box" )
+
 
     def parse_config_file( self, filename ):
         self.config.parse_file( filename )
@@ -60,38 +90,38 @@ class task_manager ( Pyro.core.ObjBase ):
                # if using an external pyro nameserver, unregister
                # objects from previous runs first:
                #try:
-               #    shared.pyro_daemon.disconnect( task )
+               #    self.pyro_daemon.disconnect( task )
                #except NamingError:
                #    pass
 
-               uri = shared.pyro_daemon.connect( task, task.identity() )
+               uri = self.pyro_daemon.connect( task, task.identity() )
 
         print "Initial Task List:"
         for task in self.task_list:
             print " + " + task.identity()
 
-    def check_for_dead_soldiers( self ):
-        # check that all existing tasks can have their prerequisites
-        # satisfied by other existing tasks
-        dead_soldiers = []
-        for task in self.task_list:
-            if not task.will_get_satisfaction( self.task_list ):
-                dead_soldiers.append( task )
 
-        print
-        if len( dead_soldiers ) == 0:
-            print "Verified task list is self-consistent."
-        else:
-            print "ERROR: THIS TASK LIST IS NOT SELF-CONSISTENT, i.e. one"
-            print "or more tasks have pre-requisites that are not matched"
-            print "by others post-requisites, THEREFORE THEY WILL NOT RUN"
-            for soldier in dead_soldiers:
-                print " + ", soldier.identity()
+    #def check_for_dead_soldiers( self ):
 
-            print
-            sys.exit(1)
+    #    DISABLED: NOT USEFUL IN CURRENT TASK MANAGEMENT SCHEME
+    #    E.G. TASKS DEPENDENT ON A DOWNLOADER CAN NOW BE CREATED BEFORE
+    #    THE DOWNLOADER IS CREATED.
 
-        print
+    #    # check that all existing tasks can have their prerequisites
+    #    # satisfied by other existing tasks
+    #    dead_soldiers = []
+    #    for task in self.task_list:
+    #        if not task.will_get_satisfaction( self.task_list ):
+    #            dead_soldiers.append( task )
+    #
+    #    if len( dead_soldiers ) != 0:
+    #        print "ERROR: THIS TASK LIST IS NOT SELF-CONSISTENT, i.e. one"
+    #        print "or more tasks have pre-requisites that are not matched"
+    #        print "by others post-requisites, THEREFORE THEY WILL NOT RUN"
+    #        for soldier in dead_soldiers:
+    #            print " + ", soldier.identity()
+    #
+    #        sys.exit(1)
 
 
     def run( self ):
@@ -104,7 +134,7 @@ class task_manager ( Pyro.core.ObjBase ):
         self.process_tasks()
 
         # process tasks again each time a request is handled
-        shared.pyro_daemon.requestLoop( self.process_tasks )
+        self.pyro_daemon.requestLoop( self.process_tasks )
 
         # NOTE: this seems the easiest way to handle incoming pyro calls
         # AND run our task processing at the same time, but I might be 
@@ -151,11 +181,11 @@ class task_manager ( Pyro.core.ObjBase ):
                     # if using an external pyro nameserver, unregister
                     # objects from previous runs first:
                     #try:
-                    #    shared.pyro_daemon.disconnect( new_task )
+                    #    self.pyro_daemon.disconnect( new_task )
                     #except NamingError:
                     #    pass
 
-                    uri = shared.pyro_daemon.connect( new_task, new_task.identity() )
+                    uri = self.pyro_daemon.connect( new_task, new_task.identity() )
 
             # delete any reference-time-batch of tasks that are (a) all
             # finished, and (b) older than the oldest running task.
@@ -186,14 +216,12 @@ class task_manager ( Pyro.core.ObjBase ):
             for task in remove:
                 print " + " + task.identity()
                 self.task_list.remove( task )
-                shared.pyro_daemon.disconnect( task )
+                self.pyro_daemon.disconnect( task )
 
         del remove
    
         #    next_task_list = self.config.get_config( next_rt )
 
-        shared.state.update( self.task_list )
-
-        self.check_for_dead_soldiers()
+        self.state.update( self.task_list )
 
         return 1  # return 1 to keep the pyro requestLoop going

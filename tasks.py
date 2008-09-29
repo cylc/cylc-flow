@@ -162,16 +162,16 @@ class task_base( Pyro.core.ObjBase ):
 
         warning = " "
         if self.state != "running":
-            warning = " WARNING: message received for a non-running task: "
+            warning = " NON-RUNNING TASK: "
 
         if self.postrequisites.requisite_exists( message ):
             if self.postrequisites.is_satisfied( message ):
-                warning = " WARNING: this postrequisite is already satisfied: "
+                warning = " ALREADY SATISFIED: "
 
             self.postrequisites.set_satisfied( message )
 
         else:
-            warning = " WARNING: received non-postrequisite message: "
+            warning = " UNEXPECTED: "
 
         print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + warning + message
 

@@ -1,9 +1,9 @@
 #!/usr/bin/python
 
 """
-class to take incoming pyro messages that are not directed at a specific task object 
-(the sender can direct warning messages here if the desired task object no longer
-exists, for example)
+class to take incoming pyro messages that are not directed at a specific
+task object (the sender can direct warning messages here if the desired
+task object no longer exists, for example)
 """
 
 import Pyro.core
