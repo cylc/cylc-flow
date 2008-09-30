@@ -100,17 +100,15 @@ class task_base( Pyro.core.ObjBase ):
 
     def get_satisfaction( self, tasks ):
 
-        # don't bother settling prerequisites if a previous instance
-        # of me hasn't finished yet 
-        # NOT NEEDED UNDER NEW TASK MANAGEMENT SCHEME
-        #self.no_previous_instance = True
-        #for task in tasks:
-        #    if task.name == self.name:
-        #        if task.state != "finishd":
-        #            if int( task.ref_time ) < int( self.ref_time ):
-        #                self.no_previous_instance = False
-        #                #print self.identity() + " blocked by " + task.identity()
-        #                return
+        # don't bother if a previous instance hasn't finished yet 
+        self.no_previous_instance = True
+        for task in tasks:
+            if task.name == self.name:
+                if task.state != "finishd":
+                    if int( task.ref_time ) < int( self.ref_time ):
+                        self.no_previous_instance = False
+                        #print self.identity() + " blocked by " + task.identity()
+                        return
 
         for task in tasks:
             self.prerequisites.satisfy_me( task.postrequisites )
