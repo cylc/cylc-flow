@@ -19,10 +19,13 @@ the dummy run-times are not currently proportional to the real run times.
 """
 
 import sys
-import Pyro.core
+import Pyro.naming, Pyro.core
+from Pyro.errors import NamingError
 
 from time import sleep
 import shared
+
+pyro_shortcut = False
 
 # command line arguments
 if len( sys.argv ) != 3:
@@ -32,15 +35,49 @@ if len( sys.argv ) != 3:
 [task_name, ref_time] = sys.argv[1:]
 
 # connect to the task object inside the control program
-task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
+
+if pyro_shortcut:
+    task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
+
+else:
+    # locate the NS
+    locator = Pyro.naming.NameServerLocator()
+    print "searching for pyro name server"
+    ns = locator.getNS()
+
+    # resolve the Pyro object
+    print "resolving " + task_name + '_' + ref_time + " task object"
+    try:
+        URI = ns.resolve( task_name + '_' + ref_time )
+        print 'URI:', URI
+    except NamingError,x:
+        print "failed: ", x
+        raise SystemExit
+
+    # create a proxy for the Pyro object, and return that
+    task = Pyro.core.getProxyForURI( URI )
 
 if task_name == "downloader" and shared.run_mode == 1:
     task.incoming( "waiting for incoming files ...")
     # simulate real time mode by delaying downloader
     # input until previous tasks have all finished.
-    system_status = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+
+    if pyro_shortcut:
+        state = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+
+    else:
+        print "finding system state object"
+        try:
+            URI = ns.resolve( 'state' )
+            print 'URI:', URI
+        except NamingError,x:
+            print "failed: ", x
+            raise SystemExit
+
+        state = Pyro.core.getProxyForURI( URI )
+
     while True:
-        if int( system_status.get_time_of_oldest_running_task() ) < int( ref_time ):
+        if int( state.get_time_of_oldest_running_task() ) < int( ref_time ):
             sleep(1)
         else:
             break
@@ -48,7 +85,7 @@ if task_name == "downloader" and shared.run_mode == 1:
 # set each postrequisite satisfied in turn
 for message in task.get_postrequisite_list():
     task.incoming( message )
-    sleep(4)
+    #sleep(4)
 
 # finished simulating the external task
 task.set_finished()
