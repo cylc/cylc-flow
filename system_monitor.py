@@ -27,23 +27,30 @@ class kit:
         self.len = len( title )
 
     def boof( self ):
-        a = b = '\033[1;31m'
+        a = b = c = '\033[1;31m'
         for i in range( 1, self.len - 1 ):
             if i == self.pos:
                 a += 'o\033[0m'
                 b += self.title[i] + '\033[0m'
+                c += 'o\033[0m'
             else:
                 a += ' '
                 b += self.title[i]
+                c += ' '
 
         if self.pos == self.len:
             self.pos = 1
         else:
             self.pos += 1
 
-        return [a,b] 
+        return [a,b,c] 
 
 title = kit( "EcoConnect System Monitor" )
+
+show_all = False
+if len( sys.argv ) == 2:
+    if sys.argv[1] == '-a':
+        show_all = True
 
 while True:
     # the following "try" ... "except" block allows the system monitor
@@ -66,6 +73,7 @@ while True:
             max_total_len = 0
             max_prog_len = 0
             lines = {}
+            all_waiting = {}
 
             for task_id in status.keys():
                 [name, reftime] = split( task_id, "_" )
@@ -102,6 +110,8 @@ while True:
 
                 ctrl_end = "\033[0m"
 
+                st = state
+
                 if state == "running":
                     state = ljust( state, max_state_len + 1 )
                     foo_start = "\033[1;37;44m"   # bold white on blue
@@ -123,8 +133,16 @@ while True:
 
                 if reftime in lines.keys(): 
                     lines[ reftime ].append( line )
+                    if st != "waiting":
+                        all_waiting[reftime] = False
                 else:
+                    # first appearane of rt
                     lines[ reftime ] = [ line ]
+                    if st != "waiting":
+                        all_waiting[reftime] = False
+                    else:
+                        all_waiting[reftime] = True
+
 
             # sort reference times using int( string )
             reftimes = lines.keys()
@@ -135,8 +153,11 @@ while True:
                 blit.append( "\033[1;31m" + "__________" + "\033[0m" ) # red
                 blit.append( "\033[1;31m" + rt + "\033[0m" )  # red
 
-                for line in lines[rt]:
-                    blit.append( line )
+                if all_waiting[ rt ] and not show_all:
+                     blit.append( "(all waiting)" )
+                else:
+                     for line in lines[rt]:
+                        blit.append( line )
 
             os.system( "clear" )
             for line in blit:
