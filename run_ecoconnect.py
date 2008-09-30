@@ -254,7 +254,7 @@ if __name__ == "__main__":
     if not os.path.exists( 'LOGFILES' ):
         os.makedirs( 'LOGFILES' )
 
-    # configure a main logger
+    # configure the main log
     log = logging.getLogger( "main" )
     log.setLevel( logging.DEBUG )
     max_bytes = 10000
@@ -273,15 +273,14 @@ if __name__ == "__main__":
     log.addHandler(h2)
 
 
-    # configure task-specific sub-loggers
+    # configure task-name-specific logs (propagate up to the main log)
     for name in all_task_names:
-        log = logging.getLogger( "main." + name )
+        foo = logging.getLogger( "main." + name )
 
         h = logging.handlers.RotatingFileHandler( 'LOGFILES/' + name, 'a', max_bytes, backups )
         f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
         h.setFormatter(f)
-        log.addHandler(h)
-
+        foo.addHandler(h)
 
     log.info( 'Startup, initial reference time ' + initial_reference_time )
 
