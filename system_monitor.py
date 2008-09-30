@@ -18,19 +18,33 @@ import Pyro.core
 
 from spinner import spinner
 from time import sleep
-from string import ljust, rjust, split
+from string import ljust, rjust, split, upper, lower
 
-foo = spinner()
+class kit:
+    def __init__( self, title ):
+        self.pos = 1
+        title = " " + title + " "
+        self.title = title
+        self.len = len( title )
 
-def func( rt ):
-    return int( rt )
+    def boof( self ):
+        a = b = '\033[1;31m'
+        for i in range( 1, self.len - 1 ):
+            if i == self.pos:
+                a += 'o\033[0m'
+                b += self.title[i] + '\033[0m'
+            else:
+                a += ' '
+                b += self.title[i]
 
-def print_heading():
-    os.system( "clear" )
-    char = foo.spin()
+        if self.pos == self.len:
+            self.pos = 1
+        else:
+            self.pos += 1
 
-    print 
-    print "\033[1;34m" + char + " EcoConnect System Monitor " + char + "\033[0m"
+        return [a,b] 
+
+title = kit( "EcoConnect System Monitor" )
 
 while True:
     # the following "try" ... "except" block allows the system monitor
@@ -97,7 +111,7 @@ while True:
 
                 elif state == "waiting":
                     state = ljust( state, max_state_len + 1 )
-                    foo_start = "\033[31m"        # red
+                    foo_start = "\033[32m"        # green
                     line = foo_start + "  " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
 
                 elif state == "finishd":
@@ -117,21 +131,23 @@ while True:
             reftimes = lines.keys()
             reftimes.sort( key = int )
 
-            print_heading()
-
+            blit = title.boof()
             for rt in reftimes:
-                print "\033[1;31m" + "__________" + "\033[0m"  # red
-                print "\033[1;31m" + rt + "\033[0m"  # red
-                #print ""
+                blit.append( "\033[1;31m" + "__________" + "\033[0m" ) # red
+                blit.append( "\033[1;31m" + rt + "\033[0m" )  # red
 
-                #lines[rt].sort()
                 for line in lines[rt]:
-                    print line
+                    blit.append( line )
 
-            sleep(1)
+            os.system( "clear" )
+            for line in blit:
+                print line
+            sleep(0.5)
 
     except:
-        print_heading()
+        os.system( "clear" )
+        for line in title.boof():
+            print line
         print "Connection to nameserver failed ..."
 
-    sleep(1)  
+    sleep( 0.5 )
