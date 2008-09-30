@@ -22,6 +22,9 @@ import threading
 from system_status import system_status
 from copy import deepcopy
 
+import logging
+import logging.handlers
+
 import re
 import sys
 import Pyro.core
@@ -33,20 +36,17 @@ task names for particular transitional reference times)."""
 class task_manager ( Pyro.core.ObjBase ):
 
     def __init__( self, ref_time, filename = None ):
-        print "Initialising Task Manager"
+        log.debug("initialising task manager")
 
         Pyro.core.ObjBase.__init__(self)
     
         self.initial_ref_time = ref_time
-
         self.config = task_config( filename )
-
         self.task_list = []
-
-        print "Starting Pyro Nameserver ..."
 
         # Start a Pyro nameserver in its own thread
         # (alternatively, run the 'pyro-ns' script as a separate process)
+        log.debug( "starting pyro nameserver" )
         ns_starter = Pyro.naming.NameServerStarter()
         ns_thread = threading.Thread( target = ns_starter.start )
         ns_thread.setDaemon(True)
@@ -74,10 +74,9 @@ class task_manager ( Pyro.core.ObjBase ):
         task = class_from_module( "tasks", task_name )( ref_time, state )
         hour = ref_time[8:10]
         if hour not in task.get_valid_hours():
-            #print "  + " + task_name + " not valid for " + hour 
-            pass
+            log.debug( task_name + " not valid for " + hour  )
         else:
-            print "  + Creating " + task_name + "for " + ref_time
+            log.info( "Creating " + task_name + "for " + ref_time )
             self.task_list.append( task )
             # connect new task to the pyro daemon
             uri = self.pyro_daemon.connect( task, task.identity() )
@@ -155,7 +154,7 @@ class task_manager ( Pyro.core.ObjBase ):
         finished = {}
 
         if len( self.task_list ) == 0:
-            print "ALL TASKS DONE"
+            log.critical( "ALL TASKS DONE" )
             sys.exit(0)
 
         # lists to determine what's finished for each ref time
@@ -172,7 +171,6 @@ class task_manager ( Pyro.core.ObjBase ):
                 task_name = task.name
                 next_rt = reference_time.increment( task.ref_time, task.ref_time_increment )
 
-                print "FOO fo " + next_rt
                 self.create_tasks( next_rt )
                 #self.create_task_by_name( task_name, next_rt, statex )
          
@@ -201,10 +199,8 @@ class task_manager ( Pyro.core.ObjBase ):
                             remove.append( task )
 
         if len( remove ) > 0:
-            print
-            print "removing spent tasks"
             for task in remove:
-                print " + " + task.identity()
+                log.debug( "removing spent " + task.name + " for " + task.ref_time )
                 self.task_list.remove( task )
                 self.pyro_daemon.disconnect( task )
 
@@ -239,17 +235,36 @@ if __name__ == "__main__":
     print
     print "Initial Reference Time " + sys.argv[1] 
 
-    if n_args == 1:
-        print
-        print "No task config file: will run ALL tasks"
+    # configure a main logger
+    log = logging.getLogger( "main" )
+    log.setLevel( logging.DEBUG )
+    max_bytes = 10000
+    backups = 5
+    h = logging.handlers.RotatingFileHandler( 
+            'LOGFILES/main', 'a', max_bytes, backups )
+    f = logging.Formatter( '%(levelname)-10s %(name)-10s %(asctime)s %(message)s', '%a, %d %b %Y %H:%M:%S' )
+    h.setFormatter(f)
+    log.addHandler(h)
 
-    if shared.run_mode == 1:
-        # dummy mode clock in its own thread
-        shared.dummy_clock = dclock.dclock( sys.argv[1] )
-        shared.dummy_clock.start()
+    # write warnings and worse to stderr as well as to the log
+    h2 = logging.StreamHandler(sys.stderr)
+    h2.setLevel( logging.WARNING )
+    h2.setFormatter( f )
+    log.addHandler(h2)
+
+    log.info( 'Startup, initial reference time ' + initial_reference_time )
+
+    if n_args == 1:
+        log.warning( "No task config file, running ALL tasks" )
+
+    #if shared.run_mode == 1:
+    #    # dummy mode clock in its own thread
+    #    shared.dummy_clock = dclock.dclock( sys.argv[1] )
+    #    shared.dummy_clock.start()
 
     # initialise the task manager
     god = task_manager( initial_reference_time, task_config_file )
+    # NEED TO CONNECT GOD TO PYRO NAMESERVER TO ALLOW EXTERNAL CONTROL 
 
     # start processing
     god.run()
