@@ -104,14 +104,14 @@ class task_base( Pyro.core.ObjBase ):
 
     def get_satisfaction( self, tasks ):
 
-        # don't bother if a previous instance hasn't finished yet 
         self.no_previous_instance = True
         for task in tasks:
             if task.name == self.name:
+                # just return if any previous instance of me not finished
                 if task.state != "finishd":
                     if int( task.ref_time ) < int( self.ref_time ):
                         self.no_previous_instance = False
-                        #print self.identity() + " blocked by " + task.identity()
+                        self.log.debug( self.identity() + " blocked by " + task.identity() )
                         return
 
         for task in tasks:
@@ -177,10 +177,12 @@ class task_base( Pyro.core.ObjBase ):
 
         self.log.info( warning + message )
 
+
 #----------------------------------------------------------------------
 all_task_names = [ 'downloader', 'nwpglobal', 'globalprep', 'globalwave',
                    'nzlam', 'nzlampost', 'nzwave', 'ricom', 'nztide', 
                    'topnet', 'mos' ]
+
 
 #----------------------------------------------------------------------
 class downloader( task_base ):
@@ -194,7 +196,7 @@ class downloader( task_base ):
 
     name = "downloader"
     ref_time_increment = 6
-    valid_hours = [ "00", "06", "12", "18" ]
+    valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
@@ -247,7 +249,7 @@ class nzlam( task_base ):
 
     name = "nzlam"
     ref_time_increment = 6
-    valid_hours = [ "00", "06", "12", "18" ]
+    valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
         
@@ -285,7 +287,7 @@ class nzlampost( task_base ):
 
     name = "nzlampost"
     ref_time_increment = 6
-    valid_hours = [ "00", "06", "12", "18" ]
+    valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
         
@@ -311,7 +313,7 @@ class nzlampost( task_base ):
 class globalprep( task_base ):
     name = "globalprep"
     ref_time_increment = 24
-    valid_hours = [ "00" ]
+    valid_hours = [ 0 ]
 
     def __init__( self, ref_time, initial_state ):
 
@@ -336,7 +338,7 @@ class globalwave( task_base ):
 
     name = "globalwave"
     ref_time_increment = 24
-    valid_hours = [ "00" ]
+    valid_hours = [ 0 ]
 
     def __init__( self, ref_time, initial_state ):
 
@@ -360,7 +362,7 @@ class nzwave( task_base ):
     
     name = "nzwave"
     ref_time_increment = 6
-    valid_hours = [ "00", "06", "12", "18" ]
+    valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
@@ -383,7 +385,7 @@ class ricom( task_base ):
     
     name = "ricom"
     ref_time_increment = 12
-    valid_hours = [ "06", "18" ]
+    valid_hours = [ 6, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
@@ -406,7 +408,7 @@ class mos( task_base ):
     
     name = "mos"
     ref_time_increment = 6
-    valid_hours = [ "00", "06", "12", "18" ]
+    valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
@@ -429,7 +431,7 @@ class nztide( task_base ):
     
     name = "nztide"
     ref_time_increment = 12
-    valid_hours = [ "06", "18" ]
+    valid_hours = [ 6, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
@@ -453,7 +455,7 @@ class topnet( task_base ):
  
     name = "topnet"
     ref_time_increment = 1
-    valid_hours = [ "06", "18" ]   
+    valid_hours = [ 6, 18 ]   
     def __init__( self, ref_time, initial_state ):
 
         self.ref_time = ref_time
@@ -475,7 +477,7 @@ class nwpglobal( task_base ):
 
     name = "nwpglobal"
     ref_time_increment = 24
-    valid_hours = [ "00" ]
+    valid_hours = [ 0 ]
 
     def __init__( self, ref_time, initial_state ):
 

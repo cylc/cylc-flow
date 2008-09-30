@@ -72,7 +72,7 @@ class task_manager ( Pyro.core.ObjBase ):
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
         task = class_from_module( "tasks", task_name )( ref_time, state )
         hour = ref_time[8:10]
-        if hour not in task.get_valid_hours():
+        if int(hour) not in task.get_valid_hours():
             log.debug( task_name + " not valid for " + hour  )
         else:
             log.info( "Creating " + task_name + "for " + ref_time )
