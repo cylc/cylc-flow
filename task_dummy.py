@@ -34,8 +34,8 @@ if len( sys.argv ) != 3:
 # connect to the task object inside the control program
 task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
 
-task.incoming( "waiting for incoming files ...")
 if task_name == "downloader" and shared.run_mode == 1:
+    task.incoming( "waiting for incoming files ...")
     # simulate real time mode by delaying downloader
     # input until previous tasks have all finished.
     system_status = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
