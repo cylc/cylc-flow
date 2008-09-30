@@ -16,7 +16,6 @@ import os
 import sys
 import Pyro.core
 
-from spinner import spinner
 from time import sleep
 from string import ljust, rjust, split, upper, lower
 

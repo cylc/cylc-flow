@@ -251,22 +251,37 @@ if __name__ == "__main__":
     print
     print "Initial Reference Time " + sys.argv[1] 
 
+    if not os.path.exists( 'LOGFILES' ):
+        os.makedirs( 'LOGFILES' )
+
     # configure a main logger
     log = logging.getLogger( "main" )
     log.setLevel( logging.DEBUG )
     max_bytes = 10000
     backups = 5
-    h = logging.handlers.RotatingFileHandler( 
-            'LOGFILES/main', 'a', max_bytes, backups )
-    f = logging.Formatter( '%(levelname)-10s %(name)-10s %(asctime)s %(message)s', '%a, %d %b %Y %H:%M:%S' )
+    h = logging.handlers.RotatingFileHandler( 'LOGFILES/main', 'a', max_bytes, backups )
+    f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
+    # use '%(name)-30s' to get the logger name print too 
     h.setFormatter(f)
     log.addHandler(h)
+
 
     # write warnings and worse to stderr as well as to the log
     h2 = logging.StreamHandler(sys.stderr)
     h2.setLevel( logging.WARNING )
     h2.setFormatter( f )
     log.addHandler(h2)
+
+
+    # configure task-specific sub-loggers
+    for name in all_task_names:
+        log = logging.getLogger( "main." + name )
+
+        h = logging.handlers.RotatingFileHandler( 'LOGFILES/' + name, 'a', max_bytes, backups )
+        f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
+        h.setFormatter(f)
+        log.addHandler(h)
+
 
     log.info( 'Startup, initial reference time ' + initial_reference_time )
 

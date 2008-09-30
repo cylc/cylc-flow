@@ -32,6 +32,7 @@ import Pyro.core
 import logging
 import logging.handlers
 
+
 #----------------------------------------------------------------------
 class task_base( Pyro.core.ObjBase ):
     "ecoconnect task base class"
@@ -41,24 +42,14 @@ class task_base( Pyro.core.ObjBase ):
     def __init__( self, initial_state ):
         Pyro.core.ObjBase.__init__(self)
 
-        self.task_log = logging.getLogger( "main." + self.identity() )
-        max_bytes = 10000
-        backups = 5
-        h = logging.handlers.RotatingFileHandler( 'LOGFILES/' + self.name, 'a', max_bytes, backups )
-        f = logging.Formatter( '%(levelname)-10s %(name)-10s %(asctime)s %(message)s', '%a, %d %b %Y %H:%M:%S' )
-        h.setFormatter(f)
-        self.task_log.addHandler(h)
-
+        self.log = logging.getLogger( "main." + self.name ) 
 
         self.state = "waiting"
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
 
-        # initial states:
-        #   waiting
-        #   running
-        #   finishd
-        # (deliberate spelling error for equal word lengths: nicer for display)
+        # initial states: waiting, running, finishd
+        # (spelling: equal word lengths for display)
         if initial_state is None: 
             pass
         elif initial_state == "finishd":  
@@ -70,6 +61,7 @@ class task_base( Pyro.core.ObjBase ):
         else:
             print "ERROR: unknown initial task state " + initial_state
             sys.exit(1)
+
 
         self.no_previous_instance = True
 
@@ -83,7 +75,7 @@ class task_base( Pyro.core.ObjBase ):
         elif self.prerequisites.all_satisfied() and self.no_previous_instance:
             # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
             # TO DO: the subprocess module might be better than os.system?
-            self.task_log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + "]" )
+            self.log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + "]" )
             os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
             self.state = "running"
         else:
@@ -170,21 +162,20 @@ class task_base( Pyro.core.ObjBase ):
 
         self.latest_message = message
 
-        warning = " "
+        warning = ""
         if self.state != "running":
-            warning = " NON-RUNNING TASK: "
+            warning = "NON-RUNNING TASK: "
 
         if self.postrequisites.requisite_exists( message ):
             if self.postrequisites.is_satisfied( message ):
-                warning = " ALREADY SATISFIED: "
+                warning = "ALREADY SATISFIED: "
 
             self.postrequisites.set_satisfied( message )
 
         else:
-            warning = " UNEXPECTED: "
+            warning = "UNEXPECTED: "
 
-        #print strftime("%Y-%m-%d %H:%M:%S ") + self.display() + warning + message
-        self.task_log.info( warning + message )
+        self.log.info( warning + message )
 
 #----------------------------------------------------------------------
 all_task_names = [ 'downloader', 'nwpglobal', 'globalprep', 'globalwave',
