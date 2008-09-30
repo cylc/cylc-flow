@@ -57,8 +57,6 @@ class task_manager ( Pyro.core.ObjBase ):
         self.pyro_daemon = Pyro.core.Daemon()
         self.pyro_daemon.useNameServer(pyro_nameserver)
 
-        #uri = self.pyro_daemon.connect( god, "god" )
-
         # connect the system status monitor to the pyro nameserver
         self.state = system_status()
         uri = self.pyro_daemon.connect( self.state, "state" )
@@ -71,50 +69,48 @@ class task_manager ( Pyro.core.ObjBase ):
     def parse_config_file( self, filename ):
         self.config.parse_file( filename )
 
+
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
-           return class_from_module( "tasks", task_name )( ref_time, state )
+        task = class_from_module( "tasks", task_name )( ref_time, state )
+        hour = ref_time[8:10]
+        if hour not in task.get_valid_hours():
+            #print "  + " + task_name + " not valid for " + hour 
+            pass
+        else:
+            print "  + Creating " + task_name + "for " + ref_time
+            self.task_list.append( task )
+            # connect new task to the pyro daemon
+            uri = self.pyro_daemon.connect( task, task.identity() )
 
-    def create_initial_tasks( self ):
-        task_list = self.config.get_config( self.initial_ref_time )
+            # if using an external pyro nameserver, unregister
+            # objects from previous runs first:
+            #try:
+            #    self.pyro_daemon.disconnect( task )
+            #except NamingError:
+            #    pass
 
-        if len( task_list ) == 0:
-           print "ERROR no tasks configured for " + self.initial_ref_time
-           sys.exit( 1 )
 
-        hour = self.initial_ref_time[8:10]
-        for task_name in task_list:
-           initial_state = None
-           if re.compile( "^.*:").match( task_name ):
-                [task_name, initial_state] = task_name.split(':')
-                print "  + Creating " + task_name + " in " + initial_state + " state"
+    def create_tasks( self, ref_time ):
+        # create any tasks configured for ref_time that don't already exist
+        # NOTE: THIS WILL NOT CREATE TASKS FOR A REFERENCE TIME THAT IS
+        # NEVER REACHED BY ABDICATION OF PREVIOUS-REFERENCE-TIME TASKS.
+        configured_tasks = self.config.get_config( ref_time )
 
-           task = self.create_task_by_name( task_name, self.initial_ref_time, initial_state )
+        for task_name in configured_tasks:
+            id = task_name + "_" + ref_time
+            if id not in [ task.identity() for task in self.task_list ]:
+                state = None
+                if re.compile( "^.*:").match( task_name ):
+                    [task_name, state] = task_name.split(':')
 
-           if hour not in task.get_valid_hours():
-               print "  + " + task.name + " not valid for " + hour 
-           else:
-               self.task_list.append( task )
-               # connect new task to the pyro daemon
-
-               # if using an external pyro nameserver, unregister
-               # objects from previous runs first:
-               #try:
-               #    self.pyro_daemon.disconnect( task )
-               #except NamingError:
-               #    pass
-
-               uri = self.pyro_daemon.connect( task, task.identity() )
-
-        print "Initial Task List:"
-        for task in self.task_list:
-            print " + " + task.identity()
+                self.create_task_by_name( task_name, ref_time, state )
 
 
     #def check_for_dead_soldiers( self ):
 
     #    DISABLED: NOT USEFUL IN CURRENT TASK MANAGEMENT SCHEME
-    #    E.G. TASKS DEPENDENT ON A DOWNLOADER CAN NOW BE CREATED BEFORE
-    #    THE DOWNLOADER IS CREATED.
+    #    TASKS DEPENDENT ON DOWNLOADER, for instance, CAN NOW BE CREATED
+    #    BEFORE THE DOWNLOADER ITSELF IS CREATED.
 
     #    # check that all existing tasks can have their prerequisites
     #    # satisfied by other existing tasks
@@ -139,7 +135,7 @@ class task_manager ( Pyro.core.ObjBase ):
         # We need at least one of these to start the system rolling 
         # (i.e. the downloader).  Thereafter things only happen only
         # when a running task gets a message via pyro). 
-        self.create_initial_tasks()
+        self.create_tasks( self.initial_ref_time )
         self.process_tasks()
 
         # process tasks again each time a request is handled
@@ -175,27 +171,11 @@ class task_manager ( Pyro.core.ObjBase ):
             if task.abdicate():
                 task_name = task.name
                 next_rt = reference_time.increment( task.ref_time, task.ref_time_increment )
-                print "  + Creating " + task_name + " for " + next_rt
-                # TO DO: for initial state, consult task_config
-                statex = None
 
-                new_task = self.create_task_by_name( task_name, next_rt, statex )
+                print "FOO fo " + next_rt
+                self.create_tasks( next_rt )
+                #self.create_task_by_name( task_name, next_rt, statex )
          
-                new_hour = task.ref_time[8:10]
-                if new_hour not in new_task.get_valid_hours():
-                    print "  + " + new_task.name + " not valid for " + new_hour
-                else:
-                    self.task_list.append( new_task )
-                    # connect new task to the pyro daemon
-
-                    # if using an external pyro nameserver, unregister
-                    # objects from previous runs first:
-                    #try:
-                    #    self.pyro_daemon.disconnect( new_task )
-                    #except NamingError:
-                    #    pass
-
-                    uri = self.pyro_daemon.connect( new_task, new_task.identity() )
 
             # delete any reference-time-batch of tasks that are (a) all
             # finished, and (b) older than the oldest running task.
