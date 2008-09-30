@@ -30,9 +30,9 @@ class kit:
         a = b = c = '\033[1;31m'
         for i in range( 1, self.len - 1 ):
             if i == self.pos:
-                a += 'o\033[0m'
+                a += '-\033[0m'
                 b += self.title[i] + '\033[0m'
-                c += 'o\033[0m'
+                c += '-\033[0m'
             else:
                 a += ' '
                 b += self.title[i]
