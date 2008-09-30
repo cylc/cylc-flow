@@ -16,7 +16,6 @@ from tasks import *
 import shared 
 from class_from_module import class_from_module
 from task_config import task_config
-from dead_letter_box import dead_letter_box
 import threading
 
 from system_status import system_status
@@ -212,6 +211,23 @@ class task_manager ( Pyro.core.ObjBase ):
 
         return 1  # to keep the pyro requestLoop going
 
+
+#----------------------------------------------------------------------
+
+"""
+class to take incoming pyro messages that are not directed at a specific
+task object (the sender can direct warning messages here if the desired
+task object no longer exists, for example)
+"""
+
+class dead_letter_box( Pyro.core.ObjBase ):
+
+    def __init__( self ):
+        log.debug( "Initialising Dead Letter Box" )
+        Pyro.core.ObjBase.__init__(self)
+
+    def incoming( self, message ):
+        log.warning( "DEAD LETTER: " + message )
 
 #----------------------------------------------------------------------
 
