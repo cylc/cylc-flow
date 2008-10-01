@@ -82,7 +82,7 @@ class task_base( Pyro.core.ObjBase ):
         # don't run a new downloader if too many previous finished
         # instances exist (this stops downloader running far ahead)
         old_and_finished = []
-        if self.name == "downloader":
+        if self.name == "downloader" and self.state == "waiting":
             for task in tasks:
                if task.name == self.name and task.state == "finishd":
                    old_and_finished.append( task.ref_time )

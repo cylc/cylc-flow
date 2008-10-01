@@ -75,7 +75,7 @@ class task_manager ( Pyro.core.ObjBase ):
         if int(hour) not in task.get_valid_hours():
             log.debug( task_name + " not valid for " + hour  )
         else:
-            log.info( "Creating " + task_name + "for " + ref_time )
+            log.info( "Creating " + task_name + " for " + ref_time )
             self.task_list.append( task )
             # connect new task to the pyro daemon
             uri = self.pyro_daemon.connect( task, task.identity() )
