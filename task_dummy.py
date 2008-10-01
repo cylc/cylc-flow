@@ -85,7 +85,14 @@ if task_name == "downloader" and shared.run_mode == 1:
 # set each postrequisite satisfied in turn
 for message in task.get_postrequisite_list():
     task.incoming( message )
-    #sleep(4)
+    if task_name == "nzlam" or task_name == "nzwave":
+        sleep(20)
+    elif task_name == "ricom":
+        sleep(10)
+    elif task_name == "topnet":
+        sleep(0.5)
+    else:
+        sleep(2)
 
 # finished simulating the external task
 task.set_finished()
