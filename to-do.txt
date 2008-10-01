@@ -1,8 +1,11 @@
-
 TO DO LIST
 
 * proper exception handling
 
-* dump state regularly to ease restarting
+* multflight startup config 
+  (and dump it regularly to ease restarting)
 
+* clock based dummy mode
 
+* implement DEAD non-configured tasks, so that abdication works even when
+  the first cycle does not contain all possible tasks.
