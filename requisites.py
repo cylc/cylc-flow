@@ -71,18 +71,17 @@ class requisites:
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
 
-    #def will_satisfy_me( self, postreqs ):
-    #DISABLED: NOT USEFUL UNDER ABDICATION TASK MANAGEMENT
-    #    # will another's postreqs, when completed, satisfy any of my prequisites?
-    #    for prereq in self.satisfied.keys():
-    #        # for each of my prerequisites
-    #        if not self.satisfied[ prereq ]:
-    #            # if my prerequisite is not already satisfied
-    #            for postreq in postreqs.satisfied.keys():
-    #                # compare it with each of the other's postreqs
-    #                if postreq == prereq:
-    #                    # if they match, my prereq has been satisfied
-    #                    self.set_satisfied( prereq )
+    def will_satisfy_me( self, postreqs ):
+        # will another's postreqs, when completed, satisfy any of my prequisites?
+        for prereq in self.satisfied.keys():
+            # for each of my prerequisites
+            if not self.satisfied[ prereq ]:
+                # if my prerequisite is not already satisfied
+                for postreq in postreqs.satisfied.keys():
+                    # compare it with each of the other's postreqs
+                    if postreq == prereq:
+                        # if they match, my prereq has been satisfied
+                        self.set_satisfied( prereq )
 
 
 class fuzzy_requisites( requisites ):

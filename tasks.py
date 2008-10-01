@@ -193,16 +193,15 @@ class task_base( Pyro.core.ObjBase ):
         for task in tasks:
             self.prerequisites.satisfy_me( task.postrequisites )
 
-    #def will_get_satisfaction( self, tasks ):
-    #DISABLED: NOT USEFUL UNDER ADBICATION TASK MANAGEMENT
-    #    temp_prereqs = deepcopy( self.prerequisites )
-    #    for task in tasks:
-    #        temp_prereqs.will_satisfy_me( task.postrequisites )
-    #
-    #    if not temp_prereqs.all_satisfied(): 
-    #        return False
-    #    else:
-    #        return True
+    def will_get_satisfaction( self, tasks ):
+        temp_prereqs = deepcopy( self.prerequisites )
+        for task in tasks:
+            temp_prereqs.will_satisfy_me( task.postrequisites )
+    
+        if not temp_prereqs.all_satisfied(): 
+            return False
+        else:
+            return True
 
     def is_complete( self ):  # not needed?
         if self.postrequisites.all_satisfied():

@@ -85,23 +85,38 @@ class task_manager ( Pyro.core.ObjBase ):
 
 
 
-    #def check_for_dead_soldiers( self ):
-    #DISABLED: NOT USEFUL UNDER ABDICATION TASK MANAGEMENT
-    #    # check that all existing tasks can have their prerequisites
-    #    # satisfied by other existing tasks
-    #    dead_soldiers = []
-    #    for task in self.task_list:
-    #        if not task.will_get_satisfaction( self.task_list ):
-    #            dead_soldiers.append( task )
-    #
-    #    if len( dead_soldiers ) != 0:
-    #        print "ERROR: THIS TASK LIST IS NOT SELF-CONSISTENT, i.e. one"
-    #        print "or more tasks have pre-requisites that are not matched"
-    #        print "by others post-requisites, THEREFORE THEY WILL NOT RUN"
-    #        for soldier in dead_soldiers:
-    #            print " + ", soldier.identity()
-    #
-    #        sys.exit(1)
+    def remove_dead_soldiers( self ):
+        # Remove any tasks in the OLDEST time batch whose prerequisites
+        # cannot be satisfied by their cotemporal peers. 
+
+        # This only works for the OLDEST batch; satisfiers can appear
+        # later  by abdication in newer batches). 
+
+        # This is useful, e.g., if we start the system at 12Z with
+        # topnet turned on, because topnet cannot get input from the
+        # 12Z nzlam.
+
+        batches = {}
+        for task in self.task_pool:
+            if task.ref_time not in batches.keys():
+                batches[ task.ref_time ] = [ task ]
+            else:
+                batches[ task.ref_time ].append( task )
+
+        reftimes = batches.keys()
+        reftimes.sort( key = int )
+        oldest_rt = reftimes[0]
+
+        dead_soldiers = []
+        for task in batches[ oldest_rt ]:
+            if not task.will_get_satisfaction( batches[ oldest_rt ] ):
+                dead_soldiers.append( task )
+    
+        for soldier in dead_soldiers:
+            soldier.log.warning( "abdicating a dead soldier " + soldier.identity() )
+            self.create_task_by_name( soldier.name, soldier.next_ref_time() )
+            self.task_pool.remove( soldier )
+            del soldier
 
 
     def run( self ):
@@ -147,8 +162,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
             # create a new task foo(T+1) if foo(T) just finished
             if task.abdicate():
-                task_name = task.name
-                self.create_task_by_name( task_name, task.next_ref_time() )
+                self.create_task_by_name( task.name, task.next_ref_time() )
 
             # record some info to determine which task batches 
             # can be deleted (see documentation just below)
@@ -190,6 +204,10 @@ class task_manager ( Pyro.core.ObjBase ):
         # I.E. cutoff is the older of most-recent-finished-nzlampost
         # and oldest running.
 
+        # TO DO: we could improve this by removing non-nzlampost tasks
+        # older than oldest_running (BUT: make sure this doesn't break
+        # the dead soldier test).
+
         still_running.sort( key = int )
         oldest_running = still_running[0]
 
@@ -222,6 +240,8 @@ class task_manager ( Pyro.core.ObjBase ):
                 self.pyro_daemon.disconnect( task )
 
         del remove
+
+        self.remove_dead_soldiers()
    
         self.state.update( self.task_pool )
 
