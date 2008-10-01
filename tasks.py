@@ -83,14 +83,15 @@ class task_base( Pyro.core.ObjBase ):
         # instances exist (this stops downloader running far ahead)
         old_and_finished = []
         if self.name == "downloader":
-           for task in tasks:
+            for task in tasks:
                if task.name == self.name and task.state == "finishd":
                    old_and_finished.append( task.ref_time )
                             
-        MAX_FINISHED_DOWNLOADERS = 8
-        if len( old_and_finished ) == MAX_FINISHED_DOWNLOADERS:
-            self.log.debug( self.identity() + " waiting, too far ahead" )
-            return
+            # TO DO: THIS LISTS ALL FINISHED DOWNLOADERS TOO
+            MAX_FINISHED_DOWNLOADERS = 8
+            if len( old_and_finished ) == MAX_FINISHED_DOWNLOADERS:
+                self.log.debug( self.identity() + " waiting, too far ahead" )
+                return
 
         if self.state == "finishd":
             # already finished
