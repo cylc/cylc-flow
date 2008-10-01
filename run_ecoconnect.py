@@ -146,21 +146,23 @@ class task_manager ( Pyro.core.ObjBase ):
     def process_tasks( self ):
         # this function gets called every time a pyro event comes in
 
-        finished = {}
 
         if len( self.task_list ) == 0:
             log.critical( "ALL TASKS DONE" )
             sys.exit(0)
 
-        # lists to determine what's finished for each ref time
-        all_finished = []
-        running_ref_times = []
+        finished_nzlamposts_exist = False
+        finished_nzlamposts = []
+        batch_finished = {}
+        still_running = []
 
         # task interaction to satisfy prerequisites
         for task in self.task_list:
-            #print "GETTING SATISFACTION FOR " + task.identity()
+
             task.get_satisfaction( self.task_list )
+
             task.run_if_ready( self.task_list )
+
 
             # create a new task foo(T+1) if foo(T) just finished
             if task.abdicate():
@@ -177,27 +179,69 @@ class task_manager ( Pyro.core.ObjBase ):
                 # or by abdication only
                 # MISSES ANY TASKS NOT IN THE INITIAL CYCLE
                 self.create_task_by_name( task_name, next_rt )
-         
+ 
 
-            # delete any reference-time-batch of tasks that are (a) all
-            # finished, and (b) older than the oldest running task.
+            # record some info to determine which task batches 
+            # can be deleted (see documentation just below)
 
-            if task.ref_time not in finished.keys():
-                finished[ task.ref_time ] = [ task.is_finished() ]
-            else:
-                finished[ task.ref_time ].append( task.is_finished() )
+            # find any finished nzlampost tasks
+            if task.name == "nzlampost" and task.state == "finishd":
+                hour = task.ref_time[8:10]
+                if hour == "06" or hour == "18":
+                    finished_nzlamposts_exist = True
+                    finished_nzlamposts.append( task.ref_time )
+
+            # find which ref_time batches are all finished
+            # (assume yes, set no if any running task found)
+            if task.ref_time not in batch_finished.keys():
+                batch_finished[ task.ref_time ] = True
+
+            if not task.is_finished():
+                batch_finished[ task.ref_time ] = False
 
             if task.is_running():
-                running_ref_times.append( task.ref_time )
+                still_running.append( task.ref_time )
 
-        # delete all tasks for a given ref time if they've all finished 
-        running_ref_times.sort( key = int )
-        oldest_running_ref_time = running_ref_times[0]
+        # DELETE SOME SPENT TASKS, defined as:
+        #   (a) finished 
+        #   (b) no longer needed to satisfy anyone else
+
+        # Normal tasks can only run once any previous instance is
+        # finished, so there is no explicit dependence on previous
+        # cycles: i.e. we can delete any completely finished
+        # batch that is older than the oldest running task.
+
+        # HOWEVER, topnet can run ahead of nzlampost so long as the
+        # "most recently generated topnet input file" is <= 24 hours
+        # old. Nzlampost only generates topnet files at 06 and 18, so: 
+        # if there is no running nzlampost, topnet will depend on the
+        # most recent FINISHED 06 or 18 nzlampost, and we can delete
+        # any finished batches older than that. 
+
+        # I.E. cutoff is the older of most-recent-finished-nzlampost
+        # and oldest running.
+
+        still_running.sort( key = int )
+        oldest_running = still_running[0]
+
+        cutoff = oldest_running
+        log.debug( " + oldest running " + cutoff )
+
+        if finished_nzlamposts_exist:
+            finished_nzlamposts.sort( key = int, reverse = True )
+            most_recent_finished_nzlampost = finished_nzlamposts[0]
+
+            log.debug( " + topnet needs " + most_recent_finished_nzlampost )
+
+            if int( most_recent_finished_nzlampost ) < int( cutoff ): 
+                cutoff = most_recent_finished_nzlampost
+
+        log.debug( "keep tasks " + cutoff + " or newer")
         
         remove = []
-        for rt in finished.keys():
-            if int( rt ) < int( oldest_running_ref_time ):
-                if False not in finished[rt]:
+        for rt in batch_finished.keys():
+            if int( rt ) < int( cutoff ):
+                if batch_finished[rt]:
                     for task in self.task_list:
                         if task.ref_time == rt:
                             remove.append( task )
