@@ -91,7 +91,7 @@ class task_manager ( Pyro.core.ObjBase ):
     def create_tasks( self, ref_time ):
         # create any tasks configured for ref_time that don't already exist
         # NOTE: THIS WILL NOT CREATE TASKS FOR A REFERENCE TIME THAT IS
-        # NEVER REACHED BY ABDICATION OF PREVIOUS-REFERENCE-TIME TASKS.
+        # NEVER REACHED BY ABDICATION OF EARLIER TASKS.
         configured_tasks = self.config.get_config( ref_time )
 
         for task_name in configured_tasks:
@@ -105,11 +105,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
 
     #def check_for_dead_soldiers( self ):
-
-    #    DISABLED: NOT USEFUL IN CURRENT TASK MANAGEMENT SCHEME
-    #    TASKS DEPENDENT ON DOWNLOADER, for instance, CAN NOW BE CREATED
-    #    BEFORE THE DOWNLOADER ITSELF IS CREATED.
-
+    #DISABLED: NOT USEFUL UNDER ABDICATION TASK MANAGEMENT
     #    # check that all existing tasks can have their prerequisites
     #    # satisfied by other existing tasks
     #    dead_soldiers = []
@@ -162,16 +158,25 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # task interaction to satisfy prerequisites
         for task in self.task_list:
+            #print "GETTING SATISFACTION FOR " + task.identity()
             task.get_satisfaction( self.task_list )
-            task.run_if_ready()
+            task.run_if_ready( self.task_list )
 
             # create a new task foo(T+1) if foo(T) just finished
             if task.abdicate():
                 task_name = task.name
                 next_rt = reference_time.increment( task.ref_time, task.ref_time_increment )
 
-                self.create_tasks( next_rt )
-                #self.create_task_by_name( task_name, next_rt, statex )
+                # create batch of all configured tasks for this
+                # time, to catch any tasks that would be missed due 
+                # to not having a previous instance to abdicate
+                # (because they weren't in the first cycle).
+                # NOT FOR FUZZY RUNAHEAD TASKS: ABDICATION ONLY
+                #self.create_tasks( next_rt )
+
+                # or by abdication only
+                # MISSES ANY TASKS NOT IN THE INITIAL CYCLE
+                self.create_task_by_name( task_name, next_rt )
          
 
             # delete any reference-time-batch of tasks that are (a) all
@@ -205,8 +210,6 @@ class task_manager ( Pyro.core.ObjBase ):
 
         del remove
    
-        #    next_task_list = self.config.get_config( next_rt )
-
         self.state.update( self.task_list )
 
         return 1  # to keep the pyro requestLoop going

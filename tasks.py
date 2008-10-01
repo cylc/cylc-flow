@@ -20,7 +20,7 @@ attribute, not the class name itself, that is).
 """
 
 import reference_time
-from requisites import requisites
+from requisites import requisites, fuzzy_requisites
 from time import sleep
 
 import os
@@ -39,19 +39,21 @@ class task_base( Pyro.core.ObjBase ):
     
     name = "task base class"
 
-    def __init__( self, initial_state ):
+    def __init__( self, initial_state = "waiting" ):
         Pyro.core.ObjBase.__init__(self)
 
         self.log = logging.getLogger( "main." + self.name ) 
 
-        self.state = "waiting"
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
 
         # initial states: waiting, running, finishd
         # (spelling: equal word lengths for display)
-        if initial_state is None: 
+        if not initial_state:
+            self.state = "waiting"
             pass
+        elif initial_state == "waiting": 
+            self.state = "waiting"
         elif initial_state == "finishd":  
             self.postrequisites.set_all_satisfied()
             self.state = "finishd"
@@ -62,25 +64,53 @@ class task_base( Pyro.core.ObjBase ):
             print "ERROR: unknown initial task state " + initial_state
             sys.exit(1)
 
+    def run_if_ready( self, tasks ):
 
-        self.no_previous_instance = True
+        # This function originally called run() if all prerequisites
+        # were satisfied. Now we can also check non-prerequisite
+        # conditions relating to other tasks, hence the list list
+        # argument 
 
-    def run_if_ready( self ):
+        # don't run if any previous instance not finished
+        for task in tasks:
+            if task.name == self.name:
+                if task.state != "finishd":
+                    if int( task.ref_time ) < int( self.ref_time ):
+                        self.log.debug( self.identity() + " blocked by " + task.identity() )
+                        return
+
+        # don't run a new downloader if too many previous finished
+        # instances exist (this stops downloader running far ahead)
+        old_and_finished = []
+        if self.name == "downloader":
+           for task in tasks:
+               if task.name == self.name and task.state == "finishd":
+                   old_and_finished.append( task.ref_time )
+                            
+        MAX_FINISHED_DOWNLOADERS = 8
+        if len( old_and_finished ) == MAX_FINISHED_DOWNLOADERS:
+            self.log.debug( self.identity() + " waiting, too far ahead" )
+            return
+
         if self.state == "finishd":
             # already finished
             pass
         elif self.state == "running":
             # already running
             pass
-        elif self.prerequisites.all_satisfied() and self.no_previous_instance:
-            # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
-            # TO DO: the subprocess module might be better than os.system?
-            self.log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + "]" )
-            os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
-            self.state = "running"
+        elif self.prerequisites.all_satisfied():
+            self.run()
         else:
             # still waiting
             pass
+
+    def run( self ):
+        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+        # TO DO: the subprocess module might be better than os.system?
+        self.log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + "]" )
+        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
+        self.state = "running"
+
 
     def get_state( self ):
         return self.name + ": " + self.state
@@ -104,28 +134,19 @@ class task_base( Pyro.core.ObjBase ):
 
     def get_satisfaction( self, tasks ):
 
-        self.no_previous_instance = True
-        for task in tasks:
-            if task.name == self.name:
-                # just return if any previous instance of me not finished
-                if task.state != "finishd":
-                    if int( task.ref_time ) < int( self.ref_time ):
-                        self.no_previous_instance = False
-                        self.log.debug( self.identity() + " blocked by " + task.identity() )
-                        return
-
         for task in tasks:
             self.prerequisites.satisfy_me( task.postrequisites )
 
-    def will_get_satisfaction( self, tasks ):
-        temp_prereqs = deepcopy( self.prerequisites )
-        for task in tasks:
-            temp_prereqs.will_satisfy_me( task.postrequisites )
-
-        if not temp_prereqs.all_satisfied(): 
-            return False
-        else:
-            return True
+    #def will_get_satisfaction( self, tasks ):
+    #DISABLED: NOT USEFUL UNDER ADBICATION TASK MANAGEMENT
+    #    temp_prereqs = deepcopy( self.prerequisites )
+    #    for task in tasks:
+    #        temp_prereqs.will_satisfy_me( task.postrequisites )
+    #
+    #    if not temp_prereqs.all_satisfied(): 
+    #        return False
+    #    else:
+    #        return True
 
     def is_complete( self ):  # not needed?
         if self.postrequisites.all_satisfied():
@@ -261,17 +282,25 @@ class nzlam( task_base ):
 
         if hour == "00" or hour == "12":
             self.prerequisites = requisites([ 
-                    "file obstore_" + ref_time + ".um ready",
-                    "file bgerr" + ref_time + ".um ready",
-                    "file lbc_" + lbc_12 + ".um ready" ])
+                "file obstore_" + ref_time + ".um ready",
+                "file bgerr" + ref_time + ".um ready",
+                "file lbc_" + lbc_12 + ".um ready" 
+                ])
 
-        if hour == "06" or hour == "18":
+            self.postrequisites = requisites([ 
+                self.name + " started for " + ref_time,
+                "file sls_" + ref_time + ".um ready",   
+                self.name + " finished for " + ref_time
+                ])
+ 
+        elif hour == "06" or hour == "18":
             self.prerequisites = requisites([ 
-                    "file obstore_" + ref_time + ".um ready",
-                    "file bgerr" + ref_time + ".um ready",
-                    "file lbc_" + lbc_06 + ".um ready" ])
+                "file obstore_" + ref_time + ".um ready",
+                "file bgerr" + ref_time + ".um ready",
+                "file lbc_" + lbc_06 + ".um ready" 
+                ])
 
-        self.postrequisites = requisites([ 
+            self.postrequisites = requisites([ 
                 self.name + " started for " + ref_time,
                 "file tn_" + ref_time + ".um ready",
                 "file sls_" + ref_time + ".um ready",   
@@ -290,15 +319,30 @@ class nzlampost( task_base ):
     valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
-        
+
         self.ref_time = ref_time
 
-        self.prerequisites = requisites([ 
-                  "file tn_" + ref_time + ".um ready",
-                  "file sls_" + ref_time + ".um ready",   
-                  "file met_" + ref_time + ".um ready" ])
+        hour = ref_time[8:10]
 
-        self.postrequisites = requisites([ 
+        if hour == "00" or hour == "12":
+            self.prerequisites = requisites([ 
+                "file sls_" + ref_time + ".um ready",   
+                ])
+
+            self.postrequisites = requisites([ 
+                self.name + " started for " + ref_time,
+                "file sls_" + ref_time + ".nc ready",   
+                self.name + " finished for " + ref_time
+                ])
+
+        elif hour == "06" or hour == "18":
+            self.prerequisites = requisites([ 
+                "file tn_" + ref_time + ".um ready",
+                "file sls_" + ref_time + ".um ready",   
+                "file met_" + ref_time + ".um ready" 
+                ])
+
+            self.postrequisites = requisites([ 
                 self.name + " started for " + ref_time,
                 "file tn_" + ref_time + ".nc ready",
                 "file sls_" + ref_time + ".nc ready",   
@@ -413,9 +457,14 @@ class mos( task_base ):
     def __init__( self, ref_time, initial_state ):
 
         self.ref_time = ref_time
+        hour = ref_time[8:10]
 
-        self.prerequisites = requisites([ 
-                 "file met_" + ref_time + ".nc ready" ])
+        if hour == "06" or hour == "18":
+            self.prerequisites = requisites([ 
+                "file met_" + ref_time + ".nc ready"
+                ])
+        else:
+            self.prerequisites = requisites([])
 
         self.postrequisites = requisites([
                 self.name + " started for " + ref_time,
@@ -455,13 +504,17 @@ class topnet( task_base ):
  
     name = "topnet"
     ref_time_increment = 1
-    valid_hours = [ 6, 18 ]   
+    valid_hours = range( 0,24 )
+
     def __init__( self, ref_time, initial_state ):
 
         self.ref_time = ref_time
 
-        self.prerequisites = requisites([ 
-                "file tn_" + ref_time + ".nc ready" ])
+        nzlam_cutoff = reference_time.decrement( ref_time, 24 )
+ 
+        # fuzzy prequisites: nzlam 24 hours old or less
+        self.prerequisites = fuzzy_requisites([ 
+                "file tn_" + nzlam_cutoff + ".nc ready" ])
 
         self.postrequisites = requisites([ 
                 self.name + " started for " + ref_time,
