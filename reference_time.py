@@ -9,6 +9,7 @@ global reference time a procedural module will do.
 """
 
 import datetime
+import re
 
 def _rt_to_dt( rt ):
     return datetime.datetime( 
@@ -27,3 +28,9 @@ def decrement( rt, hours ):
         return _dt_to_rt( dt - datetime.timedelta( 0, 0, 0, 0, 0, hours, 0 ) )
 
 # do rt comparisons in integer form via int( rt )
+
+def is_valid( rt ):
+    if re.compile( "^\d{10}$" ).match( rt ):
+        return True
+    else:
+        return False

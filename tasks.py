@@ -33,6 +33,20 @@ import Pyro.core
 import logging
 import logging.handlers
 
+#-----------------------------------------------------------------------
+all_tasks = [ 
+        'downloader',
+        'nwpglobal',
+        'globalprep',
+        'globalwave',
+        'nzlam',
+        'nzlampost',
+        'nzwave',
+        'ricom',
+        'nztide',
+        'topnet',
+        'mos' 
+        ]
 
 #----------------------------------------------------------------------
 class task_base( Pyro.core.ObjBase ):
@@ -40,8 +54,12 @@ class task_base( Pyro.core.ObjBase ):
     
     name = "task base class"
 
-    def __init__( self, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state = "waiting" ):
+
         Pyro.core.ObjBase.__init__(self)
+
+        # adjust ref time (needed for creation of initial task list)
+        self.ref_time = self.nearest_ref_time( ref_time )
 
         self.log = logging.getLogger( "ecoconnect." + self.name ) 
 
@@ -64,6 +82,42 @@ class task_base( Pyro.core.ObjBase ):
         else:
             print "ERROR: unknown initial task state " + initial_state
             sys.exit(1)
+
+    def nearest_ref_time( self, rt ):
+        # return the next time >= rt for which this task is valid
+        rh = int( rt[8:10])
+        
+        incr = None
+
+        first_vh = self.valid_hours[ 0 ]
+        extra_vh = 24 + first_vh 
+        foo = self.valid_hours
+        foo.append( extra_vh )
+
+        for vh in foo:
+            if rh <= vh:
+                incr = vh - rh
+                break
+    
+        nearest_rt = reference_time.increment( rt, incr )
+        return nearest_rt
+
+
+    def next_ref_time( self ):
+        # return the next time that this task is valid at
+        n_times = len( self.valid_hours )
+        if n_times == 1:
+            increment = 24
+        else:
+            i_now = self.valid_hours.index( int( self.ref_time[8:10]) )
+            # list indices start at zero
+            if i_now < n_times - 1 :
+                increment = self.valid_hours[ i_now + 1 ] - self.valid_hours[ i_now ]
+            else:
+                increment = self.valid_hours[ 0 ] + 24 - self.valid_hours[ i_now ]
+
+        return reference_time.increment( self.ref_time, increment )
+
 
     def run_if_ready( self, tasks ):
 
@@ -202,12 +256,6 @@ class task_base( Pyro.core.ObjBase ):
 
 
 #----------------------------------------------------------------------
-all_task_names = [ 'downloader', 'nwpglobal', 'globalprep', 'globalwave',
-                   'nzlam', 'nzlampost', 'nzwave', 'ricom', 'nztide', 
-                   'topnet', 'mos' ]
-
-
-#----------------------------------------------------------------------
 class downloader( task_base ):
     "Met Office input file download task"
 
@@ -218,12 +266,14 @@ class downloader( task_base ):
     """
 
     name = "downloader"
-    ref_time_increment = 6
     valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
+        
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
 
-        self.ref_time = ref_time
         hour = ref_time[8:10]
 
         # no prerequisites: this is The Initial Task
@@ -264,19 +314,19 @@ class downloader( task_base ):
                     self.name + " finished for " + ref_time
                     ])
 
-        task_base.__init__( self, initial_state )
-
 
 #----------------------------------------------------------------------
 class nzlam( task_base ):
 
     name = "nzlam"
-    ref_time_increment = 6
     valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
-        
-        self.ref_time = ref_time
+
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
+
         hour = ref_time[8:10]
 
         lbc_06 = reference_time.decrement( ref_time, 6 )
@@ -310,19 +360,18 @@ class nzlam( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-        task_base.__init__( self, initial_state )
-
 
 #----------------------------------------------------------------------
 class nzlampost( task_base ):
 
     name = "nzlampost"
-    ref_time_increment = 6
     valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
 
         hour = ref_time[8:10]
 
@@ -352,18 +401,18 @@ class nzlampost( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-        task_base.__init__( self, initial_state )
-
 
 #----------------------------------------------------------------------
 class globalprep( task_base ):
     name = "globalprep"
-    ref_time_increment = 24
     valid_hours = [ 0 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
+
 
         self.prerequisites = requisites([ 
                 "file 10mwind_" + ref_time + ".um ready",
@@ -376,19 +425,19 @@ class globalprep( task_base ):
                 self.name + " finished for " + ref_time
                 ])
        
-        task_base.__init__( self, initial_state )
- 
  
 #----------------------------------------------------------------------
 class globalwave( task_base ):
 
     name = "globalwave"
-    ref_time_increment = 24
     valid_hours = [ 0 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
+
 
         self.prerequisites = requisites([ 
                 "file 10mwind_" + ref_time + ".nc ready",
@@ -400,19 +449,18 @@ class globalwave( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-        task_base.__init__( self, initial_state )
- 
     
 #----------------------------------------------------------------------
 class nzwave( task_base ):
     
     name = "nzwave"
-    ref_time_increment = 6
     valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
 
         self.prerequisites = requisites([ 
                  "file sls_" + ref_time + ".nc ready" ])
@@ -423,19 +471,18 @@ class nzwave( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-        task_base.__init__( self, initial_state )
-
 
 #----------------------------------------------------------------------
 class ricom( task_base ):
     
     name = "ricom"
-    ref_time_increment = 12
     valid_hours = [ 6, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
 
         self.prerequisites = requisites([ 
                  "file sls_" + ref_time + ".nc ready" ])
@@ -446,19 +493,19 @@ class ricom( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-        task_base.__init__( self, initial_state )
-
 
 #----------------------------------------------------------------------
 class mos( task_base ):
     
     name = "mos"
-    ref_time_increment = 6
     valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
+
         hour = ref_time[8:10]
 
         if hour == "06" or hour == "18":
@@ -474,19 +521,18 @@ class mos( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-        task_base.__init__( self, initial_state )
-
 
 #----------------------------------------------------------------------
 class nztide( task_base ):
     
     name = "nztide"
-    ref_time_increment = 12
     valid_hours = [ 6, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
 
         # artificial prerequisite to stop nztide running ahead
         self.prerequisites = requisites([
@@ -498,19 +544,18 @@ class nztide( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-        task_base.__init__( self, initial_state )
-
 
 #----------------------------------------------------------------------
 class topnet( task_base ):
  
     name = "topnet"
-    ref_time_increment = 1
     valid_hours = range( 0,24 )
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
 
         nzlam_cutoff = reference_time.decrement( ref_time, 24 )
  
@@ -523,9 +568,6 @@ class topnet( task_base ):
                 "file topnet_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
                 ])
-        
-        task_base.__init__( self, initial_state )
-
 
     def run( self ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
@@ -548,12 +590,13 @@ class topnet( task_base ):
 class nwpglobal( task_base ):
 
     name = "nwpglobal"
-    ref_time_increment = 24
     valid_hours = [ 0 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        self.ref_time = ref_time
+        task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
 
         self.prerequisites = requisites([ 
                  "file 10mwind_" + ref_time + ".um ready" ])
@@ -563,5 +606,3 @@ class nwpglobal( task_base ):
                 "file 10mwind_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
                 ])
-    
-        task_base.__init__( self, initial_state )
