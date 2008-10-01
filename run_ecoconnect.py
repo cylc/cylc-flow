@@ -88,20 +88,21 @@ class task_manager ( Pyro.core.ObjBase ):
             #    pass
 
 
-    def create_tasks( self, ref_time ):
-        # create any tasks configured for ref_time that don't already exist
-        # NOTE: THIS WILL NOT CREATE TASKS FOR A REFERENCE TIME THAT IS
-        # NEVER REACHED BY ABDICATION OF EARLIER TASKS.
+    def create_initial_tasks( self, ref_time ):
+
         configured_tasks = self.config.get_config( ref_time )
 
-        for task_name in configured_tasks:
-            id = task_name + "_" + ref_time
-            if id not in [ task.identity() for task in self.task_list ]:
-                state = None
-                if re.compile( "^.*:").match( task_name ):
-                    [task_name, state] = task_name.split(':')
+                # TO DO: reimplement user task config:
+                #if re.compile( "^.*:").match( task_name ):
+                #    [task_name, state] = task_name.split(':')
 
-                self.create_task_by_name( task_name, ref_time, state )
+        for task_name in all_task_names:
+            if task_name in configured_tasks:
+                self.create_task_by_name( task_name, ref_time )
+            else:
+                # create non-configured tasks NOW for the next time they
+                # are configured (GET_CONFIG SHOULD SUPPLY THIS INFO)
+
 
 
     #def check_for_dead_soldiers( self ):
@@ -129,7 +130,7 @@ class task_manager ( Pyro.core.ObjBase ):
         # We need at least one of these to start the system rolling 
         # (i.e. the downloader).  Thereafter things only happen only
         # when a running task gets a message via pyro). 
-        self.create_tasks( self.initial_ref_time )
+        self.create_initial_tasks( self.initial_ref_time )
         self.process_tasks()
 
         # process tasks again each time a request is handled
@@ -169,15 +170,6 @@ class task_manager ( Pyro.core.ObjBase ):
                 task_name = task.name
                 next_rt = reference_time.increment( task.ref_time, task.ref_time_increment )
 
-                # create batch of all configured tasks for this
-                # time, to catch any tasks that would be missed due 
-                # to not having a previous instance to abdicate
-                # (because they weren't in the first cycle).
-                # NOT FOR FUZZY RUNAHEAD TASKS: ABDICATION ONLY
-                #self.create_tasks( next_rt )
-
-                # or by abdication only
-                # MISSES ANY TASKS NOT IN THE INITIAL CYCLE
                 self.create_task_by_name( task_name, next_rt )
  
 
