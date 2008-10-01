@@ -93,6 +93,16 @@ class fuzzy_requisites( requisites ):
     def __init__( self, reqs ):
         requisites.__init__( self, reqs ) 
 
+    def sharpen_up( self, fuzzy, sharp ):
+        # replace the fuzzy prerequisite with the actual postrequisite
+        # that satisfied it, so the task run() method can use it.
+        i = self.ordered_list.index( fuzzy )
+        self.ordered_list.remove( fuzzy )
+        self.ordered_list.insert( i, sharp ) 
+        
+        del self.satisfied[ fuzzy ]
+        self.satisfied[ sharp ] = True
+
     def satisfy_me( self, postreqs ):
         # can another's completed postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
@@ -123,4 +133,5 @@ class fuzzy_requisites( requisites ):
                             if other_reftime >= my_reftime:
                                 print "FUZZY PREREQ: " + prereq
                                 print "SATISFIED BY: " + postreq
-                                self.set_satisfied( prereq )
+                                #self.set_satisfied( prereq )
+                                self.sharpen_up( prereq, postreq )

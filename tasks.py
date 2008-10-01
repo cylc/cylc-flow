@@ -24,6 +24,7 @@ from requisites import requisites, fuzzy_requisites
 from time import sleep
 
 import os
+import re
 import sys
 from copy import deepcopy
 from time import strftime
@@ -524,6 +525,23 @@ class topnet( task_base ):
                 ])
         
         task_base.__init__( self, initial_state )
+
+
+    def run( self ):
+        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+        # TO DO: the subprocess module might be better than os.system?
+
+        # for topnet, supply name of most recent nzlam file from the
+        # sharpened fuzzy prerequisite
+
+        prereqs = self.prerequisites.get_list()
+        prereq = prereqs[0]
+        m = re.compile( "^file (.*) ready$" ).match( prereq )
+        [ file ] = m.groups()
+
+        self.log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + " " + file + "]" )
+        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
+        self.state = "running"
 
 
 #----------------------------------------------------------------------
