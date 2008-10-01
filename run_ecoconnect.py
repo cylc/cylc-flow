@@ -258,11 +258,11 @@ if __name__ == "__main__":
         os.makedirs( 'LOGFILES' )
 
     # configure the main log
-    log = logging.getLogger( "main" )
+    log = logging.getLogger( "ecoconnect" )
     log.setLevel( logging.DEBUG )
     max_bytes = 10000
     backups = 5
-    h = logging.handlers.RotatingFileHandler( 'LOGFILES/main', 'a', max_bytes, backups )
+    h = logging.handlers.RotatingFileHandler( 'LOGFILES/ecoconnect', 'a', max_bytes, backups )
     f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
     # use '%(name)-30s' to get the logger name print too 
     h.setFormatter(f)
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
     # configure task-name-specific logs (propagate up to the main log)
     for name in all_task_names:
-        foo = logging.getLogger( "main." + name )
+        foo = logging.getLogger( "ecoconnect." + name )
 
         h = logging.handlers.RotatingFileHandler( 'LOGFILES/' + name, 'a', max_bytes, backups )
         f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )

@@ -42,7 +42,7 @@ class task_base( Pyro.core.ObjBase ):
     def __init__( self, initial_state = "waiting" ):
         Pyro.core.ObjBase.__init__(self)
 
-        self.log = logging.getLogger( "main." + self.name ) 
+        self.log = logging.getLogger( "ecoconnect." + self.name ) 
 
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
