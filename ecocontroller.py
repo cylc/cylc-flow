@@ -28,8 +28,7 @@ import threading
 from system_status import system_status
 from copy import deepcopy
 
-import logging
-import logging.handlers
+import logging, logging.handlers
 
 import re
 import sys
@@ -38,7 +37,7 @@ import Pyro.core
 class task_manager ( Pyro.core.ObjBase ):
 
     def __init__( self, start_time, task_list ):
-        log.debug("initialising task manager")
+        log.info("initialising task manager")
 
         Pyro.core.ObjBase.__init__(self)
     
@@ -48,7 +47,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # Start a Pyro nameserver in its own thread
         # (alternatively, run the 'pyro-ns' script as a separate process)
-        log.debug( "starting pyro nameserver" )
+        log.info( "starting pyro nameserver" )
         ns_starter = Pyro.naming.NameServerStarter()
         ns_thread = threading.Thread( target = ns_starter.start )
         ns_thread.setDaemon(True)
@@ -76,11 +75,11 @@ class task_manager ( Pyro.core.ObjBase ):
 
         if stop_time:
             if int( task.ref_time ) > int( stop_time ):
-                task.log.warning( task.name + " STOPPING at " + stop_time )
+                task.log.debug( task.name + " STOPPING at " + stop_time )
                 del task
                 return
 
-        task.log.info( "New " + task.name + " created for " + task.ref_time )
+        task.log.debug( "New " + task.name + " created for " + task.ref_time )
         self.task_pool.append( task )
         # connect new task to the pyro daemon
         uri = self.pyro_daemon.connect( task, task.identity() )
@@ -123,7 +122,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 dead_soldiers.append( task )
     
         for task in dead_soldiers:
-            task.log.warning( "abdicating a dead soldier " + task.identity() )
+            task.log.info( "abdicating a dead soldier " + task.identity() )
             self.create_task_by_name( task.name, task.next_ref_time() )
             self.task_pool.remove( task )
             self.pyro_daemon.disconnect( task )
@@ -227,18 +226,18 @@ class task_manager ( Pyro.core.ObjBase ):
         oldest_running = still_running[0]
 
         cutoff = oldest_running
-        log.debug( " + oldest running " + cutoff )
+        log.info( " Oldest cycle with running tasks is " + cutoff )
 
         if finished_nzlamposts_exist:
             finished_nzlamposts.sort( key = int, reverse = True )
             most_recent_finished_nzlampost = finished_nzlamposts[0]
 
-            log.debug( " + topnet needs " + most_recent_finished_nzlampost )
+            log.info( "topnet needs this cycle: " + most_recent_finished_nzlampost )
 
             if int( most_recent_finished_nzlampost ) < int( cutoff ): 
                 cutoff = most_recent_finished_nzlampost
 
-        log.debug( "keep tasks " + cutoff + " or newer")
+        log.info( "keeping tasks " + cutoff + " or newer")
         
         remove_these = []
         for rt in batch_finished.keys():
@@ -250,7 +249,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         if len( remove_these ) > 0:
             for task in remove_these:
-                log.debug( "removing spent " + task.name + " for " + task.ref_time )
+                log.info( "removing spent " + task.name + " for " + task.ref_time )
                 self.task_pool.remove( task )
                 self.pyro_daemon.disconnect( task )
 
@@ -274,7 +273,7 @@ task object no longer exists, for example)
 class dead_letter_box( Pyro.core.ObjBase ):
 
     def __init__( self ):
-        log.debug( "Initialising Dead Letter Box" )
+        log.info( "Initialising Dead Letter Box" )
         Pyro.core.ObjBase.__init__(self)
 
     def incoming( self, message ):
@@ -295,17 +294,19 @@ if __name__ == "__main__":
         print "(iii) both: run the configured tasks, but override the"
         print "     configure start time"
 
-
-    print
-    print "__________________________________________________________"
-    print "      .                                           ."
-    print "      . EcoConnect Implicit Scheduling Controller ."
-    print "__________________________________________________________"
-    print
+    def banner():
+        print
+        print "__________________________________________________________"
+        print "      .                                           ."
+        print "      . EcoConnect Implicit Scheduling Controller ."
+        print "__________________________________________________________"
+        print
     
+    # TO DO: better commandline parsing with optparse or getopt
     start_time_arg = None
     stop_time = None
     config_file = None
+    verbosity = "NORMAL"
     
     if n_args == 2:
         start_time_arg = sys.argv[1]
@@ -343,12 +344,20 @@ if __name__ == "__main__":
         start_time = start_time_arg
 
 
-    # set up logging
+    # python logging module levels: INFO, DEBUG, WARNING, ERROR, CRITICAL
+    # i.e. INFO is most verbose, use DEBUG for normal program reporting
+    if verbosity == "VERBOSE":
+        logging_level = logging.INFO
+    else:
+        logging_level = logging.DEBUG
+
     if not os.path.exists( 'LOGFILES' ):
         os.makedirs( 'LOGFILES' )
 
+    print "Logfiles in ./LOGFILES"
+
     log = logging.getLogger( "ecoconnect" )
-    log.setLevel( logging.WARNING )
+    log.setLevel( logging_level )
     max_bytes = 10000
     backups = 5
     h = logging.handlers.RotatingFileHandler( 'LOGFILES/ecoconnect', 'a', max_bytes, backups )
@@ -369,7 +378,7 @@ if __name__ == "__main__":
     # these propagate messages up to the main log
     for name in all_tasks:
         foo = logging.getLogger( "ecoconnect." + name )
-        foo.setLevel( logging.WARNING )
+        foo.setLevel( logging_level )
 
         h = logging.handlers.RotatingFileHandler( 'LOGFILES/' + name, 'a', max_bytes, backups )
         f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
@@ -377,11 +386,11 @@ if __name__ == "__main__":
         foo.addHandler(h)
 
     print 'Start time ' + start_time
-    log.info( 'Start time ' + start_time )
+    log.debug( 'Start time ' + start_time )
 
     if stop_time:
         print 'Stop time ' + stop_time
-        log.info( 'Stop time ' + stop_time )
+        log.debug( 'Stop time ' + stop_time )
 
     #if shared.run_mode == 1:
     #    # dummy mode clock in its own thread

@@ -131,7 +131,7 @@ class task_base( Pyro.core.ObjBase ):
             if task.name == self.name:
                 if task.state != "finishd":
                     if int( task.ref_time ) < int( self.ref_time ):
-                        self.log.debug( self.identity() + " blocked by " + task.identity() )
+                        self.log.info( self.identity() + " blocked by " + task.identity() )
                         return
 
         # don't run a new downloader if too many previous finished
@@ -145,7 +145,7 @@ class task_base( Pyro.core.ObjBase ):
             # TO DO: THIS LISTS ALL FINISHED DOWNLOADERS TOO
             MAX_FINISHED_DOWNLOADERS = 8
             if len( old_and_finished ) == MAX_FINISHED_DOWNLOADERS:
-                self.log.debug( self.identity() + " waiting, too far ahead" )
+                self.log.info( self.identity() + " waiting, too far ahead" )
                 return
 
         if self.state == "finishd":
@@ -163,7 +163,7 @@ class task_base( Pyro.core.ObjBase ):
     def run( self ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         # TO DO: the subprocess module might be better than os.system?
-        self.log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + "]" )
+        self.log.debug( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + "]" )
         os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
         self.state = "running"
 
@@ -238,20 +238,17 @@ class task_base( Pyro.core.ObjBase ):
 
         self.latest_message = message
 
-        warning = ""
         if self.state != "running":
-            warning = "NON-RUNNING TASK: "
+            self.log.warning( "NON-RUNNING TASK: " + message )
 
         if self.postrequisites.requisite_exists( message ):
             if self.postrequisites.is_satisfied( message ):
-                warning = "ALREADY SATISFIED: "
+                self.log.warning( "ALREADY SATISFIED: " + message )
 
             self.postrequisites.set_satisfied( message )
 
         else:
-            warning = "UNEXPECTED: "
-
-        self.log.info( warning + message )
+            self.log.warning( "UNEXPECTED: " + message )
 
 
 #----------------------------------------------------------------------
@@ -580,7 +577,7 @@ class topnet( task_base ):
         m = re.compile( "^file (.*) ready$" ).match( prereq )
         [ file ] = m.groups()
 
-        self.log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + " " + file + "]" )
+        self.log.debug( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + " " + file + "]" )
         os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
         self.state = "running"
 
