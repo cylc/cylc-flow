@@ -75,7 +75,7 @@ while True:
                 ctrl_end = "\033[0m"
 
                 if state == "running":
-                    foo = "\033[1;37;44m" + name + frac + ctrl_end  # bold white on blue
+                    foo = "\033[1;37;41m" + name + frac + ctrl_end  # bold white on red
 
                 elif state == "waiting":
                     foo = "\033[32m" + name + ctrl_end       # green
@@ -95,7 +95,7 @@ while True:
                 if reftime in lines.keys():
                     lines[reftime] += ' ' + foo
                 else:
-                    lines[reftime] = indent + "\033[1;31m" + reftime + "\033[0m " + foo
+                    lines[reftime] = indent + "\033[1;34m" + reftime + "\033[0m " + foo
                 
             # sort reference times using int( string )
             reftimes = lines.keys()
