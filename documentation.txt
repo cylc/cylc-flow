@@ -33,28 +33,24 @@ This treats the prerequisites (e.g. input files) and postrequisites (e.g.
 output files) of individual tasks as fundamental, and allows tasks to interact
 in such a way that correct sequencing just emerges naturally at run time.  
 
-Let each external task be represented by a TASK OBJECT inside the controller.
+Each external task is represented by a TASK OBJECT inside the controller.
 A task object has a list of task-specific prerequisites (e.g. "input file X is
 ready") that have to be satisfied before the corresponding external task can
 run, and a set of task-specific "postrequisites" (e.g. "output file Y is
-complete") that will be completed by the task as it runs.  A task object can
-launch its external task when all its prerequisites are satisfied, and after
-that updates its internal state according to messages received from the
+complete") that will be completed by the task as it runs.  The external task
+can be launched when all its prerequisites are satisfied, after which the 
+task object updates its internal state according to messages received from the
 external task (e.g. notification of completed postrequisites). The Python
 Remote Objects module (Pyro) allows direct communication between an external
-task and the object that represents it in the controller.  Now we enable the
-task objects to interact: each task can ask all the other tasks, "can you
-satisfy any of my prequisites with your completed postrequisites?".  completed
-postrequisites can satisfy task A's  anyone's completed postrequisites can
-satisfy its own prerequisites (tasks do not need to know in advance *who* will
-satisfy their prerequisites).  Here's another way of putting it, from an email: 
-
-The important thing about the "object oriented controller" is that it only
-knows about individual tasks and their prerequisites and outputs, without
-reference to who supplies the inputs or who uses the outputs, i.e. there is no
-sequencing logic at all.  Task objects "talk amongst themselves" to match
-prerequisites and outputs so that correct sequencing just emerges naturally at
-run time.  
+task and the object that represents it in the controller.  We now let the
+task objects interact: each task can ask all the other tasks, "can you
+satisfy any of my prequisites with your completed postrequisites?".  Note
+that tasks do not need to know in advance *who* will satisfy their
+prerequisites.  The control system only knows about individual tasks and their
+prerequisites and outputs, without reference to who supplies the inputs or who
+uses the outputs, i.e. there is no sequencing logic at all.  Task objects
+"talk amongst themselves" to match prerequisites and outputs so that correct
+sequencing emerges naturally at run time.  
 
 Note that the pre- and post-requisites are just *messages* indicating that
 some condition has been satisfied.  In the case of messages like "file foo is
@@ -66,59 +62,31 @@ EcoConnect input/output directory rules for file locations.
 
 ---------- Task Management ----------
 
-Correct task sequencing (in the sense that no task will run before its
-prerequisites are satisfied) will result no matter how many tasks are
-"in play" at once, so long as all co-dependent tasks coexist at any one
-time so they can interact to match pre/post-requisites.  We still have
-to decide on one task creation scheme or another, however.  But this
-only matters in the following ways: (i) tasks can't start running
-before they're created, even if dependencies are satisfied already, (ii)
-having too many "waiting" tasks complicates system monitoring (ideally
-you only want to see that the next tasks that will be required are ready
-and waiting). 
+Correct TASK SEQUENCING, in the sense that no task will run before its
+prerequisites are satisfied, will occur regardless how many tasks are in play
+at once.  However, tasks creation and deletion must be managed to ensure that
+task objects exist by the time they are needed, but don't clutter the system
+with too many tasks that aren't needed yet or are already spent (this makes
+system monitoring difficult and, in extreme cases, may slow down task
+interaction).  
 
-ALSO, note that DURING CATCHUP, "correct model sequencing" is not
-equivalent to "orderly (i.e. by reference time) generation of products".
-E.g. nzlam can run continuously, regardless of downstream processing.
-An unconstrained system would provide fastest catchup throughput, but
-some products may be adversely affected if mintaka can't display the
-different-reference-time data well, e.g. meteograms, or seagrams if
-nztide goes way ahead of wave and ricom).  This isn't an issue 
-in real time mode: one cycle always completes before the next starts.
+Note that delayed task creation, in addition to prerequisites, can be used as
+a means of delaying task execution.
 
-IF THIS MATTERS we need to constrain the system by restricting task
-creation or through artificial dependencies, so that no products(T) are
-delayed by any (T+1) processing.  
-
-
-NOTE that these complexities are not inherent to this method, they'd
-need to be handled by any control system that allows any degree of
-"multiflight" behaviour (by "multiflight" I mean tasks for different T
-running at the same time, not just sequential catchup cycles with no
-"reference time cutoff" as in the old controller). We could make these
-problems all go away by not allowing multiflight (i.e. catchup one T at
-a time).  My ordered cycle overlap scheme, below, may be a good
-compromise.
-
-
-SCHEME ALLOWING ORDERED CYCLE OVERLAP
-
-This, I suggest, is probably about the simplest possible design that
-handles ALL of our (pre-topnet-runahead) requirements, while ENSURING
-orderly product generation even when cycles overlap and being easy to
-understand and monitor.  BUT, IT DOES NOT ACCOMMODATE THE TOPNET
-RUNAHEAD IDEA (see below). 
+Note that during CATCHUP "correct model sequencing" is not equivalent to
+"orderly generation of products by reference time".  E.g. nzlam can run
+continuously, regardless of the downstream processing that depends on it.
 
 
 TASK ZERO: 
 
-This task (the "downloader") is special in that it provides the initial
-input to get the whole system started. It must be able to start running
-immediately, i.e. have no prerequisites (except that previous instances
-of itself must be finished) or else nothing will run at all. The
-downloader's external task should watch for incoming files for cycle T
-and report back ready when the download has completed OR if the files
-already exist because they were downloaded previously.
+This task (the "downloader") is special in that it provides the initial input
+to get the whole system started. It must be able to start running immediately,
+i.e. have no prerequisites (except that previous instances of itself must be
+finished) or else nothing will run at all. The downloader's external task
+should watch for the right incoming files and report back ready when the
+download has completed OR if the files already exist because they were
+downloaded previously.
 
 INTER-CYCLE DEPENDENCIES:
 
