@@ -6,6 +6,14 @@
                    See repository documentation
 """
 
+# PYRO NOTES:
+# if using an external pyro nameserver, unregister
+# objects from previous runs first:
+#try:
+#    self.pyro_daemon.disconnect( task )
+#except NamingError:
+#    pass
+
 import dclock
 
 import Pyro.core
@@ -61,18 +69,21 @@ class task_manager ( Pyro.core.ObjBase ):
 
 
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
+
+        # class creation can increase the reference time so can't check
+        # for stop until after creation
         task = class_from_module( "tasks", task_name )( ref_time, state )
-        log.info( "Created " + task_name + " for " + task.ref_time )
+
+        if stop_time:
+            if int( task.ref_time ) > int( stop_time ):
+                task.log.warning( task.name + " STOPPING at " + stop_time )
+                del task
+                return
+
+        task.log.info( "New " + task.name + " created for " + task.ref_time )
         self.task_pool.append( task )
         # connect new task to the pyro daemon
         uri = self.pyro_daemon.connect( task, task.identity() )
-        # if using an external pyro nameserver, unregister
-        # objects from previous runs first:
-        #try:
-        #    self.pyro_daemon.disconnect( task )
-        #except NamingError:
-        #    pass
-
 
     def create_initial_tasks( self ):
 
@@ -82,7 +93,6 @@ class task_manager ( Pyro.core.ObjBase ):
 
         for task_name in self.task_list:
             self.create_task_by_name( task_name, self.start_time )
-
 
 
     def remove_dead_soldiers( self ):
@@ -143,7 +153,6 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def process_tasks( self ):
         # this function gets called every time a pyro event comes in
-
 
         if len( self.task_pool ) == 0:
             log.critical( "ALL TASKS DONE" )
@@ -210,6 +219,10 @@ class task_manager ( Pyro.core.ObjBase ):
         # older than oldest_running (BUT: make sure this doesn't break
         # the dead soldier test).
 
+        if len( still_running ) == 0:
+            log.critical( "ALL TASKS DONE" )
+            sys.exit(0)
+
         still_running.sort( key = int )
         oldest_running = still_running[0]
 
@@ -227,21 +240,21 @@ class task_manager ( Pyro.core.ObjBase ):
 
         log.debug( "keep tasks " + cutoff + " or newer")
         
-        remove = []
+        remove_these = []
         for rt in batch_finished.keys():
             if int( rt ) < int( cutoff ):
                 if batch_finished[rt]:
                     for task in self.task_pool:
                         if task.ref_time == rt:
-                            remove.append( task )
+                            remove_these.append( task )
 
-        if len( remove ) > 0:
-            for task in remove:
+        if len( remove_these ) > 0:
+            for task in remove_these:
                 log.debug( "removing spent " + task.name + " for " + task.ref_time )
                 self.task_pool.remove( task )
                 self.pyro_daemon.disconnect( task )
 
-        del remove
+        del remove_these
 
         self.remove_dead_soldiers()
    
@@ -291,6 +304,7 @@ if __name__ == "__main__":
     print
     
     start_time_arg = None
+    stop_time = None
     config_file = None
     
     if n_args == 2:
@@ -312,12 +326,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if config_file:
+        # load the config file
         print "config file: " + config_file
         # strip of the '.py'
         m = re.compile( "^(.*)\.py$" ).match( config_file )
         modname = m.groups()[0]
-        # load the config file
-        exec "from " + modname + " import start_time, task_list"
+        # load it now
+        exec "from " + modname + " import *"
 
     else:
         print "no config file, running all tasks"
@@ -362,6 +377,10 @@ if __name__ == "__main__":
 
     print 'Start time ' + start_time
     log.info( 'Start time ' + start_time )
+
+    if stop_time:
+        print 'Stop time ' + stop_time
+        log.info( 'Stop time ' + stop_time )
 
     #if shared.run_mode == 1:
     #    # dummy mode clock in its own thread
