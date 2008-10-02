@@ -61,7 +61,7 @@ class task_base( Pyro.core.ObjBase ):
         # adjust ref time (needed for creation of initial task list)
         self.ref_time = self.nearest_ref_time( ref_time )
 
-        self.log = logging.getLogger( "ecoconnect." + self.name ) 
+        self.log = logging.getLogger( "main." + self.name ) 
 
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
