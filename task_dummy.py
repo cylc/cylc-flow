@@ -23,7 +23,7 @@ import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
 
 from time import sleep
-import shared
+from config import run_mode
 
 pyro_shortcut = False
 
@@ -57,7 +57,7 @@ else:
     # create a proxy for the Pyro object, and return that
     task = Pyro.core.getProxyForURI( URI )
 
-if task_name == "downloader" and shared.run_mode == 1:
+if task_name == "downloader" and run_mode == 'dummy_realtime':
     task.incoming( "NORMAL", "waiting for incoming files ...")
     # simulate real time mode by delaying downloader
     # input until previous tasks have all finished.
@@ -77,8 +77,8 @@ if task_name == "downloader" and shared.run_mode == 1:
         state = Pyro.core.getProxyForURI( URI )
 
     while True:
-        if int( state.get_time_of_oldest_running_task() ) < int( ref_time ):
-            sleep(1)
+        if state.older_running_tasks_exist( ref_time ):
+            sleep(2)
         else:
             break
 
@@ -86,11 +86,11 @@ if task_name == "downloader" and shared.run_mode == 1:
 for message in task.get_postrequisite_list():
     task.incoming( "NORMAL", message )
     if task_name == "nzlam" or task_name == "nzwave":
-        sleep(20)
-    elif task_name == "ricom":
         sleep(10)
+    elif task_name == "ricom":
+        sleep(5)
     elif task_name == "topnet":
-        sleep(0.5)
+        sleep(1)
     else:
         sleep(2)
 

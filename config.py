@@ -10,10 +10,18 @@
 #  (3) task_list (list of task name strings, subset of tasks.all_tasks)
 #      * defaults to tasks.all_tasks
 #  (4) verbosity (string, output level) 
-#      * NORMAL (default)
-#      * VERBOSE  
+#      * 'NORMAL' (default)
+#      * 'VERBOSE'  
+#  (5) run_mode 
+#      * 'real_models'
+#      * 'dummy_realtime'  (downloader waits for earlier tasks to finish)
+#      * 'dummy_catchup'   (downloader returns immediately) 
 
 #verbosity = "VERBOSE"
+
+#run_mode = 'real_models'    
+run_mode = 'dummy_realtime'     
+#run_mode = 'dummy_catchup'    
 
 # start_time and stop_time must be strings
 start_time = "2008080812"

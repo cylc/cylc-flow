@@ -21,7 +21,6 @@ import Pyro.naming
 
 import reference_time
 from tasks import *
-import shared 
 from get_instance import get_instance
 import threading
 
@@ -294,13 +293,12 @@ if __name__ == "__main__":
         print "(iii) both: run the configured tasks, but override the"
         print "     configure start time"
 
-    def banner():
-        print
-        print "__________________________________________________________"
-        print "      .                                           ."
-        print "      . EcoConnect Implicit Scheduling Controller ."
-        print "__________________________________________________________"
-        print
+    print
+    print "__________________________________________________________"
+    print "      .                                           ."
+    print "      . EcoConnect Implicit Scheduling Controller ."
+    print "__________________________________________________________"
+    print
     
     # TO DO: better commandline parsing with optparse or getopt
     start_time_arg = None
@@ -391,11 +389,6 @@ if __name__ == "__main__":
     if stop_time:
         print 'Stop time ' + stop_time
         log.debug( 'Stop time ' + stop_time )
-
-    #if shared.run_mode == 1:
-    #    # dummy mode clock in its own thread
-    #    shared.dummy_clock = dclock.dclock( sys.argv[1] )
-    #    shared.dummy_clock.start()
 
     # initialise the task manager
     god = task_manager( start_time, task_list )

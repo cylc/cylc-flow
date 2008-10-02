@@ -46,14 +46,13 @@ class system_status( Pyro.core.ObjBase ):
     def get_status( self ):
         return self.status
 
-    def get_time_of_oldest_running_task( self ):
+    def older_running_tasks_exist( self, rt ):
         reftimes = []
         for task_id in self.status.keys():
             [name, reftime] = string.split( task_id, "_" )
             [state, complete, total, latest ] = self.status[ task_id ]
 
-            if state == "running":
-                reftimes.append( reftime )
+            if state == "running" and int( reftime ) < int( rt ):
+                return True
 
-        reftimes.sort( key = int )
-        return reftimes[0]
+        return False
