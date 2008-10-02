@@ -112,11 +112,13 @@ class task_manager ( Pyro.core.ObjBase ):
             if not task.will_get_satisfaction( batches[ oldest_rt ] ):
                 dead_soldiers.append( task )
     
-        for soldier in dead_soldiers:
-            soldier.log.warning( "abdicating a dead soldier " + soldier.identity() )
-            self.create_task_by_name( soldier.name, soldier.next_ref_time() )
-            self.task_pool.remove( soldier )
-            del soldier
+        for task in dead_soldiers:
+            task.log.warning( "abdicating a dead soldier " + task.identity() )
+            self.create_task_by_name( task.name, task.next_ref_time() )
+            self.task_pool.remove( task )
+            self.pyro_daemon.disconnect( task )
+
+            del task
 
 
     def run( self ):
