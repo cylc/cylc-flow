@@ -58,7 +58,7 @@ else:
     task = Pyro.core.getProxyForURI( URI )
 
 if task_name == "downloader" and shared.run_mode == 1:
-    task.incoming( "waiting for incoming files ...")
+    task.incoming( "NORMAL", "waiting for incoming files ...")
     # simulate real time mode by delaying downloader
     # input until previous tasks have all finished.
 
@@ -84,7 +84,7 @@ if task_name == "downloader" and shared.run_mode == 1:
 
 # set each postrequisite satisfied in turn
 for message in task.get_postrequisite_list():
-    task.incoming( message )
+    task.incoming( "NORMAL", message )
     if task_name == "nzlam" or task_name == "nzwave":
         sleep(20)
     elif task_name == "ricom":

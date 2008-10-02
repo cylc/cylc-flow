@@ -233,7 +233,7 @@ class task_base( Pyro.core.ObjBase ):
     def get_valid_hours( self ):
         return self.valid_hours
 
-    def incoming( self, message ):
+    def incoming( self, priority, message ):
         # receive all incoming pyro messages for this task 
 
         self.latest_message = message
@@ -245,10 +245,18 @@ class task_base( Pyro.core.ObjBase ):
             if self.postrequisites.is_satisfied( message ):
                 self.log.warning( "ALREADY SATISFIED: " + message )
 
+            self.log.debug( message )
             self.postrequisites.set_satisfied( message )
 
         else:
-            self.log.warning( "UNEXPECTED: " + message )
+            if priority == "NORMAL":
+                self.log.debug( "(non-p.r.) " + message )
+            elif priority == "WARNING":
+                self.log.warning( "(non-p.r.) " + message )
+            elif priority == "CRITICAL":
+                self.log.critical( "(non-p.r.) " + message )
+            else:
+                self.log.warning( "(non-p.r.; unknown priority) " + message )
 
 
 #----------------------------------------------------------------------
