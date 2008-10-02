@@ -22,7 +22,7 @@ import Pyro.naming
 import reference_time
 from tasks import *
 import shared 
-from class_from_module import class_from_module
+from get_instance import get_instance
 import threading
 
 from system_status import system_status
@@ -72,7 +72,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # class creation can increase the reference time so can't check
         # for stop until after creation
-        task = class_from_module( "tasks", task_name )( ref_time, state )
+        task = get_instance( "tasks", task_name )( ref_time, state )
 
         if stop_time:
             if int( task.ref_time ) > int( stop_time ):

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 """
-allow class instantiation by name, without using eval
+class instantiation by module and class name
 
 E.g.:
 
@@ -14,10 +14,10 @@ class bar:
 		print self.greeting
 
 ##main.py:
-baz = class_from_module( "foo", "bar" )("hello")
+baz = get_instance( "foo", "bar" )("hello")
 baz.greet()
 """
 
-def class_from_module( module, class_name ):
+def get_instance( module, class_name ):
 	mod = __import__( module )
 	return getattr( mod, class_name)
