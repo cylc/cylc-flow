@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
 """
-Simple system monitor program.
+Display progress of currently running tasks objects.
 
-It connects to the controller's "state" object via Pyro,
-and displays its contents in a terminal.
+Connects to the controller's "state" object via Pyro,
+and displays in a terminal.
 
 See system_status.py for class documentation.
 
@@ -27,30 +27,21 @@ class kit:
         self.len = len( title )
 
     def boof( self ):
-        a = b = c = '\033[1;31m'
+        a = '\033[1;34m'
         for i in range( 1, self.len - 1 ):
             if i == self.pos:
-                a += '-\033[0m'
-                b += self.title[i] + '\033[0m'
-                c += '-\033[0m'
+                a += self.title[i] + '\033[0m'
             else:
-                a += ' '
-                b += self.title[i]
-                c += ' '
+                a += self.title[i]
 
         if self.pos == self.len:
             self.pos = 1
         else:
             self.pos += 1
 
-        return [a,b,c] 
+        return [a] 
 
 title = kit( "EcoConnect System Monitor" )
-
-show_all = False
-if len( sys.argv ) == 2:
-    if sys.argv[1] == '-a':
-        show_all = True
 
 while True:
     # the following "try" ... "except" block allows the system monitor
@@ -69,7 +60,6 @@ while True:
             status = remote.get_status()
 
             max_name_len = 0
-            max_state_len = 0
             max_total_len = 0
             max_prog_len = 0
             lines = {}
@@ -88,11 +78,7 @@ while True:
                 if int( total ) > max_prog_len:
                     max_prog_len = int( total )
 
-                if len( state ) > max_state_len:
-                    max_state_len = len( state )
-
             for task_id in status.keys():
-
                 [name, reftime] = split( task_id, "_" )
                 [state, complete, total, latest ] = status[ task_id ]
 
@@ -110,58 +96,36 @@ while True:
 
                 ctrl_end = "\033[0m"
 
-                st = state
-
                 if state == "running":
-                    state = ljust( state, max_state_len + 1 )
-                    foo_start = "\033[1;37;44m"   # bold white on blue
-                    bar_start = "\033[1;34m"  # bold blue
-                    line = bar_start + "  " + ctrl_end + foo_start + name + ctrl_end + " " + bar_start + state + " " + frac + " " + prog + " " + latest + ctrl_end
+                    foo_start = "\033[1;37;42m"   # bold white on blue
+                    bar_start = "\033[0;34m"  # bold blue
+                    line = bar_start + "  " + ctrl_end + foo_start + name + ctrl_end + " " + bar_start + " " + frac + " " + prog + " " + latest + ctrl_end
 
-                elif state == "waiting":
-                    state = ljust( state, max_state_len + 1 )
-                    foo_start = "\033[32m"        # green
-                    line = foo_start + "  " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
+                    if reftime in lines.keys(): 
+                        lines[ reftime ].append( line )
 
-                elif state == "finishd":
-                    state = ljust( state, max_state_len + 1 )
-                    foo_start = "\033[0m"         # black
-                    line = foo_start + "  " + name + " " + state + " " + frac + " " + prog + " " + latest + ctrl_end
-
-                else:
-                    line = "!ERROR!"
-
-                if reftime in lines.keys(): 
-                    lines[ reftime ].append( line )
-                    if st != "waiting":
-                        all_waiting[reftime] = False
-                else:
-                    # first appearane of rt
-                    lines[ reftime ] = [ line ]
-                    if st != "waiting":
-                        all_waiting[reftime] = False
                     else:
-                        all_waiting[reftime] = True
-
+                        # first appearane of rt
+                        lines[ reftime ] = [ line ]
 
             # sort reference times using int( string )
             reftimes = lines.keys()
             reftimes.sort( key = int )
 
             blit = title.boof()
+            blit.append( "  Current Running Tasks" )
             for rt in reftimes:
-                blit.append( "\033[1;31m" + "__________" + "\033[0m" ) # red
-                blit.append( "\033[1;31m" + rt + "\033[0m" )  # red
+                if len( lines[rt] ) != 0:
+                    blit.append( "\033[1;31m" + "__________" + "\033[0m" ) # red
+                    blit.append( "\033[1;31m" + rt + "\033[0m" )  # red
 
-                if all_waiting[ rt ] and not show_all:
-                     blit.append( "(all waiting)" )
-                else:
-                     for line in lines[rt]:
+                    for line in lines[rt]:
                         blit.append( line )
 
             os.system( "clear" )
             for line in blit:
                 print line
+
             sleep(0.5)
 
     except:

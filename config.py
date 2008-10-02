@@ -10,8 +10,9 @@
 #  (3) task_list (list of task name strings, subset of tasks.all_tasks)
 #      * defaults to tasks.all_tasks
 #  (4) verbosity (string, output level) 
-#      * 'NORMAL' (default)
-#      * 'VERBOSE'  
+#      * 'NORMAL' all task messages logged, and some controller messages 
+#      * 'VERBOSE' for debugging the controller itself 
+#      * defaults to 'NORMAL'
 #  (5) run_mode 
 #      * 'real_models'
 #      * 'dummy_realtime'  (downloader waits for earlier tasks to finish)

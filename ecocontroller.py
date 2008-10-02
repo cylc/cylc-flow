@@ -14,8 +14,6 @@
 #except NamingError:
 #    pass
 
-import dclock
-
 import Pyro.core
 import Pyro.naming
 

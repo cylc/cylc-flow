@@ -27,23 +27,19 @@ class kit:
         self.len = len( title )
 
     def boof( self ):
-        a = b = c = '\033[1;31m'
-        for i in range( 1, self.len - 1 ):
+        a =  '\033[1;31m'
+        for i in range( 1, self.len - 1):
             if i == self.pos:
-                a += '-\033[0m'
-                b += self.title[i] + '\033[0m'
-                c += '-\033[0m'
+                a += self.title[i] + '\033[0m'
             else:
-                a += ' '
-                b += self.title[i]
-                c += ' '
+                a += self.title[i]
 
         if self.pos == self.len:
             self.pos = 1
         else:
             self.pos += 1
 
-        return [a,b,c] 
+        return [a] 
 
 title = kit( "EcoConnect System Monitor" )
 
@@ -75,10 +71,10 @@ while True:
                 ctrl_end = "\033[0m"
 
                 if state == "running":
-                    foo = "\033[1;37;41m" + name + frac + ctrl_end  # bold white on red
+                    foo = "\033[1;37;42m" + name + frac + ctrl_end  # bold white on green
 
                 elif state == "waiting":
-                    foo = "\033[32m" + name + ctrl_end       # green
+                    foo = "\033[35m" + name + ctrl_end       # magenta
 
                 else:
                     foo = name
@@ -102,9 +98,11 @@ while True:
             reftimes.sort( key = int )
 
             blit = title.boof()
+            blit.append("  Current Task Objects")
+            blit.append("  \033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done" )
+            blit.append("")
             for rt in reftimes:
-
-                    blit.append( lines[rt] )
+                blit.append( lines[rt] )
 
             os.system( "clear" )
             for line in blit:
