@@ -348,7 +348,7 @@ if __name__ == "__main__":
         os.makedirs( 'LOGFILES' )
 
     log = logging.getLogger( "ecoconnect" )
-    log.setLevel( logging.DEBUG )
+    log.setLevel( logging.WARNING )
     max_bytes = 10000
     backups = 5
     h = logging.handlers.RotatingFileHandler( 'LOGFILES/ecoconnect', 'a', max_bytes, backups )
@@ -369,6 +369,7 @@ if __name__ == "__main__":
     # these propagate messages up to the main log
     for name in all_tasks:
         foo = logging.getLogger( "ecoconnect." + name )
+        foo.setLevel( logging.WARNING )
 
         h = logging.handlers.RotatingFileHandler( 'LOGFILES/' + name, 'a', max_bytes, backups )
         f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )

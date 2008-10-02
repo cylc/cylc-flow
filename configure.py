@@ -7,8 +7,13 @@
 #      * can override with the commandline
 #  (2) stop_time (string, "YYYYMMHHDD")
 #      * defaults to None (i.e. never stop)
-#  (3) task_list (list of string task names, subset of tasks.all_tasks)
+#  (3) task_list (list of task name strings, subset of tasks.all_tasks)
 #      * defaults to tasks.all_tasks
+#  (4) python logging module output level 
+#      * DEBUG -- normal output (default)
+#      * INFO  -- most verbose output
+
+logging_level = "DEBUG"
 
 # start_time and stop_time must be strings
 start_time = "2008080806"
