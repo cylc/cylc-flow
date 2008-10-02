@@ -130,7 +130,6 @@ class fuzzy_requisites( requisites ):
 
                         if other_start == my_start and other_end == my_end:
                             if other_reftime >= my_reftime:
-                                print "FUZZY PREREQ: " + prereq
-                                print "SATISFIED BY: " + postreq
-                                #self.set_satisfied( prereq )
+                                #print "FUZZY PREREQ: " + prereq
+                                #print "SATISFIED BY: " + postreq
                                 self.sharpen_up( prereq, postreq )
