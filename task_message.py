@@ -23,7 +23,7 @@ if len( sys.argv ) != 5:
     sys.exit(1)
     
 [priority, task_name, ref_time] = sys.argv[1:4]
-message = sys.argv[3]
+message = sys.argv[4]
 
 # TO DO: use exception handling when I know how to report the real error
 # (which is generally more useful than my own error message)
