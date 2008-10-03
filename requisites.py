@@ -18,7 +18,15 @@ import re
 
 class requisites:
 
-    def __init__( self, reqs ):
+    def __init__( self, task_name, reqs ):
+
+        # name of my "host task" 
+        # (is there a better way to get this information?)
+        self.my_task_name = task_name
+        self.log = logging.getLogger( "main." + self.my_task_name ) 
+
+        self.log.info( "HELLO FROM REQUISITES" )
+
         self.satisfied = {}
         self.ordered_list = reqs  
         for req in reqs:

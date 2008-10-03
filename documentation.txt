@@ -96,29 +96,12 @@ simultaneously, or out of order, but it complicates system startup (there
 are no previous tasks at this time) and means finished tasks have to stay
 around longer (so that foo(T-1) can tell foo(T) it is finished). 
 
-Instead we can do this: a task can start "running" only if (a) no previous
-instance of itself exists, OR (b) any previous instance of itself that still
-exists is in a "finished" state.  This prevents running out of order but
-system startup is no longer a special case, and tasks can die as soon as all
-of their same-cycle peers are finished.
-
-CYCLE OVERLAP:
-
-The usefulness of cycle overlap depends on the fact that the first M
-tasks in a cycle run on one machine (kupe) and take longer to execute
-than the remaining N tasks which execute on another machine. This
-implies M(T+1;kupe) can run at the same time as N(T;pa) without delaying
-completion of N(T;pa) by resource contention. 
-
-Let each task know if it runs on kupe, then the new T+1 cycle can start IF:
-  (a) all tasks(T) have finished,
-    OR
-  (b) (i) all kupe tasks have finished for T
-        AND 
-      (ii) at least one kupe task is configured for T+1.
-
-Note that without b_ii a task foo(T+1) would compete with remaining tasks(T)
-as soon as foo(T) is finished.
+Instead we can let a task start "running" only if no previous instance of it
+exist, OR any previous instance that still exists is in a "finished" state.
+This prevents running out of order but system startup is no longer a special
+case, and tasks can die as soon as all of their same-cycle peers are finished
+(this task death criterion has since been modified to allow for topnet
+runahead, below).
 
 TASK CREATION:
 

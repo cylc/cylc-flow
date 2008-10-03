@@ -290,7 +290,7 @@ class downloader( task_base ):
         lbc_12 = reference_time.decrement( ref_time, 12 )
 
         if hour == "00":
-            self.postrequisites = requisites([ 
+            self.postrequisites = requisites( self.name, [ 
                     self.name + " started for " + ref_time,
                     "file obstore_" + ref_time + ".um ready",
                     "file bgerr" + ref_time + ".um ready", 
@@ -301,7 +301,7 @@ class downloader( task_base ):
                     ])
 
         elif hour == "12":
-            self.postrequisites = requisites([ 
+            self.postrequisites = requisites( self.name, [ 
                     self.name + " started for " + ref_time,
                     "file obstore_" + ref_time + ".um ready",
                     "file bgerr" + ref_time + ".um ready", 
@@ -310,7 +310,7 @@ class downloader( task_base ):
                     ])
 
         if hour == "06" or hour == "18":
-            self.postrequisites = requisites([
+            self.postrequisites = requisites( self.name, [
                     self.name + " started for " + ref_time,
                     "file obstore_" + ref_time + ".um ready",
                     "file bgerr" + ref_time + ".um ready",
@@ -337,26 +337,26 @@ class nzlam( task_base ):
         lbc_12 = reference_time.decrement( ref_time, 12 )
 
         if hour == "00" or hour == "12":
-            self.prerequisites = requisites([ 
+            self.prerequisites = requisites( self.name, [ 
                 "file obstore_" + ref_time + ".um ready",
                 "file bgerr" + ref_time + ".um ready",
                 "file lbc_" + lbc_12 + ".um ready" 
                 ])
 
-            self.postrequisites = requisites([ 
+            self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
                 "file sls_" + ref_time + ".um ready",   
                 self.name + " finished for " + ref_time
                 ])
  
         elif hour == "06" or hour == "18":
-            self.prerequisites = requisites([ 
+            self.prerequisites = requisites( self.name, [ 
                 "file obstore_" + ref_time + ".um ready",
                 "file bgerr" + ref_time + ".um ready",
                 "file lbc_" + lbc_06 + ".um ready" 
                 ])
 
-            self.postrequisites = requisites([ 
+            self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
                 "file tn_" + ref_time + ".um ready",
                 "file sls_" + ref_time + ".um ready",   
@@ -380,24 +380,24 @@ class nzlampost( task_base ):
         hour = ref_time[8:10]
 
         if hour == "00" or hour == "12":
-            self.prerequisites = requisites([ 
+            self.prerequisites = requisites( self.name, [ 
                 "file sls_" + ref_time + ".um ready",   
                 ])
 
-            self.postrequisites = requisites([ 
+            self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file sls_" + ref_time + ".nc ready",   
                 self.name + " finished for " + ref_time
                 ])
 
         elif hour == "06" or hour == "18":
-            self.prerequisites = requisites([ 
+            self.prerequisites = requisites( self.name, [ 
                 "file tn_" + ref_time + ".um ready",
                 "file sls_" + ref_time + ".um ready",   
                 "file met_" + ref_time + ".um ready" 
                 ])
 
-            self.postrequisites = requisites([ 
+            self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
                 "file tn_" + ref_time + ".nc ready",
                 "file sls_" + ref_time + ".nc ready",   
@@ -418,11 +418,11 @@ class globalprep( task_base ):
         ref_time = self.ref_time
 
 
-        self.prerequisites = requisites([ 
+        self.prerequisites = requisites( self.name, [ 
                 "file 10mwind_" + ref_time + ".um ready",
                 "file seaice_" + ref_time + ".um ready" ])
 
-        self.postrequisites = requisites([
+        self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file 10mwind_" + ref_time + ".nc ready",
                 "file seaice_" + ref_time + ".nc ready",
@@ -443,11 +443,11 @@ class globalwave( task_base ):
         ref_time = self.ref_time
 
 
-        self.prerequisites = requisites([ 
+        self.prerequisites = requisites( self.name, [ 
                 "file 10mwind_" + ref_time + ".nc ready",
                 "file seaice_" + ref_time + ".nc ready" ])
 
-        self.postrequisites = requisites([
+        self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file globalwave_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
@@ -466,10 +466,10 @@ class nzwave( task_base ):
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
 
-        self.prerequisites = requisites([ 
+        self.prerequisites = requisites( self.name, [ 
                  "file sls_" + ref_time + ".nc ready" ])
 
-        self.postrequisites = requisites([
+        self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file nzwave_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
@@ -488,10 +488,10 @@ class ricom( task_base ):
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
 
-        self.prerequisites = requisites([ 
+        self.prerequisites = requisites( self.name, [ 
                  "file sls_" + ref_time + ".nc ready" ])
 
-        self.postrequisites = requisites([
+        self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file ricom_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
@@ -513,11 +513,11 @@ class mos( task_base ):
         hour = ref_time[8:10]
 
         if hour == "06" or hour == "18":
-            self.prerequisites = requisites([ 
+            self.prerequisites = requisites( self.name, [ 
                 "file met_" + ref_time + ".nc ready"
                 ])
         else:
-            self.prerequisites = requisites([])
+            self.prerequisites = requisites( self.name, [])
 
         self.postrequisites = requisites([
                 self.name + " started for " + ref_time,

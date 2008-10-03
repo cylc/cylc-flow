@@ -90,7 +90,7 @@ for message in task.get_postrequisite_list():
     elif task_name == "ricom":
         sleep(5)
     elif task_name == "topnet":
-        sleep(1)
+        sleep(.5)
     else:
         sleep(2)
 
