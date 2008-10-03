@@ -2,10 +2,9 @@ TO DO LIST
 
 * proper exception handling
 
-* multflight startup config 
-  (and dump it regularly to ease restarting)
+* multflight state/config dump to ease restarting
 
-* clock based dummy mode
+* clock based dummy mode (e.g. 6 hours RT <--> 5min real)?
 
-* implement DEAD non-configured tasks, so that abdication works even when
-  the first cycle does not contain all possible tasks.
+* give requisite task host-object knowledge, so that who satisfied
+  what can be logged appropriately.
