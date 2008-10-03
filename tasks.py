@@ -281,7 +281,7 @@ class downloader( task_base ):
         hour = ref_time[8:10]
 
         # no prerequisites: this is The Initial Task
-        self.prerequisites = requisites([])
+        self.prerequisites = requisites( self.name, [])
 
         # my postrequisites are files needed FOR my reference time
         # (not files downloaded at my reference time) 
@@ -519,7 +519,7 @@ class mos( task_base ):
         else:
             self.prerequisites = requisites( self.name, [])
 
-        self.postrequisites = requisites([
+        self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file mos_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
@@ -539,10 +539,10 @@ class nztide( task_base ):
         ref_time = self.ref_time
 
         # artificial prerequisite to stop nztide running ahead
-        self.prerequisites = requisites([
+        self.prerequisites = requisites( self.name, [
                 "downloader started for " + ref_time ])
 
-        self.postrequisites = requisites([
+        self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file nztide_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
@@ -564,10 +564,10 @@ class topnet( task_base ):
         nzlam_cutoff = reference_time.decrement( ref_time, 24 )
  
         # fuzzy prequisites: nzlam 24 hours old or less
-        self.prerequisites = fuzzy_requisites([ 
+        self.prerequisites = fuzzy_requisites( self.name, [ 
                 "file tn_" + nzlam_cutoff + ".nc ready" ])
 
-        self.postrequisites = requisites([ 
+        self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
                 "file topnet_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
@@ -602,10 +602,10 @@ class nwpglobal( task_base ):
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
 
-        self.prerequisites = requisites([ 
+        self.prerequisites = requisites( self.name, [ 
                  "file 10mwind_" + ref_time + ".um ready" ])
 
-        self.postrequisites = requisites([
+        self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file 10mwind_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
