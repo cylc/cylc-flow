@@ -15,7 +15,7 @@ there may be extra postrequisites, to be used for monitoring progress.
 
 import sys
 import re
-#import logging
+import logging
 
 class requisites:
 
@@ -25,11 +25,10 @@ class requisites:
         # (is there a better way to get this information?)
         self.task_name = task_name
 
-
-        # can't do this because thread use in logger makes an 
-        # "un-deep-copyable" object.
-        #self.log = logging.getLogger( "main." + task_name ) 
-        #self.log.info( "HELLO FROM REQUISITES" )
+        # can't do this because thread use in logger results
+        # in an "un-deep-copyable" object.
+        # self.log = logging.getLogger( "main." + task_name ) 
+        # self.log.info( "HELLO FROM REQUISITES" )
 
         self.satisfied = {}
         self.ordered_list = reqs  
@@ -72,6 +71,8 @@ class requisites:
         return self.satisfied
 
     def satisfy_me( self, postreqs ):
+
+
         # can another's completed postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
@@ -81,6 +82,10 @@ class requisites:
                     # compare it with each of the other's postreqs
                     if postreq == prereq and postreqs.satisfied[postreq]:
                         # if they match, my prereq has been satisfied
+            
+                        log = logging.getLogger( "main." + self.task_name ) 
+                        log.info( postreqs.task_name + " satisfied: " + prereq )
+
                         self.set_satisfied( prereq )
 
     def will_satisfy_me( self, postreqs ):
