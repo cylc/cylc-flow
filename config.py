@@ -20,9 +20,7 @@
 
 #verbosity = "VERBOSE"
 
-#run_mode = 'real_models'    
-#run_mode = 'dummy_realtime'     
-run_mode = 'dummy_catchup'    
+run_mode = 'dummy'    
 
 # start_time and stop_time must be strings
 start_time = "2008080812"

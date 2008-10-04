@@ -31,6 +31,9 @@ import re
 import sys
 import Pyro.core
 
+import dummy_clock
+
+
 class task_manager ( Pyro.core.ObjBase ):
 
     def __init__( self, start_time, task_list ):

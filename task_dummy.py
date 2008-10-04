@@ -23,7 +23,6 @@ import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
 
 from time import sleep
-from config import run_mode
 
 pyro_shortcut = False
 
@@ -56,31 +55,6 @@ else:
 
     # create a proxy for the Pyro object, and return that
     task = Pyro.core.getProxyForURI( URI )
-
-if task_name == "downloader" and run_mode == 'dummy_realtime':
-    task.incoming( "NORMAL", "waiting for incoming files ...")
-    # simulate real time mode by delaying downloader
-    # input until previous tasks have all finished.
-
-    if pyro_shortcut:
-        state = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
-
-    else:
-        print "finding system state object"
-        try:
-            URI = ns.resolve( 'state' )
-            print 'URI:', URI
-        except NamingError,x:
-            print "failed: ", x
-            raise SystemExit
-
-        state = Pyro.core.getProxyForURI( URI )
-
-    while True:
-        if state.older_running_tasks_exist( ref_time ):
-            sleep(2)
-        else:
-            break
 
 # set each postrequisite satisfied in turn
 for message in task.get_postrequisite_list():
