@@ -31,7 +31,19 @@ import re
 import sys
 import Pyro.core
 
-import dummy_clock
+from dummy_clock import *
+
+
+class LogFilter(logging.Filter):
+
+    def __init__(self, dclock, name = "" ):
+        logging.Filter.__init__( self, name )
+        self.dummy_clock = dclock
+
+    def filter(self, record):
+        # replace log message time stamp with dummy time
+        record.created = self.dummy_clock.get_epoch()
+        return True
 
 
 class task_manager ( Pyro.core.ObjBase ):
@@ -66,6 +78,7 @@ class task_manager ( Pyro.core.ObjBase ):
         self.dead_letter_box = dead_letter_box()
         uri = self.pyro_daemon.connect( self.dead_letter_box, "dead_letter_box" )
 
+        uri = self.pyro_daemon.connect( dummy_clock, "dummy_clock" )
 
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
 
@@ -302,10 +315,17 @@ if __name__ == "__main__":
     print
     
     # TO DO: better commandline parsing with optparse or getopt
+    # (maybe not needed as most input is from the config file?)
     start_time_arg = None
     stop_time = None
     config_file = None
     verbosity = "NORMAL"
+
+    # start the dummy clock <offset> hours after start ref time
+    # advance an hour every <rate> seconds
+    dummy_mode = False
+    dummy_offset = None  
+    dummy_rate = 20      
     
     if n_args == 2:
         start_time_arg = sys.argv[1]
@@ -343,7 +363,11 @@ if __name__ == "__main__":
         start_time = start_time_arg
 
 
-    # python logging module levels: INFO, DEBUG, WARNING, ERROR, CRITICAL
+    if dummy_mode:
+        print 'RUNNING IN DUMMY MODE'
+        dummy_clock = dummy_clock( start_time, dummy_rate, dummy_offset ) 
+
+    # python logging levels: INFO, DEBUG, WARNING, ERROR, CRITICAL
     # i.e. INFO is most verbose, use DEBUG for normal program reporting
     if verbosity == "VERBOSE":
         logging_level = logging.INFO
@@ -365,13 +389,14 @@ if __name__ == "__main__":
     h.setFormatter(f)
     log.addHandler(h)
 
-
     # write warnings and worse to stderr as well as to the log
     h2 = logging.StreamHandler(sys.stderr)
     h2.setLevel( logging.WARNING )
     h2.setFormatter( f )
     log.addHandler(h2)
 
+    if dummy_mode:
+        log.addFilter( LogFilter( dummy_clock, "main" ))
 
     # task-name-specific logs for ALL tasks 
     # these propagate messages up to the main log
@@ -383,6 +408,8 @@ if __name__ == "__main__":
         f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
         h.setFormatter(f)
         foo.addHandler(h)
+        if dummy_mode:
+            foo.addFilter( LogFilter( dummy_clock, "main" ))
 
     print 'Start time ' + start_time
     log.debug( 'Start time ' + start_time )

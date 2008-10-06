@@ -19,6 +19,9 @@ import Pyro.core
 from time import sleep
 from string import split
 
+import config
+import datetime
+
 class kit:
     def __init__( self, title ):
         self.pos = 1
@@ -51,13 +54,18 @@ while True:
     # distinguishable from no nameserver found... 
     # ... could be done better I suspect.
 
-    try: 
+#    try: 
     
-        remote = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+        remote_state = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+        if config.dummy_mode:
+            remote_clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
 
         while True:
 
-            status = remote.get_status()
+            status = remote_state.get_status()
+            dt = datetime.datetime.now()
+            if config.dummy_mode:
+                dt = remote_clock.get_datetime()
 
             lines = {}
 
@@ -100,6 +108,7 @@ while True:
             blit = title.boof()
             blit.append("  Current Task Objects")
             blit.append("  \033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done" )
+            blit.append( dt )
             blit.append("")
             for rt in reftimes:
                 blit.append( lines[rt] )
@@ -109,10 +118,10 @@ while True:
                 print line
             sleep(0.5)
 
-    except:
-        os.system( "clear" )
-        for line in title.boof():
-            print line
-        print "Connection to nameserver failed ..."
+#    except:
+#        os.system( "clear" )
+#        for line in title.boof():
+#            print line
+#        print "Connection to nameserver failed ..."
 
-    sleep( 0.5 )
+#    sleep( 0.5 )

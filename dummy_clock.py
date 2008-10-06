@@ -4,44 +4,66 @@ import Pyro.core
 import datetime
 import reference_time
 from time import sleep
+import datetime, time
 
 class dummy_clock( Pyro.core.ObjBase ):
-    """equates a given reference time with the real time when an object
-    is initialised, and thereafter increment the reference time at some
-    rate of hours-per-realtime-second."""
+    """Equate a given dummy YYYYMMDDHH with the real time at
+    initialisation, and thereafter advance dummy time at the
+    requested rate of seconds per hour.
+    
+    This is for timing control in dummy_mode.
+    """
 
-    def __init__( self, ref_time, rate ):
+    def __init__( self, base_ref_time, rate, offset = None ):
 
         Pyro.core.ObjBase.__init__(self)
 
-        self.base_time = datetime.datetime.now() 
-        self.base_ref_time = ref_time
-        self.rate = rate    # real seconds per hour of reference time
+        self.base_datetime = datetime.datetime.now() 
 
-    def get_dummytime( self ):
-        # compute current reference time
+        self.base_dummytime = datetime.datetime( 
+            int(base_ref_time[0:4]), int(base_ref_time[4:6]), 
+            int(base_ref_time[6:8]), int(base_ref_time[8:10]))
 
-        delta = datetime.datetime.now() - self.base_time
+        if offset:
+            # start the dummy clock <offset> HOURS beyond the start time
+            self.base_dummytime += datetime.timedelta( 0,0,0,0,0, offset, 0) 
+
+        # rate of dummy time advance (S/HOUR)
+        self.rate = rate
+
+        print "dummy clock: ", self.base_dummytime, " @", self.rate, " seconds per dummy hour"
+
+    def get_datetime( self ):
+        delta = datetime.datetime.now() - self.base_datetime
         
         # time deltas are expressed as days, seconds, microseconds
         days = delta.days
         seconds = delta.seconds
         microseconds = delta.microseconds
 
-        real_seconds = microseconds / 1000000 + seconds + days * 24 * 3600
-        reftime_hours = real_seconds / self.rate
+        seconds_passed = microseconds / 1000000. + seconds + days * 24 * 3600
+        dummy_hours_passed = seconds_passed / self.rate
 
-        return reference_time.increment( self.base_ref_time, reftime_hours )
+        return self.base_dummytime + datetime.timedelta( 0,0,0,0,0, dummy_hours_passed, 0 )
+
+
+    def get_epoch( self ):
+        dt = self.get_datetime()
+        return time.mktime( dt.timetuple() )
 
 
 def test():
 
     rt = "2008080800"
     foo = dummy_clock( rt, 10 )  # 10 seconds / hour
+    bar = dummy_clock( rt, 10, 3 )  # 10 seconds / hour
 
-    print rt                     # 2008080800
-    sleep(20)                    # 20 secons => 2 hours
-    print foo.get_dummytime()    # 2008080802
+    print rt                         # 2008080800
+    print foo.get_datetime()   # 2008080800
+    print bar.get_datetime()   # 2008080803
+    sleep(11)                        # 10 secons => 1 hour
+    print foo.get_datetime()   # 2008080801
+    print bar.get_datetime()   # 2008080804
 
 
 if __name__ == "__main__":

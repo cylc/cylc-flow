@@ -13,14 +13,14 @@
 #      * 'NORMAL' all task messages logged, and some controller messages 
 #      * 'VERBOSE' for debugging the controller itself 
 #      * defaults to 'NORMAL'
-#  (5) run_mode 
-#      * 'real_models'
-#      * 'dummy_realtime'  (downloader waits for earlier tasks to finish)
-#      * 'dummy_catchup'   (downloader returns immediately) 
+#  (5) dummy_mode, dummy_mode_offset, dummy_mode_rate
+#      * (TO DO: document dummy mode here)
 
-#verbosity = "VERBOSE"
+verbosity = "VERBOSE"
 
-run_mode = 'dummy'    
+dummy_mode = True
+dummy_offset = 3
+dummy_rate = 10
 
 # start_time and stop_time must be strings
 start_time = "2008080812"

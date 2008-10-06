@@ -6,5 +6,10 @@ TO DO LIST
 
 * clock based dummy mode (e.g. 6 hours RT <--> 5min real)?
 
-* give requisite task host-object knowledge, so that who satisfied
-  what can be logged appropriately.
+* remote logging from model messaging interface script and task_dummy.py:
+  + if a message gets through to the right in-controller task object, it will
+  be logged by the controller (DONE)
+  + if it fails, attempt to contact the controller's dead-letter object
+  and it will be logged, with a warning, from there (DONE?) 
+  + finally, in case the controller itself if dead, log to a dedicated
+  non-controller log.
