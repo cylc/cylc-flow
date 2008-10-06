@@ -62,38 +62,41 @@ else:
     # create a proxy for the Pyro object, and return that
     task = Pyro.core.getProxyForURI( URI )
 
+    est_hrs = task.get_estimated_run_time() / 60.0
+    est_dummy_secs = est_hrs * dummy_rate
+
+    postreqs = task.get_postrequisite_list()
+    n_postreqs = len( postreqs )
+    delay = est_dummy_secs / n_postreqs 
+    print "DELAY for " + task_name + " is: ", delay
+
 if task_name == "downloader":
 
     rt = reference_time._rt_to_dt( ref_time )
     dt = clock.get_datetime()
+    difft = rt - dt
     if dt >= rt + datetime.timedelta( 0,0,0,0,0,3.25,0 ):
-        task.incoming( "NORMAL", "input files already exist for " + ref_time )
+        task.incoming( 'NORMAL', 'input files already exist for ' + ref_time )
+        task.incoming( 'NORMAL', 'CONTROLLER IN CATCHUP MODE' + str( difft ) )
     else:
-        task.incoming( "NORMAL", "waiting for files for " + ref_time )
+        task.incoming( 'NORMAL', 'waiting for files for ' + ref_time )
+        task.incoming( 'NORMAL', 'CONTROLLER IN REALTIME MODE' )
         while True:
             dt = clock.get_datetime()
             if dt >= rt:
                 break
-            #print "downloader WAITING ", dt, rt
             sleep(2)
 
-    for message in task.get_postrequisite_list():
+    for message in postreqs:
         # set each postrequisite satisfied in turn
         task.incoming( "NORMAL", message )
         sleep(1)
 
 else:
     # set each postrequisite satisfied in turn
-    for message in task.get_postrequisite_list():
+    for message in postreqs:
         task.incoming( "NORMAL", message )
-        if task_name == "nzlam" or task_name == "nzwave":
-            sleep(10)
-        elif task_name == "ricom":
-            sleep(5)
-        elif task_name == "topnet":
-            sleep(.5)
-        else:
-            sleep(2)
+        sleep(delay)
 
 # finished simulating the external task
 task.set_finished()

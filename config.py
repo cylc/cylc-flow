@@ -7,12 +7,12 @@ import logging
 # TO DO: DOCUMENT THIS FILE
 
 # logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
-# logging_level = logging.INFO
-logging_level = logging.DEBUG
+logging_level = logging.INFO
+# logging_level = logging.DEBUG
 
 dummy_mode = True
-dummy_offset = 3
-dummy_rate = 10
+dummy_offset = 24
+dummy_rate = 10 
 
 # start_time and stop_time must be strings
 start_time = "2008080812"

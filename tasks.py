@@ -66,6 +66,8 @@ class task_base( Pyro.core.ObjBase ):
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
 
+        self.estimated_run_time = 30  # minutes
+
         # initial states: waiting, running, finishd
         # (spelling: equal word lengths for display)
         if not initial_state:
@@ -171,6 +173,9 @@ class task_base( Pyro.core.ObjBase ):
     def get_state( self ):
         return self.name + ": " + self.state
 
+    def get_estimated_run_time( self ):
+        return self.estimated_run_time
+
     def identity( self ):
         return self.name + "_" + self.ref_time
 
@@ -267,9 +272,9 @@ class downloader( task_base ):
     "Met Office input file download task"
 
     """
-    this task provides initial input to get things going: it starts
-    running immediately and it completes when it's outputs are generated
-    for use by the downstream tasks.
+    This task provides initial input to get things going: it starts
+    running immediately and it completes when its outputs are ready
+    for use by downstream tasks.
     """
 
     name = "downloader"
@@ -292,7 +297,10 @@ class downloader( task_base ):
         lbc_06 = reference_time.decrement( ref_time, 6 )
         lbc_12 = reference_time.decrement( ref_time, 12 )
 
+        self.estimated_run_time = 1
+
         if hour == "00":
+
             self.postrequisites = requisites( self.name, [ 
                     self.name + " started for " + ref_time,
                     "file obstore_" + ref_time + ".um ready",
@@ -304,6 +312,7 @@ class downloader( task_base ):
                     ])
 
         elif hour == "12":
+
             self.postrequisites = requisites( self.name, [ 
                     self.name + " started for " + ref_time,
                     "file obstore_" + ref_time + ".um ready",
@@ -313,6 +322,7 @@ class downloader( task_base ):
                     ])
 
         if hour == "06" or hour == "18":
+
             self.postrequisites = requisites( self.name, [
                     self.name + " started for " + ref_time,
                     "file obstore_" + ref_time + ".um ready",
@@ -340,6 +350,9 @@ class nzlam( task_base ):
         lbc_12 = reference_time.decrement( ref_time, 12 )
 
         if hour == "00" or hour == "12":
+
+            self.estimated_run_time = 50
+
             self.prerequisites = requisites( self.name, [ 
                 "file obstore_" + ref_time + ".um ready",
                 "file bgerr" + ref_time + ".um ready",
@@ -353,6 +366,9 @@ class nzlam( task_base ):
                 ])
  
         elif hour == "06" or hour == "18":
+            
+            self.estimated_run_time = 120
+
             self.prerequisites = requisites( self.name, [ 
                 "file obstore_" + ref_time + ".um ready",
                 "file bgerr" + ref_time + ".um ready",
@@ -383,6 +399,9 @@ class nzlampost( task_base ):
         hour = ref_time[8:10]
 
         if hour == "00" or hour == "12":
+
+            self.estimated_run_time = 10 
+
             self.prerequisites = requisites( self.name, [ 
                 "file sls_" + ref_time + ".um ready",   
                 ])
@@ -394,6 +413,9 @@ class nzlampost( task_base ):
                 ])
 
         elif hour == "06" or hour == "18":
+    
+            self.estimated_run_time = 40
+
             self.prerequisites = requisites( self.name, [ 
                 "file tn_" + ref_time + ".um ready",
                 "file sls_" + ref_time + ".um ready",   
@@ -407,7 +429,6 @@ class nzlampost( task_base ):
                 "file met_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
                 ])
-        
 
 #----------------------------------------------------------------------
 class globalprep( task_base ):
@@ -420,6 +441,7 @@ class globalprep( task_base ):
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
 
+        self.estimated_run_time = 5
 
         self.prerequisites = requisites( self.name, [ 
                 "file 10mwind_" + ref_time + ".um ready",
@@ -445,6 +467,7 @@ class globalwave( task_base ):
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
 
+        self.estimated_run_time = 120
 
         self.prerequisites = requisites( self.name, [ 
                 "file 10mwind_" + ref_time + ".nc ready",
@@ -468,6 +491,12 @@ class nzwave( task_base ):
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
+        hour = ref_time[8:10]
+
+        if hour == "06" or hour == "18":
+            self.estimated_run_time = 120
+        else:
+            self.estimated_run_time = 30
 
         self.prerequisites = requisites( self.name, [ 
                  "file sls_" + ref_time + ".nc ready" ])
@@ -491,6 +520,8 @@ class ricom( task_base ):
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
 
+        self.estimated_run_time = 30
+
         self.prerequisites = requisites( self.name, [ 
                  "file sls_" + ref_time + ".nc ready" ])
 
@@ -512,8 +543,9 @@ class mos( task_base ):
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
-
         hour = ref_time[8:10]
+
+        self.estimated_run_time = 0.1
 
         if hour == "06" or hour == "18":
             self.prerequisites = requisites( self.name, [ 
@@ -541,6 +573,8 @@ class nztide( task_base ):
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
 
+        self.estimated_run_time = 1
+
         # artificial prerequisite to stop nztide running ahead
         self.prerequisites = requisites( self.name, [
                 "downloader started for " + ref_time ])
@@ -563,6 +597,8 @@ class topnet( task_base ):
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
+
+        self.estimated_run_time = 2
 
         nzlam_cutoff = reference_time.decrement( ref_time, 24 )
  
@@ -604,6 +640,8 @@ class nwpglobal( task_base ):
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
         ref_time = self.ref_time
+
+        self.estimated_run_time = 10
 
         self.prerequisites = requisites( self.name, [ 
                  "file 10mwind_" + ref_time + ".um ready" ])
