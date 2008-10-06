@@ -239,9 +239,11 @@ class task_base( Pyro.core.ObjBase ):
         self.latest_message = message
 
         if self.state != "running":
+            # message from a task that's not supposed to be running
             self.log.warning( "NON-RUNNING TASK: " + message )
 
         if self.postrequisites.requisite_exists( message ):
+            # an expected postrequisite from a running task
             if self.postrequisites.is_satisfied( message ):
                 self.log.warning( "ALREADY SATISFIED: " + message )
 
@@ -249,14 +251,15 @@ class task_base( Pyro.core.ObjBase ):
             self.postrequisites.set_satisfied( message )
 
         else:
+            # a non-postrequisite message, e.g. progress report
             if priority == "NORMAL":
-                self.log.info( "(non-p.r.) " + message )
+                self.log.info( message )
             elif priority == "WARNING":
-                self.log.warning( "(non-p.r.) " + message )
+                self.log.warning( message )
             elif priority == "CRITICAL":
-                self.log.critical( "(non-p.r.) " + message )
+                self.log.critical( message )
             else:
-                self.log.warning( "(non-p.r.; unknown priority) " + message )
+                self.log.warning( message )
 
 
 #----------------------------------------------------------------------
