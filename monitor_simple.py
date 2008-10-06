@@ -54,7 +54,7 @@ while True:
     # distinguishable from no nameserver found... 
     # ... could be done better I suspect.
 
-#    try: 
+    try: 
     
         remote_state = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
         if config.dummy_mode:
@@ -118,10 +118,10 @@ while True:
                 print line
             sleep(0.5)
 
-#    except:
-#        os.system( "clear" )
-#        for line in title.boof():
-#            print line
-#        print "Connection to nameserver failed ..."
+    except:
+        os.system( "clear" )
+        for line in title.boof():
+            print line
+        print "Connection to nameserver failed ..."
 
-#    sleep( 0.5 )
+    sleep( 0.5 )

@@ -49,7 +49,7 @@ class LogFilter(logging.Filter):
 class task_manager ( Pyro.core.ObjBase ):
 
     def __init__( self, start_time, task_list ):
-        log.info("initialising task manager")
+        log.debug("initialising task manager")
 
         Pyro.core.ObjBase.__init__(self)
     
@@ -59,7 +59,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # Start a Pyro nameserver in its own thread
         # (alternatively, run the 'pyro-ns' script as a separate process)
-        log.info( "starting pyro nameserver" )
+        log.debug( "starting pyro nameserver" )
         ns_starter = Pyro.naming.NameServerStarter()
         ns_thread = threading.Thread( target = ns_starter.start )
         ns_thread.setDaemon(True)
@@ -88,11 +88,11 @@ class task_manager ( Pyro.core.ObjBase ):
 
         if stop_time:
             if int( task.ref_time ) > int( stop_time ):
-                task.log.debug( task.name + " STOPPING at " + stop_time )
+                task.log.info( task.name + " STOPPING at " + stop_time )
                 del task
                 return
 
-        task.log.debug( "New " + task.name + " created for " + task.ref_time )
+        task.log.info( "New " + task.name + " created for " + task.ref_time )
         self.task_pool.append( task )
         # connect new task to the pyro daemon
         uri = self.pyro_daemon.connect( task, task.identity() )
@@ -135,7 +135,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 dead_soldiers.append( task )
     
         for task in dead_soldiers:
-            task.log.info( "abdicating a dead soldier " + task.identity() )
+            task.log.debug( "abdicating a dead soldier " + task.identity() )
             self.create_task_by_name( task.name, task.next_ref_time() )
             self.task_pool.remove( task )
             self.pyro_daemon.disconnect( task )
@@ -239,18 +239,18 @@ class task_manager ( Pyro.core.ObjBase ):
         oldest_running = still_running[0]
 
         cutoff = oldest_running
-        log.info( " Oldest cycle with running tasks is " + cutoff )
+        log.debug( " Oldest cycle with running tasks is " + cutoff )
 
         if finished_nzlamposts_exist:
             finished_nzlamposts.sort( key = int, reverse = True )
             most_recent_finished_nzlampost = finished_nzlamposts[0]
 
-            log.info( "topnet needs this cycle: " + most_recent_finished_nzlampost )
+            log.debug( "topnet needs this cycle: " + most_recent_finished_nzlampost )
 
             if int( most_recent_finished_nzlampost ) < int( cutoff ): 
                 cutoff = most_recent_finished_nzlampost
 
-        log.info( "keeping tasks " + cutoff + " or newer")
+        log.debug( "keeping tasks " + cutoff + " or newer")
         
         remove_these = []
         for rt in batch_finished.keys():
@@ -262,7 +262,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         if len( remove_these ) > 0:
             for task in remove_these:
-                log.info( "removing spent " + task.name + " for " + task.ref_time )
+                log.debug( "removing spent " + task.name + " for " + task.ref_time )
                 self.task_pool.remove( task )
                 self.pyro_daemon.disconnect( task )
 
@@ -286,7 +286,7 @@ task object no longer exists, for example)
 class dead_letter_box( Pyro.core.ObjBase ):
 
     def __init__( self ):
-        log.info( "Initialising Dead Letter Box" )
+        log.debug( "Initialising Dead Letter Box" )
         Pyro.core.ObjBase.__init__(self)
 
     def incoming( self, message ):
@@ -319,7 +319,6 @@ if __name__ == "__main__":
     start_time_arg = None
     stop_time = None
     config_file = None
-    verbosity = "NORMAL"
 
     # start the dummy clock <offset> hours after start ref time
     # advance an hour every <rate> seconds
@@ -367,13 +366,6 @@ if __name__ == "__main__":
         print 'RUNNING IN DUMMY MODE'
         dummy_clock = dummy_clock( start_time, dummy_rate, dummy_offset ) 
 
-    # python logging levels: INFO, DEBUG, WARNING, ERROR, CRITICAL
-    # i.e. INFO is most verbose, use DEBUG for normal program reporting
-    if verbosity == "VERBOSE":
-        logging_level = logging.INFO
-    else:
-        logging_level = logging.DEBUG
-
     if not os.path.exists( 'LOGFILES' ):
         os.makedirs( 'LOGFILES' )
 
@@ -412,11 +404,11 @@ if __name__ == "__main__":
             foo.addFilter( LogFilter( dummy_clock, "main" ))
 
     print 'Start time ' + start_time
-    log.debug( 'Start time ' + start_time )
+    log.info( 'Start time ' + start_time )
 
     if stop_time:
         print 'Stop time ' + stop_time
-        log.debug( 'Stop time ' + stop_time )
+        log.info( 'Stop time ' + stop_time )
 
     # initialise the task manager
     god = task_manager( start_time, task_list )

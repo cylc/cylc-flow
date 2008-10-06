@@ -1,22 +1,14 @@
 #!/usr/bin/python
 
+import logging
+
 # MULTIFLIGHT CONTROLLER CONFIGURATION FILE
 
-# You can define:
-#  (1) start_time (string, "YYYYMMHHDD")
-#      * can override with the commandline
-#  (2) stop_time (string, "YYYYMMHHDD")
-#      * defaults to None (i.e. never stop)
-#  (3) task_list (list of task name strings, subset of tasks.all_tasks)
-#      * defaults to tasks.all_tasks
-#  (4) verbosity (string, output level) 
-#      * 'NORMAL' all task messages logged, and some controller messages 
-#      * 'VERBOSE' for debugging the controller itself 
-#      * defaults to 'NORMAL'
-#  (5) dummy_mode, dummy_mode_offset, dummy_mode_rate
-#      * (TO DO: document dummy mode here)
+# TO DO: DOCUMENT THIS FILE
 
-verbosity = "VERBOSE"
+# logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
+# logging_level = logging.INFO
+logging_level = logging.DEBUG
 
 dummy_mode = True
 dummy_offset = 3

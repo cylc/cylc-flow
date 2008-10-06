@@ -25,11 +25,6 @@ class requisites:
         # (is there a better way to get this information?)
         self.task_name = task_name
 
-        # can't do this because thread use in logger results
-        # in an "un-deep-copyable" object.
-        # self.log = logging.getLogger( "main." + task_name ) 
-        # self.log.info( "HELLO FROM REQUISITES" )
-
         self.satisfied = {}
         self.ordered_list = reqs  
         for req in reqs:
@@ -84,7 +79,7 @@ class requisites:
                         # if they match, my prereq has been satisfied
             
                         log = logging.getLogger( "main." + self.task_name ) 
-                        log.info( postreqs.task_name + " satisfied: " + prereq )
+                        log.debug( postreqs.task_name + " satisfied: " + prereq )
 
                         self.set_satisfied( prereq )
 

@@ -21,6 +21,9 @@ the dummy run-times are not currently proportional to the real run times.
 import sys
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
+from config import dummy_rate
+import reference_time
+import datetime
 
 from time import sleep
 
@@ -34,6 +37,9 @@ if len( sys.argv ) != 3:
 [task_name, ref_time] = sys.argv[1:]
 
 # connect to the task object inside the control program
+
+# need non pyro_shortcut (see below) for clock!
+clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
 
 if pyro_shortcut:
     task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
@@ -56,17 +62,38 @@ else:
     # create a proxy for the Pyro object, and return that
     task = Pyro.core.getProxyForURI( URI )
 
-# set each postrequisite satisfied in turn
-for message in task.get_postrequisite_list():
-    task.incoming( "NORMAL", message )
-    if task_name == "nzlam" or task_name == "nzwave":
-        sleep(10)
-    elif task_name == "ricom":
-        sleep(5)
-    elif task_name == "topnet":
-        sleep(.5)
+if task_name == "downloader":
+
+    rt = reference_time._rt_to_dt( ref_time )
+    dt = clock.get_datetime()
+    if dt >= rt + datetime.timedelta( 0,0,0,0,0,3.25,0 ):
+        task.incoming( "NORMAL", "input files already exist for " + ref_time )
     else:
-        sleep(2)
+        task.incoming( "NORMAL", "waiting for files for " + ref_time )
+        while True:
+            dt = clock.get_datetime()
+            if dt >= rt:
+                break
+            #print "downloader WAITING ", dt, rt
+            sleep(2)
+
+    for message in task.get_postrequisite_list():
+        # set each postrequisite satisfied in turn
+        task.incoming( "NORMAL", message )
+        sleep(1)
+
+else:
+    # set each postrequisite satisfied in turn
+    for message in task.get_postrequisite_list():
+        task.incoming( "NORMAL", message )
+        if task_name == "nzlam" or task_name == "nzwave":
+            sleep(10)
+        elif task_name == "ricom":
+            sleep(5)
+        elif task_name == "topnet":
+            sleep(.5)
+        else:
+            sleep(2)
 
 # finished simulating the external task
 task.set_finished()
