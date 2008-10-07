@@ -12,7 +12,7 @@
 # if using an external pyro nameserver, unregister
 # objects from previous runs first:
 #try:
-#    self.pyro_daemon.disconnect( task )
+#    pyro_daemon.disconnect( task )
 #except NamingError:
 #    pass
 
@@ -31,7 +31,6 @@ import logging, logging.handlers
 
 import re
 import sys
-import Pyro.core
 
 from dummy_clock import *
 
@@ -60,28 +59,17 @@ class task_manager ( Pyro.core.ObjBase ):
         self.task_list = task_list        # list of task names
         self.task_pool = []               # list of interacting task objects
 
-        # Start a Pyro nameserver in its own thread
-        # (alternatively, run the 'pyro-ns' script as a separate process)
-        log.debug( "starting pyro nameserver" )
-        ns_starter = Pyro.naming.NameServerStarter()
-        ns_thread = threading.Thread( target = ns_starter.start )
-        ns_thread.setDaemon(True)
-        ns_thread.start()
-        ns_starter.waitUntilStarted(10)
-        # locate the Pyro nameserver
-        pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
-        self.pyro_daemon = Pyro.core.Daemon()
-        self.pyro_daemon.useNameServer(pyro_nameserver)
+        self.shutdown = False
 
         # connect the system status monitor to the pyro nameserver
         self.state = system_status()
-        uri = self.pyro_daemon.connect( self.state, "state" )
+        uri = pyro_daemon.connect( self.state, "state" )
 
         # dead letter box for use by external tasks
         self.dead_letter_box = dead_letter_box()
-        uri = self.pyro_daemon.connect( self.dead_letter_box, "dead_letter_box" )
+        uri = pyro_daemon.connect( self.dead_letter_box, "dead_letter_box" )
 
-        uri = self.pyro_daemon.connect( dummy_clock, "dummy_clock" )
+        uri = pyro_daemon.connect( dummy_clock, "dummy_clock" )
 
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
 
@@ -98,7 +86,7 @@ class task_manager ( Pyro.core.ObjBase ):
         task.log.info( "New " + task.name + " created for " + task.ref_time )
         self.task_pool.append( task )
         # connect new task to the pyro daemon
-        uri = self.pyro_daemon.connect( task, task.identity() )
+        uri = pyro_daemon.connect( task, task.identity() )
 
     def create_initial_tasks( self ):
 
@@ -141,7 +129,7 @@ class task_manager ( Pyro.core.ObjBase ):
             task.log.debug( "abdicating a dead soldier " + task.identity() )
             self.create_task_by_name( task.name, task.next_ref_time() )
             self.task_pool.remove( task )
-            self.pyro_daemon.disconnect( task )
+            pyro_daemon.disconnect( task )
 
             del task
 
@@ -156,7 +144,7 @@ class task_manager ( Pyro.core.ObjBase ):
         self.process_tasks()
 
         # process tasks again each time a request is handled
-        self.pyro_daemon.requestLoop( self.process_tasks )
+        pyro_daemon.requestLoop( self.process_tasks )
 
         # NOTE: this seems the easiest way to handle incoming pyro calls
         # AND run our task processing at the same time, but I might be 
@@ -168,6 +156,10 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def process_tasks( self ):
         # this function gets called every time a pyro event comes in
+
+        if self.shutdown:
+            log.critical( "SHUTTING DOWN NOW" )
+            sys.exit(0)
 
         if len( self.task_pool ) == 0:
             log.critical( "ALL TASKS DONE" )
@@ -267,7 +259,7 @@ class task_manager ( Pyro.core.ObjBase ):
             for task in remove_these:
                 log.debug( "removing spent " + task.name + " for " + task.ref_time )
                 self.task_pool.remove( task )
-                self.pyro_daemon.disconnect( task )
+                pyro_daemon.disconnect( task )
 
         del remove_these
 
@@ -277,6 +269,11 @@ class task_manager ( Pyro.core.ObjBase ):
 
         return 1  # keep the pyro requestLoop going
 
+
+    def clean_shutdown( self ):
+        # call remotely via Pyro
+        log.warning( "clean shutdown requested" )
+        self.shutdown = True
 
 #----------------------------------------------------------------------
 
@@ -296,6 +293,7 @@ class dead_letter_box( Pyro.core.ObjBase ):
         log.warning( "DEAD LETTER: " + message )
 
 #----------------------------------------------------------------------
+
 
 if __name__ == "__main__":
     # check command line arguments
@@ -412,9 +410,23 @@ if __name__ == "__main__":
         print 'Stop time ' + stop_time
         log.info( 'Stop time ' + stop_time )
 
+    # Start a Pyro nameserver in its own thread
+    # (alternatively, run the 'pyro-ns' script as a separate process)
+    log.debug( "starting pyro nameserver" )
+    ns_starter = Pyro.naming.NameServerStarter()
+    ns_thread = threading.Thread( target = ns_starter.start )
+    ns_thread.setDaemon(True)
+    ns_thread.start()
+    ns_starter.waitUntilStarted(10)
+    # locate the Pyro nameserver
+    pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
+    pyro_daemon = Pyro.core.Daemon()
+    pyro_daemon.useNameServer(pyro_nameserver)
+
     # initialise the task manager
     god = task_manager( start_time, task_list )
-    # NEED TO CONNECT GOD TO PYRO NAMESERVER TO ALLOW EXTERNAL CONTROL 
+    # connect to pyro nameserver to allow external control
+    uri = pyro_daemon.connect( god, "god" )
 
     # start processing
     god.run()
