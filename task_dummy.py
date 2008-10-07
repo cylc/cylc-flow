@@ -51,12 +51,12 @@ else:
     ns = locator.getNS()
 
     # resolve the Pyro object
-    #print "resolving " + task_name + '_' + ref_time + " task object"
+    #print "resolving " + task_name + '%' + ref_time + " task object"
     try:
-        URI = ns.resolve( task_name + '_' + ref_time )
+        URI = ns.resolve( task_name + '%' + ref_time )
     #    print 'URI:', URI
     except NamingError,x:
-        print "failed to resolve " + task_name + '_' + ref_time
+        print "failed to resolve " + task_name + '%' + ref_time
         print x
         raise SystemExit
 

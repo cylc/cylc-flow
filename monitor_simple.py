@@ -71,7 +71,7 @@ while True:
 
             for task_id in status.keys():
 
-                [name, reftime] = split( task_id, "_" )
+                [name, reftime] = split( task_id, "%" )
                 [state, complete, total, latest ] = status[ task_id ]
 
                 frac = "(" + complete + "/" + total + ")"

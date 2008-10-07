@@ -40,7 +40,7 @@ all_tasks = [
         'globalprep',
         'globalwave',
         'nzlam',
-        'nzlampost',
+        'nzlam_post',
         'nzwave',
         'ricom',
         'nztide',
@@ -174,7 +174,7 @@ class task_base( Pyro.core.ObjBase ):
         return self.estimated_run_time
 
     def identity( self ):
-        return self.name + "_" + self.ref_time
+        return self.name + "%" + self.ref_time
 
     def display( self ):
         return self.name + "(" + self.ref_time + ")"
@@ -410,9 +410,9 @@ class nzlam( task_base ):
                 ])
 
 #----------------------------------------------------------------------
-class nzlampost( task_base ):
+class nzlam_post( task_base ):
 
-    name = "nzlampost"
+    name = "nzlam_post"
     valid_hours = [ 0, 6, 12, 18 ]
 
     def run_time_estimate( self ):

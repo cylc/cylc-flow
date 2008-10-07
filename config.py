@@ -26,7 +26,7 @@ task_list = [
         'globalprep',
         'globalwave',
         'nzlam:finishd',
-        'nzlampost:ready',
+        'nzlam_post:ready',
         'nzwave',
         'ricom',
         'nztide',
