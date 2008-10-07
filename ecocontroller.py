@@ -1,7 +1,9 @@
 #!/usr/bin/python
 
 """
-========= ECOCONNECT CONTROLLER WITH IMPLICIT SCHEDULING ===============
+|----------------------------------------------------------------------|
+|---------| ECOCONNECT CONTROLLER WITH IMPLICIT SEQUENCING |-----------|
+|----------------------------------------------------------------------|
                     Hilary Oliver, NIWA, 2008
                    See repository documentation
 """
@@ -35,6 +37,7 @@ from dummy_clock import *
 
 
 class LogFilter(logging.Filter):
+    # use in dummy mode to replace log timestamps with dummy clock times
 
     def __init__(self, dclock, name = "" ):
         logging.Filter.__init__( self, name )
@@ -182,7 +185,6 @@ class task_manager ( Pyro.core.ObjBase ):
 
             task.run_if_ready( self.task_pool )
 
-
             # create a new task foo(T+1) if foo(T) just finished
             if task.abdicate():
                 self.create_task_by_name( task.name, task.next_ref_time() )
@@ -212,10 +214,10 @@ class task_manager ( Pyro.core.ObjBase ):
         #   (a) finished 
         #   (b) no longer needed to satisfy anyone else
 
-        # Normal tasks can only run once any previous instance is
+        # Normal tasks can only run once all previous instances are
         # finished, so there is no explicit dependence on previous
-        # cycles: i.e. we can delete any completely finished
-        # batch that is older than the oldest running task.
+        # cycles and we can delete any completely finished batch that is
+        # older than the oldest running task.
 
         # HOWEVER, topnet can run ahead of nzlampost so long as the
         # "most recently generated topnet input file" is <= 24 hours
@@ -224,8 +226,9 @@ class task_manager ( Pyro.core.ObjBase ):
         # most recent FINISHED 06 or 18 nzlampost, and we can delete
         # any finished batches older than that. 
 
-        # I.E. cutoff is the older of most-recent-finished-nzlampost
-        # and oldest running.
+        # => cutoff at the older of:
+        #    (i) most-recent-finished-nzlampost
+        #    (ii) oldest running.
 
         # TO DO: we could improve this by removing non-nzlampost tasks
         # older than oldest_running (BUT: make sure this doesn't break
@@ -239,18 +242,18 @@ class task_manager ( Pyro.core.ObjBase ):
         oldest_running = still_running[0]
 
         cutoff = oldest_running
-        log.debug( " Oldest cycle with running tasks is " + cutoff )
+        # log.debug( " Oldest cycle with running tasks is " + cutoff )
 
         if finished_nzlamposts_exist:
             finished_nzlamposts.sort( key = int, reverse = True )
             most_recent_finished_nzlampost = finished_nzlamposts[0]
 
-            log.debug( "topnet needs this cycle: " + most_recent_finished_nzlampost )
+            #log.debug( "topnet needs this cycle: " + most_recent_finished_nzlampost )
 
             if int( most_recent_finished_nzlampost ) < int( cutoff ): 
                 cutoff = most_recent_finished_nzlampost
 
-        log.debug( "keeping tasks " + cutoff + " or newer")
+        #log.debug( "keeping tasks " + cutoff + " or newer")
         
         remove_these = []
         for rt in batch_finished.keys():
@@ -272,7 +275,7 @@ class task_manager ( Pyro.core.ObjBase ):
    
         self.state.update( self.task_pool )
 
-        return 1  # to keep the pyro requestLoop going
+        return 1  # keep the pyro requestLoop going
 
 
 #----------------------------------------------------------------------
@@ -309,8 +312,8 @@ if __name__ == "__main__":
 
     print
     print "__________________________________________________________"
-    print "      .                                           ."
-    print "      . EcoConnect Implicit Scheduling Controller ."
+    print
+    print "      . EcoConnect Implicit Sequencing Controller ."
     print "__________________________________________________________"
     print
     
@@ -363,7 +366,6 @@ if __name__ == "__main__":
 
 
     if dummy_mode:
-        print 'RUNNING IN DUMMY MODE'
         dummy_clock = dummy_clock( start_time, dummy_rate, dummy_offset ) 
 
     if not os.path.exists( 'LOGFILES' ):

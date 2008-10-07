@@ -47,16 +47,17 @@ if pyro_shortcut:
 else:
     # locate the NS
     locator = Pyro.naming.NameServerLocator()
-    print "searching for pyro name server"
+    #print "searching for pyro name server"
     ns = locator.getNS()
 
     # resolve the Pyro object
-    print "resolving " + task_name + '_' + ref_time + " task object"
+    #print "resolving " + task_name + '_' + ref_time + " task object"
     try:
         URI = ns.resolve( task_name + '_' + ref_time )
-        print 'URI:', URI
+    #    print 'URI:', URI
     except NamingError,x:
-        print "failed: ", x
+        print "failed to resolve " + task_name + '_' + ref_time
+        print x
         raise SystemExit
 
     # create a proxy for the Pyro object, and return that
@@ -67,36 +68,56 @@ else:
 
     postreqs = task.get_postrequisite_list()
     n_postreqs = len( postreqs )
-    delay = est_dummy_secs / n_postreqs 
-    print "DELAY for " + task_name + " is: ", delay
+    delay = est_dummy_secs / ( n_postreqs - 1 )
 
 if task_name == "downloader":
 
     rt = reference_time._rt_to_dt( ref_time )
+    rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
     dt = clock.get_datetime()
-    difft = rt - dt
-    if dt >= rt + datetime.timedelta( 0,0,0,0,0,3.25,0 ):
-        task.incoming( 'NORMAL', 'input files already exist for ' + ref_time )
-        task.incoming( 'NORMAL', 'CONTROLLER IN CATCHUP MODE' + str( difft ) )
+    if dt >= rt_3p25:
+        task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
     else:
-        task.incoming( 'NORMAL', 'waiting for files for ' + ref_time )
-        task.incoming( 'NORMAL', 'CONTROLLER IN REALTIME MODE' )
+        task.incoming( 'NORMAL', 'REALTIME: waiting for input files for ' + ref_time )
         while True:
             dt = clock.get_datetime()
-            if dt >= rt:
+            if dt >= rt_3p25:
                 break
             sleep(2)
 
     for message in postreqs:
         # set each postrequisite satisfied in turn
         task.incoming( "NORMAL", message )
-        sleep(1)
+        sleep(delay)
+
+elif task_name == "topnet":
+
+    rt = reference_time._rt_to_dt( ref_time )
+    rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
+    dt = clock.get_datetime()
+    if dt >= rt_p25:
+        task.incoming( 'NORMAL', 'got streamflow data for ' + ref_time )
+        task.incoming( 'NORMAL', 'CATCHUP MODE for ' + ref_time )
+    else:
+        task.incoming( 'NORMAL', 'waiting for streamflow data for ' + ref_time )
+        task.incoming( 'NORMAL', 'REALTIME MODE for ' + ref_time )
+        while True:
+            dt = clock.get_datetime()
+            if dt >= rt_p25:
+                break
+            sleep(2)
+
+    for message in postreqs:
+        # set each postrequisite satisfied in turn
+        task.incoming( "NORMAL", message )
+        sleep(delay)
 
 else:
     # set each postrequisite satisfied in turn
-    for message in postreqs:
-        task.incoming( "NORMAL", message )
+    task.incoming( "NORMAL", postreqs[0] )
+    for message in postreqs[1:]:
         sleep(delay)
+        task.incoming( "NORMAL", message )
 
 # finished simulating the external task
 task.set_finished()

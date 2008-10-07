@@ -24,6 +24,8 @@ class requisites:
         # name of my "host task" 
         # (is there a better way to get this information?)
         self.task_name = task_name
+        # SHOULD USE TASK IDENTITY INSTEAD OF NAME SO THAT THE SATIFYING
+        # REF TIME IS ALSO IDENTIFIED FOR FUZZY PREREQUISITES
 
         self.satisfied = {}
         self.ordered_list = reqs  
@@ -66,8 +68,6 @@ class requisites:
         return self.satisfied
 
     def satisfy_me( self, postreqs ):
-
-
         # can another's completed postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
@@ -144,6 +144,10 @@ class fuzzy_requisites( requisites ):
                             if other_reftime >= my_reftime:
                                 #print "FUZZY PREREQ: " + prereq
                                 #print "SATISFIED BY: " + postreq
+            
+                                log = logging.getLogger( "main." + self.task_name ) 
+                                log.debug( postreqs.task_name + " satisfied: " + prereq )
+
                                 self.sharpen_up( prereq, postreq )
 
     def will_satisfy_me( self, postreqs ):

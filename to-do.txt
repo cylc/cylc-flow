@@ -1,10 +1,17 @@
 TO DO LIST
 
-* proper exception handling
+* run all tasks by default, use config file to exclude
 
-* multflight state/config dump to ease restarting
+* use methods is_running(), is_finished(), etc. to determine task state
+  to isolate from current spelling dependence ( "finishd" etc.)
 
-* clock based dummy mode (e.g. 6 hours RT <--> 5min real)?
+* per-postrequisite estimated run completion times, for dummy mode
+
+* retrofit proper exception handling
+
+* state/config dump to ease multiflight restart?
+
+* reinstate startup states
 
 * remote logging from model messaging interface script and task_dummy.py:
   + if a message gets through to the right in-controller task object, it will

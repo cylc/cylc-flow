@@ -54,6 +54,10 @@ class task_base( Pyro.core.ObjBase ):
     
     name = "task base class"
 
+    # assume catchup mode and detect if we've caught up
+    # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
+    catchup_mode = True
+
     def __init__( self, ref_time, initial_state = "waiting" ):
 
         Pyro.core.ObjBase.__init__(self)
@@ -123,11 +127,6 @@ class task_base( Pyro.core.ObjBase ):
 
     def run_if_ready( self, tasks ):
 
-        # This function originally called run() if all prerequisites
-        # were satisfied. Now we can also check non-prerequisite
-        # conditions relating to other tasks, hence the list list
-        # argument 
-
         # don't run if any previous instance not finished
         for task in tasks:
             if task.name == self.name:
@@ -136,20 +135,6 @@ class task_base( Pyro.core.ObjBase ):
                         self.log.debug( self.identity() + " blocked by " + task.identity() )
                         return
 
-        # don't run a new downloader if too many previous finished
-        # instances exist (this stops downloader running far ahead)
-        old_and_finished = []
-        if self.name == "downloader" and self.state == "waiting":
-            for task in tasks:
-               if task.name == self.name and task.state == "finishd":
-                   old_and_finished.append( task.ref_time )
-                            
-            # TO DO: THIS LISTS ALL FINISHED DOWNLOADERS TOO
-            MAX_FINISHED_DOWNLOADERS = 8
-            if len( old_and_finished ) == MAX_FINISHED_DOWNLOADERS:
-                self.log.debug( self.identity() + " waiting, too far ahead" )
-                return
-
         if self.state == "finishd":
             # already finished
             pass
@@ -157,6 +142,7 @@ class task_base( Pyro.core.ObjBase ):
             # already running
             pass
         elif self.prerequisites.all_satisfied():
+            # prerequisites all satisified, so run me
             self.run()
         else:
             # still waiting
@@ -266,9 +252,39 @@ class task_base( Pyro.core.ObjBase ):
             else:
                 self.log.warning( message )
 
+#----------------------------------------------------------------------
+class runahead_task_base( task_base ):
+    # for tasks with no-prerequisites, e.g. downloader and nztide,
+    # that would otherwise run ahead indefinitely: delay if we get
+    # "too far ahead" based on number of existing finished tasks.
+
+    def __init__( self, ref_time, initial_state = "waiting" ):
+
+        task_base.__init__( self, ref_time, initial_state = "waiting" )
+        self.MAX_FINISHED = 4
+        self.log.info( self.identity() + " max runahead: " + str( self.MAX_FINISHED ) + " previous " + self.name + "'s" )
+
+    def run_if_ready( self, tasks ):
+        # don't run if too many previous finished instances exist
+        delay = False
+
+        old_and_finished = []
+        if self.state == "waiting":
+            for task in tasks:
+               if task.name == self.name and task.state == "finishd":
+                   old_and_finished.append( task.ref_time )
+                            
+            if len( old_and_finished ) >= self.MAX_FINISHED:
+                delay = True
+
+        if delay:
+            self.log.debug( self.identity() + " ready and waiting (too far ahead)" )
+
+        else:
+            task_base.run_if_ready( self, tasks )
 
 #----------------------------------------------------------------------
-class downloader( task_base ):
+class downloader( runahead_task_base ):
     "Met Office input file download task"
 
     """
@@ -282,9 +298,8 @@ class downloader( task_base ):
 
     def __init__( self, ref_time, initial_state ):
         
-        task_base.__init__( self, ref_time, initial_state )
+        runahead_task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
         hour = ref_time[8:10]
 
@@ -331,7 +346,6 @@ class downloader( task_base ):
                     self.name + " finished for " + ref_time
                     ])
 
-
 #----------------------------------------------------------------------
 class nzlam( task_base ):
 
@@ -342,7 +356,6 @@ class nzlam( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
         hour = ref_time[8:10]
 
@@ -382,7 +395,6 @@ class nzlam( task_base ):
                 "file met_" + ref_time + ".um ready",
                 self.name + " finished for " + ref_time
                 ])
-        
 
 #----------------------------------------------------------------------
 class nzlampost( task_base ):
@@ -394,7 +406,6 @@ class nzlampost( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
         hour = ref_time[8:10]
 
@@ -439,7 +450,6 @@ class globalprep( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
         self.estimated_run_time = 5
 
@@ -454,7 +464,6 @@ class globalprep( task_base ):
                 self.name + " finished for " + ref_time
                 ])
        
- 
 #----------------------------------------------------------------------
 class globalwave( task_base ):
 
@@ -465,7 +474,6 @@ class globalwave( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
         self.estimated_run_time = 120
 
@@ -479,7 +487,6 @@ class globalwave( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-    
 #----------------------------------------------------------------------
 class nzwave( task_base ):
     
@@ -490,7 +497,6 @@ class nzwave( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
         hour = ref_time[8:10]
 
         if hour == "06" or hour == "18":
@@ -507,7 +513,6 @@ class nzwave( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-
 #----------------------------------------------------------------------
 class ricom( task_base ):
     
@@ -518,7 +523,6 @@ class ricom( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
         self.estimated_run_time = 30
 
@@ -531,7 +535,6 @@ class ricom( task_base ):
                 self.name + " finished for " + ref_time
                 ])
         
-
 #----------------------------------------------------------------------
 class mos( task_base ):
     
@@ -542,7 +545,6 @@ class mos( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
         hour = ref_time[8:10]
 
         self.estimated_run_time = 0.1
@@ -559,35 +561,35 @@ class mos( task_base ):
                 "file mos_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
                 ])
-        
 
 #----------------------------------------------------------------------
-class nztide( task_base ):
+class nztide( runahead_task_base ):
     
     name = "nztide"
     valid_hours = [ 6, 18 ]
 
     def __init__( self, ref_time, initial_state ):
 
-        task_base.__init__( self, ref_time, initial_state )
+        runahead_task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
         self.estimated_run_time = 1
 
-        # artificial prerequisite to stop nztide running ahead
-        self.prerequisites = requisites( self.name, [
-                "downloader started for " + ref_time ])
+        self.prerequisites = requisites( self.name, [])
 
         self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file nztide_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
                 ])
-        
 
 #----------------------------------------------------------------------
 class topnet( task_base ):
+    "streamflow data extraction and topnet" 
+
+    """If no other tasks dependend on the streamflow data then it's
+    easiest to make streamflow part of the topnet task, because of
+    the unusual runahead behavior of topnet"""
  
     name = "topnet"
     valid_hours = range( 0,24 )
@@ -596,21 +598,23 @@ class topnet( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
-        self.estimated_run_time = 2
-
-        nzlam_cutoff = reference_time.decrement( ref_time, 24 )
- 
-        # fuzzy prequisites: nzlam 24 hours old or less
-        self.prerequisites = fuzzy_requisites( self.name, [ 
-                "file tn_" + nzlam_cutoff + ".nc ready" ])
+        self.estimated_run_time = 0.01
 
         self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
                 "file topnet_" + ref_time + ".nc ready",
                 self.name + " finished for " + ref_time
                 ])
+
+        if task_base.catchup_mode:
+            nzlam_cutoff = reference_time.decrement( self.ref_time, 11 )
+        else:
+            nzlam_cutoff = reference_time.decrement( self.ref_time, 23 )
+ 
+        self.prerequisites = fuzzy_requisites( self.name, [ 
+                "file tn_" + nzlam_cutoff + ".nc ready" ])
+
 
     def run( self ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
@@ -629,6 +633,20 @@ class topnet( task_base ):
         self.state = "running"
 
 
+    def incoming( self, priority, message ):
+
+        # pass on to the base class message handling function
+        task_base.incoming( self, priority, message)
+
+        # but intercept catchup mode messages
+        if not task_base.catchup_mode and message == "CATCHUP MODE for " + self.ref_time:
+            task_base.catchup_mode = True
+            self.log.info( "telling task_base we're entering catchup mode" )
+        elif task_base.catchup_mode and message == "REALTIME MODE for " + self.ref_time:
+            task_base.catchup_mode = False
+            self.log.info( "telling task_base we've caught up" )
+
+
 #----------------------------------------------------------------------
 class nwpglobal( task_base ):
 
@@ -639,7 +657,6 @@ class nwpglobal( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
-        ref_time = self.ref_time
 
         self.estimated_run_time = 10
 
