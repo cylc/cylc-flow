@@ -102,12 +102,12 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def create_initial_tasks( self ):
 
-        # TO DO: reimplement user task config:
-        # if re.compile( "^.*:").match( task_name ):
-        #     [task_name, state] = task_name.split(':')
-
         for task_name in self.task_list:
-            self.create_task_by_name( task_name, self.start_time )
+            state = None
+            if re.compile( "^.*:").match( task_name ):
+                [task_name, state] = task_name.split(':')
+
+            self.create_task_by_name( task_name, self.start_time, state )
 
 
     def remove_dead_soldiers( self ):
@@ -371,7 +371,7 @@ if __name__ == "__main__":
     if not os.path.exists( 'LOGFILES' ):
         os.makedirs( 'LOGFILES' )
 
-    print "Logfiles in ./LOGFILES"
+    print "Logging to ./LOGFILES"
 
     log = logging.getLogger( "main" )
     log.setLevel( logging_level )

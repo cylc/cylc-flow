@@ -1,7 +1,5 @@
 TO DO LIST
 
-* run all tasks by default, use config file to exclude
-
 * use methods is_running(), is_finished(), etc. to determine task state
   to isolate from current spelling dependence ( "finishd" etc.)
 
@@ -11,7 +9,7 @@ TO DO LIST
 
 * state/config dump to ease multiflight restart?
 
-* reinstate startup states
+* allow, e.g. nzwave off for first two cycles, then on.
 
 * remote logging from model messaging interface script and task_dummy.py:
   + if a message gets through to the right in-controller task object, it will

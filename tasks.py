@@ -70,7 +70,8 @@ class task_base( Pyro.core.ObjBase ):
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
 
-        self.estimated_run_time = 30  # minutes
+        self.run_time_estimate()
+        self.define_requisites()
 
         # initial states: waiting, running, finishd
         # (spelling: equal word lengths for display)
@@ -81,13 +82,23 @@ class task_base( Pyro.core.ObjBase ):
             self.state = "waiting"
         elif initial_state == "finishd":  
             self.postrequisites.set_all_satisfied()
+            self.log.warning( "starting in FINISHED state for " + self.ref_time )
             self.state = "finishd"
         elif initial_state == "ready":
             # waiting, but ready to go
+            self.state = "waiting"
+            self.log.warning( "starting in READY state for " + self.ref_time )
             self.prerequisites.set_all_satisfied()
         else:
             print "ERROR: unknown initial task state " + initial_state
             sys.exit(1)
+
+    def define_requisites( self ):
+        self.prerequisites = requisites( self.name, [] )
+        self.postrequisites = requisites( self.name, [] )
+
+    def run_time_estimate( self ):
+        self.estimated_run_time = 30  # minutes
 
     def nearest_ref_time( self, rt ):
         # return the next time >= rt for which this task is valid
@@ -352,20 +363,25 @@ class nzlam( task_base ):
     name = "nzlam"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def __init__( self, ref_time, initial_state ):
+    def run_time_estimate( self ):
 
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
+        ref_time = self.ref_time
+        hour = ref_time[8:10]
 
+        if hour == "00" or hour == "12":
+            self.estimated_run_time = 50
+        elif hour == "06" or hour == "18":
+            self.estimated_run_time = 120
+
+    def define_requisites( self ):
+
+        ref_time = self.ref_time
         hour = ref_time[8:10]
 
         lbc_06 = reference_time.decrement( ref_time, 6 )
         lbc_12 = reference_time.decrement( ref_time, 12 )
 
         if hour == "00" or hour == "12":
-
-            self.estimated_run_time = 50
-
             self.prerequisites = requisites( self.name, [ 
                 "file obstore_" + ref_time + ".um ready",
                 "file bgerr" + ref_time + ".um ready",
@@ -379,9 +395,6 @@ class nzlam( task_base ):
                 ])
  
         elif hour == "06" or hour == "18":
-            
-            self.estimated_run_time = 120
-
             self.prerequisites = requisites( self.name, [ 
                 "file obstore_" + ref_time + ".um ready",
                 "file bgerr" + ref_time + ".um ready",
@@ -402,17 +415,20 @@ class nzlampost( task_base ):
     name = "nzlampost"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def __init__( self, ref_time, initial_state ):
+    def run_time_estimate( self ):
+        ref_time = self.ref_time
+        hour = ref_time[8:10]
+        if hour == "00" or hour == "12":
+            self.estimated_run_time = 10 
+        elif hour == "06" or hour == "18":
+            self.estimated_run_time = 40
 
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
-
+    def define_requisites( self ):
+        ref_time = self.ref_time
         hour = ref_time[8:10]
 
         if hour == "00" or hour == "12":
-
-            self.estimated_run_time = 10 
-
+            
             self.prerequisites = requisites( self.name, [ 
                 "file sls_" + ref_time + ".um ready",   
                 ])
@@ -424,8 +440,6 @@ class nzlampost( task_base ):
                 ])
 
         elif hour == "06" or hour == "18":
-    
-            self.estimated_run_time = 40
 
             self.prerequisites = requisites( self.name, [ 
                 "file tn_" + ref_time + ".um ready",
@@ -446,13 +460,12 @@ class globalprep( task_base ):
     name = "globalprep"
     valid_hours = [ 0 ]
 
-    def __init__( self, ref_time, initial_state ):
-
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
-
+    def run_time_estimate( self ):
         self.estimated_run_time = 5
 
+    def define_requisites( self ):
+        ref_time = self.ref_time
+        hour = ref_time[8:10]
         self.prerequisites = requisites( self.name, [ 
                 "file 10mwind_" + ref_time + ".um ready",
                 "file seaice_" + ref_time + ".um ready" ])
@@ -470,12 +483,12 @@ class globalwave( task_base ):
     name = "globalwave"
     valid_hours = [ 0 ]
 
-    def __init__( self, ref_time, initial_state ):
+    def run_time_estimate( self ):
+        self.estimated_run_time = 120 
 
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
 
-        self.estimated_run_time = 120
+    def define_requisites( self ):
+        ref_time = self.ref_time
 
         self.prerequisites = requisites( self.name, [ 
                 "file 10mwind_" + ref_time + ".nc ready",
@@ -493,16 +506,16 @@ class nzwave( task_base ):
     name = "nzwave"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def __init__( self, ref_time, initial_state ):
-
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
+    def run_time_estimate( self ):
+        ref_time = self.ref_time
         hour = ref_time[8:10]
-
         if hour == "06" or hour == "18":
             self.estimated_run_time = 120
         else:
             self.estimated_run_time = 30
+
+    def define_requisites( self ):
+        ref_time = self.ref_time
 
         self.prerequisites = requisites( self.name, [ 
                  "file sls_" + ref_time + ".nc ready" ])
@@ -519,12 +532,11 @@ class ricom( task_base ):
     name = "ricom"
     valid_hours = [ 6, 18 ]
 
-    def __init__( self, ref_time, initial_state ):
+    def run_time_estimate( self ):
+        self.estimated_run_time = 30 
 
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
-
-        self.estimated_run_time = 30
+    def define_requisites( self ):
+        ref_time = self.ref_time
 
         self.prerequisites = requisites( self.name, [ 
                  "file sls_" + ref_time + ".nc ready" ])
@@ -541,13 +553,12 @@ class mos( task_base ):
     name = "mos"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def __init__( self, ref_time, initial_state ):
-
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
-        hour = ref_time[8:10]
-
+    def run_time_estimate( self ):
         self.estimated_run_time = 0.1
+
+    def define_requisites( self ):
+        ref_time = self.ref_time
+        hour = ref_time[8:10]
 
         if hour == "06" or hour == "18":
             self.prerequisites = requisites( self.name, [ 
@@ -568,12 +579,11 @@ class nztide( runahead_task_base ):
     name = "nztide"
     valid_hours = [ 6, 18 ]
 
-    def __init__( self, ref_time, initial_state ):
-
-        runahead_task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
-
+    def run_time_estimate( self ):
         self.estimated_run_time = 1
+
+    def define_requisites( self ):
+        ref_time = self.ref_time
 
         self.prerequisites = requisites( self.name, [])
 
@@ -594,12 +604,11 @@ class topnet( task_base ):
     name = "topnet"
     valid_hours = range( 0,24 )
 
-    def __init__( self, ref_time, initial_state ):
-
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
-
+    def run_time_estimate( self ):
         self.estimated_run_time = 0.01
+
+    def define_requisites( self ):
+        ref_time = self.ref_time
 
         self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
@@ -653,12 +662,11 @@ class nwpglobal( task_base ):
     name = "nwpglobal"
     valid_hours = [ 0 ]
 
-    def __init__( self, ref_time, initial_state ):
-
-        task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
-
+    def run_time_estimate( self ):
         self.estimated_run_time = 10
+
+    def define_requisites( self ):
+        ref_time = self.ref_time
 
         self.prerequisites = requisites( self.name, [ 
                  "file 10mwind_" + ref_time + ".um ready" ])
