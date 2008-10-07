@@ -63,7 +63,8 @@ class task_manager ( Pyro.core.ObjBase ):
         if not os.path.exists( self.state_dump_dir ):
             os.makedirs( self.state_dump_dir )
 
-        self.shutdown = False
+        self.pause_requested = False
+        self.shutdown_requested = False
 
         # connect the system status monitor to the pyro nameserver
         self.state = system_status()
@@ -158,16 +159,24 @@ class task_manager ( Pyro.core.ObjBase ):
         # timeout that drops into our task processing loop.
 
 
+    def shutdown( self, message ):
+        log.critical( 'Shutting down NOW: ' + message )
+        pyro_daemon.shutdown( True ) 
+        sys.exit(0)
+
+
     def process_tasks( self ):
-        # this function gets called every time a pyro event comes in
+        # this gets called every time a pyro event comes in
 
-        if self.shutdown:
-            log.critical( "SHUTTING DOWN NOW" )
-            sys.exit(0)
-
+        if self.shutdown_requested:
+            self.shutdown('shutdown request received')
+ 
+        if self.pause_requested:
+            # no new tasks please
+            return 1     # '1' to keep pyro request loop happy
+       
         if len( self.task_pool ) == 0:
-            log.critical( "ALL TASKS DONE" )
-            sys.exit(0)
+            self.shutdown('all configured tasks done')
 
         finished_nzlamposts_exist = False
         finished_nzlamposts = []
@@ -259,10 +268,16 @@ class task_manager ( Pyro.core.ObjBase ):
         return 1  # keep the pyro requestLoop going
 
 
-    def clean_shutdown( self ):
+    def request_pause( self ):
+        # call remotely via Pyro
+        log.warning( "pause requested" )
+        self.pause_requested = True
+
+
+    def request_shutdown( self ):
         # call remotely via Pyro
         log.warning( "clean shutdown requested" )
-        self.shutdown = True
+        self.shutdown_requested = True
 
 
     def dump_state( self ):
@@ -310,8 +325,6 @@ class dead_letter_box( Pyro.core.ObjBase ):
         log.warning( "DEAD LETTER: " + message )
 
 #----------------------------------------------------------------------
-
-
 if __name__ == "__main__":
     # check command line arguments
     n_args = len( sys.argv ) - 1

@@ -4,6 +4,7 @@
 Tell the task manager (via Pyro) to shut down. 
 """
 
+import os
 import sys
 import Pyro.core
 
@@ -11,11 +12,17 @@ import Pyro.core
 if len( sys.argv ) != 1:
     print "USAGE:", sys.argv[0]
     sys.exit(1)
-    
-# connect to the task object inside the control program
+
+   
 try:
+    # connect to the task object inside the control program
     god = Pyro.core.getProxyForURI("PYRONAME://god")
-    god.clean_shutdown()
+    # pause to prevent new dummy tasks being launched after the pkill 
+    god.request_pause()
+    # kill any running task_dummy programs
+    os.system( 'pkill -9 -u $USER task_dummy.py' )
+    # shutdown the controller and pyro nameserver
+    god.request_shutdown()
 except:
     # nameserver not found, or god not registered with it?
     print "ERROR: failed to talk to god"
