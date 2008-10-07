@@ -202,29 +202,27 @@ class task_manager ( Pyro.core.ObjBase ):
             if task.is_running():
                 still_running.append( task.ref_time )
 
-        # DELETE SOME SPENT TASKS, defined as:
-        #   (a) finished 
-        #   (b) no longer needed to satisfy anyone else
+        # DELETE SPENT TASKS, i.e. those that are both finished, and no longer
+        # needed to satisfy anyone else
 
-        # Normal tasks can only run once all previous instances are
-        # finished, so there is no explicit dependence on previous
-        # cycles and we can delete any completely finished batch that is
-        # older than the oldest running task.
+        # Normal tasks can only run once all previous instances are finished,
+        # so there is no explicit dependence on previous cycles and we can
+        # delete any completely finished batch that is older than the oldest
+        # running task.
 
-        # HOWEVER, topnet can run ahead of nzlampost so long as the
-        # "most recently generated topnet input file" is <= 24 hours
-        # old. Nzlampost only generates topnet files at 06 and 18, so: 
-        # if there is no running nzlampost, topnet will depend on the
-        # most recent FINISHED 06 or 18 nzlampost, and we can delete
-        # any finished batches older than that. 
+        # HOWEVER, topnet can run ahead of nzlampost so long as the "most
+        # recently generated topnet input file" is <= 24 hours old. Nzlampost
+        # only generates topnet files at 06 and 18, so: if there is no running
+        # nzlampost, topnet will depend on the most recent FINISHED 06 or 18
+        # nzlampost, and we can delete any finished batches older than that. 
 
         # => cutoff at the older of:
         #    (i) most-recent-finished-nzlampost
         #    (ii) oldest running.
 
-        # TO DO: we could improve this by removing non-nzlampost tasks
-        # older than oldest_running (BUT: make sure this doesn't break
-        # the dead soldier test).
+        # TO DO: we could improve this by removing non-nzlampost tasks older
+        # than oldest_running (BUT: make sure this doesn't break the dead
+        # soldier test).
 
         if len( still_running ) == 0:
             log.critical( "ALL TASKS DONE" )

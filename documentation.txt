@@ -63,15 +63,16 @@ EcoConnect input/output directory rules for file locations.
 ---------- Task Management ----------
 
 Correct TASK SEQUENCING, in the sense that no task will run before its
-prerequisites are satisfied, will occur regardless how many tasks are in play
-at once.  However, tasks creation and deletion must be managed to ensure that
-task objects exist by the time they are needed, but don't clutter the system
-with too many tasks that aren't needed yet or are already spent (this makes
-system monitoring difficult and, in extreme cases, may slow down task
-interaction).  
+prerequisites are satisfied, will occur regardless of how many tasks are in
+play at once.  However, task creation and deletion must be managed to ensure
+that tasks exist by the time they are needed but don't exist for too long
+before they are needed or after they are finished, which would make system
+monitoring difficult and, in extreme cases, could slow down task interaction.  
 
-Note that delayed task creation, in addition to prerequisites, can be used as
-a means of delaying task execution.
+We can control when a task executes by:
+ (i) real prerequisites
+ (ii) artificial prerequisites (e.g. make nztide depend on nzlam)
+ (iii) delayed task creation.
 
 Note that during CATCHUP "correct model sequencing" is not equivalent to
 "orderly generation of products by reference time".  E.g. nzlam can run
@@ -81,92 +82,69 @@ continuously, regardless of the downstream processing that depends on it.
 TASK ZERO: 
 
 This task (the "downloader") is special in that it provides the initial input
-to get the whole system started. It must be able to start running immediately,
-i.e. have no prerequisites (except that previous instances of itself must be
-finished) or else nothing will run at all. The downloader's external task
-should watch for the right incoming files and report back ready when the
-download has completed OR if the files already exist because they were
-downloaded previously.
+to get the whole system started. It has no prerequisites and therefore starts
+running as soon as it is created (so long as all previous instances have
+finished; see below). Without this task nothing will run at all. The external
+downloader (interface to watch_ftp.sh) should watch for the right incoming
+files and report back ready when the download has completed OR if the files
+already exist because they were downloaded previously.
 
 INTER-CYCLE DEPENDENCIES:
 
 Having each task foo(T) depend explicitly on its previous instance foo(T-1)
 finishing prevents successive instances of the same task from running
-simultaneously, or out of order, but it complicates system startup (there
-are no previous tasks at this time) and means finished tasks have to stay
-around longer (so that foo(T-1) can tell foo(T) it is finished). 
+simultaneously or out of order (where their other prerequisites would allow
+this; e.g. downloader or nztide) but it complicates system startup (when there
+are no previous tasks) and means finished tasks have to stay around
+longer (so that foo(T-1) can tell foo(T) it is finished). 
 
-Instead we can let a task start "running" only if no previous instance of it
-exist, OR any previous instance that still exists is in a "finished" state.
-This prevents running out of order but system startup is no longer a special
-case, and tasks can die as soon as all of their same-cycle peers are finished
-(this task death criterion has since been modified to allow for topnet
-runahead, below).
+Instead, we let a task run if no previous instance exists OR any previous
+instance that still exists is finished.  This prevents running out of order
+but system startup is no longer a special case, and tasks can die as soon as
+all of their same-cycle peers are finished (this task death criterion has
+since been modified to allow for topnet runahead, below).
 
 TASK CREATION:
 
-The task manager creates a complete new BATCH of tasks(T) as soon as allowed
-by the above cycle overlap conditions.  Batch(T) creation, as opposed to e.g.
-creating each new foo(T) as soon as foo(T-1) is finished, is convenient from a
-config file and system restart perspective, and it prevents tasks with no
-prerequisites (nztide) from running off ahead without having to impose any
-"artificial prerequisites" such as "nztide(T) depends on nzlam(T)". 
+Task creation is determined by task-specific abdication: when foo(T) is
+finished, we create foo(T+1).  Note that this means we can't start up on a
+single reference time: not all tasks are valid at all times, and any task not
+present at the start will never be created. So, at start time each configured
+task is created at the initial start time OR at the first subsequent reference
+time for which it is valid.  
 
 TASK DELETION:
 
-Thanks to the way we're handling intercycle dependencies, above, the task
-manager can delete foo(T) when all tasks(T) are finished.
+Normal tasks can only run once all previous instances are finished, so there
+is no explicit dependence on previous cycles and we can delete any completely
+finished batch(T) that is older than the oldest running task.
 
+HOWEVER, topnet can run ahead of nzlampost so long as the "most recently
+generated topnet input file" is < 24 hours old (real time) or < 12 hours old
+(catchup).  Nzlampost only generates topnet files at 06 and 18, so: if there
+is no running nzlampost, topnet will depend on the most recent FINISHED 06 or
+18 nzlampost, and we can delete any finished batches older than that. 
 
-POINTS TO PONDER...
+=> cutoff at the older of:
+   (i) most-recent-finished-nzlampost
+   (ii) oldest running.
 
-Note that managing task creation is equivalent to imposing an artificial
-prerequisite: "the task can not start running prior to [task creation
-time]".  Batch managing task creation as above, however, has the
-additional advantage that a minimum of tasks at a time are "waiting",
-which makes sytem monitoring simpler.  Aside from simple monitoring
-though, the only reason to do this is to ensure orderly(T) product
-generation during catchup.
+TO DO: we could improve this by removing non-nzlampost tasks older than
+oldest_running (BUT: make sure this doesn't break the dead soldier test).
 
- * note there is no distinction between "catchup" and "real time" modes,
-   it's just that in catchup there is no delay between cycles because
-   the downloader returns immediately.
+DEAD SOLDIERS:
 
- * can we rely on nqs to ensure orderly product generation in "true
-   multiflight" mode?  NO: I think nqs orders according to job
-   submission order(?): foo(T+1) can be qsubbed as soon as foo(T) is
-   finished, in general, and this can be before bar(T) is finished.  
-   
+A "dead soldier" is a task that will never run because it's prerequisites can
+never be satisfied.  These need to be removed or they will prevent removal of
+spent tasks.  We can detect dead soldiers by requisite checking amongst all
+tasks in the oldest batch(T) that contains any running tasks.  Newer batches
+may not be complete yet (they may acquire new tasks as those in the oldest
+batch abdicate).  Dead soldiers are abdicated rather than just deleted, so
+that their descendents can run if they are not dead soldiers. As an example of
+this, if we start the system at 12Z all topnet tasks prior to 18Z will be dead
+soldiers because the 12Z nzlam does not generate topnet input files. 
 
-=========== runahead ===== 
+CLEAN SHUTDOWN
 
-For this we must either:
- (i) radically (?) change the task management scheme 
- (ii) process topnet separately from the other tasks. 
- (iii) as for (ii) but outside of the controller entirely
-
-(ii) or (iii) are reasonable because runahead topnet is only loosely
-dependent on nzlam, and has no downstream dependents (except its own
-postprocessing). 
-
-In case (ii) I envisage a new topnet hourly task created outside the
-main task pool each time the previous one finishes, and interacting with
-nzlam only via a task manager "most recent completed nzlam run"
-attribute.
-
- * system drivability: config files and restart, etc.?
-
- * runahead topnet necessarily creates non-topnet product delays in real
-   time, not just catchup, due to resource contention (a problem when we
-   do many basins?). Can we just 'nice' topnet down in priority?
-
- * runahead will screw up multiple-datatype products, depending on 
-   mintaka display capabilities.  E.g. image runahead nztide on seagrams
-   (but doesn't affect river products?)?
-
- * during catchup, topnet will always run off as far ahead as allowed, 
-   which implies a long sequence of very short forecasts driven by worst
-   possible nwp fields. => must turn off run-ahead in catchup mode? 
-   But, how to identify if we've caught up or not -- delayed return by
-   downloader? 
-  
+Run the script 'shutdown.py' to tell the controller to shutdown cleanly
+at the next opportunity.
