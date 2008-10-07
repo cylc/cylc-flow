@@ -7,9 +7,9 @@ TO DO LIST
 
 * retrofit proper exception handling
 
-* state/config dump to ease multiflight restart?
+* state/config restart capability
 
-* allow, e.g. nzwave off for first two cycles, then on.
+* temporarily 'off' tasks at start time.
 
 * remote logging from model messaging interface script and task_dummy.py:
   + if a message gets through to the right in-controller task object, it will

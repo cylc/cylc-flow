@@ -59,6 +59,10 @@ class task_manager ( Pyro.core.ObjBase ):
         self.task_list = task_list        # list of task names
         self.task_pool = []               # list of interacting task objects
 
+        self.state_dump_dir = 'STATE'
+        if not os.path.exists( self.state_dump_dir ):
+            os.makedirs( self.state_dump_dir )
+
         self.shutdown = False
 
         # connect the system status monitor to the pyro nameserver
@@ -202,27 +206,12 @@ class task_manager ( Pyro.core.ObjBase ):
             if task.is_running():
                 still_running.append( task.ref_time )
 
-        # DELETE SPENT TASKS, i.e. those that are both finished, and no longer
-        # needed to satisfy anyone else
-
-        # Normal tasks can only run once all previous instances are finished,
-        # so there is no explicit dependence on previous cycles and we can
-        # delete any completely finished batch that is older than the oldest
-        # running task.
-
-        # HOWEVER, topnet can run ahead of nzlampost so long as the "most
-        # recently generated topnet input file" is <= 24 hours old. Nzlampost
-        # only generates topnet files at 06 and 18, so: if there is no running
-        # nzlampost, topnet will depend on the most recent FINISHED 06 or 18
-        # nzlampost, and we can delete any finished batches older than that. 
-
-        # => cutoff at the older of:
-        #    (i) most-recent-finished-nzlampost
+        # DELETE SPENT TASKS i.e. those that are finished AND no longer
+        # needed to satisfy the prerequisites of other tasks. Cutoff is
+        # the older of:
+        #    (i) most-recent-finished-nzlampost (still needed by topnet)
         #    (ii) oldest running.
-
-        # TO DO: we could improve this by removing non-nzlampost tasks older
-        # than oldest_running (BUT: make sure this doesn't break the dead
-        # soldier test).
+        # See repository documentation for a detailed discussion of this.
 
         if len( still_running ) == 0:
             log.critical( "ALL TASKS DONE" )
@@ -265,6 +254,8 @@ class task_manager ( Pyro.core.ObjBase ):
    
         self.state.update( self.task_pool )
 
+        self.dump_state()
+
         return 1  # keep the pyro requestLoop going
 
 
@@ -273,15 +264,43 @@ class task_manager ( Pyro.core.ObjBase ):
         log.warning( "clean shutdown requested" )
         self.shutdown = True
 
+
+    def dump_state( self ):
+
+        # TO DO: implement restart from dumped state capability 
+        # Also, consider:
+        #  (i) using 'pickle' to dump and read state, or
+        #  (ii) writing a python source file similar to current startup config
+
+        config = {}
+        for task in self.task_pool:
+            ref_time = task.ref_time
+            state = task.name + ":" + task.state
+            if ref_time in config.keys():
+                config[ ref_time ].append( state )
+            else:
+                config[ ref_time ] = [ state ]
+
+        FILE = open( self.state_dump_dir + '/state', 'w' )
+
+        ref_times = config.keys()
+        ref_times.sort( key = int )
+        for rt in ref_times:
+            FILE.write( rt + ' ' )
+            for entry in config[ rt ]:
+                FILE.write( entry + ' ' )
+
+            FILE.write( '\n' )
+
+        FILE.close()
+
 #----------------------------------------------------------------------
-
-"""
-class to take incoming pyro messages that are not directed at a specific
-task object (the sender can direct warning messages here if the desired
-task object no longer exists, for example)
-"""
-
 class dead_letter_box( Pyro.core.ObjBase ):
+    """
+    class to take incoming pyro messages that are not directed at a
+    specific task object (the sender can direct warning messages here if
+    the desired task object no longer exists, for example)
+    """
 
     def __init__( self ):
         log.debug( "Initialising Dead Letter Box" )
@@ -323,8 +342,9 @@ if __name__ == "__main__":
     # advance an hour every <rate> seconds
     dummy_mode = False
     dummy_offset = None  
-    dummy_rate = 20      
-    
+    dummy_rate = 60      # dummy time advances 1 hour every 60 seconds
+                         # note that task startup overhead is ~20 secs
+ 
     if n_args == 2:
         start_time_arg = sys.argv[1]
         config_file = sys.argv[2]
