@@ -1,8 +1,5 @@
 TO DO LIST
 
-* use methods is_running(), is_finished(), etc. to determine task state
-  to isolate from current spelling dependence ( "finishd" etc.)
-
 * per-postrequisite estimated run completion times, for dummy mode
 
 * retrofit proper exception handling
@@ -18,3 +15,6 @@ TO DO LIST
   and it will be logged, with a warning, from there (DONE?) 
   + finally, in case the controller itself if dead, log to a dedicated
   non-controller log.
+
+* use methods is_running(), is_finished(), etc. to determine task state
+  instead of than accessing attributes directly

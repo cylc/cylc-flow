@@ -169,7 +169,7 @@ class task_manager ( Pyro.core.ObjBase ):
         # this gets called every time a pyro event comes in
 
         if self.shutdown_requested:
-            self.shutdown('shutdown request received')
+            self.shutdown()
  
         if self.pause_requested:
             # no new tasks please
@@ -198,7 +198,7 @@ class task_manager ( Pyro.core.ObjBase ):
             # can be deleted (see documentation just below)
 
             # find any finished nzlampost tasks
-            if task.name == "nzlampost" and task.state == "finishd":
+            if task.name == "nzlampost" and task.state == "finished":
                 hour = task.ref_time[8:10]
                 if hour == "06" or hour == "18":
                     finished_nzlamposts_exist = True
@@ -362,7 +362,7 @@ if __name__ == "__main__":
     
     # load the config file
     print
-    print "config file: " + config_file
+    print "Using config file " + config_file
     # strip of the '.py'
     m = re.compile( "^(.*)\.py$" ).match( config_file )
     modname = m.groups()[0]
@@ -423,17 +423,17 @@ if __name__ == "__main__":
             foo.addFilter( LogFilter( dummy_clock, "main" ))
 
     print
-    print 'initial reference time ' + start_time
+    print 'Initial reference time ' + start_time
     log.info( 'initial reference time ' + start_time )
 
     if stop_time:
-        print 'final reference time ' + stop_time
+        print 'Final reference time ' + stop_time
         log.info( 'final reference time ' + stop_time )
 
     # Start a Pyro nameserver in its own thread
     # (alternatively, run the 'pyro-ns' script as a separate process)
     print
-    print "starting pyro nameserver"
+    print "Starting pyro nameserver"
     ns_starter = Pyro.naming.NameServerStarter()
     ns_thread = threading.Thread( target = ns_starter.start )
     ns_thread.setDaemon(True)
@@ -451,6 +451,6 @@ if __name__ == "__main__":
 
     # start processing
     print
-    print "starting processing NOW"
+    print "Beginning task processing now"
     print
     god.run()

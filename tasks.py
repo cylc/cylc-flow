@@ -39,7 +39,7 @@ class task_base( Pyro.core.ObjBase ):
     
     name = "task base class"
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         Pyro.core.ObjBase.__init__(self)
 
@@ -51,20 +51,21 @@ class task_base( Pyro.core.ObjBase ):
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
 
-        self.run_time_estimate()
-        self.define_requisites()
+        self.estimated_run_time = 30  # minutes
 
-        # initial states: waiting, running, finishd
-        # (spelling: equal word lengths for display)
+        self.prerequisites = requisites( self.name, [] )
+        self.postrequisites = requisites( self.name, [] )
+
+        # initial states: waiting, running, finished
         if not initial_state:
             self.state = "waiting"
             pass
         elif initial_state == "waiting": 
             self.state = "waiting"
-        elif initial_state == "finishd":  
+        elif initial_state == "finished":  
             self.postrequisites.set_all_satisfied()
             self.log.warning( self.identity() + " starting in FINISHED state" )
-            self.state = "finishd"
+            self.state = "finished"
         elif initial_state == "ready":
             # waiting, but ready to go
             self.state = "waiting"
@@ -73,13 +74,6 @@ class task_base( Pyro.core.ObjBase ):
         else:
             self.log.critical( "unknown initial task state: " + initial_state )
             sys.exit(1)
-
-    def define_requisites( self ):
-        self.prerequisites = requisites( self.name, [] )
-        self.postrequisites = requisites( self.name, [] )
-
-    def run_time_estimate( self ):
-        self.estimated_run_time = 30  # minutes
 
     def nearest_ref_time( self, rt ):
         # return the next time >= rt for which this task is valid
@@ -122,12 +116,12 @@ class task_base( Pyro.core.ObjBase ):
         # don't run if any previous instance not finished
         for task in tasks:
             if task.name == self.name:
-                if task.state != "finishd":
+                if task.state != "finished":
                     if int( task.ref_time ) < int( self.ref_time ):
                         self.log.debug( self.identity() + " blocked by " + task.identity() )
                         return
 
-        if self.state == "finishd":
+        if self.state == "finished":
             # already finished
             pass
         elif self.state == "running":
@@ -170,10 +164,10 @@ class task_base( Pyro.core.ObjBase ):
 
     def set_finished( self ):
         # could do this automatically off the "name finished for ref_time" message
-        self.state = "finishd"
+        self.state = "finished"
 
     def abdicate( self ):
-        if self.state == "finishd" and not self.abdicated:
+        if self.state == "finished" and not self.abdicated:
             self.abdicated = True
             return True
         else:
@@ -207,7 +201,7 @@ class task_base( Pyro.core.ObjBase ):
             return False
 
     def is_finished( self ): 
-        if self.state == "finishd":
+        if self.state == "finished":
             return True
         else:
             return False
@@ -260,9 +254,10 @@ class runahead_task_base( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state = "waiting" )
+        task_base.__init__( self, ref_time, initial_state )
+
         self.MAX_FINISHED = 4
-        self.log.info( self.identity() + " max runahead: " + str( self.MAX_FINISHED ) + " previous " + self.name + "'s" )
+        self.log.info( self.identity() + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
 
     def run_if_ready( self, tasks, dummy_clock_rate ):
         # don't run if too many previous finished instances exist
@@ -271,20 +266,19 @@ class runahead_task_base( task_base ):
         old_and_finished = []
         if self.state == "waiting":
             for task in tasks:
-               if task.name == self.name and task.state == "finishd":
+               if task.name == self.name and task.state == "finished":
                    old_and_finished.append( task.ref_time )
                             
             if len( old_and_finished ) >= self.MAX_FINISHED:
                 delay = True
 
         if delay:
-            # this gets logged every time the function is called
+            # the following gets logged every time the function is called
             # self.log.debug( self.identity() + " ready and waiting (too far ahead)" )
             pass
 
         else:
             task_base.run_if_ready( self, tasks, dummy_clock_rate )
-
 
 #----------------------------------------------------------------------
 class downloader( runahead_task_base ):
@@ -299,18 +293,16 @@ class downloader( runahead_task_base ):
     name = "downloader"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, ref_time, initial_state = "waiting" ):
         
         runahead_task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
 
         hour = ref_time[8:10]
 
+        self.estimated_run_time = 10
+
         # no prerequisites: this is The Initial Task
         self.prerequisites = requisites( self.name, [])
-
-        # my postrequisites are files needed FOR my reference time
-        # (not files downloaded at my reference time) 
 
         lbc_06 = reference_time.decrement( ref_time, 6 )
         lbc_12 = reference_time.decrement( ref_time, 12 )
@@ -348,20 +340,17 @@ class downloader( runahead_task_base ):
                     "file lbc_" + lbc_06 + ".um ready",
                     self.name + " finished for " + ref_time
                     ])
-
             
 #----------------------------------------------------------------------
 class oper_to_topnet( runahead_task_base ):
     "connect separate operational system to a topnet task"
 
-    """
-    use instead of downloader
-    """
+    """use instead of downloader"""
 
     name = "oper_to_topnet"
     valid_hours = [ 6, 18 ]
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, ref_time, initial_state = "waiting" ):
         
         runahead_task_base.__init__( self, ref_time, initial_state )
         # note: base class init may adjust ref_time!
@@ -377,27 +366,22 @@ class oper_to_topnet( runahead_task_base ):
                 self.name + " finished for " + ref_time
                 ])
 
-
 #----------------------------------------------------------------------
 class nzlam( task_base ):
 
     name = "nzlam"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def run_time_estimate( self ):
+    def __init__( self, ref_time, initial_state = "waiting" ):
 
-        ref_time = self.ref_time
+        task_base.__init__( self, ref_time, initial_state )
+
         hour = ref_time[8:10]
 
         if hour == "00" or hour == "12":
             self.estimated_run_time = 50
         elif hour == "06" or hour == "18":
             self.estimated_run_time = 120
-
-    def define_requisites( self ):
-
-        ref_time = self.ref_time
-        hour = ref_time[8:10]
 
         lbc_06 = reference_time.decrement( ref_time, 6 )
         lbc_12 = reference_time.decrement( ref_time, 12 )
@@ -436,17 +420,16 @@ class nzlam_post( task_base ):
     name = "nzlam_post"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def run_time_estimate( self ):
-        ref_time = self.ref_time
+    def __init__( self, ref_time, initial_state = "waiting" ):
+
+        task_base.__init__( self, ref_time, initial_state )
+
         hour = ref_time[8:10]
+
         if hour == "00" or hour == "12":
             self.estimated_run_time = 10 
         elif hour == "06" or hour == "18":
             self.estimated_run_time = 40
-
-    def define_requisites( self ):
-        ref_time = self.ref_time
-        hour = ref_time[8:10]
 
         if hour == "00" or hour == "12":
             
@@ -481,12 +464,14 @@ class globalprep( task_base ):
     name = "globalprep"
     valid_hours = [ 0 ]
 
-    def run_time_estimate( self ):
+    def __init__( self, ref_time, initial_state = "waiting" ):
+
+        task_base.__init__( self, ref_time, initial_state )
+
         self.estimated_run_time = 5
 
-    def define_requisites( self ):
-        ref_time = self.ref_time
         hour = ref_time[8:10]
+
         self.prerequisites = requisites( self.name, [ 
                 "file 10mwind_" + ref_time + ".um ready",
                 "file seaice_" + ref_time + ".um ready" ])
@@ -504,12 +489,11 @@ class globalwave( task_base ):
     name = "globalwave"
     valid_hours = [ 0 ]
 
-    def run_time_estimate( self ):
+    def __init__( self, ref_time, initial_state = "waiting" ):
+
+        task_base.__init__( self, ref_time, initial_state )
+
         self.estimated_run_time = 120 
-
-
-    def define_requisites( self ):
-        ref_time = self.ref_time
 
         self.prerequisites = requisites( self.name, [ 
                 "file 10mwind_" + ref_time + ".nc ready",
@@ -527,16 +511,16 @@ class nzwave( task_base ):
     name = "nzwave"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def run_time_estimate( self ):
-        ref_time = self.ref_time
+    def __init__( self, ref_time, initial_state = "waiting" ):
+
+        task_base.__init__( self, ref_time, initial_state )
+
         hour = ref_time[8:10]
+
         if hour == "06" or hour == "18":
             self.estimated_run_time = 120
         else:
             self.estimated_run_time = 30
-
-    def define_requisites( self ):
-        ref_time = self.ref_time
 
         self.prerequisites = requisites( self.name, [ 
                  "file sls_" + ref_time + ".nc ready" ])
@@ -553,11 +537,11 @@ class ricom( task_base ):
     name = "ricom"
     valid_hours = [ 6, 18 ]
 
-    def run_time_estimate( self ):
-        self.estimated_run_time = 30 
+    def __init__( self, ref_time, initial_state = "waiting" ):
 
-    def define_requisites( self ):
-        ref_time = self.ref_time
+        task_base.__init__( self, ref_time, initial_state )
+
+        self.estimated_run_time = 30 
 
         self.prerequisites = requisites( self.name, [ 
                  "file sls_" + ref_time + ".nc ready" ])
@@ -574,11 +558,12 @@ class mos( task_base ):
     name = "mos"
     valid_hours = [ 0, 6, 12, 18 ]
 
-    def run_time_estimate( self ):
+    def __init__( self, ref_time, initial_state = "waiting" ):
+
+        task_base.__init__( self, ref_time, initial_state )
+
         self.estimated_run_time = 0.1
 
-    def define_requisites( self ):
-        ref_time = self.ref_time
         hour = ref_time[8:10]
 
         if hour == "06" or hour == "18":
@@ -600,11 +585,11 @@ class nztide( runahead_task_base ):
     name = "nztide"
     valid_hours = [ 6, 18 ]
 
-    def run_time_estimate( self ):
-        self.estimated_run_time = 1
+    def __init__( self, ref_time, initial_state = "waiting" ):
 
-    def define_requisites( self ):
-        ref_time = self.ref_time
+        runahead_task_base.__init__( self, ref_time, initial_state )
+
+        self.estimated_run_time = 1
 
         self.prerequisites = requisites( self.name, [])
 
@@ -629,11 +614,11 @@ class topnet( task_base ):
     catchup_mode = True
     # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
 
-    def run_time_estimate( self ):
-        self.estimated_run_time = 0.01
+    def __init__( self, ref_time, initial_state = "waiting" ):
 
-    def define_requisites( self ):
-        ref_time = self.ref_time
+        task_base.__init__( self, ref_time, initial_state )
+
+        self.estimated_run_time = 0.01
 
         self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
@@ -688,11 +673,11 @@ class nwpglobal( task_base ):
     name = "nwpglobal"
     valid_hours = [ 0 ]
 
-    def run_time_estimate( self ):
-        self.estimated_run_time = 10
+    def __init__( self, ref_time, initial_state = "waiting" ):
 
-    def define_requisites( self ):
-        ref_time = self.ref_time
+        task_base.__init__( self, ref_time, initial_state )
+
+        self.estimated_run_time = 10
 
         self.prerequisites = requisites( self.name, [ 
                  "file 10mwind_" + ref_time + ".um ready" ])

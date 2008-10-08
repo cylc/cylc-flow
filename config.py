@@ -18,14 +18,14 @@ start_time = "2008080818"
 stop_time = "2008081512"
 
 # task_list should be a subset of tasks.all_tasks (defaults to all)
-# optional initial states: 'finishd', 'ready', 'waiting' (default)
+# optional initial states: 'finished', 'ready', 'waiting' (default)
 task_list = [ 
         'downloader',
         'nwpglobal',
         'globalprep',
         'globalwave',
-        'nzlam:finishd',
-        'nzlam_post:ready',
+        'nzlam:finished',
+        'nzlam_post',
         'nzwave',
         'ricom',
         'nztide',
