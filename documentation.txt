@@ -132,6 +132,32 @@ is no running nzlampost, topnet will depend on the most recent FINISHED 06 or
 TO DO: we could improve this by removing non-nzlampost tasks older than
 oldest_running (BUT: make sure this doesn't break the dead soldier test).
 
+
+RUNAHEAD TASKS
+
+Any tasks that have no prerequisites can start running, by default, as soon as
+they come into existence.  However, they will execute consecutively, not all
+at once, because of our abdication-based task management: foo(T+1) depends on
+foo(T) IF foo(T) exists.  
+
+To prevent indefinite runahead when can either impose artificial prerequisites
+(e.g. tie nztide(T) to nzlam(T)), OR refuse to create a new task foo unless
+there are fewer than, say, five previous foo instances still in existence. The
+latter option has the advantage that the task remains independent in case we
+want to run it when the putative dependee is turned off.
+
+DOWNLOADER tasks must have no prerequisites otherwise nothing will happen,
+but we restrict the number of concurrent instances.
+
+NZTIDE tasks have no prerequisites, but we restrict the number of concurrent
+instances.
+
+TOPNET runs hourly and can run ahead of the nzlam by up to 23 hours (uptodate
+mode) or 11 hours (catchup).  This is achieved through FUZZY PREREQUISITES:
+"file tn_TIME.nc ready" for any TIME up to 23 hours (or 11) prior to the
+topnet task's own reference time.
+
+
 DEAD SOLDIERS:
 
 A "dead soldier" is a task that will never run because it's prerequisites can
