@@ -88,7 +88,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 del task
                 return
 
-        task.log.info( "New " + task.name + " created for " + task.ref_time )
+        task.log.info( "New task created for " + task.ref_time )
         self.task_pool.append( task )
         # connect new task to the pyro daemon
         uri = pyro_daemon.connect( task, task.identity() )
@@ -253,7 +253,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         if len( remove_these ) > 0:
             for task in remove_these:
-                log.debug( "removing spent " + task.name + " for " + task.ref_time )
+                log.debug( "removing spent " + task.identity() )
                 self.task_pool.remove( task )
                 pyro_daemon.disconnect( task )
 
@@ -270,13 +270,13 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def request_pause( self ):
         # call remotely via Pyro
-        log.warning( "pause requested" )
+        log.warning( "system pause requested" )
         self.pause_requested = True
 
 
     def request_shutdown( self ):
         # call remotely via Pyro
-        log.warning( "clean shutdown requested" )
+        log.warning( "system shutdown requested" )
         self.shutdown_requested = True
 
 

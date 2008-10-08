@@ -78,15 +78,15 @@ class task_base( Pyro.core.ObjBase ):
             self.state = "waiting"
         elif initial_state == "finishd":  
             self.postrequisites.set_all_satisfied()
-            self.log.warning( "starting in FINISHED state for " + self.ref_time )
+            self.log.warning( self.identity() + " starting in FINISHED state" )
             self.state = "finishd"
         elif initial_state == "ready":
             # waiting, but ready to go
             self.state = "waiting"
-            self.log.warning( "starting in READY state for " + self.ref_time )
+            self.log.warning( self.identity() + " starting in READY state" )
             self.prerequisites.set_all_satisfied()
         else:
-            print "ERROR: unknown initial task state " + initial_state
+            self.log.critical( "unknown initial task state: " + initial_state )
             sys.exit(1)
 
     def define_requisites( self ):
@@ -161,14 +161,14 @@ class task_base( Pyro.core.ObjBase ):
 
     def run_external_dummy( self, dummy_clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
-        self.log.info( "RUNNING external dummy " + self.identity() )
+        self.log.info( "launching external dummy for " + self.ref_time )
         os.system( "./task_dummy.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
     def run_external_task( self ):
         # DERIVED CLASSES MUST OVERRIDE THIS METHOD TO RUN THE EXTERNAL
         # TASK, AND SET self.state = "running"
-        self.log.critical( "task base run method should not be called" )
+        self.log.critical( "task base class run() should not be called" )
         return
 
     def get_state( self ):
@@ -246,12 +246,12 @@ class task_base( Pyro.core.ObjBase ):
 
         if self.state != "running":
             # message from a task that's not supposed to be running
-            self.log.warning( "NON-RUNNING TASK: " + message )
+            self.log.warning( "MESSAGE FROM NON-RUNNING TASK: " + message )
 
         if self.postrequisites.requisite_exists( message ):
             # an expected postrequisite from a running task
             if self.postrequisites.is_satisfied( message ):
-                self.log.warning( "ALREADY SATISFIED: " + message )
+                self.log.warning( "POSTREQUISITE ALREADY SATISFIED: " + message )
 
             self.log.info( message )
             self.postrequisites.set_satisfied( message )
@@ -293,7 +293,9 @@ class runahead_task_base( task_base ):
                 delay = True
 
         if delay:
-            self.log.debug( self.identity() + " ready and waiting (too far ahead)" )
+            # this gets logged every time the function is called
+            # self.log.debug( self.identity() + " ready and waiting (too far ahead)" )
+            pass
 
         else:
             task_base.run_if_ready( self, tasks, dummy_clock_rate )
@@ -645,7 +647,7 @@ class topnet( task_base ):
         m = re.compile( "^file (.*) ready$" ).match( prereq )
         [ file ] = m.groups()
 
-        self.log.info( "RUNNING external dummy " + self.identity() + " FOR " + file )
+        self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
         os.system( "./task_dummy.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
@@ -659,11 +661,11 @@ class topnet( task_base ):
         if not topnet.catchup_mode and message == "CATCHUP for " + self.ref_time:
             topnet.catchup_mode = True
             # WARNING: SHOULDN'T GO FROM UPTODATE TO CATCHUP?
-            self.log.warning( "entering CATCHUP operation" )
+            self.log.warning( "beginning CATCHUP operation" )
 
         elif topnet.catchup_mode and message == "UPTODATE for " + self.ref_time:
             topnet.catchup_mode = False
-            self.log.info( "entering UPTODATE operation" )
+            self.log.info( "beginning UPTODATE operation" )
 
 #----------------------------------------------------------------------
 class nwpglobal( task_base ):
