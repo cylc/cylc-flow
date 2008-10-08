@@ -15,9 +15,11 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import sys
 import Pyro.core
-
 from time import sleep
 from string import ljust, rjust, split, upper, lower
+import config
+import datetime
+
 
 class kit:
     def __init__( self, title ):
@@ -54,10 +56,15 @@ while True:
     try: 
     
         remote = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+        if config.dummy_mode:
+            remote_clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
 
         while True:
 
             status = remote.get_status()
+            dt = datetime.datetime.now()
+            if config.dummy_mode:
+                dt = remote_clock.get_datetime()
 
             max_name_len = 0
             max_total_len = 0
@@ -114,6 +121,7 @@ while True:
 
             blit = title.boof()
             blit.append( "  Current Running Tasks" )
+            blit.append( dt )
             for rt in reftimes:
                 if len( lines[rt] ) != 0:
                     blit.append( "\033[1;31m" + "__________" + "\033[0m" ) # red

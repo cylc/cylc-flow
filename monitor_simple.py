@@ -15,10 +15,8 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import sys
 import Pyro.core
-
 from time import sleep
 from string import split
-
 import config
 import datetime
 
