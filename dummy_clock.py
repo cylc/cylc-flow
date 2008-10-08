@@ -32,8 +32,8 @@ class dummy_clock( Pyro.core.ObjBase ):
         self.rate = rate
 
         print
-        print "DUMMY MODE" 
-        print "  o clock rate " + str(self.rate) + " s/hr"
+        print "DUMMY MODE CLOCK" 
+        print "  o rate " + str(self.rate) + " seconds / dummy hour"
         print "  o start time " + str( self.base_dummytime )
 
     def get_datetime( self ):

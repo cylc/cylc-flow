@@ -384,8 +384,14 @@ if __name__ == "__main__":
         print "ERROR: no tasks configured"
         sys.exit(1)
 
+    print
+    print 'Initial reference time ' + start_time
+    if stop_time:
+        print 'Final reference time ' + stop_time
+
     if dummy_mode:
         dummy_clock = dummy_clock( start_time, dummy_rate, dummy_offset ) 
+
 
     if not os.path.exists( 'LOGFILES' ):
         os.makedirs( 'LOGFILES' )
@@ -408,7 +414,6 @@ if __name__ == "__main__":
     h2.setLevel( logging.WARNING )
     h2.setFormatter( f )
     log.addHandler(h2)
-
     if dummy_mode:
         # replace logged real time with dummy clock time 
         log.addFilter( LogFilter( dummy_clock, "main" ))
@@ -426,15 +431,11 @@ if __name__ == "__main__":
         h.setFormatter(f)
         foo.addHandler(h)
         if dummy_mode:
+            # replace logged real time with dummy clock time 
             foo.addFilter( LogFilter( dummy_clock, "main" ))
 
-    print
-    print 'Initial reference time ' + start_time
     log.info( 'initial reference time ' + start_time )
-
-    if stop_time:
-        print 'Final reference time ' + stop_time
-        log.info( 'final reference time ' + stop_time )
+    log.info( 'final reference time ' + stop_time )
 
     # Start a Pyro nameserver in its own thread
     # (alternatively, run the 'pyro-ns' script as a separate process)
