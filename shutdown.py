@@ -7,6 +7,8 @@ Tell the task manager (via Pyro) to shut down.
 import os
 import sys
 import Pyro.core
+from time import sleep
+import config     # for dummy_mode
 
 # command line arguments
 if len( sys.argv ) != 1:
@@ -19,10 +21,19 @@ try:
     god = Pyro.core.getProxyForURI("PYRONAME://god")
     # pause to prevent new dummy tasks being launched after the pkill 
     god.request_pause()
-    # kill any running task_dummy programs
-    os.system( 'pkill -9 -u $USER task_dummy.py' )
+    print 'pausing system ...'
+    sleep(5)
+
+    if config.dummy_mode:
+        print 'killing dummy tasks ...'
+        # kill any running task_dummy programs
+        os.system( 'pkill -9 -u $USER task_dummy.py' )
+        sleep(5)
+
     # shutdown the controller and pyro nameserver
+    print 'requesting shutdown ...'
     god.request_shutdown()
+
 except:
     # nameserver not found, or god not registered with it?
     print "ERROR: failed to talk to god"

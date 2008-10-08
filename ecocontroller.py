@@ -188,7 +188,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
             task.get_satisfaction( self.task_pool )
 
-            task.run_if_ready( self.task_pool )
+            task.run_if_ready( self.task_pool, dummy_rate )
 
             # create a new task foo(T+1) if foo(T) just finished
             if task.abdicate():
@@ -379,6 +379,7 @@ if __name__ == "__main__":
     if config_file:
         # load the config file
         print "config file: " + config_file
+        print
         # strip of the '.py'
         m = re.compile( "^(.*)\.py$" ).match( config_file )
         modname = m.groups()[0]
@@ -401,6 +402,7 @@ if __name__ == "__main__":
         os.makedirs( 'LOGFILES' )
 
     print "Logging to ./LOGFILES"
+    print
 
     log = logging.getLogger( "main" )
     log.setLevel( logging_level )
@@ -441,9 +443,11 @@ if __name__ == "__main__":
         print 'Stop time ' + stop_time
         log.info( 'Stop time ' + stop_time )
 
+    print
+
     # Start a Pyro nameserver in its own thread
     # (alternatively, run the 'pyro-ns' script as a separate process)
-    log.debug( "starting pyro nameserver" )
+    log.warning( "starting pyro nameserver" )
     ns_starter = Pyro.naming.NameServerStarter()
     ns_thread = threading.Thread( target = ns_starter.start )
     ns_thread.setDaemon(True)

@@ -54,10 +54,6 @@ class task_base( Pyro.core.ObjBase ):
     
     name = "task base class"
 
-    # assume catchup mode and detect if we've caught up
-    # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
-    catchup_mode = True
-
     def __init__( self, ref_time, initial_state = "waiting" ):
 
         Pyro.core.ObjBase.__init__(self)
@@ -136,7 +132,7 @@ class task_base( Pyro.core.ObjBase ):
         return reference_time.increment( self.ref_time, increment )
 
 
-    def run_if_ready( self, tasks ):
+    def run_if_ready( self, tasks, dummy_clock_rate ):
 
         # don't run if any previous instance not finished
         for task in tasks:
@@ -154,18 +150,26 @@ class task_base( Pyro.core.ObjBase ):
             pass
         elif self.prerequisites.all_satisfied():
             # prerequisites all satisified, so run me
-            self.run()
+            if dummy_clock_rate:
+                # we're in dummy mode
+                self.run_external_dummy( dummy_clock_rate )
+            else:
+                self.run_external_task()
         else:
             # still waiting
             pass
 
-    def run( self ):
+    def run_external_dummy( self, dummy_clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
-        # TO DO: the subprocess module might be better than os.system?
-        self.log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + "]" )
-        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
+        self.log.info( "RUNNING external dummy " + self.identity() )
+        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
+    def run_external_task( self ):
+        # DERIVED CLASSES MUST OVERRIDE THIS METHOD TO RUN THE EXTERNAL
+        # TASK, AND SET self.state = "running"
+        self.log.critical( "task base run method should not be called" )
+        return
 
     def get_state( self ):
         return self.name + ": " + self.state
@@ -275,7 +279,7 @@ class runahead_task_base( task_base ):
         self.MAX_FINISHED = 4
         self.log.info( self.identity() + " max runahead: " + str( self.MAX_FINISHED ) + " previous " + self.name + "'s" )
 
-    def run_if_ready( self, tasks ):
+    def run_if_ready( self, tasks, dummy_clock_rate ):
         # don't run if too many previous finished instances exist
         delay = False
 
@@ -292,7 +296,7 @@ class runahead_task_base( task_base ):
             self.log.debug( self.identity() + " ready and waiting (too far ahead)" )
 
         else:
-            task_base.run_if_ready( self, tasks )
+            task_base.run_if_ready( self, tasks, dummy_clock_rate )
 
 #----------------------------------------------------------------------
 class downloader( runahead_task_base ):
@@ -604,6 +608,10 @@ class topnet( task_base ):
     name = "topnet"
     valid_hours = range( 0,24 )
 
+    # assume catchup mode and detect if we've caught up
+    catchup_mode = True
+    # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
+
     def run_time_estimate( self ):
         self.estimated_run_time = 0.01
 
@@ -616,7 +624,7 @@ class topnet( task_base ):
                 self.name + " finished for " + ref_time
                 ])
 
-        if task_base.catchup_mode:
+        if topnet.catchup_mode:
             nzlam_cutoff = reference_time.decrement( self.ref_time, 11 )
         else:
             nzlam_cutoff = reference_time.decrement( self.ref_time, 23 )
@@ -625,7 +633,7 @@ class topnet( task_base ):
                 "file tn_" + nzlam_cutoff + ".nc ready" ])
 
 
-    def run( self ):
+    def run_external_dummy( self, dummy_clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         # TO DO: the subprocess module might be better than os.system?
 
@@ -637,8 +645,8 @@ class topnet( task_base ):
         m = re.compile( "^file (.*) ready$" ).match( prereq )
         [ file ] = m.groups()
 
-        self.log.info( "RUNNING [task_dummy.py " + self.name + " " + self.ref_time + " " + file + "]" )
-        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + "&" )
+        self.log.info( "RUNNING external dummy " + self.identity() + " FOR " + file )
+        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
 
@@ -648,13 +656,14 @@ class topnet( task_base ):
         task_base.incoming( self, priority, message)
 
         # but intercept catchup mode messages
-        if not task_base.catchup_mode and message == "CATCHUP MODE for " + self.ref_time:
-            task_base.catchup_mode = True
-            self.log.info( "telling task_base we're entering catchup mode" )
-        elif task_base.catchup_mode and message == "REALTIME MODE for " + self.ref_time:
-            task_base.catchup_mode = False
-            self.log.info( "telling task_base we've caught up" )
+        if not topnet.catchup_mode and message == "CATCHUP for " + self.ref_time:
+            topnet.catchup_mode = True
+            # WARNING: SHOULDN'T GO FROM UPTODATE TO CATCHUP?
+            self.log.warning( "entering CATCHUP operation" )
 
+        elif topnet.catchup_mode and message == "UPTODATE for " + self.ref_time:
+            topnet.catchup_mode = False
+            self.log.info( "entering UPTODATE operation" )
 
 #----------------------------------------------------------------------
 class nwpglobal( task_base ):

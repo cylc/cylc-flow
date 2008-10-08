@@ -21,7 +21,6 @@ the dummy run-times are not currently proportional to the real run times.
 import sys
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
-from config import dummy_rate
 import reference_time
 import datetime
 
@@ -29,12 +28,9 @@ from time import sleep
 
 pyro_shortcut = False
 
-# command line arguments
-if len( sys.argv ) != 3:
-    print "USAGE:", sys.argv[0], "<task name> <REFERENCE_TIME>"
-    sys.exit(1)
+# arguments: <task name> <REFERENCE_TIME> <dummy clock rate>
     
-[task_name, ref_time] = sys.argv[1:]
+[task_name, ref_time, clock_rate] = sys.argv[1:]
 
 # connect to the task object inside the control program
 
@@ -64,7 +60,7 @@ else:
     task = Pyro.core.getProxyForURI( URI )
 
     est_hrs = task.get_estimated_run_time() / 60.0
-    est_dummy_secs = est_hrs * dummy_rate
+    est_dummy_secs = est_hrs * int( clock_rate )
 
     postreqs = task.get_postrequisite_list()
     n_postreqs = len( postreqs )
@@ -78,7 +74,7 @@ if task_name == "downloader":
     if dt >= rt_3p25:
         task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
     else:
-        task.incoming( 'NORMAL', 'REALTIME: waiting for input files for ' + ref_time )
+        task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + ref_time )
         while True:
             dt = clock.get_datetime()
             if dt >= rt_3p25:
@@ -97,10 +93,10 @@ elif task_name == "topnet":
     dt = clock.get_datetime()
     if dt >= rt_p25:
         task.incoming( 'NORMAL', 'got streamflow data for ' + ref_time )
-        task.incoming( 'NORMAL', 'CATCHUP MODE for ' + ref_time )
+        task.incoming( 'NORMAL', 'CATCHUP for ' + ref_time )
     else:
         task.incoming( 'NORMAL', 'waiting for streamflow data for ' + ref_time )
-        task.incoming( 'NORMAL', 'REALTIME MODE for ' + ref_time )
+        task.incoming( 'NORMAL', 'UPTODATE for ' + ref_time )
         while True:
             dt = clock.get_datetime()
             if dt >= rt_p25:
