@@ -332,12 +332,10 @@ if __name__ == "__main__":
     def usage():
         print "USAGE:", sys.argv[0], "<config file>"
 
-    print
     print "__________________________________________________________"
     print
     print "      . EcoConnect Implicit Sequencing Controller ."
     print "__________________________________________________________"
-    print
     
     # TO DO: better commandline parsing with optparse or getopt
     # (maybe not needed as most input is from the config file?)
@@ -357,13 +355,14 @@ if __name__ == "__main__":
     config_file = sys.argv[1]
 
     if not os.path.exists( config_file ):
+        print
         print "File not found: " + config_file
         usage()
         sys.exit(1)
     
     # load the config file
-    print "config file: " + config_file
     print
+    print "config file: " + config_file
     # strip of the '.py'
     m = re.compile( "^(.*)\.py$" ).match( config_file )
     modname = m.groups()[0]
@@ -372,10 +371,12 @@ if __name__ == "__main__":
 
     # check compulsory input
     if not start_time:
+        print
         print "ERROR: start_time not defined"
         sys.exit(1)
 
     if len( task_list ) == 0:
+        print
         print "ERROR: no tasks configured"
         sys.exit(1)
 
@@ -385,8 +386,8 @@ if __name__ == "__main__":
     if not os.path.exists( 'LOGFILES' ):
         os.makedirs( 'LOGFILES' )
 
-    print "Logging to ./LOGFILES"
     print
+    print "Logging to ./LOGFILES"
 
     log = logging.getLogger( "main" )
     log.setLevel( logging_level )
@@ -421,18 +422,18 @@ if __name__ == "__main__":
         if dummy_mode:
             foo.addFilter( LogFilter( dummy_clock, "main" ))
 
-    print 'Start time ' + start_time
-    log.info( 'Start time ' + start_time )
+    print
+    print 'initial reference time ' + start_time
+    log.info( 'initial reference time ' + start_time )
 
     if stop_time:
-        print 'Stop time ' + stop_time
-        log.info( 'Stop time ' + stop_time )
-
-    print
+        print 'final reference time ' + stop_time
+        log.info( 'final reference time ' + stop_time )
 
     # Start a Pyro nameserver in its own thread
     # (alternatively, run the 'pyro-ns' script as a separate process)
-    log.warning( "starting pyro nameserver" )
+    print
+    print "starting pyro nameserver"
     ns_starter = Pyro.naming.NameServerStarter()
     ns_thread = threading.Thread( target = ns_starter.start )
     ns_thread.setDaemon(True)
@@ -449,4 +450,7 @@ if __name__ == "__main__":
     uri = pyro_daemon.connect( god, "god" )
 
     # start processing
+    print
+    print "starting processing NOW"
+    print
     god.run()

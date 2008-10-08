@@ -19,7 +19,7 @@ stop_time = "2008081512"
 
 # task_list should be a subset of tasks.all_tasks (defaults to all)
 # optional initial states: 'finishd', 'ready', 'waiting' (default)
-task_list = [ ]
+task_list = [ 
         'downloader',
         'nwpglobal',
         'globalprep',
