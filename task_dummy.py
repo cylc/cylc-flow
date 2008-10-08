@@ -81,39 +81,27 @@ if task_name == "downloader":
                 break
             sleep(2)
 
-    for message in postreqs:
-        # set each postrequisite satisfied in turn
-        task.incoming( "NORMAL", message )
-        sleep(delay)
-
 elif task_name == "topnet":
 
     rt = reference_time._rt_to_dt( ref_time )
     rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
     dt = clock.get_datetime()
-    if dt >= rt_p25:
-        task.incoming( 'NORMAL', 'got streamflow data for ' + ref_time )
-        task.incoming( 'NORMAL', 'CATCHUP for ' + ref_time )
+    if not dt >= rt_p25:
+        task.incoming( 'NORMAL', 'CATCHUP: passed streamflow data time already, for ' + ref_time )
     else:
-        task.incoming( 'NORMAL', 'waiting for streamflow data for ' + ref_time )
-        task.incoming( 'NORMAL', 'UPTODATE for ' + ref_time )
+        task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow data time, for ' + ref_time )
+        #task.incoming( 'NORMAL', 'UPTODATE for ' + ref_time )
         while True:
             dt = clock.get_datetime()
             if dt >= rt_p25:
                 break
             sleep(2)
 
-    for message in postreqs:
-        # set each postrequisite satisfied in turn
-        task.incoming( "NORMAL", message )
-        sleep(delay)
-
-else:
-    # set each postrequisite satisfied in turn
-    task.incoming( "NORMAL", postreqs[0] )
-    for message in postreqs[1:]:
-        sleep(delay)
-        task.incoming( "NORMAL", message )
+# set each postrequisite satisfied in turn
+task.incoming( "NORMAL", postreqs[0] )
+for message in postreqs[1:]:
+    sleep(delay)
+    task.incoming( "NORMAL", message )
 
 # finished simulating the external task
 task.set_finished()

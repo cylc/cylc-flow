@@ -416,6 +416,8 @@ if __name__ == "__main__":
     # task-name-specific log files for all tasks 
     # these propagate messages up to the main log
     for name in task_list:
+        if re.compile( "^.*:").match( name ):
+            [name, state] = name.split( ':' )
         foo = logging.getLogger( "main." + name )
         foo.setLevel( logging_level )
 

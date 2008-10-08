@@ -40,23 +40,19 @@ class task_base( Pyro.core.ObjBase ):
     name = "task base class"
 
     def __init__( self, ref_time, initial_state ):
+        # Call this AFTER derived class initialisation
+        #   (it alters requisites based on initial state)
+        # Derived classes MUST call nearest_ref_time()
+        #   before defining their requisites
 
         Pyro.core.ObjBase.__init__(self)
-
-        # adjust ref time (needed for creation of initial task list)
-        self.ref_time = self.nearest_ref_time( ref_time )
 
         self.log = logging.getLogger( "main." + self.name ) 
 
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
 
-        self.estimated_run_time = 30  # minutes
-
-        self.prerequisites = requisites( self.name, [] )
-        self.postrequisites = requisites( self.name, [] )
-
-        # initial states: waiting, running, finished
+        # initial states: waiting, ready, running, finished
         if not initial_state:
             self.state = "waiting"
             pass
@@ -254,10 +250,12 @@ class runahead_task_base( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
+        self.MAX_FINISHED = 4
         task_base.__init__( self, ref_time, initial_state )
 
-        self.MAX_FINISHED = 4
+        # logging is set up by task_base
         self.log.info( self.identity() + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
+
 
     def run_if_ready( self, tasks, dummy_clock_rate ):
         # don't run if too many previous finished instances exist
@@ -294,9 +292,11 @@ class downloader( runahead_task_base ):
     valid_hours = [ 0, 6, 12, 18 ]
 
     def __init__( self, ref_time, initial_state = "waiting" ):
-        
-        runahead_task_base.__init__( self, ref_time, initial_state )
-
+ 
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+       
         hour = ref_time[8:10]
 
         self.estimated_run_time = 10
@@ -312,35 +312,34 @@ class downloader( runahead_task_base ):
         if hour == "00":
 
             self.postrequisites = requisites( self.name, [ 
-                    self.name + " started for " + ref_time,
-                    "file obstore_" + ref_time + ".um ready",
-                    "file bgerr" + ref_time + ".um ready", 
-                    "file lbc_" + lbc_12 + ".um ready", 
-                    "file 10mwind_" + ref_time + ".um ready",
-                    "file seaice_" + ref_time + ".um ready",
-                    self.name + " finished for " + ref_time
-                    ])
+                self.name + " started for " + ref_time,
+                "file obstore_" + ref_time + ".um ready",
+                "file bgerr" + ref_time + ".um ready", 
+                "file lbc_" + lbc_12 + ".um ready", 
+                "file 10mwind_" + ref_time + ".um ready",
+                "file seaice_" + ref_time + ".um ready",
+                self.name + " finished for " + ref_time ])
 
         elif hour == "12":
 
             self.postrequisites = requisites( self.name, [ 
-                    self.name + " started for " + ref_time,
-                    "file obstore_" + ref_time + ".um ready",
-                    "file bgerr" + ref_time + ".um ready", 
-                    "file lbc_" + lbc_12 + ".um ready",
-                    self.name + " finished for " + ref_time
-                    ])
+                self.name + " started for " + ref_time,
+                "file obstore_" + ref_time + ".um ready",
+                "file bgerr" + ref_time + ".um ready", 
+                "file lbc_" + lbc_12 + ".um ready",
+                self.name + " finished for " + ref_time ])
 
         if hour == "06" or hour == "18":
 
             self.postrequisites = requisites( self.name, [
-                    self.name + " started for " + ref_time,
-                    "file obstore_" + ref_time + ".um ready",
-                    "file bgerr" + ref_time + ".um ready",
-                    "file lbc_" + lbc_06 + ".um ready",
-                    self.name + " finished for " + ref_time
-                    ])
-            
+                self.name + " started for " + ref_time,
+                "file obstore_" + ref_time + ".um ready",
+                "file bgerr" + ref_time + ".um ready",
+                "file lbc_" + lbc_06 + ".um ready",
+                self.name + " finished for " + ref_time ])
+ 
+        runahead_task_base.__init__( self, ref_time, initial_state )
+           
 #----------------------------------------------------------------------
 class oper_to_topnet( runahead_task_base ):
     "connect separate operational system to a topnet task"
@@ -352,19 +351,21 @@ class oper_to_topnet( runahead_task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
         
-        runahead_task_base.__init__( self, ref_time, initial_state )
-        # note: base class init may adjust ref_time!
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         # no prerequisites: this is The Initial Task
         self.prerequisites = requisites( self.name, [])
 
         self.estimated_run_time = 1
 
         self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file tn_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
+            self.name + " started for " + ref_time,
+            "file tn_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
+
+        runahead_task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class nzlam( task_base ):
@@ -374,8 +375,10 @@ class nzlam( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         hour = ref_time[8:10]
 
         if hour == "00" or hour == "12":
@@ -390,29 +393,27 @@ class nzlam( task_base ):
             self.prerequisites = requisites( self.name, [ 
                 "file obstore_" + ref_time + ".um ready",
                 "file bgerr" + ref_time + ".um ready",
-                "file lbc_" + lbc_12 + ".um ready" 
-                ])
+                "file lbc_" + lbc_12 + ".um ready" ])
 
             self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
                 "file sls_" + ref_time + ".um ready",   
-                self.name + " finished for " + ref_time
-                ])
+                self.name + " finished for " + ref_time ])
  
         elif hour == "06" or hour == "18":
             self.prerequisites = requisites( self.name, [ 
                 "file obstore_" + ref_time + ".um ready",
                 "file bgerr" + ref_time + ".um ready",
-                "file lbc_" + lbc_06 + ".um ready" 
-                ])
+                "file lbc_" + lbc_06 + ".um ready" ])
 
             self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
                 "file tn_" + ref_time + ".um ready",
                 "file sls_" + ref_time + ".um ready",   
                 "file met_" + ref_time + ".um ready",
-                self.name + " finished for " + ref_time
-                ])
+                self.name + " finished for " + ref_time ])
+
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class nzlam_post( task_base ):
@@ -422,7 +423,9 @@ class nzlam_post( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
 
         hour = ref_time[8:10]
 
@@ -434,30 +437,28 @@ class nzlam_post( task_base ):
         if hour == "00" or hour == "12":
             
             self.prerequisites = requisites( self.name, [ 
-                "file sls_" + ref_time + ".um ready",   
-                ])
+                "file sls_" + ref_time + ".um ready" ])
 
             self.postrequisites = requisites( self.name, [
                 self.name + " started for " + ref_time,
                 "file sls_" + ref_time + ".nc ready",   
-                self.name + " finished for " + ref_time
-                ])
+                self.name + " finished for " + ref_time ])
 
         elif hour == "06" or hour == "18":
 
             self.prerequisites = requisites( self.name, [ 
                 "file tn_" + ref_time + ".um ready",
                 "file sls_" + ref_time + ".um ready",   
-                "file met_" + ref_time + ".um ready" 
-                ])
+                "file met_" + ref_time + ".um ready" ])
 
             self.postrequisites = requisites( self.name, [ 
                 self.name + " started for " + ref_time,
                 "file tn_" + ref_time + ".nc ready",
                 "file sls_" + ref_time + ".nc ready",   
                 "file met_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
+                self.name + " finished for " + ref_time ])
+
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class globalprep( task_base ):
@@ -466,23 +467,26 @@ class globalprep( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
 
         self.estimated_run_time = 5
 
         hour = ref_time[8:10]
 
         self.prerequisites = requisites( self.name, [ 
-                "file 10mwind_" + ref_time + ".um ready",
-                "file seaice_" + ref_time + ".um ready" ])
+            "file 10mwind_" + ref_time + ".um ready",
+            "file seaice_" + ref_time + ".um ready" ])
 
         self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file 10mwind_" + ref_time + ".nc ready",
-                "file seaice_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
+            self.name + " started for " + ref_time,
+            "file 10mwind_" + ref_time + ".nc ready",
+            "file seaice_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
        
+        task_base.__init__( self, ref_time, initial_state )
+
 #----------------------------------------------------------------------
 class globalwave( task_base ):
 
@@ -491,20 +495,23 @@ class globalwave( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         self.estimated_run_time = 120 
 
         self.prerequisites = requisites( self.name, [ 
-                "file 10mwind_" + ref_time + ".nc ready",
-                "file seaice_" + ref_time + ".nc ready" ])
+            "file 10mwind_" + ref_time + ".nc ready",
+            "file seaice_" + ref_time + ".nc ready" ])
 
         self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file globalwave_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
-        
+            self.name + " started for " + ref_time,
+            "file globalwave_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
+ 
+        task_base.__init__( self, ref_time, initial_state )
+       
 #----------------------------------------------------------------------
 class nzwave( task_base ):
     
@@ -513,8 +520,10 @@ class nzwave( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         hour = ref_time[8:10]
 
         if hour == "06" or hour == "18":
@@ -523,14 +532,15 @@ class nzwave( task_base ):
             self.estimated_run_time = 30
 
         self.prerequisites = requisites( self.name, [ 
-                 "file sls_" + ref_time + ".nc ready" ])
+            "file sls_" + ref_time + ".nc ready" ])
 
         self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file nzwave_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
-        
+            self.name + " started for " + ref_time,
+            "file nzwave_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
+ 
+        task_base.__init__( self, ref_time, initial_state )
+       
 #----------------------------------------------------------------------
 class ricom( task_base ):
     
@@ -539,19 +549,22 @@ class ricom( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         self.estimated_run_time = 30 
 
         self.prerequisites = requisites( self.name, [ 
-                 "file sls_" + ref_time + ".nc ready" ])
+            "file sls_" + ref_time + ".nc ready" ])
 
         self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file ricom_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
-        
+            self.name + " started for " + ref_time,
+            "file ricom_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
+ 
+        task_base.__init__( self, ref_time, initial_state )
+       
 #----------------------------------------------------------------------
 class mos( task_base ):
     
@@ -560,24 +573,26 @@ class mos( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         self.estimated_run_time = 0.1
 
         hour = ref_time[8:10]
 
         if hour == "06" or hour == "18":
             self.prerequisites = requisites( self.name, [ 
-                "file met_" + ref_time + ".nc ready"
-                ])
+                "file met_" + ref_time + ".nc ready" ])
         else:
             self.prerequisites = requisites( self.name, [])
 
         self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file mos_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
+            self.name + " started for " + ref_time,
+            "file mos_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
+
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class nztide( runahead_task_base ):
@@ -587,17 +602,20 @@ class nztide( runahead_task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        runahead_task_base.__init__( self, ref_time, initial_state )
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         self.estimated_run_time = 1
 
         self.prerequisites = requisites( self.name, [])
 
         self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file nztide_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
+            self.name + " started for " + ref_time,
+            "file nztide_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
+
+        runahead_task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class topnet( task_base ):
@@ -616,15 +634,19 @@ class topnet( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         self.estimated_run_time = 0.01
 
         self.postrequisites = requisites( self.name, [ 
-                self.name + " started for " + ref_time,
-                "file topnet_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
+            " streamflow extraction started for " + ref_time,
+            " got streamflow data for " + ref_time,
+            " streamflow extraction finished for " + ref_time,
+            self.name + " started for " + ref_time,
+            "file topnet_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
 
         if topnet.catchup_mode:
             nzlam_cutoff = reference_time.decrement( self.ref_time, 11 )
@@ -632,7 +654,9 @@ class topnet( task_base ):
             nzlam_cutoff = reference_time.decrement( self.ref_time, 23 )
  
         self.prerequisites = fuzzy_requisites( self.name, [ 
-                "file tn_" + nzlam_cutoff + ".nc ready" ])
+            "file tn_" + nzlam_cutoff + ".nc ready" ])
+
+        task_base.__init__( self, ref_time, initial_state )
 
 
     def run_external_dummy( self, dummy_clock_rate ):
@@ -675,15 +699,20 @@ class nwpglobal( task_base ):
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
-        task_base.__init__( self, ref_time, initial_state )
-
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
         self.estimated_run_time = 10
 
         self.prerequisites = requisites( self.name, [ 
-                 "file 10mwind_" + ref_time + ".um ready" ])
+            "file 10mwind_" + ref_time + ".um ready" ])
 
         self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file 10mwind_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time
-                ])
+            self.name + " started for " + ref_time,
+            "file 10mwind_" + ref_time + ".nc ready",
+            self.name + " finished for " + ref_time ])
+
+        task_base.__init__( self, ref_time, initial_state )
+
+

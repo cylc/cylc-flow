@@ -11,7 +11,7 @@ import logging
 logging_level = logging.DEBUG
 
 dummy_mode = True      
-dummy_offset = 8    # how far behind (dummy) real time to start
+dummy_offset = 12    # how far behind (dummy) real time to start
 
 # start_time and stop_time must be strings
 start_time = "2008080818"
@@ -25,7 +25,7 @@ task_list = [
         'globalprep',
         'globalwave',
         'nzlam:finished',
-        'nzlam_post',
+        'nzlam_post:ready',
         'nzwave',
         'ricom',
         'nztide',
