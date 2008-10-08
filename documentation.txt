@@ -190,7 +190,7 @@ DUMMY MODE
 In dummy mode an external dummy program (see task_dummy.py) is launched by
 each task instead of the real external model/task.  The external dummy program
 then tells its in-controller task object that it has satisfied each of its
-postrequisites in turn.
+postrequisites in turn.  
 
 An accelerated clock (which runs at 60 seconds per dummy hour, by default) is
 used for dummy task timing and replaces the real time in all log messages.
@@ -203,3 +203,10 @@ If the task definitions (i.e. requisites and their respective time estimates)
 are accurate, this enables complete testing of the control system, including
 catchup and uptodate running and the transition between, except to the extent
 that real external task timing is modified by resource contention.
+
+Note that dummy downloader and topnet tasks are treated differently to
+simulate the behaviour of the corresponding real tasks: the downloader "waits"
+for incoming files until the clock time is at least 3:15 past its reference
+time, and topnet "waits" until the clock time :15 min past its reference time,
+which is the stream flow data extraction cutoff.
+
