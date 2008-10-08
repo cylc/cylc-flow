@@ -35,7 +35,7 @@ import logging.handlers
 
 #----------------------------------------------------------------------
 class task_base( Pyro.core.ObjBase ):
-    "ecoconnect task base class"
+    "task base class"
     
     name = "task base class"
 

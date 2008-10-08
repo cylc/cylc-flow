@@ -159,8 +159,8 @@ class task_manager ( Pyro.core.ObjBase ):
         # timeout that drops into our task processing loop.
 
 
-    def shutdown( self, message ):
-        log.critical( 'Shutting down NOW: ' + message )
+    def system_halt( self, message ):
+        log.critical( 'Halting NOW: ' + message )
         pyro_daemon.shutdown( True ) 
         sys.exit(0)
 
@@ -169,7 +169,7 @@ class task_manager ( Pyro.core.ObjBase ):
         # this gets called every time a pyro event comes in
 
         if self.shutdown_requested:
-            self.shutdown()
+            self.system_halt( 'by request' )
  
         if self.pause_requested:
             # no new tasks please
@@ -273,6 +273,10 @@ class task_manager ( Pyro.core.ObjBase ):
         log.warning( "system pause requested" )
         self.pause_requested = True
 
+    def request_resume( self ):
+        # call remotely via Pyro
+        log.warning( "system resume requested" )
+        self.pause_requested = False
 
     def request_shutdown( self ):
         # call remotely via Pyro
@@ -393,7 +397,7 @@ if __name__ == "__main__":
     log.setLevel( logging_level )
     max_bytes = 10000
     backups = 5
-    h = logging.handlers.RotatingFileHandler( 'LOGFILES/ecoconnect', 'a', max_bytes, backups )
+    h = logging.handlers.RotatingFileHandler( 'LOGFILES/ecocontroller', 'a', max_bytes, backups )
     f = logging.Formatter( '%(asctime)s %(levelname)-8s %(name)-16s - %(message)s', '%Y/%m/%d %H:%M:%S' )
     # use '%(name)-30s' to get the logger name print too 
     h.setFormatter(f)
