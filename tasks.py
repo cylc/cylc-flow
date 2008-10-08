@@ -285,6 +285,7 @@ class runahead_task_base( task_base ):
         else:
             task_base.run_if_ready( self, tasks, dummy_clock_rate )
 
+
 #----------------------------------------------------------------------
 class downloader( runahead_task_base ):
     "Met Office input file download task"
@@ -347,6 +348,35 @@ class downloader( runahead_task_base ):
                     "file lbc_" + lbc_06 + ".um ready",
                     self.name + " finished for " + ref_time
                     ])
+
+            
+#----------------------------------------------------------------------
+class oper_to_topnet( runahead_task_base ):
+    "connect separate operational system to a topnet task"
+
+    """
+    use instead of downloader
+    """
+
+    name = "oper_to_topnet"
+    valid_hours = [ 6, 18 ]
+
+    def __init__( self, ref_time, initial_state ):
+        
+        runahead_task_base.__init__( self, ref_time, initial_state )
+        # note: base class init may adjust ref_time!
+
+        # no prerequisites: this is The Initial Task
+        self.prerequisites = requisites( self.name, [])
+
+        self.estimated_run_time = 1
+
+        self.postrequisites = requisites( self.name, [
+                self.name + " started for " + ref_time,
+                "file tn_" + ref_time + ".nc ready",
+                self.name + " finished for " + ref_time
+                ])
+
 
 #----------------------------------------------------------------------
 class nzlam( task_base ):
