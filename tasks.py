@@ -33,21 +33,6 @@ import Pyro.core
 import logging
 import logging.handlers
 
-#-----------------------------------------------------------------------
-all_tasks = [ 
-        'downloader',
-        'nwpglobal',
-        'globalprep',
-        'globalwave',
-        'nzlam',
-        'nzlam_post',
-        'nzwave',
-        'ricom',
-        'nztide',
-        'topnet',
-        'mos' 
-        ]
-
 #----------------------------------------------------------------------
 class task_base( Pyro.core.ObjBase ):
     "ecoconnect task base class"

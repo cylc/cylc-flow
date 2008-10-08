@@ -330,13 +330,7 @@ if __name__ == "__main__":
     n_args = len( sys.argv ) - 1
 
     def usage():
-        print "USAGE:", sys.argv[0], "[<start ref time>] [<config file>]"
-        print ""
-        print "(i) start time only: run all tasks from start time"
-        print "(ii) config file only: run the configured tasks from"
-        print "     the configured start time"
-        print "(iii) both: run the configured tasks, but override the"
-        print "     configure start time"
+        print "USAGE:", sys.argv[0], "<config file>"
 
     print
     print "__________________________________________________________"
@@ -347,53 +341,43 @@ if __name__ == "__main__":
     
     # TO DO: better commandline parsing with optparse or getopt
     # (maybe not needed as most input is from the config file?)
-    start_time_arg = None
+    start_time = None
     stop_time = None
     config_file = None
 
-    # start the dummy clock <offset> hours after start ref time
-    # advance an hour every <rate> seconds
+    # dummy mode 
     dummy_mode = False
     dummy_offset = None  
-    dummy_rate = 60      # dummy time advances 1 hour every 60 seconds
-                         # note that task startup overhead is ~20 secs
+    dummy_rate = 60 
  
-    if n_args == 2:
-        start_time_arg = sys.argv[1]
-        config_file = sys.argv[2]
-
-    elif n_args == 1:
-        arg = sys.argv[1]
-        if reference_time.is_valid( arg ):
-            start_time_arg = arg
-        elif os.path.exists( arg ):
-            config_file = arg
-        else:
-            usage()
-            sys.exit(1)
-
-    else: 
+    if n_args != 1:
         usage()
         sys.exit(1)
 
-    if config_file:
-        # load the config file
-        print "config file: " + config_file
-        print
-        # strip of the '.py'
-        m = re.compile( "^(.*)\.py$" ).match( config_file )
-        modname = m.groups()[0]
-        # load it now
-        exec "from " + modname + " import *"
+    config_file = sys.argv[1]
 
-    else:
-        print "no config file, running all tasks"
-        task_list = all_tasks
+    if not os.path.exists( config_file ):
+        print "File not found: " + config_file
+        usage()
+        sys.exit(1)
+    
+    # load the config file
+    print "config file: " + config_file
+    print
+    # strip of the '.py'
+    m = re.compile( "^(.*)\.py$" ).match( config_file )
+    modname = m.groups()[0]
+    # load it now
+    exec "from " + modname + " import *"
 
-    if start_time_arg:
-        # override config file start_time
-        start_time = start_time_arg
+    # check compulsory input
+    if not start_time:
+        print "ERROR: start_time not defined"
+        sys.exit(1)
 
+    if len( task_list ) == 0:
+        print "ERROR: no tasks configured"
+        sys.exit(1)
 
     if dummy_mode:
         dummy_clock = dummy_clock( start_time, dummy_rate, dummy_offset ) 
@@ -421,11 +405,12 @@ if __name__ == "__main__":
     log.addHandler(h2)
 
     if dummy_mode:
+        # replace logged real time with dummy clock time 
         log.addFilter( LogFilter( dummy_clock, "main" ))
 
-    # task-name-specific logs for ALL tasks 
+    # task-name-specific log files for all tasks 
     # these propagate messages up to the main log
-    for name in all_tasks:
+    for name in task_list:
         foo = logging.getLogger( "main." + name )
         foo.setLevel( logging_level )
 
