@@ -36,11 +36,6 @@ pyro_shortcut = False
 # need non pyro_shortcut (see below) for clock!
 clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
 
-#def sleep( dummy_seconds ):
-#    wait_until = clock.get_datetime() + datetime.timedelta( 0,0,0,0,0,0,dummy_seconds )
-#    while clock.get_datetime() < wait_until:
-#        pass
-
 if pyro_shortcut:
     task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
 
@@ -88,7 +83,7 @@ elif task_name == "topnet":
     rt = reference_time._rt_to_dt( ref_time )
     rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
     # THE FOLLOWING MESSAGES MUST MATCH THOSE IN topnet.incoming()
-    if not clock.get_datetime() >= rt_p25:
+    if clock.get_datetime() >= rt_p25:
         task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + ref_time )
     else:
         task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + ref_time )

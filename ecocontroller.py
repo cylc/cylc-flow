@@ -178,8 +178,8 @@ class task_manager ( Pyro.core.ObjBase ):
         if len( self.task_pool ) == 0:
             self.shutdown('all configured tasks done')
 
-        finished_nzlamposts_exist = False
-        finished_nzlamposts = []
+        finished_nzlam_post_6_18_exist = False
+        finished_nzlam_post_6_18 = []
         batch_finished = {}
         still_running = []
 
@@ -197,12 +197,12 @@ class task_manager ( Pyro.core.ObjBase ):
             # record some info to determine which task batches 
             # can be deleted (see documentation just below)
 
-            # find any finished nzlampost tasks
-            if task.name == "nzlampost" and task.state == "finished":
+            # find any finished nzlam_post tasks
+            if task.name == "nzlam_post" and task.state == "finished":
                 hour = task.ref_time[8:10]
                 if hour == "06" or hour == "18":
-                    finished_nzlamposts_exist = True
-                    finished_nzlamposts.append( task.ref_time )
+                    finished_nzlam_post_6_18_exist = True
+                    finished_nzlam_post_6_18.append( task.ref_time )
 
             # find which ref_time batches are all finished
             # (assume yes, set no if any running task found)
@@ -217,9 +217,10 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # DELETE SPENT TASKS i.e. those that are finished AND no longer
         # needed to satisfy the prerequisites of other tasks. Cutoff is
-        # the older of:
-        #    (i) most-recent-finished-nzlampost (still needed by topnet)
-        #    (ii) oldest running.
+        # therefore any batch older than the
+        # most-recent-finished-nzlam_post (still needed by topnet) AND 
+        # older than the oldest running task.
+
         # See repository documentation for a detailed discussion of this.
 
         if len( still_running ) == 0:
@@ -229,35 +230,36 @@ class task_manager ( Pyro.core.ObjBase ):
         still_running.sort( key = int )
         oldest_running = still_running[0]
 
-        cutoff = oldest_running
-        # log.debug( " Oldest cycle with running tasks is " + cutoff )
+        if finished_nzlam_post_6_18_exist:
+            cutoff = oldest_running
+            log.debug( "oldest running task: " + cutoff )
 
-        if finished_nzlamposts_exist:
-            finished_nzlamposts.sort( key = int, reverse = True )
-            most_recent_finished_nzlampost = finished_nzlamposts[0]
+            finished_nzlam_post_6_18.sort( key = int, reverse = True )
+            most_recent_finished_nzlam_post_6_18 = finished_nzlam_post_6_18[0]
 
-            #log.debug( "topnet needs this cycle: " + most_recent_finished_nzlampost )
+            log.debug( "most recent finished 6 or 18Z nzlam_post: " + most_recent_finished_nzlam_post_6_18 )
 
-            if int( most_recent_finished_nzlampost ) < int( cutoff ): 
-                cutoff = most_recent_finished_nzlampost
+            if int( most_recent_finished_nzlam_post_6_18 ) < int( cutoff ): 
+                cutoff = most_recent_finished_nzlam_post_6_18
 
-        #log.debug( "keeping tasks " + cutoff + " or newer")
+            log.debug( " => keeping tasks " + cutoff + " and newer")
         
-        remove_these = []
-        for rt in batch_finished.keys():
-            if int( rt ) < int( cutoff ):
-                if batch_finished[rt]:
-                    for task in self.task_pool:
-                        if task.ref_time == rt:
-                            remove_these.append( task )
+            remove_these = []
+            for rt in batch_finished.keys():
+                if int( rt ) < int( cutoff ):
+                    if batch_finished[rt]:
+                        log.debug( "REMOVING BATCH " + rt )
+                        for task in self.task_pool:
+                            if task.ref_time == rt:
+                                remove_these.append( task )
 
-        if len( remove_these ) > 0:
-            for task in remove_these:
-                log.debug( "removing spent " + task.identity() )
-                self.task_pool.remove( task )
-                pyro_daemon.disconnect( task )
+            if len( remove_these ) > 0:
+                for task in remove_these:
+                    log.debug( "removing spent " + task.identity() )
+                    self.task_pool.remove( task )
+                    pyro_daemon.disconnect( task )
 
-        del remove_these
+            del remove_these
 
         self.remove_dead_soldiers()
    

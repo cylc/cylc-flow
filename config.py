@@ -11,7 +11,8 @@ import logging
 logging_level = logging.DEBUG
 
 dummy_mode = True      
-dummy_offset = 0    # how far behind (dummy) real time to start
+dummy_offset = 4    # how far behind (dummy) real time to start
+dummy_rate = 20
 
 # start_time and stop_time must be strings
 start_time = "2008080818"
@@ -20,15 +21,15 @@ stop_time = "2008081512"
 # task_list should be a subset of tasks.all_tasks (defaults to all)
 # optional initial states: 'finished', 'ready', 'waiting' (default)
 task_list = [ 
-        'downloader',
-        'nwpglobal',
-        'globalprep',
-        'globalwave',
+        'downloader:finished',
+#        'nwpglobal',
+#        'globalprep',
+#        'globalwave',
         'nzlam:finished',
-        'nzlam_post:ready',
-        'nzwave',
-        'ricom',
-        'nztide',
+        'nzlam_post',
+#        'nzwave',
+#        'ricom',
+#        'nztide',
         'topnet',
-        'mos' 
+#        'mos' 
         ]
