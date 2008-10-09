@@ -133,7 +133,7 @@ TO DO: we could improve this by removing non-nzlampost tasks older than
 oldest_running (BUT: make sure this doesn't break the dead soldier test).
 
 
-RUNAHEAD TASKS
+CONSTRAINED RUNAHEAD TASKS
 
 Any tasks that have no prerequisites can start running, by default, as soon as
 they come into existence.  However, they will execute consecutively, not all
@@ -152,10 +152,22 @@ but we restrict the number of concurrent instances.
 NZTIDE tasks have no prerequisites, but we restrict the number of concurrent
 instances.
 
-TOPNET runs hourly and can run ahead of the nzlam by up to 23 hours (uptodate
-mode) or 11 hours (catchup).  This is achieved through FUZZY PREREQUISITES:
-"file tn_TIME.nc ready" for any TIME up to 23 hours (or 11) prior to the
-topnet task's own reference time.
+
+TASKS WITH FUZZY PREQUISITES
+
+TOPNET now runs hourly and can run ahead of the nzlam by up to 23 hours
+(uptodate) or 11 hours (catchup).  This is achieved through FUZZY
+PREREQUISITES: "file tn_TIME.nc ready" can be satisfied by an otherwise
+matching postrequisite whose TIME is under 24 hours different from the
+topnet task's prerequisite.  11 hours => topnet always depends on the
+most recent long nzlam forecast.
+
+Whether we are in catchup or uptodate modes is detected by the external
+topnet task: if topnet(T) launches BEFORE streamflow data time (T+15 min)
+then we're still catchup up.  As soon as the first topnet task is
+launched at or after streamflow data time, it signals to the controller
+that we've caught up. Thereafter, topnet can keep up with the (hourly)
+clock time so long as nzlam doesn't slip behind more than 24 hours.
 
 
 DEAD SOLDIERS:
