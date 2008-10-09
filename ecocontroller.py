@@ -148,15 +148,18 @@ class task_manager ( Pyro.core.ObjBase ):
         self.create_initial_tasks()
         self.process_tasks()
 
-        # process tasks again each time a request is handled
-        pyro_daemon.requestLoop( self.process_tasks )
+        # process tasks when a request is handled, or after timeout
+        # (a short timeout means many times through the loop when
+        # nothing is happening, but a long one means monitored state
+        # doesn't get updated enough.  Pyro default is 3 seconds.
+        timeout = 2.0  # (seconds)
+        pyro_daemon.requestLoop( self.process_tasks, timeout )
 
         # NOTE: this seems the easiest way to handle incoming pyro calls
         # AND run our task processing at the same time, but I might be 
         # using requestLoop's "condition" argument in an unorthodox way.
         # See pyro docs, as there are other ways to do this, if necessary.
-        # E.g. use "handleRequests()" instead of "requestLoop", with a 
-        # timeout that drops into our task processing loop.
+        # E.g. use "handleRequests()" instead of "requestLoop".
 
 
     def system_halt( self, message ):
