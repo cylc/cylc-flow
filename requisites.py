@@ -146,9 +146,8 @@ class fuzzy_requisites( requisites ):
                                 #print "SATISFIED BY: " + postreq
             
                                 log = logging.getLogger( "main." + self.task_name ) 
-                                log.debug( postreqs.task_name + " fuzzified: " + prereq )
-
                                 self.sharpen_up( prereq, postreq )
+                                log.debug( postreqs.task_name + " fuzzified: " + prereq )
 
     def will_satisfy_me( self, postreqs ):
         # will another's postreqs, when completed, satisfy any of my prequisites?
