@@ -641,19 +641,20 @@ class topnet( task_base ):
         self.estimated_run_time = 0.01
 
         self.postrequisites = requisites( self.name, [ 
-            " streamflow extraction started for " + ref_time,
-            " got streamflow data for " + ref_time,
-            " streamflow extraction finished for " + ref_time,
+            "streamflow extraction started for " + ref_time,
+            "got streamflow data for " + ref_time,
+            "streamflow extraction finished for " + ref_time,
             self.name + " started for " + ref_time,
             "file topnet_" + ref_time + ".nc ready",
             self.name + " finished for " + ref_time ])
 
         if topnet.catchup_mode:
+            print "CUTOFF 11 for " + self.identity()
             nzlam_cutoff = reference_time.decrement( ref_time, 11 )
         else:
+            print "CUTOFF 23 for " + self.identity()
             nzlam_cutoff = reference_time.decrement( ref_time, 23 )
  
-        #print "NZLAM CUTOFF " + nzlam_cutoff + " for " + ref_time
         self.prerequisites = fuzzy_requisites( self.name, [ 
             "file tn_" + nzlam_cutoff + ".nc ready" ])
 
@@ -681,14 +682,16 @@ class topnet( task_base ):
 
         # pass on to the base class message handling function
         task_base.incoming( self, priority, message)
-
+        
         # but intercept catchup mode messages
-        if not topnet.catchup_mode and message == "CATCHUP: " + self.ref_time:
+        if not topnet.catchup_mode and re.compile( "^CATCHUP:.*for " + self.ref_time ).match( message ):
+            #message == "CATCHUP: " + self.ref_time:
             topnet.catchup_mode = True
             # WARNING: SHOULDN'T GO FROM UPTODATE TO CATCHUP?
             self.log.warning( "beginning CATCHUP operation" )
 
-        elif topnet.catchup_mode and message == "UPTODATE: " + self.ref_time:
+        elif topnet.catchup_mode and re.compile( "^UPTODATE:.*for " + self.ref_time ).match( message ):
+            #message == "UPTODATE: " + self.ref_time:
             topnet.catchup_mode = False
             self.log.info( "beginning UPTODATE operation" )
 

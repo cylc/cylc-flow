@@ -87,12 +87,11 @@ elif task_name == "topnet":
 
     rt = reference_time._rt_to_dt( ref_time )
     rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
-    # NOTE: THE FOLLOWING MESSAGES MUST MATCH THOSE IN topnet.incoming()
+    # THE FOLLOWING MESSAGES MUST MATCH THOSE IN topnet.incoming()
     if not clock.get_datetime() >= rt_p25:
-        task.incoming( 'NORMAL', 'CATCHUP: passed streamflow data time already, for ' + ref_time )
+        task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + ref_time )
     else:
-        task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow data time, for ' + ref_time )
-        #task.incoming( 'NORMAL', 'UPTODATE for ' + ref_time )
+        task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + ref_time )
         while True:
             sleep(1)
             if clock.get_datetime() >= rt_p25:

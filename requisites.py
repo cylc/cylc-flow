@@ -146,7 +146,7 @@ class fuzzy_requisites( requisites ):
                                 #print "SATISFIED BY: " + postreq
             
                                 log = logging.getLogger( "main." + self.task_name ) 
-                                log.debug( postreqs.task_name + " satisfied: " + prereq )
+                                log.debug( postreqs.task_name + " fuzzified: " + prereq )
 
                                 self.sharpen_up( prereq, postreq )
 
