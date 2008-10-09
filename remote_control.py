@@ -11,32 +11,61 @@ from time import sleep
 import config     # for dummy_mode
 
 def usage():
-    print 'USAGE: ' + sys.argv[0] + '[-p] [-r] [-s]'
+    print 'USAGE: ' + sys.argv[0] + ' [-p] [-r] [-s] [-b <hours>]'
     print 'options:'
     print '  -p    pause task processing'
     print '  -r    resume task processing'
     print '  -s    shutdown the controller'
+    print '  -b <hours> bump dummy time clock forward by <hours>'
  
 # command line arguments
-if len( sys.argv ) != 2:
-    usage()
-    sys.exit(1)
+n_args = len( sys.argv ) -1
 
 pause = False
 resume = False
 shutdown = False
+bump_hours = 0
 
-if sys.argv[1] == '-p':
-    pause = True
-elif sys.argv[1] == '-r':
-    resume = True
-elif sys.argv[1] == '-s':
-    shutdown = True
+if n_args == 1: 
+    if sys.argv[1] == '-p':
+        pause = True
+    elif sys.argv[1] == '-r':
+        resume = True
+    elif sys.argv[1] == '-s':
+        shutdown = True
+    else:
+        usage()
+        sys.exit(1)
+
+
+elif n_args == 2 and sys.argv[1] == '-b':
+    # bump dummy clock
+    bump_hours = sys.argv[2]
+
+    try:
+        dummy_clock = Pyro.core.getProxyForURI("PYRONAME://dummy_clock")
+    except:
+        print "ERROR: failed to connect to god"
+        sys.exit(1)
+
+    try:
+        print "current time: " + str( dummy_clock.get_datetime() )
+        print "bumped on to: " + str( dummy_clock.bump( bump_hours ))
+    except:
+        print "ERROR: failed to bump dummy clock"
+        sys.exit(1)   
+ 
+    sys.exit(0)
+
+
+
 else:
     usage()
     sys.exit(1)
+
    
 
+# pause, resume, or halt
 try:
     # connect to the task object inside the control program
     god = Pyro.core.getProxyForURI("PYRONAME://god")

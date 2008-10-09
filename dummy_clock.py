@@ -49,6 +49,10 @@ class dummy_clock( Pyro.core.ObjBase ):
 
         return self.base_dummytime + datetime.timedelta( 0,0,0,0,0, dummy_hours_passed, 0 )
 
+    def bump( self, hours ):
+        # bump the dummy time clock forward by some hours
+        self.base_dummytime += datetime.timedelta( 0,0,0,0,0, int(hours), 0 )
+        return self.get_datetime()
 
     def get_epoch( self ):
         dt = self.get_datetime()
@@ -58,15 +62,15 @@ class dummy_clock( Pyro.core.ObjBase ):
 def test():
 
     rt = "2008080800"
-    foo = dummy_clock( rt, 10 )  # 10 seconds / hour
+    foo = dummy_clock( rt, 10 )     # 10 seconds / hour
     bar = dummy_clock( rt, 10, 3 )  # 10 seconds / hour
 
-    print rt                         # 2008080800
-    print foo.get_datetime()   # 2008080800
-    print bar.get_datetime()   # 2008080803
-    sleep(11)                        # 10 secons => 1 hour
-    print foo.get_datetime()   # 2008080801
-    print bar.get_datetime()   # 2008080804
+    print rt                        # 2008080800
+    print foo.get_datetime()        # 2008080800
+    print bar.get_datetime()        # 2008080803
+    sleep(11)                       # 10 secons => 1 hour
+    print foo.get_datetime()        # 2008080801
+    print bar.get_datetime()        # 2008080804
 
 
 if __name__ == "__main__":

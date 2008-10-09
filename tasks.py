@@ -649,10 +649,11 @@ class topnet( task_base ):
             self.name + " finished for " + ref_time ])
 
         if topnet.catchup_mode:
-            nzlam_cutoff = reference_time.decrement( self.ref_time, 11 )
+            nzlam_cutoff = reference_time.decrement( ref_time, 11 )
         else:
-            nzlam_cutoff = reference_time.decrement( self.ref_time, 23 )
+            nzlam_cutoff = reference_time.decrement( ref_time, 23 )
  
+        #print "NZLAM CUTOFF " + nzlam_cutoff + " for " + ref_time
         self.prerequisites = fuzzy_requisites( self.name, [ 
             "file tn_" + nzlam_cutoff + ".nc ready" ])
 
@@ -682,12 +683,12 @@ class topnet( task_base ):
         task_base.incoming( self, priority, message)
 
         # but intercept catchup mode messages
-        if not topnet.catchup_mode and message == "CATCHUP for " + self.ref_time:
+        if not topnet.catchup_mode and message == "CATCHUP: " + self.ref_time:
             topnet.catchup_mode = True
             # WARNING: SHOULDN'T GO FROM UPTODATE TO CATCHUP?
             self.log.warning( "beginning CATCHUP operation" )
 
-        elif topnet.catchup_mode and message == "UPTODATE for " + self.ref_time:
+        elif topnet.catchup_mode and message == "UPTODATE: " + self.ref_time:
             topnet.catchup_mode = False
             self.log.info( "beginning UPTODATE operation" )
 

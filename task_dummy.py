@@ -12,10 +12,11 @@ Program called by the controller to "dummy out" external tasks.
     postrequisites, and sets each of them "satisfied" in turn, with a
     short delay between each.
 
-This allows the entire control program to be tested on the real model
-sequence, without actually running the models, so long as model pre- and
-post-requisites have been correctly defined, and with the proviso that
-the dummy run-times are not currently proportional to the real run times.  
+This allows the control system to be tested without running the real
+tasks, so long as model pre- and post-requisites have been correctly
+defined and task run-time estimates are accurate (and with the proviso
+that the real tasks may be delayed by resource contention in addition to
+sequencing constraints).
 """
 
 import sys
@@ -26,16 +27,19 @@ import datetime
 
 from time import sleep
 
-pyro_shortcut = False
-
-# arguments: <task name> <REFERENCE_TIME> <dummy clock rate>
-    
+# unpack script arguments: <task name> <REFERENCE_TIME> <clock rate>
 [task_name, ref_time, clock_rate] = sys.argv[1:]
 
-# connect to the task object inside the control program
+# TO DO: does the non-short pyro method perform better?
+pyro_shortcut = False
 
 # need non pyro_shortcut (see below) for clock!
 clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
+
+#def sleep( dummy_seconds ):
+#    wait_until = clock.get_datetime() + datetime.timedelta( 0,0,0,0,0,0,dummy_seconds )
+#    while clock.get_datetime() < wait_until:
+#        pass
 
 if pyro_shortcut:
     task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "_" + ref_time )
@@ -70,32 +74,29 @@ if task_name == "downloader":
 
     rt = reference_time._rt_to_dt( ref_time )
     rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
-    dt = clock.get_datetime()
-    if dt >= rt_3p25:
+    if clock.get_datetime() >= rt_3p25:
         task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
     else:
         task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + ref_time )
         while True:
-            dt = clock.get_datetime()
-            if dt >= rt_3p25:
+            sleep(1)
+            if clock.get_datetime() >= rt_3p25:
                 break
-            sleep(2)
 
 elif task_name == "topnet":
 
     rt = reference_time._rt_to_dt( ref_time )
     rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
-    dt = clock.get_datetime()
-    if not dt >= rt_p25:
+    # NOTE: THE FOLLOWING MESSAGES MUST MATCH THOSE IN topnet.incoming()
+    if not clock.get_datetime() >= rt_p25:
         task.incoming( 'NORMAL', 'CATCHUP: passed streamflow data time already, for ' + ref_time )
     else:
         task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow data time, for ' + ref_time )
         #task.incoming( 'NORMAL', 'UPTODATE for ' + ref_time )
         while True:
-            dt = clock.get_datetime()
-            if dt >= rt_p25:
+            sleep(1)
+            if clock.get_datetime() >= rt_p25:
                 break
-            sleep(2)
 
 # set each postrequisite satisfied in turn
 task.incoming( "NORMAL", postreqs[0] )
