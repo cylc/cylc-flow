@@ -141,30 +141,19 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def run( self ):
 
-        # Process once to start any tasks that have no prerequisites
-        # We need at least one of these to start the system rolling 
-        # (i.e. the downloader).  Thereafter things only happen only
-        # when a running task gets a message via pyro). 
         self.create_initial_tasks()
-        self.process_tasks()
 
-        # process tasks when a request is handled, or after timeout
-        # (a short timeout means many times through the loop when
-        # nothing is happening, but a long one means monitored state
-        # doesn't get updated enough.  Pyro default is 3 seconds.
-        timeout = 2.0  # (seconds)
-        pyro_daemon.requestLoop( self.process_tasks, timeout )
+        # process tasks once, then after each 2 second timeout. 
+        while True:
+            self.process_tasks()
+            pyro_daemon.handleRequests( timeout = 2 )
 
-        # NOTE: this seems the easiest way to handle incoming pyro calls
-        # AND run our task processing at the same time, but I might be 
-        # using requestLoop's "condition" argument in an unorthodox way.
-        # See pyro docs, as there are other ways to do this, if necessary.
-        # E.g. using "handleRequests()" instead of "requestLoop".
-
-        # Can we distinguish between pyro events and timeouts?
-        # With an infinite timeout (timeout = None) only pyro events
-        # should activate process_tasks ... BUT nothing seemes to
-        # happen??????
+        # NOTE: I want to process tasks after EVERY incoming task
+        # message. handleRequests is supposed to return after timeout OR
+        # after AT LEAST ONE REQUEST was processed, but only the timeout
+        # seems to work.  So: what is a pyro request?  every remote
+        # method invocation, or every initial connection to a remote
+        # object, or what?
 
 
     def system_halt( self, message ):
@@ -175,6 +164,8 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def process_tasks( self ):
 
+        print "PROCESSING AT ", datetime.datetime.now()
+
         if self.shutdown_requested:
             self.system_halt( 'by request' )
  
@@ -183,7 +174,7 @@ class task_manager ( Pyro.core.ObjBase ):
             return 1     # '1' to keep pyro request loop happy
        
         if len( self.task_pool ) == 0:
-            self.shutdown('all configured tasks done')
+            self.system_halt('all configured tasks done')
 
         finished_nzlam_post_6_18_exist = False
         finished_nzlam_post_6_18 = []

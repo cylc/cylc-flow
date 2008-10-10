@@ -62,6 +62,7 @@ if task_name == "downloader":
     rt = reference_time._rt_to_dt( ref_time )
     rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
     if clock.get_datetime() >= rt_3p25:
+
         task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
     else:
         task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + ref_time )
@@ -78,6 +79,7 @@ elif task_name == "topnet":
     if clock.get_datetime() >= rt_p25:
         task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + ref_time )
     else:
+        del task
         task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + ref_time )
         while True:
             sleep(1)
@@ -99,8 +101,8 @@ for req in postreqs:
     time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
 
 while True:
+    sleep(1)
     dt = clock.get_datetime()
-    #print dt
     all_done = True
     for req in postreqs:
         if not done[ req]:
