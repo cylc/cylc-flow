@@ -19,6 +19,10 @@ import logging
 
 class requisites:
 
+    # TO DO: COMPILE OTHER REGEXES ONCE HERE TOO.
+    # regular exp for unpacking postrequisites "minutes:message"
+    regex = re.compile( "^([\d\.]+):(.*)$")
+
     def __init__( self, task_name, reqs ):
 
         # name of my "host task" 
@@ -28,9 +32,17 @@ class requisites:
         # REF TIME IS ALSO IDENTIFIED FOR FUZZY PREREQUISITES
 
         self.satisfied = {}
-        self.ordered_list = reqs  
+        self.completion_time = {}
+        self.ordered_list = []
         for req in reqs:
+            time = 0.0
+            if requisites.regex.match( req ):
+                m = requisites.regex.match( req )
+                [ time, req ] = m.groups()
+ 
             self.satisfied[req] = False
+            self.completion_time[req] = float(time)
+            self.ordered_list.append( req )  # DO WE STILL NEED THE ORDERED LIST?
 
     def all_satisfied( self ):
         if False in self.satisfied.values(): 
@@ -67,6 +79,9 @@ class requisites:
     def get_requisites( self ):
         return self.satisfied
 
+    def get_times( self ):
+        return self.completion_time
+
     def satisfy_me( self, postreqs ):
         # can another's completed postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
@@ -86,10 +101,12 @@ class requisites:
     def will_satisfy_me( self, postreqs ):
         # will another's postreqs, when completed, satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
+            #print "PRE: " + prereq
             # for each of my prerequisites
             if not self.satisfied[ prereq ]:
                 # if my prerequisite is not already satisfied
                 for postreq in postreqs.satisfied.keys():
+                    #print "POST: " + postreq
                     # compare it with each of the other's postreqs
                     if postreq == prereq:   # (DIFFERENT FROM ABOVE HERE)
                         # if they match, my prereq has been satisfied

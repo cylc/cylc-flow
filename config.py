@@ -11,7 +11,7 @@ import logging
 logging_level = logging.DEBUG
 
 dummy_mode = True      
-dummy_offset = 24    # how far behind (dummy) real time to start
+dummy_offset = 8    # how far behind (dummy) real time to start
 dummy_rate = 20
 
 # start_time and stop_time must be strings

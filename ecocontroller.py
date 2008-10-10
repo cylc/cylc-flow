@@ -105,7 +105,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def remove_dead_soldiers( self ):
         # Remove any tasks in the OLDEST time batch whose prerequisites
-        # cannot be satisfied by their cotemporal peers. 
+        # cannot be satisfied by their co-temporal peers. 
 
         # This only works for the OLDEST batch; satisfiers can appear
         # later  by abdication in newer batches). 
@@ -159,7 +159,12 @@ class task_manager ( Pyro.core.ObjBase ):
         # AND run our task processing at the same time, but I might be 
         # using requestLoop's "condition" argument in an unorthodox way.
         # See pyro docs, as there are other ways to do this, if necessary.
-        # E.g. use "handleRequests()" instead of "requestLoop".
+        # E.g. using "handleRequests()" instead of "requestLoop".
+
+        # Can we distinguish between pyro events and timeouts?
+        # With an infinite timeout (timeout = None) only pyro events
+        # should activate process_tasks ... BUT nothing seemes to
+        # happen??????
 
 
     def system_halt( self, message ):
@@ -169,7 +174,6 @@ class task_manager ( Pyro.core.ObjBase ):
 
 
     def process_tasks( self ):
-        # this gets called every time a pyro event comes in
 
         if self.shutdown_requested:
             self.system_halt( 'by request' )

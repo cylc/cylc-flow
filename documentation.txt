@@ -201,15 +201,16 @@ DUMMY MODE
 
 In dummy mode an external dummy program (see task_dummy.py) is launched by
 each task instead of the real external model/task.  The external dummy program
-then tells its in-controller task object that it has satisfied each of its
-postrequisites in turn.  
+then tells its in-controller task object that it has satisfied each
+postrequisite in turn, at the right time relative to the controller's dummy
+clock (below).  
 
 An accelerated clock (which runs at 60 seconds per dummy hour, by default) is
 used for dummy task timing and replaces the real time in all log messages.
 The user can specify a time offset, relative to the start reference time, at
 which to start the dummy time clock. Dummy programs complete in the same time
 (relative to the dummy clock rate) as the real models, so long as accurate
-time estimates have been defined. 
+time estimates have been defined for the postrequisites. 
 
 If the task definitions (i.e. requisites and their respective time estimates)
 are accurate, this enables complete testing of the control system, including

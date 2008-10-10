@@ -6,17 +6,16 @@ Program called by the controller to "dummy out" external tasks.
 (1) Takes <task name> and <reference time> arguments, which uniquely
     identifies the corresponding task object in the controller.
   
-(2) Connects to the said controller task object via Pyro. 
+(2) Connects to the relevant controller task object via Pyro. 
 
-(3) Calls [task object].get_postrequisites() to acquire a list of task
-    postrequisites, and sets each of them "satisfied" in turn, with a
-    short delay between each.
+(3) gets a list of timed task postrequisites for the object, and sets
+    each of them "satisfied" in turn, at the right time.
 
 This allows the control system to be tested without running the real
 tasks, so long as model pre- and post-requisites have been correctly
-defined and task run-time estimates are accurate (and with the proviso
-that the real tasks may be delayed by resource contention in addition to
-sequencing constraints).
+defined and postrequisite completion time estimates are accurate (and
+with the proviso that the real tasks may be delayed by resource
+contention in addition to sequencing constraints).
 """
 
 import sys
@@ -58,13 +57,6 @@ else:
     # create a proxy for the Pyro object, and return that
     task = Pyro.core.getProxyForURI( URI )
 
-    est_hrs = task.get_estimated_run_time() / 60.0
-    est_dummy_secs = est_hrs * int( clock_rate )
-
-    postreqs = task.get_postrequisite_list()
-    n_postreqs = len( postreqs )
-    delay = est_dummy_secs / ( n_postreqs - 1 )
-
 if task_name == "downloader":
 
     rt = reference_time._rt_to_dt( ref_time )
@@ -93,10 +85,34 @@ elif task_name == "topnet":
                 break
 
 # set each postrequisite satisfied in turn
-task.incoming( "NORMAL", postreqs[0] )
-for message in postreqs[1:]:
-    sleep(delay)
-    task.incoming( "NORMAL", message )
+start_time = clock.get_datetime()
+
+postreq_dict = task.get_postrequisites()
+postreqs = postreq_dict.keys()
+completion_times = task.get_postrequisite_times()
+done = {}
+time = {}
+
+for req in postreqs:
+    done[ req ] = False
+    hours = completion_times[ req] / 60.0
+    time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
+
+while True:
+    dt = clock.get_datetime()
+    #print dt
+    all_done = True
+    for req in postreqs:
+        if not done[ req]:
+            #print "....", time[ req ], req
+            if dt >= time[ req ]:
+                task.incoming( "NORMAL", req )
+                done[ req ] = True
+            else:
+                all_done = False
+
+    if all_done:
+        break
 
 # finished simulating the external task
 task.set_finished()

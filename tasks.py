@@ -149,9 +149,6 @@ class task_base( Pyro.core.ObjBase ):
     def get_state( self ):
         return self.name + ": " + self.state
 
-    def get_estimated_run_time( self ):
-        return self.estimated_run_time
-
     def identity( self ):
         return self.name + "%" + self.ref_time
 
@@ -202,11 +199,11 @@ class task_base( Pyro.core.ObjBase ):
         else:
             return False
 
-    def get_postrequisite_list( self ):
-        return self.postrequisites.get_list()
-
     def get_postrequisites( self ):
         return self.postrequisites.get_requisites()
+
+    def get_postrequisite_times( self ):
+        return self.postrequisites.get_times()
 
     def get_latest_message( self ):
         return self.latest_message
@@ -299,44 +296,41 @@ class downloader( runahead_task_base ):
        
         hour = ref_time[8:10]
 
-        self.estimated_run_time = 10
-
         # no prerequisites: this is The Initial Task
         self.prerequisites = requisites( self.name, [])
 
         lbc_06 = reference_time.decrement( ref_time, 6 )
         lbc_12 = reference_time.decrement( ref_time, 12 )
 
-        self.estimated_run_time = 1
-
         if hour == "00":
 
             self.postrequisites = requisites( self.name, [ 
-                self.name + " started for " + ref_time,
-                "file obstore_" + ref_time + ".um ready",
-                "file bgerr" + ref_time + ".um ready", 
-                "file lbc_" + lbc_12 + ".um ready", 
-                "file 10mwind_" + ref_time + ".um ready",
-                "file seaice_" + ref_time + ".um ready",
-                self.name + " finished for " + ref_time ])
+                "0:" + self.name + " started for " + ref_time,
+                "0.5:file obstore_" + ref_time + ".um ready",
+                "1:file bgerr" + ref_time + ".um ready", 
+                "106:file lbc_" + lbc_12 + ".um ready", 
+                "122:file 10mwind_" + ref_time + ".um ready",
+                "122.5:file seaice_" + ref_time + ".um ready",
+                "199:file dump_" + ref_time + ".um ready", 
+                "200:" + self.name + " finished for " + ref_time ])
 
         elif hour == "12":
 
             self.postrequisites = requisites( self.name, [ 
-                self.name + " started for " + ref_time,
-                "file obstore_" + ref_time + ".um ready",
-                "file bgerr" + ref_time + ".um ready", 
-                "file lbc_" + lbc_12 + ".um ready",
-                self.name + " finished for " + ref_time ])
+                "0:" + self.name + " started for " + ref_time,
+                "0.5:file obstore_" + ref_time + ".um ready",
+                "1:file bgerr" + ref_time + ".um ready", 
+                "97:file lbc_" + lbc_12 + ".um ready",
+                "98:" + self.name + " finished for " + ref_time ])
 
         if hour == "06" or hour == "18":
 
             self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file obstore_" + ref_time + ".um ready",
-                "file bgerr" + ref_time + ".um ready",
-                "file lbc_" + lbc_06 + ".um ready",
-                self.name + " finished for " + ref_time ])
+                "0:" + self.name + " started for " + ref_time,
+                "0:file lbc_" + lbc_06 + ".um ready",
+                "0.5:file obstore_" + ref_time + ".um ready",
+                "1:file bgerr" + ref_time + ".um ready",
+                "2:" + self.name + " finished for " + ref_time ])
  
         runahead_task_base.__init__( self, ref_time, initial_state )
            
@@ -358,12 +352,10 @@ class oper_to_topnet( runahead_task_base ):
         # no prerequisites: this is The Initial Task
         self.prerequisites = requisites( self.name, [])
 
-        self.estimated_run_time = 1
-
         self.postrequisites = requisites( self.name, [
-            self.name + " started for " + ref_time,
-            "file tn_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
+            "0:" + self.name + " started for " + ref_time,
+            "1:file tn_" + ref_time + ".nc ready",
+            "2:" + self.name + " finished for " + ref_time ])
 
         runahead_task_base.__init__( self, ref_time, initial_state )
 
@@ -381,11 +373,6 @@ class nzlam( task_base ):
  
         hour = ref_time[8:10]
 
-        if hour == "00" or hour == "12":
-            self.estimated_run_time = 50
-        elif hour == "06" or hour == "18":
-            self.estimated_run_time = 120
-
         lbc_06 = reference_time.decrement( ref_time, 6 )
         lbc_12 = reference_time.decrement( ref_time, 12 )
 
@@ -396,9 +383,9 @@ class nzlam( task_base ):
                 "file lbc_" + lbc_12 + ".um ready" ])
 
             self.postrequisites = requisites( self.name, [ 
-                self.name + " started for " + ref_time,
-                "file sls_" + ref_time + ".um ready",   
-                self.name + " finished for " + ref_time ])
+                "0:" + self.name + " started for " + ref_time,
+                "30:file sls_" + ref_time + ".um ready",   
+                "32:" + self.name + " finished for " + ref_time ])
  
         elif hour == "06" or hour == "18":
             self.prerequisites = requisites( self.name, [ 
@@ -407,11 +394,11 @@ class nzlam( task_base ):
                 "file lbc_" + lbc_06 + ".um ready" ])
 
             self.postrequisites = requisites( self.name, [ 
-                self.name + " started for " + ref_time,
-                "file tn_" + ref_time + ".um ready",
-                "file sls_" + ref_time + ".um ready",   
-                "file met_" + ref_time + ".um ready",
-                self.name + " finished for " + ref_time ])
+                "0:" + self.name + " started for " + ref_time,
+                "110:file tn_" + ref_time + ".um ready",
+                "111:file sls_" + ref_time + ".um ready",   
+                "112:file met_" + ref_time + ".um ready",
+                "115:" + self.name + " finished for " + ref_time ])
 
         task_base.__init__( self, ref_time, initial_state )
 
@@ -430,19 +417,14 @@ class nzlam_post( task_base ):
         hour = ref_time[8:10]
 
         if hour == "00" or hour == "12":
-            self.estimated_run_time = 10 
-        elif hour == "06" or hour == "18":
-            self.estimated_run_time = 40
-
-        if hour == "00" or hour == "12":
             
             self.prerequisites = requisites( self.name, [ 
                 "file sls_" + ref_time + ".um ready" ])
 
             self.postrequisites = requisites( self.name, [
-                self.name + " started for " + ref_time,
-                "file sls_" + ref_time + ".nc ready",   
-                self.name + " finished for " + ref_time ])
+                "0:" + self.name + " started for " + ref_time,
+                "10:file sls_" + ref_time + ".nc ready",   
+                "11:" + self.name + " finished for " + ref_time ])
 
         elif hour == "06" or hour == "18":
 
@@ -452,16 +434,17 @@ class nzlam_post( task_base ):
                 "file met_" + ref_time + ".um ready" ])
 
             self.postrequisites = requisites( self.name, [ 
-                self.name + " started for " + ref_time,
-                "file tn_" + ref_time + ".nc ready",
-                "file sls_" + ref_time + ".nc ready",   
-                "file met_" + ref_time + ".nc ready",
-                self.name + " finished for " + ref_time ])
+                "0:" + self.name + " started for " + ref_time,
+                "10:file sls_" + ref_time + ".nc ready",   
+                "20:file tn_" + ref_time + ".nc ready",
+                "30:file met_" + ref_time + ".nc ready",
+                "31:" + self.name + " finished for " + ref_time ])
 
         task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class globalprep( task_base ):
+
     name = "globalprep"
     valid_hours = [ 0 ]
 
@@ -471,8 +454,6 @@ class globalprep( task_base ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
 
-        self.estimated_run_time = 5
-
         hour = ref_time[8:10]
 
         self.prerequisites = requisites( self.name, [ 
@@ -480,10 +461,10 @@ class globalprep( task_base ):
             "file seaice_" + ref_time + ".um ready" ])
 
         self.postrequisites = requisites( self.name, [
-            self.name + " started for " + ref_time,
-            "file 10mwind_" + ref_time + ".nc ready",
-            "file seaice_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
+            "0:" + self.name + " started for " + ref_time,
+            "5:file 10mwind_" + ref_time + ".nc ready",
+            "7:file seaice_" + ref_time + ".nc ready",
+            "10:" + self.name + " finished for " + ref_time ])
        
         task_base.__init__( self, ref_time, initial_state )
 
@@ -499,16 +480,14 @@ class globalwave( task_base ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        self.estimated_run_time = 120 
-
         self.prerequisites = requisites( self.name, [ 
             "file 10mwind_" + ref_time + ".nc ready",
             "file seaice_" + ref_time + ".nc ready" ])
 
         self.postrequisites = requisites( self.name, [
-            self.name + " started for " + ref_time,
-            "file globalwave_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
+            "0:" + self.name + " started for " + ref_time,
+            "120:file globalwave_" + ref_time + ".nc ready",
+            "121:" + self.name + " finished for " + ref_time ])
  
         task_base.__init__( self, ref_time, initial_state )
        
@@ -526,24 +505,19 @@ class nzwave( task_base ):
  
         hour = ref_time[8:10]
 
-        if hour == "06" or hour == "18":
-            self.estimated_run_time = 120
-        else:
-            self.estimated_run_time = 30
-
         self.prerequisites = requisites( self.name, [ 
             "file sls_" + ref_time + ".nc ready" ])
 
         self.postrequisites = requisites( self.name, [
-            self.name + " started for " + ref_time,
-            "file nzwave_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
+            "0:" + self.name + " started for " + ref_time,
+            "110:file nzwave_" + ref_time + ".nc ready",
+            "112:" + self.name + " finished for " + ref_time ])
  
         task_base.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
 class ricom( task_base ):
-    
+
     name = "ricom"
     valid_hours = [ 6, 18 ]
 
@@ -553,21 +527,19 @@ class ricom( task_base ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        self.estimated_run_time = 30 
-
         self.prerequisites = requisites( self.name, [ 
             "file sls_" + ref_time + ".nc ready" ])
 
         self.postrequisites = requisites( self.name, [
-            self.name + " started for " + ref_time,
-            "file ricom_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
+            "0:" + self.name + " started for " + ref_time,
+            "30:file ricom_" + ref_time + ".nc ready",
+            "31:" + self.name + " finished for " + ref_time ])
  
         task_base.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
 class mos( task_base ):
-    
+
     name = "mos"
     valid_hours = [ 0, 6, 12, 18 ]
 
@@ -577,8 +549,6 @@ class mos( task_base ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        self.estimated_run_time = 0.1
-
         hour = ref_time[8:10]
 
         if hour == "06" or hour == "18":
@@ -588,15 +558,15 @@ class mos( task_base ):
             self.prerequisites = requisites( self.name, [])
 
         self.postrequisites = requisites( self.name, [
-            self.name + " started for " + ref_time,
-            "file mos_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
+            "0:" + self.name + " started for " + ref_time,
+            "5:file mos_" + ref_time + ".nc ready",
+            "6:" + self.name + " finished for " + ref_time ])
 
         task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class nztide( runahead_task_base ):
-    
+
     name = "nztide"
     valid_hours = [ 6, 18 ]
 
@@ -606,14 +576,12 @@ class nztide( runahead_task_base ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        self.estimated_run_time = 1
-
         self.prerequisites = requisites( self.name, [])
 
         self.postrequisites = requisites( self.name, [
-            self.name + " started for " + ref_time,
-            "file nztide_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
+            "0:" + self.name + " started for " + ref_time,
+            "1:file nztide_" + ref_time + ".nc ready",
+            "2:" + self.name + " finished for " + ref_time ])
 
         runahead_task_base.__init__( self, ref_time, initial_state )
 
@@ -638,16 +606,6 @@ class topnet( task_base ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        self.estimated_run_time = 0.01
-
-        self.postrequisites = requisites( self.name, [ 
-            "streamflow extraction started for " + ref_time,
-            "got streamflow data for " + ref_time,
-            "streamflow extraction finished for " + ref_time,
-            self.name + " started for " + ref_time,
-            "file topnet_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
-
         if topnet.catchup_mode:
             #print "CUTOFF 11 for " + self.identity()
             nzlam_cutoff = reference_time.decrement( ref_time, 11 )
@@ -657,6 +615,14 @@ class topnet( task_base ):
  
         self.prerequisites = fuzzy_requisites( self.name, [ 
             "file tn_" + nzlam_cutoff + ".nc ready" ])
+
+        self.postrequisites = requisites( self.name, [ 
+            "0:streamflow extraction started for " + ref_time,
+            "2:got streamflow data for " + ref_time,
+            "2.1:streamflow extraction finished for " + ref_time,
+            "3:" + self.name + " started for " + ref_time,
+            "4:file topnet_" + ref_time + ".nc ready",
+            "5:" + self.name + " finished for " + ref_time ])
 
         task_base.__init__( self, ref_time, initial_state )
 
@@ -707,16 +673,12 @@ class nwpglobal( task_base ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        self.estimated_run_time = 10
-
         self.prerequisites = requisites( self.name, [ 
             "file 10mwind_" + ref_time + ".um ready" ])
 
         self.postrequisites = requisites( self.name, [
-            self.name + " started for " + ref_time,
-            "file 10mwind_" + ref_time + ".nc ready",
-            self.name + " finished for " + ref_time ])
+            "0:" + self.name + " started for " + ref_time,
+            "120:file 10mwind_" + ref_time + ".nc ready",
+            "121:" + self.name + " finished for " + ref_time ])
 
         task_base.__init__( self, ref_time, initial_state )
-
-
