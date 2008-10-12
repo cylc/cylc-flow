@@ -79,7 +79,6 @@ elif task_name == "topnet":
     if clock.get_datetime() >= rt_p25:
         task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + ref_time )
     else:
-        del task
         task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + ref_time )
         while True:
             sleep(1)
