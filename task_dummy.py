@@ -89,14 +89,13 @@ for req in postreqs:
     time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
 
 while True:
-    sleep(1)
     dt = clock.get_datetime()
     all_done = True
     for req in postreqs:
         if not done[ req]:
-            #print "....", time[ req ], req
             if dt >= time[ req ]:
                 task = get_proxy()
+                #print "SENDING MESSAGE: ", time[ req ], req
                 task.incoming( "NORMAL", req )
                 done[ req ] = True
             else:
