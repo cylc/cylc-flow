@@ -3,11 +3,6 @@
 """
 Display progress of currently running tasks objects.
 
-Connects to the controller's "state" object via Pyro,
-and displays in a terminal.
-
-See system_status.py for class documentation.
-
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
@@ -46,22 +41,15 @@ class kit:
 title = kit( "EcoConnect System Monitor" )
 
 while True:
-    # the following "try" ... "except" block allows the system monitor
-    # to keep trying if it can't find the pyro nameserver. This means
-    # the the monitor doesn't die when the controller is killed and
-    # restarted, but on the other hand bugs in the monitor aren't
-    # distinguishable from no nameserver found... 
-    # ... could be done better I suspect.
 
     try: 
     
-        remote = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+        god = Pyro.core.getProxyForURI("PYRONAME://" + "god" )
         if config.dummy_mode:
             remote_clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
 
         while True:
 
-            status = remote.get_status()
             dt = datetime.datetime.now()
             if config.dummy_mode:
                 dt = remote_clock.get_datetime()
@@ -72,9 +60,11 @@ while True:
             lines = {}
             all_waiting = {}
 
-            for task_id in status.keys():
+            states = god.get_state_summary()
+
+            for task_id in states.keys():
                 [name, reftime] = split( task_id, "%" )
-                [state, complete, total, latest ] = status[ task_id ]
+                [state, complete, total, latest ] = states[ task_id ]
 
                 if len( name ) > max_name_len:
                     max_name_len = len( name )
@@ -85,9 +75,9 @@ while True:
                 if int( total ) > max_prog_len:
                     max_prog_len = int( total )
 
-            for task_id in status.keys():
+            for task_id in states.keys():
                 [name, reftime] = split( task_id, "%" )
-                [state, complete, total, latest ] = status[ task_id ]
+                [state, complete, total, latest ] = states[ task_id ]
 
                 prog = ""
                 for k in range( 1, int(total) + 1):

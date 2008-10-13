@@ -1,12 +1,7 @@
 #!/usr/bin/python
 
 """
-Very simple system monitor program.
-
-It connects to the controller's "state" object via Pyro,
-and displays its contents in a terminal.
-
-See system_status.py for class documentation.
+Display the state of all existing tasks.
 
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
@@ -63,7 +58,7 @@ while True:
 
             for task_id in states.keys():
                 [ name, reftime ] = task_id.split('%')
-                [ state, complete, total ] = states[ task_id ]
+                [ state, complete, total, latest ] = states[ task_id ]
                 
                 frac = "(" + str(complete) + "/" + str(total) + ")"
 

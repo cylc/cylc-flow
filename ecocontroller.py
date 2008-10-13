@@ -276,7 +276,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 if postreqs[ key ]:
                     n_satisfied += 1
 
-            summary[ task.identity() ] = [ task.state, n_satisfied, n_total ]
+            summary[ task.identity() ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
 
         return summary
 
