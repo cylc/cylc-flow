@@ -431,11 +431,11 @@ if __name__ == "__main__":
     # (alternatively, run the 'pyro-ns' script as a separate process)
     print
     print "Starting pyro nameserver"
-    ns_starter = Pyro.naming.NameServerStarter()
-    ns_thread = threading.Thread( target = ns_starter.start )
-    ns_thread.setDaemon(True)
-    ns_thread.start()
-    ns_starter.waitUntilStarted(10)
+    #ns_starter = Pyro.naming.NameServerStarter()
+    #ns_thread = threading.Thread( target = ns_starter.start )
+    #ns_thread.setDaemon(True)
+    #ns_thread.start()
+    #ns_starter.waitUntilStarted(10)
     # locate the Pyro nameserver
     pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
     pyro_daemon = Pyro.core.Daemon()
