@@ -143,17 +143,9 @@ class task_manager ( Pyro.core.ObjBase ):
 
         self.create_initial_tasks()
 
-        # process tasks once, then after each 2 second timeout. 
         while True:
             self.process_tasks()
-            pyro_daemon.handleRequests( timeout = 2 )
-
-        # NOTE: I want to process tasks after EVERY incoming task
-        # message. handleRequests is supposed to return after timeout OR
-        # after AT LEAST ONE REQUEST was processed, but only the timeout
-        # seems to work.  So: what is a pyro request?  every remote
-        # method invocation, or every initial connection to a remote
-        # object, or what?
+            pyro_daemon.handleRequests( timeout = None )
 
 
     def system_halt( self, message ):
@@ -163,8 +155,6 @@ class task_manager ( Pyro.core.ObjBase ):
 
 
     def process_tasks( self ):
-
-        print "PROCESSING AT ", datetime.datetime.now()
 
         if self.shutdown_requested:
             self.system_halt( 'by request' )
