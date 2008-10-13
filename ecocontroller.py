@@ -24,7 +24,6 @@ from tasks import *
 from get_instance import get_instance
 import threading
 
-from system_status import system_status
 from copy import deepcopy
 
 import logging, logging.handlers
@@ -65,10 +64,6 @@ class task_manager ( Pyro.core.ObjBase ):
 
         self.pause_requested = False
         self.shutdown_requested = False
-
-        # connect the system status monitor to the pyro nameserver
-        self.state = system_status()
-        uri = pyro_daemon.connect( self.state, "state" )
 
         # dead letter box for use by external tasks
         self.dead_letter_box = dead_letter_box()
@@ -251,8 +246,6 @@ class task_manager ( Pyro.core.ObjBase ):
 
         self.remove_dead_soldiers()
    
-        self.state.update( self.task_pool )
-
         self.dump_state()
 
         return 1  # keep the pyro requestLoop going
@@ -273,6 +266,19 @@ class task_manager ( Pyro.core.ObjBase ):
         log.warning( "system shutdown requested" )
         self.shutdown_requested = True
 
+    def get_state_summary( self ):
+        summary = {}
+        for task in self.task_pool:
+            postreqs = task.get_postrequisites()
+            n_total = len( postreqs )
+            n_satisfied = 0
+            for key in postreqs.keys():
+                if postreqs[ key ]:
+                    n_satisfied += 1
+
+            summary[ task.identity() ] = [ task.state, n_satisfied, n_total ]
+
+        return summary
 
     def dump_state( self ):
 

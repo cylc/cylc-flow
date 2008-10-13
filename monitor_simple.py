@@ -45,34 +45,27 @@ class kit:
 title = kit( "EcoConnect System Monitor" )
 
 while True:
-    # the following "try" ... "except" block allows the system monitor
-    # to keep trying if it can't find the pyro nameserver. This means
-    # the the monitor doesn't die when the controller is killed and
-    # restarted, but on the other hand bugs in the monitor aren't
-    # distinguishable from no nameserver found... 
-    # ... could be done better I suspect.
 
     try: 
     
-        remote_state = Pyro.core.getProxyForURI("PYRONAME://" + "state" )
+        god = Pyro.core.getProxyForURI("PYRONAME://" + "god" )
         if config.dummy_mode:
             remote_clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
 
         while True:
 
-            status = remote_state.get_status()
             dt = datetime.datetime.now()
             if config.dummy_mode:
                 dt = remote_clock.get_datetime()
 
             lines = {}
+            states = god.get_state_summary()
 
-            for task_id in status.keys():
-
-                [name, reftime] = split( task_id, "%" )
-                [state, complete, total, latest ] = status[ task_id ]
-
-                frac = "(" + complete + "/" + total + ")"
+            for task_id in states.keys():
+                [ name, reftime ] = task_id.split('%')
+                [ state, complete, total ] = states[ task_id ]
+                
+                frac = "(" + str(complete) + "/" + str(total) + ")"
 
                 ctrl_end = "\033[0m"
 
@@ -89,6 +82,7 @@ while True:
 
                 if hour == 6 or hour == 18:
                     indent = ""
+
                 elif hour == 0 or hour == 12:
                     indent = ' |--'
                 else:
