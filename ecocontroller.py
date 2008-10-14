@@ -6,15 +6,28 @@
 |----------------------------------------------------------------------|
                     Hilary Oliver, NIWA, 2008
                    See repository documentation
+
+       Requires an external pyro nameserver (start with 'pyro-ns')
 """
 
 # PYRO NOTES:
-# if using an external pyro nameserver, unregister
-# objects from previous runs first:
+
+# To avoid having to start a clean pyro nameserver, try to unregister
+# any existing objects before connecting new ones:
 #try:
 #    pyro_daemon.disconnect( task )
 #except NamingError:
 #    pass
+
+
+# Note that we can run the Pyro nameserver in a thread in this program:
+
+#ns_starter = Pyro.naming.NameServerStarter()
+#ns_thread = threading.Thread( target = ns_starter.start )
+#ns_thread.setDaemon(True)
+#ns_thread.start()
+#ns_starter.waitUntilStarted(10)
+
 
 import Pyro.core
 import Pyro.naming
@@ -141,27 +154,15 @@ class task_manager ( Pyro.core.ObjBase ):
 
         self.create_initial_tasks()
 
-        #count = 0
         while True:
             # MAIN MESSAGE HANDLING LOOP
 
-            # handleRequests() returns after a timeout period has
-            # passed, Or at least one request (i.e. remote method call)
-            # was handled.  NOTE THAT THIS ONLY APPLIES FOR SINGLE
-            # THREADED PYRO. If multithreaded, every remote method call
-            # on a single pyro proxy object is handled in its own
-            # THREAD; in the main thread handleRequests returns after
-            # the a new thread is started, and the actual method calls
-            # come in asynchronously: this is no good for us: I want the
-            # task pool to interact each time new messages come in, then
-            # wait for new messages, and so on, which is synchronous.
+            if task_base.processing_required:
+                #print "processing ..."
+                self.process_tasks()
 
-            # count += 1
-
-            # print "processing ...", count
-            self.process_tasks()
-
-            # print "handling requests ...", count
+            task_base.processing_required = False
+            #print "handling requests ..."
             pyro_daemon.handleRequests( timeout = None )
 
 
@@ -346,13 +347,21 @@ class dead_letter_box( Pyro.core.ObjBase ):
     def incoming( self, message ):
         log.warning( "DEAD LETTER: " + message )
 
+
 #----------------------------------------------------------------------
+def usage():
+    print "USAGE:", argv[0], "<config file>"
+
+
+#----------------------------------------------------------------------
+# TO DO: convert to main() function, see:
+# http://www.artima.com/weblogs/viewpost.jsp?thread=4829
+# requires some thought about global variables like 'log'
+
 if __name__ == "__main__":
+
     # check command line arguments
     n_args = len( sys.argv ) - 1
-
-    def usage():
-        print "USAGE:", sys.argv[0], "<config file>"
 
     print "__________________________________________________________"
     print
@@ -381,7 +390,7 @@ if __name__ == "__main__":
         print "File not found: " + config_file
         usage()
         sys.exit(1)
-    
+
     # load the config file
     print
     print "Using config file " + config_file
@@ -409,7 +418,6 @@ if __name__ == "__main__":
 
     if dummy_mode:
         dummy_clock = dummy_clock( start_time, dummy_rate, dummy_offset ) 
-
 
     if not os.path.exists( 'LOGFILES' ):
         os.makedirs( 'LOGFILES' )
@@ -455,21 +463,33 @@ if __name__ == "__main__":
     log.info( 'initial reference time ' + start_time )
     log.info( 'final reference time ' + stop_time )
 
-    # single threaded operation is required
-    # for the main request loop to work as intended.
+    """ This program relies on SINGLE THREADED operation.  Pyro is
+    multithreaded by default so we explicitly disable threading: """
+
     Pyro.config.PYRO_MULTITHREADED = 0
 
-    # START THE PYRO NAMESERVER BY RUNNING 'PYRO-NS' EXTERNALLY 
+    """In SINGLE THREADED PYRO, handleRequests() returns after EITHER a
+    timeout has occurred OR at least one request (remote method call)
+    was handled.  With "timeout = None" this allows us to process tasks
+    ONLY after remote method invocations come in. Further, the
+    processing_required boolean set in task_base.incoming() allows us to
+    process tasks ONLY when a task changes state as a result of an
+    incoming message, which minimizes non-useful output from the task
+    processing loop (e.g. in dummy mode there are a lot of remote calls
+    on the dummy clock object, which does not alter tasks at all). 
 
-    # ... it can run in a thread in this program though:
-    #print
-    #print "Starting pyro nameserver"
-    #ns_starter = Pyro.naming.NameServerStarter()
-    #ns_thread = threading.Thread( target = ns_starter.start )
-    #ns_thread.setDaemon(True)
-    #ns_thread.start()
-    #ns_starter.waitUntilStarted(10)
-
+    In MULTITHREADED PYRO, handleRequests() returns immediately after
+    creating a new request handling thread for a single remote object
+    and thereafter remote method calls on that object come in
+    asynchronously in the dedicated thread.  It is impossible(?) to make
+    our main loop work properly like this because handleRequests will
+    block until a new connection is made, even while messages from
+    existing remote objects are coming in.  Tasks that are ready to run
+    are only set running in the processing loop, so these will be
+    delayed unnecessarily until handleRequests returns.  The only way
+    out of this is to do task processing on a handleRequests timeout
+    as well, which results in a lot of unnecessary task processing."""
+ 
     # locate the Pyro nameserver
     pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
     pyro_daemon = Pyro.core.Daemon()
@@ -485,3 +505,5 @@ if __name__ == "__main__":
     print "Beginning task processing now"
     print
     god.run()
+
+

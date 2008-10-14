@@ -45,6 +45,8 @@ class task_base( Pyro.core.ObjBase ):
         # Derived classes MUST call nearest_ref_time()
         #   before defining their requisites
 
+        task_base.processing_required = True
+
         Pyro.core.ObjBase.__init__(self)
 
         self.log = logging.getLogger( "main." + self.name ) 
@@ -217,6 +219,8 @@ class task_base( Pyro.core.ObjBase ):
         # receive all incoming pyro messages for this task 
 
         # print "HELLO FROM INCOMING: " + message
+
+        task_base.processing_required = True
 
         self.latest_message = message
 
