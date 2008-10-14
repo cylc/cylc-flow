@@ -19,30 +19,21 @@ import logging
 
 class requisites:
 
-    # TO DO: COMPILE OTHER REGEXES ONCE HERE TOO.
-    # regular exp for unpacking postrequisites "minutes:message"
-    regex = re.compile( "^([\d\.]+):(.*)$")
+    # TO DO: COMPILE REGEXES ONCE, UP HERE
 
     def __init__( self, task_name, reqs ):
 
         # name of my "host task" 
         # (is there a better way to get this information?)
         self.task_name = task_name
-        # SHOULD USE TASK IDENTITY INSTEAD OF NAME SO THAT THE SATIFYING
-        # REF TIME IS ALSO IDENTIFIED FOR FUZZY PREREQUISITES
+        # should use task identity instead of name so that the satifying
+        # ref time is also identified for fuzzy prerequisites?
 
         self.satisfied = {}
-        self.completion_time = {}
         self.ordered_list = []
         for req in reqs:
-            time = 0.0
-            if requisites.regex.match( req ):
-                m = requisites.regex.match( req )
-                [ time, req ] = m.groups()
- 
             self.satisfied[req] = False
-            self.completion_time[req] = float(time)
-            self.ordered_list.append( req )  # DO WE STILL NEED THE ORDERED LIST?
+            self.ordered_list.append( req ) 
 
     def all_satisfied( self ):
         if False in self.satisfied.values(): 
@@ -79,9 +70,6 @@ class requisites:
     def get_requisites( self ):
         return self.satisfied
 
-    def get_times( self ):
-        return self.completion_time
-
     def satisfy_me( self, postreqs ):
         # can another's completed postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
@@ -111,6 +99,25 @@ class requisites:
                     if postreq == prereq:   # (DIFFERENT FROM ABOVE HERE)
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
+
+
+class timed_requisites( requisites ):
+    # use for postrequisites with estimated completion times
+
+    def __init__( self, task_name, timed_reqs ):
+
+        reqs = []
+        self.completion_time = {}
+        for entry in timed_reqs:
+            [ time, req ] = entry
+            reqs.append( req )
+
+            self.completion_time[ req ] = time 
+
+        requisites.__init__( self, task_name, reqs )
+
+    def get_times( self ):
+        return self.completion_time
 
 
 class fuzzy_requisites( requisites ):

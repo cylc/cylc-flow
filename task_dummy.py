@@ -36,7 +36,7 @@ use_dummy_clock = True
 # be that the long way is better for error checking; see pyro docs.
 task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "%" + ref_time )
 
-completion_times = task.get_postrequisite_times()
+completion_time = task.get_postrequisite_times()
 postreqs = task.get_postrequisite_list()
 
 if not use_dummy_clock:
@@ -51,7 +51,7 @@ if not use_dummy_clock:
     n_postreqs = len( postreqs )
 
     for req in postreqs:
-        sleep( completion_times[ req ] / float( clock_rate ) )
+        sleep( completion_time[ req ] / float( clock_rate ) )
 
         #print "SENDING MESSAGE: ", time[ req ], req
         task.incoming( "NORMAL", req )
@@ -104,7 +104,7 @@ else:
 
     for req in postreqs:
         done[ req ] = False
-        hours = completion_times[ req] / 60.0
+        hours = completion_time[ req] / 60.0
         time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
 
     while True:

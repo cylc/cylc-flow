@@ -20,7 +20,7 @@ attribute, not the class name itself, that is).
 """
 
 import reference_time
-from requisites import requisites, fuzzy_requisites
+from requisites import requisites, timed_requisites, fuzzy_requisites
 from time import sleep
 
 import os
@@ -315,33 +315,33 @@ class downloader( runahead_task_base ):
 
         if hour == "00":
 
-            self.postrequisites = requisites( self.name, [ 
-                "0:" + self.name + " started for " + ref_time,
-                "0.5:file obstore_" + ref_time + ".um ready",
-                "1:file bgerr" + ref_time + ".um ready", 
-                "106:file lbc_" + lbc_12 + ".um ready", 
-                "122:file 10mwind_" + ref_time + ".um ready",
-                "122.5:file seaice_" + ref_time + ".um ready",
-                "199:file dump_" + ref_time + ".um ready", 
-                "200:" + self.name + " finished for " + ref_time ])
+            self.postrequisites = timed_requisites( self.name, [ 
+                [0, self.name + " started for " + ref_time],
+                [0.5, "file obstore_" + ref_time + ".um ready"],
+                [1, "file bgerr" + ref_time + ".um ready"], 
+                [106, "file lbc_" + lbc_12 + ".um ready"], 
+                [122, "file 10mwind_" + ref_time + ".um ready"],
+                [122.5, "file seaice_" + ref_time + ".um ready"],
+                [199, "file dump_" + ref_time + ".um ready"], 
+                [200, self.name + " finished for " + ref_time] ])
 
         elif hour == "12":
 
-            self.postrequisites = requisites( self.name, [ 
-                "0:" + self.name + " started for " + ref_time,
-                "0.5:file obstore_" + ref_time + ".um ready",
-                "1:file bgerr" + ref_time + ".um ready", 
-                "97:file lbc_" + lbc_12 + ".um ready",
-                "98:" + self.name + " finished for " + ref_time ])
+            self.postrequisites = timed_requisites( self.name, [ 
+                [0, self.name + " started for " + ref_time],
+                [0.5, "file obstore_" + ref_time + ".um ready"],
+                [1, "file bgerr" + ref_time + ".um ready"], 
+                [97, "file lbc_" + lbc_12 + ".um ready"],
+                [98, self.name + " finished for " + ref_time] ])
 
         if hour == "06" or hour == "18":
 
-            self.postrequisites = requisites( self.name, [
-                "0:" + self.name + " started for " + ref_time,
-                "0:file lbc_" + lbc_06 + ".um ready",
-                "0.5:file obstore_" + ref_time + ".um ready",
-                "1:file bgerr" + ref_time + ".um ready",
-                "2:" + self.name + " finished for " + ref_time ])
+            self.postrequisites = timed_requisites( self.name, [
+                [0, self.name + " started for " + ref_time],
+                [0, "file lbc_" + lbc_06 + ".um ready"],
+                [0.5, "file obstore_" + ref_time + ".um ready"],
+                [1, "file bgerr" + ref_time + ".um ready"],
+                [2, self.name + " finished for " + ref_time] ])
  
         runahead_task_base.__init__( self, ref_time, initial_state )
            
@@ -363,10 +363,10 @@ class oper_to_topnet( runahead_task_base ):
         # no prerequisites: this is The Initial Task
         self.prerequisites = requisites( self.name, [])
 
-        self.postrequisites = requisites( self.name, [
-            "0:" + self.name + " started for " + ref_time,
-            "1:file tn_" + ref_time + ".nc ready",
-            "2:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [1, "file tn_" + ref_time + ".nc ready"],
+            [2, self.name + " finished for " + ref_time] ])
 
         runahead_task_base.__init__( self, ref_time, initial_state )
 
@@ -393,10 +393,10 @@ class nzlam( task_base ):
                 "file bgerr" + ref_time + ".um ready",
                 "file lbc_" + lbc_12 + ".um ready" ])
 
-            self.postrequisites = requisites( self.name, [ 
-                "0:" + self.name + " started for " + ref_time,
-                "30:file sls_" + ref_time + ".um ready",   
-                "32:" + self.name + " finished for " + ref_time ])
+            self.postrequisites = timed_requisites( self.name, [ 
+                [0, self.name + " started for " + ref_time],
+                [30, "file sls_" + ref_time + ".um ready"],   
+                [32, self.name + " finished for " + ref_time] ])
  
         elif hour == "06" or hour == "18":
             self.prerequisites = requisites( self.name, [ 
@@ -404,12 +404,12 @@ class nzlam( task_base ):
                 "file bgerr" + ref_time + ".um ready",
                 "file lbc_" + lbc_06 + ".um ready" ])
 
-            self.postrequisites = requisites( self.name, [ 
-                "0:" + self.name + " started for " + ref_time,
-                "110:file tn_" + ref_time + ".um ready",
-                "111:file sls_" + ref_time + ".um ready",   
-                "112:file met_" + ref_time + ".um ready",
-                "115:" + self.name + " finished for " + ref_time ])
+            self.postrequisites = timed_requisites( self.name, [ 
+                [0, self.name + " started for " + ref_time],
+                [110, "file tn_" + ref_time + ".um ready"],
+                [111, "file sls_" + ref_time + ".um ready"],   
+                [112, "file met_" + ref_time + ".um ready"],
+                [115, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
 
@@ -432,10 +432,10 @@ class nzlam_post( task_base ):
             self.prerequisites = requisites( self.name, [ 
                 "file sls_" + ref_time + ".um ready" ])
 
-            self.postrequisites = requisites( self.name, [
-                "0:" + self.name + " started for " + ref_time,
-                "10:file sls_" + ref_time + ".nc ready",   
-                "11:" + self.name + " finished for " + ref_time ])
+            self.postrequisites = timed_requisites( self.name, [
+                [0, self.name + " started for " + ref_time],
+                [10, "file sls_" + ref_time + ".nc ready"],   
+                [11, self.name + " finished for " + ref_time] ])
 
         elif hour == "06" or hour == "18":
 
@@ -444,12 +444,12 @@ class nzlam_post( task_base ):
                 "file sls_" + ref_time + ".um ready",   
                 "file met_" + ref_time + ".um ready" ])
 
-            self.postrequisites = requisites( self.name, [ 
-                "0:" + self.name + " started for " + ref_time,
-                "10:file sls_" + ref_time + ".nc ready",   
-                "20:file tn_" + ref_time + ".nc ready",
-                "30:file met_" + ref_time + ".nc ready",
-                "31:" + self.name + " finished for " + ref_time ])
+            self.postrequisites = timed_requisites( self.name, [ 
+                [0, self.name + " started for " + ref_time],
+                [10, "file sls_" + ref_time + ".nc ready"],   
+                [20, "file tn_" + ref_time + ".nc ready"],
+                [30, "file met_" + ref_time + ".nc ready"],
+                [31, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
 
@@ -471,11 +471,11 @@ class globalprep( task_base ):
             "file 10mwind_" + ref_time + ".um ready",
             "file seaice_" + ref_time + ".um ready" ])
 
-        self.postrequisites = requisites( self.name, [
-            "0:" + self.name + " started for " + ref_time,
-            "5:file 10mwind_" + ref_time + ".nc ready",
-            "7:file seaice_" + ref_time + ".nc ready",
-            "10:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [5, "file 10mwind_" + ref_time + ".nc ready"],
+            [7, "file seaice_" + ref_time + ".nc ready"],
+            [10, self.name + " finished for " + ref_time] ])
        
         task_base.__init__( self, ref_time, initial_state )
 
@@ -495,10 +495,10 @@ class globalwave( task_base ):
             "file 10mwind_" + ref_time + ".nc ready",
             "file seaice_" + ref_time + ".nc ready" ])
 
-        self.postrequisites = requisites( self.name, [
-            "0:" + self.name + " started for " + ref_time,
-            "120:file globalwave_" + ref_time + ".nc ready",
-            "121:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [120, "file globalwave_" + ref_time + ".nc ready"],
+            [121, self.name + " finished for " + ref_time] ])
  
         task_base.__init__( self, ref_time, initial_state )
        
@@ -519,10 +519,10 @@ class nzwave( task_base ):
         self.prerequisites = requisites( self.name, [ 
             "file sls_" + ref_time + ".nc ready" ])
 
-        self.postrequisites = requisites( self.name, [
-            "0:" + self.name + " started for " + ref_time,
-            "110:file nzwave_" + ref_time + ".nc ready",
-            "112:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [110, "file nzwave_" + ref_time + ".nc ready"],
+            [112, self.name + " finished for " + ref_time] ])
  
         task_base.__init__( self, ref_time, initial_state )
        
@@ -541,10 +541,10 @@ class ricom( task_base ):
         self.prerequisites = requisites( self.name, [ 
             "file sls_" + ref_time + ".nc ready" ])
 
-        self.postrequisites = requisites( self.name, [
-            "0:" + self.name + " started for " + ref_time,
-            "30:file ricom_" + ref_time + ".nc ready",
-            "31:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [30, "file ricom_" + ref_time + ".nc ready"],
+            [31, self.name + " finished for " + ref_time] ])
  
         task_base.__init__( self, ref_time, initial_state )
        
@@ -568,10 +568,10 @@ class mos( task_base ):
         else:
             self.prerequisites = requisites( self.name, [])
 
-        self.postrequisites = requisites( self.name, [
-            "0:" + self.name + " started for " + ref_time,
-            "5:file mos_" + ref_time + ".nc ready",
-            "6:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [5, "file mos_" + ref_time + ".nc ready"],
+            [6, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
 
@@ -589,10 +589,10 @@ class nztide( runahead_task_base ):
  
         self.prerequisites = requisites( self.name, [])
 
-        self.postrequisites = requisites( self.name, [
-            "0:" + self.name + " started for " + ref_time,
-            "1:file nztide_" + ref_time + ".nc ready",
-            "2:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [1, "file nztide_" + ref_time + ".nc ready"],
+            [2, self.name + " finished for " + ref_time] ])
 
         runahead_task_base.__init__( self, ref_time, initial_state )
 
@@ -627,13 +627,13 @@ class topnet( task_base ):
         self.prerequisites = fuzzy_requisites( self.name, [ 
             "file tn_" + nzlam_cutoff + ".nc ready" ])
 
-        self.postrequisites = requisites( self.name, [ 
-            "0:streamflow extraction started for " + ref_time,
-            "2:got streamflow data for " + ref_time,
-            "2.1:streamflow extraction finished for " + ref_time,
-            "3:" + self.name + " started for " + ref_time,
-            "4:file topnet_" + ref_time + ".nc ready",
-            "5:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [ 
+            [0, "streamflow extraction started for " + ref_time],
+            [2, "got streamflow data for " + ref_time],
+            [2.1, "streamflow extraction finished for " + ref_time],
+            [3, self.name + " started for " + ref_time],
+            [4, "file topnet_" + ref_time + ".nc ready"],
+            [5, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
 
@@ -687,9 +687,9 @@ class nwpglobal( task_base ):
         self.prerequisites = requisites( self.name, [ 
             "file 10mwind_" + ref_time + ".um ready" ])
 
-        self.postrequisites = requisites( self.name, [
-            "0:" + self.name + " started for " + ref_time,
-            "120:file 10mwind_" + ref_time + ".nc ready",
-            "121:" + self.name + " finished for " + ref_time ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [120, "file 10mwind_" + ref_time + ".nc ready"],
+            [121, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
