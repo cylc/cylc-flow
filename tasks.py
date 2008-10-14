@@ -201,6 +201,9 @@ class task_base( Pyro.core.ObjBase ):
     def get_postrequisites( self ):
         return self.postrequisites.get_requisites()
 
+    def get_postrequisite_list( self ):
+        return self.postrequisites.get_list()
+
     def get_postrequisite_times( self ):
         return self.postrequisites.get_times()
 

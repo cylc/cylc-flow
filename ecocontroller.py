@@ -141,6 +141,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         self.create_initial_tasks()
 
+        #count = 0
         while True:
             # MAIN MESSAGE HANDLING LOOP
 
@@ -155,7 +156,12 @@ class task_manager ( Pyro.core.ObjBase ):
             # task pool to interact each time new messages come in, then
             # wait for new messages, and so on, which is synchronous.
 
+            # count += 1
+
+            # print "processing ...", count
             self.process_tasks()
+
+            # print "handling requests ...", count
             pyro_daemon.handleRequests( timeout = None )
 
 
