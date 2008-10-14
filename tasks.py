@@ -144,7 +144,6 @@ class task_base( Pyro.core.ObjBase ):
         # DERIVED CLASSES MUST OVERRIDE THIS METHOD TO RUN THE EXTERNAL
         # TASK, AND SET self.state = "running"
         self.log.critical( "task base class run() should not be called" )
-        return
 
     def get_state( self ):
         return self.name + ": " + self.state
@@ -240,6 +239,9 @@ class task_base( Pyro.core.ObjBase ):
                 self.log.critical( message )
             else:
                 self.log.warning( message )
+
+        if self.postrequisites.all_satisfied():
+            self.set_finished()
 
 #----------------------------------------------------------------------
 class runahead_task_base( task_base ):
