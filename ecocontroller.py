@@ -18,6 +18,7 @@
 
 import Pyro.core
 import Pyro.naming
+# from Pyro.errors import NamingError
 
 import reference_time
 from tasks import *
@@ -67,6 +68,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # dead letter box for use by external tasks
         self.dead_letter_box = dead_letter_box()
+
         uri = pyro_daemon.connect( self.dead_letter_box, "dead_letter_box" )
 
         uri = pyro_daemon.connect( dummy_clock, "dummy_clock" )
@@ -86,6 +88,7 @@ class task_manager ( Pyro.core.ObjBase ):
         task.log.info( "New task created for " + task.ref_time )
         self.task_pool.append( task )
         # connect new task to the pyro daemon
+
         uri = pyro_daemon.connect( task, task.identity() )
 
     def create_initial_tasks( self ):
@@ -139,6 +142,19 @@ class task_manager ( Pyro.core.ObjBase ):
         self.create_initial_tasks()
 
         while True:
+            # MAIN MESSAGE HANDLING LOOP
+
+            # handleRequests() returns after a timeout period has
+            # passed, Or at least one request (i.e. remote method call)
+            # was handled.  NOTE THAT THIS ONLY APPLIES FOR SINGLE
+            # THREADED PYRO. If multithreaded, every remote method call
+            # on a single pyro proxy object is handled in its own
+            # THREAD; in the main thread handleRequests returns after
+            # the a new thread is started, and the actual method calls
+            # come in asynchronously: this is no good for us: I want the
+            # task pool to interact each time new messages come in, then
+            # wait for new messages, and so on, which is synchronous.
+
             self.process_tasks()
             pyro_daemon.handleRequests( timeout = None )
 
@@ -156,7 +172,7 @@ class task_manager ( Pyro.core.ObjBase ):
  
         if self.pause_requested:
             # no new tasks please
-            return 1     # '1' to keep pyro request loop happy
+            return
        
         if len( self.task_pool ) == 0:
             self.system_halt('all configured tasks done')
@@ -166,16 +182,18 @@ class task_manager ( Pyro.core.ObjBase ):
         batch_finished = {}
         still_running = []
 
+        for task in self.task_pool:
+            # create a new task foo(T+1) if foo(T) just finished
+            if task.abdicate():
+                task.log.debug( "abdicating " + task.identity() )
+                self.create_task_by_name( task.name, task.next_ref_time() )
+
         # task interaction to satisfy prerequisites
         for task in self.task_pool:
 
             task.get_satisfaction( self.task_pool )
 
             task.run_if_ready( self.task_pool, dummy_rate )
-
-            # create a new task foo(T+1) if foo(T) just finished
-            if task.abdicate():
-                self.create_task_by_name( task.name, task.next_ref_time() )
 
             # record some info to determine which task batches 
             # can be deleted (see documentation just below)
@@ -247,8 +265,6 @@ class task_manager ( Pyro.core.ObjBase ):
         self.remove_dead_soldiers()
    
         self.dump_state()
-
-        return 1  # keep the pyro requestLoop going
 
 
     def request_pause( self ):
@@ -433,15 +449,21 @@ if __name__ == "__main__":
     log.info( 'initial reference time ' + start_time )
     log.info( 'final reference time ' + stop_time )
 
-    # Start a Pyro nameserver in its own thread
-    # (alternatively, run the 'pyro-ns' script as a separate process)
-    print
-    print "Starting pyro nameserver"
+    # single threaded operation is required
+    # for the main request loop to work as intended.
+    Pyro.config.PYRO_MULTITHREADED = 0
+
+    # START THE PYRO NAMESERVER BY RUNNING 'PYRO-NS' EXTERNALLY 
+
+    # ... it can run in a thread in this program though:
+    #print
+    #print "Starting pyro nameserver"
     #ns_starter = Pyro.naming.NameServerStarter()
     #ns_thread = threading.Thread( target = ns_starter.start )
     #ns_thread.setDaemon(True)
     #ns_thread.start()
     #ns_starter.waitUntilStarted(10)
+
     # locate the Pyro nameserver
     pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
     pyro_daemon = Pyro.core.Daemon()

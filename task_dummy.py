@@ -26,18 +26,12 @@ import datetime
 
 from time import sleep
 
-def get_proxy():
-    # Use this to renew the connection (get a new proxy for the remote
-    # object) each time a message is sent, so that handleRequests() 
-    # returns control without using a timeout.
-
-    # getProxyForURI is the shortcut way to a pyro object proxy; it may
-    # be that the long way is better for error checking; see pyro docs.
-    return Pyro.core.getProxyForURI("PYRONAME://" + task_name + "%" + ref_time )
-
-
 # unpack script arguments: <task name> <REFERENCE_TIME> <clock rate>
 [task_name, ref_time, clock_rate] = sys.argv[1:]
+
+# getProxyForURI is the shortcut way to a pyro object proxy; it may
+# be that the long way is better for error checking; see pyro docs.
+task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "%" + ref_time )
 
 # Connect just once for the clock.  Real models will use the OS clock,
 # so no connection will be made, but here we need to consult the main
@@ -48,7 +42,6 @@ if task_name == "downloader":
 
     rt = reference_time._rt_to_dt( ref_time )
     rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
-    task = get_proxy()
     if clock.get_datetime() >= rt_3p25:
         task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
     else:
@@ -63,7 +56,6 @@ elif task_name == "topnet":
     rt = reference_time._rt_to_dt( ref_time )
     rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
     # THE FOLLOWING MESSAGES MUST MATCH THOSE IN topnet.incoming()
-    task = get_proxy()
     if clock.get_datetime() >= rt_p25:
         task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + ref_time )
     else:
@@ -76,7 +68,6 @@ elif task_name == "topnet":
 # set each postrequisite satisfied in turn
 start_time = clock.get_datetime()
 
-task = get_proxy()
 postreq_dict = task.get_postrequisites()
 completion_times = task.get_postrequisite_times()
 postreqs = postreq_dict.keys()
@@ -89,12 +80,12 @@ for req in postreqs:
     time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
 
 while True:
+    sleep(1)
     dt = clock.get_datetime()
     all_done = True
     for req in postreqs:
         if not done[ req]:
             if dt >= time[ req ]:
-                task = get_proxy()
                 #print "SENDING MESSAGE: ", time[ req ], req
                 task.incoming( "NORMAL", req )
                 done[ req ] = True
@@ -103,7 +94,3 @@ while True:
 
     if all_done:
         break
-
-# finished simulating the external task
-task = get_proxy()
-task.set_finished()
