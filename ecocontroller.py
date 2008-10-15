@@ -425,9 +425,14 @@ if __name__ == "__main__":
 
     log = logging.getLogger( "main" )
     log.setLevel( logging_level )
-    max_bytes = 10000
+    max_bytes = 1000000
     backups = 5
-    h = logging.handlers.RotatingFileHandler( 'LOGFILES/ecocontroller', 'a', max_bytes, backups )
+    main_logfile = 'LOGFILES/ecocontroller'
+    h = logging.handlers.RotatingFileHandler( main_logfile, 'a', max_bytes, backups )
+    if os.path.exists( main_logfile ):
+        print ' + rotating exist log:', main_logfile
+        h.doRollover()
+
     f = logging.Formatter( '%(asctime)s %(levelname)-8s %(name)-16s - %(message)s', '%Y/%m/%d %H:%M:%S' )
     # use '%(name)-30s' to get the logger name print too 
     h.setFormatter(f)
@@ -450,7 +455,12 @@ if __name__ == "__main__":
         foo = logging.getLogger( "main." + name )
         foo.setLevel( logging_level )
 
-        h = logging.handlers.RotatingFileHandler( 'LOGFILES/' + name, 'a', max_bytes, backups )
+        task_logfile = 'LOGFILES/' + name
+        h = logging.handlers.RotatingFileHandler( task_logfile, 'a', max_bytes/10, backups )
+        if os.path.exists( task_logfile ):
+            print ' + rotating exist log:', task_logfile
+            h.doRollover()
+
         f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
         h.setFormatter(f)
         foo.addHandler(h)

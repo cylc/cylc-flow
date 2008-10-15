@@ -94,8 +94,8 @@ class task_base( Pyro.core.ObjBase ):
 
     def run_if_ready( self, tasks, dummy_clock_rate ):
 
-        # don't run if any previous instance not finished
         for task in tasks:
+            # don't run if any previous instance of me is not finished
             if task.name == self.name:
                 if task.state != "finished":
                     if int( task.ref_time ) < int( self.ref_time ):
