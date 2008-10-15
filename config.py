@@ -9,6 +9,9 @@ import logging
 # pyro nameserver group (must be different for each control program instance)
 pyro_ns_group = ':ecoconnect'
 
+# which task class definition module to use
+task_module = 'task_definitions'
+
 # logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 logging_level = logging.INFO
 #logging_level = logging.DEBUG
@@ -21,8 +24,8 @@ dummy_rate = 20
 start_time = "2008080818"
 stop_time = "2008081512"
 
-# task_list should be a subset of tasks.all_tasks (defaults to all)
-# optional initial states: 'finished', 'ready', 'waiting' (default)
+# task_list optional initial states: 'finished', 'ready', 'waiting'
+# (default is 'waiting')
 task_list = [ 
         'downloader',
         #'nwpglobal',

@@ -23,7 +23,6 @@ import Pyro.naming
 from Pyro.errors import NamingError
 
 import reference_time
-from tasks import *
 from get_instance import get_instance
 from dummy_clock import *
 from pyro_ns_name import pyro_object_name
@@ -79,7 +78,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # class creation can increase the reference time so can't check
         # for stop until after creation
-        task = get_instance( "tasks", task_name )( ref_time, state )
+        task = get_instance( task_module, task_name )( ref_time, state )
 
         if stop_time:
             if int( task.ref_time ) > int( stop_time ):
@@ -366,6 +365,8 @@ if __name__ == "__main__":
 
     pyro_ns_group = ':foo'
 
+    task_module = 'tasks'
+
     # dummy mode 
     dummy_mode = False
     dummy_offset = None  
@@ -411,11 +412,16 @@ if __name__ == "__main__":
     if dummy_mode:
         dummy_clock = dummy_clock( start_time, dummy_rate, dummy_offset ) 
 
-    if not os.path.exists( 'LOGFILES' ):
-        os.makedirs( 'LOGFILES' )
+    # load task definition module
+    print
+    print 'Loading task definitions from ' + task_module + '.py'
+    exec "from " + task_module + " import *"
 
     print
     print "Logging to ./LOGFILES"
+
+    if not os.path.exists( 'LOGFILES' ):
+        os.makedirs( 'LOGFILES' )
 
     log = logging.getLogger( "main" )
     log.setLevel( logging_level )
