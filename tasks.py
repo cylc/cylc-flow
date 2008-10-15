@@ -346,31 +346,6 @@ class downloader( runahead_task_base ):
         runahead_task_base.__init__( self, ref_time, initial_state )
            
 #----------------------------------------------------------------------
-class oper_to_topnet( runahead_task_base ):
-    "connect separate operational system to a topnet task"
-
-    """use instead of downloader"""
-
-    name = "oper_to_topnet"
-    valid_hours = [ 6, 18 ]
-
-    def __init__( self, ref_time, initial_state = "waiting" ):
-        
-        # adjust reference time to next valid for this task
-        self.ref_time = self.nearest_ref_time( ref_time )
-        ref_time = self.ref_time
- 
-        # no prerequisites: this is The Initial Task
-        self.prerequisites = requisites( self.name, [])
-
-        self.postrequisites = timed_requisites( self.name, [
-            [0, self.name + " started for " + ref_time],
-            [1, "file tn_" + ref_time + ".nc ready"],
-            [2, self.name + " finished for " + ref_time] ])
-
-        runahead_task_base.__init__( self, ref_time, initial_state )
-
-#----------------------------------------------------------------------
 class nzlam( task_base ):
 
     name = "nzlam"

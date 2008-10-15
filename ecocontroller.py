@@ -214,9 +214,9 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # DELETE SPENT TASKS i.e. those that are finished AND no longer
         # needed to satisfy the prerequisites of other tasks. Cutoff is
-        # therefore any batch older than the
-        # most-recent-finished-nzlam_post (still needed by topnet) AND 
-        # older than the oldest running task.
+        # therefore any batch older than the most recent finished
+        # nzlam_post (still needed by topnet) AND older than the oldest
+        # running task.
 
         # See repository documentation for a detailed discussion of this.
 
