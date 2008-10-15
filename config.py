@@ -6,6 +6,9 @@ import logging
 
 # TO DO: DOCUMENT THIS FILE
 
+# pyro nameserver group (must be different for each control program instance)
+pyro_ns_group = ':ecoconnect'
+
 # logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 #logging_level = logging.INFO
 logging_level = logging.DEBUG
@@ -22,14 +25,14 @@ stop_time = "2008081512"
 # optional initial states: 'finished', 'ready', 'waiting' (default)
 task_list = [ 
         'downloader',
-        'nwpglobal',
-        'globalprep',
-        'globalwave',
+        #'nwpglobal',
+        #'globalprep',
+        #'globalwave',
         'nzlam:finished',
         'nzlam_post',
-        'nzwave',
-        'ricom',
-        'nztide',
+        #'nzwave',
+        #'ricom',
+        #'nztide',
         'topnet',
-        'mos' 
+        #'mos' 
         ]

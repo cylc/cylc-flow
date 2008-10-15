@@ -21,6 +21,7 @@ contention in addition to sequencing constraints).
 import sys
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
+from pyro_ns_name import pyro_object_name
 import reference_time
 import datetime
 
@@ -34,7 +35,7 @@ use_dummy_clock = True
 
 # getProxyForURI is the shortcut way to a pyro object proxy; it may
 # be that the long way is better for error checking; see pyro docs.
-task = Pyro.core.getProxyForURI("PYRONAME://" + task_name + "%" + ref_time )
+task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_object_name( task_name + '%' + ref_time ))
 
 completion_time = task.get_postrequisite_times()
 postreqs = task.get_postrequisite_list()
@@ -67,7 +68,7 @@ else:
 
     # print task.identity() + " using dummy clock"
 
-    clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
+    clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_object_name( 'dummy_clock' ))
 
     if task_name == "downloader":
 

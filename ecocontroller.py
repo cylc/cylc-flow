@@ -10,18 +10,8 @@
        Requires an external pyro nameserver (start with 'pyro-ns')
 """
 
-# PYRO NOTES:
-
-# To avoid having to start a clean pyro nameserver, try to unregister
-# any existing objects before connecting new ones:
-#try:
-#    pyro_daemon.disconnect( task )
-#except NamingError:
-#    pass
-
-
 # Note that we can run the Pyro nameserver in a thread in this program:
-
+#import threading
 #ns_starter = Pyro.naming.NameServerStarter()
 #ns_thread = threading.Thread( target = ns_starter.start )
 #ns_thread.setDaemon(True)
@@ -31,21 +21,20 @@
 
 import Pyro.core
 import Pyro.naming
-# from Pyro.errors import NamingError
+from Pyro.errors import NamingError
 
 import reference_time
 from tasks import *
 from get_instance import get_instance
-import threading
+from dummy_clock import *
+from pyro_ns_name import pyro_object_name
 
 from copy import deepcopy
 
 import logging, logging.handlers
 
 import re
-import sys
-
-from dummy_clock import *
+import os, sys
 
 
 class LogFilter(logging.Filter):
@@ -82,9 +71,10 @@ class task_manager ( Pyro.core.ObjBase ):
         # dead letter box for use by external tasks
         self.dead_letter_box = dead_letter_box()
 
-        uri = pyro_daemon.connect( self.dead_letter_box, "dead_letter_box" )
+        pyro_daemon.connect( self.dead_letter_box, pyro_object_name( 'dead_letter_box' ) )
 
-        uri = pyro_daemon.connect( dummy_clock, "dummy_clock" )
+        pyro_daemon.connect( dummy_clock, pyro_object_name( 'dummy_clock' ) )
+
 
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
 
@@ -100,9 +90,9 @@ class task_manager ( Pyro.core.ObjBase ):
 
         task.log.info( "New task created for " + task.ref_time )
         self.task_pool.append( task )
-        # connect new task to the pyro daemon
 
-        uri = pyro_daemon.connect( task, task.identity() )
+        # connect new task to the pyro daemon
+        pyro_daemon.connect( task, pyro_object_name( task.identity() ) )
 
     def create_initial_tasks( self ):
 
@@ -370,9 +360,12 @@ if __name__ == "__main__":
     
     # TO DO: better commandline parsing with optparse or getopt
     # (maybe not needed as most input is from the config file?)
+
     start_time = None
     stop_time = None
     config_file = None
+
+    pyro_ns_group = ':foo'
 
     # dummy mode 
     dummy_mode = False
@@ -492,18 +485,29 @@ if __name__ == "__main__":
  
     # locate the Pyro nameserver
     pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
+
+    # create a Pyro nameserver group based on the user's name
+    try:
+        # first delete any existing objects registered in my group name
+        # (this avoids having to restart the nameserver every time we
+        # run the controller, or otherwise having to disconnect
+        # individual objects that already exist).  If running several
+        # ecocontroller instances, each needs a different group name.
+        pyro_nameserver.deleteGroup( pyro_ns_group )
+    except NamingError:
+        pass
+
+    pyro_nameserver.createGroup( pyro_ns_group )
     pyro_daemon = Pyro.core.Daemon()
     pyro_daemon.useNameServer(pyro_nameserver)
 
     # initialise the task manager
     god = task_manager( start_time, task_list )
     # connect to pyro nameserver to allow external control
-    uri = pyro_daemon.connect( god, "god" )
+    pyro_daemon.connect( god, pyro_object_name( 'god' ) )
 
     # start processing
     print
     print "Beginning task processing now"
     print
     god.run()
-
-

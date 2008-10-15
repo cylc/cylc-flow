@@ -11,6 +11,7 @@ import os
 import sys
 import Pyro.core
 from time import sleep
+from pyro_ns_name import pyro_object_name
 from string import split
 import config
 import datetime
@@ -43,9 +44,12 @@ while True:
 
     try: 
     
-        god = Pyro.core.getProxyForURI("PYRONAME://" + "god" )
+        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_object_name( 'god' ) )
+        god._setTimeout(1)
+
         if config.dummy_mode:
-            remote_clock = Pyro.core.getProxyForURI("PYRONAME://" + "dummy_clock" )
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_object_name( 'dummy_clock' ) )
+            remote_clock._setTimeout(1)
 
         while True:
 
@@ -109,6 +113,6 @@ while True:
         os.system( "clear" )
         for line in title.boof():
             print line
-        print "Connection to nameserver failed ..."
+        print "Connection failed ..."
 
     sleep( 0.5 )
