@@ -18,7 +18,6 @@
 #ns_thread.start()
 #ns_starter.waitUntilStarted(10)
 
-
 import Pyro.core
 import Pyro.naming
 from Pyro.errors import NamingError

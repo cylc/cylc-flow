@@ -10,8 +10,8 @@ import logging
 pyro_ns_group = ':ecoconnect'
 
 # logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
-#logging_level = logging.INFO
-logging_level = logging.DEBUG
+logging_level = logging.INFO
+#logging_level = logging.DEBUG
 
 dummy_mode = True      
 dummy_offset = 8    # how far behind (dummy) real time to start

@@ -88,7 +88,7 @@ try:
         god.request_pause()
         print 'pausing system ...'
         sleep(5)
-
+        
         if config.dummy_mode:
             print 'killing dummy tasks ...'
             # kill any running task_dummy programs
@@ -98,6 +98,10 @@ try:
         # shutdown the controller and pyro nameserver
         print 'requesting shutdown ...'
         god.request_shutdown()
+
+        print "FIX ME: you now need to send a message to an existing task"
+        print "to cause the processing loop to activate again and effect"
+        print "the final shutdown."
 
     else:
         print "ERROR: should not be here"
