@@ -1,23 +1,6 @@
 #!/usr/bin/python
 
-"""
-Task base class for the Ecoconnect Controller.
-
-A "task" represents a particular group of external jobs, for a single
-reference time, that we want separate scheduling control over (as a
-group).  Each task has certain prerequisites that must be satisfied
-before it can launch its external task, and certain postrequisites that
-are created or achieved as the task runs, and which may be prerequisites
-for other tasks.  A task must maintain an accurate representation of
-the task's state as it follows through to the end of processing for its
-reference time.  
-
-tasks communicate with each other in order to sort out inter-task
-dependencies (i.e. match postrequisites with prerequisites).
-
-Task names must not contain underscores at the moment (the 'name'
-attribute, not the class name itself, that is).
-"""
+"""operational task class definitions"""
 
 import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
