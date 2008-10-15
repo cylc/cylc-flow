@@ -19,8 +19,6 @@ import logging
 
 class requisites:
 
-    # TO DO: COMPILE REGEXES ONCE, UP HERE
-
     def __init__( self, task_name, reqs ):
 
         # name of my "host task" 
@@ -174,7 +172,7 @@ class fuzzy_requisites( requisites ):
                                 # actual postreq that satisfied it
                                 self.sharpen_up( prereq, postreq )
 
-                                log.debug( postreqs.task_name + " fuzzy-satisfied: " + postreq )
+                                log.debug( postreqs.task_name + " fuzzy-satisfier: " + postreq )
 
     def will_satisfy_me( self, postreqs ):
         # will another's postreqs, when completed, satisfy any of my prequisites?

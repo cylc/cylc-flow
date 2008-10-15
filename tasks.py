@@ -611,7 +611,12 @@ class topnet( task_base ):
     catchup_mode = True
     # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
 
+    fuzzy_file_re =  re.compile( "^file (.*) ready$" )
+
     def __init__( self, ref_time, initial_state = "waiting" ):
+
+        self.catchup_re = re.compile( "^CATCHUP:.*for " + ref_time )
+        self.uptodate_re = re.compile( "^UPTODATE:.*for " + ref_time )
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -647,7 +652,7 @@ class topnet( task_base ):
 
         prereqs = self.prerequisites.get_list()
         prereq = prereqs[0]
-        m = re.compile( "^file (.*) ready$" ).match( prereq )
+        m = topnet.fuzzy_file_re.match( prereq )
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
@@ -661,13 +666,13 @@ class topnet( task_base ):
         task_base.incoming( self, priority, message)
         
         # but intercept catchup mode messages
-        if not topnet.catchup_mode and re.compile( "^CATCHUP:.*for " + self.ref_time ).match( message ):
+        if not topnet.catchup_mode and self.catchup_re.match( message ):
             #message == "CATCHUP: " + self.ref_time:
             topnet.catchup_mode = True
             # WARNING: SHOULDN'T GO FROM UPTODATE TO CATCHUP?
             self.log.warning( "beginning CATCHUP operation" )
 
-        elif topnet.catchup_mode and re.compile( "^UPTODATE:.*for " + self.ref_time ).match( message ):
+        elif topnet.catchup_mode and self.uptodate_re.match( message ):
             #message == "UPTODATE: " + self.ref_time:
             topnet.catchup_mode = False
             self.log.info( "beginning UPTODATE operation" )
