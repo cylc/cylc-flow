@@ -13,3 +13,7 @@ TO DO LIST
 
 * use methods is_running(), is_finished(), etc. to determine task state
   instead of than accessing attributes directly
+
+* define external dummy_task behavior, somehow, into the configured task class
+  definition file. Then special case behaviour: topnet, downloader
+  (operational) or nzlam_post (topnet_test) can be easily automated.
