@@ -244,9 +244,9 @@ class runahead_task_base( task_base ):
     # that would otherwise run ahead indefinitely: delay if we get
     # "too far ahead" based on number of existing finished tasks.
 
-    def __init__( self, ref_time, max_runahead, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state = "waiting" ):
 
-        self.MAX_FINISHED = max_runahead
+        self.MAX_FINISHED = 4
         task_base.__init__( self, ref_time, initial_state )
 
         # logging is set up by task_base
@@ -295,38 +295,7 @@ class nzlam_post( runahead_task_base ):
                 [2, "file tn_" + ref_time + ".nc ready"],
                 [3, self.name + " finished for " + ref_time] ])
 
-        runahead_task_base.__init__( self, ref_time, 4, initial_state )
-
-
-    def run_if_ready( self, tasks, dummy_clock_rate ):
-        # Don't get ahead of topnet. Nzlam_post is here equivalent to
-        # the operational downloader (no prerequisites) so it wants to
-        # run ahead ...
-
-        # The most recent topnet task will either be running or just
-        # created and waiting (because of abdication).
-        
-        ############ TEMPORARY############### 
-        runahead_task_base.run_if_ready( self, tasks, dummy_clock_rate )
-        return
-        ############ TEMPORARY############### 
-
-        topnet_times = []
-        if self.state == "waiting":
-            for task in tasks:
-                if task.name == "topnet": 
-                   topnet_times.append( task.ref_time )
-        
-        if len( topnet_times ) > 0:
-            topnet_times.sort( key = int )
-            most_rec_topnet = topnet_times[ len(topnet_times) - 1 ]
-
-            if int( self.ref_time ) > int( most_rec_topnet ):
-                print self.identity() + ": DELAYED BY TOPNET " + most_rec_topnet 
-                self.log.debug( self.identity() + " delayed by topnet!" )
-                return
-            
-        runahead_task_base.run_if_ready( self, tasks, dummy_clock_rate )
+        runahead_task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class topnet( task_base ):
