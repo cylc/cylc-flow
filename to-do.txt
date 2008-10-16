@@ -14,4 +14,5 @@ TO DO LIST
 * use methods is_running(), is_finished(), etc. to determine task state
   instead of than accessing attributes directly
 
-* somehow put special task deletion criteria in task definition modules
+* special task deletion criteria in the main program should be made 
+  part of task object behaviour? 

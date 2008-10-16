@@ -92,7 +92,7 @@ class task_base( Pyro.core.ObjBase ):
         return reference_time.increment( self.ref_time, increment )
 
 
-    def run_if_ready( self, tasks, dummy_clock_rate ):
+    def run_if_ready( self, tasks, dummy_mode, dummy_clock_rate = 20 ):
 
         for task in tasks:
             # don't run if any previous instance of me is not finished
@@ -105,7 +105,7 @@ class task_base( Pyro.core.ObjBase ):
 
         if self.state == 'waiting' and self.prerequisites.all_satisfied():
             # prerequisites all satisified, so run me
-            if dummy_clock_rate:
+            if dummy_mode:
                 # we're in dummy mode
                 self.run_external_dummy( dummy_clock_rate )
             else:
@@ -116,9 +116,10 @@ class task_base( Pyro.core.ObjBase ):
         sys.exit(1)
 
     def run_external_task( self ):
-        # DERIVED CLASSES MUST OVERRIDE THIS METHOD TO RUN THE EXTERNAL
-        # TASK, AND SET self.state = "running"
-        self.log.critical( "task base class run() should not be called" )
+        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+        self.log.info( "launching external task for " + self.ref_time )
+        os.system( self.external_task + ' ' + self.ref_time + " &" )
+        self.state = "running"
 
     def get_state( self ):
         return self.name + ": " + self.state
@@ -211,6 +212,7 @@ class task_base( Pyro.core.ObjBase ):
 
         else:
             # a non-postrequisite message, e.g. progress report
+            message = '*' + message
             if priority == "NORMAL":
                 self.log.info( message )
             elif priority == "WARNING":
@@ -235,10 +237,10 @@ class free_task_base( task_base ):
         task_base.__init__( self, ref_time, initial_state )
 
         # logging is set up by task_base
-        self.log.info( self.identity() + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
+        # self.log.info( self.identity() + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
 
 
-    def run_if_ready( self, tasks, dummy_clock_rate ):
+    def run_if_ready( self, tasks, dummy_mode, dummy_clock_rate = 20 ):
         # don't run if too many previous finished instances exist
         delay = False
 
@@ -257,6 +259,6 @@ class free_task_base( task_base ):
             pass
 
         else:
-            task_base.run_if_ready( self, tasks, dummy_clock_rate )
+            task_base.run_if_ready( self, tasks, dummy_mode, dummy_clock_rate )
 
 

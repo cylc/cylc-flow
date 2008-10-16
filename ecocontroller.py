@@ -61,11 +61,8 @@ class task_manager ( Pyro.core.ObjBase ):
 
         Pyro.core.ObjBase.__init__(self)
     
-        # this is just so external monitors can interrogate me to see if
-        # we're in dummy mode or not
-        self.dummy_mode = False
         if dummy_mode:
-            self.dummy_mode = True
+            pyro_daemon.connect( dummy_clock, pyro_ns_name( 'dummy_clock' ) )
 
         self.start_time = start_time
         self.task_list = task_list        # list of task names
@@ -83,11 +80,9 @@ class task_manager ( Pyro.core.ObjBase ):
 
         pyro_daemon.connect( self.dead_letter_box, pyro_ns_name( 'dead_letter_box' ) )
 
-        pyro_daemon.connect( dummy_clock, pyro_ns_name( 'dummy_clock' ) )
-
 
     def in_dummy_mode( self ):
-        return self.dummy_mode
+        return dummy_mode
 
 
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
@@ -206,7 +201,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
             task.get_satisfaction( self.task_pool )
 
-            task.run_if_ready( self.task_pool, dummy_rate )
+            task.run_if_ready( self.task_pool, dummy_mode, dummy_rate )
 
             # Determine which tasks can be deleted (documentation below)
 
@@ -562,5 +557,7 @@ if __name__ == "__main__":
     # start processing
     print
     print "Beginning task processing now"
+    if dummy_mode:
+        print "     (in dummy mode)"
     print
     god.run()

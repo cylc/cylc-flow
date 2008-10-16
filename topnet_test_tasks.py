@@ -58,6 +58,8 @@ class nzlam_post( free ):
 
     name = "nzlam_post"
     valid_hours = [ 6, 18 ]
+    external_task = 'external/nzlam_post-topnet_test.sh' 
+    user_prefix = 'hydrology'
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -71,7 +73,7 @@ class nzlam_post( free ):
         
         self.postrequisites = timed_requisites( self.name, [ 
                 [0, self.name + " started for " + ref_time],
-                [2, "file tn_" + ref_time + ".nc ready"],
+                [2, "file tn_" + ref_time + "_utc_nzlam_12.nc ready"],
                 [3, self.name + " finished for " + ref_time] ])
 
         free.__init__( self, ref_time, initial_state )
@@ -115,14 +117,14 @@ class topnet( normal ):
         fuzzy_limits = nzlam_cutoff + ':' + ref_time
  
         self.prerequisites = fuzzy_requisites( self.name, [ 
-            "file tn_" + fuzzy_limits + ".nc ready" ])
+            "file tn_" + fuzzy_limits + "_utc_nzlam_12.nc ready" ])
 
         self.postrequisites = timed_requisites( self.name, [ 
             [0, "streamflow extraction started for " + ref_time],
             [2, "got streamflow data for " + ref_time],
             [2.1, "streamflow extraction finished for " + ref_time],
             [3, self.name + " started for " + ref_time],
-            [4, "file topnet_" + ref_time + ".nc ready"],
+            [4, "file topnet_" + ref_time + "_utc_nzlam_12.nc ready"],
             [5, self.name + " finished for " + ref_time] ])
 
         normal.__init__( self, ref_time, initial_state )

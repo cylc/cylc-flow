@@ -10,21 +10,21 @@ import logging
 task_definition_module = 'topnet_test_tasks'
 
 # logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
-#logging_level = logging.INFO
-logging_level = logging.DEBUG
+logging_level = logging.INFO
+#logging_level = logging.DEBUG
 
-dummy_mode = True      
-dummy_offset = 24    # how far behind (dummy) real time to start
-dummy_rate = 20
+#dummy_mode = True      
+#dummy_offset = 24    # how far behind (dummy) real time to start
+#dummy_rate = 20
 
 # start_time and stop_time must be strings
-start_time = "2008080818"
-stop_time = "2008081018"
+start_time = "2008101600"
+stop_time  = "2008101618"
 
 # task_list optional initial states: 'finished', 'ready', 'waiting'
 # (default is 'waiting')
 task_list = [ 
         'nzlam_post',
-        'topnet',
+        #'topnet',
         #'topnet_post'
         ]
