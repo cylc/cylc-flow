@@ -102,22 +102,14 @@ class task_base( Pyro.core.ObjBase ):
                         self.log.debug( self.identity() + " blocked by " + task.identity() )
                         return
 
-        if self.state == "finished":
-            # already finished
-            pass
-        elif self.state == "running":
-            # already running
-            pass
-        elif self.prerequisites.all_satisfied():
+
+        if self.state == 'waiting' and self.prerequisites.all_satisfied():
             # prerequisites all satisified, so run me
             if dummy_clock_rate:
                 # we're in dummy mode
                 self.run_external_dummy( dummy_clock_rate )
             else:
                 self.run_external_task()
-        else:
-            # still waiting
-            pass
 
     def run_external_dummy( self, dummy_clock_rate ):
         self.log.critical( 'YOU MUST OVERRIDE THIS METHOD' )
