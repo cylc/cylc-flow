@@ -14,6 +14,7 @@ from time import sleep
 from pyro_ns_naming import pyro_ns_name
 from string import split
 import datetime
+from reference_time import _rt_to_dt
 
 class kit:
     def __init__( self, title ):
@@ -55,9 +56,10 @@ while True:
 
         while True:
 
-            dt = datetime.datetime.now()
             if dummy_mode:
                 dt = remote_clock.get_datetime()
+            else:
+                dt = datetime.datetime.now()
 
             lines = {}
             states = god.get_state_summary()
@@ -88,7 +90,7 @@ while True:
                 if reftime in lines.keys():
                     lines[reftime] += ' ' + foo
                 else:
-                    lines[reftime] = indent + "\033[1;34m" + reftime + "\033[0m " + foo
+                    lines[reftime] = indent + reftime + "\033[0m " + foo
                 
             # sort reference times using int( string )
             reftimes = lines.keys()
@@ -97,10 +99,16 @@ while True:
             blit = title.boof()
             blit.append("  Current Task Objects")
             blit.append("  \033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done" )
-            blit.append( dt )
+            blit.append( '\033[1;34m' + str(dt) + '\033[0m' )
             blit.append("")
             for rt in reftimes:
-                blit.append( lines[rt] )
+                # colour reference time relative to clock time
+                rtdt = _rt_to_dt( rt )
+                if dt > rtdt:
+                    foo = '\033[1;35m'
+                else:
+                    foo = '\033[1;34m'
+                blit.append( foo + lines[rt] )
 
             os.system( "clear" )
             for line in blit:
