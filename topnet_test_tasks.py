@@ -381,7 +381,6 @@ class topnet( task_base ):
             topnet.catchup_mode = False
             self.log.info( "beginning UPTODATE operation" )
 
-
 #----------------------------------------------------------------------
 if __name__ == '__main__':
 
@@ -437,17 +436,17 @@ if __name__ == '__main__':
 
         clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ))
 
-        if task_name == "downloader":
+        if task_name == "nzlam_post":
 
             rt = reference_time._rt_to_dt( ref_time )
-            rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
-            if clock.get_datetime() >= rt_3p25:
-                task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
+            delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 
+            if clock.get_datetime() >= delayed_start:
+                task.incoming( 'NORMAL', 'CATCHUP: operational tn file already exists for ' + ref_time )
             else:
-                task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + ref_time )
+                task.incoming( 'NORMAL', 'UPTODATE: waiting for operational tn file for ' + ref_time )
                 while True:
                     sleep(1)
-                    if clock.get_datetime() >= rt_3p25:
+                    if clock.get_datetime() >= delayed_start:
                         break
 
         elif task_name == "topnet":
@@ -490,4 +489,3 @@ if __name__ == '__main__':
 
             if all_done:
                 break
-

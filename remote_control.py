@@ -9,7 +9,6 @@ import sys
 import Pyro.core
 from time import sleep
 from pyro_ns_naming import pyro_ns_name
-import config     # for dummy_mode
 
 def usage():
     print 'USAGE: ' + sys.argv[0] + ' [-p] [-r] [-s] [-b <hours>]'
@@ -26,6 +25,8 @@ pause = False
 resume = False
 shutdown = False
 bump_hours = 0
+
+dummy_mode = False
 
 if n_args == 1: 
     if sys.argv[1] == '-p':
@@ -71,6 +72,9 @@ try:
     # connect to the task object inside the control program
     god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'god'))
 
+    if god.in_dummy_mode():
+        dummy_mode = True
+ 
 except:
     print "ERROR: failed to connect to god"
     sys.exit(1)
@@ -89,8 +93,8 @@ try:
         print 'pausing system ...'
         sleep(5)
         
-        if config.dummy_mode:
-            print 'killing dummy tasks ...'
+        if dummy_mode:
+            print 'killing any dummy tasks ...'
             # kill any running 'dummy_task's
             os.system( 'pkill -9 -u $USER dummy_task.py' )
             sleep(5)

@@ -267,9 +267,7 @@ class task_manager ( Pyro.core.ObjBase ):
         cutoff = oldest_running
         log.debug( "oldest running task: " + cutoff )
 
-        #if finished_nzlam_post_6_18_exist and topnet_found:
-        if True:
-
+        if finished_nzlam_post_6_18_exist and topnet_found:
             finished_nzlam_post_6_18.sort( key = int, reverse = True )
             for nzp_time in finished_nzlam_post_6_18:
                 if int( nzp_time ) < int( topnet_time ):
