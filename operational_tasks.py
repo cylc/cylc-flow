@@ -495,12 +495,15 @@ if __name__ == '__main__':
 
         clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ))
 
+        fast_complete = False
+
         if task_name == "downloader":
 
             rt = reference_time._rt_to_dt( ref_time )
             rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
             if clock.get_datetime() >= rt_3p25:
                 task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
+                fast_complete = True
             else:
                 task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + ref_time )
                 while True:
@@ -530,7 +533,10 @@ if __name__ == '__main__':
 
         for req in postreqs:
             done[ req ] = False
-            hours = completion_time[ req] / 60.0
+            if fast_complete:
+                hours = completion_time[ req] / 60.0 / 20.
+            else:
+                hours = completion_time[ req] / 60.0
             time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
 
         while True:
