@@ -14,7 +14,7 @@ task_definition_module = 'topnet_test_tasks'
 logging_level = logging.DEBUG
 
 dummy_mode = True      
-dummy_offset = 12    # how far behind (dummy) real time to start
+dummy_offset = 24    # how far behind (dummy) real time to start
 dummy_rate = 20
 
 # start_time and stop_time must be strings

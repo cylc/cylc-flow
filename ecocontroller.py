@@ -465,7 +465,7 @@ if __name__ == "__main__":
     main_logfile = 'LOGFILES/ecocontroller'
     h = logging.handlers.RotatingFileHandler( main_logfile, 'a', max_bytes, backups )
     if os.path.exists( main_logfile ):
-        print ' + rotating exist log:', main_logfile
+        print ' + rotating existing log:', main_logfile
         h.doRollover()
 
     f = logging.Formatter( '%(asctime)s %(levelname)-8s %(name)-16s - %(message)s', '%Y/%m/%d %H:%M:%S' )
@@ -493,7 +493,7 @@ if __name__ == "__main__":
         task_logfile = 'LOGFILES/' + name
         h = logging.handlers.RotatingFileHandler( task_logfile, 'a', max_bytes/10, backups )
         if os.path.exists( task_logfile ):
-            print ' + rotating exist log:', task_logfile
+            print ' + rotating existing log:', task_logfile
             h.doRollover()
 
         f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
@@ -544,7 +544,7 @@ if __name__ == "__main__":
         # individual objects that already exist).  If running several
         # ecocontroller instances, each needs a different group name.
         print
-        print "Attempting to deleting Pyro nameserver group " + pyro_ns_group
+        print "Unregistering any existing '" + pyro_ns_group + "' group in the Pyro nameserver"
         pyro_nameserver.deleteGroup( pyro_ns_group )
     except NamingError:
         print "(no such group registered)"

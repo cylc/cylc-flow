@@ -1,8 +1,9 @@
 #!/usr/bin/python
 
-"""operational task class definitions"""
+# operational task class definitions
 
 from task_base import *
+from dummy_task_base import *
 
 import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
@@ -440,62 +441,18 @@ class nwpglobal( normal ):
 
         normal.__init__( self, ref_time, initial_state )
 
+
 #----------------------------------------------------------------------
-if __name__ == '__main__':
+class dummy_task( dummy_task_base ):
+    def __init__( self, task_name, ref_time, clock_rate ):
+        dummy_task_base.__init__( self, task_name, ref_time, clock_rate )
 
-    import sys
-    import Pyro.naming, Pyro.core
-    from Pyro.errors import NamingError
-    from pyro_ns_naming import pyro_ns_name
-    import reference_time
-    import datetime
-
-    from time import sleep
-
-    # hardwired dummy clock use
-    use_dummy_clock = True
-
-    # unpack script arguments: <task name> <REFERENCE_TIME> <clock rate>
-    [task_name, ref_time, clock_rate] = sys.argv[1:]
-
-    # getProxyForURI is the shortcut way to a pyro object proxy; it may
-    # be that the long way is better for error checking; see pyro docs.
-    task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( task_name + '%' + ref_time ))
-
-    completion_time = task.get_postrequisite_times()
-    postreqs = task.get_postrequisite_list()
-
-    if not use_dummy_clock:
-        #=======> simple method
-        # report postrequisites done at the estimated time for each,
-        # scaled by the configured dummy clock rate, but without reference
-        # to the actual dummy clock: so dummy tasks do not complete faster
-        # when we bump the dummy clock forward.
-
-        # print task.identity() + " NOT using dummy clock"
-    
-        n_postreqs = len( postreqs )
-
-        for req in postreqs:
-            sleep( completion_time[ req ] / float( clock_rate ) )
-
-            #print "SENDING MESSAGE: ", time[ req ], req
-            task.incoming( "NORMAL", req )
-
-
-    else:
-        #=======> use the controller's accelerated dummy clock
-        # i.e. report postrequisites done when the dummy clock time is 
-        # greater than or equal to the estimated postrequisite time.
-        # Dummy tasks therefore react when we bump the clock forward,
-        # AND we can fully simulate catchup operation and the transition
-        # to fully caught up.
-
-        # print task.identity() + " using dummy clock"
-
-        clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ))
-
-        fast_complete = False
+    def delay( self ):
+        task_name = self.task_name
+        ref_time = self.ref_time
+        clock_rate = self.clock_rate
+        clock = self.clock
+        task = self.task
 
         if task_name == "downloader":
 
@@ -503,7 +460,7 @@ if __name__ == '__main__':
             rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
             if clock.get_datetime() >= rt_3p25:
                 task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
-                fast_complete = True
+                self.fast_complete = True
             else:
                 task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + ref_time )
                 while True:
@@ -525,33 +482,9 @@ if __name__ == '__main__':
                     if clock.get_datetime() >= rt_p25:
                         break
 
-        # set each postrequisite satisfied in turn
-        start_time = clock.get_datetime()
-
-        done = {}
-        time = {}
-
-        for req in postreqs:
-            done[ req ] = False
-            if fast_complete:
-                hours = completion_time[ req] / 60.0 / 20.
-            else:
-                hours = completion_time[ req] / 60.0
-            time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
-
-        while True:
-            sleep(1)
-            dt = clock.get_datetime()
-            all_done = True
-            for req in postreqs:
-                if not done[ req]:
-                    if dt >= time[ req ]:
-                        #print "SENDING MESSAGE: ", time[ req ], req
-                        task.incoming( "NORMAL", req )
-                        done[ req ] = True
-                    else:
-                        all_done = False
-
-            if all_done:
-                break
-
+#----------------------------------------------------------------------
+if __name__ == '__main__':
+    # script arguments: <task name> <REFERENCE_TIME> <clock rate>
+    [task_name, ref_time, clock_rate] = sys.argv[1:]
+    dummy = dummy_task( task_name, ref_time, clock_rate )
+    dummy.run()

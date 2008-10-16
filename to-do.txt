@@ -14,5 +14,4 @@ TO DO LIST
 * use methods is_running(), is_finished(), etc. to determine task state
   instead of than accessing attributes directly
 
-* take common base class code AND common dummy tasks code out of task
-  definition files now that we have multiple task definition files.
+* somehow put special task deletion criteria in task definition modules

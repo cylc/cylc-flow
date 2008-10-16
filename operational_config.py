@@ -19,20 +19,20 @@ dummy_rate = 20
 
 # start_time and stop_time must be strings
 start_time = "2008080818"
-stop_time = "2008081512"
+stop_time = "2008081012"
 
 # task_list optional initial states: 'finished', 'ready', 'waiting'
 # (default is 'waiting')
 task_list = [ 
         'downloader',
-        #'nwpglobal',
-        #'globalprep',
-        #'globalwave',
+        'nwpglobal',
+        'globalprep',
+        'globalwave',
         'nzlam:finished',
         'nzlam_post',
-        #'nzwave',
-        #'ricom',
-        #'nztide',
+        'nzwave',
+        'ricom',
+        'nztide',
         'topnet',
-        #'mos' 
+        'mos' 
         ]
