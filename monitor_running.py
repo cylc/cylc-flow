@@ -8,12 +8,10 @@ http://ascii-table.com/ansi-escape-sequences.php
 """
 
 import os
-import sys
 import Pyro.core
 from time import sleep
-from pyro_ns_name import pyro_object_name
+from pyro_ns_naming import pyro_ns_name
 from string import ljust, rjust, split, upper, lower
-import config
 import datetime
 
 
@@ -41,21 +39,24 @@ class kit:
 
 title = kit( "EcoConnect System Monitor" )
 
+dummy_mode = False
+
 while True:
 
     try: 
     
-        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_object_name( 'god' ))
+        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'god' ))
         god._setTimeout(1)
 
-        if config.dummy_mode:
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_object_name( 'dummy_clock' ) )
+        if god.in_dummy_mode():
+            dummy_mode = True
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ) )
             remote_clock._setTimeout(1)
 
         while True:
 
             dt = datetime.datetime.now()
-            if config.dummy_mode:
+            if dummy_mode:
                 dt = remote_clock.get_datetime()
 
             max_name_len = 0

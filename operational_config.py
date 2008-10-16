@@ -6,11 +6,8 @@ import logging
 
 # TO DO: DOCUMENT THIS FILE
 
-# pyro nameserver group (must be different for each control program instance)
-pyro_ns_group = ':ecoconnect'
-
 # which task class definition module to use
-task_module = 'task_definitions'
+task_definition_module = 'operational_tasks'
 
 # logging levels: DEBUG, INFO, WARNING, ERROR, CRITICAL
 logging_level = logging.INFO

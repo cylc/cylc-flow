@@ -127,7 +127,7 @@ class task_base( Pyro.core.ObjBase ):
     def run_external_dummy( self, dummy_clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        os.system( "./dummy_task.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
     def run_external_task( self ):
@@ -244,9 +244,9 @@ class runahead_task_base( task_base ):
     # that would otherwise run ahead indefinitely: delay if we get
     # "too far ahead" based on number of existing finished tasks.
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, max_runahead, initial_state = "waiting" ):
 
-        self.MAX_FINISHED = 4
+        self.MAX_FINISHED = max_runahead
         task_base.__init__( self, ref_time, initial_state )
 
         # logging is set up by task_base
@@ -268,7 +268,7 @@ class runahead_task_base( task_base ):
 
         if delay:
             # the following gets logged every time the function is called
-            # self.log.debug( self.identity() + " ready and waiting (too far ahead)" )
+            self.log.debug( self.identity() + " ready and waiting (too far ahead)" )
             pass
 
         else:
@@ -295,7 +295,38 @@ class nzlam_post( runahead_task_base ):
                 [2, "file tn_" + ref_time + ".nc ready"],
                 [3, self.name + " finished for " + ref_time] ])
 
-        runahead_task_base.__init__( self, ref_time, initial_state )
+        runahead_task_base.__init__( self, ref_time, 4, initial_state )
+
+
+    def run_if_ready( self, tasks, dummy_clock_rate ):
+        # Don't get ahead of topnet. Nzlam_post is here equivalent to
+        # the operational downloader (no prerequisites) so it wants to
+        # run ahead ...
+
+        # The most recent topnet task will either be running or just
+        # created and waiting (because of abdication).
+        
+        ############ TEMPORARY############### 
+        runahead_task_base.run_if_ready( self, tasks, dummy_clock_rate )
+        return
+        ############ TEMPORARY############### 
+
+        topnet_times = []
+        if self.state == "waiting":
+            for task in tasks:
+                if task.name == "topnet": 
+                   topnet_times.append( task.ref_time )
+        
+        if len( topnet_times ) > 0:
+            topnet_times.sort( key = int )
+            most_rec_topnet = topnet_times[ len(topnet_times) - 1 ]
+
+            if int( self.ref_time ) > int( most_rec_topnet ):
+                print self.identity() + ": DELAYED BY TOPNET " + most_rec_topnet 
+                self.log.debug( self.identity() + " delayed by topnet!" )
+                return
+            
+        runahead_task_base.run_if_ready( self, tasks, dummy_clock_rate )
 
 #----------------------------------------------------------------------
 class topnet( task_base ):
@@ -329,9 +360,12 @@ class topnet( task_base ):
         else:
             #print "CUTOFF 23 for " + self.identity()
             nzlam_cutoff = reference_time.decrement( ref_time, 23 )
+
+        # min:max
+        fuzzy_limits = nzlam_cutoff + ':' + ref_time
  
         self.prerequisites = fuzzy_requisites( self.name, [ 
-            "file tn_" + nzlam_cutoff + ".nc ready" ])
+            "file tn_" + fuzzy_limits + ".nc ready" ])
 
         self.postrequisites = timed_requisites( self.name, [ 
             [0, "streamflow extraction started for " + ref_time],
@@ -357,7 +391,7 @@ class topnet( task_base ):
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
-        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        os.system( "./dummy_task.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
 

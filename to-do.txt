@@ -1,20 +1,15 @@
 TO DO LIST
 
-* per-postrequisite estimated run completion times, for dummy mode
-
 * retrofit proper exception handling
 
 * state/config restart capability
 
 * temporarily 'off' tasks at start time.
 
-* remote logging from model messaging interface script and task_dummy.py:
-  + if a message gets through to the right in-controller task object, it will
-  be logged by the controller (DONE)
-  + if it fails, attempt to contact the controller's dead-letter object
-  and it will be logged, with a warning, from there (DONE?) 
-  + finally, in case the controller itself if dead, log to a dedicated
-  non-controller log.
+* remote logging from model messaging interface script and task_dummy.py,
+  in case the controller itself is dead.
+
+* make sure spent task removal works if we're not running topnet
 
 * use methods is_running(), is_finished(), etc. to determine task state
   instead of than accessing attributes directly

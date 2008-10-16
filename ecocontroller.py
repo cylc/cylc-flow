@@ -2,12 +2,12 @@
 
 """
 |----------------------------------------------------------------------|
-|---------| ECOCONNECT CONTROLLER WITH IMPLICIT SEQUENCING |-----------|
+|----------| ECOCONNECT CONTROLLER WITH IMPLICIT SEQUENCING |----------|
 |----------------------------------------------------------------------|
                     Hilary Oliver, NIWA, 2008
                    See repository documentation
 
-       Requires an external pyro nameserver (start with 'pyro-ns')
+       Requires an external Pyro nameserver (start with 'pyro-ns')
 """
 
 # Note that we can run the Pyro nameserver in a thread in this program:
@@ -18,6 +18,10 @@
 #ns_thread.start()
 #ns_starter.waitUntilStarted(10)
 
+# Note: to put modules in sub-directories, add to search path like this:
+# pwd = os.environ[ 'PWD' ]
+# sys.path.insert(1, pwd + '/sub-dir-1' )
+
 import Pyro.core
 import Pyro.naming
 from Pyro.errors import NamingError
@@ -25,15 +29,17 @@ from Pyro.errors import NamingError
 import reference_time
 from get_instance import get_instance
 from dummy_clock import *
-from pyro_ns_name import pyro_object_name
+from pyro_ns_naming import *
 
 from copy import deepcopy
 
 import logging, logging.handlers
 
-import re
-import os, sys
+import sys, os
 
+import re
+
+import pdb
 
 class LogFilter(logging.Filter):
     # use in dummy mode to replace log timestamps with dummy clock times
@@ -50,11 +56,17 @@ class LogFilter(logging.Filter):
 
 class task_manager ( Pyro.core.ObjBase ):
 
-    def __init__( self, start_time, task_list ):
+    def __init__( self, start_time, task_list, dummy_mode ):
         log.debug("initialising task manager")
 
         Pyro.core.ObjBase.__init__(self)
     
+        # this is just so external monitors can interrogate me to see if
+        # we're in dummy mode or not
+        self.dummy_mode = False
+        if dummy_mode:
+            self.dummy_mode = True
+
         self.start_time = start_time
         self.task_list = task_list        # list of task names
         self.task_pool = []               # list of interacting task objects
@@ -69,16 +81,20 @@ class task_manager ( Pyro.core.ObjBase ):
         # dead letter box for use by external tasks
         self.dead_letter_box = dead_letter_box()
 
-        pyro_daemon.connect( self.dead_letter_box, pyro_object_name( 'dead_letter_box' ) )
+        pyro_daemon.connect( self.dead_letter_box, pyro_ns_name( 'dead_letter_box' ) )
 
-        pyro_daemon.connect( dummy_clock, pyro_object_name( 'dummy_clock' ) )
+        pyro_daemon.connect( dummy_clock, pyro_ns_name( 'dummy_clock' ) )
+
+
+    def in_dummy_mode( self ):
+        return self.dummy_mode
 
 
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
 
         # class creation can increase the reference time so can't check
         # for stop until after creation
-        task = get_instance( task_module, task_name )( ref_time, state )
+        task = get_instance( task_definition_module, task_name )( ref_time, state )
 
         if stop_time:
             if int( task.ref_time ) > int( stop_time ):
@@ -90,7 +106,7 @@ class task_manager ( Pyro.core.ObjBase ):
         self.task_pool.append( task )
 
         # connect new task to the pyro daemon
-        pyro_daemon.connect( task, pyro_object_name( task.identity() ) )
+        pyro_daemon.connect( task, pyro_ns_name( task.identity() ) )
 
     def create_initial_tasks( self ):
 
@@ -174,11 +190,13 @@ class task_manager ( Pyro.core.ObjBase ):
 
         finished_nzlam_post_6_18_exist = False
         finished_nzlam_post_6_18 = []
+        topnet_found = False
+        topnet_time = []
         batch_finished = {}
         still_running = []
 
         for task in self.task_pool:
-            # create a new task foo(T+1) if foo(T) just finished
+            # create a new task(T+1) if task(T) has just finished
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity() )
                 self.create_task_by_name( task.name, task.next_ref_time() )
@@ -190,15 +208,27 @@ class task_manager ( Pyro.core.ObjBase ):
 
             task.run_if_ready( self.task_pool, dummy_rate )
 
-            # record some info to determine which task batches 
-            # can be deleted (see documentation just below)
+            # Determine which tasks can be deleted (documentation below)
 
-            # find any finished nzlam_post tasks
+            # Generally speaking we can remove any batch(T) older than
+            # the oldest running task, BUT topnet's "fuzzy" dependence
+            # on nzlam_post requires special handling (see below).
+
+            # find any finished 6 or 18Z nzlam_post tasks
             if task.name == "nzlam_post" and task.state == "finished":
                 hour = task.ref_time[8:10]
                 if hour == "06" or hour == "18":
                     finished_nzlam_post_6_18_exist = True
                     finished_nzlam_post_6_18.append( task.ref_time )
+
+            # find the running or waiting topnet
+            if task.name == 'topnet' and task.state != 'finished':
+                if topnet_found:
+                    # should only be one running or waiting
+                    log.warning( 'already found topnet!')
+
+                topnet_found = True
+                topnet_time = task.ref_time
 
             # find which ref_time batches are all finished
             # (assume yes, set no if any running task found)
@@ -212,12 +242,20 @@ class task_manager ( Pyro.core.ObjBase ):
                 still_running.append( task.ref_time )
 
         # DELETE SPENT TASKS i.e. those that are finished AND no longer
-        # needed to satisfy the prerequisites of other tasks. Cutoff is
-        # therefore any batch older than the most recent finished
-        # nzlam_post (still needed by topnet) AND older than the oldest
-        # running task.
+        # needed to satisfy the prerequisites of other tasks that are
+        # yet to run, i.e. any batch OLDER THAN:
+        #   (i) the oldest running task
+        #   (ii) the most recent finished nzlam_post 
+        # because upcoming hourly topnet tasks may still need the most
+        # recent finished nzlam_post.
 
-        # See repository documentation for a detailed discussion of this.
+        # For running topnet on /test off operational files, nzlam_post
+        # takes the place of the downloader (no prerequisites) and is
+        # able to run ahead of topnet.  To handle this we had to modify
+        # the second condition:
+        #   (ii) the most recent finished nzlam_post THAT IS OLDER THAN
+        #        THE MOST RECENT TOPNET.
+
 
         if len( still_running ) == 0:
             log.critical( "ALL TASKS DONE" )
@@ -226,36 +264,38 @@ class task_manager ( Pyro.core.ObjBase ):
         still_running.sort( key = int )
         oldest_running = still_running[0]
 
-        if finished_nzlam_post_6_18_exist:
-            cutoff = oldest_running
-            log.debug( "oldest running task: " + cutoff )
+        cutoff = oldest_running
+        log.debug( "oldest running task: " + cutoff )
+
+        #if finished_nzlam_post_6_18_exist and topnet_found:
+        if True:
 
             finished_nzlam_post_6_18.sort( key = int, reverse = True )
-            most_recent_finished_nzlam_post_6_18 = finished_nzlam_post_6_18[0]
+            for nzp_time in finished_nzlam_post_6_18:
+                if int( nzp_time ) < int( topnet_time ):
+                    log.debug( "most recent finished 6 or 18Z nzlam_post older than topnet: " + nzp_time )
+                    if int( nzp_time ) < int( cutoff ):
+                        cutoff = nzp_time
+                    break
 
-            log.debug( "most recent finished 6 or 18Z nzlam_post: " + most_recent_finished_nzlam_post_6_18 )
-
-            if int( most_recent_finished_nzlam_post_6_18 ) < int( cutoff ): 
-                cutoff = most_recent_finished_nzlam_post_6_18
-
-            log.debug( " => keeping tasks " + cutoff + " and newer")
+        log.debug( " => keeping tasks " + cutoff + " and newer")
         
-            remove_these = []
-            for rt in batch_finished.keys():
-                if int( rt ) < int( cutoff ):
-                    if batch_finished[rt]:
-                        log.debug( "REMOVING BATCH " + rt )
-                        for task in self.task_pool:
-                            if task.ref_time == rt:
-                                remove_these.append( task )
+        remove_these = []
+        for rt in batch_finished.keys():
+            if int( rt ) < int( cutoff ):
+                if batch_finished[rt]:
+                    log.debug( "REMOVING BATCH " + rt )
+                    for task in self.task_pool:
+                        if task.ref_time == rt:
+                            remove_these.append( task )
 
-            if len( remove_these ) > 0:
-                for task in remove_these:
-                    log.debug( "removing spent " + task.identity() )
-                    self.task_pool.remove( task )
-                    pyro_daemon.disconnect( task )
+        if len( remove_these ) > 0:
+            for task in remove_these:
+                log.debug( "removing spent " + task.identity() )
+                self.task_pool.remove( task )
+                pyro_daemon.disconnect( task )
 
-            del remove_these
+        del remove_these
 
         self.remove_dead_soldiers()
    
@@ -337,9 +377,9 @@ class dead_letter_box( Pyro.core.ObjBase ):
 
 
 #----------------------------------------------------------------------
-def usage():
-    print "USAGE:", argv[0], "<config file>"
-
+def usage( argv ):
+    print "USAGE:", argv[0], "<config module name>"
+    print "  E.g. '" + argv[0] + " foo' loads foo.py"
 
 #----------------------------------------------------------------------
 # TO DO: convert to main() function, see:
@@ -359,39 +399,36 @@ if __name__ == "__main__":
     # TO DO: better commandline parsing with optparse or getopt
     # (maybe not needed as most input is from the config file?)
 
+    if n_args != 1:
+        usage( sys.argv )
+        sys.exit(1)
+
+    # set some defaults
+
     start_time = None
     stop_time = None
     config_file = None
 
-    pyro_ns_group = ':foo'
+    task_definition_module = 'operational_tasks'
 
-    task_module = 'tasks'
-
-    # dummy mode 
     dummy_mode = False
     dummy_offset = None  
     dummy_rate = 60 
- 
-    if n_args != 1:
-        usage()
-        sys.exit(1)
 
-    config_file = sys.argv[1]
+    # load user config
+    config_module = sys.argv[1]
+
+    print
+    print "Using config module " + config_module
+    config_file = config_module + '.py'
 
     if not os.path.exists( config_file ):
         print
         print "File not found: " + config_file
-        usage()
+        usage( sys.argv )
         sys.exit(1)
 
-    # load the config file
-    print
-    print "Using config file " + config_file
-    # strip of the '.py'
-    m = re.compile( "^(.*)\.py$" ).match( config_file )
-    modname = m.groups()[0]
-    # load it now
-    exec "from " + modname + " import *"
+    exec "from " + config_module + " import *"
 
     # check compulsory input
     if not start_time:
@@ -414,8 +451,8 @@ if __name__ == "__main__":
 
     # load task definition module
     print
-    print 'Loading task definitions from ' + task_module + '.py'
-    exec "from " + task_module + " import *"
+    print 'Loading task definitions from ' + task_definition_module + '.py'
+    exec "from " + task_definition_module + " import *"
 
     print
     print "Logging to ./LOGFILES"
@@ -508,8 +545,11 @@ if __name__ == "__main__":
         # run the controller, or otherwise having to disconnect
         # individual objects that already exist).  If running several
         # ecocontroller instances, each needs a different group name.
+        print
+        print "Attempting to deleting Pyro nameserver group " + pyro_ns_group
         pyro_nameserver.deleteGroup( pyro_ns_group )
     except NamingError:
+        print "(no such group registered)"
         pass
 
     pyro_nameserver.createGroup( pyro_ns_group )
@@ -517,9 +557,9 @@ if __name__ == "__main__":
     pyro_daemon.useNameServer(pyro_nameserver)
 
     # initialise the task manager
-    god = task_manager( start_time, task_list )
+    god = task_manager( start_time, task_list, dummy_mode )
     # connect to pyro nameserver to allow external control
-    pyro_daemon.connect( god, pyro_object_name( 'god' ) )
+    pyro_daemon.connect( god, pyro_ns_name( 'god' ) )
 
     # start processing
     print

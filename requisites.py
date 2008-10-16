@@ -144,12 +144,13 @@ class fuzzy_requisites( requisites ):
                 # if my prerequisite is not already satisfied
 
                 # extract reference time from my prerequisite
-                m = re.compile( "^(.*)(\d{10})(.*)$").match( prereq )
+                m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
                 if not m:
-                    print "FAILED TO MATCH REF TIME IN " + prereq
+                    print "FAILED TO MATCH MIN:MAX IN " + prereq
                     sys.exit(1)
 
-                [ my_start, my_reftime, my_end ] = m.groups()
+                [ my_start, my_minmax, my_end ] = m.groups()
+                [ my_min, my_max ] = my_minmax.split(':')
 
                 for postreq in postreqs.satisfied.keys():
 
@@ -157,13 +158,13 @@ class fuzzy_requisites( requisites ):
                         # extract reference time from other's postrequisite
                         m = re.compile( "^(.*)(\d{10})(.*)$").match( postreq )
                         if not m:
-                            print "FAILED TO MATCH REF TIME IN " + postreq
+                            print "FAILED TO MATCH REFTIME IN " + postreq
                             sys.exit(1)
-
+                
                         [ other_start, other_reftime, other_end ] = m.groups()
 
                         if other_start == my_start and other_end == my_end:
-                            if other_reftime >= my_reftime:
+                            if other_reftime >= my_min and other_reftime <= my_max:
                                 #print "FUZZY PREREQ: " + prereq
                                 #print "SATISFIED BY: " + postreq
             
@@ -182,12 +183,13 @@ class fuzzy_requisites( requisites ):
                 # if my prerequisite is not already satisfied
 
                 # extract reference time from my prerequisite
-                m = re.compile( "^(.*)(\d{10})(.*)$").match( prereq )
+                m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
                 if not m:
-                    print "FAILED TO MATCH REF TIME IN " + prereq
+                    print "FAILED TO MATCH MIN:MAX IN " + prereq
                     sys.exit(1)
 
-                [ my_start, my_reftime, my_end ] = m.groups()
+                [ my_start, my_minmax, my_end ] = m.groups()
+                [ my_min, my_max ] = my_minmax.split(':')
 
                 for postreq in postreqs.satisfied.keys():
 
@@ -200,5 +202,5 @@ class fuzzy_requisites( requisites ):
                     [ other_start, other_reftime, other_end ] = m.groups()
 
                     if other_start == my_start and other_end == my_end:
-                        if other_reftime >= my_reftime:
+                        if other_reftime >= my_min and other_reftime <= my_max:
                             self.sharpen_up( prereq, postreq )

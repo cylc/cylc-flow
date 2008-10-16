@@ -11,9 +11,8 @@ import os
 import sys
 import Pyro.core
 from time import sleep
-from pyro_ns_name import pyro_object_name
+from pyro_ns_naming import pyro_ns_name
 from string import split
-import config
 import datetime
 
 class kit:
@@ -40,21 +39,24 @@ class kit:
 
 title = kit( "EcoConnect System Monitor" )
 
+dummy_mode = False
+
 while True:
 
     try: 
     
-        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_object_name( 'god' ) )
+        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'god' ) )
         god._setTimeout(1)
 
-        if config.dummy_mode:
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_object_name( 'dummy_clock' ) )
+        if god.in_dummy_mode():
+            dummy_mode = True
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ) )
             remote_clock._setTimeout(1)
 
         while True:
 
             dt = datetime.datetime.now()
-            if config.dummy_mode:
+            if dummy_mode:
                 dt = remote_clock.get_datetime()
 
             lines = {}
@@ -79,13 +81,9 @@ while True:
 
                 hour = int( reftime[8:10] )
 
-                if hour == 6 or hour == 18:
+                indent = ' - '
+                if hour == 6 or hour == 18 or hour == 0 or hour == 12:
                     indent = ""
-
-                elif hour == 0 or hour == 12:
-                    indent = ' |--'
-                else:
-                    indent = ' |----'
 
                 if reftime in lines.keys():
                     lines[reftime] += ' ' + foo
@@ -115,4 +113,4 @@ while True:
             print line
         print "Connection failed ..."
 
-    sleep( 0.5 )
+        sleep( 0.5 )

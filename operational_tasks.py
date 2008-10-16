@@ -122,7 +122,7 @@ class task_base( Pyro.core.ObjBase ):
     def run_external_dummy( self, dummy_clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        os.system( "./dummy_task.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
     def run_external_task( self ):
@@ -586,9 +586,12 @@ class topnet( task_base ):
         else:
             #print "CUTOFF 23 for " + self.identity()
             nzlam_cutoff = reference_time.decrement( ref_time, 23 )
+
+        # min:max
+        fuzzy_limits = nzlam_cutoff + ':' + ref_time
  
         self.prerequisites = fuzzy_requisites( self.name, [ 
-            "file tn_" + nzlam_cutoff + ".nc ready" ])
+            "file tn_" + fuzzy_limits + ".nc ready" ])
 
         self.postrequisites = timed_requisites( self.name, [ 
             [0, "streamflow extraction started for " + ref_time],
@@ -614,7 +617,7 @@ class topnet( task_base ):
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
-        os.system( "./task_dummy.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        os.system( "./dummy_task.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
 
