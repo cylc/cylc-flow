@@ -1,55 +1,54 @@
 #!/bin/bash
 
+set -x
 set -e  # abort on error
+trap "task_message CRITICAL 'nzlam_post failed'" ERR
 
-# You can test this on an existing nwp_oper/output tn file by:
+# Find the operational tn_\${REFERENCE_TIME}_utc_nzlam_12.nc(.bz2)
+# file and copy it to hydrology_\$SYS/input/ for use by topnet.
+# Search order:
+#  1. main archive: \$ARCHIVE/YYYYMM/DD/
+#  2. staging archive: \$STAGING/YYYYMM/
+#  3. nwp_oper/output/nzlam_12/
+#  4. (old controller) wait on operational log message
+
+# INPUT:
+# * no commandline arguments (for qsub)
+# * environment variables:
+#   1. $REFERENCE_TIME
+
+# INTENDED USER:
+# * hydrology_(test|dvel)
+
+# test this script on an existing nwp_oper/output tn file by:
 #  + changing OPER_LOG to /var/log/ecoconnect-test
 #  + disabling the initial nwp_oper file search
 #  + kicking the test log with the right message
 #    MSG="retrieving met UM file(s) for $REFERENCE_TIME"
 #    logger -i -p local1.info -t process_nzlam_output $MSG 
 
-function usage
-{
-	echo "USAGE: ${0##*/} <REFERENCE_TIME>"
-	echo ""
-	echo "Find the operational tn_\${REFERENCE_TIME}_utc_nzlam_12.nc(.bz2)"
-    echo "  file and copy it to hydrology_\$SYS/input/ for use by topnet."
-    echo "Search order:"
-	echo "  1. main archive: \$ARCHIVE/YYYYMM/DD/"
-	echo "  2. staging archive: \$STAGING/YYYYMM/"
-	echo "  3. nwp_oper/output/nzlam_12/"
-    echo "  4. (old controller) wait on operational log message"
-    echo ""
-    echo "Run as user hydrology_\$SYS"
-}
-
-# CURRENTLY ASSUMES RUNNING FROM CONTROLLER SOURCE DIR
-PATH=.:$PATH
-
 function task_message 
 {
     # USAGE: task_message <PRIORITY> <"MESSAGE">
     # priorities are CRITICAL, WARNING, NORMAL
 
-    MESSAGER=task_messager.py
+    MESSAGER=./task_messager.py  # NOTE PATH
     #MESSAGER=echo   # uncomment for debugging
     
     PRIORITY=$1; shift
     $MESSAGER $PRIORITY $TASK_NAME $REFERENCE_TIME "$@"
 }
 
-if [[ $# != 1 ]]; then
-	usage
+if [[ -z $REFERENCE_TIME ]]; then
+	task_message CRITICAL "REFERENCE_TIME not defined"
 	exit 1
 fi
 
+task_message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+
 TASK_NAME=nzlam_post
 
-REFERENCE_TIME=$1
 FILENAME=tn_${REFERENCE_TIME}_utc_nzlam_12.nc
-
-task_message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
 
 # temporary directory for bunzip2'ing
 TMPDIR=/tmp/$USER  
@@ -82,6 +81,8 @@ SEARCH_MAIN=$ARCHIVE/$YYYYMM/$DD/$FILENAME
 SEARCH_STAGING=$STAGING/$YYYYMM/$FILENAME
 SEARCH_NWP=$OUTPUT/$FILENAME
 
+UPTODATE=false
+
 if [[ -f $SEARCH_MAIN ]]; then
     task_message NORMAL "found $FILENAME in main archive"
     FOUND=$SEARCH_MAIN
@@ -112,6 +113,10 @@ elif [[ -f $SEARCH_NWP ]]; then
 
 else
     task_message WARNING "$FILENAME not found; waiting on $OPER_LOG"
+    UPTODATE=true
+    # Alert the controller to the fact that we've caught up
+    # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
+    task_message NORMAL "UPTODATE: waiting for operational tn file for $REFERENCE_TIME"
     while true; do
         sleep 10
         if grep "retrieving met UM file(s) for $REFERENCE_TIME" $OPER_LOG; then
@@ -129,9 +134,14 @@ else
     done
 fi
 
+if ! $UPTODATE; then
+    # Alert the controller to the fact that we're in catch up mode
+    # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
+    task_message NORMAL "UPTODATE: operational tn file already exists for $REFERENCE_TIME"
+fi
+ 
 # copy file to my output directory
 task_message NORMAL "copying file to $TARGET_DIR"
 cp $FOUND $TARGET_DIR
 task_message NORMAL "file $FILENAME ready"
 task_message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
-
