@@ -122,7 +122,7 @@ class task_base( Pyro.core.ObjBase ):
     def run_external_dummy( self, dummy_clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( "./dummy_task.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
     def run_external_task( self ):
@@ -617,7 +617,7 @@ class topnet( task_base ):
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
-        os.system( "./dummy_task.py " + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
         self.state = "running"
 
 
@@ -659,3 +659,113 @@ class nwpglobal( task_base ):
             [121, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
+
+#----------------------------------------------------------------------
+if __name__ == '__main__':
+
+    import sys
+    import Pyro.naming, Pyro.core
+    from Pyro.errors import NamingError
+    from pyro_ns_naming import pyro_ns_name
+    import reference_time
+    import datetime
+
+    from time import sleep
+
+    # hardwired dummy clock use
+    use_dummy_clock = True
+
+    # unpack script arguments: <task name> <REFERENCE_TIME> <clock rate>
+    [task_name, ref_time, clock_rate] = sys.argv[1:]
+
+    # getProxyForURI is the shortcut way to a pyro object proxy; it may
+    # be that the long way is better for error checking; see pyro docs.
+    task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( task_name + '%' + ref_time ))
+
+    completion_time = task.get_postrequisite_times()
+    postreqs = task.get_postrequisite_list()
+
+    if not use_dummy_clock:
+        #=======> simple method
+        # report postrequisites done at the estimated time for each,
+        # scaled by the configured dummy clock rate, but without reference
+        # to the actual dummy clock: so dummy tasks do not complete faster
+        # when we bump the dummy clock forward.
+
+        # print task.identity() + " NOT using dummy clock"
+    
+        n_postreqs = len( postreqs )
+
+        for req in postreqs:
+            sleep( completion_time[ req ] / float( clock_rate ) )
+
+            #print "SENDING MESSAGE: ", time[ req ], req
+            task.incoming( "NORMAL", req )
+
+
+    else:
+        #=======> use the controller's accelerated dummy clock
+        # i.e. report postrequisites done when the dummy clock time is 
+        # greater than or equal to the estimated postrequisite time.
+        # Dummy tasks therefore react when we bump the clock forward,
+        # AND we can fully simulate catchup operation and the transition
+        # to fully caught up.
+
+        # print task.identity() + " using dummy clock"
+
+        clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ))
+
+        if task_name == "downloader":
+
+            rt = reference_time._rt_to_dt( ref_time )
+            rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
+            if clock.get_datetime() >= rt_3p25:
+                task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
+            else:
+                task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + ref_time )
+                while True:
+                    sleep(1)
+                    if clock.get_datetime() >= rt_3p25:
+                        break
+
+        elif task_name == "topnet":
+
+            rt = reference_time._rt_to_dt( ref_time )
+            rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
+            # THE FOLLOWING MESSAGES MUST MATCH THOSE IN topnet.incoming()
+            if clock.get_datetime() >= rt_p25:
+                task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + ref_time )
+            else:
+                task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + ref_time ) 
+                while True:
+                    sleep(1)
+                    if clock.get_datetime() >= rt_p25:
+                        break
+
+        # set each postrequisite satisfied in turn
+        start_time = clock.get_datetime()
+
+        done = {}
+        time = {}
+
+        for req in postreqs:
+            done[ req ] = False
+            hours = completion_time[ req] / 60.0
+            time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
+
+        while True:
+            sleep(1)
+            dt = clock.get_datetime()
+            all_done = True
+            for req in postreqs:
+                if not done[ req]:
+                    if dt >= time[ req ]:
+                        #print "SENDING MESSAGE: ", time[ req ], req
+                        task.incoming( "NORMAL", req )
+                        done[ req ] = True
+                    else:
+                        all_done = False
+
+            if all_done:
+                break
+
