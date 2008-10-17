@@ -22,5 +22,4 @@ def run( user_prefix, task_name, ref_time, task, extra_vars=[] ):
 
         command += ' -k oe ' + path + '/' + task 
 
-	print "HERE WE GO"
         os.system( command + ' &' )

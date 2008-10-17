@@ -25,6 +25,6 @@ stop_time  = "2008101618"
 # (default is 'waiting')
 task_list = [ 
         'nzlam_post',
-        #'topnet',
+        'topnet',
         #'topnet_post'
         ]

@@ -97,7 +97,7 @@ class task_base( Pyro.core.ObjBase ):
         return reference_time.increment( self.ref_time, increment )
 
 
-    def run_if_ready( self, tasks, dummy_mode, dummy_clock_rate = 20 ):
+    def run_if_ready( self, tasks, dummy_mode, clock_rate = 20 ):
 
         for task in tasks:
             # don't run if any previous instance of me is not finished
@@ -112,16 +112,18 @@ class task_base( Pyro.core.ObjBase ):
             # prerequisites all satisified, so run me
             if dummy_mode:
                 # we're in dummy mode
-                self.run_external_dummy( dummy_clock_rate )
+                self.run_external_dummy( True, clock_rate )
             else:
                 self.run_external_task()
 
-    def run_external_dummy( self, dummy_clock_rate ):
+    def run_external_dummy( self, use_clock, clock_rate = 20 ):
         self.log.critical( 'YOU MUST OVERRIDE THIS METHOD' )
         sys.exit(1)
 
     def run_external_task( self ):
         # RUN THE EXTERNAL TASK 
+        # note that you can mix real and dummy tasks by temporarily
+        # overriding this method to call run_external_dummy(), 
         self.log.info( 'launching external task for ' + self.ref_time )
 
         qsub.run( self.user_prefix, self.name, self.ref_time, self.external_task )
@@ -243,7 +245,7 @@ class free_task_base( task_base ):
         # self.log.info( self.identity + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
 
 
-    def run_if_ready( self, tasks, dummy_mode, dummy_clock_rate = 20 ):
+    def run_if_ready( self, tasks, dummy_mode, clock_rate = 20 ):
         # don't run if too many previous finished instances exist
         delay = False
 
@@ -262,6 +264,6 @@ class free_task_base( task_base ):
             pass
 
         else:
-            task_base.run_if_ready( self, tasks, dummy_mode, dummy_clock_rate )
+            task_base.run_if_ready( self, tasks, dummy_mode, clock_rate )
 
 

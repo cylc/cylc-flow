@@ -4,8 +4,6 @@ TO DO LIST
 
 * state/config restart capability
 
-* temporarily 'off' tasks at start time.
-
 * remote logging from model messaging interface script and task_dummy.py,
   in case the controller itself is dead.
 

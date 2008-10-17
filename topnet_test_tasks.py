@@ -35,10 +35,13 @@ class normal ( task_base ):
     def __init__( self, ref_time, initial_state = 'waiting' ):
         task_base.__init__( self, ref_time, initial_state = 'waiting' )
         
-    def run_external_dummy( self, dummy_clock_rate ):
+    def run_external_dummy( self, use_clock, clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        if use_clock:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
+        else:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 #----------------------------------------------------------------------
@@ -47,10 +50,13 @@ class free ( free_task_base ):
     def __init__( self, ref_time, initial_state = 'waiting' ):
         free_task_base.__init__( self, ref_time, initial_state = 'waiting' )
  
-    def run_external_dummy( self, dummy_clock_rate ):
+    def run_external_dummy( self, use_clock, clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        if use_clock:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
+        else:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 #----------------------------------------------------------------------
@@ -98,6 +104,9 @@ class topnet( normal ):
 
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
 
+    def run_external_task( self ):
+        self.run_external_dummy( False )
+
     def __init__( self, ref_time, initial_state = "waiting" ):
 
         self.catchup_re = re.compile( "^CATCHUP:.*for " + ref_time )
@@ -131,7 +140,7 @@ class topnet( normal ):
         normal.__init__( self, ref_time, initial_state )
 
 
-    def run_external_dummy( self, dummy_clock_rate ):
+    def run_external_dummy( self, use_clock, clock_rate = 20 ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         # TO DO: the subprocess module might be better than os.system?
 
@@ -144,7 +153,11 @@ class topnet( normal ):
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        if use_clock:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        else:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
+
         self.state = "running"
 
 
@@ -167,47 +180,54 @@ class topnet( normal ):
 
 #----------------------------------------------------------------------
 class dummy_task( dummy_task_base ):
-    def __init__( self, task_name, ref_time, clock_rate ):
-        dummy_task_base.__init__( self, task_name, ref_time, clock_rate )
+    def __init__( self, task_name, ref_time, use_clock, clock_rate = 20 ):
+        dummy_task_base.__init__( self, task_name, ref_time, use_clock, clock_rate = 20 )
 
     def delay( self ):
-        task_name = self.task_name
-        ref_time = self.ref_time
-        clock_rate = self.clock_rate
-        clock = self.clock
-        task = self.task
+        if not self.use_clock:
+            return
 
-        if task_name == "nzlam_post":
+        if self.task_name == "nzlam_post":
 
-            rt = reference_time._rt_to_dt( ref_time )
+            rt = reference_time._rt_to_dt( self.ref_time )
             delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 
-            if clock.get_datetime() >= delayed_start:
-                task.incoming( 'NORMAL', 'CATCHUP: operational tn file already exists for ' + ref_time )
+            if self.clock.get_datetime() >= delayed_start:
+                self.task.incoming( 'NORMAL', 'CATCHUP: operational tn file already exists for ' + self.ref_time )
                 self.fast_complete = True
             else:
-                task.incoming( 'NORMAL', 'UPTODATE: waiting for operational tn file for ' + ref_time )
+                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for operational tn file for ' + self.ref_time )
                 while True:
                     sleep(1)
-                    if clock.get_datetime() >= delayed_start:
+                    if self.clock.get_datetime() >= delayed_start:
                         break
 
-        elif task_name == "topnet":
+        elif self.task_name == "topnet":
 
-            rt = reference_time._rt_to_dt( ref_time )
+            rt = reference_time._rt_to_dt( self.ref_time )
             rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
             # THE FOLLOWING MESSAGES MUST MATCH THOSE IN topnet.incoming()
-            if clock.get_datetime() >= rt_p25:
-                task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + ref_time )
+            if self.clock.get_datetime() >= rt_p25:
+                self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + self.ref_time )
             else:
-                task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + ref_time ) 
+                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + self.ref_time ) 
                 while True:
                     sleep(1)
-                    if clock.get_datetime() >= rt_p25:
+                    if self.clock.get_datetime() >= rt_p25:
                         break
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
     # script arguments: <task name> <REFERENCE_TIME> <clock rate>
-    [task_name, ref_time, clock_rate] = sys.argv[1:]
-    dummy = dummy_task( task_name, ref_time, clock_rate )
+    args = sys.argv[1:]
+    task_name = args[0]
+    ref_time = args[1]
+
+    if len( args ) == 3:
+        use_clock = True
+        clock_rate = args[2]
+    else:
+        use_clock = False
+        clock_rate = None
+
+    dummy = dummy_task( task_name, ref_time, use_clock, clock_rate )
     dummy.run()
