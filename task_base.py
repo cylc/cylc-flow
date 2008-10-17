@@ -16,6 +16,8 @@ import Pyro.core
 import logging
 import logging.handlers
 
+from config import dummy_mode
+
 import qsub
 
 #----------------------------------------------------------------------
@@ -97,7 +99,7 @@ class task_base( Pyro.core.ObjBase ):
         return reference_time.increment( self.ref_time, increment )
 
 
-    def run_if_ready( self, tasks, dummy_mode, clock_rate = 20 ):
+    def run_if_ready( self, tasks ):
 
         for task in tasks:
             # don't run if any previous instance of me is not finished
@@ -112,11 +114,11 @@ class task_base( Pyro.core.ObjBase ):
             # prerequisites all satisified, so run me
             if dummy_mode:
                 # we're in dummy mode
-                self.run_external_dummy( True, clock_rate )
+                self.run_external_dummy()
             else:
                 self.run_external_task()
 
-    def run_external_dummy( self, use_clock, clock_rate = 20 ):
+    def run_external_dummy( self ):
         self.log.critical( 'YOU MUST OVERRIDE THIS METHOD' )
         sys.exit(1)
 
@@ -245,7 +247,7 @@ class free_task_base( task_base ):
         # self.log.info( self.identity + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
 
 
-    def run_if_ready( self, tasks, dummy_mode, clock_rate = 20 ):
+    def run_if_ready( self, tasks ):
         # don't run if too many previous finished instances exist
         delay = False
 
@@ -264,6 +266,6 @@ class free_task_base( task_base ):
             pass
 
         else:
-            task_base.run_if_ready( self, tasks, dummy_mode, clock_rate )
+            task_base.run_if_ready( self, tasks )
 
 

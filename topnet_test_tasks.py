@@ -21,6 +21,8 @@ from copy import deepcopy
 from time import strftime
 import Pyro.core
 
+from config import dummy_mode, dummy_clock_rate
+
 import logging
 import logging.handlers
 
@@ -31,32 +33,18 @@ import logging.handlers
 
 #----------------------------------------------------------------------
 class normal ( task_base ):
-
-    def __init__( self, ref_time, initial_state = 'waiting' ):
-        task_base.__init__( self, ref_time, initial_state = 'waiting' )
         
-    def run_external_dummy( self, use_clock, clock_rate ):
-        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+    def run_external_dummy( self ):
         self.log.info( "launching external dummy for " + self.ref_time )
-        if use_clock:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
-        else:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 #----------------------------------------------------------------------
 class free ( free_task_base ):
-
-    def __init__( self, ref_time, initial_state = 'waiting' ):
-        free_task_base.__init__( self, ref_time, initial_state = 'waiting' )
  
-    def run_external_dummy( self, use_clock, clock_rate ):
-        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+    def run_external_dummy( self ):
         self.log.info( "launching external dummy for " + self.ref_time )
-        if use_clock:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
-        else:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 #----------------------------------------------------------------------
@@ -106,7 +94,7 @@ class topnet( normal ):
 
     def run_external_task( self ):
         print "TEMPORARILY DUMMYING OUT THE REAL TOPNET"
-        self.run_external_dummy( False )
+        self.run_external_dummy()
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -141,7 +129,7 @@ class topnet( normal ):
         normal.__init__( self, ref_time, initial_state )
 
 
-    def run_external_dummy( self, use_clock, clock_rate = 20 ):
+    def run_external_dummy( self ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         # TO DO: the subprocess module might be better than os.system?
 
@@ -154,11 +142,7 @@ class topnet( normal ):
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
-        if use_clock:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
-        else:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
-
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 
@@ -181,11 +165,9 @@ class topnet( normal ):
 
 #----------------------------------------------------------------------
 class dummy_task( dummy_task_base ):
-    def __init__( self, task_name, ref_time, use_clock, clock_rate = 20 ):
-        dummy_task_base.__init__( self, task_name, ref_time, use_clock, clock_rate = 20 )
 
     def delay( self ):
-        if not self.use_clock:
+        if not dummy_mode:
             return
 
         if self.task_name == "nzlam_post":
@@ -218,17 +200,7 @@ class dummy_task( dummy_task_base ):
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
-    # script arguments: <task name> <REFERENCE_TIME> <clock rate>
-    args = sys.argv[1:]
-    task_name = args[0]
-    ref_time = args[1]
+    [ task_name, ref_time ] = sys.argv[1:]
 
-    if len( args ) == 3:
-        use_clock = True
-        clock_rate = args[2]
-    else:
-        use_clock = False
-        clock_rate = None
-
-    dummy = dummy_task( task_name, ref_time, use_clock, clock_rate )
+    dummy = dummy_task( task_name, ref_time )
     dummy.run()

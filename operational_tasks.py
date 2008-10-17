@@ -27,31 +27,17 @@ import logging.handlers
 #----------------------------------------------------------------------
 class normal ( task_base ):
 
-    def __init__( self, ref_time, initial_state = 'waiting' ):
-        task_base.__init__( self, ref_time, initial_state = 'waiting' )
-        
-    def run_external_dummy( self, use_clock, clock_rate ):
-        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+    def run_external_dummy( self ):
         self.log.info( "launching external dummy for " + self.ref_time )
-        if use_clock:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
-        else:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 #----------------------------------------------------------------------
 class free ( free_task_base ):
 
-    def __init__( self, ref_time, initial_state = 'waiting' ):
-        free_task_base.__init__( self, ref_time, initial_state = 'waiting' )
- 
-    def run_external_dummy( self, use_clock, clock_rate ):
-        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
+    def run_external_dummy( self ):
         self.log.info( "launching external dummy for " + self.ref_time )
-        if use_clock:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
-        else:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 #----------------------------------------------------------------------
@@ -391,7 +377,7 @@ class topnet( normal ):
         normal.__init__( self, ref_time, initial_state )
 
 
-    def run_external_dummy( self, use_clock, clock_rate = 20 ):
+    def run_external_dummy( self ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         # TO DO: the subprocess module might be better than os.system?
 
@@ -404,11 +390,7 @@ class topnet( normal ):
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
-        if use_clock:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
-        else:
-            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
-
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 
@@ -454,47 +436,40 @@ class nwpglobal( normal ):
 
 #----------------------------------------------------------------------
 class dummy_task( dummy_task_base ):
-    def __init__( self, task_name, ref_time, clock_rate ):
-        dummy_task_base.__init__( self, task_name, ref_time, clock_rate )
 
     def delay( self ):
-        task_name = self.task_name
-        ref_time = self.ref_time
-        clock_rate = self.clock_rate
-        clock = self.clock
-        task = self.task
 
-        if task_name == "downloader":
+        if self.task_name == "downloader":
 
-            rt = reference_time._rt_to_dt( ref_time )
+            rt = reference_time._rt_to_dt( self.ref_time )
             rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
-            if clock.get_datetime() >= rt_3p25:
-                task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + ref_time )
+            if self.clock.get_datetime() >= rt_3p25:
+                # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN downloader.incoming()
+                self.task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + self.ref_time )
                 self.fast_complete = True
             else:
-                task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + ref_time )
+                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + self.ref_time )
                 while True:
                     sleep(1)
-                    if clock.get_datetime() >= rt_3p25:
+                    if self.clock.get_datetime() >= rt_3p25:
                         break
 
-        elif task_name == "topnet":
+        elif self.task_name == "topnet":
 
-            rt = reference_time._rt_to_dt( ref_time )
+            rt = reference_time._rt_to_dt( self.ref_time )
             rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
-            # THE FOLLOWING MESSAGES MUST MATCH THOSE IN topnet.incoming()
-            if clock.get_datetime() >= rt_p25:
-                task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + ref_time )
+            # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN topnet.incoming()
+            if self.clock.get_datetime() >= rt_p25:
+                self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + self.ref_time )
             else:
-                task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + ref_time ) 
+                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + self.ref_time ) 
                 while True:
                     sleep(1)
-                    if clock.get_datetime() >= rt_p25:
+                    if self.clock.get_datetime() >= rt_p25:
                         break
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
-    # script arguments: <task name> <REFERENCE_TIME> <clock rate>
-    [task_name, ref_time, clock_rate] = sys.argv[1:]
-    dummy = dummy_task( task_name, ref_time, clock_rate )
+    [task_name, ref_time] = sys.argv[1:]
+    dummy = dummy_task( task_name, ref_time )
     dummy.run()

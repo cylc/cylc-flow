@@ -22,27 +22,27 @@
 # pwd = os.environ[ 'PWD' ]
 # sys.path.insert(1, pwd + '/sub-dir-1' )
 
-import Pyro.core
-import Pyro.naming
+import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 
 import reference_time
-from get_instance import get_instance
+from get_instance import *
 from dummy_clock import *
 from pyro_ns_naming import *
 
-from copy import deepcopy
-
 import logging, logging.handlers
+import sys, os, re
 
-import sys, os
-
-import re
+from config import logging_level
+from config import start_time, stop_time
+from config import task_module, task_list 
+from config import dummy_mode, dummy_clock_rate, dummy_clock_offset
 
 import pdb
 
+#----------------------------------------------------------------------
 class LogFilter(logging.Filter):
-    # use in dummy mode to replace log timestamps with dummy clock times
+    # replace log message timestamps with dummy clock times
 
     def __init__(self, dclock, name = "" ):
         logging.Filter.__init__( self, name )
@@ -53,11 +53,11 @@ class LogFilter(logging.Filter):
         record.created = self.dummy_clock.get_epoch()
         return True
 
-
+#----------------------------------------------------------------------
 class task_manager ( Pyro.core.ObjBase ):
 
-    def __init__( self, start_time, task_list, dummy_mode ):
-        log.debug("initialising task manager")
+    def __init__( self, start_time, task_list ):
+        #log.debug("initialising task manager")
 
         Pyro.core.ObjBase.__init__(self)
     
@@ -81,15 +81,11 @@ class task_manager ( Pyro.core.ObjBase ):
         pyro_daemon.connect( self.dead_letter_box, pyro_ns_name( 'dead_letter_box' ) )
 
 
-    def in_dummy_mode( self ):
-        return dummy_mode
-
-
     def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
 
         # class creation can increase the reference time so can't check
         # for stop until after creation
-        task = get_instance( task_definition_module, task_name )( ref_time, state )
+        task = get_instance( task_module, task_name )( ref_time, state )
 
         if stop_time:
             if int( task.ref_time ) > int( stop_time ):
@@ -201,7 +197,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
             task.get_satisfaction( self.task_pool )
 
-            task.run_if_ready( self.task_pool, dummy_mode, dummy_rate )
+            task.run_if_ready( self.task_pool )
 
             # Determine which tasks can be deleted (documentation below)
 
@@ -368,12 +364,6 @@ class dead_letter_box( Pyro.core.ObjBase ):
     def incoming( self, message ):
         log.warning( "DEAD LETTER: " + message )
 
-
-#----------------------------------------------------------------------
-def usage( argv ):
-    print "USAGE:", argv[0], "<config module name>"
-    print "  E.g. '" + argv[0] + " foo' loads foo.py"
-
 #----------------------------------------------------------------------
 # TO DO: convert to main() function, see:
 # http://www.artima.com/weblogs/viewpost.jsp?thread=4829
@@ -381,71 +371,33 @@ def usage( argv ):
 
 if __name__ == "__main__":
 
-    # check command line arguments
-    n_args = len( sys.argv ) - 1
-
     print "__________________________________________________________"
     print
     print "      . EcoConnect Implicit Sequencing Controller ."
     print "__________________________________________________________"
+
+    # Variables that must be defined in config.py:
+    #  1. start_time ('yyyymmddhh')
+    #  2. stop_time  ('yyyymmddhh', or None for no stop)
+    #  3. dummy_mode (dummy out all tasks)
+    #  4. dummy_clock_rate (seconds per simulated hour) 
+    #  5. dummy_clock_offset (hours before start_time)
+    #  6. task_module (for task class definitions)
+    #  7. task_list (tasks out of task_module to run)
+    #  8. logging_level (logging.(INFO|DEBUG))
     
-    # TO DO: better commandline parsing with optparse or getopt
-    # (maybe not needed as most input is from the config file?)
-
-    if n_args != 1:
-        usage( sys.argv )
-        sys.exit(1)
-
-    # set some defaults
-
-    start_time = None
-    stop_time = None
-    config_file = None
-
-    task_definition_module = 'operational_tasks'
-
-    dummy_mode = False
-    dummy_offset = None  
-    dummy_rate = 60 
-
-    # load user config
-    config_module = sys.argv[1]
-
-    print
-    print "Using config module " + config_module
-    config_file = config_module + '.py'
-
-    if not os.path.exists( config_file ):
-        print
-        print "File not found: " + config_file
-        usage( sys.argv )
-        sys.exit(1)
-
-    exec "from " + config_module + " import *"
-
-    # check compulsory input
-    if not start_time:
-        print
-        print "ERROR: start_time not defined"
-        sys.exit(1)
-
-    if len( task_list ) == 0:
-        print
-        print "ERROR: no tasks configured"
-        sys.exit(1)
-
     print
     print 'Initial reference time ' + start_time
     if stop_time:
         print 'Final reference time ' + stop_time
 
     if dummy_mode:
-        dummy_clock = dummy_clock( start_time, dummy_rate, dummy_offset ) 
+        dummy_clock = dummy_clock( start_time, dummy_clock_rate, dummy_clock_offset ) 
 
-    # load task definition module
+    # load task definitions
     print
-    print 'Loading task definitions from ' + task_definition_module + '.py'
-    exec "from " + task_definition_module + " import *"
+    print 'Loading task definitions from ' + task_module + '.py'
+    exec "from " + task_module + " import *"
 
     print
     print "Logging to ./LOGFILES"
@@ -552,7 +504,7 @@ if __name__ == "__main__":
     pyro_daemon.useNameServer(pyro_nameserver)
 
     # initialise the task manager
-    god = task_manager( start_time, task_list, dummy_mode )
+    god = task_manager( start_time, task_list )
     # connect to pyro nameserver to allow external control
     pyro_daemon.connect( god, pyro_ns_name( 'god' ) )
 
@@ -560,6 +512,6 @@ if __name__ == "__main__":
     print
     print "Beginning task processing now"
     if dummy_mode:
-        print "     (in dummy mode)"
+        print "   RUNNING IN DUMMY MODE"
     print
     god.run()

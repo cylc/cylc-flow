@@ -1,10 +1,12 @@
 #!/usr/bin/python
 
-"""class for external dummy task programs that report task
-postrequisites done at the right time relative to the accelerated dummy
-mode clock. Use of the dummy clock means that dummy tasks react
-correctly to bumping the clock forward AND we can fully simulate the
-transition out of catchup mode."""
+# For external dummy task programs that report their postrequisites done
+# on time relative to the controllers internal accelerated dummy clock.
+
+# If dummy_mode = False we must have dummied out a particular task in
+# real mode, in which case there's no dummy clock to consult. Instead 
+# we complete requisites done after the right length of time has passed
+# (still sped up according to dummy_clock_rate, however).
 
 import sys
 import Pyro.naming, Pyro.core
@@ -14,15 +16,15 @@ import reference_time
 import datetime
 from time import sleep
 
+from config import dummy_mode, dummy_clock_rate, dummy_clock_offset
+
 class dummy_task_base:
 
-    def __init__( self, task_name, ref_time, use_clock, clock_rate = 20 ):
+    def __init__( self, task_name, ref_time ):
         self.task_name = task_name
         self.ref_time = ref_time
-        self.use_clock = use_clock
-        self.clock_rate = clock_rate
 
-        if self.use_clock:
+        if dummy_mode:
             self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ))
 
         self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( self.task_name + '%' + self.ref_time ))
@@ -33,7 +35,7 @@ class dummy_task_base:
         completion_time = self.task.get_postrequisite_times()
         postreqs = self.task.get_postrequisite_list()
 
-        if not self.use_clock:
+        if not dummy_mode:
 
             # report postrequisites done at the estimated time for each,
             # scaled by the configured dummy clock rate, but without reference
@@ -43,7 +45,7 @@ class dummy_task_base:
             n_postreqs = len( postreqs )
          
             for req in postreqs:
-                sleep( completion_time[ req ] / float( self.clock_rate ) )
+                sleep( completion_time[ req ] / float( dummy_clock_rate ) )
                 self.task.incoming( "NORMAL", req )
 
         else:

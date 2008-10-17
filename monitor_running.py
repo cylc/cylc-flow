@@ -13,6 +13,7 @@ from time import sleep
 from pyro_ns_naming import pyro_ns_name
 from string import ljust, rjust, split, upper, lower
 import datetime
+from config import dummy_mode
 
 
 class kit:
@@ -39,8 +40,6 @@ class kit:
 
 title = kit( "EcoConnect System Monitor" )
 
-dummy_mode = False
-
 while True:
 
     try: 
@@ -48,8 +47,7 @@ while True:
         god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'god' ))
         god._setTimeout(1)
 
-        if god.in_dummy_mode():
-            dummy_mode = True
+        if dummy_mode:
             remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ) )
             remote_clock._setTimeout(1)
 
