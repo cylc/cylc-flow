@@ -459,7 +459,8 @@ if __name__ == "__main__":
     backups = 5
     main_logfile = 'LOGFILES/ecocontroller'
     h = logging.handlers.RotatingFileHandler( main_logfile, 'a', max_bytes, backups )
-    if os.path.exists( main_logfile ):
+    # the above creates a zero-sized log file if one doesn't already exist
+    if os.path.getsize( main_logfile ) > 0:
         print ' + rotating existing log:', main_logfile
         h.doRollover()
 
@@ -487,7 +488,8 @@ if __name__ == "__main__":
 
         task_logfile = 'LOGFILES/' + name
         h = logging.handlers.RotatingFileHandler( task_logfile, 'a', max_bytes/10, backups )
-        if os.path.exists( task_logfile ):
+        # the above creates a zero-sized log file if one doesn't already exist
+        if os.path.getsize( task_logfile ) > 0:
             print ' + rotating existing log:', task_logfile
             h.doRollover()
 
