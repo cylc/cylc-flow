@@ -105,6 +105,7 @@ class topnet( normal ):
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
 
     def run_external_task( self ):
+        print "TEMPORARILY DUMMYING OUT THE REAL TOPNET"
         self.run_external_dummy( False )
 
     def __init__( self, ref_time, initial_state = "waiting" ):

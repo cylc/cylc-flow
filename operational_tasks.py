@@ -30,10 +30,13 @@ class normal ( task_base ):
     def __init__( self, ref_time, initial_state = 'waiting' ):
         task_base.__init__( self, ref_time, initial_state = 'waiting' )
         
-    def run_external_dummy( self, dummy_clock_rate ):
+    def run_external_dummy( self, use_clock, clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        if use_clock:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
+        else:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 #----------------------------------------------------------------------
@@ -42,10 +45,13 @@ class free ( free_task_base ):
     def __init__( self, ref_time, initial_state = 'waiting' ):
         free_task_base.__init__( self, ref_time, initial_state = 'waiting' )
  
-    def run_external_dummy( self, dummy_clock_rate ):
+    def run_external_dummy( self, use_clock, clock_rate ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        if use_clock:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
+        else:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 #----------------------------------------------------------------------
@@ -385,7 +391,7 @@ class topnet( normal ):
         normal.__init__( self, ref_time, initial_state )
 
 
-    def run_external_dummy( self, dummy_clock_rate ):
+    def run_external_dummy( self, use_clock, clock_rate = 20 ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         # TO DO: the subprocess module might be better than os.system?
 
@@ -398,7 +404,11 @@ class topnet( normal ):
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(dummy_clock_rate) + " &" )
+        if use_clock:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " " + str(clock_rate) + " &" )
+        else:
+            os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
+
         self.state = "running"
 
 
