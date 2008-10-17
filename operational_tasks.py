@@ -19,10 +19,10 @@ import Pyro.core
 import logging
 import logging.handlers
 
-# task classes 'normal' and 'free' exist entirely so we can override
-# run_external_dummy in this module, so I can determine the module's
-# name and execute the module file to run the module-specific dummy
-# tasks. There is probably a better way to do this!
+# task classes 'normal', 'free', and 'topnet_foo' exist entirely so we
+# can override run_external_dummy in this module, so I can determine the
+# module's name and execute the module file to run the module-specific
+# dummy tasks. There is probably a better way to do this!
 
 #----------------------------------------------------------------------
 class normal ( task_base ):
@@ -35,6 +35,14 @@ class normal ( task_base ):
 #----------------------------------------------------------------------
 class free ( free_task_base ):
 
+    def run_external_dummy( self ):
+        self.log.info( "launching external dummy for " + self.ref_time )
+        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
+        self.state = "running"
+
+#----------------------------------------------------------------------
+class topnet_foo ( topnet_base ):
+ 
     def run_external_dummy( self ):
         self.log.info( "launching external dummy for " + self.ref_time )
         os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
@@ -326,7 +334,7 @@ class nztide( free ):
         free.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class topnet( normal ):
+class topnet( topnet_foo ):
     "streamflow data extraction and topnet" 
 
     """If no other tasks dependend on the streamflow data then it's
@@ -374,7 +382,7 @@ class topnet( normal ):
             [4, "file topnet_" + ref_time + ".nc ready"],
             [5, self.name + " finished for " + ref_time] ])
 
-        normal.__init__( self, ref_time, initial_state )
+        topnet_foo.__init__( self, ref_time, initial_state )
 
 
     def run_external_dummy( self ):
@@ -397,7 +405,7 @@ class topnet( normal ):
     def incoming( self, priority, message ):
 
         # pass on to the base class message handling function
-        normal.incoming( self, priority, message)
+        topnet_foo.incoming( self, priority, message)
         
         # but intercept catchup mode messages
         if not topnet.catchup_mode and self.catchup_re.match( message ):

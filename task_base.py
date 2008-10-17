@@ -63,6 +63,21 @@ class task_base( Pyro.core.ObjBase ):
             self.log.critical( "unknown initial task state: " + initial_state )
             sys.exit(1)
 
+    def oldest_to_keep( self, all_tasks ):
+        # Most tasks depend only on their cotemporal peers
+        # (not even their own previous instances because of abdication)
+        # Therefore we can remove any batch of tasks older than the
+        # oldest running task.
+
+        if self.state != 'finished':
+            return self.ref_time
+        else:
+            return None
+
+        # BUT override this method for tasks with special dependency
+        # requirements (e.g. topnet!)
+
+
     def nearest_ref_time( self, rt ):
         # return the next time >= rt for which this task is valid
         rh = int( rt[8:10])
@@ -267,5 +282,40 @@ class free_task_base( task_base ):
 
         else:
             task_base.run_if_ready( self, tasks )
+
+
+#----------------------------------------------------------------------
+class topnet_base ( task_base ):
+    # topnet's special behaviour is encoded in the base class file
+    # so that we don't have to put it in every task definition module
+    # that includes topnet.
+
+    def oldest_to_keep( self, all_tasks ):
+
+        if self.state == 'finished':
+            return None
+
+        finished_nzlam_post_6_18_exist = False
+        finished_nzlam_post_6_18 = []
+
+        for task in all_tasks:
+            # find any finished 6 or 18Z nzlam_post tasks
+            if task.name == "nzlam_post" and task.state == "finished":
+                hour = task.ref_time[8:10]
+                if hour == "06" or hour == "18":
+                    finished_nzlam_post_6_18_exist = True
+                    finished_nzlam_post_6_18.append( task.ref_time )
+
+        result = None
+        if finished_nzlam_post_6_18_exist: 
+            finished_nzlam_post_6_18.sort( key = int, reverse = True )
+            for nzp_time in finished_nzlam_post_6_18:
+                if int( nzp_time ) < int( self.ref_time ):
+                    self.log.debug( "most recent finished 6 or 18Z nzlam_post older than me: " + nzp_time )
+                    result = nzp_time
+                    break
+
+        return result
+
 
 

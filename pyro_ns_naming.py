@@ -7,7 +7,7 @@
 # See Pyro manual for nameserver hierachical naming details ...
 # prepending ':' put names or sub-groups under the root group. 
  
-pyro_ns_group = ':ecoconnect'
+from config import pyro_ns_group
 
 def pyro_ns_name( object_name ):
    return pyro_ns_group + '.' + object_name

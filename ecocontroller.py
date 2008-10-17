@@ -179,10 +179,6 @@ class task_manager ( Pyro.core.ObjBase ):
         if len( self.task_pool ) == 0:
             self.system_halt('all configured tasks done')
 
-        finished_nzlam_post_6_18_exist = False
-        finished_nzlam_post_6_18 = []
-        topnet_found = False
-        topnet_time = []
         batch_finished = {}
         still_running = []
 
@@ -193,6 +189,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 self.create_task_by_name( task.name, task.next_ref_time() )
 
         # task interaction to satisfy prerequisites
+        keep_me = []
         for task in self.task_pool:
 
             task.get_satisfaction( self.task_pool )
@@ -200,27 +197,10 @@ class task_manager ( Pyro.core.ObjBase ):
             task.run_if_ready( self.task_pool )
 
             # Determine which tasks can be deleted (documentation below)
-
-            # Generally speaking we can remove any batch(T) older than
-            # the oldest running task, BUT topnet's "fuzzy" dependence
-            # on nzlam_post requires special handling (see below).
-
-            # find any finished 6 or 18Z nzlam_post tasks
-            if task.name == "nzlam_post" and task.state == "finished":
-                hour = task.ref_time[8:10]
-                if hour == "06" or hour == "18":
-                    finished_nzlam_post_6_18_exist = True
-                    finished_nzlam_post_6_18.append( task.ref_time )
-
-            # find the running or waiting topnet
-            if task.name == 'topnet' and task.state != 'finished':
-                if topnet_found:
-                    # should only be one running or waiting
-                    log.warning( 'already found topnet!')
-
-                topnet_found = True
-                topnet_time = task.ref_time
-
+            res = task.oldest_to_keep( self.task_pool )
+            if res:
+                keep_me.append( res )
+            
             # find which ref_time batches are all finished
             # (assume yes, set no if any running task found)
             if task.ref_time not in batch_finished.keys():
@@ -247,27 +227,25 @@ class task_manager ( Pyro.core.ObjBase ):
         #   (ii) the most recent finished nzlam_post THAT IS OLDER THAN
         #        THE MOST RECENT TOPNET.
 
-
         if len( still_running ) == 0:
             log.critical( "ALL TASKS DONE" )
             sys.exit(0)
 
-        still_running.sort( key = int )
-        oldest_running = still_running[0]
+        #still_running.sort( key = int )
+        #oldest_running = still_running[0]
 
-        cutoff = oldest_running
-        log.debug( "oldest running task: " + cutoff )
+        #cutoff = oldest_running
+        #log.debug( "oldest running task: " + cutoff )
 
-        if finished_nzlam_post_6_18_exist and topnet_found:
-            finished_nzlam_post_6_18.sort( key = int, reverse = True )
-            for nzp_time in finished_nzlam_post_6_18:
-                if int( nzp_time ) < int( topnet_time ):
-                    log.debug( "most recent finished 6 or 18Z nzlam_post older than topnet: " + nzp_time )
-                    if int( nzp_time ) < int( cutoff ):
-                        cutoff = nzp_time
-                    break
+        keep_me.sort( key = int )
+        cutoff = keep_me[0]
 
         log.debug( " => keeping tasks " + cutoff + " and newer")
+
+        # TO DO: REFORMULATE THIS SECTION
+        # TO DO: MAKE TOPNET'S DEPENDENCY (nzlam_post) A PARAMETER
+        #        SO I CAN USE A DIFFERENT INITIAL TASK FOR THE TEST
+        #        SYSTEM
         
         remove_these = []
         for rt in batch_finished.keys():
@@ -385,6 +363,7 @@ if __name__ == "__main__":
     #  6. task_module (for task class definitions)
     #  7. task_list (tasks out of task_module to run)
     #  8. logging_level (logging.(INFO|DEBUG))
+    #  9. pyro_ns_group (must be unique for each running controller)
     
     print
     print 'Initial reference time ' + start_time
