@@ -362,10 +362,10 @@ class topnet( normal ):
         ref_time = self.ref_time
  
         if topnet.catchup_mode:
-            #print "CUTOFF 11 for " + self.identity()
+            #print "CUTOFF 11 for " + self.identity
             nzlam_cutoff = reference_time.decrement( ref_time, 11 )
         else:
-            #print "CUTOFF 23 for " + self.identity()
+            #print "CUTOFF 23 for " + self.identity
             nzlam_cutoff = reference_time.decrement( ref_time, 23 )
 
         # min:max

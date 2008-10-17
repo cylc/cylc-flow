@@ -16,6 +16,8 @@ import Pyro.core
 import logging
 import logging.handlers
 
+import qsub
+
 #----------------------------------------------------------------------
 class task_base( Pyro.core.ObjBase ):
     "task base class"
@@ -28,9 +30,12 @@ class task_base( Pyro.core.ObjBase ):
         # Derived classes MUST call nearest_ref_time()
         #   before defining their requisites
 
+        Pyro.core.ObjBase.__init__(self)
+
         task_base.processing_required = True
 
-        Pyro.core.ObjBase.__init__(self)
+        # unique task identity
+        self.identity = self.name + '%' + self.ref_time
 
         self.log = logging.getLogger( "main." + self.name ) 
 
@@ -45,12 +50,12 @@ class task_base( Pyro.core.ObjBase ):
             self.state = "waiting"
         elif initial_state == "finished":  
             self.postrequisites.set_all_satisfied()
-            self.log.warning( self.identity() + " starting in FINISHED state" )
+            self.log.warning( self.identity + " starting in FINISHED state" )
             self.state = "finished"
         elif initial_state == "ready":
             # waiting, but ready to go
             self.state = "waiting"
-            self.log.warning( self.identity() + " starting in READY state" )
+            self.log.warning( self.identity + " starting in READY state" )
             self.prerequisites.set_all_satisfied()
         else:
             self.log.critical( "unknown initial task state: " + initial_state )
@@ -99,7 +104,7 @@ class task_base( Pyro.core.ObjBase ):
             if task.name == self.name:
                 if task.state != "finished":
                     if int( task.ref_time ) < int( self.ref_time ):
-                        self.log.debug( self.identity() + " blocked by " + task.identity() )
+                        self.log.debug( self.identity + " blocked by " + task.identity )
                         return
 
 
@@ -116,16 +121,14 @@ class task_base( Pyro.core.ObjBase ):
         sys.exit(1)
 
     def run_external_task( self ):
-        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
-        self.log.info( "launching external task for " + self.ref_time )
-        os.system( self.external_task + ' ' + self.ref_time + " &" )
-        self.state = "running"
+        # RUN THE EXTERNAL TASK 
+        self.log.info( 'launching external task for ' + self.ref_time )
+
+        qsub.run( self.user_prefix, self.name, self.ref_time, self.external_task )
+        self.state = 'running'
 
     def get_state( self ):
         return self.name + ": " + self.state
-
-    def identity( self ):
-        return self.name + "%" + self.ref_time
 
     def display( self ):
         return self.name + "(" + self.ref_time + ")"
@@ -237,7 +240,7 @@ class free_task_base( task_base ):
         task_base.__init__( self, ref_time, initial_state )
 
         # logging is set up by task_base
-        # self.log.info( self.identity() + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
+        # self.log.info( self.identity + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
 
 
     def run_if_ready( self, tasks, dummy_mode, dummy_clock_rate = 20 ):
@@ -255,7 +258,7 @@ class free_task_base( task_base ):
 
         if delay:
             # the following gets logged every time the function is called
-            # self.log.debug( self.identity() + " ready and waiting (too far ahead)" )
+            # self.log.debug( self.identity + " ready and waiting (too far ahead)" )
             pass
 
         else:

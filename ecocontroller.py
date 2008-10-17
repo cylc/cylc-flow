@@ -101,7 +101,7 @@ class task_manager ( Pyro.core.ObjBase ):
         self.task_pool.append( task )
 
         # connect new task to the pyro daemon
-        pyro_daemon.connect( task, pyro_ns_name( task.identity() ) )
+        pyro_daemon.connect( task, pyro_ns_name( task.identity ) )
 
     def create_initial_tasks( self ):
 
@@ -141,7 +141,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 dead_soldiers.append( task )
     
         for task in dead_soldiers:
-            task.log.debug( "abdicating a dead soldier " + task.identity() )
+            task.log.debug( "abdicating a dead soldier " + task.identity )
             self.create_task_by_name( task.name, task.next_ref_time() )
             self.task_pool.remove( task )
             pyro_daemon.disconnect( task )
@@ -193,7 +193,7 @@ class task_manager ( Pyro.core.ObjBase ):
         for task in self.task_pool:
             # create a new task(T+1) if task(T) has just finished
             if task.abdicate():
-                task.log.debug( "abdicating " + task.identity() )
+                task.log.debug( "abdicating " + task.identity )
                 self.create_task_by_name( task.name, task.next_ref_time() )
 
         # task interaction to satisfy prerequisites
@@ -284,7 +284,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         if len( remove_these ) > 0:
             for task in remove_these:
-                log.debug( "removing spent " + task.identity() )
+                log.debug( "removing spent " + task.identity )
                 self.task_pool.remove( task )
                 pyro_daemon.disconnect( task )
 
@@ -320,7 +320,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 if postreqs[ key ]:
                     n_satisfied += 1
 
-            summary[ task.identity() ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
+            summary[ task.identity ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
 
         return summary
 
