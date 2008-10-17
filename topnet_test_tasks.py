@@ -58,7 +58,7 @@ class nzlam_post( free ):
 
     name = "nzlam_post"
     valid_hours = [ 6, 18 ]
-    external_task = 'external/nzlam_post-topnet_test.sh' 
+    external_task = 'nzlam_post-topnet_test.sh' 
     #user_prefix = 'hydrology'
     user_prefix = 'ecoconnect'
 

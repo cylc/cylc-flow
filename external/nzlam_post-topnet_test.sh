@@ -1,6 +1,5 @@
 #!/bin/bash
 
-set -x
 set -e  # abort on error
 trap "task_message CRITICAL 'nzlam_post failed'" ERR
 
@@ -32,7 +31,8 @@ function task_message
     # USAGE: task_message <PRIORITY> <"MESSAGE">
     # priorities are CRITICAL, WARNING, NORMAL
 
-    MESSAGER=./task_messager.py  # NOTE PATH
+    # TO DO: WHERE TO KEEP EXTERNAL SCRIPTS AND HOW TO REFER TO THEM
+    MESSAGER=/test/ecoconnect_test/ecocontroller/task_messager.py  
     #MESSAGER=echo   # uncomment for debugging
     
     PRIORITY=$1; shift
@@ -137,7 +137,7 @@ fi
 if ! $UPTODATE; then
     # Alert the controller to the fact that we're in catch up mode
     # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
-    task_message NORMAL "UPTODATE: operational tn file already exists for $REFERENCE_TIME"
+    task_message NORMAL "CATCHUP: operational tn file already exists for $REFERENCE_TIME"
 fi
  
 # copy file to my output directory

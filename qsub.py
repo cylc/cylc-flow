@@ -2,6 +2,9 @@
 
 import os
 
+# TO DO: WHERE TO KEEP EXTERNAL PROGRAMS AND HOW TO REFER TO THEM
+path = '/test/ecoconnect_test/ecocontroller/external'
+
 def run( user_prefix, task_name, ref_time, task, extra_vars=[] ):
 
         temp = os.environ[ 'USER' ].split('_')
@@ -17,6 +20,7 @@ def run( user_prefix, task_name, ref_time, task, extra_vars=[] ):
             [ var_name, value ] = entry
             command += ',' + var_name + '=' + value
 
-        command += ' -oe ' + task 
+        command += ' -k oe ' + path + '/' + task 
 
+	print "HERE WE GO"
         os.system( command + ' &' )
