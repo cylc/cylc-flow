@@ -223,3 +223,6 @@ for incoming files until the clock time is at least 3:15 past its reference
 time, and topnet "waits" until the clock time :15 min past its reference time,
 which is the stream flow data extraction cutoff.
 
+[note that timed postrequisites apply after a task starts running, so bumping
+the dummy clock forward affects a running task correctly, but it doesn't make
+tasks that are still waiting start halfway through, etc...]

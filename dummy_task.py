@@ -84,6 +84,64 @@ class dummy_task_base:
                     break
             
     def delay( self ):
-        # override this to delay abnormal dummy tasks (downloader,
-        # topnet streamflow) according to clock time restraints
+        # override this to delay dummy tasks that have non-standard
+        # behavior after startup (external tasks can usually start
+        # executing immediately, but some (downloader, topnet
+        # streamflow) are delayed by having to wait from some external
         pass
+
+
+#----------------------------------------------------------------------
+class dummy_task( dummy_task_base ):
+
+    def delay( self ):
+
+        if self.task_name == "downloader":
+
+            rt = reference_time._rt_to_dt( self.ref_time )
+            rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
+            if self.clock.get_datetime() >= rt_3p25:
+                # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN downloader.incoming()
+                self.task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + self.ref_time )
+                self.fast_complete = True
+            else:
+                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + self.ref_time )
+                while True:
+                    sleep(1)
+                    if self.clock.get_datetime() >= rt_3p25:
+                        break
+
+        elif self.task_name == "oper2test_topnet":
+
+            rt = reference_time._rt_to_dt( self.ref_time )
+            delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 
+            if self.clock.get_datetime() >= delayed_start:
+                self.task.incoming( 'NORMAL', 'CATCHUP: operational tn file already exists for ' + self.ref_time )
+                self.fast_complete = True
+            else:
+                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for operational tn file for ' + self.ref_time )
+                while True:
+                    sleep(1)
+                    if self.clock.get_datetime() >= delayed_start:
+                        break
+
+
+        elif self.task_name == "topnet":
+
+            rt = reference_time._rt_to_dt( self.ref_time )
+            rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
+            # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN topnet.incoming()
+            if self.clock.get_datetime() >= rt_p25:
+                self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + self.ref_time )
+            else:
+                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + self.ref_time ) 
+                while True:
+                    sleep(1)
+                    if self.clock.get_datetime() >= rt_p25:
+                        break
+
+#----------------------------------------------------------------------
+if __name__ == '__main__':
+    [task_name, ref_time] = sys.argv[1:]
+    dummy = dummy_task( task_name, ref_time )
+    dummy.run()

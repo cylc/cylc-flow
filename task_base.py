@@ -12,13 +12,13 @@ import sys
 from copy import deepcopy
 from time import strftime
 import Pyro.core
+import config
+import qsub
+
+import pdb
 
 import logging
 import logging.handlers
-
-import config
-
-import qsub
 
 #----------------------------------------------------------------------
 class task_base( Pyro.core.ObjBase ):
@@ -134,8 +134,9 @@ class task_base( Pyro.core.ObjBase ):
                 self.run_external_task()
 
     def run_external_dummy( self ):
-        self.log.critical( 'YOU MUST OVERRIDE THIS METHOD' )
-        sys.exit(1)
+        self.log.info( "launching external dummy for " + self.ref_time )
+        os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
+        self.state = "running"
 
     def run_external_task( self ):
         # RUN THE EXTERNAL TASK 
@@ -169,6 +170,10 @@ class task_base( Pyro.core.ObjBase ):
             self.prerequisites.satisfy_me( task.postrequisites )
 
     def will_get_satisfaction( self, tasks ):
+
+        #if self.name == 'topnet':
+        #    pdb.set_trace()
+
         temp_prereqs = deepcopy( self.prerequisites )
         for task in tasks:
             temp_prereqs.will_satisfy_me( task.postrequisites )
@@ -282,51 +287,4 @@ class free_task_base( task_base ):
 
         else:
             task_base.run_if_ready( self, tasks )
-
-
-#----------------------------------------------------------------------
-class topnet_base ( task_base ):
-    # topnet's special behaviour is encoded in the base class file
-    # so that we don't have to put it in every task definition module
-    # that includes topnet.
-
-    def __init__( self, ref_time, initial_state = 'waiting' ):
-        # upstream task is nzlam_post in the oper system
-        # but not for topnet_test setup (global user config is the
-        # simplest place to set this
-        if config.topnet_upstream_task:
-            self.upstream_task = config.topnet_upstream_task
-        else:
-            self.upstream_task = "nzlam_post"
-
-        task_base.__init__( self, ref_time, initial_state = 'waiting' )
-
-    def oldest_to_keep( self, all_tasks ):
-
-        if self.state == 'finished':
-            return None
-
-        finished_upstream_6_18_exist = False
-        finished_upstream_6_18 = []
-
-        for task in all_tasks:
-            # find any finished 6 or 18Z upstream tasks
-            if task.name == self.upstream_task and task.state == "finished":
-                hour = task.ref_time[8:10]
-                if hour == "06" or hour == "18":
-                    finished_upstream_6_18_exist = True
-                    finished_upstream_6_18.append( task.ref_time )
-
-        result = None
-        if finished_upstream_6_18_exist: 
-            finished_upstream_6_18.sort( key = int, reverse = True )
-            for nzp_time in finished_upstream_6_18:
-                if int( nzp_time ) < int( self.ref_time ):
-                    self.log.debug( "most recent finished 6 or 18Z upstream older than me: " + nzp_time )
-                    result = nzp_time
-                    break
-
-        return result
-
-
 

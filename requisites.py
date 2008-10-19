@@ -69,6 +69,7 @@ class requisites:
         return self.satisfied
 
     def satisfy_me( self, postreqs ):
+        log = logging.getLogger( "main." + self.task_name ) 
         # can another's completed postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
@@ -78,10 +79,7 @@ class requisites:
                     # compare it with each of the other's postreqs
                     if postreq == prereq and postreqs.satisfied[postreq]:
                         # if they match, my prereq has been satisfied
-            
-                        log = logging.getLogger( "main." + self.task_name ) 
                         log.debug( postreqs.task_name + " satisfied: " + prereq )
-
                         self.set_satisfied( prereq )
 
     def will_satisfy_me( self, postreqs ):
@@ -137,6 +135,7 @@ class fuzzy_requisites( requisites ):
         self.satisfied[ sharp ] = True
 
     def satisfy_me( self, postreqs ):
+        log = logging.getLogger( "main." + self.task_name ) 
         # can another's completed postreqs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
@@ -146,7 +145,7 @@ class fuzzy_requisites( requisites ):
                 # extract reference time from my prerequisite
                 m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
                 if not m:
-                    print "FAILED TO MATCH MIN:MAX IN " + prereq
+                    log.critical( "FAILED TO MATCH MIN:MAX IN " + prereq )
                     sys.exit(1)
 
                 [ my_start, my_minmax, my_end ] = m.groups()
@@ -158,8 +157,9 @@ class fuzzy_requisites( requisites ):
                         # extract reference time from other's postrequisite
                         m = re.compile( "^(.*)(\d{10})(.*)$").match( postreq )
                         if not m:
-                            print "FAILED TO MATCH REFTIME IN " + postreq
-                            sys.exit(1)
+                            # this postreq can't possibly satisfy a
+                            # fuzzy; move on to the next one.
+                            continue
                 
                         [ other_start, other_reftime, other_end ] = m.groups()
 
@@ -167,12 +167,8 @@ class fuzzy_requisites( requisites ):
                             if other_reftime >= my_min and other_reftime <= my_max:
                                 #print "FUZZY PREREQ: " + prereq
                                 #print "SATISFIED BY: " + postreq
-            
-                                log = logging.getLogger( "main." + self.task_name ) 
-                                # now replace the fuzzy prereq with the
-                                # actual postreq that satisfied it
+                                # replace fuzzy prereq with the actual postreq that satisfied it
                                 self.sharpen_up( prereq, postreq )
-
                                 log.debug( postreqs.task_name + " fuzzy-satisfier: " + postreq )
 
     def will_satisfy_me( self, postreqs ):
@@ -185,7 +181,7 @@ class fuzzy_requisites( requisites ):
                 # extract reference time from my prerequisite
                 m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
                 if not m:
-                    print "FAILED TO MATCH MIN:MAX IN " + prereq
+                    log.critical( "FAILED TO MATCH MIN:MAX IN " + prereq )
                     sys.exit(1)
 
                 [ my_start, my_minmax, my_end ] = m.groups()
@@ -196,8 +192,9 @@ class fuzzy_requisites( requisites ):
                     # extract reference time from other's postrequisite
                     m = re.compile( "^(.*)(\d{10})(.*)$").match( postreq )
                     if not m:
-                        print "FAILED TO MATCH REF TIME IN " + postreq
-                        sys.exit(1)
+                        # this postreq can't possibly satisfy a
+                        # fuzzy; move on to the next one.
+                        continue
 
                     [ other_start, other_reftime, other_end ] = m.groups()
 

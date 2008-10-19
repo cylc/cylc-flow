@@ -3,7 +3,6 @@
 # operational task class definitions
 
 from task_base import *
-from dummy_task_base import *
 
 import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
@@ -19,37 +18,8 @@ import Pyro.core
 import logging
 import logging.handlers
 
-# task classes 'normal', 'free', and 'topnet_foo' exist entirely so we
-# can override run_external_dummy in this module, so I can determine the
-# module's name and execute the module file to run the module-specific
-# dummy tasks. There is probably a better way to do this!
-
 #----------------------------------------------------------------------
-class normal ( task_base ):
-
-    def run_external_dummy( self ):
-        self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
-        self.state = "running"
-
-#----------------------------------------------------------------------
-class free ( free_task_base ):
-
-    def run_external_dummy( self ):
-        self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
-        self.state = "running"
-
-#----------------------------------------------------------------------
-class topnet_foo ( topnet_base ):
- 
-    def run_external_dummy( self ):
-        self.log.info( "launching external dummy for " + self.ref_time )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
-        self.state = "running"
-
-#----------------------------------------------------------------------
-class downloader( free ):
+class downloader( free_task_base ):
     "Met Office input file download task"
 
     """
@@ -105,10 +75,10 @@ class downloader( free ):
                 [1, "file bgerr" + ref_time + ".um ready"],
                 [2, self.name + " finished for " + ref_time] ])
  
-        free.__init__( self, ref_time, initial_state )
+        free_task_base.__init__( self, ref_time, initial_state )
            
 #----------------------------------------------------------------------
-class oper2test_topnet( free ):
+class oper2test_topnet( free_task_base ):
 
     name = "oper2test_topnet"
     valid_hours = [ 6, 18 ]
@@ -131,10 +101,10 @@ class oper2test_topnet( free ):
                 [2, "file tn_" + ref_time + "_utc_nzlam_12.nc ready"],
                 [3, self.name + " finished for " + ref_time] ])
 
-        free.__init__( self, ref_time, initial_state )
+        free_task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nzlam( normal ):
+class nzlam( task_base ):
 
     name = "nzlam"
     valid_hours = [ 0, 6, 12, 18 ]
@@ -158,7 +128,7 @@ class nzlam( normal ):
 
             self.postrequisites = timed_requisites( self.name, [ 
                 [0, self.name + " started for " + ref_time],
-                [30, "file sls_" + ref_time + ".um ready"],   
+                [30, "file sls_" + ref_time + "_utc_nzlam_12.um ready"],   
                 [32, self.name + " finished for " + ref_time] ])
  
         elif hour == "06" or hour == "18":
@@ -169,15 +139,15 @@ class nzlam( normal ):
 
             self.postrequisites = timed_requisites( self.name, [ 
                 [0, self.name + " started for " + ref_time],
-                [110, "file tn_" + ref_time + ".um ready"],
-                [111, "file sls_" + ref_time + ".um ready"],   
-                [112, "file met_" + ref_time + ".um ready"],
+                [110, "file tn_" + ref_time + "_utc_nzlam_12.um ready"],
+                [111, "file sls_" + ref_time + "_utc_nzlam_12.um ready"],   
+                [112, "file met_" + ref_time + "_utc_nzlam_12.um ready"],
                 [115, self.name + " finished for " + ref_time] ])
 
-        normal.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nzlam_post( normal ):
+class nzlam_post( task_base ):
 
     name = "nzlam_post"
     valid_hours = [ 0, 6, 12, 18 ]
@@ -203,21 +173,21 @@ class nzlam_post( normal ):
         elif hour == "06" or hour == "18":
 
             self.prerequisites = requisites( self.name, [ 
-                "file tn_" + ref_time + ".um ready",
-                "file sls_" + ref_time + ".um ready",   
-                "file met_" + ref_time + ".um ready" ])
+                "file tn_" + ref_time + "_utc_nzlam_12.um ready",
+                "file sls_" + ref_time + "_utc_nzlam_12.um ready",   
+                "file met_" + ref_time + "_utc_nzlam_12.um ready" ])
 
             self.postrequisites = timed_requisites( self.name, [ 
                 [0, self.name + " started for " + ref_time],
-                [10, "file sls_" + ref_time + ".nc ready"],   
-                [20, "file tn_" + ref_time + ".nc ready"],
-                [30, "file met_" + ref_time + ".nc ready"],
+                [10, "file sls_" + ref_time + "_utc_nzlam_12.nc ready"],   
+                [20, "file tn_" + ref_time + "_utc_nzlam_12.nc ready"],
+                [30, "file met_" + ref_time + "_utc_nzlam_12.nc ready"],
                 [31, self.name + " finished for " + ref_time] ])
 
-        normal.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class globalprep( normal ):
+class globalprep( task_base ):
 
     name = "globalprep"
     valid_hours = [ 0 ]
@@ -240,10 +210,10 @@ class globalprep( normal ):
             [7, "file seaice_" + ref_time + ".nc ready"],
             [10, self.name + " finished for " + ref_time] ])
        
-        normal.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class globalwave( normal ):
+class globalwave( task_base ):
 
     name = "globalwave"
     valid_hours = [ 0 ]
@@ -263,10 +233,10 @@ class globalwave( normal ):
             [120, "file globalwave_" + ref_time + ".nc ready"],
             [121, self.name + " finished for " + ref_time] ])
  
-        normal.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class nzwave( normal ):
+class nzwave( task_base ):
     
     name = "nzwave"
     valid_hours = [ 0, 6, 12, 18 ]
@@ -287,10 +257,10 @@ class nzwave( normal ):
             [110, "file nzwave_" + ref_time + ".nc ready"],
             [112, self.name + " finished for " + ref_time] ])
  
-        normal.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class ricom( normal ):
+class ricom( task_base ):
 
     name = "ricom"
     valid_hours = [ 6, 18 ]
@@ -309,10 +279,10 @@ class ricom( normal ):
             [30, "file ricom_" + ref_time + ".nc ready"],
             [31, self.name + " finished for " + ref_time] ])
  
-        normal.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class mos( normal ):
+class mos( task_base ):
 
     name = "mos"
     valid_hours = [ 0, 6, 12, 18 ]
@@ -327,19 +297,19 @@ class mos( normal ):
 
         if hour == "06" or hour == "18":
             self.prerequisites = requisites( self.name, [ 
-                "file met_" + ref_time + ".nc ready" ])
+                "file met_" + ref_time + "_utc_nzlam_12.nc ready" ])
         else:
             self.prerequisites = requisites( self.name, [])
 
         self.postrequisites = timed_requisites( self.name, [
             [0, self.name + " started for " + ref_time],
-            [5, "file mos_" + ref_time + ".nc ready"],
+            [5, "processing done"],
             [6, self.name + " finished for " + ref_time] ])
 
-        normal.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nztide( free ):
+class nztide( free_task_base ):
 
     name = "nztide"
     valid_hours = [ 6, 18 ]
@@ -357,17 +327,17 @@ class nztide( free ):
             [1, "file nztide_" + ref_time + ".nc ready"],
             [2, self.name + " finished for " + ref_time] ])
 
-        free.__init__( self, ref_time, initial_state )
+        free_task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class topnet( topnet_foo ):
+class topnet( task_base ):
     "streamflow data extraction and topnet" 
 
     """If no other tasks dependend on the streamflow data then it's
     easiest to make streamflow part of the topnet task, because of
     the unusual runahead behavior of topnet"""
 
-    # topnet is not a "free task" -- it has prerequisites.
+    # topnet is not a "free_task_base task" -- it has prerequisites.
  
     name = "topnet"
     valid_hours = range( 0,24 )
@@ -409,18 +379,16 @@ class topnet( topnet_foo ):
             [2, "got streamflow data for " + ref_time],
             [2.1, "streamflow extraction finished for " + ref_time],
             [3, self.name + " started for " + ref_time],
-            [4, "file topnet_" + ref_time + "_utc_nzlam_12.nc ready"],
+            [4, "catchment forecasts finished"],
             [5, self.name + " finished for " + ref_time] ])
 
-        topnet_foo.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 
     def run_external_dummy( self ):
         # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
-        # TO DO: the subprocess module might be better than os.system?
-
-        # for topnet, supply name of most recent nzlam file from the
-        # sharpened fuzzy prerequisite
+        # topnet (external) needs to be given the name of the netcdf
+        # file that satisfied satisified the topnet fuzzy prerequisite
 
         prereqs = self.prerequisites.get_list()
         prereq = prereqs[0]
@@ -428,14 +396,14 @@ class topnet( topnet_foo ):
         [ file ] = m.groups()
 
         self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
-        os.system( './' + __name__ + '.py ' + self.name + " " + self.ref_time + " &" )
+        os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
 
     def incoming( self, priority, message ):
 
         # pass on to the base class message handling function
-        topnet_foo.incoming( self, priority, message)
+        task_base.incoming( self, priority, message)
         
         # but intercept catchup mode messages
         if not topnet.catchup_mode and self.catchup_re.match( message ):
@@ -449,8 +417,47 @@ class topnet( topnet_foo ):
             topnet.catchup_mode = False
             self.log.info( "beginning UPTODATE operation" )
 
+
+    def oldest_to_keep( self, all_tasks ):
+
+        if self.state == 'finished':
+            return None
+
+        # keep the most recent non-waiting 06 or 18Z nzlam_post or
+        # oper2test_topnet task, because the next hourly topnet may 
+        # also need the output from that same 12-hourly task.
+
+        # note that this could be down without searching for actual
+        # 'nzlam_post' or 'oper2test_topnet' tasks because we know how 
+        # for ahead topnet is allowed to get, depending on catchup.
+
+        found = False
+        times = []
+        result = None
+        for task in all_tasks:
+            if task.name == 'nzlam_post' or task.name == 'oper2test_topnet':
+                if task.state != 'waiting':
+                    hour = task.ref_time[8:10]
+                    if hour == '06' or hour == '18':
+                        found = True
+                        times.append( task.ref_time )
+        if not found: 
+            #self.log.debug( 'no upstream task found: I am a dead soldier' )
+            pass
+            # will be eliminated by the main program dead soldier check
+
+        else:
+            times.sort( key = int, reverse = True )
+            for time in times:
+                if int( time ) < int( self.ref_time ):
+                    self.log.debug( 'most recent non-waiting upstream task: ' + time )
+                    result = time
+                    break
+
+        return result
+
 #----------------------------------------------------------------------
-class nwpglobal( normal ):
+class nwpglobal( task_base ):
 
     name = "nwpglobal"
     valid_hours = [ 0 ]
@@ -469,59 +476,6 @@ class nwpglobal( normal ):
             [120, "file 10mwind_" + ref_time + ".nc ready"],
             [121, self.name + " finished for " + ref_time] ])
 
-        normal.__init__( self, ref_time, initial_state )
-
-#----------------------------------------------------------------------
-class dummy_task( dummy_task_base ):
-
-    def delay( self ):
-
-        if self.task_name == "downloader":
-
-            rt = reference_time._rt_to_dt( self.ref_time )
-            rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
-            if self.clock.get_datetime() >= rt_3p25:
-                # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN downloader.incoming()
-                self.task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + self.ref_time )
-                self.fast_complete = True
-            else:
-                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + self.ref_time )
-                while True:
-                    sleep(1)
-                    if self.clock.get_datetime() >= rt_3p25:
-                        break
-
-        elif self.task_name == "oper2test_topnet":
-
-            rt = reference_time._rt_to_dt( self.ref_time )
-            delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 
-            if self.clock.get_datetime() >= delayed_start:
-                self.task.incoming( 'NORMAL', 'CATCHUP: operational tn file already exists for ' + self.ref_time )
-                self.fast_complete = True
-            else:
-                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for operational tn file for ' + self.ref_time )
-                while True:
-                    sleep(1)
-                    if self.clock.get_datetime() >= delayed_start:
-                        break
+        task_base.__init__( self, ref_time, initial_state )
 
 
-        elif self.task_name == "topnet":
-
-            rt = reference_time._rt_to_dt( self.ref_time )
-            rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
-            # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN topnet.incoming()
-            if self.clock.get_datetime() >= rt_p25:
-                self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + self.ref_time )
-            else:
-                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + self.ref_time ) 
-                while True:
-                    sleep(1)
-                    if self.clock.get_datetime() >= rt_p25:
-                        break
-
-#----------------------------------------------------------------------
-if __name__ == '__main__':
-    [task_name, ref_time] = sys.argv[1:]
-    dummy = dummy_task( task_name, ref_time )
-    dummy.run()

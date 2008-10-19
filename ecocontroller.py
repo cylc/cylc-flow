@@ -29,13 +29,14 @@ import reference_time
 from get_instance import *
 from dummy_clock import *
 from pyro_ns_naming import *
+from task_definitions import task_base 
 
 import logging, logging.handlers
 import sys, os, re
 
 from config import logging_level
 from config import start_time, stop_time
-from config import task_module, task_list 
+from config import task_list 
 from config import dummy_mode, dummy_clock_rate, dummy_clock_offset
 
 import pdb
@@ -85,7 +86,7 @@ class task_manager ( Pyro.core.ObjBase ):
 
         # class creation can increase the reference time so can't check
         # for stop until after creation
-        task = get_instance( task_module, task_name )( ref_time, state )
+        task = get_instance( 'task_definitions', task_name )( ref_time, state )
 
         if stop_time:
             if int( task.ref_time ) > int( stop_time ):
@@ -113,12 +114,19 @@ class task_manager ( Pyro.core.ObjBase ):
         # Remove any tasks in the OLDEST time batch whose prerequisites
         # cannot be satisfied by their co-temporal peers. 
 
-        # This only works for the OLDEST batch; satisfiers can appear
-        # later  by abdication in newer batches). 
+        # This is needed because, for example, if we start the system at
+        # 12Z with topnet turned on, topnet is valid at every hour from 
+        # 12 through 17Z, so those tasks will be created but they will 
+        # never be able to run due to lack of any upstream nzlam_post
+        # task until 18Z comes along.
 
-        # This is useful, e.g., if we start the system at 12Z with
-        # topnet turned on, because topnet cannot get input from the
-        # 12Z nzlam.
+        # This action is only appied to the OLDEST batch of tasks. In
+        # newer batches potential prerequisite satisfiers can appear
+        # later as their predecessors abdicate.
+
+        # NOTE THAT DEAD SOLDIERS ARE REMOVED IN THE TASK INTERACTION
+        # LOOP, SO SOMETIMES THEY MAY NOT GET ELIMINATED IMMEDIATELY
+        # ... just wait until a message comes in for another task. 
 
         batches = {}
         for task in self.task_pool:
@@ -137,7 +145,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 dead_soldiers.append( task )
     
         for task in dead_soldiers:
-            task.log.debug( "abdicating a dead soldier " + task.identity )
+            task.log.info( "abdicating a dead soldier " + task.identity )
             self.create_task_by_name( task.name, task.next_ref_time() )
             self.task_pool.remove( task )
             pyro_daemon.disconnect( task )
@@ -360,8 +368,7 @@ if __name__ == "__main__":
     #  3. dummy_mode (dummy out all tasks)
     #  4. dummy_clock_rate (seconds per simulated hour) 
     #  5. dummy_clock_offset (hours before start_time)
-    #  6. task_module (for task class definitions)
-    #  7. task_list (tasks out of task_module to run)
+    #  7. task_list (tasks out of task_definitions module to run)
     #  8. logging_level (logging.(INFO|DEBUG))
     #  9. pyro_ns_group (must be unique for each running controller)
     
@@ -372,11 +379,6 @@ if __name__ == "__main__":
 
     if dummy_mode:
         dummy_clock = dummy_clock( start_time, dummy_clock_rate, dummy_clock_offset ) 
-
-    # load task definitions
-    print
-    print 'Loading task definitions from ' + task_module + '.py'
-    exec "from " + task_module + " import *"
 
     print
     print "Logging to ./LOGFILES"
