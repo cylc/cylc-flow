@@ -22,4 +22,5 @@ def run( user_prefix, task_name, ref_time, task, extra_vars=[] ):
 
         command += ' -k oe ' + path + '/' + task 
 
-        os.system( command + ' &' )
+        if os.system( command ) != 0:
+            raise Exception( 'qsub failed: ' + task_name + ' ' + ref_time )
