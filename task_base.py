@@ -16,7 +16,7 @@ import Pyro.core
 import logging
 import logging.handlers
 
-from config import dummy_mode
+import config
 
 import qsub
 
@@ -127,7 +127,7 @@ class task_base( Pyro.core.ObjBase ):
 
         if self.state == 'waiting' and self.prerequisites.all_satisfied():
             # prerequisites all satisified, so run me
-            if dummy_mode:
+            if config.dummy_mode:
                 # we're in dummy mode
                 self.run_external_dummy()
             else:
@@ -290,28 +290,39 @@ class topnet_base ( task_base ):
     # so that we don't have to put it in every task definition module
     # that includes topnet.
 
+    def __init__( self, ref_time, initial_state = 'waiting' ):
+        # upstream task is nzlam_post in the oper system
+        # but not for topnet_test setup (global user config is the
+        # simplest place to set this
+        if config.topnet_upstream_task:
+            self.upstream_task = config.topnet_upstream_task
+        else:
+            self.upstream_task = "nzlam_post"
+
+        task_base.__init__( self, ref_time, initial_state = 'waiting' )
+
     def oldest_to_keep( self, all_tasks ):
 
         if self.state == 'finished':
             return None
 
-        finished_nzlam_post_6_18_exist = False
-        finished_nzlam_post_6_18 = []
+        finished_upstream_6_18_exist = False
+        finished_upstream_6_18 = []
 
         for task in all_tasks:
-            # find any finished 6 or 18Z nzlam_post tasks
-            if task.name == "nzlam_post" and task.state == "finished":
+            # find any finished 6 or 18Z upstream tasks
+            if task.name == self.upstream_task and task.state == "finished":
                 hour = task.ref_time[8:10]
                 if hour == "06" or hour == "18":
-                    finished_nzlam_post_6_18_exist = True
-                    finished_nzlam_post_6_18.append( task.ref_time )
+                    finished_upstream_6_18_exist = True
+                    finished_upstream_6_18.append( task.ref_time )
 
         result = None
-        if finished_nzlam_post_6_18_exist: 
-            finished_nzlam_post_6_18.sort( key = int, reverse = True )
-            for nzp_time in finished_nzlam_post_6_18:
+        if finished_upstream_6_18_exist: 
+            finished_upstream_6_18.sort( key = int, reverse = True )
+            for nzp_time in finished_upstream_6_18:
                 if int( nzp_time ) < int( self.ref_time ):
-                    self.log.debug( "most recent finished 6 or 18Z nzlam_post older than me: " + nzp_time )
+                    self.log.debug( "most recent finished 6 or 18Z upstream older than me: " + nzp_time )
                     result = nzp_time
                     break
 

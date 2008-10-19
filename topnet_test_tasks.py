@@ -2,10 +2,9 @@
 
 """Task class definitions for running topnet on /test off the
 operational nzlam output. The initial task, with no prequisites, is now
-nzlam_post which goes waits on and copies back the operational tn netcdf
-when ready.  We need to use the actual 'nzlam_post' name because
-topnet's unusual mode of operation relies on the presence of
-nzlam_post."""
+oper2test_topnet which waits on and copies back the operational tn netcdf
+when ready.  Topnet's behaviour with respect to oper2test_topnet must be
+the same as it is to nzlam_post in the operational system."""
 
 from task_base import *
 from dummy_task_base import *
@@ -56,11 +55,11 @@ class topnet_foo ( topnet_base ):
         self.state = "running"
 
 #----------------------------------------------------------------------
-class nzlam_post( free ):
+class oper2test_topnet( free ):
 
-    name = "nzlam_post"
+    name = "oper2test_topnet"
     valid_hours = [ 6, 18 ]
-    external_task = 'nzlam_post-topnet_test.sh' 
+    external_task = 'oper2test_topnet.sh' 
     #user_prefix = 'hydrology'
     user_prefix = 'ecoconnect'
 
@@ -99,10 +98,6 @@ class topnet( topnet_foo ):
     # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
 
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
-
-    def run_external_task( self ):
-        print "TEMPORARILY DUMMYING OUT THE REAL TOPNET"
-        self.run_external_dummy()
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -178,7 +173,7 @@ class dummy_task( dummy_task_base ):
         if not dummy_mode:
             return
 
-        if self.task_name == "nzlam_post":
+        if self.task_name == "oper2test_topnet":
 
             rt = reference_time._rt_to_dt( self.ref_time )
             delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 

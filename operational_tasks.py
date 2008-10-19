@@ -108,6 +108,32 @@ class downloader( free ):
         free.__init__( self, ref_time, initial_state )
            
 #----------------------------------------------------------------------
+class oper2test_topnet( free ):
+
+    name = "oper2test_topnet"
+    valid_hours = [ 6, 18 ]
+    external_task = 'oper2test_topnet.sh' 
+    #user_prefix = 'hydrology'
+    user_prefix = 'ecoconnect'
+
+    def __init__( self, ref_time, initial_state = "waiting" ):
+
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+
+        hour = ref_time[8:10]
+
+        self.prerequisites = requisites( self.name, []) 
+        
+        self.postrequisites = timed_requisites( self.name, [ 
+                [0, self.name + " started for " + ref_time],
+                [2, "file tn_" + ref_time + "_utc_nzlam_12.nc ready"],
+                [3, self.name + " finished for " + ref_time] ])
+
+        free.__init__( self, ref_time, initial_state )
+
+#----------------------------------------------------------------------
 class nzlam( normal ):
 
     name = "nzlam"
@@ -352,6 +378,10 @@ class topnet( topnet_foo ):
 
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
 
+    #    def run_external_task( self ):
+    #        print "TEMPORARILY DUMMYING OUT THE REAL TOPNET"
+    #        self.run_external_dummy()
+
     def __init__( self, ref_time, initial_state = "waiting" ):
 
         self.catchup_re = re.compile( "^CATCHUP:.*for " + ref_time )
@@ -372,14 +402,14 @@ class topnet( topnet_foo ):
         fuzzy_limits = nzlam_cutoff + ':' + ref_time
  
         self.prerequisites = fuzzy_requisites( self.name, [ 
-            "file tn_" + fuzzy_limits + ".nc ready" ])
+            "file tn_" + fuzzy_limits + "_utc_nzlam_12.nc ready" ])
 
         self.postrequisites = timed_requisites( self.name, [ 
             [0, "streamflow extraction started for " + ref_time],
             [2, "got streamflow data for " + ref_time],
             [2.1, "streamflow extraction finished for " + ref_time],
             [3, self.name + " started for " + ref_time],
-            [4, "file topnet_" + ref_time + ".nc ready"],
+            [4, "file topnet_" + ref_time + "_utc_nzlam_12.nc ready"],
             [5, self.name + " finished for " + ref_time] ])
 
         topnet_foo.__init__( self, ref_time, initial_state )
@@ -441,7 +471,6 @@ class nwpglobal( normal ):
 
         normal.__init__( self, ref_time, initial_state )
 
-
 #----------------------------------------------------------------------
 class dummy_task( dummy_task_base ):
 
@@ -461,6 +490,21 @@ class dummy_task( dummy_task_base ):
                     sleep(1)
                     if self.clock.get_datetime() >= rt_3p25:
                         break
+
+        elif self.task_name == "oper2test_topnet":
+
+            rt = reference_time._rt_to_dt( self.ref_time )
+            delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 
+            if self.clock.get_datetime() >= delayed_start:
+                self.task.incoming( 'NORMAL', 'CATCHUP: operational tn file already exists for ' + self.ref_time )
+                self.fast_complete = True
+            else:
+                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for operational tn file for ' + self.ref_time )
+                while True:
+                    sleep(1)
+                    if self.clock.get_datetime() >= delayed_start:
+                        break
+
 
         elif self.task_name == "topnet":
 
