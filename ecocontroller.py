@@ -34,10 +34,12 @@ from task_definitions import task_base
 import logging, logging.handlers
 import sys, os, re
 
-from config import logging_level
-from config import start_time, stop_time
-from config import task_list 
-from config import dummy_mode, dummy_clock_rate, dummy_clock_offset
+import config
+
+#from config import logging_level
+#from config import start_time, stop_time
+#from config import task_list, dummy_out
+#from config import dummy_mode, dummy_clock_rate, dummy_clock_offset
 
 import pdb
 
@@ -57,16 +59,14 @@ class LogFilter(logging.Filter):
 #----------------------------------------------------------------------
 class task_manager ( Pyro.core.ObjBase ):
 
-    def __init__( self, start_time, task_list ):
+    def __init__( self ):
         #log.debug("initialising task manager")
 
         Pyro.core.ObjBase.__init__(self)
     
-        if dummy_mode:
+        if config.dummy_mode:
             pyro_daemon.connect( dummy_clock, pyro_ns_name( 'dummy_clock' ) )
 
-        self.start_time = start_time
-        self.task_list = task_list        # list of task names
         self.task_pool = []               # list of interacting task objects
 
         self.state_dump_dir = 'STATE'
@@ -88,9 +88,9 @@ class task_manager ( Pyro.core.ObjBase ):
         # for stop until after creation
         task = get_instance( 'task_definitions', task_name )( ref_time, state )
 
-        if stop_time:
-            if int( task.ref_time ) > int( stop_time ):
-                task.log.info( task.name + " STOPPING at " + stop_time )
+        if config.stop_time:
+            if int( task.ref_time ) > int( config.stop_time ):
+                task.log.info( task.name + " STOPPING at " + config.stop_time )
                 del task
                 return
 
@@ -102,12 +102,12 @@ class task_manager ( Pyro.core.ObjBase ):
 
     def create_initial_tasks( self ):
 
-        for task_name in self.task_list:
+        for task_name in config.task_list:
             state = None
             if re.compile( "^.*:").match( task_name ):
                 [task_name, state] = task_name.split(':')
 
-            self.create_task_by_name( task_name, self.start_time, state )
+            self.create_task_by_name( task_name, config.start_time, state )
 
 
     def remove_dead_soldiers( self ):
@@ -368,17 +368,18 @@ if __name__ == "__main__":
     #  3. dummy_mode (dummy out all tasks)
     #  4. dummy_clock_rate (seconds per simulated hour) 
     #  5. dummy_clock_offset (hours before start_time)
-    #  7. task_list (tasks out of task_definitions module to run)
+    #  6. task_list (tasks out of task_definitions module to run)
+    #  7. dummy_out (tasks to dummy out even when dummy_mode is False)
     #  8. logging_level (logging.(INFO|DEBUG))
     #  9. pyro_ns_group (must be unique for each running controller)
     
     print
-    print 'Initial reference time ' + start_time
-    if stop_time:
-        print 'Final reference time ' + stop_time
+    print 'Initial reference time ' + config.start_time
+    if config.stop_time:
+        print 'Final reference time ' + config.stop_time
 
-    if dummy_mode:
-        dummy_clock = dummy_clock( start_time, dummy_clock_rate, dummy_clock_offset ) 
+    if config.dummy_mode:
+        dummy_clock = dummy_clock( config.start_time, config.dummy_clock_rate, config.dummy_clock_offset ) 
 
     print
     print "Logging to ./LOGFILES"
@@ -387,7 +388,7 @@ if __name__ == "__main__":
         os.makedirs( 'LOGFILES' )
 
     log = logging.getLogger( "main" )
-    log.setLevel( logging_level )
+    log.setLevel( config.logging_level )
     max_bytes = 1000000
     backups = 5
     main_logfile = 'LOGFILES/ecocontroller'
@@ -407,17 +408,17 @@ if __name__ == "__main__":
     h2.setLevel( logging.WARNING )
     h2.setFormatter( f )
     log.addHandler(h2)
-    if dummy_mode:
+    if config.dummy_mode:
         # replace logged real time with dummy clock time 
         log.addFilter( LogFilter( dummy_clock, "main" ))
 
     # task-name-specific log files for all tasks 
     # these propagate messages up to the main log
-    for name in task_list:
+    for name in config.task_list:
         if re.compile( "^.*:").match( name ):
             [name, state] = name.split( ':' )
         foo = logging.getLogger( "main." + name )
-        foo.setLevel( logging_level )
+        foo.setLevel( config.logging_level )
 
         task_logfile = 'LOGFILES/' + name
         h = logging.handlers.RotatingFileHandler( task_logfile, 'a', max_bytes/10, backups )
@@ -429,12 +430,12 @@ if __name__ == "__main__":
         f = logging.Formatter( '%(asctime)s %(levelname)-8s - %(message)s', '%Y/%m/%d %H:%M:%S' )
         h.setFormatter(f)
         foo.addHandler(h)
-        if dummy_mode:
+        if config.dummy_mode:
             # replace logged real time with dummy clock time 
             foo.addFilter( LogFilter( dummy_clock, "main" ))
 
-    log.info( 'initial reference time ' + start_time )
-    log.info( 'final reference time ' + stop_time )
+    log.info( 'initial reference time ' + config.start_time )
+    log.info( 'final reference time ' + config.stop_time )
 
     """ This program relies on SINGLE THREADED operation.  Pyro is
     multithreaded by default so we explicitly disable threading: """
@@ -474,7 +475,7 @@ if __name__ == "__main__":
         # individual objects that already exist).  If running several
         # ecocontroller instances, each needs a different group name.
         print
-        print "Unregistering any existing '" + pyro_ns_group + "' group in the Pyro nameserver"
+        print "Removing any '" + pyro_ns_group + "' group from the Pyro nameserver"
         pyro_nameserver.deleteGroup( pyro_ns_group )
     except NamingError:
         print "(no such group registered)"
@@ -485,14 +486,17 @@ if __name__ == "__main__":
     pyro_daemon.useNameServer(pyro_nameserver)
 
     # initialise the task manager
-    god = task_manager( start_time, task_list )
+
+    # TO DO: MIGHT AS WELL INCORPORATE TASK_MANAGER INTO THE MAIN PROGRAM?
+
+    god = task_manager()
     # connect to pyro nameserver to allow external control
     pyro_daemon.connect( god, pyro_ns_name( 'god' ) )
 
     # start processing
     print
     print "Beginning task processing now"
-    if dummy_mode:
+    if config.dummy_mode:
         print "   RUNNING IN DUMMY MODE"
     print
     god.run()

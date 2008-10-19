@@ -1,12 +1,12 @@
 #!/usr/bin/python
-
-# GLOBAL CONFIGURATION FILE
-
+# ECOCONTROLLER CONFIGURATION FILE
 import logging
 
-dummy_mode = True
+dummy_mode = False
 dummy_clock_offset = 8
 dummy_clock_rate = 20
+
+pyro_ns_group = ':ecoconnect'
 
 #logging_level = logging.INFO
 logging_level = logging.DEBUG
@@ -14,7 +14,9 @@ logging_level = logging.DEBUG
 start_time = "2008080812"
 stop_time = "2008081012"
 
-operational_task_list = [ 
+dummy_out = []
+
+operational_tasks = [ 
         'downloader',
         'nwpglobal',
         'globalprep',
@@ -28,13 +30,15 @@ operational_task_list = [
         'mos' 
         ]
 
-topnet_test_task_list = [ 
+topnet_test_tasks = [ 
         'oper2test_topnet',
         'topnet',
         #'topnet_post'
         ]
 
-pyro_ns_group = ':ecoconnect'
 
-task_list = operational_task_list
-#task_list = topnet_test_task_list
+#task_list = operational_tasks
+
+task_list = topnet_test_tasks
+dummy_out = [ 'topnet' ]
+

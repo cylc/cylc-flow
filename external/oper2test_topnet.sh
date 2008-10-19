@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set -e  # abort on error
-trap "task_message CRITICAL 'nzlam_post failed'" ERR
+trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 
 # Find the operational tn_\${REFERENCE_TIME}_utc_nzlam_12.nc(.bz2)
 # file and copy it to hydrology_\$SYS/input/ for use by topnet.
@@ -44,9 +44,12 @@ if [[ -z $REFERENCE_TIME ]]; then
 	exit 1
 fi
 
-task_message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+if [[ -z $TASK_NAME ]]; then
+	task_message CRITICAL "TASK_NAME not defined"
+	exit 1
+fi
 
-TASK_NAME=nzlam_post
+task_message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
 
 FILENAME=tn_${REFERENCE_TIME}_utc_nzlam_12.nc
 
@@ -118,7 +121,6 @@ else
     # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
     task_message NORMAL "UPTODATE: waiting for operational tn file for $REFERENCE_TIME"
     while true; do
-        sleep 10
         if grep "retrieving met UM file(s) for $REFERENCE_TIME" $OPER_LOG; then
             # this message means the tn has been converted to nc and llcleaned
             task_message NORMAL "$OPER_LOG says $FILENAME is ready"
@@ -131,6 +133,7 @@ else
                 exit 1
             fi
         fi
+        sleep 10
     done
 fi
 

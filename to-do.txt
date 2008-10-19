@@ -11,3 +11,5 @@ TO DO LIST
 
 * use methods is_running(), is_finished(), etc. to determine task state
   instead of than accessing attributes directly
+
+* the task manager object might as well be the main program... 

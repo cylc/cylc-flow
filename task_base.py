@@ -44,7 +44,10 @@ class task_base( Pyro.core.ObjBase ):
         self.latest_message = ""
         self.abdicated = False # True => my successor has been created
 
-        # initial states: waiting, ready, running, finished
+        # initial states: 
+        #  + waiting 
+        #  + ready (prerequisites satisfied)
+        #  + finished (postrequisites satisfied)
         if not initial_state:
             self.state = "waiting"
             pass
@@ -62,6 +65,9 @@ class task_base( Pyro.core.ObjBase ):
         else:
             self.log.critical( "unknown initial task state: " + initial_state )
             sys.exit(1)
+
+        if not config.dummy_mode and self.name in config.dummy_out:
+            self.log.warning( "dummying out " + self.identity + " in real mode")
 
     def oldest_to_keep( self, all_tasks ):
         # Most tasks depend only on their cotemporal peers
@@ -127,14 +133,14 @@ class task_base( Pyro.core.ObjBase ):
 
         if self.state == 'waiting' and self.prerequisites.all_satisfied():
             # prerequisites all satisified, so run me
-            if config.dummy_mode:
+            if config.dummy_mode or self.name in config.dummy_out:
                 # we're in dummy mode
                 self.run_external_dummy()
             else:
                 self.run_external_task()
 
     def run_external_dummy( self ):
-        self.log.info( "launching external dummy for " + self.ref_time )
+        self.log.info( "launching dummy for " + self.ref_time )
         os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
@@ -142,7 +148,7 @@ class task_base( Pyro.core.ObjBase ):
         # RUN THE EXTERNAL TASK 
         # note that you can mix real and dummy tasks by temporarily
         # overriding this method to call run_external_dummy(), 
-        self.log.info( 'launching external task for ' + self.ref_time )
+        self.log.info( 'launching task for ' + self.ref_time )
 
         qsub.run( self.user_prefix, self.name, self.ref_time, self.external_task )
         self.state = 'running'

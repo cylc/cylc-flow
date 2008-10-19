@@ -30,6 +30,9 @@ class downloader( free_task_base ):
 
     name = "downloader"
     valid_hours = [ 0, 6, 12, 18 ]
+    external_task = 'downloader.sh' 
+    user_prefix = 'ecoconnect'
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
  
@@ -108,6 +111,8 @@ class nzlam( task_base ):
 
     name = "nzlam"
     valid_hours = [ 0, 6, 12, 18 ]
+    external_task = 'nzlam.sh'
+    user_prefix = 'nwp'
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -151,6 +156,10 @@ class nzlam_post( task_base ):
 
     name = "nzlam_post"
     valid_hours = [ 0, 6, 12, 18 ]
+    external_task = 'nzlam_post.sh'
+    user_prefix = 'nwp'
+
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -189,8 +198,12 @@ class nzlam_post( task_base ):
 #----------------------------------------------------------------------
 class globalprep( task_base ):
 
-    name = "globalprep"
+    name = "global_prep"
     valid_hours = [ 0 ]
+    external_task = 'global_prep.sh'
+    user_prefix = 'wave'
+
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -217,6 +230,10 @@ class globalwave( task_base ):
 
     name = "globalwave"
     valid_hours = [ 0 ]
+    external_task = 'globalwave.sh'
+    user_prefix = 'wave'
+
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -240,6 +257,10 @@ class nzwave( task_base ):
     
     name = "nzwave"
     valid_hours = [ 0, 6, 12, 18 ]
+    external_task = 'nzwave.sh'
+    user_prefix = 'wave'
+
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -264,6 +285,10 @@ class ricom( task_base ):
 
     name = "ricom"
     valid_hours = [ 6, 18 ]
+    external_task = 'ricom.sh'
+    user_prefix = 'sea_level'
+
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -286,6 +311,9 @@ class mos( task_base ):
 
     name = "mos"
     valid_hours = [ 0, 6, 12, 18 ]
+    external_task = 'mos.sh'
+    user_prefix = 'nwp'
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -313,6 +341,10 @@ class nztide( free_task_base ):
 
     name = "nztide"
     valid_hours = [ 6, 18 ]
+    external_task = 'nztide.sh'
+    user_prefix = 'sea_level'
+
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -341,16 +373,15 @@ class topnet( task_base ):
  
     name = "topnet"
     valid_hours = range( 0,24 )
+    external_task = 'topnet.sh'
+    user_prefix = 'hydrology'
+
 
     # assume catchup mode and detect if we've caught up
     catchup_mode = True
     # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
 
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
-
-    #    def run_external_task( self ):
-    #        print "TEMPORARILY DUMMYING OUT THE REAL TOPNET"
-    #        self.run_external_dummy()
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -395,7 +426,7 @@ class topnet( task_base ):
         m = topnet.fuzzy_file_re.match( prereq )
         [ file ] = m.groups()
 
-        self.log.info( "launching external dummy for " + self.ref_time + " (off " + file + ")" )
+        self.log.info( "launching dummy for " + self.ref_time + " (off " + file + ")" )
         os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
@@ -459,8 +490,11 @@ class topnet( task_base ):
 #----------------------------------------------------------------------
 class nwpglobal( task_base ):
 
-    name = "nwpglobal"
+    name = "nwp_global"
     valid_hours = [ 0 ]
+    external_task = 'nwp_global.sh'
+    user_prefix = 'nwp'
+
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
