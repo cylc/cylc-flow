@@ -64,8 +64,6 @@ else:
     usage()
     sys.exit(1)
 
-   
-
 # pause, resume, or halt
 try:
     # connect to the task object inside the control program
@@ -73,19 +71,20 @@ try:
 
 except:
     print "ERROR: failed to connect to god"
-    sys.exit(1)
+    raise
+    #sys.exit(1)
 
 try:
     if pause:
-        god.request_pause()
+        god.pause()
 
     elif resume:
-        god.request_resume()
+        god.resume()
 
     elif shutdown:
 
         # pause to prevent new dummy tasks being launched after the pkill 
-        god.request_pause()
+        god.pause()
         print 'pausing system ...'
         sleep(5)
         
@@ -97,7 +96,7 @@ try:
 
         # shutdown the controller and pyro nameserver
         print 'requesting shutdown ...'
-        god.request_shutdown()
+        god.shutdown()
 
         print "FIX ME: you now need to send a message to an existing task"
         print "to cause the processing loop to activate again and effect"
@@ -110,6 +109,7 @@ try:
 except:
     # nameserver not found, or god not registered with it?
     print "ERROR: failed to talk to god; trying dead letter box"
+    raise
 
     try:
         dead_box = Pyro.core.getProxyForURI("PYRONAME://" + "dead_letter_box" )

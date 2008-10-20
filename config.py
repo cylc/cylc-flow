@@ -36,6 +36,6 @@ topnet_test_tasks = [
         #'topnet_post'
         ]
 
-#task_list = operational_tasks
-task_list = topnet_test_tasks
-dummy_out = [ 'topnet' ]
+task_list = operational_tasks
+#task_list = topnet_test_tasks
+#dummy_out = [ 'topnet' ]

@@ -459,7 +459,7 @@ class topnet( task_base ):
                         found = True
                         times.append( task.ref_time )
         if not found: 
-            self.log.warning( 'no upstream task found: I am a dead soldier' )
+            # self.log.warning( 'no upstream task found: I am a lame duck' )
             # will be eliminated by the main program dead soldier check
             pass
 

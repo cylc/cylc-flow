@@ -130,7 +130,7 @@ is no running nzlampost, topnet will depend on the most recent FINISHED 06 or
    (ii) oldest running.
 
 TO DO: we could improve this by removing non-nzlampost tasks older than
-oldest_running (BUT: make sure this doesn't break the dead soldier test).
+oldest_running (BUT: make sure this doesn't break the lame duck test).
 
 
 CONSTRAINED RUNAHEAD TASKS
@@ -170,15 +170,15 @@ that we've caught up. Thereafter, topnet can keep up with the (hourly)
 clock time so long as nzlam doesn't slip behind more than 24 hours.
 
 
-DEAD SOLDIERS:
+LAME DUCKS:
 
-A "dead soldier" is a task that will never run because it's prerequisites can
+A "lame duck" is a task that will never run because it's prerequisites can
 never be satisfied.  These need to be removed or they will prevent removal of
-spent tasks.  We can detect dead soldiers by requisite checking amongst all
+spent tasks.  We can detect lame ducks by requisite checking amongst all
 tasks in the oldest batch(T) that contains any running tasks.  Newer batches
 may not be complete yet (they may acquire new tasks as those in the oldest
-batch abdicate).  Dead soldiers are abdicated rather than just deleted, so
-that their descendents can run if they are not dead soldiers. As an example of
+batch abdicate).  Lame ducks are abdicated rather than just deleted, so
+that their descendents can run if they are not lame ducks. As an example of
 this, if we start the system at 12Z all topnet tasks prior to 18Z will be dead
 soldiers because the 12Z nzlam does not generate topnet input files. 
 
