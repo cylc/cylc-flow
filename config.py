@@ -6,6 +6,8 @@ dummy_mode = True
 dummy_clock_offset = 20
 dummy_clock_rate = 5
 
+logging_dir = 'LOGFILES'
+
 pyro_ns_group = ':ecoconnect'
 
 #logging_level = logging.INFO

@@ -34,7 +34,7 @@ class task_base( Pyro.core.ObjBase ):
 
         Pyro.core.ObjBase.__init__(self)
 
-        task_base.processing_required = True
+        task_base.state_changed = True
 
         # unique task identity
         self.identity = self.name + '%' + self.ref_time
@@ -223,7 +223,7 @@ class task_base( Pyro.core.ObjBase ):
 
         # print "HELLO FROM INCOMING: " + message
 
-        task_base.processing_required = True
+        task_base.state_changed = True
 
         self.latest_message = message
 

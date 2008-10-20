@@ -226,3 +226,29 @@ which is the stream flow data extraction cutoff.
 [note that timed postrequisites apply after a task starts running, so bumping
 the dummy clock forward affects a running task correctly, but it doesn't make
 tasks that are still waiting start halfway through, etc...]
+
+
+SINGLE THREADED PYRO REQUIRED
+
+"""In SINGLE THREADED PYRO, handleRequests() returns after EITHER a
+timeout has occurred OR at least one request (remote method call)
+was handled.  With "timeout = None" this allows us to process tasks
+ONLY after remote method invocations come in. Further, the
+processing_required boolean set in task_base.incoming() allows us to
+process tasks ONLY when a task changes state as a result of an
+incoming message, which minimizes non-useful output from the task
+processing loop (e.g. in dummy mode there are a lot of remote calls
+on the dummy clock object, which does not alter tasks at all). 
+
+In MULTITHREADED PYRO, handleRequests() returns immediately after
+creating a new request handling thread for a single remote object
+and thereafter remote method calls on that object come in
+asynchronously in the dedicated thread.  It is impossible(?) to make
+our main loop work properly like this because handleRequests will
+block until a new connection is made, even while messages from
+existing remote objects are coming in.  Tasks that are ready to run
+are only set running in the processing loop, so these will be
+delayed unnecessarily until handleRequests returns.  The only way
+out of this is to do task processing on a handleRequests timeout
+as well, which results in a lot of unnecessary task processing."""
+ 

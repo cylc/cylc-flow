@@ -1,9 +1,5 @@
 #!/usr/bin/python
 
-""" 
-Tell the task manager (via Pyro) to shut down. 
-"""
-
 import os
 import sys
 import Pyro.core
@@ -59,7 +55,6 @@ elif n_args == 2 and sys.argv[1] == '-b':
     sys.exit(0)
 
 
-
 else:
     usage()
     sys.exit(1)
@@ -67,24 +62,24 @@ else:
 # pause, resume, or halt
 try:
     # connect to the task object inside the control program
-    god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'god'))
+    control = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'control'))
 
 except:
-    print "ERROR: failed to connect to god"
+    print "ERROR: failed to connect to control"
     raise
     #sys.exit(1)
 
 try:
     if pause:
-        god.pause()
+        control.pause()
 
     elif resume:
-        god.resume()
+        control.resume()
 
     elif shutdown:
 
         # pause to prevent new dummy tasks being launched after the pkill 
-        god.pause()
+        control.pause()
         print 'pausing system ...'
         sleep(5)
         
@@ -96,19 +91,19 @@ try:
 
         # shutdown the controller and pyro nameserver
         print 'requesting shutdown ...'
-        god.shutdown()
+        control.shutdown()
 
-        print "FIX ME: you now need to send a message to an existing task"
-        print "to cause the processing loop to activate again and effect"
-        print "the final shutdown."
+        #the following may still be necessary:
+        #print "you may now need to send a message to an existing task"
+        #print "to reactivate task processing and effect the shutdown."
 
     else:
         print "ERROR: should not be here"
         sys.exit(1)
 
 except:
-    # nameserver not found, or god not registered with it?
-    print "ERROR: failed to talk to god; trying dead letter box"
+    # nameserver not found, or control not registered with it?
+    print "ERROR: failed to talk to control; trying dead letter box"
     raise
 
     try:

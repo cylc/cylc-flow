@@ -8,7 +8,6 @@ from Pyro.errors import NamingError
 import logging
 import os, re
 
-#----------------------------------------------------------------------
 class task_pool ( Pyro.core.ObjBase ):
     
     def __init__( self, task_names, pyrod ):
@@ -20,8 +19,6 @@ class task_pool ( Pyro.core.ObjBase ):
         self.task_names = task_names
         self.tasks = []
 
-        self.paused = False
-        self.shuttingdown = False
         self.pyro_daemon = pyrod
 
         self.state_dump_dir = 'STATE'
@@ -34,28 +31,32 @@ class task_pool ( Pyro.core.ObjBase ):
             if re.compile( "^.*:").match( task_name ):
                 [task_name, state] = task_name.split(':')
 
-            self.create_task_by_name( task_name, config.start_time, state )
+            self._create_task( task_name, config.start_time, state )
 
     def all_finished( self ):
+        # return True if all tasks have completed
         for task in self.tasks:
             if task.is_running():
                 return False
         return True
 
     def interact( self ):
+        # each task asks the others, can you satisfy my prerequisites?
         for task in self.tasks:
             task.get_satisfaction( self.tasks )
 
     def run_if_ready( self ):
+        # tell tasks to run if their prequisites are satisfied
         for task in self.tasks:
             task.run_if_ready( self.tasks )
 
-    def create_task_by_name( self, task_name, ref_time, state = "waiting" ):
-
-        # class creation can increase the reference time so can't check
-        # for stop until after creation
+    def _create_task( self, task_name, ref_time, state = "waiting" ):
+        # dynamic task object creation by task and module name
         task = get_instance( 'task_definitions', task_name )( ref_time, state )
 
+        # the initial task reference time can be altered during
+        # creation, so we have to create the task before checking if
+        # stop time has been reached.
         if config.stop_time:
             if int( task.ref_time ) > int( config.stop_time ):
                 task.log.info( task.name + " STOPPING at " + config.stop_time )
@@ -64,16 +65,14 @@ class task_pool ( Pyro.core.ObjBase ):
 
         task.log.info( "New task created for " + task.ref_time )
         self.tasks.append( task )
-
-        # connect new task to the pyro daemon
         self.pyro_daemon.connect( task, pyro_ns_name( task.identity ) )
 
-    def regenerate( self ):
-        # create a new task(T+1) if task(T) has abdicated
+    def spawn_new_tasks( self ):
+        # create new task(T+1) if task(T) has abdicated
         for task in self.tasks:
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
-                self.create_task_by_name( task.name, task.next_ref_time() )
+                self._create_task( task.name, task.next_ref_time() )
 
     def kill_lame_ducks( self ):
         # Remove any tasks in the OLDEST BATCH whose prerequisites
@@ -110,7 +109,7 @@ class task_pool ( Pyro.core.ObjBase ):
     
         for task in lame_ducks:
             task.log.info( "abdicating a lame duck " + task.identity )
-            self.create_task_by_name( task.name, task.next_ref_time() )
+            self._create_task( task.name, task.next_ref_time() )
             self.tasks.remove( task )
             self.pyro_daemon.disconnect( task )
 
@@ -153,22 +152,7 @@ class task_pool ( Pyro.core.ObjBase ):
 
             del remove_these
 
-    def get_state_summary( self ):
-        summary = {}
-        for task in self.tasks:
-            postreqs = task.get_postrequisites()
-            n_total = len( postreqs )
-            n_satisfied = 0
-            for key in postreqs.keys():
-                if postreqs[ key ]:
-                    n_satisfied += 1
-
-            summary[ task.identity ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
-
-        return summary
-
     def dump_state( self ):
-
         # TO DO: implement restart from dumped state capability 
         # Also, consider:
         #  (i) using 'pickle' to dump and read state, or
@@ -196,18 +180,18 @@ class task_pool ( Pyro.core.ObjBase ):
 
         FILE.close()
 
-    def pause( self ):
-        # call remotely via Pyro
-        self.log.warning( "system pause requested" )
-        self.paused = True
+    def get_state_summary( self ):
+        summary = {}
+        for task in self.tasks:
+            postreqs = task.get_postrequisites()
+            n_total = len( postreqs )
+            n_satisfied = 0
+            for key in postreqs.keys():
+                if postreqs[ key ]:
+                    n_satisfied += 1
 
-    def resume( self ):
-        # call remotely via Pyro
-        self.log.warning( "system resume requested" )
-        self.paused = False 
+            summary[ task.identity ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
 
-    def shutdown( self ):
-        # call remotely via Pyro
-        self.log.warning( "system shutdown requested" )
-        self.shuttingdown = True
+        return summary
+
 
