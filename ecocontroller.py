@@ -111,18 +111,17 @@ class task_manager ( Pyro.core.ObjBase ):
 
 
     def remove_dead_soldiers( self ):
-        # Remove any tasks in the OLDEST time batch whose prerequisites
-        # cannot be satisfied by their co-temporal peers. 
+        # Remove any tasks in the OLDEST BATCH whose prerequisites
+        # cannot be satisfied by their co-temporal peers.  It's not
+        # possible to detect dead soldiers in newer batches because 
+        # the batch may not be fully populated yet(more tasks may appear
+        # as their predecessors abdicate).
 
         # This is needed because, for example, if we start the system at
         # 12Z with topnet turned on, topnet is valid at every hour from 
         # 12 through 17Z, so those tasks will be created but they will 
         # never be able to run due to lack of any upstream nzlam_post
         # task until 18Z comes along.
-
-        # This action is only appied to the OLDEST batch of tasks. In
-        # newer batches potential prerequisite satisfiers can appear
-        # later as their predecessors abdicate.
 
         # NOTE THAT DEAD SOLDIERS ARE REMOVED IN THE TASK INTERACTION
         # LOOP, SO SOMETIMES THEY MAY NOT GET ELIMINATED IMMEDIATELY
@@ -160,109 +159,79 @@ class task_manager ( Pyro.core.ObjBase ):
         while True:
             # MAIN MESSAGE HANDLING LOOP
 
-            if task_base.processing_required:
-                #print "processing ..."
+            if self.shutdown_requested:
+                self.system_halt( 'by request' )
+ 
+            if task_base.processing_required and not self.pause_requested:
+                # TASK PROCESSING
+                self.create_new_tasks()
                 self.process_tasks()
+                self.stop_if_done()
+                self.kill_spent_tasks()
+                self.remove_dead_soldiers()
+                self.dump_state()
 
             task_base.processing_required = False
-            #print "handling requests ..."
+            # REMOTE OBJECT MESSAGE HANDLING
             pyro_daemon.handleRequests( timeout = None )
 
 
+    def stop_if_done( self ):
+        all_done = True
+        for task in self.task_pool:
+            if task.is_running():
+                all_done = False
+        if all_done:
+            self.system_halt( 'ALL TASKS DONE' )
+
     def system_halt( self, message ):
-        log.critical( 'Halting NOW: ' + message )
+        log.critical( 'System Halt: ' + message )
         pyro_daemon.shutdown( True ) 
         sys.exit(0)
 
-
-    def process_tasks( self ):
-
-        if self.shutdown_requested:
-            self.system_halt( 'by request' )
- 
-        if self.pause_requested:
-            # no new tasks please
-            return
-       
-        if len( self.task_pool ) == 0:
-            self.system_halt('all configured tasks done')
-
-        batch_finished = {}
-        still_running = []
-
+    def create_new_tasks( self ):
         for task in self.task_pool:
             # create a new task(T+1) if task(T) has just finished
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
                 self.create_task_by_name( task.name, task.next_ref_time() )
 
-        # task interaction to satisfy prerequisites
-        keep_me = []
-        for task in self.task_pool:
+    def process_tasks( self ):
 
-            task.get_satisfaction( self.task_pool )
+        # MAIN TASK PROCESSING LOOP
+        for task in self.task_pool:                  # LOOP OVER ALL TASKS
 
-            task.run_if_ready( self.task_pool )
+            task.get_satisfaction( self.task_pool )  # TASK INTERACTION
+            task.run_if_ready( self.task_pool )      # RUN IF READY
 
-            # Determine which tasks can be deleted (documentation below)
-            res = task.oldest_to_keep( self.task_pool )
-            if res:
-                keep_me.append( res )
-            
-            # find which ref_time batches are all finished
-            # (assume yes, set no if any running task found)
-            if task.ref_time not in batch_finished.keys():
-                batch_finished[ task.ref_time ] = True
+    def kill_spent_tasks( self ):
+        # DELETE tasks that are finished AND no longer needed to satisfy
+        # the prerequisites of other waiting tasks.
+        batch_finished = []
+        cutoff_times = []
+        for task in self.task_pool:   
+            if task.state != 'finished':
+                cutoff_times.append( task.get_cutoff( self.task_pool ))
+            # which ref_time batches are all finished
+            if task.ref_time not in batch_finished:
+                batch_finished.append( task.ref_time )
 
-            if not task.is_finished():
-                batch_finished[ task.ref_time ] = False
+        if len( cutoff_times ) == 0:
+            # no tasks to delete (is this possible?)
+            return
 
-            if task.is_running():
-                still_running.append( task.ref_time )
+        cutoff_times.sort( key = int )
+        cutoff = cutoff_times[0]
 
-        # DELETE SPENT TASKS i.e. those that are finished AND no longer
-        # needed to satisfy the prerequisites of other tasks that are
-        # yet to run, i.e. any batch OLDER THAN:
-        #   (i) the oldest running task
-        #   (ii) the most recent finished nzlam_post 
-        # because upcoming hourly topnet tasks may still need the most
-        # recent finished nzlam_post.
+        log.debug( "task deletion cutoff is " + cutoff )
 
-        # For running topnet on /test off operational files, nzlam_post
-        # takes the place of the downloader (no prerequisites) and is
-        # able to run ahead of topnet.  To handle this we had to modify
-        # the second condition:
-        #   (ii) the most recent finished nzlam_post THAT IS OLDER THAN
-        #        THE MOST RECENT TOPNET.
-
-        if len( still_running ) == 0:
-            log.critical( "ALL TASKS DONE" )
-            sys.exit(0)
-
-        #still_running.sort( key = int )
-        #oldest_running = still_running[0]
-
-        #cutoff = oldest_running
-        #log.debug( "oldest running task: " + cutoff )
-
-        keep_me.sort( key = int )
-        cutoff = keep_me[0]
-
-        log.debug( " => keeping tasks " + cutoff + " and newer")
-
-        # TO DO: REFORMULATE THIS SECTION
-        # TO DO: MAKE TOPNET'S DEPENDENCY (nzlam_post) A PARAMETER
-        #        SO I CAN USE A DIFFERENT INITIAL TASK FOR THE TEST
-        #        SYSTEM
-        
         remove_these = []
-        for rt in batch_finished.keys():
+        for rt in batch_finished:
             if int( rt ) < int( cutoff ):
-                if batch_finished[rt]:
-                    log.debug( "REMOVING BATCH " + rt )
-                    for task in self.task_pool:
-                        if task.ref_time == rt:
-                            remove_these.append( task )
+                log.debug( "REMOVING BATCH " + rt )
+                for task in self.task_pool:
+                    if task.ref_time == rt:
+                        remove_these.append( task )
 
         if len( remove_these ) > 0:
             for task in remove_these:
@@ -270,11 +239,7 @@ class task_manager ( Pyro.core.ObjBase ):
                 self.task_pool.remove( task )
                 pyro_daemon.disconnect( task )
 
-        del remove_these
-
-        self.remove_dead_soldiers()
-   
-        self.dump_state()
+            del remove_these
 
 
     def request_pause( self ):

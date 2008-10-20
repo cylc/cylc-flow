@@ -262,11 +262,11 @@ class nzwave( task_base ):
         hour = ref_time[8:10]
 
         self.prerequisites = requisites( self.name, [ 
-            "file sls_" + ref_time + ".nc ready" ])
+            "file sls_" + ref_time + "_utc_nzlam_12.nc ready" ])
 
         self.postrequisites = timed_requisites( self.name, [
             [0, self.name + " started for " + ref_time],
-            [110, "file nzwave_" + ref_time + ".nc ready"],
+            [110, "processing finished"],
             [112, self.name + " finished for " + ref_time] ])
  
         task_base.__init__( self, ref_time, initial_state )
@@ -286,11 +286,11 @@ class ricom( task_base ):
         ref_time = self.ref_time
  
         self.prerequisites = requisites( self.name, [ 
-            "file sls_" + ref_time + ".nc ready" ])
+            "file sls_" + ref_time + "_utc_nzlam_12.nc ready" ])
 
         self.postrequisites = timed_requisites( self.name, [
             [0, self.name + " started for " + ref_time],
-            [30, "file ricom_" + ref_time + ".nc ready"],
+            [30, "processing finished"],
             [31, self.name + " finished for " + ref_time] ])
  
         task_base.__init__( self, ref_time, initial_state )
