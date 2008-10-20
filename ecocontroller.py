@@ -6,7 +6,7 @@ import pyro_ns_naming
 import pyro_setup
 import logging_setup
 import task_base
-import task_pool
+import task_manager
 import dead_letter
 import config
 
@@ -81,7 +81,7 @@ def main( argv ):
     # initialize the task pool, as configured or from the state dump
     if restart:
         print
-        print 'Resetarting from state dump file ' + config.state_dump_file
+        print 'Starting from state dump file ' + config.state_dump_file
         log.info( 'starting from state dump file ' + config.state_dump_file )
 
     else:
@@ -95,8 +95,8 @@ def main( argv ):
         log.info( 'final reference time ' + config.stop_time )
         stop_time = config.stop_time
     
-    tasks = task_pool.pool( pyro_daemon, restart, config.task_list, config.start_time, stop_time )
-    pyro_daemon.connect( tasks, pyro_ns_naming.name( 'god' ) )
+    pool = task_manager.manager( pyro_daemon, restart, config.task_list, config.start_time, stop_time )
+    pyro_daemon.connect( pool, pyro_ns_naming.name( 'god' ) )
 
     print
     print "Beginning task processing now"
@@ -111,20 +111,20 @@ def main( argv ):
         # TASK PROCESSING, each time a task message comes in
         if task_base.state_changed and not master.system_pause:
 
-            tasks.create_tasks()
+            pool.create_tasks()
 
-            tasks.interact()
+            pool.interact()
 
-            tasks.run_if_ready()
+            pool.run_if_ready()
 
-            tasks.dump_state()
+            pool.dump_state()
 
-            if tasks.all_finished():
+            if pool.all_finished():
                 clean_shutdown( 'ALL TASKS FINISHED' )
 
-            tasks.kill_spent_tasks()
+            pool.kill_spent_tasks()
 
-            tasks.kill_lame_ducks()
+            pool.kill_lame_ducks()
 
         task_base.state_changed = False
         # PYRO REQUEST HANDLING, returns after one or

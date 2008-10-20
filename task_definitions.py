@@ -358,7 +358,6 @@ class topnet( normal_task ):
     external_task = 'topnet.sh'
     user_prefix = 'hydrology'
 
-
     # assume catchup mode and detect if we've caught up
     catchup_mode = True
     # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
@@ -399,7 +398,6 @@ class topnet( normal_task ):
 
 
     def run_external_dummy( self ):
-        # RUN THE EXTERNAL TASK AS A SEPARATE PROCESS
         # topnet (external) needs to be given the name of the netcdf
         # file that satisfied satisified the topnet fuzzy prerequisite
 

@@ -136,7 +136,6 @@ class normal_task( Pyro.core.ObjBase ):
         self.state = "running"
 
     def run_external_task( self ):
-        # RUN THE EXTERNAL TASK 
         # note that you can mix real and dummy tasks by temporarily
         # overriding this method to call run_external_dummy(), 
         self.log.info( 'launching task for ' + self.ref_time )

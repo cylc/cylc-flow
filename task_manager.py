@@ -8,11 +8,10 @@ from Pyro.errors import NamingError
 import logging
 import os, re
 
-class pool ( Pyro.core.ObjBase ):
+class manager ( Pyro.core.ObjBase ):
     def __init__( self, pyro_d, restart, task_names, start_time, stop_time = None ):
 
         self.log = logging.getLogger( "main" )
-        self.log.debug( "Initialising Task Pool" )
         Pyro.core.ObjBase.__init__(self)
 
         self.task_names = task_names
