@@ -15,14 +15,8 @@ import sys, os, re
 
 global pyro_daemon
 
-def clean_shutdown( reason ):
-    global pyro_daemon
-    log = logging.getLogger( 'main' )
-    log.critical( 'System Halt: ' + reason )
-    pyro_daemon.shutdown( True ) 
-    sys.exit(0)
 
-def main( argv ):
+def print_banner():
     print "__________________________________________________________"
     print
     print "      . EcoConnect Implicit Sequencing Controller ."
@@ -31,6 +25,35 @@ def main( argv ):
     print "              See repository documentation"
     print "      .    Pyro nameserver required: 'pyro-ns'    ."
     print "__________________________________________________________"
+
+
+def usage():
+    print "ecocontroller [-r]"
+    print "Options:"
+    print "  + most inputs should be configured in config.py"
+    print "  + [-r] restart from state dump file (this overrides"
+    print "    the configured start time and task list)."
+
+
+def clean_shutdown( reason ):
+    global pyro_daemon
+    log = logging.getLogger( 'main' )
+    log.critical( 'System Halt: ' + reason )
+    pyro_daemon.shutdown( True ) 
+    sys.exit(0)
+
+
+def main( argv ):
+
+    if len( argv ) - 1 > 1:
+        usage()
+        sys.exit(1)
+
+    restart = False
+    if len( argv ) -1 == 1 and argv[1] == '-r':
+        restart = True
+
+    print_banner()
 
     # create the Pyro daemon
     global pyro_daemon
@@ -55,13 +78,25 @@ def main( argv ):
     dead_letter_box = dead_letter.letter_box()
     pyro_daemon.connect( dead_letter_box, pyro_ns_naming.name( 'dead_letter_box' ) )
 
-    print
-    print 'Initial reference time ' + config.start_time
-    log.info( 'initial reference time ' + config.start_time )
+    # initialize the task pool, as configured or from the state dump
+    if restart:
+        print
+        print 'Resetarting from state dump file ' + config.state_dump_file
+        log.info( 'starting from state dump file ' + config.state_dump_file )
 
+    else:
+        print
+        print 'Initial reference time ' + config.start_time
+        log.info( 'initial reference time ' + config.start_time )
+
+    stop_time = None
     if config.stop_time:
         print 'Final reference time ' + config.stop_time
         log.info( 'final reference time ' + config.stop_time )
+        stop_time = config.stop_time
+    
+    tasks = task_pool.pool( pyro_daemon, restart, config.task_list, config.start_time, stop_time )
+    pyro_daemon.connect( tasks, pyro_ns_naming.name( 'god' ) )
 
     print
     print "Beginning task processing now"
@@ -69,14 +104,6 @@ def main( argv ):
         print "      (DUMMY MODE)"
     print
  
-    # initialize the task pool
-    stop_time = None
-    if config.stop_time:
-        stop_time = config.stop_time
-
-    tasks = task_pool.pool( pyro_daemon, config.task_list, config.start_time, stop_time )
-    pyro_daemon.connect( tasks, pyro_ns_naming.name( 'god' ) )
-
     while True: # MAIN LOOP ################################
         if master.system_halt:
             clean_shutdown( 'remote request' )
@@ -90,6 +117,8 @@ def main( argv ):
 
             tasks.run_if_ready()
 
+            tasks.dump_state()
+
             if tasks.all_finished():
                 clean_shutdown( 'ALL TASKS FINISHED' )
 
@@ -97,13 +126,12 @@ def main( argv ):
 
             tasks.kill_lame_ducks()
 
-            tasks.dump_state()
-
         task_base.state_changed = False
         # PYRO REQUEST HANDLING, returns after one or
         # more remote method invocations is processed
         pyro_daemon.handleRequests( timeout = None )
     #########################################################
+
 
 if __name__ == "__main__":
     main( sys.argv )

@@ -14,12 +14,14 @@ import logging
 #  8. logging_dir (directory under which to put all log files)
 #  9. logging_level (logging.INFO or logging.DEBUG)
 # 10. pyro_ns_group (must be unique for each running controller)
+# 11. state_dump_file (records current system state)
 
 dummy_mode = True
 dummy_clock_offset = 20
 dummy_clock_rate = 5
 
 logging_dir = 'LOGFILES'
+state_dump_file = 'STATE'
 
 pyro_ns_group = ':ecoconnect'
 

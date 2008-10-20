@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 from get_instance import *
+import config
 import pyro_ns_naming
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
@@ -8,8 +9,7 @@ import logging
 import os, re
 
 class pool ( Pyro.core.ObjBase ):
-    
-    def __init__( self, pyro_d, task_names, start_time, stop_time = None ):
+    def __init__( self, pyro_d, restart, task_names, start_time, stop_time = None ):
 
         self.log = logging.getLogger( "main" )
         self.log.debug( "Initialising Task Pool" )
@@ -22,17 +22,48 @@ class pool ( Pyro.core.ObjBase ):
 
         self.pyro_daemon = pyro_d
 
-        self.state_dump_dir = 'STATE'
-        if not os.path.exists( self.state_dump_dir ):
-            os.makedirs( self.state_dump_dir )
+        self.state_dump_file = config.state_dump_file
+        if re.compile( "/" ).search( config.state_dump_file ):
+            state_dump_dir = os.path.dirname( config.state_dump_file )
+            if not os.path.exists( state_dump_dir ):
+                os.makedirs( state_dump_dir )
 
-        # create initial set of tasks
+        if restart:
+            self._initialise_from_state_dump()
+        else:
+            self._initialise_from_config()
+
+
+    def _initialise_from_config( self ):
+        # initialise from a list of task names
         for task_name in self.task_names:
             state = None
             if re.compile( "^.*:").match( task_name ):
                 [task_name, state] = task_name.split(':')
 
-            self._create_task( task_name, self.start_time, state )
+            self._create_task( task_name, self.start_time, False, state )
+
+    def _initialise_from_state_dump( self ):
+        config = self._read_state()
+        ref_times = config.keys()
+        ref_times.sort( key = int, reverse = True )
+        seen = {}
+        for ref_time in ref_times:
+            for task in config[ ref_time ]:
+                [task_name, state] = task.split(':')
+                # convert 'running' to 'waiting'
+                if state == 'running':
+                    state = 'waiting'
+
+                abdicate = False
+                if task_name not in seen.keys():
+                    seen[ task_name ] = True
+                elif state == 'finished':
+                    # finished task, but already seen at a later
+                    # reference time => already abdicated
+                    abdicate = True
+                    
+                self._create_task( task_name, ref_time, abdicate, state )
 
     def all_finished( self ):
         # return True if all tasks have completed
@@ -51,9 +82,12 @@ class pool ( Pyro.core.ObjBase ):
         for task in self.tasks:
             task.run_if_ready( self.tasks )
 
-    def _create_task( self, task_name, ref_time, state = "waiting" ):
+    def _create_task( self, task_name, ref_time, abdicate, state = "waiting" ):
         # dynamic task object creation by task and module name
         task = get_instance( 'task_definitions', task_name )( ref_time, state )
+        if abdicate:
+            if state == 'finished':
+                task.abdicate()
 
         # the initial task reference time can be altered during
         # creation, so we have to create the task before checking if
@@ -73,7 +107,7 @@ class pool ( Pyro.core.ObjBase ):
         for task in self.tasks:
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
-                self._create_task( task.name, task.next_ref_time() )
+                self._create_task( task.name, task.next_ref_time(), False )
 
     def kill_lame_ducks( self ):
         # Remove any tasks in the OLDEST BATCH whose prerequisites
@@ -112,7 +146,7 @@ class pool ( Pyro.core.ObjBase ):
     
         for task in lame_ducks:
             task.log.info( "abdicating a lame duck " + task.identity )
-            self._create_task( task.name, task.next_ref_time() )
+            self._create_task( task.name, task.next_ref_time(), False )
             self.tasks.remove( task )
             self.pyro_daemon.disconnect( task )
 
@@ -156,10 +190,9 @@ class pool ( Pyro.core.ObjBase ):
             del remove_these
 
     def dump_state( self ):
-        # TO DO: implement restart from dumped state capability 
-        # Also, consider:
-        #  (i) using 'pickle' to dump and read state, or
-        #  (ii) writing a python source file similar to current startup config
+        # I considered using python 'pickle' to dump and read a state
+        # object, but we really need a trivially human-readable file
+        # format.
 
         config = {}
         for task in self.tasks:
@@ -170,18 +203,36 @@ class pool ( Pyro.core.ObjBase ):
             else:
                 config[ ref_time ] = [ state ]
 
-        FILE = open( self.state_dump_dir + '/state', 'w' )
+        FILE = open( self.state_dump_file, 'w' )
 
         ref_times = config.keys()
         ref_times.sort( key = int )
         for rt in ref_times:
-            FILE.write( rt + ' ' )
+            FILE.write( rt )
             for entry in config[ rt ]:
-                FILE.write( entry + ' ' )
+                FILE.write( ' ' + entry )
 
             FILE.write( '\n' )
 
         FILE.close()
+
+    def _read_state( self ):
+
+        FILE = open( self.state_dump_file, 'r' )
+        lines = FILE.readlines()
+        FILE.close()
+
+        config = {}
+        for line in lines:
+            # ref_time task:state task:state ...
+            if re.compile( '^.*\n$' ).match( line ):
+                # strip trailing newlines
+                line = line[:-1]
+
+            tokens = line.split(' ')
+            config[ tokens[0] ] = tokens[1:]
+
+        return config
 
     def get_state_summary( self ):
         summary = {}
@@ -196,5 +247,3 @@ class pool ( Pyro.core.ObjBase ):
             summary[ task.identity ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
 
         return summary
-
-
