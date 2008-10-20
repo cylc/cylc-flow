@@ -2,8 +2,8 @@
 # ECOCONTROLLER CONFIGURATION FILE
 import logging
 
-dummy_mode = False
-dummy_clock_offset = 8
+dummy_mode = True
+dummy_clock_offset = 20 
 dummy_clock_rate = 20
 
 pyro_ns_group = ':ecoconnect'
@@ -18,8 +18,8 @@ dummy_out = []
 
 operational_tasks = [ 
         'downloader',
-        'nwpglobal',
-        'globalprep',
+        'nwp_global',
+        'global_prep',
         'globalwave',
         'nzlam:finished',
         'nzlam_post',
@@ -36,9 +36,7 @@ topnet_test_tasks = [
         #'topnet_post'
         ]
 
-
-#task_list = operational_tasks
-
-task_list = topnet_test_tasks
-dummy_out = [ 'topnet' ]
+task_list = operational_tasks
+#task_list = topnet_test_tasks
+#dummy_out = [ 'topnet' ]
 

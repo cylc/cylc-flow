@@ -33,7 +33,6 @@ class downloader( free_task_base ):
     external_task = 'downloader.sh' 
     user_prefix = 'ecoconnect'
 
-
     def __init__( self, ref_time, initial_state = "waiting" ):
  
         # adjust reference time to next valid for this task
@@ -144,7 +143,7 @@ class nzlam( task_base ):
 
             self.postrequisites = timed_requisites( self.name, [ 
                 [0, self.name + " started for " + ref_time],
-                [110, "file tn_" + ref_time + "_utc_nzlam_12.um ready"],
+                [110, "file tn_"  + ref_time + "_utc_nzlam_12.um ready"],
                 [111, "file sls_" + ref_time + "_utc_nzlam_12.um ready"],   
                 [112, "file met_" + ref_time + "_utc_nzlam_12.um ready"],
                 [115, self.name + " finished for " + ref_time] ])
@@ -159,8 +158,6 @@ class nzlam_post( task_base ):
     external_task = 'nzlam_post.sh'
     user_prefix = 'nwp'
 
-
-
     def __init__( self, ref_time, initial_state = "waiting" ):
 
         # adjust reference time to next valid for this task
@@ -172,11 +169,11 @@ class nzlam_post( task_base ):
         if hour == "00" or hour == "12":
             
             self.prerequisites = requisites( self.name, [ 
-                "file sls_" + ref_time + ".um ready" ])
+                "file sls_" + ref_time + "_utc_nzlam_12.um ready" ])
 
             self.postrequisites = timed_requisites( self.name, [
                 [0, self.name + " started for " + ref_time],
-                [10, "file sls_" + ref_time + ".nc ready"],   
+                [10, "file sls_" + ref_time + "_utc_nzlam_12.nc ready"],   
                 [11, self.name + " finished for " + ref_time] ])
 
         elif hour == "06" or hour == "18":
@@ -196,14 +193,12 @@ class nzlam_post( task_base ):
         task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class globalprep( task_base ):
+class global_prep( task_base ):
 
     name = "global_prep"
     valid_hours = [ 0 ]
     external_task = 'global_prep.sh'
     user_prefix = 'wave'
-
-
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -233,8 +228,6 @@ class globalwave( task_base ):
     external_task = 'globalwave.sh'
     user_prefix = 'wave'
 
-
-
     def __init__( self, ref_time, initial_state = "waiting" ):
 
         # adjust reference time to next valid for this task
@@ -259,8 +252,6 @@ class nzwave( task_base ):
     valid_hours = [ 0, 6, 12, 18 ]
     external_task = 'nzwave.sh'
     user_prefix = 'wave'
-
-
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -288,8 +279,6 @@ class ricom( task_base ):
     external_task = 'ricom.sh'
     user_prefix = 'sea_level'
 
-
-
     def __init__( self, ref_time, initial_state = "waiting" ):
 
         # adjust reference time to next valid for this task
@@ -313,7 +302,6 @@ class mos( task_base ):
     valid_hours = [ 0, 6, 12, 18 ]
     external_task = 'mos.sh'
     user_prefix = 'nwp'
-
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -343,8 +331,6 @@ class nztide( free_task_base ):
     valid_hours = [ 6, 18 ]
     external_task = 'nztide.sh'
     user_prefix = 'sea_level'
-
-
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -488,13 +474,12 @@ class topnet( task_base ):
         return result
 
 #----------------------------------------------------------------------
-class nwpglobal( task_base ):
+class nwp_global( task_base ):
 
     name = "nwp_global"
     valid_hours = [ 0 ]
     external_task = 'nwp_global.sh'
     user_prefix = 'nwp'
-
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -511,5 +496,4 @@ class nwpglobal( task_base ):
             [121, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
-
 
