@@ -4,14 +4,16 @@ import Pyro.core
 import logging
 import sys
 
-class control( Pyro.core.ObjBase ):
+class main_switch( Pyro.core.ObjBase ):
+    "class to take remote system control requests" 
 
-    def __init__( self, pyrod ):
+    # the main program can take action on these when it is convenient.
+
+    def __init__( self ):
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
         self.system_halt = False
         self.system_pause = False
-        self.pyro_daemon = pyrod
 
     def pause( self ):
         # call remotely via Pyro
@@ -25,10 +27,5 @@ class control( Pyro.core.ObjBase ):
 
     def shutdown( self ):
         # call remotely via Pyro
-        self.log.warning( "system shutdown requested" )
+        self.log.warning( "system halt requested" )
         self.system_halt = True
-
-    def clean_shutdown( self, message ):
-        self.log.critical( 'System Halt: ' + message )
-        self.pyro_daemon.shutdown( True ) 
-        sys.exit(0)

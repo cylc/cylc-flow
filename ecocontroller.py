@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from dummy_clock import *
-from control import *
+from master_control import main_switch
 from pyro_ns_naming import *
 from setup_pyro import *
 from task_definitions import task_base 
@@ -13,13 +13,19 @@ import config
 import logging
 import sys, os, re
 
+def clean_shutdown( reason ):
+    log = logging.getLogger( 'main' )
+    log.critical( 'System Halt: ' + reason )
+    pyro_daemon.shutdown( True ) 
+    sys.exit(0)
+
 print "__________________________________________________________"
 print
 print "      . EcoConnect Implicit Sequencing Controller ."
-print 
-print "              Hilary Oliver, NIWA, 2008"
-print "             See repository documentation"
-print "          Pyro nameserver required: 'pyro-ns'"
+print
+print "      .         Hilary Oliver, NIWA, 2008         ."
+print "              See repository documentation"
+print "      .    Pyro nameserver required: 'pyro-ns'    ."
 print "__________________________________________________________"
 
 # create the Pyro daemon
@@ -36,9 +42,9 @@ else:
 setup_logging( dummy_clock )
 log = logging.getLogger( 'main' )
 
-# remotely accessible control switches
-control = control( pyro_daemon )
-pyro_daemon.connect( control, pyro_ns_name( 'control' ) )
+# remotely accessible control switch
+master = main_switch()
+pyro_daemon.connect( master, pyro_ns_name( 'master' ) )
 
 # dead letter box for remote use
 dead_letter_box = dead_letter_box()
@@ -64,11 +70,11 @@ pyro_daemon.connect( task_pool, pyro_ns_name( 'god' ) )
 
 while True: # MAIN LOOP ################################
 
-    if control.system_halt:
-        control.clean_shutdown( 'requested' )
+    if master.system_halt:
+        clean_shutdown( 'remote request' )
 
     # TASK PROCESSING, each time a task message comes in
-    if task_base.state_changed and not control.system_pause:
+    if task_base.state_changed and not master.system_pause:
 
         task_pool.spawn_new_tasks()
 
@@ -77,7 +83,7 @@ while True: # MAIN LOOP ################################
         task_pool.run_if_ready()
 
         if task_pool.all_finished():
-            control.clean_shutdown( 'ALL TASKS FINISHED' )
+            clean_shutdown( 'ALL TASKS FINISHED' )
 
         task_pool.kill_spent_tasks()
 

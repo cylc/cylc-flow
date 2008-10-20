@@ -62,7 +62,7 @@ else:
 # pause, resume, or halt
 try:
     # connect to the task object inside the control program
-    control = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'control'))
+    control = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'master'))
 
 except:
     print "ERROR: failed to connect to control"
