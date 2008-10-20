@@ -1,6 +1,19 @@
 #!/usr/bin/python
-# ECOCONTROLLER CONFIGURATION FILE
+
 import logging
+
+# THE FOLLOWING ITEMS MUST BE DEFINED IN THIS CONFIGURATION FILE:
+
+#  1. start_time ('yyyymmddhh')
+#  2. stop_time  ('yyyymmddhh', or None for no stop)
+#  3. dummy_mode (dummy out all tasks)
+#  4. dummy_clock_rate (seconds per simulated hour) 
+#  5. dummy_clock_offset (hours before start_time)
+#  6. task_list (tasks out of task_definitions module to run)
+#  7. dummy_out (tasks to dummy out even when dummy_mode is False)
+#  8. logging_dir (directory under which to put all log files)
+#  9. logging_level (logging.INFO or logging.DEBUG)
+# 10. pyro_ns_group (must be unique for each running controller)
 
 dummy_mode = True
 dummy_clock_offset = 20

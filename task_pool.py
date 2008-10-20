@@ -87,9 +87,11 @@ class task_pool ( Pyro.core.ObjBase ):
         # never be able to run due to lack of any upstream nzlam_post
         # task until 18Z comes along.
 
-        # NOTE THAT LAME DUCKS ARE REMOVED IN THE TASK INTERACTION
-        # LOOP, SO SOMETIMES THEY MAY NOT GET ELIMINATED IMMEDIATELY
-        # ... just wait until a message comes in for another task. 
+        # LAME DUCKS ARE REMOVED IN THE TASK PROCESSING LOOP SO THEY 
+        # WON'T GET ELIMINATED IMMEDIATELY IF NO REMOTE MESSAGES ARE
+        # COMING IN ... when a new message does come in for any task 
+        # it will cause the pyro request handling loop to return and
+        # and thereby allow another round of task processing.
 
         batches = {}
         for task in self.tasks:

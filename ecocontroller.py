@@ -12,7 +12,6 @@ import config
 
 import logging
 import sys, os, re
-import pdb
 
 print "__________________________________________________________"
 print
@@ -23,19 +22,7 @@ print "             See repository documentation"
 print "          Pyro nameserver required: 'pyro-ns'"
 print "__________________________________________________________"
 
-# THINGS THAT MUST BE DEFINED IN CONFIG.PY:
-#  1. start_time ('yyyymmddhh')
-#  2. stop_time  ('yyyymmddhh', or None for no stop)
-#  3. dummy_mode (dummy out all tasks)
-#  4. dummy_clock_rate (seconds per simulated hour) 
-#  5. dummy_clock_offset (hours before start_time)
-#  6. task_list (tasks out of task_definitions module to run)
-#  7. dummy_out (tasks to dummy out even when dummy_mode is False)
-#  8. logging_dir (directory under which to put all log files)
-#  9. logging_level (logging.INFO or logging.DEBUG)
-# 10. pyro_ns_group (must be unique for each running controller)
-
-# Pyro
+# create the Pyro daemon
 pyro_daemon = setup_pyro()
 
 # dummy mode accelerated clock
@@ -45,7 +32,7 @@ if config.dummy_mode:
 else:
     dummy_clock = None
 
-# task type based logging hierarchy
+# task type based hierarchical logging
 setup_logging( dummy_clock )
 log = logging.getLogger( 'main' )
 
@@ -53,7 +40,7 @@ log = logging.getLogger( 'main' )
 control = control( pyro_daemon )
 pyro_daemon.connect( control, pyro_ns_name( 'control' ) )
 
-# dead letter box
+# dead letter box for remote use
 dead_letter_box = dead_letter_box()
 pyro_daemon.connect( dead_letter_box, pyro_ns_name( 'dead_letter_box' ) )
 
@@ -62,11 +49,11 @@ print 'initial reference time ' + config.start_time
 log.info( 'initial reference time ' + config.start_time )
 
 if config.stop_time:
-    print 'Final reference time ' + config.stop_time
+    print 'final reference time ' + config.stop_time
     log.info( 'final reference time ' + config.stop_time )
 
 print
-print "beginning task processing"
+print "beginning task processing now"
 if config.dummy_mode:
     print "      (DUMMY MODE)"
 print
