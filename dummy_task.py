@@ -11,7 +11,7 @@
 import sys
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
-from pyro_ns_naming import pyro_ns_name
+import pyro_ns_naming
 import reference_time
 import datetime
 from time import sleep
@@ -25,9 +25,9 @@ class dummy_task_base:
         self.ref_time = ref_time
 
         if dummy_mode:
-            self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ))
+            self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock' ))
 
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( self.task_name + '%' + self.ref_time ))
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( self.task_name + '%' + self.ref_time ))
         self.fast_complete = False
 
     def run( self ):

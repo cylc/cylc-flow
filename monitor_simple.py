@@ -11,7 +11,7 @@ import os
 import sys
 import Pyro.core
 from time import sleep
-from pyro_ns_naming import pyro_ns_name
+import pyro_ns_naming
 from string import split
 import datetime
 from reference_time import _rt_to_dt
@@ -45,11 +45,11 @@ while True:
 
     try: 
     
-        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'god' ) )
+        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'god' ) )
         god._setTimeout(1)
 
         if dummy_mode:
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ) )
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock' ) )
             remote_clock._setTimeout(1)
 
         while True:

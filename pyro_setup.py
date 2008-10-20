@@ -11,9 +11,9 @@
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 
-from pyro_ns_naming import *
+import config
 
-def setup_pyro():
+def create_daemon():
 
     # We require SINGLE THREADED operation (see repository docs)
     Pyro.config.PYRO_MULTITHREADED = 0
@@ -22,7 +22,7 @@ def setup_pyro():
     pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
 
     print
-    print "Using Pyro nameserver group '" + pyro_ns_group + "'"
+    print "Using Pyro nameserver group '" + config.pyro_ns_group + "'"
     print "(must be unique for each program instance)"
  
     try:
@@ -30,12 +30,12 @@ def setup_pyro():
         # (this avoids having to restart the nameserver every time we
         # run the controller, or otherwise having to disconnect
         # individual objects that already exist). 
-        pyro_nameserver.deleteGroup( pyro_ns_group )
+        pyro_nameserver.deleteGroup( config.pyro_ns_group )
     except NamingError:
         # no such group already registered
         pass
 
-    pyro_nameserver.createGroup( pyro_ns_group )
+    pyro_nameserver.createGroup( config.pyro_ns_group )
     pyro_daemon = Pyro.core.Daemon()
     pyro_daemon.useNameServer(pyro_nameserver)
 

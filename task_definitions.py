@@ -2,24 +2,20 @@
 
 # operational task class definitions
 
-from task_base import *
+from task_base import normal_task, free_task
 
 import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
 from time import sleep
 
-import os
-import re
-import sys
+import os, sys, re
 from copy import deepcopy
 from time import strftime
 import Pyro.core
-
 import logging
-import logging.handlers
 
 #----------------------------------------------------------------------
-class downloader( free_task_base ):
+class downloader( free_task ):
     "Met Office input file download task"
 
     """
@@ -77,10 +73,10 @@ class downloader( free_task_base ):
                 [1, "file bgerr" + ref_time + ".um ready"],
                 [2, self.name + " finished for " + ref_time] ])
  
-        free_task_base.__init__( self, ref_time, initial_state )
+        free_task.__init__( self, ref_time, initial_state )
            
 #----------------------------------------------------------------------
-class oper2test_topnet( free_task_base ):
+class oper2test_topnet( free_task ):
 
     name = "oper2test_topnet"
     valid_hours = [ 6, 18 ]
@@ -103,10 +99,10 @@ class oper2test_topnet( free_task_base ):
                 [2, "file tn_" + ref_time + "_utc_nzlam_12.nc ready"],
                 [3, self.name + " finished for " + ref_time] ])
 
-        free_task_base.__init__( self, ref_time, initial_state )
+        free_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nzlam( task_base ):
+class nzlam( normal_task ):
 
     name = "nzlam"
     valid_hours = [ 0, 6, 12, 18 ]
@@ -148,10 +144,10 @@ class nzlam( task_base ):
                 [112, "file met_" + ref_time + "_utc_nzlam_12.um ready"],
                 [115, self.name + " finished for " + ref_time] ])
 
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nzlam_post( task_base ):
+class nzlam_post( normal_task ):
 
     name = "nzlam_post"
     valid_hours = [ 0, 6, 12, 18 ]
@@ -190,10 +186,10 @@ class nzlam_post( task_base ):
                 [30, "file met_" + ref_time + "_utc_nzlam_12.nc ready"],
                 [31, self.name + " finished for " + ref_time] ])
 
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class global_prep( task_base ):
+class global_prep( normal_task ):
 
     name = "global_prep"
     valid_hours = [ 0 ]
@@ -218,10 +214,10 @@ class global_prep( task_base ):
             [7, "file seaice_" + ref_time + ".nc ready"],
             [10, self.name + " finished for " + ref_time] ])
        
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class globalwave( task_base ):
+class globalwave( normal_task ):
 
     name = "globalwave"
     valid_hours = [ 0 ]
@@ -243,10 +239,10 @@ class globalwave( task_base ):
             [120, "file globalwave_" + ref_time + ".nc ready"],
             [121, self.name + " finished for " + ref_time] ])
  
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class nzwave( task_base ):
+class nzwave( normal_task ):
     
     name = "nzwave"
     valid_hours = [ 0, 6, 12, 18 ]
@@ -269,10 +265,10 @@ class nzwave( task_base ):
             [110, "processing finished"],
             [112, self.name + " finished for " + ref_time] ])
  
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class ricom( task_base ):
+class ricom( normal_task ):
 
     name = "ricom"
     valid_hours = [ 6, 18 ]
@@ -293,10 +289,10 @@ class ricom( task_base ):
             [30, "processing finished"],
             [31, self.name + " finished for " + ref_time] ])
  
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class mos( task_base ):
+class mos( normal_task ):
 
     name = "mos"
     valid_hours = [ 0, 6, 12, 18 ]
@@ -322,10 +318,10 @@ class mos( task_base ):
             [5, "processing done"],
             [6, self.name + " finished for " + ref_time] ])
 
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nztide( free_task_base ):
+class nztide( free_task ):
 
     name = "nztide"
     valid_hours = [ 6, 18 ]
@@ -345,17 +341,17 @@ class nztide( free_task_base ):
             [1, "file nztide_" + ref_time + ".nc ready"],
             [2, self.name + " finished for " + ref_time] ])
 
-        free_task_base.__init__( self, ref_time, initial_state )
+        free_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class topnet( task_base ):
+class topnet( normal_task ):
     "streamflow data extraction and topnet" 
 
     """If no other tasks dependend on the streamflow data then it's
     easiest to make streamflow part of the topnet task, because of
     the unusual runahead behavior of topnet"""
 
-    # topnet is not a "free_task_base task" -- it has prerequisites.
+    # topnet is not a "free_task task" -- it has prerequisites.
  
     name = "topnet"
     valid_hours = range( 0,24 )
@@ -399,7 +395,7 @@ class topnet( task_base ):
             [4, "catchment forecasts finished"],
             [5, self.name + " finished for " + ref_time] ])
 
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
 
 
     def run_external_dummy( self ):
@@ -420,7 +416,7 @@ class topnet( task_base ):
     def incoming( self, priority, message ):
 
         # pass on to the base class message handling function
-        task_base.incoming( self, priority, message)
+        normal_task.incoming( self, priority, message)
         
         # but intercept catchup mode messages
         if not topnet.catchup_mode and self.catchup_re.match( message ):
@@ -474,7 +470,7 @@ class topnet( task_base ):
         return result
 
 #----------------------------------------------------------------------
-class nwp_global( task_base ):
+class nwp_global( normal_task ):
 
     name = "nwp_global"
     valid_hours = [ 0 ]
@@ -495,5 +491,5 @@ class nwp_global( task_base ):
             [120, "file 10mwind_" + ref_time + ".nc ready"],
             [121, self.name + " finished for " + ref_time] ])
 
-        task_base.__init__( self, ref_time, initial_state )
+        normal_task.__init__( self, ref_time, initial_state )
 

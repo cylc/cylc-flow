@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 from get_instance import *
-from pyro_ns_naming import *
+import pyro_ns_naming
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 import logging
@@ -66,7 +66,7 @@ class pool ( Pyro.core.ObjBase ):
 
         task.log.info( "New task created for " + task.ref_time )
         self.tasks.append( task )
-        self.pyro_daemon.connect( task, pyro_ns_name( task.identity ) )
+        self.pyro_daemon.connect( task, pyro_ns_naming.name( task.identity ) )
 
     def create_tasks( self ):
         # create new task(T+1) if task(T) has abdicated

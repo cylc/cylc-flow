@@ -6,7 +6,7 @@ import os, sys, re
 
 from log_filter import *
 
-def setup_logging( dummy_clock ):
+def create_logs( dummy_clock ):
 
     print
     print 'Logging to ' + config.logging_dir

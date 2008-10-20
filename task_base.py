@@ -1,30 +1,24 @@
 #!/usr/bin/python
 
-# task base classes
-
 import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
 from time import sleep
-
-import os
-import re
-import sys
-from copy import deepcopy
-from time import strftime
-import Pyro.core
 import config
 import qsub
 
-import pdb
-
+import os, sys, re
+from copy import deepcopy
+from time import strftime
+import Pyro.core
 import logging
-import logging.handlers
+
+global state_changed
+state_changed = False
 
 #----------------------------------------------------------------------
-class task_base( Pyro.core.ObjBase ):
-    "task base class"
+class normal_task( Pyro.core.ObjBase ):
     
-    name = "task base class"
+    name = "task base"
 
     def __init__( self, ref_time, initial_state ):
         # Call this AFTER derived class initialisation
@@ -34,7 +28,8 @@ class task_base( Pyro.core.ObjBase ):
 
         Pyro.core.ObjBase.__init__(self)
 
-        task_base.state_changed = True
+        global state_changed 
+        state_changed = True
 
         # unique task identity
         self.identity = self.name + '%' + self.ref_time
@@ -223,7 +218,8 @@ class task_base( Pyro.core.ObjBase ):
 
         # print "HELLO FROM INCOMING: " + message
 
-        task_base.state_changed = True
+        global state_changed
+        state_changed = True
 
         self.latest_message = message
 
@@ -255,19 +251,16 @@ class task_base( Pyro.core.ObjBase ):
             self.set_finished()
 
 #----------------------------------------------------------------------
-class free_task_base( task_base ):
+class free_task( normal_task ):
     # for tasks with no-prerequisites, e.g. downloader and nztide,
     # that would otherwise run ahead indefinitely: delay if we get
     # "too far ahead" based on number of existing finished tasks.
 
+    name = "free task base"
+
     def __init__( self, ref_time, initial_state = "waiting" ):
-
         self.MAX_FINISHED = 4
-        task_base.__init__( self, ref_time, initial_state )
-
-        # logging is set up by task_base
-        # self.log.info( self.identity + " max runahead: " + str( self.MAX_FINISHED ) + " tasks" )
-
+        normal_task.__init__( self, ref_time, initial_state )
 
     def run_if_ready( self, tasks ):
         # don't run if too many previous finished instances exist
@@ -288,5 +281,5 @@ class free_task_base( task_base ):
             pass
 
         else:
-            task_base.run_if_ready( self, tasks )
+            normal_task.run_if_ready( self, tasks )
 

@@ -10,7 +10,7 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import Pyro.core
 from time import sleep
-from pyro_ns_naming import pyro_ns_name
+import pyro_ns_naming
 from string import ljust, rjust, split, upper, lower
 import datetime
 from config import dummy_mode
@@ -44,11 +44,11 @@ while True:
 
     try: 
     
-        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'god' ))
+        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'god' ))
         god._setTimeout(1)
 
         if dummy_mode:
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock' ) )
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock' ) )
             remote_clock._setTimeout(1)
 
         while True:

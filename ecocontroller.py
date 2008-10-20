@@ -1,13 +1,13 @@
 #!/usr/bin/python
 
-from dummy_clock import *
+import dummy_mode_clock 
 from master_control import main_switch
-from pyro_ns_naming import *
-from setup_pyro import *
-from task_definitions import task_base 
+import pyro_ns_naming
+import pyro_setup
+import logging_setup
+import task_base
 import task_pool
 import dead_letter
-from setup_logging import *
 import config
 
 import logging
@@ -34,26 +34,26 @@ def main( argv ):
 
     # create the Pyro daemon
     global pyro_daemon
-    pyro_daemon = setup_pyro()
+    pyro_daemon = pyro_setup.create_daemon()
 
     # dummy mode accelerated clock
     if config.dummy_mode:
-        dummy_clock = time_converter( config.start_time, config.dummy_clock_rate, config.dummy_clock_offset ) 
-        pyro_daemon.connect( dummy_clock, pyro_ns_name( 'dummy_clock' ) )
+        dummy_clock = dummy_mode_clock.time_converter( config.start_time, config.dummy_clock_rate, config.dummy_clock_offset ) 
+        pyro_daemon.connect( dummy_clock, pyro_ns_naming.name( 'dummy_clock' ) )
     else:
         dummy_clock = None
 
-    # task type based hierarchical logging
-    setup_logging( dummy_clock )
+    # task-type based hierarchical logging
+    logging_setup.create_logs( dummy_clock )
     log = logging.getLogger( 'main' )
 
     # remotely accessible control switch
     master = main_switch()
-    pyro_daemon.connect( master, pyro_ns_name( 'master' ) )
+    pyro_daemon.connect( master, pyro_ns_naming.name( 'master' ) )
 
     # dead letter box for remote use
     dead_letter_box = dead_letter.letter_box()
-    pyro_daemon.connect( dead_letter_box, pyro_ns_name( 'dead_letter_box' ) )
+    pyro_daemon.connect( dead_letter_box, pyro_ns_naming.name( 'dead_letter_box' ) )
 
     print
     print 'Initial reference time ' + config.start_time
@@ -75,7 +75,7 @@ def main( argv ):
         stop_time = config.stop_time
 
     tasks = task_pool.pool( pyro_daemon, config.task_list, config.start_time, stop_time )
-    pyro_daemon.connect( tasks, pyro_ns_name( 'god' ) )
+    pyro_daemon.connect( tasks, pyro_ns_naming.name( 'god' ) )
 
     while True: # MAIN LOOP ################################
         if master.system_halt:

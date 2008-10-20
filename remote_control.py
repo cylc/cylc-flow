@@ -4,7 +4,7 @@ import os
 import sys
 import Pyro.core
 from time import sleep
-from pyro_ns_naming import pyro_ns_name
+import pyro_ns_naming
 import config
 
 def usage():
@@ -40,7 +40,7 @@ elif n_args == 2 and sys.argv[1] == '-b':
     bump_hours = sys.argv[2]
 
     try:
-        dummy_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'dummy_clock'))
+        dummy_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock'))
     except:
         print "ERROR: failed to connect to the dummy clock"
         sys.exit(1)
@@ -62,7 +62,7 @@ else:
 # pause, resume, or halt
 try:
     # connect to the task object inside the control program
-    control = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_name( 'master'))
+    control = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'master'))
 
 except:
     print "ERROR: failed to connect to control"
