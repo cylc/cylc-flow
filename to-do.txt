@@ -2,14 +2,5 @@ TO DO LIST
 
 * retrofit proper exception handling
 
-* state/config restart capability
-
-* remote logging from model messaging interface script and task_dummy.py,
+* remote logging from send_message and task_dummy,
   in case the controller itself is dead.
-
-* make sure spent task removal works if we're not running topnet
-
-* use methods is_running(), is_finished(), etc. to determine task state
-  instead of than accessing attributes directly
-
-* the task manager object might as well be the main program... 
