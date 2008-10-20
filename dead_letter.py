@@ -3,7 +3,7 @@
 import Pyro.core
 import logging
 
-class dead_letter_box( Pyro.core.ObjBase ):
+class letter_box( Pyro.core.ObjBase ):
     # remote programs should attempt sending to this if they fail to
     # connect to their intended target objects.
 

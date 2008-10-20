@@ -1,6 +1,5 @@
 #!/usr/bin/python
 
-import config
 from get_instance import *
 from pyro_ns_naming import *
 import Pyro.core, Pyro.naming
@@ -8,18 +7,20 @@ from Pyro.errors import NamingError
 import logging
 import os, re
 
-class task_pool ( Pyro.core.ObjBase ):
+class pool ( Pyro.core.ObjBase ):
     
-    def __init__( self, task_names, pyrod ):
+    def __init__( self, pyro_d, task_names, start_time, stop_time = None ):
 
         self.log = logging.getLogger( "main" )
         self.log.debug( "Initialising Task Pool" )
         Pyro.core.ObjBase.__init__(self)
 
         self.task_names = task_names
+        self.start_time = start_time
+        self.stop_time = stop_time
         self.tasks = []
 
-        self.pyro_daemon = pyrod
+        self.pyro_daemon = pyro_d
 
         self.state_dump_dir = 'STATE'
         if not os.path.exists( self.state_dump_dir ):
@@ -31,7 +32,7 @@ class task_pool ( Pyro.core.ObjBase ):
             if re.compile( "^.*:").match( task_name ):
                 [task_name, state] = task_name.split(':')
 
-            self._create_task( task_name, config.start_time, state )
+            self._create_task( task_name, self.start_time, state )
 
     def all_finished( self ):
         # return True if all tasks have completed
@@ -57,9 +58,9 @@ class task_pool ( Pyro.core.ObjBase ):
         # the initial task reference time can be altered during
         # creation, so we have to create the task before checking if
         # stop time has been reached.
-        if config.stop_time:
-            if int( task.ref_time ) > int( config.stop_time ):
-                task.log.info( task.name + " STOPPING at " + config.stop_time )
+        if self.stop_time:
+            if int( task.ref_time ) > int( self.stop_time ):
+                task.log.info( task.name + " STOPPING at " + self.stop_time )
                 del task
                 return
 
@@ -67,7 +68,7 @@ class task_pool ( Pyro.core.ObjBase ):
         self.tasks.append( task )
         self.pyro_daemon.connect( task, pyro_ns_name( task.identity ) )
 
-    def spawn_new_tasks( self ):
+    def create_tasks( self ):
         # create new task(T+1) if task(T) has abdicated
         for task in self.tasks:
             if task.abdicate():

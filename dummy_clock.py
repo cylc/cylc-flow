@@ -6,7 +6,7 @@ import reference_time
 from time import sleep
 import datetime, time
 
-class dummy_clock( Pyro.core.ObjBase ):
+class time_converter( Pyro.core.ObjBase ):
     """Equate a given dummy YYYYMMDDHH with the real time at
     initialisation, and thereafter advance dummy time at the
     requested rate of seconds per hour.
@@ -33,8 +33,8 @@ class dummy_clock( Pyro.core.ObjBase ):
 
         print
         print "DUMMY MODE CLOCK" 
-        print "  o rate " + str(self.rate) + " seconds / dummy hour"
-        print "  o start time " + str( self.base_dummytime )
+        print " + rate " + str(self.rate) + " seconds / dummy hour"
+        print " + start time " + str( self.base_dummytime )
 
     def get_datetime( self ):
         delta = datetime.datetime.now() - self.base_datetime
@@ -58,7 +58,6 @@ class dummy_clock( Pyro.core.ObjBase ):
         dt = self.get_datetime()
         return time.mktime( dt.timetuple() )
 
-
 def test():
 
     rt = "2008080800"
@@ -71,7 +70,6 @@ def test():
     sleep(11)                       # 10 secons => 1 hour
     print foo.get_datetime()        # 2008080801
     print bar.get_datetime()        # 2008080804
-
 
 if __name__ == "__main__":
     test()
