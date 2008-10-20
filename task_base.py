@@ -69,20 +69,16 @@ class task_base( Pyro.core.ObjBase ):
         if not config.dummy_mode and self.name in config.dummy_out:
             self.log.warning( "dummying out " + self.identity + " in real mode")
 
-    def oldest_to_keep( self, all_tasks ):
-        # Most tasks depend only on their cotemporal peers
-        # (not even their own previous instances because of abdication)
-        # Therefore we can remove any batch of tasks older than the
-        # oldest running task.
+    def get_cutoff( self, all_tasks ):
+        # Return the time beyond which all other tasks can be deleted as
+        # far as this task is concerned.  For most tasks this is their
+        # own reference time because they depend only on their
+        # cotemporal peers (not even on previous instances of their own
+        # task type, because of abdication):
+        return self.ref_time
 
-        if self.state != 'finished':
-            return self.ref_time
-        else:
-            return None
-
-        # BUT override this method for tasks with special dependency
-        # requirements (e.g. topnet!)
-
+        # BUT OVERRIDE THIS METHOD for the few tasks (e.g. topnet) that
+        # do depend on other non-cotemporal (earlier) tasks.
 
     def nearest_ref_time( self, rt ):
         # return the next time >= rt for which this task is valid

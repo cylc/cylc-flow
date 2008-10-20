@@ -435,14 +435,12 @@ class topnet( task_base ):
             self.log.info( "beginning UPTODATE operation" )
 
 
-    def oldest_to_keep( self, all_tasks ):
-
-        if self.state == 'finished':
-            return None
+    def get_cutoff( self, all_tasks ):
 
         # keep the most recent non-waiting 06 or 18Z nzlam_post or
-        # oper2test_topnet task, because the next hourly topnet may 
-        # also need the output from that same 12-hourly task.
+        # oper2test_topnet task that is OLDER THAN ME, because the next
+        # hourly topnet may also need the output from that same
+        # 12-hourly task.
 
         # note that this could be down without searching for actual
         # 'nzlam_post' or 'oper2test_topnet' tasks because we know how 
@@ -450,7 +448,9 @@ class topnet( task_base ):
 
         found = False
         times = []
-        result = None
+
+        result = self.ref_time # default
+
         for task in all_tasks:
             if task.name == 'nzlam_post' or task.name == 'oper2test_topnet':
                 if task.state != 'waiting':
@@ -459,15 +459,15 @@ class topnet( task_base ):
                         found = True
                         times.append( task.ref_time )
         if not found: 
-            #self.log.debug( 'no upstream task found: I am a dead soldier' )
-            pass
+            self.log.warning( 'no upstream task found: I am a dead soldier' )
             # will be eliminated by the main program dead soldier check
+            pass
 
         else:
             times.sort( key = int, reverse = True )
             for time in times:
                 if int( time ) < int( self.ref_time ):
-                    self.log.debug( 'most recent non-waiting upstream task: ' + time )
+                    self.log.debug( self.identity + ' cutoff: ' + time )
                     result = time
                     break
 
