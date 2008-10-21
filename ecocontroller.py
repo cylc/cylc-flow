@@ -100,7 +100,7 @@ def main( argv ):
             # PROCESS ALL TASKS whenever one changes state as
             # a result of a remote task message coming in.
 
-            pool.create_tasks()
+            pool.regenerate()
 
             pool.interact()
 
