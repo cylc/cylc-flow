@@ -65,9 +65,14 @@ def main( argv ):
     else:
         dummy_clock = None
 
-    # task-type based hierarchical logging
-    logging_setup.create_logs( dummy_clock )
+    print
+    print 'Logging to ' + config.logging_dir
+    if not os.path.exists( config.logging_dir ):
+        os.makedirs( config.logging_dir )
+
+    # top level logging
     log = logging.getLogger( 'main' )
+    logging_setup.pimp_my_logger( log, 'main', dummy_clock )
 
     # remotely accessible control switch
     master = main_switch()
@@ -78,7 +83,7 @@ def main( argv ):
     pyro_daemon.connect( dead_letter_box, pyro_ns_naming.name( 'dead_letter_box' ) )
 
     # initialize the task pool from general config file or state dump
-    pool = task_manager.manager( pyro_daemon, restart  )
+    pool = task_manager.manager( pyro_daemon, restart, dummy_clock )
     pyro_daemon.connect( pool, pyro_ns_naming.name( 'god' ) )
 
     print

@@ -2,6 +2,7 @@
 
 from get_instance import *
 import config
+import logging_setup
 import pyro_ns_naming
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
@@ -9,74 +10,134 @@ import logging
 import os, re
 
 class manager ( Pyro.core.ObjBase ):
-    def __init__( self, pyro_d, restart ):
+    def __init__( self, pyro_d, reload, dummy_clock ):
 
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
+        
+        self.tasks = []
 
-        self.task_names = config.task_list
+        self.pyro_daemon = pyro_d
         self.start_time = config.start_time
         self.stop_time = config.stop_time
 
-        if restart:
+        self.state_dump_file = config.state_dump_file
+        if re.compile( "/" ).search( self.state_dump_file ):
+            dir = os.path.dirname( self.state_dump_file )
+            if not os.path.exists( dir ):
+                os.makedirs( dir )
+
+        task_config = {}
+        if reload:
             print
-            print 'Starting from state dump file ' + config.state_dump_file
-            self.log.info( 'starting from state dump file ' + config.state_dump_file )
+            print 'Loading state from ' + config.state_dump_file
+            self.log.info( 'Loading state from ' + config.state_dump_file )
+            task_config = self.reload_state()
+
         else:
             print
             print 'Initial reference time ' + config.start_time
             self.log.info( 'initial reference time ' + config.start_time )
 
+            # initialise from configured task name list
+            ref_time = config.start_time
+            for item in config.task_list:
+                state = 'waiting'
+                name = item
+                if re.compile( "^.*:").match( item ):
+                    [name, state] = item.split(':')
+
+                if ref_time not in task_config.keys():
+                    task_config[ ref_time  ] = [ [ name, state ] ]
+                else:
+                    task_config[ ref_time  ].append( [ name, state ] )
+
         if config.stop_time:
             print 'Final reference time ' + config.stop_time
             self.log.info( 'final reference time ' + config.stop_time )
+       
+        # task loggers that propagate messages up to the main logger
+        seen = {}
+        ref_times = task_config.keys()
+        for ref_time in ref_times:
+            for item in task_config[ ref_time ]:
+                [name, state] = item
+                if name not in seen.keys():
+                    seen[ name ] = True
  
-        self.tasks = []
+        for name in seen.keys():
+            log = logging.getLogger( 'main.' + name )
+            logging_setup.pimp_my_logger( log, name, dummy_clock )
 
-        self.pyro_daemon = pyro_d
-
-        self.state_dump_file = config.state_dump_file
-        if re.compile( "/" ).search( config.state_dump_file ):
-            state_dump_dir = os.path.dirname( config.state_dump_file )
-            if not os.path.exists( state_dump_dir ):
-                os.makedirs( state_dump_dir )
-
-        if restart:
-            self._initialise_from_state_dump()
-        else:
-            self._initialise_from_config()
-
-
-    def _initialise_from_config( self ):
-        # initialise from a list of task names
-        for task_name in self.task_names:
-            state = None
-            if re.compile( "^.*:").match( task_name ):
-                [task_name, state] = task_name.split(':')
-
-            self._create_task( task_name, self.start_time, False, state )
-
-    def _initialise_from_state_dump( self ):
-        config = self._read_state()
-        ref_times = config.keys()
+        # create initial tasks
         ref_times.sort( key = int, reverse = True )
         seen = {}
         for ref_time in ref_times:
-            for task in config[ ref_time ]:
-                [task_name, state] = task.split(':')
-                # convert 'running' to 'waiting'
-                if state == 'running':
-                    state = 'waiting'
-
+            for item in task_config[ ref_time ]:
+                [name, state] = item
                 abdicate = False
-                if task_name not in seen.keys():
-                    seen[ task_name ] = True
+                if name not in seen.keys():
+                    seen[ name ] = True
                 elif state == 'finished':
                     # finished task, but already seen at a later
                     # reference time => already abdicated
                     abdicate = True
                     
-                self._create_task( task_name, ref_time, abdicate, state )
+                self._create_task( name, ref_time, abdicate, state )
+
+    def dump_state( self ):
+        # I considered using python 'pickle' to dump and read a state
+        # object, but we need a trivially human-editable file format.
+
+        FILE = open( self.state_dump_file, 'w' )
+
+        task_config = {}
+        for task in self.tasks:
+            ref_time = task.ref_time
+            item = task.name + ":" + task.state
+            if ref_time in task_config.keys():
+                task_config[ ref_time ].append( item )
+            else:
+                task_config[ ref_time ] = [ item ]
+
+        ref_times = task_config.keys()
+        ref_times.sort( key = int )
+        for rt in ref_times:
+            FILE.write( rt )
+            for entry in task_config[ rt ]:
+                FILE.write( ' ' + entry )
+
+            FILE.write( '\n' )
+
+        FILE.close()
+
+
+    def reload_state( self ):
+        FILE = open( self.state_dump_file, 'r' )
+        lines = FILE.readlines()
+        FILE.close()
+
+        task_config = {}
+        for line in lines:
+            # ref_time task:state task:state ...
+            if re.compile( '^.*\n$' ).match( line ):
+                # strip trailing newlines
+                line = line[:-1]
+
+            tokens = line.split(' ')
+            ref_time = tokens[0]
+            for item in tokens[1:]:
+                [name, state] = item.split(':')
+                # convert running to waiting on restart
+                if state == 'running':
+                    state = 'waiting'
+                if ref_time in task_config.keys():
+                    task_config[ ref_time ].append( [name, state] )
+                else:
+                    task_config[ ref_time ] = [[name, state]] 
+
+        return task_config
+
 
     def all_finished( self ):
         # return True if all tasks have completed
@@ -202,50 +263,6 @@ class manager ( Pyro.core.ObjBase ):
 
             del remove_these
 
-    def dump_state( self ):
-        # I considered using python 'pickle' to dump and read a state
-        # object, but we really need a trivially human-readable file
-        # format.
-
-        config = {}
-        for task in self.tasks:
-            ref_time = task.ref_time
-            state = task.name + ":" + task.state
-            if ref_time in config.keys():
-                config[ ref_time ].append( state )
-            else:
-                config[ ref_time ] = [ state ]
-
-        FILE = open( self.state_dump_file, 'w' )
-
-        ref_times = config.keys()
-        ref_times.sort( key = int )
-        for rt in ref_times:
-            FILE.write( rt )
-            for entry in config[ rt ]:
-                FILE.write( ' ' + entry )
-
-            FILE.write( '\n' )
-
-        FILE.close()
-
-    def _read_state( self ):
-
-        FILE = open( self.state_dump_file, 'r' )
-        lines = FILE.readlines()
-        FILE.close()
-
-        config = {}
-        for line in lines:
-            # ref_time task:state task:state ...
-            if re.compile( '^.*\n$' ).match( line ):
-                # strip trailing newlines
-                line = line[:-1]
-
-            tokens = line.split(' ')
-            config[ tokens[0] ] = tokens[1:]
-
-        return config
 
     def get_state_summary( self ):
         summary = {}
