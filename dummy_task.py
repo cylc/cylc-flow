@@ -41,7 +41,22 @@ class dummy_task_base:
             # scaled by the configured dummy clock rate, but without reference
             # to the actual dummy clock: so dummy tasks do not complete faster
             # when we bump the dummy clock forward.
-         
+ 
+            if self.task_name == "topnet":
+                # if caught up, delay as if waiting for streamflow data
+
+                rt = reference_time._rt_to_dt( self.ref_time )
+                rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
+                # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN topnet.incoming()
+                if datetime.datetime.now() >= rt_p25:
+                    self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + self.ref_time )
+                else:
+                    self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + self.ref_time ) 
+                    while True:
+                        sleep(10)
+                        if datetime.datetime.now() >= rt_p25:
+                            break
+        
             n_postreqs = len( postreqs )
          
             for req in postreqs:
