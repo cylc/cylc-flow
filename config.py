@@ -28,8 +28,8 @@ pyro_ns_group = ':ecoconnect'
 #logging_level = logging.INFO
 logging_level = logging.DEBUG
 
-start_time = "2008080812"
-stop_time = "2008080912"
+start_time = "2008102012"
+stop_time = "2008202200"
 
 dummy_out = []
 

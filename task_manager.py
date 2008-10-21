@@ -9,14 +9,28 @@ import logging
 import os, re
 
 class manager ( Pyro.core.ObjBase ):
-    def __init__( self, pyro_d, restart, task_names, start_time, stop_time = None ):
+    def __init__( self, pyro_d, restart ):
 
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
 
-        self.task_names = task_names
-        self.start_time = start_time
-        self.stop_time = stop_time
+        self.task_names = config.task_list
+        self.start_time = config.start_time
+        self.stop_time = config.stop_time
+
+        if restart:
+            print
+            print 'Starting from state dump file ' + config.state_dump_file
+            self.log.info( 'starting from state dump file ' + config.state_dump_file )
+        else:
+            print
+            print 'Initial reference time ' + config.start_time
+            self.log.info( 'initial reference time ' + config.start_time )
+
+        if config.stop_time:
+            print 'Final reference time ' + config.stop_time
+            self.log.info( 'final reference time ' + config.stop_time )
+ 
         self.tasks = []
 
         self.pyro_daemon = pyro_d
