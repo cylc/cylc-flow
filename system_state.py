@@ -15,7 +15,7 @@ A system state object can:
 """
 
 import os, re
-import instantiate_by_name
+import instantiation
 
 class state_base:
     # base class; override to provide different initialisation methods
@@ -78,7 +78,7 @@ class state_base:
             for item in self.content[ ref_time ]:
                 [name, state] = item
                 # dynamic task object creation by task and module name
-                task = instantiate_by_name.get_instance( 'task_classes', name )( ref_time, state )
+                task = instantiation.get_by_name( 'task_classes', name )( ref_time, state )
                 if name not in seen.keys():
                     seen[ name ] = True
                 elif state == 'finished':

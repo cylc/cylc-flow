@@ -6,7 +6,7 @@ create and destroy tasks, and provides methods for getting them to
 interact, etc.
 """
 
-import instantiate_by_name
+import instantiation
 import system_state
 import config
 import pimp_my_logger
@@ -82,7 +82,7 @@ class manager ( Pyro.core.ObjBase ):
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
                 # dynamic task object creation by task and module name
-                new_task = instantiate_by_name.get_instance( 'task_classes', task.name )( task.next_ref_time() )
+                new_task = instantiation.get_by_name( 'task_classes', task.name )( task.next_ref_time() )
                 new_task.log.info( "New task created for " + new_task.ref_time )
                 self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
                 self.tasks.append( new_task )
@@ -129,7 +129,7 @@ class manager ( Pyro.core.ObjBase ):
             lame.log.info( "abdicating a lame duck " + task.identity )
 
             # dynamic task object creation by task and module name
-            new_task = instantiate_by_name.get_instance( 'task_classes', lame.name )( lame.next_ref_time() )
+            new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time() )
             new_task.log.info( "New task created for " + new_task.ref_time )
             self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
             self.tasks.append( new_task )
