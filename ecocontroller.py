@@ -4,7 +4,7 @@ import dummy_mode_clock
 from master_control import main_switch
 import pyro_ns_naming
 import pyro_setup
-import logging_setup
+import pimp_my_logger
 import task_base
 import task_manager
 import dead_letter
@@ -72,7 +72,7 @@ def main( argv ):
 
     # top level logging
     log = logging.getLogger( 'main' )
-    logging_setup.pimp_my_logger( log, 'main', dummy_clock )
+    pimp_my_logger.pimp_it( log, 'main', dummy_clock )
 
     # remotely accessible control switch
     master = main_switch()

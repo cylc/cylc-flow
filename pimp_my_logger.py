@@ -4,9 +4,22 @@ import logging, logging.handlers
 import config
 import os, sys, re
 
-from log_filter import *
+# function to format all task logs in the same way, and to replace
+# the message timestamp with dummy clock time in dummy mode.
 
-def pimp_my_logger( log, name, dummy_clock = None ):
+class LogFilter(logging.Filter):
+    # replace log message timestamps with dummy clock times
+
+    def __init__(self, dclock, name = "" ):
+        logging.Filter.__init__( self, name )
+        self.dummy_clock = dclock
+
+    def filter(self, record):
+        # replace log message time stamp with dummy time
+        record.created = self.dummy_clock.get_epoch()
+        return True
+    
+def pimp_it( log, name, dummy_clock = None ):
     log.setLevel( config.logging_level )
     max_bytes = 1000000
     backups = 5
@@ -17,7 +30,12 @@ def pimp_my_logger( log, name, dummy_clock = None ):
         print ' + rotating existing log:', logfile
         h.doRollover()
 
-    f = logging.Formatter( '%(asctime)s %(levelname)-8s %(name)-16s - %(message)s', '%Y/%m/%d %H:%M:%S' )
+    if name == "main":
+        width = 20
+    else:
+        width = len( name ) + 2
+
+    f = logging.Formatter( '%(asctime)s %(levelname)-8s %(name)-'+str(width)+'s - %(message)s', '%Y/%m/%d %H:%M:%S' )
     # use '%(name)-30s' to get the logger name print too 
     h.setFormatter(f)
     log.addHandler(h)

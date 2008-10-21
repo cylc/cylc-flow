@@ -2,7 +2,7 @@
 
 from get_instance import *
 import config
-import logging_setup
+import pimp_my_logger
 import pyro_ns_naming
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
@@ -67,7 +67,7 @@ class manager ( Pyro.core.ObjBase ):
  
         for name in seen.keys():
             log = logging.getLogger( 'main.' + name )
-            logging_setup.pimp_my_logger( log, name, dummy_clock )
+            pimp_my_logger.pimp_it( log, name, dummy_clock )
 
         # create initial tasks
         ref_times.sort( key = int, reverse = True )
