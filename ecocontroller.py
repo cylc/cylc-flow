@@ -15,7 +15,6 @@ import sys, os, re
 
 global pyro_daemon
 
-
 def print_banner():
     print "__________________________________________________________"
     print
@@ -26,7 +25,6 @@ def print_banner():
     print "      .    Pyro nameserver required: 'pyro-ns'    ."
     print "__________________________________________________________"
 
-
 def clean_shutdown( reason ):
     global pyro_daemon
     log = logging.getLogger( 'main' )
@@ -34,14 +32,12 @@ def clean_shutdown( reason ):
     pyro_daemon.shutdown( True ) 
     sys.exit(0)
 
-
 def usage():
     print "ecocontroller [-r]"
     print "Options:"
     print "  + most inputs should be configured in config.py"
     print "  + [-r] restart from state dump file (this overrides"
     print "    the configured start time and task list)."
-
 
 def main( argv ):
     if len( argv ) - 1 > 1:
@@ -121,7 +117,6 @@ def main( argv ):
         task_base.state_changed = False
         pyro_daemon.handleRequests( timeout = None )
     ############################################################
-
 
 if __name__ == "__main__":
     main( sys.argv )

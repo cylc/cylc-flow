@@ -4,7 +4,7 @@ import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
 from time import sleep
 import config
-import qsub
+import job_submit
 
 import os, sys, re
 from copy import deepcopy

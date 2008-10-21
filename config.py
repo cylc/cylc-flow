@@ -9,7 +9,7 @@ import logging
 #  3. dummy_mode (dummy out all tasks)
 #  4. dummy_clock_rate (seconds per simulated hour) 
 #  5. dummy_clock_offset (hours before start_time)
-#  6. task_list (tasks out of task_definitions module to run)
+#  6. task_list (tasks out of task_classes module to run)
 #  7. dummy_out (tasks to dummy out even when dummy_mode is False)
 #  8. logging_dir (directory under which to put all log files)
 #  9. logging_level (logging.INFO or logging.DEBUG)

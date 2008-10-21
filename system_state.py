@@ -14,8 +14,8 @@ A system state object can:
    the task manager as old ones finish).
 """
 
-from get_instance import *
 import os, re
+import instantiate_by_name
 
 class state_base:
     # base class; override to provide different initialisation methods
@@ -78,7 +78,7 @@ class state_base:
             for item in self.content[ ref_time ]:
                 [name, state] = item
                 # dynamic task object creation by task and module name
-                task = get_instance( 'task_definitions', name )( ref_time, state )
+                task = instantiate_by_name.get_instance( 'task_classes', name )( ref_time, state )
                 if name not in seen.keys():
                     seen[ name ] = True
                 elif state == 'finished':
