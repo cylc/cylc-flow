@@ -1,7 +1,6 @@
 
 =============== ECOCONNECT CONTROLLER WITH IMPLICIT SEQUENCING =============
 
-
 Model Sequencing ----------
 
 The EcoConnect forecasting engine consists of a set of tasks that must
@@ -17,247 +16,293 @@ parallel streams of execution that sometimes branch and merge.
 
 Explicit Sequencing ----------
 
-This is probably the obvious method to try first: determine the final
-task sequence in advance, taking into all task interdependencies into
-account, and write code to explicitly enforce the sequence. This is
-relatively easy to understand, but the resulting program will inevitably
-(?) be fragile and inflexible with respect to insertion and deletion of
-models, mid-stream startup, maintenance and extensibility, etc. 
+This is the obvious method to try first: determine the final task sequence in
+advance, taking all task interdependencies into account, and write code to
+explicitly enforce the correct sequencing. This can be coded as some kind of
+finite state machine, which is relatively easy to understand ("if A is
+finished and B is finished, then run C" etc.), but the program will
+inevitably(?) be fragile and inflexible with respect to insertion and deletion
+of models, mid-stream startup, maintenance and extensibility, etc,
 
 Implicit Sequencing ----------
 
-Concept
+Concept (according to Hilary Oliver):
 
-Rather than enforcing correct sequencing from the outset, let individual
-tasks interact dynamically in such a way that correct sequencing emerges
-naturally at run time.
+Rather than enforcing correct sequencing from the outset, get the tasks to
+interact in such a way that correct sequencing emerges naturally at run time.
 
-Each task has its own set of prerequisites that have to be satisfied
-before it can run (e.g. "input file foo is ready") and "postrequisites"
-that are satisfied as it runs (e.g. "output file bar is ready"). This is
-essentially the minimum information that a task needs even to run in
-isolation, BUT it actually entirely determines the global task sequence
-too (because one task's prerequisites must be satisfied by another's
-completed postrequisites, obviously). So, in principle no extra
-"sequencing logic" is needed, we just need to get the tasks to interact
-at run time so that unsatisfied prerequisites can be matched with
-completed postrequisites. 
+Each task has its own set of prerequisites that have to be satisfied before it
+can run (e.g. "input file foo is ready") and "postrequisites" that are
+satisfied as it runs (e.g. "output file bar is ready"). This is the minimum
+external interface information needed to run a task, even in standalone mode,
+BUT it actually entirely determines the global task sequence too: i.e. no
+"sequencing logic" is needed because that information is encoded in the
+matching of one task's postrequisites with another's prerequistes. To make use
+of this, however, we have to get the tasks to interact at run time.
 
 Implementation
 
-Tasks are represented within the controller by TASK OBJECTS that know
-only their own requisites, can interact with each other to satisfy
-prerequisites, can launch their external tasks as soon as their
-prerequisites are all satisfied, and whose internal states are kept in
-sync with their external tasks (e.g. notification of completed
-postrequisites) by a messaging system.  The Python Remote Object
-protocol (Pyro) allows direct communication between external tasks and
-their representative task objects. Note that task objects do not know in
-advance *who* will satisfy their prerequisites; they can inquire of all
-the other tasks.   
+Tasks are represented within the controller by TASK OBJECTS that know their
+own requisites, can interact with others to get their prerequisites satisfied,
+can launch their external tasks as soon as their prerequisites are all
+satisfied, and whose internal states are kept in sync with their external
+tasks (e.g. notification of completed postrequisites) by a messaging system
+(Pyro, the Python Remote Object protocol, allows direct communication between
+external tasks and their task objects in the controller). 
 
-Note that pre and postrequisites are just *messages*, e.g. an external
-task has started or finished, or a particular file is ready for use.  In
-the case of "file ready" messages, the controller does not need to know
-the actual location of the file.  It could easily be made to, but
-there's no point because the external tasks have to know anyway (at
-least within EcoConnect) and they can report back any "file not found"
-errors.
+Note that task objects do not need to know *who* will satisfy their
+prerequisites as they can inquire of all the other tasks (this is a great
+simplification). Note also that pre and postrequisites are just *messages*,
+e.g. an external task has started or finished, or a particular file is ready
+for use. In the case of "file ready" messages, the controller does not need to
+know the actual location of the file. It could easily be made to, but there's
+not really any point in doing so because the external tasks have to know that
+anyway (at least within EcoConnect) and they can report back any "file not
+found" errors.
 
 
-Task Management Notes ----------
+Description of The Main Algoritm:
 
-Correct sequencing will occur so long as tasks always exist by the time
-they are needed (which encompasses the fact that codependent tasks must
-coexist). They shouldn't exist for too long before they are needed,
-however, or for too long after they are no longer needed, because that
-complicates system monitoring unnecessarily.
+Nomenclature:
 
-We can control when a task executes through:
- (i) prerequisites
- (ii) artificial prerequisites (e.g. make nztide depend on nzlam)
+A task object is uniquely identified by its type, e.g. 'nzlam', and its
+associated reference time: foo(T) is "an object of task type foo at time T". 
+foo(T+1) means "an object of task type foo at the NEXT reference time,
+relative to foo(T), that is valid for task type foo".
+
+EXACT PREREQUISITES (most tasks): times are specified exactly, relative to
+the task's own reference time.  E.g. "file foo_{T}.nc ready" where T is the
+task's reference time.
+
+FUZZY PREREQUISITES (topnet): a time boundary, Tb, is specified relative to
+the task's own reference time, and any task with a reference time greater than
+or equal to Tb can satisify the prerequisite.
+
+Algorithm:
+
++ the user supplies a list of task names and an initial reference time.
+    + a task object is created for each named task at the start time, OR at
+    the next valid reference time for that task type
+    + tasks are created in a 'waiting' state by default.
+
++ thereafter, new tasks are only created by ABDICATION: foo(T+1) is created
+only when foo(T) reaches a 'finished' state.
+    + foo(T) isn't deleted as soon as foo(T+1) is created, however, (see below) 
+    + this ensures that foo(T+1) can't run before foo(T), even if foo has no
+    prerequisites (and can therefore run as soon as the task exists).  
+
++ initially the task processing block (below) is run through once so that any
+tasks with no prerequisites (e.g. the 'Met Office downloader') will launch
+their external jobs and enter the 'running' state immediately.
+
++ the program then enters the PYRO REQUEST LOOP, which:
+    + handles incoming remote method calls from external tasks.  
+    + returns after one or more remote method calls are handled. 
+
++ the TASK PROCESSING BLOCK runs whenever the Pyro request loop returns after
+handling one or more task messages (i.e. one or more tasks changed state): 
+
+    1. REGENERATE: create new foo(T+1) if foo(T) has finished
+
+    2. INTERACT: each task asks all the others, "can you satisfy any of my
+       unsatisfied prequisites with one of your completed postrequisites"?
+
+    3. RUN_IF_READY: tasks are told to run (and enter the 'running' state) if:
+        + their prerequisites are all satisfied
+        + any previous tasks of the same type that still exist are 'finished' 
+        + fewer than MAX_RUNAHEAD=4 finished tasks of the same type exist
+        (this stops tasks with no prerequisites, e.g. nztide, from running
+        ahead indefinitely).
+
+    4. DUMP_STATE: the current state (waiting, running, or finished) of all
+    tasks in the system is written out to the "state dump file".
+
+        + this provides a snapshot of the system just prior to shutdown.
+
+        + the controller can be initialised from the state dump file
+
+            + the state dump file can be edited before reloading
+
+            + any 'running' tasks are reloaded in the 'waiting' state.
+
+    5. KILL_SPENT_TASKS: a task is spent if it (a) finished, and (b) no longer
+       needed to satisfy the prequisites of any other task.
+
+       + each non-finished task reports its CUTOFF REFERENCE TIME, i.e. the
+       reference time that could still be needed for satisfying dependencies.
+       In most cases this is just the tasks own reference time. For hourly
+       topnet, it is the reference time of the previous finished 06 or 18Z
+       'nzlam_post' task (the next hourly topnet may get input from the same
+       nzlam_post).  
+
+       + the task manager then kills any batch of cotemporal tasks that are
+       all finished AND older than the oldest task cutoff time.
+
+    6. KILL_LAME_DUCKS: a lame duck is a task that will never run because its
+       prerequisites can not be satisfied by any other task in the system. 
+       They need to be removed or they'll prevent the spent task deletion
+       algorithm from working. 
+       
+       + lame ducks can only be detected in the OLDEST batch of tasks(T). At
+       other times new tasks that could satisfy some dependencies could
+       potentially still appear as their predecessors abdicate.
+
+       + the presence of lame ducks may indicate user error: e.g. forgetting
+       to include task type "foo" that supplies input to task type "bar" will
+       turn any instance of "bar" into a lame duck.
+
+       + lame ducks are to be expected in certain start up situations. E.g. if
+       we start the system at 12Z with topnet turned on, all hourly topnet
+       objects from 12Z through 17Z are valid, but they will want to take
+       input from the non-existent nzlam_post from 06Z prior to startup.
+
+       + lame ducks are abdicated rather than just deleted, because on of
+       their descendents may not be lame (see topnet case above). 
+
+
+COMMENTS:
+
+The algorithm above achieves all of our requirements (multiflight, catchup,
+flexibility, etc.) even for the unusual "fuzzy runahead" behaviour of topnet,
+while still being completely generic: the main program knows nothing at all
+about task sequencing, it simply operates on a single pool of tasks that know
+only of their own individual prerequisites and outputs. How to do this was by
+no means obvious at the outset, however, because immediately below the
+high level implicit sequencing concept there is almost too much flexibility in
+terms of how to "manage" the task objects.  Below are some notes on task
+management that help to explain how I arrived at the above algorithm.
+
+
+*** Generality:
+
+Correct sequencing (i.e. that no task will run before its prerequisites are
+satisfied) will occur regardless of the task management scheme used, so long
+as tasks exist by the time they are needed. 
+
+But, that said, we still have to come up with a specific task management
+scheme that does ensure tasks exist when they are needed, and also, ideally,
+that tasks don't exist for too long before they are needed or for too long
+after they are no longer needed, because having too many tasks around longer
+than necessary makes system monitoring difficult.
+
+*** How to control when a task executes:
+ (i)   prerequisites
+ (ii)  artificial prerequisites (e.g. make nztide depend on nzlam)
  (iii) delayed instantiation (a task can't run if it doesn't exist yet).
+ (iv)  other contraints based on, for example, the number of previous instances
+       that still exist in the system.
 
 
-Initial Task: 
+*** The INITIAL Task: 
 
-This task (the "downloader") is special in that it provides the initial input
-to get the whole system started. It has no prerequisites and therefore starts
-running as soon as it is created (so long as all previous instances have
-finished; see below). Without this task nothing will run at all. The external
-downloader (interface to watch_ftp.sh) should watch for the right incoming
-files and report back ready when the download has completed OR if the files
-already exist because they were downloaded previously.
+At least one task object, at system start up time, must have no prerequisites
+so that it can start running immediately, otherwise nothing will run at all.
+The downloader task is of this type. It will immediately launch its external
+task, which will go off and wait for the right files to come in, reporting
+back when the download has completed OR immediately if the files already exist
+because they were downloaded at some earlier time.
 
-INTER-CYCLE DEPENDENCIES:
+*** INTER-CYCLE DEPENDENCIES:
 
-Having each task foo(T) depend explicitly on its previous instance foo(T-1)
-finishing prevents successive instances of the same task from running
+Having each task foo(T) depend on its previous instance foo(T-1) via explicit
+prerequisites prevents successive instances of the same task from running
 simultaneously or out of order (where their other prerequisites would allow
 this; e.g. downloader or nztide) but it complicates system startup (when there
-are no previous tasks) and means finished tasks have to stay around
-longer (so that foo(T-1) can tell foo(T) it is finished). 
+are no previous tasks) and means finished tasks have to stay around longer (so
+that foo(T-1) can tell foo(T) it is finished). 
 
-Instead, we let a task run if no previous instance exists OR any previous
-instance that still exists is finished.  This prevents running out of order
-but system startup is no longer a special case, and tasks can (usually;
-see below) die as soon as all of their same-cycle peers are finished.
-
-TASK CREATION by ABDICATION:
-
-Create a new foo(T+1) only after foo(T) is finished. This is convenient,
-and it prevents prerequisiteless tasks from launching immediately, all
-at once. 
-
-TASK DELETION:
-
-Normal tasks can only run once all previous instances are finished, so there
-is no explicit dependence on previous cycles and we can delete any completely
-finished batch(T) that is older than the oldest running task.
-
-HOWEVER, topnet can run ahead of nzlampost so long as the "most recently
-generated topnet input file" is < 24 hours old (real time) or < 12 hours old
-(catchup).  Nzlampost only generates topnet files at 06 and 18, so: if there
-is no running nzlampost, topnet will depend on the most recent FINISHED 06 or
-18 nzlampost, and we can delete any finished batches older than that. 
-
-=> cutoff at the older of:
-   (i) most-recent-finished-nzlampost
-   (ii) oldest running.
-
-TO DO: we could improve this by removing non-nzlampost tasks older than
-oldest_running (BUT: make sure this doesn't break the lame duck test).
+Instead of using explicit prerequisites between cycles, we can let a task run
+if all previous instances that still exist are in the 'finished' state, OR if
+no previous instances exist.  This still prevents running out of order but
+system startup is no longer special, and tasks can (usually; see below) die as
+soon as all of their same-cycle peers are finished.
 
 
-CONSTRAINED RUNAHEAD TASKS
+*** DETECTING CATHCUP MODE
 
-Any tasks that have no prerequisites can start running, by default, as soon as
-they come into existence.  However, they will execute consecutively, not all
-at once, because of our abdication-based task management: foo(T+1) depends on
-foo(T) IF foo(T) exists.  
+Catchup vs up-to-date operation is now task-dependent, rather than a property
+of the whole system (as it is if only tasks from the same reference time can
+run at once).  Where this matters, it can be detected by the relevant external
+task. E.g. if the external topnet(T) task starts up at real time t greater
+than the streamflow data time for T (i.e. T+15 min), i.e. the required
+streamflow data is already available, then we're still in catchup. If, on the
+other hand, the topnet task finds that it has to wait for its streamflow data
+time to arrive, then we're caught up to real time.  This matters because
+topnet is allowed to run ahead by a different amount of time depending on
+whether we're in catchup mode or not.
 
-To prevent indefinite runahead when can either impose artificial prerequisites
-(e.g. tie nztide(T) to nzlam(T)), OR refuse to create a new task foo unless
-there are fewer than, say, five previous foo instances still in existence. The
-latter option has the advantage that the task remains independent in case we
-want to run it when the putative dependee is turned off.
-
-DOWNLOADER tasks must have no prerequisites otherwise nothing will happen,
-but we restrict the number of concurrent instances.
-
-NZTIDE tasks have no prerequisites, but we restrict the number of concurrent
-instances.
-
-
-TASKS WITH FUZZY PREQUISITES
-
-TOPNET now runs hourly and can run ahead of the nzlam by up to 23 hours
-(uptodate) or 11 hours (catchup).  This is achieved through FUZZY
-PREREQUISITES: "file tn_TIME.nc ready" can be satisfied by an otherwise
-matching postrequisite whose TIME is under 24 hours different from the
-topnet task's prerequisite.  11 hours => topnet always depends on the
-most recent long nzlam forecast.
-
-Whether we are in catchup or uptodate modes is detected by the external
-topnet task: if topnet(T) launches BEFORE streamflow data time (T+15 min)
-then we're still catchup up.  As soon as the first topnet task is
-launched at or after streamflow data time, it signals to the controller
-that we've caught up. Thereafter, topnet can keep up with the (hourly)
-clock time so long as nzlam doesn't slip behind more than 24 hours.
-
-
-LAME DUCKS:
-
-A "lame duck" is a task that will never run because it's prerequisites can
-never be satisfied.  These need to be removed or they will prevent removal of
-spent tasks.  We can detect lame ducks by requisite checking amongst all
-tasks in the oldest batch(T) that contains any running tasks.  Newer batches
-may not be complete yet (they may acquire new tasks as those in the oldest
-batch abdicate).  Lame ducks are abdicated rather than just deleted, so
-that their descendents can run if they are not lame ducks. As an example of
-this, if we start the system at 12Z all topnet tasks prior to 18Z will be dead
-soldiers because the 12Z nzlam does not generate topnet input files. 
-
-
-CLEAN SHUTDOWN
-
-Run the script 'shutdown.py' to tell the controller to shutdown cleanly
-at the next opportunity.
-
-
-STATE DUMP
-
-The controller records its current state, i.e. the state of all
-tasks that currently exist, to a file. 
-
-Currently we can't restart from the state file.
 
 
 DUMMY MODE
 
-In dummy mode an external dummy program (see task_dummy.py) is launched by
-each task instead of the real external model/task.  The external dummy program
-then tells its in-controller task object that it has satisfied each
-postrequisite in turn, at the right time relative to the controller's dummy
-clock (below).  
+The controller has a "dummy mode" that allows *almost* complete testing of the
+control system without running any external tasks/models at all. In dummy
+mode, each task object launches an external dummy program instead of the real
+external task. The dummy program interrogates its representative task object
+in the controller (via Pyro) to find out what its postrequisites are, then it
+reports each one satisfied in turn at the (estimated) right time relative to
+an accelerated clock, i.e. dummy programs complete in approximately the same
+dummy clock time as the real tasks do in real time. User's can also specify an
+initial dummy clock time offset relative to the starting reference time, which
+allows us to simulate catchup mode and real time operation, and the transition
+between. Log messages are stamped with dummy clock time instead of real time.
 
-An accelerated clock (which runs at 60 seconds per dummy hour, by default) is
-used for dummy task timing and replaces the real time in all log messages.
-The user can specify a time offset, relative to the start reference time, at
-which to start the dummy time clock. Dummy programs complete in the same time
-(relative to the dummy clock rate) as the real models, so long as accurate
-time estimates have been defined for the postrequisites. 
+As far as the controller is concerned the only (?) differences between dummy
+mode and real operation is that the external dummy tasks do not suffer from
+delays due to resource contention. 
 
-If the task definitions (i.e. requisites and their respective time estimates)
-are accurate, this enables complete testing of the control system, including
-catchup and uptodate running and the transition between, except to the extent
-that real external task timing is modified by resource contention.
+The same "dummy task program" is used for all external dummy tasks, but it has
+special behaviour when representing the downloader or topnet tasks, in order
+to correctly simulate the behaviour of the corresponding real tasks: the
+downloader "waits" for incoming files until the clock time is at least 3:15
+past its reference time, and topnet "waits" until the clock time 0:15 min past
+its reference time, which is the stream flow data extraction cutoff.
 
-Note that dummy downloader and topnet tasks are treated differently to
-simulate the behaviour of the corresponding real tasks: the downloader "waits"
-for incoming files until the clock time is at least 3:15 past its reference
-time, and topnet "waits" until the clock time :15 min past its reference time,
-which is the stream flow data extraction cutoff.
-
-[note that timed postrequisites apply after a task starts running, so bumping
-the dummy clock forward affects a running task correctly, but it doesn't make
-tasks that are still waiting start halfway through, etc...]
+The dummy clock can be bumped forward by a number of hours, by remote control,
+while the system is running. This affects the postrequisite timing of running
+tasks correctly, but if it causes a running task to finish immediately the
+next task in line will still start from the beginning no matter how big the
+bump.
 
 
 SINGLE THREADED PYRO REQUIRED
 
-"""In SINGLE THREADED PYRO, handleRequests() returns after EITHER a
-timeout has occurred OR at least one request (remote method call)
-was handled.  With "timeout = None" this allows us to process tasks
-ONLY after remote method invocations come in. Further, the
-processing_required boolean set in task_base.incoming() allows us to
-process tasks ONLY when a task changes state as a result of an
-incoming message, which minimizes non-useful output from the task
-processing loop (e.g. in dummy mode there are a lot of remote calls
-on the dummy clock object, which does not alter tasks at all). 
+In SINGLE THREADED PYRO, handleRequests() returns after EITHER a timeout has
+occurred OR at least one request (remote method call) was handled.  With
+"timeout = None" this allows us to process tasks ONLY after remote method
+invocations come in. Further, the processing_required boolean set in
+task_base.incoming() allows us to process tasks ONLY when a task changes state
+as a result of an incoming message, which minimizes non-useful output from the
+task processing loop (e.g. in dummy mode there are a lot of remote calls on
+the dummy clock object, which does not alter tasks at all). 
 
-In MULTITHREADED PYRO, handleRequests() returns immediately after
-creating a new request handling thread for a single remote object
-and thereafter remote method calls on that object come in
-asynchronously in the dedicated thread.  It is impossible(?) to make
-our main loop work properly like this because handleRequests will
-block until a new connection is made, even while messages from
-existing remote objects are coming in.  Tasks that are ready to run
-are only set running in the processing loop, so these will be
-delayed unnecessarily until handleRequests returns.  The only way
-out of this is to do task processing on a handleRequests timeout
-as well, which results in a lot of unnecessary task processing."""
+In MULTITHREADED PYRO, handleRequests() returns immediately after creating a
+new request handling thread for a single remote object and thereafter remote
+method calls on that object come in asynchronously in the dedicated thread.
+It is impossible(?) to make our main loop work properly like this because
+handleRequests will block until a new connection is made, even while messages
+from existing remote objects are coming in.  Tasks that are ready to run are
+only set running in the processing loop, so these will be delayed
+unnecessarily until handleRequests returns.  The only way out of this is to do
+task processing on a handleRequests timeout as well, which results in a lot of
+unnecessary task processing."""
  
- 
- Note that during CATCHUP "correct model sequencing" is not equivalent to
-"orderly generation of products by reference time".  E.g. nzlam can run
-continuously, regardless of the downstream processing that depends on it.
 
-task interaction probably doesn't scale well with large task numbers
+########### TO BE DOCUMENTED:
 
-we can't start up on a single reference time: not all tasks are
-valid at all times, and any task not present at the start will never be
-created. So, at start time each configured task is created at the
-initial start time OR at the first subsequent reference time for which
-it is valid.  
+ 1/ simple system monitors
+ 2/ remote control: 
+    + clean shutdown of pyro
+    + bumping the dummy clock forward
+ 3/ external task messaging interface script
+ 4/ config file, and optional initialisation from state dump
+ 5/ dummying out specific tasks in real mode
 
+
+########### OTHER NOTES
+
+Note that during CATCHUP operation "correct model sequencing" is not
+equivalent to "orderly generation of products by reference time".  E.g. nzlam
+can run continuously regardless of downstream processing that depends on it.
+
+The task interaction step probably doesn't scale well with very large task numbers.
