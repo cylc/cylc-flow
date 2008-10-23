@@ -1,0 +1,343 @@
+\documentclass[12pt]{article}
+
+\title{A Multiflight Dynamic Sequencing Controller for EcoConnect}
+
+\author{Hilary Oliver, NIWA}
+
+\begin{document}
+\maketitle
+
+\section{Task Sequencing} 
+
+The EcoConnect forecasting engine consists of a large number of tasks
+that must be executed in the correct order, because output from one task
+is used as input for the next, and so on (a {\em task} is any set of
+processes that, as a group, we want separate scheduling control over).
+Each task may take input from several upstream tasks, and may generate
+output for several downstream tasks. In general this results in a
+complex non-linear task ``sequence'' consisting of several branching and
+merging parallel streams of execution, and which present a non-trivial
+control system design problem. Further, not all task types are valid at
+all times, the system must be flexible (with respect to turning tasks on
+and off) and easily extensible (adding new tasks) and, where
+dependencies allow, must be able to run multiple cycles at once
+(multiflight operation) for maximum throughput when catching up to real
+time operation after a system delay. 
+
+
+\subsection{Use of Explicit Sequencing Logic}
+
+This is perhaps the obvious approach to try first: determine the correct
+task sequence in advance, and write a Finite State Machine to explicitly
+enforce it: {\em if A is finished and B is finished, then run C}, etc.
+While this is easy to understand, at least in the single-flight case,
+the resulting program will almost inevitably be inflexible (with respect
+to insertion and deletion of models, mid-stream startup, etc.) and it is
+hard to see how to generalise it to multiflight operation without ending
+up in a desperately convoluted mess. Note that you can't just fire off a
+sequence of overlapping independent single cycle controllers because of
+intercycle dependencies, the simplest being that foo(T+1) usually can't
+run until foo(T) is finished (because models usually retain some
+``background''/``restart'' state information from one forecast to the
+next). 
+
+
+\subsection{Dynamic Sequencing}
+
+This method was inspired by basic object oriented games programming
+techniques. Tasks in the system are represented by objects that have
+only self-knowledge, but are able to interact to dynamically satisfy
+each others' dependencies so that correct sequencing just emerges
+naturally at run time.  The lack of any explicit sequencing logic
+whatsoever makes it extremely flexible: new tasks can added and existing
+ones turned on and off at will, without changing the main control
+program at all.
+
+
+\section{Implementation}
+
+\subsection{Overview}
+
+Each task has {\em prerequisites} that have to be satisfied before it
+can run (e.g. ``file foo is ready'') and {\em postrequisites} that are
+satisfied as it runs (e.g. ``file bar is ready''). This is in fact just
+the minimum input/output information needed even to run a task in
+isolation, {\em but} it actually determines the global task sequence as
+well: no explicit sequencing logic is needed because sequencing
+information is already encoded in the match-up of pre and
+postrequisites. 
+
+Tasks are represented by {\em task objects} that know their own
+``requisites'' and can interact with others as described, launch their
+external tasks when their prerequisites are all satisfied, and whose
+internal states are then kept in sync with the external tasks (e.g.
+notification of completed postrequisites) via a messaging system (Pyro,
+the Python Remote Object protocol, allows direct communication between
+external tasks and their representative objects in the controller). 
+
+Note that task objects do not need to know {\em who} will satisfy their
+prerequisites. They can just ask {\em all} the other tasks, which is a
+nice simplification. Also, note that pre and postrequisites are just {\em
+messages}: in the case of ``file ready'' messages, the controller does
+not need to check for the file's existence because the external tasks
+necessarily have to do that anyway, and they can report back any errors.
+
+
+\subsection{The Dynamic Sequencing Algorithm}
+
+The specific algorithm described here is by no means obvious because the
+there are so many ways one could potentially choose to manage task
+creation, interaction, deletion, etc. (and still get correct dynamic
+sequencing), that it's hard to see where to start. Nonetheless, I've
+managed to come up with an algorithm that handles all requirements, even
+for the complex runahead behaviour of topnet, and yet is still quite
+simple and completely generic: the main program knows nothing of the
+relationships between the tasks it is managing, it simply operates on a
+single pool of tasks, each of which cares only about its own inputs and
+outputs.  
+
+\begin{itemize}
+    \item At startup, the user supplies an initial reference time and
+    list of task names. Task objects are created for each named task at
+    the initial reference time, {\em or} at the first subsequent
+    reference time that is valid for the particular task type.
+    \begin{itemize}
+        \item tasks are uniquely identified by type and reference time. 
+        \item new task objects are created in a {\em waiting} state, by
+        default.
+        \item we can also start from a previous {\em state dump} file
+        (see below).
+    \end{itemize}
+
+\item After startup, new tasks are created only by {\em abdication}:
+foo(T+1) is created only when foo(T) achieves a {\em finished} state.
+    \begin{itemize}
+    \item this ensures that foo(T+1) won't run before foo(T), without
+    using explicit intercycle prerequisites (which are a problem at
+    startup time, when there is no previous cycle. 
+    \item it also ensures that tasks with no prerequisites at all, e.g.
+    downloader and nztide, won't all try to run at once.
+    \item tasks are not deleted immediately on abdication (see below). 
+    \end{itemize}
+
+\item An initial run through the {\em task processing block} (see below)
+ensures that any tasks with no prerequisites (e.g. 'downloader') will
+enter the 'running' state and launch their external tasks immediately.
+    \begin{itemize}
+    \item without a no-prequisite initial task, nothing starts running.
+    \end{itemize}
+
+\item The program now enters the {\em Pyro request loop}, which:
+    \begin{itemize}
+    \item handles remote method calls coming in from external tasks, 
+    \item returns after one or more remote method calls are handled. 
+    \end{itemize}
+
+\item The {\em task processing block} executes whenever the Pyro request
+loop returns and one or more tasks have changed state: 
+    \begin{itemize} 
+    \item {\em regeneration}: create new tasks by abdication.
+
+    \item {\em interaction}: tasks satisfy each others' prerequisites. 
+
+    \item {\em run if ready}: tasks launch their external tasks and
+    enter the {\em running} state if:
+        \begin{itemize}
+        \item their prerequisites are all satisfied
+        \item any existing older tasks of the same type are {\em
+        finished} 
+        \item fewer than {\em MAX\_ RUNAHEAD} finished tasks of the
+        same type still exist (this stops tasks with no prerequisites
+        from running ahead indefinitely).
+        \end{itemize}
+
+    \item {\em dump state}: the current state (waiting, running, or
+    finished) of all tasks is written out to the {\em state dump file}.
+        \begin{itemize}
+        \item this provides a snapshot of the system just prior to shutdown.
+
+        \item the controller can be initialised from the state dump file
+            \begin{itemize}
+            \item the state dump file can be edited before reloading
+
+            \item any 'running' tasks are reloaded in the 'waiting' state.
+            \end{itemize}
+        \end{itemize}
+
+    \item {\em kill spent tasks}: a task is spent if it (a) finished,
+    and (b) no longer needed to satisfy the prequisites of any other
+    task.
+       \begin{itemize}
+
+       \item each non-finished task reports its {\em cutoff reference
+       time}, i.e. the oldest reference time that it thinks is still
+       needed for satisfying its own, or its successors, prerequisites.
+       In most cases this is just the tasks own reference time. For
+       hourly topnet, it is the reference time of the previous finished
+       06 or 18Z 'nzlam\_post' task (the next hourly topnet may get
+       input from the same nzlam\_post).  
+
+       \item the task manager then kills any batch of cotemporal tasks
+       that are all finished {\em and} older than the oldest task cutoff
+       time.
+
+       \end{itemize}
+
+    \item {\em kill lame ducks}: these are tasks that will never run
+    because their prerequisites can not be satisfied by any other task
+    in the system.  
+
+       \begin{itemize}
+       \item lame ducks need to be removed or they'll prevent the spent
+       task deletion algorithm from working.
+       
+       \item lame ducks can only be detected in the {\em oldest} batch
+       of cotemporal tasks. At other times new tasks, which may satisfy
+       someone's prequisites, may appear later on as their predecessors
+       abdicate.
+
+       \item the presence of lame ducks may indicate user error: e.g.
+       forgetting to include task type ``foo'' that supplies input to
+       task type ``bar'' will turn any instance of ``bar'' into a lame
+       duck.
+
+       \item lame ducks are to be expected in certain start up
+       situations. E.g. if we start the system at 12Z with topnet turned
+       on, all hourly topnet objects from 12Z through 17Z are valid, but
+       they will want to take input from the non-existent nzlam\_post
+       from 06Z prior to startup.
+
+       \item lame ducks are abdicated rather than just deleted, because
+       on of their descendents may not be lame (see topnet case above). 
+       \end{itemize}
+   \end{itemize}
+\end{itemize}
+
+\subsection{Other Relevant Remarks}
+
+\begin{itemize}
+
+\item Correct sequencing (i.e. that no task will run before its
+prerequisites are satisfied) will occur regardless of the task
+management scheme used, so long as tasks exist by the time they are
+needed.  That said, however, we still have to come up with a specific
+task management scheme that does ensure tasks exist when they are
+needed, and also, ideally, that tasks don't exist for too long before
+they are needed or for too long after they are no longer needed, because
+having too many tasks around longer than necessary makes system
+monitoring difficult.
+
+\item controlling when a task executes:
+\begin{itemize}
+ \item  prerequisites
+ \item artificial prerequisites (e.g. make nztide depend on nzlam)
+ \item delayed instantiation (a task can't run if it doesn't exist yet).
+ \item other contraints based on, for example, the number of previous instances
+       that still exist in the system.
+\end{itemize}
+
+\item{detecting cathcup mode}
+
+Catchup vs up-to-date operation is now task-dependent, rather than a
+property of the whole system (as it is if only tasks from the same
+reference time can run at once).  Where this matters, it can be detected
+by the relevant external task. E.g. if the external topnet(T) task
+starts up at real time t greater than the streamflow data time for T
+(i.e. T+15 min), i.e. the required streamflow data is already available,
+then we're still in catchup. If, on the other hand, the topnet task
+finds that it has to wait for its streamflow data time to arrive, then
+we're caught up to real time.  This matters because topnet is allowed to
+run ahead by a different amount of time depending on whether we're in
+catchup mode or not.
+
+\end{itemize}
+
+
+\section{DUMMY MODE}
+
+The controller has a ``dummy mode'' that allows *almost* complete
+testing of the control system without running any external tasks/models
+at all. In dummy mode, each task object launches an external dummy
+program instead of the real external task. The dummy program
+interrogates its representative task object in the controller (via Pyro)
+to find out what its postrequisites are, then it reports each one
+satisfied in turn at the (estimated) right time relative to an
+accelerated clock, i.e. dummy programs complete in approximately the
+same dummy clock time as the real tasks do in real time. User's can also
+specify an initial dummy clock time offset relative to the starting
+reference time, which allows us to simulate catchup mode and real time
+operation, and the transition between. Log messages are stamped with
+dummy clock time instead of real time.
+
+As far as the controller is concerned the only (?) differences between dummy
+mode and real operation is that the external dummy tasks do not suffer from
+delays due to resource contention. 
+
+The same ``dummy task program'' is used for all external dummy tasks, but it has
+special behaviour when representing the downloader or topnet tasks, in order
+to correctly simulate the behaviour of the corresponding real tasks: the
+downloader ``waits'' for incoming files until the clock time is at least 3:15
+past its reference time, and topnet ``waits'' until the clock time 0:15 min past
+its reference time, which is the stream flow data extraction cutoff.
+
+The dummy clock can be bumped forward by a number of hours, by remote control,
+while the system is running. This affects the postrequisite timing of running
+tasks correctly, but if it causes a running task to finish immediately the
+next task in line will still start from the beginning no matter how big the
+bump.
+
+
+\section{Threading in Pyro}
+
+In SINGLE THREADED PYRO, handleRequests() returns after EITHER a timeout has
+occurred OR at least one request (remote method call) was handled.  With
+``timeout = None'' this allows us to process tasks ONLY after remote method
+invocations come in. Further, the processing\_required boolean set in
+task\_base.incoming() allows us to process tasks ONLY when a task changes state
+as a result of an incoming message, which minimizes non-useful output from the
+task processing loop (e.g. in dummy mode there are a lot of remote calls on
+the dummy clock object, which does not alter tasks at all). 
+
+In MULTITHREADED PYRO, handleRequests() returns immediately after creating a
+new request handling thread for a single remote object and thereafter remote
+method calls on that object come in asynchronously in the dedicated thread.
+It is impossible(?) to make our main loop work properly like this because
+handleRequests will block until a new connection is made, even while messages
+from existing remote objects are coming in.  Tasks that are ready to run are
+only set running in the processing loop, so these will be delayed
+unnecessarily until handleRequests returns.  The only way out of this is to do
+task processing on a handleRequests timeout as well, which results in a lot of
+unnecessary task processing.
+ 
+
+\section{TO BE DOCUMENTED}
+
+\begin{itemize}
+ \item simple system monitors
+ \item remote control: 
+    \begin{itemize}
+    \item clean shutdown of pyro
+    \item bumping the dummy clock forward
+    \end{itemize}
+ \item external task messaging interface script
+ \item config file, and optional initialisation from state dump
+ \item dummying out specific tasks in real mode
+\end{itemize}
+
+\section{Misc}
+
+Note that during CATCHUP operation ``correct model sequencing'' is not
+equivalent to ``orderly generation of products by reference time''.  E.g. nzlam
+can run continuously regardless of downstream processing that depends on it.
+
+The task interaction step probably doesn't scale well with very large task numbers.
+
+{\em EXACT PREREQUISITES} (most tasks): times are specified exactly,
+relative to the task's own reference time.  E.g. ``file foo\_{T}.nc
+ready'' where T is the task's reference time.
+
+{\em FUZZY PREREQUISITES} (topnet): a time boundary, Tb, is specified
+relative to the task's own reference time, and any task with a reference
+time greater than or equal to Tb can satisify the prerequisite.
+
+\end{document}
