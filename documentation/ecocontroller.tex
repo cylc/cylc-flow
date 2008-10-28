@@ -99,7 +99,7 @@ necessarily have to verify the existence of input files anyway, and they
 can report back in case of error.
 
 
-\subsection{The Algorithm}
+\section{Implementation}
 
 To implement the dynamic sequencing concept we need to decide when tasks
 will be created and destroyed, and how live tasks will be handled within
@@ -124,11 +124,29 @@ main program is completely task-agnostic: it operates on a single pool
 of tasks that each care only about their own inputs and outputs and
 know nothing about the other tasks.  
 
+\subsection{Summary}
+
 \begin{itemize}
-    \item At startup, the user supplies an initial reference time and
-    list of task names. Task objects are created for each named task at
-    the initial reference time, {\em or} at the first subsequent
-    reference time that is valid for the particular task type.
+    \item startup (create initial tasks)
+    \item repeat ad infinitum:
+    \begin{itemize}
+        \item Pyro request handling (process remote method calls, which
+        include task messages)
+        \item task processing (whenever a new task message comes in:
+        tasks.interact(), tasks.run\_if\_ready(), create new tasks, kill
+        spent tasks, etc.)
+    \end{itemize}
+\end{itemize}
+
+
+\subsection{Details}
+
+\subsubsection{Startup}
+
+The user supplies an initial reference time and list of task names.
+Create named task objects at the initial reference time {\em or} at the
+first subsequent reference time that is valid for the task type.
+Subsequently, new tasks are created only by {\em abdication} (below).
     \begin{itemize}
         \item tasks are uniquely identified by type and reference time. 
         \item new task objects are created in a {\em waiting} state, by
@@ -137,8 +155,31 @@ know nothing about the other tasks.
         (see below).
     \end{itemize}
 
-\item After startup, new tasks are created only by {\em abdication}:
-$foo(T+1)$ is created only when $foo(T)$ achieves a {\em finished} state.
+
+An initial run through the {\em task processing block} (see below)
+causes any tasks with no prerequisites (e.g. {\em downloader}) to enter the
+{\em running} state and launch their external tasks immediately.
+    \begin{itemize}
+    \item if there are no prerequisiteless tasks, nothing will happen.
+    \end{itemize}
+
+\subsubsection{Pyro request handling}
+
+The program now enters the {\em Pyro request loop}, which:
+
+    \begin{itemize}
+    \item handles remote method calls coming in from external tasks, 
+    \item returns after at least one remote method call is handled. 
+    \end{itemize}
+
+\subsubsection{task processing block} 
+
+The following processing is done whenever the Pyro request loop returns
+and one or more tasks have changed state: 
+
+    \begin{itemize} 
+    \item \verb#regeneration#: create new tasks by abdication, i.e.
+    create $foo(T+1)$ when $foo(T)$ achieves a {\em finished} state.
     \begin{itemize}
     \item this ensures that $foo(T+1)$ won't run before $foo(T)$
     finishes, without imposing explicit intercycle prerequisites
@@ -149,25 +190,6 @@ $foo(T+1)$ is created only when $foo(T)$ achieves a {\em finished} state.
     \item tasks are not deleted immediately on abdication (see below). 
     \end{itemize}
 
-\item An initial run through the {\em task processing block} (see below)
-causes any tasks with no prerequisites (e.g. {\em downloader}) to enter the
-{\em running} state and launch their external tasks immediately.
-    \begin{itemize}
-    \item if there are no tasks that lack prequisites, nothing starts running.
-    \end{itemize}
-
-\item The program now enters the {\em Pyro request loop}, which:
-
-    \begin{itemize}
-    \item handles remote method calls coming in from external tasks, 
-    \item returns after at least one remote method call is handled. 
-    \end{itemize}
-
-\item The {\em task processing block} executes whenever the Pyro request
-loop returns and one or more tasks have changed state: 
-
-    \begin{itemize} 
-    \item \verb#regeneration#: create new tasks by abdication.
 
     \item \verb#interaction#: satisfy each others' prerequisites. 
 
@@ -240,8 +262,6 @@ loop returns and one or more tasks have changed state:
        their descendents might not be lame (see topnet case above). 
        \end{itemize}
    \end{itemize}
-\end{itemize}
-
 
 \appendix
 
