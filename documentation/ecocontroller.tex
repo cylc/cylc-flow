@@ -51,15 +51,14 @@ depends on $foo(T)$ because most forecast models start from a
 \section{Dynamic Sequencing}
 
 This method was inspired by basic object oriented game programming
-techniques. Tasks are represented by objects (in the {\em Object
-Oriented Programming} sense) that are only aware of their own state
-information but are able to interact to dynamically to satisfy each
-other's dependencies.  Thus, rather than enforcing a prescribed task
-sequence from the outset, correct sequencing just emerges naturally at
-run time. The total lack of explicit sequencing logic makes this
-approach extremely flexible: new tasks can be added to the system, or
-existing tasks switched on and off, without modifying the main control
-program at all.
+techniques. Tasks are represented by {\em task objects} in the
+controller that are aware only of their own state information but are
+able to interact to dynamically to satisfy each other's dependencies.
+Thus, rather than enforcing a prescribed task sequence from the outset,
+correct sequencing just emerges naturally at run time. The total lack of
+explicit sequencing logic makes this approach extremely flexible: new
+tasks can be added to the system, or existing tasks switched on and off,
+without modifying the main control program at all.
 
 
 \subsection{Task Dependencies}
@@ -384,66 +383,58 @@ time greater than or equal to Tb can satisify the prerequisite.
 
 \section{Object Oriented Programming}
 
-This section contains a minimal introduction to the main OOP concepts
-that are needed to understand how the controller works.  Please refer to
-an OOP textbook for more information.
+This is a minimal introduction to OOP concepts that the controller is
+critically dependent on. Refer to any OOP reference for more detail.
 
-\subsection{classes and objects}
+\subsection{Classes and Objects}
 
-A {\em class definition} defines the properties of {\em objects} or {\em
-instances} of that class. An object is a more or less self contained
-entity, that can be assigned to a variable, with specific {\em state}
-(data) and class dependent {\em behaviour} (functions or ``methods''
-that operate on the data and are the means by which objects interacts
-with the outside world).    
+A {\em class definition} declares the properties of {\em objects} or
+{\em instances} of the class; these are self-contained entities that can
+be assigned to a variable and have specific {\em state} (data) and {\em
+behaviour} (functions or ``methods'' that operate on the data and are
+the means by which objects interact with the outside world).    
 
-For example, a $shape$ class might define a $position$ data member that
-describes the location of each shape object, and a $draw()$ method that
-causes a shape object to draw itself in the right location on screen.
+For example, a $shape$ class could define a $position$ data member that
+describes the location of each shape object, a $move()$ method that
+alters its position, and a $draw()$ method that causes a shape object to
+draw itself in the right location on screen.
 
-\subsection{inheritance}
+\subsection{Inheritance}
 
-A {\em subclass} is a class that inherits the properties (methods and
-data members) of its {\em parent class}, but can also {\em override}
-specific parent class properties, or add new properties that aren't
-present in the parent class. Calling a method $f()$ on an object invokes
-the object's own class method $f()$ if one is defined, or otherwise
-falls back to its parent class's $f()$, and so on down to the {\em
-base class's} $f()$ at the root of the inheritance tree. 
+A {\em subclass} inherits the properties (methods and data members)
+of its {\em parent class}. It can also {\em override} specific parent
+class properties, or add new properties that aren't present in the
+parent class. Calling a particular method on an object invokes the
+object's own class method if one is defined, otherwise the parent class
+is searched, and so on down to the {\em base class} at the root of the
+object's inheritance tree. 
 
-For example, $circle$ and $square$ classes could be derived from the
-$shape$ class; these would define additional variables to describe their
-particular kind of shape, such as a $radius$ for circles, and would
-override $shape.draw()$ so that a circle object would draw itself as a
-proper circle, and so on.
+For example, we could derive a $circle$ class from $shape$, adding a
+`radius' data member and overriding the $draw()$ to get circle objects
+to display themselves as actual circles.  Calling $circle.move()$ would
+invoke the base class method, $shape.move()$. 
 
 
-\subsection{polymorphism}
+\subsection{Polymorphism}
 
-This refers to the ability to treat a group of objects of different
-classes as if they were all members of a common parent class.
+This refers to the ability to treat a group of objects as if they were
+all members of a common parent class.
 
-For example, consider a list of $shape$ objects that actually contains a
-mix of $circles$, $triangles$, and $squares$, all derived from the
-$shape$ base class.  Calling $draw()$ on each list member in turn would
-result in each object drawing itself in its own unique position and
-colour using the $draw()$ method appropriate to its own subclass (so
-that $circle$ objects would look like circles, etc.). This is very
-powerful because {\em it allows unmodified old code to call new code}:
-two years after writing this program we could derive an entirely new
-kind of shape ($hexagon$, say) with it's own unique behaviour, and add
-it to the list of shapes; the old shape handling code, without
-modification, would magically do the right thing when it encountered 
-the new shape objects.
+For example, if we iterate through a list of $shapes$ that actually
+contains a mix of $circles$, $triangles$, and $squares$, calling
+$draw()$ on any list member will automatically invoke the right
+derived-class $draw()$ method.  This is a very powerful mechanism
+because {\em it allows unmodified old code to call new code}: if we
+later derive an entirely new kind of shape ($hexagon$, say) with it's
+own unique behaviour the existing program will already be able to
+process the new objects in hexagon-specific ways, without modification. 
 
-\subsection{... in the controller}
+\subsection{The OO Controller}
 
-The controller makes extensive use of inheritance and polymorphism, and
-in particular it handles task objects polymorphically. All tasks are
-treated as if they were instances of the base class that defines common
-task behaviour, which is an enormous simplification, but they respond in
-derived-class-specific ways when necessary: calling $task.run()$ on an
-nztide task object results in the real tide model running, and so on. 
-
+Task objects are polymorphic: tasks of all types are stored and
+manipulated in a single list as if they were instances of the base class
+that defines common task behaviour, but their actual behaviour is
+derived-class-specific when necessary (calling $nztide.run()$ results in
+the tide model running, and so on). 
 
 \end{document}
