@@ -1,4 +1,4 @@
-\documentclass[12pt]{article}
+\documentclass[12pt]{amsart}
 
 \title{Multiflight Dynamic Sequencing Controller Documentation}
 
@@ -32,7 +32,7 @@ Machine that enforces the correct predetermined, hardwired, task
 sequence: 
 
 \begin{verbatim}
-IF [task A(T) has completed file X] AND [task B(T) is finished]
+IF [file X is ready] AND [task B(T) is finished]
    THEN [run task C(T)] 
 (etc.)
 \end{verbatim} 
@@ -101,24 +101,28 @@ can report back in case of error.
 
 \subsection{The Algorithm}
 
-We need to decide on a specific {\em task management scheme}: how should
-task objects be handled within the program, and when should they be
-created and destroyed?  For example, we could simply create a whole
-month's worth of tasks at once and let them interact until everything
-runs to completion. That seems refreshingly simple, and nothing would
-run out of sequence, but there are some negative consequences. For
-instance, system monitoring would be difficult because of the sheer
-number of tasks involved, the end of the month presents an artificial
-barrier to multiflight operation, any tasks that lack prerequisites
-would all want to run at once, and restarting the system after a problem
-could be very difficult. The algorithm that I eventually zeroed in on,
-below, satisfies all of our requirements, features simple start up and
-continuous operation, and is relatively easy to monitor: task objects
-exist by the time they are needed but not for too long before that, and
-not for too long after they are spent. It is completely generic in that
-it knows nothing about relationships between tasks; it simply operates
-on a single pool of interacting tasks, each of which cares only about
-its own inputs and outputs.  
+To implement the dynamic sequencing concept we need to decide when tasks
+will be created and destroyed, and how live tasks will be handled within
+the program.  There are almost too many choices here, and the advantages
+and disadvantages of potential task management schemes have to be
+evaluated carefully (which often isn't easy because of the inherent
+complexity of multiflight operation). In principle we could, for
+example, create a whole month's worth of tasks at once and let them
+interact until everything runs to completion.  That seems refreshingly
+simple, and nothing would run out of sequence, {\em but} system
+monitoring would be difficult because of the sheer number of tasks
+involved, the end of the month presents an artificial barrier to
+multiflight operation, any tasks that lack prerequisites would all want
+to run at once, and restarting the system after a problem could be very
+difficult. 
+
+The algorithm actually implemented in the controller, below, allows
+simple start up and continuous operation, and is relatively easy to
+monitor (task objects exist by the time they are needed but not for too
+long before that, and not for too long after they are spent) and the
+main program is completely task-agnostic: it operates on a single pool
+of tasks that each care only about their own inputs and outputs and
+know nothing about the other tasks.  
 
 \begin{itemize}
     \item At startup, the user supplies an initial reference time and
@@ -246,24 +250,22 @@ loop returns and one or more tasks have changed state:
 Dummy mode allows complete testing of the control system without running
 any of the real external tasks\footnote{The only difference between
 dummy mode and real operation, as far as the controller is concerned, is
-that external dummy tasks are not delayed by resource contention}.
-Instead of its real external task, each task object launches an external
-dummy program that gets a list of postrequisites from the parent task
-object (via Pyro) and reports back that each one is satisfied in turn.
-Postrequisites are satisfied at the (estimated) right time relative to
-an accelerated clock, and dummy tasks therefore complete in
-approximately the same dummy clock time as the real tasks do in real
-time. An initial dummy clock offset relative to the initial reference
-time can also be specified, which also allows simulation of catchup
-operation and the transition to real time mode.  Log messages are
-stamped with dummy clock time instead of real time.
+that external dummy tasks are not delayed by resource contention}.  When
+it is ready to run, a task object will launch an external dummy program
+that (i) gets a list of postrequisites from the parent task object and
+then (ii) reports back that each one is satisfied in turn.  Messages are
+sent back at the (estimated) right time relative to the controller's
+accelerated clock so that dummy tasks complete in approximately the same
+dummy clock time as the real tasks do in real time. An initial dummy
+clock offset relative to the initial reference time can also be
+specified, which also allows simulation of catchup operation and the
+transition to real time mode.  Log messages are stamped with dummy clock
+time instead of real time.
 
 The same script is used for all external dummy tasks but it has special
-behaviour when representing some tasks (downloader and topnet) in order
-to correctly simulate their behaviour (the downloader ``waits for incoming
-files'' until the clock time is at least 3:15 past its reference time, and
-topnet ``waits until the clock time 0:15 min past the task reference
-time'' (i.e. the stream flow data extraction cutoff).
+behaviour in certain cases: the dummy downloader ``waits for incoming
+files'' until 3:15 past its reference time, and the dummy topnet ``waits
+for streamflow data'' until 0:15 past its reference time.
 
 The dummy clock can be bumped forward a number of hours by remote
 control, while the system is running. This affects the postrequisite
@@ -360,26 +362,26 @@ relative to the task's own reference time, and any task with a reference
 time greater than or equal to Tb can satisify the prerequisite.
 
 
-\subsection{Object Oriented Programming}
+\section{Object Oriented Programming}
 
-It is beyond the scope of this document to teach object oriented
-programming, but it might be useful to give a quick once-over-lightly
-explanation of the main OOP concepts that the controller depends on.
+This section contains a minimal introduction to the main OOP concepts
+that are needed to understand how the controller works.  Please refer to
+an OOP textbook for more information.
 
-\subsubsection{classes and objects}
+\subsection{classes and objects}
 
-
-From a {\em class definition} one can {\em instantiate} {\em objects} or
-{\em instances} (of the class); these are entities with specific {\em
-state} (data) and class dependent {\em behaviour} (functions or
-``methods'' that operate on the data and are the means by which objects
-interacts with the outside world).    
+A {\em class definition} defines the properties of {\em objects} or {\em
+instances} of that class. An object is a more or less self contained
+entity, that can be assigned to a variable, with specific {\em state}
+(data) and class dependent {\em behaviour} (functions or ``methods''
+that operate on the data and are the means by which objects interacts
+with the outside world).    
 
 For example, a $shape$ class might define a $position$ data member that
 describes the location of each shape object, and a $draw()$ method that
 causes a shape object to draw itself in the right location on screen.
 
-\subsubsection{inheritance}
+\subsection{inheritance}
 
 A {\em subclass} is a class that inherits the properties (methods and
 data members) of its {\em parent class}, but can also {\em override}
@@ -396,10 +398,10 @@ override $shape.draw()$ so that a circle object would draw itself as a
 proper circle, and so on.
 
 
-\subsubsection{polymorphism}
+\subsection{polymorphism}
 
-This is the ability to treat a set of objects as if they were
-all members of a common parent class.
+This refers to the ability to treat a group of objects of different
+classes as if they were all members of a common parent class.
 
 For example, consider a list of $shape$ objects that actually contains a
 mix of $circles$, $triangles$, and $squares$, all derived from the
@@ -411,10 +413,10 @@ powerful because {\em it allows unmodified old code to call new code}:
 two years after writing this program we could derive an entirely new
 kind of shape ($hexagon$, say) with it's own unique behaviour, and add
 it to the list of shapes; the old shape handling code, without
-modification, would magically do the right thing when it encountered any
-of the new shape objects.
+modification, would magically do the right thing when it encountered 
+the new shape objects.
 
-\subsubsection{... in the controller}
+\subsection{... in the controller}
 
 The controller makes extensive use of inheritance and polymorphism, and
 in particular it handles task objects polymorphically. All tasks are
