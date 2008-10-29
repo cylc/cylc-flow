@@ -1,4 +1,4 @@
-\documentclass[12pt]{amsart}
+\documentclass[a4paper,12pt]{amsart}
 
 \title{Multiflight Dynamic Sequencing Controller Documentation}
 
@@ -277,9 +277,9 @@ sent back at the (estimated) right time relative to the controller's
 accelerated clock so that dummy tasks complete in approximately the same
 dummy clock time as the real tasks do in real time. An initial dummy
 clock offset relative to the initial reference time can also be
-specified, which also allows simulation of catchup operation and the
-transition to real time mode.  Log messages are stamped with dummy clock
-time instead of real time.
+specified, which also allows simulation of the transition between
+catchup and real time operation. Log messages are stamped with dummy
+clock time instead of real time.
 
 The same script is used for all external dummy tasks but it has special
 behaviour in certain cases: the dummy downloader ``waits for incoming
