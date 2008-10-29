@@ -1,6 +1,11 @@
 #!/bin/bash
 
 set -e  # abort on error
+
+# load functions
+echo "WARNING: USING TEMPORARY BAD HARDWIRED FUNCTIONS PATH"
+. /test/ecoconnect_test/ecocontroller/external/functions.sh
+
 trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 
 # Find the operational tn_\${REFERENCE_TIME}_utc_nzlam_12.nc(.bz2)
@@ -25,19 +30,6 @@ trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 #  + kicking the test log with the right message
 #    MSG="retrieving met UM file(s) for $REFERENCE_TIME"
 #    logger -i -p local1.info -t process_nzlam_output $MSG 
-
-function task_message 
-{
-    # USAGE: task_message <PRIORITY> <"MESSAGE">
-    # priorities are CRITICAL, WARNING, NORMAL
-
-    # TO DO: WHERE TO KEEP EXTERNAL SCRIPTS AND HOW TO REFER TO THEM
-    MESSAGER=/test/ecoconnect_test/ecocontroller/send_message.py  
-    #MESSAGER=echo   # uncomment for debugging
-    
-    PRIORITY=$1; shift
-    $MESSAGER $PRIORITY $TASK_NAME $REFERENCE_TIME "$@"
-}
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task_message CRITICAL "REFERENCE_TIME not defined"

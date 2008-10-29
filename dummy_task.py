@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# TO DO: DERIVE SPECIFIC DUMMY TASK CLASSES FOR TOPNET AND DOWNLOADER
+# to get rid of the nasty 'IF' blocks, or move them to main() at least.
+
 # For external dummy task programs that report their postrequisites done
 # on time relative to the controllers internal accelerated dummy clock.
 
@@ -49,9 +52,9 @@ class dummy_task_base:
                 rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
                 # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN topnet.incoming()
                 if datetime.datetime.now() >= rt_p25:
-                    self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + self.ref_time )
+                    self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data already available for ' + self.ref_time )
                 else:
-                    self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + self.ref_time ) 
+                    self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow data for ' + self.ref_time ) 
                     while True:
                         sleep(10)
                         if datetime.datetime.now() >= rt_p25:

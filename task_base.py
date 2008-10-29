@@ -135,12 +135,10 @@ class normal_task( Pyro.core.ObjBase ):
         os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
 
-    def run_external_task( self ):
-        # note that you can mix real and dummy tasks by temporarily
-        # overriding this method to call run_external_dummy(), 
+    def run_external_task( self, extra_vars = [] ):
         self.log.info( 'launching task for ' + self.ref_time )
 
-        qsub.run( self.user_prefix, self.name, self.ref_time, self.external_task )
+        job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
     def get_state( self ):
@@ -258,7 +256,7 @@ class free_task( normal_task ):
     name = "free task base"
 
     def __init__( self, ref_time, initial_state = "waiting" ):
-        self.MAX_FINISHED = 4
+        self.MAX_FINISHED = 2
         normal_task.__init__( self, ref_time, initial_state )
 
     def run_if_ready( self, tasks ):

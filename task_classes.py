@@ -81,8 +81,7 @@ class oper2test_topnet( free_task ):
     name = "oper2test_topnet"
     valid_hours = [ 6, 18 ]
     external_task = 'oper2test_topnet.sh' 
-    #user_prefix = 'hydrology'
-    user_prefix = 'ecoconnect'
+    user_prefix = 'hydrology'
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -347,7 +346,7 @@ class nztide( free_task ):
 class topnet( normal_task ):
     "streamflow data extraction and topnet" 
 
-    """If no other tasks dependend on the streamflow data then it's
+    """If no other tasks depend on the streamflow data then it's
     easiest to make streamflow part of the topnet task, because of
     the unusual runahead behavior of topnet"""
 
@@ -355,12 +354,11 @@ class topnet( normal_task ):
  
     name = "topnet"
     valid_hours = range( 0,24 )
-    external_task = 'topnet.sh'
+    external_task = 'run_topnet.sh'
     user_prefix = 'hydrology'
 
     # assume catchup mode and detect if we've caught up
     catchup_mode = True
-    # (SHOULD THIS BE BASED ON TOPNET OR DOWNLOADER?)
 
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
 
@@ -389,10 +387,8 @@ class topnet( normal_task ):
         self.postrequisites = timed_requisites( self.name, [ 
             [0, "streamflow extraction started for " + ref_time],
             [2, "got streamflow data for " + ref_time],
-            [2.1, "streamflow extraction finished for " + ref_time],
             [3, self.name + " started for " + ref_time],
-            [4, "catchment forecasts finished"],
-            [5, self.name + " finished for " + ref_time] ])
+            [6, self.name + " finished for " + ref_time] ])
 
         normal_task.__init__( self, ref_time, initial_state )
 
@@ -409,6 +405,16 @@ class topnet( normal_task ):
         self.log.info( "launching dummy for " + self.ref_time + " (off " + file + ")" )
         os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
         self.state = "running"
+
+    def run_external_task( self ):
+
+        prereqs = self.prerequisites.get_list()
+        prereq = prereqs[0]
+        m = topnet.fuzzy_file_re.match( prereq )
+        [ file ] = m.groups()
+
+        extra_vars = [ ['TN_FILENAME', file] ]
+        normal_task.run_external_task( self, extra_vars )
 
 
     def incoming( self, priority, message ):
