@@ -50,14 +50,14 @@ depends on $foo(T)$ because most forecast models start from a
 \section{Dynamic Sequencing}
 
 This method was inspired by object oriented game programming techniques.
-Tasks are represented in the controller by {\em task objects} that are
-only care about their own states but are able to interact with others to
-find out if their dependencies are satisfied yet. Thus, rather than
-enforcing a prescribed task sequence from the outset, correct sequencing
-just emerges naturally at run time.  The total lack of explicit
-sequencing logic makes this an extremely flexible approach: new tasks
-can be added, or existing ones switched on and off, without modifying
-the main program at all.
+Tasks are represented in the controller by {\em task objects} that only
+care about their own states but are able to interact with others to find
+out if their dependencies are satisfied yet. Thus, rather than enforcing
+a prescribed task sequence from the outset, correct sequencing emerges
+naturally at run time.  The total lack of explicit sequencing logic
+makes this an extremely flexible approach: new tasks can be added, or
+existing ones switched on and off, without modifying the main program at
+all.
 
 
 \subsection{Task Dependencies}
@@ -77,16 +77,15 @@ post-requisites.
 
 A task object knows its own prerequisites and postrequisites and can
 interact with other tasks to find out if its prerequisites have been
-satisfied yet. When all its prerequisites are satisfied, it can
-launch its external task, after which its internal state is updated by
-Pyro-based\footnote{The Python Remote Object protocol allows direct
-network communication between external tasks and their parent task
-objects in the controller} remote method calls coming in from the
-external task. 
+satisfied yet. When all its prerequisites are satisfied, it can launch
+its external task, after which its internal state is updated by remote
+method calls\footnote{The Python Remote Object protocol (Pyro) allows
+direct network communication between external tasks and their parent
+task objects in the controller} coming in from the external task. 
 
 Note that a task object does not need to know {\em who} is supposed to
-satisfy its prerequisites. It can just ask, indiscriminately, every
-other task in the system.  This makes the task interaction code almost
+satisfy its prerequisites because it can ask, indiscriminately, every
+other task in the system. This makes the task interaction code almost
 trivial, and the fact that most task interactions are fruitless is of no
 consequence. 
 
@@ -94,33 +93,31 @@ Note also that postrequisites are just {\em messages}. If the controller
 receives a ``file X ready'' message, for example, it trusts the message
 source and does not bother to check for the actual file's existence. To
 do otherwise would be redundant because the external tasks have to
-verify the existence of input files anyway, and they can report back in
-case of error.
+verify the existence of input files anyway, and they can report back any
+errors.
 
 
 \section{Implementation}
 
-To implement dynamic sequencing we need to decide when tasks will be
-created and destroyed, and how they will be managed by the program.
-There are almost too many choices here; the advantages and disadvantages
-of potential task management schemes have to be evaluated carefully,
-which may not be easy thanks to the inherent complexity of multiflight
-operation. In principle we could, for example, create a whole month's
-worth of tasks at once and let them interact until everything runs to
-completion. That seems refreshingly simple, and nothing would run out of
-sequence, {\em but} system monitoring would be difficult because of the
-sheer number of tasks involved, the end of the month presents an
-artificial barrier to multiflight operation, tasks that lack
-prerequisites would all want to run at once, and system restarts could
-be very complicated. 
+To implement dynamic sequencing we need to decide how to manage the task
+objects (e.g. when they will be created and destroyed). There is almost
+too much flexibility here (e.g.  should tasks be created all at once, in
+cotemporal batches, or one at a time as their predecessors finish?) and
+consequences have to be evaluated carefully, which is not easy because
+of the inherent complexity of multiflight operation. In principle we
+could, for example, create a whole month's worth of tasks at once and
+let them interact until everything runs to completion. That seems
+refreshingly simple, and nothing would run out of sequence, {\em but}
+system monitoring would be difficult because of the sheer number of
+tasks involved, the end of the month presents an artificial barrier to
+multiflight operation, tasks that lack prerequisites would all want to
+run at once, and system restarts could be very complicated. 
 
-The algorithm implemented in the controller, below, allows simple start
-up and continuous operation, it is relatively easy to monitor (task
-objects exist by the time they are needed but not for too long before
-that, and not for too long after they are spent) and the main program is
-completely task-agnostic: it operates on a single pool of tasks that
-each care only about their own inputs and outputs and know nothing about
-the other tasks.  
+The algorithm actually implemented in the controller, below, operates on
+a single pool of interacting task objects, has simple start up and
+continuous operation, and is relatively easy to monitor (task objects
+exist by the time they are needed but not for too long before that, and
+not for too long after they are spent). 
 
 \subsection{Summary}
 
@@ -266,19 +263,18 @@ and one or more tasks have changed state:
 \section{Dummy Mode}
 
 Dummy mode allows complete testing of the control system without running
-any of the real external tasks\footnote{The only difference between
-dummy mode and real operation, as far as the controller is concerned, is
-that external dummy tasks are not delayed by resource contention}.  When
-it is ready to run, a task object will launch an external dummy program
+any real external tasks\footnote{The only difference between dummy mode
+and real operation, as far as the controller is concerned, is that
+external dummy tasks are not delayed by resource contention.}. When it
+is ready to run, a task object will launch an external dummy program
 that (i) gets a list of postrequisites from the parent task object and
-then (ii) reports back that each one is satisfied in turn.  Messages are
-sent back at the (estimated) right time relative to the controller's
-accelerated clock so that dummy tasks complete in approximately the same
-dummy clock time as the real tasks do in real time. An initial dummy
-clock offset relative to the initial reference time can also be
-specified, which also allows simulation of the transition between
-catchup and real time operation. Log messages are stamped with dummy
-clock time instead of real time.
+then (ii) reports back that each one is satisfied at the (estimated)
+right time relative to an accelerated dummy clock. Dummy tasks therefore
+complete in approximately the same dummy clock time as the real tasks do
+in real time. An initial dummy clock offset relative to the initial
+reference time can also be specified, which allows simulation of the
+transition between catchup and real time operation. Log messages are
+stamped with dummy clock time instead of real time.
 
 The same script is used for all external dummy tasks but it has special
 behaviour in certain cases: the dummy downloader ``waits for incoming
@@ -290,6 +286,63 @@ control, while the system is running. This affects the postrequisite
 timing of running tasks correctly, but if it causes a running task to
 finish immediately the next task in line will still start from the
 beginning no matter how big the bump.
+
+
+\section{Object Oriented Programming}
+
+This is a minimal introduction to OOP concepts that the controller is
+critically dependent on. Refer to any OOP reference for more detail.
+
+\subsection{Classes and Objects}
+
+A {\em class definition} declares the properties of {\em objects} or
+{\em instances} of that class; objects are self-contained entities that
+can be assigned to a variable and have specific {\em state} (data) and
+{\em behaviour} (functions or ``methods'' that operate on the data and
+are the means by which objects interact with the outside world).    
+
+For example, a $shape$ class could define a $position$ data member that
+describes the location of each shape object, a $move()$ method that
+causes a shape object to alter its position, and a $draw()$ method that
+causes it to display itself in the right place on screen.
+
+\subsection{Inheritance}
+
+A {\em derived class} or {\em subclass} inherits the properties (methods
+and data members) of its {\em parent class}. It can also {\em override}
+specific parent class properties, or add new properties that aren't
+present in the parent class. Calling a particular method on an object
+invokes the object's own class method if one is defined, otherwise the
+parent class is searched, and so on down to the {\em base class} at the
+root of the object's inheritance tree. 
+
+For example, we could derive a $circle$ class from $shape$, adding a
+`radius' data member and overriding the $draw()$ to get circle objects
+to display themselves as actual circles.  Because we didn't override the
+$move()$ method, calling $circle.move()$ would invoke the base class
+method, $shape.move()$. 
+
+
+\subsection{Polymorphism}
+
+This refers to the ability to treat a group of objects as if they were
+all members of a common base class.
+
+For example, we could construct a list of $shape$ objects from
+$circles$, $triangles$, and $squares$; calling $[list member].draw()$
+will invoke the right derived class $draw()$. This is a very powerful
+mechanism because {\em it allows unmodified old code to call new code}:
+if we later derive an entirely new kind of shape ($hexagon$, say) with
+it's own unique behaviour, the existing program, without modification,
+will process the new objects in the proper hexagon-specific way.
+
+\subsection{The OO Controller}
+
+Task objects are polymorphic: tasks of all types are stored and
+manipulated in a single list as if they were instances of the base class
+that defines common task behaviour, but their actual behaviour is
+derived-class-specific when necessary (calling $nztide.run()$ results in
+the tide model running, and so on). 
 
 
 \section{Threading in Pyro}
@@ -364,8 +417,8 @@ catchup mode or not.
  \item  prerequisites
  \item artificial prerequisites (e.g. make nztide depend on nzlam)
  \item delayed instantiation (a task can't run if it doesn't exist yet).
- \item other contraints based on, for example, the number of previous instances
-       that still exist in the system.
+ \item other contraints based on, for example, the number of previous
+ instances that still exist in the system.
 \end{itemize}
 
 
@@ -379,61 +432,5 @@ ready'' where T is the task's reference time.
 relative to the task's own reference time, and any task with a reference
 time greater than or equal to Tb can satisify the prerequisite.
 
-
-\section{Object Oriented Programming}
-
-This is a minimal introduction to OOP concepts that the controller is
-critically dependent on. Refer to any OOP reference for more detail.
-
-\subsection{Classes and Objects}
-
-A {\em class definition} declares the properties of {\em objects} or
-{\em instances} of the class; these are self-contained entities that can
-be assigned to a variable and have specific {\em state} (data) and {\em
-behaviour} (functions or ``methods'' that operate on the data and are
-the means by which objects interact with the outside world).    
-
-For example, a $shape$ class could define a $position$ data member that
-describes the location of each shape object, a $move()$ method that
-causes a shape object to alter its position, and a $draw()$ method that
-causes it to display itself in the right place on screen.
-
-\subsection{Inheritance}
-
-A {\em derived class| or {\em subclass} inherits the properties (methods
-and data members) of its {\em parent class}. It can also {\em override}
-specific parent class properties, or add new properties that aren't
-present in the parent class. Calling a particular method on an object
-invokes the object's own class method if one is defined, otherwise the
-parent class is searched, and so on down to the {\em base class} at the
-root of the object's inheritance tree. 
-
-For example, we could derive a $circle$ class from $shape$, adding a
-`radius' data member and overriding the $draw()$ to get circle objects
-to display themselves as actual circles.  Calling $circle.move()$ would
-invoke the base class method, $shape.move()$. 
-
-
-\subsection{Polymorphism}
-
-This refers to the ability to treat a group of objects as if they were
-all members of a common parent class.
-
-For example, if we iterate through a list of $shapes$ that actually
-contains a mix of $circles$, $triangles$, and $squares$, calling
-$draw()$ on any list member will automatically invoke the right
-derived-class $draw()$ method.  This is a very powerful mechanism
-because {\em it allows unmodified old code to call new code}: if we
-later derive an entirely new kind of shape ($hexagon$, say) with it's
-own unique behaviour the existing program will already be able to
-process the new objects in hexagon-specific ways, without modification. 
-
-\subsection{The OO Controller}
-
-Task objects are polymorphic: tasks of all types are stored and
-manipulated in a single list as if they were instances of the base class
-that defines common task behaviour, but their actual behaviour is
-derived-class-specific when necessary (calling $nztide.run()$ results in
-the tide model running, and so on). 
 
 \end{document}
