@@ -396,18 +396,18 @@ the means by which objects interact with the outside world).
 
 For example, a $shape$ class could define a $position$ data member that
 describes the location of each shape object, a $move()$ method that
-alters its position, and a $draw()$ method that causes a shape object to
-draw itself in the right location on screen.
+causes a shape object to alter its position, and a $draw()$ method that
+causes it to display itself in the right place on screen.
 
 \subsection{Inheritance}
 
-A {\em subclass} inherits the properties (methods and data members)
-of its {\em parent class}. It can also {\em override} specific parent
-class properties, or add new properties that aren't present in the
-parent class. Calling a particular method on an object invokes the
-object's own class method if one is defined, otherwise the parent class
-is searched, and so on down to the {\em base class} at the root of the
-object's inheritance tree. 
+A {\em derived class| or {\em subclass} inherits the properties (methods
+and data members) of its {\em parent class}. It can also {\em override}
+specific parent class properties, or add new properties that aren't
+present in the parent class. Calling a particular method on an object
+invokes the object's own class method if one is defined, otherwise the
+parent class is searched, and so on down to the {\em base class} at the
+root of the object's inheritance tree. 
 
 For example, we could derive a $circle$ class from $shape$, adding a
 `radius' data member and overriding the $draw()$ to get circle objects
