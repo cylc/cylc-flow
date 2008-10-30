@@ -17,8 +17,8 @@ FETCH_TD=/dvel/data_dvel/fetchtd/fetchtd/src/fetchtd.py
 # INPUT:
 # * no commandline arguments (for qsub)
 # * environment variables:
-#   1. $REFERENCE_TIME
-#   2. $TN_FILENAME (tn netcdf file from most recenet nzlam post processing)
+#   1. $REFERENCE_TIME (=> streamflow data time)
+#   2. $NZLAM_TIME (time of the tn_ netcdf file to use as input)
 
 # INTENDED USER:
 # * hydrology_(dvel|test|oper)
@@ -27,25 +27,45 @@ if [[ -z $REFERENCE_TIME ]]; then
 	task_message CRITICAL "REFERENCE_TIME not defined"
 	exit 1
 fi
+STREAMFLOW_TIME=$REFERENCE_TIME
 
 if [[ -z $TASK_NAME ]]; then
 	task_message CRITICAL "TASK_NAME not defined"
 	exit 1
 fi
 
-if [[ -z $TN_FILENAME ]]; then
-    task_message CRITICAL "TN_FILENAME not defined"
+if [[ -z $NZLAM_TIME ]]; then
+    task_message CRITICAL "NZLAM_TIME not defined"
     exit 1
 fi
 
+INPUT_DIR=$HOME/input/topnet
+RUN_TOPNET=$HOME/bin/run_topnet.sh
+
+# BASIN IDS:
+HUTT=09013064
+CLUTHA=14070121
+BULLER=12009639
+MANAWATU=07042266
+MANUHERIKIKA=14031628
+OPIHI=13070002
+RANGITAIKI=04029020
+RUAMAHANGA=09012311
+WAIPAOA=05013426
+# WAIRAU=11016544
+WAIRAU=11016543
+WANGANUI=07030483
+
 NOW=$(date "+%Y%m%d%H%M")
-STREAMFLOW_CUTOFF=${REFERENCE_TIME}15  # 15 min past the hour
+STREAMFLOW_CUTOFF=${STREAMFLOW_TIME}15  # 15 min past the hour
+
+cd $HOME/running
 
 # check current time and wait for the streamflow cutoff if necessary
 if (( NOW >= STREAMFLOW_CUTOFF )); then
-    task_message NORMAL "CATCHUP: streamflow data already available for $REFERENCE_TIME"
+    task_message NORMAL "CATCHUP: streamflow data already available for $STREAMFLOW_TIME"
 else
-    task_message NORMAL "UPTODATE: waiting for streamflow data for $REFERENCE_TIME"
+    task_message NORMAL "UPTODATE: waiting for streamflow data for $STREAMFLOW_TIME"
 
     while true; do
         # TO DO: CALCULATE THE CORRECT WAIT TIME INSTEAD OF POLLING LIKE A 'TARD
@@ -58,22 +78,34 @@ else
 fi
 
 # get the streamflow data
-task_message NORMAL "streamflow extraction started for $REFERENCE_TIME"
-STREAMFLOW_DATA=/dvel/data_dvel/streamq_${REFERENCE_TIME}_utc_ods_nz.nc
+task_message NORMAL "streamflow extraction started for $STREAMFLOW_TIME"
+STREAMFLOW_DATA=/dvel/data_dvel/streamq_${STREAMFLOW_TIME}_utc_ods_nz.nc
 python $FETCH_TD
 
 if [[ $? != 0 || ! -f $STREAMFLOW_DATA ]]; then
     task_message CRITICAL "Failed to get streamflow data"
     exit 1
 fi
-task_message NORMAL "Got $STREAMFLOW_DATA"
-task_message NORMAL "got streamflow data for $REFERENCE_TIME"
+task_message NORMAL "got $STREAMFLOW_DATA"
+task_message NORMAL "got streamflow data for $STREAMFLOW_TIME"
+
+# copy streamflow data to my input dir
+
+if [[ ! -d $INPUT_DIR ]]; then
+    mkdir -p $INPUT_DIR
+fi
+cp $STREAMFLOW_DATA $INPUT_DIR
 
 # LAUNCH TOPNET NOW
 task_message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
-
 task_message NORMAL "using $TN_FILENAME"
 
-task_message CRITICAL "TOPNET DISABLED!"
+#task_message CRITICAL "TOPNET DISABLED!"
+for BASIN in $CLUTHA; do
+    task_message NORMAL "processing basin $BASIN"
+    $RUN_TOPNET $NZLAM_TIME $STREAMFLOW_TIME $BASIN
+    echo TOPNET RETURNED $?
+    echo $PWD
+done
 
 task_message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"

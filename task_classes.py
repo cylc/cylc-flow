@@ -361,6 +361,7 @@ class topnet( normal_task ):
     catchup_mode = True
 
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
+    reftime_re = re.compile( "\d{10}")
 
     def __init__( self, ref_time, initial_state = "waiting" ):
 
@@ -412,8 +413,10 @@ class topnet( normal_task ):
         prereq = prereqs[0]
         m = topnet.fuzzy_file_re.match( prereq )
         [ file ] = m.groups()
+        m = topnet.reftime_re.search( file )
+        nzlam_time = m.group()
 
-        extra_vars = [ ['TN_FILENAME', file] ]
+        extra_vars = [ ['NZLAM_TIME', nzlam_time ] ]
         normal_task.run_external_task( self, extra_vars )
 
 

@@ -12,8 +12,6 @@ dummy_mode = False
 dummy_clock_rate = 5       
 dummy_clock_offset = 20 
 
-# logging 
-logging_dir = 'LOGFILES' 
 #logging_level = logging.INFO
 logging_level = logging.DEBUG
 

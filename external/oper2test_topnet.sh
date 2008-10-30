@@ -9,7 +9,7 @@ echo "WARNING: USING TEMPORARY BAD HARDWIRED FUNCTIONS PATH"
 trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 
 # Find the operational tn_\${REFERENCE_TIME}_utc_nzlam_12.nc(.bz2)
-# file and copy it to hydrology_\$SYS/input/ for use by topnet.
+# file and copy it to hydrology_\$SYS/input/topnet/ for use by topnet.
 # Search order:
 #  1. main archive: \$ARCHIVE/YYYYMM/DD/
 #  2. staging archive: \$STAGING/YYYYMM/
@@ -55,7 +55,7 @@ STAGING=/oper/archive
 OUTPUT=/oper/nwp_oper/output/nzlam_12
 
 # target directory
-TARGET_DIR=$HOME/input
+TARGET_DIR=$HOME/input/topnet
 
 # operational log to watch
 OPER_LOG=/var/log/ecoconnect
