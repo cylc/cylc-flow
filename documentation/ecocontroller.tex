@@ -143,11 +143,10 @@ continuous operation, and is relatively easy to monitor (task objects
 exist by the time they are needed but not for too long before that, and
 not for too long after they are finished). 
 
-\pagebreak
+The simplicity of the dynamic sequencing algorithm is clear from the
+following code listing, taken directly from the main program:
 
-The fundamental simplicity of the dynamic sequencing algorithm is
-evident from the following listing, which is taken directly from the
-main program source code:
+\pagebreak
 
 \noindent
 \rule{5cm}{.2mm}
@@ -180,7 +179,7 @@ while True: # MAIN LOOP
 \end{lstlisting}
 
 
-\subsection{Startup}
+\subsection{Startup and Initialization}
 
 An initial reference time and list of task object names are read in from
 the config file, then each task object is created at the initial
@@ -197,7 +196,7 @@ state and launch their external tasks immediately. Otherwise ({\em or}
 if there are no tasks that lack prerequisites) nothing will happen.
 
 
-\subsection{Pyro Request Handling}
+\subsection{Remote Method Calls (Pyro)}
 
 The Pyro request handling loop processes remote method calls coming in
 from external tasks, and returns after at least one remote method call
@@ -207,10 +206,10 @@ Appendix \ref{pyro-appendix}).
 
 \subsection{Task Processing}
 
-The following task processing is done whenever one or more task objects
-have changed state: 
+The following operations are performed whenever one or more task objects
+have changed state through the action of remote method calls: 
 
-\subsubsection{regenerate}
+\subsubsection{Task Regeneration}
 
 New tasks are created by abdication, i.e. create $foo(T\negmedspace
 +\negmedspace 1)$ if $foo(T)$ is {\em finished}.  Task abdication
@@ -222,11 +221,12 @@ previous cycle).  It also ensures that tasks with no prerequisites, e.g.
 Tasks are not deleted immediately on abdication (see below).
 
 
-\subsubsection{interact} 
+\subsubsection{Task Interaction} 
 
-Each task asks the others if they can satisfy its prerequisites. 
+Each task keeps track of which of its postrequisites are completed, and
+asks the other tasks if they can satisfy any of its prerequisites. 
 
-\subsubsection{run if ready}
+\subsubsection{Run Ready Tasks }
 
 Each task object can launch its associated external task, and enter the
 {\em running} state if its prerequisites are all satisfied, any existing
@@ -234,7 +234,7 @@ older tasks of the same type are already {\em finished}, and fewer than
 {\em MAX\_ RUNAHEAD} finished tasks of the same type still exist (this
 stops tasks with no prerequisites from running ahead indefinitely).
 
-\subsubsection{dump state} 
+\subsubsection{Dump State} 
 
 The current state (waiting, running, or finished) of each task is
 written out to the {\em state dump file}.  This provides a running
@@ -243,7 +243,7 @@ system just prior to shutdown. The controller can optionally start up
 by loading the state dump (which can be edited first). Any 'running'
 tasks are reloaded in the 'waiting' state.
 
-\subsubsection{kill spent tasks} 
+\subsubsection{Removing Spent Tasks} 
 
 A task is spent if it finished {\em and} no longer needed to satisfy the
 prequisites of any other task. Each non-finished task reports its {\em
@@ -257,7 +257,7 @@ may need the same nzlam\_post).
 The task manager can kill any batch of cotemporal tasks that are all
 finished {\em and} older than the oldest task cutoff time.
 
-\subsubsection{kill lame tasks} 
+\subsubsection{Removing Lame Tasks} 
 
 Tasks that will never run (because their prerequisites cannot be
 satisfied by any other task in the system) are removed from the {\em
@@ -332,10 +332,18 @@ Options:
 
 \appendix
 
-\chapter{Object Oriented Programming}
+\chapter{Essential OOP Concepts}
 
-This is a minimal introduction to OOP concepts that the controller is
-critically dependent on. Refer to any OOP reference for more detail.
+This is a minimal introduction to Object Oriented Program concepts that
+the controller is critically dependent on. Refer to any OOP reference
+for more detail.
+
+In the controller, task objects are polymorphic: tasks of all types are
+stored and manipulated in a single list as if they were instances of the
+base class that defines common task behaviour, but their actual
+behaviour is derived-class-specific when necessary (calling
+$nztide.run()$ results in the tide model running, and so on). The
+following sections should help explain what this means.
 
 \section{Classes and Objects}
 
@@ -379,14 +387,6 @@ mechanism because {\em it allows unmodified old code to call new code}:
 if we later derive an entirely new kind of shape ($hexagon$, say) with
 it's own unique behaviour, the existing program, without modification,
 will process the new objects in the proper hexagon-specific way.
-
-\section{The OO Controller}
-
-Task objects are polymorphic: tasks of all types are stored and
-manipulated in a single list as if they were instances of the base class
-that defines common task behaviour, but their actual behaviour is
-derived-class-specific when necessary (calling $nztide.run()$ results in
-the tide model running, and so on). 
 
 
 \chapter{Threading in Pyro} \label{pyro-appendix}
@@ -438,21 +438,20 @@ important is happening.
 \section{catchup mode}
 
 Note that ``correct model sequencing'' is not equivalent to ``orderly
-generation of products by reference time'', in catchup operation.  E.g.
-nzlam can run continuously regardless of the downstream processing that
-depends on it.
+generation of products by reference time''.  Nzlam can run continuously,
+regardless of the downstream processing that depends on it.
 
-Catchup vs up-to-date operation is now task-dependent, rather than a
-property of the whole system (as it is if only tasks from the same
-reference time can run at once).  Where this matters, it can be detected
-by the relevant external task. E.g. if the external topnet(T) task
-starts up at real time t greater than the streamflow data time for T
-(i.e. $T+15$ min), i.e. the required streamflow data is already available,
-then we're still in catchup. If, on the other hand, the topnet task
-finds that it has to wait for its streamflow data time to arrive, then
-we're caught up to real time.  This matters because topnet is allowed to
-run ahead by a different amount of time depending on whether we're in
-catchup mode or not.
+Catchup mode is now task-dependent, rather than a property of the whole
+system (as it is if only tasks from the same reference time can run at
+once).  Where this matters, it can be detected by the relevant external
+task. E.g. if the external topnet(T) task starts up at real time t
+greater than the streamflow data time for T (i.e. $T+15$ min), i.e. the
+required streamflow data is already available, then we're still in
+catchup. If, on the other hand, the topnet task finds that it has to
+wait for its streamflow data time to arrive, then we're caught up to
+real time.  This matters because topnet is allowed to run ahead by a
+different amount of time depending on whether we're in catchup mode or
+not.
 
 
 \section{controlling when a task executes}
@@ -466,14 +465,15 @@ catchup mode or not.
 \end{itemize}
 
 
-\section{requisites}
+\section{fuzzy prequisites}
 
-{\em EXACT PREREQUISITES} (most tasks): times are specified exactly,
-relative to the task's own reference time.  E.g. ``file foo\_{T}.nc
-ready'' where T is the task's reference time.
+{\em Exact prerequisites} (most tasks): times are specified exactly,
+relative to the task's own reference time.  E.g. {\em file foo\_{T}.nc
+ready} where T is the task's reference time.
 
-{\em FUZZY PREREQUISITES} (topnet): a time boundary, Tb, is specified
-relative to the task's own reference time, and any task with a reference
-time greater than or equal to Tb can satisify the prerequisite.
+{\em Fuzzy prerequisites} (topnet): a time boundary is specified
+relative to the task's own reference time; any task with a reference
+time greater than or equal to the boundary time can satisify the
+prerequisite.
 
 \end{document}
