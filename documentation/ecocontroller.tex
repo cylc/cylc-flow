@@ -30,11 +30,11 @@ can be added easily) and it must allow tasks from different forecast
 cycles to run at the same time, where dependencies allow, for maximum
 throughput after system delays ({\em multiflight} operation). 
 
-\chapter{Design Options}
+\chapter{Rejected Design Options}
 
 The following sections describe the task sequencing method used by our
-original single-flight control system, and several ideas put forward
-for its multiflight successor.
+original single-flight control system, and several other ideas put
+forward for its multiflight successor.
 
 \section{Explicit Sequencing Logic}
 
@@ -71,7 +71,9 @@ problem to such an extent that any putative generic framework would find
 it impossible to compete. 
 
 
-\section{Dynamic Sequencing}
+\chapter{Dynamic Sequencing}
+
+\section{Conceptual Overview}
 
 This method was inspired by object oriented game programming techniques.
 Tasks are represented in the controller by {\em task objects} that only
@@ -82,8 +84,6 @@ naturally at run time.  The total lack of explicit sequencing logic
 makes this extremely flexible: new tasks can be added, or existing ones
 switched on and off, without modifying the main program at all.
 
-
-\chapter{Dynamic Sequencing}
 
 \section{Task Dependencies}
 
