@@ -226,7 +226,7 @@ Tasks are not deleted immediately on abdication (see below).
 Each task keeps track of which of its postrequisites are completed, and
 asks the other tasks if they can satisfy any of its prerequisites. 
 
-\subsubsection{Run Ready Tasks }
+\subsubsection{Running Ready Tasks}
 
 Each task object can launch its associated external task, and enter the
 {\em running} state if its prerequisites are all satisfied, any existing
@@ -247,15 +247,14 @@ tasks are reloaded in the 'waiting' state.
 
 A task is spent if it finished {\em and} no longer needed to satisfy the
 prequisites of any other task. Each non-finished task reports its {\em
-cutoff reference time}, i.e. the oldest reference time that is still
-needed for to satisfy its own prerequisites or those of its immediate
-successor after abdication.  In most cases this is just the task's own
-reference time. For hourly {\em topnet} it is the reference time of the
-previous finished 06 or 18Z {\em nzlam\_post} task (the next topnet task
-may need the same nzlam\_post).  
-
-The task manager can kill any batch of cotemporal tasks that are all
-finished {\em and} older than the oldest task cutoff time.
+cutoff reference time}, i.e. the oldest reference time that may contain
+tasks still needed to satisfy its own prerequisites or those of its
+immediate post-abdication successor.  In most cases this is just the
+task's own reference time. For hourly {\em topnet} it is the reference
+time of the previous finished 06 or 18Z {\em nzlam\_post} task (the next
+topnet task may need the same nzlam\_post). The task manager can then
+kill any batch of cotemporal tasks that are all finished {\em and} older
+than the oldest task cutoff time.
 
 \subsubsection{Removing Lame Tasks} 
 
@@ -334,16 +333,14 @@ Options:
 
 \chapter{Essential OOP Concepts}
 
-This is a minimal introduction to Object Oriented Program concepts that
-the controller is critically dependent on. Refer to any OOP reference
-for more detail.
-
-In the controller, task objects are polymorphic: tasks of all types are
-stored and manipulated in a single list as if they were instances of the
-base class that defines common task behaviour, but their actual
-behaviour is derived-class-specific when necessary (calling
-$nztide.run()$ results in the tide model running, and so on). The
-following sections should help explain what this means.
+Task objects in the new controller are {\em polymorphic}: tasks of all
+types are stored and manipulated in a single list as if they were
+instances of the base class that defines common task behaviour, but
+their actual behaviour is derived-class-specific when necessary (for
+example, calling $nztide.run()$ results in the tide model running, and
+so on). The section is a minimal introduction to the Object Oriented
+Program concepts needed to understand what this means.  Refer to any OOP
+reference for more detail.
 
 \section{Classes and Objects}
 
@@ -378,15 +375,14 @@ method, $shape.move()$.
 \section{Polymorphism}
 
 This refers to the ability to treat a group of objects as if they were
-all members of a common base class.
-
-For example, we could construct a list of $shape$ objects from
-$circles$, $triangles$, and $squares$; calling $[list member].draw()$
-will invoke the right derived class $draw()$. This is a very powerful
-mechanism because {\em it allows unmodified old code to call new code}:
-if we later derive an entirely new kind of shape ($hexagon$, say) with
-it's own unique behaviour, the existing program, without modification,
-will process the new objects in the proper hexagon-specific way.
+all members of a common base class.  For example, we could construct a
+list of $shape$ objects from $circles$, $triangles$, and $squares$;
+calling $[list member].draw()$ will invoke the right derived class
+$draw()$. This is a very powerful mechanism because {\em it allows
+unmodified old code to call new code}: if we later derive an entirely
+new kind of shape ($hexagon$, say) with it's own unique behaviour, the
+existing program, without modification, will process the new objects in
+the proper hexagon-specific way.
 
 
 \chapter{Threading in Pyro} \label{pyro-appendix}
