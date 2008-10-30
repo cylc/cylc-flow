@@ -153,10 +153,13 @@ main program source code:
 \rule{5cm}{.2mm}
 \begin{lstlisting}
 # (startup initialization code omitted)
+
 while True: # MAIN LOOP
+
    if task_base.state_changed:
        # PROCESS ALL TASKS whenever one changes state as
        # a result of a remote task message coming in.
+
        task_pool.regenerate()  # create new tasks
        task_pool.interact()
        task_pool.run_if_ready()
@@ -167,10 +170,12 @@ while True: # MAIN LOOP
        task_pool.kill_lame_tasks()
 
     # PYRO REQUEST HANDLING; returns after one or more remote
-    # method invocations is processed (not just task messages, 
-    # hence the use of task_base.state_changed above).
+    # method invocations are processed (these are not just task
+    # messages, hence the use of task_base.state_changed above).
+
     task_base.state_changed = False
     pyro_daemon.handleRequests( timeout = None )
+
 # MAIN LOOP END
 \end{lstlisting}
 
