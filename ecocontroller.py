@@ -112,7 +112,7 @@ def main( argv ):
             pool.kill_lame_ducks()
 
         # PYRO REQUEST HANDLING; returns after one or more remote
-        # method invocations is processed (not just task messages, 
+        # method invocations are processed (not just task messages, 
         # hence the use of task_base.state_changed above).
         task_base.state_changed = False
         pyro_daemon.handleRequests( timeout = None )
