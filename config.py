@@ -1,38 +1,33 @@
 #!/usr/bin/python
 
+# User-editable controller configuration file
+
+# This file gets listed automatically in the latex
+# documentation, so keep line lengths reasonable.
+
 import logging
 
-# THE FOLLOWING ITEMS MUST BE DEFINED IN THIS CONFIGURATION FILE:
-
-#  1. start_time ('yyyymmddhh')
-#  2. stop_time  ('yyyymmddhh', or None for no stop)
-#  3. dummy_mode (dummy out all tasks)
-#  4. dummy_clock_rate (seconds per simulated hour) 
-#  5. dummy_clock_offset (hours before start_time)
-#  6. task_list (tasks out of task_classes module to run)
-#  7. dummy_out (tasks to dummy out even when dummy_mode is False)
-#  8. logging_dir (directory under which to put all log files)
-#  9. logging_level (logging.INFO or logging.DEBUG)
-# 10. pyro_ns_group (must be unique for each running controller)
-# 11. state_dump_file (records current system state)
-
+# dummy mode settings
 dummy_mode = False
-dummy_clock_offset = 20
-dummy_clock_rate = 5
+dummy_clock_rate = 5       
+dummy_clock_offset = 20 
 
-logging_dir = 'LOGFILES'
-state_dump_file = 'STATE'
-
-pyro_ns_group = ':ecoconnect'
-
+# logging 
+logging_dir = 'LOGFILES' 
 #logging_level = logging.INFO
 logging_level = logging.DEBUG
 
+state_dump_file = 'STATE'
+
+# pyro nameserver group must be unique per controller
+# instance so that different programs don't interfere.
+pyro_ns_group = ':ecoconnect'   
+
+# start and (optional) stop reference times
 start_time = "2008102012"
 stop_time = "2008102112"
 
-dummy_out = []
-
+# list the tasks to run
 operational_tasks = [ 
         'downloader',
         'nwp_global',
@@ -55,4 +50,6 @@ topnet_test_tasks = [
 
 #task_list = operational_tasks
 task_list = topnet_test_tasks
+
+# list tasks to dummy out in non-dummy-mode
 #dummy_out = [ 'topnet' ]
