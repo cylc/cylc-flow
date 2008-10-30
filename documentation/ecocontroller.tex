@@ -1,5 +1,8 @@
 \documentclass[a4paper,12pt]{amsart}
 
+\usepackage{listings}
+\lstset{language=Python}
+
 \title{Multiflight Dynamic Sequencing Controller Documentation}
 
 \author{Hilary Oliver, NIWA}
@@ -138,17 +141,23 @@ continuous operation, and is relatively easy to monitor (task objects
 exist by the time they are needed but not for too long before that, and
 not for too long after they are spent): 
 
-\begin{itemize}
-    \item startup (create initial tasks)
-    \item repeat ad infinitum:
-    \begin{itemize}
-        \item Pyro request handling (process remote method calls, which
-        include task messages)
-        \item task processing (whenever a new task message comes in:
-        tasks.interact(), tasks.run\_if\_ready(), create new tasks, kill
-        spent tasks, etc.)
-    \end{itemize}
-\end{itemize}
+%\begin{tiny}
+\begin{lstlisting}
+task_manager.create_initial_tasks() 
+while True:
+    # Remote method call handling 
+    # (returns after one or more calls handled)
+    pyro_daemon.handleRequests() 
+
+    # task processing 
+    if someones_state_changed:
+        task_manager.interact() 
+        task_manager.run_if_ready()
+        task_manager.regenerate()
+        task_manager.kill_spent_tasks()
+        task_manager.kill_lame_ducks()
+\end{lstlisting}
+%\end{tiny}
 
 
 \subsubsection{Startup}
@@ -447,5 +456,8 @@ ready'' where T is the task's reference time.
 relative to the task's own reference time, and any task with a reference
 time greater than or equal to Tb can satisify the prerequisite.
 
+\section{Controller Config File}
+
+\lstinputlisting{../config.py}
 
 \end{document}
