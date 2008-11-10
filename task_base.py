@@ -121,20 +121,14 @@ class task_base( Pyro.core.ObjBase ):
 
         if self.state == 'waiting' and self.prerequisites.all_satisfied():
             # prerequisites all satisified, so run me
-            if config.dummy_mode or self.name in config.dummy_out:
-                # we're in dummy mode
-                self.run_external_dummy()
-            else:
-                self.run_external_task()
-
-    def run_external_dummy( self ):
-        self.log.info( "launching dummy for " + self.ref_time )
-        os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
-        self.state = "running"
+            self.run_external_task()
 
     def run_external_task( self, extra_vars = [] ):
         self.log.info( 'launching task for ' + self.ref_time )
-        job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, extra_vars )
+        if config.dummy_mode or self.name in config.dummy_out:
+            os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
+        else:
+            job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
     def get_state( self ):

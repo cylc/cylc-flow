@@ -438,22 +438,9 @@ class topnet( task_base ):
         task_base.__init__( self, ref_time, initial_state )
 
 
-    def run_external_dummy( self ):
-        # topnet (external) needs to be given the name of the netcdf
-        # file that satisfied satisified the topnet fuzzy prerequisite
-
-        # assumes the nzlam prereq is the second one
-        # (TO DO: search for 'nzlam' in the list of prereqs)
-        prereqs = self.prerequisites.get_list()
-        prereq = prereqs[1]
-        m = topnet.fuzzy_file_re.match( prereq )
-        [ file ] = m.groups()
-
-        self.log.info( "launching dummy for " + self.ref_time + " (off " + file + ")" )
-        os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
-        self.state = "running"
-
     def run_external_task( self ):
+        # topnet needs to be given the time of the netcdf file that
+        # satisfied satisified the topnet fuzzy prerequisite
 
         # assumes the nzlam prereq is the second one
         # (TO DO: search for 'nzlam' in the list of prereqs)
@@ -532,7 +519,7 @@ class topnet_products( simple_task ):
     valid_hours = range( 0,24 )
     external_task = 'product_gen.sh'
     user_prefix = 'hydrology'
-    env_vars = [ ['MODEL_NAME', 'topnet' ] ]
+    env_vars = [ ['MODEL_NAME', 'topnet' ] ]  # needed by external task
 
     def __init__( self, ref_time, initial_state ):
 
@@ -546,9 +533,7 @@ class topnet_products( simple_task ):
         simple_task.__init__( self, ref_time, initial_state, est_run_time = 2 )
 
     def run_external_task( self ):
-        self.log.info( 'launching task for ' + self.ref_time )
-        job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, topnet_products.env_vars )
-        self.state = 'running'
+        task_base.run_external_task( self, topnet_products.env_vars )
 
 #----------------------------------------------------------------------
 class nwp_global( task_base ):
