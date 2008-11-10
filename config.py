@@ -24,8 +24,8 @@ state_dump_file = 'STATE'
 pyro_ns_group = ':ecoconnect'   
 
 # start and (optional) stop reference times
-start_time = "2008102012"
-stop_time = "2008102112"
+start_time = "2008102018"
+stop_time = "2008102018"
 
 # list the tasks to run
 operational_tasks = [ 
@@ -39,17 +39,22 @@ operational_tasks = [
         'ricom',
         'nztide',
         'topnet',
+        'topnet_vis',
+        'topnet_products',
         'mos' 
         ]
 
 topnet_test_tasks = [ 
-        'oper2test_topnet',
-        'topnet',
-        #'topnet_post'
+        'oper2test_topnet:finished',
+        'topnet:finished',
+        'topnet_vis',
+        'topnet_products'
         ]
 
 #task_list = operational_tasks
 task_list = topnet_test_tasks
 
 # list tasks to dummy out in non-dummy-mode
+# (currently needs to be defined as an empty list if not needed)
+dummy_out = []
 #dummy_out = [ 'topnet' ]

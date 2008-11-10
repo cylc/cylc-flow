@@ -16,7 +16,7 @@ global state_changed
 state_changed = False
 
 #----------------------------------------------------------------------
-class normal_task( Pyro.core.ObjBase ):
+class task_base( Pyro.core.ObjBase ):
     
     name = "task base"
 
@@ -43,10 +43,7 @@ class normal_task( Pyro.core.ObjBase ):
         #  + waiting 
         #  + ready (prerequisites satisfied)
         #  + finished (postrequisites satisfied)
-        if not initial_state:
-            self.state = "waiting"
-            pass
-        elif initial_state == "waiting": 
+        if initial_state == "waiting": 
             self.state = "waiting"
         elif initial_state == "finished":  
             self.postrequisites.set_all_satisfied()
@@ -137,7 +134,6 @@ class normal_task( Pyro.core.ObjBase ):
 
     def run_external_task( self, extra_vars = [] ):
         self.log.info( 'launching task for ' + self.ref_time )
-
         job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
@@ -164,9 +160,6 @@ class normal_task( Pyro.core.ObjBase ):
             self.prerequisites.satisfy_me( task.postrequisites )
 
     def will_get_satisfaction( self, tasks ):
-
-        #if self.name == 'topnet':
-        #    pdb.set_trace()
 
         temp_prereqs = deepcopy( self.prerequisites )
         for task in tasks:
@@ -248,16 +241,31 @@ class normal_task( Pyro.core.ObjBase ):
             self.set_finished()
 
 #----------------------------------------------------------------------
-class free_task( normal_task ):
+class simple_task( task_base ):
+    # for tasks with minimal postrequisites: started, finished
+
+    name = "simple task base"
+
+    def __init__( self, ref_time, initial_state, est_run_time = 1 ):
+        # est_run_time in minutes
+
+        self.postrequisites = timed_requisites( self.name, [ 
+            [0, self.name + " started for " + ref_time],
+            [est_run_time, self.name + " finished for " + ref_time] ])
+
+        task_base.__init__( self, ref_time, initial_state )
+
+#----------------------------------------------------------------------
+class free_task( task_base ):
     # for tasks with no-prerequisites, e.g. downloader and nztide,
     # that would otherwise run ahead indefinitely: delay if we get
     # "too far ahead" based on number of existing finished tasks.
 
     name = "free task base"
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
         self.MAX_FINISHED = 2
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
     def run_if_ready( self, tasks ):
         # don't run if too many previous finished instances exist
@@ -278,5 +286,6 @@ class free_task( normal_task ):
             pass
 
         else:
-            normal_task.run_if_ready( self, tasks )
+            task_base.run_if_ready( self, tasks )
+
 

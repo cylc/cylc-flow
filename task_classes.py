@@ -2,7 +2,8 @@
 
 # operational task class definitions
 
-from task_base import normal_task, free_task
+from task_base import task_base, simple_task, free_task
+import job_submit
 
 import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
@@ -29,7 +30,7 @@ class downloader( free_task ):
     external_task = 'downloader.sh' 
     user_prefix = 'ecoconnect'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
  
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -83,7 +84,7 @@ class oper2test_topnet( free_task ):
     external_task = 'oper2test_topnet.sh' 
     user_prefix = 'hydrology'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -101,14 +102,14 @@ class oper2test_topnet( free_task ):
         free_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nzlam( normal_task ):
+class nzlam( task_base ):
 
     name = "nzlam"
     valid_hours = [ 0, 6, 12, 18 ]
     external_task = 'nzlam.sh'
     user_prefix = 'nwp'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -143,17 +144,17 @@ class nzlam( normal_task ):
                 [112, "file met_" + ref_time + "_utc_nzlam_12.um ready"],
                 [115, self.name + " finished for " + ref_time] ])
 
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nzlam_post( normal_task ):
+class nzlam_post( task_base ):
 
     name = "nzlam_post"
     valid_hours = [ 0, 6, 12, 18 ]
     external_task = 'nzlam_post.sh'
     user_prefix = 'nwp'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -185,17 +186,17 @@ class nzlam_post( normal_task ):
                 [30, "file met_" + ref_time + "_utc_nzlam_12.nc ready"],
                 [31, self.name + " finished for " + ref_time] ])
 
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class global_prep( normal_task ):
+class global_prep( task_base ):
 
     name = "global_prep"
     valid_hours = [ 0 ]
     external_task = 'global_prep.sh'
     user_prefix = 'wave'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -213,17 +214,17 @@ class global_prep( normal_task ):
             [7, "file seaice_" + ref_time + ".nc ready"],
             [10, self.name + " finished for " + ref_time] ])
        
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class globalwave( normal_task ):
+class globalwave( task_base ):
 
     name = "globalwave"
     valid_hours = [ 0 ]
     external_task = 'globalwave.sh'
     user_prefix = 'wave'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -238,17 +239,17 @@ class globalwave( normal_task ):
             [120, "file globalwave_" + ref_time + ".nc ready"],
             [121, self.name + " finished for " + ref_time] ])
  
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class nzwave( normal_task ):
+class nzwave( task_base ):
     
     name = "nzwave"
     valid_hours = [ 0, 6, 12, 18 ]
     external_task = 'nzwave.sh'
     user_prefix = 'wave'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -264,17 +265,17 @@ class nzwave( normal_task ):
             [110, "processing finished"],
             [112, self.name + " finished for " + ref_time] ])
  
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class ricom( normal_task ):
+class ricom( task_base ):
 
     name = "ricom"
     valid_hours = [ 6, 18 ]
     external_task = 'ricom.sh'
     user_prefix = 'sea_level'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -288,17 +289,17 @@ class ricom( normal_task ):
             [30, "processing finished"],
             [31, self.name + " finished for " + ref_time] ])
  
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
        
 #----------------------------------------------------------------------
-class mos( normal_task ):
+class mos( task_base ):
 
     name = "mos"
     valid_hours = [ 0, 6, 12, 18 ]
     external_task = 'mos.sh'
     user_prefix = 'nwp'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -317,7 +318,7 @@ class mos( normal_task ):
             [5, "processing done"],
             [6, self.name + " finished for " + ref_time] ])
 
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
 class nztide( free_task ):
@@ -327,7 +328,7 @@ class nztide( free_task ):
     external_task = 'nztide.sh'
     user_prefix = 'sea_level'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -343,7 +344,7 @@ class nztide( free_task ):
         free_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class topnet( normal_task ):
+class topnet( task_base ):
     "streamflow data extraction and topnet" 
 
     """If no other tasks depend on the streamflow data then it's
@@ -354,7 +355,7 @@ class topnet( normal_task ):
  
     name = "topnet"
     valid_hours = range( 0,24 )
-    external_task = 'run_topnet.sh'
+    external_task = 'topnet_run.sh'
     user_prefix = 'hydrology'
 
     # assume catchup mode and detect if we've caught up
@@ -363,7 +364,7 @@ class topnet( normal_task ):
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
     reftime_re = re.compile( "\d{10}")
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         self.catchup_re = re.compile( "^CATCHUP:.*for " + ref_time )
         self.uptodate_re = re.compile( "^UPTODATE:.*for " + ref_time )
@@ -391,7 +392,7 @@ class topnet( normal_task ):
             [3, self.name + " started for " + ref_time],
             [6, self.name + " finished for " + ref_time] ])
 
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
 
     def run_external_dummy( self ):
@@ -417,13 +418,13 @@ class topnet( normal_task ):
         nzlam_time = m.group()
 
         extra_vars = [ ['NZLAM_TIME', nzlam_time ] ]
-        normal_task.run_external_task( self, extra_vars )
+        task_base.run_external_task( self, extra_vars )
 
 
     def incoming( self, priority, message ):
 
         # pass on to the base class message handling function
-        normal_task.incoming( self, priority, message)
+        task_base.incoming( self, priority, message)
         
         # but intercept catchup mode messages
         if not topnet.catchup_mode and self.catchup_re.match( message ):
@@ -477,14 +478,58 @@ class topnet( normal_task ):
         return result
 
 #----------------------------------------------------------------------
-class nwp_global( normal_task ):
+class topnet_vis( simple_task ):
+
+    name = "topnet_vis"
+    valid_hours = range( 0,24 )
+    external_task = 'topnet_vis.sh'
+    user_prefix = 'hydrology'
+
+    def __init__( self, ref_time, initial_state ):
+
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+
+        self.prerequisites = requisites( self.name, [ 
+            "topnet finished for " + ref_time  ])
+
+        simple_task.__init__( self, ref_time, initial_state, est_run_time = 3 )
+
+#----------------------------------------------------------------------
+class topnet_products( simple_task ):
+
+    name = "topnet_products"
+    valid_hours = range( 0,24 )
+    external_task = 'product_gen.sh'
+    user_prefix = 'hydrology'
+    env_vars = [ ['MODEL_NAME', 'topnet' ] ]
+
+    def __init__( self, ref_time, initial_state ):
+
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+
+        self.prerequisites = requisites( self.name, [ 
+            "topnet_vis finished for " + ref_time  ])
+
+        simple_task.__init__( self, ref_time, initial_state, est_run_time = 2 )
+
+    def run_external_task( self ):
+        self.log.info( 'launching task for ' + self.ref_time )
+        job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, topnet_products.env_vars )
+        self.state = 'running'
+
+#----------------------------------------------------------------------
+class nwp_global( task_base ):
 
     name = "nwp_global"
     valid_hours = [ 0 ]
     external_task = 'nwp_global.sh'
     user_prefix = 'nwp'
 
-    def __init__( self, ref_time, initial_state = "waiting" ):
+    def __init__( self, ref_time, initial_state ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -498,5 +543,5 @@ class nwp_global( normal_task ):
             [120, "file 10mwind_" + ref_time + ".nc ready"],
             [121, self.name + " finished for " + ref_time] ])
 
-        normal_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 

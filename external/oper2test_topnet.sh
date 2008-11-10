@@ -20,6 +20,7 @@ trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 # * no commandline arguments (for qsub)
 # * environment variables:
 #   1. $REFERENCE_TIME
+#   2. $TASK_NAME
 
 # INTENDED USER:
 # * hydrology_(test|dvel)
@@ -138,5 +139,10 @@ fi
 # copy file to my output directory
 task_message NORMAL "copying file to $TARGET_DIR"
 cp $FOUND $TARGET_DIR
+task_message WARNING "COMPENSATING FOR UM2NETCDF TOTAL_PRECIP ATTRIBUTES BUG"
+cd $TARGET_DIR
+ncatted -a coordinates,total_precip,o,c,"latitude longitude" $FILENAME
+ncatted -a coordinates,sfc_temp,o,c,"latitude longitude" $FILENAME
+ncatted -a coordinates,sfc_rh,o,c,"latitude longitude" $FILENAME
 task_message NORMAL "file $FILENAME ready"
 task_message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"

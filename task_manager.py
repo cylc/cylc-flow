@@ -82,10 +82,15 @@ class manager ( Pyro.core.ObjBase ):
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
                 # dynamic task object creation by task and module name
-                new_task = instantiation.get_by_name( 'task_classes', task.name )( task.next_ref_time() )
-                new_task.log.info( "New task created for " + new_task.ref_time )
-                self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
-                self.tasks.append( new_task )
+                new_task = instantiation.get_by_name( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
+                if config.stop_time:
+                    if int( new_task.ref_time ) <= int( config.stop_time ):
+                        new_task.log.info( "New task created for " + new_task.ref_time )
+                        self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
+                        self.tasks.append( new_task )
+                    else:
+                        new_task.log.warning( new_task.name + " STOPPING at configured stop time " + config.stop_time )
+                        del new_task
 
     def dump_state( self ):
         self.system_state.update( self.tasks )
@@ -129,7 +134,7 @@ class manager ( Pyro.core.ObjBase ):
             lame.log.info( "abdicating a lame duck " + task.identity )
 
             # dynamic task object creation by task and module name
-            new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time() )
+            new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
             new_task.log.info( "New task created for " + new_task.ref_time )
             self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
             self.tasks.append( new_task )
