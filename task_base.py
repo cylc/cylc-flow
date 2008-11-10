@@ -124,11 +124,7 @@ class task_base( Pyro.core.ObjBase ):
             self.run_external_task()
 
     def run_external_task( self, extra_vars = [] ):
-        self.log.info( 'launching task for ' + self.ref_time )
-        if config.dummy_mode or self.name in config.dummy_out:
-            os.system( './dummy_task.py ' + self.name + " " + self.ref_time + " &" )
-        else:
-            job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, extra_vars )
+        job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
     def get_state( self ):
