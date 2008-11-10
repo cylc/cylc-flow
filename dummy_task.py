@@ -11,7 +11,11 @@
 # we complete requisites done after the right length of time has passed
 # (still sped up according to dummy_clock_rate, however).
 
-import sys
+import os, sys
+
+# TO DO: EXTERNAL PROGRAMS AND MODULE LOCATIONS
+sys.path.append( '/test/ecoconnect_test/ecocontroller' )
+
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
 import pyro_ns_naming
@@ -160,6 +164,20 @@ class dummy_task( dummy_task_base ):
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
-    [task_name, ref_time] = sys.argv[1:]
+    if len( sys.argv ) == 3:
+        [task_name, ref_time] = sys.argv[1:]
+    else:
+        try:
+            task_name = os.environ[ 'TASK_NAME' ]
+        except KeyError:
+            raise
+
+        try:
+            ref_time = os.environ[ 'REFERENCE_TIME' ]
+        except KeyError:
+            raise
+
+    print "DUMMY TASK STARTING: " + task_name + " " + ref_time
     dummy = dummy_task( task_name, ref_time )
     dummy.run()
+    print "DUMMY TASK FINISHED: " + task_name + " " + ref_time

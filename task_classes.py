@@ -479,8 +479,12 @@ class topnet( task_base ):
                         found = True
                         times.append( task.ref_time )
         if not found: 
-            self.log.warning( 'no upstream task found: I am lame' )
-            # will be eliminated by the main program lame task check
+            # This could mean the task is lame, in which case it will
+            # be eliminated by lame task deletion in the main program.
+
+            # Or, more likely, at start up time the first nzlam_post
+            # just hasn't finished yet.
+
             pass
 
         else:
