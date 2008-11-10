@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-# TO DO: DERIVE SPECIFIC DUMMY TASK CLASSES FOR TOPNET AND DOWNLOADER
-# to get rid of the nasty 'IF' blocks, or move them to main() at least.
+# TO DO: DERIVE CLASSES FOR STREAMFLOW AND DOWNLOADER, ETC. to get
+# rid of the nasty 'IF' blocks, or move them to main() at least.
 
 # For external dummy task programs that report their postrequisites done
 # on time relative to the controllers internal accelerated dummy clock.
@@ -45,12 +45,12 @@ class dummy_task_base:
             # to the actual dummy clock: so dummy tasks do not complete faster
             # when we bump the dummy clock forward.
  
-            if self.task_name == "topnet":
+            if self.task_name == "streamflow":
                 # if caught up, delay as if waiting for streamflow data
 
                 rt = reference_time._rt_to_dt( self.ref_time )
                 rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
-                # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN topnet.incoming()
+                # THE FOLLOWING MESSAGES MUST MATCH WHAT'S EXPECTED IN streamflow.incoming()
                 if datetime.datetime.now() >= rt_p25:
                     self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data already available for ' + self.ref_time )
                 else:
@@ -104,8 +104,8 @@ class dummy_task_base:
     def delay( self ):
         # override this to delay dummy tasks that have non-standard
         # behavior after startup (external tasks can usually start
-        # executing immediately, but some (downloader, topnet
-        # streamflow) are delayed by having to wait from some external
+        # executing immediately, but some (e.g. downloader, streamflow)
+        # are delayed by having to wait from some external
         pass
 
 
@@ -144,11 +144,11 @@ class dummy_task( dummy_task_base ):
                         break
 
 
-        elif self.task_name == "topnet":
+        elif self.task_name == "streamflow":
 
             rt = reference_time._rt_to_dt( self.ref_time )
             rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
-            # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN topnet.incoming()
+            # THE FOLLOWING MESSAGES MUST MATCH WHAT'S EXPECTED IN streamflow.incoming()
             if self.clock.get_datetime() >= rt_p25:
                 self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + self.ref_time )
             else:

@@ -1,5 +1,10 @@
 TO DO LIST
 
+* potential bug in free_task class: will never run if too many previous
+  instances exist that are newer than the task deletion cutoff
+
+* allow some (most) tasks to be deleted earlier than the main cutoff
+
 * retrofit proper exception handling
 
 * remote logging from send_message and task_dummy,

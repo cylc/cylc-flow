@@ -8,14 +8,14 @@
 import logging
 
 # dummy mode settings
-dummy_mode = False
-dummy_clock_rate = 5       
-dummy_clock_offset = 20 
+dummy_mode = True
+dummy_clock_rate = 60      
+dummy_clock_offset = 10 
 
 # logging 
 logging_dir = 'LOGFILES' 
-logging_level = logging.INFO
-#logging_level = logging.DEBUG
+#logging_level = logging.INFO
+logging_level = logging.DEBUG
 
 state_dump_file = 'STATE'
 
@@ -25,7 +25,7 @@ pyro_ns_group = ':ecoconnect'
 
 # start and (optional) stop reference times
 start_time = "2008102018"
-stop_time = "2008102018"
+stop_time = "2008102218"
 
 # list the tasks to run
 operational_tasks = [ 
@@ -38,6 +38,7 @@ operational_tasks = [
         'nzwave',
         'ricom',
         'nztide',
+        'streamflow',
         'topnet',
         'topnet_vis',
         'topnet_products',
@@ -45,8 +46,9 @@ operational_tasks = [
         ]
 
 topnet_test_tasks = [ 
-        'oper2test_topnet:finished',
-        'topnet:finished',
+        'oper2test_topnet',
+        'streamflow',
+        'topnet',
         'topnet_vis',
         'topnet_products'
         ]

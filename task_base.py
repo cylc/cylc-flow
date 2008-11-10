@@ -188,6 +188,12 @@ class task_base( Pyro.core.ObjBase ):
         else:
             return False
 
+    def is_not_finished( self ):
+        if self.state != "finished":
+            return True
+        else:
+            return False
+
     def get_postrequisites( self ):
         return self.postrequisites.get_requisites()
 

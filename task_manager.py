@@ -62,7 +62,7 @@ class manager ( Pyro.core.ObjBase ):
     def all_finished( self ):
         # return True if all tasks have completed
         for task in self.tasks:
-            if task.is_running():
+            if task.is_not_finished():
                 return False
         return True
 
