@@ -71,6 +71,18 @@ task) and a task is therefore characterised by its type or {\em class}
 the forecast cycle to which it belongs (this is usually the {\em nominal
 start time} of the forecast run).  
 
+In addition, the tasks run in a standardised operational environment so
+that, for example, they know exactly what their input files look like
+(filename conventions) and where to get them from (e.g. task X's output
+directory) {\em if} those files exist (it is the control system's job to
+to ensure that a task doesn't get run {\em until} the right input files
+do exist).  Consequently, the controller needs to know what files have
+been generated (etc.) but it does not need to know their actual
+locations or check for their existence, because the external tasks
+necessarily have to do that anyway. In a less standardised environment,
+however, the controller could easily be adapted to pass exact file
+location information between the tasks.
+
 The implementation below controls the forecasting system over a
 heterogeneous distributed environment and it allows tasks from different
 forecast cycles to run at the same time, where dependencies allow, for
