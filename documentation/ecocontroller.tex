@@ -15,7 +15,7 @@
 \tableofcontents
 
 
-\chapter{General Overview}
+\chapter{Introduction}
 
 {\em Dynamic Sequencing} is an extremely flexible new way to control the
 execution of a set of {\em interdependent tasks}\footnote{A {\em task}
@@ -27,6 +27,8 @@ execution that can branch (when one task generates output for more than
 one downstream task) and merge (when one task takes input from more than
 one upstream task). 
 
+\section{Explicit Sequencing}
+
 The obvious controller design for such a system is a {\em Finite State
 Machine} that enforces a predetermined sequence of events through
 explicit sequencing logic: {\em if task A has finished and task B has
@@ -36,90 +38,87 @@ becomes convoluted as system complexity increases, and attempting to
 build in flexibility (e.g. by allowing tasks to be switched on and off
 easily) just exacerbates the problem.
 
-Dynamic sequencing, on the other hand, enables tasks to resolve their
-own dependencies by interacting with others so that {\em correct
-sequencing emerges naturally at run time}. Simply put, each task finds
-out if its own prerequisites have been satisfied by asking all the other
-tasks what outputs they have completed so far (and once they are all
-satisfied, it can run).  Tasks only need to know their own prerequisites
-and outputs, as would be required even for standalone operation. They do
-not need to know anything about the other tasks, not even which one is
-supposed to satisfy their prerequisites (they can just ask every other
-task in the system; it doesn't matter that most of these interactions
-will be fruitless).  The total absence of explicit sequencing logic
-makes this method extremely flexible: tasks can be switched on and off,
-and new ones added, without any change to the main program. Each task
-will run at the right time so long as the system manager ensures that
-its prerequisites will be satsified by one other task in the system.
+\section{Dynamic Sequencing}
+
+Dynamic sequencing enables tasks to resolve their own dependencies by
+interacting with others so that {\em correct sequencing emerges
+naturally at run time}. Simply put, each task finds out if its own
+prerequisites have been satisfied by asking all the other tasks what
+outputs they have completed so far (and once they are all satisfied, it
+can run).  Tasks only need to know their own prerequisites and outputs,
+as would be required even for standalone operation. They do not need to
+know anything about the other tasks, not even which one is supposed to
+satisfy their prerequisites (they can just ask every other task in the
+system; it doesn't matter that most of these interactions will be
+fruitless).  The total absence of explicit sequencing logic makes this
+method extremely flexible: tasks can be switched on and off, and new
+ones added, without any change to the main program. Each task will run
+at the right time so long as the system manager ensures that its
+prerequisites will be satsified by one other task in the system.
 
 
-\chapter{Applicability}
+\subsection{Applicability}
 
-The dynamic sequencing concept as described in the Overview is very
-general and could in principle be implemented for any system of
-interdependent tasks.  The specific implementation described here,
-however, depends on a few additional, but still fairly general,
-assumptions related to the fact that it is designed to control an
-environmental forecasting system\footnote{The forecasting system
-consists of a number of scientific models (global and/or regional
-configurations of atmospheric, sea state, storm surge, tide, and river
-flow) and many associated post-processing and product generation
-tasks.}. Specifically, the system runs on an operational schedule that
-repeats several times per day (the number of repeats depends on the
-task) and a task is therefore characterised by its type or {\em class}
-(e.g. atmospheric model post processing) and the {\em reference time} of
-the forecast cycle to which it belongs (this is usually the {\em nominal
-start time} of the forecast run).  
+The dynamic sequencing concept is very general and could in principle be
+implemented for any system of interdependent tasks.  The specific
+implementation described here, however, depends on a few additional (but
+still fairly general) assumptions related to the fact that it is
+designed to control an environmental forecasting system\footnote{The
+forecasting system consists of global and regional atmosphere and sea
+state models that drive regional storm surge, tide, and river flow
+models, and many associated pre- and post-processing tasks.}.
+Specifically, the system runs on an operational schedule that repeats
+several times per day (the number of repeats depends on the task) and a
+task is therefore characterised by its type or {\em class} (e.g.
+atmospheric model post processing) and the {\em reference time} of the
+forecast cycle to which it belongs (i.e. its nominal start time). 
 
-In addition, the tasks run in a standardised operational environment so
-that, for example, they know exactly what their input files look like
+In addition, the system operates in a standardised environment so that,
+for example, each task knows exactly what its input files look like
 (filename conventions) and where to get them from (e.g. task X's output
-directory) {\em if} those files exist (it is the control system's job to
-to ensure that a task doesn't get run {\em until} the right input files
-do exist).  Consequently, the controller needs to know what files have
-been generated (etc.) but it does not need to know their actual
-locations or check for their existence, because the external tasks
-necessarily have to do that anyway. In a less standardised environment,
-however, the controller could easily be adapted to pass exact file
-location information between the tasks.
+directory). The control system's job is simply to to ensure that tasks
+don't get run {\em until} their input files do exist; consequently, it
+needs to know what files have been generated but it does not need
+to know their actual locations or check for their existence, because the
+tasks themselves have to do that anyway. In a less standardised
+environment, however, the controller could easily be adapted to pass
+exact file location information between the tasks.
 
-The implementation below controls the forecasting system over a
-heterogeneous distributed environment and it allows tasks from different
-forecast cycles to run at the same time, where dependencies allow, for
-maximum throughput after system delays.  Note that it would be very
-difficult to generalise the aforementioned Finite State Machine based
-design to this {\em multiflight} operation without ending up in a real
-mess (we can't just fire off a sequence of overlapping independent
-single-flight controllers because of intercycle
-dependencies\footnote{The simplest of these is that $foo(T\negmedspace
-+\negmedspace 1)$ usually depends on $foo(T)$ because most forecast
-models start from a ``background state'' that is generated by the
-previous forecast.}). 
+The forecasting system runs on a heterogeneous distributed environment,
+and tasks from different forecast cycles can run at the same time, where
+dependencies allow, for maximum throughput after system delays. Note
+that it would be very difficult to generalise a Finite State Machine
+based controller to this {\em multiflight} operation without getting
+into a real mess (we can't just fire off a sequence of overlapping
+independent single-flight controllers because of intercycle
+dependencies\footnote{$foo(T\negmedspace +\negmedspace 1)$ may depend on
+$foo(T)$, for example, because forecast models usually start from a
+``background state'' generated by the previous forecast.}). 
 
-\section{Replacement}
+\section{Other Options}
 
 We considered basing the new multiflight controller on a generic control
 framework of some kind, but nothing that was obviously well suited came
-to light. In any case the {\em dynamic sequencing} design described in
-the next chapter simplifies the main problem to such an extent that, in
-my view, it is unlikely that any generic framework could compete. I note
-also that while some batch queue schedulers now allow simple job
-dependencies ({\em don't run Y until X is finished}) they are still far
-too rudimentary for our purposes.
+to light. In any case the dynamic sequencing design described in this
+document simplifies the problem to such an extent that, in the author's
+view, it is unlikely that any generic framework could compete.  It may
+be worth noting here that some batch queue schedulers now allow simple
+job dependencies ({\em don't run Y until X is finished}) but they are
+still far too rudimentary for our purposes.
 
 
-\chapter{New Controller Implementation}
+\chapter{Implementation}
 
-\section{Dynamic Sequencing Overview}
 
-The dynamic sequencing method was inspired by object oriented game
-programming techniques. Tasks are represented in the controller by
-self-contained {\em task objects} that are able to interact to find out
-if their dependencies are satisfied yet. Thus, rather than enforcing a
-prescribed task sequence from the outset, correct sequencing emerges
-naturally at run time. The total lack of explicit sequencing logic makes
-this approach extremely flexible: new tasks can be added, or existing
-ones switched on and off, without any change to the main program.
+\section{Definitions}
+
+Tasks are represented in the controller by self-contained {\em task
+objects} that are able to interact to find out if their dependencies are
+satisfied yet. Thus, rather than enforcing a prescribed task sequence
+from the outset, correct sequencing emerges naturally at run time. The
+total lack of explicit sequencing logic makes this approach extremely
+flexible: new tasks can be added, or existing ones switched on and off,
+without any change to the main program.
 
 \subsection{Task Requisites}
 
