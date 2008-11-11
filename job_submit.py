@@ -4,7 +4,7 @@ import os
 import config
 
 # TO DO: EXTERNAL PROGRAMS AND MODULE LOCATIONS
-path = '/test/ecoconnect_test/ecocontroller/external'
+path = '/test/ecoconnect_test/sequenz/external'
 
 def run( user_prefix, task_name, ref_time, task, extra_vars=[] ):
 

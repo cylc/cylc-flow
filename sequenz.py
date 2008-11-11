@@ -18,7 +18,7 @@ global pyro_daemon
 def print_banner():
     print "__________________________________________________________"
     print
-    print "      . EcoConnect Implicit Sequencing Controller ."
+    print "      . EcoConnect Dynamic Sequencing Controller ."
     print
     print "      .         Hilary Oliver, NIWA, 2008         ."
     print "              See repository documentation"
@@ -33,7 +33,7 @@ def clean_shutdown( reason ):
     sys.exit(0)
 
 def usage():
-    print "ecocontroller [-r]"
+    print "sequenz [-r]"
     print "Options:"
     print "  + most inputs should be configured in config.py"
     print "  + [-r] restart from state dump file (this overrides"
