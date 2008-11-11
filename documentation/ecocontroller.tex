@@ -30,32 +30,33 @@ controller design problem.
 
 \section{Explicit Sequencing}
 
-The obvious controller design for such a system is a {\em Finite State
-Machine} that enforces a predetermined sequence of events through
-explicit sequencing logic: {\em if task A has finished and task B has
-generated file X, then run task C}, and so on. This is relatively easy
-to understand in simple systems, but the sequencing logic rapidly
+The most obvious task sequencing controller design is a {\em Finite
+State Machine} that uses explicit sequencing logic to enforce the
+predetermined order of events: {\em if task A has finished and task B
+has generated file X, then run task C}, and so on. This is relatively
+easy to understand in simple systems, but the sequencing logic rapidly
 becomes convoluted as system complexity increases, and attempting to
 build in flexibility (e.g. by allowing tasks to be switched on and off
-easily) just exacerbates the problem.
+easily) further exacerbates the problem.
 
 \section{Dynamic Sequencing}
 
-Dynamic sequencing enables tasks to resolve their own dependencies by
-interacting with others so that {\em correct sequencing emerges
-naturally at run time}. Simply put, each task finds out if its own
-prerequisites have been satisfied by asking all the other tasks what
-outputs they have completed so far (and once they are all satisfied, it
-can run).  Tasks only need to know their own prerequisites and outputs,
-as would be required even for standalone operation. They do not need to
-know anything about the other tasks, not even which one is supposed to
-satisfy their prerequisites (they can just ask every other task in the
-system; it doesn't matter that most of these interactions will be
-fruitless).  The total absence of explicit sequencing logic makes this
-method extremely flexible: tasks can be switched on and off, and new
-ones added, without any change to the main program. Each task will run
-at the right time so long as the system manager ensures that its
-prerequisites will be satsified by one other task in the system.
+Dynamic sequencing enables a pool of self-contained tasks to resolve its
+own internal dependencies through interactiion so that {\em correct
+sequencing emerges naturally at run time}.  In essence, tasks find out
+for themselves when their own prerequisites have been satisfied by
+asking all the others what outputs they have generated so far.  Each
+task needs to know no more than what's required to run it in isolation,
+namely its prerequisites and outputs. Tasks do not even need need to
+know who is supposed to satisfy their prerequisites because all the
+others can be interrogated indiscriminately. This is a great
+simplification and it does not matter that most task interactions will
+be fruitless.  The total absence of explicit sequencing logic makes the
+dynamic sequencing method extremely flexible: tasks can be switched on
+and off, and new ones added, without any change to the main program.
+Each task will run at the right time so long as the system manager
+ensures that the task set is consistent (in the sense that each task's
+prerequisites can be satsified by someone else in the group).
 
 
 \subsection{Applicability}
