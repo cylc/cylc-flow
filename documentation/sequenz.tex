@@ -103,6 +103,11 @@ however, easily be made to pass file locations between tasks.
 
 \subsection{Alternatives}
 
+There are currently no other systems in existence that can handle
+general {\em multiflight} sequencing, as far as the author is aware.
+This section just contains a brief discussion of some alternatives that
+were considered prior to beginning development of sequenz.
+
 \subsubsection{Explicit Sequencing}
 
 The obvious algorithm to try first is a {\em Finite State Machine} that
@@ -371,14 +376,14 @@ Options:
 
 \section{Essential OOP Concepts}
 
-Task objects in the new controller are {\em polymorphic}: tasks of all
-types are stored and manipulated in a single list as if they were
-instances of the base class that defines common task behaviour, but
-their actual behaviour is derived-class-specific when necessary (for
-example, calling $nztide.run()$ results in the tide model running, and
-so on). The subsection is a minimal introduction to the Object Oriented
-Program concepts needed to understand what this means.  Refer to any OOP
-reference for more detail.
+Task objects in the new controller are {\em polymorphic}: they are are
+stored and manipulated in a single list as if they were instances of the
+base class that defines common task behaviour, but their actual
+behaviour is derived-class-specific when necessary (for example, calling
+$nztide.run()$ results in the tide model running, and so on). This
+section contains a minimal introduction to the Object Oriented Program
+concepts needed to understand this.  Refer to any OOP reference for more
+detail.
 
 \subsection{Classes and Objects}
 
