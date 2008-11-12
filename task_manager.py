@@ -67,7 +67,9 @@ class manager ( Pyro.core.ObjBase ):
         return True
 
     def interact( self ):
-        # each task asks the others, can you satisfy my prerequisites?
+        # get each task to ask all the others if 
+        # they can satisfy its prerequisites
+        #--
         for task in self.tasks:
             task.get_satisfaction( self.tasks )
 

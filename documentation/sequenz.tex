@@ -1,4 +1,5 @@
-\documentclass[11pt,a4paper]{report}
+%\documentclass[11pt,a4paper]{report}
+\documentclass[11pt,a4paper]{article}
 
 \usepackage{listings}
 \usepackage{amsmath}
@@ -15,40 +16,94 @@
 \tableofcontents
 
 
-\chapter{Introduction}
+\section{Dynamic Sequencing}
 
-{\em Dynamic Sequencing} is a new and extremely flexible way to control
-the execution order of a network of interdependent tasks\footnote{A {\em
-task} is any group of processes treated as a single entity for
-scheduling purposes.}. It solves, implicitly, the complex problem of
-{\em determining when tasks with prerequisites that depend on other
-tasks (e.g. input files that are generated upstream), are ready to run}.
-Once a task's prerequisites are satisfied, it can be submitted to a
-batch queue scheduler for allocation to available computing resource
-(tasks do not all have to run on the same machine).  In general, task
-dependencies result in multiple parallel streams of execution that can
-branch (when one task generates output for several downstream task) and
-merge (when one task takes input from several upstream task), which
-presents a difficult control system design problem.  
+\subsection{Overview}
 
-{\em Sequenz} is a dynamic sequencer that runs NIWA's operational
-environmental forecasting system, EcoConnect, which consists of global
-weather and sea state models that drive regional weather, sea state,
-storm surge, tide, and river flow models, and many associated pre- and
-post-processing tasks. The tasks run on heterogenous distributed
-hardware, on an operational schedule that repeats several times daily
-(between one and twenty four times, depending on the task). Sequenz is
-written in Python. It can run tasks from different forecast cycles at
-the same time, dependencies allowing, for maximum throughput ({\em
-multiflight} operation). Tasks can be switched on and off trivially, and
-new ones can be added by simply defining their prerequisites (without
-reference to who will satisfy them) and outputs (without reference to
-who will use them). The system can be restarted in arbitrarily complex
-states after maintenance, and sequencing of all system tasks can be
-fully tested in an accelerated-time dummy mode without actually running
-the real external tasks. 
+{\em Dynamic Sequencing} is an extremely flexible way to control the
+execution order of a pool of interdependent tasks\footnote{A {\em task}
+is any group of processes treated as a single entity for scheduling
+purposes.} by enabling them to resolve their own internal dependencies
+through interaction, so that {\em correct sequencing emerges naturally
+at run time}. In other words, it solves the problem of determining when
+each task is ready to run in the presence of prerequisites that must be
+satisfied by other tasks in the system, without using any explicit
+sequencing logic. Once a task's prerequisites are satisfied, it can be
+submitted to a batch queue scheduler for allocation to available
+computing resource (tasks do not all have to run on the same machine).
+In general, task dependencies result in multiple parallel streams of
+execution that can branch (when one task generates output for several
+downstream task) and merge (when one task takes input from several
+upstream task), which presents a difficult control system design
+problem.  
 
-\section{Explicit Sequencing}
+
+\subsection{Implementation}
+
+{\em Sequenz} is a Python program that implements the dynamic sequencing
+concept. It is used to run NIWA's EcoConnect operational environmental
+forecasting system, which consists of global weather and sea state
+models that drive regional weather, sea state, storm surge, tide, and
+river flow models, and many associated pre- and post-processing tasks.
+The tasks run on heterogenous distributed hardware, on an operational
+schedule that repeats several times daily (between one and twenty four
+times, depending on the task).  It can run tasks from different forecast
+cycles at the same time, dependencies allowing, for maximum throughput
+({\em multiflight} operation). Tasks can be switched on and off
+trivially, and new ones can be added by simply defining their
+prerequisites (without reference to who will satisfy them) and outputs
+(without reference to who will use them). The system can be restarted in
+arbitrarily complex states after maintenance, and sequencing of all
+system tasks can be fully tested in an accelerated-time dummy mode
+without actually running the real external tasks. 
+
+Sequenz relies on Object Oriented Programming techniques to construct
+self-contained {\em task objects} that represent each external system
+task.  A task object knows its own prerequisites and outputs, keeps its
+internal state in sync with the external task via remote method
+calls\footnote{Remote method calls are achieved using the Python Remote
+Object ({\em Pyro}) protocol.}, can interact with other task objects to
+find out if any of its prerequisites have been satisfied by their
+completed outputs, and can launch the external task when the time comes.
+Tasks do not need to know anything about the other tasks in the system,
+just their own prerequisites and outputs as would be required for them
+to run in isolation. They do not even need to know who is supposed to
+satisfy their prerequisites because they can ask {\em all} other tasks.
+To the task objects, outputs are just {\em messages} that indicate their
+external task has reached a particular waypoint, such as generation of
+an output file. The total absence of explicit sequencing logic makes
+this method extremely flexible: tasks can be switched on and off, and
+new ones added, without changing the main program at all. Each task runs
+at the right time so long as the system manager ensures that the task
+pool is consistent (everyone's prerequisites must be satsified by
+someone else in the system).
+
+
+\subsection{Applicability}
+
+The dynamic sequencing concept is very general and could in principle be
+implemented for any set of interdependent tasks. Sequenz, however, is
+somewhat specialized toward systems, such as EcoConnect, that normally
+need to keep cycling indefinitely. In particular, each task has an
+associated {\em reference time}, representing the nominal start time of
+its associated forecast run, and all prerequisites and outputs are
+assumed to depend on it in some way.  One-off task pools with no
+particular time dependence, however, are much simpler than this, and it
+would not be difficult to strip all reference time handling from the
+program.
+
+In addition, EcoConnect operates in a well defined environment so that,
+for example, each task knows exactly what its input files look like
+(filenaming conventions) and where to get them from (e.g. {\em task X}'s
+output directory). Consequently, for file-based prerequisites, the
+controller does not need to know the file's actual location or check for
+its existence, because the external tasks already do that. It could,
+however, easily be made to pass file locations between tasks.  
+
+
+\subsection{Alternatives}
+
+\subsubsection{Explicit Sequencing}
 
 The obvious algorithm to try first is a {\em Finite State Machine} that
 uses explicit sequencing logic to enforce a predetermined order of
@@ -57,8 +112,8 @@ then run task C}, and so on. This is relatively easy to understand in
 simple systems, but the sequencing logic becomes increasingly convoluted
 as system complexity increases, and with any attempt to build in
 flexibility (e.g. by allowing tasks to be switched on and off easily).
-In addition, for the forecast system controller, it does not seem
-possible to generalise this to multiflight operation (above) without
+In addition, for forecast systems (and similar) it does not seem
+possible to generalise this to multiflight operation without
 prohibitively complex coding.\footnote{Note that a sequence of
 overlapping independent single-flight controllers does not work because
 of intercycle dependencies: $foo(T\negmedspace +\negmedspace 1)$ may
@@ -66,101 +121,27 @@ depend on $foo(T)$, for example, because forecast models usually start
 from a ``background state'' generated by the previous forecast.} 
 
 
-\section{Other Options}
+\subsubsection{Dependent Batch Schedulers}
 
 Some batch queue schedulers now allow simple job dependencies ({\em
 don't run Y until X is finished}) but are still far too rudimentary for
-our purposes.  Use of a generic control framework of some kind was also
+our purposes. 
+
+
+\subsubsection{Generic Control Frameworks}
+
+Use of a generic control framework of some kind was also
 considered, but nothing that was obviously well suited came to light. In
 any case, in the author's opinion, the dynamic sequencing design
 described in this document simplifies the problem to such an extent that
 it is unlikely any generic framework could compete.  
 
-\section{Dynamic Sequencing}
 
-Dynamic sequencing enables a pool of self-contained tasks to resolve its
-own internal dependencies through interaction so that {\em correct
-sequencing emerges naturally at run time}.  In essence, tasks find out
-for themselves when their own prerequisites have been satisfied by
-asking others what outputs they have generated so far.  Tasks only need
-knowledge of their own  prerequisites and outputs, as would be required
-for them to run isolation. They do not even need to know who is supposed
-to satisfy their prerequisites because they can ask {\em all} other
-tasks. The total absence of explicit sequencing logic makes this method
-extremely flexible: tasks can be switched on and off, and new ones
-added, without changing the main program at all.  Each task will run at
-the right time so long as the system manager ensures that the task pool
-is consistent (everyone's prerequisites must be satsified by someone
-else in the system).
+\section{Sequenz Implementation}
 
-
-\subsection{Applicability}
-
-The dynamic sequencing concept is very general and could in principle be
-implemented for any system of interdependent tasks.  The specific
-implementation described here, however, depends on a few additional
-assumptions related to the fact that it is designed to control the
-environmental forecasting system described above.  Namely, each task
-belongs to a particular {\em task type} (e.g. atmospheric model post
-processing) that is instantiated for a specific {\em reference time},
-essentially the nominal start time of its associated forecast. 
-
-In addition, the system operates in a well defined environment so that,
-for example, each task knows exactly what its input files look like
-(filenaming conventions) and where to get them from (e.g. {\em task X}'s
-output directory). Consequently, for file based prerequisites, the
-controller does not need to know the file's actual location or check for
-its existence, because the external tasks already do that. In a less
-well defined operating environment, however, the controller could easily
-be made to pass file locations between tasks.
-
-
-\chapter{Sequenz Implementation}
-
-
-\section{Discussion}
-
-\subsection{Task Objects}
-
-The crucial implementation detail is that tasks can be represented in
-the controller by self-contained {\em task objects} that know their own
-prerequisites and outputs, maintain internal states that reflect the
-progress of their external tasks, can interact to find out if their
-dependencies have been satisfied by other tasks, and can launch their
-own external tasks when the time comes. 
-
-\subsection{Remote Method Calls}
-
-The internal state of each task object is updated by remote method
-calls from the external task, achieved via the {\em Python Remote Object
-protocol} (Pyro). 
-
-\subsection{Prequisites and Outputs}
-
-Tasks have {\em prerequisites} that must be satisfied before they can
-run, e.g. ``file foo is ready'' [to use], and {\em postrequisites} that
-are satisfied as they run, e.g. ``file bar is ready'' [to be used by
-others]. This is just the minimal external interface information needed
-to run a task in isolation (i.e. what inputs are required, and what
-outputs are generated) {\em but} because one task's output is another's
-input, it entirely determines the global task sequence too. Explicit
-sequencing logic is not needed because sequencing information is already
-present, implicitly, in the matching of pre- and post-requisites. 
-
-Postrequisites are just {\em messages} that indicate a task has reached
-a particular waypoint, such as generation of an output file. 
-
-The fact that task objects do not need to know who is supposed to
-satisfy their prerequisites (because they can ask, indiscriminately,
-every other task in the system) makes the task interaction (sequencing!)
-algorithm almost trivial. The fact that most of these interactions
-are fruitless is of no consequence. 
-
-\subsection{Task Management}
-
-To implement dynamic sequencing we need a specific task management
+To implement dynamic sequencing we need a specific {\em task management}
 scheme that controls when tasks will be created and destroyed, and so
-on. There is almost too much flexibility here (e.g.  should tasks be
+on. There is almost too much flexibility here (e.g. should tasks be
 created all at once, in cotemporal batches, or one at a time as their
 predecessors finish?) and consequences have to be evaluated carefully,
 which is not easy because of the inherent complexity of multiflight
@@ -173,20 +154,17 @@ artificial barrier to multiflight operation, tasks that lack
 prerequisites would all want to run at once, and system restarts could
 be very complicated. 
 
+\subsection{Main Algorithm}
 
-\section{The Algorithm}
-
-The algorithm actually implemented in the controller, below, operates on
-a single pool of interacting task objects, has simple start up and
-continuous operation, and is relatively easy to monitor (task objects
-exist by the time they are needed but not for too long before that, and
-not for too long after they are finished). 
+The algorithm below operates on a single pool of interacting task
+objects, has simple start up and continuous operation, and is relatively
+easy to monitor (task objects exist by the time they are needed but not
+for too long before that, and not for too long after they are finished). 
 
 The simplicity of the dynamic sequencing algorithm is clear from the
 following code listing, taken directly from the main program:
 
-\pagebreak
-
+{\small
 \noindent
 \rule{5cm}{.2mm}
 \begin{lstlisting}
@@ -195,30 +173,30 @@ following code listing, taken directly from the main program:
 while True: # MAIN LOOP
 
    if task_base.state_changed:
-       # PROCESS ALL TASKS whenever one changes state as
-       # a result of a remote task message coming in.
-
-       task_pool.regenerate()  # create new tasks
-       task_pool.interact()
-       task_pool.run_if_ready()
+       # PROCESS ALL TASKS whenever one has changed state
+       # as a result of a remote task message coming in: 
+       # interact, run, create new, and kill spent tasks
+       #---
+       task_pool.process_tasks()
        task_pool.dump_state()
        if task_pool.all_finished():
            clean_shutdown( "ALL TASKS FINISHED" )
-       task_pool.kill_spent_tasks()
-       task_pool.kill_lame_tasks()
 
-    # PYRO REQUEST HANDLING; returns after one or more remote
-    # method invocations are processed (these are not just task
-    # messages, hence the use of task_base.state_changed above).
-
+    # REMOTE METHOD HANDLING; handleRequests() returns 
+    # after one or more remote method invocations are 
+    # processed (these are not just task messages, hence 
+    # the use of task_base.state_changed above).
+    #---
     task_base.state_changed = False
     pyro_daemon.handleRequests( timeout = None )
 
-# MAIN LOOP END
+# END MAIN LOOP
 \end{lstlisting}
+}
 
+\subsection{Details}
 
-\subsection{Startup and Initialization}
+\subsubsection{Startup and Initialization}
 
 An initial reference time and list of task object names are read in from
 the config file, then each task object is created at the initial
@@ -235,20 +213,8 @@ state and launch their external tasks immediately. Otherwise ({\em or}
 if there are no tasks that lack prerequisites) nothing will happen.
 
 
-\subsection{Remote Method Calls (Pyro)}
 
-The Pyro request handling loop processes remote method calls coming in
-from external tasks, and returns after at least one remote method call
-was handled. Pyro must be run in non-default single-threaded mode (see
-Appendix \ref{pyro-appendix}).
-
-
-\subsection{Task Processing}
-
-The following operations are performed whenever one or more task objects
-have changed state through the action of remote method calls: 
-
-\subsubsection{Task Regeneration}
+\subsubsection{Creation of New Tasks}
 
 New tasks are created by abdication, i.e. create $foo(T\negmedspace
 +\negmedspace 1)$ if $foo(T)$ is {\em finished}.  Task abdication
@@ -263,9 +229,30 @@ Tasks are not deleted immediately on abdication (see below).
 \subsubsection{Task Interaction} 
 
 Each task keeps track of which of its postrequisites are completed, and
-asks the other tasks if they can satisfy any of its prerequisites. 
+asks the other tasks if they can satisfy any of its prerequisites.  The
+fact that task objects do not need to know who is supposed to satisfy
+their prerequisites (because they can ask, indiscriminately, every other
+task in the system) makes the task interaction (sequencing!) algorithm
+almost trivial. The fact that most of these interactions are fruitless
+is of no consequence. 
 
-\subsubsection{Running Ready Tasks}
+{\small
+\noindent
+\rule{5cm}{.2mm}
+\begin{lstlisting}
+class task_pool( Pyro.core.ObjBase ):
+    # ...
+    def interact( self ):
+        # get each task to ask all the others if 
+        # they can satisfy its prerequisites
+        #--
+        for task in self.tasks:
+            task.get_satisfaction( self.tasks )
+    # ...
+\end{lstlisting}
+}
+
+\subsubsection{Running Tasks}
 
 Each task object can launch its associated external task, and enter the
 {\em running} state if its prerequisites are all satisfied, any existing
@@ -273,14 +260,21 @@ older tasks of the same type are already {\em finished}, and fewer than
 {\em MAX\_ RUNAHEAD} finished tasks of the same type still exist (this
 stops tasks with no prerequisites from running ahead indefinitely).
 
-\subsubsection{Dump State} 
+\subsubsection{Pyro Remote Method Calls}
+
+The Pyro request handling loop executes remote method calls coming in
+from external tasks, and returns after at least one call was handled.
+Pyro must be run in non-default single-threaded mode (see Appendix
+\ref{pyro-appendix}).
+
+\subsubsection{Dumping State} 
 
 The current state (waiting, running, or finished) of each task is
 written out to the {\em state dump file}.  This provides a running
-snapshot of the system. Most importantly, it records the state of the
-system just prior to shutdown. The controller can optionally start up
-by loading the state dump (which can be edited first). Any 'running'
-tasks are reloaded in the 'waiting' state.
+snapshot of the system as it runs, and just prior to shutdown or
+failure. The controller can optionally start up by loading the state
+dump (which can be edited first). Any 'running' tasks are reloaded in
+the 'waiting' state.
 
 \subsubsection{Removing Spent Tasks} 
 
@@ -299,9 +293,9 @@ than the oldest task cutoff time.
 
 Tasks that will never run (because their prerequisites cannot be
 satisfied by any other task in the system) are removed from the {\em
-oldest batch} of tasks.  These need to be removed or they'll prevent the
-spent task deletion algorithm from working. Lame tasks can only be
-detected in the oldest task batch; in later batches new tasks may still
+oldest batch} of tasks.  If not removed they would prevent the spent
+task deletion algorithm from working properly. Lame tasks can only be
+detected in the oldest task batch; in younger batches some tasks may yet
 appear as their predecessors abdicate.
 
 Lame tasks are abdicated rather than just deleted, because their
@@ -314,7 +308,7 @@ to turn on task type $foo$ that supplies input to task type $bar$,
 any instance of $bar$ will be lame.
 
 
-\chapter{Dummy Mode}
+\section{Dummy Mode}
 
 Dummy mode allows complete testing of the control system without running
 any real external tasks\footnote{The only difference between dummy mode
@@ -342,7 +336,7 @@ finish immediately the next task in line will still start from the
 beginning no matter how big the bump.
 
 
-\chapter{Program Usage}
+\section{Program Usage}
 
 All user-configurable parameters are set in \verb#config.py#. There is
 one commandline option to force a restart from the state dump file
@@ -350,6 +344,8 @@ one commandline option to force a restart from the state dump file
 task list:
 
 \lstset{language=sh}
+
+{\small
 
 \noindent
 \rule{5cm}{.2mm}
@@ -359,29 +355,32 @@ Options:
     + most inputs should be configured in config.py
     + [-r] restart from the state dump file
 \end{lstlisting}
+}
 
 \lstset{language=Python}
 
-\section{Config File}
+\subsection{Config File}
 
+{\small
 \noindent
 \rule{5cm}{.2mm}
 \lstinputlisting{../config.py}
+}
 
 \appendix
 
-\chapter{Essential OOP Concepts}
+\section{Essential OOP Concepts}
 
 Task objects in the new controller are {\em polymorphic}: tasks of all
 types are stored and manipulated in a single list as if they were
 instances of the base class that defines common task behaviour, but
 their actual behaviour is derived-class-specific when necessary (for
 example, calling $nztide.run()$ results in the tide model running, and
-so on). The section is a minimal introduction to the Object Oriented
+so on). The subsection is a minimal introduction to the Object Oriented
 Program concepts needed to understand what this means.  Refer to any OOP
 reference for more detail.
 
-\section{Classes and Objects}
+\subsection{Classes and Objects}
 
 A {\em class definition} declares the properties of {\em objects} or
 {\em instances} of that class; objects are self-contained entities that
@@ -394,7 +393,7 @@ describes the location of each shape object, a $move()$ method that
 causes a shape object to alter its position, and a $draw()$ method that
 causes it to display itself in the right place on screen.
 
-\section{Inheritance}
+\subsection{Inheritance}
 
 A {\em derived class} or {\em subclass} inherits the properties (methods
 and data members) of its {\em parent class}. It can also {\em override}
@@ -411,7 +410,7 @@ $move()$ method, calling $circle.move()$ would invoke the base class
 method, $shape.move()$. 
 
 
-\section{Polymorphism}
+\subsection{Polymorphism}
 
 This refers to the ability to treat a group of objects as if they were
 all members of a common base class.  For example, we could construct a
@@ -424,7 +423,7 @@ existing program, without modification, will process the new objects in
 the proper hexagon-specific way.
 
 
-\chapter{Threading in Pyro} \label{pyro-appendix}
+\section{Threading in Pyro} \label{pyro-appendix}
 
 With Pyro in {\em single threaded mode}, \verb#handleRequests()# returns
 after {\em either} a timeout has occurred {\em or} at least one request
@@ -449,7 +448,7 @@ which results in a lot of unnecessary task processing when nothing
 important is happening.
 
 
-\chapter{YET TO BE DOCUMENTED}
+\section{YET TO BE DOCUMENTED}
 
 \begin{itemize}
  \item usage
@@ -466,11 +465,11 @@ important is happening.
  \item dummying out tasks in real mode
 \end{itemize}
 
-\chapter{Miscellaneous Notes}
+\section{Miscellaneous Notes}
 
 (To be incorporated into the main documentation, or deleted).
 
-\section{catchup mode}
+\subsection{catchup mode}
 
 Note that ``correct model sequencing'' is not equivalent to ``orderly
 generation of products by reference time''.  Nzlam can run continuously,
@@ -489,7 +488,7 @@ different amount of time depending on whether we're in catchup mode or
 not.
 
 
-\section{controlling when a task executes}
+\subsection{controlling when a task executes}
 
 \begin{itemize}
  \item  prerequisites
@@ -500,7 +499,7 @@ not.
 \end{itemize}
 
 
-\section{fuzzy prequisites}
+\subsection{fuzzy prequisites}
 
 {\em Exact prerequisites} (most tasks): times are specified exactly,
 relative to the task's own reference time.  E.g. {\em file foo\_{T}.nc
