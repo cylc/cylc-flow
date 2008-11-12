@@ -25,8 +25,8 @@ execution order of a pool of interdependent tasks\footnote{A {\em task}
 is any group of processes treated as a single entity for scheduling
 purposes.} by enabling them to resolve their own internal dependencies
 through interaction, so that {\em correct sequencing emerges naturally
-at run time}. In other words, it solves the problem of determining when
-each task is ready to run in the presence of prerequisites that must be
+at run time}. In other words, it determines when each task is ready to
+run, and runs it, in the presence of prerequisites that must be
 satisfied by other tasks in the system, without using any explicit
 sequencing logic. Once a task's prerequisites are satisfied, it can be
 submitted to a batch queue scheduler for allocation to available
