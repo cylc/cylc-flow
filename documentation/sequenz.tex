@@ -26,12 +26,12 @@ is any group of processes treated as a single entity for scheduling
 purposes.} by enabling them to resolve their own internal dependencies
 through interaction, so that {\em correct sequencing emerges naturally
 at run time}. In other words, it determines when each task is ready to
-run, and runs it, in the presence of prerequisites that must be
-satisfied by other tasks in the system, without using any explicit
-sequencing logic. Once a task's prerequisites are satisfied, it can be
-submitted to a batch queue scheduler for allocation to available
-computing resource (tasks do not all have to run on the same machine).
-In general, task dependencies result in multiple parallel streams of
+run, in the presence of prerequisites that must be satisfied by other
+tasks in the system, without using any explicit sequencing logic. Once a
+task is ready it is submitted to a batch queue scheduler and its
+progress is tracked so that it can be used to satisfy the prerequisites
+of other tasks. Tasks do not all have to run on the same machine.  In
+general, task dependencies result in multiple parallel streams of
 execution that can branch (when one task generates output for several
 downstream task) and merge (when one task takes input from several
 upstream task), which presents a difficult control system design
