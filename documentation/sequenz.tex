@@ -530,15 +530,18 @@ a particular output file.
 \section{To Do}
 
 \begin{itemize}
+
 \item
  retrofit proper exception handling throughout (currently used sparsely and 
   inconsistently)
+
 \item
- potential bug in free_task class: will never run if too many previous
-  instances exist that are newer than the task deletion cutoff
+ potential bug in the free task class: will never run if too many
+ previous instances exist that are newer than the task deletion cutoff
+
 \item
- remote logging from send_message and dummy_task, in case the controller
- itself is dead.
+ remote logging from messaging and dummy task scripts, in case the
+ controller itself is dead.
 
 \end{itemize}
 
