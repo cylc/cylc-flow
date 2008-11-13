@@ -16,8 +16,8 @@ dummy_job_launch = 'direct'
 
 # logging 
 logging_dir = 'LOGFILES' 
-#logging_level = logging.INFO
-logging_level = logging.DEBUG
+logging_level = logging.INFO
+#logging_level = logging.DEBUG
 
 state_dump_file = 'STATE'
 
@@ -26,7 +26,7 @@ state_dump_file = 'STATE'
 pyro_ns_group = ':ecoconnect'   
 
 # start and (optional) stop reference times
-start_time = "2008102018"
+start_time = "2008102012"
 stop_time = "2008102218"
 
 # list the tasks to run
@@ -36,7 +36,8 @@ operational_tasks = [
         'global_prep',
         'globalwave',
         'nzlam:finished',
-        'nzlam_post',
+        'nzlam_post_00_12',
+        'nzlam_post_06_18',
         'nzwave',
         'ricom',
         'nztide',
@@ -55,10 +56,10 @@ topnet_test_tasks = [
         'topnet_products'
         ]
 
-#task_list = operational_tasks
-task_list = topnet_test_tasks
+task_list = operational_tasks
+#task_list = topnet_test_tasks
 
-# list tasks to dummy out in non-dummy-mode
+# list tasks to dummy out in real mode
 # (currently needs to be defined as an empty list if not needed)
 dummy_out = []
 #dummy_out = [ 'topnet' ]

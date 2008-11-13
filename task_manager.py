@@ -108,8 +108,8 @@ class manager ( Pyro.core.ObjBase ):
         # This is needed because, for example, if we start the system at
         # 12Z with topnet turned on, topnet is valid at every hour from 
         # 12 through 17Z, so those tasks will be created but they will 
-        # never be able to run due to lack of any upstream nzlam_post
-        # task until 18Z comes along.
+        # never be able to run due to lack of any upstream
+        # nzlam_post_06_18 until 18Z comes along.
 
         # Note that as lame ducks are removed in the task processing
         # loop they won't get eliminated immediately during periods when
@@ -133,7 +133,7 @@ class manager ( Pyro.core.ObjBase ):
                 lame_ducks.append( task )
     
         for lame in lame_ducks:
-            lame.log.info( "abdicating a lame duck " + task.identity )
+            lame.log.info( "abdicating a lame duck " + lame.identity )
 
             # dynamic task object creation by task and module name
             new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
@@ -150,6 +150,7 @@ class manager ( Pyro.core.ObjBase ):
         # the prerequisites of other waiting tasks.
         batch_finished = []
         cutoff_times = []
+
         for task in self.tasks:   
             if task.state != 'finished':
                 cutoff_times.append( task.get_cutoff( self.tasks ))

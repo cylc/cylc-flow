@@ -28,15 +28,19 @@ class task_base( Pyro.core.ObjBase ):
 
         Pyro.core.ObjBase.__init__(self)
 
+        # set state_changed True if any task's state changes 
+        # as a result of a remote method call
         global state_changed 
         state_changed = True
 
         # unique task identity
         self.identity = self.name + '%' + self.ref_time
 
+        # task-specific log file
         self.log = logging.getLogger( "main." + self.name ) 
 
         self.latest_message = ""
+
         self.abdicated = False # True => my successor has been created
 
         # initial states: 

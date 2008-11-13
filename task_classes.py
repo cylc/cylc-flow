@@ -122,10 +122,39 @@ class nzlam( task_base ):
         task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class nzlam_post( task_base ):
+class nzlam_post_06_18( task_base ):
 
-    name = "nzlam_post"
-    valid_hours = [ 0, 6, 12, 18 ]
+    name = "nzlam_post_06_18"
+    valid_hours = [ 6, 18 ]
+    external_task = 'nzlam_post.sh'
+    user_prefix = 'nwp'
+    quick_death = False
+
+    def __init__( self, ref_time, initial_state ):
+
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+
+        self.prerequisites = requisites( self.name, [ 
+            "file tn_" + ref_time + "_utc_nzlam_12.um ready",
+            "file sls_" + ref_time + "_utc_nzlam_12.um ready",   
+            "file met_" + ref_time + "_utc_nzlam_12.um ready" ])
+
+        self.postrequisites = timed_requisites( self.name, [ 
+            [0, self.name + " started for " + ref_time],
+            [10, "file sls_" + ref_time + "_utc_nzlam_12.nc ready"],   
+            [20, "file tn_" + ref_time + "_utc_nzlam_12.nc ready"],
+            [30, "file met_" + ref_time + "_utc_nzlam_12.nc ready"],
+            [31, self.name + " finished for " + ref_time] ])
+
+        task_base.__init__( self, ref_time, initial_state )
+
+#----------------------------------------------------------------------
+class nzlam_post_00_12( task_base ):
+
+    name = "nzlam_post_00_12"
+    valid_hours = [ 0, 12 ]
     external_task = 'nzlam_post.sh'
     user_prefix = 'nwp'
 
@@ -135,31 +164,13 @@ class nzlam_post( task_base ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
 
-        hour = ref_time[8:10]
+        self.prerequisites = requisites( self.name, [ 
+            "file sls_" + ref_time + "_utc_nzlam_12.um ready" ])
 
-        if hour == "00" or hour == "12":
-            
-            self.prerequisites = requisites( self.name, [ 
-                "file sls_" + ref_time + "_utc_nzlam_12.um ready" ])
-
-            self.postrequisites = timed_requisites( self.name, [
-                [0, self.name + " started for " + ref_time],
-                [10, "file sls_" + ref_time + "_utc_nzlam_12.nc ready"],   
-                [11, self.name + " finished for " + ref_time] ])
-
-        elif hour == "06" or hour == "18":
-
-            self.prerequisites = requisites( self.name, [ 
-                "file tn_" + ref_time + "_utc_nzlam_12.um ready",
-                "file sls_" + ref_time + "_utc_nzlam_12.um ready",   
-                "file met_" + ref_time + "_utc_nzlam_12.um ready" ])
-
-            self.postrequisites = timed_requisites( self.name, [ 
-                [0, self.name + " started for " + ref_time],
-                [10, "file sls_" + ref_time + "_utc_nzlam_12.nc ready"],   
-                [20, "file tn_" + ref_time + "_utc_nzlam_12.nc ready"],
-                [30, "file met_" + ref_time + "_utc_nzlam_12.nc ready"],
-                [31, self.name + " finished for " + ref_time] ])
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [10, "file sls_" + ref_time + "_utc_nzlam_12.nc ready"],   
+            [11, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
 
@@ -270,7 +281,7 @@ class ricom( task_base ):
 class mos( task_base ):
 
     name = "mos"
-    valid_hours = [ 0, 6, 12, 18 ]
+    valid_hours = [ 6, 18 ]
     external_task = 'mos.sh'
     user_prefix = 'nwp'
 
@@ -282,11 +293,8 @@ class mos( task_base ):
  
         hour = ref_time[8:10]
 
-        if hour == "06" or hour == "18":
-            self.prerequisites = requisites( self.name, [ 
-                "file met_" + ref_time + "_utc_nzlam_12.nc ready" ])
-        else:
-            self.prerequisites = requisites( self.name, [])
+        self.prerequisites = requisites( self.name, [ 
+            "file met_" + ref_time + "_utc_nzlam_12.nc ready" ])
 
         self.postrequisites = timed_requisites( self.name, [
             [0, self.name + " started for " + ref_time],
@@ -457,13 +465,13 @@ class topnet( task_base ):
 
     def get_cutoff( self, all_tasks ):
 
-        # keep the most recent *finished* 06 or 18Z nzlam_post or
+        # keep the most recent *finished* nzlam_post_06_18 or
         # oper2test_topnet task that is OLDER THAN ME, because the next
         # hourly topnet may also need the output from that same
         # 12-hourly task.
 
         # note that this could be down without searching for actual
-        # 'nzlam_post' or 'oper2test_topnet' tasks because we know how 
+        # 'nzlam_post_06_18' or 'oper2test_topnet' tasks because we know how 
         # far ahead topnet is allowed to get, depending on catchup.
 
         found = False
@@ -472,17 +480,15 @@ class topnet( task_base ):
         result = self.ref_time # default
 
         for task in all_tasks:
-            if task.name == 'nzlam_post' or task.name == 'oper2test_topnet':
+            if task.name == 'nzlam_post_06_18' or task.name == 'oper2test_topnet':
                 if task.state == 'finished':
-                    hour = task.ref_time[8:10]
-                    if hour == '06' or hour == '18':
-                        found = True
-                        times.append( task.ref_time )
+                    found = True
+                    times.append( task.ref_time )
         if not found: 
             # This could mean the task is lame, in which case it will
             # be eliminated by lame task deletion in the main program.
 
-            # Or, more likely, at start up time the first nzlam_post
+            # Or, more likely, at start up, the first nzlam_post_06_18
             # just hasn't finished yet.
 
             pass
