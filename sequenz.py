@@ -88,37 +88,32 @@ def main( argv ):
         print "      (DUMMY MODE)"
     print
  
-    while True: # MAIN LOOP ###################################
+    while True: # MAIN LOOP
+
         if master.system_halt:
             clean_shutdown( 'remote request' )
 
         if task_base.state_changed and not master.system_pause:
-            # PROCESS ALL TASKS whenever one changes state as
-            # a result of a remote task message coming in.
-
-            pool.regenerate()
-
-            pool.interact()
-
-            pool.run_if_ready()
+            # PROCESS ALL TASKS whenever one has changed state
+            # as a result of a remote task message coming in: 
+            # interact, run, create new, and kill spent tasks
+            #---
+            pool.process_tasks()
 
             pool.dump_state()
 
             if pool.all_finished():
-                clean_shutdown( 'ALL TASKS FINISHED' )
+                clean_shutdown( "ALL TASKS FINISHED" )
 
-            pool.kill_spent_tasks()
-
-            pool.kill_lame_ducks()
-
-        # PYRO REQUEST HANDLING; returns after one or more remote
-        # method invocations are processed (these are not just task
-        # messages, hence the use of task_base.state_changed above).
-
+        # REMOTE METHOD HANDLING; handleRequests() returns 
+        # after one or more remote method invocations are 
+        # processed (these are not just task messages, hence 
+        # the use of task_base.state_changed above).
+        #---
         task_base.state_changed = False
         pyro_daemon.handleRequests( timeout = None )
 
-    ############################################################
+     # END MAIN LOOP
 
 if __name__ == "__main__":
     main( sys.argv )

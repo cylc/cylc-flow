@@ -215,3 +215,18 @@ class manager ( Pyro.core.ObjBase ):
             summary[ task.identity ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
 
         return summary
+
+
+    def process_tasks( self ):
+
+            self.regenerate()
+
+            self.interact()
+
+            self.run_if_ready()
+
+            self.kill_spent_tasks()
+
+            self.kill_lame_ducks()
+
+
