@@ -6,7 +6,7 @@
 
 \lstset{language=Python}
 
-\title{Dynamic Task Sequencing with {\em Sequenz}}
+\title{Multiflight Dynamic Task Sequencing with {\em Sequenz}}
 
 \author{Hilary Oliver, NIWA}
 
@@ -148,9 +148,9 @@ it is unlikely any generic framework could compete.
 
 To implement dynamic sequencing we need a specific {\em task management}
 scheme that controls when tasks will be created and destroyed, and so
-on. There are almost too many options here, for instance: should tasks
+on. There are almost too many options here; for instance: should tasks
 be created all at once, in cotemporal batches, or one at a time as their
-predecessors finish?. The consequences of choices such as this have to
+predecessors finish? The consequences of choices such as this have to
 be evaluated carefully, which isn't easy because of the inherent
 complexity of multiflight operation. At the simple end of the task
 management spectrum, for example, we could create a whole month's worth
