@@ -387,6 +387,7 @@ class oper2test_topnet( free_task ):
     valid_hours = [ 6, 18 ]
     external_task = 'oper2test_topnet.sh' 
     user_prefix = 'hydrology'
+    quick_death = False
 
     def __init__( self, ref_time, initial_state ):
 

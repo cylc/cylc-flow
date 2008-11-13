@@ -20,6 +20,14 @@ class task_base( Pyro.core.ObjBase ):
     
     name = "task base"
 
+    # By default, finished tasks can die as soon as their reference
+    # time is older than that of the oldest non-finished task. Rare 
+    # task types the system manager knows are needed to satisfy the 
+    # prerequisites of tasks *in subsequent cycles*, however, must
+    # set quick_death = False, in which case it will be removed by
+    # cutoff time.
+    quick_death = True
+
     def __init__( self, ref_time, initial_state ):
         # Call this AFTER derived class initialisation
         #   (it alters requisites based on initial state)

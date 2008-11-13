@@ -146,42 +146,60 @@ class manager ( Pyro.core.ObjBase ):
             del lame
 
     def kill_spent_tasks( self ):
-        # DELETE tasks that are finished AND no longer needed to satisfy
-        # the prerequisites of other waiting tasks.
-        batch_finished = []
+        # delete FINISHED tasks that are:
+
+        # (i) older than the oldest non-finished task 
+        # (this applies to most tasks, with quick_death = True)
+        #   OR
+        # (ii) older than the oldest cutoff time
+        # cutoff time is the oldest time still needed to satisfy the
+        # prerequisites of a waiting task or a running task's immediate
+        # successor. This only matters rarely, e.g. nzlam_post_06_18
+        # which has to hang around longer to satisfy many subsequent
+        # hourly topnets.
+         
+        not_finished = []
         cutoff_times = []
 
         for task in self.tasks:   
             if task.state != 'finished':
                 cutoff_times.append( task.get_cutoff( self.tasks ))
-            # which ref_time batches are all finished
-            if task.ref_time not in batch_finished:
-                batch_finished.append( task.ref_time )
+                not_finished.append( task.ref_time )
+        
+        not_finished.sort( key = int )
+        death_list = []
+        if len( not_finished ) != 0:
 
-        if len( cutoff_times ) == 0:
-            # no tasks to delete (is this possible?)
-            return
+            oldest_not_finished = not_finished[0]
+            for task in self.tasks:
+                if task.quick_death and int( task.ref_time ) < int( oldest_not_finished ):
+                    death_list.append( task )
+                     
+        for task in death_list:
+            self.log.debug( "removing spent " + task.identity )
+            self.tasks.remove( task )
+            self.pyro_daemon.disconnect( task )
 
-        cutoff_times.sort( key = int )
-        cutoff = cutoff_times[0]
+        del death_list
 
-        self.log.debug( "task deletion cutoff is " + cutoff )
+        if len( cutoff_times ) != 0:
 
-        remove_these = []
-        for rt in batch_finished:
-            if int( rt ) < int( cutoff ):
-                self.log.debug( "REMOVING BATCH " + rt )
-                for task in self.tasks:
-                    if task.ref_time == rt:
-                        remove_these.append( task )
+            cutoff_times.sort( key = int )
+            cutoff = cutoff_times[0]
 
-        if len( remove_these ) > 0:
-            for task in remove_these:
+            self.log.debug( "task deletion cutoff is " + cutoff )
+
+            death_list = []
+            for task in self.tasks:
+                if task.is_finished() and int( task.ref_time ) < int( cutoff ):
+                    death_list.append( task )
+
+            for task in death_list:
                 self.log.debug( "removing spent " + task.identity )
                 self.tasks.remove( task )
                 self.pyro_daemon.disconnect( task )
 
-            del remove_these
+            del death_list
 
 
     def get_state_summary( self ):
