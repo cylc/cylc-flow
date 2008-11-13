@@ -27,18 +27,16 @@ purposes.} by enabling them to resolve their own internal dependencies
 through interaction, so that {\em correct sequencing emerges naturally
 at run time}. In other words, it determines when each task is ready to
 run, in the presence of prerequisites that must be satisfied by other
-tasks in the system, without using any explicit sequencing logic. Once a
-task is ready it is submitted to a batch queue scheduler and its
-progress is tracked so that it can be used to satisfy the prerequisites
-of other tasks. Tasks do not all have to run on the same machine.  In
-general, task dependencies result in multiple parallel streams of
-execution that can branch (when one task generates output for several
-downstream task) and merge (when one task takes input from several
-upstream task), which presents a difficult control system design
-problem.  
+tasks in the system, without use of explicit sequencing logic. Once a
+task is ready to run it is submitted to a batch queue scheduler. Tasks
+do not all have to run on the same machine.  In general, task
+dependencies result in multiple parallel streams of execution that can
+branch (when one task generates output for several downstream task) and
+merge (when one task takes input from several upstream task), which
+presents a difficult control system design problem.  
 
 
-\subsection{Implementation}
+\subsection{Sequenz}
 
 {\em Sequenz} is a Python program that implements the dynamic sequencing
 concept. It is used to run NIWA's EcoConnect operational environmental
@@ -47,10 +45,13 @@ models that drive regional weather, sea state, storm surge, tide, and
 river flow models, and many associated pre- and post-processing tasks.
 The tasks run on heterogenous distributed hardware, on an operational
 schedule that repeats several times daily (between one and twenty four
-times, depending on the task).  It can automatically run tasks from many
-different forecast cycles at the same time if dependencies allow, for
-maximum throughput ({\em multiflight} operation). Tasks can be switched
-on and off trivially, and new ones can be added by simply defining their
+times, depending on the task).  It automatically runs tasks from many
+many different forecast cycles simultaneously, where dependencies allow,
+for maximum throughput\footnote{This is useful when catching up to real
+time after system delays, and for running the entire system over
+historical periods for which all the initial input data is already
+available.} ({\em multiflight} operation). Tasks can be switched on and
+off trivially, and new ones can be added by simply defining their
 prerequisites (without reference to who will satisfy them) and outputs
 (without reference to who will use them). The system can be restarted in
 arbitrarily complex states after maintenance, and sequencing of all
@@ -69,14 +70,12 @@ Tasks do not need to know anything about the other tasks in the system,
 just their own prerequisites and outputs as would be required for them
 to run in isolation. They do not even need to know who is supposed to
 satisfy their prerequisites because they can ask {\em all} other tasks.
-To the task objects, outputs are just {\em messages} that indicate their
-external task has reached a particular waypoint, such as generation of
-an output file. The total absence of explicit sequencing logic makes
-this method extremely flexible: tasks can be switched on and off, and
-new ones added, without changing the main program at all. Each task runs
-at the right time so long as the system manager ensures that the task
-pool is consistent (everyone's prerequisites must be satsified by
-someone else in the system).
+The total absence of explicit sequencing logic makes this method
+extremely flexible: tasks can be switched on and off, and new ones
+added, without changing the main program at all. Each task runs at the
+right time so long as the system manager ensures that the task pool is
+consistent (i.e. that each task's prerequisites will be satsified by
+another task's outputs).
 
 
 \subsection{Applicability}
@@ -98,7 +97,9 @@ for example, each task knows exactly what its input files look like
 output directory). Consequently, for file-based prerequisites, the
 controller does not need to know the file's actual location or check for
 its existence, because the external tasks already do that. It could,
-however, easily be made to pass file locations between tasks.  
+however, easily be made to pass file locations between tasks so that all
+input/output filenames and paths could be defined centrally in the
+control program itself.  
 
 
 \subsection{Alternatives}
@@ -116,15 +117,15 @@ events: {\em if task A has finished and task B has generated file X,
 then run task C}, and so on. This is relatively easy to understand in
 simple systems, but the sequencing logic becomes increasingly convoluted
 as system complexity increases, and with any attempt to build in
-flexibility (e.g. by allowing tasks to be switched on and off easily).
-In addition, for forecast systems (and similar) it does not seem
-possible to generalise this to multiflight operation without
-prohibitively complex coding.\footnote{Note that a sequence of
-overlapping independent single-flight controllers does not work, in
-general, because of intercycle dependencies: $foo(T\negmedspace
-+\negmedspace 1)$ may depend on $foo(T)$, for example, because forecast
-models usually start from a ``background state'' generated by the
-previous forecast.} 
+flexibility (e.g. by allowing tasks to be switched on and off easily,
+which effectively changes the predetermined order). In addition, for
+forecast systems (and similar) it does not seem possible to generalise
+this to multiflight operation without prohibitively complex
+coding.\footnote{Note that a sequence of overlapping independent
+single-flight controllers does not work, in general, because of
+intercycle dependencies: $foo(T\negmedspace +\negmedspace 1)$ may depend
+on $foo(T)$, for example, because forecast models usually start from a
+``background state'' generated by the previous forecast.} 
 
 
 \subsubsection{Dependent Batch Schedulers}
@@ -147,18 +148,18 @@ it is unlikely any generic framework could compete.
 
 To implement dynamic sequencing we need a specific {\em task management}
 scheme that controls when tasks will be created and destroyed, and so
-on. There is almost too many options here (e.g. should tasks be
-created all at once, in cotemporal batches, or one at a time as their
-predecessors finish?) and consequences have to be evaluated carefully,
-which is not easy because of the inherent complexity of multiflight
-operation. In principle we could, for example, create a whole month's
-worth of tasks at once and let them interact until everything runs to
-completion. That seems refreshingly simple, and nothing would run out of
-sequence, {\em but} system monitoring would be difficult because of the
-sheer number of tasks involved, the end of the month presents an
-artificial barrier to multiflight operation, tasks that lack
-prerequisites would all want to run at once, and system restarts could
-be very complicated. 
+on. There are almost too many options here, for instance: should tasks
+be created all at once, in cotemporal batches, or one at a time as their
+predecessors finish?. The consequences of choices such as this have to
+be evaluated carefully, which isn't easy because of the inherent
+complexity of multiflight operation. At the simple end of the task
+management spectrum, for example, we could create a whole month's worth
+of tasks at once and just let them interact until everything runs to
+completion. Nothing would run out of sequence, {\em but} system
+monitoring would be difficult because of the sheer number of tasks
+involved, the end of the month would present an artificial barrier to
+multiflight operation, tasks that lack prerequisites would all want to
+run at once, and system restarts would be overly complicated. 
 
 \subsection{Main Algorithm}
 
@@ -285,15 +286,18 @@ the 'waiting' state.
 \subsubsection{Removing Spent Tasks} 
 
 A task is spent if it finished {\em and} no longer needed to satisfy the
-prequisites of any other task. Each non-finished task reports its {\em
-cutoff reference time}, i.e. the oldest reference time that may contain
-tasks still needed to satisfy its own prerequisites or those of its
-immediate post-abdication successor.  In most cases this is just the
-task's own reference time. For hourly {\em topnet} it is the reference
-time of the previous finished 06 or 18Z {\em nzlam\_post} task (the next
-topnet task may need the same nzlam\_post). The task manager can then
-kill any batch of cotemporal tasks that are all finished {\em and} older
-than the oldest task cutoff time.
+prequisites of any other task. Most tasks are only needed by other
+cotemporal downstream tasks; these can be removed when they are finished
+{\em and} older than the oldest non-finished task. For rare cases that
+are needed by tasks in later reference times (e.g. nzlam post
+processing: multiple hourly topnet tasks need the same most recent
+previously finished 06 or 18Z nzlam post processing task), each
+non-finished task reports its {\em cutoff reference time} which is the
+oldest reference time that may contain tasks still needed to satisfy its
+own prerequisites (if it is waiting) or those of its immediate
+post-abdication successor (if it is running already), then the task
+manager can then kill any finished tasks that are also older than the
+oldest task cutoff time.
 
 \subsubsection{Removing Lame Tasks} 
 
@@ -461,7 +465,7 @@ important is happening.
  \item logging
  \item debugging
  \item adding new task definitions
- \item simple system monitors
+ \item system monitors
  \item remote control: 
     \begin{itemize}
     \item clean shutdown of pyro
@@ -469,6 +473,7 @@ important is happening.
     \end{itemize}
  \item external task messaging interface script
  \item dummying out tasks in real mode
+ \item how to set up partial parallel test systems
 \end{itemize}
 
 \section{Miscellaneous Notes}
@@ -516,9 +521,25 @@ relative to the task's own reference time; any task with a reference
 time greater than or equal to the boundary time can satisify the
 prerequisite.
 
-\section{External Interface Requirements}
+\subsection{Task Messaging}
 
+To the task objects, outputs are just {\em messages} indicating that the
+external task has reached a significant waypoint, such as generation of
+a particular output file.
 
+\section{To Do}
 
+\begin{itemize}
+\item
+ retrofit proper exception handling throughout (currently used sparsely and 
+  inconsistently)
+\item
+ potential bug in free_task class: will never run if too many previous
+  instances exist that are newer than the task deletion cutoff
+\item
+ remote logging from send_message and dummy_task, in case the controller
+ itself is dead.
+
+\end{itemize}
 
 \end{document}
