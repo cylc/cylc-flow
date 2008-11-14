@@ -417,6 +417,9 @@ class topnet( task_base ):
     external_task = 'topnet_run.sh'
     user_prefix = 'hydrology'
 
+    # class variable to keep track of when the nzlam input changes
+    nzlam_time = 0
+
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
     reftime_re = re.compile( "\d{10}")
 
@@ -459,6 +462,12 @@ class topnet( task_base ):
         [ file ] = m.groups()
         m = topnet.reftime_re.search( file )
         nzlam_time = m.group()
+
+        if nzlam_time != topnet.nzlam_time:
+            # this can be used if different vis processing is needed
+            # when nzlam input changes (may not be necessary?)
+            self.log.info( "new nzlam time detected:  " + nzlam_time )
+            topnet.nzlam_time = nzlam_time
 
         extra_vars = [ ['NZLAM_TIME', nzlam_time ] ]
         task_base.run_external_task( self, extra_vars )

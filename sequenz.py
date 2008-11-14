@@ -105,10 +105,15 @@ def main( argv ):
             if pool.all_finished():
                 clean_shutdown( "ALL TASKS FINISHED" )
 
-        # REMOTE METHOD HANDLING; handleRequests() returns 
-        # after one or more remote method invocations are 
-        # processed (these are not just task messages, hence 
-        # the use of task_base.state_changed above).
+        # REMOTE METHOD HANDLING; with no timeout and single-
+        # threaded pyro, handleRequests() returns after one or
+        # more remote method invocations are processed (these 
+        # are not just task messages, hence the use of the
+        # state_changed variable above). Note that we could 
+        # decide to do some processing on temporary timeouts,
+        # however, e.g. when lame ducks are dected (currently 
+        # they can only be removed as messages from other tasks
+        # come in, thereby activating the task processing loop).
         #---
         task_base.state_changed = False
         pyro_daemon.handleRequests( timeout = None )
