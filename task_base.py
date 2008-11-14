@@ -249,21 +249,6 @@ class task_base( Pyro.core.ObjBase ):
             self.set_finished()
 
 #----------------------------------------------------------------------
-class simple_task( task_base ):
-    # for tasks with minimal postrequisites: started, finished
-
-    name = "simple task base"
-
-    def __init__( self, ref_time, initial_state, est_run_time = 1 ):
-        # est_run_time in minutes
-
-        self.postrequisites = timed_requisites( self.name, [ 
-            [0, self.name + " started for " + ref_time],
-            [est_run_time, self.name + " finished for " + ref_time] ])
-
-        task_base.__init__( self, ref_time, initial_state )
-
-#----------------------------------------------------------------------
 class free_task( task_base ):
     # for tasks with no-prerequisites, e.g. downloader and nztide,
     # that would otherwise run ahead indefinitely: delay if we get

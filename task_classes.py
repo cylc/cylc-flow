@@ -2,7 +2,7 @@
 
 # operational task class definitions
 
-from task_base import task_base, simple_task, free_task
+from task_base import task_base, free_task
 import job_submit
 
 import reference_time
@@ -505,7 +505,7 @@ class topnet( task_base ):
         return result
 
 #----------------------------------------------------------------------
-class topnet_vis( simple_task ):
+class topnet_vis( task_base ):
 
     name = "topnet_vis"
     valid_hours = range( 0,24 )
@@ -521,10 +521,14 @@ class topnet_vis( simple_task ):
         self.prerequisites = requisites( self.name, [ 
             "topnet finished for " + ref_time  ])
 
-        simple_task.__init__( self, ref_time, initial_state, est_run_time = 3 )
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [3, self.name + " finished for " + ref_time] ])
+
+        task_base.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class topnet_products( simple_task ):
+class topnet_products( task_base ):
 
     name = "topnet_products"
     valid_hours = range( 0,24 )
@@ -541,7 +545,11 @@ class topnet_products( simple_task ):
         self.prerequisites = requisites( self.name, [ 
             "topnet_vis finished for " + ref_time  ])
 
-        simple_task.__init__( self, ref_time, initial_state, est_run_time = 2 )
+        self.postrequisites = timed_requisites( self.name, [
+            [0, self.name + " started for " + ref_time],
+            [2, self.name + " finished for " + ref_time] ])
+
+        task_base.__init__( self, ref_time, initial_state )
 
     def run_external_task( self ):
         task_base.run_external_task( self, topnet_products.env_vars )
