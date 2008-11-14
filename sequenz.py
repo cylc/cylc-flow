@@ -109,11 +109,7 @@ def main( argv ):
         # threaded pyro, handleRequests() returns after one or
         # more remote method invocations are processed (these 
         # are not just task messages, hence the use of the
-        # state_changed variable above). Note that we could 
-        # decide to do some processing on temporary timeouts,
-        # however, e.g. when lame ducks are dected (currently 
-        # they can only be removed as messages from other tasks
-        # come in, thereby activating the task processing loop).
+        # state_changed variable above).
         #---
         task_base.state_changed = False
         pyro_daemon.handleRequests( timeout = None )

@@ -111,10 +111,13 @@ class manager ( Pyro.core.ObjBase ):
         # never be able to run due to lack of any upstream
         # nzlam_post_06_18 until 18Z comes along.
 
-        # Note that as lame ducks are removed in the task processing
-        # loop they won't get eliminated immediately during periods when
-        # no remote messages are coming in at the time (incoming task
-        # messages are what activates the task processing loop).
+        # Note that lame ducks won't be eliminated immediately during
+        # periods when no remote messages are coming in (since that's
+        # what activates task processing, including this function). If
+        # this is ever a problem though, we could decide to kill lame
+        # ducks on temporary handleRequests() timeouts as well, OR set
+        # task_base.state_changed in this function, whenever any lame
+        # ducks are detected.
 
         batches = {}
         for task in self.tasks:
