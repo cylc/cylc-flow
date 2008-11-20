@@ -384,34 +384,31 @@ Options:
 
 \section{Essential OOP Concepts}
 
-``Task objects'' in sequenz are {\em objects} in the Object Oriented
-Programming sense, and the simplicity of the sequencing algorithm
-depends critically on their {\em polymorphic} nature.  This section
-contains a minimal introduction to OOP concepts needed to understand
-this.  Refer to any OOP reference for more detail.
+The simplicity of the dynamic sequencing implementation in {\em sequenz}
+is critically dependent on the {\em polymorphic} nature of the {\em task
+objects} in the program.  This section contains a minimal introduction
+to these Object Oriented Programming concepts.  Refer to any OOP
+reference for more detail.
 
 \subsection{Classes and Objects}
 
-A {\em class definition} declares the properties of {\em objects} or
-{\em instances} of that class; objects are self-contained entities that
-can be assigned to a variable and have specific {\em state} (data) and
-{\em behaviour} (functions or ``methods'' that operate on the data and
-are the means by which objects interact with the outside world).    
-
-For example, a $shape$ class could define a $position$ data member that
-describes the location of each shape object, a $move()$ method that
-causes a shape object to alter its position, and a $draw()$ method that
-causes it to display itself in the right place on screen.
+A {\em class} is essentially a generalisation {\em data type}, to
+include {\em behaviour} (i.e. functions or {\em methods}) as well as
+state.  {\em Objects} are more or less self contained {\em instances} of
+a class. For example, a $shape$ class could define a $position$ data
+member that describes the location of each shape object, a $move()$
+method that causes a shape object to alter its position, and a $draw()$
+method that causes it to display itself in the right place on screen.
 
 \subsection{Inheritance}
 
 A {\em derived class} or {\em subclass} inherits the properties (methods
-and data members) of its {\em parent class}. It can also {\em override}
-specific parent class properties, or add new properties that aren't
-present in the parent class. Calling a particular method on an object
+and data members) of a {\em base class}. It can also {\em override}
+specific base class properties, or add new properties that aren't
+present in the base class. Calling a particular method on an object
 invokes the object's own class method if one is defined, otherwise the
-parent class is searched, and so on down to the {\em base class} at the
-root of the object's inheritance tree. 
+immediate base class is searched, and so on down to the root of the
+inheritance graph. 
 
 For example, we could derive a $circle$ class from $shape$, adding a
 `radius' data member and overriding the $draw()$ to get circle objects
@@ -422,18 +419,18 @@ method, $shape.move()$.
 
 \subsection{Polymorphism}
 
-Polymorphism is the ability of one {\em type} to appear as and be used
-like another type.  In OOP languages with inheritance, this usually
-refers to the ability to treat derived/sub-class objects as if they were
-members of a parent class.  In particular, a group of mixed-type objects
-can all be treated as members of a common parent class. For example, we
-could construct a list of $shape$ objects from $circles$, $triangles$,
-and $squares$; calling $[list member].draw()$ will invoke the right
-derived class $draw()$. This is a very powerful mechanism because {\em
-it allows unmodified old code to call new code}: if we later derive an
-entirely new kind of shape ($hexagon$, say) with it's own unique
-behaviour, the existing program, without modification, will process the
-new objects in the proper hexagon-specific way.
+Polymorphism is the ability of one type to appear as and be used like
+another type.  In OOP languages with inheritance, this usually refers to
+the ability to treat derived/sub-class objects as if they were members
+of a base class.  In particular, a group of mixed-type objects can all
+be treated as members of a common base class. For example, we could
+construct a list of $shape$ objects from $circles$, $triangles$, and
+$squares$; calling $[list member].draw()$ will invoke the right derived
+class $draw()$. This is a very powerful mechanism because {\em it allows
+unmodified old code to call new code}: if we later derive an entirely
+new kind of shape ($hexagon$, say) with it's own unique behaviour, the
+existing program, without modification, will process the new objects in
+the proper hexagon-specific way.
 
 
 \section{Threading in Pyro} \label{pyro-appendix}
