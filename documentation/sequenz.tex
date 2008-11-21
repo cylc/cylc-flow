@@ -18,6 +18,29 @@ Application to Chained Environmental Forecasting Models}
 \maketitle
 \tableofcontents
 
+\begin{abstract}
+
+A system of interdependent tasks can, in general, execute in multiple
+parallel streams that branch (when one task generates output for several
+downstream task) and merge (when one task takes input from several
+upstream task). {\em Dynamic Sequencing} is an extremely flexible way to
+control such a system without any use of explicit sequencing logic, by
+enabling the tasks to resolve their own dependencies through interaction
+so that {\em correct sequencing emerges naturally at run time}. We
+describe a specific implementation ({\em sequenz}) that is particularly
+suited to real time forecasting, where each task has an associated
+``reference time'' and repeats after some interval, ad infinitum.  Tasks
+from many different reference times can run at once, where dependencies
+allow, and the system transitions seamlessly from ``catchup mode'' (in
+which all initial input is already available; e.g. after delays for
+maintenance) to real time operation. Tasks can be turned on and off
+trivially, and new ones added, without any change to the main program,
+and sequencing can be tested completely without actually running the
+real tasks. Sequenz controls a complex network of chained environmental
+forecasting models and post processing tasks at NIWA (EcoConnect). 
+
+\end{abstract}
+
 
 \section{Dynamic Sequencing}
 
@@ -26,17 +49,17 @@ Application to Chained Environmental Forecasting Models}
 {\em Dynamic Sequencing} is an extremely flexible way to control the
 execution order of a pool of interdependent tasks\footnote{A {\em task}
 is any group of processes treated as a single entity for scheduling
-purposes.} by enabling them to resolve their own internal dependencies
-through interaction, so that {\em correct sequencing emerges naturally
-at run time}. In other words, it determines when each task is ready to
-run, in the presence of prerequisites that must be satisfied by other
-tasks in the system, without use of explicit sequencing logic. Once a
-task is ready to run it is submitted to a batch queue scheduler. Tasks
-do not all have to run on the same machine.  In general, task
-dependencies result in multiple parallel streams of execution that can
-branch (when one task generates output for several downstream task) and
-merge (when one task takes input from several upstream task), which
-presents a difficult control system design problem.  
+purposes.} by enabling them to resolve their own dependencies through
+interaction, so that {\em correct sequencing emerges naturally at run
+time}. In other words, it determines when each task is ready to run, in
+the presence of prerequisites that must be satisfied by other tasks in
+the system, without use of explicit sequencing logic. Once a task is
+ready to run it is submitted to a batch queue scheduler. Tasks do not
+all have to run on the same machine.  In general, task dependencies
+result in multiple parallel streams of execution that can branch (when
+one task generates output for several downstream task) and merge (when
+one task takes input from several upstream task), which presents a
+difficult control system design problem.  
 
 
 \subsection{Sequenz}
