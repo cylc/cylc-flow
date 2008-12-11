@@ -6,10 +6,8 @@
 
 \lstset{language=Python}
 
-\title{Sequenz: \linebreak
-Dynamic Sequencing of Interdependent Tasks \linebreak 
-with
-Application to Chained Environmental Forecasting Models}
+\title{Asynchronous Dynamic Task Sequencing 
+for Cycling Multi-Model Forecast Systems}
 
 \author{Hilary Oliver, NIWA}
 
@@ -20,49 +18,121 @@ Application to Chained Environmental Forecasting Models}
 
 \begin{abstract}
 
-A system of interdependent tasks can, in general, execute in multiple
-parallel streams that branch (when one task generates output for several
-downstream task) and merge (when one task takes input from several
-upstream task). {\em Dynamic Sequencing} is an extremely flexible way to
-control such a system without any use of explicit sequencing logic, by
-enabling the tasks to resolve their own dependencies through interaction
-so that {\em correct sequencing emerges naturally at run time}. We
-describe a specific implementation ({\em sequenz}) that is particularly
-suited to real time forecasting, where each task has an associated
-``reference time'' and repeats after some interval, ad infinitum.  Tasks
-from many different reference times can run at once, where dependencies
-allow, and the system transitions seamlessly from ``catchup mode'' (in
-which all initial input is already available; e.g. after delays for
-maintenance) to real time operation. Tasks can be turned on and off
-trivially, and new ones added, without any change to the main program,
-and sequencing can be tested completely without actually running the
-real tasks. Sequenz controls a complex network of chained environmental
-forecasting models and post processing tasks at NIWA (EcoConnect). 
+{\em Dynamic Task Sequencing} is a new and extremely flexible approach
+to controlling the execution of a complex set of interdependent tasks.
+Each task is represented by a self-contained {\em task object} that
+knows nothing about other tasks in the system (such as who will generate
+its inputs or who will use its outputs) but can interact with other
+tasks to negotiate dependencies so that {\em correct sequencing emerges
+naturally at run time}. The absence of explicit sequencing logic means
+complete freedom to switch tasks on and off, or to add new ones to the
+system, without any change to the sequencing algorithm. Our dynamic
+sequencing implementation, {\em Sequenz}, is aimed at cycling
+multi-model real time forecasting systems. It can run tasks from many
+different forecast cycles simultaneously, where dependencies allow. In
+addition, it can be completely tested on the configured task set without
+running any real tasks, and partial parallel test systems that feed off
+the main operational system can be quickly created on an ad hoc basis.
+Sequenz is written in Python, and uses the Python Remote Object protocol
+({\em Pyro}) for direct network communication between task objects and
+the tasks they represent. Pyro also enables efficient RPC-based system
+monitoring by external programs.  Sequenz can be interfaced to existing
+models and tasks with minimal overhead.
 
 \end{abstract}
 
+\section{Task Sequencing}
 
-\section{Dynamic Sequencing}
+NIWA's EcoConnect operation runs a set of regional environmental models
+(weather, sea state, storm surge, river flow, tide) driven by global and
+regional weather and sea state models, along with many associated pre-
+and post-processing tasks for each model, product generation, archiving,
+etc.  The EcoConnect forecasting engine runs on heterogenous distributed
+hardware, and each model (and associated tasks) runs between 1 and 24
+times per day, depending on the model. We define a {\em task} to be any
+group of processes treated as a single entity for scheduling purposes
+(and which would generally be controlled by a single top level script or
+program). Controlling such a system is largely a matter of determining
+when each task, which may depend on output from one or more other tasks,
+is ready to execute.  This is not easy to do in a flexible and
+extensible way because  such systems may have multiple parallel streams
+of execution that branch (when one task generates output for several
+downstream task) and merge (when one task takes input from several
+upstream task), and the detailed properties of this ``sequence'' depend
+entirely on the particular inputs and outputs of the configured task
+set. The typical in-house solution to this problem is a highly specific
+Finite State Machine that enforces a predetermined order of operations
+using hard coded sequencing logic ({\em if A has generated file X, and B
+has finished, then start executing C}, etc.) which quickly becomes
+convoluted and inflexible as system complexity increases.  In addition,
+forecasting control systems simplify their job by assuming that all
+tasks from one cycle will complete before the next cycle begins, even
+though any task is technically ready to run as soon as its own
+prerequisites are satisfied\footnote{Most tasks depend only on their own
+immediate predecessor (forecast models usually begin from a ``background
+state'' generated by the previous forecast) and one more cotemporal
+peers.} regardless of whether tasks from previous cycles are still
+running or yet to start. This is reasonable in normal real time
+operation where time is spent between cycles waiting on external input
+(e.g. new observational data), but it is a significant impediment when
+external input for multiple cycles is already available, such as when
+catching up after system downtime in a resource constrained
+computational environment, or when running the entire system over
+historical case study periods.  Attempting to relax this constraint to
+achieve ``asynchronous'' behaviour within the confines of a hard coded
+finite state machine, however, dramatically exacerbates the
+aforementioned coding problems.  
 
-\subsection{Overview}
 
-{\em Dynamic Sequencing} is an extremely flexible way to control the
-execution order of a pool of interdependent tasks\footnote{A {\em task}
-is any group of processes treated as a single entity for scheduling
-purposes.} by enabling them to resolve their own dependencies through
-interaction, so that {\em correct sequencing emerges naturally at run
-time}. In other words, it determines when each task is ready to run, in
-the presence of prerequisites that must be satisfied by other tasks in
-the system, without use of explicit sequencing logic. Once a task is
-ready to run it is submitted to a batch queue scheduler. Tasks do not
-all have to run on the same machine.  In general, task dependencies
-result in multiple parallel streams of execution that can branch (when
-one task generates output for several downstream task) and merge (when
-one task takes input from several upstream task), which presents a
-difficult control system design problem.  
+\section{Dynamic Task Sequencing}
+
+Dynamic Sequencing is an object oriented approach to the task sequencing
+problem.  Within the control program each task is represented by a
+self-contained {\em task object} that needs to know only what it would
+to run in isolation, namely its own prerequisites (usually input files)
+and outputs, without reference to who will generate its inputs or who
+will use its outputs. A task object can launch its own external task
+when all of its prerequisites are satisfied (by submitting it to a batch
+queue scheduler on the task's target machine), and must then keep its
+internal state in sync with the external task via remote method calls.
+Most importantly, a task object can interact with other task objects to
+find out if they have satisfied any of its prerequisites yet.  The
+controller gets each task to interact with every other task\footnote{It
+doesn't matter that most of these interactions will be fruitless.}, each
+time a new remote call comes in (which indicates someone's state has
+changed).  Thus, regardless of the number of tasks in the system or the
+complexity of their interdependencies, the the control program remains
+simple and completely generic - just a set of standalone tasks that
+don't know they are part of a wider system\footnote{Of course the system
+manager has to ensure that the task pool is self consistent, in that
+each task's prerequisites will be satisfied by some other task in the
+system.}.  The total absence of explicit sequencing logic makes this
+method extremely flexible: tasks can be switched on and off, and new
+ones added, without changing the main program at all. 
+
+Dynamic sequencing is essentially a simulation of a set of
+interdependent tasks in which the state of each {\em simulee} is
+strongly tied to that of the real task it represents.  This makes
+possible a powerful ``dummy mode'' allowing complete testing of the
+control system for a given task set, in accelerated time, without
+actually running any of the real tasks: instead of launching the real
+task we launch an external dummy program that masquerades as the real
+task by reporting each of its prerequisites satisfied in turn. The
+control program will not be able to distinguish this from real
+operations.
 
 
-\subsection{Sequenz}
+\section{Sequenz}
+
+Our dynamic sequencing implementation, {\em Sequenz} (described below),
+features asynchronous sequencing (tasks from many different forecast
+cycles can run at once where dependencies allow, as described above), it
+transitions seamlessly from ``catchup mode'' (in which all initial input
+is already available; e.g. after downtime) to real time operation, and
+the powerful dummy mode, above.  Tasks can be turned on and off
+trivially, and new ones added, without any change to the main program.
+Sequenz controls NIWA's complex network of linked environmental
+forecasting models and associated tasks (EcoConnect). 
 
 {\em Sequenz} is a Python program that implements the dynamic sequencing
 concept. It is used to run NIWA's EcoConnect operational environmental
@@ -83,25 +153,6 @@ prerequisites (without reference to who will satisfy them) and outputs
 arbitrarily complex states after maintenance, and sequencing of all
 system tasks can be fully tested in an accelerated-time dummy mode
 without actually running the real external tasks. 
-
-Sequenz relies on Object Oriented Programming techniques to construct
-self-contained {\em task objects} that represent each external system
-task.  A task object knows its own prerequisites and outputs, keeps its
-internal state in sync with the external task via remote method
-calls\footnote{Remote method calls are achieved using the Python Remote
-Object ({\em Pyro}) protocol.}, can interact with other task objects to
-find out if any of its prerequisites have been satisfied by their
-completed outputs, and can launch the external task when the time comes.
-Tasks do not need to know anything about the other tasks in the system,
-just their own prerequisites and outputs as would be required for them
-to run in isolation. They do not even need to know who is supposed to
-satisfy their prerequisites because they can ask {\em all} other tasks.
-The total absence of explicit sequencing logic makes this method
-extremely flexible: tasks can be switched on and off, and new ones
-added, without changing the main program at all. Each task runs at the
-right time so long as the system manager ensures that the task pool is
-consistent (i.e. that each task's prerequisites will be satsified by
-another task's outputs).
 
 
 \subsection{Applicability}
@@ -131,46 +182,20 @@ control program itself.
 \subsection{Alternatives}
 
 There are currently no other systems in existence that can handle
-general {\em multiflight} sequencing, as far as the author is aware.
-This section just contains a brief discussion of some alternatives that
-were considered prior to beginning development of sequenz.
+general {\em asynchronous} sequencing, as far as the author is aware.
 
-\subsubsection{Explicit Sequencing}
-
-The obvious algorithm to try first is a {\em Finite State Machine} that
-uses explicit sequencing logic to enforce a predetermined order of
-events: {\em if task A has finished and task B has generated file X,
-then run task C}, and so on. This is relatively easy to understand in
-simple systems, but the sequencing logic becomes increasingly convoluted
-as system complexity increases, and with any attempt to build in
-flexibility (e.g. by allowing tasks to be switched on and off easily,
-which effectively changes the predetermined order). In addition, for
-forecast systems (and similar) it does not seem possible to generalise
-this to multiflight operation without prohibitively complex
-coding.\footnote{Note that a sequence of overlapping independent
-single-flight controllers does not work, in general, because of
-intercycle dependencies: $foo(T\negmedspace +\negmedspace 1)$ may depend
-on $foo(T)$, for example, because forecast models usually start from a
-``background state'' generated by the previous forecast.} 
+In the planning stage, in addition to considering a Finite State Machine
+controller, as discussed above, we also considered new generation batch
+queue schedulers (which now allow simple job dependencies), and the use
+of a generic control framework.  Batch queue schedulers were still far
+too rudimentary for our purposes, however, and no generic control
+framework that was obviously well suited came to light. In any case, in
+the author's opinion, the dynamic sequencing design described in this
+paper simplifies the problem to such an extent that it is unlikely any
+generic framework could compete.  
 
 
-\subsubsection{Dependent Batch Schedulers}
-
-Some batch queue schedulers now allow simple job dependencies ({\em
-don't run Y until X is finished}) but are still far too rudimentary for
-our purposes. 
-
-
-\subsubsection{Generic Control Frameworks}
-
-Use of a generic control framework of some kind was also
-considered, but nothing that was obviously well suited came to light. In
-any case, in the author's opinion, the dynamic sequencing design
-described in this document simplifies the problem to such an extent that
-it is unlikely any generic framework could compete.  
-
-
-\section{Sequenz Implementation}
+\section{Implementation}
 
 To implement dynamic sequencing we need a specific {\em task management}
 scheme that controls when tasks will be created and destroyed, and so
