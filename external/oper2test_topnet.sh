@@ -11,9 +11,9 @@ trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 # Find the operational tn_\${REFERENCE_TIME}_utc_nzlam_12.nc(.bz2)
 # file and copy it to hydrology_\$SYS/input/topnet/ for use by topnet.
 # Search order:
-#  1. main archive: \$ARCHIVE/YYYYMM/DD/
-#  2. staging archive: \$STAGING/YYYYMM/
-#  3. nwp_oper/output/nzlam_12/
+#  1. nwp_oper/output/nzlam_12/
+#  2. main archive: \$ARCHIVE/YYYYMM/DD/
+#  3. staging archive: (stored according to date of harvest)
 #  4. (old controller) wait on operational log message
 
 # INPUT:
@@ -31,6 +31,7 @@ trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 #  + kicking the test log with the right message
 #    MSG="retrieving met UM file(s) for $REFERENCE_TIME"
 #    logger -i -p local1.info -t process_nzlam_output $MSG 
+
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task_message CRITICAL "REFERENCE_TIME not defined"
@@ -74,38 +75,47 @@ DD=${DDHH%??}
 # task_message NORMAL "searching for $FILENAME"
 
 SEARCH_MAIN=$ARCHIVE/$YYYYMM/$DD/$FILENAME
-SEARCH_STAGING=$STAGING/$YYYYMM/$FILENAME
 SEARCH_NWP=$OUTPUT/$FILENAME
 
 UPTODATE=false
 
-if [[ -f $SEARCH_MAIN ]]; then
+# Search the entire staging archive first, because files are stored there
+# according to insertion date, not reference time.  A full search is not
+# prohibitive as files are shipped regularly to the main archive. 
+FILE_STAGED=false
+FOO=$( find $STAGING -name ${FILENAME}'*' )
+if [[ -f $FOO ]]; then
+    FILE_STAGED=true
+    if [[ $FOO = *.bz2 ]];the
+        # copy to /tmp for bunzip2'ing in case we don't have write access
+        cp ${STAGING/$FILENAME}.bz2 $TMPDIR
+        bunzip2 $TMPDIR/${FILENAME}.bz2
+        FOO=$TMPDIR/$FILENAME
+    else
+        FOUND=$FOO
+    fi
+fi
+
+if $FILE_STAGED; then
+    task_message NORMAL "found $FILENAME in staging archive"
+    FOUND=$FOO
+
+elif [[ -f $SEARCH_NWP ]]; then
+    task_message NORMAL "found $FILENAME in nwp_oper/output/nzlam_12"
+    # TO DO: (LONG SHOT) CHECK THAT THE FILE IS COMPLETE?
+    # (size check twice, or compare with known file size)
+    FOUND=$SEARCH_NWP
+
+elif [[ -f $SEARCH_MAIN ]]; then
     task_message NORMAL "found $FILENAME in main archive"
     FOUND=$SEARCH_MAIN
 
 elif [[ -f ${SEARCH_MAIN}.bz2 ]]; then
-    task_message NORMAL "... found  ${FILENAME}.bz2 in main archive"
+    task_message NORMAL "... found  $FILENAME in main archive"
     # copy to /tmp for bunzip2'ing in case we don't have write access
     cp ${SEARCH_MAIN}.bz2 $TMPDIR
     bunzip2 $TMPDIR/${FILENAME}.bz2
     FOUND=$TMPDIR/$FILENAME
-
-elif [[ -f $SEARCH_STAGING ]]; then
-    task_message NORMAL "found $FILENAME in staging archive"
-    FOUND=$SEARCH_STAGING
-
-elif [[ -f ${SEARCH_STAGING}.bz2 ]]; then
-    task_message NORMAL "found ${FILENAME}.bz2 in main archive"
-    # copy to /tmp for bunzip2'ing in case we don't have write access
-    cp ${SEARCH_STAGING}.bz2 $TMPDIR
-    bunzip2 $TMPDIR/${FILENAME}.bz2
-    FOUND=$TMPDIR/$FILENAME
-
-elif [[ -f $SEARCH_NWP ]]; then
-    task_message NORMAL "found $FILENAME in nwp_oper/output/nzlam_12"
-    # TO DO: CHECK THAT THE FILE IS NOT STILL BEING WRITTEN
-    # (size check twice, or compare with typical known size)
-    FOUND=$SEARCH_NWP
 
 else
     task_message WARNING "$FILENAME not found; waiting on $OPER_LOG"
