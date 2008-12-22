@@ -5,7 +5,7 @@ set -x
 
 # load functions
 echo "WARNING: USING TEMPORARY BAD HARDWIRED FUNCTIONS PATH"
-. /test/ecoconnect_test/ecocontroller/external/functions.sh
+. /test/ecoconnect_test/sequenz/external/functions.sh
 
 trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 

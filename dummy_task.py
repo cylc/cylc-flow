@@ -14,7 +14,7 @@
 import os, sys
 
 # TO DO: EXTERNAL PROGRAMS AND MODULE LOCATIONS
-sys.path.append( '/test/ecoconnect_test/ecocontroller' )
+sys.path.append( '/test/ecoconnect_test/sequenz' )
 
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
