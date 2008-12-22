@@ -29,7 +29,11 @@ def run( user_prefix, task_name, ref_time, task, extra_vars=[] ):
     user = user_prefix + '_' + system
 
     command  = 'sudo -u ' + user 
-    command += ' qsub -q ' + system + ' -z'
+
+    print "job_submit.py: TEMPORARILY using topnet_test queue"
+    # command += ' qsub -q ' + system + ' -z'
+    command += ' qsub -q topnet_test -z'
+
     command += ' -v REFERENCE_TIME=' + ref_time
     command += ',TASK_NAME=' + task_name
 

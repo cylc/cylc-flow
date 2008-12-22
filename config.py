@@ -8,9 +8,9 @@
 import logging
 
 # dummy mode settings
-dummy_mode = True
+dummy_mode = False
 dummy_clock_rate = 20      
-dummy_clock_offset = 48 
+dummy_clock_offset = 10 
 dummy_job_launch = 'direct'
 #dummy_job_launch = 'qsub'
 
