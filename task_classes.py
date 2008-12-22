@@ -395,8 +395,6 @@ class oper2test_topnet( free_task ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
 
-        hour = ref_time[8:10]
-
         self.prerequisites = requisites( self.name, []) 
         
         self.postrequisites = timed_requisites( self.name, [ 
@@ -407,18 +405,35 @@ class oper2test_topnet( free_task ):
         free_task.__init__( self, ref_time, initial_state )
 
 #----------------------------------------------------------------------
-class topnet( task_base ):
-    "run hourly topnet off most recent nzlam input" 
+class topnet_and_vis( task_base ):
+    "run hourly topnet and visualisation off most recent nzlam input" 
 
-    # topnet is not a "free_task task" -- it has prerequisites.
+    # Topnet runs hourly using cotemporal stream flow data AND met
+    # forecast data from *the most recent nzlam run*. This variable
+    # nzlam dependence requires *fuzzy prerequisites*. In addition, we
+    # allow topnet to run out to 12 or 24 hours ahead of the nzlam
+    # (depending on catchup mode) to make best use of the important
+    # incoming streamflow data.
  
-    name = "topnet"
+    # WHY WE'RE NOT RUNNING TOPNET VISUALISATION AS A SEPARATE TASK:
+    # Site-specific vis is done for every run, but areal only when new
+    # nzlam input is first used.  It is easy for the topnet task to
+    # detect a change in nzlam input, but it is difficult to see how to
+    # communicate this to its dependent visualisation task.  Setting a
+    # topnet 'nzlam_changed = True' class variable is not ideal as we
+    # can't be entirely sure that the vis task will start before the
+    # next topnet task changes it back to False. If we do decide a
+    # separate topnet_vis task is required, we may have to add
+    # additional functionality to task interaction, or have the control
+    # program itself keep track of the reference times at which topnet
+    # used new nzlam input.
+
+    name = "topnet_and_vis"
     valid_hours = range( 0,24 )
     external_task = 'topnet_run.sh'
     user_prefix = 'hydrology'
 
-    # class variable to keep track of when the nzlam input changes
-    nzlam_time = 0
+    nzlam_time = 0 # see below
 
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
     reftime_re = re.compile( "\d{10}")
@@ -445,31 +460,41 @@ class topnet( task_base ):
 
         self.postrequisites = timed_requisites( self.name, [ 
             [3, self.name + " started for " + ref_time],
-            [6, self.name + " finished for " + ref_time] ])
+            [3.1, "topnet started for " + ref_time],
+            [6,   "topnet finished for " + ref_time],
+            [6.1, "topnet vis started for " + ref_time ],
+            [8.9, "topnet vis finished for " + ref_time ],
+            [9, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
 
 
     def run_external_task( self ):
-        # topnet needs to be given the time of the netcdf file that
-        # satisfied satisified the topnet fuzzy prerequisite
+        # topnet needs to be given the time of the netcdf 
+        # file that satisified the fuzzy prerequisites
 
-        # assumes the nzlam prereq is the second one
-        # (TO DO: search for 'nzlam' in the list of prereqs)
+        # TO DO: this assumes the nzlam prereq is the second
+        # one; better to search for 'nzlam' in the prereq list
         prereqs = self.prerequisites.get_list()
         prereq = prereqs[1]
-        m = topnet.fuzzy_file_re.match( prereq )
+        m = topnet_and_vis.fuzzy_file_re.match( prereq )
         [ file ] = m.groups()
-        m = topnet.reftime_re.search( file )
+        m = topnet_and_vis.reftime_re.search( file )
         nzlam_time = m.group()
 
-        if nzlam_time != topnet.nzlam_time:
-            # this can be used if different vis processing is needed
-            # when nzlam input changes (may not be necessary?)
+        nzlam_age = 'old'
+        if nzlam_time != topnet_and_vis.nzlam_time:
+            # NEW NZLAM INPUT DETECTED
+            # when a new topnet is launched, determine if its
+            # prerequisites were satisfied by a new nzlam
             self.log.info( "new nzlam time detected:  " + nzlam_time )
-            topnet.nzlam_time = nzlam_time
+            nzlam_age = 'new'
+            topnet_and_vis.nzlam_time = nzlam_time
 
-        extra_vars = [ ['NZLAM_TIME', nzlam_time ] ]
+        extra_vars = [ 
+                ['NZLAM_TIME', nzlam_time ],
+                ['NZLAM_AGE', nzlam_age ],
+                ]
         task_base.run_external_task( self, extra_vars )
 
 
@@ -480,9 +505,9 @@ class topnet( task_base ):
         # hourly topnet may also need the output from that same
         # 12-hourly task.
 
-        # note that this could be down without searching for actual
-        # 'nzlam_post_06_18' or 'oper2test_topnet' tasks because we know how 
-        # far ahead topnet is allowed to get, depending on catchup.
+        # this could be done without searching for 'nzlam_post_06_18' 
+        # or 'oper2test_topnet' tasks because we know how far ahead
+        # topnet is allowed to get, depending on catchup.
 
         found = False
         times = []
@@ -514,29 +539,6 @@ class topnet( task_base ):
         return result
 
 #----------------------------------------------------------------------
-class topnet_vis( task_base ):
-
-    name = "topnet_vis"
-    valid_hours = range( 0,24 )
-    external_task = 'topnet_vis.sh'
-    user_prefix = 'hydrology'
-
-    def __init__( self, ref_time, initial_state ):
-
-        # adjust reference time to next valid for this task
-        self.ref_time = self.nearest_ref_time( ref_time )
-        ref_time = self.ref_time
-
-        self.prerequisites = requisites( self.name, [ 
-            "topnet finished for " + ref_time  ])
-
-        self.postrequisites = timed_requisites( self.name, [
-            [0, self.name + " started for " + ref_time],
-            [3, self.name + " finished for " + ref_time] ])
-
-        task_base.__init__( self, ref_time, initial_state )
-
-#----------------------------------------------------------------------
 class topnet_products( task_base ):
 
     name = "topnet_products"
@@ -552,7 +554,7 @@ class topnet_products( task_base ):
         ref_time = self.ref_time
 
         self.prerequisites = requisites( self.name, [ 
-            "topnet_vis finished for " + ref_time  ])
+            "topnet_and_vis finished for " + ref_time  ])
 
         self.postrequisites = timed_requisites( self.name, [
             [0, self.name + " started for " + ref_time],

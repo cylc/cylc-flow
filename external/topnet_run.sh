@@ -11,8 +11,10 @@ trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 echo "WARNING: USING TEMPORARY HARDWIRED FETCH_TD INSTALLATION"
 FETCH_TD=/dvel/data_dvel/fetchtd/fetchtd/src/fetchtd.py
 
-# launch the topnet model
-# the streamflow data extraction task must run before this task
+# run the topnet model AND visualisation (see task_class.py for 
+# why we combine the two tasks in the case of topnet only).
+
+# streamflow data extraction must run before this task
 
 # INPUT:
 # * no commandline arguments (for qsub)
@@ -20,6 +22,7 @@ FETCH_TD=/dvel/data_dvel/fetchtd/fetchtd/src/fetchtd.py
 #   1. $REFERENCE_TIME
 #   2. $TASK_NAME
 #   3. $NZLAM_TIME (time of the tn_ netcdf file to use as input)
+#   4. $NZLAM_AGE ('old' or 'new': new nzlam input or not)
 
 # INTENDED USER:
 # * hydrology_(dvel|test|oper)
@@ -59,8 +62,11 @@ WANGANUI=07030483
 
 cd $HOME/running
 
-# LAUNCH TOPNET NOW
+# TOPNET_AND_VIS STARTING ==============================================
 task_message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+
+# TOPNET MODEL RUN =====================================================
+task_message NORMAL "topnet started for $REFERENCE_TIME"
 task_message NORMAL "(nzlam time ${NZLAM_TIME})"
 
 #task_message CRITICAL "TOPNET DISABLED!"
@@ -72,4 +78,29 @@ for BASIN in $RANGITAIKI; do
     echo $PWD
 done
 
+task_message NORMAL "topnet finished for $REFERENCE_TIME"
+
+# TOPNET VISUALISATION =================================================
+task_message NORMAL "topnet vis started for $REFERENCE_TIME"
+
+VIS_TOPNET_SSF=$HOME/bin/vis_topnet_ssf
+VIS_TOPNET=$HOME/bin/vis_topnet
+cd $HOME/running
+
+if [[ $NZLAM_AGE == old ]]; then
+    task_message NORMAL "ssf only ($NZLAM_AGE nzlam)"
+    $VIS_TOPNET_SSF $REFERENCE_TIME 
+
+elif [[ $NZLAM_AGE == old ]]; then
+    task_message NORMAL "ssf and rrf ($NZLAM_AGE nzlam)"
+    $VIS_TOPNET $REFERENCE_TIME 
+
+else
+    task_message CRITICAL "unknown \$NZLAM_AGE"
+    exit 1
+fi
+
+task_message NORMAL "topnet vis finished for $REFERENCE_TIME"
+
+# TOPNET_AND_VIS FINISHED ==============================================
 task_message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"

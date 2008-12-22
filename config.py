@@ -10,7 +10,7 @@ import logging
 # dummy mode settings
 dummy_mode = True
 dummy_clock_rate = 20      
-dummy_clock_offset = 10 
+dummy_clock_offset = 48 
 dummy_job_launch = 'direct'
 #dummy_job_launch = 'qsub'
 
@@ -42,8 +42,7 @@ operational_tasks = [
         'ricom',
         'nztide',
         'streamflow',
-        'topnet',
-        'topnet_vis',
+        'topnet_and_vis',
         'topnet_products',
         'mos' 
         ]
@@ -51,15 +50,14 @@ operational_tasks = [
 topnet_test_tasks = [ 
         'oper2test_topnet',
         'streamflow',
-        'topnet',
-        'topnet_vis',
+        'topnet_and_vis',
         'topnet_products'
         ]
 
-task_list = operational_tasks
-#task_list = topnet_test_tasks
+#task_list = operational_tasks
+task_list = topnet_test_tasks
 
 # list tasks to dummy out in real mode
 # (currently needs to be defined as an empty list if not needed)
 dummy_out = []
-#dummy_out = [ 'topnet' ]
+#dummy_out = [ 'topnet_and_vis' ]
