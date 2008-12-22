@@ -86,7 +86,7 @@ FILE_STAGED=false
 FOO=$( find $STAGING -name ${FILENAME}'*' )
 if [[ -f $FOO ]]; then
     FILE_STAGED=true
-    if [[ $FOO = *.bz2 ]];the
+    if [[ $FOO = *.bz2 ]]; then
         # copy to /tmp for bunzip2'ing in case we don't have write access
         cp ${STAGING/$FILENAME}.bz2 $TMPDIR
         bunzip2 $TMPDIR/${FILENAME}.bz2
