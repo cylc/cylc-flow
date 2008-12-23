@@ -51,7 +51,8 @@ else
     task_message NORMAL "UPTODATE: waiting on data for $STREAMFLOW_TIME"
 
     while true; do
-        # TO DO: CALCULATE THE CORRECT WAIT TIME INSTEAD OF POLLING LIKE A 'TARD
+        # TO DO: CALCULATE THE CORRECT WAIT TIME INSTEAD OF POLLING LIKE
+        # A 'TARD
         sleep 60
         NOW=$(date "+%Y%m%d%H%M")
         if (( NOW >= STREAMFLOW_CUTOFF )); then
@@ -63,7 +64,12 @@ fi
 # get the streamflow data
 task_message NORMAL "streamflow extraction started for $STREAMFLOW_TIME"
 STREAMFLOW_DATA=/dvel/data_dvel/output/td2cf/streamq_${STREAMFLOW_TIME}_utc_ods_nz.nc
-python $FETCH_TD
+if [[ -f $STREAMFLOW_DATA ]]; then
+    task_message NORMAL "streamflow data already exists for $STREAMFLOW_TIME"
+else
+    # fetch_td returns when the data file arrives
+    python $FETCH_TD
+fi
 
 if [[ $? != 0 || ! -f $STREAMFLOW_DATA ]]; then
     task_message CRITICAL "Failed to get streamflow data"
