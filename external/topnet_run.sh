@@ -91,7 +91,7 @@ if [[ $NZLAM_AGE == old ]]; then
     task_message NORMAL "ssf only ($NZLAM_AGE nzlam)"
     $VIS_TOPNET_SSF $REFERENCE_TIME 
 
-elif [[ $NZLAM_AGE == old ]]; then
+elif [[ $NZLAM_AGE == new ]]; then
     task_message NORMAL "ssf and rrf ($NZLAM_AGE nzlam)"
     $VIS_TOPNET $REFERENCE_TIME 
 

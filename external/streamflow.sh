@@ -62,7 +62,7 @@ fi
 
 # get the streamflow data
 task_message NORMAL "streamflow extraction started for $STREAMFLOW_TIME"
-STREAMFLOW_DATA=/dvel/data_dvel/streamq_${STREAMFLOW_TIME}_utc_ods_nz.nc
+STREAMFLOW_DATA=/dvel/data_dvel/output/td2cf/streamq_${STREAMFLOW_TIME}_utc_ods_nz.nc
 python $FETCH_TD
 
 if [[ $? != 0 || ! -f $STREAMFLOW_DATA ]]; then

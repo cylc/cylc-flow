@@ -26,8 +26,8 @@ state_dump_file = 'STATE'
 pyro_ns_group = ':ecoconnect'   
 
 # start and (optional) stop reference times
-start_time = "2008102018"
-stop_time = "2008102118"
+start_time = "2008121506"
+stop_time = "2008121506"
 
 # list the tasks to run
 operational_tasks = [ 
