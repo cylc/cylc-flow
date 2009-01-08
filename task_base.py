@@ -233,6 +233,10 @@ class task_base( Pyro.core.ObjBase ):
             self.log.info( message )
             self.postrequisites.set_satisfied( message )
 
+        elif message == self.name + " failed":
+            self.log.critical( message )
+            self.state = "failed"
+
         else:
             # a non-postrequisite message, e.g. progress report
             message = '*' + message

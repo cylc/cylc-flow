@@ -430,7 +430,7 @@ class topnet_and_vis( task_base ):
 
     name = "topnet_and_vis"
     valid_hours = range( 0,24 )
-    external_task = 'topnet_run.sh'
+    external_task = 'topnet_and_vis.sh'
     user_prefix = 'hydrology'
 
     nzlam_time = 0 # see below

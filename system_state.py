@@ -148,7 +148,7 @@ class state_from_dump ( state_base ):
             for item in tokens[1:]:
                 [name, state] = item.split(':')
                 # convert running to waiting on restart
-                if state == 'running':
+                if state == 'running' or state == 'failed':
                     state = 'waiting'
                 if ref_time in self.content.keys():
                     self.content[ ref_time ].append( [name, state] )

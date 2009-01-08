@@ -26,8 +26,8 @@ state_dump_file = 'STATE'
 pyro_ns_group = ':ecoconnect'   
 
 # start and (optional) stop reference times
-start_time = "2008121506"
-stop_time = "2008121506"
+start_time = "2008122018"
+stop_time  = "2008122018"
 
 # list the tasks to run
 operational_tasks = [ 
@@ -54,8 +54,13 @@ topnet_test_tasks = [
         'topnet_products'
         ]
 
+#test = [ 
+#        'streamflow'
+#        ]
+
 #task_list = operational_tasks
 task_list = topnet_test_tasks
+#task_list = test
 
 # list tasks to dummy out in real mode
 # (currently needs to be defined as an empty list if not needed)
