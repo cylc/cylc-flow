@@ -82,23 +82,19 @@ UPTODATE=false
 # Search the entire staging archive first, because files are stored there
 # according to insertion date, not reference time.  A full search is not
 # prohibitive as files are shipped regularly to the main archive. 
-FILE_STAGED=false
-FOO=$( find $STAGING -name ${FILENAME}'*' )
-if [[ -f $FOO ]]; then
-    FILE_STAGED=true
-    if [[ $FOO = *.bz2 ]]; then
-        # copy to /tmp for bunzip2'ing in case we don't have write access
-        cp ${STAGING/$FILENAME}.bz2 $TMPDIR
-        bunzip2 $TMPDIR/${FILENAME}.bz2
-        FOO=$TMPDIR/$FILENAME
-    else
-        FOUND=$FOO
-    fi
-fi
+FOO=$( find $STAGING -name ${FILENAME} )
+FOOBZ=$( find $STAGING -name ${FILENAME}.bz2 )
 
-if $FILE_STAGED; then
-    task_message NORMAL "found $FILENAME in staging archive"
+if [[ -f $FOO ]]; then
+    echo NORMAL "found $FILENAME in staging archive"
     FOUND=$FOO
+
+elif [[ -f $FOOBZ ]]; then
+    echo NORMAL "found ${FILENAME}.bz2 in staging archive"
+    # copy to /tmp for bunzip2'ing in case we don't have write access
+    cp $FOOBZ $TMPDIR
+    bunzip2 $TMPDIR/${FILENAME}.bz2
+    FOUND=$TMPDIR/$FILENAME
 
 elif [[ -f $SEARCH_NWP ]]; then
     task_message NORMAL "found $FILENAME in nwp_oper/output/nzlam_12"
