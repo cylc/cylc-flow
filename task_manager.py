@@ -85,7 +85,7 @@ class manager ( Pyro.core.ObjBase ):
                 task.log.debug( "abdicating " + task.identity )
                 # dynamic task object creation by task and module name
                 new_task = instantiation.get_by_name( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
-                if config.stop_time and int( new_task.ref_time ) >= int( config.stop_time ):
+                if config.stop_time and int( new_task.ref_time ) > int( config.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log.warning( new_task.name + " STOPPING at configured stop time " + config.stop_time )
                     del new_task
