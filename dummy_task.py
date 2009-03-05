@@ -56,9 +56,9 @@ class dummy_task_base:
                 rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
                 # THE FOLLOWING MESSAGES MUST MATCH WHAT'S EXPECTED IN streamflow.incoming()
                 if datetime.datetime.now() >= rt_p25:
-                    self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data already available for ' + self.ref_time )
+                    self.task.incoming( 'NORMAL', 'CATCHINGUP: streamflow data already available for ' + self.ref_time )
                 else:
-                    self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow data for ' + self.ref_time ) 
+                    self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for streamflow data for ' + self.ref_time ) 
                     while True:
                         sleep(10)
                         if datetime.datetime.now() >= rt_p25:
@@ -124,10 +124,10 @@ class dummy_task( dummy_task_base ):
             rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
             if self.clock.get_datetime() >= rt_3p25:
                 # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN downloader.incoming()
-                self.task.incoming( 'NORMAL', 'CATCHUP: input files already exist for ' + self.ref_time )
+                self.task.incoming( 'NORMAL', 'CATCHINGUP: input files already exist for ' + self.ref_time )
                 self.fast_complete = True
             else:
-                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for input files for ' + self.ref_time )
+                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for input files for ' + self.ref_time )
                 while True:
                     sleep(1)
                     if self.clock.get_datetime() >= rt_3p25:
@@ -135,13 +135,19 @@ class dummy_task( dummy_task_base ):
 
         elif self.task_name == "oper2test_topnet":
 
+            current_time = self.clock.get_datetime()
             rt = reference_time._rt_to_dt( self.ref_time )
             delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 
-            if self.clock.get_datetime() >= delayed_start:
-                self.task.incoming( 'NORMAL', 'CATCHUP: operational tn file already exists for ' + self.ref_time )
+            #print "oper2test_topnet: current time   " + current_time.isoformat()
+            #print "oper2test_topnet: reference time " + rt.isoformat()
+            #print "oper2test_topnet: delayed start  " + delayed_start.isoformat()
+            if current_time >= delayed_start:
+                self.task.incoming( 'NORMAL', 'CATCHINGUP: operational tn file already exists for ' + self.ref_time )
+            #    print 'oper2test_topnet: CATCHINGUP'
                 self.fast_complete = True
             else:
-                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for operational tn file for ' + self.ref_time )
+                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for operational tn file for ' + self.ref_time )
+            #    print 'oper2test_topnet: CAUGHTUP'
                 while True:
                     sleep(1)
                     if self.clock.get_datetime() >= delayed_start:
@@ -150,13 +156,14 @@ class dummy_task( dummy_task_base ):
 
         elif self.task_name == "streamflow":
 
+            current_time = self.clock.get_datetime()
             rt = reference_time._rt_to_dt( self.ref_time )
             rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
             # THE FOLLOWING MESSAGES MUST MATCH WHAT'S EXPECTED IN streamflow.incoming()
-            if self.clock.get_datetime() >= rt_p25:
-                self.task.incoming( 'NORMAL', 'CATCHUP: streamflow data available, for ' + self.ref_time )
+            if current_time >= rt_p25:
+                self.task.incoming( 'NORMAL', 'CATCHINGUP: streamflow data available, for ' + self.ref_time )
             else:
-                self.task.incoming( 'NORMAL', 'UPTODATE: waiting for streamflow, for ' + self.ref_time ) 
+                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for streamflow, for ' + self.ref_time ) 
                 while True:
                     sleep(1)
                     if self.clock.get_datetime() >= rt_p25:

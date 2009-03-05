@@ -49,12 +49,13 @@ cd $HOME/running
 
 # check current time and wait for the streamflow cutoff if necessary
 if (( NOW_epochseconds >= CUTOFF_epochseconds )); then
-    task_message NORMAL "CATCHUP: data already available for $STREAMFLOW_TIME"
+    task_message NORMAL "CATCHINGUP: data already available for $STREAMFLOW_TIME"
 else
     # compute seconds to wait until cutoff
     WAIT_seconds=$(( CUTOFF_epochseconds - NOW_epochseconds ))
     WAIT_minutes=$(( WAIT_seconds / 60 ))
-    task_message NORMAL "UPTODATE: waiting $WAIT_minutes min for streamflow data"
+    #task_message NORMAL "CAUGHTUP: waiting for  $WAIT_minutes min for streamflow data"
+    task_message NORMAL "CAUGHTUP: waiting till $YYYYMMDD ${HHmm%??}:${HHmm#??} for new streamflow data "
     sleep $WAIT_seconds
 fi
 

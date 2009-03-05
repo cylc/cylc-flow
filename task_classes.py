@@ -339,8 +339,8 @@ class streamflow( free_task ):
 
     def __init__( self, ref_time, initial_state ):
 
-        self.catchup_re = re.compile( "^CATCHUP:.*for " + ref_time )
-        self.uptodate_re = re.compile( "^UPTODATE:.*for " + ref_time )
+        self.catchup_re = re.compile( "^CATCHINGUP:.*for " + ref_time )
+        self.uptodate_re = re.compile( "^CAUGHTUP:.*for " + ref_time )
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -370,15 +370,15 @@ class streamflow( free_task ):
         
         # but intercept messages that indicate we're in catchup mode
         if not streamflow.catchup_mode and self.catchup_re.match( message ):
-            #message == "CATCHUP: " + self.ref_time:
+            #message == "CATCHINGUP: " + self.ref_time:
             streamflow.catchup_mode = True
-            # WARNING: SHOULDN'T GO FROM UPTODATE TO CATCHUP?
-            self.log.warning( "beginning CATCHUP operation" )
+            # WARNING: SHOULDN'T GO FROM CAUGHTUP TO CATCHINGUP?
+            self.log.warning( "beginning CATCHINGUP operation" )
 
         elif streamflow.catchup_mode and self.uptodate_re.match( message ):
-            #message == "UPTODATE: " + self.ref_time:
+            #message == "CAUGHTUP: " + self.ref_time:
             streamflow.catchup_mode = False
-            self.log.info( "beginning UPTODATE operation" )
+            self.log.info( "beginning CAUGHTUP operation" )
 
 #----------------------------------------------------------------------
 class oper2test_topnet( free_task ):

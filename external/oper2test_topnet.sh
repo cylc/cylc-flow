@@ -77,7 +77,7 @@ DD=${DDHH%??}
 SEARCH_MAIN=$ARCHIVE/$YYYYMM/$DD/$FILENAME
 SEARCH_NWP=$OUTPUT/$FILENAME
 
-UPTODATE=false
+CAUGHTUP=false
 
 # Search the entire staging archive first, because files are stored there
 # according to insertion date, not reference time.  A full search is not
@@ -115,10 +115,10 @@ elif [[ -f ${SEARCH_MAIN}.bz2 ]]; then
 
 else
     task_message WARNING "$FILENAME not found; waiting on $OPER_LOG"
-    UPTODATE=true
+    CAUGHTUP=true
     # Alert the controller to the fact that we've caught up
     # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
-    task_message NORMAL "UPTODATE: waiting for operational tn file for $REFERENCE_TIME"
+    task_message NORMAL "CAUGHTUP: waiting for operational tn file for $REFERENCE_TIME"
     while true; do
         if grep "retrieving met UM file(s) for $REFERENCE_TIME" $OPER_LOG; then
             # this message means the tn has been converted to nc and llcleaned
@@ -136,10 +136,10 @@ else
     done
 fi
 
-if ! $UPTODATE; then
+if ! $CAUGHTUP; then
     # Alert the controller to the fact that we're in catch up mode
     # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
-    task_message NORMAL "CATCHUP: operational tn file already exists for $REFERENCE_TIME"
+    task_message NORMAL "CATCHINGUP: operational tn file already exists for $REFERENCE_TIME"
 fi
  
 # copy file to my output directory
