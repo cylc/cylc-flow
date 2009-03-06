@@ -91,8 +91,8 @@ class manager ( Pyro.core.ObjBase ):
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    new_task.log.info( "New task created for " + new_task.ref_time )
                     self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
+                    new_task.log.info( "New task connected for " + new_task.ref_time )
                     self.tasks.append( new_task )
 
     def dump_state( self ):
@@ -141,12 +141,13 @@ class manager ( Pyro.core.ObjBase ):
 
             # dynamic task object creation by task and module name
             new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
-            new_task.log.info( "New task created for " + new_task.ref_time )
+            new_task.log.info( "New task connected for " + new_task.ref_time )
             self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
             self.tasks.append( new_task )
 
             self.tasks.remove( lame )
             self.pyro_daemon.disconnect( lame )
+            lame.log.info( "lame task disconnected for " + lame.ref_time )
             del lame
 
     def kill_spent_tasks( self ):

@@ -97,7 +97,7 @@ class state_base:
                         skip = True
 
                 if not skip:
-                    task.log.info( "New task created for " + task.ref_time )
+                    task.log.info( "New task connected for " + task.ref_time )
                     tasks.append( task )
                     
         return tasks

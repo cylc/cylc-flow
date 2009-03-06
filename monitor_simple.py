@@ -3,6 +3,9 @@
 """
 Display the state of all existing tasks.
 
+NOTE: ONLY DETECTS DUMMY MODE VS REAL TIME MODE AT STARTUP
+(so restart this if you restart sequenz in different mode)
+
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
@@ -48,7 +51,10 @@ while True:
         god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'god' ) )
         god._setTimeout(1)
 
+
+        mode = 'REAL TIME OPERATION'
         if dummy_mode:
+            mode = 'DUMMY MODE WITH ACCELERATED CLOCK' 
             remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock' ) )
             remote_clock._setTimeout(1)
 
@@ -96,6 +102,7 @@ while True:
 
             blit = title.boof()
             blit.append("  Current Task Objects")
+            blit.append( mode )
             blit.append("  \033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done" )
             blit.append( '\033[1;34m' + str(dt) + '\033[0m' )
             blit.append("")

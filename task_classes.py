@@ -445,15 +445,13 @@ class topnet_and_vis( task_base ):
         ref_time = self.ref_time
  
         if streamflow.catchup_mode:
-            #print "CUTOFF 11 for " + self.name + "%" + ref_time
             nzlam_cutoff = reference_time.decrement( ref_time, 11 )
         else:
-            #print "CUTOFF 23 for " + self.name + "%" + ref_time
             nzlam_cutoff = reference_time.decrement( ref_time, 23 )
 
         # min:max
         fuzzy_limits = nzlam_cutoff + ':' + ref_time
- 
+
         self.prerequisites = fuzzy_requisites( self.name, [ 
             "got streamflow data for " + ref_time + ':' + ref_time, 
             "file tn_" + fuzzy_limits + "_utc_nzlam_12.nc ready" ])
@@ -468,6 +466,8 @@ class topnet_and_vis( task_base ):
 
         task_base.__init__( self, ref_time, initial_state )
 
+        self.log.info( "nzlam_cutoff is " + nzlam_cutoff + " for " + ref_time )
+ 
 
     def run_external_task( self ):
         # topnet needs to be given the time of the netcdf 

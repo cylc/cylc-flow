@@ -3,6 +3,9 @@
 """
 Display progress of currently running tasks objects.
 
+NOTE: ONLY DETECTS DUMMY MODE VS REAL TIME MODE AT STARTUP
+(so restart this if you restart sequenz in different mode)
+
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
@@ -47,7 +50,10 @@ while True:
         god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'god' ))
         god._setTimeout(1)
 
+
+        mode = 'REAL TIME OPERATION'
         if dummy_mode:
+            mode = 'DUMMY MODE WITH ACCELERATED CLOCK' 
             remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock' ) )
             remote_clock._setTimeout(1)
 
@@ -114,6 +120,7 @@ while True:
 
             blit = title.boof()
             blit.append( "  Current Running Tasks" )
+            blit.append( mode )
             blit.append( dt )
             for rt in reftimes:
                 if len( lines[rt] ) != 0:
