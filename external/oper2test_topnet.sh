@@ -10,10 +10,10 @@ trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 
 # Find the operational tn_\${REFERENCE_TIME}_utc_nzlam_12.nc(.bz2)
 # file and copy it to hydrology_\$SYS/input/topnet/ for use by topnet.
-# Search order:
-#  1. nwp_oper/output/nzlam_12/
-#  2. main archive: \$ARCHIVE/YYYYMM/DD/
-#  3. staging archive: (stored according to date of harvest)
+# Search order (see below for why I search the staging archive first):
+#  2. nwp_oper/output/nzlam_12/
+#  3. main archive: \$ARCHIVE/YYYYMM/DD/
+#  1. staging archive: (stored according to date of harvest)
 #  4. (old controller) wait on operational log message
 
 # INPUT:
