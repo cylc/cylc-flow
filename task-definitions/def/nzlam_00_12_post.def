@@ -1,0 +1,23 @@
+
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+#   (see template.def for more information)
+
+%TASK_NAME
+    nzlam_00_12_post
+
+%VALID_REFERENCE_TIMES
+    0,12
+
+%EXTERNAL_TASK
+    nzlam_post.sh
+
+%USER_PREFIX
+    nwp
+
+%PREREQUISITES
+    file sls_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.um ready
+
+%POSTREQUISITES
+    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
+    10 min: file sls_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    11 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)

@@ -1,0 +1,25 @@
+
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+#   (see template.def for more information)
+
+%TASK_NAME
+    global_prep
+
+%VALID_REFERENCE_TIMES
+    0
+
+%EXTERNAL_TASK
+    global_prep.sh
+
+%USER_PREFIX
+    wave
+
+%PREREQUISITES
+    file 10mwind_$(CURRENT_REFERENCE_TIME).um ready
+    file seaice_$(CURRENT_REFERENCE_TIME).um ready
+
+%POSTREQUISITES
+    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
+    5 min: file 10mwind_$(CURRENT_REFERENCE_TIME).nc ready
+    7 min: file seaice_$(CURRENT_REFERENCE_TIME).nc ready
+    10 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)

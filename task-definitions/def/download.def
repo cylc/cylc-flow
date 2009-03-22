@@ -1,0 +1,33 @@
+
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+#   (see template.def for more information)
+
+%TASK_NAME
+    download
+
+%VALID_REFERENCE_TIMES
+    0,6,12,18
+
+%EXTERNAL_TASK
+    download.sh
+
+%USER_PREFIX
+    ecoconnect
+
+%PREREQUISITES
+%POSTREQUISITES
+    0   min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
+    0.5 min: file obstore_$(CURRENT_REFERENCE_TIME).um ready
+    1   min: file bgerr_$(CURRENT_REFERENCE_TIME).um ready
+
+    0 | 106 min: file lbc_$(CURRENT_REFERENCE_TIME - 12).um ready
+    0 | 122 min: file 10mwind_$(CURRENT_REFERENCE_TIME).um ready
+    0 | 122.5 min: file seaice_$(CURRENT_REFERENCE_TIME).um ready
+    0 | 199 min: file dump__$(CURRENT_REFERENCE_TIME).um ready
+    0 | 200 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+
+    12 | 97 min: file lbc_$(CURRENT_REFERENCE_TIME - 12).um ready
+    12 | 98 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+
+    6,18 | 0.1 min: file lbc_$(CURRENT_REFERENCE_TIME - 6).um ready
+    6,18 | 2 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME) 

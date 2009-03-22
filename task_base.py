@@ -256,7 +256,7 @@ class task_base( Pyro.core.ObjBase ):
 
 #----------------------------------------------------------------------
 class free_task( task_base ):
-    # for tasks with no-prerequisites, e.g. downloader and nztide,
+    # for tasks with no-prerequisites, e.g. download and nztide,
     # that would otherwise run ahead indefinitely: delay if we get
     # "too far ahead" based on number of existing finished tasks.
 

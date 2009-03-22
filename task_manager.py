@@ -110,7 +110,7 @@ class manager ( Pyro.core.ObjBase ):
         # 12Z with topnet turned on, topnet is valid at every hour from 
         # 12 through 17Z, so those tasks will be created but they will 
         # never be able to run due to lack of any upstream
-        # nzlam_post_06_18 until 18Z comes along.
+        # nzlam_06_18_post until 18Z comes along.
 
         # Note that lame ducks won't be eliminated immediately during
         # periods when no remote messages are coming in (since that's
@@ -159,7 +159,7 @@ class manager ( Pyro.core.ObjBase ):
         # (ii) older than the oldest cutoff time
         # cutoff time is the oldest time still needed to satisfy the
         # prerequisites of a waiting task or a running task's immediate
-        # successor. This only matters rarely, e.g. nzlam_post_06_18
+        # successor. This only matters rarely, e.g. nzlam_06_18_post
         # which has to hang around longer to satisfy many subsequent
         # hourly topnets.
          

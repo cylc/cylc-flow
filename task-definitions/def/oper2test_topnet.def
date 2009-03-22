@@ -1,0 +1,26 @@
+
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+#   (see template.def for more information)
+
+%TASK_NAME
+    oper2test_topnet
+
+%DELAYED_DEATH
+    True
+
+%VALID_REFERENCE_TIMES
+    6,18
+
+%EXTERNAL_TASK
+    oper2test_topnet.sh
+
+%USER_PREFIX
+    hydrology
+
+%PREREQUISITES
+    # NONE
+
+%POSTREQUISITES
+    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
+    2 min: file tn_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    3 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)

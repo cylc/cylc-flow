@@ -8,7 +8,7 @@
 import logging
 
 # dummy mode settings
-dummy_mode = False
+dummy_mode = True
 dummy_clock_rate = 20      
 dummy_clock_offset = 10 
 dummy_job_launch = 'direct'
@@ -23,21 +23,21 @@ state_dump_file = 'STATE'
 
 # pyro nameserver group must be unique per controller
 # instance so that different programs don't interfere.
-pyro_ns_group = ':ecoconnect'   
+pyro_ns_group = ':foo'   
 
 # start and (optional) stop reference times
 start_time = "2008122018"
-stop_time  = "2008122018"
+stop_time  = "2008125018"
 
 # list the tasks to run
 operational_tasks = [ 
-        'downloader',
+        'download',
         'nwp_global',
         'global_prep',
         'globalwave',
         'nzlam:finished',
-        'nzlam_post_00_12',
-        'nzlam_post_06_18',
+        'nzlam_00_12_post',
+        'nzlam_06_18_post',
         'nzwave',
         'ricom',
         'nztide',
@@ -58,8 +58,8 @@ topnet_test_tasks = [
 #        'streamflow'
 #        ]
 
-#task_list = operational_tasks
-task_list = topnet_test_tasks
+task_list = operational_tasks
+#task_list = topnet_test_tasks
 #task_list = test
 
 # list tasks to dummy out in real mode

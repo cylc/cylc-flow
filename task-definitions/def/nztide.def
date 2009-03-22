@@ -1,0 +1,23 @@
+
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+#   (see template.def for more information)
+
+%TASK_NAME
+    nztide
+
+%VALID_REFERENCE_TIMES
+    6,18
+
+%EXTERNAL_TASK
+    nztide.sh
+
+%USER_PREFIX
+    sea_level
+
+%PREREQUISITES
+    # NONE
+
+%POSTREQUISITES
+    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
+    1 min: file nztide_$(CURRENT_REFERENCE_TIME).nc ready
+    2 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)

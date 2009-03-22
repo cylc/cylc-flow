@@ -1,0 +1,34 @@
+
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+#   (see template.def for more information)
+
+%TASK_NAME
+    nzlam
+
+%VALID_REFERENCE_TIMES
+    0,6,12,18
+
+%EXTERNAL_TASK
+    nzlam.sh
+
+%USER_PREFIX
+    nwp
+
+%PREREQUISITES
+    file obstore_$(CURRENT_REFERENCE_TIME).um ready
+    file bgerr_$(CURRENT_REFERENCE_TIME).um ready
+
+    0,12 | file lbc_$(CURRENT_REFERENCE_TIME - 12).um ready
+
+    6,18 | file lbc_$(CURRENT_REFERENCE_TIME - 6).um ready
+
+%POSTREQUISITES
+    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
+
+    0,12 | 30 min: file sls_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.um ready
+    0,12 | 32 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+
+    6,18 | 110 min: file tn_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.um ready
+    6,18 | 111 min: file sls_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.um ready
+    6,18 | 112 min: file met_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.um ready
+    6,18 | 115 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)

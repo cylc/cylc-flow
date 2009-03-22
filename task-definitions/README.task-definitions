@@ -1,0 +1,41 @@
+
++ generate_task_classes.py 
+    script to parse task definitions in the def/ and pydef/
+    subdirectories and construct the task_classes.py module.
+
++ task_classes.py
+    python module containing class definitions for all tasks.
+    copy to main source directory before running sequenz.
+
++ template.def
+    template/example for a task definition file.
+
++ def/
+    contains a task definition file for each "normal" task.
+    (at NIWA, everything except streamflow, topnet_and_vis)
+
++ pydef/
+    contains python class code for tasks with complex behaviour.
+    (a NIWA, streamflow, and topnet_and_vis)
+
+===================================================================
+NOTE ON tasks that behave differently at different reference times:
+
+If a task has different pre- or post-requisites depending on reference
+time, you can choose to represent it as several different task classes
+OR define reference time dependent requisites in the one task class.
+
+Keep in mind, however, that sequenz creates new task objects by
+abdication: only when one instance of a task (at a particular reference
+time) finishes will the next instance (at the next valid reference time
+for that class) be created. This means instances of a particular task
+type can only run sequentially and we don't need to explicitly specify
+that the previous instance must be finished as a prerequisite. It also
+means that IF YOUR TASK TYPE DOES DEPEND ON ITS PREVIOUS INSTANCE
+FINISHING (as for most scientific models, which generate a "model
+background" of some kind for use by the next forecast, but which often
+isn't specified explicitly as an external input file) and it behaves
+differently at different reference times, it is best must encode that
+behavior in the one class definition. Otherwise you'll have to use
+explicit prerequisites to ensure that task_foo-b(T+1) does not run
+before task_foo-a(T) is finished (for example).

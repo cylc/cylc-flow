@@ -1,0 +1,23 @@
+
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+#   (see template.def for more information)
+
+%TASK_NAME
+    mos
+
+%VALID_REFERENCE_TIMES
+    6,18
+
+%EXTERNAL_TASK
+    mos.sh
+
+%USER_PREFIX
+    nwp
+
+%PREREQUISITES
+    file met_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
+
+%POSTREQUISITES
+    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
+    5 min: processing done
+    6 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)

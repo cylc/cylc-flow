@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# TO DO: DERIVE CLASSES FOR STREAMFLOW AND DOWNLOADER, ETC. to get
+# TO DO: DERIVE CLASSES FOR STREAMFLOW AND DOWNLOAD, ETC. to get
 # rid of the nasty 'IF' blocks, or move them to main() at least.
 
 # For external dummy task programs that report their postrequisites done
@@ -21,6 +21,7 @@ from Pyro.errors import NamingError
 import pyro_ns_naming
 import reference_time
 import datetime
+import re
 from time import sleep
 
 from config import dummy_mode, dummy_clock_rate, dummy_clock_offset
@@ -108,7 +109,7 @@ class dummy_task_base:
     def delay( self ):
         # override this to delay dummy tasks that have non-standard
         # behavior after startup (external tasks can usually start
-        # executing immediately, but some (e.g. downloader, streamflow)
+        # executing immediately, but some (e.g. download, streamflow)
         # are delayed by having to wait from some external
         pass
 
@@ -118,12 +119,12 @@ class dummy_task( dummy_task_base ):
 
     def delay( self ):
 
-        if self.task_name == "downloader":
+        if self.task_name == 'download':
 
             rt = reference_time._rt_to_dt( self.ref_time )
             rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
             if self.clock.get_datetime() >= rt_3p25:
-                # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN downloader.incoming()
+                # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN download_foo.incoming()
                 self.task.incoming( 'NORMAL', 'CATCHINGUP: input files already exist for ' + self.ref_time )
                 self.fast_complete = True
             else:
