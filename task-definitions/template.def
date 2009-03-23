@@ -52,8 +52,11 @@
     6,18 | 1 min: file nztide_$(CURRENT_REFERENCE_TIME).nc ready
     2 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
 
-########## OPTIONAL KEYS FOLLOW
+# NOTE that requisites are literal strings (albeit with some variable
+# substitution) and requisite matching is exact, so be careful of white 
+# space, spelling errors, etc.
 
+# OPTIONAL:
 %DELAYED_DEATH
     # THIS KEY IS OPTIONAL and defaults to 'False'. Any task that has
     # only cotemporal downstream dependents (i.e. all normal tasks) can
@@ -64,8 +67,10 @@
     # the cutoff time specified by their dependents is reached.
     True
 
+# OPTIONAL:
 %EXPORT
     # specify environment variable names and values to passed to the
     # external task. (other than $REFERENCE_TIME and $TASK_NAME)
     FOO foo
     BAR bar
+
