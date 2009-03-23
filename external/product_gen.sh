@@ -12,7 +12,7 @@ trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 # * no commandline arguments (for qsub)
 # * environment variables:
 #   1. $REFERENCE_TIME    e.g. 2008102018
-#   2. $TASK_NAME         e.g. topnet
+#   2. $TASK_NAME         e.g. topnet_and_vis
 #   3. $MODEL_NAME        e.g. topnet
 
 # runs create_images.sh in /$HOME/running/$MODEL/product
