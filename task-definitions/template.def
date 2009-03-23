@@ -22,6 +22,7 @@
     # May contain:
     #  1. $(CURRENT_REFERENCE_TIME)
     #  2. $(CURRENT_REFERENCE_TIME - HRS)
+    # ALL listed prerequisites must be satisfied for this task to run
 
     # For requisites that depend on reference hour, prefix with
     # a comma-separated hour list followed by the '|' character.
@@ -40,6 +41,9 @@
     # Must at least include 'started' and 'finished' messages, e.g.:
     #   0  min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
     #   10 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    # ALL postrequisites must be satsified for this task to finish.
+    # External tasks may send extra (non-postrequisite) messages,
+    # however, for progess logging purposes.
 
     # For postrequisites that depend on reference hour, see above.
 
@@ -51,13 +55,13 @@
 ########## OPTIONAL KEYS FOLLOW
 
 %DELAYED_DEATH
-    # THIS KEY IS OPTIONAL, and defaults to 'False'. Most tasks have
-    # only cotemporal downstream dependents and can therefore be killed
-    # as soon as they are finished AND their reference time is older
-    # than the oldest non-finished task.  Specify delayed death for any
-    # tasks known to have downstream dependents in later reference
-    # times, in which case they will be killed only when the cutoff time
-    # specified by their dependents is reached.
+    # THIS KEY IS OPTIONAL and defaults to 'False'. Any task that has
+    # only cotemporal downstream dependents (i.e. all normal tasks) can
+    # be killed  as soon as it is finished AND there are no other
+    # tasks yet to be finished at its reference time or earlier.
+    # Specify delayed death for any tasks with downstream dependents in
+    # later reference times, in which case they will be killed only when
+    # the cutoff time specified by their dependents is reached.
     True
 
 %EXPORT

@@ -216,8 +216,6 @@ class task_base( Pyro.core.ObjBase ):
     def incoming( self, priority, message ):
         # receive all incoming pyro messages for this task 
 
-        # print "HELLO FROM INCOMING: " + message
-
         global state_changed
         state_changed = True
 
