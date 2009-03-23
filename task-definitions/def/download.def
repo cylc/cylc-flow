@@ -23,7 +23,7 @@
     0 | 106 min: file lbc_$(CURRENT_REFERENCE_TIME - 12).um ready
     0 | 122 min: file 10mwind_$(CURRENT_REFERENCE_TIME).um ready
     0 | 122.5 min: file seaice_$(CURRENT_REFERENCE_TIME).um ready
-    0 | 199 min: file dump__$(CURRENT_REFERENCE_TIME).um ready
+    0 | 199 min: file dump_$(CURRENT_REFERENCE_TIME).um ready
     0 | 200 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
 
     12 | 97 min: file lbc_$(CURRENT_REFERENCE_TIME - 12).um ready

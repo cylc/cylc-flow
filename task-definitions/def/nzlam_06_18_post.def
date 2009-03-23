@@ -24,7 +24,7 @@
 
 %POSTREQUISITES
     0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    10 min: file tn_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
-    20 min: file sls_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    10 min: file sls_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    20 min: file tn_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
     30 min: file met_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
     31 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)

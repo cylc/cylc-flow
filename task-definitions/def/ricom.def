@@ -19,5 +19,5 @@
 
 %POSTREQUISITES
     0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    30 min: processing finsihed
+    30 min: processing finished
     31 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
