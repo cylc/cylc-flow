@@ -48,6 +48,8 @@ operational_tasks = [
         'mos' 
         ]
 
+operational_task_launch_dir = 'task-launch/ecoconnect-operations'
+
 topnet_test_tasks = [ 
         'oper2test_topnet',
         'streamflow',
@@ -55,13 +57,13 @@ topnet_test_tasks = [
         'topnet_products'
         ]
 
-#test = [ 
-#        'streamflow'
-#        ]
+topnet_test_task_launch_dir = 'task-launch/topnet-hourly-testing'
 
-task_list = operational_tasks
-#task_list = topnet_test_tasks
-#task_list = test
+#task_list = operational_tasks
+#task_launch_dir = operational_task_launch_dir 
+
+task_list = topnet_test_tasks
+task_launch_dir = topnet_test_task_launch_dir
 
 # list tasks to dummy out in real mode
 # (currently needs to be defined as an empty list if not needed)

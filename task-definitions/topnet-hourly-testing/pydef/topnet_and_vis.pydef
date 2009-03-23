@@ -1,0 +1,132 @@
+class topnet_and_vis( task_base ):
+    "run hourly topnet and visualisation off most recent nzlam input" 
+
+    # Topnet runs hourly using cotemporal stream flow data AND met
+    # forecast data from *the most recent nzlam run*. This variable
+    # nzlam dependence requires *fuzzy prerequisites*. In addition, we
+    # allow topnet to run out to 12 or 24 hours ahead of the nzlam
+    # (depending on catchup mode) to make best use of the important
+    # incoming streamflow data.
+ 
+    # WHY WE'RE NOT RUNNING TOPNET VISUALISATION AS A SEPARATE TASK:
+    # Site-specific vis is done for every run, but areal only when new
+    # nzlam input is first used.  It is easy for the topnet task to
+    # detect a change in nzlam input, but it is difficult to see how to
+    # communicate this to its dependent visualisation task.  Setting a
+    # topnet 'nzlam_changed = True' class variable is not ideal as we
+    # can't be entirely sure that the vis task will start before the
+    # next topnet task changes it back to False. If we do decide a
+    # separate topnet_vis task is required, we may have to add
+    # additional functionality to task interaction, or have the control
+    # program itself keep track of the reference times at which topnet
+    # used new nzlam input.
+
+    name = "topnet_and_vis"
+    valid_hours = range( 0,24 )
+    external_task = 'topnet_and_vis.sh'
+    user_prefix = 'hydrology'
+
+    nzlam_time = 0 # see below
+
+    fuzzy_file_re =  re.compile( "^file (.*) ready$" )
+    reftime_re = re.compile( "\d{10}")
+
+    def __init__( self, ref_time, initial_state ):
+
+        # adjust reference time to next valid for this task
+        self.ref_time = self.nearest_ref_time( ref_time )
+        ref_time = self.ref_time
+ 
+        if streamflow.catchup_mode:
+            #print "CUTOFF 11 for " + self.name + "%" + ref_time
+            nzlam_cutoff = reference_time.decrement( ref_time, 11 )
+        else:
+            #print "CUTOFF 23 for " + self.name + "%" + ref_time
+            nzlam_cutoff = reference_time.decrement( ref_time, 23 )
+
+        # min:max
+        fuzzy_limits = nzlam_cutoff + ':' + ref_time
+ 
+        self.prerequisites = fuzzy_requisites( self.name, [ 
+            "got streamflow data for " + ref_time + ':' + ref_time, 
+            "file tn_" + fuzzy_limits + "_utc_nzlam_12.nc ready" ])
+
+        self.postrequisites = timed_requisites( self.name, [ 
+            [3, self.name + " started for " + ref_time],
+            [3.1, "topnet started for " + ref_time],
+            [6,   "topnet finished for " + ref_time],
+            [6.1, "topnet vis started for " + ref_time ],
+            [8.9, "topnet vis finished for " + ref_time ],
+            [9, self.name + " finished for " + ref_time] ])
+
+        task_base.__init__( self, ref_time, initial_state )
+
+
+    def run_external_task( self ):
+        # topnet needs to be given the time of the netcdf 
+        # file that satisified the fuzzy prerequisites
+
+        # TO DO: this assumes the nzlam prereq is the second
+        # one; better to search for 'nzlam' in the prereq list
+        prereqs = self.prerequisites.get_list()
+        prereq = prereqs[1]
+        m = topnet_and_vis.fuzzy_file_re.match( prereq )
+        [ file ] = m.groups()
+        m = topnet_and_vis.reftime_re.search( file )
+        nzlam_time = m.group()
+
+        nzlam_age = 'old'
+        if nzlam_time != topnet_and_vis.nzlam_time:
+            # NEW NZLAM INPUT DETECTED
+            # when a new topnet is launched, determine if its
+            # prerequisites were satisfied by a new nzlam
+            self.log.info( "new nzlam time detected:  " + nzlam_time )
+            nzlam_age = 'new'
+            topnet_and_vis.nzlam_time = nzlam_time
+
+        extra_vars = [ 
+                ['NZLAM_TIME', nzlam_time ],
+                ['NZLAM_AGE', nzlam_age ],
+                ]
+        task_base.run_external_task( self, extra_vars )
+
+
+    def get_cutoff( self, all_tasks ):
+
+        # keep the most recent *finished* nzlam_06_18_post or
+        # oper2test_topnet task that is OLDER THAN ME, because the next
+        # hourly topnet may also need the output from that same
+        # 12-hourly task.
+
+        # this could be done without searching for 'nzlam_06_18_post' 
+        # or 'oper2test_topnet' tasks because we know how far ahead
+        # topnet is allowed to get, depending on catchup.
+
+        found = False
+        times = []
+
+        result = self.ref_time # default
+
+        for task in all_tasks:
+            if task.name == 'nzlam_06_18_post' or task.name == 'oper2test_topnet':
+                if task.state == 'finished':
+                    found = True
+                    times.append( task.ref_time )
+        if not found: 
+            # This could mean the task is lame, in which case it will
+            # be eliminated by lame task deletion in the main program.
+
+            # Or, more likely, at start up, the first nzlam_06_18_post
+            # just hasn't finished yet.
+
+            pass
+
+        else:
+            times.sort( key = int, reverse = True )
+            for time in times:
+                if int( time ) < int( self.ref_time ):
+                    self.log.debug( self.identity + ' cutoff: ' + time )
+                    result = time
+                    break
+
+        return result

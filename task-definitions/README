@@ -1,7 +1,7 @@
 
 + generate_task_classes.py 
-    script to parse task definitions in the def/ and pydef/
-    subdirectories and construct the task_classes.py module.
+    script to parse task definitions in SYSTEM/def/ and SYSTEM/pydef/
+    subdirectories and thereby construct the task_classes.py module.
 
 + task_classes.py
     python module containing class definitions for all tasks.
@@ -10,13 +10,17 @@
 + template.def
     template/example for a task definition file.
 
-+ def/
-    contains a task definition file for each "normal" task.
-    (at NIWA, everything except streamflow, topnet_and_vis)
++ SYSTEM/def/
+    contains a task definition file for each "normal" task
+    (tasks that trigger off other cotemporal tasks, or have no
+    prerequisites, and which don't need to override class methods other
+    than __init__().)
 
-+ pydef/
-    contains python class code for tasks with complex behaviour.
-    (a NIWA, streamflow, and topnet_and_vis)
++ SYSTEM/pydef/
+    contains verbatim python class code for tasks with more complex behaviour
+    (e.g. tasks that trigger off other non-cotemporal tasks via fuzzy
+    prerequisites, or need to override class methods other than
+    __init__().)
 
 ===================================================================
 NOTE ON tasks that behave differently at different reference times:

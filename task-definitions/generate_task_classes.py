@@ -11,8 +11,7 @@ import os
 #import pdb
 
 def usage():
-    print 'USAGE: ' + sys.argv[0] + '[options] <input task def files>'
-    print 'no input files specified: default to all under def/ and pydef/'
+    print 'USAGE: ' + sys.argv[0] + '[options] <system definition sub-dir>'
     print 'OPTIONS: -h ... print this USAGE message'
     sys.exit(1)
 
@@ -161,16 +160,16 @@ def main( argv ):
 
     task_class_file = 'task_classes.py'
 
-    if len( argv ) == 1:
-        # no args, process all files
-        task_def_files = glob.glob( 'def/*' ) 
-        task_def_files = task_def_files + glob.glob( 'pydef/*' )
-
-    elif argv[1] == '-h':
+    if len( argv ) != 2:
         usage()
 
-    else:
-        task_def_files = argv[1:]
+    if argv[1] == '-h':
+        usage()
+
+    system_definition_subdir = argv[1]
+
+    task_def_files = glob.glob( system_definition_subdir + '/def/*' ) 
+    task_def_files = task_def_files + glob.glob( system_definition_subdir + '/pydef/*' )
 
     allowed_keys = [ 'TASK_NAME', 'VALID_REFERENCE_TIMES', 'EXTERNAL_TASK', 'EXPORT',
         'DELAYED_DEATH', 'USER_PREFIX', 'PREREQUISITES', 'POSTREQUISITES' ]
@@ -276,7 +275,7 @@ import logging
 
         indent_more()
  
-        #FILE.write( indent + '# THIS CLASS DEFINITION WAS AUTO-GENERATED FROM ' + task_def_file + '\n' )  
+        FILE.write( indent + '# THIS CLASS DEFINITION WAS AUTO-GENERATED FROM ' + task_def_file + '\n' )  
    
         # task name
         FILE.write( indent + 'name = \'' + task_name + '\'\n' )
