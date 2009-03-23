@@ -10,7 +10,7 @@ import logging
 # dummy mode settings
 dummy_mode = True
 dummy_clock_rate = 10      
-dummy_clock_offset = 10 
+dummy_clock_offset = 0 
 dummy_job_launch = 'direct'
 #dummy_job_launch = 'qsub'
 
@@ -26,8 +26,9 @@ state_dump_file = 'STATE'
 pyro_ns_group = ':foo'   
 
 # start and (optional) stop reference times
-start_time = "2008122018"
-stop_time  = "2008125018"
+start_time = "2009030200"
+#stop_time = "2009020618"
+stop_time = None
 
 # list the tasks to run
 operational_tasks = [ 
