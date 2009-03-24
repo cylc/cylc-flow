@@ -86,4 +86,30 @@ generate_task_classes.py ecoconnect-operations
 
 \subsection{More Complex Task Behaviour}
 
+\section{Task Control Script Requirements}
+
+Each external task control script must:
+
+\begin{itemize}
+\item report (to sequenz) when the has task started
+\item report when each registered task postrequisite has completed
+\item report when the task has finished
+\end{itemize}
+
+In addition, arbitrary non-postrequisite messages can be sent for
+debugging, logging, or progress monitoring purposes.
+
+Note that postrequisite completion messages could potentially be 
+sent by lower level scripts that are invoked as the task runs. 
+
+\subsection{Task Messaging Interface}
+
+A sequenz utility script \verb=task_message= communicates with sequenz:
+
+
+\subsection{Simple Example}
+
+\section{How Sequenz Launches External Tasks}
+
+
 \end{document}
