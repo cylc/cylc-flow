@@ -1,0 +1,47 @@
+%\documentclass[11pt,a4paper]{report}
+\documentclass[11pt,a4paper]{article}
+
+\usepackage{listings}
+\usepackage{amsmath}
+
+\lstset{language=Python}
+
+\title{Connecting Sequenz To Real Tasks}
+\author{Hilary Oliver, NIWA}
+
+\begin{document}
+
+\maketitle
+\tableofcontents
+
+\section{Overview}
+
+First, divide your system into a set of interdependent {\em
+tasks}\footnote{A {\em task} is a single schedulable unit such as a
+science model or top-level post-processing script), and specify the
+pre-requisites and post-requisites for each task. Then:
+
+\begin{itemize}
+    \item write a simple {\em task definition file} for each task: 
+    this specifies properties such as task name, hours the task should
+    run at each day, external task launch script, and pre- and
+    post-requisites.
+    
+    \item run {\em task-definitions/generate_task_classes.py}: this
+    parses your task definition files and generates python source 
+    code to define the task classes ({\em task_classes.py}). 
+
+    \item if necessary, write the real external task launch scripts:
+    these may be trivial wrappers around an existing script or
+    program that runs the external task,  or sequenz may be able to call 
+    existing scripts directly.
+
+    \item finally, ensure that each external task communicates with
+    sequenz at appropriate points: at the least any defined
+    postrequisites must be reported when achieved, but arbitrary
+    non-postrequisite messages can be sent too for logging and progress
+    monitoring purposes.
+
+\end{itemize}
+
+\end{document}
