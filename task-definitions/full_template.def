@@ -1,6 +1,5 @@
 
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
-#   (see template.def for more information)
 
 %TASK_NAME
     foo
@@ -11,11 +10,11 @@
 
 %EXTERNAL_TASK
     # script to invoke when my prerequisites are all satisfied
-    nztide.sh
+    run_foo.sh
 
 %USER_PREFIX
     # external task runs as user PREFIX_(dvel|test|oper)
-    sea_level
+    user_foo
 
 %PREREQUISITES
     # ZERO OR MORE prerequisite messages, each on a separate line.
@@ -28,8 +27,8 @@
     # a comma-separated hour list followed by the '|' character.
     # (USE NO PREFIX FOR REQUISTES THAT APPLY IN ALL VALID HOURS).
 
-    nzlam_12 finished for $(CURRENT_REFERENCE_TIME)
-    0,12 | file met_$(CURRENT_REFERENCE_TIME)_utc.nc ready
+    bar finished for $(CURRENT_REFERENCE_TIME)
+    0,12 | file baz_$(CURRENT_REFERENCE_TIME)_utc.nc ready
 
 %POSTREQUISITES
     # TWO OR MORE postrequisite messages, each on a separate line.
@@ -48,9 +47,9 @@
     # For postrequisites that depend on reference hour, see above.
 
     0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    0,12 | 1 min: file nztide_$(CURRENT_REFERENCE_TIME).nc ready
-    6,18 | 1 min: file nztide_$(CURRENT_REFERENCE_TIME).nc ready
-    2 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0,12 | 15 min: file foo_1_$(CURRENT_REFERENCE_TIME).nc ready
+    6,18 | 15 min: file foo_2_$(CURRENT_REFERENCE_TIME).nc ready
+    20 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
 
 # NOTE that requisites are literal strings (albeit with some variable
 # substitution) and requisite matching is exact, so be careful of white 
@@ -73,4 +72,3 @@
     # external task. (other than $REFERENCE_TIME and $TASK_NAME)
     FOO foo
     BAR bar
-
