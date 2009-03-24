@@ -16,32 +16,74 @@
 
 \section{Overview}
 
-First, divide your system into a set of interdependent {\em
-tasks}\footnote{A {\em task} is a single schedulable unit such as a
-science model or top-level post-processing script), and specify the
-pre-requisites and post-requisites for each task. Then:
+Divide your system into a set of distinct tasks. A {\em task} is a group
+of processes to be treated as a unit for scheduling purposes and
+invoked via a single {\em task control script}. Then:
 
 \begin{itemize}
-    \item write a simple {\em task definition file} for each task: 
-    this specifies properties such as task name, hours the task should
-    run at each day, external task launch script, and pre- and
-    post-requisites.
+
+    \item \textbf{Write a sequenz task definition file for each task}.
+    This specifies task properties such as name, valid run times,
+    prerequisites and postrequisites, and the task control script used
+    to invoke the task. Task definition files are used in
+    auto-generating Python class code to define the task objects managed
+    by sequenz.
     
-    \item run {\em task-definitions/generate_task_classes.py}: this
-    parses your task definition files and generates python source 
-    code to define the task classes ({\em task_classes.py}). 
-
-    \item if necessary, write the real external task launch scripts:
-    these may be trivial wrappers around an existing script or
-    program that runs the external task,  or sequenz may be able to call 
-    existing scripts directly.
-
-    \item finally, ensure that each external task communicates with
-    sequenz at appropriate points: at the least any defined
-    postrequisites must be reported when achieved, but arbitrary
-    non-postrequisite messages can be sent too for logging and progress
-    monitoring purposes.
+    \item \textbf{Modify the external task control scripts}. Completion
+    of postrequisites, etc., must be communicated back to sequenz. Note,
+    however, that simple task-completion based metascheduling of
+    existing tasks can be done via simple a simple wrapper that reports
+    task startup, invokes the task, and reports task completion, without
+    modifying existing external tasks in any way.
 
 \end{itemize}
+
+\section{Task Definition Files}
+
+A {\em Task Definition File} defines the properties of a sequenz task:
+name, valid run times, prerequisites and postrequisites, the task
+control script used to invoke the task, etc.  These files are parsed by
+a sequenz utility program that auto-generates Python to define the
+sequenz task classes:
+
+\lstset{language=sh, numbers=left}
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+\begin{lstlisting}
+# generate class code for tasks defined in
+# the ecoconnect-operations sub-directory:
+
+cd task-definitions
+generate_task_classes.py ecoconnect-operations
+\end{lstlisting}
+}
+
+\subsection{Simple Example}
+
+\lstset{language=sh, numbers=left}
+
+{\tiny
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{../task-definitions/simple_example.def}
+%\end{lstlisting}
+}
+
+\subsection{Full Task Definition Template}
+
+\lstset{language=sh, numbers=left}
+
+{\tiny
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{../task-definitions/full_template.def}
+%\end{lstlisting}
+}
+
+\subsection{More Complex Task Behaviour}
 
 \end{document}
