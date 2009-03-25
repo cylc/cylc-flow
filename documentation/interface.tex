@@ -18,49 +18,43 @@
 
 Divide your system into a set of distinct tasks. A {\em task} is a group
 of processes to be treated as a unit for scheduling purposes and
-invoked via a single {\em task control script}. Then:
+invoked via a single {\em task control script}. 
 
-\begin{itemize}
+\subsection{Define Each Task}
 
-    \item \textbf{Write a sequenz task definition file for each task}.
-    This specifies task properties such as name, valid run times,
-    prerequisites and postrequisites, and the task control script used
-    to invoke the task. Task definition files are used in
-    auto-generating Python class code to define the task objects managed
-    by sequenz.
+A \textbf{task definition file} must be written for each task. These
+files specify task properties such as name, valid run times,
+prerequisites and postrequisites, and how to invoke the real external
+task.
     
-    \item \textbf{Modify the external task control scripts}. Completion
-    of postrequisites, etc., must be communicated back to sequenz. Note,
-    however, that simple task-completion based metascheduling of
-    existing tasks can be done via simple a simple wrapper that reports
-    task startup, invokes the task, and reports task completion, without
-    modifying existing external tasks in any way.
+\subsection{Task Messaging}
 
-\end{itemize}
+The external tasks (or rather the scripts that run them) must be 
+modified so that completion of postrequisites is reported back to
+sequenz. 
+
+Note however that simple task-completion based metascheduling of
+existing tasks can be done via simple a simple wrapper that reports task
+startup, invokes the task, and reports task completion, without
+modifying existing external tasks in any way.
+
 
 \section{Task Definition Files}
 
 A {\em Task Definition File} defines the properties of a sequenz task:
 name, valid run times, prerequisites and postrequisites, the task
-control script used to invoke the task, etc.  These files are parsed by
-a sequenz utility program that auto-generates Python to define the
-sequenz task classes:
+control script used to invoke the task, etc.  A sequenz utility, 
+\verb=generate_task_classes.py= parses task definition files and 
+auto-generates Python code that defines the objects that represent
+each task within sequenz.
 
-\lstset{language=sh, numbers=left}
+\subsection{Typical Example}
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
-\begin{lstlisting}
-# generate class code for tasks defined in
-# the ecoconnect-operations sub-directory:
-
-cd task-definitions
-generate_task_classes.py ecoconnect-operations
-\end{lstlisting}
-}
-
-\subsection{Simple Example}
+Most tasks have only cotemporal (same reference time) upstream and
+downstream dependencies (recall that every task is implicitly dependent
+on the previous instance of its own class, in sequenz). The following
+task definition file is sufficient to completely define such a task.
+Different postrequisites can be specified depending on reference time. 
 
 \lstset{language=sh, numbers=left}
 
@@ -68,7 +62,7 @@ generate_task_classes.py ecoconnect-operations
 \noindent
 \rule{5cm}{.2mm}
 %\begin{lstlisting}
-\lstinputlisting{../task-definitions/simple_example.def}
+\lstinputlisting{../task-definitions/typical.def}
 %\end{lstlisting}
 }
 
@@ -86,21 +80,41 @@ generate_task_classes.py ecoconnect-operations
 
 \subsection{More Complex Task Behaviour}
 
-\section{Task Control Script Requirements}
+\textit{In EcoConnect: streamflow and topnet}
 
-Each external task control script must:
+For tasks that have non-cotemporal upstream dependencies and/or need to  
+override task class methods to define new behaviour, you have to 
+write the Python class source directly. 
+
+\section{Task Messaging Mechanism}
+
+Each external task must:
 
 \begin{itemize}
-\item report (to sequenz) when the has task started
-\item report when each registered task postrequisite has completed
+\item report (to sequenz) when the task has started
 \item report when the task has finished
+\item report when every other registered task postrequisite has
+completed
 \end{itemize}
 
-In addition, arbitrary non-postrequisite messages can be sent for
-debugging, logging, or progress monitoring purposes.
+(Technically, the `started' and `finished' messages are just
+postrequisites too, but they are special in that every task
+must have them).
 
-Note that postrequisite completion messages could potentially be 
-sent by lower level scripts that are invoked as the task runs. 
+In addition, tasks can optionally:
+
+\begin{itemize}
+\item report any arbitrary unregistered (i.e. non-postrequisite)
+messages, for debugging, logging, or progress monitoring purposes.
+\end{itemize}
+
+All incoming messages are logged by sequenz, but only postrequisite
+messages affect the state of their target task objects.
+
+Task messages don't necessarily have to originate from top level task
+control scripts. It's a probably a good idea to do this if possible, but
+lower level scripts that are invoked as the task runs can communicate
+directly with sequenz if necessary.
 
 \subsection{Task Messaging Interface}
 

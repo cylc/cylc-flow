@@ -1,6 +1,5 @@
-
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
-#   (see template.def for more information)
+# See full_template.def for documented entries
 
 %TASK_NAME
     ricom
@@ -15,9 +14,9 @@
     sea_level
 
 %PREREQUISITES
-    file sls_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    file sls_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
 
 %POSTREQUISITES
-    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    30 min: processing finished for $(CURRENT_REFERENCE_TIME)
-    31 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    30 min: processing finished for $(REFERENCE_TIME)
+    31 min: $(TASK_NAME) finished for $(REFERENCE_TIME)

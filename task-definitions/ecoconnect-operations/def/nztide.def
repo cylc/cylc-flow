@@ -1,6 +1,5 @@
-
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
-#   (see template.def for more information)
+# See full_template.def for documented entries
 
 %TASK_NAME
     nztide
@@ -18,6 +17,6 @@
     # NONE
 
 %POSTREQUISITES
-    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    1 min: file nztide_$(CURRENT_REFERENCE_TIME).nc ready
-    2 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    1 min: file nztide_$(REFERENCE_TIME).nc ready
+    2 min: $(TASK_NAME) finished for $(REFERENCE_TIME)

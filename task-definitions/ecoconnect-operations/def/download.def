@@ -1,6 +1,5 @@
-
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
-#   (see template.def for more information)
+# See full_template.def for documented entries
 
 %TASK_NAME
     download
@@ -17,18 +16,18 @@
 %PREREQUISITES
 
 %POSTREQUISITES
-    0   min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    0.5 min: file obstore_$(CURRENT_REFERENCE_TIME).um ready
-    1   min: file bgerr_$(CURRENT_REFERENCE_TIME).um ready
+    0   min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    0.5 min: file obstore_$(REFERENCE_TIME).um ready
+    1   min: file bgerr_$(REFERENCE_TIME).um ready
 
-    0 | 106 min: file lbc_$(CURRENT_REFERENCE_TIME - 12).um ready
-    0 | 122 min: file 10mwind_$(CURRENT_REFERENCE_TIME).um ready
-    0 | 122.5 min: file seaice_$(CURRENT_REFERENCE_TIME).um ready
-    0 | 199 min: file dump_$(CURRENT_REFERENCE_TIME).um ready
-    0 | 200 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0 | 106 min: file lbc_$(REFERENCE_TIME - 12).um ready
+    0 | 122 min: file 10mwind_$(REFERENCE_TIME).um ready
+    0 | 122.5 min: file seaice_$(REFERENCE_TIME).um ready
+    0 | 199 min: file dump_$(REFERENCE_TIME).um ready
+    0 | 200 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
 
-    12 | 97 min: file lbc_$(CURRENT_REFERENCE_TIME - 12).um ready
-    12 | 98 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    12 | 97 min: file lbc_$(REFERENCE_TIME - 12).um ready
+    12 | 98 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
 
-    6,18 | 0.1 min: file lbc_$(CURRENT_REFERENCE_TIME - 6).um ready
-    6,18 | 2 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME) 
+    6,18 | 0.1 min: file lbc_$(REFERENCE_TIME - 6).um ready
+    6,18 | 2 min: $(TASK_NAME) finished for $(REFERENCE_TIME) 

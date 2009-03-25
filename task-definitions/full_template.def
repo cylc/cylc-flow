@@ -1,5 +1,5 @@
-
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
 
 %TASK_NAME
     foo
@@ -19,37 +19,37 @@
 %PREREQUISITES
     # ZERO OR MORE prerequisite messages, each on a separate line.
     # May contain:
-    #  1. $(CURRENT_REFERENCE_TIME)
-    #  2. $(CURRENT_REFERENCE_TIME - HRS)
+    #  1. $(REFERENCE_TIME)
+    #  2. $(REFERENCE_TIME - HRS)
     # ALL listed prerequisites must be satisfied for this task to run
 
     # For requisites that depend on reference hour, prefix with
     # a comma-separated hour list followed by the '|' character.
     # (USE NO PREFIX FOR REQUISTES THAT APPLY IN ALL VALID HOURS).
 
-    bar finished for $(CURRENT_REFERENCE_TIME)
-    0,12 | file baz_$(CURRENT_REFERENCE_TIME)_utc.nc ready
+    bar finished for $(REFERENCE_TIME)
+    0,12 | file baz_$(REFERENCE_TIME)_utc.nc ready
 
 %POSTREQUISITES
     # TWO OR MORE postrequisite messages, each on a separate line.
     # + Each must be prefixed by estimated completion time in minutes. 
     # May contain:
     #  1. $(TASK_NAME) 
-    #  2. $(CURRENT_REFERENCE_TIME)
-    #  3. $(CURRENT_REFERENCE_TIME - HRS)
+    #  2. $(REFERENCE_TIME)
+    #  3. $(REFERENCE_TIME - HRS)
     # Must at least include 'started' and 'finished' messages, e.g.:
-    #   0  min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    #   10 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    #   0  min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    #   10 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
     # ALL postrequisites must be satsified for this task to finish.
     # External tasks may send extra (non-postrequisite) messages,
     # however, for progess logging purposes.
 
     # For postrequisites that depend on reference hour, see above.
 
-    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    0,12 | 15 min: file foo_1_$(CURRENT_REFERENCE_TIME).nc ready
-    6,18 | 15 min: file foo_2_$(CURRENT_REFERENCE_TIME).nc ready
-    20 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    0,12 | 15 min: file foo_1_$(REFERENCE_TIME).nc ready
+    6,18 | 15 min: file foo_2_$(REFERENCE_TIME).nc ready
+    20 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
 
 # NOTE that requisites are literal strings (albeit with some variable
 # substitution) and requisite matching is exact, so be careful of white 

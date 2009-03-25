@@ -1,6 +1,5 @@
-
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
-#   (see template.def for more information)
+# See full_template.def for documented entries
 
 %TASK_NAME
     mos
@@ -15,9 +14,9 @@
     nwp
 
 %PREREQUISITES
-    file met_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    file met_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
 
 %POSTREQUISITES
-    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    5 min: processing done for $(CURRENT_REFERENCE_TIME)
-    6 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    5 min: processing done for $(REFERENCE_TIME)
+    6 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
