@@ -1,20 +1,20 @@
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
-%TASK_NAME
+%NAME
     foo
 
-%VALID_REFERENCE_TIMES
+%OWNER
+    # external task runs as user PREFIX_(dvel|test|oper)
+    user_foo
+
+%VALID_HOURS
     # list of comma separated hours
     6,18
 
 %EXTERNAL_TASK
     # script to invoke when my prerequisites are all satisfied
     run_foo.sh
-
-%USER_PREFIX
-    # external task runs as user PREFIX_(dvel|test|oper)
-    user_foo
 
 %PREREQUISITES
     # ZERO OR MORE prerequisite messages, each on a separate line.
@@ -34,22 +34,22 @@
     # TWO OR MORE postrequisite messages, each on a separate line.
     # + Each must be prefixed by estimated completion time in minutes. 
     # May contain:
-    #  1. $(TASK_NAME) 
+    #  1. $(NAME) 
     #  2. $(REFERENCE_TIME)
     #  3. $(REFERENCE_TIME - HRS)
     # Must at least include 'started' and 'finished' messages, e.g.:
-    #   0  min: $(TASK_NAME) started for $(REFERENCE_TIME)
-    #   10 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
+    #   0  min: $(NAME) started for $(REFERENCE_TIME)
+    #   10 min: $(NAME) finished for $(REFERENCE_TIME)
     # ALL postrequisites must be satsified for this task to finish.
     # External tasks may send extra (non-postrequisite) messages,
     # however, for progess logging purposes.
 
     # For postrequisites that depend on reference hour, see above.
 
-    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(REFERENCE_TIME)
     0,12 | 15 min: file foo_1_$(REFERENCE_TIME).nc ready
     6,18 | 15 min: file foo_2_$(REFERENCE_TIME).nc ready
-    20 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
+    20 min: $(NAME) finished for $(REFERENCE_TIME)
 
 # NOTE that requisites are literal strings (albeit with some variable
 # substitution) and requisite matching is exact, so be careful of white 
@@ -69,6 +69,6 @@
 # OPTIONAL:
 %EXPORT
     # specify environment variable names and values to passed to the
-    # external task. (other than $REFERENCE_TIME and $TASK_NAME)
+    # external task. (other than $REFERENCE_TIME and $NAME)
     FOO foo
     BAR bar

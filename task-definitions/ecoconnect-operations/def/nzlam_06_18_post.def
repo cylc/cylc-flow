@@ -1,20 +1,20 @@
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
-%TASK_NAME
+%NAME
     nzlam_06_18_post
+
+%OWNER
+    nwp_oper
+
+%VALID_HOURS
+    6,18
 
 %DELAYED_DEATH
     True
 
-%VALID_REFERENCE_TIMES
-    6,18
-
 %EXTERNAL_TASK
     nzlam_post.sh
-
-%USER_PREFIX
-    nwp
 
 %PREREQUISITES
     file tn_$(REFERENCE_TIME)_utc_nzlam_12.um ready
@@ -22,8 +22,8 @@
     file met_$(REFERENCE_TIME)_utc_nzlam_12.um ready
 
 %POSTREQUISITES
-    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(REFERENCE_TIME)
     10 min: file sls_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
     20 min: file tn_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
     30 min: file met_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
-    31 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
+    31 min: $(NAME) finished for $(REFERENCE_TIME)

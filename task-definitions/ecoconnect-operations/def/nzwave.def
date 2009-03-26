@@ -1,22 +1,22 @@
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
-%TASK_NAME
+%NAME
     nzwave
 
-%VALID_REFERENCE_TIMES
+%OWNER
+    wave_oper
+
+%VALID_HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
     nzwave.sh
 
-%USER_PREFIX
-    wave
-
 %PREREQUISITES
     file sls_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
 
 %POSTREQUISITES
-    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(REFERENCE_TIME)
     110 min: processing finished for $(REFERENCE_TIME)
-    112 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
+    112 min: $(NAME) finished for $(REFERENCE_TIME)

@@ -29,13 +29,13 @@ from config import dummy_mode, dummy_clock_rate, dummy_clock_offset
 class dummy_task_base:
 
     def __init__( self, task_name, ref_time ):
-        self.task_name = task_name
+        self.name = task_name
         self.ref_time = ref_time
 
         if dummy_mode:
             self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock' ))
 
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( self.task_name + '%' + self.ref_time ))
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( self.name + '%' + self.ref_time ))
         self.fast_complete = False
 
     def run( self ):
@@ -50,7 +50,7 @@ class dummy_task_base:
             # to the actual dummy clock: so dummy tasks do not complete faster
             # when we bump the dummy clock forward.
  
-            if self.task_name == "streamflow":
+            if self.name == "streamflow":
                 # if caught up, delay as if waiting for streamflow data
 
                 rt = reference_time._rt_to_dt( self.ref_time )
@@ -119,7 +119,7 @@ class dummy_task( dummy_task_base ):
 
     def delay( self ):
 
-        if self.task_name == 'download':
+        if self.name == 'download':
 
             rt = reference_time._rt_to_dt( self.ref_time )
             rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
@@ -134,7 +134,7 @@ class dummy_task( dummy_task_base ):
                     if self.clock.get_datetime() >= rt_3p25:
                         break
 
-        elif self.task_name == "oper2test_topnet":
+        elif self.name == "oper2test_topnet":
 
             current_time = self.clock.get_datetime()
             rt = reference_time._rt_to_dt( self.ref_time )
@@ -155,7 +155,7 @@ class dummy_task( dummy_task_base ):
                         break
 
 
-        elif self.task_name == "streamflow":
+        elif self.name == "streamflow":
 
             current_time = self.clock.get_datetime()
             rt = reference_time._rt_to_dt( self.ref_time )

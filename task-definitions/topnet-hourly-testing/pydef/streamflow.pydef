@@ -3,7 +3,7 @@ class streamflow( free_task ):
     name = "streamflow"
     valid_hours = range( 0, 24 )
     external_task = 'streamflow.sh'
-    user_prefix = 'hydrology'
+    owner = 'hydrology_oper'
 
     # assume catchup mode and detect if we've caught up
     catchup_mode = True

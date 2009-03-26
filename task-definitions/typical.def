@@ -1,17 +1,17 @@
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
-%TASK_NAME
+%NAME
     typical_task
 
-%VALID_REFERENCE_TIMES
+%OWNER
+    bob 
+
+%VALID_HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
     run-typical_task.sh
-
-%USER_PREFIX
-    bob 
 
 %PREREQUISITES
     file input_$(REFERENCE_TIME)_utc.nc ready

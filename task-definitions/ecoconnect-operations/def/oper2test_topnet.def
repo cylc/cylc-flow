@@ -1,25 +1,25 @@
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
-%TASK_NAME
+%NAME
     oper2test_topnet
+
+%OWNER
+    hydrology_oper
+
+%VALID_HOURS
+    6,18
 
 %DELAYED_DEATH
     True
 
-%VALID_REFERENCE_TIMES
-    6,18
-
 %EXTERNAL_TASK
     oper2test_topnet.sh
-
-%USER_PREFIX
-    hydrology
 
 %PREREQUISITES
     # NONE
 
 %POSTREQUISITES
-    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(REFERENCE_TIME)
     2 min: file tn_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
-    3 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
+    3 min: $(NAME) finished for $(REFERENCE_TIME)

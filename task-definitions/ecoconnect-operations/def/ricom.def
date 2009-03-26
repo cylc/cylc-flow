@@ -1,22 +1,22 @@
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
-%TASK_NAME
+%NAME
     ricom
 
-%VALID_REFERENCE_TIMES
+%OWNER
+    sea_level_oper
+
+%VALID_HOURS
     6,18
 
 %EXTERNAL_TASK
     ricom.sh
 
-%USER_PREFIX
-    sea_level
-
 %PREREQUISITES
     file sls_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
 
 %POSTREQUISITES
-    0 min: $(TASK_NAME) started for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(REFERENCE_TIME)
     30 min: processing finished for $(REFERENCE_TIME)
-    31 min: $(TASK_NAME) finished for $(REFERENCE_TIME)
+    31 min: $(NAME) finished for $(REFERENCE_TIME)

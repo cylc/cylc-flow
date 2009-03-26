@@ -2,8 +2,11 @@
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
 #   (see template.def for more information)
 
-%TASK_NAME
+%NAME
     topnet_products
+
+%OWNER
+    hydrology_oper
 
 %VALID_REFERENCE_TIMES
     0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23
@@ -11,19 +14,12 @@
 %EXTERNAL_TASK
     product_gen.sh
 
-%USER_PREFIX
-    hydrology
-
 %EXPORT
     MODEL_NAME topnet
-    FOO bar
-#    def run_external_task( self ):
-#        task_base.run_external_task( self, topnet_products.env_vars )
-
 
 %PREREQUISITES
     topnet_and_vis finished for $(CURRENT_REFERENCE_TIME)
 
 %POSTREQUISITES
-    0 min: $(TASK_NAME) started for $(CURRENT_REFERENCE_TIME)
-    2 min: $(TASK_NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0 min: $(NAME) started for $(CURRENT_REFERENCE_TIME)
+    2 min: $(NAME) finished for $(CURRENT_REFERENCE_TIME)

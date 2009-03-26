@@ -138,7 +138,7 @@ class task_base( Pyro.core.ObjBase ):
             self.run_external_task()
 
     def run_external_task( self, extra_vars = [] ):
-        job_submit.run( self.user_prefix, self.name, self.ref_time, self.external_task, extra_vars )
+        job_submit.run( self.owner, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
     def get_state( self ):

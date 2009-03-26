@@ -24,7 +24,7 @@ class topnet_and_vis( task_base ):
     name = "topnet_and_vis"
     valid_hours = range( 0,24 )
     external_task = 'topnet_and_vis.sh'
-    user_prefix = 'hydrology'
+    owner = 'hydrology_oper'
 
     nzlam_time = 0 # see below
 
@@ -86,8 +86,7 @@ class topnet_and_vis( task_base ):
 
         extra_vars = [ 
                 ['NZLAM_TIME', nzlam_time ],
-                ['NZLAM_AGE', nzlam_age ],
-                ]
+                ['NZLAM_AGE', nzlam_age ] ]
         task_base.run_external_task( self, extra_vars )
 
 

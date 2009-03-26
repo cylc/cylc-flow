@@ -1,12 +1,13 @@
 #!/usr/bin/python
 
 import os
+import re
 import config
 
 # TO DO: EXTERNAL PROGRAMS AND MODULE LOCATIONS
 path = config.task_launch_dir
 
-def run( user_prefix, task_name, ref_time, task, extra_vars=[] ):
+def run( owner, task_name, ref_time, task, extra_vars=[] ):
 
     external_task = path + '/' + task
     if config.dummy_mode or task_name in config.dummy_out:
@@ -22,13 +23,13 @@ def run( user_prefix, task_name, ref_time, task, extra_vars=[] ):
                 raise Exception( 'dummy_task.py failed: ' + task_name + ' ' + ref_time )
             return
 
+    # ECOCONNECT: modify owner if we're running on /test or /dvel
+    sequenz_owner = os.environ[ 'USER' ]
+    if( re.search( '_test$', sequenz_owner) or re.search( '_dvel$', sequenz_owner )): 
+            system = re.split( '_', sequenz_owner )[-1]
+            owner = re.sub( '_oper$', '_' + system, owner )
 
-    # QSUB AS THE DESIGNATED USER
-    temp = os.environ[ 'USER' ].split('_')
-    system = temp[ len(temp) - 1 ] # oper, test, dvel
-    user = user_prefix + '_' + system
-
-    command  = 'sudo -u ' + user 
+    command  = 'sudo -u ' + owner 
 
     print "job_submit.py: TEMPORARILY using topnet_test queue"
     # command += ' qsub -q ' + system + ' -z'
