@@ -1,0 +1,20 @@
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    A
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    task-wrapper.sh
+
+%EXPORT
+    WRAP example-system/tasks/task-a.sh
+
+%PREREQUISITES
+
+%POSTREQUISITES
+    0 min: $(NAME) started for $(REFERENCE_TIME)
+    1 min: $(NAME) finished for $(REFERENCE_TIME)
