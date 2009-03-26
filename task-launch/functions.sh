@@ -6,7 +6,8 @@ function task_message
     # priorities are CRITICAL, WARNING, NORMAL
 
     # TO DO: WHERE TO KEEP EXTERNAL SCRIPTS AND HOW TO REFER TO THEM
-    MESSAGER=/test/ecoconnect_test/sequenz/send_message.py  
+    #MESSAGER=/test/ecoconnect_test/sequenz/send_message.py  
+    MESSAGER=send_message.py  
     #MESSAGER=echo   # uncomment for debugging
     
     PRIORITY=$1; shift

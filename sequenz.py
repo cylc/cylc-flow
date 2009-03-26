@@ -18,7 +18,7 @@ global pyro_daemon
 def print_banner():
     print "__________________________________________________________"
     print
-    print "      . EcoConnect Dynamic Sequencing Controller  ."
+    print "      .       Sequenz Dynamic Metascheduler       ."
     print
     print "      .         Hilary Oliver, NIWA, 2008         ."
     print "              See repository documentation"

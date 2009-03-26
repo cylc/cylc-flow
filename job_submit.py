@@ -5,11 +5,12 @@ import re
 import config
 
 # TO DO: EXTERNAL PROGRAMS AND MODULE LOCATIONS
-path = config.task_launch_dir
+# path = config.task_launch_dir
 
 def run( owner, task_name, ref_time, task, extra_vars=[] ):
 
-    external_task = path + '/' + task
+    #external_task = path + '/' + task
+    external_task = task
     if config.dummy_mode or task_name in config.dummy_out:
         # RUN AN EXTERNAL DUMMY TASK
         external_task = "./dummy_task.py"
@@ -29,8 +30,17 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
             system = re.split( '_', sequenz_owner )[-1]
             owner = re.sub( '_oper$', '_' + system, owner )
 
+    #====================================
+    print "!!!!!!!!job_submit.py: DISABLING QSUB"
+    command = 'export REFERENCE_TIME=' + ref_time + '; export TASK_NAME=' + task_name + '; ' + external_task + '&'
+    if os.system( command ) != 0:
+        raise Exception( 'job launch failed' )
+
+    return
+    #====================================
+
     if owner == sequenz_owner: 
-        command = owner
+        command = ''
     else:
         command  = 'sudo -u ' + owner 
 

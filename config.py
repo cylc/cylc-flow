@@ -8,7 +8,8 @@
 import logging
 
 # dummy mode settings
-dummy_mode = True
+#dummy_mode = True
+dummy_mode = False
 dummy_clock_rate = 10      
 dummy_clock_offset = 0 
 dummy_job_launch = 'direct'
@@ -59,11 +60,15 @@ topnet_test_tasks = [
 
 topnet_test_task_launch_dir = 'task-launch/topnet-hourly-testing'
 
+example_tasks = [ 'A', 'B', 'C' ]
+
 #task_list = operational_tasks
 #task_launch_dir = operational_task_launch_dir 
 
-task_list = topnet_test_tasks
-task_launch_dir = topnet_test_task_launch_dir
+#task_list = topnet_test_tasks
+#task_launch_dir = topnet_test_task_launch_dir
+
+task_list = example_tasks
 
 # list tasks to dummy out in real mode
 # (currently needs to be defined as an empty list if not needed)
