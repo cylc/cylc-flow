@@ -271,8 +271,16 @@ import logging
    
         # task name
         FILE.write( indent + 'name = \'' + task_name + '\'\n' )
+
         # owner
-        FILE.write( indent + 'owner = \'' + parsed_def[ 'OWNER' ][0] + '\'\n' )
+        if 'OWNER' in parsed_def.keys():
+            owner = parsed_def[ 'OWNER' ][0]
+        else:
+            # run as sequenz user
+            owner = os.environ[ 'USER' ]
+ 
+        FILE.write( indent + 'owner = \'' + owner + '\'\n' )
+
         # external task
         FILE.write( indent + 'external_task = \'' + parsed_def[ 'EXTERNAL_TASK' ][0] + '\'\n\n' )
         # valid hours

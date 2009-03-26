@@ -5,7 +5,8 @@
     foo
 
 %OWNER
-    # external task runs as user PREFIX_(dvel|test|oper)
+    # specify task owner username here
+    # LEAVE UNSPECIFIED IF YOU WANT THE TASK TO RUN AS THE SEQUENZ USER
     user_foo
 
 %VALID_HOURS
