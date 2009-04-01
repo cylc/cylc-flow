@@ -1,0 +1,12 @@
+SEQUENZ DARCS REPOSITORY SETUP
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+bin/     - sequenz main program and utility programs that can be directly invoked.
+
+src/     - python modules used by sequenz
+
+doc/     - sequenz documentation
+
+example/ - example interdependent task system, and setup for control by sequenz
+
+

@@ -1,26 +1,18 @@
+Example task definition files for sequenz. Task definitions based on
+these templates are processed by task_generator.py, which
+auto-generates the task class module (task_classes.py) used by sequenz.  
 
-+ generate_task_classes.py 
-    script to parse task definitions in SYSTEM/def/ and SYSTEM/pydef/
-    subdirectories and thereby construct the task_classes.py module.
++ <task-name>.def
+  task definition file, suitable for all normal tasks: those that
+  have no prerequisites or trigger only off other cotemporal tasks, 
+  and which don't need to override class methods to define special
+  behaviour.
 
-+ task_classes.py
-    python module containing class definitions for all tasks.
-    copy to main source directory before running sequenz.
-
-+ template.def
-    template/example for a task definition file.
-
-+ SYSTEM/def/
-    contains a task definition file for each "normal" task
-    (tasks that trigger off other cotemporal tasks, or have no
-    prerequisites, and which don't need to override class methods other
-    than __init__().)
-
-+ SYSTEM/pydef/
-    contains verbatim python class code for tasks with more complex behaviour
-    (e.g. tasks that trigger off other non-cotemporal tasks via fuzzy
-    prerequisites, or need to override class methods other than
-    __init__().)
++ <task-name>.pydef
+  verbatim python code for tasks with complex behaviour that is not 
+  yet handled by generate_task_classes.py: e.g. those that trigger off
+  non-cotemporal tasks via fuzzy prerequisites, or need to override
+  class methods other than __init__().
 
 ===================================================================
 NOTE ON tasks that behave differently at different reference times:

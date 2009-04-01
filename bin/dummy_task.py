@@ -2,6 +2,8 @@
 
 # TO DO: DERIVE CLASSES FOR STREAMFLOW AND DOWNLOAD, ETC. to get
 # rid of the nasty 'IF' blocks, or move them to main() at least.
+# TO DO: THIS SHOULD BE JUST THE GENERIC DUMMY TASK - PROVIDE A
+# MEANS OF DEFINING TASK-SPECIFIC BEHAVIOUR FOR DUMMY TASKS TOO.
 
 # For external dummy task programs that report their postrequisites done
 # on time relative to the controllers internal accelerated dummy clock.
@@ -13,18 +15,15 @@
 
 import os, sys
 
-# TO DO: EXTERNAL PROGRAMS AND MODULE LOCATIONS
-sys.path.append( '/test/ecoconnect_test/sequenz' )
+# make sequenz src modules available
+sys.path.append( 'src' ) # TO DO: generalise this
 
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
-import pyro_ns_naming
 import reference_time
 import datetime
 import re
 from time import sleep
-
-from config import dummy_mode, dummy_clock_rate, dummy_clock_offset
 
 class dummy_task_base:
 
@@ -33,9 +32,9 @@ class dummy_task_base:
         self.ref_time = ref_time
 
         if dummy_mode:
-            self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock' ))
+            self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_group + '.dummy_clock' )
 
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( self.name + '%' + self.ref_time ))
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_group + '.' + self.name + '%' + self.ref_time )
         self.fast_complete = False
 
     def run( self ):
@@ -172,19 +171,11 @@ class dummy_task( dummy_task_base ):
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
-    if len( sys.argv ) == 3:
-        [task_name, ref_time] = sys.argv[1:]
+    if len( sys.argv ) == 7:
+        [task_name, ref_time, pyro_group, dummy_mode, dummy_clock_rate, dummy_clock_offset ] = sys.argv[1:]
     else:
-        try:
-            task_name = os.environ[ 'TASK_NAME' ]
-        except KeyError:
-            raise
-
-        try:
-            ref_time = os.environ[ 'REFERENCE_TIME' ]
-        except KeyError:
-            raise
-
+        sys.exit(1)
+        
     print "DUMMY TASK STARTING: " + task_name + " " + ref_time
     dummy = dummy_task( task_name, ref_time )
     dummy.run()

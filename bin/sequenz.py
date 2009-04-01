@@ -1,5 +1,10 @@
 #!/usr/bin/python
 
+import sys, os
+
+# make sequenz src modules available
+sys.path.append( 'src' )  # TO DO: generalize this
+
 import dummy_mode_clock 
 from master_control import main_switch
 import pyro_ns_naming
@@ -11,7 +16,7 @@ import dead_letter
 import config
 
 import logging
-import sys, os, re
+import re
 
 global pyro_daemon
 
@@ -33,20 +38,26 @@ def clean_shutdown( reason ):
     sys.exit(0)
 
 def usage():
-    print "sequenz [-r]"
+    print "sequenz [-r] <task-config-dir>"
     print "Options:"
-    print "  + most inputs should be configured in config.py"
     print "  + [-r] restart from state dump file (this overrides"
     print "    the configured start time and task list)."
 
 def main( argv ):
-    if len( argv ) - 1 > 1:
+
+    if len( argv ) != 2 and len( argv ) != 3:
         usage()
         sys.exit(1)
 
-    restart = False
-    if len( argv ) -1 == 1 and argv[1] == '-r':
+    if argv[1] == '-r':
+        task_config_dir = argv[2]
         restart = True
+    else:
+        task_config_dir = argv[1]
+        restart = False
+
+    # make config and task_classes modules available
+    sys.path.append( task_config_dir ) 
 
     print_banner()
 

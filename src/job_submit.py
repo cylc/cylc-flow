@@ -13,12 +13,12 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
     external_task = task
     if config.dummy_mode or task_name in config.dummy_out:
         # RUN AN EXTERNAL DUMMY TASK
-        external_task = "./dummy_task.py"
+        external_task = "dummy_task.py"
 
         if config.dummy_job_launch == "direct":
             command =  'export REFERENCE_TIME=' + ref_time + '; '
             command += 'export TASK_NAME=' + task_name + '; '
-            command += external_task + ' ' + task_name + ' ' + ref_time + ' &' 
+            command += external_task + ' ' + task_name + ' ' + ref_time + ' ' + config.pyro_ns_group + ' ' + str( config.dummy_mode ) + ' ' + str( config.dummy_clock_rate ) + ' ' + str( config.dummy_clock_offset ) + ' &' 
 
             if os.system( command ) != 0:
                 raise Exception( 'dummy_task.py failed: ' + task_name + ' ' + ref_time )
