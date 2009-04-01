@@ -1,9 +1,10 @@
 #!/usr/bin/python
 
-import sys, os
+# YOU MUST EXPORT PYTHONPATH TO MAKE AVAILABLE:
+# 1/ sequenz 'src' module directory
+# 2/ system config module directory (for config.py and task_classes.py)
 
-# make sequenz src modules available
-sys.path.append( 'src' )  # TO DO: generalize this
+import sys, os
 
 import dummy_mode_clock 
 from master_control import main_switch
@@ -38,26 +39,21 @@ def clean_shutdown( reason ):
     sys.exit(0)
 
 def usage():
-    print "sequenz [-r] <task-config-dir>"
+    print "sequenz [-r]"
     print "Options:"
-    print "  + [-r] restart from state dump file (this overrides"
-    print "    the configured start time and task list)."
+    print "  + [-r] restart from state dump file (overriding"
+    print "         the configured start time and task list)."
 
 def main( argv ):
 
-    if len( argv ) != 2 and len( argv ) != 3:
+    if len( argv ) > 2:
         usage()
         sys.exit(1)
 
-    if argv[1] == '-r':
-        task_config_dir = argv[2]
+    if len( argv ) == 2 and argv[1] == '-r':
         restart = True
     else:
-        task_config_dir = argv[1]
         restart = False
-
-    # make config and task_classes modules available
-    sys.path.append( task_config_dir ) 
 
     print_banner()
 

@@ -15,9 +15,6 @@
 
 import os, sys
 
-# make sequenz src modules available
-sys.path.append( 'src' ) # TO DO: generalise this
-
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
 import reference_time

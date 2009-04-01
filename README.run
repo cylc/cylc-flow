@@ -1,0 +1,20 @@
+HOW TO RUN SEQUENZ
+
+1/ write your task definition files, 
+    new-system/taskdef/(*.def, *.pydef)
+
+2/ generate your task_classes.py module: 
+    $ cd new-system
+    $ task_generator.py taskdef/*
+
+3/ write your sequenz config file, listing each task,
+    new-system/config.py
+
+4/ set the PATH environment variable for access to the sequenz bin dir, e.g.
+    $ export PATH=$HOME/sequenz/bin:$PATH
+
+5/ set the PYTHONPATH environment variable for access to modules in the
+   sequenz src dir, and your system definition dir, e.g.
+    $ export PYTHONPATH=$HOME/sequenz/src:$HOME/sequenz/new-system:$PYTHONPATH
+
+6/ run sequenz

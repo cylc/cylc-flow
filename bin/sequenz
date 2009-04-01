@@ -1,0 +1,12 @@
+#!/bin/bash
+
+# TRIVIAL FRONT END FOR sequenz.py 
+# checks PATH and PYTHONPATH are set
+
+# CAN BE MODIFIED BY DEPLOYMENT SYSTEM AT INSTALL TIME
+# ACCORDING TO WHERE SEQUENZ MODULES ARE INSTALLED TO.
+
+export PATH=$HOME/sequenz/bin:$PATH
+export PYTHONPATH=$HOME/sequenz/src:$HOME/sequenz/example:$PYTHONPATH
+
+sequenz.py $@

@@ -7,6 +7,8 @@ src/     - python modules used by sequenz
 
 doc/     - sequenz documentation
 
-example/ - example interdependent task system, and setup for control by sequenz
+example/ - example interdependent task set, with task definition and config files for sequenz
 
+taskdef/ - task definition file templates, with some documentation
 
+ecoconnect/ - ecoconnect task definition and config files 

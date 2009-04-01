@@ -4,6 +4,8 @@
 Display progress of currently running tasks objects.
 
 NOTE: ONLY DETECTS DUMMY MODE VS REAL TIME MODE AT STARTUP
+MUST BE RUN IN SAME PYTHONPATH ENVIRONMENT AS SEQUENZ SO
+WE ACCESS THE SAME SEQUENZ CONFIG FILE
 (so restart this if you restart sequenz in different mode)
 
 For color terminal ASCII escape codes, see
