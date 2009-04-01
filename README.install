@@ -1,0 +1,7 @@
+Sequenz should be installed to an external (non-repository) location.
+TO DO: INSTALLATION INSTRUCTIONS
+
+For development purposes, however, sequenz can be run from the top level
+of the source repository itself. This should obviously be done in a
+branch, not in the master repository, in case of accidental source
+corruption.
