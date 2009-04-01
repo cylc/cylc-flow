@@ -11,8 +11,7 @@ import os
 #import pdb
 
 def usage():
-    print 'USAGE: ' + sys.argv[0] + '[options] <system definition sub-dir>'
-    print 'OPTIONS: -h ... print this USAGE message'
+    print 'USAGE: ' + sys.argv[0] + '<list of task definition files>'
     sys.exit(1)
 
 def indent_more():
@@ -160,16 +159,14 @@ def main( argv ):
 
     task_class_file = 'task_classes.py'
 
-    if len( argv ) != 2:
+    if len( argv ) < 2:
         usage()
 
-    if argv[1] == '-h':
-        usage()
+    #system_definition_subdir = argv[1]
+    #task_def_files = glob.glob( system_definition_subdir + '/def/*' ) 
+    #task_def_files = task_def_files + glob.glob( system_definition_subdir + '/pydef/*' )
 
-    system_definition_subdir = argv[1]
-
-    task_def_files = glob.glob( system_definition_subdir + '/def/*' ) 
-    task_def_files = task_def_files + glob.glob( system_definition_subdir + '/pydef/*' )
+    task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK', 'EXPORT',
         'DELAYED_DEATH', 'PREREQUISITES', 'POSTREQUISITES' ]

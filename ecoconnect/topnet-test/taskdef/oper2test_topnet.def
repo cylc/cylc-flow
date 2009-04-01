@@ -1,4 +1,3 @@
-
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
 #   (see template.def for more information)
 
@@ -8,7 +7,7 @@
 %OWNER
     hydrology_oper
 
-%VALID_REFERENCE_TIMES
+%VALID_HOURS
     6,18
 
 %DELAYED_DEATH
