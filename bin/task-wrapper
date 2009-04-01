@@ -1,0 +1,34 @@
+#!/bin/bash
+
+set -e  # abort on error
+
+trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
+
+#   1. $REFERENCE_TIME  
+#   2. $TASK_NAME      
+#   3. $WRAP          
+
+if [[ -z $REFERENCE_TIME ]]; then
+	task-message CRITICAL "REFERENCE_TIME not defined"
+	exit 1
+fi
+
+if [[ -z $TASK_NAME ]]; then
+	task-message CRITICAL "TASK_NAME not defined"
+	exit 1
+fi
+
+if [[ -z $WRAP ]]; then
+	task-message CRITICAL "WRAP not defined"
+	exit 1
+fi
+
+echo $TASK_NAME $REFERENCE_TIME
+
+task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+
+if $WRAP; then 
+    task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
+else
+    task-message CRITICAL "$TASK_NAME FAILED for $REFERENCE_TIME"
+fi

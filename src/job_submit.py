@@ -32,7 +32,14 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
 
     #====================================
     print "!!!!!!!!job_submit.py: DISABLING QSUB"
-    command = 'export REFERENCE_TIME=' + ref_time + '; export TASK_NAME=' + task_name + '; ' + external_task + '&'
+
+    command = ''
+    for entry in extra_vars:
+        [ var_name, value ] = entry
+        command += 'export ' + var_name + '=' + value + '; '
+
+    command += 'export REFERENCE_TIME=' + ref_time + '; export TASK_NAME=' + task_name + '; ' + external_task + '&'
+    print command
     if os.system( command ) != 0:
         raise Exception( 'job launch failed' )
 

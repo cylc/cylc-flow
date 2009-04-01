@@ -15,16 +15,16 @@ import Pyro.core
 import logging
 
 class A(free_task):
-    # AUTO-GENERATED FROM task-definition//def/task-a.def
+    # AUTO-GENERATED FROM taskdef/task-a.def
 
     name = 'A'
-    owner = 'hilary'
-    external_task = 'task-wrapper.sh'
+    owner = 'ecoconnect_test'
+    external_task = 'task-wrapper'
 
     valid_hours = [0,6,12,18]
 
     env_vars = [
-        ['WRAP', 'example-system/tasks/task-a.sh'] ]
+        ['WRAP', 'task-a.sh'] ]
 
     def __init__( self, ref_time, initial_state):
 
@@ -45,16 +45,16 @@ class A(free_task):
         free_task.run_external_task( self, A.env_vars )
 
 class B(task_base):
-    # AUTO-GENERATED FROM task-definition//def/task-b.def
+    # AUTO-GENERATED FROM taskdef/task-b.def
 
     name = 'B'
-    owner = 'hilary'
-    external_task = 'task-wrapper.sh'
+    owner = 'ecoconnect_test'
+    external_task = 'task-wrapper'
 
     valid_hours = [0,6,12,18]
 
     env_vars = [
-        ['WRAP', 'example-system/tasks/task-b.sh'] ]
+        ['WRAP', 'task-b.sh'] ]
 
     def __init__( self, ref_time, initial_state):
 
@@ -76,16 +76,16 @@ class B(task_base):
         task_base.run_external_task( self, B.env_vars )
 
 class C(task_base):
-    # AUTO-GENERATED FROM task-definition//def/task-c.def
+    # AUTO-GENERATED FROM taskdef/task-c.def
 
     name = 'C'
-    owner = 'hilary'
-    external_task = 'task-wrapper.sh'
+    owner = 'ecoconnect_test'
+    external_task = 'task-wrapper'
 
     valid_hours = [0,6,12,18]
 
     env_vars = [
-        ['WRAP', 'example-system/tasks/task-c.sh'] ]
+        ['WRAP', 'task-c.sh'] ]
 
     def __init__( self, ref_time, initial_state):
 

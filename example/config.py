@@ -14,7 +14,7 @@ start_time = "2009030200"
 stop_time = None
 
 # DUMMY MODE SETTINGS
-dummy_mode = True
+dummy_mode = False
 dummy_clock_rate = 10      
 dummy_clock_offset = 10 
 dummy_job_launch = 'direct'

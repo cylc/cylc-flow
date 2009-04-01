@@ -8,10 +8,11 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    task-wrapper.sh
+    task-wrapper
 
 %EXPORT
-    WRAP example-system/tasks/task-a.sh
+    # task-a.sh must be in $PATH
+    WRAP task-a.sh
 
 %PREREQUISITES
 
