@@ -21,11 +21,13 @@ import re
 
 global pyro_daemon
 
+sequenz_version = 'foo-0.0.0' # to be replaced by the install system
+
 def print_banner():
     print "__________________________________________________________"
     print
     print "      .       Sequenz Dynamic Metascheduler       ."
-    print
+    print "version: " + sequenz_version
     print "      .         Hilary Oliver, NIWA, 2008         ."
     print "              See repository documentation"
     print "      .    Pyro nameserver required: 'pyro-ns'    ."
