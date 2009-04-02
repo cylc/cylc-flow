@@ -43,10 +43,10 @@ modifying existing external tasks in any way.
 
 A {\em Task Definition File} defines the properties of a sequenz task:
 name, valid run times, prerequisites and postrequisites, the task
-control script used to invoke the task, etc.  A sequenz utility, 
-\verb=generate_task_classes.py= parses task definition files and 
-auto-generates Python code that defines the objects that represent
-each task within sequenz.
+control script used to invoke the task, etc.  A sequenz utility,
+\verb=task_generator.py= parses task definition files and auto-generates
+Python code that defines the objects that represent each task within
+sequenz.
 
 \subsection{Typical Example}
 
@@ -80,11 +80,11 @@ Different postrequisites can be specified depending on reference time.
 
 \subsection{More Complex Task Behaviour}
 
-\textit{In EcoConnect: streamflow and topnet}
+\textit{In EcoConnect: only streamflow and topnet}
 
 For tasks that have non-cotemporal upstream dependencies and/or need to  
-override task class methods to define new behaviour, you have to 
-write the Python class source directly. 
+override task class methods to define new behaviour, the Python task
+code must currently be written directly. 
 
 \section{Task Messaging Mechanism}
 
@@ -109,7 +109,7 @@ messages, for debugging, logging, or progress monitoring purposes.
 \end{itemize}
 
 All incoming messages are logged by sequenz, but only postrequisite
-messages affect the state of their target task objects.
+messages can affect the state of other task objects.
 
 Task messages don't necessarily have to originate from top level task
 control scripts. It's a probably a good idea to do this if possible, but
