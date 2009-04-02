@@ -18,7 +18,9 @@ dummy_mode = True
 dummy_clock_rate = 10      
 dummy_clock_offset = 10 
 #dummy_job_launch = 'direct'
-dummy_job_launch = 'qsub'
+
+#job_launch_method = 'qsub'
+job_launch_method = 'direct'
 
 # LOGGING CONFIGURATION
 logging_dir = os.environ['HOME'] + '/sequenz.logs' 
