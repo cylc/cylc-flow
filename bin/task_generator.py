@@ -11,7 +11,7 @@ import os
 #import pdb
 
 def usage():
-    print 'USAGE: ' + sys.argv[0] + '<list of task definition files>'
+    print 'USAGE: ' + sys.argv[0] + ' <list of task definition files>'
     sys.exit(1)
 
 def indent_more():
