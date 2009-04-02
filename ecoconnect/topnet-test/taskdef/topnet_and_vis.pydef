@@ -86,8 +86,7 @@ class topnet_and_vis( task_base ):
 
         extra_vars = [ 
                 ['NZLAM_TIME', nzlam_time ],
-                ['NZLAM_AGE', nzlam_age ],
-                ]
+                ['NZLAM_AGE', nzlam_age ] ]
         task_base.run_external_task( self, extra_vars )
 
 

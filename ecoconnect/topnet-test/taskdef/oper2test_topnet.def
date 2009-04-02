@@ -1,5 +1,5 @@
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
-#   (see template.def for more information)
+# See full_template.def for documented entries
 
 %NAME
     oper2test_topnet
@@ -20,6 +20,6 @@
     # NONE
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(CURRENT_REFERENCE_TIME)
-    2 min: file tn_$(CURRENT_REFERENCE_TIME)_utc_nzlam_12.nc ready
-    3 min: $(NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0 min: $(NAME) started for $(REFERENCE_TIME)
+    2 min: file tn_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
+    3 min: $(NAME) finished for $(REFERENCE_TIME)

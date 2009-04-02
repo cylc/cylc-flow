@@ -1,6 +1,5 @@
-
 # THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
-#   (see template.def for more information)
+# See full_template.def for documented entries
 
 %NAME
     topnet_products
@@ -18,8 +17,8 @@
     MODEL_NAME topnet
 
 %PREREQUISITES
-    topnet_and_vis finished for $(CURRENT_REFERENCE_TIME)
+    topnet_and_vis finished for $(REFERENCE_TIME)
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(CURRENT_REFERENCE_TIME)
-    2 min: $(NAME) finished for $(CURRENT_REFERENCE_TIME)
+    0 min: $(NAME) started for $(REFERENCE_TIME)
+    2 min: $(NAME) finished for $(REFERENCE_TIME)
