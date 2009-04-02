@@ -21,7 +21,7 @@ import re
 
 global pyro_daemon
 
-sequenz_version = 'foo-0.0.0' # to be replaced by the install system
+sequenz_version = "foo-bar-baz";
 
 def print_banner():
     print "__________________________________________________________"

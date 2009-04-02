@@ -27,7 +27,7 @@ install_dir = os.environ.get("HOME") + '/sequenz'
 # insert the version tag into banner in sequenz.py
 command = """
 	cd bin; 
-	cat sequenz.py | sed -e 's/\(\s*sequenz_version_tag =\).*/\\1 \"""" + version + """\";/' > tmp1 || exit 1;
+	cat sequenz.py | sed -e 's/\(\s*sequenz_version =\).*/\\1 \"""" + version + """\";/' > tmp1 || exit 1;
 	mv tmp1 sequenz.py || exit 1
 	"""
 if os.system( command ):
@@ -37,9 +37,8 @@ if os.system( command ):
 # INSTALL FILES
 all = [ 'bin', 'doc', 'ecoconnect', 'example', 'src', 'taskdef',
     'README.install', 'README.dirs', 'README.run' ]
-env = $environment()
-env.Install( install_dir, all )
+env = Environment()
+i_a = env.Install( install_dir, all )
 
 # define an alias so we can say 'scons install'
-i_a = env.Alias( 'install-all', install_dir )
-c_env.Alias( 'install', [i_a] )
+Alias( 'install', i_a )
