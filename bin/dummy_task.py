@@ -171,9 +171,10 @@ if __name__ == '__main__':
     if len( sys.argv ) == 7:
         [task_name, ref_time, pyro_group, dummy_mode, dummy_clock_rate, dummy_clock_offset ] = sys.argv[1:]
     else:
+        print "DUMMY TASK ABORTING: WRONG NUMBER OF ARGUMENTS!"
         sys.exit(1)
         
-    print "DUMMY TASK STARTING: " + task_name + " " + ref_time
+    #print "DUMMY TASK STARTING: " + task_name + " " + ref_time
     dummy = dummy_task( task_name, ref_time )
     dummy.run()
-    print "DUMMY TASK FINISHED: " + task_name + " " + ref_time
+    #print "DUMMY TASK FINISHED: " + task_name + " " + ref_time
