@@ -31,7 +31,7 @@ state_dump_file = os.environ['HOME'] + '/sequenz.state'
 # PYRO NAMESERVER CONFIGURATION 
 # group must be unique per sequenz instance 
 # so that different systems don't interfere
-pyro_ns_group = ':example'   
+pyro_ns_group = ':topnet_test'   
 
 # TASK LIST 
 task_list = [ 
