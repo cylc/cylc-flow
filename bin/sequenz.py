@@ -21,6 +21,7 @@ import re
 
 global pyro_daemon
 
+# scons will replace this with actual version at build/install time:
 sequenz_version = "foo-bar-baz";
 
 def print_banner():

@@ -14,7 +14,7 @@
     True
 
 %EXTERNAL_TASK
-    oper2test_topnet.sh
+    /test/ecoconnect_test/sequenz/ecoconnect/topnet-test/temp-external/oper2test_topnet.sh
 
 %PREREQUISITES
     # NONE

@@ -23,7 +23,7 @@ class topnet_and_vis( task_base ):
 
     name = "topnet_and_vis"
     valid_hours = range( 0,24 )
-    external_task = 'topnet_and_vis.sh'
+    external_task = '/test/ecoconnect_test/sequenz/ecoconnect/topnet-test/temp-external/topnet_and_vis.sh'
     owner = 'hydrology_oper'
 
     nzlam_time = 0 # see below

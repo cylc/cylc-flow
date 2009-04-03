@@ -2,11 +2,9 @@
 
 set -e  # abort on error
 
-# load functions
-echo "WARNING: USING TEMPORARY BAD HARDWIRED FUNCTIONS PATH"
-. /test/ecoconnect_test/sequenz/external/functions.sh
+. /test/ecoconnect_test/sequenz/bin/environment.sh
 
-trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
+trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 # INPUT:
 # * no commandline arguments (for qsub)
@@ -18,17 +16,17 @@ trap 'task_message CRITICAL "$TASK_NAME failed"' ERR
 # runs create_images.sh in /$HOME/running/$MODEL/product
 
 if [[ -z $REFERENCE_TIME ]]; then
-	task_message CRITICAL "REFERENCE_TIME not defined"
+	task-message CRITICAL "REFERENCE_TIME not defined"
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
-	task_message CRITICAL "TASK_NAME not defined"
+	task-message CRITICAL "TASK_NAME not defined"
 	exit 1
 fi
 
 if [[ -z $MODEL_NAME ]]; then
-	task_message CRITICAL "MODEL_NAME not defined"
+	task-message CRITICAL "MODEL_NAME not defined"
 	exit 1
 fi
 
@@ -37,8 +35,8 @@ SYSTEM=${USER##*_}
 SCRIPT=/$SYSTEM/ecoconnect_$SYSTEM/bin/create_images.sh
 cd $HOME/running/$MODEL_NAME/product
 
-task_message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
 
 $SCRIPT
 
-task_message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
+task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"

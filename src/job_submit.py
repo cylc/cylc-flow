@@ -19,9 +19,11 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
             owner = re.sub( '_oper$', '_' + system, owner )
 
     command = ''
-    if owner != sequenz_owner and config.job_launch_method == 'qsub': 
+    if owner != sequenz_owner and config.dummy_mode != True and config.job_launch_method == 'qsub': 
         # run the task as its proper owner
-        # ONLY FOR QSUB JOB LAUNCH
+	#  + SUDO QSUB MUST BE ALLOWED
+        #  + NOT FOR DIRECT JOB LAUNCH (assuming 'sudo task' not allowed in general)
+	#  + NOT FOR DUMMY MODE (other owners may not have dummy_task.py in $PATH)
         command  = 'sudo -u ' + owner 
 
     if config.dummy_mode or task_name in config.dummy_out:
@@ -63,4 +65,5 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
     if os.system( command ) != 0:
         # NOTE: this means JOB LAUNCH failed, i.e. 
         # the job itself did not begin to execute.
+	print command
         raise Exception( 'job launch failed: ' + task_name + ' ' + ref_time )
