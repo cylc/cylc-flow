@@ -15,8 +15,8 @@ def usage():
     print 'large number of external dummy programs all running at the same time.'
     print ''
     print 'Output locations relative to script running directory:'
-    print '  scaling-system/config.py'
-    print '  scaling-system/taskdef/(task definition files)'
+    print '  scaling-test/config.py'
+    print '  scaling-test/taskdef/(task definition files)'
     sys.exit(1)
 
 def main( argv ):
@@ -26,7 +26,7 @@ def main( argv ):
 
     n_tasks = argv[1]
 
-    topdir = 'scaling'
+    topdir = 'scaling-test'
     defdir = topdir + '/taskdef'
 
     if not os.path.exists( defdir ):
