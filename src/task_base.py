@@ -261,7 +261,7 @@ class free_task( task_base ):
     name = "free task base"
 
     def __init__( self, ref_time, initial_state ):
-        self.MAX_FINISHED = 2
+        self.MAX_FINISHED = 5
         task_base.__init__( self, ref_time, initial_state )
 
     def run_if_ready( self, tasks ):
