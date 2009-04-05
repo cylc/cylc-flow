@@ -1,3 +1,0 @@
-Generate a set of n trivially interdependent (a linear sequence) task
-definition files.  Use, dummy mode only, to test sequenz interaction
-loop performance on a large number of tasks. 

@@ -1,9 +1,22 @@
 #!/usr/bin/python
 
-import sys
+import os, sys
 
 def usage():
-    print 'USAGE: ' + sys.argv[0] + ' <n (no. of tasks)'
+    print 'USAGE: ' + sys.argv[0] + ' <n (number of tasks)>'
+    print 'Generate a system of n interdependent sequenz task definition files,'
+    print 'and a sequenz config file to run the system in dummy mode. For use'
+    print 'in testing sequenz performance on large task numbers (dummy mode'
+    print 'and real mode are the same as far as sequenz is concerned).'
+    print ''
+    print 'Each task depends only on the previous one, i.e. a simple linear'
+    print 'sequence so that only a few external dummy task programs run at once.'
+    print 'This prevents the system (hardware, not sequenz) being swamped by a'
+    print 'large number of external dummy programs all running at the same time.'
+    print ''
+    print 'Output locations relative to script running directory:'
+    print '  scaling-system/config.py'
+    print '  scaling-system/taskdef/(task definition files)'
     sys.exit(1)
 
 def main( argv ):
@@ -13,6 +26,13 @@ def main( argv ):
 
     n_tasks = argv[1]
 
+    topdir = 'scaling'
+    defdir = topdir + '/taskdef'
+
+    if not os.path.exists( defdir ):
+	print 'creating directory ' + defdir 
+	os.makedirs( defdir )
+
     for task in range( 1, int(n_tasks) + 1 ):
 
         tdef = 'T' + str( task )
@@ -20,7 +40,7 @@ def main( argv ):
 
         print "writing task definition file " + str(task)
     
-        FILE = open( 'taskdef/' + tdef + '.def', 'w' )
+        FILE = open( defdir + '/' + tdef + '.def', 'w' )
      
         FILE.write(
                 """
@@ -57,7 +77,7 @@ def main( argv ):
         FILE.close() 
 
     # write config file
-    FILE = open( 'config.py', 'w' )
+    FILE = open( topdir + '/config.py', 'w' )
 
     FILE.write(
             """
