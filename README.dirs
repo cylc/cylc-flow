@@ -9,6 +9,8 @@ doc/     - sequenz documentation
 
 example/ - example interdependent task set, with task definition and config files for sequenz
 
+scaling/ - interdependent system generator, to test sequenz performance on large task numbers
+
 taskdef/ - task definition file templates, with some documentation
 
 ecoconnect/ - ecoconnect task definition and config files 

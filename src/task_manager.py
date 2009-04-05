@@ -14,6 +14,7 @@ import pyro_ns_naming
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 import logging
+import datetime
 
 class manager ( Pyro.core.ObjBase ):
     def __init__( self, pyro_d, reload, dummy_clock ):
@@ -70,8 +71,14 @@ class manager ( Pyro.core.ObjBase ):
         # get each task to ask all the others if 
         # they can satisfy its prerequisites
         #--
+
+        loop_start = datetime.datetime.now()
+
         for task in self.tasks:
             task.get_satisfaction( self.tasks )
+
+        loop_end = datetime.datetime.now()
+        print 'INT: ' + str( loop_start) + '...' + str(loop_end)
 
     def run_if_ready( self ):
         # tell tasks to run if their prequisites are satisfied

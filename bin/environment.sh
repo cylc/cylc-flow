@@ -11,10 +11,14 @@
 #export PATH=/test/ecoconnect_test/sequenz-dev/bin:/test/ecoconnect_test/sequenz-dev/example/tasks:$PATH
 #export PYTHONPATH=/test/ecoconnect_test/sequenz-dev/src:/test/ecoconnect_test/sequenz-dev/example:$PYTHONPATH
 
+# scaling test system 
+export PATH=$HOME/sequenz/bin:$PATH
+export PYTHONPATH=$HOME/sequenz/src:$HOME/sequenz/scaling:$PYTHONPATH
+
 # ecoconnect operational
 #export PATH=/test/ecoconnect_test/sequenz-dev/bin:$PATH
 #export PYTHONPATH=/test/ecoconnect_test/sequenz-dev/src:/test/ecoconnect_test/sequenz-dev/ecoconnect/operational:$PYTHONPATH# ecoconnect operational
 
 # ecoconnect topnet test
-export PATH=/test/ecoconnect_test/sequenz/bin:$PATH
-export PYTHONPATH=/test/ecoconnect_test/sequenz/src:/test/ecoconnect_test/sequenz/ecoconnect/topnet-test:$PYTHONPATH
+#export PATH=/test/ecoconnect_test/sequenz/bin:$PATH
+#export PYTHONPATH=/test/ecoconnect_test/sequenz/src:/test/ecoconnect_test/sequenz/ecoconnect/topnet-test:$PYTHONPATH
