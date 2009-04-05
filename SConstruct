@@ -35,7 +35,7 @@ if os.system( command ):
 	sys.exit()
 
 # INSTALL FILES
-all = [ 'bin', 'doc', 'ecoconnect', 'example', 'src', 'taskdef',
+all = [ 'bin', 'doc', 'ecoconnect', 'example', 'scaling', 'src', 'taskdef',
     'README.install', 'README.dirs', 'README.run' ]
 env = Environment()
 i_a = env.Install( install_dir, all )
