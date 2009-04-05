@@ -17,8 +17,8 @@ stop_time = None
 dummy_mode = True
 dummy_clock_rate = 10      
 dummy_clock_offset = 10 
-#dummy_job_launch = 'direct'
 
+# JOB LAUNCH METHOD
 #job_launch_method = 'qsub'
 job_launch_method = 'direct'
 
