@@ -77,8 +77,14 @@ class manager ( Pyro.core.ObjBase ):
         for task in self.tasks:
             task.get_satisfaction( self.tasks )
 
-        loop_end = datetime.datetime.now()
-        print 'INT: ' + str( loop_start) + '...' + str(loop_end)
+        delta = datetime.datetime.now() - loop_start
+        # time deltas are expressed as days, seconds, microseconds
+        days = delta.days
+        seconds = delta.seconds
+        microseconds = delta.microseconds
+        seconds_passed = microseconds / 1000000. + seconds + days * 24 * 3600
+
+        print ' task interaction loop timing: ' + str( seconds_passed ) + ' seconds'
 
     def run_if_ready( self ):
         # tell tasks to run if their prequisites are satisfied
