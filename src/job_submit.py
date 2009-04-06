@@ -72,5 +72,6 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
     if os.system( command ) != 0:
         # NOTE: this means JOB LAUNCH failed, i.e. 
         # the job itself did not begin to execute.
-	print command
+
+	# print command
         raise Exception( 'job launch failed: ' + task_name + ' ' + ref_time )

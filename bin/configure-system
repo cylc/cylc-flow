@@ -1,13 +1,14 @@
 #!/bin/bash
 
 # given a sequenz system definition directory:
-#    system-name/config.py
-#    system-name/taskdef/(task definition files)
+#    system/config.py
+#    system/taskdef/(task definition files)
 
 # 1/ generate task class code for sequenz
 # 2/ generate system environment script 
 #    + this exports PATH and PYTHONPATH, and also 
 #      SEQUENZ_ENV (its own path) for system tasks
+# 3/ copy task-wrapper from sequenz/bin to system/tasks
 
 set -e  # ABORT on error
 
@@ -64,3 +65,9 @@ export PATH PYTHONPATH
 # export my location as \$SEQUENZ_ENV
 export SEQUENZ_ENV=$TOPDIR/$SYSDIR/$ENV_SCRIPT
 EOF
+
+# copy task-wrapper
+
+mkdir -p $TOPDIR/$SYSDIR/tasks
+cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/tasks
+

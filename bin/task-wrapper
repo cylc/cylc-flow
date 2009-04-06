@@ -23,7 +23,7 @@ if [[ -z $WRAP ]]; then
 	exit 1
 fi
 
-echo $TASK_NAME $REFERENCE_TIME
+echo "task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
 
 task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
 

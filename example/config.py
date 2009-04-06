@@ -10,8 +10,8 @@ import os
 
 # START AND STOP (OPTIONAL) REFERENCE TIMES
 start_time = "2009030200"
-#stop_time = "2009020618"
-stop_time = None
+stop_time = "2009030300"
+#stop_time = None
 
 # DUMMY MODE SETTINGS
 dummy_mode = False
