@@ -29,6 +29,7 @@ command = """
 	cd bin; 
 	cat sequenz.py | sed -e 's/\(\s*sequenz_version =\).*/\\1 \"""" + version + """\";/' > tmp1 || exit 1;
 	mv tmp1 sequenz.py || exit 1
+	chmod +x sequenz.py || exit 1
 	"""
 if os.system( command ):
 	print "Failed to insert sequenz version number into sequenz.py"
