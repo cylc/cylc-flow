@@ -86,7 +86,7 @@ try:
         if config.dummy_mode:
             print 'killing any dummy tasks ...'
             # kill any running 'dummy_task's
-            os.system( 'pkill -9 -u $USER dummy_task.py' )
+            os.system( 'pkill -9 -u $USER dummy-task.py' )
             sleep(5)
 
         # shutdown the controller and pyro nameserver

@@ -37,7 +37,7 @@ PATH=$PWD/bin:$PATH
 cd $SYSDIR
 
 echo "> generating task class code for sequenz: $SYSDIR/task_classes.py"
-task_generator.py taskdef/*
+task-generator.py taskdef/*
 
 # generate system environment script
 echo "> generating environment script for this system: $SYSDIR/environment.sh"
@@ -52,8 +52,8 @@ cat > $ENV_SCRIPT <<EOF
 # for running sequenz on system $SYSDIR
 
 # clean existing sequenz paths
-      PATH=\$( $TOPDIR/bin/clean_sequenz_path.sh \$PATH )
-PYTHONPATH=\$( $TOPDIR/bin/clean_sequenz_path.sh \$PYTHONPATH )
+      PATH=\$( $TOPDIR/bin/clean-sequenz-path.sh \$PATH )
+PYTHONPATH=\$( $TOPDIR/bin/clean-sequenz-path.sh \$PYTHONPATH )
 
 # not using \$HOME or relative path; may be sourced by other users
 PATH=$TOPDIR/bin:$TOPDIR/$SYSDIR/tasks:\$PATH

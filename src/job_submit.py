@@ -23,12 +23,12 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
         # run the task as its proper owner
 	#  + SUDO QSUB MUST BE ALLOWED
         #  + NOT FOR DIRECT JOB LAUNCH (assuming 'sudo task' not allowed in general)
-	#  + NOT FOR DUMMY MODE (other owners may not have dummy_task.py in $PATH)
+	#  + NOT FOR DUMMY MODE (other owners may not have dummy-task.py in $PATH)
         command  = 'sudo -u ' + owner 
 
     if config.dummy_mode or task_name in config.dummy_out:
         # substitute the dummy task program for the real task
-        external_task = 'dummy_task.py'
+        external_task = 'dummy-task.py'
     else:
         # run the real task
 	if not re.match( '^/', task ):
