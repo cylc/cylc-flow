@@ -8,7 +8,7 @@ HOW TO RUN SEQUENZ FOR SYSTEM FOO
 
 
 3/ generate the task class code (foo/task_classes.py)
-   and sequenz environment script (foo/sequenz-env.sh)
+   and sequenz environment script (foo/environment.sh)
 
     $ sequenz-setup.py
 
@@ -19,7 +19,7 @@ HOW TO RUN SEQUENZ FOR SYSTEM FOO
    runs the sequenz instance that handles system foo, and in any other shells
    that need to interact with the same sequenz instance (e.g. system monitors).
 
-   $ . foo/sequenz-env.sh
+   $ . foo/environment.sh
 
 
 5/ run sequenz

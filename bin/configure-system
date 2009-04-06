@@ -26,7 +26,7 @@ SYSDIR=$1
 # remove any trailing '/'
 SYSDIR=${SYSDIR%/}
 
-ENV_SCRIPT='sequenz-env.sh'
+ENV_SCRIPT='environment.sh'
 
 TOPDIR=$PWD
 
@@ -39,7 +39,7 @@ echo "> generating task class code for sequenz: $SYSDIR/task_classes.py"
 task_generator.py taskdef/*
 
 # generate system environment script
-echo "> generating environment script for this system: $SYSDIR/sequenz-env.sh"
+echo "> generating environment script for this system: $SYSDIR/environment.sh"
 echo "  (the environment script sets PATH and PYTHONPATH for system $SYSDIR)"
 
 cat > $ENV_SCRIPT <<EOF

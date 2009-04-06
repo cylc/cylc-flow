@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# trivial wrapper for 
+# trivial wrapper for task-message.py
 
 # USAGE: task_message <PRIORITY> <"MESSAGE">
 # priorities are CRITICAL, WARNING, NORMAL
 
-MESSAGER=sequenz_notify.py  
+MESSAGER=task-message.py
 #MESSAGER=echo   # debugging
     
 PRIORITY=$1; shift
