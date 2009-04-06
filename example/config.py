@@ -20,7 +20,7 @@ dummy_clock_offset = 10
 
 # JOB LAUNCH METHOD
 job_launch_method = 'direct'
-job_launch_method = 'qsub'
+#job_launch_method = 'qsub'
 
 # LOGGING CONFIGURATION
 #logging_dir = os.environ['HOME'] + '/sequenz.logs' 
