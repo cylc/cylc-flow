@@ -53,8 +53,8 @@ PYTHONPATH=\$( $TOPDIR/bin/clean_sequenz_path.sh \$PYTHONPATH )
 
 # not using \$HOME or relative path; may be sourced by other users
 PATH=$TOPDIR/bin:$TOPDIR/$SYSDIR/tasks:\$PATH
-PATH=${PATH%:}  # in case variable was empty before
+PATH=\${PATH%:}  # in case variable was empty before
 PYTHONPATH=$TOPDIR/src:$TOPDIR/$SYSDIR:\$PYTHONPATH
-PYTHONPATH=${PYTHONPATH%:}  # in case was empty before
+PYTHONPATH=\${PYTHONPATH%:}  # in case was empty before
 export PATH PYTHONPATH
 EOF
