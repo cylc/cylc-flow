@@ -2,7 +2,8 @@
 
 set -e  # abort on error
 
-. /test/ecoconnect_test/sequenz/bin/environment.sh
+# source sequenz environment
+. $SEQUENZ_ENV
 
 trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
@@ -19,6 +20,7 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 # * environment variables:
 #   1. $REFERENCE_TIME
 #   2. $TASK_NAME
+#   3. $SEQUENZ_ENV
 
 # INTENDED USER:
 # * hydrology_(test|dvel)

@@ -12,6 +12,9 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
     # who is running the control system
     sequenz_owner = os.environ[ 'USER' ]
 
+    # sequenz environment script for this system
+    sequenz_env = os.environ[ 'SEQUENZ_ENV' ]
+
     if re.search( '_test$', sequenz_owner) or re.search( '_dvel$', sequenz_owner ): 
         # for ecoconnect, if the system running on /test or /dvel
         # then replace '_oper' owner postfix with '_test' or '_dvel'
@@ -50,6 +53,7 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
 
         command += ' -v REFERENCE_TIME=' + ref_time
         command += ',TASK_NAME=' + task_name
+        command += ',SEQUENZ_ENV=' + sequenz_env
 
         for entry in extra_vars:
             [ var_name, value ] = entry

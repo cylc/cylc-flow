@@ -2,7 +2,8 @@
 
 set -e  # abort on error
 
-. /test/ecoconnect_test/sequenz/bin/environment.sh
+# source sequenz environment
+. $SEQUENZ_ENV
 
 trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
@@ -16,6 +17,7 @@ FETCH_TD=/dvel/data_dvel/fetchtd/fetchtd/src/fetchtd.py
 # * environment variables:
 #   1. $REFERENCE_TIME (=> streamflow data time)
 #   2. $TASK_NAME
+#   3. $SEQUENZ_ENV
 
 # INTENDED USER:
 # * hydrology_(dvel|test|oper)

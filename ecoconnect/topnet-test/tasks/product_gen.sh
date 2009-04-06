@@ -2,7 +2,8 @@
 
 set -e  # abort on error
 
-. /test/ecoconnect_test/sequenz/bin/environment.sh
+# source sequenz environment
+. $SEQUENZ_ENV
 
 trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
@@ -12,6 +13,8 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 #   1. $REFERENCE_TIME    e.g. 2008102018
 #   2. $TASK_NAME         e.g. topnet_and_vis
 #   3. $MODEL_NAME        e.g. topnet
+#   4. $SEQUENZ_ENV
+
 
 # runs create_images.sh in /$HOME/running/$MODEL/product
 
