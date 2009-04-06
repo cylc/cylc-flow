@@ -23,14 +23,12 @@ job_launch_method = 'direct'
 #job_launch_method = 'qsub'
 
 # LOGGING CONFIGURATION
-#logging_dir = os.environ['HOME'] + '/sequenz.logs' 
-logging_dir = 'LOGS' 
+logging_dir = 'running/example/log' 
 logging_level = logging.INFO
 #logging_level = logging.DEBUG
 
 # STATE DUMP FILE
-#state_dump_file = os.environ['HOME'] + '/sequenz.state'
-state_dump_file = 'STATE'
+state_dump_file = 'running/example/state'
 
 # PYRO NAMESERVER CONFIGURATION 
 # group must be unique per sequenz instance 
