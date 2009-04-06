@@ -4,9 +4,6 @@ import os
 import re
 import config
 
-# TO DO: EXTERNAL PROGRAMS AND MODULE LOCATIONS
-# path = config.task_launch_dir
-
 def run( owner, task_name, ref_time, task, extra_vars=[] ):
 
     # who is running the control system
@@ -34,8 +31,14 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
         external_task = 'dummy_task.py'
     else:
         # run the real task
-        # external_task = path + '/' + task
-        external_task = task
+	if not re.match( '^/', task ):
+	    # relative path implies use sequenz 'tasks' subdir for this system
+	    sequenz_env = os.environ[ 'SEQUENZ_ENV' ]
+	    sysdir = re.sub( '[^/]*$', '', sequenz_env )
+            external_task = sysdir + 'tasks/' + task
+        else:
+	    # full task path given
+            external_task = task
 
     if config.job_launch_method == 'direct':
         # run the task directly (i.e. not in the queue) in the background 
