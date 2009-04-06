@@ -2,7 +2,7 @@ class streamflow( free_task ):
 
     name = "streamflow"
     valid_hours = range( 0, 24 )
-    external_task = '/test/ecoconnect_test/sequenz/ecoconnect/topnet-test/temp-external/streamflow.sh'
+    external_task = 'streamflow.sh'
     owner = 'hydrology_oper'
 
     # assume catchup mode and detect if we've caught up
