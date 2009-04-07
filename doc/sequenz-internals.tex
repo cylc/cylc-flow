@@ -6,7 +6,7 @@
 
 \lstset{language=Python}
 
-\title{A Flexible Dynamic Meta-scheduler
+\title{A Flexible Dynamic Metascheduler
 for Multi-Model Real Time Forecasting}
 
 \author{Hilary Oliver, NIWA}
@@ -18,21 +18,22 @@ for Multi-Model Real Time Forecasting}
 
 \begin{abstract}
 
-{\em Dynamic Task Sequencing} is an extremely flexible object oriented
-approach to controlling the order of execution of a complex set of
-interdependent tasks.  Each task is represented by a self-contained {\em
-task object} that does not need to know anything about other tasks in
-the system but can interact with others to negotiate dependencies so
-that {\em correct sequencing emerges naturally at run time}. The absence
-of any explicit sequencing logic means complete freedom to extend the
-system and to switch tasks on and off without any change to the
-sequencing algorithm.  Our dynamic sequencing implementation, {\em
-Sequenz}, which is aimed at cycling multi-model real time forecasting
-systems, can run tasks from many different forecast cycles
-simultaneously, where dependencies allow. In addition, it can be
+An extremely flexible approach to ensuring correct order of execution of
+a complex set of interdependent tasks is described.  The method is
+naturally implemented using Object Oriented Programming techniques. Each
+task is represented by a self-contained {\em task object} that does not
+know anything about other tasks in the system but can interact with
+others to negotiate dependencies so that {\em correct execution order
+emerges naturally at run time}. The total absence of explicit sequencing
+logic means tasks can be switched in and out of the system at will, and
+the system can be arbitrarily extended without any without any change to
+the control program logic.  Our dynamic metascheduler implementation,
+{\em sequenz}, is aimed at cycling multi-model real time forecasting
+systems.  It can run tasks from many different forecast cycles
+simultaneously, where dependencies allow.  In addition, it can be
 completely tested on the configured task set without running any real
 tasks, and partial parallel test systems that feed off the main
-operational system can be quickly created on an ad hoc basis.  Sequenz
+operational system can be created quickly on an ad hoc basis. Sequenz
 is written in Python, and uses the Python Remote Object protocol ({\em
 Pyro}) for direct network communication between task objects and the
 tasks they represent. Pyro also enables efficient RPC-based remote
@@ -41,16 +42,17 @@ interfaced to existing models and tasks with minimal overhead.
 
 \end{abstract}
 
-\section{Task Sequencing Overview}
+\section{Metascheduling Overview}
 
-For the purposes of this paper, {\em Task Sequencing} is defined to be
-the process of controlling the execution order of a set of tasks that
-are related by mutual input/output dependencies: each task may depend on
-one or more ``upstream'' tasks for input, and may generate output for
-use by one or more ``downstream'' tasks.  A {\em task} is any group of
-processes to be treated as a single entity for scheduling purposes (and
-which would generally be controlled by a single top level script or
-program).
+Metascheduling is the process of deciding when each task in a system of
+interdependent tasks is {\em ready to run}, at which point it can be
+submitted to a normal batch scheduler for allocation to available
+computing resource.  Such a task set is generally related by mutual
+input/output dependencies: each task may depend on one or more
+``upstream'' tasks for input, and may generate output for use by one or
+more ``downstream'' tasks.  A {\em task} is any group of processes to be
+treated as a single entity for scheduling purposes (and which would
+generally be controlled by a single top level script or program).
 
 The National Institute of Water and Atmosperhic Research (NIWA), New
 Zealand, has developed an operational environmental forecasting system,
@@ -89,13 +91,14 @@ the existence of required inputs directly, or by monitoring the state of
 the other tasks that are known to provide the inputs in each case (are
 they finished yet?). It is not easy to do this in a flexible and
 extensible way, however, because the control diagram will, in general,
-have multiple parallel streams of execution that branch (when one task
-generates output for several downstream task) and merge (when one task
-takes input from several upstream task), and the detailed properties of
-this ``sequence'' depend entirely on the particular inputs and outputs
-of the current configured task set. Typical in-house solutions are a
-simple control program that executes a user-specified task list (assumed
-to be correctly ordered) in a linear sequence,  or some form of highly
+take the form of a \textbf{Directed Acyclic Graph}: multiple parallel
+streams of execution that branch (when one task generates output for
+several downstream task) and merge (when one task takes input from
+several upstream task), and the detailed properties of this network
+depend entirely on the particular inputs and outputs of the current
+configured task set.  A typical in-house solution is a simple control
+program that executes a user-specified task list (assumed to be
+correctly ordered already) in a linear sequence, or some form of highly
 specific Finite State Machine that enforces a predetermined (but
 possibly non-linear) order of operations using hard coded sequencing
 logic: {\em if A has generated file X, and B has finished, then start
@@ -114,14 +117,13 @@ cycles is already available, such as when catching up after system
 downtime in a resource constrained computational environment, or when
 running the entire system over historical case study periods.
 Attempting to relax this constraint to achieve ``asynchronous''
-behaviour within the confines of a hard coded finite state machine,
-however, dramatically exacerbates the aforementioned complexity-related
-problems.  
+behaviour in a hard coded finite state machine, however, dramatically
+exacerbates the complexity of 
 
 
-\subsection{Dynamic Task Sequencing}
+\subsection{Dynamic Metascheduling}
 
-Dynamic Task Sequencing is an object oriented approach to the problem.
+Dynamic Metascheduling is an object oriented approach to the problem.
 Within the control program each task is represented by a self-contained
 {\em task object} that knows nothing about other tasks in the system but
 does know its own prerequisites (inputs) and outputs, and can interact
@@ -437,37 +439,6 @@ timing of running tasks correctly, but if it causes a running task to
 finish immediately the next task in line will still start from the
 beginning no matter how big the bump.
 
-
-\subsection{Program Usage}
-
-All user-configurable parameters are set in \verb#config.py#. There is
-one commandline option to force a restart from the state dump file
-(which may have been edited) instead of the configured start time and
-task list:
-
-\lstset{language=sh}
-
-{\small
-
-\noindent
-\rule{5cm}{.2mm}
-\begin{lstlisting}
-ecocontroller [-r]
-Options:
-    + most inputs should be configured in config.py
-    + [-r] restart from the state dump file
-\end{lstlisting}
-}
-
-\lstset{language=Python}
-
-\subsection{Config File}
-
-{\small
-\noindent
-\rule{5cm}{.2mm}
-\lstinputlisting{../config.py}
-}
 
 \appendix
 

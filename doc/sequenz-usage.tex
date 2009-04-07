@@ -116,14 +116,37 @@ control scripts. It's a probably a good idea to do this if possible, but
 lower level scripts that are invoked as the task runs can communicate
 directly with sequenz if necessary.
 
-\subsection{Task Messaging Interface}
+\subsection{Program Usage}
 
-A sequenz utility script \verb=task_message= communicates with sequenz:
+All user-configurable parameters are set in \verb#config.py#. There is
+one commandline option to force a restart from the state dump file
+(which may have been edited) instead of the configured start time and
+task list:
 
+\lstset{language=sh}
 
-\subsection{Simple Example}
+{\small
 
-\section{How Sequenz Launches External Tasks}
+\noindent
+\rule{5cm}{.2mm}
+\begin{lstlisting}
+ecocontroller [-r]
+Options:
+    + most inputs should be configured in config.py
+    + [-r] restart from the state dump file
+\end{lstlisting}
+}
+
+\lstset{language=Python}
+
+\subsection{Config File}
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+\lstinputlisting{../example/config.py}
+}
+
 
 
 \end{document}
