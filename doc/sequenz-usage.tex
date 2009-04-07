@@ -16,18 +16,18 @@
 
 \section{Overview}
 
-Sequenz does metascheduling for systems of interdependent tasks, where a
-{\em task} is defined to be a group of one or more processes treated as
-a unit for scheduling purposes, and invoked via a single top level
-script or executable.  It can do task-completion based metascheduling
-(i.e.  tasks trigger off \texbf{completion} one or more upstream tasks)
-{\em without any modification of the existing tasks}. The only
-requirement is a simple \textbf{task definition file} describing each
-task. If you have some tasks with long execution times several
-significant internal outputs (i.e. prior to task completion), however,
-you can have sequenz trigger downstream tasks off the internal outputs.
-This requires a slight modification of the external task to get
-completion of internal outputs reported back to sequenz. 
+Sequenz is a metascheduling controller for systems of interdependent
+tasks, where a {\em task} is defined to be a group of one or more
+processes treated as a unit for scheduling purposes, and invoked via a
+single top level script or executable.  It can do task-completion based
+metascheduling (i.e. a task triggers off \texbf{completion} one or more
+upstream tasks) {\em without any modification of the existing tasks}:
+the only requirement is a simple \textbf{task definition file} that
+describes each task. However, if some tasks have long execution times
+and several significant internal outputs (i.e. prior to task
+completion), you can have sequenz trigger downstream tasks off internal
+outputs with minor modification of external tasks to get completion of
+internal outputs reported back to sequenz. 
 
 Section \ref{config} below describes how to configure sequenz in order to
 control a new system.  Section \ref{usage} describes how to run sequenz
