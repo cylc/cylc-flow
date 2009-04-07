@@ -145,10 +145,12 @@ fi
 # copy file to my output directory
 task-message NORMAL "copying file to $TARGET_DIR"
 cp $FOUND $TARGET_DIR
-task-message WARNING "COMPENSATING FOR UM2NETCDF TOTAL_PRECIP ATTRIBUTES BUG"
-cd $TARGET_DIR
-ncatted -a coordinates,total_precip,o,c,"latitude longitude" $FILENAME
-ncatted -a coordinates,sfc_temp,o,c,"latitude longitude" $FILENAME
-ncatted -a coordinates,sfc_rh,o,c,"latitude longitude" $FILENAME
+# The following is no longer necessary as llclean has been fixed, and TopNet
+# made backward compatible (for missing attributes) in older tn_.nc files.
+#task-message WARNING "COMPENSATING FOR UM2NETCDF TOTAL_PRECIP ATTRIBUTES BUG"
+#cd $TARGET_DIR
+#ncatted -a coordinates,total_precip,o,c,"latitude longitude" $FILENAME
+#ncatted -a coordinates,sfc_temp,o,c,"latitude longitude" $FILENAME
+#ncatted -a coordinates,sfc_rh,o,c,"latitude longitude" $FILENAME
 task-message NORMAL "file $FILENAME ready"
 task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
