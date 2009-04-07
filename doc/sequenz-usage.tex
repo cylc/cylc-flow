@@ -6,7 +6,7 @@
 
 \lstset{language=Python}
 
-\title{Connecting Sequenz To Real Tasks}
+\title{How To Use Sequenz}
 \author{Hilary Oliver, NIWA}
 
 \begin{document}
@@ -16,29 +16,24 @@
 
 \section{Overview}
 
-Divide your system into a set of distinct tasks. A {\em task} is a group
-of processes to be treated as a unit for scheduling purposes and
-invoked via a single {\em task control script}. 
+Sequenz does metascheduling for systems of interdependent tasks, where a
+{\em task} is defined to be a group of one or more processes treated as
+a unit for scheduling purposes, and invoked via a single top level
+script or executable.  It can do task-completion based metascheduling
+(i.e.  tasks trigger off \texbf{completion} one or more upstream tasks)
+{\em without any modification of the existing tasks}. The only
+requirement is a simple \textbf{task definition file} describing each
+task. If you have some tasks with long execution times several
+significant internal outputs (i.e. prior to task completion), however,
+you can have sequenz trigger downstream tasks off the internal outputs.
+This requires a slight modification of the external task to get
+completion of internal outputs reported back to sequenz. 
 
-\subsection{Define Each Task}
+Section \ref{config} below describes how to configure sequenz in order to
+control a new system.  Section \ref{usage} describes how to run sequenz
+once sequenz has been configured.
 
-A \textbf{task definition file} must be written for each task. These
-files specify task properties such as name, valid run times,
-prerequisites and postrequisites, and how to invoke the real external
-task.
-    
-\subsection{Task Messaging}
-
-The external tasks (or rather the scripts that run them) must be 
-modified so that completion of postrequisites is reported back to
-sequenz. 
-
-Note however that simple task-completion based metascheduling of
-existing tasks can be done via simple a simple wrapper that reports task
-startup, invokes the task, and reports task completion, without
-modifying existing external tasks in any way.
-
-
+\label{config}
 \section{Task Definition Files}
 
 A {\em Task Definition File} defines the properties of a sequenz task:
@@ -116,7 +111,14 @@ control scripts. It's a probably a good idea to do this if possible, but
 lower level scripts that are invoked as the task runs can communicate
 directly with sequenz if necessary.
 
-\subsection{Program Usage}
+\section{wrapper}
+
+A simple a simple wrapper script invoked by sequenz reports task
+startup, invokes the task, and reports task completion or failure. 
+
+
+\label{usage}
+\section{Usage}
 
 All user-configurable parameters are set in \verb#config.py#. There is
 one commandline option to force a restart from the state dump file
