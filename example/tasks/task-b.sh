@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TMPDIR=${TMPDIR:-/tmp/sequenz-example}
+TMPDIR=${TMPDIR:-/tmp/$USER/sequenz-example}
 mkdir -p $TMPDIR
 
 # check prerequistes

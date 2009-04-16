@@ -15,7 +15,7 @@ import config
 
 def create_daemon():
 
-    # We require SINGLE THREADED operation (see repository docs)
+    # REQUIRE SINGLE THREADED OPERATION (see documentation)
     Pyro.config.PYRO_MULTITHREADED = 0
 
     # locate the Pyro nameserver

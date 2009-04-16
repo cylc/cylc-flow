@@ -2,7 +2,7 @@
 
 # initial task (no prerequistes)
 
-TMPDIR=${TMPDIR:-/tmp/sequenz-example}
+TMPDIR=${TMPDIR:-/tmp/$USER/sequenz-example}
 mkdir -p $TMPDIR
 
 # generate outputs
