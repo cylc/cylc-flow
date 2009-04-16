@@ -33,7 +33,7 @@ state_dump_file = 'running/example/state'
 # PYRO NAMESERVER CONFIGURATION 
 # group must be unique per sequenz instance 
 # so that different systems don't interfere
-pyro_ns_group = ':example'   
+pyro_ns_group = 'example'   
 
 task_list = [ 'A', 'B', 'C' ]
 

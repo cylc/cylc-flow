@@ -116,7 +116,7 @@ state_dump_file = 'running/scaling-test/state'
 # PYRO NAMESERVER CONFIGURATION 
 # group must be unique per sequenz instance 
 # so that different systems don't interfere
-pyro_ns_group = ':scaling'   
+pyro_ns_group = 'scaling'   
 
 task_list = [\n""" )
 
