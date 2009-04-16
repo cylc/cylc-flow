@@ -18,41 +18,39 @@ for Multi-Model Real Time Forecasting}
 
 \begin{abstract}
 
-An extremely flexible approach to ensuring correct order of execution of
-a complex set of interdependent tasks is described.  The method is
-naturally implemented using Object Oriented Programming techniques. Each
-task is represented by a self-contained {\em task object} that does not
-know anything about other tasks in the system but can interact with
-others to negotiate dependencies so that {\em correct execution order
-emerges naturally at run time}. The total absence of explicit sequencing
-logic means tasks can be switched in and out of the system at will, and
-the system can be arbitrarily extended without any without any change to
-the control program logic.  Our dynamic metascheduler implementation,
-{\em sequenz}, is aimed at cycling multi-model real time forecasting
-systems.  It can run tasks from many different forecast cycles
-simultaneously, where dependencies allow.  In addition, it can be
-completely tested on the configured task set without running any real
-tasks, and partial parallel test systems that feed off the main
-operational system can be created quickly on an ad hoc basis. Sequenz
-is written in Python, and uses the Python Remote Object protocol ({\em
-Pyro}) for direct network communication between task objects and the
-tasks they represent. Pyro also enables efficient RPC-based remote
-control and system monitoring by external programs.  Sequenz can be
-interfaced to existing models and tasks with minimal overhead.
-
+We describe an extremely flexible way to ensure correct order of
+execution in a complex set of interdependent tasks, with particular
+application to continuously cycling multi-model environmental
+forecasting systems. Each task is represented by a self-contained object
+that can interact with other task objects, to negotiate dependencies, so
+that {\em correct execution order emerges naturally at run time}. The
+absence of any explicit sequencing logic means tasks can be switched in
+and out at will, and new tasks can added without any change to the main
+control program. Our dynamic metascheduler implementation, {\em
+sequenz}, controls NIWA's Ecoconnect multi-model multi-platform real
+time environmental forecasting system which, where dependencies allow,
+can run tasks from many different forecast cycles simultaneously.
+Sequenz can be interfaced to existing models/tasks with minimal
+overhead, can be completely tested on the configured task set without
+running the real tasks, and partial (or full) parallel test systems that
+feed off the main operational system can be created quickly on an ad hoc
+basis.  Sequenz is written in object oriented Python, and uses the
+Python Remote Object protocol ({\em Pyro}) for network communication
+between task objects and the tasks they represent.  Pyro also enables
+efficient remote control and system monitoring by external programs.
 \end{abstract}
 
 \section{Metascheduling Overview}
 
-Metascheduling is the process of deciding when each task in a system of
-interdependent tasks is {\em ready to run}, at which point it can be
-submitted to a normal batch scheduler for allocation to available
-computing resource.  Such a task set is generally related by mutual
-input/output dependencies: each task may depend on one or more
-``upstream'' tasks for input, and may generate output for use by one or
-more ``downstream'' tasks.  A {\em task} is any group of processes to be
-treated as a single entity for scheduling purposes (and which would
-generally be controlled by a single top level script or program).
+Metascheduling is the process of determining when a task\footnote{A {\em
+task} is any group of processes to be treated as a single entity for
+scheduling purposes (and which would generally be controlled by a single
+top level script or program).} is {\em ready to execute} in the sense
+that all of its prerequisites have been satisfied by other tasks in the
+system, at which point it may be submitted to a normal batch queue
+scheduler for allocation to available computing resource. Each task in
+such a system may depend on one or more ``upstream'' tasks for input,
+and may generate output for use by one or more ``downstream'' tasks.
 
 The National Institute of Water and Atmosperhic Research (NIWA), New
 Zealand, has developed an operational environmental forecasting system,
