@@ -41,14 +41,14 @@ class manager ( Pyro.core.ObjBase ):
         else:
             # use configured task list and start time
             print
-            print 'Initial reference time ' + config.start_time
+            print 'START time: ' + config.start_time
             print
-            self.log.info( 'initial reference time ' + config.start_time )
+            self.log.info( 'Start time: ' + config.start_time )
             self.system_state = system_state.state_from_list( config.state_dump_file, config.task_list, config.start_time, config.stop_time )
 
         if config.stop_time:
-            print 'Final reference time ' + config.stop_time
-            self.log.info( 'final reference time ' + config.stop_time )
+            print 'STOP time: ' + config.stop_time
+            self.log.info( 'Stop time: ' + config.stop_time )
        
         # task loggers that propagate messages up to the main logger
         for name in self.system_state.get_unique_taskname_list():
@@ -100,12 +100,12 @@ class manager ( Pyro.core.ObjBase ):
                 new_task = instantiation.get_by_name( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
                 if config.stop_time and int( new_task.ref_time ) > int( config.stop_time ):
                     # we've reached the stop time: delete the new task 
-                    new_task.log.warning( new_task.name + " STOPPING at configured stop time " + config.stop_time )
+                    new_task.log.info( new_task.name + " STOPPING at configured stop time " + config.stop_time )
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
                     self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
-                    new_task.log.info( "New task connected for " + new_task.ref_time )
+                    new_task.log.info( "New " + new_task.name + " connected for " + new_task.ref_time )
                     self.tasks.append( new_task )
 
     def dump_state( self ):
@@ -150,17 +150,17 @@ class manager ( Pyro.core.ObjBase ):
                 lame_ducks.append( task )
     
         for lame in lame_ducks:
-            lame.log.info( "abdicating a lame duck " + lame.identity )
+            lame.log.warning( "ABDICATING A LAME TASK " + lame.identity )
 
             # dynamic task object creation by task and module name
             new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
-            new_task.log.info( "New task connected for " + new_task.ref_time )
+            new_task.log.debug( "New task connected for " + new_task.ref_time )
             self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
             self.tasks.append( new_task )
 
             self.tasks.remove( lame )
             self.pyro_daemon.disconnect( lame )
-            lame.log.info( "lame task disconnected for " + lame.ref_time )
+            lame.log.debug( "lame task disconnected for " + lame.ref_time )
             del lame
 
     def kill_spent_tasks( self ):
