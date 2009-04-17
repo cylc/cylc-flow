@@ -19,6 +19,8 @@ import config
 import logging
 import re
 
+import profile
+
 global pyro_daemon
 
 # scons will replace this with actual version at build/install time:
@@ -39,7 +41,7 @@ def clean_shutdown( reason ):
     log = logging.getLogger( 'main' )
     log.critical( 'System Halt: ' + reason )
     pyro_daemon.shutdown( True ) 
-    sys.exit(0)
+#    sys.exit(0)
 
 def usage():
     print "sequenz [-r]"
@@ -102,6 +104,7 @@ def main( argv ):
 
         if master.system_halt:
             clean_shutdown( 'remote request' )
+	    return
 
         if task_base.state_changed and not master.system_pause:
             # PROCESS ALL TASKS whenever one has changed state
@@ -114,6 +117,7 @@ def main( argv ):
 
             if pool.all_finished():
                 clean_shutdown( "ALL TASKS FINISHED" )
+                return
 
         # REMOTE METHOD HANDLING; with no timeout and single-
         # threaded pyro, handleRequests() returns after one or
@@ -127,4 +131,13 @@ def main( argv ):
      # END MAIN LOOP
 
 if __name__ == "__main__":
-    main( sys.argv )
+    
+    if False:
+	# Do this to get performance profiling information
+	# This method has a big performance hit itself, so
+	# maybe there is a better way to do it?!)
+        profile.run( 'main( sys.argv )' )
+
+    else:
+    	main( sys.argv )
+
