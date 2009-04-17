@@ -22,13 +22,14 @@ dummy_clock_offset = 10
 job_launch_method = 'direct'
 #job_launch_method = 'qsub'
 
+running_dir = os.environ['HOME'] + '/running/sequenz-example'
 # LOGGING CONFIGURATION
-logging_dir = 'running/example/log' 
+logging_dir = running_dir + '/log' 
 logging_level = logging.INFO
 #logging_level = logging.DEBUG
 
 # STATE DUMP FILE
-state_dump_file = 'running/example/state'
+state_dump_file = running_dir + '/state'
 
 # PYRO NAMESERVER CONFIGURATION 
 # group must be unique per sequenz instance 
