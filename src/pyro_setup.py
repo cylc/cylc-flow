@@ -11,31 +11,56 @@
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 
+import sys
 import config
 
 def create_daemon():
 
+    print "Configuring Pyro"
     # REQUIRE SINGLE THREADED OPERATION (see documentation)
+    print "   + single threaded" 
     Pyro.config.PYRO_MULTITHREADED = 0
 
     # locate the Pyro nameserver
+    print "   + locating nameserver" 
     pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
 
-    print
-    print "Using Pyro nameserver group '" + config.pyro_ns_group + "'"
-    print "(must be unique for each program instance)"
- 
     try:
-        # first delete any existing objects registered in my group name
-        # (this avoids having to restart the nameserver every time we
-        # run the controller, or otherwise having to disconnect
-        # individual objects that already exist). 
-        pyro_nameserver.deleteGroup( config.pyro_ns_group )
-    except NamingError:
-        # no such group already registered
-        pass
+	# abort if any existing objects are registered in my group name
+	# (this may indicate another instance of sequenz is running
+	# with the same groupname; must be unique for each instance
+	# else the different systems will interfere with each other) 
+    
+	print "   + creating nameserver group '" + config.pyro_ns_group + "'"
+    	pyro_nameserver.createGroup( config.pyro_ns_group )
 
-    pyro_nameserver.createGroup( config.pyro_ns_group )
+    except NamingError:
+
+	print ""
+    	print "ERROR: group '" + config.pyro_ns_group + "' is already registered"
+	
+	objs = pyro_nameserver.list( config.pyro_ns_group )
+
+	if len( objs ) == 0:
+		print "(although it currently contains no registered objects)."
+
+	else:
+		print "And contains the following registered objects:"
+		for obj in objs:
+			print '  + ' + obj[0]
+
+	print ""
+	print "OPTIONS:"
+	print "(i) if the group is yours from a previous aborted run you can"
+	print "    manually delete it with 'pyro-nsc deletegroup " + config.pyro_ns_group +"'"
+	print "(ii) if the group is being used by another program, change"
+	print "    'pyro_ns_group' in your config file to avoid interference."
+	print ""
+
+	print "ABORTING NOW"
+	#raise NamingError
+	sys.exit(1)
+
     pyro_daemon = Pyro.core.Daemon()
     pyro_daemon.useNameServer(pyro_nameserver)
 
