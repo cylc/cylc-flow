@@ -15,8 +15,8 @@ def usage():
     print 'large number of external dummy programs all running at the same time.'
     print ''
     print 'Output locations relative to script running directory:'
-    print '  scaling-test/config.py'
-    print '  scaling-test/taskdef/(task definition files)'
+    print '  system-def/scaling-test/config.py'
+    print '  system-def/scaling-test/taskdef/(task definition files)'
     sys.exit(1)
 
 def main( argv ):
@@ -26,7 +26,7 @@ def main( argv ):
 
     n_tasks = argv[1]
 
-    topdir = 'scaling-test'
+    topdir = 'system-def/scaling-test'
     defdir = topdir + '/taskdef'
 
     if not os.path.exists( defdir ):
@@ -105,13 +105,16 @@ dummy_clock_offset = 10
 job_launch_method = 'direct'
 #job_launch_method = 'qsub'
 
+# TOP LEVEL OUTPUT DIR
+output_dir = os.environ['HOME'] + '/sequenz-output' 
+
 # LOGGING CONFIGURATION
-logging_dir = 'running/scaling-test/log' 
+logging_dir = output_dir + '/scaling-test/log' 
 logging_level = logging.INFO
 #logging_level = logging.DEBUG
 
 # STATE DUMP FILE
-state_dump_file = 'running/scaling-test/state'
+state_dump_file = output_dir + '/scaling-test/state-dump'
 
 # PYRO NAMESERVER CONFIGURATION 
 # group must be unique per sequenz instance 

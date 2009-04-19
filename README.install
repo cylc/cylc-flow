@@ -1,7 +1,13 @@
-Sequenz should be installed to an external (non-repository) location.
-TO DO: INSTALLATION INSTRUCTIONS
+1/ Get a copy of sequenz:
+	darcs get http://matiu.niwa.co.nz/repos/sequenz
 
-For development purposes, however, sequenz can be run from the top level
-of the source repository itself. This should obviously be done in a
-branch, not in the master repository, in case of accidental source
-corruption.
+2/ sequenz is designed to run from the top level sequenz directoy.
+
+    2a/ For development purposes, you can do this from within an actual
+	sequenz repository, so that any changes can be recorded directly.
+  	Be careful not to corrupt the repository, however.	
+
+    2b/ You can install to, and run from, a non-repository location 
+	(run 'scons install' after modifying the SConstruct file;
+	appropriately; this installs to an identical source tree, 
+	except that it is not a darcs repository).    

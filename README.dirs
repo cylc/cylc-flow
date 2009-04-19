@@ -7,10 +7,14 @@ src/     - python modules used by sequenz
 
 doc/     - sequenz documentation
 
-example/ - example interdependent task set, with task definition and config files for sequenz
+system-def/ - top level system (task set) definition directory
 
-scaling/ - interdependent system generator, to test sequenz performance on large task numbers
+	example/ - example task set, with sequenz task definition and config files
 
-taskdef/ - task definition file templates, with some documentation
+	templates/ - task definition file templates, with some documentation
 
-ecoconnect/ - ecoconnect task definition and config files 
+	ecoconnect/ - ecoconnect task definition and config files 
+
+		operational/ - ecoconnect operational tasks
+
+		topnet-test/ - ecoconnect topnet parallel test tasks

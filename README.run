@@ -2,15 +2,15 @@ HOW TO RUN SEQUENZ FOR SYSTEM FOO
 
 [paths below are relative to the sequenz repo top level]
 
-1/ write your task definition files: foo/taskdef/(*.def, *.pydef)
+1/ write your task definition files: system-def/foo/taskdef/(*.def, *.pydef)
 
-2/ write your sequenz config file: foo/config.py
+2/ write your sequenz config file: system-def/foo/config.py
 
 
-3/ generate the task class code (foo/task_classes.py)
-   and sequenz environment script (foo/environment.sh)
+3/ generate the task class code (system-def/foo/task_classes.py)
+   and sequenz environment script (system-def/foo/environment.sh)
 
-    $ sequenz-setup.py
+    $ bin/configure-system
 
 
 4/ source the sequenz environment file for system foo (sets the PATH and
@@ -19,9 +19,13 @@ HOW TO RUN SEQUENZ FOR SYSTEM FOO
    runs the sequenz instance that handles system foo, and in any other shells
    that need to interact with the same sequenz instance (e.g. system monitors).
 
-   $ . foo/environment.sh
+   $ . system-def/foo/environment.sh
 
 
 5/ run sequenz
 
-   $ sequenz.py
+   $ bin/sequenz.py
+
+To switch to a controlling an entirely different existing set of tasks, just
+source the environment.sh file for that system and run sequenz again.
+
