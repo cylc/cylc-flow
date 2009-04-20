@@ -92,7 +92,7 @@ class manager ( Pyro.core.ObjBase ):
                 else:
                     # no stop time, or we haven't reached it yet.
                     self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
-                    new_task.log.info( "New " + new_task.name + " connected for " + new_task.ref_time )
+                    new_task.log.debug( "New " + new_task.name + " connected for " + new_task.ref_time )
                     self.tasks.append( new_task )
 
     def dump_state( self ):

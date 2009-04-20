@@ -70,7 +70,7 @@ class task_base( Pyro.core.ObjBase ):
             self.log.critical( "unknown initial task state: " + initial_state )
             sys.exit(1)
 
-        self.log.info( "Creating new task in " + initial_state + " state, for " + self.ref_time )
+        self.log.debug( "Creating new task in " + initial_state + " state, for " + self.ref_time )
 
         if not config.dummy_mode and self.name in config.dummy_out:
             self.log.warning( "dummying out " + self.identity + " in real mode")
