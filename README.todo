@@ -1,0 +1,4 @@
+Sequenz To Do List
+
+1/ restart from state dump is incomplete in the case of task types with unusual
+   state information, such as "catching up".
