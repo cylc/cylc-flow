@@ -13,22 +13,26 @@ start_time = "2009030200"
 #stop_time = "2009020618"
 stop_time = None
 
-# DUMMY MODE SETTINGS
+# DUMMY MODE
 dummy_mode = True
 dummy_clock_rate = 10      
 dummy_clock_offset = 10 
 
 # JOB LAUNCH METHOD
 #job_launch_method = 'qsub'
+#job_queue = 'default'
 job_launch_method = 'direct'
 
-# LOGGING CONFIGURATION
-logging_dir = os.environ['HOME'] + '/sequenz.logs' 
+# TOP LEVEL OUTPUT DIR
+output_dir = os.environ['HOME'] + '/sequenz-output' 
+
+# LOGGING
+logging_dir = output_dir + '/operational/log-files' 
 logging_level = logging.INFO
 #logging_level = logging.DEBUG
 
 # STATE DUMP FILE
-state_dump_file = os.environ['HOME'] + '/sequenz.state'
+state_dump_file = output_dir + '/operational/state-dump'
 
 # PYRO NAMESERVER CONFIGURATION 
 # group must be unique per sequenz instance 

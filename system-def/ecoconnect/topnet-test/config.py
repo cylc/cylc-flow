@@ -10,25 +10,29 @@ import os
 
 # START AND STOP (OPTIONAL) REFERENCE TIMES
 start_time = "2009032618"
-#stop_time = "2009032718"
-stop_time = None
+stop_time = "2009032718"
+#stop_time = None
 
-# DUMMY MODE SETTINGS
-dummy_mode = False
+# DUMMY MODE
+dummy_mode = True
 dummy_clock_rate = 10      
 dummy_clock_offset = 10 
 
 # JOB LAUNCH METHOD
 #job_launch_method = 'direct'
 job_launch_method = 'qsub'
+job_queue = 'topnet_test'
 
-# LOGGING CONFIGURATION
-logging_dir = os.environ['HOME'] + '/running/topnet_test/log' 
+# TOP LEVEL OUTPUT DIR
+output_dir = os.environ['HOME'] + '/sequenz-output' 
+
+# LOGGING
+logging_dir = output_dir + '/topnet_test/log-files' 
 logging_level = logging.INFO
 #logging_level = logging.DEBUG
 
 # STATE DUMP FILE
-state_dump_file = os.environ['HOME'] + '/running/topnet_test/state'
+state_dump_file = output_dir + '/topnet_test/state-dump'
 
 # PYRO NAMESERVER CONFIGURATION 
 # group must be unique per sequenz instance 

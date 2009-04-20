@@ -96,7 +96,7 @@ start_time = "2009030200"
 stop_time = "2009030300"
 #stop_time = None
 
-# DUMMY MODE SETTINGS
+# DUMMY MODE
 dummy_mode = True
 dummy_clock_rate = 10      
 dummy_clock_offset = 10 
@@ -104,12 +104,13 @@ dummy_clock_offset = 10
 # JOB LAUNCH METHOD
 job_launch_method = 'direct'
 #job_launch_method = 'qsub'
+#job_queue = 'default'
 
 # TOP LEVEL OUTPUT DIR
 output_dir = os.environ['HOME'] + '/sequenz-output' 
 
-# LOGGING CONFIGURATION
-logging_dir = output_dir + '/scaling-test/log' 
+# LOGGING
+logging_dir = output_dir + '/scaling-test/log-files' 
 logging_level = logging.INFO
 #logging_level = logging.DEBUG
 

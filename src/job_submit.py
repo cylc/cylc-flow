@@ -65,13 +65,12 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
         command += external_task + ' ' + task_name + ' ' + ref_time + ' ' + config.pyro_ns_group + ' ' + str( config.dummy_mode ) + ' ' + str( config.dummy_clock_rate ) + ' ' + str( config.dummy_clock_offset ) + ' &' 
 
     elif config.job_launch_method == 'qsub':
-        # command += ' qsub -q ' + system + ' -z'
-        print 'job_submit.py: using HARDWIRED TOPNET_TEST queue'
-        command += ' qsub -q topnet_test -z'
+        command += ' qsub -q ' + config.queue + ' -z'
 
         command += ' -v REFERENCE_TIME=' + ref_time
         command += ',TASK_NAME=' + task_name
         command += ',SEQUENZ_ENV=' + sequenz_env
+        #command += ',PYTHONPATH=' + os.environ['PYTHONPATH']
 
         for entry in extra_vars:
             [ var_name, value ] = entry
