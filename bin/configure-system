@@ -6,8 +6,9 @@
 
 # 1/ generate task class code for sequenz
 # 2/ generate system environment script 
-#    + this exports PATH and PYTHONPATH, and also 
+#    + this exports PATH and PYTHONPATH, and 
 #      SEQUENZ_ENV (its own path) for system tasks
+#      and SEQUENZ_BIN for utility scripts
 # 3/ copy task-wrapper from sequenz/bin to system/tasks
 
 set -e  # ABORT on error
@@ -36,12 +37,12 @@ PATH=$PWD/bin:$PATH
 
 cd $SYSDIR
 
-echo "> generating task class code for sequenz: $SYSDIR/task_classes.py"
+echo "> generating task class code:"
+echo "     $SYSDIR/task_classes.py"
 task-generator.py taskdef/*
 
-# generate system environment script
-echo "> generating environment script for this system: $SYSDIR/environment.sh"
-echo "  (the environment script sets PATH and PYTHONPATH for system $SYSDIR)"
+echo "> generating environment script for this system:"
+echo "     $SYSDIR/environment.sh"
 
 cat > $ENV_SCRIPT <<EOF
 #!/bin/bash
@@ -64,10 +65,15 @@ export PATH PYTHONPATH
 
 # export my location as \$SEQUENZ_ENV
 export SEQUENZ_ENV=$TOPDIR/$SYSDIR/$ENV_SCRIPT
+
+# export sequenz bin path for utility scripts
+export SEQUENZ_BIN=$TOPDIR/bin
 EOF
 
 # copy task-wrapper
 
+echo "> copying task-wrapper to system tasks dir"
 mkdir -p $TOPDIR/$SYSDIR/tasks
 cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/tasks
 
+echo "SOURCE THE NEW SYSTEM ENVIRONMENT.SH BEFORE RUNNING SEQUENZ"
