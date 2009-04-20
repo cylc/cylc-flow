@@ -1,5 +1,14 @@
 #!/usr/bin/python
 
+# Construct the command to run real or dummy external tasks, and run it.
+
+# supported job launch methods:
+#  (i) direct execution in the background ( 'task &' )
+#  (ii) qsub
+
+# dummy tasks are always run directly because the dummy task script 
+# currently requires commandline arguments (not supported by qsub).
+
 import os
 import re
 import config
@@ -18,8 +27,14 @@ def run( owner, task_name, ref_time, task, extra_vars=[] ):
             system = re.split( '_', sequenz_owner )[-1]
             owner = re.sub( '_oper$', '_' + system, owner )
 
+    if config.dummy_mode:
+	# don't qsub in dummy mode (see above)
+	if config.job_launch_method == 'qsub':
+	   print 'warning: no qsub in dummy mode'
+	   config.job_launch_method = 'direct'
+
     command = ''
-    if owner != sequenz_owner and config.dummy_mode != True and config.job_launch_method == 'qsub': 
+    if owner != sequenz_owner and not config.dummy_mode and config.job_launch_method == 'qsub': 
         # run the task as its proper owner
 	#  + SUDO QSUB MUST BE ALLOWED
         #  + NOT FOR DIRECT JOB LAUNCH (assuming 'sudo task' not allowed in general)
