@@ -25,8 +25,8 @@ class manager ( Pyro.core.ObjBase ):
         # get a reference to the main log
         self.log = logging.getLogger( "main" )
 
-        # broker
-        self.broker = broker.broker()
+        if config.use_broker:
+            self.broker = broker.broker()
         
         # start and stop times, from config file
         self.start_time = config.start_time
@@ -161,7 +161,8 @@ class manager ( Pyro.core.ObjBase ):
             self.tasks.remove( lame )
             self.pyro_daemon.disconnect( lame )
             lame.log.debug( "lame task disconnected for " + lame.ref_time )
-            self.broker.unregister( lame.get_fullpostrequisites() )
+            if config.use_broker:
+                self.broker.unregister( lame.get_fullpostrequisites() )
 
             del lame
 
@@ -199,7 +200,8 @@ class manager ( Pyro.core.ObjBase ):
             self.log.debug( "removing spent " + task.identity )
             self.tasks.remove( task )
             self.pyro_daemon.disconnect( task )
-            self.broker.unregister( task.get_fullpostrequisites() )
+            if config.use_broker:
+                self.broker.unregister( task.get_fullpostrequisites() )
 
         del death_list
 
@@ -219,7 +221,8 @@ class manager ( Pyro.core.ObjBase ):
                 self.log.debug( "removing spent " + task.identity )
                 self.tasks.remove( task )
                 self.pyro_daemon.disconnect( task )
-                self.broker.unregister( task.get_fullpostrequisites() )
+                if config.use_broker:
+                    self.broker.unregister( task.get_fullpostrequisites() )
 
             del death_list
 
@@ -253,5 +256,3 @@ class manager ( Pyro.core.ObjBase ):
             self.kill_spent_tasks()
 
             self.kill_lame_ducks()
-
-
