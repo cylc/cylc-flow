@@ -13,6 +13,10 @@ start_time = "2009030200"
 stop_time = "2009030300"
 #stop_time = None
 
+# SCHEDULING ALGORITHM (task interaction, or broker)
+#use_broker = False
+use_broker = True
+
 # DUMMY MODE
 dummy_mode = False
 dummy_clock_rate = 10      

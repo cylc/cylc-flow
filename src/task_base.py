@@ -201,6 +201,9 @@ class task_base( Pyro.core.ObjBase ):
     def get_postrequisites( self ):
         return self.postrequisites.get_requisites()
 
+    def get_fullpostrequisites( self ):
+        return self.postrequisites
+
     def get_postrequisite_list( self ):
         return self.postrequisites.get_list()
 
@@ -251,6 +254,14 @@ class task_base( Pyro.core.ObjBase ):
 
         if self.postrequisites.all_satisfied():
             self.set_finished()
+
+    def update( self, reqs ):
+        for req in reqs.get_list():
+            if req in self.prerequisites.get_list():
+                # req is one of my prerequisites
+                if reqs.is_satisfied(req):
+                    self.prerequisites.set_satisfied( req )
+
 
 #----------------------------------------------------------------------
 class free_task( task_base ):

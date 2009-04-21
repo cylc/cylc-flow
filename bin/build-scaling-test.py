@@ -96,6 +96,10 @@ start_time = "2009030200"
 stop_time = "2009030300"
 #stop_time = None
 
+# SEQUENCING METHOD: task interaction or negotiation with a broker
+#use_broker = False
+use_broker = True
+
 # DUMMY MODE
 dummy_mode = True
 dummy_clock_rate = 10      

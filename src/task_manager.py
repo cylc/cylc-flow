@@ -14,6 +14,7 @@ import pyro_ns_naming
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 import logging
+import broker
 
 class manager ( Pyro.core.ObjBase ):
     def __init__( self, pyro_d, reload, dummy_clock ):
@@ -23,6 +24,9 @@ class manager ( Pyro.core.ObjBase ):
 
         # get a reference to the main log
         self.log = logging.getLogger( "main" )
+
+        # broker
+        self.broker = broker.broker()
         
         # start and stop times, from config file
         self.start_time = config.start_time
@@ -72,6 +76,15 @@ class manager ( Pyro.core.ObjBase ):
         #--
         for task in self.tasks:
             task.get_satisfaction( self.tasks )
+
+    def negotiate( self ):
+        # each task registers its postrequisites with the broker
+        for task in self.tasks:
+            self.broker.register( task.get_fullpostrequisites() )
+
+        # each task asks the broker to satisfy its prerequisites
+        for task in self.tasks:
+            task.prerequisites.satisfy_me( self.broker.get_requisites() )
 
     def run_if_ready( self ):
         # tell tasks to run if their prequisites are satisfied
@@ -148,6 +161,8 @@ class manager ( Pyro.core.ObjBase ):
             self.tasks.remove( lame )
             self.pyro_daemon.disconnect( lame )
             lame.log.debug( "lame task disconnected for " + lame.ref_time )
+            self.broker.unregister( lame.get_fullpostrequisites() )
+
             del lame
 
     def kill_spent_tasks( self ):
@@ -184,6 +199,7 @@ class manager ( Pyro.core.ObjBase ):
             self.log.debug( "removing spent " + task.identity )
             self.tasks.remove( task )
             self.pyro_daemon.disconnect( task )
+            self.broker.unregister( task.get_fullpostrequisites() )
 
         del death_list
 
@@ -203,6 +219,7 @@ class manager ( Pyro.core.ObjBase ):
                 self.log.debug( "removing spent " + task.identity )
                 self.tasks.remove( task )
                 self.pyro_daemon.disconnect( task )
+                self.broker.unregister( task.get_fullpostrequisites() )
 
             del death_list
 
@@ -226,7 +243,10 @@ class manager ( Pyro.core.ObjBase ):
 
             self.regenerate()
 
-            self.interact()
+            if config.use_broker:
+                self.negotiate()
+            else:
+                self.interact()
 
             self.run_if_ready()
 

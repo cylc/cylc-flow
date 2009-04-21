@@ -33,6 +33,22 @@ class requisites:
             self.satisfied[req] = False
             self.ordered_list.append( req ) 
 
+    def count( self ):
+        return len( self.ordered_list )
+
+    def update( self, reqs ):            
+        for req in reqs.get_list():
+            if req not in self.ordered_list:
+                self.ordered_list.append( req )
+
+            self.satisfied[req] = reqs.is_satisfied( req )
+
+    def downdate( self, reqs ):
+        for req in reqs.get_list():
+            if req in self.ordered_list:
+                self.ordered_list.remove( req )
+                del self.satisfied[req]
+
     def all_satisfied( self ):
         if False in self.satisfied.values(): 
             return False

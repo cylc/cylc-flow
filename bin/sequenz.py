@@ -109,7 +109,8 @@ def main( argv ):
         if task_base.state_changed and not master.system_pause:
             # PROCESS ALL TASKS whenever one has changed state
             # as a result of a remote task message coming in: 
-            # interact, run, create new, and kill spent tasks
+            # interact OR negotiate with a requisite broker,
+            # then run, create new, and kill spent tasks
             #---
             pool.process_tasks()
 

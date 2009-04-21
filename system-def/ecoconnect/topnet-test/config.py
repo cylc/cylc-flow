@@ -13,6 +13,10 @@ start_time = "2009032618"
 stop_time = "2009032718"
 #stop_time = None
 
+# SEQUENCING ALGORITHM
+#use_broker = False
+use_broker = True
+
 # DUMMY MODE
 dummy_mode = True
 dummy_clock_rate = 10      
