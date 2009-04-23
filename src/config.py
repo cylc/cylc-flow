@@ -104,7 +104,7 @@ class config:
             print " + task sequencing method: broker negotiation"
         else:
             print " + task sequencing method: task interaction"
-            print "   (may be slow if number of tasks is very large) 
+            print "   (may be slow if number of tasks is very large)" 
 
         print " + start time: " + self.configured['start_time']
         if self.configured['stop_time']:
