@@ -204,7 +204,7 @@ import logging
         lines = DEF.readlines()
         DEF.close()
 
-        print 'parsing ' + task_def_file
+        print '  + ' + task_def_file
 
         if re.match( '^.*\.pydef$', task_def_file ):
             # this file is a python class definition

@@ -134,14 +134,9 @@ config['task_list'] = [\n""" )
     FILE.close()
 
     print
-    print "> To generate your task class code and environment script, do this:"
+    print "> Now you need to generate task classes and environment script:"
     print "  $ configure-system " + topdir
     print 
-    print "> And source the resulting environment script before running sequenz:"
-    print "  $ . " + topdir + "/environment.sh"
-    print "  $ sequenz.py"
-    print
-
 
 if __name__ == '__main__':
     main( sys.argv )

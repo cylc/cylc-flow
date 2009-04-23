@@ -37,10 +37,12 @@ PATH=$PWD/bin:$PATH
 
 cd $SYSDIR
 
-echo "> generating task class code:"
-echo "     $SYSDIR/task_classes.py"
+echo
+echo "> generating $SYSDIR/task_classes.py"
+
 task-generator.py taskdef/*
 
+echo
 echo "> generating environment script for this system:"
 echo "     $SYSDIR/environment.sh"
 
@@ -72,8 +74,13 @@ EOF
 
 # copy task-wrapper
 
+echo
 echo "> copying task-wrapper to system tasks dir"
 mkdir -p $TOPDIR/$SYSDIR/tasks
 cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/tasks
 
-echo "SOURCE THE NEW SYSTEM ENVIRONMENT.SH BEFORE RUNNING SEQUENZ"
+echo
+echo "> SOURCE THE SYSTEM ENVIRONMENT SCRIPT BEFORE RUNNING SEQUENZ"
+echo "  \$ . $TOPDIR/$SYSDIR/environment.sh"
+echo "  \$ sequenz.py"
+echo
