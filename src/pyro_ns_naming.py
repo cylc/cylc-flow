@@ -1,13 +1,11 @@
 #!/usr/bin/python
 
-# Different controller instances must use different versions of this
-# file, each with pyro_ns_group set to a different group name because
-# there can be only one instance of the nameserver running at a time.
+# Different sequenz instances must use different Pyro nameserver 
+# group names to prevent the different systems interfering with
+# each other via the common nameserver. 
 
 # See Pyro manual for nameserver hierachical naming details ...
-# prepending ':' put names or sub-groups under the root group. 
+# prepending ':' puts names or sub-groups under the root group. 
  
-from config import pyro_ns_group
-
-def name( object_name ):
-   return pyro_ns_group + '.' + object_name
+def name( object_name, group_name ):
+   return group_name + '.' + object_name

@@ -31,7 +31,7 @@ class topnet_and_vis( task_base ):
     fuzzy_file_re =  re.compile( "^file (.*) ready$" )
     reftime_re = re.compile( "\d{10}")
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, ref_time, initial_state, launcher ):
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -59,7 +59,7 @@ class topnet_and_vis( task_base ):
             [8.9, "topnet vis finished for " + ref_time ],
             [9, self.name + " finished for " + ref_time] ])
 
-        task_base.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state, launcher )
 
 
     def run_external_task( self ):

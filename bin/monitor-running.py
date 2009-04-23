@@ -18,8 +18,8 @@ from time import sleep
 import pyro_ns_naming
 from string import ljust, rjust, split, upper, lower
 import datetime
-from config import dummy_mode
 
+import config
 
 class kit:
     def __init__( self, title ):
@@ -43,26 +43,34 @@ class kit:
 
         return [a] 
 
-title = kit( "EcoConnect System Monitor" )
+title = kit( "Sequenz System Monitor" )
+
+config = config.config()
+config.user_override()
+config.check()
+config.dump()
+print
+print "here we go ..."
+sleep(2)
 
 while True:
 
     try: 
     
-        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'god' ))
+        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'god', config.get('pyro_ns_group')))
         god._setTimeout(1)
 
 
         mode = 'REAL TIME OPERATION'
-        if dummy_mode:
-            mode = 'DUMMY MODE WITH ACCELERATED CLOCK' 
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock' ) )
+        if config.get('dummy_mode') :
+            mode = 'ACCELERATED CLOCK DUMMY MODE' 
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock', config.get('pyro_ns_group')))
             remote_clock._setTimeout(1)
 
         while True:
 
             dt = datetime.datetime.now()
-            if dummy_mode:
+            if config.get('dummy_mode'):
                 dt = remote_clock.get_datetime()
 
             max_name_len = 0
@@ -121,7 +129,7 @@ while True:
             reftimes.sort( key = int )
 
             blit = title.boof()
-            blit.append( "  Current Running Tasks" )
+            blit.append("system name: '" + config.get('system_name') + "'")
             blit.append( mode )
             blit.append( dt )
             for rt in reftimes:
@@ -135,13 +143,13 @@ while True:
             os.system( "clear" )
             for line in blit:
                 print line
-
             sleep(0.5)
 
     except:
+        # uncomment for debugging:
+        # raise
         os.system( "clear" )
-        for line in title.boof():
-            print line
-        print "Connection failed ..."
+        print "connection failed ..."
+        sleep(1)
 
-    sleep( 0.5 )
+        sleep( 0.5 )

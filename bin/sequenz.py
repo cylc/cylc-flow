@@ -2,7 +2,7 @@
 
 # YOU MUST EXPORT PYTHONPATH TO MAKE AVAILABLE:
 # 1/ sequenz 'src' module directory
-# 2/ system config module directory (for config.py and task_classes.py)
+# 2/ user config module (for user_config.py and task_classes.py)
 
 import sys, os
 
@@ -14,6 +14,7 @@ import pimp_my_logger
 import task_base
 import task_manager
 import dead_letter
+
 import config
 
 import logging
@@ -62,44 +63,48 @@ def main( argv ):
 
     print_banner()
 
+    # load system config defaults
+    system_config = config.config()
+    system_config.user_override()
+    system_config.check()
+    system_config.dump()
+
     # create the Pyro daemon
     global pyro_daemon
-    pyro_daemon = pyro_setup.create_daemon()
+    pyro_daemon = pyro_setup.create_daemon( system_config.get('pyro_ns_group'))
 
     # dummy mode accelerated clock
-    if config.dummy_mode:
-        dummy_clock = dummy_mode_clock.time_converter( config.start_time, config.dummy_clock_rate, config.dummy_clock_offset ) 
-        pyro_daemon.connect( dummy_clock, pyro_ns_naming.name( 'dummy_clock' ) )
+    if system_config.get('dummy_mode'):
+        dummy_clock = dummy_mode_clock.time_converter( system_config.get('start_time'), 
+                                                       system_config.get('dummy_clock_rate'), 
+                                                       system_config.get('dummy_clock_offset') ) 
+        pyro_daemon.connect( dummy_clock, pyro_ns_naming.name( 'dummy_clock', system_config.get( 'pyro_ns_group') ) )
     else:
         dummy_clock = None
 
-    print
-    print 'Logging to ' + config.logging_dir
-    if not os.path.exists( config.logging_dir ):
-        os.makedirs( config.logging_dir )
+    # create logging dirs
+    if not os.path.exists( system_config.get('logging_dir') ):
+       os.makedirs( system_config.get('logging_dir') )
 
     # top level logging
     log = logging.getLogger( 'main' )
-    pimp_my_logger.pimp_it( log, 'main', dummy_clock )
+    pimp_my_logger.pimp_it( log, 'main', system_config, dummy_clock )
 
     # remotely accessible control switch
     master = main_switch()
-    pyro_daemon.connect( master, pyro_ns_naming.name( 'master' ) )
+    pyro_daemon.connect( master, pyro_ns_naming.name( 'master', system_config.get('pyro_ns_group')) )
 
     # dead letter box for remote use
     dead_letter_box = dead_letter.letter_box()
-    pyro_daemon.connect( dead_letter_box, pyro_ns_naming.name( 'dead_letter_box' ) )
+    pyro_daemon.connect( dead_letter_box, pyro_ns_naming.name( 'dead_letter_box', system_config.get('pyro_ns_group') ) )
 
     # initialize the task pool from general config file or state dump
-    pool = task_manager.manager( pyro_daemon, restart, dummy_clock )
-    pyro_daemon.connect( pool, pyro_ns_naming.name( 'god' ) )
+    pool = task_manager.manager( system_config, pyro_daemon, restart, dummy_clock )
+    pyro_daemon.connect( pool, pyro_ns_naming.name( 'god', system_config.get('pyro_ns_group') ) )
 
     print
     print "Beginning task processing now"
-    if config.dummy_mode:
-        print "      (DUMMY MODE)"
-    print
- 
+
     while True: # MAIN LOOP
 
         if master.system_halt:

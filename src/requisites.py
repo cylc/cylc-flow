@@ -36,6 +36,10 @@ class requisites:
     def count( self ):
         return len( self.ordered_list )
 
+    def dump( self ):
+        for key in self.satisfied.keys():
+            print key + " ... ", self.satisfied[ key ]
+
     def update( self, reqs ):            
         for req in reqs.get_list():
             if req not in self.ordered_list:

@@ -15,12 +15,12 @@ class broker:
     def register( self, task_requisites ):
         # task updates me with its completed postrequisites
         self.requisites.update( task_requisites )
-        #print "update: ", self.requisites.count()
+        #print "register: ", self.requisites.count()
 
     def unregister( self, task_requisites ):
         # delete requisites from a dying task
         self.requisites.downdate( task_requisites )
-        #print "downdate: ", self.requisites.count()
+        #print "unregister: ", self.requisites.count()
 
     def get_requisites( self ):
         return self.requisites

@@ -12,17 +12,16 @@ import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 
 import sys
-import config
 
-def create_daemon():
+def create_daemon( pyro_ns_group ):
 
-    print "Configuring Pyro"
+    print " + configuring Pyro"
     # REQUIRE SINGLE THREADED OPERATION (see documentation)
-    print "   + single threaded" 
+    print "   - single threaded" 
     Pyro.config.PYRO_MULTITHREADED = 0
 
     # locate the Pyro nameserver
-    print "   + locating nameserver" 
+    print "   - locating nameserver" 
     pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
 
     try:
@@ -31,15 +30,15 @@ def create_daemon():
 	# with the same groupname; must be unique for each instance
 	# else the different systems will interfere with each other) 
     
-	print "   + creating nameserver group '" + config.pyro_ns_group + "'"
-    	pyro_nameserver.createGroup( config.pyro_ns_group )
+	print "   - creating nameserver group '" + pyro_ns_group + "'"
+    	pyro_nameserver.createGroup( pyro_ns_group )
 
     except NamingError:
 
 	print ""
-    	print "ERROR: group '" + config.pyro_ns_group + "' is already registered"
+    	print "ERROR: group '" + pyro_ns_group + "' is already registered"
 	
-	objs = pyro_nameserver.list( config.pyro_ns_group )
+	objs = pyro_nameserver.list( pyro_ns_group )
 
 	if len( objs ) == 0:
 		print "(although it currently contains no registered objects)."
@@ -52,7 +51,7 @@ def create_daemon():
 	print ""
 	print "OPTIONS:"
 	print "(i) if the group is yours from a previous aborted run you can"
-	print "    manually delete it with 'pyro-nsc deletegroup " + config.pyro_ns_group +"'"
+	print "    manually delete it with 'pyro-nsc deletegroup " + pyro_ns_group +"'"
 	print "(ii) if the group is being used by another program, change"
 	print "    'pyro_ns_group' in your config file to avoid interference."
 	print ""

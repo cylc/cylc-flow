@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # given a sequenz system definition directory:
-#    system/config.py
+#    system/user_config.py
 #    system/taskdef/(task definition files)
 
 # 1/ generate task class code for sequenz

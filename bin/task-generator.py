@@ -303,7 +303,7 @@ import logging
             FILE.write( strng )
 
         # class init function
-        FILE.write( indent + 'def __init__( self, ref_time, initial_state):\n\n' )
+        FILE.write( indent + 'def __init__( self, ref_time, initial_state, launcher ):\n\n' )
 
         indent_more()
 
@@ -319,7 +319,7 @@ import logging
         write_requisites( 'POSTREQUISITES' )
 
         # call parent's init method
-        FILE.write( indent + parent_class + '.__init__( self, ref_time, initial_state )\n\n' )
+        FILE.write( indent + parent_class + '.__init__( self, ref_time, initial_state, launcher )\n\n' )
 
         if 'EXPORT' in parsed_def.keys():
             # override run_external_task() for the export case

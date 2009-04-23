@@ -8,7 +8,7 @@ class streamflow( free_task ):
     # assume catchup mode and detect if we've caught up
     catchup_mode = True
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, ref_time, initial_state, launcher ):
 
         self.catchup_re = re.compile( "^CATCHINGUP:.*for " + ref_time )
         self.uptodate_re = re.compile( "^CAUGHTUP:.*for " + ref_time )
@@ -24,7 +24,7 @@ class streamflow( free_task ):
             [5, "got streamflow data for " + ref_time ],
             [5.1, self.name + " finished for " + ref_time] ])
 
-        free_task.__init__( self, ref_time, initial_state )
+        free_task.__init__( self, ref_time, initial_state, launcher )
 
         # NEED TO ALLOW FINISHED TASKS BACK TO THE TASK DELETION CUTOFF
         # Do this AFTER parent class init, which sets to the default

@@ -21,13 +21,14 @@ class state_base:
     # base class; override to provide different initialisation methods
     # content[ ref_time ] = [ [taskname, state], [task_name, state], ...]
 
-    def __init__( self, filename, start_time, stop_time = None ):
-        self.filename = filename
-        self.start_time = start_time
-        self.stop_time = stop_time
+    def __init__( self, config, launcher ):
+        self.filename = config.get('state_dump_file')
+        self.start_time = config.get('start_time')
+        self.stop_time = config.get('stop_time')
+        self.launcher = launcher
 
-        if re.compile( "/" ).search( filename ):
-            dir = os.path.dirname( filename )
+        if re.compile( "/" ).search( self.filename ):
+            dir = os.path.dirname( self.filename )
             if not os.path.exists( dir ):
                 os.makedirs( dir )
 
@@ -78,7 +79,7 @@ class state_base:
             for item in self.content[ ref_time ]:
                 [name, state] = item
                 # dynamic task object creation by task and module name
-                task = instantiation.get_by_name( 'task_classes', name )( ref_time, state )
+                task = instantiation.get_by_name( 'task_classes', name )( ref_time, state, self.launcher )
                 if name not in seen.keys():
                     seen[ name ] = True
                 elif state == 'finished':
@@ -104,32 +105,32 @@ class state_base:
 
 class state_from_list ( state_base ):
 
-    def __init__( self, filename, config_list, start_time, stop_time = None ):
-        # config_list = [ taskname(:state), taskname(:state), ...]
+    def __init__( self, config, launcher ):
+        # config.task_list = [ taskname(:state), taskname(:state), ...]
         # where (:state) is optional and defaults to 'waiting'.
 
-        state_base.__init__( self, filename, start_time, stop_time )
+        state_base.__init__( self, config, launcher )
 
         self.content = {}
 
-        for item in config_list:
+        for item in config.get('task_list'):
             state = 'waiting'
             name = item
             if re.compile( "^.*:").match( item ):
                 [name, state] = item.split(':')
 
-            if start_time not in self.content.keys():
-                self.content[ start_time  ] = [ [ name, state ] ]
+            if self.start_time not in self.content.keys():
+                self.content[ self.start_time  ] = [ [ name, state ] ]
             else:
-                self.content[ start_time  ].append( [ name, state ] )
+                self.content[ self.start_time  ].append( [ name, state ] )
 
 class state_from_dump ( state_base ):
     
-    def __init__( self, filename, start_time, stop_time ):
+    def __init__( self, config, launcher ):
         # load from file with lines like this:
         # ref_time taskname:state taskname:state
 
-        state_base.__init__( self, filename, start_time, stop_time )
+        state_base.__init__( self, config, launcher )
 
         self.content = {}
 

@@ -8,7 +8,7 @@ interact, etc.
 
 import instantiation
 import system_state
-import config
+import job_submit
 import pimp_my_logger
 import pyro_ns_naming
 import Pyro.core, Pyro.naming
@@ -17,51 +17,48 @@ import logging
 import broker
 
 class manager ( Pyro.core.ObjBase ):
-    def __init__( self, pyro_d, reload, dummy_clock ):
+    def __init__( self, config, pyro_d, reload, dummy_clock ):
         
         Pyro.core.ObjBase.__init__(self)
         self.pyro_daemon = pyro_d
 
+        self.launcher = job_submit.job_submit( config )
+
         # get a reference to the main log
         self.log = logging.getLogger( "main" )
 
-        if config.use_broker:
+        self.config = config
+
+        if config.get('use_broker'):
             self.broker = broker.broker()
         
         # start and stop times, from config file
-        self.start_time = config.start_time
-        self.stop_time = config.stop_time
+        self.start_time = config.get('start_time')
+        self.stop_time = config.get('stop_time')
 
         # initialise the task list
         if reload:
             # reload from the state dump file
             print
-            print 'Loading state from ' + config.state_dump_file
+            print 'Loading state from ' + config.get('state_dump_file')
             print
-            self.log.info( 'Loading state from ' + config.state_dump_file )
-            self.system_state = system_state.state_from_dump( config.state_dump_file, config.start_time, config.stop_time )
+            self.log.info( 'Loading state from ' + config.get('state_dump_file') )
+            self.system_state = system_state.state_from_dump( config, self.launcher )
 
         else:
             # use configured task list and start time
-            print
-            print 'START time: ' + config.start_time
-            print
-            self.log.info( 'Start time: ' + config.start_time )
-            self.system_state = system_state.state_from_list( config.state_dump_file, config.task_list, config.start_time, config.stop_time )
+            self.log.info( 'Start time: ' + config.get('start_time') )
+            self.system_state = system_state.state_from_list( config, self.launcher )
 
-        if config.stop_time:
-            print 'STOP time: ' + config.stop_time
-            self.log.info( 'Stop time: ' + config.stop_time )
-       
         # task loggers that propagate messages up to the main logger
         for name in self.system_state.get_unique_taskname_list():
             log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, dummy_clock )
+            pimp_my_logger.pimp_it( log, name, config, dummy_clock )
 
         # initialise the task list
         self.tasks = self.system_state.create_tasks()
         for task in self.tasks:
-            self.pyro_daemon.connect( task, pyro_ns_naming.name( task.identity ) )
+            self.pyro_daemon.connect( task, pyro_ns_naming.name( task.identity, config.get('pyro_ns_group') ) )
 
     def all_finished( self ):
         # return True if all tasks have completed
@@ -97,14 +94,14 @@ class manager ( Pyro.core.ObjBase ):
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
                 # dynamic task object creation by task and module name
-                new_task = instantiation.get_by_name( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
-                if config.stop_time and int( new_task.ref_time ) > int( config.stop_time ):
+                new_task = instantiation.get_by_name( 'task_classes', task.name )( task.next_ref_time(), "waiting", self.launcher )
+                if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
                     # we've reached the stop time: delete the new task 
-                    new_task.log.info( new_task.name + " STOPPING at configured stop time " + config.stop_time )
+                    new_task.log.info( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
+                    self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity, self.config.get('pyro_ns_group') ) )
                     new_task.log.debug( "New " + new_task.name + " connected for " + new_task.ref_time )
                     self.tasks.append( new_task )
 
@@ -153,15 +150,15 @@ class manager ( Pyro.core.ObjBase ):
             lame.log.warning( "ABDICATING A LAME TASK " + lame.identity )
 
             # dynamic task object creation by task and module name
-            new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
+            new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time(), "waiting", self.launcher )
             new_task.log.debug( "New task connected for " + new_task.ref_time )
-            self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity ) )
+            self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity, self.config.get('pyro_ns_group') ) )
             self.tasks.append( new_task )
 
             self.tasks.remove( lame )
             self.pyro_daemon.disconnect( lame )
             lame.log.debug( "lame task disconnected for " + lame.ref_time )
-            if config.use_broker:
+            if self.config.get('use_broker'):
                 self.broker.unregister( lame.get_fullpostrequisites() )
 
             del lame
@@ -200,7 +197,7 @@ class manager ( Pyro.core.ObjBase ):
             self.log.debug( "removing spent " + task.identity )
             self.tasks.remove( task )
             self.pyro_daemon.disconnect( task )
-            if config.use_broker:
+            if self.config.get('use_broker'):
                 self.broker.unregister( task.get_fullpostrequisites() )
 
         del death_list
@@ -221,7 +218,7 @@ class manager ( Pyro.core.ObjBase ):
                 self.log.debug( "removing spent " + task.identity )
                 self.tasks.remove( task )
                 self.pyro_daemon.disconnect( task )
-                if config.use_broker:
+                if self.config.get('use_broker'):
                     self.broker.unregister( task.get_fullpostrequisites() )
 
             del death_list
@@ -246,7 +243,7 @@ class manager ( Pyro.core.ObjBase ):
 
             self.regenerate()
 
-            if config.use_broker:
+            if self.config.get('use_broker'):
                 self.negotiate()
             else:
                 self.interact()

@@ -15,7 +15,7 @@ def usage():
     print 'large number of external dummy programs all running at the same time.'
     print ''
     print 'Output locations relative to script running directory:'
-    print '  system-def/scaling-test/config.py'
+    print '  system-def/scaling-test/user_config.py'
     print '  system-def/scaling-test/taskdef/(task definition files)'
     sys.exit(1)
 
@@ -77,56 +77,37 @@ def main( argv ):
         FILE.close() 
 
     # write config file
-    FILE = open( topdir + '/config.py', 'w' )
+    FILE = open( topdir + '/user_config.py', 'w' )
 
     FILE.write(
             """
 #!/usr/bin/python
 
-# User-editable controller configuration file
+# sequenz user configuration file
+# see config.py for other options
 
-# This file gets listed automatically in the latex
-# documentation, so keep line lengths reasonable.
+# DO NOT REMOVE THE FOLLOWING TWO LINES >>>>
+import logging  # for logging level
+config = {}
+####################################### <<<<
 
-import logging
-import os
+config[ 'system_name' ] = 'scaling-test'
 
-# START AND STOP (OPTIONAL) REFERENCE TIMES
-start_time = "2009030200"
-stop_time = "2009030300"
-#stop_time = None
+config[ 'start_time' ] = '2009030200'
+config[ 'stop_time' ] = '2009030300'
 
-# SEQUENCING METHOD: task interaction or negotiation with a broker
-#use_broker = False
-use_broker = True
+config[ 'logging_level' ] = logging.DEBUG
 
-# DUMMY MODE
-dummy_mode = True
-dummy_clock_rate = 10      
-dummy_clock_offset = 10 
+#config[ 'use_broker' ] = False
 
-# JOB LAUNCH METHOD
-job_launch_method = 'direct'
-#job_launch_method = 'qsub'
-#job_queue = 'default'
+config[ 'dummy_mode' ] = True
+config[ 'dummy_clock_rate' ] = 10      
+config[ 'dummy_clock_offset' ] = 10 
 
-# TOP LEVEL OUTPUT DIR
-output_dir = os.environ['HOME'] + '/sequenz-output' 
+config[ 'use_qsub' ] = False
+config[ 'job_queue' ] = 'default'
 
-# LOGGING
-logging_dir = output_dir + '/scaling-test/log-files' 
-logging_level = logging.INFO
-#logging_level = logging.DEBUG
-
-# STATE DUMP FILE
-state_dump_file = output_dir + '/scaling-test/state-dump'
-
-# PYRO NAMESERVER CONFIGURATION 
-# group must be unique per sequenz instance 
-# so that different systems don't interfere
-pyro_ns_group = 'scaling'   
-
-task_list = [\n""" )
+config['task_list'] = [\n""" )
 
     for task in range( 1, int(n_tasks) + 1 ):
 
@@ -135,13 +116,7 @@ task_list = [\n""" )
 
     FILE.write(
             """]
-
-# TASKS TO DUMMY OUT IN REAL MODE
-# (currently needs to be defined here 
-#  as an empty list if not needed)
-dummy_out = []
 """)
 
 if __name__ == '__main__':
     main( sys.argv )
-

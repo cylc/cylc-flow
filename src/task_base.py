@@ -3,8 +3,6 @@
 import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
 from time import sleep
-import config
-import job_submit
 
 import os, sys, re
 from copy import deepcopy
@@ -28,13 +26,15 @@ class task_base( Pyro.core.ObjBase ):
     # cutoff time.
     quick_death = True
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, ref_time, initial_state, launcher ):
         # Call this AFTER derived class initialisation
         #   (it alters requisites based on initial state)
         # Derived classes MUST call nearest_ref_time()
         #   before defining their requisites
 
         Pyro.core.ObjBase.__init__(self)
+
+        self.launcher = launcher
 
         # set state_changed True if any task's state changes 
         # as a result of a remote method call
@@ -72,8 +72,6 @@ class task_base( Pyro.core.ObjBase ):
 
         self.log.debug( "Creating new task in " + initial_state + " state, for " + self.ref_time )
 
-        if not config.dummy_mode and self.name in config.dummy_out:
-            self.log.warning( "dummying out " + self.identity + " in real mode")
 
     def get_cutoff( self, all_tasks ):
         # Return the time beyond which all other tasks can be deleted as
@@ -138,20 +136,22 @@ class task_base( Pyro.core.ObjBase ):
             self.run_external_task()
 
     def run_external_task( self, extra_vars = [] ):
-        job_submit.run( self.owner, self.name, self.ref_time, self.external_task, extra_vars )
+        self.log.debug( 'launching task ' + self.name + ' for ' + self.ref_time )
+        self.launcher.run( self.owner, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
     def get_state( self ):
         return self.name + ": " + self.state
 
     def display( self ):
-        return self.name + "(" + self.ref_time + ")"
+        return self.name + "(" + self.ref_time + "): " + self.state
 
     def set_finished( self ):
         # could do this automatically off the "name finished for ref_time" message
         self.state = "finished"
 
     def abdicate( self ):
+        #print self.display()
         if self.state == "finished" and not self.abdicated:
             self.abdicated = True
             return True
@@ -218,7 +218,7 @@ class task_base( Pyro.core.ObjBase ):
 
     def incoming( self, priority, message ):
         # receive all incoming pyro messages for this task 
-
+            
         global state_changed
         state_changed = True
 
@@ -271,9 +271,9 @@ class free_task( task_base ):
 
     name = "free task base"
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, ref_time, initial_state, launcher ):
         self.MAX_FINISHED = 5
-        task_base.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state, launcher )
 
     def run_if_ready( self, tasks ):
         # don't run if too many previous finished instances exist

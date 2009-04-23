@@ -7,6 +7,6 @@
 
 MESSAGER=task-message.py
 #MESSAGER=echo   # debugging
-    
+
 PRIORITY=$1; shift
 $MESSAGER $PRIORITY $TASK_NAME $REFERENCE_TIME "$@"

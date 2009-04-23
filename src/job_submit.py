@@ -11,81 +11,76 @@
 
 import os
 import re
-import config
 
-def run( owner, task_name, ref_time, task, extra_vars=[] ):
+class job_submit:
 
-    # who is running the control system
-    sequenz_owner = os.environ[ 'USER' ]
+    def __init__( self, config ):
+        self.config = config
 
-    # sequenz environment script for this system
-    sequenz_env = os.environ[ 'SEQUENZ_ENV' ]
+    def run( self, owner, task_name, ref_time, task, extra_vars=[] ):
 
-    if re.search( '_test$', sequenz_owner) or re.search( '_dvel$', sequenz_owner ): 
-        # for ecoconnect, if the system running on /test or /dvel
-        # then replace '_oper' owner postfix with '_test' or '_dvel'
+        # who is running the control system
+        sequenz_owner = os.environ[ 'USER' ]
+
+        # sequenz environment script for this system
+        sequenz_env = os.environ[ 'SEQUENZ_ENV' ]
+
+        if re.search( '_test$', sequenz_owner) or re.search( '_dvel$', sequenz_owner ): 
+            # for ecoconnect, if the system running on /test or /dvel
+            # then replace '_oper' owner postfix with '_test' or '_dvel'
             system = re.split( '_', sequenz_owner )[-1]
             owner = re.sub( '_oper$', '_' + system, owner )
 
-    if config.dummy_mode:
-	# don't qsub in dummy mode (see above)
-	if config.job_launch_method == 'qsub':
-	   print 'warning: no qsub in dummy mode'
-	   config.job_launch_method = 'direct'
+        command = ''
+        if owner != sequenz_owner and not self.config.get('dummy_mode') and self.config.get('use_qsub'): 
+            # run the task as its proper owner
+	        #  + SUDO QSUB MUST BE ALLOWED
+            #  + NOT FOR DIRECT JOB LAUNCH (assuming 'sudo task' not allowed in general)
+	        #  + NOT FOR DUMMY MODE (other owners may not have dummy-task.py in $PATH)
+            command  = 'sudo -u ' + owner 
 
-    command = ''
-    if owner != sequenz_owner and not config.dummy_mode and config.job_launch_method == 'qsub': 
-        # run the task as its proper owner
-	#  + SUDO QSUB MUST BE ALLOWED
-        #  + NOT FOR DIRECT JOB LAUNCH (assuming 'sudo task' not allowed in general)
-	#  + NOT FOR DUMMY MODE (other owners may not have dummy-task.py in $PATH)
-        command  = 'sudo -u ' + owner 
+        if self.config.get('dummy_mode') or task_name in self.config.get('dummy_out'):
+            if not self.config.get( 'dummy_mode' ) and task_name in self.config.get('dummy_out'):
+                self.log.warning( "dummying out " + self.identity + " in real mode")
 
-    if config.dummy_mode or task_name in config.dummy_out:
-        # substitute the dummy task program for the real task
-        external_task = 'dummy-task.py'
-    else:
-        # run the real task
-	if not re.match( '^/', task ):
-	    # relative path implies use sequenz 'tasks' subdir for this system
-	    sequenz_env = os.environ[ 'SEQUENZ_ENV' ]
-	    sysdir = re.sub( '[^/]*$', '', sequenz_env )
-            external_task = sysdir + 'tasks/' + task
+            # substitute the dummy task program for the real task
+            external_task = 'dummy-task.py'
         else:
-	    # full task path given
-            external_task = task
+            # run the real task
+            if not re.match( '^/', task ):
+                # relative path implies use sequenz 'tasks' subdir for this system
+                sequenz_env = os.environ[ 'SEQUENZ_ENV' ]
+                sysdir = re.sub( '[^/]*$', '', sequenz_env )
+                external_task = sysdir + 'tasks/' + task
+            else:
+                # full task path given
+                external_task = task
 
-    if config.job_launch_method == 'direct':
-        # run the task directly (i.e. not in the queue) in the background 
-        command =  'export REFERENCE_TIME=' + ref_time + '; '
-        command += 'export TASK_NAME=' + task_name + '; '
-        for entry in extra_vars:
-            [ var_name, value ] = entry
-            command += 'export ' + var_name + '=' + value + '; '
-        command += external_task + ' ' + task_name + ' ' + ref_time + ' ' + config.pyro_ns_group + ' ' + str( config.dummy_mode ) + ' ' + str( config.dummy_clock_rate ) + ' ' + str( config.dummy_clock_offset ) + ' &' 
+        if not self.config.get('use_qsub'):
+            # run the task directly (i.e. not in the queue) in the background 
+            command =  'export REFERENCE_TIME=' + ref_time + '; '
+            command += 'export TASK_NAME=' + task_name + '; '
+            for entry in extra_vars:
+                [ var_name, value ] = entry
+                command += 'export ' + var_name + '=' + value + '; '
+            command += external_task + ' ' + task_name + ' ' + ref_time + ' ' + self.config.get('pyro_ns_group') + ' ' + str( self.config.get('dummy_mode') ) + ' ' + str( self.config.get('dummy_clock_rate') ) + ' ' + str( self.config.get('dummy_clock_offset') ) + ' &' 
 
-    elif config.job_launch_method == 'qsub':
-        command += ' qsub -q ' + config.queue + ' -z'
+        else:
+            command += ' qsub -q ' + self.config.get('job_queue') + ' -z'
 
-        command += ' -v REFERENCE_TIME=' + ref_time
-        command += ',TASK_NAME=' + task_name
-        command += ',SEQUENZ_ENV=' + sequenz_env
-        #command += ',PYTHONPATH=' + os.environ['PYTHONPATH']
+            command += ' -v REFERENCE_TIME=' + ref_time
+            command += ',TASK_NAME=' + task_name
+            command += ',SEQUENZ_ENV=' + sequenz_env
+            #command += ',PYTHONPATH=' + os.environ['PYTHONPATH']
 
-        for entry in extra_vars:
-            [ var_name, value ] = entry
-            command += ',' + var_name + '=' + value
+            for entry in extra_vars:
+                [ var_name, value ] = entry
+                command += ',' + var_name + '=' + value
 
-        command += ' -k oe ' + external_task
+            command += ' -k oe ' + external_task
 
-    else:
-        print 'ERROR: UNKNOWN JOB LAUNCH METHOD: ' + config.job_launch_method
-        raise Exception( 'job launch failed: ' + task_name + ' ' + ref_time )
-
-    # RUN THE EXTERNAL TASK
-    if os.system( command ) != 0:
-        # NOTE: this means JOB LAUNCH failed, i.e. 
-        # the job itself did not begin to execute.
-
-	# print command
-        raise Exception( 'job launch failed: ' + task_name + ' ' + ref_time )
+        # RUN THE EXTERNAL TASK
+        if os.system( command ) != 0:
+            # NOTE: this means JOB LAUNCH failed, i.e. 
+            # the job itself did not begin to execute.
+            raise Exception( 'job launch failed: ' + task_name + ' ' + ref_time )

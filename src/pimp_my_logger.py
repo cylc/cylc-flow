@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import logging, logging.handlers
-import config
 import os, sys, re
 
 # function to format all task logs in the same way, and to replace
@@ -19,11 +18,11 @@ class LogFilter(logging.Filter):
         record.created = self.dummy_clock.get_epoch()
         return True
     
-def pimp_it( log, name, dummy_clock = None ):
-    log.setLevel( config.logging_level )
+def pimp_it( log, name, config, dummy_clock = None ):
+    log.setLevel( config.get('logging_level') )
     max_bytes = 1000000
     backups = 5
-    logfile = config.logging_dir + '/' + name
+    logfile = config.get('logging_dir') + '/' + name
     h = logging.handlers.RotatingFileHandler( logfile, 'a', max_bytes, backups )
     # the above creates a zero-sized log file if one doesn't already exist
     if os.path.getsize( logfile ) > 0:
@@ -46,6 +45,6 @@ def pimp_it( log, name, dummy_clock = None ):
     h.setFormatter(f)
     log.addHandler(h)
 
-    if config.dummy_mode:
+    if config.get('dummy_mode'):
         # replace logged real time with dummy clock time 
         log.addFilter( LogFilter( dummy_clock, "main" ))
