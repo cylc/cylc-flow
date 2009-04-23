@@ -57,6 +57,10 @@ class config:
         # group must be unique per sequenz instance so that different systems don't interfere
         self.configured['pyro_ns_group'] = self.configured['system_name']
 
+    def load( self ):
+        self.user_override()
+        self.check()
+        self.dump()
        
     def user_override( self ):
         for key in user_config.config.keys():

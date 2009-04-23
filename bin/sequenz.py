@@ -65,9 +65,7 @@ def main( argv ):
 
     # load system config defaults
     system_config = config.config()
-    system_config.user_override()
-    system_config.check()
-    system_config.dump()
+    system_config.load()
 
     # create the Pyro daemon
     global pyro_daemon

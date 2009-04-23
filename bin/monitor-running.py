@@ -46,9 +46,8 @@ class kit:
 title = kit( "Sequenz System Monitor" )
 
 config = config.config()
-config.user_override()
-config.check()
-config.dump()
+config.load()
+
 print
 print "here we go ..."
 sleep(2)

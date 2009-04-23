@@ -14,6 +14,9 @@ def usage():
     print '  -r    resume task processing'
     print '  -s    shutdown the controller'
     print '  -b <hours> bump dummy time clock forward by <hours>'
+
+config = config.config()
+config.load()
  
 # command line arguments
 n_args = len( sys.argv ) -1
