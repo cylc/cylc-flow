@@ -24,6 +24,11 @@ class task_base( Pyro.core.ObjBase ):
     # prerequisites of tasks *in subsequent cycles*, however, must
     # set quick_death = False, in which case it will be removed by
     # cutoff time.
+
+    # TO DO: 
+    # this should be an instance variable (the instance variable is 
+    # overriding the class variable when I do set it, so this
+    # works ok, but should be changed for clarity).
     quick_death = True
 
     def __init__( self, ref_time, initial_state, launcher ):
@@ -262,7 +267,19 @@ class task_base( Pyro.core.ObjBase ):
                 if reqs.is_satisfied(req):
                     self.prerequisites.set_satisfied( req )
 
+    def dump_state( self, FILE ):
 
+        # write a state string, 
+        #   reftime:name:state
+        # to the state dump file.  
+
+        # Must be compatible with __init__ for reloading.
+
+        # sub-classes can override this if they have other state
+        # information that needs to be reloaded from the file.
+
+        FILE.write( self.ref_time + ":" + self.name + ":" + self.state + '\n' )
+    
 #----------------------------------------------------------------------
 class free_task( task_base ):
     # for tasks with no-prerequisites, e.g. download and nztide,

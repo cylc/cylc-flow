@@ -7,7 +7,6 @@ interact, etc.
 """
 
 import instantiation
-import system_state
 import job_submit
 import pimp_my_logger
 import pyro_ns_naming
@@ -15,6 +14,7 @@ import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 import logging
 import broker
+import re
 
 class manager ( Pyro.core.ObjBase ):
     def __init__( self, config, pyro_d, reload, dummy_clock ):
@@ -28,37 +28,133 @@ class manager ( Pyro.core.ObjBase ):
         self.log = logging.getLogger( "main" )
 
         self.config = config
+        self.dummy_clock = dummy_clock
 
         if config.get('use_broker'):
             self.broker = broker.broker()
         
-        # start and stop times, from config file
-        self.start_time = config.get('start_time')
-        self.stop_time = config.get('stop_time')
-
-        # initialise the task list
+        # initialise the list of tasks
+        # state_list = [ref_time:name:state, ...]
         if reload:
             # reload from the state dump file
             print
             print 'Loading state from ' + config.get('state_dump_file')
             print
             self.log.info( 'Loading state from ' + config.get('state_dump_file') )
-            self.system_state = system_state.state_from_dump( config, self.launcher )
+            state_list = self.load_from_dump( config.get('state_dump_file') )
 
         else:
             # use configured task list and start time
-            self.log.info( 'Start time: ' + config.get('start_time') )
-            self.system_state = system_state.state_from_list( config, self.launcher )
+            print
+            print 'Loading configured task list'
+            print
+            self.log.info( 'Loading configured task list' )
+            state_list = self.load_from_config( config )
 
-        # task loggers that propagate messages up to the main logger
-        for name in self.system_state.get_unique_taskname_list():
-            log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, config, dummy_clock )
+        self.create_task_logs( state_list )
 
-        # initialise the task list
-        self.tasks = self.system_state.create_tasks()
+        self.tasks = self.create_tasks( state_list )
         for task in self.tasks:
             self.pyro_daemon.connect( task, pyro_ns_naming.name( task.identity, config.get('pyro_ns_group') ) )
+
+
+    def create_task_logs( self, state_list ):
+        # task loggers that propagate messages up to the main logger
+        unique_task_names = {}
+        for item in state_list:
+            [ref_time, name, state] = item.split(':')
+            unique_task_names[ name ] = True
+    
+        for task_name in unique_task_names.keys():
+            log = logging.getLogger( 'main.' + task_name )
+            pimp_my_logger.pimp_it( log, task_name, self.config, self.dummy_clock )
+ 
+
+    def load_from_config ( self, config ):
+        # config.task_list = [ taskname(:state), taskname(:state), ...]
+        # where (:state) is optional and defaults to 'waiting'.
+
+        state_list = []
+        for item in config.get('task_list'):
+            state = 'waiting'
+            name = item
+            if re.compile( "^.*:").match( item ):
+                [name, state] = item.split(':')
+
+            state_list.append( self.config.get('start_time') + ':' + name + ':' + state )
+
+        return state_list
+
+
+    def load_from_dump( self, filename ):
+        # file format: ref_time:name:state, one per line 
+
+        FILE = open( filename, 'r' )
+        lines = FILE.readlines()
+        FILE.close()
+
+        state_list = []
+
+        for line in lines:
+            # ref_time task:state task:state ...
+            if re.compile( '^.*\n$' ).match( line ):
+                # strip trailing newlines
+                line = line[:-1]
+
+            [ref_time, name, state] = line.split(':')
+            # convert running to waiting on restart
+            if state == 'running' or state == 'failed':
+                state = 'waiting'
+
+            state_list.append( ref_time + ':' + name + ':' + state )
+
+        return state_list
+
+
+    def create_tasks( self, state_list ):
+
+        state_by_reftime = {}
+
+        for item in state_list:
+            [ref_time, name, state] = item.split(':')
+            if ref_time not in state_by_reftime.keys():
+                state_by_reftime[ ref_time ] = [item]
+            else:
+                state_by_reftime[ ref_time ].append( item )
+ 
+        ref_times = state_by_reftime.keys()
+        ref_times.sort( key = int, reverse = True )
+
+        tasks = []
+        seen = {}
+        for ref_time in ref_times:
+            for item in state_by_reftime[ ref_time ]:
+                [ref_time, name, state] = item.split(':')
+                # dynamic task object creation by task and module name
+                task = instantiation.get_by_name( 'task_classes', name )( ref_time, state, self.launcher )
+                if name not in seen.keys():
+                    seen[ name ] = True
+                elif state == 'finished':
+                    # finished but already seen at a later
+                    # reference time => already abdicated
+                    task.abdicate()
+
+                # the initial task reference time can be altered during
+                # creation, so we have to create the task before
+                # checking if stop time has been reached.
+                skip = False
+                if self.config.get('stop_time'):
+                    if int( task.ref_time ) > int( self.stop_time ):
+                        task.log.info( task.name + " STOPPING at " + self.stop_time )
+                        del task
+                        skip = True
+
+                if not skip:
+                    task.log.debug( "New task connected for " + task.ref_time )
+                    tasks.append( task )
+                    
+        return tasks
+
 
     def all_finished( self ):
         # return True if all tasks have completed
@@ -106,8 +202,12 @@ class manager ( Pyro.core.ObjBase ):
                     self.tasks.append( new_task )
 
     def dump_state( self ):
-        self.system_state.update( self.tasks )
-        self.system_state.dump()
+        filename = self.config.get( 'state_dump_file' )
+        FILE = open( filename, 'w' )
+        for task in self.tasks:
+            task.dump_state( FILE )
+
+        FILE.close()
 
     def kill_lame_ducks( self ):
         # Remove any tasks in the OLDEST BATCH whose prerequisites
