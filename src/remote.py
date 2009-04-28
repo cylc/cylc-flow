@@ -4,7 +4,7 @@ import Pyro.core
 import logging
 import sys
 
-class main_switch( Pyro.core.ObjBase ):
+class switch( Pyro.core.ObjBase ):
     "class to take remote system control requests" 
 
     # the main program can take action on these when it is convenient.
@@ -29,3 +29,26 @@ class main_switch( Pyro.core.ObjBase ):
         # call remotely via Pyro
         self.log.warning( "system halt requested" )
         self.system_halt = True
+
+
+class state_summary( Pyro.core.ObjBase ):
+    "class to supply system state summary to external monitoring programs"
+
+    def __init__( self ):
+        Pyro.core.ObjBase.__init__(self)
+        summary = {}
+ 
+    def update( self, tasks ):
+        self.summary = {}
+        for task in tasks:
+            postreqs = task.get_postrequisites()
+            n_total = len( postreqs )
+            n_satisfied = 0
+            for key in postreqs.keys():
+                if postreqs[ key ]:
+                    n_satisfied += 1
+
+            self.summary[ task.identity ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
+
+    def get_summary( self ):
+        return self.summary

@@ -56,7 +56,7 @@ while True:
 
     try: 
     
-        god = Pyro.core.getProxyForURI('PYRONAME://'+ pyro_ns_naming.name('god', config.get('pyro_ns_group')))
+        god = Pyro.core.getProxyForURI('PYRONAME://'+ pyro_ns_naming.name('state_summary', config.get('pyro_ns_group')))
         god._setTimeout(1)
 
 
@@ -74,7 +74,7 @@ while True:
                 dt = datetime.datetime.now()
 
             lines = {}
-            states = god.get_state_summary()
+            states = god.get_summary()
 
             for task_id in states.keys():
                 [ name, reftime ] = task_id.split('%')
@@ -129,8 +129,7 @@ while True:
             sleep(0.5)
 
     except:
-        # uncomment for debugging:
-        # raise
-        os.system( "clear" )
-        print "connection failed ..."
-        sleep( 1 )
+        raise
+        #os.system( "clear" )
+        #print "connection failed ..."
+        #sleep( 1 )
