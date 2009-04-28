@@ -90,42 +90,14 @@ class topnet_and_vis( task_base ):
         task_base.run_external_task( self, launcher, extra_vars )
 
 
-    def get_cutoff( self, all_tasks ):
+    def get_cutoff( self ):
 
-        # keep the most recent *finished* nzlam_06_18_post or
-        # oper2test_topnet task that is OLDER THAN ME, because the next
+        # must keep the most recent *finished* nzlam_06_18_post or
+        # oper2test_topnet task that is older than me, because the next
         # hourly topnet may also need the output from that same
         # 12-hourly task.
 
-        # this could be done without searching for 'nzlam_06_18_post' 
-        # or 'oper2test_topnet' tasks because we know how far ahead
-        # topnet is allowed to get, depending on catchup.
-
-        found = False
-        times = []
-
-        result = self.ref_time # default
-
-        for task in all_tasks:
-            if task.name == 'nzlam_06_18_post' or task.name == 'oper2test_topnet':
-                if task.state == 'finished':
-                    found = True
-                    times.append( task.ref_time )
-        if not found: 
-            # This could mean the task is lame, in which case it will
-            # be eliminated by lame task deletion in the main program.
-
-            # Or, more likely, at start up, the first nzlam_06_18_post
-            # just hasn't finished yet.
-
-            pass
-
+        if streamflow.catchup_mode:
+            return reference_time.decrement( self.ref_time, 13 )
         else:
-            times.sort( key = int, reverse = True )
-            for time in times:
-                if int( time ) < int( self.ref_time ):
-                    self.log.debug( self.identity + ' cutoff: ' + time )
-                    result = time
-                    break
-
-        return result
+            return reference_time.decrement( self.ref_time, 25 )

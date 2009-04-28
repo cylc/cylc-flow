@@ -160,9 +160,37 @@ class task_manager:
             task.prerequisites.satisfy_me( self.broker.get_requisites() )
 
     def run_if_ready( self, launcher ):
-        # tell tasks to run if their prequisites are satisfied
+        # Tell each task to run if:
+        #   (a) it is waiting
+        #      AND 
+        #   (b) its prequisites are satisfied
+        #      AND
+        #   (c) all (previous) instances of it are finished
+        #      AND
+        #   (d) not too many previous instances exist, which stops 
+        #       tasks with no prerequisites from running off ahead
+
+        # (a) and (b) are handled by the task itself
+        # (c) and (d) are handled here, where we have the global task view
+
+        finished = {}  # finished[ task.name ] = [ all_finished?, n_finished ]
         for task in self.tasks:
-            task.run_if_ready( self.tasks, launcher)
+            if task.name not in finished.keys():
+                fin = False
+                n_fin = 0
+                if task.is_finished():
+                    fin = True
+                    n_fin = 1
+                finished[ task.name ] = [ fin, n_fin ]
+            else:
+                if task.is_finished():
+                    (finished[ task.name ])[1] += 1
+                else:
+                    (finished[ task.name ])[0] = False
+
+        for task in self.tasks:
+            if not (finished[ task.name ])[0] and (finished[ task.name ])[1] <= task.MAX_FINISHED:
+                task.run_if_ready( launcher )
 
     def regenerate( self, config ):
         # create new task(T+1) if task(T) has abdicated
@@ -261,7 +289,7 @@ class task_manager:
 
         for task in self.tasks:   
             if task.state != 'finished':
-                cutoff_times.append( task.get_cutoff( self.tasks ))
+                cutoff_times.append( task.get_cutoff())
                 not_finished.append( task.ref_time )
         
         not_finished.sort( key = int )

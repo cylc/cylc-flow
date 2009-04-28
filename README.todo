@@ -3,5 +3,4 @@ Sequenz To Do List
 * restart from state dump is incomplete in the case of task types with unusual
    state information, such as "catching up"?
 
-* task.run_if_ready( tasks ) is O(n^2) like the original task interaction
-  loop: use an intermediate broker?
+* non-O(n^2) will_get_satisfaction() for use with broker method 

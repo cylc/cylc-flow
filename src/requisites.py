@@ -147,7 +147,15 @@ class fuzzy_requisites( requisites ):
     def sharpen_up( self, fuzzy, sharp ):
         # replace the fuzzy prerequisite with the actual postrequisite
         # that satisfied it, so the task run() method can use it.
-        i = self.ordered_list.index( fuzzy )
+        try:
+            i = self.ordered_list.index( fuzzy )
+        except:
+            log = logging.getLogger( "main." + self.task_name ) 
+            log.warning( "!!!!! " + self.task_name )
+            log.warning( "!!!!! " + fuzzy )
+            log.warning( "!!!!! " + sharp )
+            raise
+
         self.ordered_list.remove( fuzzy )
         self.ordered_list.insert( i, sharp ) 
         

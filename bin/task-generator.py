@@ -179,7 +179,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task_base import task_base, free_task
+from task_base import task_base
 import execution
 
 import reference_time
@@ -251,12 +251,7 @@ import logging
         # print_parsed_info()
 
         # write the class definition
-
-        # no prerequisites implies derive from free_task parent class
-        if len( parsed_def[ 'PREREQUISITES' ] ) == 0:
-            parent_class = 'free_task'
-        else:
-            parent_class = 'task_base'
+        parent_class = 'task_base'
 
         task_name = parsed_def[ 'NAME' ][0]
         # class definition

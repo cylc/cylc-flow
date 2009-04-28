@@ -25,11 +25,9 @@ class task_base( Pyro.core.ObjBase ):
     # set quick_death = False, in which case it will be removed by
     # cutoff time.
 
-    # TO DO: 
-    # this should be an instance variable (the instance variable is 
-    # overriding the class variable when I do set it, so this
-    # works, but it should be changed).
+    # class defaults that can be overridden by instance variables:
     quick_death = True
+    MAX_FINISHED = 5
 
     def __init__( self, ref_time, initial_state ):
         # Call this AFTER derived class initialisation
@@ -46,6 +44,7 @@ class task_base( Pyro.core.ObjBase ):
 
         # unique task identity
         self.identity = self.name + '%' + self.ref_time
+
 
         # task-specific log file
         self.log = logging.getLogger( "main." + self.name ) 
@@ -76,16 +75,17 @@ class task_base( Pyro.core.ObjBase ):
         self.log.debug( "Creating new task in " + initial_state + " state, for " + self.ref_time )
 
 
-    def get_cutoff( self, all_tasks ):
+    def get_cutoff( self ):
         # Return the time beyond which all other tasks can be deleted as
         # far as this task is concerned.  For most tasks this is their
         # own reference time because they depend only on their
         # cotemporal peers (not even on previous instances of their own
         # task type, because of abdication):
-        return self.ref_time
 
-        # BUT OVERRIDE THIS METHOD for the few tasks (e.g. topnet) that
-        # do depend on other non-cotemporal (earlier) tasks.
+        # OVERRIDE THIS METHOD for any tasks that depend on other
+        # non-cotemporal (i.e. earlier) tasks.
+
+        return self.ref_time
 
     def nearest_ref_time( self, rt ):
         # return the next time >= rt for which this task is valid
@@ -123,19 +123,8 @@ class task_base( Pyro.core.ObjBase ):
         return reference_time.increment( self.ref_time, increment )
 
 
-    def run_if_ready( self, tasks, launcher ):
-
-        for task in tasks:
-            # don't run if any previous instance of me is not finished
-            if task.name == self.name:
-                if task.state != "finished":
-                    if int( task.ref_time ) < int( self.ref_time ):
-                        self.log.debug( self.identity + " blocked by " + task.identity )
-                        return
-
-
+    def run_if_ready( self, launcher ):
         if self.state == 'waiting' and self.prerequisites.all_satisfied():
-            # prerequisites all satisified, so run me
             self.run_external_task( launcher )
 
     def run_external_task( self, launcher, extra_vars = [] ):
@@ -162,12 +151,10 @@ class task_base( Pyro.core.ObjBase ):
             return False
 
     def get_satisfaction( self, tasks ):
-
         for task in tasks:
             self.prerequisites.satisfy_me( task.postrequisites )
 
     def will_get_satisfaction( self, tasks ):
-
         temp_prereqs = deepcopy( self.prerequisites )
         for task in tasks:
             temp_prereqs.will_satisfy_me( task.postrequisites )
@@ -277,36 +264,3 @@ class task_base( Pyro.core.ObjBase ):
         # information that needs to be reloaded from the file.
 
         FILE.write( self.ref_time + ":" + self.name + ":" + self.state + '\n' )
-    
-#----------------------------------------------------------------------
-class free_task( task_base ):
-    # for tasks with no-prerequisites, e.g. download and nztide,
-    # that would otherwise run ahead indefinitely: delay if we get
-    # "too far ahead" based on number of existing finished tasks.
-
-    name = "free task base"
-
-    def __init__( self, ref_time, initial_state ):
-        self.MAX_FINISHED = 5
-        task_base.__init__( self, ref_time, initial_state )
-
-    def run_if_ready( self, tasks, launcher ):
-        # don't run if too many previous finished instances exist
-        delay = False
-
-        old_and_finished = []
-        if self.state == "waiting":
-            for task in tasks:
-               if task.name == self.name and task.state == "finished":
-                   old_and_finished.append( task.ref_time )
-                            
-            if len( old_and_finished ) >= self.MAX_FINISHED:
-                delay = True
-
-        if delay:
-            # the following gets logged every time the function is called
-            # self.log.debug( self.identity + " ready and waiting (too far ahead)" )
-            pass
-
-        else:
-            task_base.run_if_ready( self, tasks, launcher )

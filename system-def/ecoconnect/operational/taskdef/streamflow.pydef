@@ -1,4 +1,4 @@
-class streamflow( free_task ):
+class streamflow( task_base ):
 
     name = "streamflow"
     valid_hours = range( 0, 24 )
@@ -24,7 +24,7 @@ class streamflow( free_task ):
             [5, "got streamflow data for " + ref_time ],
             [5.1, self.name + " finished for " + ref_time] ])
 
-        free_task.__init__( self, ref_time, initial_state )
+        task_base.__init__( self, ref_time, initial_state )
 
         # NEED TO ALLOW FINISHED TASKS BACK TO THE TASK DELETION CUTOFF
         # Do this AFTER parent class init, which sets to the default
