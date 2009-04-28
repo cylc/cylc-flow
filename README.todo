@@ -4,3 +4,6 @@ Sequenz To Do List
    state information, such as "catching up"?
 
 * non-O(n^2) will_get_satisfaction() for use with broker method 
+
+* possible problem with non-broker method: if more than one fuzzy
+  satisfying postrequisite, will we end up with the most recent?

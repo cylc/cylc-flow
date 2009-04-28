@@ -47,11 +47,11 @@ class topnet_and_vis( task_base ):
         # min:max
         fuzzy_limits = nzlam_cutoff + ':' + ref_time
  
-        self.prerequisites = fuzzy_requisites( self.name, [ 
+        self.prerequisites = fuzzy_requisites( self.name + '%' + ref_time, [ 
             "got streamflow data for " + ref_time + ':' + ref_time, 
             "file tn_" + fuzzy_limits + "_utc_nzlam_12.nc ready" ])
 
-        self.postrequisites = timed_requisites( self.name, [ 
+        self.postrequisites = timed_requisites( self.name + '%' + ref_time, [ 
             [3, self.name + " started for " + ref_time],
             [3.1, "topnet started for " + ref_time],
             [6,   "topnet finished for " + ref_time],
@@ -66,11 +66,14 @@ class topnet_and_vis( task_base ):
         # topnet needs to be given the time of the netcdf 
         # file that satisified the fuzzy prerequisites
 
-        # TO DO: this assumes the nzlam prereq is the second
-        # one; better to search for 'nzlam' in the prereq list
+        # extract nzlam time from the nzlam prereq
         prereqs = self.prerequisites.get_list()
-        prereq = prereqs[1]
-        m = topnet_and_vis.fuzzy_file_re.match( prereq )
+        for prereq in prereqs:
+            m = topnet_and_vis.fuzzy_file_re.match( prereq )
+            if m:
+                # we've found the nzlam prereq
+                break
+ 
         [ file ] = m.groups()
         m = topnet_and_vis.reftime_re.search( file )
         nzlam_time = m.group()

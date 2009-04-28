@@ -152,11 +152,15 @@ class task_manager:
 
     def negotiate( self ):
         # each task registers its postrequisites with the broker
+        #print "REGISTER----------------"
         for task in self.tasks:
+            #print "  - " + task.identity
             self.broker.register( task.get_fullpostrequisites() )
 
         # each task asks the broker to satisfy its prerequisites
+        #print "SATISFY-----------------"
         for task in self.tasks:
+            #print "  - " + task.identity
             task.prerequisites.satisfy_me( self.broker.get_requisites() )
 
     def run_if_ready( self, launcher ):
@@ -267,6 +271,7 @@ class task_manager:
             self.pyro.disconnect( lame )
             lame.log.debug( "lame task disconnected for " + lame.ref_time )
             if config.get('use_broker'):
+                #print "unregister " + lame.identity
                 self.broker.unregister( lame.get_fullpostrequisites() )
 
             del lame
@@ -306,6 +311,7 @@ class task_manager:
             self.tasks.remove( task )
             self.pyro.disconnect( task )
             if config.get('use_broker'):
+                #print "unregister " + task.identity
                 self.broker.unregister( task.get_fullpostrequisites() )
 
         del death_list
@@ -327,6 +333,7 @@ class task_manager:
                 self.tasks.remove( task )
                 self.pyro.disconnect( task )
                 if config.get('use_broker'):
+                    #print "unregister " + task.identity
                     self.broker.unregister( task.get_fullpostrequisites() )
 
             del death_list

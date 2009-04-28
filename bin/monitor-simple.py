@@ -126,7 +126,7 @@ while True:
             sleep(0.5)
 
     except:
-        raise
+        #raise
         #os.system( "clear" )
-        #print "connection failed ..."
-        #sleep( 1 )
+        print "connection failed ..."
+        sleep( 1 )

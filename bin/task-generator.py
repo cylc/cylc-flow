@@ -8,8 +8,6 @@ import re
 import os
 #print os.getcwd()
 
-#import pdb
-
 def usage():
     print 'USAGE: ' + sys.argv[0] + ' <list of task definition files>'
     sys.exit(1)
@@ -112,9 +110,9 @@ def write_requisites( req_type ):
            
     if len( conditional_reqs.keys() ) == 0:
         if req_type == 'PREREQUISITES':
-            strng = indent + 'self.prerequisites = requisites( self.name, [' 
+            strng = indent + 'self.prerequisites = requisites( self.name + "%" + ref_time, [' 
         else:
-            strng = indent + 'self.postrequisites = timed_requisites( self.name, [' 
+            strng = indent + 'self.postrequisites = timed_requisites( self.name + "%" + ref_time, [' 
 
         strng += generate_req_string( unconditional_reqs )
         FILE.write( strng + ' ])\n\n' )
@@ -137,9 +135,9 @@ def write_requisites( req_type ):
         indent_more()
 
         if req_type == 'PREREQUISITES':
-            strng = indent + 'self.prerequisites = requisites( self.name, [' 
+            strng = indent + 'self.prerequisites = requisites( self.name + "%" + ref_time, [' 
         else:
-            strng = indent + 'self.postrequisites = timed_requisites( self.name, [' 
+            strng = indent + 'self.postrequisites = timed_requisites( self.name + "%" + ref_time, [' 
 
         strng += generate_req_string( conditional_reqs[key] + unconditional_reqs )
         FILE.write( strng + ' ])\n\n' )

@@ -111,6 +111,7 @@ def main( argv ):
             # interact OR negotiate with a requisite broker,
             # then run, create new, and kill spent tasks
             #---
+
             task_pool.regenerate( system_config )
 
             if system_config.get('use_broker'):

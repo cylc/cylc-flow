@@ -19,22 +19,20 @@ import logging
 
 class requisites:
 
-    def __init__( self, task_name, reqs ):
+    def __init__( self, task_id, reqs ):
 
-        # name of my "host task" 
-        # (is there a better way to get this information?)
-        self.task_name = task_name
-        # should use task identity instead of name so that the satifying
-        # ref time is also identified for fuzzy prerequisites?
+        # name and id of my "host task" 
+        self.task_id = task_id
+        self.task_name = re.sub( '%.*$', '', self.task_id )
+
+        # TO DO: check the given requisites are unique
 
         self.satisfied = {}
-        self.ordered_list = []
         for req in reqs:
             self.satisfied[req] = False
-            self.ordered_list.append( req ) 
 
     def count( self ):
-        return len( self.ordered_list )
+        return len( self.satisfied.keys() )
 
     def dump( self ):
         for key in self.satisfied.keys():
@@ -42,16 +40,11 @@ class requisites:
 
     def update( self, reqs ):            
         for req in reqs.get_list():
-            if req not in self.ordered_list:
-                self.ordered_list.append( req )
-
-            self.satisfied[req] = reqs.is_satisfied( req )
+            self.satisfied[ req ] = reqs.is_satisfied( req )
 
     def downdate( self, reqs ):
         for req in reqs.get_list():
-            if req in self.ordered_list:
-                self.ordered_list.remove( req )
-                del self.satisfied[req]
+            del self.satisfied[req]
 
     def all_satisfied( self ):
         if False in self.satisfied.values(): 
@@ -66,24 +59,20 @@ class requisites:
             return False
 
     def set_satisfied( self, req ):
-        if req in self.ordered_list:
-            self.satisfied[ req ] = True
-        else:
-            print "ERROR: unknown requisite: " + req
-            sys.exit(1)
+        self.satisfied[ req ] = True
 
     def requisite_exists( self, req ):
-        if req in self.ordered_list:
+        if req in self.satisfied.keys():
             return True
         else:
             return False
 
     def set_all_satisfied( self ):
-        for req in self.ordered_list:
+        for req in self.satisfied.keys():
             self.satisfied[ req ] = True
 
     def get_list( self ):
-        return self.ordered_list
+        return self.satisfied.keys()
 
     def get_requisites( self ):
         return self.satisfied
@@ -120,7 +109,7 @@ class requisites:
 class timed_requisites( requisites ):
     # use for postrequisites with estimated completion times
 
-    def __init__( self, task_name, timed_reqs ):
+    def __init__( self, task_id, timed_reqs ):
 
         reqs = []
         self.completion_time = {}
@@ -130,7 +119,7 @@ class timed_requisites( requisites ):
 
             self.completion_time[ req ] = time 
 
-        requisites.__init__( self, task_name, reqs )
+        requisites.__init__( self, task_id, reqs )
 
     def get_times( self ):
         return self.completion_time
@@ -141,24 +130,13 @@ class fuzzy_requisites( requisites ):
     # for reference-time based prerequisites of the form 
     # "more recent than or equal to this reference time"
 
-    def __init__( self, task_name, reqs ):
-        requisites.__init__( self, task_name, reqs ) 
+    def __init__( self, task_id, reqs ):
+        requisites.__init__( self, task_id, reqs ) 
 
     def sharpen_up( self, fuzzy, sharp ):
-        # replace the fuzzy prerequisite with the actual postrequisite
-        # that satisfied it, so the task run() method can use it.
-        try:
-            i = self.ordered_list.index( fuzzy )
-        except:
-            log = logging.getLogger( "main." + self.task_name ) 
-            log.warning( "!!!!! " + self.task_name )
-            log.warning( "!!!!! " + fuzzy )
-            log.warning( "!!!!! " + sharp )
-            raise
-
-        self.ordered_list.remove( fuzzy )
-        self.ordered_list.insert( i, sharp ) 
-        
+        # replace a fuzzy prerequisite with the actual postrequisite
+        # that satisfied it, and set it satisfied. This allows the task
+        # run() method to know the actual postrequisite.
         del self.satisfied[ fuzzy ]
         self.satisfied[ sharp ] = True
 
@@ -168,9 +146,9 @@ class fuzzy_requisites( requisites ):
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
             if not self.satisfied[ prereq ]:
-                # if my prerequisite is not already satisfied
+                # if it is not yet satisfied
 
-                # extract reference time from my prerequisite
+                # extract fuzzy reference time bounds from my prerequisite
                 m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
                 if not m:
                     log.critical( "FAILED TO MATCH MIN:MAX IN " + prereq )
@@ -179,10 +157,13 @@ class fuzzy_requisites( requisites ):
                 [ my_start, my_minmax, my_end ] = m.groups()
                 [ my_min, my_max ] = my_minmax.split(':')
 
+                possible_satisfiers = {}
+                found_at_least_one = False
                 for postreq in postreqs.satisfied.keys():
 
                     if postreqs.satisfied[postreq]:
                         # extract reference time from other's postrequisite
+
                         m = re.compile( "^(.*)(\d{10})(.*)$").match( postreq )
                         if not m:
                             # this postreq can't possibly satisfy a
@@ -191,16 +172,33 @@ class fuzzy_requisites( requisites ):
                 
                         [ other_start, other_reftime, other_end ] = m.groups()
 
-                        if other_start == my_start and other_end == my_end:
-                            if other_reftime >= my_min and other_reftime <= my_max:
-                                #print "FUZZY PREREQ: " + prereq
-                                #print "SATISFIED BY: " + postreq
-                                # replace fuzzy prereq with the actual postreq that satisfied it
-                                self.sharpen_up( prereq, postreq )
-                                log.debug( postreqs.task_name + " fuzzy-satisfier: " + postreq )
+                        if other_start == my_start and other_end == my_end and other_reftime >= my_min and other_reftime <= my_max:
+                            possible_satisfiers[ other_reftime ] = postreq
+                            found_at_least_one = True
+                        else:
+                            continue
+
+                if found_at_least_one: 
+                    # choose the most recent possible satisfier
+                    possible_reftimes = possible_satisfiers.keys()
+                    possible_reftimes.sort( key = int, reverse = True )
+                    chosen_reftime = possible_reftimes[0]
+                    chosen_postreq = possible_satisfiers[ chosen_reftime ]
+
+                    #print "FUZZY PREREQ: " + prereq
+                    #print "SATISFIED BY: " + chosen_postreq
+
+                    # replace fuzzy prereq with the actual postreq that satisfied it
+                    self.sharpen_up( prereq, chosen_postreq )
+                    log.debug( postreqs.task_name + " fuzzy-satisfier: " + chosen_postreq )
 
     def will_satisfy_me( self, postreqs ):
-        # will another's postreqs, when completed, satisfy any of my prequisites?
+        # will another's postreqs, if/when completed, satisfy any of my
+        # prequisites?
+
+        # this is similar to satisfy_me() but we don't need to know the most
+        # recent satisfying postrequisite, just if any one can do it.
+
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
             if not self.satisfied[ prereq ]:
@@ -226,6 +224,5 @@ class fuzzy_requisites( requisites ):
 
                     [ other_start, other_reftime, other_end ] = m.groups()
 
-                    if other_start == my_start and other_end == my_end:
-                        if other_reftime >= my_min and other_reftime <= my_max:
-                            self.sharpen_up( prereq, postreq )
+                    if other_start == my_start and other_end == my_end and other_reftime >= my_min and other_reftime <= my_max:
+                        self.sharpen_up( prereq, postreq )
