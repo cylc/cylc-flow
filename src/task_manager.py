@@ -30,7 +30,7 @@ class task_manager:
             state_list = self.states_from_config( config )
 
         self.create_task_logs( state_list, config, dummy_clock)
-        self.create_tasks( state_list, config )
+        self.create_initial_tasks( state_list, config )
 
 
     def create_task_logs( self, state_list, config, dummy_clock ):
@@ -93,7 +93,7 @@ class task_manager:
         return state_list
 
 
-    def create_tasks( self, state_list, config ):
+    def create_initial_tasks( self, state_list, config ):
 
         state_by_reftime = {}
 
