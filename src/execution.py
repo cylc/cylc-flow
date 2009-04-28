@@ -12,7 +12,7 @@
 import os
 import re
 
-class job_submit:
+class launcher:
 
     def __init__( self, config ):
         self.config = config

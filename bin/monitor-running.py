@@ -15,7 +15,6 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import Pyro.core
 from time import sleep
-import pyro_ns_naming
 from string import ljust, rjust, split, upper, lower
 import datetime
 
@@ -56,14 +55,13 @@ while True:
 
     try: 
     
-        god = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'state_summary', config.get('pyro_ns_group')))
+        god = Pyro.core.getProxyForURI('PYRONAME://' + config.get('pyro_ns_group') + '.' + 'state_summary' )
         god._setTimeout(1)
-
 
         mode = 'REAL TIME OPERATION'
         if config.get('dummy_mode') :
             mode = 'ACCELERATED CLOCK DUMMY MODE' 
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock', config.get('pyro_ns_group')))
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + config.get('pyro_ns_group') + '.' + 'dummy_clock' )
             remote_clock._setTimeout(1)
 
         while True:

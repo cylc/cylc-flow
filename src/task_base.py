@@ -28,18 +28,16 @@ class task_base( Pyro.core.ObjBase ):
     # TO DO: 
     # this should be an instance variable (the instance variable is 
     # overriding the class variable when I do set it, so this
-    # works ok, but should be changed for clarity).
+    # works, but it should be changed).
     quick_death = True
 
-    def __init__( self, ref_time, initial_state, launcher ):
+    def __init__( self, ref_time, initial_state ):
         # Call this AFTER derived class initialisation
         #   (it alters requisites based on initial state)
         # Derived classes MUST call nearest_ref_time()
         #   before defining their requisites
 
         Pyro.core.ObjBase.__init__(self)
-
-        self.launcher = launcher
 
         # set state_changed True if any task's state changes 
         # as a result of a remote method call
@@ -125,7 +123,7 @@ class task_base( Pyro.core.ObjBase ):
         return reference_time.increment( self.ref_time, increment )
 
 
-    def run_if_ready( self, tasks ):
+    def run_if_ready( self, tasks, launcher ):
 
         for task in tasks:
             # don't run if any previous instance of me is not finished
@@ -138,11 +136,11 @@ class task_base( Pyro.core.ObjBase ):
 
         if self.state == 'waiting' and self.prerequisites.all_satisfied():
             # prerequisites all satisified, so run me
-            self.run_external_task()
+            self.run_external_task( launcher )
 
-    def run_external_task( self, extra_vars = [] ):
+    def run_external_task( self, launcher, extra_vars = [] ):
         self.log.debug( 'launching task ' + self.name + ' for ' + self.ref_time )
-        self.launcher.run( self.owner, self.name, self.ref_time, self.external_task, extra_vars )
+        launcher.run( self.owner, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
     def get_state( self ):
@@ -288,11 +286,11 @@ class free_task( task_base ):
 
     name = "free task base"
 
-    def __init__( self, ref_time, initial_state, launcher ):
+    def __init__( self, ref_time, initial_state ):
         self.MAX_FINISHED = 5
-        task_base.__init__( self, ref_time, initial_state, launcher )
+        task_base.__init__( self, ref_time, initial_state )
 
-    def run_if_ready( self, tasks ):
+    def run_if_ready( self, tasks, launcher ):
         # don't run if too many previous finished instances exist
         delay = False
 
@@ -311,6 +309,4 @@ class free_task( task_base ):
             pass
 
         else:
-            task_base.run_if_ready( self, tasks )
-
-
+            task_base.run_if_ready( self, tasks, launcher )

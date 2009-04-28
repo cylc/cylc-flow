@@ -180,7 +180,7 @@ def main( argv ):
     FILE.write( 
 '''
 from task_base import task_base, free_task
-import job_submit
+import execution
 
 import reference_time
 from requisites import requisites, timed_requisites, fuzzy_requisites
@@ -303,7 +303,7 @@ import logging
             FILE.write( strng )
 
         # class init function
-        FILE.write( indent + 'def __init__( self, ref_time, initial_state, launcher ):\n\n' )
+        FILE.write( indent + 'def __init__( self, ref_time, initial_state ):\n\n' )
 
         indent_more()
 
@@ -319,13 +319,13 @@ import logging
         write_requisites( 'POSTREQUISITES' )
 
         # call parent's init method
-        FILE.write( indent + parent_class + '.__init__( self, ref_time, initial_state, launcher )\n\n' )
+        FILE.write( indent + parent_class + '.__init__( self, ref_time, initial_state )\n\n' )
 
         if 'EXPORT' in parsed_def.keys():
             # override run_external_task() for the export case
             indent_less()
-            FILE.write( indent + 'def run_external_task( self ):\n' )
-            FILE.write( indent + indent_unit + parent_class + '.run_external_task( self, ' + task_name + '.env_vars )\n\n' )
+            FILE.write( indent + 'def run_external_task( self, launcher ):\n' )
+            FILE.write( indent + indent_unit + parent_class + '.run_external_task( self, launcher, ' + task_name + '.env_vars )\n\n' )
 
         indent_less()
         indent_less()

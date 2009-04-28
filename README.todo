@@ -1,6 +1,7 @@
 Sequenz To Do List
 
 * restart from state dump is incomplete in the case of task types with unusual
-   state information, such as "catching up".
+   state information, such as "catching up"?
 
-* clean up some OOP internals such as handling of config data and task launchers.
+* task.run_if_ready( tasks ) is O(n^2) like the original task interaction
+  loop: use an intermediate broker?

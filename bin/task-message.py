@@ -15,8 +15,6 @@ task objects that represent them in the controller.
 
 import sys
 import Pyro.core
-import pyro_ns_naming
-
 import config
 
 # command line arguments
@@ -37,7 +35,7 @@ message = sys.argv[4]
 
 # connect to the task object inside the control program
 #try:
-task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( task_name + '%' + ref_time, config.get('pyro_ns_group') ) )
+task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('pyro_ns_group') + '.' + task_name + '%' + ref_time )
 task.incoming( priority, message )
 #except:
 #    # nameserver not found, or object not registered with it?
@@ -45,7 +43,7 @@ task.incoming( priority, message )
 #    print "Trying dead letter box"
 
 #    try:
-#        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dead_letter_box' ))
+#        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + config.get('pyro_ns_group') + '.' + 'dead_letter_box' )
 #        dead_box.incoming( message )
 #    except:
 #        # nameserver not found, or object not registered with it?

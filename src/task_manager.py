@@ -6,36 +6,27 @@ create and destroy tasks, and provides methods for getting them to
 interact, etc.
 """
 
-import instantiation
+from instantiate import get_instance
 import pimp_my_logger
-import pyro_ns_naming
-import job_submit
 import logging
 import broker
 import re
 
 class task_manager:
-    def __init__( self, config, pyro_d, reload, dummy_clock ):
+    def __init__( self, config, pyro, restart, dummy_clock ):
         
-        self.pyro_daemon = pyro_d
-        self.launcher = job_submit.job_submit( config )
+        self.pyro = pyro  # pyrex (sequenz Pyro helper) object
         self.log = logging.getLogger( "main" )
 
         if config.get('use_broker'):
             self.broker = broker.broker()
         
         self.tasks = []
-        self.load_initial_task_list( config, dummy_clock )
-
-
-    def load_initial_task_list( self, config, dummy_clock ):
 
         # state_list = [ref_time:name:state, ...]
-        if reload:
-            # reload from state dump file
+        if restart:
             state_list = self.states_from_dump( config )
         else:
-            # load configured task list
             state_list = self.states_from_config( config )
 
         self.create_task_logs( state_list, config, dummy_clock)
@@ -56,8 +47,8 @@ class task_manager:
 
     def states_from_config ( self, config ):
         # use configured task list and start time
-        print '\nLoading configured task list\n\n'
-        self.log.info( 'Loading configured task list' )
+        print '\nLoading state from configured task list\n'
+        self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname(:state), taskname(:state), ...]
         # where (:state) is optional and defaults to 'waiting'.
 
@@ -74,10 +65,10 @@ class task_manager:
 
 
     def states_from_dump( self, config ):
-        # reload from the state dump file
+        # restart from the state dump file
         filename = config.get('state_dump_file')
-        print '\nLoading state from ' + filename + '\n\n'
-        self.log.info( 'Loading state from ' + filename )
+        print '\nLoading previous state from ' + filename + '\n'
+        self.log.info( 'Loading previous state from ' + filename )
         # file format: ref_time:name:state, one per line 
 
         FILE = open( filename, 'r' )
@@ -122,7 +113,7 @@ class task_manager:
             for item in state_by_reftime[ ref_time ]:
                 [ref_time, name, state] = item.split(':')
                 # dynamic task object creation by task and module name
-                task = instantiation.get_by_name( 'task_classes', name )( ref_time, state, self.launcher )
+                task = get_instance( 'task_classes', name )( ref_time, state )
                 if name not in seen.keys():
                     seen[ name ] = True
                 elif state == 'finished':
@@ -142,7 +133,7 @@ class task_manager:
 
                 if not skip:
                     task.log.debug( "Connecting new " + task.name + " for " + task.ref_time )
-                    self.pyro_daemon.connect( task, pyro_ns_naming.name( task.identity, config.get('pyro_ns_group') ) )
+                    self.pyro.connect( task, task.identity )
                     self.tasks.append( task )
 
     def all_finished( self ):
@@ -168,10 +159,10 @@ class task_manager:
         for task in self.tasks:
             task.prerequisites.satisfy_me( self.broker.get_requisites() )
 
-    def run_if_ready( self ):
+    def run_if_ready( self, launcher ):
         # tell tasks to run if their prequisites are satisfied
         for task in self.tasks:
-            task.run_if_ready( self.tasks )
+            task.run_if_ready( self.tasks, launcher)
 
     def regenerate( self, config ):
         # create new task(T+1) if task(T) has abdicated
@@ -179,14 +170,14 @@ class task_manager:
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
                 # dynamic task object creation by task and module name
-                new_task = instantiation.get_by_name( 'task_classes', task.name )( task.next_ref_time(), "waiting", self.launcher )
+                new_task = get_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
                 if config.get('stop_time') and int( new_task.ref_time ) > int( config.get('stop_time') ):
                     # we've reached the stop time: delete the new task 
                     new_task.log.info( new_task.name + " STOPPING at configured stop time " + config.get('stop_time') )
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity, config.get('pyro_ns_group') ) )
+                    self.pyro.connect( new_task, new_task.identity )
                     new_task.log.debug( "New " + new_task.name + " connected for " + new_task.ref_time )
                     self.tasks.append( new_task )
 
@@ -239,13 +230,13 @@ class task_manager:
             lame.log.warning( "ABDICATING A LAME TASK " + lame.identity )
 
             # dynamic task object creation by task and module name
-            new_task = instantiation.get_by_name( 'task_classes', lame.name )( lame.next_ref_time(), "waiting", self.launcher )
+            new_task = get_instance( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
             new_task.log.debug( "New task connected for " + new_task.ref_time )
-            self.pyro_daemon.connect( new_task, pyro_ns_naming.name( new_task.identity, config.get('pyro_ns_group') ) )
+            self.pyro.connect( new_task, new_task.identity )
             self.tasks.append( new_task )
 
             self.tasks.remove( lame )
-            self.pyro_daemon.disconnect( lame )
+            self.pyro.disconnect( lame )
             lame.log.debug( "lame task disconnected for " + lame.ref_time )
             if config.get('use_broker'):
                 self.broker.unregister( lame.get_fullpostrequisites() )
@@ -285,7 +276,7 @@ class task_manager:
         for task in death_list:
             self.log.debug( "removing spent " + task.identity )
             self.tasks.remove( task )
-            self.pyro_daemon.disconnect( task )
+            self.pyro.disconnect( task )
             if config.get('use_broker'):
                 self.broker.unregister( task.get_fullpostrequisites() )
 
@@ -306,7 +297,7 @@ class task_manager:
             for task in death_list:
                 self.log.debug( "removing spent " + task.identity )
                 self.tasks.remove( task )
-                self.pyro_daemon.disconnect( task )
+                self.pyro.disconnect( task )
                 if config.get('use_broker'):
                     self.broker.unregister( task.get_fullpostrequisites() )
 

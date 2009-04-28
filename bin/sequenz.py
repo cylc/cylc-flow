@@ -4,20 +4,20 @@
 # 1/ sequenz 'src' module directory
 # 2/ user config module (for user_config.py and task_classes.py)
 
-import dummy_mode_clock 
-import pyro_ns_naming
-import pimp_my_logger
-import task_manager
-import dead_letter
-import pyro_setup
-import task_base
-import logging
-import profile
-import config
-import remote
-import sys
-import os
 import re
+import os
+import sys
+import pyrex
+import remote
+import config
+import profile
+import logging
+import task_base
+import execution
+import dead_letter
+import task_manager
+import pimp_my_logger
+import dummy_mode_clock 
 
 # auto-replace with version tag at build/install:
 sequenz_version = "foo-bar-baz";
@@ -28,17 +28,10 @@ def usage():
     print "  + [-r] restart from state dump file (overriding"
     print "         the configured start time and task list)."
 
-def pyro_connect( object, name ):
-    global pyro_nameserver_group
-    global pyro_daemon
-    object_id = pyro_ns_naming.name( name, pyro_nameserver_group )
-    pyro_daemon.connect( object, object_id )
-
-def clean_shutdown( pyro_daemon, reason ):
+def clean_shutdown( pyro, reason ):
     log = logging.getLogger( 'main' )
     log.critical( 'System Halt: ' + reason )
-    pyro_daemon.shutdown( True ) 
-
+    pyro.shutdown( True ) 
 
 # MAIN PROGRAM
 #---
@@ -66,20 +59,18 @@ def main( argv ):
     system_config = config.config()
     system_config.load()
 
-    # pyro nameserver group name for the configured task set
-    global pyro_nameserver_group
-    pyro_nameserver_group = system_config.get( 'pyro_ns_group' )
+    # external task launcher
+    launcher = execution.launcher( system_config )
 
-    # create the Pyro daemon
-    global pyro_daemon
-    pyro_daemon = pyro_setup.create_daemon( pyro_nameserver_group )
+    # configure my pyro helper
+    pyro = pyrex.pyrex( system_config.get( 'pyro_ns_group' ))
 
     # dummy mode accelerated clock
     if system_config.get('dummy_mode'):
         dummy_clock = dummy_mode_clock.time_converter( system_config.get('start_time'), 
                                                        system_config.get('dummy_clock_rate'), 
                                                        system_config.get('dummy_clock_offset') ) 
-        pyro_connect( dummy_clock, 'dummy_clock' )
+        pyro.connect( dummy_clock, 'dummy_clock' )
     else:
         dummy_clock = None
 
@@ -93,25 +84,25 @@ def main( argv ):
 
     # remote control switch
     remote_switch = remote.switch()
-    pyro_connect( remote_switch, 'remote_switch' )
+    pyro.connect( remote_switch, 'remote_switch' )
 
     # remotely accessible system state summary
     state_summary = remote.state_summary()
-    pyro_connect( state_summary, 'state_summary' )
+    pyro.connect( state_summary, 'state_summary' )
 
     # dead letter box for remote use
     dead_letter_box = dead_letter.letter_box()
-    pyro_connect( dead_letter_box, 'dead_letter_box' )
+    pyro.connect( dead_letter_box, 'dead_letter_box' )
 
     # initialize the task task_pool from general config file or state dump
-    task_pool = task_manager.task_manager( system_config, pyro_daemon, restart, dummy_clock )
+    task_pool = task_manager.task_manager( system_config, pyro, restart, dummy_clock )
 
     print "\nBeginning task processing now\n"
 
     while True: # MAIN LOOP
 
         if remote_switch.system_halt:
-            clean_shutdown( pyro_daemon, 'remote request' )
+            clean_shutdown( pyro, 'remote request' )
 	    return
 
         if task_base.state_changed and not remote_switch.system_pause:
@@ -127,7 +118,7 @@ def main( argv ):
             else:
                 task_pool.interact()
 
-            task_pool.run_if_ready()
+            task_pool.run_if_ready( launcher )
 
             task_pool.kill_spent_tasks( system_config )
 
@@ -138,7 +129,7 @@ def main( argv ):
             state_summary.update( task_pool.tasks )
 
             if task_pool.all_finished():
-                clean_shutdown( pyro_daemon, "ALL TASKS FINISHED" )
+                clean_shutdown( pyro, "ALL TASKS FINISHED" )
                 return
 
         # REMOTE METHOD HANDLING; with no timeout and single-
@@ -148,7 +139,7 @@ def main( argv ):
         # state_changed variable above).
         #---
         task_base.state_changed = False
-        pyro_daemon.handleRequests( timeout = None )
+        pyro.handleRequests( timeout = None )
 
      # END MAIN LOOP
 

@@ -2,10 +2,9 @@
 
 import os
 import sys
+import config
 import Pyro.core
 from time import sleep
-import pyro_ns_naming
-import config
 
 def usage():
     print 'USAGE: ' + sys.argv[0] + ' [-p] [-r] [-s] [-b <hours>]'
@@ -43,7 +42,7 @@ elif n_args == 2 and sys.argv[1] == '-b':
     bump_hours = sys.argv[2]
 
     try:
-        dummy_clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'dummy_clock', config.get('pyro_ns_group')))
+        dummy_clock = Pyro.core.getProxyForURI('PYRONAME://' + config.get('pyro_ns_group') + '.' + 'dummy_clock' )
     except:
         print "ERROR: failed to connect to the dummy clock"
         sys.exit(1)
@@ -65,7 +64,7 @@ else:
 # pause, resume, or halt
 try:
     # connect to the task object inside the control program
-    control = Pyro.core.getProxyForURI('PYRONAME://' + pyro_ns_naming.name( 'remote_switch', config.get('pyro_ns_group')))
+    control = Pyro.core.getProxyForURI('PYRONAME://' + config.get('pyro_ns_group') + '.' + 'remote_switch' )
 
 except:
     print "ERROR: failed to connect to control"
@@ -110,7 +109,7 @@ except:
     raise
 
     try:
-        dead_box = Pyro.core.getProxyForURI("PYRONAME://" + pyro_ns_naming( 'dead_letter_box', config.get('pyro_ns_group')))
+        dead_box = Pyro.core.getProxyForURI("PYRONAME://" + config.get('pyro_ns_group') + '.' + 'dead_letter_box' )
         try:
             dead_box.incoming( message )
         except:
