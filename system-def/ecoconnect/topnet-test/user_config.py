@@ -19,7 +19,7 @@ config[ 'logging_level' ] = logging.DEBUG
 
 config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 10
-config[ 'dummy_clock_offset' ] = 100 
+config[ 'dummy_clock_offset' ] = 10 
 
 config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'topnet_test'

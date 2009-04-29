@@ -26,17 +26,22 @@ class pyrex:
 
         self.groupname = groupname
 
-        print " + configuring Pyro"
+        print "CONFIGURING Pyro........"
         # REQUIRE SINGLE THREADED OPERATION (see documentation)
-        print "   - single threaded" 
+        print " - single threaded" 
         Pyro.config.PYRO_MULTITHREADED = 0
 
         # locate the Pyro nameserver
-        print "   - locating nameserver" 
-        pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
+        print " - locating nameserver ...",
+        try:
+            pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
+        except:
+            print "ERROR: failed to find a Pyro nameserver"
+            raise
 
+        print "found"
         # create a nameserver group for this system
-        print "   - creating nameserver group '" + groupname + "'"
+        print " - creating nameserver group '" + groupname + "'"
         try:
             # abort if any existing objects are registered in my group name
             # (this may indicate another instance of sequenz is running
@@ -58,7 +63,7 @@ class pyrex:
             print "(i) if the group is yours from a previous aborted run you can"
             print "    manually delete it with 'pyro-nsc deletegroup " + groupname +"'"
             print "(ii) if the group is being used by another program, change"
-            print "    'groupname' in your config file to avoid interference.\n"
+            print "    'system_name' in your config file to avoid interference.\n"
 
             print "ABORTING NOW"
             #raise NamingError

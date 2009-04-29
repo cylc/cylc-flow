@@ -74,6 +74,7 @@ def main( argv ):
     else:
         dummy_clock = None
 
+    print "CREATING MAIN LOG......."
     # create logging dirs
     if not os.path.exists( system_config.get('logging_dir') ):
        os.makedirs( system_config.get('logging_dir') )

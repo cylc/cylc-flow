@@ -31,10 +31,10 @@ class time_converter( Pyro.core.ObjBase ):
         # rate of dummy time advance (S/HOUR)
         self.rate = rate
 
-        print
-        print "DUMMY MODE CLOCK" 
-        print " + rate " + str(self.rate) + " seconds / dummy hour"
-        print " + start time " + str( self.base_dummytime )
+        print "DUMMY MODE CLOCK........" 
+        print " - rate:   " + str(self.rate) + " seconds = 1 hour"
+        print " - start:  " + str( self.base_dummytime )
+        print " - offset: " + str( offset )
 
     def get_datetime( self ):
         delta = datetime.datetime.now() - self.base_datetime

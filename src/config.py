@@ -95,44 +95,46 @@ class config:
     def dump( self ):
             
         print
-        print " + SYSTEM NAME: " + self.configured['system_name']
+        print "SYSTEM NAME.............", 
+        print self.configured['system_name']
 
+        print "MODE....................",
         if self.configured['dummy_mode']:
-            print " + RUNNING IN DUMMY MODE"
-            print "   clock rate: ", self.configured['dummy_clock_rate']
-            print "   clock offset: ", self.configured['dummy_clock_offset']
+            print "DUMMY MODE"
         else:
-            print " + running in real mode"
+            print "real mode"
  
+        print "TASK SEQUENCING METHOD..",
         if self.configured['use_broker']:
-            print " + task sequencing method: broker negotiation"
+            print "broker negotiation"
         else:
-            print " + task sequencing method: task interaction"
-            print "   (may be slow if number of tasks is very large)" 
+            print "task interaction (may be slow for large task numbers)" 
 
-        print " + start time: " + self.configured['start_time']
+        print "START TIME..............",
+        print self.configured['start_time']
+        print "STOP TIME...............",
         if self.configured['stop_time']:
-            print " + stop time: " + self.configured['stop_time']
+            print self.configured['stop_time']
         else:
-            print " + (no stop time configured)"
+            print "(none)"
 
+        print "TASK EXECUTION..........",
         if self.configured['use_qsub']:
-            print " + job launch method: qsub"
-            print " + job queue: " + self.configured['job_queue']
+            print "qsub, queue = " + self.configured['job_queue']
         else:
-            print " + job launch method: direct, in background"
+            print "direct, in background"
 
-        print ' + logging dir: ' + self.configured['logging_dir']
+        print 'LOGGING DIRECTORY.......',
+        print self.configured['logging_dir']
 
-        print ' + state dump file: ' + self.configured['state_dump_file']
+        print "STATE DUMP FILE.........",
+        print self.configured['state_dump_file']
 
-        print ' + pyro nameserver group name: ' + self.configured['pyro_ns_group']
-
-        print ' + task list: '
+        print 'CONFIGURED TASK LIST....'
         for task in self.configured['task_list']:
-            print '   - ' + task
+            print ' - ' + task
 
         if len( self.configured['dummy_out'] ) > 0:
-            print ' + dummying out in real mode: '
+            print 'TASKS DUMMIED OUT IN REAL MODE:'
             for task in self.configured['dummy_out']:
-                print '    ' + task
+                print '  - ' + task

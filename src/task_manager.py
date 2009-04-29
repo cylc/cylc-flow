@@ -35,6 +35,7 @@ class task_manager:
 
     def create_task_logs( self, state_list, config, dummy_clock ):
         # task loggers that propagate messages up to the main logger
+        print "CREATING TASK LOGS......"
         unique_task_names = {}
         for item in state_list:
             [ref_time, name, state] = item.split(':')
@@ -47,7 +48,7 @@ class task_manager:
 
     def states_from_config ( self, config ):
         # use configured task list and start time
-        print '\nLoading state from configured task list\n'
+        print '\nCLEAN START: INITIAL STATE FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname(:state), taskname(:state), ...]
         # where (:state) is optional and defaults to 'waiting'.
@@ -67,7 +68,7 @@ class task_manager:
     def states_from_dump( self, config ):
         # restart from the state dump file
         filename = config.get('state_dump_file')
-        print '\nLoading previous state from ' + filename + '\n'
+        print '\nRESTART: INITIAL STATE FROM STATE DUMP: ' + filename + '\n'
         self.log.info( 'Loading previous state from ' + filename )
         # file format: ref_time:name:state, one per line 
 
