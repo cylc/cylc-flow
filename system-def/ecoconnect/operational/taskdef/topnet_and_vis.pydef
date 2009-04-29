@@ -25,10 +25,13 @@ class topnet_and_vis( task_base ):
     valid_hours = range( 0,24 )
     external_task = 'topnet_and_vis.sh'
     owner = 'hydrology_oper'
+    nzlam_time = None
 
-    nzlam_time = 0 # see below
+    # cutoff in hours (min wait before killing upstream tasks)
+    CATCHUP_MODE_CUTOFF  = 11
+    CAUGHTUP_MODE_CUTOFF = 23   
 
-    fuzzy_file_re =  re.compile( "^file (.*) ready$" )
+    fuzzy_file_re =  re.compile( "^file (tn_\d{10}_utc_nzlam_12.nc) ready$" )
     reftime_re = re.compile( "\d{10}")
 
     def __init__( self, ref_time, initial_state ):
@@ -38,11 +41,10 @@ class topnet_and_vis( task_base ):
         ref_time = self.ref_time
  
         if streamflow.catchup_mode:
-            #print "CUTOFF 11 for " + self.name + "%" + ref_time
-            nzlam_cutoff = reference_time.decrement( ref_time, 11 )
+            nzlam_cutoff = reference_time.decrement( ref_time, topnet_and_vis.CATCHUP_MODE_CUTOFF )
         else:
             #print "CUTOFF 23 for " + self.name + "%" + ref_time
-            nzlam_cutoff = reference_time.decrement( ref_time, 23 )
+            nzlam_cutoff = reference_time.decrement( ref_time, topnet_and_vis.CAUGHTUP_MODE_CUTOFF )
 
         # min:max
         fuzzy_limits = nzlam_cutoff + ':' + ref_time
@@ -67,16 +69,20 @@ class topnet_and_vis( task_base ):
         # file that satisified the fuzzy prerequisites
 
         # extract nzlam time from the nzlam prereq
+        nzlam_time = None
         prereqs = self.prerequisites.get_list()
         for prereq in prereqs:
             m = topnet_and_vis.fuzzy_file_re.match( prereq )
             if m:
-                # we've found the nzlam prereq
+                # found the nzlam prereq
+                [ file ] = m.groups()
+                m = topnet_and_vis.reftime_re.search( file )
+                nzlam_time = m.group()
                 break
  
-        [ file ] = m.groups()
-        m = topnet_and_vis.reftime_re.search( file )
-        nzlam_time = m.group()
+        if not nzlam_time:
+            print "ERROR: failed to find nzlam time"
+            sys.exit(1)
 
         nzlam_age = 'old'
         if nzlam_time != topnet_and_vis.nzlam_time:
@@ -93,14 +99,14 @@ class topnet_and_vis( task_base ):
         task_base.run_external_task( self, launcher, extra_vars )
 
 
-    def get_cutoff( self, all_tasks ):
+    def get_cutoff( self ):
 
-        # keep the most recent *finished* nzlam_06_18_post or
-        # oper2test_topnet task that is OLDER THAN ME, because the next
+        # must keep the most recent *finished* nzlam_06_18_post or
+        # oper2test_topnet task that is older than me, because the next
         # hourly topnet may also need the output from that same
         # 12-hourly task.
 
         if streamflow.catchup_mode:
-            return reference_time.decrement( self.ref_time, 13 )
+            return reference_time.decrement( self.ref_time, topnet_and_vis.CATCHUP_MODE_CUTOFF )
         else:
-            return reference_time.decrement( self.ref_time, 25 )
+            return reference_time.decrement( self.ref_time, topnet_and_vis.CAUGHTUP_MODE_CUTOFF )
