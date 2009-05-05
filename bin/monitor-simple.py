@@ -87,6 +87,9 @@ while True:
                 elif state == "waiting":
                     foo = "\033[35m" + name + ctrl_end       # magenta
 
+                elif state == "failed":
+                    foo = "\033[1;37;41m" + name + ctrl_end       # bold white on red
+
                 else:
                     foo = name
 
