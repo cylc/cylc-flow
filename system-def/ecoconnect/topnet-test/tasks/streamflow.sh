@@ -63,7 +63,7 @@ fi
 # TDSERVER FREQUENTLY FAILS TO RETURN A FILE, SO DO MULTIPLE RETRIES
 MAX_ATTEMPTS=10
 
-STREAMFLOW_DATA=/dvel/data_dvel/output/td2cf/streamq_${STREAMFLOW_TIME}_utc_ods_nz.nc
+STREAMFLOW_DATA=/dvel/data_dvel/output/td2cf/streamobs_${STREAMFLOW_TIME}_utc_ods_nz.nc
 if [[ -f $STREAMFLOW_DATA ]]; then
     task-message NORMAL "streamflow data already exists for $STREAMFLOW_TIME"
 else
