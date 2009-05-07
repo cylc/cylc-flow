@@ -29,5 +29,6 @@ config[ 'task_list' ] = [
         'oper2test_topnet',
         'streamflow',
         'topnet_and_vis',
-        'topnet_products'
+        'topnet_products',
+        'cleanup_topnet_nc'
         ]
