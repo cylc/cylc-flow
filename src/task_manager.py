@@ -8,7 +8,9 @@ interact, etc.
 
 from instantiate import get_instance
 import pimp_my_logger
+import datetime
 import logging
+import shutil
 import broker
 import re
 
@@ -68,7 +70,11 @@ class task_manager:
     def states_from_dump( self, config ):
         # restart from the state dump file
         filename = config.get('state_dump_file')
-        print '\nRESTART: INITIAL STATE FROM STATE DUMP: ' + filename + '\n'
+        backup = filename + '.' + datetime.datetime.now().isoformat()
+        print '\nRESTART: INITIAL STATE FROM STATE DUMP: ' + filename
+        print ' backing up the initial state dump file to ' + backup
+        shutil.copyfile( filename, backup )
+
         self.log.info( 'Loading previous state from ' + filename )
         # file format: ref_time:name:state, one per line 
 
