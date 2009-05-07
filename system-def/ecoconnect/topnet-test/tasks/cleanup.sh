@@ -70,7 +70,7 @@ for FILENAME in $FILENAMES; do
 	fi
 
     # delete if older than the cutoff
-	if [[ $RT > $CUT ]]; then
+	if [[ $RT < $CLEANUP_CUTOFF ]]; then
 		echo "deleting $FILENAME"
         rm $FILENAME
 	fi
