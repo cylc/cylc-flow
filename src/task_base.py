@@ -214,33 +214,40 @@ class task_base( Pyro.core.ObjBase ):
 
         self.latest_message = message
 
+        # if message does not end in 'for YYYYMMDDHH'
+        # add my reference time for logging purposes
+        if not re.search( 'for \d\d\d\d\d\d\d\d\d\d$', message ):
+            log_message = message + ' + for ' + self.ref_time
+        else:
+            log_message = message
+
         if self.state != "running":
             # message from a task that's not supposed to be running
-            self.log.warning( "MESSAGE FROM NON-RUNNING TASK: " + message )
+            self.log.warning( "MESSAGE FROM NON-RUNNING TASK: " + log_message )
 
         if self.postrequisites.requisite_exists( message ):
             # an expected postrequisite from a running task
             if self.postrequisites.is_satisfied( message ):
-                self.log.warning( "POSTREQUISITE ALREADY SATISFIED: " + message )
+                self.log.warning( "POSTREQUISITE ALREADY SATISFIED: " + log_message )
 
-            self.log.info( message )
+            self.log.info( log_message )
             self.postrequisites.set_satisfied( message )
 
         elif message == self.name + " failed":
-            self.log.critical( message )
+            self.log.critical( log_message )
             self.state = "failed"
 
         else:
             # a non-postrequisite message, e.g. progress report
             message = '*' + message
             if priority == "NORMAL":
-                self.log.info( message )
+                self.log.info( log_message )
             elif priority == "WARNING":
-                self.log.warning( message )
+                self.log.warning( log_message )
             elif priority == "CRITICAL":
-                self.log.critical( message )
+                self.log.critical( log_message )
             else:
-                self.log.warning( message )
+                self.log.warning( log_message )
 
         if self.postrequisites.all_satisfied():
             self.set_finished()
