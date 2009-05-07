@@ -216,8 +216,9 @@ class task_base( Pyro.core.ObjBase ):
 
         # if message does not end in 'for YYYYMMDDHH'
         # add my reference time for logging purposes
+        # (and a semi-colon to identify these cases)
         if not re.search( 'for \d\d\d\d\d\d\d\d\d\d$', message ):
-            log_message = message + ' + for ' + self.ref_time
+            log_message = message + '; for ' + self.ref_time
         else:
             log_message = message
 
