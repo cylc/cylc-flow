@@ -17,6 +17,6 @@
     # NONE
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    1 min: file nztide_$(REFERENCE_TIME).nc ready
-    2 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    1 min: file nztide_$(MY_REFERENCE_TIME).nc ready
+    2 min: $(NAME) finished for $(MY_REFERENCE_TIME)

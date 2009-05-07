@@ -67,13 +67,13 @@ def main( argv ):
             FILE.write('\n\n')
 
         else:
-            FILE.write( '    ' + prev_tdef + ' finished for $(REFERENCE_TIME)\n' )
+            FILE.write( '    ' + prev_tdef + ' finished for $(MY_REFERENCE_TIME)\n' )
             
         FILE.write( 
             """
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    1 min: $(NAME) finished for $(REFERENCE_TIME)\n""" )
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    1 min: $(NAME) finished for $(MY_REFERENCE_TIME)\n""" )
     
         FILE.close() 
 

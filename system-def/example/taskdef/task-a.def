@@ -17,5 +17,5 @@
 %PREREQUISITES
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    1 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    1 min: $(NAME) finished for $(MY_REFERENCE_TIME)

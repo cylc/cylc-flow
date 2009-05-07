@@ -14,9 +14,9 @@
     mos.sh
 
 %PREREQUISITES
-    file met_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
+    file met_$(MY_REFERENCE_TIME)_utc_nzlam_12.nc ready
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    5 min: processing done for $(REFERENCE_TIME)
-    6 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    5 min: processing done for $(MY_REFERENCE_TIME)
+    6 min: $(NAME) finished for $(MY_REFERENCE_TIME)

@@ -14,10 +14,10 @@
     globalwave.sh
 
 %PREREQUISITES
-    file 10mwind_$(REFERENCE_TIME).nc ready
-    file seaice_$(REFERENCE_TIME).nc ready
+    file 10mwind_$(MY_REFERENCE_TIME).nc ready
+    file seaice_$(MY_REFERENCE_TIME).nc ready
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    120 min: file globalwave_$(REFERENCE_TIME).nc ready
-    121 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    120 min: file globalwave_$(MY_REFERENCE_TIME).nc ready
+    121 min: $(NAME) finished for $(MY_REFERENCE_TIME)

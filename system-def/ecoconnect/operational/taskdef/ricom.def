@@ -14,9 +14,9 @@
     ricom.sh
 
 %PREREQUISITES
-    file sls_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
+    file sls_$(MY_REFERENCE_TIME)_utc_nzlam_12.nc ready
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    30 min: processing finished for $(REFERENCE_TIME)
-    31 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    30 min: processing finished for $(MY_REFERENCE_TIME)
+    31 min: $(NAME) finished for $(MY_REFERENCE_TIME)

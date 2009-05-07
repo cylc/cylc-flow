@@ -17,13 +17,13 @@
     nzlam_post.sh
 
 %PREREQUISITES
-    file tn_$(REFERENCE_TIME)_utc_nzlam_12.um ready
-    file sls_$(REFERENCE_TIME)_utc_nzlam_12.um ready
-    file met_$(REFERENCE_TIME)_utc_nzlam_12.um ready
+    file tn_$(MY_REFERENCE_TIME)_utc_nzlam_12.um ready
+    file sls_$(MY_REFERENCE_TIME)_utc_nzlam_12.um ready
+    file met_$(MY_REFERENCE_TIME)_utc_nzlam_12.um ready
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    10 min: file sls_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
-    20 min: file tn_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
-    30 min: file met_$(REFERENCE_TIME)_utc_nzlam_12.nc ready
-    31 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    10 min: file sls_$(MY_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    20 min: file tn_$(MY_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    30 min: file met_$(MY_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    31 min: $(NAME) finished for $(MY_REFERENCE_TIME)

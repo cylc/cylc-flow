@@ -14,9 +14,9 @@
     nwp_global.sh
 
 %PREREQUISITES
-    file 10mwind_$(REFERENCE_TIME).um ready
+    file 10mwind_$(MY_REFERENCE_TIME).um ready
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    120 min: file 10mwind_$(REFERENCE_TIME).nc ready
-    121 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    120 min: file 10mwind_$(MY_REFERENCE_TIME).nc ready
+    121 min: $(NAME) finished for $(MY_REFERENCE_TIME)

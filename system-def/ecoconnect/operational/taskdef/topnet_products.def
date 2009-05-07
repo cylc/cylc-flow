@@ -17,8 +17,8 @@
     MODEL_NAME topnet
 
 %PREREQUISITES
-    topnet_and_vis finished for $(REFERENCE_TIME)
+    topnet_and_vis finished for $(MY_REFERENCE_TIME)
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    2 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    2 min: $(NAME) finished for $(MY_REFERENCE_TIME)

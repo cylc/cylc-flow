@@ -14,11 +14,11 @@
     global_prep.sh
 
 %PREREQUISITES
-    file 10mwind_$(REFERENCE_TIME).um ready
-    file seaice_$(REFERENCE_TIME).um ready
+    file 10mwind_$(MY_REFERENCE_TIME).um ready
+    file seaice_$(MY_REFERENCE_TIME).um ready
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
-    5 min: file 10mwind_$(REFERENCE_TIME).nc ready
-    7 min: file seaice_$(REFERENCE_TIME).nc ready
-    10 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    5 min: file 10mwind_$(MY_REFERENCE_TIME).nc ready
+    7 min: file seaice_$(MY_REFERENCE_TIME).nc ready
+    10 min: $(NAME) finished for $(MY_REFERENCE_TIME)

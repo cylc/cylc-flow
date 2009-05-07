@@ -16,18 +16,18 @@
 %PREREQUISITES
 
 %POSTREQUISITES
-    0   min: $(NAME) started for $(REFERENCE_TIME)
-    0.5 min: file obstore_$(REFERENCE_TIME).um ready
-    1   min: file bgerr_$(REFERENCE_TIME).um ready
+    0   min: $(NAME) started for $(MY_REFERENCE_TIME)
+    0.5 min: file obstore_$(MY_REFERENCE_TIME).um ready
+    1   min: file bgerr_$(MY_REFERENCE_TIME).um ready
 
-    0 | 106 min: file lbc_$(REFERENCE_TIME - 12).um ready
-    0 | 122 min: file 10mwind_$(REFERENCE_TIME).um ready
-    0 | 122.5 min: file seaice_$(REFERENCE_TIME).um ready
-    0 | 199 min: file dump_$(REFERENCE_TIME).um ready
-    0 | 200 min: $(NAME) finished for $(REFERENCE_TIME)
+    0 | 106 min: file lbc_$(MY_REFERENCE_TIME - 12).um ready
+    0 | 122 min: file 10mwind_$(MY_REFERENCE_TIME).um ready
+    0 | 122.5 min: file seaice_$(MY_REFERENCE_TIME).um ready
+    0 | 199 min: file dump_$(MY_REFERENCE_TIME).um ready
+    0 | 200 min: $(NAME) finished for $(MY_REFERENCE_TIME)
 
-    12 | 97 min: file lbc_$(REFERENCE_TIME - 12).um ready
-    12 | 98 min: $(NAME) finished for $(REFERENCE_TIME)
+    12 | 97 min: file lbc_$(MY_REFERENCE_TIME - 12).um ready
+    12 | 98 min: $(NAME) finished for $(MY_REFERENCE_TIME)
 
-    6,18 | 0.1 min: file lbc_$(REFERENCE_TIME - 6).um ready
-    6,18 | 2 min: $(NAME) finished for $(REFERENCE_TIME) 
+    6,18 | 0.1 min: file lbc_$(MY_REFERENCE_TIME - 6).um ready
+    6,18 | 2 min: $(NAME) finished for $(MY_REFERENCE_TIME) 

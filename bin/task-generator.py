@@ -245,7 +245,6 @@ import logging
                 # data associated with current key
                 parsed_def[ current_key ].append( line ) 
 
-        # for debugging:
         # print_parsed_info()
 
         # write the class definition

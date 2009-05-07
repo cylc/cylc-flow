@@ -14,20 +14,20 @@
     nzlam.sh
 
 %PREREQUISITES
-    file obstore_$(REFERENCE_TIME).um ready
-    file bgerr_$(REFERENCE_TIME).um ready
+    file obstore_$(MY_REFERENCE_TIME).um ready
+    file bgerr_$(MY_REFERENCE_TIME).um ready
 
-    0,12 | file lbc_$(REFERENCE_TIME - 12).um ready
+    0,12 | file lbc_$(MY_REFERENCE_TIME - 12).um ready
 
-    6,18 | file lbc_$(REFERENCE_TIME - 6).um ready
+    6,18 | file lbc_$(MY_REFERENCE_TIME - 6).um ready
 
 %POSTREQUISITES
-    0 min: $(NAME) started for $(REFERENCE_TIME)
+    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
 
-    0,12 | 30 min: file sls_$(REFERENCE_TIME)_utc_nzlam_12.um ready
-    0,12 | 32 min: $(NAME) finished for $(REFERENCE_TIME)
+    0,12 | 30 min: file sls_$(MY_REFERENCE_TIME)_utc_nzlam_12.um ready
+    0,12 | 32 min: $(NAME) finished for $(MY_REFERENCE_TIME)
 
-    6,18 | 110 min: file tn_$(REFERENCE_TIME)_utc_nzlam_12.um ready
-    6,18 | 111 min: file sls_$(REFERENCE_TIME)_utc_nzlam_12.um ready
-    6,18 | 112 min: file met_$(REFERENCE_TIME)_utc_nzlam_12.um ready
-    6,18 | 115 min: $(NAME) finished for $(REFERENCE_TIME)
+    6,18 | 110 min: file tn_$(MY_REFERENCE_TIME)_utc_nzlam_12.um ready
+    6,18 | 111 min: file sls_$(MY_REFERENCE_TIME)_utc_nzlam_12.um ready
+    6,18 | 112 min: file met_$(MY_REFERENCE_TIME)_utc_nzlam_12.um ready
+    6,18 | 115 min: $(NAME) finished for $(MY_REFERENCE_TIME)

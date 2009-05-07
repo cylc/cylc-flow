@@ -14,10 +14,10 @@
     run-typical_task.sh
 
 %PREREQUISITES
-    file input_$(REFERENCE_TIME)_utc.nc ready
+    file input_$(MY_REFERENCE_TIME)_utc.nc ready
 
 %POSTREQUISITES
-            0 min: typical_task started for $(REFERENCE_TIME)
-    6,18 | 18 min: file typical_task-foo_$(REFERENCE_TIME).nc ready
-    0,12 | 18 min: file typical_task-bar_$(REFERENCE_TIME).nc ready
-           20 min: typical_task finished for $(REFERENCE_TIME)
+            0 min: typical_task started for $(MY_REFERENCE_TIME)
+    6,18 | 18 min: file typical_task-foo_$(MY_REFERENCE_TIME).nc ready
+    0,12 | 18 min: file typical_task-bar_$(MY_REFERENCE_TIME).nc ready
+           20 min: typical_task finished for $(MY_REFERENCE_TIME)
