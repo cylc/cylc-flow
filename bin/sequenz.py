@@ -7,15 +7,15 @@
 import re
 import os
 import sys
+import task
 import pyrex
 import remote
 import config
 import profile
+import manager
 import logging
-import task_base
 import execution
 import dead_letter
-import task_manager
 import pimp_my_logger
 import dummy_mode_clock 
 
@@ -95,8 +95,8 @@ def main( argv ):
     dead_letter_box = dead_letter.letter_box()
     pyro.connect( dead_letter_box, 'dead_letter_box' )
 
-    # initialize the task task_pool from general config file or state dump
-    task_pool = task_manager.task_manager( system_config, pyro, restart, dummy_clock )
+    # initialize the task manager from general config file or state dump
+    god = manager.manager( system_config, pyro, restart, dummy_clock )
 
     print "\nBeginning task processing now\n"
 
@@ -106,31 +106,31 @@ def main( argv ):
             clean_shutdown( pyro, 'remote request' )
 	    return
 
-        if task_base.state_changed and not remote_switch.system_pause:
+        if task.state_changed and not remote_switch.system_pause:
             # PROCESS ALL TASKS whenever one has changed state
             # as a result of a remote task message coming in: 
             # interact OR negotiate with a requisite broker,
             # then run, create new, and kill spent tasks
             #---
 
-            task_pool.regenerate( system_config )
+            god.regenerate_tasks( system_config )
 
             if system_config.get('use_broker'):
-                task_pool.negotiate()
+                god.negotiate()
             else:
-                task_pool.interact()
+                god.interact()
 
-            task_pool.run_if_ready( launcher )
+            god.run_tasks( launcher )
 
-            task_pool.kill_spent_tasks( system_config )
+            god.kill_spent_tasks( system_config )
 
-            task_pool.kill_lame_tasks( system_config )
+            god.kill_lame_tasks( system_config )
 
-            task_pool.dump_state( system_config )
+            god.dump_state( system_config )
 
-            state_summary.update( task_pool.tasks )
+            state_summary.update( god.tasks )
 
-            if task_pool.all_finished():
+            if god.all_finished():
                 clean_shutdown( pyro, "ALL TASKS FINISHED" )
                 return
 
@@ -140,7 +140,7 @@ def main( argv ):
         # are not just task messages, hence the use of the
         # state_changed variable above).
         #---
-        task_base.state_changed = False
+        task.state_changed = False
         pyro.handleRequests( timeout = None )
 
      # END MAIN LOOP

@@ -104,7 +104,7 @@ class config:
         else:
             print "real mode"
  
-        print "TASK SEQUENCING METHOD..",
+        print "SCHEDULING METHOD ......",
         if self.configured['use_broker']:
             print "broker negotiation"
         else:

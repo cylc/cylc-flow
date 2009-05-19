@@ -14,7 +14,7 @@ import shutil
 import broker
 import re
 
-class task_manager:
+class manager:
     def __init__( self, config, pyro, restart, dummy_clock ):
         
         self.pyro = pyro  # pyrex (sequenz Pyro helper) object
@@ -123,10 +123,10 @@ class task_manager:
                 task = get_instance( 'task_classes', name )( ref_time, state )
                 if name not in seen.keys():
                     seen[ name ] = True
-                elif state == 'finished':
-                    # finished but already seen at a later
-                    # reference time => already abdicated
-                    task.abdicate()
+                else:
+                    # an instance of this task was already seen at a
+                    # later reference time, therefore it has abdicated
+                    task.set_abdicated()
 
                 # the initial task reference time can be altered during
                 # creation, so we have to create the task before
@@ -135,6 +135,7 @@ class task_manager:
                 if config.get('stop_time'):
                     if int( task.ref_time ) > int( self.stop_time ):
                         task.log.info( task.name + " STOPPING at " + self.stop_time )
+                        task.prepare_for_death()
                         del task
                         skip = True
 
@@ -170,40 +171,11 @@ class task_manager:
             #print "  - " + task.identity
             task.prerequisites.satisfy_me( self.broker.get_requisites() )
 
-    def run_if_ready( self, launcher ):
-        # Tell each task to run if:
-        #   (a) it is waiting
-        #      AND 
-        #   (b) its prequisites are satisfied
-        #      AND
-        #   (c) all (previous) instances of it are finished
-        #      AND
-        #   (d) not too many previous instances exist, which stops 
-        #       tasks with no prerequisites from running off ahead
-
-        # (a) and (b) are handled by the task itself
-        # (c) and (d) are handled here, where we have the global task view
-
-        finished = {}  # finished[ task.name ] = [ all_finished?, n_finished ]
+    def run_tasks( self, launcher ):
         for task in self.tasks:
-            if task.name not in finished.keys():
-                fin = False
-                n_fin = 0
-                if task.is_finished():
-                    fin = True
-                    n_fin = 1
-                finished[ task.name ] = [ fin, n_fin ]
-            else:
-                if task.is_finished():
-                    (finished[ task.name ])[1] += 1
-                else:
-                    (finished[ task.name ])[0] = False
-
-        for task in self.tasks:
-            if not (finished[ task.name ])[0] and (finished[ task.name ])[1] <= task.MAX_FINISHED:
                 task.run_if_ready( launcher )
 
-    def regenerate( self, config ):
+    def regenerate_tasks( self, config ):
         # create new task(T+1) if task(T) has abdicated
         for task in self.tasks:
             if task.abdicate():
@@ -213,6 +185,7 @@ class task_manager:
                 if config.get('stop_time') and int( new_task.ref_time ) > int( config.get('stop_time') ):
                     # we've reached the stop time: delete the new task 
                     new_task.log.info( new_task.name + " STOPPING at configured stop time " + config.get('stop_time') )
+                    new_task.prepare_for_death()
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
@@ -246,8 +219,8 @@ class task_manager:
         # what activates task processing, including this function). If
         # this is ever a problem though, we could decide to kill lame
         # tasks on temporary handleRequests() timeouts as well, OR set
-        # task_base.state_changed in this function, whenever any lame
-        # tasks are detected.
+        # task.state_changed in this function, whenever any lame tasks
+        # are detected.
 
         batches = {}
         for task in self.tasks:
@@ -281,15 +254,16 @@ class task_manager:
                 #print "unregister " + lame.identity
                 self.broker.unregister( lame.get_fullpostrequisites() )
 
+            lame.prepare_for_death()
             del lame
 
     def kill_spent_tasks( self, config ):
-        # delete FINISHED tasks that are:
-
-        # (i) older than the oldest non-finished task 
-        # (this applies to most tasks, with quick_death = True)
+        # Delete FINISHED tasks that are:
+        # (i) older than the oldest non-finished task this applies to
+        #     most tasks: those for which quick_death is True)
         #   OR
         # (ii) older than the oldest cutoff time
+
         # cutoff time is the oldest time still needed to satisfy the
         # prerequisites of a waiting task or a running task's immediate
         # successor. This only matters rarely, e.g. nzlam_06_18_post
@@ -307,7 +281,6 @@ class task_manager:
         not_finished.sort( key = int )
         death_list = []
         if len( not_finished ) != 0:
-
             oldest_not_finished = not_finished[0]
             for task in self.tasks:
                 if task.quick_death and int( task.ref_time ) < int( oldest_not_finished ):
@@ -318,8 +291,8 @@ class task_manager:
             self.tasks.remove( task )
             self.pyro.disconnect( task )
             if config.get('use_broker'):
-                #print "unregister " + task.identity
                 self.broker.unregister( task.get_fullpostrequisites() )
+            task.prepare_for_death()
 
         del death_list
 
@@ -340,7 +313,7 @@ class task_manager:
                 self.tasks.remove( task )
                 self.pyro.disconnect( task )
                 if config.get('use_broker'):
-                    #print "unregister " + task.identity
                     self.broker.unregister( task.get_fullpostrequisites() )
+                task.prepare_for_death()
 
             del death_list

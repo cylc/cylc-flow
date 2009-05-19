@@ -1,7 +1,7 @@
 Sequenz To Do List
 
-* restart from state dump is incomplete in the case of task types with unusual
-   state information, such as "catching up"?
+* is restart from state dump is incomplete in the case of task types
+  with unusual state information, such as "catching up"? (NO)
 
 * non-O(n^2) will_get_satisfaction() for use with broker method 
 

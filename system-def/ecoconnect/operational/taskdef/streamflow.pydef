@@ -4,6 +4,7 @@ class streamflow( task_base ):
     valid_hours = range( 0, 24 )
     external_task = 'streamflow.sh'
     owner = 'hydrology_oper'
+    instance_count = 0
 
     # assume catchup mode and detect if we've caught up
     catchup_mode = True

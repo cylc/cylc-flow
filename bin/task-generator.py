@@ -51,7 +51,6 @@ def interpolate_variables( strng ):
 
     return strng
 
-
 def generate_req_string( foo ):
 
     global indent
@@ -153,7 +152,6 @@ def write_requisites( req_type ):
 
         indent_less()
 
-
 #================= MAIN PROGRAM ========================================
 def main( argv ):
 
@@ -172,7 +170,7 @@ def main( argv ):
     task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK', 'EXPORT',
-        'DELAYED_DEATH', 'PREREQUISITES', 'POSTREQUISITES' ]
+        'DELAYED_DEATH', 'PREREQUISITES', 'POSTREQUISITES', 'SEQUENTIAL' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -182,7 +180,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task_base import task_base
+from task import sequential_task, parallel_task
 import execution
 
 import reference_time
@@ -252,8 +250,14 @@ import logging
 
         # print_parsed_info()
 
-        # write the class definition
-        parent_class = 'task_base'
+        # sequential or parallel task (i.e. does it depend on its own
+        # previous instant (like a forecast model) or not?
+        # Default to sequential, which is safer.
+        parent_class = 'sequential_task'
+        if 'SEQUENTIAL' in parsed_def.keys():
+            sequential = parsed_def[ 'SEQUENTIAL' ][0]
+            if sequential == 'False' or sequential == 'false' or sequential == 'No' or sequential == 'no':
+                parent_class = 'sequential_task'
 
         task_name = parsed_def[ 'NAME' ][0]
         # class definition
@@ -265,6 +269,8 @@ import logging
    
         # task name
         FILE.write( indent + 'name = \'' + task_name + '\'\n' )
+
+        FILE.write( indent + 'instance_count = 0\n\n' )
 
         # owner
         if 'OWNER' in parsed_def.keys():

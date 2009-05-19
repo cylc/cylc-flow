@@ -22,6 +22,7 @@ class topnet_and_vis( task_base ):
     # used new nzlam input.
 
     name = "topnet_and_vis"
+    instance_count = 0
     valid_hours = range( 0,24 )
     external_task = 'topnet_and_vis.sh'
     owner = 'hydrology_oper'

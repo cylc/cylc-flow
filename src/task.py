@@ -14,10 +14,8 @@ global state_changed
 state_changed = False
 
 #----------------------------------------------------------------------
-class task_base( Pyro.core.ObjBase ):
+class task( Pyro.core.ObjBase ):
     
-    name = "task base"
-
     # By default, finished tasks can die as soon as their reference
     # time is older than that of the oldest non-finished task. Rare 
     # task types the system manager knows are needed to satisfy the 
@@ -29,11 +27,24 @@ class task_base( Pyro.core.ObjBase ):
     quick_death = True
     MAX_FINISHED = 5
 
+    def prepare_for_death( self ):
+        # Call this immediately before deleting a task object.
+        # It decrements the instance count of top level objects derived
+        # from task. It would be nice to use Python's __del__() function
+        # for this, but it is only called when a deleted object is about
+        # to be garbage collected (not guaranteed to be right away).
+        self.__class__.instance_count -= 1
+
     def __init__( self, ref_time, initial_state ):
         # Call this AFTER derived class initialisation
         #   (it alters requisites based on initial state)
         # Derived classes MUST call nearest_ref_time()
         #   before defining their requisites
+
+        # count instances of each top level object derived from task
+        # top level derived classes must define:
+        #   <class>.instance_count = 0
+        self.__class__.instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
 
@@ -73,7 +84,6 @@ class task_base( Pyro.core.ObjBase ):
             sys.exit(1)
 
         self.log.debug( "Creating new task in " + initial_state + " state, for " + self.ref_time )
-
 
     def get_cutoff( self ):
         # Return the time beyond which all other tasks can be deleted as
@@ -124,7 +134,8 @@ class task_base( Pyro.core.ObjBase ):
 
 
     def run_if_ready( self, launcher ):
-        if self.state == 'waiting' and self.prerequisites.all_satisfied():
+        # run if I am 'waiting' AND my prequisites are satisfied
+        if self.state == 'waiting' and self.prerequisites.all_satisfied(): 
             self.run_external_task( launcher )
 
     def run_external_task( self, launcher, extra_vars = [] ):
@@ -141,14 +152,6 @@ class task_base( Pyro.core.ObjBase ):
     def set_finished( self ):
         # could do this automatically off the "name finished for ref_time" message
         self.state = "finished"
-
-    def abdicate( self ):
-        #print self.display()
-        if self.state == "finished" and not self.abdicated:
-            self.abdicated = True
-            return True
-        else:
-            return False
 
     def get_satisfaction( self, tasks ):
         for task in tasks:
@@ -271,4 +274,50 @@ class task_base( Pyro.core.ObjBase ):
         # sub-classes can override this if they have other state
         # information that needs to be reloaded from the file.
 
-        FILE.write( self.ref_time + ":" + self.name + ":" + self.state + '\n' )
+        FILE.write( 
+                self.ref_time + ":" + 
+                self.name     + ":" + 
+                self.state    + '\n' )
+
+    def set_abdicated( self ):
+        self.abdicated = True
+
+
+class sequential_task( task ) :
+    # Embodies forecast model type tasks, which depend on their own
+    # previous instance. This task therefore abdicates to the next
+    # instance as soon as it is finished (which forces successive
+    # instances to run sequentially).
+
+    # There's no need to call task.__init__ explicitly unless I define
+    # an __init__ function here.
+
+    def abdicate( self ):
+
+        if not self.abdicated and \
+            self.state == "finished" and \
+            self.__class__.instance_count <= self.MAX_FINISHED:
+                self.abdicated = True
+                return True
+        else:
+            return False
+
+
+class parallel_task( task ) :
+    # Embodies non forecast model type tasks that do not depend on their
+    # own previous instance.  This task therefore abdicates to the next
+    # instance as soon as it starts running (so multiple instances can
+    # run in parallel if other dependencies allow). 
+
+    # There's no need to call task.__init__ explicitly unless I define
+    # an __init__ function here.
+
+    def abdicate( self ):
+        if not self.abdicated and \
+           ( self.state == "running" or self.state == "finished" ) and \
+           self.__class__.instance_count <= self.MAX_FINISHED:
+               self.abdicated = True
+               return True
+        else:
+            return False
+

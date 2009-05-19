@@ -1,4 +1,4 @@
-class topnet_and_vis( task_base ):
+class topnet_and_vis( sequential_task ):
     "run hourly topnet and visualisation off most recent nzlam input" 
 
     # Topnet runs hourly using cotemporal stream flow data AND met
@@ -22,6 +22,7 @@ class topnet_and_vis( task_base ):
     # used new nzlam input.
 
     name = "topnet_and_vis"
+    instance_count = 0
     valid_hours = range( 0,24 )
     external_task = 'topnet_and_vis.sh'
     owner = 'hydrology_oper'
@@ -60,7 +61,7 @@ class topnet_and_vis( task_base ):
             [8.9, "topnet vis finished for " + ref_time ],
             [9, self.name + " finished for " + ref_time] ])
 
-        task_base.__init__( self, ref_time, initial_state )
+        sequential_task.__init__( self, ref_time, initial_state )
 
         self.log.debug( "nzlam cutoff is " + self.my_cutoff + " for " + ref_time )
 
@@ -97,7 +98,7 @@ class topnet_and_vis( task_base ):
         extra_vars = [ 
                 ['NZLAM_TIME', nzlam_time ],
                 ['NZLAM_AGE', nzlam_age ] ]
-        task_base.run_external_task( self, launcher, extra_vars )
+        sequential_task.run_external_task( self, launcher, extra_vars )
 
 
     def get_cutoff( self ):

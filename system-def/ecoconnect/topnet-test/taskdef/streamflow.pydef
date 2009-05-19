@@ -1,9 +1,10 @@
-class streamflow( task_base ):
+class streamflow( parallel_task ):
 
     name = "streamflow"
     valid_hours = range( 0, 24 )
     external_task = 'streamflow.sh'
     owner = 'hydrology_oper'
+    instance_count = 0
 
     # assume catchup mode and detect if we've caught up
     catchup_mode = True
@@ -24,7 +25,7 @@ class streamflow( task_base ):
             [5, "got streamflow data for " + ref_time ],
             [5.1, self.name + " finished for " + ref_time] ])
 
-        task_base.__init__( self, ref_time, initial_state )
+        parallel_task.__init__( self, ref_time, initial_state )
 
         # NEED TO ALLOW FINISHED TASKS BACK TO THE TASK DELETION CUTOFF
         # Do this AFTER parent class init, which sets to the default
@@ -36,7 +37,7 @@ class streamflow( task_base ):
     def incoming( self, priority, message ):
 
         # pass on to the base class message handling function
-        task_base.incoming( self, priority, message)
+        parallel_task.incoming( self, priority, message)
         
         # but intercept messages that indicate we're in catchup mode
         if self.catchup_re.match( message ):
