@@ -5,8 +5,10 @@ Sequenz To Do List
 
 * non-O(n^2) will_get_satisfaction() for use with broker method 
 
-* possible problem with non-broker method: if more than one fuzzy
-  satisfying postrequisite, will we end up with the most recent?
+* possible problem with non-broker (interaction) method: if more than
+  one fuzzy satisfying postrequisite, do we end up with the most recent?
+
+* for non-sequential tasks, allow constraint by real time? 
 
 * when a fuzzy prerequisite is satisfied, can we change the cutoff to
   suit?
