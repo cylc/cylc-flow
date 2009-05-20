@@ -13,3 +13,6 @@ Sequenz To Do List
 
 * on restart, topnet always thinks we have a "new nzlam time".  this
   needs to be saved as state?
+
+* update documentation on fuzzy prerequisites: if multiple satisfiers
+  are found, the most recent one will be chosen.
