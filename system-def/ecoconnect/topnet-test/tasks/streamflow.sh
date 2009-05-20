@@ -54,8 +54,7 @@ else
     # compute seconds to wait until cutoff
     WAIT_seconds=$(( CUTOFF_epochseconds - NOW_epochseconds ))
     WAIT_minutes=$(( WAIT_seconds / 60 ))
-    #task-message NORMAL "CAUGHTUP: waiting for  $WAIT_minutes min for streamflow data"
-    task-message NORMAL "CAUGHTUP: waiting till $YYYYMMDD ${HHmm%??}:${HHmm#??} for new streamflow data "
+    task-message NORMAL "CAUGHTUP: waiting till $YYYYMMDD ${HHmm%??}:${HHmm#??} for $STREAMFLOW_TIME"
     sleep $WAIT_seconds
 fi
 

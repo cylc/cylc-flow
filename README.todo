@@ -7,3 +7,9 @@ Sequenz To Do List
 
 * possible problem with non-broker method: if more than one fuzzy
   satisfying postrequisite, will we end up with the most recent?
+
+* when a fuzzy prerequisite is satisfied, can we change the cutoff to
+  suit?
+
+* on restart, topnet always thinks we have a "new nzlam time".  this
+  needs to be saved as state?

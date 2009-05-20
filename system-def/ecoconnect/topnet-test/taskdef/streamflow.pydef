@@ -28,7 +28,7 @@ class streamflow( task_base ):
 
         # NEED TO ALLOW FINISHED TASKS BACK TO THE TASK DELETION CUTOFF
         # Do this AFTER parent class init, which sets to the default
-        if streamflow.catchup_mode == True:
+        if streamflow.catchup_mode:
             self.MAX_FINISHED = 13
         else:
             self.MAX_FINISHED = 25
@@ -39,13 +39,10 @@ class streamflow( task_base ):
         task_base.incoming( self, priority, message)
         
         # but intercept messages that indicate we're in catchup mode
-        if not streamflow.catchup_mode and self.catchup_re.match( message ):
-            #message == "CATCHINGUP: " + self.ref_time:
+        if self.catchup_re.match( message ):
             streamflow.catchup_mode = True
-            # WARNING: SHOULDN'T GO FROM CAUGHTUP TO CATCHINGUP?
-            self.log.warning( "beginning CATCHINGUP operation" )
+            self.MAX_FINISHED = 13
 
-        elif streamflow.catchup_mode and self.uptodate_re.match( message ):
-            #message == "CAUGHTUP: " + self.ref_time:
+        elif self.uptodate_re.match( message ):
             streamflow.catchup_mode = False
-            self.log.info( "beginning CAUGHTUP operation" )
+            self.MAX_FINISHED = 25

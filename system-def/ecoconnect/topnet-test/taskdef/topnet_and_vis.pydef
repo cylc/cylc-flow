@@ -41,13 +41,12 @@ class topnet_and_vis( task_base ):
         ref_time = self.ref_time
  
         if streamflow.catchup_mode:
-            nzlam_cutoff = reference_time.decrement( ref_time, topnet_and_vis.CATCHUP_MODE_CUTOFF )
+            self.my_cutoff = reference_time.decrement( ref_time, topnet_and_vis.CATCHUP_MODE_CUTOFF )
         else:
-            #print "CUTOFF 23 for " + self.name + "%" + ref_time
-            nzlam_cutoff = reference_time.decrement( ref_time, topnet_and_vis.CAUGHTUP_MODE_CUTOFF )
+            self.my_cutoff = reference_time.decrement( ref_time, topnet_and_vis.CAUGHTUP_MODE_CUTOFF )
 
         # min:max
-        fuzzy_limits = nzlam_cutoff + ':' + ref_time
+        fuzzy_limits = self.my_cutoff + ':' + ref_time
  
         self.prerequisites = fuzzy_requisites( self.name + '%' + ref_time, [ 
             "got streamflow data for " + ref_time + ':' + ref_time, 
@@ -62,6 +61,8 @@ class topnet_and_vis( task_base ):
             [9, self.name + " finished for " + ref_time] ])
 
         task_base.__init__( self, ref_time, initial_state )
+
+        self.log.debug( "nzlam cutoff is " + self.my_cutoff + " for " + ref_time )
 
 
     def run_external_task( self, launcher ):
@@ -106,7 +107,4 @@ class topnet_and_vis( task_base ):
         # hourly topnet may also need the output from that same
         # 12-hourly task.
 
-        if streamflow.catchup_mode:
-            return reference_time.decrement( self.ref_time, topnet_and_vis.CATCHUP_MODE_CUTOFF )
-        else:
-            return reference_time.decrement( self.ref_time, topnet_and_vis.CAUGHTUP_MODE_CUTOFF )
+        return self.my_cutoff
