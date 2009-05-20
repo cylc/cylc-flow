@@ -66,6 +66,7 @@ else:
 locator = Pyro.naming.NameServerLocator()
 ns = locator.getNS()
 ns_groups = {}
+n_groups = 0
 # loop through registered objects
 for obj in ns.flatlist():
     # Extract the group name for each object (GROUP.name).
