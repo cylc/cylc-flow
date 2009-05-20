@@ -1,0 +1,51 @@
+
+TopNet runs hourly (by reference time) and is dependent on (1)
+streamflow at the same reference time, and (2) the most recent available
+12-hourly nzlam output.  "most recent available" depends on how far ahead
+of the nzlam we allow topnet to run.  In catchup, this should be at most
+12 hours because there is no reason not to use the most recent possible
+nzlam data. In real time we've chosen 24 hours because timeliness of 
+real time forecasts, given new streamflow data, overrides nzlam
+recentness to some extent. 
+
+CATCHUP, WITH NZLAM:
+
+There is no gap between nzlam cycles in catchup but topnet and
+streamflow still run much faster than nzlam, so topnet will quickly run
+out as far ahead of nzlam as it's "fuzzy prerequisite" limits allow
+(min:max by ref time). => we need to impose a max 12 hour fuzzy
+prerequisite in this case (if we used a 24 hour max, topnet would just
+run exactly 24 hours ahead of nzlam instead of 12, which is worse use of
+foreast data for only 12 reference-time hours of system time gain).
+
+CATCHUP, WITH OPER2TEST NZLAM
+
+Nzlam effectively runs instantly (the nzlam data has already been
+generated), so topnet won't run more than one nzlam cycle (12 hours)
+ahead of the nzlam. => we don't need to (but could) impose a max
+12 hour fuzzy preqrequisite in this case.
+
+REAL TIME
+
+Nzlam and oper2test are effectively the same slow beast here - one
+generates the data, the other waits on it being generated, and very slow
+relative to topnet. TopNet will therefore want to keep pace with
+streamflow (15 min past the hour) except when constrained by its fuzzy
+nzlam prerequisite. => we need to impose a max 24 hour fuzzy
+prerequisite in this case (as above).
+
+HOW TO DETECT CATCHUP VS REAL TIME
+
+The three tasks involved here are: nzlam, topnet, streamflow. nzlam and
+topnet don't know about real time, but streamflow does: if caught up, it
+has to wait until 15 min past the hour of its reference time before
+requesting new streamflow observations. So, topnet's fuzzy prerequisite
+limits (12 or 24 hours) should ideally be determined by the streamflow
+task of the same reference time (i.e. the one that satisfies its
+streamflow prerequisite). But, topnet(T) is created without regard for
+whether or not streamflow(T) exists yet (although it almost certainly
+would exist first because streamflow(T-1) necessarily finishes before
+topnet(T-1)) so a new topnet should use the most recent streamflow's
+catchup status (most recent by reference time, not creation time, in
+case streamflow tasks are created in parallel, or out of order at start
+up). 
