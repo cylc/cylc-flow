@@ -16,6 +16,9 @@
 %EXTERNAL_TASK
     oper2test_topnet.sh
 
+%PREVIOUS_INSTANCE_DEPENDENCE
+    False
+
 %PREREQUISITES
     # NONE
 

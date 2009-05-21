@@ -19,6 +19,9 @@
 %PREREQUISITES
     topnet_and_vis finished for $(MY_REFERENCE_TIME)
 
+%PREVIOUS_INSTANCE_DEPENDENCE
+    False
+
 %POSTREQUISITES
     0 min: $(NAME) started for $(MY_REFERENCE_TIME)
     2 min: $(NAME) finished for $(MY_REFERENCE_TIME)

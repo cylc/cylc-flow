@@ -313,11 +313,25 @@ class parallel_task( task ) :
     # an __init__ function here.
 
     def abdicate( self ):
-        if not self.abdicated and \
-           ( self.state == "running" or self.state == "finished" ) and \
-           self.__class__.instance_count <= self.MAX_FINISHED:
-               self.abdicated = True
-               return True
+        if not self.abdicated:
+
+            if self.prerequisites.count() == 0:
+                # ARTIFICIALLY CONSTRAIN TOTALLY FREE TASKS TO 
+                # SEQUENTIAL BEHAVIOUR
+                if self.state == "finished" and \
+                    self.__class__.instance_count <= self.MAX_FINISHED:
+                    self.abdicated = True
+                    return True
+                else:
+                    return False
+                
+            elif ( self.state == "running" or self.state == "finished" ) and \
+                    self.__class__.instance_count <= self.MAX_FINISHED:
+                self.abdicated = True
+                return True
+            else:
+                return False
+            
         else:
             return False
 
