@@ -52,6 +52,7 @@ class dummy_task_base:
                 rt = reference_time._rt_to_dt( self.ref_time )
                 rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
                 # THE FOLLOWING MESSAGES MUST MATCH WHAT'S EXPECTED IN streamflow.incoming()
+                # AND IN THE REAL STREAMFLOW TASK
                 if datetime.datetime.now() >= rt_p25:
                     self.task.incoming( 'NORMAL', 'CATCHINGUP: streamflow data already available for ' + self.ref_time )
                 else:
