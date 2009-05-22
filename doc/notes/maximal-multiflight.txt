@@ -60,6 +60,10 @@ Vary the task creation scheme according to previous instance dependence:
  (2) other tasks should be created when their previous instance enters the
      "running" state.
 
+(note that in the program, a new task is always created when its previous
+instance abdicates, thus I achieve the above by varying when the old task
+is allowed to abdicate).
+
 This will immmediately allow successive instances of non-forecast-model tasks
 to overlap, should the opportunity arise. It will also prerequisiteless tasks
 to run in parallel, so some constraint will be required on task creation
