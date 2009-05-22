@@ -37,6 +37,7 @@ class manager:
 
     def create_task_logs( self, state_list, config, dummy_clock ):
         # task loggers that propagate messages up to the main logger
+        #--
         print "CREATING TASK LOGS......"
         unique_task_names = {}
         for item in state_list:
@@ -50,6 +51,7 @@ class manager:
 
     def states_from_config ( self, config ):
         # use configured task list and start time
+        #--
         print '\nCLEAN START: INITIAL STATE FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname(:state), taskname(:state), ...]
@@ -69,6 +71,7 @@ class manager:
 
     def states_from_dump( self, config ):
         # restart from the state dump file
+        #--
         filename = config.get('state_dump_file')
         backup = filename + '.' + datetime.datetime.now().isoformat()
         print '\nRESTART: INITIAL STATE FROM STATE DUMP: ' + filename
@@ -146,29 +149,37 @@ class manager:
 
     def all_finished( self ):
         # return True if all tasks have completed
+        #--
         for task in self.tasks:
             if task.is_not_finished():
                 return False
         return True
 
-    def interact( self ):
-        # get each task to ask all the others if 
-        # they can satisfy its prerequisites
+
+    def negotiate_dependencies( self, config ):
+        # run time dependency negotiation: tasks attempt to get their
+        # prerequisites satisfied by other tasks' postrequisites.
+        #--
+        if config.get('use_broker'):
+            self.negotiate_via_broker()
+        else:
+            self.direct_interaction()
+
+
+    def direct_interaction( self ):
+        # each task asks the others to satisfy its prerequisites
         #--
         for task in self.tasks:
             task.get_satisfaction( self.tasks )
 
-    def negotiate( self ):
+    def negotiate_via_broker( self ):
         # each task registers its postrequisites with the broker
-        #print "REGISTER----------------"
+        #--
         for task in self.tasks:
-            #print "  - " + task.identity
             self.broker.register( task.get_fullpostrequisites() )
 
         # each task asks the broker to satisfy its prerequisites
-        #print "SATISFY-----------------"
         for task in self.tasks:
-            #print "  - " + task.identity
             task.prerequisites.satisfy_me( self.broker.get_requisites() )
 
     def run_tasks( self, launcher ):
@@ -177,6 +188,7 @@ class manager:
 
     def regenerate_tasks( self, config ):
         # create new task(T+1) if task(T) has abdicated
+        #--
         for task in self.tasks:
             if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
@@ -221,6 +233,7 @@ class manager:
         # tasks on temporary handleRequests() timeouts as well, OR set
         # task.state_changed in this function, whenever any lame tasks
         # are detected.
+        #--
 
         batches = {}
         for task in self.tasks:
@@ -269,6 +282,7 @@ class manager:
         # successor. This only matters rarely, e.g. nzlam_06_18_post
         # which has to hang around longer to satisfy many subsequent
         # hourly topnets.
+        #--
          
         not_finished = []
         cutoff_times = []

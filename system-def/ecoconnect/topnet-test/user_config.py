@@ -19,7 +19,7 @@ config[ 'logging_level' ] = logging.INFO
 #config[ 'use_broker' ] = False
 
 config[ 'dummy_mode' ] = True
-config[ 'dummy_clock_rate' ] = 30
+config[ 'dummy_clock_rate' ] = 20
 config[ 'dummy_clock_offset' ] = 20 
 
 config[ 'use_qsub' ] = False

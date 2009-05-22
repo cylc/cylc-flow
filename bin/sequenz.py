@@ -109,16 +109,12 @@ def main( argv ):
         if task.state_changed and not remote_switch.system_pause:
             # PROCESS ALL TASKS whenever one has changed state
             # as a result of a remote task message coming in: 
-            # interact OR negotiate with a requisite broker,
             # then run, create new, and kill spent tasks
             #---
 
             god.regenerate_tasks( system_config )
 
-            if system_config.get('use_broker'):
-                god.negotiate()
-            else:
-                god.interact()
+            god.negotiate_dependencies( system_config )
 
             god.run_tasks( launcher )
 
