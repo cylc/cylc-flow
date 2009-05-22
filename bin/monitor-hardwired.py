@@ -172,7 +172,7 @@ while True:
             blit = title.boof()
             blit.append("system name: topnet-test")
             blit.append( mode )
-            blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done" )
+            blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m" )
             blit.append( '\033[1;34m' + str(dt) + '\033[0m' )
             blit.append("")
             for rt in reftimes:
