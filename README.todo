@@ -18,3 +18,7 @@ Sequenz To Do List
 
 * update documentation on fuzzy prerequisites: if multiple satisfiers
   are found, the most recent one will be chosen.
+
+* "finished but not abdicated" should be presented to system monitors 
+  (this is similar to 'waiting' for parallel tasks constrained by number
+  of instances).
