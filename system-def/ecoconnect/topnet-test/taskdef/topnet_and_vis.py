@@ -21,10 +21,7 @@ class topnet_and_vis( sequential_task ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        if streamflow.catchup_mode:
-            self.my_cutoff = reference_time.decrement( ref_time, topnet_and_vis.CATCHUP_MODE_CUTOFF )
-        else:
-            self.my_cutoff = reference_time.decrement( ref_time, topnet_and_vis.CAUGHTUP_MODE_CUTOFF )
+        self.my_cutoff = self.compute_cutoff()
 
         # min:max
         fuzzy_limits = self.my_cutoff + ':' + ref_time
@@ -81,11 +78,21 @@ class topnet_and_vis( sequential_task ):
         sequential_task.run_external_task( self, launcher, extra_vars )
 
 
-    def get_cutoff( self ):
+    def compute_cutoff( self, rt = None ):
+        # See base class documentation
 
-        # must keep the most recent *finished* nzlam_06_18_post or
+        # I want to keep the most recent *finished* nzlam_06_18_post or
         # oper2test_topnet task that is older than me, because the next
         # hourly topnet may also need the output from that same
         # 12-hourly task.
 
-        return self.my_cutoff
+        if not rt:
+            # can't use self.foo as a default argument
+            rt = self.ref_time
+
+        if streamflow.catchup_mode:
+            cutoff = reference_time.decrement( rt, topnet_and_vis.CATCHUP_MODE_CUTOFF )
+        else:
+            cutoff = reference_time.decrement( rt, topnet_and_vis.CAUGHTUP_MODE_CUTOFF )
+
+        return cutoff

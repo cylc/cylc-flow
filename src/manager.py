@@ -143,7 +143,7 @@ class manager:
                         skip = True
 
                 if not skip:
-                    task.log.debug( "Connecting new " + task.name + " for " + task.ref_time )
+                    task.log.debug( "new " + task.name + " connected for " + task.ref_time )
                     self.pyro.connect( task, task.identity )
                     self.tasks.append( task )
 
@@ -271,36 +271,72 @@ class manager:
             del lame
 
     def kill_spent_tasks( self, config ):
-        # Delete FINISHED tasks that are:
-        # (i) older than the oldest non-finished task this applies to
-        #     most tasks: those for which quick_death is True)
+        # Delete FINISHED tasks that have ABDICATED already AND:
+        # (i) if quick_death is True: are older than all non-finished tasks 
         #   OR
-        # (ii) older than the oldest cutoff time
+        # (ii) if quick_death is False: are older than the system cutoff time
 
-        # cutoff time is the oldest time still needed to satisfy the
-        # prerequisites of a waiting task or a running task's immediate
-        # successor. This only matters rarely, e.g. nzlam_06_18_post
-        # which has to hang around longer to satisfy many subsequent
-        # hourly topnets.
-        #--
-         
-        not_finished = []
-        cutoff_times = []
+        # System cutoff time is the oldest task cutoff time.
 
-        for task in self.tasks:   
-            if task.state != 'finished':
-                cutoff_times.append( task.get_cutoff())
-                not_finished.append( task.ref_time )
+        # A task's cutoff time is the reference time of the earliest
+        # upstream dependency that it has.
         
-        not_finished.sort( key = int )
-        death_list = []
-        if len( not_finished ) != 0:
-            oldest_not_finished = not_finished[0]
-            for task in self.tasks:
-                if task.quick_death and int( task.ref_time ) < int( oldest_not_finished ):
-                    death_list.append( task )
-                     
-        for task in death_list:
+        # For a waiting task with only cotemporal upstream dependencies
+        # the cutoff time is its own reference time.  
+
+        # For a running task with only cotemporal upstream dependencies
+        # the cutoff time is the reference time of its immediate
+        # successor, i.e. the next instance of that task type. 
+        #--
+
+        # list of candidates for deletion
+        finished_and_abdicated = []
+        # list of ref times of non-finished tasks
+        ref_times_not_finished = []
+        # list of all task cutoff times
+        cutoff_times = []
+        # compile the above lists
+        for task in self.tasks:
+            cutoff_times.append( task.get_cutoff() )
+            if task.state == 'waiting' or task.state == 'running':
+                ref_times_not_finished.append( task.ref_time )
+            if task.state == 'finished' and task.has_abdicated():
+                # we don't tag 'failed' tasks for deletion
+                finished_and_abdicated.append( task )
+
+        # find reference time of the oldest non-finished task
+        all_tasks_finished = True
+        if len( ref_times_not_finished ) > 0:
+            all_tasks_finished = False
+            ref_times_not_finished.sort( key = int )
+            oldest_ref_time_not_finished = ref_times_not_finished[0]
+            self.log.debug( "oldest non-finished task ref time is " + oldest_ref_time_not_finished )
+
+        # find the system cutoff reference time
+        no_cutoff_times = True
+        if len( cutoff_times ) > 0:
+            no_cutoff_times = False
+            cutoff_times.sort( key = int )
+            system_cutoff = cutoff_times[0]
+            self.log.debug( "task deletion cutoff is " + system_cutoff )
+
+        # find list of tasks to delete
+        spent_tasks = []
+
+        for task in finished_and_abdicated:
+            if task.quick_death: 
+                # case (i) tasks to delete
+                if all_tasks_finished or \
+                        int( task.ref_time ) < int( oldest_ref_time_not_finished ):
+                    spent_tasks.append( task )
+            else:
+                # case (ii) tasks to delete
+                if not no_cutoff_times and \
+                        int( task.ref_time ) < int( system_cutoff ):
+                    spent_tasks.append( task )
+
+        # delete spent tasks
+        for task in spent_tasks:
             self.log.debug( "removing spent " + task.identity )
             self.tasks.remove( task )
             self.pyro.disconnect( task )
@@ -308,26 +344,4 @@ class manager:
                 self.broker.unregister( task.get_fullpostrequisites() )
             task.prepare_for_death()
 
-        del death_list
-
-        if len( cutoff_times ) != 0:
-
-            cutoff_times.sort( key = int )
-            cutoff = cutoff_times[0]
-
-            self.log.debug( "task deletion cutoff is " + cutoff )
-
-            death_list = []
-            for task in self.tasks:
-                if task.is_finished() and int( task.ref_time ) < int( cutoff ):
-                    death_list.append( task )
-
-            for task in death_list:
-                self.log.debug( "removing spent " + task.identity )
-                self.tasks.remove( task )
-                self.pyro.disconnect( task )
-                if config.get('use_broker'):
-                    self.broker.unregister( task.get_fullpostrequisites() )
-                task.prepare_for_death()
-
-            del death_list
+        del spent_tasks

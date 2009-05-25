@@ -26,7 +26,7 @@ config[ 'dummy_clock_offset' ] = 20
 config[ 'use_qsub' ] = True
 config[ 'job_queue' ] = 'topnet_test'
 
-config[ 'task_list' ] = [ 
+config[ 'task_list' ] = [
         'oper2test_topnet',
         'streamflow',
         'topnet_and_vis',

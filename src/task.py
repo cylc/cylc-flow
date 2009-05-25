@@ -16,30 +16,40 @@ state_changed = False
 #----------------------------------------------------------------------
 class task( Pyro.core.ObjBase ):
     
-    # By default, finished tasks can die as soon as their reference
-    # time is older than that of the oldest non-finished task. Rare 
-    # task types the system manager knows are needed to satisfy the 
-    # prerequisites of tasks *in subsequent cycles*, however, must
-    # set quick_death = False, in which case it will be removed by
-    # cutoff time.
+    # Default task deletion: quick_death = True
+    # This amounts to a statement that the task has only cotemporal
+    # downstream dependents (i.e. the only other tasks that depend on it
+    # to satisfy their prerequisites have the same reference time as it
+    # does) and as such can be deleted at the earliest possible
+    # opportunity - which is as soon as there are no non-finished
+    # tasks with reference times the same or older than its reference
+    # time (prior to that we can't be sure that an older non-finished 
+    # task won't give rise (on abdicating) to a new task that does
+    # depend on the task we're interested in). 
 
-    # class defaults that can be overridden by instance variables:
+    # Tasks that are needed to satisfy the prerequisites of other tasks
+    # in subsequent cycles, however, must set quick_death = False, in
+    # which case they will be removed according to system cutoff time.
+
     quick_death = True
+
     MAX_FINISHED = 5
 
     def prepare_for_death( self ):
-        # Call this immediately before deleting a task object.
-        # It decrements the instance count of top level objects derived
-        # from task. It would be nice to use Python's __del__() function
-        # for this, but it is only called when a deleted object is about
-        # to be garbage collected (not guaranteed to be right away).
+        # The task manager MUST call this immediately before deleting a
+        # task object. It decrements the instance count of top level
+        # objects derived from task. It would be nice to use Python's
+        # __del__() function for this, but that is only called when a
+        # deleted object is about to be garbage collected (which is not
+        # guaranteed to be right away).
         self.__class__.instance_count -= 1
 
     def __init__( self, initial_state ):
         # Call this AFTER derived class initialisation
-        #   (it alters requisites based on initial state)
+        # (which alters requisites based on initial state)
+
         # Derived classes MUST call nearest_ref_time()
-        #   before defining their requisites
+        # before defining their requisites.
 
         # count instances of each top level object derived from task
         # top level derived classes must define:
@@ -56,6 +66,8 @@ class task( Pyro.core.ObjBase ):
         # unique task identity
         self.identity = self.name + '%' + self.ref_time
 
+        # my cutoff reference time
+        self.my_cutoff = self.compute_cutoff( )
 
         # task-specific log file
         self.log = logging.getLogger( "main." + self.name ) 
@@ -85,24 +97,62 @@ class task( Pyro.core.ObjBase ):
 
         self.log.debug( "Creating new task in " + initial_state + " state, for " + self.ref_time )
 
+
+    def compute_cutoff( self, rt = None ):
+        # Return the reference time of the oldest tasks that the system
+        # must retain in order to satisfy my prerequisites (if I am
+        # waiting) or those of my immediate successor (if I am running). 
+        # The non default argument allow me to compute the cutoff of 
+        # my immediate successor (see below)
+
+        # This base class method deals with the usual case of tasks with
+        # only cotemporal (same reference time) upstream dependencies.
+
+        # Override this method for tasks that depend on non-cotemporal
+        # (earlier) tasks.
+
+        if not rt:
+            # can't use self.foo as a default argument
+            rt = self.ref_time
+
+        cutoff = rt
+        return cutoff
+
+
     def get_cutoff( self ):
-        # Return the time beyond which all other tasks can be deleted as
-        # far as this task is concerned.  For most tasks this is their
-        # own reference time because they depend only on their
-        # cotemporal peers (not even on previous instances of their own
-        # task type, because of abdication):
+        if self.state == 'waiting':
+            # return time of my upstream dependencies
+            return self.my_cutoff
 
-        # OVERRIDE THIS METHOD for any tasks that depend on other
-        # non-cotemporal (i.e. earlier) tasks.
+        elif self.state == 'running':
+            # my prerequisites are already satisfied, but
+            # my successor has not been created yet so 
+            # I must speak for it.
+            return self.compute_cutoff( self.next_ref_time( self.ref_time ) )
 
-        return self.ref_time
+        elif self.state == 'failed':
+            # manager should not delete me (so that the failed task
+            # remains visible on the system monitor) but cutoff does
+            # not concern me any more because I won't be abdicating.
+            return '9999010100'
+
+        elif self.state == 'finished':
+            if not self.abdicated:
+                # I've finished, but my successor has not been created
+                # yet so I must speak for it.
+                return self.compute_cutoff( self.next_ref_time( self.ref_time ) )
+            else:
+                # I've finished and my successor can
+                # take care of its own cutoff time.
+                return '9999010100'
+        else:
+            raise( 'get_cutoff called on illegal task state')
+
 
     def nearest_ref_time( self, rt ):
         # return the next time >= rt for which this task is valid
         rh = int( rt[8:10])
-        
         incr = None
-
         first_vh = self.valid_hours[ 0 ]
         extra_vh = 24 + first_vh 
         foo = self.valid_hours
@@ -117,20 +167,27 @@ class task( Pyro.core.ObjBase ):
         return nearest_rt
 
 
-    def next_ref_time( self ):
-        # return the next time that this task is valid at
+    def next_ref_time( self, rt = None):
+        # return the next reference time, or the next reference time
+        # after rt, that is valid for this task.
+        #--
+
+        if not rt:
+            # can't use self.foo as a default argument
+            rt = self.ref_time
+
         n_times = len( self.valid_hours )
         if n_times == 1:
             increment = 24
         else:
-            i_now = self.valid_hours.index( int( self.ref_time[8:10]) )
+            i_now = self.valid_hours.index( int( rt[8:10]) )
             # list indices start at zero
             if i_now < n_times - 1 :
                 increment = self.valid_hours[ i_now + 1 ] - self.valid_hours[ i_now ]
             else:
                 increment = self.valid_hours[ 0 ] + 24 - self.valid_hours[ i_now ]
 
-        return reference_time.increment( self.ref_time, increment )
+        return reference_time.increment( rt, increment )
 
 
     def run_if_ready( self, launcher ):
@@ -283,6 +340,13 @@ class task( Pyro.core.ObjBase ):
         self.abdicated = True
 
 
+    def has_abdicated( self ):
+        if self.abdicated:
+            return True
+        else:
+            return False
+
+
 class sequential_task( task ) :
     # Embodies forecast model type tasks, which depend on their own
     # previous instance. This task therefore abdicates to the next
@@ -294,11 +358,13 @@ class sequential_task( task ) :
 
     def abdicate( self ):
 
-        if not self.abdicated and \
-            self.state == "finished" and \
-            self.__class__.instance_count <= self.MAX_FINISHED:
+        if not self.abdicated and self.state == "finished": 
+            if self.__class__.instance_count <= self.MAX_FINISHED:
                 self.abdicated = True
                 return True
+            else:
+                self.log.debug( "not abdicating " + self.identity + ": too many current instances")
+                return False
         else:
             return False
 
