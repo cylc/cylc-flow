@@ -1,5 +1,8 @@
 Sequenz To Do List
 
+* document the new default O(n) brokered dependency negotation
+  algorithm.
+
 * state dump is incomplete for topnet and streamflow: I need
   to store 'nzlam_time' variables in it.
 

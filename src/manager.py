@@ -114,6 +114,7 @@ class manager:
             else:
                 state_by_reftime[ ref_time ].append( item )
  
+        # reverse sorted list of reference times
         ref_times = state_by_reftime.keys()
         ref_times.sort( key = int, reverse = True )
 
@@ -121,8 +122,13 @@ class manager:
         seen = {}
         for ref_time in ref_times:
             for item in state_by_reftime[ ref_time ]:
+                # Create each task in reverse sorted reference time
+                # order. Abdicate all but the last task of each type.
+                # This correctly handles waiting and running tasks that
+                # have not abdicated AND finished tasks that have not 
+                # abdicated yet (parallel tasks that have been delayed
+                # by the number-of-instances restriction).
                 [ref_time, name, state] = item.split(':')
-                # dynamic task object creation by task and module name
                 task = get_instance( 'task_classes', name )( ref_time, state )
                 if name not in seen.keys():
                     seen[ name ] = True
