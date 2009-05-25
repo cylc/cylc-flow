@@ -2,7 +2,7 @@
 # See full_template.def for documented entries
 
 %NAME
-    oper2test_topnet
+    oper_interface
 
 %OWNER
     hydrology_oper
@@ -14,7 +14,7 @@
     True
 
 %EXTERNAL_TASK
-    oper2test_topnet.sh
+    oper_interface.sh
 
 %PREVIOUS_INSTANCE_DEPENDENCE
     False

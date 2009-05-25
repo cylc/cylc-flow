@@ -35,11 +35,11 @@ class topnet_vis( parallel_task ):
 
         nzlam_age = 'old'
         if topnet_nzlam_time != topnet_vis.nzlam_time:
-            self.log.info( "new nzlam time " + topnet_nzlam_time )
+            self.log.info( "new nzlam time " + topnet_nzlam_time + ", for " + self.ref_time )
             nzlam_age = 'new'
             topnet_vis.nzlam_time = topnet_nzlam_time
         else:
-            self.log.info( "old nzlam time " + topnet_nzlam_time )
+            self.log.info( "old nzlam time " + topnet_nzlam_time + ", for " + self.ref_time )
 
         extra_vars = [ ['NZLAM_AGE', nzlam_age ] ]
 

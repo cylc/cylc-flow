@@ -131,21 +131,19 @@ class dummy_task( dummy_task_base ):
                     if self.clock.get_datetime() >= rt_3p25:
                         break
 
-        elif self.name == "oper2test_topnet":
+        elif self.name == "oper_interface":
 
             current_time = self.clock.get_datetime()
             rt = reference_time._rt_to_dt( self.ref_time )
             delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 
-            #print "oper2test_topnet: current time   " + current_time.isoformat()
-            #print "oper2test_topnet: reference time " + rt.isoformat()
-            #print "oper2test_topnet: delayed start  " + delayed_start.isoformat()
+            #print "oper_interface: current time   " + current_time.isoformat()
+            #print "oper_interface: reference time " + rt.isoformat()
+            #print "oper_interface: delayed start  " + delayed_start.isoformat()
             if current_time >= delayed_start:
                 self.task.incoming( 'NORMAL', 'CATCHINGUP: operational tn file already exists for ' + self.ref_time )
-            #    print 'oper2test_topnet: CATCHINGUP'
                 self.fast_complete = True
             else:
                 self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for operational tn file for ' + self.ref_time )
-            #    print 'oper2test_topnet: CAUGHTUP'
                 while True:
                     sleep(1)
                     if self.clock.get_datetime() >= delayed_start:

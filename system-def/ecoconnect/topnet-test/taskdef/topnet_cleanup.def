@@ -2,7 +2,7 @@
 # See full_template.def for documented entries
 
 %NAME
-    cleanup_topnet_nc
+    topnet_cleanup
 
 %OWNER
     hydrology_oper

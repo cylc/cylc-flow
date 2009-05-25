@@ -78,7 +78,7 @@ class topnet( sequential_task ):
         # See base class documentation
 
         # I want to keep the most recent *finished* nzlam_06_18_post or
-        # oper2test_topnet task that is older than me, because the next
+        # oper_interface task that is older than me, because the next
         # hourly topnet may also need the output from that same
         # 12-hourly task.
 

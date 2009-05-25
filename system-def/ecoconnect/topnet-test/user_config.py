@@ -21,17 +21,17 @@ config[ 'logging_level' ] = logging.DEBUG
 
 config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 20
-config[ 'dummy_clock_offset' ] = 0
+config[ 'dummy_clock_offset' ] = 12
 
 config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'topnet_test'
 
 config[ 'task_list' ] = \
         [
-        'oper2test_topnet',
+        'oper_interface',
         'streamflow',
         'topnet',
         'topnet_vis',
         'topnet_products',
-        'cleanup_topnet_nc'
+        'topnet_cleanup'
         ]
