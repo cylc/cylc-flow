@@ -17,7 +17,7 @@
     MODEL_NAME topnet
 
 %PREREQUISITES
-    topnet_and_vis finished for $(MY_REFERENCE_TIME)
+    topnet_vis finished for $(MY_REFERENCE_TIME)
 
 %PREVIOUS_INSTANCE_DEPENDENCE
     False

@@ -41,9 +41,11 @@ class streamflow( parallel_task ):
         
         # but intercept messages that indicate we're in catchup mode
         if self.catchup_re.match( message ):
+            self.log.debug( 'in catching up mode' )
             streamflow.catchup_mode = True
             self.MAX_FINISHED = 13
 
         elif self.uptodate_re.match( message ):
+            self.log.debug( 'in caught up mode' )
             streamflow.catchup_mode = False
             self.MAX_FINISHED = 25

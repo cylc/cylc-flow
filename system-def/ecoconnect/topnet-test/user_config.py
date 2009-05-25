@@ -11,7 +11,7 @@ config = {}
 config[ 'system_name' ] = 'topnet-test'
 #config[ 'state_dump_file' ] = 'blah'
 
-config[ 'start_time' ] = '2009030200'
+config[ 'start_time' ] = '2009052201'
 #config[ 'stop_time' ] = '2009030300'
 
 #config[ 'logging_level' ] = logging.INFO
@@ -19,17 +19,19 @@ config[ 'logging_level' ] = logging.DEBUG
 
 #config[ 'use_broker' ] = False
 
-config[ 'dummy_mode' ] = False
+config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 20
-config[ 'dummy_clock_offset' ] = 20 
+config[ 'dummy_clock_offset' ] = 0
 
-config[ 'use_qsub' ] = True
+config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'topnet_test'
 
-config[ 'task_list' ] = [
+config[ 'task_list' ] = \
+        [
         'oper2test_topnet',
         'streamflow',
-        'topnet_and_vis',
+        'topnet',
+        'topnet_vis',
         'topnet_products',
         'cleanup_topnet_nc'
         ]

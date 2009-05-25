@@ -268,7 +268,7 @@ class task( Pyro.core.ObjBase ):
 
     def incoming( self, priority, message ):
         # receive all incoming pyro messages for this task 
-            
+
         global state_changed
         state_changed = True
 
@@ -281,6 +281,8 @@ class task( Pyro.core.ObjBase ):
             log_message = message + '; for ' + self.ref_time
         else:
             log_message = message
+
+        log_message = '(INCOMING) ' + log_message
 
         if self.state != "running":
             # message from a task that's not supposed to be running
@@ -300,7 +302,7 @@ class task( Pyro.core.ObjBase ):
 
         else:
             # a non-postrequisite message, e.g. progress report
-            message = '*' + message
+            log_message = '*' + log_message
             if priority == "NORMAL":
                 self.log.info( log_message )
             elif priority == "WARNING":

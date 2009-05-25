@@ -1,4 +1,6 @@
 
+DOCUMENTATION OF METASCHEDULING FOR THE TOPNET - NZLAM SYSTEM.
+
 TopNet runs hourly (by reference time) and is dependent on (1)
 streamflow at the same reference time, and (2) the most recent available
 12-hourly nzlam output.  "most recent available" depends on how far ahead
@@ -53,29 +55,21 @@ up).
 
 FUZZY PREREQUISITES
 
-    # Topnet runs hourly using cotemporal stream flow data AND met
-    # forecast data from *the most recent nzlam run*. This variable
-    # nzlam dependence requires *fuzzy prerequisites*. In addition, we
-    # allow topnet to run out to 12 or 24 hours ahead of the nzlam
-    # (depending on catchup mode) to make best use of the important
-    # incoming streamflow data.
+Topnet runs hourly using cotemporal stream flow data AND met forecast data
+from *the most recent nzlam run*. This variable nzlam dependence requires
+*fuzzy prerequisites*. In addition, we allow topnet to run out to 12 or 24
+hours ahead of the nzlam (depending on catchup mode) to make best use of the
+important incoming streamflow data.
  
 
-WHY WE'RE NOT RUNNING TOPNET VISUALISATION AS A SEPARATE TASK:
+TOPNET VISUALISATION
 
-    # Site-specific vis is done for every run, but areal only when new
-    # nzlam input is first used.  It is easy for the topnet task to
-    # detect a change in nzlam input, but it is difficult to see how to
-    # communicate this to its dependent visualisation task.  Setting a
-    # topnet 'nzlam_changed = True' class variable is not ideal as we
-    # can't be entirely sure that the vis task will start before the
-    # next topnet task changes it back to False. If we do decide a
-    # separate topnet_vis task is required, we may have to add
-    # additional functionality to task interaction, or have the control
-    # program itself keep track of the reference times at which topnet
-    # used new nzlam input.
-
-    # ANOTHER IDEA: keep a topnet class variable:  nzlam_new = [list of topnet
-    # ref times for which a new nzlam was detected]; the vis task could then
-    # check its own reference time against this list.
-
+Site-specific vis is done for every run, but areal only when new
+nzlam input is first used.  Topnet tasks detect a change in nzlam input 
+by comparing their satisfying prerequisite's nzlam time with that held
+in a topnet class variable. Topnet_vis tasks detect the change by 
+comparing their own nzlam time class variable with topnet's.
+Only the latest value is needed, not a list, because:
+   + topnet is sequential
+   + topnet_vis is dependent on topnet, so instance could potentially
+     overlap but must necessarily start in the right order.

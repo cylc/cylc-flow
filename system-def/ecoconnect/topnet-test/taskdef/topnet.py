@@ -1,10 +1,10 @@
-class topnet_and_vis( sequential_task ):
-    "run hourly topnet and visualisation off most recent nzlam input" 
+class topnet( sequential_task ):
+    "run hourly topnet off the most recent nzlam input" 
 
-    name = "topnet_and_vis"
+    name = "topnet"
     instance_count = 0
     valid_hours = range( 0,24 )
-    external_task = 'topnet_and_vis.sh'
+    external_task = 'topnet.sh'
     owner = 'hydrology_oper'
     nzlam_time = None
 
@@ -31,50 +31,46 @@ class topnet_and_vis( sequential_task ):
             "file tn_" + fuzzy_limits + "_utc_nzlam_12.nc ready" ])
 
         self.postrequisites = timed_requisites( self.name + '%' + ref_time, [ 
-            [3, self.name + " started for " + ref_time],
-            [3.1, "topnet started for " + ref_time],
-            [6,   "topnet finished for " + ref_time],
-            [6.1, "topnet vis started for " + ref_time ],
-            [8.9, "topnet vis finished for " + ref_time ],
-            [9, self.name + " finished for " + ref_time] ])
+            [1,  self.name + " started for " + ref_time],
+            [10, self.name + " finished for " + ref_time] ])
 
         sequential_task.__init__( self, initial_state )
 
-        self.log.debug( "nzlam cutoff is " + self.my_cutoff + " for " + ref_time )
+        self.log.debug( "cutoff is " + self.my_cutoff + ", for " + ref_time )
 
 
     def run_external_task( self, launcher ):
-        # topnet needs to be given the time of the netcdf 
-        # file that satisified the fuzzy prerequisites
+
+        # At task run time, let's see if new nzlam output is available.
+        # Topnet needs to be given the time of the netcdf file that
+        # satisified its (fuzzy) prerequisites
 
         # extract nzlam time from the nzlam prereq
         nzlam_time = None
         prereqs = self.prerequisites.get_list()
         for prereq in prereqs:
-            m = topnet_and_vis.fuzzy_file_re.match( prereq )
+            m = topnet.fuzzy_file_re.match( prereq )
             if m:
                 # found the nzlam prereq
                 [ file ] = m.groups()
-                m = topnet_and_vis.reftime_re.search( file )
+                m = topnet.reftime_re.search( file )
                 nzlam_time = m.group()
                 break
  
         if not nzlam_time:
-            print "ERROR: failed to find nzlam time"
-            sys.exit(1)
+            raise( "Failed to find nzlam time, for " + self.ref_time )
 
-        nzlam_age = 'old'
-        if nzlam_time != topnet_and_vis.nzlam_time:
+        if nzlam_time != topnet.nzlam_time:
             # NEW NZLAM INPUT DETECTED
             # when a new topnet is launched, determine if its
             # prerequisites were satisfied by a new nzlam
-            self.log.info( "new nzlam time detected:  " + nzlam_time )
-            nzlam_age = 'new'
-            topnet_and_vis.nzlam_time = nzlam_time
+            self.log.info( "new nzlam time " + nzlam_time + ', for ' + self.ref_time )
+            topnet.nzlam_time = nzlam_time
+        else:
+            self.log.info( "old nzlam time " + nzlam_time + ', for ' + self.ref_time )
 
-        extra_vars = [ 
-                ['NZLAM_TIME', nzlam_time ],
-                ['NZLAM_AGE', nzlam_age ] ]
+        extra_vars = [ ['NZLAM_TIME', nzlam_time ] ]
+
         sequential_task.run_external_task( self, launcher, extra_vars )
 
 
@@ -91,8 +87,8 @@ class topnet_and_vis( sequential_task ):
             rt = self.ref_time
 
         if streamflow.catchup_mode:
-            cutoff = reference_time.decrement( rt, topnet_and_vis.CATCHUP_MODE_CUTOFF )
+            cutoff = reference_time.decrement( rt, topnet.CATCHUP_MODE_CUTOFF )
         else:
-            cutoff = reference_time.decrement( rt, topnet_and_vis.CAUGHTUP_MODE_CUTOFF )
+            cutoff = reference_time.decrement( rt, topnet.CAUGHTUP_MODE_CUTOFF )
 
         return cutoff
