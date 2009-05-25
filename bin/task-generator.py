@@ -207,7 +207,7 @@ import logging
 
         print '  + ' + task_def_file
 
-        if re.match( '^.*\.pydef$', task_def_file ):
+        if re.match( '^.*\.py$', task_def_file ):
             # this file is a python class definition
             for line in lines:
                 FILE.write( line )
