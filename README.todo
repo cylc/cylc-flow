@@ -1,7 +1,7 @@
 Sequenz To Do List
 
-* is restart from state dump is incomplete in the case of task types
-  with unusual state information, such as "catching up"? (NO)
+* state dump is incomplete for topnet and streamflow: I need
+  to store 'nzlam_time' variables in it.
 
 * non-O(n^2) will_get_satisfaction() for use with broker method 
 
@@ -13,11 +13,11 @@ Sequenz To Do List
 * when a fuzzy prerequisite is satisfied, can we change the cutoff to
   suit?
 
-* on restart, topnet always thinks we have a "new nzlam time".  this
-  needs to be saved as state?
-
-* update documentation on fuzzy prerequisites: if multiple satisfiers
-  are found, the most recent one will be chosen.
+* streamflow 'caughtup' indicator does not need to specify the
+  reference time that catchup was achieved even though streamflow
+  catches up long before nzlam, because the indicator is only used to
+  determine how far ahead of nzlam we allow topnet to get (? I need 
+  to think about this).
 
 * "finished but not abdicated" should be presented to system monitors 
   (this is similar to 'waiting' for parallel tasks constrained by number
