@@ -220,55 +220,77 @@ class manager:
         # they may not be fully populated yet (more tasks can appear
         # as their predecessors abdicate).
 
-        # This is needed because, for example, if we start the system at
-        # 12Z with topnet turned on, topnet is valid at every hour from 
-        # 12 through 17Z, so those tasks will be created but they will 
-        # never be able to run due to lack of any upstream
-        # nzlam_06_18_post until 18Z comes along.
+        # This is needed in order to allow us to start the system
+        # simply, at a single reference time, even when the configured 
+        # task list includes tasks that do not all have the same list
+        # of valid reference times at which they can run: some lame
+        # tasks may be created initially, and these will abdicate until
+        # their first non-lame descendent is generated. 
 
-        # Note that lame tasks won't be eliminated immediately during
-        # periods when no remote messages are coming in (since that's
-        # what activates task processing, including this function). If
-        # this is ever a problem though, we could decide to kill lame
-        # tasks on temporary handleRequests() timeouts as well, OR set
-        # task.state_changed in this function, whenever any lame tasks
-        # are detected.
+        # This function removes all lame tasks in the oldest batch
+        # before returning. Any lame tasks in the next batch may not be
+        # removed immediately during periods when no remote messages are
+        # coming in (since that's what activates task processing,
+        # including this function). 
+        
+        # To Do: put an outer loop in this function to repeat the
+        # process in the next batch, if the first batch is entirely
+        # rejected for being lame.
         #--
 
         batches = {}
         for task in self.tasks:
-            if task.ref_time not in batches.keys():
-                batches[ task.ref_time ] = [ task ]
-            else:
-                batches[ task.ref_time ].append( task )
+           if task.ref_time not in batches.keys():
+               batches[ task.ref_time ] = [ task ]
+           else:
+               batches[ task.ref_time ].append( task )
 
         reftimes = batches.keys()
+        if len( reftimes ) == 0:
+            return
+
         reftimes.sort( key = int )
-        oldest_rt = reftimes[0]
+        oldest_batch = batches[ reftimes[0] ]
 
-        lame_tasks = []
-        for task in batches[ oldest_rt ]:
-            if not task.will_get_satisfaction( batches[ oldest_rt ] ):
-                lame_tasks.append( task )
+        while True:
+            # repeat until no lame tasks are found in this batch,
+            # because in a set of cotemporal tasks that depend on each
+            # other only one can be identified as lame at a time (a task
+            # that depends on the lame task will not itself appear to be
+            # lame until the lame task has been deleted).
+            lame_tasks = []
+            no_lame_found = True
+            for task in oldest_batch:
+                if task.state != 'waiting':
+                    # running, finished, or failed tasks are not lame
+                    continue
+                # need to attempt satisfaction from all tasks in the
+                # batch, not just the potentially lame ones
+                if not task.will_get_satisfaction( oldest_batch ):
+                    lame_tasks.append( task )
+                    no_lame_found = False
     
-        for lame in lame_tasks:
-            lame.log.warning( "ABDICATING A LAME TASK " + lame.identity )
+            if no_lame_found:
+                break
 
-            # dynamic task object creation by task and module name
-            new_task = get_instance( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
-            new_task.log.debug( "New task connected for " + new_task.ref_time )
-            self.pyro.connect( new_task, new_task.identity )
-            self.tasks.append( new_task )
+            for lame in lame_tasks:
+                # abdicate the lame task and create its successor
+                lame.log.warning( "ABDICATING A LAME TASK " + lame.identity )
+                new_task = get_instance( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
+                new_task.log.debug( "new task connected for " + new_task.ref_time )
+                self.pyro.connect( new_task, new_task.identity )
+                self.tasks.append( new_task )
 
-            self.tasks.remove( lame )
-            self.pyro.disconnect( lame )
-            lame.log.debug( "lame task disconnected for " + lame.ref_time )
-            if config.get('use_broker'):
-                #print "unregister " + lame.identity
-                self.broker.unregister( lame.get_fullpostrequisites() )
+                # delete the lame task
+                oldest_batch.remove( lame )
+                self.tasks.remove( lame )
+                self.pyro.disconnect( lame )
+                lame.log.debug( "lame task disconnected for " + lame.ref_time )
+                if config.get('use_broker'):
+                    self.broker.unregister( lame.get_fullpostrequisites() )
+                lame.prepare_for_death()
+                del lame
 
-            lame.prepare_for_death()
-            del lame
 
     def kill_spent_tasks( self, config ):
         # Delete FINISHED tasks that have ABDICATED already AND:

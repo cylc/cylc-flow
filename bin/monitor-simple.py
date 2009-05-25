@@ -72,8 +72,10 @@ while True:
 
             lines = {}
             states = god.get_summary()
+            task_ids = states.keys()
+            task_ids.sort()
 
-            for task_id in states.keys():
+            for task_id in task_ids:
                 [ name, reftime ] = task_id.split('%')
                 [ state, complete, total, latest ] = states[ task_id ]
                 
