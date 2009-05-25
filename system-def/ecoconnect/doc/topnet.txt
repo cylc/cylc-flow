@@ -49,3 +49,33 @@ topnet(T-1)) so a new topnet should use the most recent streamflow's
 catchup status (most recent by reference time, not creation time, in
 case streamflow tasks are created in parallel, or out of order at start
 up). 
+
+
+FUZZY PREREQUISITES
+
+    # Topnet runs hourly using cotemporal stream flow data AND met
+    # forecast data from *the most recent nzlam run*. This variable
+    # nzlam dependence requires *fuzzy prerequisites*. In addition, we
+    # allow topnet to run out to 12 or 24 hours ahead of the nzlam
+    # (depending on catchup mode) to make best use of the important
+    # incoming streamflow data.
+ 
+
+WHY WE'RE NOT RUNNING TOPNET VISUALISATION AS A SEPARATE TASK:
+
+    # Site-specific vis is done for every run, but areal only when new
+    # nzlam input is first used.  It is easy for the topnet task to
+    # detect a change in nzlam input, but it is difficult to see how to
+    # communicate this to its dependent visualisation task.  Setting a
+    # topnet 'nzlam_changed = True' class variable is not ideal as we
+    # can't be entirely sure that the vis task will start before the
+    # next topnet task changes it back to False. If we do decide a
+    # separate topnet_vis task is required, we may have to add
+    # additional functionality to task interaction, or have the control
+    # program itself keep track of the reference times at which topnet
+    # used new nzlam input.
+
+    # ANOTHER IDEA: keep a topnet class variable:  nzlam_new = [list of topnet
+    # ref times for which a new nzlam was detected]; the vis task could then
+    # check its own reference time against this list.
+
