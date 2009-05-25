@@ -41,7 +41,7 @@ class topnet_and_vis( sequential_task ):
             [8.9, "topnet vis finished for " + ref_time ],
             [9, self.name + " finished for " + ref_time] ])
 
-        sequential_task.__init__( self, ref_time, initial_state )
+        sequential_task.__init__( self, initial_state )
 
         self.log.debug( "nzlam cutoff is " + self.my_cutoff + " for " + ref_time )
 

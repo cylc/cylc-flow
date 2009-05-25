@@ -35,7 +35,7 @@ class task( Pyro.core.ObjBase ):
         # to be garbage collected (not guaranteed to be right away).
         self.__class__.instance_count -= 1
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, initial_state ):
         # Call this AFTER derived class initialisation
         #   (it alters requisites based on initial state)
         # Derived classes MUST call nearest_ref_time()

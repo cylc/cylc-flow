@@ -25,7 +25,7 @@ class streamflow( parallel_task ):
             [5, "got streamflow data for " + ref_time ],
             [5.1, self.name + " finished for " + ref_time] ])
 
-        parallel_task.__init__( self, ref_time, initial_state )
+        parallel_task.__init__( self, initial_state )
 
         # NEED TO ALLOW FINISHED TASKS BACK TO THE TASK DELETION CUTOFF
         # Do this AFTER parent class init, which sets to the default
