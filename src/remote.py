@@ -6,27 +6,27 @@ import sys
 
 class switch( Pyro.core.ObjBase ):
     "class to take remote system control requests" 
-
-    # the main program can take action on these when it is convenient.
+    # the task manager can take action on these when convenient.
 
     def __init__( self ):
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
+
+        # record remote system halt requests
         self.system_halt = False
+
+        # record remote system pause requests
         self.system_pause = False
 
     def pause( self ):
-        # call remotely via Pyro
         self.log.warning( "system pause requested" )
         self.system_pause = True
 
     def resume( self ):
-        # call remotely via Pyro
         self.log.warning( "system resume requested" )
         self.system_pause = False 
 
     def shutdown( self ):
-        # call remotely via Pyro
         self.log.warning( "system halt requested" )
         self.system_halt = True
 
@@ -48,7 +48,22 @@ class state_summary( Pyro.core.ObjBase ):
                 if postreqs[ key ]:
                     n_satisfied += 1
 
-            self.summary[ task.identity ] = [ task.state, str( n_satisfied), str(n_total), task.latest_message ]
+            # temporary hack to show tasks that are finished but have
+            # not abdicated yet (i.e. parallel tasks held back by
+            # the number of instances constraint): prepend an asterisk
+            # to the name of tasks that have NOT abdicated yet.
+
+            name = task.name
+            if not task.has_abdicated():
+                name = '*' + name
+
+            identity = name + '%' + task.ref_time
+
+            self.summary[ identity ] = [ \
+                    task.state, \
+                    str( n_satisfied), \
+                    str(n_total), \
+                    task.latest_message ]
 
     def get_summary( self ):
         return self.summary

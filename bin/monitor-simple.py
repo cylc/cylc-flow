@@ -11,6 +11,7 @@ http://ascii-table.com/ansi-escape-sequences.php
 """
 
 import os
+import re
 import sys
 import config
 import datetime
@@ -18,30 +19,6 @@ import Pyro.core
 from time import sleep
 from string import split
 from reference_time import _rt_to_dt
-
-class kit:
-    def __init__( self, title ):
-        self.pos = 1
-        title = " " + title + " "
-        self.title = title
-        self.len = len( title )
-
-    def boof( self ):
-        a =  '\033[1;31m'
-        for i in range( 1, self.len - 1):
-            if i == self.pos:
-                a += self.title[i] + '\033[0m'
-            else:
-                a += self.title[i]
-
-        if self.pos == self.len:
-            self.pos = 1
-        else:
-            self.pos += 1
-
-        return [a] 
-
-title = kit( "Sequenz System Monitor" )
 
 config = config.config()
 config.load()
@@ -55,16 +32,17 @@ while True:
     try: 
     
         god = Pyro.core.getProxyForURI('PYRONAME://'+ config.get('pyro_ns_group') + '.' + 'state_summary')
-        god._setTimeout(1)
+        god._setTimeout(10)
 
-        mode = 'REAL TIME OPERATION'
+        mode = 'real time'
         if config.get('dummy_mode'):
-            mode = 'ACCELERATED CLOCK DUMMY MODE' 
+            mode = 'dummy time' 
             remote_clock = Pyro.core.getProxyForURI('PYRONAME://'+ config.get('pyro_ns_group') + '.' + 'dummy_clock' )
-            remote_clock._setTimeout(1)
+            remote_clock._setTimeout(10)
+
+        system_name = config.get('system_name')
 
         while True:
-
             if config.get('dummy_mode'):
                 dt = remote_clock.get_datetime()
             else:
@@ -79,9 +57,16 @@ while True:
                 [ name, reftime ] = task_id.split('%')
                 [ state, complete, total, latest ] = states[ task_id ]
                 
-                frac = "(" + str(complete) + "/" + str(total) + ")"
-
                 ctrl_end = "\033[0m"
+
+                # indentify not-abdicated-yet indicator in task name
+                not_abdicated = False
+                m = re.match( '(\*)(.*)', name )
+                if m:
+                    not_abdicated = True
+                    [ junk, name ] = m.groups()
+
+                frac = "(" + str(complete) + "/" + str(total) + ")"
 
                 if state == "running":
                     foo = "\033[1;37;42m" + name + frac + ctrl_end  # bold white on green
@@ -94,6 +79,9 @@ while True:
 
                 else:
                     foo = name
+
+                if not_abdicated:
+                    foo = "\033[1;37;45m" + '*' + ctrl_end + foo
 
                 hour = int( reftime[8:10] )
 
@@ -110,11 +98,11 @@ while True:
             reftimes = lines.keys()
             reftimes.sort( key = int )
 
-            blit = title.boof()
-            blit.append("system name: '" + config.get('system_name') + "'")
-            blit.append( mode )
-            blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m" )
-            blit.append( '\033[1;34m' + str(dt) + '\033[0m' )
+            blit = [ "\033[1;37;46m" + system_name + ctrl_end + ' ' + mode ]
+            blit.append( '\033[1;37;34m ' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
+            blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
+            blit.append( '\033[1;37;45m' + '*' + '\033[0m' + ' => task not yet abdicated' )
+            blit.append( '============================' )
             blit.append("")
             for rt in reftimes:
                 # colour reference time relative to clock time
