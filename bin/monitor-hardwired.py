@@ -140,7 +140,7 @@ while True:
                     foo = name
 
                 if not_abdicated:
-                    foo = "\033[1;37;45m" + '*' + ctrl_end + foo
+                    foo = "\033[1;37;43m" + '*' + ctrl_end + foo
 
                 hour = int( reftime[8:10] )
 
@@ -160,7 +160,7 @@ while True:
             blit = [ "\033[1;37;46m" + system_name + ctrl_end + ' ' + mode ]
             blit.append( '\033[1;37;34m ' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
             blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
-            blit.append( '\033[1;37;45m' + '*' + '\033[0m' + ' => task not yet abdicated' )
+            blit.append( '\033[1;37;43m' + '*' + '\033[0m' + ' => task not yet abdicated' )
             blit.append( '============================' )
             blit.append("")
             for rt in reftimes:
@@ -173,7 +173,7 @@ while True:
             sleep(0.5)
 
     except:
-        raise
+        #raise
         #os.system( "clear" )
         print "connection failed ..."
         sleep( 1 )
