@@ -23,98 +23,95 @@ class manager:
         if config.get('use_broker'):
             self.broker = broker.broker()
         
-        self.tasks = []
-
-        # state_list = [ref_time:name:state, ...]
+        # instantiate the initial task list and create task logs 
         if restart:
-            state_list = self.states_from_dump( config )
+            self.load_from_state_dump( config, dummy_clock )
         else:
-            state_list = self.states_from_config( config )
-
-        self.create_task_logs( state_list, config, dummy_clock)
-        self.create_initial_tasks( state_list, config )
+            self.load_from_config( config, dummy_clock )
 
 
-    def create_task_logs( self, state_list, config, dummy_clock ):
-        # task loggers that propagate messages up to the main logger
-        #--
-        print "CREATING TASK LOGS......"
-        unique_task_names = {}
-        for item in state_list:
-            [ref_time, name, state] = item.split(':')
-            unique_task_names[ name ] = True
-    
-        for task_name in unique_task_names.keys():
-            log = logging.getLogger( 'main.' + task_name )
-            pimp_my_logger.pimp_it( log, task_name, config, dummy_clock )
- 
-
-    def states_from_config ( self, config ):
-        # use configured task list and start time
+    def load_from_config ( self, config, dummy_clock ):
+        # load initial system state from configured tasks and start time
         #--
         print '\nCLEAN START: INITIAL STATE FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname(:state), taskname(:state), ...]
         # where (:state) is optional and defaults to 'waiting'.
 
-        state_list = []
+        self.tasks = []
+        start_time = config.get('start_time')
+
         for item in config.get('task_list'):
             state = 'waiting'
             name = item
             if re.compile( "^.*:").match( item ):
                 [name, state] = item.split(':')
 
-            state_list.append( config.get('start_time') + ':' + name + ':' + state )
+            # instantiate the task
+            task = get_instance( 'task_classes', name )( start_time, state )
 
-        return state_list
+            # create the task log
+            log = logging.getLogger( 'main.' + name )
+            pimp_my_logger.pimp_it( log, name, config, dummy_clock )
+
+            # the initial task reference time can be altered during
+            # creation, so we have to create the task before
+            # checking if stop time has been reached.
+            skip = False
+            if config.get('stop_time'):
+                if int( task.ref_time ) > int( self.stop_time ):
+                    task.log.info( task.name + " STOPPING at " + self.stop_time )
+                    task.prepare_for_death()
+                    del task
+                    skip = True
+
+            if not skip:
+                task.log.debug( "new " + task.name + " connected for " + task.ref_time )
+                self.pyro.connect( task, task.identity )
+                self.tasks.append( task )
 
 
-    def states_from_dump( self, config ):
-        # restart from the state dump file
+    def load_from_state_dump( self, config, dummy_clock ):
+        # load initial system state from the configured state dump file
         #--
         filename = config.get('state_dump_file')
+        # back up the state dump file in case the restart attemp fails
         backup = filename + '.' + datetime.datetime.now().isoformat()
         print '\nRESTART: INITIAL STATE FROM STATE DUMP: ' + filename
         print ' backing up the initial state dump file to ' + backup
         shutil.copyfile( filename, backup )
-
+        # state dump file format: ref_time:name:state, one per line 
         self.log.info( 'Loading previous state from ' + filename )
-        # file format: ref_time:name:state, one per line 
 
         FILE = open( filename, 'r' )
         lines = FILE.readlines()
         FILE.close()
 
-        state_list = []
-
+        # parse each line and create a ref_time keyed dict
+        # state_by_reftime[ ref_time ] = [ name:state, ... ]
+        state_by_reftime = {}
         for line in lines:
             # ref_time task:state task:state ...
-            if re.compile( '^.*\n$' ).match( line ):
-                # strip trailing newlines
-                line = line[:-1]
+
+            # strip trailing newlines
+            line = line.rstrip( '\n' )
 
             [ref_time, name, state] = line.split(':')
             # convert running to waiting on restart
             if state == 'running' or state == 'failed':
                 state = 'waiting'
 
-            state_list.append( ref_time + ':' + name + ':' + state )
-
-        return state_list
-
-
-    def create_initial_tasks( self, state_list, config ):
-
-        state_by_reftime = {}
-
-        for item in state_list:
-            [ref_time, name, state] = item.split(':')
             if ref_time not in state_by_reftime.keys():
-                state_by_reftime[ ref_time ] = [item]
+                state_by_reftime[ ref_time ] = [ name + ':' + state ]
             else:
-                state_by_reftime[ ref_time ].append( item )
+                state_by_reftime[ ref_time ].append( name + ':' + state )
  
-        # reverse sorted list of reference times
+        # reverse sorted list of reference times so we can create each
+        # task in reverse reference time order, abdicating all but the
+        # last task of each type (this correctly handles waiting and
+        # running tasks that have not abdicated AND finished tasks that
+        # have not abdicated yet (i.e. parallel tasks that have been
+        # delayed by the number-of-instances restriction).
         ref_times = state_by_reftime.keys()
         ref_times.sort( key = int, reverse = True )
 
@@ -122,16 +119,14 @@ class manager:
         seen = {}
         for ref_time in ref_times:
             for item in state_by_reftime[ ref_time ]:
-                # Create each task in reverse sorted reference time
-                # order. Abdicate all but the last task of each type.
-                # This correctly handles waiting and running tasks that
-                # have not abdicated AND finished tasks that have not 
-                # abdicated yet (parallel tasks that have been delayed
-                # by the number-of-instances restriction).
-                [ref_time, name, state] = item.split(':')
+                [name, state] = item.split(':')
                 task = get_instance( 'task_classes', name )( ref_time, state )
                 if name not in seen.keys():
                     seen[ name ] = True
+                    # create the task log
+                    log = logging.getLogger( 'main.' + name )
+                    pimp_my_logger.pimp_it( log, name, config, dummy_clock )
+ 
                 else:
                     # an instance of this task was already seen at a
                     # later reference time, therefore it has abdicated
@@ -152,6 +147,7 @@ class manager:
                     task.log.debug( "new " + task.name + " connected for " + task.ref_time )
                     self.pyro.connect( task, task.identity )
                     self.tasks.append( task )
+
 
     def all_finished( self ):
         # return True if all tasks have completed
