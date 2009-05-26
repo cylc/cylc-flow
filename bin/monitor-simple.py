@@ -36,7 +36,7 @@ while True:
 
         mode = 'real time'
         if config.get('dummy_mode'):
-            mode = 'dummy time' 
+            mode = 'DUMMY MODE' 
             remote_clock = Pyro.core.getProxyForURI('PYRONAME://'+ config.get('pyro_ns_group') + '.' + 'dummy_clock' )
             remote_clock._setTimeout(10)
 

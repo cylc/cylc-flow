@@ -34,7 +34,7 @@ class pyrex:
         # locate the Pyro nameserver
         print " - locating nameserver ...",
         try:
-            pyro_nameserver = Pyro.naming.NameServerLocator().getNS()
+            self.nameserver = Pyro.naming.NameServerLocator().getNS()
         except:
             print "ERROR: failed to find a Pyro nameserver"
             raise
@@ -47,11 +47,11 @@ class pyrex:
             # (this may indicate another instance of sequenz is running
             # with the same groupname; must be unique for each instance
             # else the different systems will interfere with each other) 
-            pyro_nameserver.createGroup( groupname )
+            self.nameserver.createGroup( groupname )
 
         except NamingError:
             print "\nERROR: group '" + groupname + "' is already registered"
-            objs = pyro_nameserver.list( groupname )
+            objs = self.nameserver.list( groupname )
             if len( objs ) == 0:
                 print "(although it currently contains no registered objects)."
             else:
@@ -71,7 +71,7 @@ class pyrex:
 
         # create a pyro_daemon for this program
         self.daemon = Pyro.core.Daemon()
-        self.daemon.useNameServer(pyro_nameserver)
+        self.daemon.useNameServer(self.nameserver)
 
     def object_id( self, name ):
         return self.groupname + '.' + name
@@ -83,7 +83,12 @@ class pyrex:
         self.daemon.disconnect( object )
 
     def shutdown( self, bool ):
+        # shut down the daemon
+        print "Shutting down my Pyro daemon"
         self.daemon.shutdown( bool )
+        print "Deleting group " + self.groupname + " from the Pyro nameserver"
+        # delete my group from the nameserver
+        self.nameserver.deleteGroup( self.groupname )
 
     def handleRequests( self, timeout ):
         self.daemon.handleRequests( timeout )
