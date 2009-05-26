@@ -4,7 +4,12 @@ Sequenz To Do List
   algorithm.
 
 * state dump is incomplete for topnet and streamflow: I need
-  to store 'nzlam_time' variables in it.
+  to store 'nzlam_time' variables in it so that on restart 
+  topnet does not always see a 'new' nzlam.
+
+* if any task fails the system should pause itself before deleting
+  any prerequisites of the failed tasks, to allow a clean restart
+  on fixing the problem.
 
 * non-O(n^2) will_get_satisfaction() for use with broker method 
 
