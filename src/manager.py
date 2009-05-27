@@ -88,23 +88,24 @@ class manager:
         FILE.close()
 
         # parse each line and create a ref_time keyed dict
-        # state_by_reftime[ ref_time ] = [ name:state, ... ]
+        # state_by_reftime[ ref_time ] = [ name, [state,foo] ], ... 
         state_by_reftime = {}
         for line in lines:
-            # ref_time task:state task:state ...
-
             # strip trailing newlines
             line = line.rstrip( '\n' )
-
-            [ref_time, name, state] = line.split(':')
+            # ref_time task_name task_state_string
+            [ ref_time, name, state_string ] = line.split()
+            state_list = state_string.split( ':' )
+            # main state (waiting, running, finished, failed)
+            state = state_list[0]
             # convert running to waiting on restart
             if state == 'running' or state == 'failed':
-                state = 'waiting'
+                state_list[0] = 'waiting'
 
             if ref_time not in state_by_reftime.keys():
-                state_by_reftime[ ref_time ] = [ name + ':' + state ]
+                state_by_reftime[ ref_time ] = [ [ name, state_list] ]
             else:
-                state_by_reftime[ ref_time ].append( name + ':' + state )
+                state_by_reftime[ ref_time ].append( [ name, state_list ] )
  
         # reverse sorted list of reference times so we can create each
         # task in reverse reference time order, abdicating all but the
@@ -119,8 +120,8 @@ class manager:
         seen = {}
         for ref_time in ref_times:
             for item in state_by_reftime[ ref_time ]:
-                [name, state] = item.split(':')
-                task = get_instance( 'task_classes', name )( ref_time, state )
+                [ name, state_list ] = item
+                task = get_instance( 'task_classes', name )( ref_time, *state_list )
                 if name not in seen.keys():
                     seen[ name ] = True
                     # create the task log

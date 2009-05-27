@@ -13,7 +13,38 @@ import logging
 global state_changed
 state_changed = False
 
-#----------------------------------------------------------------------
+# NOTE ON TASK STATE INFORMATION---------------------------------------
+
+# The only task attributes required for a CLEAN system start (i.e. from
+# configured start time, rather than a previous dumped state) are:
+
+#  (1) reference time
+#  (2) state ('waiting', 'running', 'finished', or 'failed')
+
+# The 'state' variable is initialised by the base class. The reference
+# time is initialised by derived classes because it may be adjusted at
+# start time according to the allowed values for each task type.  Both
+# of these variables are written to the state dump file by the base
+# class dump_state() method.
+
+# For a restart from previous state, however, some tasks may require
+# additional state information to be stored in the state dump file.
+# Take, for instance, a task foo that runs hourly and depends on the
+# most recent available 12-hourly task bar, but is allowed to run ahead
+# of bar to some extent, and changes its behavior according whether or
+# not it was triggered by a "old" bar (i.e. one already used by the
+# previous foo instance) or an "old" one. In this case, currently, we
+# use a class variable in task type foo to record the reference time of
+# the most recent bar used by any foo instance. This is written to the
+# the state dump file so that task foo does not have to automatically
+# assume it was triggered by a "new" bar after a restart.
+
+# To handle this difference in initial state information (between normal
+# start and restart) task initialisation must use a default value of
+# 'None' for the additional variables, and for a restart the tast
+# manager must instantiate each task with a flattened list of all the
+# state values found in the state dump file.
+
 class task( Pyro.core.ObjBase ):
     
     # Default task deletion: quick_death = True
@@ -33,16 +64,9 @@ class task( Pyro.core.ObjBase ):
 
     quick_death = True
 
+    # maximum number of finished tasks present in the system. Used to 
+    # restrict task runahead, mainly for prerequisiteless tasks. 
     MAX_FINISHED = 5
-
-    def prepare_for_death( self ):
-        # The task manager MUST call this immediately before deleting a
-        # task object. It decrements the instance count of top level
-        # objects derived from task. It would be nice to use Python's
-        # __del__() function for this, but that is only called when a
-        # deleted object is about to be garbage collected (which is not
-        # guaranteed to be right away).
-        self.__class__.instance_count -= 1
 
     def __init__( self, initial_state ):
         # Call this AFTER derived class initialisation
@@ -54,6 +78,15 @@ class task( Pyro.core.ObjBase ):
         # count instances of each top level object derived from task
         # top level derived classes must define:
         #   <class>.instance_count = 0
+
+        # task types that need to DUMP and LOAD MORE STATE INFORMATION
+        # should override __init__() but make the new state variables
+        # default to None so that they aren't required for normal
+        # startup: __init__( self, initial_state, foo = None )
+        # On reload from state dump the task manager will call the 
+        # task __init__() with a flattened list of whatever state values 
+        # it finds in the state dump file.
+
         self.__class__.instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
@@ -96,6 +129,16 @@ class task( Pyro.core.ObjBase ):
             sys.exit(1)
 
         self.log.debug( "Creating new task in " + initial_state + " state, for " + self.ref_time )
+
+
+    def prepare_for_death( self ):
+        # The task manager MUST call this immediately before deleting a
+        # task object. It decrements the instance count of top level
+        # objects derived from task. It would be nice to use Python's
+        # __del__() function for this, but that is only called when a
+        # deleted object is about to be garbage collected (which is not
+        # guaranteed to be right away).
+        self.__class__.instance_count -= 1
 
 
     def compute_cutoff( self, rt = None ):
@@ -323,20 +366,24 @@ class task( Pyro.core.ObjBase ):
                     self.prerequisites.set_satisfied( req )
 
     def dump_state( self, FILE ):
+        # Write state information to the state dump file, reference time
+        # first to allow users to sort the file easily in case they need
+        # to edit it:
+        #   reftime name state
 
-        # write a state string, 
-        #   reftime:name:state
-        # to the state dump file.  
+        # Derived classes can override this if they require other state
+        # values to to be dumped and reloaded from the state dump file,
+        # which should be written in this form:
+        #   reftime name state:foo:bar (etc.)
 
-        # Must be compatible with __init__ for reloading.
-
-        # sub-classes can override this if they have other state
-        # information that needs to be reloaded from the file.
+        # This must be compatible with __init__() on reload (see comment
+        # above).
 
         FILE.write( 
-                self.ref_time + ":" + 
-                self.name     + ":" + 
+                self.ref_time + ' ' + 
+                self.name     + ' ' + 
                 self.state    + '\n' )
+
 
     def set_abdicated( self ):
         self.abdicated = True

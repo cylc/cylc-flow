@@ -8,7 +8,10 @@ class topnet_vis( parallel_task ):
     owner = 'hydrology_oper'
     nzlam_time = None
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, ref_time, initial_state, nzlam_time = None ):
+
+        if nzlam_time:
+            topnet_vis.nzlam_time = nzlam_time
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -44,3 +47,18 @@ class topnet_vis( parallel_task ):
         extra_vars = [ ['NZLAM_AGE', nzlam_age ] ]
 
         parallel_task.run_external_task( self, launcher, extra_vars )
+
+
+    def dump_state( self, FILE ):
+        # topnet_vis needs nzlam_time in the state dump file, otherwise
+        # it will always assume new nzlam input at restart time.
+
+        if topnet.nzlam_time:
+            state_string = self.state + ':' + topnet.nzlam_time
+        else:
+            state_string = self.state
+
+        FILE.write( 
+                self.ref_time + ' ' + 
+                self.name     + ' ' + 
+                state_string + '\n' )

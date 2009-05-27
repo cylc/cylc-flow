@@ -15,7 +15,10 @@ class topnet( sequential_task ):
     fuzzy_file_re =  re.compile( "^file (tn_\d{10}_utc_nzlam_12.nc) ready$" )
     reftime_re = re.compile( "\d{10}")
 
-    def __init__( self, ref_time, initial_state ):
+    def __init__( self, ref_time, initial_state, nzlam_time = None ):
+
+        if nzlam_time:
+            topnet.nzlam_time = nzlam_time
 
         # adjust reference time to next valid for this task
         self.ref_time = self.nearest_ref_time( ref_time )
@@ -92,3 +95,18 @@ class topnet( sequential_task ):
             cutoff = reference_time.decrement( rt, topnet.CAUGHTUP_MODE_CUTOFF )
 
         return cutoff
+
+
+    def dump_state( self, FILE ):
+        # topnet needs nzlam_time in the state dump file, otherwise
+        # it will always assume new nzlam input at restart time.
+
+        if topnet.nzlam_time:
+            state_string = self.state + ':' + topnet.nzlam_time
+        else:
+            state_string = self.state
+
+        FILE.write( 
+                self.ref_time + ' ' + 
+                self.name     + ' ' + 
+                state_string + '\n' )

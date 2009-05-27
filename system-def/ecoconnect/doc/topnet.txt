@@ -73,3 +73,14 @@ Only the latest value is needed, not a list, because:
    + topnet is sequential
    + topnet_vis is dependent on topnet, so instance could potentially
      overlap but must necessarily start in the right order.
+
+
+TOPNET AND TOPNET VISUALISATION 'NZLAM TIME' IN THE STATE DUMP FILE
+
+nzlam_time is held as a class variable (not an instance variable) in the
+topnet and topnet_vis classes: it represents the latest nzlam time used by all
+current topnet instances. Therefore, if there are multiple instances of 
+topnet, say, in the state dump file, they will all have the same nzlam_time
+value (i.e. do not assume that the nzlam_time assocated with a finished topnet
+task is the nzlam_time actually used by that topnet task when it ran.
+
