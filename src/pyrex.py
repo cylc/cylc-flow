@@ -19,9 +19,10 @@ import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 
 import sys
+import re
+
 
 class pyrex:
-
     def __init__( self, groupname ):
 
         self.groupname = groupname
@@ -93,3 +94,40 @@ class pyrex:
     def handleRequests( self, timeout ):
         self.daemon.handleRequests( timeout )
 
+
+class discover:
+    # what groups are currently registered with the Pyro nameserver
+
+    def __init__( self ):
+        locator = Pyro.naming.NameServerLocator()
+        ns = locator.getNS()
+        self.ns_groups = {}
+        # loop through registered objects
+        for obj in ns.flatlist():
+            # Extract the group name for each object (GROUP.name).
+            # Note that GROUP may contain '.' characters too.
+            # E.g. ':Default.ecoconnect.name'
+            group = obj[0].rsplit('.', 1)[0]
+            # now strip off ':Default'
+            # TO DO: use 'sequenz' group!
+            group = re.sub( '^:Default\.', '', group )
+            if re.match( ':Pyro', group ):
+                # avoid Pyro.nameserver itself
+                continue
+
+            if group not in self.ns_groups.keys():
+                self.ns_groups[ group ] = 1
+            else:
+                self.ns_groups[ group ] += + 1
+
+    def registered( self, name ):
+        if name in self.ns_groups.keys():
+            return True
+        else:
+            return False
+
+    def print_info( self ):
+        n_groups = len( self.ns_groups.keys() )
+        print "Currently ", len( self.ns_groups.keys() ), " systems registered with Pyro"
+        for group in self.ns_groups.keys():
+            print ' + ', group, ' ... (', self.ns_groups[group], 'objects )'
