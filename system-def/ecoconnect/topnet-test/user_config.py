@@ -8,7 +8,7 @@ import logging  # for logging level
 config = {}
 ####################################### <<<<
 
-config[ 'system_name' ] = 'topnet-test'
+config[ 'system_name' ] = 'topnet-dvel'
 #config[ 'state_dump_file' ] = 'blah'
 
 config[ 'start_time' ] = '2009052201'
@@ -21,7 +21,7 @@ config[ 'logging_level' ] = logging.DEBUG
 
 config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 20
-config[ 'dummy_clock_offset' ] = 12
+config[ 'dummy_clock_offset' ] = 48
 
 config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'topnet_test'

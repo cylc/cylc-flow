@@ -8,7 +8,7 @@ from optparse import OptionParser
 from time import sleep
 
 # construct a command line parser
-parser = OptionParser( "usage: %prog [options] system-name" )
+parser = OptionParser( "USAGE: %prog [options] system-name" )
 
 parser.add_option( "-p", "--pause", help="pause system",
         action="store_true", default=False, dest="pause" )
@@ -41,9 +41,8 @@ if len( sys.argv ) == 1:
 if len( args ) != 1:
     parser.error( "incorrect number of arguments" )
 
-ns_groups = pyrex.discover()
-
 system_name = args[0]
+ns_groups = pyrex.discover()
 
 if ns_groups.registered( system_name ):
     print "system: " + system_name

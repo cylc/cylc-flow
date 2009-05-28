@@ -13,15 +13,58 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import re
 import sys
-import config
+import pyrex
 import datetime
 import Pyro.core
+import Pyro.naming
 from time import sleep
 from string import split
+from optparse import OptionParser
 from reference_time import _rt_to_dt
 
-config = config.config()
-config.load()
+# construct a command line parser
+parser = OptionParser( "%prog [options]" )
+
+parser.add_option( "-c", "--configured", help="use configured system",
+        action="store_true", default=False, dest="use_configured" )
+
+parser.add_option( "-s", "--system", help="use configured system",
+        metavar="SYSTEM-NAME", action="store", dest="system_name" )
+
+parser.add_option( "-p", "--print", help="print registered systems",
+        action="store_true", default=False, dest="print_systems" )
+
+# get command line options and positional args
+( options, args ) = parser.parse_args()
+
+#if len( args ) != 0:
+#    parser.print_help()
+#    sys.exit(1)
+
+# get systems currently registered in the Pyro nameserver
+ns_groups = pyrex.discover()
+
+if options.use_configured:
+    # use the configured system
+    import config
+    config = config.config()
+    config.load()
+    system_name = config.get( 'system_name' )
+
+elif options.system_name:
+    # use the given system name
+    system_name = options.system_name
+    if ns_groups.registered( system_name ):
+        print "system: " + system_name
+    else:
+        print "WARNING: no " + system_name + " registered yet ..." 
+
+else:
+    # print available systems and exit
+    parser.print_help()
+    print
+    ns_groups.print_info()
+    sys.exit(0)
 
 print
 print "here we go ..."
@@ -30,36 +73,38 @@ sleep(2)
 while True:
 
     try: 
-    
-        god = Pyro.core.getProxyForURI('PYRONAME://'+ config.get('pyro_ns_group') + '.' + 'state_summary')
+        god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
         god._setTimeout(10)
 
-        mode = 'real time'
-        if config.get('dummy_mode'):
-            mode = 'DUMMY MODE' 
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://'+ config.get('pyro_ns_group') + '.' + 'dummy_clock' )
-            remote_clock._setTimeout(10)
+        dummy_mode = god.get_dummy_mode()
 
-        system_name = config.get('system_name')
+        if dummy_mode:
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.dummy_clock' )
+            remote_clock._setTimeout(10)
+            mode = 'dummy mode' 
+        else:
+            mode = 'real time'
 
         while True:
-            if config.get('dummy_mode'):
+
+            if dummy_mode:
                 dt = remote_clock.get_datetime()
             else:
                 dt = datetime.datetime.now()
 
             lines = {}
             states = god.get_summary()
+
             task_ids = states.keys()
             task_ids.sort()
 
             for task_id in task_ids:
                 [ name, reftime ] = task_id.split('%')
                 [ state, complete, total, latest ] = states[ task_id ]
-                
+
                 ctrl_end = "\033[0m"
 
-                # indentify not-abdicated-yet indicator in task name
+                # identify not-abdicated-yet indicator in task name
                 not_abdicated = False
                 m = re.match( '(\*)(.*)', name )
                 if m:
@@ -72,10 +117,10 @@ while True:
                     foo = "\033[1;37;42m" + name + frac + ctrl_end  # bold white on green
 
                 elif state == "waiting":
-                    foo = "\033[35m" + name + ctrl_end       # magenta
+                    foo = "\033[35m" + name + ctrl_end              # magenta
 
                 elif state == "failed":
-                    foo = "\033[1;37;41m" + name + ctrl_end       # bold white on red
+                    foo = "\033[1;37;41m" + name + ctrl_end         # bold white on red
 
                 else:
                     foo = name
@@ -85,14 +130,10 @@ while True:
 
                 hour = int( reftime[8:10] )
 
-                indent = ' - '
-                if hour == 6 or hour == 18 or hour == 0 or hour == 12:
-                    indent = ""
-
                 if reftime in lines.keys():
                     lines[reftime] += ' ' + foo
                 else:
-                    lines[reftime] = indent + reftime + "\033[0m " + foo
+                    lines[reftime] = reftime + "\033[0m " + foo
                 
             # sort reference times using int( string )
             reftimes = lines.keys()
