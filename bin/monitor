@@ -28,7 +28,7 @@ parser = OptionParser( "%prog [options]" )
 parser.add_option( "-c", "--configured", help="use configured system",
         action="store_true", default=False, dest="use_configured" )
 
-parser.add_option( "-s", "--system", help="use configured system",
+parser.add_option( "-n", "--name", help="system name",
         metavar="SYSTEM-NAME", action="store", dest="system_name" )
 
 parser.add_option( "-p", "--print", help="print registered systems",

@@ -8,7 +8,7 @@ from optparse import OptionParser
 from time import sleep
 
 # construct a command line parser
-parser = OptionParser( "USAGE: %prog [options] system-name" )
+parser = OptionParser( "%prog [options]" )
 
 parser.add_option( "-p", "--pause", help="pause system",
         action="store_true", default=False, dest="pause" )
@@ -18,6 +18,12 @@ parser.add_option( "-r", "--resume", help="resume system",
 
 parser.add_option( "-s", "--shutdown", help="shutdown system",
         action="store_true", default=False, dest="shutdown" )
+
+parser.add_option( "-c", "--configured", help="use configured system",
+        action="store_true", default=False, dest="use_configured" )
+
+parser.add_option( "-n", "--name", help="system name",
+        metavar="SYSTEM-NAME", action="store", dest="system_name" )
 
 verbosity_choices = ['debug','info', 'warning', 'error', 'critical'] 
 
@@ -30,26 +36,43 @@ parser.add_option( "-v", "--verbosity",
 parser.add_option( "-b", "--bump", help="bump dummy clock forward (hours)",
         type="int", action="store", dest="bump_hours" )
 
-if len( sys.argv ) == 1:
-    # no options or args supplied
-    parser.print_help()
-    sys.exit(1)
+#if len( sys.argv ) == 1:
+#    # no options or args supplied
+#    parser.print_help()
+#    sys.exit(1)
 
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
-if len( args ) != 1:
-    parser.error( "incorrect number of arguments" )
+#if len( args ) > 1:
+#    parser.error( "incorrect number of arguments" )
 
-system_name = args[0]
+# get systems currently registered in the Pyro nameserver
 ns_groups = pyrex.discover()
 
-if ns_groups.registered( system_name ):
-    print "system: " + system_name
+if options.use_configured:
+    # use the configured system
+    import config
+    config = config.config()
+    config.load()
+    system_name = config.get( 'system_name' )
+
+elif options.system_name:
+    # use the given system name
+    system_name = options.system_name
+    if ns_groups.registered( system_name ):
+        print "system: " + system_name
+    else:
+        print "WARNING: no " + system_name + " registered yet ..." 
+        ns_groups.print_info()
+        sys.exit(1)
+
 else:
-    print "WARNING: no " + system_name + " registered in the Pyro nameserver"
+    # print available systems and exit
+    parser.print_help()
+    print
     ns_groups.print_info()
-    sys.exit(1)
+    sys.exit(0)
 
 
 try:
