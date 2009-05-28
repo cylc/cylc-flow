@@ -62,3 +62,9 @@ class topnet_vis( parallel_task ):
                 self.ref_time + ' ' + 
                 self.name     + ' ' + 
                 state_string + '\n' )
+
+        
+    def get_state_summary( self ):
+        summary = parallel_task.get_state_summary( self )
+        summary[ 'nzlam_time' ] = topnet_vis.nzlam_time
+        return summary

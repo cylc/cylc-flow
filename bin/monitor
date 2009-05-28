@@ -70,6 +70,8 @@ print
 print "here we go ..."
 sleep(2)
 
+topnet_nzlam_time = None
+
 while True:
 
     try: 
@@ -83,7 +85,7 @@ while True:
             remote_clock._setTimeout(10)
             mode = 'dummy mode' 
         else:
-            mode = 'real time'
+            mode = 'production'
 
         while True:
 
@@ -111,6 +113,9 @@ while True:
                 complete = str( states[ task_id ][ 'n_completed_postrequisites' ] )
                 total    = str( states[ task_id ][ 'n_total_postrequisites' ] )
                 latest   =      states[ task_id ][ 'latest_message' ]
+
+                if states[ task_id ][ 'name' ] == 'topnet':
+                    topnet_nzlam_time = states[ task_id ][ 'nzlam_time' ]
 
                 ctrl_end = "\033[0m"
 
@@ -143,19 +148,26 @@ while True:
             reftimes = lines.keys()
             reftimes.sort( key = int )
 
-            blit = [ "\033[1;37;46m" + system_name + ctrl_end + ' ' + mode ]
-            blit.append( '\033[1;37;34m ' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
+            blit = []
+            blit.append( '\033[1;37;40m Sequenz  System  Monitor  ' + ctrl_end )
             blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
-            blit.append( '\033[1;37;43m' + '*' + '\033[0m' + ' => task not yet abdicated' )
-            blit.append( '============================' )
+            blit.append( '\033[1;37;43m' + '*' + '\033[0m' + ' -> task not yet abdicated' )
+            blit.append( '--------(' + mode + ')-------' )
+            
+            blit.append( "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
+
+            if topnet_nzlam_time:
+                blit.append( 'TopNet NZLAM time: ' + topnet_nzlam_time )
+
             blit.append("")
+
             for rt in reftimes:
                 # colour reference time relative to clock time
                 rtdt = _rt_to_dt( rt )
                 if dt > rtdt:
-                    foo = '\033[1;35m'
-                else:
                     foo = '\033[1;34m'
+                else:
+                    foo = '\033[1;31m'
                 blit.append( foo + lines[rt] )
 
             os.system( "clear" )
@@ -165,6 +177,6 @@ while True:
 
     except:
         # uncomment 'raise' to identify errors
-        #raise
+        # raise
         print "connection failed ..."
         sleep( 1 )

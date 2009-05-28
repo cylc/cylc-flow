@@ -25,4 +25,7 @@ Sequenz To Do List
 
 * "finished but not abdicated" should be presented to system monitors 
   (this is similar to 'waiting' for parallel tasks constrained by number
-  of instances).
+
+* in dummy mode, the dummy clock time should be written to the state
+  dump file so that the clock doesn't reset to the configured start time
+  (plus any configured offset) on a restart.

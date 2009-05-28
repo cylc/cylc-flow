@@ -110,3 +110,9 @@ class topnet( sequential_task ):
                 self.ref_time + ' ' + 
                 self.name     + ' ' + 
                 state_string + '\n' )
+
+
+    def get_state_summary( self ):
+        summary = sequential_task.get_state_summary( self )
+        summary[ 'nzlam_time' ] = topnet.nzlam_time
+        return summary
