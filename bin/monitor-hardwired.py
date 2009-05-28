@@ -13,6 +13,7 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import re
 import sys
+import pyrex
 import datetime
 import Pyro.core
 import Pyro.naming
@@ -20,64 +21,26 @@ from time import sleep
 from string import split
 
 def usage():
-    print "USAGE: " + sys.argv[0] + " [sequenz system name]"
-    print
-    print "Monitor the given system, or"
-    print "print a list of registered systems and exit."
+    print "USAGE: " + sys.argv[0] + " <system-name>"
+    print "Monitor the specified sequenz system"
+
+ns_groups = pyrex.discover()
 
 if len( sys.argv ) == 2:
     # user supplied name of system to monitor
     system_name = sys.argv[1]
-
-elif len( sys.argv ) == 1:
-    # no system name supplied
-    # lets see what names are registered with Pyro
-    system_name = None
-
 else:
-    # too many args
     usage()
+    ns_groups.print_info()
     sys.exit(1)
 
-# what groups are currently registered with the Pyro nameserver
-locator = Pyro.naming.NameServerLocator()
-ns = locator.getNS()
-ns_groups = {}
-n_groups = 0
-# loop through registered objects
-for obj in ns.flatlist():
-    # Extract the group name for each object (GROUP.name).
-    # Note that GROUP may contain '.' characters too.
-    # E.g. ':Default.ecoconnect.name'
-    group = obj[0].rsplit('.', 1)[0]
-    # now strip off ':Default'
-    # TO DO: use 'sequenz' group!
-    group = re.sub( '^:Default\.', '', group )
-    if re.match( ':Pyro', group ):
-        # avoid Pyro.nameserver itself
-        continue
-
-    if group not in ns_groups.keys():
-        ns_groups[ group ] = 1
-    else:
-        ns_groups[ group ] = ns_groups[ group ] + 1
-
-    n_groups = len( ns_groups.keys() )
-
-print "There are ", n_groups, " systems registered with Pyro"
-for group in ns_groups.keys():
-    print ' + ', group, ' ... ', ns_groups[group], ' objects registered'
-
-if system_name == None:
-    print "ABORTING: no system specified to monitor or wait on."
-    sys.exit(0)
-
-elif system_name not in ns_groups.keys():
-    print "WARNING: waiting for " + system_name + " to be registered." 
-
-else:
+if ns_groups.registered( system_name ):
     print "Monitoring system " + system_name
-        
+else:
+    print "WARNING: " + system_name + " not yet registered:" 
+    ns_groups.print_info()
+    print "waiting ..."
+
 print
 print "here we go ..."
 sleep(2)
@@ -86,18 +49,16 @@ while True:
 
     try: 
         god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
-        print "HELLO"
         god._setTimeout(10)
 
-        try:
+        dummy_mode = god.get_dummy_mode()
+
+        if dummy_mode:
             remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.dummy_clock' )
-        except:
-            mode = 'real time'
-            dummy_mode = False
-        else:
-            dummy_mode = True
+            remote_clock._setTimeout(10)
             mode = 'dummy mode' 
-            remote_clock._setTimeout(1)
+        else:
+            mode = 'real time'
 
         while True:
 
@@ -131,10 +92,10 @@ while True:
                     foo = "\033[1;37;42m" + name + frac + ctrl_end  # bold white on green
 
                 elif state == "waiting":
-                    foo = "\033[35m" + name + ctrl_end       # magenta
+                    foo = "\033[35m" + name + ctrl_end              # magenta
 
                 elif state == "failed":
-                    foo = "\033[1;37;41m" + name + ctrl_end       # bold white on red
+                    foo = "\033[1;37;41m" + name + ctrl_end         # bold white on red
 
                 else:
                     foo = name
@@ -144,14 +105,10 @@ while True:
 
                 hour = int( reftime[8:10] )
 
-                indent = ' - '
-                if hour == 6 or hour == 18 or hour == 0 or hour == 12:
-                    indent = ""
-
                 if reftime in lines.keys():
                     lines[reftime] += ' ' + foo
                 else:
-                    lines[reftime] = indent + reftime + "\033[0m " + foo
+                    lines[reftime] = reftime + "\033[0m " + foo
                 
             # sort reference times using int( string )
             reftimes = lines.keys()
