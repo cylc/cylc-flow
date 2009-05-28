@@ -19,7 +19,7 @@ set -e  # ABORT on error
 	exit 1
 }
 
-[[ ! -f bin/sequenz.py ]] && {
+[[ ! -f bin/sequenz ]] && {
 	echo "RUN THIS IN SEQUENZ REPO TOP LEVEL"
 	exit 1
 }
@@ -82,5 +82,5 @@ cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/tasks
 echo
 echo "> SOURCE THE SYSTEM ENVIRONMENT SCRIPT BEFORE RUNNING SEQUENZ"
 echo "  \$ . $TOPDIR/$SYSDIR/environment.sh"
-echo "  \$ sequenz.py"
+echo "  \$ sequenz"
 echo
