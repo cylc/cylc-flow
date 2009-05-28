@@ -395,6 +395,27 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
+    def get_state_summary( self ):
+        # derived classes can call task.get_state_summary() and then 
+        # add more information to the summary if necessary.
+
+        postreqs = self.get_postrequisites()
+        n_total = len( postreqs )
+        n_satisfied = 0
+        for key in postreqs.keys():
+            if postreqs[ key ]:
+                n_satisfied += 1
+
+        summary = {}
+        summary[ 'name' ] = self.name
+        summary[ 'state' ] = self.state
+        summary[ 'reference_time' ] = self.ref_time
+        summary[ 'n_total_postrequisites' ] = n_total
+        summary[ 'n_completed_postrequisites' ] = n_satisfied
+        summary[ 'abdicated' ] = self.abdicated
+        summary[ 'latest_message' ] = self.latest_message
+ 
+        return summary
 
 class sequential_task( task ) :
     # Embodies forecast model type tasks, which depend on their own

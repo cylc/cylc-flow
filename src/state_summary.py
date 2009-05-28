@@ -15,34 +15,27 @@ class state_summary( Pyro.core.ObjBase ):
     def update( self, tasks ):
         self.summary = {}
         for task in tasks:
-            postreqs = task.get_postrequisites()
-            n_total = len( postreqs )
-            n_satisfied = 0
-            for key in postreqs.keys():
-                if postreqs[ key ]:
-                    n_satisfied += 1
-
-            # temporary hack to show tasks that are finished but have
-            # not abdicated yet (i.e. parallel tasks held back by
-            # the number of instances constraint): prepend an asterisk
-            # to the name of tasks that have NOT abdicated yet.
-
-            name = task.name
-            if not task.has_abdicated():
-                name = '*' + name
-
-            identity = name + '%' + task.ref_time
-
-            self.summary[ identity ] = [ \
-                    task.state, \
-                    str( n_satisfied), \
-                    str(n_total), \
-                    task.latest_message ]
-
+            self.summary[ task.identity ] = task.get_state_summary()
+           
+        self.get_summary()
 
     def get_dummy_mode( self ):
         return self.config.get( 'dummy_mode' )
 
+    def get_state_summary( self ):
+        return self.summary
 
     def get_summary( self ):
-        return self.summary
+        # DEPRECATED. Remove when Bernard's monitor has been updated
+        # to use get_state_summary()
+
+        old_style_summary = {}
+
+        for task_id in self.summary.keys():
+            old_style_summary[ task_id ] = [ \
+                         self.summary[ task_id ][ 'state' ], \
+                    str( self.summary[ task_id ][ 'n_completed_postrequisites' ] ), \
+                    str( self.summary[ task_id ][ 'n_total_postrequisites' ] ), \
+                         self.summary[ task_id ]['latest_message' ] ]
+
+        return old_style_summary

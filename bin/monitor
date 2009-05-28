@@ -93,23 +93,26 @@ while True:
                 dt = datetime.datetime.now()
 
             lines = {}
-            states = god.get_summary()
+            # TO DO: wrap all remote calls like this, to get remote
+            # traceback in case of error:
+            try:
+                states = god.get_state_summary()
+            except Exception,x:
+                print ''.join(Pyro.util.getPyroTraceback(x))
+                sys.exit(1)
 
             task_ids = states.keys()
             task_ids.sort()
 
             for task_id in task_ids:
-                [ name, reftime ] = task_id.split('%')
-                [ state, complete, total, latest ] = states[ task_id ]
+                name     =      states[ task_id ][ 'name' ]
+                reftime  =      states[ task_id ][ 'reference_time' ]
+                state    =      states[ task_id ][ 'state' ]
+                complete = str( states[ task_id ][ 'n_completed_postrequisites' ] )
+                total    = str( states[ task_id ][ 'n_total_postrequisites' ] )
+                latest   =      states[ task_id ][ 'latest_message' ]
 
                 ctrl_end = "\033[0m"
-
-                # identify not-abdicated-yet indicator in task name
-                not_abdicated = False
-                m = re.match( '(\*)(.*)', name )
-                if m:
-                    not_abdicated = True
-                    [ junk, name ] = m.groups()
 
                 frac = "(" + str(complete) + "/" + str(total) + ")"
 
@@ -125,7 +128,8 @@ while True:
                 else:
                     foo = name
 
-                if not_abdicated:
+                # identify any tasks that have not abdicated yet
+                if not states[ task_id ][ 'abdicated' ]:
                     foo = "\033[1;37;43m" + '*' + ctrl_end + foo
 
                 hour = int( reftime[8:10] )
@@ -160,7 +164,7 @@ while True:
             sleep(0.5)
 
     except:
+        # uncomment 'raise' to identify errors
         #raise
-        #os.system( "clear" )
         print "connection failed ..."
         sleep( 1 )
