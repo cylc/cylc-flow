@@ -85,8 +85,8 @@ def main( argv ):
     pimp_my_logger.pimp_it( log, 'main', system_config, dummy_clock )
 
     # remote control switch
-    remote_switch = remote.switch()
-    pyro.connect( remote_switch, 'remote_switch' )
+    remote_control = remote_switch.remote_switch( system_config, system_config.get('task_list') )
+    pyro.connect( remote_control, 'remote_control' )
 
     # remotely accessible system state summary
     system_state = state_summary.state_summary( system_config )
@@ -103,11 +103,11 @@ def main( argv ):
 
     while True: # MAIN LOOP
 
-        if remote_switch.system_halt:
+        if remote_control.system_halt:
             clean_shutdown( pyro, 'remote request' )
 	    return
 
-        if task.state_changed and not remote_switch.system_pause:
+        if task.state_changed and not remote_control.system_pause:
             # PROCESS ALL TASKS whenever one has changed state
             # as a result of a remote task message coming in: 
             # then run, create new, and kill spent tasks
