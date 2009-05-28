@@ -22,21 +22,21 @@ class remote_switch( Pyro.core.ObjBase ):
         self.system_pause = False
 
     def pause( self ):
-        self.log.warning( "system pause requested" )
+        self.log.warning( "REMOTE: system pause requested" )
         self.system_pause = True
 
     def resume( self ):
-        self.log.warning( "system resume requested" )
+        self.log.warning( "REMOTE: system resume requested" )
         self.system_pause = False 
         # ensure we resume task processing immediately
         task.state_changed = True
 
     def shutdown( self ):
-        self.log.warning( "system halt requested" )
+        self.log.warning( "REMOTE: system halt requested" )
         self.system_halt = True
 
     def get_config( self, item ):
-        self.log.warning( "config item " + item + " requested" )
+        self.log.warning( "REMOTE: config item " + item + " requested" )
         try:
             result = self.config.get( item )
         except:
@@ -47,7 +47,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def set_verbosity( self, level ):
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
-        self.log.warning( "verbosity change to " + level + " requested"  )
+        self.log.warning( "REMOTE: verbosity change to " + level + " requested"  )
         
         if level == 'debug':
             new_level = logging.DEBUG
@@ -63,7 +63,6 @@ class remote_switch( Pyro.core.ObjBase ):
             self.log.warning( "no such logging level: " + level )
             return
 
-        self.log.warning( 'change logging level to ' + level + ' by remote request' )
         self.config.set( 'logging_level', new_level )
 
         # main log
