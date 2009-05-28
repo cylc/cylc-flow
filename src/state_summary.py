@@ -4,39 +4,13 @@ import Pyro.core
 import logging
 import sys
 
-class switch( Pyro.core.ObjBase ):
-    "class to take remote system control requests" 
-    # the task manager can take action on these when convenient.
-
-    def __init__( self ):
-        self.log = logging.getLogger( "main" )
-        Pyro.core.ObjBase.__init__(self)
-
-        # record remote system halt requests
-        self.system_halt = False
-
-        # record remote system pause requests
-        self.system_pause = False
-
-    def pause( self ):
-        self.log.warning( "system pause requested" )
-        self.system_pause = True
-
-    def resume( self ):
-        self.log.warning( "system resume requested" )
-        self.system_pause = False 
-
-    def shutdown( self ):
-        self.log.warning( "system halt requested" )
-        self.system_halt = True
-
-
 class state_summary( Pyro.core.ObjBase ):
     "class to supply system state summary to external monitoring programs"
 
-    def __init__( self ):
+    def __init__( self, config ):
         Pyro.core.ObjBase.__init__(self)
         summary = {}
+        self.config = config
  
     def update( self, tasks ):
         self.summary = {}
@@ -64,6 +38,11 @@ class state_summary( Pyro.core.ObjBase ):
                     str( n_satisfied), \
                     str(n_total), \
                     task.latest_message ]
+
+
+    def get_dummy_mode( self ):
+        return self.config.get( 'dummy_mode' )
+
 
     def get_summary( self ):
         return self.summary

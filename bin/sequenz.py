@@ -9,13 +9,14 @@ import os
 import sys
 import task
 import pyrex
-import remote
 import config
 import profile
 import manager
 import logging
 import execution
 import dead_letter
+import remote_switch
+import state_summary
 import pimp_my_logger
 import dummy_mode_clock 
 
@@ -88,8 +89,8 @@ def main( argv ):
     pyro.connect( remote_switch, 'remote_switch' )
 
     # remotely accessible system state summary
-    state_summary = remote.state_summary()
-    pyro.connect( state_summary, 'state_summary' )
+    system_state = state_summary.state_summary( system_config )
+    pyro.connect( system_state, 'state_summary' )
 
     # dead letter box for remote use
     dead_letter_box = dead_letter.letter_box()
@@ -124,7 +125,7 @@ def main( argv ):
 
             god.dump_state( system_config )
 
-            state_summary.update( god.tasks )
+            system_state.update( god.tasks )
 
             if god.all_finished():
                 clean_shutdown( pyro, "ALL TASKS FINISHED" )
