@@ -32,8 +32,7 @@ class manager:
             self.load_from_config( dummy_clock )
 
 
-
-    def get_instance( module, class_name ):
+    def get_task_instance( self, module, class_name ):
         # task object instantiation by module and class name
 	    mod = __import__( module )
 	    return getattr( mod, class_name)
@@ -64,7 +63,7 @@ class manager:
                 [name, state] = item.split(':')
 
             # instantiate the task
-            task = self.get_instance( 'task_classes', name )( start_time, state )
+            task = self.get_task_instance( 'task_classes', name )( start_time, state )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -137,7 +136,7 @@ class manager:
         for ref_time in ref_times:
             for item in state_by_reftime[ ref_time ]:
                 [ name, state_list ] = item
-                task = self.get_instance( 'task_classes', name )( ref_time, *state_list )
+                task = self.get_task_instance( 'task_classes', name )( ref_time, *state_list )
                 if name not in seen.keys():
                     seen[ name ] = True
                     # create the task log
@@ -226,7 +225,7 @@ class manager:
                 task.log.debug( "abdicating " + task.identity )
 
                 # dynamic task object creation by task and module name
-                new_task = self.get_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
+                new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
                 if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
                     # we've reached the stop time: delete the new task 
                     new_task.log.info( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
@@ -308,7 +307,7 @@ class manager:
             for lame in lame_tasks:
                 # abdicate the lame task and create its successor
                 lame.log.warning( "ABDICATING A LAME TASK " + lame.identity )
-                new_task = self.get_instance( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
+                new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
                 new_task.log.debug( "new task connected for " + new_task.ref_time )
                 self.pyro.connect( new_task, new_task.identity )
                 self.tasks.append( new_task )
