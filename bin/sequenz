@@ -114,17 +114,17 @@ def main( argv ):
             # then run, create new, and kill spent tasks
             #--
 
-            god.regenerate_tasks( system_config )
+            god.regenerate_tasks()
 
-            god.negotiate_dependencies( system_config )
+            god.negotiate_dependencies()
 
-            god.run_tasks( launcher, system_config )
+            god.run_tasks( launcher )
 
-            god.kill_spent_tasks( system_config )
+            god.kill_spent_tasks()
 
-            god.kill_lame_tasks( system_config )
+            god.kill_lame_tasks()
 
-            god.dump_state( system_config )
+            god.dump_state()
 
             system_state.update( god.tasks )
 

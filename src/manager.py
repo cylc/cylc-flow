@@ -19,14 +19,16 @@ class manager:
         self.pyro = pyro  # pyrex (sequenz Pyro helper) object
         self.log = logging.getLogger( "main" )
 
+        self.config = config
+
         if config.get('use_broker'):
             self.broker = broker.broker()
         
         # instantiate the initial task list and create task logs 
         if restart:
-            self.load_from_state_dump( config, dummy_clock )
+            self.load_from_state_dump( dummy_clock )
         else:
-            self.load_from_config( config, dummy_clock )
+            self.load_from_config( dummy_clock )
 
         # initial oldest ref time in the system
         self.oldest_ref_time = self.get_oldest_ref_time()
@@ -45,7 +47,7 @@ class manager:
                 oldest = task.ref_time
         return oldest
 
-    def load_from_config ( self, config, dummy_clock ):
+    def load_from_config ( self, dummy_clock ):
         # load initial system state from configured tasks and start time
         #--
         print '\nCLEAN START: INITIAL STATE FROM CONFIGURED TASK LIST\n'
@@ -54,9 +56,9 @@ class manager:
         # where (:state) is optional and defaults to 'waiting'.
 
         self.tasks = []
-        start_time = config.get('start_time')
+        start_time = self.config.get('start_time')
 
-        for item in config.get('task_list'):
+        for item in self.config.get('task_list'):
             state = 'waiting'
             name = item
             if re.compile( "^.*:").match( item ):
@@ -67,13 +69,13 @@ class manager:
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, config, dummy_clock )
+            pimp_my_logger.pimp_it( log, name, self.config, dummy_clock )
 
             # the initial task reference time can be altered during
             # creation, so we have to create the task before
             # checking if stop time has been reached.
             skip = False
-            if config.get('stop_time'):
+            if self.config.get('stop_time'):
                 if int( task.ref_time ) > int( self.stop_time ):
                     task.log.info( task.name + " STOPPING at " + self.stop_time )
                     task.prepare_for_death()
@@ -86,10 +88,10 @@ class manager:
                 self.tasks.append( task )
 
 
-    def load_from_state_dump( self, config, dummy_clock ):
+    def load_from_state_dump( self, dummy_clock ):
         # load initial system state from the configured state dump file
         #--
-        filename = config.get('state_dump_file')
+        filename = self.config.get('state_dump_file')
         # back up the state dump file in case the restart attemp fails
         backup = filename + '.' + datetime.datetime.now().isoformat()
         print '\nRESTART: INITIAL STATE FROM STATE DUMP: ' + filename
@@ -141,7 +143,7 @@ class manager:
                     seen[ name ] = True
                     # create the task log
                     log = logging.getLogger( 'main.' + name )
-                    pimp_my_logger.pimp_it( log, name, config, dummy_clock )
+                    pimp_my_logger.pimp_it( log, name, self.config, dummy_clock )
  
                 else:
                     # an instance of this task was already seen at a
@@ -152,7 +154,7 @@ class manager:
                 # creation, so we have to create the task before
                 # checking if stop time has been reached.
                 skip = False
-                if config.get('stop_time'):
+                if self.config.get('stop_time'):
                     if int( task.ref_time ) > int( self.stop_time ):
                         task.log.info( task.name + " STOPPING at " + self.stop_time )
                         task.prepare_for_death()
@@ -173,11 +175,11 @@ class manager:
         return True
 
 
-    def negotiate_dependencies( self, config ):
+    def negotiate_dependencies( self ):
         # run time dependency negotiation: tasks attempt to get their
         # prerequisites satisfied by other tasks' postrequisites.
         #--
-        if config.get('use_broker'):
+        if self.config.get('use_broker'):
             self.negotiate_via_broker()
         else:
             self.direct_interaction()
@@ -199,13 +201,13 @@ class manager:
         for task in self.tasks:
             task.prerequisites.satisfy_me( self.broker.get_requisites() )
 
-    def run_tasks( self, launcher, config ):
+    def run_tasks( self, launcher ):
         # tell each task to run if it is ready
         #--
         for task in self.tasks:
                 task.run_if_ready( launcher )
 
-    def regenerate_tasks( self, config ):
+    def regenerate_tasks( self ):
         # create new task(T+1) if task(T) has abdicated
         #--
 
@@ -220,9 +222,9 @@ class manager:
 
                 # dynamic task object creation by task and module name
                 new_task = self.get_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
-                if config.get('stop_time') and int( new_task.ref_time ) > int( config.get('stop_time') ):
+                if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
                     # we've reached the stop time: delete the new task 
-                    new_task.log.info( new_task.name + " STOPPING at configured stop time " + config.get('stop_time') )
+                    new_task.log.info( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
                     new_task.prepare_for_death()
                     del new_task
                 else:
@@ -231,15 +233,14 @@ class manager:
                     new_task.log.debug( "New " + new_task.name + " connected for " + new_task.ref_time )
                     self.tasks.append( new_task )
 
-    def dump_state( self, config ):
-        dir( config )
-        filename = config.get('state_dump_file')
+    def dump_state( self ):
+        filename = self.config.get('state_dump_file')
         FILE = open( filename, 'w' )
         for task in self.tasks:
             task.dump_state( FILE )
         FILE.close()
 
-    def kill_lame_tasks( self, config ):
+    def kill_lame_tasks( self ):
         # Remove any tasks in the OLDEST BATCH whose prerequisites
         # cannot be satisfied by their co-temporal peers.  It's not
         # possible to detect lame tasks in newer batches because 
@@ -312,13 +313,13 @@ class manager:
                 self.tasks.remove( lame )
                 self.pyro.disconnect( lame )
                 lame.log.debug( "lame task disconnected for " + lame.ref_time )
-                if config.get('use_broker'):
+                if self.config.get('use_broker'):
                     self.broker.unregister( lame.get_fullpostrequisites() )
                 lame.prepare_for_death()
                 del lame
 
 
-    def kill_spent_tasks( self, config ):
+    def kill_spent_tasks( self ):
         # Delete FINISHED tasks that have ABDICATED already AND:
         # (i) if quick_death is True: are older than all non-finished tasks 
         #   OR
@@ -388,7 +389,7 @@ class manager:
             self.log.debug( "removing spent " + task.identity )
             self.tasks.remove( task )
             self.pyro.disconnect( task )
-            if config.get('use_broker'):
+            if self.config.get('use_broker'):
                 self.broker.unregister( task.get_fullpostrequisites() )
             task.prepare_for_death()
 
