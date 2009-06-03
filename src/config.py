@@ -11,11 +11,16 @@ class config:
         self.configured = {}
 
         # SET DEFAULTS FOR ALL USER CONFIG
+
+        # SYSTEM NAME (used as Pyro nameserver group)
         self.configured['system_name'] = 'REPLACE_ME'
 
         # START AND STOP (OPTIONAL) REFERENCE TIMES
         self.configured['start_time'] = 'YYYYMMDDHH' 
         self.configured['stop_time'] = None   
+
+        # MAXIMUM TIME ANY TASK IS ALLOWED TO GET AHEAD OF THE SLOWEST
+        self.configured['max_runahead_hours'] = 24
 
         # SCHEDULING ALGORITHM (task interaction or requisite broker)
         self.configured['use_broker'] = True
@@ -125,6 +130,9 @@ class config:
             print self.configured['stop_time']
         else:
             print "(none)"
+
+        print "MAXIMUM RUNAHEAD (hours)"
+        print self.configured['max_runahead_hrs']
 
         print "TASK EXECUTION..........",
         if self.configured['use_qsub']:

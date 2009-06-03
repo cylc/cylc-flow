@@ -19,6 +19,8 @@ config[ 'logging_level' ] = logging.DEBUG
 
 #config[ 'use_broker' ] = False
 
+config[ 'max_runahead_hours' ] = 24
+
 config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 20
 config[ 'dummy_clock_offset' ] = 8
