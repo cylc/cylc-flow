@@ -385,6 +385,42 @@ class task( Pyro.core.ObjBase ):
                 self.state    + '\n' )
 
 
+    def abdicate( self, primary_ref_time ):
+        # the task manager should instantiate a new task when this one
+        # abdicates (which only happens once per task). 
+        if not self.abdicated and self.ready_to_abdicate( primary_ref_time ):
+            self.abdicated = True
+            return True
+        else:
+            return False
+
+    def delay_abdication( self, primary_ref_time ):
+        # By default, do not delay abdication.
+        # Tasks that need to be restrained from running ahead too far
+        # can override this method to delay abdication if too far 
+        # ahead of the system primary reference time.
+
+        max = reference_time.decrement( self.ref_time, 12 )
+        if int( max ) > int( primary_ref_time ):
+            return True
+        else:
+            return False
+
+    def ready_to_abdicate( self, primary_ref_time ):
+        # DEFAULT BEHAVIOUR IS FOR FORECAST MODEL TYPE TASKS, which
+        # depend on their own previous instance, to abdicate as soon as
+        # they achieve a 'finished' state (this forces successive
+        # instances of them to run sequentially).
+
+        # TASKS THAT DO NOT DEPEND ON THEIR PREVIOUS INSTANCE can be
+        # handled by the derived parallel_task class below.
+
+        if self.state == "finished" and not self.delay_abdication( primary_ref_time ):
+            return True
+        else:
+            return False
+
+
     def set_abdicated( self ):
         self.abdicated = True
 
@@ -394,6 +430,7 @@ class task( Pyro.core.ObjBase ):
             return True
         else:
             return False
+
 
     def get_state_summary( self ):
         # derived classes can call task.get_state_summary() and then 
@@ -417,27 +454,6 @@ class task( Pyro.core.ObjBase ):
  
         return summary
 
-class sequential_task( task ) :
-    # Embodies forecast model type tasks, which depend on their own
-    # previous instance. This task therefore abdicates to the next
-    # instance as soon as it is finished (which forces successive
-    # instances to run sequentially).
-
-    # There's no need to call task.__init__ explicitly unless I define
-    # an __init__ function here.
-
-    def abdicate( self ):
-
-        if not self.abdicated and self.state == "finished": 
-            if self.__class__.instance_count <= self.MAX_FINISHED:
-                self.abdicated = True
-                return True
-            else:
-                self.log.debug( "not abdicating " + self.identity + ": too many current instances")
-                return False
-        else:
-            return False
-
 
 class parallel_task( task ) :
     # Embodies non forecast model type tasks that do not depend on their
@@ -448,26 +464,19 @@ class parallel_task( task ) :
     # There's no need to call task.__init__ explicitly unless I define
     # an __init__ function here.
 
-    def abdicate( self ):
-        if not self.abdicated:
+    def ready_to_abdicate( self, primary_ref_time ):
 
-            if self.prerequisites.count() == 0:
-                # ARTIFICIALLY CONSTRAIN TOTALLY FREE TASKS TO 
-                # SEQUENTIAL BEHAVIOUR
-                if self.state == "finished" and \
-                    self.__class__.instance_count <= self.MAX_FINISHED:
-                    self.abdicated = True
-                    return True
-                else:
-                    return False
-                
-            elif ( self.state == "running" or self.state == "finished" ) and \
-                    self.__class__.instance_count <= self.MAX_FINISHED:
-                self.abdicated = True
+        if self.prerequisites.count() == 0:
+            # force totally free tasks to run sequentially
+            if self.state == "finished" and not self.delay_abdication( primary_ref_time ):
                 return True
             else:
                 return False
-            
+
+        #elif ( self.state == "running" or self.state == "finished" ) and \
+        elif self.state == "running" and not self.delay_abdication( primary_ref_time ):
+            # otherwise can run in parallel until abdication is delayed
+            return True
+
         else:
             return False
-

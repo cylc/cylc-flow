@@ -39,6 +39,9 @@ class config:
         # LIST OF TASK NAMES
         self.configured['task_list'] = []
 
+        # DESIGNATED PRIMARY TASK
+        self.configured['primary_task'] = None
+
         # TASKS TO DUMMY OUT IN REAL MODE
         self.configured['dummy_out'] = []
 
@@ -69,22 +72,42 @@ class config:
         self.derive_the_rest()
 
     def check( self ):
+
+        die = False
+
         if self.configured['start_time'] == None:
             print "ERROR: you must define a start time in your user_config.py"
             print "module for system " + self.configured['system_name']
-            sys.exit(1)
+            die = True
 
         if self.configured['dummy_mode'] and self.configured['use_qsub']:
             print "ERROR: you can't use qsub in dummy mode."
             print "change the 'use_qsub' config in your user_config.py"
             print "module for system " + self.configured['system_name']
-            sys.exit(1)
+            die = True
 
         if len( self.configured[ 'task_list' ] ) == 0:
             print "ERROR: your task list is empty"
             print "define config[ 'task_list' ] in your user_config.py"
             print "module for system " + self.configured['system_name']
+            die = True
+
+        if self.configured[ 'primary_task' ] == None:
+            print "ERROR: no designated primary task"
+            print "define config['primary_task'] in your user_config.py"
+            print "module for system " + self.configured['system_name']
+            die = True
+
+        elif self.configured[ 'primary_task' ] not in self.configured[ 'task_list' ]:
+            print "ERROR: your designated primary task is not in the configured task list"
+            print "change config['primary_task'] in your user_config.py"
+            print "module for system " + self.configured['system_name']
+            die = True
+
+        if die:
+            print "ABORTING due to aforementioned errors"
             sys.exit(1)
+
 
     def get( self, key ):
         return self.configured[ key ]

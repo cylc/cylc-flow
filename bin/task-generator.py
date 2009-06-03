@@ -170,7 +170,7 @@ def main( argv ):
     task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK', 'EXPORT',
-        'DELAYED_DEATH', 'PREREQUISITES', 'POSTREQUISITES', 'PREVIOUS_INSTANCE_DEPENDENCE' ]
+        'DELAYED_DEATH', 'PREREQUISITES', 'POSTREQUISITES', 'SELF_PARALLEL' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -180,7 +180,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import sequential_task, parallel_task
+from task import task, parallel_task
 import execution
 
 import reference_time
@@ -250,18 +250,16 @@ import logging
 
         # print_parsed_info()
 
-        # previous instance dependence: 
-        #    'True' (like a forecast model) => sequential task creation
-        #    'False' => or potentially parallel task creation (subject
-        #    to other prerequisites). 
-        # Default to True, which is safer.
-        parent_class = 'sequential_task'
-        if 'PREVIOUS_INSTANCE_DEPENDENCE' in parsed_def.keys():
-            sequential = parsed_def[ 'PREVIOUS_INSTANCE_DEPENDENCE' ][0]
-            if sequential == 'False' or sequential == 'false':
+        # SELF_PARALLEL => no previous instance dependence, so
+        # successive instances can potentially run in parallel.
+        # Default to False (safer).
+        parent_class = 'task'
+        if 'SELF_PARALLEL' in parsed_def.keys():
+            self_parallel = parsed_def[ 'SELF_PARALLEL' ][0]
+            if self_parallel == 'False' or self_parallel == 'false':
+                parent_class = 'task'
+            elif self_parallel == 'True' or self_parallel == 'true':
                 parent_class = 'parallel_task'
-            elif sequential == 'True' or sequential == true:
-                parent_class = 'sequential_task'
             else:
                 print "Error: illegal value for key PREVIOUS_INSTANCE_DEPENDENCE"
                 sys.exit(1)

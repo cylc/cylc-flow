@@ -27,13 +27,6 @@ class streamflow( parallel_task ):
 
         parallel_task.__init__( self, initial_state )
 
-        # NEED TO ALLOW FINISHED TASKS BACK TO THE TASK DELETION CUTOFF
-        # Do this AFTER parent class init, which sets to the default
-        if streamflow.catchup_mode:
-            self.MAX_FINISHED = 13
-        else:
-            self.MAX_FINISHED = 25
-
     def incoming( self, priority, message ):
 
         # pass on to the base class message handling function
@@ -43,9 +36,7 @@ class streamflow( parallel_task ):
         if self.catchup_re.match( message ):
             self.log.debug( 'in catching up mode' )
             streamflow.catchup_mode = True
-            self.MAX_FINISHED = 13
 
         elif self.uptodate_re.match( message ):
             self.log.debug( 'in caught up mode' )
             streamflow.catchup_mode = False
-            self.MAX_FINISHED = 25

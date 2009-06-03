@@ -21,7 +21,7 @@ config[ 'logging_level' ] = logging.DEBUG
 
 config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 20
-config[ 'dummy_clock_offset' ] = 48
+config[ 'dummy_clock_offset' ] = 148
 
 config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'topnet_test'
@@ -35,3 +35,5 @@ config[ 'task_list' ] = \
         'topnet_products',
         'topnet_cleanup'
         ]
+
+config[ 'primary_task' ] = 'oper_interface'

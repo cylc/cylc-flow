@@ -16,8 +16,8 @@
 %EXTERNAL_TASK
     oper_interface.sh
 
-%PREVIOUS_INSTANCE_DEPENDENCE
-    False
+%SELF_PARALLEL
+    True
 
 %PREREQUISITES
     # NONE

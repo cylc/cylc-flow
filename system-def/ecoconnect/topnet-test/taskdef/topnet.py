@@ -1,4 +1,4 @@
-class topnet( sequential_task ):
+class topnet( task ):
     "run hourly topnet off the most recent nzlam input" 
 
     name = "topnet"
@@ -37,7 +37,7 @@ class topnet( sequential_task ):
             [1,  self.name + " started for " + ref_time],
             [10, self.name + " finished for " + ref_time] ])
 
-        sequential_task.__init__( self, initial_state )
+        task.__init__( self, initial_state )
 
         self.log.debug( "cutoff is " + self.my_cutoff + ", for " + ref_time )
 
@@ -74,7 +74,7 @@ class topnet( sequential_task ):
 
         extra_vars = [ ['NZLAM_TIME', nzlam_time ] ]
 
-        sequential_task.run_external_task( self, launcher, extra_vars )
+        task.run_external_task( self, launcher, extra_vars )
 
 
     def compute_cutoff( self, rt = None ):
@@ -113,6 +113,6 @@ class topnet( sequential_task ):
 
 
     def get_state_summary( self ):
-        summary = sequential_task.get_state_summary( self )
+        summary = task.get_state_summary( self )
         summary[ 'nzlam_time' ] = topnet.nzlam_time
         return summary

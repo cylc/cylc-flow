@@ -19,8 +19,8 @@
 %PREREQUISITES
     topnet_vis finished for $(MY_REFERENCE_TIME)
 
-%PREVIOUS_INSTANCE_DEPENDENCE
-    False
+%SELF_PARALLEL
+    True
 
 %POSTREQUISITES
     0 min: $(NAME) started for $(MY_REFERENCE_TIME)

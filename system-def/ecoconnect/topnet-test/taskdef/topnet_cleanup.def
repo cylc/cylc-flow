@@ -21,10 +21,10 @@
 %PREREQUISITES
     topnet_products finished for $(MY_REFERENCE_TIME)
 
-%PREVIOUS_INSTANCE_DEPENDENCE
-    # this task deletes all file older than a given reference time
+%SELF_PARALLEL
+    # this task deletes all files older than a given reference time
     # so running several instances in parallel could cause problems
-    True
+    False
 
 %POSTREQUISITES
     0 min: $(NAME) started for $(MY_REFERENCE_TIME)

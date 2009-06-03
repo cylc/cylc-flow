@@ -118,7 +118,7 @@ def main( argv ):
 
             god.negotiate_dependencies( system_config )
 
-            god.run_tasks( launcher )
+            god.run_tasks( launcher, system_config )
 
             god.kill_spent_tasks( system_config )
 
