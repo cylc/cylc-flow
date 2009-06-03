@@ -8,7 +8,8 @@ Sequenz To Do List
   (STUCK OPER_INTERFACE RUNNING TASK!) -- this may be proper behaviour,
   but think about it....
 
-------
+* allow remote-control to set a proper stop time (as opposed to an
+  instant shutdown).
 
 * document the new default O(n) brokered dependency negotation
   algorithm.
