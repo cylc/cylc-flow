@@ -20,15 +20,6 @@ class manager:
         self.pyro = pyro  # pyrex (sequenz Pyro helper) object
         self.log = logging.getLogger( "main" )
 
-        # system primary reference time is the reference time of the
-        # designated primary system task, which should be the task that
-        # controls the throughput of the bulk of the system and with
-        # respect to which we may want to stop other tasks from getting
-        # too far ahead of. At start up this is set to the start time of
-        # the initial primary task. Thereafter it is updated every time
-        # a new primary task enters the 'finished' state.
-        self.primary_ref_time = None
-
         if config.get('use_broker'):
             self.broker = broker.broker()
         
@@ -39,11 +30,15 @@ class manager:
             self.load_from_config( config, dummy_clock )
 
         # initial oldest ref time in the system
-        self.oldest_ref_time = 9999887766
-        for task in self.tasks:
-            if int( task.ref_time ) < int( self.oldest_ref_time ):
-                self.oldest_ref_time = task.ref_time
+        self.oldest_ref_time = self.get_oldest_ref_time()
 
+
+    def get_oldest_ref_time( self ):
+        oldest = 9999887766
+        for task in self.tasks:
+            if int( task.ref_time ) < int( oldest ):
+                oldest = task.ref_time
+        return oldest
 
     def load_from_config ( self, config, dummy_clock ):
         # load initial system state from configured tasks and start time
@@ -81,10 +76,6 @@ class manager:
                     skip = True
 
             if not skip:
-                if task.name == config.get('primary_task'):
-                    # set initial system primary reference time to the
-                    # start reference time of the primary system task.
-                    self.primary_ref_time = task.ref_time
                 task.log.debug( "new " + task.name + " connected for " + task.ref_time )
                 self.pyro.connect( task, task.identity )
                 self.tasks.append( task )
@@ -164,10 +155,6 @@ class manager:
                         skip = True
 
                 if not skip:
-                    if task.name == config.get('primary_task'):
-                        # set initial system primary reference time to the
-                        # start reference time of the primary system task.
-                        self.primary_ref_time = task.ref_time
                     task.log.debug( "new " + task.name + " connected for " + task.ref_time )
                     self.pyro.connect( task, task.identity )
                     self.tasks.append( task )
@@ -218,23 +205,13 @@ class manager:
         #--
 
         # update oldest system reference time
-        for task in self.tasks:
-            if int( task.ref_time ) < int( self.oldest_ref_time ):
-                self.oldest_ref_time = task.ref_time
+        self.oldest_ref_time = self.get_oldest_ref_time()
 
         for task in self.tasks:
 
-            #if task.abdicate( self.primary_ref_time ):
             if task.abdicate( self.oldest_ref_time ):
 
                 task.log.debug( "abdicating " + task.identity )
-
-                if task.name == config.get('primary_task'):
-                    # update the system primary reference time
-                    self.primary_ref_time = task.ref_time
-                    self.log.debug( "updating primary reference time using " + task.identity )
-                    print "Primary REF TIME is " + task.ref_time
-
 
                 # dynamic task object creation by task and module name
                 new_task = get_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )

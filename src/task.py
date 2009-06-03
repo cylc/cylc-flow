@@ -64,10 +64,6 @@ class task( Pyro.core.ObjBase ):
 
     quick_death = True
 
-    # maximum number of finished tasks present in the system. Used to 
-    # restrict task runahead, mainly for prerequisiteless tasks. 
-    MAX_FINISHED = 5
-
     def __init__( self, initial_state ):
         # Call this AFTER derived class initialisation
         # (which alters requisites based on initial state)
@@ -385,28 +381,26 @@ class task( Pyro.core.ObjBase ):
                 self.state    + '\n' )
 
 
-    def abdicate( self, primary_ref_time ):
+    def abdicate( self, oldest_ref_time ):
         # the task manager should instantiate a new task when this one
         # abdicates (which only happens once per task). 
-        if not self.abdicated and self.ready_to_abdicate( primary_ref_time ):
+        if not self.abdicated and self.ready_to_abdicate( oldest_ref_time ):
             self.abdicated = True
             return True
         else:
             return False
 
-    def delay_abdication( self, primary_ref_time ):
-        # By default, do not delay abdication.
-        # Tasks that need to be restrained from running ahead too far
-        # can override this method to delay abdication if too far 
-        # ahead of the system primary reference time.
-
-        max = reference_time.decrement( self.ref_time, 12 )
-        if int( max ) > int( primary_ref_time ):
+    def delay_abdication( self, oldest_ref_time ):
+        # Do not let any task get more than 24 hours ahead of the oldest
+        # task in the system.  TO DO: make this configurable.
+        rtm24 = reference_time.decrement( self.ref_time, 24 )
+        if int( rtm24 ) > int( oldest_ref_time ):
+            print "delay " + self.identity + " (" + oldest_ref_time + ")"
             return True
         else:
             return False
 
-    def ready_to_abdicate( self, primary_ref_time ):
+    def ready_to_abdicate( self, oldest_ref_time ):
         # DEFAULT BEHAVIOUR IS FOR FORECAST MODEL TYPE TASKS, which
         # depend on their own previous instance, to abdicate as soon as
         # they achieve a 'finished' state (this forces successive
@@ -415,7 +409,7 @@ class task( Pyro.core.ObjBase ):
         # TASKS THAT DO NOT DEPEND ON THEIR PREVIOUS INSTANCE can be
         # handled by the derived parallel_task class below.
 
-        if self.state == "finished" and not self.delay_abdication( primary_ref_time ):
+        if self.state == "finished" and not self.delay_abdication( oldest_ref_time ):
             return True
         else:
             return False
@@ -464,17 +458,18 @@ class parallel_task( task ) :
     # There's no need to call task.__init__ explicitly unless I define
     # an __init__ function here.
 
-    def ready_to_abdicate( self, primary_ref_time ):
+    def ready_to_abdicate( self, oldest_ref_time ):
 
         if self.prerequisites.count() == 0:
             # force totally free tasks to run sequentially
-            if self.state == "finished" and not self.delay_abdication( primary_ref_time ):
+            if self.state == "finished" and not self.delay_abdication( oldest_ref_time ):
                 return True
             else:
                 return False
 
-        #elif ( self.state == "running" or self.state == "finished" ) and \
-        elif self.state == "running" and not self.delay_abdication( primary_ref_time ):
+        elif ( self.state == "running" or self.state == "finished" ) and \
+                not self.delay_abdication( oldest_ref_time ):
+                #elif self.state == "running" and not self.delay_abdication( oldest_ref_time ):
             # otherwise can run in parallel until abdication is delayed
             return True
 
