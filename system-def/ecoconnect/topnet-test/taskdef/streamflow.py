@@ -6,7 +6,7 @@ class streamflow( parallel_task ):
     owner = 'hydrology_oper'
     instance_count = 0
 
-    # assume catchup mode and detect if we've caught up
+    # start in catchup mode and detect if we've caught up
     catchup_mode = True
 
     def __init__( self, ref_time, initial_state ):
@@ -32,11 +32,13 @@ class streamflow( parallel_task ):
         # pass on to the base class message handling function
         parallel_task.incoming( self, priority, message)
         
-        # but intercept messages that indicate we're in catchup mode
+        # but intercept messages to do with catchup mode
         if self.catchup_re.match( message ):
             self.log.debug( 'in catching up mode' )
             streamflow.catchup_mode = True
+            self.MAX_FINISHED = 13
 
         elif self.uptodate_re.match( message ):
             self.log.debug( 'in caught up mode' )
             streamflow.catchup_mode = False
+            self.MAX_FINISHED = 25
