@@ -34,9 +34,6 @@ Sequenz To Do List
   determine how far ahead of nzlam we allow topnet to get (? I need 
   to think about this).
 
-* "finished but not abdicated" should be presented to system monitors 
-  (this is similar to 'waiting' for parallel tasks constrained by number
-
 * in dummy mode, the dummy clock time should be written to the state
   dump file so that the clock doesn't reset to the configured start time
   (plus any configured offset) on a restart.
