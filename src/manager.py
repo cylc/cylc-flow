@@ -6,6 +6,7 @@ create and destroy tasks, and provides methods for getting them to
 interact, etc.
 """
 
+import reference_time
 import pimp_my_logger
 import datetime
 import logging
@@ -30,8 +31,6 @@ class manager:
         else:
             self.load_from_config( dummy_clock )
 
-        # initial oldest ref time in the system
-        self.oldest_ref_time = self.get_oldest_ref_time()
 
 
     def get_instance( module, class_name ):
@@ -208,16 +207,22 @@ class manager:
                 task.run_if_ready( launcher )
 
     def regenerate_tasks( self ):
-        # create new task(T+1) if task(T) has abdicated
+        # create new tasks foo(T+1) if foo has not got too far ahead of
+        # the slowest task, and if foo(T) abdicates
         #--
 
         # update oldest system reference time
-        self.oldest_ref_time = self.get_oldest_ref_time()
+        oldest_ref_time = self.get_oldest_ref_time()
 
         for task in self.tasks:
 
-            if task.abdicate( self.oldest_ref_time ):
+            tdiff = reference_time.decrement( task.ref_time, self.config.get('max_runahead_hours') )
+            if int( tdiff ) > int( oldest_ref_time ):
+                # too far ahead: don't abdicate this task.
+                self.log.debug( task.identity + " delayed: too far ahead" )
+                continue
 
+            if task.abdicate():
                 task.log.debug( "abdicating " + task.identity )
 
                 # dynamic task object creation by task and module name

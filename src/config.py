@@ -131,8 +131,8 @@ class config:
         else:
             print "(none)"
 
-        print "MAXIMUM RUNAHEAD (hours)"
-        print self.configured['max_runahead_hrs']
+        print "MAX RUNAHEAD (hours)....",
+        print self.configured['max_runahead_hours']
 
         print "TASK EXECUTION..........",
         if self.configured['use_qsub']:
