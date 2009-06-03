@@ -1,5 +1,15 @@
 Sequenz To Do List
 
+* CATCHUP MODE: write to state dump file: restarts assume
+   catchup initially, which changes the cutoff time and may result in
+   deletion of a task still needed to satisfy existing prerequisites!
+
+* DELETING SPENT TASKS BEYOND CUTOFF WHEN NO REPLACEMENT IS AVAILABLE?
+  (STUCK OPER_INTERFACE RUNNING TASK!) -- this may be proper behaviour,
+  but think about it....
+
+------
+
 * document the new default O(n) brokered dependency negotation
   algorithm.
 
