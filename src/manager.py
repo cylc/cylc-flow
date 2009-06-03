@@ -76,8 +76,8 @@ class manager:
             # checking if stop time has been reached.
             skip = False
             if self.config.get('stop_time'):
-                if int( task.ref_time ) > int( self.stop_time ):
-                    task.log.info( task.name + " STOPPING at " + self.stop_time )
+                if int( task.ref_time ) > int( config.get('stop_time') ):
+                    task.log.info( task.name + " STOPPING at " + config.get('stop_time') )
                     task.prepare_for_death()
                     del task
                     skip = True
@@ -155,8 +155,8 @@ class manager:
                 # checking if stop time has been reached.
                 skip = False
                 if self.config.get('stop_time'):
-                    if int( task.ref_time ) > int( self.stop_time ):
-                        task.log.info( task.name + " STOPPING at " + self.stop_time )
+                    if int( task.ref_time ) > int( config.get('stop_time') ):
+                        task.log.info( task.name + " STOPPING at " + config.get('stop_time') )
                         task.prepare_for_death()
                         del task
                         skip = True

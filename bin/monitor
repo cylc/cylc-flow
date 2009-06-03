@@ -13,13 +13,15 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import re
 import sys
-import pyrex
 import datetime
 import Pyro.core
 import Pyro.naming
 from time import sleep
 from string import split
 from optparse import OptionParser
+
+# sequenz modules:
+import pyrex
 from reference_time import _rt_to_dt
 
 # construct a command line parser
