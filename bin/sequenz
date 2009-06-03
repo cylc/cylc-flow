@@ -101,6 +101,7 @@ def main( argv ):
 
     print "\nBeginning task processing now\n"
 
+    task.state_changed = True
     while True: # MAIN LOOP
 
         if remote_control.system_halt:
@@ -111,7 +112,7 @@ def main( argv ):
             # PROCESS ALL TASKS whenever one has changed state
             # as a result of a remote task message coming in: 
             # then run, create new, and kill spent tasks
-            #---
+            #--
 
             god.regenerate_tasks( system_config )
 
@@ -136,7 +137,7 @@ def main( argv ):
         # more remote method invocations are processed (these 
         # are not just task messages, hence the use of the
         # state_changed variable above).
-        #---
+        #--
         task.state_changed = False
         pyro.handleRequests( timeout = None )
 
