@@ -6,10 +6,22 @@ class streamflow( parallel_task ):
     owner = 'hydrology_oper'
     instance_count = 0
 
-    # start in catchup mode and detect if we've caught up
-    catchup_mode = True
+    def __init__( self, ref_time, initial_state, relative_state = 'catching_up' ):
 
-    def __init__( self, ref_time, initial_state ):
+        if relative_state == 'catching_up':
+            streamflow.catchup_mode = True
+        else:
+            # 'caught_up'
+            streamflow.catchup_mode = False
+        # Note that streamflow.catchup_mode needs to be written to the
+        # state dump file so that we don't need to assume catching up at
+        # restart.  Topnet, via its fuzzy prerequisites, can run out to
+        # 24 hours ahead of nzlam when caught up, and only 12 hours
+        # ahead when catching up.  Therefore if topnet is 18 hours, say,
+        # ahead of nzlam when we stop the system, on restart the first
+        # topnet to be created will have only a 12 hour fuzzy window,
+        # which will cause it to wait for the next nzlam instead of
+        # running immediately.
 
         self.catchup_re = re.compile( "^CATCHINGUP:.*for " + ref_time )
         self.uptodate_re = re.compile( "^CAUGHTUP:.*for " + ref_time )
@@ -26,6 +38,7 @@ class streamflow( parallel_task ):
             [5.1, self.name + " finished for " + ref_time] ])
 
         parallel_task.__init__( self, initial_state )
+
 
     def incoming( self, priority, message ):
 
@@ -55,3 +68,25 @@ class streamflow( parallel_task ):
                 # we have just caught up
                 self.log.debug( 'just caught up to real time' )
                 streamflow.catchup_mode = False
+
+
+    def dump_state( self, FILE ):
+        # see comment above on catchup_mode and restarts
+
+        if streamflow.catchup_mode:
+            relative_state = 'catching_up'
+        else:
+            relative_state = 'caught_up'
+
+        state_string = self.state + ':' + relative_state
+
+        FILE.write( 
+                self.ref_time + ' ' + 
+                self.name     + ' ' + 
+                state_string + '\n' )
+
+
+    def get_state_summary( self ):
+        summary = parallel_task.get_state_summary( self )
+        summary[ 'catching_up' ] = streamflow.catchup_mode
+        return summary

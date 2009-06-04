@@ -134,6 +134,12 @@ class task( Pyro.core.ObjBase ):
         # __del__() function for this, but that is only called when a
         # deleted object is about to be garbage collected (which is not
         # guaranteed to be right away).
+
+        # NOTE: this was once used for constraining the number of
+        # instances of each task type. However, it has not been used
+        # since converting to a global contraint on the maximum number
+        # of hours that any task can get ahead of the slowest one.
+
         self.__class__.instance_count -= 1
 
 

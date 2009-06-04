@@ -73,6 +73,7 @@ print "here we go ..."
 sleep(2)
 
 topnet_nzlam_time = None
+streamflow_catchup_found = False
 
 while True:
 
@@ -119,6 +120,10 @@ while True:
                 if states[ task_id ][ 'name' ] == 'topnet':
                     topnet_nzlam_time = states[ task_id ][ 'nzlam_time' ]
 
+                if states[ task_id ][ 'name' ] == 'streamflow':
+                    streamflow_catchup_found = True
+                    streamflow_catchup_mode = states[ task_id ][ 'catching_up' ]
+
                 ctrl_end = "\033[0m"
 
                 frac = "(" + str(complete) + "/" + str(total) + ")"
@@ -161,6 +166,12 @@ while True:
             if topnet_nzlam_time:
                 blit.append( 'TopNet NZLAM time: ' + topnet_nzlam_time )
 
+            if streamflow_catchup_found:
+                if streamflow_catchup_mode:
+                    blit.append( 'streamflow: catching up' )
+                else:
+                    blit.append( 'streamflow: caught up' )
+
             blit.append("")
 
             for rt in reftimes:
@@ -179,6 +190,6 @@ while True:
 
     except:
         # uncomment 'raise' to identify errors
-        # raise
+        #raise
         print "connection failed ..."
         sleep( 1 )
