@@ -1,12 +1,15 @@
 Sequenz To Do List
 
-* CATCHUP MODE: write to state dump file: restarts assume
-   catchup initially, which changes the cutoff time and may result in
-   deletion of a task still needed to satisfy existing prerequisites!
-
-* DELETING SPENT TASKS BEYOND CUTOFF WHEN NO REPLACEMENT IS AVAILABLE?
-  (STUCK OPER_INTERFACE RUNNING TASK!) -- this may be proper behaviour,
-  but think about it....
+* note on stuck oper_interface tasks (if no files arrive on the
+  operational system): once the prior-to-stuck finished instance gets
+  deleted, as it falls beyond cutoff, there'll be nothing to satisfy
+  future topnet tasks?  - This won't happen anymore as we always keep
+  the last *finished* oper_interface rather than basing cutoff on
+  reference time alone. However, still need to deal with said stuck task
+  ... do we need remote control to get the stuck task to abdicate and
+  die? - then topnet will carry on as normal SO LONG AS there are
+  non-stuck oper_interfaces finishing within topnet's fuzzy prerequisite
+  window. 
 
 * allow remote-control to set a proper stop time (as opposed to an
   instant shutdown).
