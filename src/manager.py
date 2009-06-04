@@ -22,6 +22,8 @@ class manager:
 
         self.config = config
 
+        self.finished_task_dict = []
+
         if config.get('use_broker'):
             self.broker = broker.broker()
         
@@ -322,6 +324,21 @@ class manager:
                 lame.prepare_for_death()
                 del lame
 
+    def update_finished_task_dict( self ):
+        # compile a dict for possible use by task.get_cutoff():
+        # finished_task_dict[ name ] = [ list of ref times ] 
+
+        self.finished_task_dict = {}
+
+        for task in self.tasks:
+
+            if task.is_not_finished():
+                continue
+            if task.name not in self.finished_task_dict.keys():
+                self.finished_task_dict[ task.name ] = [ task.ref_time ]
+            else:
+                self.finished_task_dict[ task.name ].append( task.ref_time )
+
 
     def kill_spent_tasks( self ):
         # Delete FINISHED tasks that have ABDICATED already AND:
@@ -348,9 +365,13 @@ class manager:
         ref_times_not_finished = []
         # list of all task cutoff times
         cutoff_times = []
+
+        self.update_finished_task_dict()
         # compile the above lists
         for task in self.tasks:
-            cutoff_times.append( task.get_cutoff() )
+            coft = task.get_cutoff( self.finished_task_dict ) 
+            if coft:
+                cutoff_times.append( coft )
             if task.state == 'waiting' or task.state == 'running':
                 ref_times_not_finished.append( task.ref_time )
             if task.state == 'finished' and task.has_abdicated():

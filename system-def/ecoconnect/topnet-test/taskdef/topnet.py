@@ -8,7 +8,7 @@ class topnet( task ):
     owner = 'hydrology_oper'
     nzlam_time = None
 
-    # cutoff in hours (min wait before killing upstream tasks)
+    # for fuzzy prerequiste satisfaction limits
     CATCHUP_MODE_CUTOFF  = 11
     CAUGHTUP_MODE_CUTOFF = 23   
 
@@ -24,10 +24,12 @@ class topnet( task ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        self.my_cutoff = self.compute_cutoff()
+        if streamflow.catchup_mode:
+            cutoff = reference_time.decrement( self.ref_time, topnet.CATCHUP_MODE_CUTOFF )
+        else:
+            cutoff = reference_time.decrement( self.ref_time, topnet.CAUGHTUP_MODE_CUTOFF )
 
-        # min:max
-        fuzzy_limits = self.my_cutoff + ':' + ref_time
+        fuzzy_limits = cutoff + ':' + ref_time
  
         self.prerequisites = fuzzy_requisites( self.name + '%' + ref_time, [ 
             "got streamflow data for " + ref_time + ':' + ref_time, 
@@ -38,8 +40,6 @@ class topnet( task ):
             [10, self.name + " finished for " + ref_time] ])
 
         task.__init__( self, initial_state )
-
-        self.log.debug( "cutoff is " + self.my_cutoff + ", for " + ref_time )
 
 
     def run_external_task( self, launcher ):
@@ -77,22 +77,29 @@ class topnet( task ):
         task.run_external_task( self, launcher, extra_vars )
 
 
-    def compute_cutoff( self, rt = None ):
+    def get_cutoff( self, finished_task_dict ):
         # See base class documentation
 
-        # I want to keep the most recent *finished* nzlam_06_18_post or
-        # oper_interface task that is older than me, because the next
-        # hourly topnet may also need the output from that same
-        # 12-hourly task.
+        # the task manager must keep the most recent *finished*
+        # nzlam_06_18_post or oper_interface task that is older than me,
+        # because the next hourly topnet may also need the output from
+        # that same 12-hourly task.
 
-        if not rt:
-            # can't use self.foo as a default argument
-            rt = self.ref_time
+        if self.state == 'waiting' or \
+            ( self.state == 'running' and not self.abdicated ) or \
+            ( self.state == 'finished' and not self.abdicated ):
 
-        if streamflow.catchup_mode:
-            cutoff = reference_time.decrement( rt, topnet.CATCHUP_MODE_CUTOFF )
+            cutoff = self.ref_time
+
+            if 'oper_interface' in finished_task_dict.keys():
+                ref_times = finished_task_dict[ 'oper_interface' ]
+                ref_times.sort( key = int, reverse = True )
+                for rt in ref_times:
+                    if int( rt ) <= int( self.ref_time ):
+                        cutoff = rt
+                        break
         else:
-            cutoff = reference_time.decrement( rt, topnet.CAUGHTUP_MODE_CUTOFF )
+            cutoff = None
 
         return cutoff
 

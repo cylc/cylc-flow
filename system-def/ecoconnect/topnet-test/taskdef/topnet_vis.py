@@ -17,7 +17,7 @@ class topnet_vis( parallel_task ):
         self.ref_time = self.nearest_ref_time( ref_time )
         ref_time = self.ref_time
  
-        self.my_cutoff = self.compute_cutoff()
+        self.my_cutoff = self.ref_time
 
         self.prerequisites = requisites( self.name + '%' + ref_time, [ 
             "topnet finished for " + ref_time ])

@@ -96,7 +96,7 @@ class task( Pyro.core.ObjBase ):
         self.identity = self.name + '%' + self.ref_time
 
         # my cutoff reference time
-        self.my_cutoff = self.compute_cutoff( )
+        self.my_cutoff = self.ref_time
 
         # task-specific log file
         self.log = logging.getLogger( "main." + self.name ) 
@@ -137,55 +137,29 @@ class task( Pyro.core.ObjBase ):
         self.__class__.instance_count -= 1
 
 
-    def compute_cutoff( self, rt = None ):
+    def get_cutoff( self, finished_task_dict ):
         # Return the reference time of the oldest tasks that the system
         # must retain in order to satisfy my prerequisites (if I am
-        # waiting) or those of my immediate successor (if I am running). 
-        # The non default argument allow me to compute the cutoff of 
-        # my immediate successor (see below)
+        # waiting) or those of my immediate successor (if I am running
+        # or finished but have not abdicated). 
 
-        # This base class method deals with the usual case of tasks with
-        # only cotemporal (same reference time) upstream dependencies.
+        if self.state == 'waiting' or \
+            ( self.state == 'running' and not self.abdicated ) or \
+            ( self.state == 'finished' and not self.abdicated ):
 
-        # Override this method for tasks that depend on non-cotemporal
-        # (earlier) tasks.
+            # running and not abdicated, OR finished and not abdicated:
+            # my prerequisites are already satisfied but my successor
+            # has not been created yet so I must speak for it.
+            # Technically my successor's cutoff will be later than mine
+            # (next_ref_time() in the simplest case) but just using my
+            # cutoff is simpler and safe (because it is more
+            # conservative).
+            return self.ref_time
 
-        if not rt:
-            # can't use self.foo as a default argument
-            rt = self.ref_time
-
-        cutoff = rt
-        return cutoff
-
-
-    def get_cutoff( self ):
-        if self.state == 'waiting':
-            # return time of my upstream dependencies
-            return self.my_cutoff
-
-        elif self.state == 'running':
-            # my prerequisites are already satisfied, but
-            # my successor has not been created yet so 
-            # I must speak for it.
-            return self.compute_cutoff( self.next_ref_time( self.ref_time ) )
-
-        elif self.state == 'failed':
-            # manager should not delete me (so that the failed task
-            # remains visible on the system monitor) but cutoff does
-            # not concern me any more because I won't be abdicating.
-            return '9999010100'
-
-        elif self.state == 'finished':
-            if not self.abdicated:
-                # I've finished, but my successor has not been created
-                # yet so I must speak for it.
-                return self.compute_cutoff( self.next_ref_time( self.ref_time ) )
-            else:
-                # I've finished and my successor can
-                # take care of its own cutoff time.
-                return '9999010100'
         else:
-            raise( 'get_cutoff called on illegal task state')
+            # finished and abdicated, or running and abdicated:
+            # no cutoff required on my account
+            return None
 
 
     def nearest_ref_time( self, rt ):
@@ -353,6 +327,7 @@ class task( Pyro.core.ObjBase ):
 
         if self.postrequisites.all_satisfied():
             self.set_finished()
+            self.__class__.last_finished_ref_time = self.ref_time
 
     def update( self, reqs ):
         for req in reqs.get_list():
@@ -386,9 +361,11 @@ class task( Pyro.core.ObjBase ):
         # abdicates (which only happens once per task). 
         if not self.abdicated and self.ready_to_abdicate():
             self.abdicated = True
+            self.__class__.last_abdicated_ref_time = self.ref_time
             return True
         else:
             return False
+
 
     def ready_to_abdicate( self ):
         # DEFAULT BEHAVIOUR IS FOR FORECAST MODEL TYPE TASKS, which
