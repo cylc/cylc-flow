@@ -1,10 +1,35 @@
+OPTIMAL METASCHEDULING
 
-OPTIMAL "MULTIFLIGHT" CAPABILITY (MAXIMUM SYSTEM THROUGHPUT)
+Every task in the system should be submitted at the instant its prerequisites
+are satisfied, regardless of reference time or any other consideration, EXCEPT
+where this is not desirable. This is desirable for the forecast models (which
+have previous instance dependence) and model postprocessing tasks (which don't
+have previous instance dependence, but do depend directly or indirectly on
+forecast models that do), but it is not desirable for tasks that have no
+prerequisites and no previous instance dependence. These are the tasks that
+run as soon as they are created (no prerequisites) and then wait on some
+external event such as arrival of real time data before reporting completion
+(it would be possible for the task proxy object to wait on the known earliest
+data arrival time before launching the task, but this would not be desirable
+during catchup when all such data is already available). The natural behaviour
+of these FREE TASKS is to ALL (up to the system stop time, or otherwise
+infinitely many) run at once and thereby swamp the system, so: 
 
-This occurs when every task is submitted to the queue(s) as soon as its
-prerequisites are satisfied, regardless of reference time or other
-considerations, except for deliberate means of preventing prerequisiteless
-tasks from swamping the system.
+  Free tasks are:
+     (1) forced to run in sequence, and 
+     (2) not allowed to get more than max_runahead_hours ahead of the oldest
+         task in the system at any given time. 
+
+  Together these restrictions prevent (a) multiple instances from running at
+  once, and (b) appearance of too many finished instances that have to be kept
+  around to satisfy the prerequisites in the rest of the system that will be
+  lagging behind.
+
+Sequenz actually applies the max_runahead_hours restriction to all tasks, but
+this has the same affect as applying the restriction to just the free tasks
+(because the rest of the system depends on the free tasks).  OPTIMAL
+
+====== 
 
 PREVIOUS INSTANCE DEPENDENCE.
 
@@ -25,59 +50,40 @@ proxy object creation mechanism: For a forecast model foo, instance foo(T2)
 should not be created until foo(T1) achieves a "finished" state (i.e. foo(T2)
 can't run before foo(T1) is finished, because it doesn't exist before then).
 
-As of May 2009, sequenz actually enforces (or assumes) this previous instance
-dependence on all tasks, not just forecast models, which means some tasks that
-don't strictly depend on their previous instances are forced to run
-sequentially, as if they did. Sequenz is thus sub-optimal to the extent that
-this negatively impacts system throughput.
+TASKS WITH NO PREVIOUS INSTANCE DEPENDENCE
 
- * forcing tasks with no prerequisites, like nztide, to run sequentially is 
-   probably not a bad thing because their maximum throughput behaviour is to
-   run infinitely many tasks at once. Even sequentially though, we have to 
-   constrain the number of instance allowed to exist at once (including
-   "finished" ones), to stop nztide running off far ahead of the main forecast
-   models. It would arguably be "more natural" to allow nztide instances to
-   run "naturally" in parallel and to constrain the allowable runahead on that
-   scheme. 
-   
- * Model post processing tasks don't strictly depend on their previous
-   instance, but they necessarily depend on upstream cotemporal tasks that do
-   (i.e. the forecast models), which means they can't run completely in
-   parallel anyway.  However, sequenz will "unfairly" prevent two successive
-   instances of a post processing task from *overlapping* when the post
-   processing task takes longer to run than the total time between the
-   previous and current model instances finishing (i.e. significantly longer
-   than the model itself). If it is safe to run multiple instances of the same
-   post processing job at the same time, in the same area, without
-   interference between instances, then this is a slight impediment to maximum
-   system throughput. 
+This includes FREE TASKS (see above) and model postprocessing tasks.
 
-PLANNED MINOR UPGRADE TO ALLOW MAXIMUM SYSTEM THROUGHPUT, WITH CONSTRAINTS.
+Model post processing tasks don't strictly depend on their previous instance,
+but they necessarily depend on upstream cotemporal tasks that do (i.e. the
+forecast models). This means that two successive instances of the same post
+processing task will not be able to run in parallel, but they can potentially
+OVERLAP. This can happen  when the post processing task takes longer to run
+than the total time between the previous and current model instances finishing
+(i.e. significantly longer than the model itself). If it is not safe to run
+multiple instances of the same post processing job at the same time in
+the same area, without interference between instances, then the task should be
+declared as having previous instance dependence, like a forecast model, which
+will force it to run sequentially. 
 
-Vary the task creation scheme according to previous instance dependence:
- (1) forecast models should be created when their previous instance achieves a 
-     "finished" state, as above.
- (2) other tasks should be created when their previous instance enters the
-     "running" state.
 
-(note that in the program, a new task is always created when its previous
-instance abdicates, thus I achieve the above by varying when the old task
-is allowed to abdicate).
+HANDLING OF PREVIOUS INSTANCE DEPENDENCE IN SEQUENZ: TASK CREATION 
 
-This will immmediately allow successive instances of non-forecast-model tasks
-to overlap, should the opportunity arise. It will also prerequisiteless tasks
-to run in parallel, so some constraint will be required on task creation
-according to the number of tasks of the same type that already exist in the
-sytem (this constrains run-ahead too, because tasks aren't killed immediately
-after achieving a "finished" state [TO DO: FLESH THIS OUT]).
+ (1) new forecast model tasks should be created only when their previous
+ instance achieves a "finished" state. This forces them to run in sequence.
 
-== an email on the same topic:
+ (2) other tasks should be created as soon as their previous instance enters
+ the "running" state (except for restriction of free tasks, as above) - this
+ allows successive instances of these tasks to overlap if the opportunity
+ arises (i.e. when dependencies allow).
+
+
+== an email on the topic, from just prior to achieving optimal metascheduling
 
 From: Hilary Oliver
 To: Michael Uddstrom; Colin Tinker; Chris Edsall; Bernard Miville
 Date: Monday, May 18, 2009 1:57 PM
 Subject: optimal multi-flighting under the new controller?
-
 
 
 Hi all,
@@ -121,6 +127,5 @@ so, is that strictly necessary?)
 Hilary
 
 ==
-(note: simon's creation scheme, based on arrival of a first
-prerequisites, wouldn't work for my prerequisiteless tasks.)
-
+(note that simon wood's task creation scheme, based on satisfaction of special
+"primary" prerequisites, would not work for my prerequisiteless tasks).

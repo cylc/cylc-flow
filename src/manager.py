@@ -14,6 +14,8 @@ import shutil
 import broker
 import re
 
+# See system documentation for OPTIMAL METASCHEDULING details.
+
 class manager:
     def __init__( self, config, pyro, restart, dummy_clock ):
         
