@@ -12,7 +12,7 @@ config[ 'system_name' ] = 'topnet-dvel'
 #config[ 'state_dump_file' ] = 'blah'
 
 config[ 'start_time' ] = '2009052206'
-#config[ 'stop_time' ] = '2009030300'
+config[ 'stop_time'  ] = '2009052300'
 
 #config[ 'logging_level' ] = logging.INFO
 config[ 'logging_level' ] = logging.DEBUG
@@ -33,7 +33,7 @@ config[ 'task_list' ] = \
         'oper_interface',
         'streamflow',
         'topnet',
-        #'topnet_vis',
-        #'topnet_products',
-        #'topnet_cleanup'
+        'topnet_vis',
+        'topnet_products',
+        'topnet_cleanup'
         ]

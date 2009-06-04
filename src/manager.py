@@ -76,8 +76,8 @@ class manager:
             # checking if stop time has been reached.
             skip = False
             if self.config.get('stop_time'):
-                if int( task.ref_time ) > int( config.get('stop_time') ):
-                    task.log.info( task.name + " STOPPING at " + config.get('stop_time') )
+                if int( task.ref_time ) > int( self.config.get('stop_time') ):
+                    task.log.warning( task.name + " STOPPING at " + self.config.get('stop_time') )
                     task.prepare_for_death()
                     del task
                     skip = True
@@ -155,8 +155,8 @@ class manager:
                 # checking if stop time has been reached.
                 skip = False
                 if self.config.get('stop_time'):
-                    if int( task.ref_time ) > int( config.get('stop_time') ):
-                        task.log.info( task.name + " STOPPING at " + config.get('stop_time') )
+                    if int( task.ref_time ) > int( self.config.get('stop_time') ):
+                        task.log.warning( task.name + " STOPPING at " + self.config.get('stop_time') )
                         task.prepare_for_death()
                         del task
                         skip = True
@@ -230,7 +230,7 @@ class manager:
                 new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
                 if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
                     # we've reached the stop time: delete the new task 
-                    new_task.log.info( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
+                    new_task.log.warning( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
                     new_task.prepare_for_death()
                     del new_task
                 else:
