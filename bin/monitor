@@ -191,5 +191,5 @@ while True:
     except:
         # uncomment 'raise' to identify errors
         #raise
-        print "connection failed ..."
+        print "failed..."
         sleep( 1 )

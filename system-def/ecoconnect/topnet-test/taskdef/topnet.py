@@ -91,13 +91,18 @@ class topnet( task ):
 
             cutoff = self.ref_time
 
+            ref_times = []
             if 'oper_interface' in finished_task_dict.keys():
                 ref_times = finished_task_dict[ 'oper_interface' ]
-                ref_times.sort( key = int, reverse = True )
-                for rt in ref_times:
-                    if int( rt ) <= int( self.ref_time ):
-                        cutoff = rt
-                        break
+
+            elif 'nzlam_06_18_post' in finished_task_dict.keys():
+                ref_times = finished_task_dict[ 'nzlam_06_18_post' ]
+
+            ref_times.sort( key = int, reverse = True )
+            for rt in ref_times:
+                if int( rt ) <= int( self.ref_time ):
+                    cutoff = rt
+                    break
         else:
             cutoff = None
 
