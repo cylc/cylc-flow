@@ -1,0 +1,8 @@
+To date, sequenz development has occurred in parallel with the
+development of the topnet-test system. The full operational ecoconnect
+system is still in a very rudimentary state, however it includes the
+topnet-test tasks as a subset and these will need to be updated from
+the completed topnet-test system as soon as we resume work on the
+operational system.
+
+This file can be deleted once that occurs.
