@@ -25,8 +25,11 @@ Sequenz To Do List
 
 * for non-sequential tasks, allow constraint by real time? 
 
-* when a fuzzy prerequisite is satisfied, can we change the cutoff to
-  suit?
+* just before a task runs, try to re-satisfy fuzzy prerequisites in case
+  a more up-to-date satisfier has shown up while the task was waiting
+  for other prerequisites to be satisfied ... OR (better?!) don't try to
+  satisfy fuzzy prerequistes until after all non-fuzzy ones have been
+  satsified. 
 
 * streamflow 'caughtup' indicator does not need to specify the
   reference time that catchup was achieved even though streamflow
