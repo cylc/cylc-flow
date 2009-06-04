@@ -6,14 +6,15 @@ where this is not desirable. This is desirable for the forecast models (which
 have previous instance dependence) and model postprocessing tasks (which don't
 have previous instance dependence, but do depend directly or indirectly on
 forecast models that do), but it is not desirable for tasks that have no
-prerequisites and no previous instance dependence. These are the tasks that
-run as soon as they are created (no prerequisites) and then wait on some
-external event such as arrival of real time data before reporting completion
-(it would be possible for the task proxy object to wait on the known earliest
-data arrival time before launching the task, but this would not be desirable
-during catchup when all such data is already available). The natural behaviour
-of these FREE TASKS is to ALL (up to the system stop time, or otherwise
-infinitely many) run at once and thereby swamp the system, so: 
+prerequisites and no previous instance dependence. These include tide forecast
+models and any task that runs as soon as it is created (no prerequisites) and
+then waits on some external event such as arrival of real time data before
+reporting completion (it would be possible for the task proxy object to wait
+on the known earliest data arrival time before launching the task, but this
+would not be desirable during catchup when all such data is already
+available). The natural behaviour of these FREE TASKS is to ALL (up to the
+system stop time, or otherwise infinitely many) run at once and thereby swamp
+the system, so: 
 
   Free tasks are:
      (1) forced to run in sequence, and 
@@ -27,9 +28,12 @@ infinitely many) run at once and thereby swamp the system, so:
 
 Sequenz actually applies the max_runahead_hours restriction to all tasks, but
 this has the same affect as applying the restriction to just the free tasks
-(because the rest of the system depends on the free tasks).  OPTIMAL
+(because the rest of the system depends on the free tasks). Actually, this
+restriction would also be important for fast prerequisiteless tasks that do
+have previous instance dependence, if there are any ... these would also tend
+to run far ahead of the system, albeit sequentially.
 
-====== 
+------ more detail:
 
 PREVIOUS INSTANCE DEPENDENCE.
 
