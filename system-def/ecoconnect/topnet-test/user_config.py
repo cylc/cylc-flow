@@ -11,8 +11,8 @@ config = {}
 config[ 'system_name' ] = 'topnet-dvel'
 #config[ 'state_dump_file' ] = 'blah'
 
-config[ 'start_time' ] = '2009052206'
-config[ 'stop_time'  ] = '2009052300'
+config[ 'start_time' ] = '2009052118'
+#config[ 'stop_time'  ] = '2009052300'
 
 #config[ 'logging_level' ] = logging.INFO
 config[ 'logging_level' ] = logging.DEBUG

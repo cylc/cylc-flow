@@ -419,3 +419,45 @@ class manager:
             task.prepare_for_death()
 
         del spent_tasks
+
+
+    def abdicate_and_kill( self, task_id ):
+        # find the task
+        found = False
+        for t in self.tasks:
+            if t.identity == task_id:
+                found = True
+                task = t
+                break
+
+        if not found:
+            self.log.warning( "task not found for remote kill request: " + task_id )
+            return
+
+        task.log.debug( "suicide by remote request " + task.identity )
+
+        if task.has_abdicated():
+            task.log.debug( task.identity + " has already abdicated" )
+            return
+
+        # TO DO: the following should reuse code in regenerate_tasks()?
+        # dynamic task object creation by task and module name
+        new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
+        if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
+            # we've reached the stop time: delete the new task 
+            new_task.log.warning( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
+            new_task.prepare_for_death()
+            del new_task
+        else:
+            # no stop time, or we haven't reached it yet.
+            self.pyro.connect( new_task, new_task.identity )
+            new_task.log.debug( "New " + new_task.name + " connected for " + new_task.ref_time )
+            self.tasks.append( new_task )
+
+        # now kill the task
+        self.tasks.remove( task )
+        self.pyro.disconnect( task )
+        if self.config.get('use_broker'):
+            self.broker.unregister( task.get_fullpostrequisites() )
+        task.prepare_for_death()
+        del task

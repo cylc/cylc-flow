@@ -146,11 +146,13 @@ class config:
         print "STATE DUMP FILE.........",
         print self.configured['state_dump_file']
 
-        print 'CONFIGURED TASK LIST....'
-        for task in self.configured['task_list']:
-            print ' - ' + task
+        print 'CONFIGURED TASK LIST....',
+        print '- ' + self.configured['task_list'][0]
+        for task in self.configured['task_list'][1:]:
+            print '                         - ' + task
 
         if len( self.configured['dummy_out'] ) > 0:
-            print 'TASKS DUMMIED OUT IN REAL MODE:'
-            for task in self.configured['dummy_out']:
-                print '  - ' + task
+            print 'TASKS DUMMIED OUT IN REAL MODE:',
+            print '- ' + self.configured['dummy_out'][0]
+            for task in self.configured['dummy_out'][1:]:
+                print '                         - ' + task

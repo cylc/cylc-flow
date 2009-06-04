@@ -11,7 +11,8 @@ import Pyro.core
 import logging
 
 global state_changed
-state_changed = False
+#state_changed = False
+state_changed = True
 
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
@@ -441,8 +442,8 @@ class parallel_task( task ) :
                 return False
 
         elif self.state == "running" or self.state == "finished":
-            #elif self.state == "running":
-            # otherwise can run in parallel until abdication is delayed
+            # ("or finished" not necessary here?)
+            # launch my successor as soon as I start running
             return True
 
         else:

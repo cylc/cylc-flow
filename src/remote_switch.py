@@ -21,6 +21,10 @@ class remote_switch( Pyro.core.ObjBase ):
         # record remote system pause requests
         self.system_pause = False
 
+        # task to abdicate and kill
+        self.go_psycho = False
+        self.kill_task_id = None
+
     def pause( self ):
         self.log.warning( "REMOTE: system pause requested" )
         self.system_pause = True
@@ -43,6 +47,14 @@ class remote_switch( Pyro.core.ObjBase ):
             self.log.warning( "no such config item: " + item )
         else:
             return result
+
+    def abdicate_and_kill( self, task_id ):
+        # main prog must reset go_psycho after doin' the killin'
+        self.log.warning( "REMOTE: abdicate and kill request for " + task_id )
+        self.go_psycho = True
+        self.kill_task_id = task_id
+        # ensure we resume task processing immediately
+        task.state_changed = True
 
     def set_verbosity( self, level ):
         # change the verbosity of all the logs:

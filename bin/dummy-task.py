@@ -139,6 +139,13 @@ class dummy_task( dummy_task_base ):
             #print "oper_interface: current time   " + current_time.isoformat()
             #print "oper_interface: reference time " + rt.isoformat()
             #print "oper_interface: delayed start  " + delayed_start.isoformat()
+
+            # UNCOMMENT THIS TO SIMULATE A STUCK TASK (when Met Office files
+            # fail to arrive and nzlam therefore can't run):
+            #if self.ref_time == '2009052218':
+            #    print self.identity, "STUCK (for one hour real time)"
+            #    sleep(3600)
+
             if current_time >= delayed_start:
                 self.task.incoming( 'NORMAL', 'CATCHINGUP: operational tn file already exists for ' + self.ref_time )
                 self.fast_complete = True
