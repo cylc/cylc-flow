@@ -109,6 +109,8 @@ if options.verbosity:
     control.set_verbosity( options.verbosity )
 
 if options.kill_task_id:
+    print "requesting abdicate and kill for " + options.kill_task_id
+    print "WARNING: you may also need to manually kill the REAL stuck task"
     control.abdicate_and_kill( options.kill_task_id )
 
 if options.bump_hours:
