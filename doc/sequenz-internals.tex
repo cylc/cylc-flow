@@ -31,19 +31,19 @@ reference to other tasks, and task proxy objects then negotiate
 dependencies dynamically, as outputs are reported, so that correct
 execution order emerges naturally at run time. The method is optimal in
 that tasks can be submitted the instant their prerequisites are
-satisfied regardless of their associated ``forecast cycle'' or any other
+satisfied, regardless of associated ``forecast cycle'' or any other
 consideration. The entire system can therefore run over historical case
 study periods, or catch up to real time after a delay, with maximum
 throughput: tasks from many different forecast cycles can run
 simultaneously where dependencies allow. The absence of explicit task
-sequencing logic or prescribed dependencies makes the system very
-flexible. New tasks can be added and existing ones deleted or switched
-on and off without any change to the algorithm, and partial parallel
-test systems that feed off the main operation can be created very
-easily. Our metascheduling controller, {\em Sequenz}, can be interfaced
-to existing tasks (models etc.) with minimal overhead. It is written in
-object oriented Python and uses the Python Remote Object protocol ({\em
-Pyro}) to control tasks on multiple platforms at once. 
+sequencing logic or prescribed dependencies means that new tasks can be
+added and existing ones deleted or switched off without any change to
+the algorithm, and partial parallel test systems that feed off the main
+operation can be created quickly. Our metascheduling controller, {\em
+Sequenz}, can be interfaced to existing tasks (models etc.) with minimal
+overhead. It is written in object oriented Python and uses the Python
+Remote Object protocol ({\em Pyro}) to control tasks on multiple
+platforms at once. 
 
 (*) The term ``metascheduler'' can also be used to refer to ``a single
 aggregated view of multiple Distributed Resource Managers''.
