@@ -21,35 +21,33 @@ date ONLY THE ABSTRACT is done.}
 
 \begin{abstract}
 
-Metascheduling is the process of determining when each task in a system
-of tasks with dependencies is ready to be submitted to the batch queue
-scheduler; i.e.\ when tasks could execute given available computing
-resource because their prerequisites have been satisfied by other tasks
-in the system*. This paper describes an extremely flexible
-metascheduling algorithm that ensures correct order of execution in a
-complex continuously cycling multi-model forecasting system without any
-need to dictate execution order or to explicitly define the dependencies
-between tasks. Each task simply registers its own prerequisites, without
-reference to other tasks, and task proxy objects then negotiate
-dependencies dynamically, as outputs are reported, so that correct
-execution order emerges naturally at run time. The method is optimal in
-that tasks can be submitted the instant their prerequisites are
-satisfied, regardless of associated ``forecast cycle'' or any other
-consideration. The entire system can therefore run over historical case
-study periods, or catch up to real time after a delay, with maximum
-throughput: tasks from many different forecast cycles can run
-simultaneously where dependencies allow. The absence of explicit task
-sequencing logic or prescribed dependencies means that new tasks can be
-added and existing ones deleted or switched off without any change to
-the algorithm, and partial parallel test systems that feed off the main
-operation can be created quickly. Our metascheduling controller, {\em
-Sequenz}, can be interfaced to existing tasks (models etc.) with minimal
-overhead. It is written in object oriented Python and uses the Python
-Remote Object protocol ({\em Pyro}) to control tasks on multiple
-platforms at once. 
+A {\it metascheduler} determines when each task in a system of tasks
+with dependencies is ready to be submitted to a batch scheduler; i.e.\
+when their prerequisites have been satisfied by other tasks in the
+system*. This paper describes an extremely flexible algorithm that
+ensures correct order of execution in a complex continuously cycling
+multi-model forecasting system without any need to dictate execution
+order or to explicitly define the dependencies between tasks.  Each task
+simply registers its own prerequisites, without reference to other
+tasks, and task proxy objects then negotiate dependencies dynamically,
+as outputs are reported, so that correct execution order emerges
+naturally at run time. The method is optimal in that tasks can be
+submitted the instant their prerequisites are satisfied, regardless of
+associated ``forecast cycle'' or any other consideration. The entire
+system can therefore run over historical case study periods, or catch up
+to real time after a delay, with maximum throughput: tasks from many
+different forecast cycles can run simultaneously where dependencies
+allow. The absence of explicit task sequencing logic or prescribed
+dependencies means that new tasks can be added and existing ones deleted
+or switched off without any change to the algorithm, and partial
+parallel test systems that feed off the main operation can be created
+quickly. Our metascheduling controller, {\em Sequenz}, can be interfaced
+to existing tasks (models etc.) with minimal overhead. It is written in
+object oriented Python and uses the Python Remote Object protocol ({\em
+Pyro}) to control tasks on multiple platforms at once. 
 
-(*) The term ``metascheduler'' can also be used to refer to ``a single
-aggregated view of multiple Distributed Resource Managers''.
+(*) The term {\em metascheduler} can also be used to refer to {\it a
+single aggregated view of multiple Distributed Resource Managers}.
 
 \end{abstract}
 
