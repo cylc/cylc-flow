@@ -21,21 +21,21 @@ date ONLY THE ABSTRACT is done.}
 
 \begin{abstract}
 
-A metascheduler decides when a task in a set of tasks with dependencies
-can be submitted to the batch queue scheduler, i.e.\ when it is {\em
-ready to execute} because its dependencies have been satisfied by other
-tasks in the system*. This paper describes a metascheduling algorithm
-that ensures optimal operation of a complex continuously cycling
-multi-model forecasting system without dictating task execution order or
-even requiring that the dependencies between tasks are explicitly
-defined. Each task simply registers its own prerequisites, without
-reference to other tasks, and task proxies then negotiate dependencies
-dynamically, as outputs are reported, so that correct execution order
-emerges naturally at run time.  The algorithm is optimal in the sense
-that tasks will be submitted at the earliest possible moment, namely as
-soon as their prerequisites are satisfied, regardless of associated
-``forecast cycle'' or any other consideration.  Tasks from many
-different forecast cycles can therefore run simultaneously where
+A metascheduler decides when tasks in a set of tasks with dependencies
+can be submitted to the batch queue scheduler, i.e.\ when they are {\em
+ready to execute} because their dependencies have been satisfied by
+other tasks in the system*. This paper describes a metascheduling
+algorithm that ensures optimal operation of a complex continuously
+cycling multi-model forecasting system without dictating task execution
+order or even requiring that the dependencies between tasks are
+explicitly defined. Each task simply registers its own prerequisites,
+without reference to other tasks, and task proxies then negotiate
+dependencies dynamically, as outputs are reported, so that correct
+execution order emerges naturally at run time.  The algorithm is optimal
+in the sense that tasks will be submitted at the earliest possible
+moment, namely as soon as their prerequisites are satisfied, regardless
+of associated ``forecast cycle'' or any other consideration.  Tasks from
+many different forecast cycles can therefore run simultaneously where
 dependencies allow, and the entire system can catch up to real time
 after a delay, or run over historical case study periods, with maximum
 throughput. The absence of explicit task sequencing logic or prescribed
