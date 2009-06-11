@@ -16,7 +16,7 @@ class streamflow( parallel_task ):
         # Note that streamflow.catchup_mode needs to be written to the
         # state dump file so that we don't need to assume catching up at
         # restart.  Topnet, via its fuzzy prerequisites, can run out to
-        # 24 hours ahead of nzlam when caught up, and only 12 hours
+        # 48 hours ahead of nzlam when caught up, and only 12 hours
         # ahead when catching up.  Therefore if topnet is 18 hours, say,
         # ahead of nzlam when we stop the system, on restart the first
         # topnet to be created will have only a 12 hour fuzzy window,

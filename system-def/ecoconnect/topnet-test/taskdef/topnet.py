@@ -10,7 +10,7 @@ class topnet( task ):
 
     # for fuzzy prerequiste satisfaction limits
     CATCHUP_MODE_CUTOFF  = 11
-    CAUGHTUP_MODE_CUTOFF = 23   
+    CAUGHTUP_MODE_CUTOFF = 47   
 
     fuzzy_file_re =  re.compile( "^file (tn_\d{10}_utc_nzlam_12.nc) ready$" )
     reftime_re = re.compile( "\d{10}")
