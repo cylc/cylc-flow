@@ -22,26 +22,26 @@ date ONLY THE ABSTRACT is done.}
 \begin{abstract}
 
 From a scheduling perspective an environmental forecasting system
-consists of a set of tasks with dependencies (each task takes input from
-one or more ``upstream'' tasks, and supplies output to one or more
-``downstream'' tasks). A metascheduler is a control system that ensures
-tasks are not submitted to the batch queue scheduler(s) until they ready
-to execute, i.e. when they prerequisites have been satisfied by other
-tasks in the system. This paper describes a metascheduling algorithm
-that ensures optimal operation of a complex continuously cycling
-multi-model environmental forecasting system without dictating execution
-order or requiring explicit definition of the dependencies between
-tasks. Each task simply registers its own prerequisites without
-reference to other tasks, and task proxies then negotiate dependencies
-dynamically, as outputs are reported, so that correct execution order
-emerges naturally at run time.  The algorithm is optimal in the sense
-that tasks will be scheduled for execution as soon as their
-prerequisites are satisfied regardless of associated forecast cycle or
-any other consideration.  Tasks from many different forecast cycles can
-therefore run simultaneously where dependencies allow, and the entire
-system can catch up to real time after a delay, or run over historical
-case study periods, with maximum throughput. The absence of explicit
-task sequencing logic or prescribed dependencies lends great
+consists of a repeating set of tasks with dependencies: each task takes
+input from one or more ``upstream'' tasks, and supplies output to one or
+more ``downstream'' tasks. A metascheduler is a control system that
+ensures tasks are not submitted to the batch queue scheduler(s) until
+they are ready to execute*, i.e. when their prerequisites have been
+satisfied by other tasks in the system. This paper describes a
+metascheduling algorithm that ensures optimal operation of a complex
+continuously cycling multi-model environmental forecasting system
+without dictating execution order or requiring explicit definition of
+the dependencies between tasks. Each task simply registers its own
+prerequisites without reference to other tasks, and task proxies then
+negotiate dependencies dynamically, as outputs are reported, so that
+correct execution order emerges naturally at run time.  The algorithm is
+optimal in the sense that tasks will be scheduled for execution as soon
+as their prerequisites are satisfied regardless of associated forecast
+cycle or any other consideration.  Tasks from many different forecast
+cycles can therefore run simultaneously where dependencies allow, and
+the entire system can catch up to real time after a delay, or run over
+historical case study periods, with maximum throughput. The absence of
+explicit task sequencing logic or prescribed dependencies lends great
 flexibility: tasks can be switched on and off on the fly, new tasks can
 be added to the system without altering the main program, and parallel
 test systems that feed off the main operation can be created quickly.
