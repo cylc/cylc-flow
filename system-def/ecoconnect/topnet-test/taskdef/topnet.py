@@ -72,9 +72,9 @@ class topnet( task ):
         else:
             self.log.info( "old nzlam time " + nzlam_time + ', for ' + self.ref_time )
 
-        extra_vars = [ ['NZLAM_TIME', nzlam_time ] ]
+        env_vars = [ ['NZLAM_TIME', nzlam_time ] ]
 
-        task.run_external_task( self, launcher, extra_vars )
+        task.run_external_task( self, launcher, env_vars )
 
 
     def get_cutoff( self, finished_task_dict ):

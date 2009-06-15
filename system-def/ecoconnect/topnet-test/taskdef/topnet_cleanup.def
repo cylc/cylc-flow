@@ -14,9 +14,9 @@
     cleanup.sh
 
 %EXPORT
-    CLEANUP_DIR output/topnet
+    CLEANUP_DIRS output/topnet running/topnet
     CLEANUP_MATCH *.nc
-    CLEANUP_CUTOFF $(MY_REFERENCE_TIME - 06)
+    CLEANUP_CUTOFF $(MY_REFERENCE_TIME - 12)
 
 %PREREQUISITES
     topnet_products finished for $(MY_REFERENCE_TIME)

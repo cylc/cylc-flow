@@ -13,7 +13,7 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 #   1. $REFERENCE_TIME
 #   2. $TASK_NAME      
 #   3. $SEQUENZ_ENV
-#   4. $CLEANUP_DIR      directory to clean up
+#   4. $CLEANUP_DIRS     directories to clean
 #   5. $CLEANUP_MATCH    find-style filename match pattern
 #   6. $CLEANUP_CUTOFF   reference time cutoff (delete older) 
 
@@ -31,8 +31,8 @@ if [[ -z $TASK_NAME ]]; then
 	exit 1
 fi
 
-if [[ -z $CLEANUP_DIR ]]; then
-	task-message CRITICAL "CLEANUP_DIR not defined"
+if [[ -z $CLEANUP_DIRS ]]; then
+	task-message CRITICAL "CLEANUP_DIRS not defined"
 	exit 1
 fi
 
@@ -47,10 +47,10 @@ if [[ -z $CLEANUP_CUTOFF ]]; then
 fi
 
 task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
-task-message NORMAL "deleting $CLEANUP_MATCH older than $CLEANUP_CUTOFF under $CLEANUP_DIR"
+task-message NORMAL "deleting $CLEANUP_MATCH older than $CLEANUP_CUTOFF under $CLEANUP_DIRS"
 
 # find files, and sort for cleaner output
-FILENAMES=$( find $CLEANUP_DIR -type f -name "$CLEANUP_MATCH" -print | sort )
+FILENAMES=$( find $CLEANUP_DIRS -type f -name "$CLEANUP_MATCH" -print | sort )
 
 for FILENAME in $FILENAMES; do
 

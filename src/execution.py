@@ -62,7 +62,7 @@ class launcher:
             command += 'export TASK_NAME=' + task_name + '; '
             for entry in extra_vars:
                 [ var_name, value ] = entry
-                command += 'export ' + var_name + '=' + value + '; '
+                command += 'export ' + var_name + '="' + value + '"; '
             command += external_task + ' ' + task_name + ' ' + ref_time + ' ' + self.config.get('pyro_ns_group') + ' ' + str( self.config.get('dummy_mode') ) + ' ' + str( self.config.get('dummy_clock_rate') ) + ' ' + str( self.config.get('dummy_clock_offset') ) + ' &' 
 
         else:
@@ -75,7 +75,7 @@ class launcher:
 
             for entry in extra_vars:
                 [ var_name, value ] = entry
-                command += ',' + var_name + '=' + value
+                command += ',' + var_name + '="' + value + '"'
 
             command += ' -k oe ' + external_task
 

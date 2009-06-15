@@ -44,9 +44,9 @@ class topnet_vis( parallel_task ):
         else:
             self.log.info( "old nzlam time " + topnet_nzlam_time + ", for " + self.ref_time )
 
-        extra_vars = [ ['NZLAM_AGE', nzlam_age ] ]
+        env_vars = [ ['NZLAM_AGE', nzlam_age ] ]
 
-        parallel_task.run_external_task( self, launcher, extra_vars )
+        parallel_task.run_external_task( self, launcher, env_vars )
 
 
     def dump_state( self, FILE ):
