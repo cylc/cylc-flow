@@ -53,121 +53,113 @@ Distributed Resource Managers}, which is not the topic of this paper.
 
 \section{Introduction}
 
-At the National Institute of Water and Atmospheric Research in New
-Zealand (NIWA) we run a continuously cycling multi-model environmental
+The National Institute of Water and Atmospheric Research (NIWA) in New
+Zealand runs a continuously cycling multi-model environmental
 forecasting operation. The system takes operational global weather
-forecasts from the UK Met Office four times daily and uses these, with
-new atmospheric observations, to drive a global sea state model and a
-data assimilating regional weather model, and these in turn drive
+forecasts from the UK Met Office four times daily, with new atmospheric
+observations, and uses these to drive a global sea state model and a
+data assimilating regional weather model, which in turn drives various
 regional sea state, storm surge, and catchment river flow models, along
 with regional tide prediction and a host of data collection, pre- and
-post-processing, product generation, and product upload tasks. 
+post-processing, file archiving, and product generation tasks. 
+The system runs on heterogenous distributed hardware, and each task runs
+between 1 and 24 times per day, depending on the task and the model(s)
+it is associated with. 
 
-Designing a flexible controller that can automate this for real time
-operation, and allow it to catch up smoothly after delays, and even run
-the entire system or part thereof over historical case study periods,
-is challenging. From a metascheduling perspective forecastings systems
-like this consist of a complicated set of tasks\footnote{A {\em task} is
-any group of processes to be treated as a single entity for scheduling
-purposes.} that repeat on task-dependent intervals and have several
-kinds of intertask dependency.  Each task has an associated {\em
-forecast reference time} or {\em forecast cycle}, which corresponds to
-the nominal forecast start time for the forecast models, and each task
-type runs for a particular set of reference times each day (for
-instance, the regional weather model might generate a forecast four
-times daily while the regional sea state model runs only twice daily).
-Each task may depend upon one or more cotemporal (same reference time)
-upstream tasks for input, and may itself be depended on by one or more
-cotemporal downstream tasks. But there are also non-cotemporal
-dependencies: forecast models usually depend on their own previous
-instance (one forecast generates the {\em background model state} for
-the next), so these must be constrained to run in sequence.  Some tasks
-may depend explicitly on input from tasks in {\em previous} forecast
-cycles (for instance, our river forecasts run hourly, assimilating new
-streamflow data in real time and using forecast precipitation from the
-{\em most recent} regional weather model). Some tasks do not have any
-non-cotemporal upstream dependencies (multiple instances of these, from
-different forecast cycles, can run at the same time, other dependencies
-allowing). Finally, some tasks may have no upstream dependencies at all
-(data collection tasks and tide models fall into this category); many
-instances of these can potentially run in parallel, subject to compute
-resource restrictions).
+From a metascheduling perspective a forecasting system like this
+consists of a complicated set of interdependent tasks\footnote{A {\em
+task} is any group of processes to be treated as a single entity for
+scheduling purposes.} that each have an associated {\em forecast
+reference time} and which repeat on some task-dependent interval.  For
+forecast models the reference time is just the nominal forecast start
+time; for other tasks it is the reference time of the associated
+forecast model. For instance, ignoring all non-model tasks for the
+moment, our main regional weather model currently runs four times daily,
+but it supplies surface winds to a regional sea state model that runs
+only twice daily, and precipitation forecasts to catchment river flow
+models that run hourly as they assimilate incoming real time streamflow
+observations.  A {\em forecast cycle} consists of a complete set of
+tasks with a common reference time.  A task is ready to run when its
+{\em upstream dependencies} have been satisfied, usually by other tasks
+in the system, so it is important to consider what kinds of dependencies
+exist. 
 
-This paper describes a metascheduling algorithm that ensures correct
-operation of forecasting systems without requiring task execution order
-to be prescribed or dependencies to be explicitly defined. Each task
-simply registers its own prerequisites without reference to other tasks,
-and task proxies then negotiate dependencies dynamically as outputs are
-reported so that correct execution order emerges naturally at run time.
-The algorithm is optimal in the sense that tasks will be scheduled for
-execution as soon as their prerequisites are satisfied regardless of
-associated forecast cycle or any other consideration. Tasks from many
-different forecast cycles can therefore run simultaneously where
-dependencies allow, and the entire system can catch up to real time
-after a delay, or run over historical case study periods, with maximum
-throughput. The lack of system-specific sequencing logic or predefined
-dependencies lends great flexibility: tasks can be switched on and off
-on the fly, new tasks can be added to the system without altering the
-main program, and parallel test systems that feed off the main operation
-can be built quickly. Our dynamic metascheduler, {\em sequenz}, is
-easily interfaced to existing tasks (models etc.). It is written in the
-Python language and uses the Python Remote Object protocol ({\em Pyro})
-to control tasks on multiple platforms at once. 
+For a given reference time, the task execution sequencing diagram (TO
+DO: show an example) forms a {\em Directed Acyclic Graph}: a task may
+depend upon one or more cotemporal upstream tasks, and may itself be
+depended on by one or more downstream tasks (in other words, multiple
+parallel streams of execution that branch, when one task generates
+output for several downstream tasks, and merge, when one task takes
+input from several upstream tasks.  However, there are also
+non-cotemporal (different reference time) dependencies of several kinds.
+Forecast models generally depend on their own previous instance because
+one forecast generates the {\em background model state} for the next.
+Post processing tasks, on the other hand, do not strictly depend on
+their own previous instance, but they depend on cotemporal forecast
+models, which do.  Some forecast model tasks may depend explicitly on
+earlier tasks of a different type as well as on their own previous
+instance. Our hourly river flow forecasts, for example, take input from
+the {\em most recent} available regional weather forecast.  Finally,
+some tasks, such as those that wait on external input data, and tide
+models, may have no upstream dependencies at all.
 
-For a set of tasks with the same reference time, intertask dependencies
-dictate a pattern of execution that forms a Directed Acyclic Graph (each
-task may take input from zero or more upstream tasks and may provide
-input to zero or more downstream tasks).  However, forecasting systems
-are continuously cycling and there are additional dependencies between
-tasks with different reference times.  Principally, forecast models
-ususally depend on their own previous instance because each forecast
-generates a ``background model state'' for the next. Post processing
-tasks, on the other hand, don't depend on their own previous instances,
-but they necessarily depend on cotemporal forecast tasks that do. In
-addition, there may be some tasks that depend on non-cotemporal tasks of
-another class (for instance, we have an hourly river catchment model
-that takes input from the {\em most recent} 6-hourly regional weather
-model, which it is allowed to run ahead of to a limited extent (while it
-assimilates incoming real time streamflow observations). Finally, there
-will be some pre-processing tasks that have no upstream dependencies but
-are constrained to wait on some external event (such as incoming real
-time observations), and there may be some that have no prerequisites and
-no constraints (e.g. ocean tide forecasts, for which all reference times
-could ``go off at once'' if not artificially constrained in some way).  
+\subsection{Traditional Solutions}
+
+It is not easy to automate a complex continously cycling system like
+this in a flexible manner. The typical in house controller is a Finite
+State Machine with hard coded task-specific sequencing logic, which is
+inevitably convoluted, fragile, and inflexible (imagine adding a new
+forecast model with new dependencies and associated pre- and
+post-processing tasks in the middle of an existing system).
+Additionally, existing forecast control systems, as far as the author is
+aware, invariably handle non-cotemporal dependencies by insisting that
+each forecast cycle completes entirely before the next cycle starts, and
+indeed it would be difficult to do otherwise within the confines of a
+system-specific Finite State Machine. To be fair this is a natural
+simplification for normal real time operations where there is
+necessarily a gap between cycles while the system waits on external
+input, such as real time observations, so successive cycles won't
+overlap in any case.  The constraint is, however, a serious impediment
+during catch up operation after delays, particularly in a system with
+limited compute resource, and likewise if we want to run the entire
+system, or part thereof, over historical case study periods. That is
+because when all external input is already available the dependencies
+described above allow a lot of forecast cycle overlap or parallelism.
+For example, as soon as the main ``driving model'' at the top of the
+single-cycle dependency graph for a particular reference time is
+finished, its next instance (for the next valid reference time of that
+task) can in principle start immediately, regardless of how much
+downstream processing is still running, or yet to run, at the current or
+any previous reference time.  And the same applies, but to a lesser
+extent because of cotemporal upstream dependencies, further down the
+graph of dependent tasks. Non-forecast model tasks can even overlap with
+their own previous instances, if the opportunity arises (this occurs
+when a post processing task takes longer to run than the delay between
+its upstream model starting and it starting).  System throughput can be
+greatly increased by allowing tasks from many different forecast cycles
+to run simultaneously where dependencies allow.
 
 There is at least one generic metascheduler that has long been
-available, Condor's DAGMan (ref:). However, it appears to be for "one
-off" dependent job sets and requires dependencies to be explicitly
+available, Condor's DAGMan (REF:...). However, it appears to be for one
+off dependent job sets and requires the dependencies to be explicitly
 specified.  To the author's knowledge there has been nothing published
-on metascheduling controllers for continuously cycling forecast systems,
-and the complexity of such systems has led most forecasting centres to
-develop in-house solutions that are highly specific to their particular
-task set and therefore not widely applicable. In addition, these
-in-house solutions invariably simplify by insisting that only a single
-``forecast cycle'' can run at a time (i.e. all tasks with one reference
-time must complete before any from the next can start). This can
-arguably be justified on the grounds that it is usually adequate for
-real time operation for which there is a gap between cycles anyway (but
-see **) as the system waits on arrival of real time observational data,
-or possibly on forecast fields from an external system that is so
-constrained. However, this is a significant impediment when catching up
-to real time operation after a delay, or when running the entire system
-over historical case study periods; in these situations external input
-for one or more cycles is immediately available and consequently a lot
-of parallelism is possible: tasks from multiple reference times can run
-at once where dependencies allow. The biggest gain here is that
-successive instances of the driving (upstream) forecast models can, in
-principle, run without delay, regardless of ongoing downstream
-processing (dependent models and post processing) associated with
-previous forecasts. Similarly, but constrained but cotemporal upstream
-dependencies, the downstream forecast models need not wait for an entire
-cycle to finish either, and in, and in some cases successive instances
-of the same post-processing task may be able to overlap (these have no
-previous-instance dependence; overlap can occur when a post processing
-task takes longer to run than the delay between its upstream model
-starting and it starting).
-
-(** except: topnet)
+on metascheduling controllers for continuously cycling systems, and the
+complexity of such systems has led most forecasting centres to develop
+in-house solutions that are highly specific to their particular task set
+and therefore not widely applicable. In addition, these in-house
+solutions invariably simplify by insisting that only a single ``forecast
+cycle'' can run at a time (i.e. all tasks with one reference time must
+complete before any from the next can start). This can arguably be
+justified on the grounds that it is usually adequate for real time
+operation for which there is a gap between cycles anyway (but see **) as
+the system waits on arrival of real time observational data, or possibly
+on forecast fields from an external system that is so constrained.
+However, this is a significant impediment when catching up to real time
+operation after a delay, or when running the entire system over
+historical case study periods; in these situations external input for
+one or more cycles is immediately available and consequently a lot of
+parallelism is possible: tasks from multiple reference times can run at
+once where dependencies allow.  (** except: topnet)
 
 Some modern batch queue schedulers have a rudimentary ability to handle
 depedencies but they are not nearly sophisticated enough to provide
@@ -175,49 +167,45 @@ optimal control of a complex continuously cycling multi-model
 forecasting system, and typical in-house solutions are highly
 system-specific and inflexible. 
 
-The National Institute of Water and Atmosperhic Research (NIWA), New
-Zealand, has developed an operational environmental forecasting system,
-EcoConnect, which consists of chained global sea state, regional
-atmospheric (data assimilating), sea state, storm surge, river flow, and
-tide models, driven by the UK Met Office operational global atmospheric
-model, and many associated pre- and post-processing, product generation,
-and archiving tasks, etc. The system runs on heterogenous distributed
-hardware, and each task runs between 1 and 24 times per day, depending
-on the task and the model(s) it is associated with. Most tasks depend
-primarily on one or more of their cotemporal peers and, in the case of
-the scientific models, their immediate predecessor of the same task type
-(because forecast models generally start from a ``background state''
-generated by the previous forecast) but some have more complex
-dependencies on previous forecast cycles\footnote{For example, the
-catchment model, TopNet, runs hourly, driven by precipitation forecasts
-from the {\em most recent} 12-hourly regional atmospheric run, {\em and}
-assimilates stream flow observations that come in hourly (real time).
+\subsection{Dynamic Metascheduling}
+
+As the abstact states, this paper describes an optimal metascheduling
+algorithm for continuously cycling forecasting systems that is
+constrained only by real intertask dependencies, does not prescribe task
+execution order, and does not even require the dependencies to be
+explicitly defined. Each task simply registers its own prerequisites
+without reference to other tasks, and task proxies then negotiate
+dependencies dynamically as outputs are reported so that correct
+execution order emerges naturally at run time. The algorithm is optimal
+in the sense that tasks will be scheduled for execution as soon as their
+prerequisites are satisfied, regardless of associated forecast cycle or
+any other consideration.  Tasks from many different forecast cycles can
+therefore run simultaneously where dependencies allow, and the entire
+system can catch up to real time after a delay, or run over historical
+case study periods, with maximum throughput. The lack of system-specific
+sequencing logic or predefined dependencies lends great flexibility:
+tasks can be switched on and off on the fly, new tasks can be added to
+the system without altering the main program, and parallel test systems
+that feed off the main operation can be built quickly. Our dynamic
+metascheduler, {\em sequenz}, is easily interfaced to existing tasks
+(models etc.). It is written in the Python language and uses the Python
+Remote Object protocol ({\em Pyro}) to control tasks on multiple
+platforms at once. 
+
+\subsection{TopNet}
+
 However, precipitation forecasts are delayed by several hours with
 respect to real time, and possibly longer if system delays occur, so we
 allow TopNet to run ahead of the atmospheric model by more than the
 minimum 0-12 hours in order to make the best use of new streamflow
-observations.}.  Finally, because of limited computational resource we
-have to be able to run tasks from multiple forecast cycles at once,
-where dependencies allow, for maximum system throughput after downtime,
-or for historical case study runs for which all external input data is
-already available.
+observations.  
 
 \subsection{Traditional Solutions}
 
-Controlling such a system is largely a matter of determining when each
-task's inputs, generated by other tasks in the system, are ready (when
-they are, allocation to available computational resource can be handled
-by a normal batch queue scheduler).  This could be done by checking for
-the existence of required inputs directly, or by monitoring the state of
-the other tasks that are known to provide the inputs in each case (are
-they finished yet?). It is not easy to do this in a flexible and
-extensible way, however, because the control diagram will, in general,
-take the form of a \textbf{Directed Acyclic Graph}: multiple parallel
-streams of execution that branch (when one task generates output for
-several downstream task) and merge (when one task takes input from
-several upstream task), and the detailed properties of this network
-depend entirely on the particular inputs and outputs of the current
-configured task set.  A typical in-house solution is a simple control
+This could be done by checking for the existence of required inputs
+directly, or by monitoring the state of the other tasks that are known
+to provide the inputs in each case (are they finished yet?).  
+
 program that executes a user-specified task list (assumed to be
 correctly ordered already) in a linear sequence, or some form of highly
 specific Finite State Machine that enforces a predetermined (but
