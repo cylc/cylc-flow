@@ -14,6 +14,9 @@ Sequenz To Do List
 * allow remote-control to set a proper stop time (as opposed to an
   instant shutdown).
 
+* remote control "hold", whereby the control system runs as usual but
+  does not run any new tasks (and corresponding "release").
+
 * document the new default O(n) brokered dependency negotation
   algorithm.
 
@@ -25,8 +28,6 @@ Sequenz To Do List
 
 * possible problem with non-broker (interaction) method: if more than
   one fuzzy satisfying postrequisite, do we end up with the most recent?
-
-* for non-sequential tasks, allow constraint by real time? 
 
 * just before a task runs, try to re-satisfy fuzzy prerequisites in case
   a more up-to-date satisfier has shown up while the task was waiting
