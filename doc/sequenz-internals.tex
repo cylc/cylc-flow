@@ -20,7 +20,6 @@ Multi-Model Forecasting Systems}
 date ONLY THE ABSTRACT is done.}
 
 \begin{abstract}
-
 A metascheduler is a control system that determines when members of a
 set of tasks with dependencies are {\em ready} to be scheduled for
 execution.* This paper describes a flexible metascheduling algorithm
@@ -52,29 +51,72 @@ Distributed Resource Managers}, which is not the topic of this paper.
 \end{abstract}
 \section{Introduction}
 
-The National Institute of Water and Atmospheric Research (NIWA) in New
-Zealand runs a continuously cycling multi-model environmental
-forecasting operation called EcoConnect. Global sea state and data
-assimilating regional weather models are driven by operational global
-weather forecasts from the UK Met Office, and these in turn drive
-regional sea state, storm surge, and catchment river flow models, along
-with regional tide prediction and a host of data collection, pre and
-post processing, file archiving, and product generation tasks. The
-operation runs on heterogenous distributed hardware, which includes a
-massively parallel supercomputer and several high end Linux servers. 
+Environmental forecasting systems consist of one or more scientific
+models (weather, sea state, etc.) which, for each new {\em forecast
+cycle}, may drive other ``downstream'' models (which may in turn drive
+others, and so on), along with any associated data collection, data
+processing, product generation and archiving jobs, etc.
 
-From a metascheduling perspective such a system consists of a large set
-of tasks\footnote{A {\em task} is any group of processes to be treated
-as a single entity for scheduling purposes.} with some complicated
-dependencies, that repeat on task-dependent intervals. Also, each task
-has an associated {\em forecast reference time} that determines, in
-part, how it relates to other tasks; for a forecast model this is the
-nominal forecast start time, and for other tasks it is the reference
-time of the associated forecast model. To illustrate, ignoring non-model
-tasks for the moment, EcoConnect's main regional weather model currently
-runs four times daily but it supplies surface winds to a regional sea
-state model that runs only twice daily, and precipitation forecasts to
-catchment river flow models that run 24 times daily.  
+In the normal real time operation of such a system each new forecast
+cycle necessarily finishes before the next one starts, because the new
+cycle must wait on incoming external data of some kind: real time
+atmospheric observations for example. In addition, forecasting sytems
+often consist of just a single small set of models and associated
+processing that all run in every forecast cycle. One can easily imagine,
+therefore, that a control system need only be designed to run a single
+complete forecast cycle at a time. Indeed all forecasting controllers to
+date do this, as far as the author is aware, and in addition they tend
+to be developed in-house as highly system specific Finite State Machines
+that enforce a predetermined correct order of events: ``if A is finished
+and B is finished, then execute C'', and so on.  However, even within a
+single forecast cycle the ``task sequencing'' diagram is such that the
+required hardwired ``task sequencing logic'' can be very convoluted: it
+forms a {\em Directed Acyclic Graph} (REF: example) in which each task
+may depend upon one or more other upstream tasks, and may itself be
+depended on by one or more other downstream tasks; i.e. there are
+multiple parallel streams of execution that branch when one task
+generates output for several downstream tasks, and merge when one task
+takes input from several upstream tasks. This approach is very
+inflexible (imagine adding a new task with its various dependencies into
+the middle of an existing system), and it becomes impossibly convoluted
+as system complexity increases or if we try to relax the sequential
+cycling constraint.
+
+The EcoConnect operation at the National Institute of Water and
+Atmospheric Research (NIWA) in New Zealand, which motivated this work,
+is of sufficient size and complexity, relative to the hardware on which
+it runs, that a more sophisticated kind of control system was required.
+In EcoConnect, a global sea state model and a data assimilating regional
+weather model, both driven by operational global weather forecasts from
+the UK Met Office, drive regional sea state, storm surge, and catchment
+river flow models, along with regional tide prediction and a host of
+data collection, pre and post processing, file archiving, and product
+generation tasks\footnote{future plans include additional deterministic
+regional weather models and a statistical ensemble}. The number of tasks
+in this system, with potentially complex dependencies, is large, but
+another source of complexity is that the {\em forecast cycle} actually
+depends on the task type, in general: our regional weather model runs
+four times daily but it supplies surface winds to a regional sea state
+model that runs only twice daily, and precipitation forecasts to
+catchment river flow models that run 24 times daily as they assimilate
+hourly real time stream flow observations. Another problem arises when
+we consider catchup operation after delays\dots
+
+
+Each task in a forecasting
+system has an associated {\em forecast reference time}; for a forecast
+model this is the nominal forecast start time, and for other tasks it is
+the reference time of the associated forecast model.  In addition, each
+task type repeats on some task-dependent interval.  For instance,
+EcoConnect's   
+
+
+
+From a metascheduling perspective an environmental forecasting system
+can be thought of as a set of interdependent tasks\footnote{A {\em task}
+is any group of processes treated as a single entity for scheduling
+purposes.} that repeat for each new {\em forecast cycle}. and
+
 
 A task is ready to run when its upstream dependencies are satisfied,
 usually by other tasks generating its input files, so it is important to
@@ -310,6 +352,9 @@ enables efficient RPC-based remote control and system monitoring by
 external programs.  Sequenz can be interfaced to existing models and
 tasks with minimal overhead. 
 
+The operation runs on heterogenous distributed
+hardware, which includes a massively parallel supercomputer and several
+Linux servers. 
 
 \subsubsection{Applicability}
 
