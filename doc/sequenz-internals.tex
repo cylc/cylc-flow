@@ -51,85 +51,122 @@ Distributed Resource Managers}, which is not the topic of this paper.
 \end{abstract}
 \section{Introduction}
 
-Environmental forecasting systems consist of one or more scientific
-models (weather, sea state, etc.) which, for each new {\em forecast
-cycle}, may drive other ``downstream'' models (which may in turn drive
-others, and so on), along with any associated data collection, data
-processing, product generation and archiving jobs, etc.
-
-In the normal real time operation of such a system each new forecast
-cycle necessarily finishes before the next one starts, because the new
-cycle must wait on incoming external data of some kind: real time
-atmospheric observations for example. In addition, forecasting sytems
-often consist of just a single small set of models and associated
-processing that all run in every forecast cycle. One can easily imagine,
-therefore, that a control system need only be designed to run a single
-complete forecast cycle at a time. Indeed all forecasting controllers to
-date do this, as far as the author is aware, and in addition they tend
-to be developed in-house as highly system specific Finite State Machines
-that enforce a predetermined correct order of events: ``if A is finished
-and B is finished, then execute C'', and so on.  However, even within a
-single forecast cycle the ``task sequencing'' diagram is such that the
-required hardwired ``task sequencing logic'' can be very convoluted: it
-forms a {\em Directed Acyclic Graph} (REF: example) in which each task
-may depend upon one or more other upstream tasks, and may itself be
-depended on by one or more other downstream tasks; i.e. there are
-multiple parallel streams of execution that branch when one task
-generates output for several downstream tasks, and merge when one task
-takes input from several upstream tasks. This approach is very
-inflexible (imagine adding a new task with its various dependencies into
-the middle of an existing system), and it becomes impossibly convoluted
-as system complexity increases or if we try to relax the sequential
-cycling constraint.
+\subsection{EcoConnect}
 
 The EcoConnect operation at the National Institute of Water and
-Atmospheric Research (NIWA) in New Zealand, which motivated this work,
-is of sufficient size and complexity, relative to the hardware on which
-it runs, that a more sophisticated kind of control system was required.
-In EcoConnect, a global sea state model and a data assimilating regional
-weather model, both driven by operational global weather forecasts from
-the UK Met Office, drive regional sea state, storm surge, and catchment
-river flow models, along with regional tide prediction and a host of
-data collection, pre and post processing, file archiving, and product
-generation tasks\footnote{future plans include additional deterministic
-regional weather models and a statistical ensemble}. The number of tasks
-in this system, with potentially complex dependencies, is large, but
-another source of complexity is that the {\em forecast cycle} actually
-depends on the task type, in general: our regional weather model runs
-four times daily but it supplies surface winds to a regional sea state
-model that runs only twice daily, and precipitation forecasts to
-catchment river flow models that run 24 times daily as they assimilate
-hourly real time stream flow observations. Another problem arises when
-we consider catchup operation after delays\dots
+Atmospheric Research (NIWA) in New Zealand consists of a global sea
+state model and a data assimilating regional weather model, driven by
+real time operational global weather forecasts from the UK Met Office,
+which in turn drive regional sea state, storm surge, and catchment river
+flow models, along with regional tide prediction and a host of data
+collection, preprocessing, postprocessing, file archiving, and product
+generation tasks\footnote{Planned additions to EcoConnect include more
+deterministic regional weather models and a statistical ensemble}.  The
+actual task set depends on the {\em forecast cycle}: the regional weather
+model, for instance, runs four times daily but it supplies surface winds
+to a regional storm surge model that runs only twice daily, and
+precipitation forecasts to catchment river flow models that run 24 times
+daily as they assimilate hourly real time stream flow observations.
+EcoConnect is of sufficient size and complexity that a full forecast
+cycle on current hardware allows little down time between cycles.
+Catching up from a delay is consequently a time consuming process if
+complete forecast cycles have to run in sequence, as is the case with
+most, if not all, existing operational forecast systems (see below).
+This problem motivated the design and development of a more
+sophisticated ``multiflight'' control system, as described in the
+abstract.
 
 
-Each task in a forecasting
-system has an associated {\em forecast reference time}; for a forecast
-model this is the nominal forecast start time, and for other tasks it is
-the reference time of the associated forecast model.  In addition, each
-task type repeats on some task-dependent interval.  For instance,
-EcoConnect's   
+\subsection{Characteristics of Environmental Forecasting Systems}
+
+Environmental forecasting systems consist of a set of tasks\footnote{A
+{\em task} is any group of processes treated as a single entity for
+scheduling purposes.} which may vary depending on the forecast cycle but
+generally speaking will include one or more scientific models driven by
+external real time input (atmospheric observations or forecast fields
+from some other operation, for example) which may in turn drive other
+``downstream'' models, and so on, along with associated data collection,
+preprocessing, postprocessing, product generation, and archiving tasks,
+etc.  Execution order is determined by inter-task dependencies; these
+include dependencies between tasks of different types in the same
+forecast cycle (e.g. a sea state forecast from time T cannot run until
+it receives surface wind fields generated by the weather forecast from
+time T), dependencies between tasks of the same type in different
+forecast cycles (forecast models always depend on their own previous
+instance for the initial ``background model state'') and, potentially,
+dependencies between tasks of different types in different forecast
+cycles (consider how EcoConnect's river models depend on the regional 
+weather model, above).
+
+[Figure XXX] shows a schematic diagram of the dependencies, and
+resulting task execution order, for a single cycle of a simple example
+system.  Disregarding the extent of the ``nodes'' this forms a {\em
+Directed Acyclic Graph}. Each task may depend upon one or more other
+upstream tasks, and may itself be depended on by one or more other
+downstream tasks; in other words there are multiple parallel streams of
+execution that branch when one task generates output for several
+downstream tasks, and merge when one task takes input from several
+upstream tasks. This in itself presents a challenging control system
+design problem, but note that it only represents optimal ``task
+sequencing'' during normal real time operation when the gap between
+cycles allows us to ignore the previous instance dependence of the
+forecast models. If the external driving data is already available, such
+as during catchup to real time after a delay or when running the system
+over historical case study periods, efficiency can be dramatically
+increased, in principle, by running tasks from many different forecast
+cycles at once, dependencies allowing, as illustrated in [Figure XXX].
+To do this though, one must properly take account of {\em all}
+dependencies in the system, not just those that operate within a single
+forecast cycle.
 
 
+\subsection{Existing Forecast Control Systems}
 
-From a metascheduling perspective an environmental forecasting system
-can be thought of as a set of interdependent tasks\footnote{A {\em task}
-is any group of processes treated as a single entity for scheduling
-purposes.} that repeat for each new {\em forecast cycle}. and
+Existing forecast control systems are invariably in-house
+custom-designed programs that are not documented in the literature
+because they are highly system-specific.  The simplest such system
+might, for example, sequentially execute a predefined list of tasks for
+each forecast cycle, which the operator guarantees is ordered correctly
+so that no dependencies are violated.  This is inefficient because it
+ignores the inherent parallelism, within a forecast cycle, allowed by
+the system dependencies.  A better solution, and perhaps the most
+obvious design, is a system-specific Finite State Machine that enforces
+a predetermined but non-linear order of operations for each forecast
+cycle using hard coded sequencing logic: {\em if task A has generated
+file X, and task B has finished, then start executing task C}, etc. This
+works well for simple systems but the coding becomes increasingly
+convoluted as system complexity increases, inevitably leading to
+inflexibility and fragility (consider adding a new task with
+dependencies into an existing system). In addition, as far as the author
+is aware existing control systems employ a drastic simplifying
+principle: one forecast cycle is required to complete before the next
+begins. This allows the difficult previous cycle dependence of forecast
+models to be ignored without impacting greatly on normal real time
+operations (for which there is necessarily a gap between cycles anyway
+as the system waits on its external driving data). This constraint is a
+significant impediment to system throughput, however, when all external
+driving data is already available. This clearly applies to running the
+system over historical case study periods, but also, for an operation,
+when catching up to real time after a delay; this can be a real problem
+if computational resource is limited so that a full system forecast
+cycle takes little less than real time.  Relaxing this constraint within
+the confines of an already complex hard coded finite state machine,
+however, seems next to impossible.
 
+\subsection{Dynamic Metascheduling}
+
+Each task in a forecasting system has an associated {\em forecast
+reference time}; for a forecast model this is the nominal forecast start
+time, and for other tasks it is the reference time of the associated
+forecast model.  In addition, each task type repeats on some
+task-dependent interval.  For instance, EcoConnect's   
 
 A task is ready to run when its upstream dependencies are satisfied,
 usually by other tasks generating its input files, so it is important to
-consider what kinds of dependencies occur in the system.  The ``task
-sequencing'' diagram for all tasks with a given reference time forms a
-{\em Directed Acyclic Graph} (REF: example): a task may depend upon one
-or more cotemporal upstream tasks, and may itself be depended on by one
-or more downstream tasks. In other words, multiple parallel streams of
-execution that branch when one task generates output for several
-downstream tasks, and merge when one task takes input from several
-upstream tasks.  However, there are also several kinds of non-cotemporal
-(different reference time) dependence.  Forecast models generally depend
-on their own previous instance, because one forecast generates the {\em
+consider what kinds of dependencies occur in the system. 
+However, there are also several kinds of non-cotemporal (different
+reference time) dependence.  Forecast models generally depend on their
+own previous instance, because one forecast generates the {\em
 background model state} for the next.  In addition, some forecast models
 may depend explicitly on earlier tasks of a different type, as well as
 on their own previous instance.  Post processing tasks, on the other
@@ -140,61 +177,7 @@ recent previous regional weather forecast.  Finally, some tasks, such as
 those that wait on external input data, and tide models, may have no
 upstream dependencies at all.
 
-\subsection{Metascheduling Methods}
-
-It is not easy to automate a complex continously cycling system like
-this in a flexible manner. Existing controllers, as far as the author is
-aware, invariably handle the aforementioned inconvenient non-cotemporal
-dependencies by ignoring them and requiring that each {\em forecast
-cycle} (i.e. the set of all tasks with a given reference time) completes
-entirely before the next cycle starts. Then, the simplest control
-solution is arguably a highly system-specific Finite State Machine that
-enforces a predetermined (but possibly non-linear) order of operations
-using hard coded sequencing logic: {\em if A has generated file X, and B
-has finished, then start executing C}, etc. a program that launches a
-specified set of tasks in a specified predetermined order, perhaps with
-some cotemporal
-tasks executing in parallel.
-
-In
-fact it is difficult to do otherwise with a system-specific Finite State
-Machine, but to be fair this simplification is quite natural for normal
-real time operations where there is necessarily a gap between cycles
-while the system waits on external input, such as real time
-observations, so successive cycles won't overlap in any case.  
-
- or some form of Unfortunately, the former method is highly
-inefficient because it is likely that many tasks could execute in
-parallel, and the latter quickly becomes very convoluted and inflexible
-as system complexity increases. In addition, forecasting control systems
-typically demand that all tasks from one cycle complete before starting
-the next cycle, even though any task can run, in principle, as soon as
-its own prerequisites are satisfied, regardless of whether any tasks
-from previous cycles are still running or yet to start.  While this
-simplification is reasonable in normal real time operation where time is
-spent between cycles waiting on external input (e.g. new observational
-data), it is a significant impediment when external input for multiple
-cycles is already available, such as when catching up after system
-downtime in a resource constrained computational environment, or when
-running the entire system over historical case study periods.
-Attempting to relax this constraint to achieve ``asynchronous''
-behaviour in a hard coded finite state machine, however, dramatically
-exacerbates the complexity of 
-
-
-
-
-The typical in house controller is a Finite
-State Machine with hard coded task-specific sequencing logic, which is
-inevitably convoluted, fragile, and inflexible (imagine adding a new
-forecast model with new dependencies and associated pre- and
-post-processing tasks in the middle of an existing system).
-
-The
-constraint is, however, a serious impediment during catch up operation
-after delays, particularly in a system with limited compute resource,
-and likewise if we want to run the entire system, or part thereof, over
-historical case study periods. That is because when all external input
+That is because when all external input
 is already available the dependencies described above allow a lot of
 forecast cycle overlap or parallelism.  For example, as soon as the main
 ``driving model'' at the top of the single-cycle dependency graph for a
@@ -398,7 +381,7 @@ sequencing design described in this paper simplifies the problem to such
 an extent that it is unlikely any generic framework could compete.  
 
 
-\section{{\em Sequenz} Implementation}
+\section{Implementation}
 
 To implement dynamic sequencing we need a specific {\em task management}
 scheme that controls when tasks will be created and destroyed, and so
