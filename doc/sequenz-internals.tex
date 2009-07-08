@@ -136,51 +136,61 @@ explicitly specified.
 \subsubsection{A New Approach}
 
 The Finite State Machine control system design described above has
-several deficiencies. Firstly, it is highly specific to the system it
-was original designed for, and is thus largely useless to other
-forecasting centers. Secondly, while it is relatively straightforward to
-code up initially, the task sequencing logic becomes increasingly
-convoluted as system complexity increases, and this inevitably leads to
-inflexibility and fragility (consider adding a new task with
-dependencies into an existing system). Finally, requiring that one
-forecast cycle completes before the next begins dramatically and
-unnecessarily impedes system throughput when the external driving data
-for then next cycle(s) are already available, such as when running the
-system over historical periods for case study based research, system
-tests, or when catching up to real time operation after a significant
-delay.
+several deficiencies. Firstly, it is highly system-specific and is thus
+largely useless to other forecasting centers. Secondly, while it may be
+relatively straightforward to implement the initial design, the task
+sequencing logic becomes increasingly convoluted as system complexity
+increases, and this inevitably leads to inflexibility and fragility
+(consider adding a new task with dependencies into an existing system).
+Finally, requiring that one forecast cycle completes before the next
+begins dramatically and unnecessarily impedes system throughput when the
+external driving data for the next cycle(s) are already available. This
+occurs, for example, when running the system over historical case study
+periods, for system tests on existing data and, most importantly for
+operational systems, when catching up to real time operation after a
+significant delay. This is in fact what motivated the design and
+development of the ``multiflight'' metascheduler described in this
+paper: the EcoConnect forecasting system is of sufficient size and
+complexity that a full forecast cycle on NIWA's current hardware leaves
+little down time between cycles, so catching up to real time operation
+after a delay can take a very long time if complete cycles have to be
+run in sequence. 
 
-While the dependencies between tasks do not allow complete forecast
-cycles to overlap as if they were independent, equally they do not
-require a complete cycle to finish before the next one starts.
-Optimally fast catchup operation (and fast historical case study
-throughput, etc.) is only feasible if we can abandon the system-wide
-``forecast cycle'' as a concept that has holds any meaning for task
-scheduling purposes and instead take proper account of {\em all} task
-dependencies, not just those relating tasks within the same forecast
-cycle. [Figure YYY] shows another schematic of our simple example
-system, which is this time constrained only by real dependencies,
-without regard for a global forecast cycle. Consider forecast model
-[BLAH], which is the uppermost task in the single cycle dependency graph
-[Figure XXX]: it has no upstream dependencies in the same cycle other
-than the task(s) that receives the incoming external driving data.
-Therefore, if the external driving data is already available, model
-[BLAH] should be able to start a new forecast as soon as it finishes the
-current one regardless of how much downstream processing is still going
-on, or is yet to start, in the current cycle or in any previous cycle.
-The same argument holds, although to a lesser extent because of the
-additional upstream dependencies, for the other tasks lower down in the
-single cycle dependency graph.  As the system catches up to real time
-and is again constrained by availability of the external driving data it
-will naturally transition to a linear sequence of complete cycles as in
-[Figure XXX]. 
+Unfortunately, while complete forecast cycles do not necessarily have to
+run in sequence, we cannot just overlap them at will as if they were
+completely independent either. The only way to achieve optimal task
+sequencing, and thereby the fastest possible catchup operation etc., is
+to abandon the system-wide ``forecast cycle'' as a concept that holds
+any meaning for task scheduling purposes, and instead take proper
+account of {\em all} task dependencies, not just those that relate tasks
+within the same cycle.
 
-This problem is in fact what motivated the design and development of the
-``multiflight'' metascheduler described in this paper: the EcoConnect
-forecasting system is of sufficient size and complexity that a full
-forecast cycle on NIWA's current hardware leaves little down time
-between cycles, so catching up to real time operation after a delay can
-take a very long time if complete cycles have to be run in sequence. 
+It is unfortunately difficult to represent the task sequencing behaviour
+that results from this schematically, even for the simple example system
+of [Figure XXX]. But it can be understood as follows. Task FOO is the
+uppermost task in the single cycle dependency graph, typically it will
+be a computuationally intensive atmospheric model. Being a forecast
+model, FOO(T) depends upon its own previous instance FOO(T-1), but it
+has no upstream dependencies in cycle T except for the incoming external
+data. Therefore, if the external data is already available FOO(T) can
+start executing as soon as FOO(T-1) finishes, regardless of how much
+downstream processing is yet to be completed in cycle $T-1$ or any
+previous cycle; i.e.\ model FOO can in principle run continuously until
+it catches up to real time and has to wait on new external data again.
+The other tasks, which are more or less lower on the single cycle
+dependency graph, will not be able to run continuously like FOO, in
+general, because they also have upstream dependencies in the same
+forecast cycle. If task BAR(T), which depends on FOO(T), is also a
+forecast model it will be able to run as soon as BAR(T-1) and FOO(T)
+have finished. Otherwise, it can run as soon as FOO(T) alone has
+finished, potentially (depending on relative execution times)
+overlapping with BAR(T-1). In any case, it only needs to wait on its own
+upstream dependencies, regardless of any other processing that is still
+going on, or yet to be completed, elsewhere in the system. After a while
+there will be tasks from many different forecast cycles executing at
+once, but as the system catches up to real time and is again constrained
+by availability of the external driving data it will naturally
+transition to a linear sequence of complete cycles as in [Figure XXX]. 
 
 It seemed almost impossible to implement this new approach within the
 confines of an already convoluted Finite State Machine, so we had to
