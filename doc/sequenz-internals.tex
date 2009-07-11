@@ -4,6 +4,7 @@
 \usepackage{listings}
 \usepackage{amsmath}
 \usepackage{verbatim}
+\usepackage{graphicx}
 
 \lstset{language=Python}
 
@@ -80,6 +81,38 @@ forecasts to catchment river flow models that run 24 times daily as they
 assimilate hourly real time stream flow observations. 
 
 \subsection{Control Systems}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=4cm]{dependencies-one}
+    \end{center}
+    \caption{\small Dependencies One}
+    \label{fig-dep-one}
+\end{figure}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=4cm]{dependencies-two}
+    \end{center}
+    \caption{\small Dependencies Two}
+    \label{fig-dep-two}
+\end{figure}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=4cm]{timeline-one}
+    \end{center}
+    \caption{\small Timeline One}
+    \label{fig-tim-one}
+\end{figure}
+
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=4cm]{timeline-two}
+    \end{center}
+    \caption{\small Timeline Two}
+    \label{fig-time-two}
+\end{figure}
 
 Task scheduling has to be carefully controlled in a system like this so
 that no task is executed before its dependencies are satisfied (i.e.\
