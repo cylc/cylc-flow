@@ -57,28 +57,32 @@ Distributed Resource Managers}, which is not the topic of this paper.
 
 \subsection{Operational Forecasting Systems}
 
-In environmental forecasting operations a set of one or more scientific
-models and associated tasks\footnote{A {\em task} is any group of
-processes treated as a single entity for scheduling purposes.} for data
-collection, quality control, preprocessing, postprocessing, product
-generation, archiving, etc., is regularly cycled, driven by external
-real time input (e.g.\ atmospheric observations or forecast fields from
-another operation). For example, the EcoConnect forecasting system at
+Environmental forecasting operations generate a set of forecast products
+at regular intervals (48 hour weather, sea state, and river flow
+predictions, for example) using a collection of connected scientific
+models, and any number of associated data processing tasks\footnote{A
+{\em task} is any group of processes treated as a single entity for
+scheduling purposes.} driven by real time observational data or forecast
+fields from another operation. In the EcoConnect Forecasting System at
 the National Institute of Water and Atmospheric Research (NIWA) in New
-Zealand consists of a global sea state model and a data assimilating
-regional weather model, driven by real time atmospheric observations and
-operational global weather forecasts from the UK Met Office, which in
-turn drive regional sea state, storm surge, and catchment river models,
-along with regional tide prediction and a large number of processing
-tasks\footnote{Plans for EcoConnect include additional deterministic
-regional weather models and a statistical ensemble of weather models.}.
-Every task has an associated {\em forecast cycle}, e.g.\ the daily 06
-UTC run, and the subset of tasks to run may depend on the forecast
-cycle.  The regional weather model in EcoConnect, for instance, runs at
-regular 6 hour intervals but it supplies surface pressures to a regional
-storm surge model that runs only twice daily, and precipitation
-forecasts to catchment river flow models that run 24 times daily as they
-assimilate hourly real time stream flow observations. 
+Zealand, for example, real time atmospheric and stream flow observations
+and operational global weather forecasts from the UK Met Office drive a
+global sea state model and a data assimilating regional weather model,
+which in turn drive regional sea state, storm surge, catchment river
+models, regional tide prediction, and a large number of tasks for data
+collection, quality control, preprocessing, postprocessing, product
+generation, and archiving.\footnote{Plans for EcoConnect include
+additional deterministic regional weather models and a statistical
+ensemble of weather models.}.  Each new {\em forecast cycle} is
+initiated by the arrival of a new batch of the external driving data,
+which will be delayed somewhat with respect to the cycle's {\em
+reference time}, the nominal start time of the model forecasts.  Every
+task does not necessarily run in every forecast cycle. The regional
+weather model in EcoConnect, for instance, runs four times daily in the
+00, 06, 12, and 18 UTC cycles, but it supplies surface pressures to a
+regional storm surge model that runs only twice daily, at 00 and 12 UTC,
+and precipitation accumulations to catchment river models that every
+hour as they assimilate real time stream flow observations. 
 
 \subsection{Control Systems}
 
