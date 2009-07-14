@@ -284,22 +284,12 @@ class.
 
 \begin{comment}
 
-Each task in a forecasting system has an associated {\em forecast
-reference time}; for a forecast model this is the nominal forecast start
-time, and for other tasks it is the reference time of the associated
-forecast model.  And, in addition, each task type repeats on some
-task-dependent interval. 
-
-A task is ready to run when its upstream dependencies are satisfied,
-usually by way other tasks generating its input files, so it is
-important to consider what kinds of dependencies occur in the system.
-
-However, there are also several kinds of non-cotemporal (different
-reference time) dependence.  Forecast models generally depend on their
-own previous instance, because one forecast generates the {\em
-background model state} for the next.  In addition, some forecast models
-may depend explicitly on earlier tasks of a different type, as well as
-on their own previous instance.  Post processing tasks, on the other
+there are several kinds of non-cotemporal (different reference time)
+dependence.  Forecast models depend on their own previous instance,
+because one forecast generates the {\em background model state} for the
+next.  In addition, some forecast models may depend explicitly on
+earlier tasks of a different type, as well as on their own previous
+instance.  Post processing tasks, on the other
 hand, do not depend on their own previous instance, strictly speaking,
 but they depend on cotemporal forecast models that do. EcoConnect's
 hourly river flow forecasts, for example, take input from the most
@@ -307,13 +297,12 @@ recent previous regional weather forecast.  Finally, some tasks, such as
 those that wait on external input data, and tide models, may have no
 upstream dependencies at all.
 
- Non-forecast
-model tasks can even overlap with their own previous instances, if the
-opportunity arises (this occurs when a post processing task takes longer
-to run than the delay between its upstream model starting and it
-starting).  System throughput can be greatly increased by allowing tasks
-from many different forecast cycles to run simultaneously where
-dependencies allow.
+Non-forecast model tasks can even overlap with their own previous
+instances, if the opportunity arises (this occurs when a post processing
+task takes longer to run than the delay between its upstream model
+starting and it starting).  System throughput can be greatly increased
+by allowing tasks from many different forecast cycles to run
+simultaneously where dependencies allow.
 
 This could be done by checking for the existence of required inputs
 directly, or by monitoring the state of the other tasks that are known
@@ -321,10 +310,7 @@ to provide the inputs in each case (are they finished yet?).
 
 \subsection{Dynamic Metascheduling}
 
-Dynamic Metascheduling is an object oriented approach to the problem.
-Within the control program each task is represented by a self-contained
-{\em task object} that knows nothing about other tasks in the system but
-does know its own prerequisites (inputs) and outputs, and can interact
+knows its own prerequisites (inputs) and outputs, and can interact
 with other tasks to negotiate dependencies so that correct sequencing
 emerges naturally at run time.  The entire sequencing problem is now
 contained within the task interaction step, which is almost trivial
