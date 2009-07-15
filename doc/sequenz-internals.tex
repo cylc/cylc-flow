@@ -81,24 +81,24 @@ daily, in the 00 and 12 UTC cycles, and precipitation accumulations to
 catchment river models that run on an hourly cycle as they assimilate
 real time stream flow observations. 
 
-A control system for such an operation must carefully manage task
+The control system for such an operation must carefully manage task
 scheduling to achieve good system throughput without attempting to
 execute any task before its prerequisites have been satisfied by the
 other tasks in the system. This is relatively straightforward to arrange
-in system-specific ways for normal real time operation, where
-consecutive forecast cycles are necessarily separated by a time gap as
-the system waits on new external driving data. But it is very difficult,
-because of intercycle dependencies, to exploit the greater potential for
-parallel execution that exists when the external driving data is
-available in advance. This is a serious problem for operations that,
-because of hardware limitations, have little down time between cycles
-and thus take dramatically longer than necessary to catch up to real
-time after delays. The ability to run tasks from many different forecast
-cycles at once, where dependencies allow, is also extremely useful for
-parallel test systems that must slowly catch up to a main operation, for
-running the entire system (or part thereof) over historical case study
-periods, and sometimes even during real time operation: see the
-EcoConnect catchment model's unusual mode of operation, below.
+for normal real time operation, where consecutive forecast cycles are
+necessarily separated by a time gap as the system waits on new external
+driving data. But it is very difficult, because of intercycle
+dependencies, to exploit the greater potential for parallel execution
+that exists when the external driving data is available in advance. This
+is a serious problem for operations that, because of hardware
+limitations, have little down time between cycles and thus take
+dramatically longer than necessary to catch up to real time after
+delays. The ability to run tasks from many different forecast cycles at
+once, where dependencies allow, is also extremely useful for parallel
+test systems that must slowly catch up to a main operation, for running
+the entire system (or part thereof) over historical case study periods,
+and sometimes even during real time operation: see the EcoConnect
+catchment model's unusual mode of operation, below.
 
 
 \subsection{Existing Control Systems}
