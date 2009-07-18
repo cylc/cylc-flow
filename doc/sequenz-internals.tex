@@ -83,24 +83,25 @@ hourly cycle as they assimilate real time stream flow observations.
 
 \section{Control Systems}
 
-Control systems for forecasting operations must carefully manage task
+A control system for such an operation must carefully manage task
 scheduling to achieve good system throughput without attempting to
-execute any task before its prerequisites have been satisfied by the
-other tasks in the system. This is relatively straightforward to arrange
-for normal real time operation, where consecutive forecast cycles are
-separated by a time gap as the system waits on new external driving
-data. But it is very difficult, because of intercycle dependencies, to
-exploit the potential for simultaneous execution of tasks from different
-forecast cycles that exists when the external driving data is available
-in advance. This is a serious problem for operations that, because of
-hardware limitations, have little down time between cycles and thus take
-dramatically longer than necessary to catch up to real time after
-delays. The ability to run tasks from many different forecast cycles at
-once, where dependencies allow, is also extremely useful for parallel
-test systems that must slowly catch up to a main operation, for running
-the entire system (or part thereof) over historical case study periods,
-and sometimes even during real time operation: see the EcoConnect
-catchment model's unusual mode of operation, below.
+execute any task before its prerequisites have been satisfied, usually
+by other tasks in the system. This is relatively straightforward to
+arrange for normal real time operation, where consecutive forecast
+cycles are separated by a time gap as the system waits on new external
+driving data. But it is very difficult, because of intercycle
+dependencies, to exploit the potential for simultaneous execution of
+tasks from different forecast cycles that exists when the external
+driving data is available in advance. This is a serious problem for
+operations that, because of hardware limitations, have little down time
+between cycles and thus take dramatically longer than necessary to catch
+up to real time after delays. The ability to run tasks from many
+different forecast cycles at once, where dependencies allow, is also
+extremely useful for parallel test systems that must slowly catch up to
+a main operation, for running the entire system (or part thereof) over
+historical case study periods, and sometimes even during real time
+operation: see the EcoConnect catchment model's unusual mode of
+operation, below.
 
 
 \subsection{Existing Systems}
@@ -129,7 +130,7 @@ if one cycle always completes before the next starts then any intercycle
 dependencies are implicitly satisfied and can be ignored. In any
 case, according to the diagram, each task may depend upon one or more
 other upstream tasks, and one or more other downstream tasks may in turn
-depend on it. A control system could therefore allow multiple parallel
+depend on it. A control system should therefore allow multiple parallel
 streams of execution that branch when one task generates output for
 several downstream tasks, and merge when one task takes input from
 several upstream tasks. 
@@ -160,9 +161,9 @@ section through the graph intersects all tasks executing in parallel
 at the time, but the vertical ordering of tasks is not meaningful.
 
 The simplest control system that could manage this might be one that
-runs tasks in order from an externally defined list, perhaps providing
-some mechanism for the user to specify tasks that can run in parallel.
-Then, arguably, the obvious step up in sophistication is a Finite State
+runs each forecast cycle according to a user defined external task list,
+perhaps with some means of crudely specifying tasks that can run in
+parallel.  A more sophisticated system can be based on a Finite State
 Machine that enforces a predetermined non-linear execution schedule
 defined by the single cycle dependency graph for the system: {\em IF
 task $b$ has finished AND task $c$ has finished THEN begin executing
@@ -183,10 +184,10 @@ of continuously dependent system described in this paper.}
 
 The first of the two basic designs above is quite flexible in that
 specific tasks are not hard coded into the main program, but it relies
-on the user to define which tasks can run in parallel, probably by
-primitive means, and is unlikely to be capable of approaching the
-optimal single cycle job schedule for a realistic system. The Finite
-State Machine on the other hand, can be deliberately designed to follow
+on the user to define which tasks can run in parallel, most probably in
+a very crude way, and is unlikely to be capable of approaching the
+optimal single cycle job schedule for a realistic system.  The Finite
+State Machine, on the other hand, can be deliberately designed to follow
 the optimal single cycle job schedule for its particular hard coded task
 set. Unfortunately though, this is highly system-specific, and hard
 coded finite state logic becomes increasingly convoluted as system
@@ -216,7 +217,8 @@ account of {\em all} dependencies regardless of forecast cycle.
     simple example system, with the least possible intercycle
     dependence: each of the tasks that represent forecast models ($a$,
     $b$, and $c$) depends on its own previous instance for the initial
-    ``background model state''.} 
+    background state. The dashed arrows show how these intercycle
+    dependencies connect to the next and previous forecast cycles.} 
     \label{fig-dep-two}
 \end{figure}
 Figure \ref{fig-dep-two} shows the dependency graph for two consecutive
@@ -231,72 +233,137 @@ dependencies that link different task types and span more than one
 forecast cycle (c.f.\ the EcoConnect catchment model's dependence on the
 regional weather model, as described above). 
 
-Figure \ref{fig-time-two} shows the optimal task schedule for the
-example system, updated for the dependencies of Figure
-\ref{fig-dep-two}, when the external driving data is available in
-advance (for catchup operation, etc., as explained above).
+Figure \ref{fig-time-two} compares optimal job schedules with 
+and without proper handling of intercycle dependencies, for our simple
+example system when all external driving data are available in advance
+(i.e.\ catchup operation, case study mode, etc., as explained above).
 \begin{figure} 
     \begin{center} 
         \includegraphics[width=8cm]{timeline-two}
     \end{center} 
-    \caption{\small Optimal job schedule for several consecutive cycles
-    of our example system, with dependencies as shown in Figure
-    \ref{fig-dep-one} and all external driving data available.} 
+    \caption{\small Job schedules for our simple example system when the
+    external driving data are available in advance (i.e.\ catchup or case
+    study operation). Above the time axis is the optimal job schedule
+    obtained when the system is constrained only by the dependencies
+    shown in Figure \ref{fig-dep-two}. Below the time axis is the best
+    that can be achieved when intercycle dependencies are ignored.} 
     \label{fig-time-two}
 \end{figure} 
-The initial task $a$, which has no dependence on cotemporal (same
-reference time) upstream tasks, can run continuously regardless of how
-much downstream processing is yet to be completed in any previous cycle.
-This is good because the initial forecast task is normally a resource
-intensive atmosphere or ocean model (in fact there may be two or more
-such initial tasks that can both run continuously, in parallel). In
-practice the initial tasks would actually depend on cotemporal upstream
-tasks that wait on the external driving data, but this does not change
-the result because data collection tasks return immediately when their
-data is already available. The other tasks can repeat at regular short
-intervals, for which the interval gap is the difference between their
-own run length and the maximum length of any cotemporal upstream
-execution paths that they depend on. Thus Task $c$ runs continuously,
-and consecutive instances of task $e$ can actually overlap to a
-significant degree. At any one time tasks from three different cycles
-can run simultaneously, even for this very simple system, and efficiency
-is clearly far in advance of the sequential cycling schedule of Figure
-\ref{fig-time-one} (for which the time gap between the two cycles should
-be shrunk to zero, for comparison). 
+The initial task $a$, which would normally be a resource intensive
+atmosphere or ocean model, has no dependence on cotemporal (same
+reference time) upstream tasks and can therefore run continuously,
+regardless of how much downstream processing is yet to be
+completed in any previous cycle. There could in fact be several such
+initial forecast tasks that can run continuously, in parallel. In
+practice initial forecast tasks would depend on cotemporal upstream
+tasks that wait on the external driving data, but they would return 
+immediately when the external data is already available, so the result
+stands. The other tasks can repeat at regular short intervals; the
+interval gap is [CHECK THIS].
+%the difference between their own run length and the maximum length of
+%any cotemporal upstream execution paths that they depend on. 
+In this case task $c$ can also run continuously, and consecutive
+instances of task $e$ can actually overlap ($e$ represents a post
+processing task with no previous instance dependence). Even for this
+very simple system, tasks from three different cycles run simultaneously
+at any one time, and overall system efficiency is clearly far in advance
+of the sequential cycling schedule.  
 
 In the following sections we describe a new algorithm that achieves
 continuous optimal metascheduling as shown in Figure \ref{fig-time-two}.
 As the system catches up to real time and is again constrained by
-availability of the external driving data it smoothly transitions to a
+availability of external driving data it smoothly transitions to a
 linear sequence of distinct cycles, as in Figure \ref{fig-time-one}. In
 contrast to Finite State Machine controllers, the new method is
 completely generic (i.e.\ not system-specific), extremely flexible, and
 widely applicable.  
 
 
+
 \section{Object Oriented Dynamic Metascheduling}
 
-As discussed, the concept of a global ``forecast cycle'' has to be
-replaced with a distinct ``forecast reference time'' for each task, and
-all dependencies handled properly regardless of reference time. This
-suggests the possibility of an object oriented design in which members
-of an evolving group of self contained task proxy objects, each with
-their own reference time and each reflecting the state of the external
-tasks they represent, interact with each other to negotiate dependencies
-at run time.  The flexibility of this approach is self-evident, if it
-can be made to work.  Dynamic negotiation of dependencies means there is
-absolutely no need for hardwired system-specific task sequencing logic,
-and by means of object polymorphism\footnote{Polymorphism is the ability
-of one type to appear as and be used like another type. In OOP languages
-with inheritance, this usually refers to the ability to treat derived
-class objects as if they were members of a base class so that, for
-instance, a group of mixed-type objects can all be treated as members of
-a common base class while retaining their specialized derived class
-behaviour.} a control system can be designed that will, without
-modification, automatically handle any new task that is derived from
-(inherits the properties of) the original task base class.  The new
-control system, as described below, is implemented the object oriented
-scripting language, Python.
+In order to let tasks from multiple cycles run at once where
+dependencies allow, as discussed above, we need to stop treating the
+forecast cycle as a sequentially incremented system-wide
+parameter and instead treat the system as a single large batch of tasks
+with their own independent forecast reference times. 
+
+
+\subsection{The Metascheduling Algorithm}
+
+The new algorithm is actually very simple, and the following high level
+description should enable the reader to understand how it achieves
+optimal cycle independent metascheduling. Everything else is arguably
+just implementation, although some important aspects of the
+implementation are not trivial and will be discussed later.
+
+\begin{itemize}
+
+    \item The control system maintains a pool of self contained {\em
+        task proxy objects} that represent each real task. 
+       
+    \item The internal state of a task proxy object always reflects the
+        progress of the real task it represents (how this information is
+        communicated will be explained later). This state information
+        includes, but is not limited to:
+
+        \begin{itemize}
+
+            \item task name.
+
+            \item task owner, if necessary (who the task should run as).
+
+            \item associated external (real) task.  
+
+            \item UTC {\em forecast reference time}, e.g. $2010012418$
+        
+            \item current run status: {\em waiting}, {\em running}, 
+                {\em finished}, or {\em failed}. 
+
+            \item a list of prerequisites, e.g.\ {\em file FOO is
+                ready}, and whether or not they are satisfied yet.
+
+            \item a list of important outputs completed so far by the
+                associated external task, e.g.\ {\em file FOO is ready}.
+
+        \end{itemize}
+       
+    \item A task proxy object can launch its associated external task
+        when all of its prerequisites are satisfied.
+
+    \item A task proxy object can interact with each other task proxy
+        objects to find out if any of their completed outputs can
+        satisfy any of its prerequisites (dependency negotiation). 
+
+    \item The control system gets the task pool to interact and
+        negotiate dependencies whenever a new output is completed by any
+        one task.
+ 
+\end{itemize}
+
+This method, in principle, solves all of our problems at once.
+Dependency negotation is reference time agnostic so intercycle
+dependencies are no longer any more difficult to deal with than same
+cycle dependencies.  and, because every prerequisite will be satisfied
+as soon another task has a matching output, optimal metascheduling will
+emerge naturally at run time without any need for complex
+system-specific task sequencing logic whatsoever.  The method is also
+extremely flexible because of the fact that task proxy objects only care
+about their own prerequisites and outputs and do not need to know what
+other tasks exist in the system or who is expected to satisfy each of
+their prerequisites; they just interact without whichever other tasks
+happen to be in the pool.  Consequently existing tasks can be taken out
+of the system, or new ones added, without any change to the control
+algorithm.  Further, by means of object
+polymorphism\footnote{Polymorphism is the ability of one type to appear
+as and be used like another type. In OOP languages with inheritance,
+this usually refers to the ability to treat derived class objects as if
+they were members of a base class so that, for instance, a group of
+mixed-type objects can all be treated as members of a common base class
+while retaining their specialized derived class behaviour.} a control
+system can be designed that will automatically handle any future task so
+long as it is derived from (inherits the properties of) the original
+task base class.
 
 \subsection{Task Proxy Objects}
 
@@ -305,28 +372,30 @@ blah\dots
 \label{sec-task-messaging}
 \subsection{Communicating with Real Tasks}
 
-The internal state of our task proxy objects must accurately reflect the
-progress of their real external counterparts.  There is a temptation to
-try track external task progress by watching for the appearance of
-critical output files, because most task prerequisites are just files
-generated by other tasks. But we have to be sure that a newly detected
-file is complete, not just that it exists, which is difficult to do in
-general.  On Linux one could insist that every completed output file is
-immediately renamed by the generating task, and have the controller use
-{\em inotify} to watch for the sudden appearance of the new file
-(because file rename operations are atomic when the source and target
-are on the same file system) [REF: Simon, if he wants]. But this is not
-platform independent, and most forecast systems run on heterogeneous
-distributed hardware. More importantly though, prerequisites are not
-necessarily single files: tasks could conceivably depend on completion
-of a large sets of files, database updates, or a data transfers by
-remote procedure call, for instance. Consequently we chose to use a high
-level messaging system for communication between external tasks and the
-control system. This is entirely platform independent and allows tasks
-to be triggered off any conceivable condition. In the case of a file
-prerequisite, for example, rather than detecting the existence of the
-real file, the controller receives a message saying ``file foo is
-ready'', or similar, from the task that has just generated the file.
+Our task proxy objects must keep track of progress in their external
+counterparts. Most task prerequisites are just files generated by other
+tasks, so it is tempting to have the controller use the appearance of
+expected new output files as a proxy for task progress. But we have to
+be sure that a newly detected file is complete, not just that it exists,
+and it is difficult to do this in an OS-independent way (using {\em
+inotify} on Linux, for example.). 
+%On Linux one could insist that every completed output file is
+%immediately renamed by the generating task, and have the controller use
+%{\em inotify} to watch for the sudden appearance of the new file
+%(because file rename operations are atomic when the source and target
+%are on the same file system) [REF: Simon, if he wants]. But this is not
+%platform independent, and most forecast systems run on heterogeneous
+%distributed hardware. 
+More importantly though, prerequisites are not necessarily single files:
+a task could conceivably depend on completion of a large set of files, a
+database update, or a data transfer by remote procedure call, for
+instance. Consequently we chose to use a high level messaging system for
+communication between external tasks and the control system. This is
+platform independent and allows tasks to be triggered off any
+conceivable condition. For example, rather than detecting the existence
+of the file $foo.bar$, the controller would receive a message saying
+``file $foo.bar$ is ready for use'', or similar, from the task that has
+just generated the file.
 
 The Python Remote Object Protocal (Pyro) allows external programs to
 communicate directly, across the network, with specific objects inside
