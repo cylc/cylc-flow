@@ -160,41 +160,42 @@ they will run immediately for the purposes of this paper. A vertical
 section through the graph intersects all tasks executing in parallel
 at the time, but the vertical ordering of tasks is not meaningful.
 
-The simplest control system that could manage this might be one that
-runs a forecast cycle's worth of tasks in an order defined in an
-external task list, which the operator guarantees will not violate any
-dependencies, and perhaps with some means of crudely specifying tasks
-that can run in parallel. A more sophisticated system can be based on a
-Finite State Machine that enforces a predetermined non-linear execution
-schedule defined by the single cycle dependency graph for the system:
-{\em IF task $b$ has finished AND task $c$ has finished THEN begin
-executing task $d$}, etc.  Both of these designs are easy to comprehend
-and reasonably straightforward to implement\footnote{We have glossed
-over many implementation details here that are highly non-trivial, but
-they are nevertheless irrelevant to the high level metascheduling
-algorithm.} and, as far as the author is aware, most existing
-operational forecast control systems are variations on one or the other
-(it is difficult to be sure of this, however, because they are
-invariably system-specific in-house projects that are not documented in
-the literature!).\footnote{DAGMan, which is part of the Condor
-distributed workload management system [REF:...], is a generic
-metascheduler for sets of jobs with dependencies, but it does not appear
-to allow the kind of continuously dependent system described in this
-paper.}
+ who must
+guarantee that there are no dependency violations.  There could be some
+means of crudely specifying tasks that can run in parallel but for a
+realistic system it would be very difficult to get this to approach the
+optimal single cycle job schedule.
 
-\subsubsection{Deficiencies}
-
-The first of the two basic designs above is quite flexible in that
-specific tasks are not hard coded into the main program, but it relies
-on the user to define which tasks can run in parallel, most probably in
-a very crude way, and is unlikely to be capable of approaching the
-optimal single cycle job schedule for a realistic system.  The Finite
-State Machine, on the other hand, can be deliberately designed to follow
-the optimal single cycle job schedule for its particular hard coded task
-set. Unfortunately though, this is highly system-specific, and hard
+The obvious design for a control system that could achieve the optimal
+single cycle job schedule is, arguably, a Finite State Machine that
+enforces a predetermined non-linear order of events as encoded in the
+single cycle dependency graph, using hard coded logic: {\em IF task $b$
+has finished AND task $c$ has finished THEN begin executing task $d$},
+etc. Unfortunately though, this is highly system-specific, and hard
 coded finite state logic becomes increasingly convoluted as system
 complexity increases, which leads to inflexibility and fragility
 (consider adding a new task with dependencies into an existing system).
+Considerably less optimal, in terms of scheduling, but potentially
+more flexible, are systems that allows the user control over task order,
+possibly with some means of crudely specifying which tasks can run in
+parallel 
+
+
+Both of these
+designs are easy to comprehend and reasonably straightforward to
+implement\footnote{We have glossed over many implementation details here
+that are highly non-trivial, but they are nevertheless irrelevant to the
+high level metascheduling algorithm.} and, as far as the author is
+aware, most existing operational forecast control systems are variations
+on one or the other (it is difficult to be sure of this, however,
+because they are invariably system-specific in-house projects that are
+not documented in the literature!).\footnote{DAGMan, which is part of
+the Condor distributed workload management system [REF:...], is a
+generic metascheduler for sets of jobs with dependencies, but it does
+not appear to allow the kind of continuously dependent system described
+in this paper.}
+
+
 Also, as explained earlier, when the external driving data is available
 in advance we would like to be able to run tasks from many different
 forecast cycles at once, where dependencies allow, but this cannot be
