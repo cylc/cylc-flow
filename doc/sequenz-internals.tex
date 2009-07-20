@@ -59,27 +59,28 @@ Continuously cycling multi-model environmental forecasting operations
 generate forecast products at regular intervals using a set of connected
 scientific models and associated data processing tasks\footnote{A {\em
 task} is any group of processes treated as a single entity for
-scheduling purposes.} driven by real time observational data and/or forecast
-fields from another operation.  The EcoConnect Forecasting System at the
-National Institute of Water and Atmospheric Research (NIWA) in New
-Zealand takes real time atmospheric and stream flow observations, and
-operational global weather forecasts from the UK Met Office, and uses
-these to drive global sea state and regional data assimilating weather
-models, which in turn drive regional sea state, storm surge, and
-catchment river models, plus tide prediction, and a large number of
-associated tasks for data collection, quality control, preprocessing,
-postprocessing, product generation, and archiving.\footnote{Plans for
-EcoConnect include additional deterministic regional weather models and
-a statistical ensemble of weather models.}  In real time operation, the
-arrival of new external driving data initiates a new {\em forecast
-cycle} consisting of a group of tasks with a common {\em forecast
-reference time}, the nominal start time of the new model forecasts. Not
-all tasks necessarily run in every cycle. The regional weather model in
-EcoConnect, for instance, runs four times daily in the 00, 06, 12, and
-18 UTC cycles, but it supplies surface pressures to a regional storm
-surge model that runs only twice daily, in the 00 and 12 UTC cycles, and
-precipitation accumulations to catchment river models that run on an
-hourly cycle as they assimilate real time stream flow observations. 
+scheduling purposes.} driven by real time observational data and/or
+forecast fields from another operation.  The EcoConnect Forecasting
+System at the National Institute of Water and Atmospheric Research
+(NIWA) in New Zealand takes real time atmospheric and stream flow
+observations, and operational global weather forecasts from the UK Met
+Office, and uses these to drive global sea state and regional data
+assimilating weather models, which in turn drive regional sea state,
+storm surge, and catchment river models, plus tide prediction, and a
+large number of associated data collection, quality control,
+preprocessing, postprocessing, product generation, and archiving
+tasks.\footnote{Plans for EcoConnect include additional deterministic
+regional weather models and a statistical ensemble of weather models.}
+In real time operation, the arrival of new external driving data
+initiates a new {\em forecast cycle} consisting of a set of tasks with
+a common {\em forecast reference time}, the nominal start time of the
+new model forecasts. Not all tasks necessarily run in every cycle. The
+regional weather model in EcoConnect, for instance, runs four times
+daily in the 00, 06, 12, and 18 UTC cycles, but it supplies surface
+pressures to a regional storm surge model that runs only twice daily, in
+the 00 and 12 UTC cycles, and precipitation accumulations to catchment
+river models that run on an hourly cycle as they assimilate real time
+stream flow observations. 
 
 \section{Control Systems}
 
@@ -100,16 +101,15 @@ different forecast cycles at once, where dependencies allow, is also
 extremely useful for parallel test systems that must slowly catch up to
 a main operation, for running the entire system (or part thereof) over
 historical case study periods, and sometimes even during real time
-operation: see the EcoConnect catchment model's unusual mode of
-operation, below.
+operation: for example, see the EcoConnect catchment model's unusual
+mode of operation, below.
 
 
 \subsection{Existing Systems}
 
-It is natural to think about forecasting systems on a per cycle basis
-because they normally operate as a linear sequence of complete forecast
-cycles separated by a time gap (as the system waits on new external
-driving data in real time). 
+It is natural to think about forecasting systems as a linear sequence
+of distinct forecast cycles, because they necessarily are just that
+during normal real time operation. 
 \begin{figure}
     \begin{center}
         \includegraphics[width=4cm]{dependencies-one}
@@ -161,24 +161,26 @@ section through the graph intersects all tasks executing in parallel
 at the time, but the vertical ordering of tasks is not meaningful.
 
 The simplest control system that could manage this might be one that
-runs each forecast cycle according to a user defined external task list,
-perhaps with some means of crudely specifying tasks that can run in
-parallel.  A more sophisticated system can be based on a Finite State
-Machine that enforces a predetermined non-linear execution schedule
-defined by the single cycle dependency graph for the system: {\em IF
-task $b$ has finished AND task $c$ has finished THEN begin executing
-task $d$}, etc.  Both of these designs are easy to comprehend and
-reasonably straightforward to implement\footnote{We have glossed over
-many implementation details here that are highly non-trivial, but they
-are nevertheless irrelevant to the high level metascheduling algorithm.}
-and, as far as the author is aware, most existing operational forecast
-control systems are variations on one or the other (it is difficult to
-be sure of this, however, because they are invariably system-specific
-in-house projects that are not documented in the
-literature!).\footnote{DAGMan, which is part of the Condor distributed
-workload management system [REF:...], is a generic metascheduler for
-sets of jobs with dependencies, but it does not appear to allow the kind
-of continuously dependent system described in this paper.}
+runs a forecast cycle's worth of tasks in an order defined in an
+external task list, which the operator guarantees will not violate any
+dependencies, and perhaps with some means of crudely specifying tasks
+that can run in parallel. A more sophisticated system can be based on a
+Finite State Machine that enforces a predetermined non-linear execution
+schedule defined by the single cycle dependency graph for the system:
+{\em IF task $b$ has finished AND task $c$ has finished THEN begin
+executing task $d$}, etc.  Both of these designs are easy to comprehend
+and reasonably straightforward to implement\footnote{We have glossed
+over many implementation details here that are highly non-trivial, but
+they are nevertheless irrelevant to the high level metascheduling
+algorithm.} and, as far as the author is aware, most existing
+operational forecast control systems are variations on one or the other
+(it is difficult to be sure of this, however, because they are
+invariably system-specific in-house projects that are not documented in
+the literature!).\footnote{DAGMan, which is part of the Condor
+distributed workload management system [REF:...], is a generic
+metascheduler for sets of jobs with dependencies, but it does not appear
+to allow the kind of continuously dependent system described in this
+paper.}
 
 \subsubsection{Deficiencies}
 
@@ -331,7 +333,7 @@ implementation are not trivial and will be discussed later.
     \item A task proxy object can launch its associated external task
         when all of its prerequisites are satisfied.
 
-    \item A task proxy object can interact with each other task proxy
+    \item A task proxy object can interact with other task proxy
         objects to find out if any of their completed outputs can
         satisfy any of its prerequisites (dependency negotiation). 
 
@@ -344,14 +346,14 @@ implementation are not trivial and will be discussed later.
 This method, in principle, solves all of our problems at once.
 Dependency negotation is reference time agnostic so intercycle
 dependencies are no longer any more difficult to deal with than same
-cycle dependencies.  and, because every prerequisite will be satisfied
+cycle dependencies. And, because every prerequisite will be satisfied
 as soon another task has a matching output, optimal metascheduling will
 emerge naturally at run time without any need for complex
 system-specific task sequencing logic whatsoever.  The method is also
 extremely flexible because of the fact that task proxy objects only care
 about their own prerequisites and outputs and do not need to know what
 other tasks exist in the system or who is expected to satisfy each of
-their prerequisites; they just interact without whichever other tasks
+their prerequisites; they just interact with whichever other tasks
 happen to be in the pool.  Consequently existing tasks can be taken out
 of the system, or new ones added, without any change to the control
 algorithm.  Further, by means of object
@@ -365,12 +367,8 @@ system can be designed that will automatically handle any future task so
 long as it is derived from (inherits the properties of) the original
 task base class.
 
-\subsection{Task Proxy Objects}
-
-blah\dots
-
 \label{sec-task-messaging}
-\subsection{Communicating with Real Tasks}
+\subsection{Communication between Task and Task Proxy Object}
 
 Our task proxy objects must keep track of progress in their external
 counterparts. Most task prerequisites are just files generated by other
@@ -393,9 +391,14 @@ instance. Consequently we chose to use a high level messaging system for
 communication between external tasks and the control system. This is
 platform independent and allows tasks to be triggered off any
 conceivable condition. For example, rather than detecting the existence
-of the file $foo.bar$, the controller would receive a message saying
-``file $foo.bar$ is ready for use'', or similar, from the task that has
-just generated the file.
+of the file {\em FOO}, the controller would receive a message saying
+{\em file FOO is ready}, or similar, from the task that has
+just generated the file.  There is no need for the control system itself
+does to verify that the message is true (i.e. that file {\em FOO}
+really does exist) because any downstream task that
+depends on file {\em FOO} must necessarily do that itself, and error 
+conditions can be reported back to the controller, and possibly to a
+separate monitoring system as well, at that point.
 
 The Python Remote Object Protocal (Pyro) allows external programs to
 communicate directly, across the network, with specific objects inside
