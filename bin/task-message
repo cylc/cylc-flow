@@ -5,6 +5,13 @@
 # USAGE: task_message <PRIORITY> <"MESSAGE">
 # priorities are CRITICAL, WARNING, NORMAL
 
+# $REFERENCE_TIME required
+
+if [[ -z $REFERENCE_TIME ]]; then
+    echo "task-message ERROR: \$REFERENCE_TIME not defined"
+    exit 1
+fi
+
 MESSAGER=task-message.py
 #MESSAGER=echo   # debugging
 
