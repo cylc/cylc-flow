@@ -120,8 +120,14 @@ else
     # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
     task-message NORMAL "CAUGHTUP: waiting for operational tn file for $REFERENCE_TIME"
     while true; do
+        if grep "failed to convert tn\*_${REFERENCE_TIME}_\*.um to netcdf" $OPER_LOG > /dev/null; then
+            # this means the operational file conversion failed
+            task-message CRITICAL "$OPER_LOG indicates $FILENAME netcdf conversion failed"
+            task-message CRITICAL "$TASK_NAME failed"
+            exit 1
+        fi
         if grep "retrieving met UM file(s) for $REFERENCE_TIME" $OPER_LOG > /dev/null; then
-            # this message means the tn has been converted to nc and llcleaned
+            # this means the tn file has been converted to netcdf and llcleaned
             task-message NORMAL "$OPER_LOG says $FILENAME is ready"
             if [[ -f $SEARCH_NWP ]]; then
                 task-message NORMAL "$FILENAME found in $OUTPUT"
