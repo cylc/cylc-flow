@@ -1,5 +1,10 @@
 Sequenz To Do List
 
+* rationalize CRITICAL message and "task failed" processing. Should the
+  former always imply the latter?  Currently critical status affects
+  logging, but a task is only considered failed if the critical message
+  includes the phrase "<TASK-NAME> failed".
+
 * note on stuck oper_interface tasks (if no files arrive on the
   operational system): once the prior-to-stuck finished instance gets
   deleted, as it falls beyond cutoff, there'll be nothing to satisfy

@@ -35,11 +35,13 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
@@ -128,13 +130,14 @@ else
         fi
         if grep "retrieving met UM file(s) for $REFERENCE_TIME" $OPER_LOG > /dev/null; then
             # this means the tn file has been converted to netcdf and llcleaned
-            task-message NORMAL "$OPER_LOG says $FILENAME is ready"
+            task-message NORMAL "$OPER_LOG indicates $FILENAME is ready"
             if [[ -f $SEARCH_NWP ]]; then
                 task-message NORMAL "$FILENAME found in $OUTPUT"
                 FOUND=$SEARCH_NWP
                 break
             else
                 task-message CRITICAL "FILE NOT FOUND: $SEARCH_NWP"
+                task-message CRITICAL "$TASK_NAME failed"
                 exit 1
             fi
         fi

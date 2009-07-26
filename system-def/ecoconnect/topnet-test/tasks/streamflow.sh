@@ -24,12 +24,14 @@ FETCH_TD=/dvel/data_dvel/fetchtd/fetchtd/src/fetchtd.py
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 STREAMFLOW_TIME=$REFERENCE_TIME
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
@@ -89,6 +91,7 @@ else
     done
 fi
 
+# reset error trapping
 set -e  # abort on error
 trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 

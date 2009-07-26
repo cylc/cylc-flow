@@ -20,16 +20,19 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
 if [[ -z $MODEL_NAME ]]; then
 	task-message CRITICAL "MODEL_NAME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 

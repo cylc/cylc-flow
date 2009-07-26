@@ -23,26 +23,31 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
 if [[ -z $CLEANUP_DIRS ]]; then
 	task-message CRITICAL "CLEANUP_DIRS not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
 if [[ -z $CLEANUP_MATCH ]]; then
 	task-message CRITICAL "CLEANUP_MATCH not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
 if [[ -z $CLEANUP_CUTOFF ]]; then
 	task-message CRITICAL "CLEANUP_CUTOFF not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 

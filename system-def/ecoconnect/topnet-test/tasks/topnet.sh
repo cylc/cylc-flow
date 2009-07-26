@@ -22,17 +22,20 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 STREAMFLOW_TIME=$REFERENCE_TIME
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
 	exit 1
 fi
 
 if [[ -z $NZLAM_TIME ]]; then
     task-message CRITICAL "NZLAM_TIME not defined"
+    task-message CRITICAL "$TASK_NAME failed"
     exit 1
 fi
 
