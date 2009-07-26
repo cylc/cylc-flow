@@ -120,7 +120,7 @@ else
     # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
     task-message NORMAL "CAUGHTUP: waiting for operational tn file for $REFERENCE_TIME"
     while true; do
-        if grep "retrieving met UM file(s) for $REFERENCE_TIME" $OPER_LOG; then
+        if grep "retrieving met UM file(s) for $REFERENCE_TIME" $OPER_LOG > /dev/null; then
             # this message means the tn has been converted to nc and llcleaned
             task-message NORMAL "$OPER_LOG says $FILENAME is ready"
             if [[ -f $SEARCH_NWP ]]; then
