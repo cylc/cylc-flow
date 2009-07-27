@@ -2,7 +2,7 @@
 
 set -e  # abort on error
 
-trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
+trap 'task-message CRITICAL failed' ERR
 
 # source sequenz environment
 . $SEQUENZ_ENV
@@ -22,20 +22,20 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 STREAMFLOW_TIME=$REFERENCE_TIME
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
 if [[ -z $NZLAM_TIME ]]; then
     task-message CRITICAL "NZLAM_TIME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
     exit 1
 fi
 
@@ -49,7 +49,7 @@ WAIRAU=11016543
 
 cd $HOME/running
 
-task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+task-message NORMAL started
 task-message NORMAL "(nzlam time ${NZLAM_TIME})"
 
 task-message WARNING "Running TopNet on Rangataiki basin only"
@@ -61,4 +61,4 @@ for BASIN in $RANGITAIKI; do
     echo $PWD
 done
 
-task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
+task-message NORMAL finished

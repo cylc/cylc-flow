@@ -63,12 +63,15 @@ def generate_req_string( foo ):
         timed = False
         if re.search( ':', req ):
             timed = True
-            # timed postrequistes
+            # timed postrequisites
             [ time, req ] = re.split( ':', req, 1 )
             req = re.sub( '^\s+', '', req )
             time = re.sub( '\s+min', '', time )
 
-        # enclose in quotes
+        # Enclose in quotes, 
+        #if req == 'started' or req == 'finished':
+        #    req = 'self.name + \' ' + req + ' for \' + ref_time'
+        #else:
         req = '\'' + req + '\''
 
         # replace NAME and MY_REFERENCE_TIME variables
@@ -96,7 +99,7 @@ def generate_req_string( foo ):
     return strng
 
 def write_requisites( req_type ):
-    # req_type should be 'PREREQUISITES' or 'POSTREQUISITES'
+    # req_type should be 'PREREQUISITES' or 'OUTPUTS'
     global indent
     global indent_unit
     global parsed_def
@@ -116,6 +119,11 @@ def write_requisites( req_type ):
         else:
             unconditional_reqs.append( line )
            
+    # define compulsory 'started' and 'finished' postrequisites
+    if req_type == 'OUTPUTS':
+        unconditional_reqs.insert( 0, '0 min: $(NAME) started for $(MY_REFERENCE_TIME)' ) 
+        unconditional_reqs.append( parsed_def[ 'RUN_LENGTH' ][0] + ': $(NAME) finished for $(MY_REFERENCE_TIME)' ) 
+
     if len( conditional_reqs.keys() ) == 0:
         if req_type == 'PREREQUISITES':
             strng = indent + 'self.prerequisites = requisites( self.name + "%" + ref_time, [' 
@@ -170,7 +178,7 @@ def main( argv ):
     task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK', 'EXPORT',
-        'DELAYED_DEATH', 'PREREQUISITES', 'POSTREQUISITES', 'SELF_PARALLEL' ]
+        'DELAYED_DEATH', 'PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH', 'SELF_PARALLEL' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -330,7 +338,7 @@ import logging
         write_requisites( 'PREREQUISITES' )
 
         # ... postrequisites
-        write_requisites( 'POSTREQUISITES' )
+        write_requisites( 'OUTPUTS' )
 
         # call parent's init method
         FILE.write( indent + parent_class + '.__init__( self, initial_state )\n\n' )

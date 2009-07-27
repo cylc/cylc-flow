@@ -5,10 +5,15 @@
 # USAGE: task_message <PRIORITY> <"MESSAGE">
 # priorities are CRITICAL, WARNING, NORMAL
 
-# $REFERENCE_TIME required
+# $REFERENCE_TIME and $TASK_MESSAGE required 
 
 if [[ -z $REFERENCE_TIME ]]; then
     echo "task-message ERROR: \$REFERENCE_TIME not defined"
+    exit 1
+fi
+
+if [[ -z $TASK_NAME ]]; then
+    echo "task-message ERROR: \$TASK_NAME not defined"
     exit 1
 fi
 

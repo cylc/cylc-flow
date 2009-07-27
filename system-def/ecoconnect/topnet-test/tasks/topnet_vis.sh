@@ -2,7 +2,7 @@
 
 set -e  # abort on error
 
-trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
+trap 'task-message CRITICAL failed' ERR
 
 # source sequenz environment
 . $SEQUENZ_ENV
@@ -22,14 +22,14 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 STREAMFLOW_TIME=$REFERENCE_TIME
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
@@ -43,7 +43,7 @@ WAIRAU=11016543
 
 cd $HOME/running
 
-task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+task-message NORMAL started
 
 VIS_TOPNET_SSF=$HOME/bin/vis_topnet_ssf
 VIS_TOPNET=$HOME/bin/vis_topnet
@@ -59,8 +59,8 @@ elif [[ $NZLAM_AGE == new ]]; then
 
 else
     task-message CRITICAL "unknown \$NZLAM_AGE"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
     exit 1
 fi
 
-task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
+task-message NORMAL finished

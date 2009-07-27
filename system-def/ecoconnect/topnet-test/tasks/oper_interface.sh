@@ -5,7 +5,7 @@ set -e  # abort on error
 # source sequenz environment
 . $SEQUENZ_ENV
 
-trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
+trap 'task-message CRITICAL failed' ERR
 
 # Find the operational tn_\${REFERENCE_TIME}_utc_nzlam_12.nc(.bz2)
 # file and copy it to hydrology_\$SYS/input/topnet/ for use by topnet.
@@ -35,13 +35,13 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
@@ -120,12 +120,12 @@ else
     CAUGHTUP=true
     # Alert the controller to the fact that we've caught up
     # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
-    task-message NORMAL "CAUGHTUP: waiting for operational tn file for $REFERENCE_TIME"
+    task-message NORMAL "CAUGHTUP: waiting for operational tn file"
     while true; do
         if grep "failed to convert tn\*_${REFERENCE_TIME}_\*.um to netcdf" $OPER_LOG > /dev/null; then
             # this means the operational file conversion failed
             task-message CRITICAL "$OPER_LOG indicates $FILENAME netcdf conversion failed"
-            task-message CRITICAL "$TASK_NAME failed"
+            task-message CRITICAL failed
             exit 1
         fi
         if grep "retrieving met UM file(s) for $REFERENCE_TIME" $OPER_LOG > /dev/null; then
@@ -137,7 +137,7 @@ else
                 break
             else
                 task-message CRITICAL "FILE NOT FOUND: $SEARCH_NWP"
-                task-message CRITICAL "$TASK_NAME failed"
+                task-message CRITICAL failed
                 exit 1
             fi
         fi
@@ -148,7 +148,7 @@ fi
 if ! $CAUGHTUP; then
     # Alert the controller to the fact that we're in catch up mode
     # THE FOLLOWING MESSAGE HAS TO MATCH WHAT THE CONTROLLER EXPECTS
-    task-message NORMAL "CATCHINGUP: operational tn file already exists for $REFERENCE_TIME"
+    task-message NORMAL "CATCHINGUP: operational tn file already exists"
 fi
  
 # copy file to my output directory
@@ -162,4 +162,4 @@ cp $FOUND $TARGET_DIR
 #ncatted -a coordinates,sfc_temp,o,c,"latitude longitude" $FILENAME
 #ncatted -a coordinates,sfc_rh,o,c,"latitude longitude" $FILENAME
 task-message NORMAL "file $FILENAME ready"
-task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
+task-message NORMAL finished

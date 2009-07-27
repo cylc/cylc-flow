@@ -8,10 +8,10 @@ import logging  # for logging level
 config = {}
 ####################################### <<<<
 
-config[ 'system_name' ] = 'topnet-dvel'
+config[ 'system_name' ] = 'topnet-test'
 #config[ 'state_dump_file' ] = 'blah'
 
-config[ 'start_time' ] = '2009052118'
+config[ 'start_time' ] = '2009071206'
 #config[ 'stop_time'  ] = '2009052300'
 
 #config[ 'logging_level' ] = logging.INFO
@@ -19,13 +19,13 @@ config[ 'logging_level' ] = logging.DEBUG
 
 #config[ 'use_broker' ] = False
 
-config[ 'max_runahead_hours' ] = 24
+config[ 'max_runahead_hours' ] = 48
 
-config[ 'dummy_mode' ] = True
+config[ 'dummy_mode' ] = False
+config[ 'use_qsub' ] = True
 config[ 'dummy_clock_rate' ] = 20
-config[ 'dummy_clock_offset' ] = 10
+config[ 'dummy_clock_offset' ] = 100
 
-config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'topnet_test'
 
 config[ 'task_list' ] = \

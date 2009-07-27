@@ -1,9 +1,12 @@
 Sequenz To Do List
 
-* rationalize CRITICAL message and "task failed" processing. Should the
-  former always imply the latter?  Currently critical status affects
-  logging, but a task is only considered failed if the critical message
-  includes the phrase "<TASK-NAME> failed".
+* go through all 'requisite' class methods, get rid of those that
+  aren't used, and make sure the remaining ones are sensibly named
+
+* rationalize CRITICAL and "failed" message processing? Should the
+  former always imply the latter? Currently critical status affects
+  logging, but a task is only considered failed if a "failed"
+  message is received.
 
 * note on stuck oper_interface tasks (if no files arrive on the
   operational system): once the prior-to-stuck finished instance gets

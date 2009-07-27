@@ -22,7 +22,8 @@
 %PREREQUISITES
     # NONE
 
-%POSTREQUISITES
-    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+%RUN_LENGTH
+    3 min
+
+%OUTPUTS
     2 min: file tn_$(MY_REFERENCE_TIME)_utc_nzlam_12.nc ready
-    3 min: $(NAME) finished for $(MY_REFERENCE_TIME)

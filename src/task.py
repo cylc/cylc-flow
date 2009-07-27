@@ -277,8 +277,8 @@ class task( Pyro.core.ObjBase ):
     def get_postrequisite_list( self ):
         return self.postrequisites.get_list()
 
-    def get_postrequisite_times( self ):
-        return self.postrequisites.get_times()
+    def get_timed_postrequisites( self ):
+        return self.postrequisites.get_timed_requisites()
 
     def get_latest_message( self ):
         return self.latest_message
@@ -294,15 +294,11 @@ class task( Pyro.core.ObjBase ):
 
         self.latest_message = message
 
-        # if message does not end in 'for YYYYMMDDHH'
-        # add my reference time for logging purposes
-        # (and a semi-colon to identify these cases)
+        # make sure log messages end in 'for YYYYMMDDHH', and 
+        # distinguish incoming task messages from internal logging
+        log_message = '(INCOMING) ' + message
         if not re.search( 'for \d\d\d\d\d\d\d\d\d\d$', message ):
-            log_message = message + '; for ' + self.ref_time
-        else:
-            log_message = message
-
-        log_message = '(INCOMING) ' + log_message
+            log_message =  log_message + '; for ' + self.ref_time
 
         if self.state != "running":
             # message from a task that's not supposed to be running
@@ -316,7 +312,8 @@ class task( Pyro.core.ObjBase ):
             self.log.info( log_message )
             self.postrequisites.set_satisfied( message )
 
-        elif message == self.name + " failed":
+        elif message == "failed":
+            # lone "failed" message required to indicate failure
             self.log.critical( log_message )
             self.state = "failed"
 

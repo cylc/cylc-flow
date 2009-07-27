@@ -30,14 +30,12 @@ class dummy_task_base:
 
     def run( self ):
 
-        #timed_requisites = self.task.get_timed_postrequisites()
+        timed_requisites = self.task.get_timed_postrequisites()
         # timed_requisites[ time ] = requisite
-        # times = timed_requisites.keys()
-        # times.sort()
-        
-        completion_time = self.task.get_postrequisite_times()
-        postreqs = self.task.get_postrequisite_list()
 
+        times = timed_requisites.keys()
+        times.sort()
+        
         self.delay()
 
         start_time = self.clock.get_datetime()
@@ -50,26 +48,27 @@ class dummy_task_base:
         else:
             speedup = 1.
 
-        for req in postreqs:
-            done[ req ] = False
-            hours = completion_time[ req] / 60.0 / speedup
-            time[ req ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
+        for req_time in times:
+            done[ req_time ] = False
+            hours = req_time / 60.0 / speedup
+            time[ req_time ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
 
         while True:
             sleep(1)
             dt = self.clock.get_datetime()
             all_done = True
-            for req in postreqs:
-                if not done[ req]:
-                    if dt >= time[ req ]:
-                        #print "SENDING MESSAGE: ", time[ req ], req
+            for req_time in times:
+                req = timed_requisites[ req_time ]
+                if not done[ req_time ]:
+                    if dt >= time[ req_time ]:
+                        #print "SENDING MESSAGE: ", req_time, req
                         self.task.incoming( "NORMAL", req )
-                        done[ req ] = True
+                        done[ req_time ] = True
                     else:
                         all_done = False
 
-           if all_done:
-               break
+            if all_done:
+                break
             
     def delay( self ):
         # override this to delay dummy tasks that have non-standard
@@ -90,10 +89,10 @@ class dummy_task( dummy_task_base ):
             rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
             if self.clock.get_datetime() >= rt_3p25:
                 # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN download_foo.incoming()
-                self.task.incoming( 'NORMAL', 'CATCHINGUP: input files already exist for ' + self.ref_time )
+                self.task.incoming( 'NORMAL', 'CATCHINGUP: input files already exist' )
                 self.fast_complete = True
             else:
-                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for input files for ' + self.ref_time )
+                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for input files' )
                 while True:
                     sleep(1)
                     if self.clock.get_datetime() >= rt_3p25:
@@ -115,10 +114,10 @@ class dummy_task( dummy_task_base ):
             #    sleep(3600)
 
             if current_time >= delayed_start:
-                self.task.incoming( 'NORMAL', 'CATCHINGUP: operational tn file already exists for ' + self.ref_time )
+                self.task.incoming( 'NORMAL', 'CATCHINGUP: operational tn file already exists' )
                 self.fast_complete = True
             else:
-                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for operational tn file for ' + self.ref_time )
+                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for operational tn file' )
                 while True:
                     sleep(1)
                     if self.clock.get_datetime() >= delayed_start:
@@ -132,9 +131,9 @@ class dummy_task( dummy_task_base ):
             rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
             # THE FOLLOWING MESSAGES MUST MATCH WHAT'S EXPECTED IN streamflow.incoming()
             if current_time >= rt_p25:
-                self.task.incoming( 'NORMAL', 'CATCHINGUP: streamflow data available, for ' + self.ref_time )
+                self.task.incoming( 'NORMAL', 'CATCHINGUP: streamflow data available' )
             else:
-                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for streamflow, for ' + self.ref_time ) 
+                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for streamflow' ) 
                 while True:
                     sleep(1)
                     if self.clock.get_datetime() >= rt_p25:

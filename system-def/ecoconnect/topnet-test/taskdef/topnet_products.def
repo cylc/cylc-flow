@@ -22,6 +22,8 @@
 %SELF_PARALLEL
     True
 
-%POSTREQUISITES
-    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
-    2 min: $(NAME) finished for $(MY_REFERENCE_TIME)
+%RUN_LENGTH
+    2 min
+
+%OUTPUTS
+    # NONE

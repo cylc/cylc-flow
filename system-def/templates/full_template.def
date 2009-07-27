@@ -31,30 +31,43 @@
     bar finished for $(MY_REFERENCE_TIME)
     0,12 | file baz_$(MY_REFERENCE_TIME)_utc.nc ready
 
-%POSTREQUISITES
-    # TWO OR MORE postrequisite messages, each on a separate line.
-    # + Each must be prefixed by estimated completion time in minutes. 
+%RUN_LENGTH
+    # Estimated run length in minutes. This is used to properly simulate
+    # the behaviour the task in dummy mode.
+    20 min
+
+%OUTPUTS
+    # List any output messages that are important for task sequencing
+    # purposes (i.e. that other tasks may depend on), on separate lines.
+    # Each must be prefixed by estimated completion time in minutes. 
     # May contain:
     #  1. $(NAME) 
     #  2. $(MY_REFERENCE_TIME)
     #  3. $(MY_REFERENCE_TIME - <hours>)
-    # Must at least include 'started' and 'finished' messages, e.g.:
-    #   0  min: $(NAME) started for $(MY_REFERENCE_TIME)
-    #   10 min: $(NAME) finished for $(MY_REFERENCE_TIME)
-    # ALL postrequisites must be satsified for this task to finish.
-    # External tasks may send extra (non-postrequisite) messages,
-    # however, for progess logging purposes.
+    # But do not add 'started' and 'finished' messages; these are
+    # generated automatically according to the estimated run length:
+    #   0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    #   L min: $(NAME) finished for $(MY_REFERENCE_TIME)
 
-    # For postrequisites that depend on reference hour, see above.
+    # ALL listed outputs must be completed for the task to finish,
+    # but tasks may send additional messages from those listed here,
+    # for progess monitoring and logging purposes.
 
-    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
+    # For outputs that depend on reference hour, see the documentation
+    # on PREREQUISITES above.
+
+    10 min: file foo_0_$(MY_REFERENCE_TIME).nc ready
     0,12 | 15 min: file foo_1_$(MY_REFERENCE_TIME).nc ready
     6,18 | 15 min: file foo_2_$(MY_REFERENCE_TIME).nc ready
-    20 min: $(NAME) finished for $(MY_REFERENCE_TIME)
 
-# NOTE that requisites are literal strings (albeit with some variable
-# substitution) and requisite matching is exact, so be careful of white 
-# space, spelling errors, etc.
+# NOTE that prerequisite and output messages are literal strings (with
+# some limited variable substitution) and prerequisite-output matching
+# is exact, so be careful of white space, spelling errors, etc.
+
+# NOTE that some tasks may have no listed prerequisites (these will run
+# immediately after launch) and/or not outputs (in which case other
+# tasks may depend on their automatically supplied 'started' or
+# 'finished' messages. 
 
 # OPTIONAL:
 %DELAYED_DEATH

@@ -112,17 +112,16 @@ class timed_requisites( requisites ):
     def __init__( self, task_id, timed_reqs ):
 
         reqs = []
-        self.completion_time = {}
+        self.timed_reqs = {}
         for entry in timed_reqs:
             [ time, req ] = entry
             reqs.append( req )
-
-            self.completion_time[ req ] = time 
+            self.timed_reqs[ time ] = req
 
         requisites.__init__( self, task_id, reqs )
 
-    def get_times( self ):
-        return self.completion_time
+    def get_timed_requisites( self ):
+        return self.timed_reqs
 
 
 class fuzzy_requisites( requisites ):

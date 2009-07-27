@@ -26,6 +26,8 @@
     # so running several instances in parallel could cause problems
     False
 
-%POSTREQUISITES
-    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
-    2 min: $(NAME) finished for $(MY_REFERENCE_TIME)
+%RUN_LENGTH
+    2 min 
+
+%OUTPUTS
+    # NONE

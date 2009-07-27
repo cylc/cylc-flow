@@ -5,7 +5,7 @@ set -e  # abort on error
 # source sequenz environment
 . $SEQUENZ_ENV
 
-trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
+trap 'task-message CRITICAL failed' ERR
 
 echo "WARNING: USING TEMPORARY HARDWIRED FETCH_TD INSTALLATION"
 FETCH_TD=/dvel/data_dvel/fetchtd/fetchtd/src/fetchtd.py
@@ -24,19 +24,19 @@ FETCH_TD=/dvel/data_dvel/fetchtd/fetchtd/src/fetchtd.py
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 STREAMFLOW_TIME=$REFERENCE_TIME
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
 # LAUNCH TOPNET NOW
-task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+task-message NORMAL started
 
 INPUT_DIR=$HOME/input/topnet
 
@@ -82,7 +82,7 @@ else
                 task-message WARNING "streamflow data retrieval FAILED, attempt $ATTEMPT"
             else
                 task-message CRITICAL "streamflow data retrieval FAILED ALL $MAX_ATTEMPTS ATTEMPTS"
-                task-message CRITICAL "$TASK_NAME failed"
+                task-message CRITICAL failed
                 exit 1
             fi
         else
@@ -93,7 +93,7 @@ fi
 
 # reset error trapping
 set -e  # abort on error
-trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
+trap 'task-message CRITICAL failed' ERR
 
 task-message NORMAL "got $STREAMFLOW_DATA"
 task-message NORMAL "got streamflow data for $STREAMFLOW_TIME"
@@ -105,4 +105,4 @@ if [[ ! -d $INPUT_DIR ]]; then
 fi
 cp $STREAMFLOW_DATA $INPUT_DIR
 
-task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
+task-message NORMAL finished

@@ -5,7 +5,7 @@ set -e  # abort on error
 # source sequenz environment
 . $SEQUENZ_ENV
 
-trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
+trap 'task-message CRITICAL failed' ERR
 
 # INPUT:
 # * no commandline arguments (for qsub)
@@ -23,35 +23,35 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL "task failed"
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL "task failed"
 	exit 1
 fi
 
 if [[ -z $CLEANUP_DIRS ]]; then
 	task-message CRITICAL "CLEANUP_DIRS not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL "task failed"
 	exit 1
 fi
 
 if [[ -z $CLEANUP_MATCH ]]; then
 	task-message CRITICAL "CLEANUP_MATCH not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
 if [[ -z $CLEANUP_CUTOFF ]]; then
 	task-message CRITICAL "CLEANUP_CUTOFF not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
-task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+task-message NORMAL started
 task-message NORMAL "deleting $CLEANUP_MATCH older than $CLEANUP_CUTOFF under $CLEANUP_DIRS"
 
 # find files, and sort for cleaner output
@@ -81,4 +81,4 @@ for FILENAME in $FILENAMES; do
 	fi
 done
 
-task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
+task-message NORMAL finished

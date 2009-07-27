@@ -5,7 +5,7 @@ set -e  # abort on error
 # source sequenz environment
 . $SEQUENZ_ENV
 
-trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
+trap 'task-message CRITICAL failed' ERR
 
 # INPUT:
 # * no commandline arguments (for qsub)
@@ -20,19 +20,19 @@ trap 'task-message CRITICAL "$TASK_NAME failed"' ERR
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
 if [[ -z $MODEL_NAME ]]; then
 	task-message CRITICAL "MODEL_NAME not defined"
-    task-message CRITICAL "$TASK_NAME failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
@@ -41,8 +41,8 @@ SYSTEM=${USER##*_}
 SCRIPT=/$SYSTEM/ecoconnect_$SYSTEM/bin/create_images.sh
 cd $HOME/running/$MODEL_NAME/product
 
-task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
+task-message NORMAL started
 
 $SCRIPT
 
-task-message NORMAL "$TASK_NAME finished for $REFERENCE_TIME"
+task-message NORMAL finished
