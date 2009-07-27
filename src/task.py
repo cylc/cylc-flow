@@ -429,10 +429,12 @@ class parallel_task( task ) :
     # There's no need to call task.__init__ explicitly unless I define
     # an __init__ function here.
 
+    restrict_unconstrained = False
+
     def ready_to_abdicate( self ):
 
-        if self.prerequisites.count() == 0:
-            # force totally free tasks to run sequentially
+        if self.prerequisites.count() == 0 and self.restrict_unconstrained:
+            # force totally unconstrained tasks to run sequentially
             if self.state == "finished":
                 return True
             else:

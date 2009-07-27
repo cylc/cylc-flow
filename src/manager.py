@@ -12,6 +12,7 @@ import datetime
 import logging
 import shutil
 import broker
+import task
 import re
 
 # See system documentation for OPTIMAL METASCHEDULING details.
@@ -23,6 +24,9 @@ class manager:
         self.log = logging.getLogger( "main" )
 
         self.config = config
+
+        if config.get( 'restrict_unconstrained_tasks' ):
+            task.parallel_task.restrict_unconstrained = True
 
         self.finished_task_dict = []
 

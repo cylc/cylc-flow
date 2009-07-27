@@ -22,6 +22,10 @@ class config:
         # MAXIMUM TIME ANY TASK IS ALLOWED TO GET AHEAD OF THE SLOWEST
         self.configured['max_runahead_hours'] = 24
 
+        # RESTRICT TOTALLY UNCONSTRAINED TASKS (i.e. those with no
+        # prerequisites) TO SEQUENTIAL EXECUTION
+        self.configured[ 'restrict_unconstrained_tasks' ] = True
+
         # SCHEDULING ALGORITHM (task interaction or requisite broker)
         self.configured['use_broker'] = True
 
@@ -130,6 +134,10 @@ class config:
 
         print "MAX RUNAHEAD ...........",
         print self.configured['max_runahead_hours'], "hours"
+
+        print "RESTRICT UNCONSTRAINED  "
+        print "TASKS TO BE SEQUENTIAL? ",
+        print self.configured['restrict_unconstrained_tasks']
 
         print "TASK EXECUTION..........",
         if self.configured['use_qsub']:
