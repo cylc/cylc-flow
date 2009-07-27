@@ -22,6 +22,8 @@ FETCH_TD=/dvel/data_dvel/fetchtd/fetchtd/src/fetchtd.py
 # INTENDED USER:
 # * hydrology_(dvel|test|oper)
 
+task-message NORMAL started
+
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
     task-message CRITICAL failed
@@ -36,7 +38,6 @@ if [[ -z $TASK_NAME ]]; then
 fi
 
 # LAUNCH TOPNET NOW
-task-message NORMAL started
 
 INPUT_DIR=$HOME/input/topnet
 
@@ -75,7 +76,7 @@ else
     trap - ERR
     while $TRY_AGAIN; do
         ATTEMPT=$(( ATTEMPT + 1 ))
-        task-message NORMAL "streamflow data extraction started for ${STREAMFLOW_TIME}, attempt $ATTEMPT"
+        task-message NORMAL "starting streamflow data extraction for ${STREAMFLOW_TIME}, attempt $ATTEMPT"
         python $FETCH_TD
         if [[ $? != 0 || ! -f $STREAMFLOW_DATA ]]; then
             if (( ATTEMPT < MAX_ATTEMPTS )); then

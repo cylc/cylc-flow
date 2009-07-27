@@ -20,6 +20,8 @@ trap 'task-message CRITICAL failed' ERR
 # INTENDED USER:
 # * hydrology_(dvel|test|oper)
 
+task-message NORMAL started
+
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
     task-message CRITICAL failed
@@ -49,7 +51,6 @@ WAIRAU=11016543
 
 cd $HOME/running
 
-task-message NORMAL started
 task-message NORMAL "(nzlam time ${NZLAM_TIME})"
 
 task-message WARNING "Running TopNet on Rangataiki basin only"

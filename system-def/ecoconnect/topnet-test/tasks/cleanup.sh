@@ -21,21 +21,23 @@ trap 'task-message CRITICAL failed' ERR
 # remove files under a given directory that are older (by reference
 # time) than a given reference time cutoff. 
 
+task-message NORMAL started
+
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
-    task-message CRITICAL "task failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
 	task-message CRITICAL "TASK_NAME not defined"
-    task-message CRITICAL "task failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
 if [[ -z $CLEANUP_DIRS ]]; then
 	task-message CRITICAL "CLEANUP_DIRS not defined"
-    task-message CRITICAL "task failed"
+    task-message CRITICAL failed
 	exit 1
 fi
 
@@ -51,7 +53,6 @@ if [[ -z $CLEANUP_CUTOFF ]]; then
 	exit 1
 fi
 
-task-message NORMAL started
 task-message NORMAL "deleting $CLEANUP_MATCH older than $CLEANUP_CUTOFF under $CLEANUP_DIRS"
 
 # find files, and sort for cleaner output

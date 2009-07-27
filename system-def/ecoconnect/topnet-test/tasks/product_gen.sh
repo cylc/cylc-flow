@@ -15,8 +15,9 @@ trap 'task-message CRITICAL failed' ERR
 #   3. $MODEL_NAME        e.g. topnet
 #   4. $SEQUENZ_ENV
 
-
 # runs create_images.sh in /$HOME/running/$MODEL/product
+
+task-message NORMAL started
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
@@ -36,12 +37,9 @@ if [[ -z $MODEL_NAME ]]; then
 	exit 1
 fi
 
-
 SYSTEM=${USER##*_}
 SCRIPT=/$SYSTEM/ecoconnect_$SYSTEM/bin/create_images.sh
 cd $HOME/running/$MODEL_NAME/product
-
-task-message NORMAL started
 
 $SCRIPT
 

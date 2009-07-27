@@ -32,6 +32,7 @@ trap 'task-message CRITICAL failed' ERR
 #    MSG="retrieving met UM file(s) for $REFERENCE_TIME"
 #    logger -i -p local1.info -t process_nzlam_output $MSG 
 
+task-message NORMAL started
 
 if [[ -z $REFERENCE_TIME ]]; then
 	task-message CRITICAL "REFERENCE_TIME not defined"
@@ -44,8 +45,6 @@ if [[ -z $TASK_NAME ]]; then
     task-message CRITICAL failed
 	exit 1
 fi
-
-task-message NORMAL "$TASK_NAME started for $REFERENCE_TIME"
 
 FILENAME=tn_${REFERENCE_TIME}_utc_nzlam_12.nc
 

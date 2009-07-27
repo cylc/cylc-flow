@@ -5,7 +5,11 @@
 # USAGE: task_message <PRIORITY> <"MESSAGE">
 # priorities are CRITICAL, WARNING, NORMAL
 
-# $REFERENCE_TIME and $TASK_MESSAGE required 
+# $REFERENCE_TIME and $TASK_MESSAGE required from env
+
+# If MESSAGE is 'started', 'finished', or 'failed'
+# task name and reference time are added automatically
+
 
 if [[ -z $REFERENCE_TIME ]]; then
     echo "task-message ERROR: \$REFERENCE_TIME not defined"
@@ -21,4 +25,11 @@ MESSAGER=task-message.py
 #MESSAGER=echo   # debugging
 
 PRIORITY=$1; shift
-$MESSAGER $PRIORITY $TASK_NAME $REFERENCE_TIME "$@"
+MESSAGE="$@"
+
+# special cases
+if [[ $MESSAGE = 'started' || $MESSAGE = 'finished' || $MESSAGE = 'failed' ]]; then 
+    MESSAGE="$TASK_NAME $MESSAGE for $REFERENCE_TIME"
+fi
+
+$MESSAGER $PRIORITY $TASK_NAME $REFERENCE_TIME "$MESSAGE"
