@@ -44,9 +44,6 @@ class config:
         # LIST OF TASK NAMES
         self.configured['task_list'] = []
 
-        # TASKS TO DUMMY OUT IN REAL MODE
-        self.configured['dummy_out'] = []
-
         self.derive_the_rest()
 
 
@@ -150,9 +147,3 @@ class config:
         print '- ' + self.configured['task_list'][0]
         for task in self.configured['task_list'][1:]:
             print '                         - ' + task
-
-        if len( self.configured['dummy_out'] ) > 0:
-            print 'TASKS DUMMIED OUT IN REAL MODE:',
-            print '- ' + self.configured['dummy_out'][0]
-            for task in self.configured['dummy_out'][1:]:
-                print '                         - ' + task

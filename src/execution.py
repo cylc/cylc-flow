@@ -39,10 +39,7 @@ class launcher:
 	        #  + NOT FOR DUMMY MODE (other owners may not have dummy-task.py in $PATH)
             command  = 'sudo -u ' + owner 
 
-        if self.config.get('dummy_mode') or task_name in self.config.get('dummy_out'):
-            if not self.config.get( 'dummy_mode' ) and task_name in self.config.get('dummy_out'):
-                self.log.warning( "dummying out " + self.identity + " in real mode")
-
+        if self.config.get('dummy_mode'):
             # substitute the dummy task program for the real task
             external_task = 'dummy-task.py'
         else:
