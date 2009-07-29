@@ -1,5 +1,6 @@
 %\documentclass[11pt,a4paper]{report}
 \documentclass[11pt,a4paper]{article}
+%\documentclass[11pt,a4paper]{amsart}
 
 \usepackage{listings}
 \usepackage{amsmath}
@@ -28,7 +29,7 @@ Multi-Model Forecasting Systems}
     the system, and dependencies are negotiated dynamically as outputs
     are reported so that correct execution order emerges naturally at
     run time.  The algorithm is optimal in the sense that tasks are
-    queued for execution at the instant their prerequisites are
+    queued for execution as soon as their prerequisites are
     satisfied regardless of associated forecast cycle or any other
     consideration. Tasks from many different forecast cycles can
     therefore run simultaneously, where dependencies allow, to achieve
@@ -60,7 +61,7 @@ generate forecast products at regular intervals using a set of connected
 scientific models and associated data processing tasks\footnote{A {\em
 task} is any group of processes treated as a single entity for
 scheduling purposes.} driven by real time observational data and/or
-forecast fields from another operation.  The EcoConnect Forecasting
+forecast fields from another operation. The EcoConnect Forecasting
 System at the National Institute of Water and Atmospheric Research
 (NIWA) in New Zealand takes real time atmospheric and stream flow
 observations, and operational global weather forecasts from the UK Met
@@ -82,102 +83,229 @@ the 00 and 12 UTC cycles, and precipitation accumulations to catchment
 river models that run on an hourly cycle as they assimilate real time
 stream flow observations. 
 
-\subsection{Control Systems}
+\subsection{Existing Systems: Sequential Cycling}
 
-The control system for a forecasting operation must achieve good system
-throughput without attempting to execute any task before it is ready to
-run.  An {\em optimal} metascheduler would queue each task for execution
-at the earliest possible moment, namely as soon as all of its
-prerequisites have been satisfied (usually by other tasks in the
-system). Whether queued tasks actually run immediately is of course up
-to the batch queue scheduler(s), but for the purposes of this paper we
-can assume they will run immediately. 
+In normal real time operation a new forecast cycle is initiated by
+availability of the next batch of external driving data, at which point
+the previous cycle must be well finished (or else the system will get
+increasingly further behind with each cycle). There is consequently a
+tendency to design control systems that ensure a linear sequence of
+distinct forecast cycles. As far as the author is aware all existing
+control systems do this, although it is difficult to be sure because
+they are invariably highly task-specific in-house systems that are
+not documented in the literature.\footnote{DAGMan, which is part of the
+Condor distributed workload management system [REF:...], is a generic
+metascheduler for sets of jobs with dependencies, but it does not appear
+to allow continuously dependent systems as described above.} 
 
-In order to understand how an optimal metascheduler might work, we need
-to examine the dependencies between tasks in a forecasting system. There
-is a natural tendency to see forecasting systems as a linear sequence of
-distinct forecast cycles, because this is exactly what happens during
-normal real time operation (in fact there is a time gap between cycles
-as the system waits on new external driving data). 
+\subsection{A New Approach: Free Cycling}
+
+If the external driving data is available one or more cycles in advance,
+as frequently happens after breakdowns and delays, different forecast
+cycles will be able to interleave to a large extent, in principle, and
+strict sequential cycling is then a significant impediment. This is a
+serious problem for complex operations, like EcoConnect, that have
+little downtime between forecast cycles and consequently take much
+longer than necessary to catch up after delays. To realize this
+potential for functional parallelism the intercycle dependencies that
+can be ignored for sequential cycling must be handled properly so that
+no task is executed before its inputs, if any, from earlier cycles have
+been generated. These intercycle dependencies, however, transform a
+series of distinct forecast cycles into a continuous network of
+connected tasks that is next to impossible to handle within a
+traditional Finite State control framework. 
+
+The simulation-like algorithm, described below, used to solve this
+problem has significant advantages in addition to automatically
+exploiting any potential for functional parallelism. In particular, it
+requires no explicit task scheduling logic at all, which makes it quite
+generic and widely applicable, and is extremely flexible. The ability to
+run tasks from several forecast cycles at once can also dramatically
+improve system throughput in historical case studies (where the external
+driving data for all cycles are available in advance) and allows
+efficient parallel test systems that are delayed with respect to the
+main operation, and new kinds of real time operation (such as that of
+the TopNet catchment model in EcoConnect, described below). 
+
+
+\section{Task Scheduling}
+
+In this section we use a simple example system to explore the
+consequences, in terms of metascheduling, of abandoning the requirement
+for strict sequential cycling as discussed above.
+
+A control system for a forecasting operation should ideally queue each
+task for execution as soon as it is ready to run. This is the best that
+can be done whether or not the queued tasks actually begin executing
+immediately, which depends on computational resource availability as
+determined by the batch queue scheduler(s). For illustrative purposes,
+we assume below that queued tasks do execute immediately. 
+
+
 \begin{figure}
     \begin{center}
         \includegraphics[width=4cm]{dependencies-one}
     \end{center}
     \caption{\small Dependency diagram for a single forecast cycle
-    in a simple example system. Tasks $a$, $b$, and $c$ represent
-    different forecast models, and $d$, $e$ and $f$ post processing or
+    in a simple example system. Tasks {\em a, b,} and {\em c} represent
+    forecast models, and {\em d, e} and {\em f} are post processing or
     product generation tasks.}
     \label{fig-dep-one}
 \end{figure}
-Figure \ref{fig-dep-one} shows the dependency diagram for a single
-cycle of a simple example system, which forms a {\em Directed Acyclic
-Graph}.  Each task may depend upon one or more other ``upstream'' tasks,
+Figure \ref{fig-dep-one} shows the dependency diagram, which forms a
+{\em Directed Acyclic Graph}, for a single cycle of a simple example
+system consisting of three forecast models ({\em a, b,} and {\em c}) and
+three post processing or product generation tasks ({\em d, e} and {\em
+f}).  Each task may depend upon one or more other ``upstream'' tasks,
 and may itself be depended upon by one or more other ``downstream''
-tasks.  A control system therefore needs to allow, within a single
-forecast cycle, multiple parallel streams of execution that branch when
-one task generates output for several downstream tasks, and merge when
-one task takes input from several upstream tasks. 
+tasks.  A control system should therefore be capable of managing, within
+a single forecast cycle, multiple parallel streams of execution that
+branch when one task generates output for several downstream tasks, and
+merge when one task takes input from several upstream tasks. 
+
 \begin{figure}
     \begin{center}
         \includegraphics[width=8cm]{timeline-one}
     \end{center}
     \caption{\small Optimal job schedule for two consecutive cycles of
-    the example system of Figure \ref{fig-dep-one}.  Execution times
-    are represented by the horizontal extent of the task bars. The
-    vertical ordering of tasks is not meaningful, but a vertical section
-    through the graph will intersect all tasks executing in parallel at
-    that time.}
+    the example system during normal real time operation. Execution
+    times are represented by the horizontal extent of the task bars. 
+    Vertical sections through the graph intersect tasks executing at
+    the same time, but the vertical ordering of tasks is not
+    meaningful.}
     \label{fig-time-one}
 \end{figure}
-Figure \ref{fig-time-one} shows the optimal job schedule for two
-consecutive cycles of the single-cycle example system given some
-arbitrary execution times represented by
-the horizontal extent of the task bars. Note that it assumes that all
-tasks trigger off their upstream dependents {\em finishing} rather than
-on any intermediate outputs; this has no bearing on the results to
-follow, it just makes for clearer diagrams.  
 
-Strictly speaking the dependency graph of Figure \ref{fig-dep-one} is
-incomplete because it does not show any intercycle dependencies.
+Figure \ref{fig-time-one} shows two consecutive cycles of the optimal
+job schedule for the example system in normal real time operation (where
+one cycle always completes before the next is triggered by the arrival
+of new external driving data), given the task execution times
+represented by the horizontal extent of the task bars. The schedule is
+optimal in the sense that every task begins executing as soon as its
+dependencies are satisfied. Note that we are assuming all tasks depend
+on upstream tasks {\em finishing} rather than on intermediate outputs;
+this has no bearing on the discussion to follow, but it makes for
+clearer diagrams.  
+
+The dependency graph of Figure \ref{fig-dep-one} is incomplete because
+it does not show any dependencies that connect different forcast cycles.
+At the least, forecast models generate a ``background model state''
+that is required by the next forecast. As indicated above, these
+intercycle dependencies are ignored as a matter of course in existing
+systems because in normal real time operation they are implicitly
+satisfied\footnote{This is not true of EcoConnect's TopNet, however.}
+(if one forecast cycle always completes before the next begins there is
+no danger of a forecast model starting before its previous instance has
+finished\footnote{Note that model background states for the next
+forecast are written early in the forecast, thus forecast models in
+principle don't have to wait on their previous instance actually {\em
+finishing} - the new system could be easily made to handle this (trigger
+task abdication by a message rather than finishing).}), but this amounts
+to an implicit assumption of, or requirement for, a sequence of distinct
+forecast cycles. 
+
 \begin{figure} \begin{center}
     \includegraphics[width=6cm]{dependencies-two} \end{center}
-    \caption{\small Complete dependency graph for our simple example
-    system, with the least possible intercycle dependence: each of the
-    tasks that represent forecast models ($a$, $b$, and $c$) depends on
-    its own previous instance for the initial background state. The
-    dashed arrows show connections to previous and subsequent forecast
-    cycles.} 
+    \caption{\small Complete dependency graph for the simple example
+    system, assuming the least possible intercycle dependence: the
+    forecast models ($a$, $b$, and $c$) depend on their own previous
+    instances. The dashed arrows show connections to previous and
+    subsequent forecast cycles.} 
     \label{fig-dep-two}
 \end{figure}
-The true dependency graph for our example system is shown in Figure
-\ref{fig-dep-two}, with the least possible intercycle dependence
-included: each of the tasks that represent forecast models ($a$, $b$,
-and $c$) depends on its previous instance for its initial ``background
-model state''.  This is sufficient to demonstrate global
-optimal metascheduling, but note that real systems can also include
-intercycle dependencies that link different task types and span more
-than one forecast cycle (c.f.\ the EcoConnect catchment model's
-dependence on the regional weather model, as described above). 
-In any case, even for the simple example our series of consecutive
-discrete forecast cycles has become a continuous complex network of
-tasks, and it is difficult to imagine how one might design a control
-system to handle this. 
 
-Fortunately though, intercycle dependencies only matter if tasks from
-multiple forecast cycles can execute at the same time, in which case
-they must be taken into account to prevent tasks from running out of
-order. During normal real time operation this never happens because each
-forecast cycle completes before the next one begins; any intercycle
-dependencies are therefore implicitly satisfied.  Not surprisingly then,
-existing control systems simply avoid the dramatic increase in
-complexity by assuming strict sequential cycling.  Realistic systems are
-likely to have many more tasks than our example, but the dependency
-graph should be qualitatively similar to Figure \ref{fig-dep-one}, just
-bigger.  There is one obvious control system design candidate for this:
-a Finite State Machine that, within an event loop, enforces the
-predetermined non-linear order of events as encoded in the single cycle
-dependency graph, using hard coded logic.  For the simple example
-system, the task sequencing logic might look like this:
+The complete dependency graph for the example system, assuming the least
+possible intercycle dependence, is shown in Figure \ref{fig-dep-two}.
+Each of the tasks that represent forecast models ($a$, $b$, and $c$)
+depends on its previous instance (for the initial ``background model
+state''). This is sufficient to demonstrate the effect of intercycle
+dependence, but it should be noted that real systems can also include
+links that span more than one forecast cycle and different task
+types and (c.f.\ the EcoConnect catchment model's dependence on the
+regional weather model, as described above). Even for this simple
+example, intercycle dependencies transform a series of distinct forecast
+cycles into a continuous complex network of tasks, and it is difficult
+to imagine how one might design a control system to handle this. 
+
+\begin{figure} 
+    \begin{center} 
+        \includegraphics[width=12cm]{timeline-three}
+    \end{center} 
+    \caption{\small Job schedules for our simple example system when the
+    external driving data for the orange cycle are delayed by almost one
+    forecast cycle (so that the external driving data for the blue cycle
+    are available in advance of the orange cycle finishing). Above the
+    time axis is the optimal job schedule obtained when the system is
+    constrained only by its dependencies, as shown in Figure
+    \ref{fig-dep-two}. Below the time axis is the best that can be
+    achieved in general when intercycle dependencies are ignored.
+    The coloured lines show how long each cycle is delayed, and 
+    grey task bars indicate normal ``caught up'' conditions.} 
+    \label{fig-time-three}
+\end{figure} 
+
+Figure \ref{fig-time-three} compares optimal job schedules after a 
+delay of almost one forecast cycle. When all dependencies are taken  
+into account (above the time axis) the blue cycle immediately after the 
+delayed cycle is almost unaffected, and subsequent cycles (in grey) 
+are all on time. With strict sequential cycling, on the other hand,
+it takes four more cycles, with delayed forecast products, for the
+system to catch up. The delay length has been chosen to illustrate both
+that the orange and blue cycles can't just simply overlap, and that 
+even a reasonably extreme delay need not drastically affect subsequent
+cycles.  Note that it may be possible to simply {\em overlap}
+consecutive single-cycle job schedules somewhat using system specific
+knowledge: e.g. that {\em a(T2)} only depends on {\em a(T1)} but takes
+long enough to run that no other T2 -> T1 dependencies will be violated
+if a(T2) starts immediately after c(T1) is finished. However, this is 
+prone to breaking if the system is modified, and a generic, general
+solution would be much better.
+
+Figure \ref{fig-time-two} compares optimal job schedules with and
+without proper handling of intercycle dependencies, for our simple
+example system when all external driving data are available in advance.
+\begin{figure} 
+    \begin{center} 
+        \includegraphics[width=8cm]{timeline-two}
+    \end{center} 
+    \caption{\small Job schedules for our simple example system when the
+    external driving data are available well in advance such as after a
+    long delay, or when running an historical case study. Above the time
+    axis is the optimal job schedule obtained when the system is
+    constrained only by its dependencies, as shown in Figure
+    \ref{fig-dep-two}.  Below the time axis is the best that can be
+    achieved when intercycle dependencies are ignored.} 
+    \label{fig-time-two}
+\end{figure} 
+The initial task $a$, which would normally be a resource intensive
+atmosphere or ocean model, has no dependence on cotemporal (same
+reference time) upstream tasks and can therefore run continuously,
+regardless of how much downstream processing is yet to be
+completed in any previous cycle. There could in fact be several such
+initial forecast tasks that can run continuously, in parallel. In
+practice initial forecast tasks would depend on cotemporal upstream
+tasks that wait on the external driving data, but they return 
+immediately when the external data is already available, so the result
+stands. The other tasks can repeat at regular short intervals; the
+interval gap depends on [CHECK THIS] the task run length relative to
+that of its longest cotemporal upstream dependency path .
+In this case task $c$ can also run continuously, and consecutive
+instances of task $e$ can actually overlap ($e$ represents a post
+processing task with no previous instance dependence). Even for this
+very simple system tasks from three different cycles run simultaneously
+at any one time, and overall system efficiency is clearly far in advance
+of the sequential cycling schedule. 
+\subsection{Existing Systems}
+
+As explained above, existing forecast control systems require sequential
+cycling in order to avoid dealing with intercycle dependencies.
+Realistic systems are likely to have many more tasks than our example
+system, but the dependency graph should be qualitatively similar to
+Figure \ref{fig-dep-one}, just bigger.  There is one obvious control
+system design candidate for this: a Finite State Machine that, within an
+event loop, enforces the predetermined non-linear order of events as
+encoded in the single cycle dependency graph, using hard coded logic.
+For the example system, the task sequencing logic might look like this:
 
 {\small
 \noindent
@@ -205,75 +333,17 @@ while some_task_just_finished():
 \end{lstlisting}
 }
 
-As far as the author is aware, all existing operational forecast control
-systems are variations on the FSM design, or something even
-simpler,\footnote{Less optimal but potentially more flexible, are
-systems that allows the user control over task order, possibly with some
-means of crudely specifying which tasks can run in parallel.} although
-it is difficult to be sure of this because they are invariably
-system-specific in-house projects that are not documented in the
-literature).\footnote{DAGMan, which is part of the Condor distributed
+Existing forecast control systems are invariably system-specific
+in-house projects that are not documented in the
+literature,\footnote{DAGMan, which is part of the Condor distributed
 workload management system [REF:...], is a generic metascheduler for
-sets of jobs with dependencies, but it does not appear to allow the kind
-of continuously dependent system described in this paper.} 
-
-\subsection{A New Design}
-
-The sequential cycling constraint can be a serious impediment if all
-external driving data is available in advance.  For instance,
-operations that have little down time between forecast cycles, because
-of hardware limitations, will take dramatically longer than necessary to
-catch up to real time after a delay if forced to run sequential cycles.
-The ability to run tasks from many different forecast cycles at once,
-where dependencies allow, could also greatly improve system throughput
-for historical case study runs, and for parallel test systems delayed
-somewhat with respect to the main operation. It also allows new kinds of
-real time operation, such as the behaviour of the EcoConnect catchment
-model (below). NIWA's EcoConnect operation, which motivated this work,
-was sufficiently complex and computationally intensive on current
-hardware to warrant development of a more flexible control system that
-could also interleave successive cycles for efficient catchup operation.
-To do this we have to abandon the concept of a linear sequence of global
-forecast cycles, as far as the control system is concerned, and instead
-take proper account of {\em all} dependencies regardless of forecast
-cycle. 
-
-Figure \ref{fig-time-two} compares optimal job schedules with 
-and without proper handling of intercycle dependencies, for our simple
-example system when all external driving data are available in advance
-(i.e.\ catchup operation, case study mode, etc., as explained above).
-\begin{figure} 
-    \begin{center} 
-        \includegraphics[width=8cm]{timeline-two}
-    \end{center} 
-    \caption{\small Job schedules for our simple example system when the
-    external driving data are available in advance (i.e.\ catchup or case
-    study operation). Above the time axis is the optimal job schedule
-    obtained when the system is constrained only by the dependencies
-    shown in Figure \ref{fig-dep-two}. Below the time axis is the best
-    that can be achieved when intercycle dependencies are ignored.} 
-    \label{fig-time-two}
-\end{figure} 
-The initial task $a$, which would normally be a resource intensive
-atmosphere or ocean model, has no dependence on cotemporal (same
-reference time) upstream tasks and can therefore run continuously,
-regardless of how much downstream processing is yet to be
-completed in any previous cycle. There could in fact be several such
-initial forecast tasks that can run continuously, in parallel. In
-practice initial forecast tasks would depend on cotemporal upstream
-tasks that wait on the external driving data, but they would return 
-immediately when the external data is already available, so the result
-stands. The other tasks can repeat at regular short intervals; the
-interval gap is [CHECK THIS].
-%the difference between their own run length and the maximum length of
-%any cotemporal upstream execution paths that they depend on. 
-In this case task $c$ can also run continuously, and consecutive
-instances of task $e$ can actually overlap ($e$ represents a post
-processing task with no previous instance dependence). Even for this
-very simple system, tasks from three different cycles run simultaneously
-at any one time, and overall system efficiency is clearly far in advance
-of the sequential cycling schedule.  
-
+sets of jobs with dependencies, but it does not appear to allow
+continuously dependent system as described above.} but as far as the
+author is aware they are all some  variant of this design, or else
+something even simpler sub-optimal designs, e.g.\ systems that allow the
+user control over task execution order, possibly along with some means
+of crudely specifying tasks that can run in parallel. 
+ 
 We first considered extending the basic FSM design.  But even as a
 single cycle algorithm it suffers from being highly system-specific, and
 the hard coded finite state logic becomes increasingly convoluted as
@@ -300,7 +370,6 @@ dependencies allow, as discussed above, we need to stop treating the
 forecast cycle as a sequentially incremented system-wide
 parameter and instead treat the system as a single large batch of tasks
 with their own independent forecast reference times. 
-
 
 \subsection{The Metascheduling Algorithm}
 
