@@ -1,5 +1,7 @@
 Sequenz To Do List
 
+* new RUN_LENGTH def field must be reference hour dependent
+
 * go through all 'requisite' class methods, get rid of those that
   aren't used, and make sure the remaining ones are sensibly named
 
