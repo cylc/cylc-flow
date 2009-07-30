@@ -16,10 +16,11 @@ class remote_switch( Pyro.core.ObjBase ):
         self.tasknames = tasknames
 
         # record remote system halt requests
-        self.system_halt = False
+        self.system_halt_requested = False
 
         # record remote system hold requests
-        self.system_hold = False
+        self.system_hold_requested = False
+        self.system_resume_requested = False
 
         # task to abdicate and kill
         self.go_psycho = False
@@ -27,17 +28,32 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def hold( self ):
         self.log.warning( "REMOTE: system hold requested" )
-        self.system_hold = True
+        self.system_hold_requested = True
+
+    def get_hold( self ):
+        if self.system_hold_requested:
+            self.system_hold_requested = False
+            return True
+        else:
+            return False
 
     def resume( self ):
         self.log.warning( "REMOTE: system resume requested" )
-        self.system_hold = False 
+        self.system_resume_requested = True 
+        self.system_hold_requested = False 
         # ensure we resume task processing immediately
         task.state_changed = True
 
+    def get_resume( self ):
+        if self.system_resume_requested:
+            self.system_resume_requested = False
+            return True
+        else:
+            return False
+
     def shutdown( self ):
         self.log.warning( "REMOTE: system halt requested" )
-        self.system_halt = True
+        self.system_halt_requested = True
 
     def get_config( self, item ):
         self.log.warning( "REMOTE: config item " + item + " requested" )

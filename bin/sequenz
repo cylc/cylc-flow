@@ -104,14 +104,14 @@ def main( argv ):
     task.state_changed = True
     while True: # MAIN LOOP
 
-        if remote_control.system_halt:
+        if remote_control.system_halt_requested:
             clean_shutdown( pyro, 'remote request' )
             return
 
-        if remote_control.system_hold:
+        if remote_control.get_hold():
             god.set_system_hold()
 
-        if remote_control.system_resume:
+        if remote_control.get_resume():
             god.unset_system_hold()
 
         if task.state_changed:
