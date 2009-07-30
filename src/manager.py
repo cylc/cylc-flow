@@ -25,10 +25,8 @@ class manager:
 
         self.config = config
 
-        if config.get( 'restrict_unconstrained_tasks' ):
-            task.parallel_task.restrict_unconstrained = True
-
         self.finished_task_dict = []
+        self.system_hold = False
 
         if config.get('use_broker'):
             self.broker = broker.broker()
@@ -39,6 +37,13 @@ class manager:
         else:
             self.load_from_config( dummy_clock )
 
+    def set_system_hold( self ):
+        self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run")
+        self.system_hold = True
+
+    def unset_system_hold( self ):
+        self.log.critical( "UNSETTING SYSTEM HOLD: new tasks will run when ready")
+        self.system_hold = False
 
     def get_task_instance( self, module, class_name ):
         # task object instantiation by module and class name
@@ -209,7 +214,11 @@ class manager:
 
     def run_tasks( self, launcher ):
         # tell each task to run if it is ready
+        # unless the system is on hold
         #--
+        if self.system_hold:
+            return
+
         for task in self.tasks:
                 task.run_if_ready( launcher )
 

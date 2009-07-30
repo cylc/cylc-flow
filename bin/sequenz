@@ -106,9 +106,15 @@ def main( argv ):
 
         if remote_control.system_halt:
             clean_shutdown( pyro, 'remote request' )
-	    return
+            return
 
-        if task.state_changed and not remote_control.system_pause:
+        if remote_control.system_hold:
+            god.set_system_hold()
+
+        if remote_control.system_resume:
+            god.unset_system_hold()
+
+        if task.state_changed:
             # PROCESS ALL TASKS whenever one has changed state
             # as a result of a remote task message coming in: 
             # then run, create new, and kill spent tasks
