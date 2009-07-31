@@ -54,3 +54,6 @@ Sequenz To Do List
 * in dummy mode, the dummy clock time should be written to the state
   dump file so that the clock doesn't reset to the configured start time
   (plus any configured offset) on a restart.
+
+* retrofit proper exception handling throughout (current use is
+  sporadic).

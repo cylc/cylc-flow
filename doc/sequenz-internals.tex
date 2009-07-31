@@ -40,7 +40,7 @@ Multi-Model Forecasting Systems}
     be switched on and off on the fly, new tasks can be added without
     altering the main program, and parallel test systems that feed off
     the main operation, or entirely new systems, can be built quickly.
-    Our dynamic metascheduler, {\em sequenz}, is easily interfaced to
+    Our dynamic metascheduler, {\em iCycle}, is easily interfaced to
     existing tasks (models etc.). It is written in the Python language
     and uses the Python Remote Object protocol ({\em Pyro}) to control
     tasks on multiple platforms at once. 
@@ -81,7 +81,8 @@ regional weather model in EcoConnect runs four times daily in the 00,
 regional storm surge model that runs only twice daily, in the 00 and 12
 UTC cycles, and precipitation accumulations to catchment river models
 that run on an hourly cycle as they assimilate real time stream flow
-observations. 
+observations. EcoConnect runs on heterogenous distributed hardware,
+including a massively parallel supercomputer and several Linux servers. 
 
 \subsection{Sequential Cycling}
 
@@ -339,7 +340,7 @@ continuous metascheduling as in Figures \ref{fig-time-two} and
 distinct forecast cycles as in Figure \ref{fig-time-one}, as the system
 catches up to real time.  
 
-\subsection{The Basic Algorithm}
+\subsection{The Main Algorithm}
 
 From the discussion above it is apparent that the additional complexity
 due to explicitly handling intercycle dependencies is too difficult to
@@ -376,7 +377,6 @@ implementation, although some important aspects of that are not trivial
 and will be discussed later.
 
 \begin{itemize}
-
     \item The control system maintains a pool of autonomous {\em task
         proxy objects} that represent each real task. 
        
@@ -422,11 +422,106 @@ and will be discussed later.
 
 \end{itemize}
 
-\subsection{Task Proxy Object Life Cycle}
+\subsubsection{Main Loop}
 
-blah.
+{\small
+\noindent
+\rule{5cm}{.2mm}
+\begin{lstlisting}
+while True:
+
+   if task_base.state_changed:
+       # PROCESS ALL TASKS whenever one has changed state
+       # as a result of a remote task message coming in. 
+       #---
+       task_pool.process_tasks()
+       task_pool.dump_state()
+       if task_pool.all_finished():
+           clean_shutdown( "ALL TASKS FINISHED" )
+
+    # REMOTE METHOD HANDLING; handleRequests() returns 
+    # after one or more remote method invocations are 
+    # processed (these are not just task messages, hence 
+    # the use of task_base.state_changed above).
+    #---
+    task_base.state_changed = False
+    pyro_daemon.handleRequests( timeout = None )
+
+# END MAIN LOOP
+\end{lstlisting}
+}
+
 
 \label{sec-task-messaging}
+
+
+\subsection{Task Proxy Object Life Cycle}
+
+Task proxy creation and destruction must be managed so that, in a
+continuously running system, they exist when needed, but do not exist
+for too long before they are needed, and cease to exist soon after they
+are no longer needed.
+
+\subsubsection{Task Creation}
+
+A task proxy object needs to exist, at the latest, by the time that all
+of its prerequisites have been satisfied.  The earliest a task can run
+is governed chiefly by whether it depends on its previous
+instance (in which case it can potentially run as soon as its previous
+instance has finished\footnote{Or when it has generated its background
+state for the next instance, at least.}) or not (in which case it can
+potentially run in parallel with its previous instance). This
+information is specific to the task type so the best place to hold it is
+in the task proxy class definitions. 
+
+New tasks are therefore created after their previous instance {\em
+abdicates}; for forecast models this happens when the previous instance
+finishes\footnote{But see previous footnote}; and otherwise as soon as
+the previous instance starts running. This ensures that a task cannot
+run before its previous instance without use of explicit intercycle
+prerequisites that would require special treatment at startup (when
+there is no previous cycle). Tasks are not deleted immediately on
+abdication (see below).
+
+\subsubsection{Removing Spent Tasks} 
+
+A task is spent if it finished {\em and} no longer needed to satisfy the
+prequisites of any other task. Most tasks are only needed by other
+cotemporal downstream tasks; these can be removed when they are finished
+{\em and} older than the oldest non-finished task. For rare cases that
+are needed by tasks in later reference times (e.g.\ nzlam post
+processing: multiple hourly topnet tasks need the same most recent
+previously finished 06 or 18Z nzlam post processing task), each
+non-finished task reports its {\em cutoff reference time} which is the
+oldest reference time that may contain tasks still needed to satisfy its
+own prerequisites (if it is waiting) or those of its immediate
+post-abdication successor (if it is running already), then the task
+manager can then kill any finished tasks that are also older than the
+oldest task cutoff time.
+
+\subsubsection{Removing Lame Tasks} 
+
+Tasks that will never run (because their prerequisites cannot be
+satisfied by any other task in the system) are removed from the {\em
+oldest batch} of tasks.  If not removed they would prevent the spent
+task deletion algorithm from working properly. Lame tasks can only be
+detected in the oldest task batch; in younger batches some tasks may yet
+appear as their predecessors abdicate.
+
+Lame tasks are abdicated rather than just deleted, because their
+descendents will not necessarily be lame: e.g.\ if the system is started
+at 12Z with topnet turned on, all topnet tasks from 12Z through 17Z will
+be valid but lame, because they will want to take input from a
+non-existent nzlam\_post from 06Z prior to startup. However, the
+presence of lame tasks may indicate user error: e.g.\ if you forget
+to turn on task type $foo$ that supplies input to task type $bar$,
+any instance of $bar$ will be lame.
+
+\subsection{Constraining The System}
+
+No task is allowed to get more than 48 hours (user configurable) ahead
+of the slowest task in the system (with respect to reference time).
+
 
 \subsection{Coupling Task Proxies to Tasks} 
 
@@ -473,210 +568,91 @@ files'', and must send messages of the same kind back to the controller
 to indicate when it has reached an important waypoint or completed
 generated any important outputs.  
 
-\subsection{Logging}
 
+\subsection{Task Definition}
 blah.
 
-
 \subsection{Pyro}
-
 blah.
 
 \subsection{Pure Simulation Mode}
 
-blah.
+The dynamic metascheduling algorithm is essentially a simulation of an
+interacting task set in which the state of each task proxy object is
+coupled to that of the real task it represents. In addition, task proxy
+state changes occur in response to {\em messages} rather than, say,
+actual detection of newly generated input files.  This suggests
+a {\em dummy mode} in which each configured external task is replaced by
+an instance of an external dummy program that masquerades as the real
+task by reporting completion of each of its outputs in turn (task output
+lists can be exposed to other programs, namely to the dummy task
+program, through Pyro RPC calls). As far as the control system is
+concerned this is indistinguishable from real operation, except that
+external dummy tasks are less likely to be delayed by resource
+contention, and the dummy mode can be run according to an accelerated
+clock, rather than real time, for quick testing.  Dummy tasks therefore
+complete in approximately the same dummy clock time as the real tasks do
+in real time. An initial dummy clock offset relative to the initial
+reference time can also be specified, which allows simulation of the
+transition between catch up and real time operation, and vice versa. Log
+messages are stamped with dummy clock time instead of real time.
 
-\subsection{System and Task Definition}
+The same script is used for all external dummy tasks but it has special
+behaviour in certain cases: the dummy downloader ``waits for incoming
+files'' until 3:15 past its reference time, and the dummy topnet ``waits
+for stream flow data'' until 0:15 past its reference time.
 
-
-\begin{comment}
-
-there are several kinds of non-cotemporal (different reference time)
-dependence.  Forecast models depend on their own previous instance,
-because one forecast generates the {\em background model state} for the
-next.  In addition, some forecast models may depend explicitly on
-earlier tasks of a different type, as well as on their own previous
-instance.  Post processing tasks, on the other
-hand, do not depend on their own previous instance, strictly speaking,
-but they depend on cotemporal forecast models that do. EcoConnect's
-hourly river flow forecasts, for example, take input from the most
-recent previous regional weather forecast.  Finally, some tasks, such as
-those that wait on external input data, and tide models, may have no
-upstream dependencies at all.
-
-Non-forecast model tasks can even overlap with their own previous
-instances, if the opportunity arises (this occurs when a post processing
-task takes longer to run than the delay between its upstream model
-starting and it starting).  System throughput can be greatly increased
-by allowing tasks from many different forecast cycles to run
-simultaneously where dependencies allow.
-
-This could be done by checking for the existence of required inputs
-directly, or by monitoring the state of the other tasks that are known
-to provide the inputs in each case (are they finished yet?).  
-
-\subsection{Dynamic Metascheduling}
-
-knows its own prerequisites (inputs) and outputs, and can interact
-with other tasks to negotiate dependencies so that correct scheduling
-emerges naturally at run time.  The entire scheduling problem is now
-contained within the task interaction step, which is almost trivial
-because it is completely indiscriminate: whenever any task changes
-state, {\em each task} asks {\em all the others} if they can satisfy its
-prerequisites with their completed outputs (it does not matter that most
-of these interactions are destined to be fruitless). The control program
-thus remains simple and generic, regardless of the number of tasks or
-the complexity of their interdependencies; it simply manages a set of
-tasks that are all individually configured as if they were to run in
-isolation.\footnote{The system manager does of course have to ensure
-that the configured task pool is self consistent, i.e.\ that each task's
-prerequisites will be satisfied by some other task(s) in the system.}
-The total absence of explicit scheduling logic makes this method
-extremely flexible and extensible.\footnote{To extend the system, one
-simply derives a new class definition that lists the new task's
-prerequisites and outputs. The new task will automatically run at the
-right time, i.e.\ when its prerequisites have been satisfied by some
-other task(s) in the system.}
-
-Dynamic scheduling can be viewed as a simulation of an interacting task
-set in which the state of each {\em simulee} is tied to, and can
-influence, that of the real task it represents.  This suggests a
-powerful dummy mode of operation in which the simulation is divorced
-from reality by replacing external tasks with an external dummy program
-that masquerades as a real task by ``completing'' each of its outputs in
-turn (i.e.\ it reports they are complete because, as far as the
-controller is concerned, task outputs are just {\em messages}; more on
-this below).  The control program cannot distinguish this from real
-operations, so the dummy mode allows complete testing of the control
-system for a given configured task set, without running any real tasks.
-
-
-\subsection{{\em Sequenz}}
-
-A dynamic scheduling controller would clearly be most naturally
-implemented in an object oriented programming language, which provides
-the tools for object construction and interaction.  We must also provide
-the means for task objects to launch their external tasks when their
-prerequisites are satisfied (e.g.\  by submission to a batch queue
-scheduler on a task-dependent target machine), and for synchronization
-of the internal states of task objects and the external tasks they
-represent, via remote method calls or something similar.  Finally, the
-generic description above assumes that task objects exist whenever they
-are needed (for external task control and for interacting with other
-dependent tasks), so we must devise a task management scheme governing
-the creation and destruction of task objects, to ensure that this is the
-case.
-
-NIWA's EcoConnect Forecasting System, described above, is controlled by
-an asynchronous dynamic scheduling implementation called {\em Sequenz},
-implemented in object oriented Python and using the Python Remote Object
-protocol ({\em Pyro}) for direct network communication between task
-objects and the tasks they represent. It allows tasks from many
-different forecast cycles to run at once, where dependencies allow,
-transitions seamlessly from ``catchup'' or case study mode (where all
-external input is available from the outset and much asynchronous
-activity is therefore possible, e.g.\ after system downtime; in this
-case) to real time operation, tasks can be switched on and off while the
-controller is running, new tasks added without any change to the main
-program, and the system can be restarted in arbitrarily complex states
-after downtime.  It also features the powerful dummy mode described
-above, for testing, and allows easy construction of ad hoc parallel test
-systems feeding off the main operational system. Pyro also enables
-efficient RPC-based remote control and system monitoring by external
-programs.  Sequenz can be interfaced to existing models and tasks with
-minimal overhead. 
-
-The operation runs on heterogenous distributed
-hardware, which includes a massively parallel supercomputer and several
-Linux servers. 
-
-\subsubsection{Applicability}
-
-The dynamic scheduling concept is very general and could in principle be
-implemented for any set of interdependent tasks. Sequenz, however, is
-somewhat specialized toward cycling forecast systems, such as
-EcoConnect, in which each task has an associated {\em reference time}
-(generally the nominal forecast start time, or {\em analysis} time, of
-the associated forecast model) that all task prerequisites and outputs
-depend on in some way. and a set of valid times for each task type (e.g.\
-the atmospheric model might run at 00, 06, 12, and 18 UTC each day,
-while the river model runs hourly).  One-off task pools with no
-particular time dependence, however, are much simpler than this, and it
-would not be difficult to strip all reference time handling from the
-program.
-
-In addition, EcoConnect operates in a well defined environment so that,
-for example, each task knows exactly what its input files look like
-(filenaming conventions) and where to get them from (e.g.\ {\em task X}'s
-output directory). Consequently, for file-based prerequisites, the
-controller does not need to know the file's actual location or check for
-its existence, because the external tasks already do that. It could,
-however, easily be made to pass file locations between tasks so that all
-input/output filenames and paths could be defined centrally in the
-control program itself.  
+The dummy clock can be bumped forward a number of hours by remote
+control, while the system is running. This affects the postrequisite
+timing of running tasks correctly, but if it causes a running task to
+finish immediately the next task in line will still start from the
+beginning no matter how big the bump.
 
 
 
-\section{Implementation}
+%some tasks, such as those that wait on external input data, and tide
+%models, may have no upstream dependencies at all.
 
-To implement dynamic scheduling we need a specific {\em task management}
-scheme that controls when tasks will be created and destroyed, and so
-on. There are many options here; for instance: should tasks be created
-all at once, in cotemporal batches, or one at a time as their
-predecessors finish? The consequences of these choices must be evaluated
-carefully, which isn't easy in light of the inherent complexity of
-asynchronous operation. At the simpler end of the task management
-spectrum we could, for example, create a whole month's worth of tasks at
-once and let them interact until everything runs to completion.  Nothing
-would run out of sequence, {\em but} system monitoring would be
-difficult because of the sheer number of tasks involved, the end of the
-month would present an artificial barrier to operations, tasks that lack
-prerequisites would all want to run at once, and system restarts would
-be overly complicated. 
+%This could be done by checking for the existence of required inputs
+%directly, or by monitoring the state of the other tasks that are known
+%to provide the inputs in each case (are they finished yet?).  
 
-\subsection{Main Algorithm}
+%The control program thus remains simple and generic, regardless of the
+%number of tasks or the complexity of their interdependencies; it simply
+%manages a set of tasks that are all individually configured as if they
+%were to run in isolation.\footnote{The system manager does of course
+%have to ensure that the configured task pool is self consistent, i.e.\
+%that each task's prerequisites will be satisfied by some other task(s)
+%in the system.}
+%The total absence of explicit scheduling logic makes this method
+%extremely flexible and extensible.\footnote{To extend the system, one
+%simply derives a new class definition that lists the new task's
+%prerequisites and outputs. The new task will automatically run at the
+%right time, i.e.\ when its prerequisites have been satisfied by some
+%other task(s) in the system.}
 
-The algorithm below operates on a single pool of interacting task
-objects, has simple start up and continuous operation, and is relatively
-easy to monitor (task objects exist by the time they are needed but not
-for too long before that, and not for too long after they are finished). 
 
-The simplicity of the dynamic scheduling algorithm is clear from the
-following code listing, taken directly from the main program:
+\subsection{Applicability}
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
-\begin{lstlisting}
-# (startup initialization code omitted)
+The object oriented dynamic metascheduling concept is quite general and
+could in principle be implemented for any set of interdependent tasks.
+iCycle, however, is specialized toward cycling forecast systems in that
+each task must have an associated {\em forecast reference time} that is
+part of a predetermined series for a given task type and is not
+necessarily related to the real time at which the task actually runs.  
 
-while True: # MAIN LOOP
+\subsection{Environment}
 
-   if task_base.state_changed:
-       # PROCESS ALL TASKS whenever one has changed state
-       # as a result of a remote task message coming in: 
-       # interact, run, create new, and kill spent tasks
-       #---
-       task_pool.process_tasks()
-       task_pool.dump_state()
-       if task_pool.all_finished():
-           clean_shutdown( "ALL TASKS FINISHED" )
+EcoConnect operates in a well defined environment so that each real task
+knows what its input files look like for a given reference time
+(through filenaming conventions) and where to get them from (e.g.\ from
+their own input directories, or upstream output directories).
+Consequently the control system does not need to know the location of
+important input/output files, just (via messaging) that they exist. In a
+less structured environment additional tasks could easily be added to
+to move files around as needed. 
 
-    # REMOTE METHOD HANDLING; handleRequests() returns 
-    # after one or more remote method invocations are 
-    # processed (these are not just task messages, hence 
-    # the use of task_base.state_changed above).
-    #---
-    task_base.state_changed = False
-    pyro_daemon.handleRequests( timeout = None )
-
-# END MAIN LOOP
-\end{lstlisting}
-}
-
-\subsection{Details}
-
-\subsubsection{Startup and Initialization}
+\subsection{Startup and Initialization}
 
 An initial reference time and list of task object names are read in from
 the config file, then each task object is created at the initial
@@ -693,28 +669,10 @@ state and launch their external tasks immediately. Otherwise ({\em or}
 if there are no tasks that lack prerequisites) nothing will happen.
 
 
-
-\subsubsection{Creation of New Tasks}
-
-New tasks are created by abdication, i.e.\ create $foo(T\negmedspace
-+\negmedspace 1)$ if $foo(T)$ is {\em finished}.  Task abdication
-ensures that $foo(T\negmedspace +\negmedspace 1)$ won't run before
-$foo(T)$ finishes, without imposing explicit intercycle prerequisites
-that would require special treatment at startup (when there is no
-previous cycle).  It also ensures that tasks with no prerequisites, e.g.\
-{\em downloader} and {\em nztide}, won't all try to run at once.
-Tasks are not deleted immediately on abdication (see below).
-
-
-\subsubsection{Task Interaction} 
+\subsection{Task Interaction} 
 
 Each task keeps track of which of its postrequisites are completed, and
-asks the other tasks if they can satisfy any of its prerequisites.  The
-fact that task objects do not need to know who is supposed to satisfy
-their prerequisites (because they can ask, indiscriminately, every other
-task in the system) makes the task interaction (scheduling!) algorithm
-almost trivial. The fact that most of these interactions are fruitless
-is of no consequence. 
+asks the other tasks if they can satisfy any of its prerequisites. 
 
 {\small
 \noindent
@@ -732,7 +690,7 @@ class task_pool( Pyro.core.ObjBase ):
 \end{lstlisting}
 }
 
-\subsubsection{Running Tasks}
+\subsection{Running Tasks}
 
 Each task object can launch its associated external task, and enter the
 {\em running} state if its prerequisites are all satisfied, any existing
@@ -740,14 +698,14 @@ older tasks of the same type are already {\em finished}, and fewer than
 {\em MAX\_ RUNAHEAD} finished tasks of the same type still exist (this
 stops tasks with no prerequisites from running ahead indefinitely).
 
-\subsubsection{Pyro Remote Method Calls}
+\subsection{Pyro Remote Method Calls}
 
 The Pyro request handling loop executes remote method calls coming in
 from external tasks, and returns after at least one call was handled.
 Pyro must be run in non-default single-threaded mode (see Appendix
 \ref{pyro-appendix}).
 
-\subsubsection{Dumping State} 
+\subsection{Dumping State} 
 
 The current state (waiting, running, or finished) of each task is
 written out to the {\em state dump file}.  This provides a running
@@ -756,74 +714,11 @@ failure. The controller can optionally start up by loading the state
 dump (which can be edited first). Any 'running' tasks are reloaded in
 the 'waiting' state.
 
-\subsubsection{Removing Spent Tasks} 
-
-A task is spent if it finished {\em and} no longer needed to satisfy the
-prequisites of any other task. Most tasks are only needed by other
-cotemporal downstream tasks; these can be removed when they are finished
-{\em and} older than the oldest non-finished task. For rare cases that
-are needed by tasks in later reference times (e.g.\ nzlam post
-processing: multiple hourly topnet tasks need the same most recent
-previously finished 06 or 18Z nzlam post processing task), each
-non-finished task reports its {\em cutoff reference time} which is the
-oldest reference time that may contain tasks still needed to satisfy its
-own prerequisites (if it is waiting) or those of its immediate
-post-abdication successor (if it is running already), then the task
-manager can then kill any finished tasks that are also older than the
-oldest task cutoff time.
-
-\subsubsection{Removing Lame Tasks} 
-
-Tasks that will never run (because their prerequisites cannot be
-satisfied by any other task in the system) are removed from the {\em
-oldest batch} of tasks.  If not removed they would prevent the spent
-task deletion algorithm from working properly. Lame tasks can only be
-detected in the oldest task batch; in younger batches some tasks may yet
-appear as their predecessors abdicate.
-
-Lame tasks are abdicated rather than just deleted, because their
-descendents will not necessarily be lame: e.g.\ if the system is started
-at 12Z with topnet turned on, all topnet tasks from 12Z through 17Z will
-be valid but lame, because they will want to take input from a
-non-existent nzlam\_post from 06Z prior to startup. However, the
-presence of lame tasks may indicate user error: e.g.\ if you forget
-to turn on task type $foo$ that supplies input to task type $bar$,
-any instance of $bar$ will be lame.
-
-
-\subsection{Dummy Mode}
-
-Dummy mode allows complete testing of the control system without running
-any real external tasks\footnote{The only difference between dummy mode
-and real operation, as far as the controller is concerned, is that
-external dummy tasks are not delayed by resource contention.}. When it
-is ready to run, a task object will launch an external dummy program
-that (i) gets a list of postrequisites from the parent task object and
-then (ii) reports back that each one is satisfied at the (estimated)
-right time relative to an accelerated dummy clock. Dummy tasks therefore
-complete in approximately the same dummy clock time as the real tasks do
-in real time. An initial dummy clock offset relative to the initial
-reference time can also be specified, which allows simulation of the
-transition between catchup and real time operation. Log messages are
-stamped with dummy clock time instead of real time.
-
-The same script is used for all external dummy tasks but it has special
-behaviour in certain cases: the dummy downloader ``waits for incoming
-files'' until 3:15 past its reference time, and the dummy topnet ``waits
-for stream flow data'' until 0:15 past its reference time.
-
-The dummy clock can be bumped forward a number of hours by remote
-control, while the system is running. This affects the postrequisite
-timing of running tasks correctly, but if it causes a running task to
-finish immediately the next task in line will still start from the
-beginning no matter how big the bump.
-
-
 \appendix
 
 \section{Essential OOP Concepts}
 
-The simplicity of the dynamic scheduling implementation in {\em sequenz}
+The simplicity of the dynamic scheduling implementation in {\em iCycle}
 is critically dependent on the {\em polymorphic} nature of the {\em task
 objects} in the program.  This section contains a minimal introduction
 to these Object Oriented Programming concepts.  Refer to any OOP
@@ -897,57 +792,56 @@ which results in a lot of unnecessary task processing when nothing
 important is happening.
 
 
-\section{YET TO BE DOCUMENTED}
+\subsection{Interfacing Tasks To iCycle}
+blah.
 
-\begin{itemize}
- \item usage
- \item logging
- \item debugging
- \item adding new task definitions
- \item system monitors
- \item remote control: 
-    \begin{itemize}
-    \item clean shutdown of pyro
-    \item bumping the dummy clock forward
-    \end{itemize}
- \item external task messaging interface script
- \item dummying out tasks in real mode
- \item how to set up partial parallel test systems
-\end{itemize}
+\subsection{Utility Programs}
+blah.
+
+\subsubsection{Configure System}
+blah.
+
+\subsubsection{Remote Control}
+blah.
+
+\subsubsection{System Monitors}
+blah.
+
+\subsection{Logging}
+blah.
 
 \section{Miscellaneous Notes}
 
-(To be incorporated into the main documentation, or deleted).
+\subsection{Product Generation}
 
-\subsection{catchup mode}
+Note that ``correct scheduling'' is not necessarily equivalent to
+``orderly generation of products by reference time'' (the upstream 
+forecast model can run continuously regardless of any downstream
+processing that depends on it).
 
-Note that ``correct model scheduling'' is not equivalent to ``orderly
-generation of products by reference time''.  Nzlam can run continuously,
-regardless of the downstream processing that depends on it.
+\subsection{Catching Up}
 
-Catchup mode is now task-dependent, rather than a property of the whole
-system (as it is if only tasks from the same reference time can run at
-once).  Where this matters, it can be detected by the relevant external
-task. E.g.\ if the external topnet(T) task starts up at real time t
-greater than the stream flow data time for T (i.e.\ $T+15$ min), i.e.\ the
-required stream flow data is already available, then we're still in
-catchup. If, on the other hand, the topnet task finds that it has to
-wait for its stream flow data time to arrive, then we're caught up to
-real time.  This matters because topnet is allowed to run ahead by a
-different amount of time depending on whether we're in catchup mode or
+The state of ``catching up'' is a property of the individual tasks, not
+the whole system. Where this matters, it can be detected by the relevant
+external task. E.g.\ if the external topnet(T) task starts up at real
+time t greater than the stream flow data time for T (i.e.\ $T+15$ min),
+i.e.\ the required stream flow data is already available, then we're
+still in catchup. If, on the other hand, the topnet task finds that it
+has to wait for its stream flow data time to arrive, then we're caught
+up to real time.  This matters because topnet is allowed to run ahead by
+a different amount of time depending on whether we're in catchup mode or
 not.
 
-
-\subsection{controlling when a task executes}
+\subsection{Controlling Task Execution}
 
 \begin{itemize}
  \item  prerequisites
  \item artificial prerequisites (e.g.\ make nztide depend on nzlam)
  \item delayed instantiation (a task can't run if it doesn't exist yet).
  \item other contraints based on, for example, the number of previous
- instances that still exist in the system.
+ instances that still exist in the system, or how far ahead of the 
+ slowest/oldest task we can get.
 \end{itemize}
-
 
 \subsection{fuzzy prequisites}
 
@@ -960,32 +854,4 @@ relative to the task's own reference time; any task with a reference
 time greater than or equal to the boundary time can satisify the
 prerequisite.
 
-\subsection{Task Messaging}
-
-To the task objects, outputs are just {\em messages} indicating that the
-external task has reached a significant waypoint, such as generation of
-a particular output file.
-
-\section{To Do}
-
-\begin{itemize}
-
-\item
- retrofit proper exception handling throughout (currently used sparsely and 
-  inconsistently)
-
-\item
- potential bug in the free task class: will never run if too many
- previous instances exist that are newer than the task deletion cutoff
-
-\item
- remote logging from messaging and dummy task scripts, in case the
- controller itself is dead.
-
-\end{itemize}
-
-
-\end{comment}
-
 \end{document}
-
