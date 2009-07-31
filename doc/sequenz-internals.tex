@@ -18,35 +18,34 @@ Multi-Model Forecasting Systems}
 
 \maketitle
 
-\begin{abstract} A metascheduler is a control system that determines
-    when members of a set of tasks with dependencies are {\em ready} to
-    be scheduled for execution.* This paper describes a flexible
-    metascheduling algorithm that provides optimal control over
-    continuously cycling multi-model environmental forecasting systems
-    without prescribing task execution order or requiring that
-    dependencies between tasks be explicitly defined. Each task simply
-    registers its own prerequisites, without reference to other tasks in
-    the system, and dependencies are negotiated dynamically as outputs
-    are reported so that correct execution order emerges naturally at
-    run time.  The algorithm is optimal in the sense that tasks are
-    queued for execution as soon as their prerequisites are satisfied
-    regardless of associated forecast cycle or any other consideration.
-    Tasks from many different forecast cycles can therefore run
-    simultaneously, where dependencies allow, to achieve maximum
-    throughput during catch up from delays or when running the entire
-    system over historical case study periods, and can allow new kinds
-    of real time operation. The absence of any task-specific scheduling
-    logic or predefined dependencies lends great flexibility: tasks can
-    be switched on and off on the fly, new tasks can be added without
+\begin{abstract}
+
+    A metascheduler is a control system that determines when members of
+    a set of tasks with dependencies are {\em ready} to be scheduled for
+    execution.\footnote{The term can also refer to {\it a single
+    aggregate view of multiple Distributed Resource Managers}, which is
+    not the topic of this paper.} Environmental forecasting systems are
+    continuously repeating task sets with intra- and inter-cycle
+    dependencies. Existing forecast control systems ignore the
+    intercycle dependencies; this has no effect on normal real time
+    operation but it dramatically reduces potential system throughput
+    after a delay and is therefore a serious problem for operations that
+    have little down time between forecast cycles. This paper describes
+    a new metascheduling algorithm for continuously cycling forecasting
+    systems that can run tasks from many different forecast cycles at
+    once, where dependencies allow, to achieve maximum throughput in all
+    modes of operation. It is also extremely flexible and widely
+    applicable because it requires no system-specific scheduling logic:
+    each task registers its own prerequisites without reference to other
+    tasks in the system, and dependencies are negotiated dynamically as
+    outputs are reported so that correct execution order emerges
+    naturally at run time. Tasks can be added or removed without
     altering the main program, and parallel test systems that feed off
     the main operation, or entirely new systems, can be built quickly.
     Our dynamic metascheduler, {\em iCycle}, is easily interfaced to
     existing tasks (models etc.). It is written in the Python language
-    and uses the Python Remote Object protocol ({\em Pyro}) to control
+    and uses the Python Remote Object Protocol ({\em Pyro}) to control
     tasks on multiple platforms at once. 
-
-*The term can also refer to {\it a single aggregate view of multiple
-Distributed Resource Managers}, which is not the topic of this paper.
 
 \end{abstract}
 
