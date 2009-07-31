@@ -84,3 +84,36 @@ topnet, say, in the state dump file, they will all have the same nzlam_time
 value (i.e. do not assume that the nzlam_time assocated with a finished topnet
 task is the nzlam_time actually used by that topnet task when it ran.
 
+
+HOW TO GET TOPNET OVER A 24 HOUR NZLAM FORECAST GAP, IN CATCHUP MODE
+
+If the topnet nzlam file does not exist due to operational problems, the
+oper_interface task will hang because when it can't find the file it 
+waits on a yet-to-be generated operational file (which in this case will never
+be generated). The waiting TopNet will not use the previous oper_interface
+(from before the gap) because in catchup mode TopNet is only allowed to get up
+to 12 hours ahead of NZLAM. So:
+
+1) use 'remote-control -ck oper_interface%YYYYMMDDHH' to abdicate-and-kill the
+two tasks that will hang in the forecast gap. 
+
+2) use 'remote-control -cs' to shut down the controller
+
+3) change CATCHUP_MODE_CUTOFF to 47 in taskdef/topnet.py (this sets TopNet's
+fuzzy prerequisite to allow up to 48 hours ahead of the NZLAM) and reconfigure
+the system with 'configure-system system-def/ecoconnect/topnet-test'
+
+4/ set a stop time (in user_config.py) past the NZLAM forecast gap and restart
+the controller ('sequenz -r'). The first topnet in the gap should now run off
+the pre-gap oper_interface. 
+
+6/ when the system stops past the gap, restore CATCHUP_MODE_CUTOFF to 11, 
+reconfigure the system (as for 3), and restart again ('sequence -r').
+
+NOTE: in case of a forecast gap in real time (when TopNet is 'caught up') it
+should be sufficient to just abdicate-and-kill the hung oper_interface tasks
+(because in this case TopNet is allowed to get 48 hours ahead already). In
+fact, if running in 'unconstrained' mode, the post-gap oper_interface tasks
+will already have started and TopNet should automatically carry on at that
+point.  However, the hung (but already abdicated) oper_interfaces tasks will
+still have to be killed using 'remote-control -ck oper_interface%YYYYMMDDHH'.
