@@ -8,9 +8,7 @@ interact, etc.
 
 import reference_time
 import pimp_my_logger
-import datetime
 import logging
-import shutil
 import broker
 import task
 import os
@@ -35,15 +33,6 @@ class manager:
         if config.get('use_broker'):
             self.broker = broker.broker()
         
-        # always back up the state dump file
-        filename = self.config.get('state_dump_file')
-        if os.path.exists( filename ):
-            backup = filename + '.' + datetime.datetime.now().isoformat()
-            print ' backing up the old state dump file to ' + backup
-            shutil.copyfile( filename, backup )
-        else:
-            print ' no existing state dump file to back up'
-
         # instantiate the initial task list and create task logs 
         if restart:
             self.load_from_state_dump( dummy_clock )

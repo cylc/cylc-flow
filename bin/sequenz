@@ -10,9 +10,11 @@ import sys
 import task
 import pyrex
 import config
+import shutil
 import profile
 import manager
 import logging
+import datetime
 import execution
 import dead_letter
 import remote_switch
@@ -74,6 +76,13 @@ def main( argv ):
         pyro.connect( dummy_clock, 'dummy_clock' )
     else:
         dummy_clock = None
+
+    state_dump_file = system_config.get('state_dump_file')
+    if os.path.exists( state_dump_file ):
+        print "STATE DUMP BACKUP..."
+        backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
+        print ' + ' + backup
+        shutil.copyfile( state_dump_file, backup )
 
     print "CREATING MAIN LOG......."
     # create logging dirs
