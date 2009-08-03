@@ -9,7 +9,10 @@ class topnet( task ):
     nzlam_time = None
 
     # for fuzzy prerequiste satisfaction limits
+    # when catching up there's no reason to let TopNet get far ahead
+    # (unless, temporarily, getting over an NZLAM forecast gap)
     CATCHUP_MODE_CUTOFF  = 11
+    #CATCHUP_MODE_CUTOFF  = 47
     CAUGHTUP_MODE_CUTOFF = 47   
 
     fuzzy_file_re =  re.compile( "^file (tn_\d{10}_utc_nzlam_12.nc) ready$" )

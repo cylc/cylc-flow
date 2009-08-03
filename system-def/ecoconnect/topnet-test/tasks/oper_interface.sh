@@ -111,8 +111,11 @@ elif [[ -f ${SEARCH_MAIN}.bz2 ]]; then
     task-message NORMAL "... found  $FILENAME in main archive"
     # copy to /tmp for bunzip2'ing in case we don't have write access
     cp ${SEARCH_MAIN}.bz2 $TMPDIR
-    bunzip2 $TMPDIR/${FILENAME}.bz2
     FOUND=$TMPDIR/$FILENAME
+    # remove the unzipped file if it already exists from a previous run
+    [[ -f $FOUND ]] && rm -f $FOUND
+    # now unzip the newly found file
+    bunzip2 $TMPDIR/${FILENAME}.bz2
 
 else
     task-message WARNING "$FILENAME not found; waiting on $OPER_LOG"
