@@ -13,6 +13,7 @@ import logging
 import shutil
 import broker
 import task
+import os
 import re
 
 # See system documentation for OPTIMAL METASCHEDULING details.
@@ -34,6 +35,15 @@ class manager:
         if config.get('use_broker'):
             self.broker = broker.broker()
         
+        # always back up the state dump file
+        filename = self.config.get('state_dump_file')
+        if os.path.exists( filename ):
+            backup = filename + '.' + datetime.datetime.now().isoformat()
+            print ' backing up the old state dump file to ' + backup
+            shutil.copyfile( filename, backup )
+        else:
+            print ' no existing state dump file to back up'
+
         # instantiate the initial task list and create task logs 
         if restart:
             self.load_from_state_dump( dummy_clock )
@@ -106,11 +116,6 @@ class manager:
         # load initial system state from the configured state dump file
         #--
         filename = self.config.get('state_dump_file')
-        # back up the state dump file in case the restart attemp fails
-        backup = filename + '.' + datetime.datetime.now().isoformat()
-        print '\nRESTART: INITIAL STATE FROM STATE DUMP: ' + filename
-        print ' backing up the initial state dump file to ' + backup
-        shutil.copyfile( filename, backup )
         # state dump file format: ref_time:name:state, one per line 
         self.log.info( 'Loading previous state from ' + filename )
 
