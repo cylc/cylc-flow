@@ -6,7 +6,7 @@ class streamflow( parallel_task ):
     owner = 'hydrology_oper'
     instance_count = 0
 
-    def __init__( self, ref_time, initial_state, relative_state = 'catching_up' ):
+    def __init__( self, ref_time, abdicated, initial_state, relative_state = 'catching_up' ):
 
         if relative_state == 'catching_up':
             streamflow.catchup_mode = True
@@ -27,8 +27,7 @@ class streamflow( parallel_task ):
         self.uptodate_re = re.compile( "^CAUGHTUP:.*for " + ref_time )
 
         # adjust reference time to next valid for this task
-        self.ref_time = self.nearest_ref_time( ref_time )
-        ref_time = self.ref_time
+        ref_time = self.nearest_ref_time( ref_time )
  
         self.prerequisites = requisites( self.name + '%' + ref_time, [])
 
@@ -37,7 +36,7 @@ class streamflow( parallel_task ):
             [5, "got streamflow data for " + ref_time ],
             [5.1, self.name + " finished for " + ref_time] ])
 
-        parallel_task.__init__( self, initial_state )
+        parallel_task.__init__( self, ref_time, abdicated, initial_state )
 
 
     def incoming( self, priority, message ):
@@ -70,7 +69,7 @@ class streamflow( parallel_task ):
                 streamflow.catchup_mode = False
 
 
-    def dump_state( self, FILE ):
+    def get_state_string( self ):
         # see comment above on catchup_mode and restarts
 
         if streamflow.catchup_mode:
@@ -78,12 +77,7 @@ class streamflow( parallel_task ):
         else:
             relative_state = 'caught_up'
 
-        state_string = self.state + ':' + relative_state
-
-        FILE.write( 
-                self.ref_time + ' ' + 
-                self.name     + ' ' + 
-                state_string + '\n' )
+        return self.state + ':' + relative_state
 
 
     def get_state_summary( self ):

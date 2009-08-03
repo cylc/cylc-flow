@@ -1,5 +1,8 @@
 Sequenz To Do List
 
+* only topnet-test tasks have been updated for the change that adds
+  abdication status to the state dump file.
+
 * new RUN_LENGTH def field must be reference hour dependent
 
 * go through all 'requisite' class methods, get rid of those that

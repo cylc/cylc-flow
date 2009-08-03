@@ -65,12 +65,17 @@ class task( Pyro.core.ObjBase ):
 
     quick_death = True
 
-    def __init__( self, initial_state ):
+    def __init__( self, ref_time, abdicated, initial_state ):
         # Call this AFTER derived class initialisation
         # (which alters requisites based on initial state)
 
-        # Derived classes MUST call nearest_ref_time()
-        # before defining their requisites.
+        # Derived classes MUST call nearest_ref_time() and define their 
+        # prerequistes and outptus before calling this __init__.
+        self.ref_time = ref_time
+
+        # Has this object abdicated yet (used for recreating abdicated
+        # tasks when loading tasks from the state dump file).
+        self.abdicated = abdicated
 
         # count instances of each top level object derived from task
         # top level derived classes must define:
@@ -104,7 +109,12 @@ class task( Pyro.core.ObjBase ):
 
         self.latest_message = ""
 
-        self.abdicated = False # True => my successor has been created
+        if abdicated == 'True':
+            # my successor has been created already
+            self.abdicated = True
+        else:
+            # my successor has not been created yet
+            self.abdicated = False 
 
         # initial states: 
         #  + waiting 
@@ -340,24 +350,33 @@ class task( Pyro.core.ObjBase ):
                 if reqs.is_satisfied(req):
                     self.prerequisites.set_satisfied( req )
 
+    def get_state_string( self ):
+        # Derived classes should override this function if they require
+        # non-standard state information to be written to the state dump
+        # file.
+
+        # Currently only single string values allowed, FORMAT: 
+        #    state:foo:bar:baz (etc.)
+
+        return self.state
+
+
+
     def dump_state( self, FILE ):
         # Write state information to the state dump file, reference time
         # first to allow users to sort the file easily in case they need
         # to edit it:
-        #   reftime name state
+        #   reftime name abdicated state
 
-        # Derived classes can override this if they require other state
-        # values to to be dumped and reloaded from the state dump file,
-        # which should be written in this form:
-        #   reftime name state:foo:bar (etc.)
+        # Derived classes can override get_state_string() to add
+        # information to the state dump file.
+        
+        # This must be compatible with __init__() on reload
 
-        # This must be compatible with __init__() on reload (see comment
-        # above).
-
-        FILE.write( 
-                self.ref_time + ' ' + 
-                self.name     + ' ' + 
-                self.state    + '\n' )
+        FILE.write( self.ref_time           + ' ' + 
+                    self.name               + ' ' + 
+                    str(self.abdicated)     + ' ' + 
+                    self.get_state_string() + '\n' )
 
 
     def abdicate( self ):

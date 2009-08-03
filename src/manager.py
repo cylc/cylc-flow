@@ -34,6 +34,7 @@ class manager:
             self.broker = broker.broker()
         
         # instantiate the initial task list and create task logs 
+        self.tasks = []
         if restart:
             self.load_from_state_dump( dummy_clock )
         else:
@@ -52,7 +53,6 @@ class manager:
 	    mod = __import__( module )
 	    return getattr( mod, class_name)
 
-
     def get_oldest_ref_time( self ):
         oldest = 9999887766
         for task in self.tasks:
@@ -68,17 +68,17 @@ class manager:
         # config.task_list = [ taskname(:state), taskname(:state), ...]
         # where (:state) is optional and defaults to 'waiting'.
 
-        self.tasks = []
         start_time = self.config.get('start_time')
 
         for item in self.config.get('task_list'):
             state = 'waiting'
             name = item
+
             if re.compile( "^.*:").match( item ):
                 [name, state] = item.split(':')
 
             # instantiate the task
-            task = self.get_task_instance( 'task_classes', name )( start_time, state )
+            task = self.get_task_instance( 'task_classes', name )( start_time, 'False', state )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -112,14 +112,14 @@ class manager:
         lines = FILE.readlines()
         FILE.close()
 
-        # parse each line and create a ref_time keyed dict
-        # state_by_reftime[ ref_time ] = [ name, [state,foo] ], ... 
-        state_by_reftime = {}
+        log_created = {}
+
+        # parse each line and create the task it represents
         for line in lines:
             # strip trailing newlines
             line = line.rstrip( '\n' )
-            # ref_time task_name task_state_string
-            [ ref_time, name, state_string ] = line.split()
+            # ref_time task_name abdicated task_state_string
+            [ ref_time, name, abdicated, state_string ] = line.split()
             state_list = state_string.split( ':' )
             # main state (waiting, running, finished, failed)
             state = state_list[0]
@@ -127,52 +127,30 @@ class manager:
             if state == 'running' or state == 'failed':
                 state_list[0] = 'waiting'
 
-            if ref_time not in state_by_reftime.keys():
-                state_by_reftime[ ref_time ] = [ [ name, state_list] ]
-            else:
-                state_by_reftime[ ref_time ].append( [ name, state_list ] )
+            # instantiate the task object
+            task = self.get_task_instance( 'task_classes', name )( ref_time, abdicated, *state_list )
+
+            # create the task log
+            if name not in log_created.keys():
+                log = logging.getLogger( 'main.' + name )
+                pimp_my_logger.pimp_it( log, name, self.config, dummy_clock )
+                log_created[ name ] = True
  
-        # reverse sorted list of reference times so we can create each
-        # task in reverse reference time order, abdicating all but the
-        # last task of each type (this correctly handles waiting and
-        # running tasks that have not abdicated AND finished tasks that
-        # have not abdicated yet (i.e. parallel tasks that have been
-        # delayed by the number-of-instances restriction).
-        ref_times = state_by_reftime.keys()
-        ref_times.sort( key = int, reverse = True )
+            # the initial task reference time can be altered during
+            # creation, so we have to create the task before
+            # checking if stop time has been reached.
+            skip = False
+            if self.config.get('stop_time'):
+                if int( task.ref_time ) > int( self.config.get('stop_time') ):
+                    task.log.warning( task.name + " STOPPING at " + self.config.get('stop_time') )
+                    task.prepare_for_death()
+                    del task
+                    skip = True
 
-        self.tasks = []
-        seen = {}
-        for ref_time in ref_times:
-            for item in state_by_reftime[ ref_time ]:
-                [ name, state_list ] = item
-                task = self.get_task_instance( 'task_classes', name )( ref_time, *state_list )
-                if name not in seen.keys():
-                    seen[ name ] = True
-                    # create the task log
-                    log = logging.getLogger( 'main.' + name )
-                    pimp_my_logger.pimp_it( log, name, self.config, dummy_clock )
- 
-                else:
-                    # an instance of this task was already seen at a
-                    # later reference time, therefore it has abdicated
-                    task.set_abdicated()
-
-                # the initial task reference time can be altered during
-                # creation, so we have to create the task before
-                # checking if stop time has been reached.
-                skip = False
-                if self.config.get('stop_time'):
-                    if int( task.ref_time ) > int( self.config.get('stop_time') ):
-                        task.log.warning( task.name + " STOPPING at " + self.config.get('stop_time') )
-                        task.prepare_for_death()
-                        del task
-                        skip = True
-
-                if not skip:
-                    task.log.debug( "new " + task.name + " connected for " + task.ref_time )
-                    self.pyro.connect( task, task.identity )
-                    self.tasks.append( task )
+            if not skip:
+                task.log.debug( "new " + task.name + " connected for " + task.ref_time )
+                self.pyro.connect( task, task.identity )
+                self.tasks.append( task )
 
     def all_finished( self ):
         # return True if all tasks have finished AND abdicated
@@ -239,7 +217,7 @@ class manager:
                 task.log.debug( "abdicating " + task.identity )
 
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
+                new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), 'False', "waiting" )
                 if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
                     # we've reached the stop time: delete the new task 
                     new_task.log.warning( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
@@ -320,8 +298,10 @@ class manager:
 
             for lame in lame_tasks:
                 # abdicate the lame task and create its successor
-                lame.log.warning( "ABDICATING A LAME TASK " + lame.identity )
-                new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), "waiting" )
+                if lame.abdicate():
+                    lame.log.warning( "ABDICATED A LAME TASK " + lame.identity )
+
+                new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), 'False', "waiting" )
                 new_task.log.debug( "new task connected for " + new_task.ref_time )
                 self.pyro.connect( new_task, new_task.identity )
                 self.tasks.append( new_task )
@@ -448,13 +428,12 @@ class manager:
 
         task.log.debug( "suicide by remote request " + task.identity )
 
-        if task.has_abdicated():
-            task.log.debug( task.identity + " has already abdicated" )
-            return
+        if task.abdicate():
+            task.log.debug( "abdicating " + task.identity )
 
         # TO DO: the following should reuse code in regenerate_tasks()?
         # dynamic task object creation by task and module name
-        new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), "waiting" )
+        new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), 'False', "waiting" )
         if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
             # we've reached the stop time: delete the new task 
             new_task.log.warning( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
