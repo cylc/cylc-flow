@@ -94,8 +94,11 @@ elif [[ -f $FOOBZ ]]; then
     echo NORMAL "found ${FILENAME}.bz2 in staging archive"
     # copy to /tmp for bunzip2'ing in case we don't have write access
     cp $FOOBZ $TMPDIR
-    bunzip2 $TMPDIR/${FILENAME}.bz2
     FOUND=$TMPDIR/$FILENAME
+    # remove the unzipped file if it already exists from a previous run
+    [[ -f $FOUND ]] && rm -f $FOUND
+    # now unzip the newly found file
+    bunzip2 $TMPDIR/${FILENAME}.bz2
 
 elif [[ -f $SEARCH_NWP ]]; then
     task-message NORMAL "found $FILENAME in nwp_oper/output/nzlam_12"
