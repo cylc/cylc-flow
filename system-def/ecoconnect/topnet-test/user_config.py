@@ -9,7 +9,6 @@ config = {}
 ####################################### <<<<
 
 config[ 'system_name' ] = 'topnet-test'
-#config[ 'state_dump_file' ] = 'blah'
 
 config[ 'start_time' ] = '2009071206'
 config[ 'stop_time'  ] = '2009072606'
