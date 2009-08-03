@@ -37,8 +37,6 @@ if [[ -z $TASK_NAME ]]; then
 	exit 1
 fi
 
-# LAUNCH TOPNET NOW
-
 INPUT_DIR=$HOME/input/topnet
 
 NOW_epochseconds=$(date +%s)
