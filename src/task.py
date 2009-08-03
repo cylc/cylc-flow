@@ -312,7 +312,7 @@ class task( Pyro.core.ObjBase ):
             self.log.info( log_message )
             self.postrequisites.set_satisfied( message )
 
-        elif message == "failed":
+        elif message == self.name + " failed for " + self.ref_time:
             # lone "failed" message required to indicate failure
             self.log.critical( log_message )
             self.state = "failed"
