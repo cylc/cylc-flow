@@ -1,5 +1,7 @@
 Sequenz To Do List
 
+* IN PROGRESS: converting to generic dummy task 
+
 * only topnet-test tasks have been updated for the change that adds
   abdication status to the state dump file.
 

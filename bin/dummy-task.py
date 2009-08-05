@@ -1,43 +1,45 @@
 #!/usr/bin/python
 
-# TO DO: DERIVE CLASSES FOR STREAMFLOW AND DOWNLOAD, ETC. to get
-# rid of the nasty 'IF' blocks, or move them to main() at least.
-# TO DO: THIS SHOULD BE JUST THE GENERIC DUMMY TASK - PROVIDE A
-# MEANS OF DEFINING TASK-SPECIFIC BEHAVIOUR FOR DUMMY TASKS TOO.
-
-# For external dummy task programs that report their postrequisites done
-# on time relative to the controllers internal accelerated dummy clock.
-
-import os, sys
+# A program that masquerade's as a given tasks by reporting its outputs
+# completed on time according to the controller's dummy clock.
 
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
 import reference_time
 import datetime
+import sys
+import os
 import re
 from time import sleep
 
 class dummy_task_base:
 
     def __init__( self, task_name, ref_time ):
+
+        # get a pyro proxy for the task object that I'm masquerading as
         self.name = task_name
         self.ref_time = ref_time
-
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_group + '.' + self.name + '%' + self.ref_time )
+        
+        # get a pyro proxy for the dummy clock
         self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_group + '.dummy_clock' )
 
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_group + '.' + self.name + '%' + self.ref_time )
+        # fast completion            
         self.fast_complete = False
 
     def run( self ):
 
-        timed_requisites = self.task.get_timed_postrequisites()
-        # timed_requisites[ time ] = requisite
+        # get a list of output messages to fake: outputs[ time ] = output
+        outputs = self.task.get_timed_postrequisites()
 
-        times = timed_requisites.keys()
+        # ordered list of times
+        times = outputs.keys()
         times.sort()
         
+        # task-specific delay
         self.delay()
 
+        # time to start counting from 
         start_time = self.clock.get_datetime()
 
         done = {}
@@ -47,23 +49,25 @@ class dummy_task_base:
             speedup = 20.
         else:
             speedup = 1.
+            
+        # time to stop counting and generate the output
+        for output_time in times:
+            done[ output_time ] = False
+            hours = output_time / 60.0 / speedup
+            stop_time[ output_time ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
 
-        for req_time in times:
-            done[ req_time ] = False
-            hours = req_time / 60.0 / speedup
-            time[ req_time ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
-
+        # wait until the stop time for each output, and then generate the output
         while True:
             sleep(1)
             dt = self.clock.get_datetime()
             all_done = True
-            for req_time in times:
-                req = timed_requisites[ req_time ]
-                if not done[ req_time ]:
-                    if dt >= time[ req_time ]:
-                        #print "SENDING MESSAGE: ", req_time, req
-                        self.task.incoming( "NORMAL", req )
-                        done[ req_time ] = True
+            for output_time in times:
+                output = outputs[ output_time ]
+                if not done[ output_time ]:
+                    if dt >= stop_time[ output_time ]:
+                        #print "SENDING MESSAGE: ", output_time, output
+                        self.task.incoming( "NORMAL", output )
+                        done[ output_time ] = True
                     else:
                         all_done = False
 
