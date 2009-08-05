@@ -13,31 +13,18 @@ Sequenz To Do List
   logging, but a task is only considered failed if a "failed"
   message is received.
 
-* note on stuck oper_interface tasks (if no files arrive on the
-  operational system): once the prior-to-stuck finished instance gets
-  deleted, as it falls beyond cutoff, there'll be nothing to satisfy
-  future topnet tasks?  - This won't happen anymore as we always keep
-  the last *finished* oper_interface rather than basing cutoff on
-  reference time alone. However, still need to deal with said stuck task
-  ... do we need remote control to get the stuck task to abdicate and
-  die? - then topnet will carry on as normal SO LONG AS there are
-  non-stuck oper_interfaces finishing within topnet's fuzzy prerequisite
-  window. 
-
 * allow remote-control to set a proper stop time (as opposed to an
   instant shutdown).
 
-* remote control "hold", whereby the control system runs as usual but
-  does not run any new tasks (and corresponding "release").
-
-* document the new default O(n) brokered dependency negotation
-  algorithm.
-
-* if any task fails the system should pause itself before deleting
-  any prerequisites of the failed tasks, to allow a clean restart
-  on fixing the problem.
+* document the default O(n) brokered dependency negotation algorithm.
 
 * non-O(n^2) will_get_satisfaction() for use with broker method 
+
+* THE SYSTEM SHOULD NOT DELETE ANY SPENT TASKS AFTER A TASK HAS FAILED,
+  to prevent deletion of prerequisites of the failed task that will be
+  needed again at restart, after fixing the problem. This won't cause a
+  massive overpopulation problem as the failed task will soon hold up
+  the whole system anyway, because of the runahead limit.
 
 * possible problem with non-broker (interaction) method: if more than
   one fuzzy satisfying postrequisite, do we end up with the most recent?
@@ -58,5 +45,4 @@ Sequenz To Do List
   dump file so that the clock doesn't reset to the configured start time
   (plus any configured offset) on a restart.
 
-* retrofit proper exception handling throughout (current use is
-  sporadic).
+* retrofit proper exception handling (current use is sporadic).
