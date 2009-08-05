@@ -46,3 +46,5 @@ Sequenz To Do List
   (plus any configured offset) on a restart.
 
 * retrofit proper exception handling (current use is sporadic).
+
+* allow multiple outputs at the same time.
