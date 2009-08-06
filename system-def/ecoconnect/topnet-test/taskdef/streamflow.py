@@ -1,4 +1,4 @@
-class streamflow( parallel_task ):
+class streamflow( task ):
 
     name = "streamflow"
     valid_hours = range( 0, 24 )
@@ -36,13 +36,13 @@ class streamflow( parallel_task ):
             [5, "got streamflow data for " + ref_time ],
             [5.1, self.name + " finished for " + ref_time] ])
 
-        parallel_task.__init__( self, ref_time, abdicated, initial_state )
+        task.__init__( self, ref_time, abdicated, initial_state )
 
 
     def incoming( self, priority, message ):
 
         # pass on to the base class message handling function
-        parallel_task.incoming( self, priority, message)
+        task.incoming( self, priority, message)
         
         # but intercept messages to do with catchup mode
         if self.catchup_re.match( message ):
@@ -81,6 +81,6 @@ class streamflow( parallel_task ):
 
 
     def get_state_summary( self ):
-        summary = parallel_task.get_state_summary( self )
+        summary = task.get_state_summary( self )
         summary[ 'catching_up' ] = streamflow.catchup_mode
         return summary

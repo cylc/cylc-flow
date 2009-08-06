@@ -17,7 +17,7 @@
     oper_interface.sh
 
 %SELF_PARALLEL
-    True
+    False
 
 %PREREQUISITES
     # NONE
