@@ -2,6 +2,11 @@ Sequenz To Do List
 
 * IN PROGRESS: converting to generic dummy task 
 
+* define abdication of "sequential" tasks by a message, which can
+  default to "task finished". This would allow new forecasts to 
+  start as soon as their predecessors have written out the "model
+  background state". 
+
 * only topnet-test tasks have been updated for the change that adds
   abdication status to the state dump file.
 
