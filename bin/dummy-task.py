@@ -43,7 +43,7 @@ class dummy_task_base:
         start_time = self.clock.get_datetime()
 
         done = {}
-        time = {}
+        stop_time = {}
 
         if self.fast_complete:
             speedup = 20.
