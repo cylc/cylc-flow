@@ -26,8 +26,8 @@
 %PREREQUISITES
     topnet_products finished for $(MY_REFERENCE_TIME)
 
-%RUN_LENGTH
-    2 min 
+%RUN_LENGTH_MINUTES
+    2
 
 %OUTPUTS
     # NONE

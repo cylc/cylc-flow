@@ -4,6 +4,9 @@
 %NAME
     typical_task
 
+%TYPE
+    sequential
+
 %OWNER
     bob 
 
@@ -14,11 +17,11 @@
     run-typical_task.sh
 
 %PREREQUISITES
-    file input_$(MY_REFERENCE_TIME)_utc.nc ready
+    file met_$(MY_REFERENCE_TIME)_utc.nc ready
 
 %RUN_LENGTH
-    20 min
+    20 
 
-%POSTREQUISITES
-    6,18 | 18 min: file typical_task-foo_$(MY_REFERENCE_TIME).nc ready
-    0,12 | 18 min: file typical_task-bar_$(MY_REFERENCE_TIME).nc ready
+%OUTPUTS
+    6,18 | 18: file typical_task-foo_$(MY_REFERENCE_TIME).nc ready
+    0,12 | 18: file typical_task-bar_$(MY_REFERENCE_TIME).nc ready

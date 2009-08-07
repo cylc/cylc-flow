@@ -66,7 +66,7 @@ def generate_req_string( foo ):
             # timed postrequisites
             [ time, req ] = re.split( ':', req, 1 )
             req = re.sub( '^\s+', '', req )
-            time = re.sub( '\s+min', '', time )
+            time = re.sub( '\s+', '', time )
 
         # Enclose in quotes, 
         #if req == 'started' or req == 'finished':
@@ -121,8 +121,8 @@ def write_requisites( req_type ):
            
     # define compulsory 'started' and 'finished' postrequisites
     if req_type == 'OUTPUTS':
-        unconditional_reqs.insert( 0, '0 min: $(NAME) started for $(MY_REFERENCE_TIME)' ) 
-        unconditional_reqs.append( parsed_def[ 'RUN_LENGTH' ][0] + ': $(NAME) finished for $(MY_REFERENCE_TIME)' ) 
+        unconditional_reqs.insert( 0, '0: $(NAME) started for $(MY_REFERENCE_TIME)' ) 
+        unconditional_reqs.append( parsed_def[ 'RUN_LENGTH_MINUTES' ][0] + ': $(NAME) finished for $(MY_REFERENCE_TIME)' ) 
 
     if len( conditional_reqs.keys() ) == 0:
         if req_type == 'PREREQUISITES':
@@ -177,8 +177,9 @@ def main( argv ):
 
     task_def_files = argv[1:]
 
-    allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK', 'EXPORT',
-        'DELAYED_DEATH', 'PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH', 'TYPE', 'DELAY' ]
+    allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK',
+            'EXPORT', 'DELAYED_DEATH', 'PREREQUISITES', 'OUTPUTS',
+            'RUN_LENGTH_MINUTES', 'TYPE', 'DELAY_HOURS' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -273,11 +274,11 @@ import logging
                 parent_class = 'parallel_task'
 
             elif type == 'contact':
-                if 'DELAY' not in parsed_def.keys():
-                    print "Error: contact class must define %DELAY"
+                if 'DELAY_HOURS' not in parsed_def.keys():
+                    print "Error: contact class must define %DELAY_HOURS"
                     sys.exit(1)
 
-                delay = parsed_def[ 'DELAY' ][0]
+                delay = parsed_def[ 'DELAY_HOURS' ][0]
 
                 parent_class = 'contact'
                 def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"

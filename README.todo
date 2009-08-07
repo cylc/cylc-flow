@@ -1,6 +1,8 @@
 Sequenz To Do List
 
-* IN PROGRESS: converting to generic dummy task 
+* new RUN_LENGTH def field must be reference hour dependent
+
+* easier requisite initialisation by an 'add( req )' method.
 
 * use hasattr to check that required attributes have been defined in the 
   highest level class definition?
@@ -15,8 +17,6 @@ Sequenz To Do List
 
 * only topnet-test tasks have been updated for the change that adds
   abdication status to the state dump file.
-
-* new RUN_LENGTH def field must be reference hour dependent
 
 * go through all 'requisite' class methods, get rid of those that
   aren't used, and make sure the remaining ones are sensibly named

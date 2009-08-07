@@ -2,87 +2,97 @@
 # See full_template.def for documented entries
 
 %NAME
+
     foo
 
+%TYPE
+    # sequential: consecutive instances may not overlap, e.g. forecast
+    #             models, so abdicate after previous instance finished
+    # parallel: consecutive instance may overlap, so abdicate when
+    #             previous instance starts running
+    # contact: tasks with no prerequisites that wait on external events
+
+    sequential
+
 %OWNER
-    # specify task owner username here
-    # LEAVE UNSPECIFIED IF YOU WANT THE TASK TO RUN AS THE SEQUENZ USER
-    user_foo
+    # what username to run the task as.
+    # defaults to sequenz owner if unspecified.
+    # EcoConnect: user the oper username (e.g. hydrology_oper)
+
+    bob
 
 %VALID_HOURS
-    # list of comma separated hours
-    6,18
+    # comma separated hours in the day valid for this task type
+
+    0,6,12,18
 
 %EXTERNAL_TASK
-    # script to invoke when my prerequisites are all satisfied
-    run_foo.sh
+    # external program or script to invoke when all of my prerequisites
+    # have been satisfied
+
+    run-foo.sh
+
+%RUN_LENGTH_MINUTES
+    # Estimated run length in minutes, used in dummy mode.
+    # May be conditional on valid hours, as for %PREREQUISITES.
+
+           20
+    0,12 | 25
+    6,18 | 35
 
 %PREREQUISITES
-    # ZERO OR MORE prerequisite messages, each on a separate line.
-    # May contain:
+    # zero or more prerequisite messages, on separate lines
+
+    # These are LITERAL STRINGS, with some from variable substitution:
     #  1. $(MY_REFERENCE_TIME)
     #  2. $(MY_REFERENCE_TIME - <hours>)
-    # ALL listed prerequisites must be satisfied for this task to run
 
-    # For requisites that depend on reference hour, prefix with
-    # a comma-separated hour list followed by the '|' character.
-    # (USE NO PREFIX FOR REQUISTES THAT APPLY IN ALL VALID HOURS).
+    # May be conditional on a comma separated list of %VALID_HOURS
 
-    bar finished for $(MY_REFERENCE_TIME)
+           foo finished for $(MY_REFERENCE_TIME)
+           file bar_$(MY_REFERENCE_TIME)_utc.nc ready
     0,12 | file baz_$(MY_REFERENCE_TIME)_utc.nc ready
 
-%RUN_LENGTH
-    # Estimated run length in minutes. This is used to properly simulate
-    # the behaviour the task in dummy mode.
-    20 min
-
 %OUTPUTS
-    # List any output messages that are important for task sequencing
-    # purposes (i.e. that other tasks may depend on), on separate lines.
-    # Each must be prefixed by estimated completion time in minutes. 
-    # May contain:
+    # List of all output messages that are important for task scheduling
+    # purposes (i.e. that other tasks may depend on through their
+    # prerequisites), prefixed by the approximate time in minutes that
+    # the output is completed (the time is used in dummy mode).
+
+    # These are LITERAL STRINGS, with some from variable substitution:
     #  1. $(NAME) 
     #  2. $(MY_REFERENCE_TIME)
     #  3. $(MY_REFERENCE_TIME - <hours>)
-    # But do not add 'started' and 'finished' messages; these are
+
+    # Do not add task 'started' and 'finished' messages, these are
     # generated automatically according to the estimated run length:
-    #   0 min: $(NAME) started for $(MY_REFERENCE_TIME)
-    #   L min: $(NAME) finished for $(MY_REFERENCE_TIME)
+    #   0: $(NAME) started for $(MY_REFERENCE_TIME)
+    #   <%RUN_LENGTH_MINUTES>: $(NAME) finished for $(MY_REFERENCE_TIME)
+    # Other tasks may depend on these automatically supplied outputs.
 
-    # ALL listed outputs must be completed for the task to finish,
-    # but tasks may send additional messages from those listed here,
-    # for progess monitoring and logging purposes.
+    # May be conditional on %VALID_HOURS as for prerequisites.
 
-    # For outputs that depend on reference hour, see the documentation
-    # on PREREQUISITES above.
+           10: file foo_0_$(MY_REFERENCE_TIME).nc ready
+    0,12 | 15: file foo_1_$(MY_REFERENCE_TIME).nc ready
+    6,18 | 15: file foo_2_$(MY_REFERENCE_TIME).nc ready
 
-    10 min: file foo_0_$(MY_REFERENCE_TIME).nc ready
-    0,12 | 15 min: file foo_1_$(MY_REFERENCE_TIME).nc ready
-    6,18 | 15 min: file foo_2_$(MY_REFERENCE_TIME).nc ready
 
-# NOTE that prerequisite and output messages are literal strings (with
-# some limited variable substitution) and prerequisite-output matching
-# is exact, so be careful of white space, spelling errors, etc.
+%DELAYED_DEATH 
+    # THIS KEY IS OPTIONAL and defaults to 'False'.  
 
-# NOTE that some tasks may have no listed prerequisites (these will run
-# immediately after launch) and/or not outputs (in which case other
-# tasks may depend on their automatically supplied 'started' or
-# 'finished' messages. 
+    # Tasks that have only cotemporal downstream dependents can be
+    # deleted as soon as they are finished AND there are no other tasks
+    # yet to be finished at their reference time or earlier. Set this
+    # key 'True' for tasks that have downstream dependents in OTHER
+    # FORECAST CYCLES. These will be deleted only when the cutoff time
+    # specified by their dependents is reached.
 
-# OPTIONAL:
-%DELAYED_DEATH
-    # THIS KEY IS OPTIONAL and defaults to 'False'. Any task that has
-    # only cotemporal downstream dependents (i.e. all normal tasks) can
-    # be killed  as soon as it is finished AND there are no other
-    # tasks yet to be finished at its reference time or earlier.
-    # Specify delayed death for any tasks with downstream dependents in
-    # later reference times, in which case they will be killed only when
-    # the cutoff time specified by their dependents is reached.
     True
 
-# OPTIONAL:
 %EXPORT
-    # specify environment variable names and values to passed to the
-    # external task. (other than $MY_REFERENCE_TIME and $NAME)
+    # THIS KEY IS OPTIONAL
+    # specify additional environment variable name value pairs to pass
+    # to the external task (other than $MY_REFERENCE_TIME and $NAME).
+
     FOO foo
     BAR bar

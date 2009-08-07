@@ -7,7 +7,7 @@
 %TYPE
     contact
 
-%DELAY
+%DELAY_HOURS
     4.5
 
 %OWNER
@@ -25,8 +25,8 @@
 %PREREQUISITES
     # NONE
 
-%RUN_LENGTH
-    3 min
+%RUN_LENGTH_MINUTES
+    3
 
 %OUTPUTS
-    2 min: file tn_$(MY_REFERENCE_TIME)_utc_nzlam_12.nc ready
+    2: file tn_$(MY_REFERENCE_TIME)_utc_nzlam_12.nc ready
