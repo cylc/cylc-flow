@@ -19,10 +19,10 @@ class dummy_task:
         # get a pyro proxy for the task object that I'm masquerading as
         self.name = task_name
         self.ref_time = ref_time
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pyro_group + '.' + self.name + '%' + self.ref_time )
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + self.name + '%' + self.ref_time )
         
         # get a pyro proxy for the dummy clock
-        self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pyro_group + '.dummy_clock' )
+        self.clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.dummy_clock' )
 
         # fast completion            
         self.fast_complete = False
@@ -95,16 +95,12 @@ class dummy_task:
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
-    if len( sys.argv ) == 7:
-        [task_name, ref_time, pyro_group, dummy_mode, dummy_clock_rate, dummy_clock_offset ] = sys.argv[1:]
-    else:
-        print "DUMMY TASK ABORTING: WRONG NUMBER OF ARGUMENTS!"
-        sys.exit(1)
+    task_name = os.environ['TASK_NAME']
+    ref_time = os.environ['REFERENCE_TIME']
+    system_name = os.environ['SYSTEM_NAME'] 
+    dummy_clock_rate = os.environ['CLOCK_RATE']
+    dummy_clock_offset = os.environ['CLOCK_OFFSET']
         
-    if not dummy_mode:
-        print "DUMMY TASK ABORTING: NOT IN DUMMY MODE"
-        sys.exit(1)
-
     #print "DUMMY TASK STARTING: " + task_name + " " + ref_time
     dummy = dummy_task( task_name, ref_time )
     dummy.run()

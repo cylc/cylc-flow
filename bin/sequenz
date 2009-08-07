@@ -66,7 +66,7 @@ def main( argv ):
     launcher = execution.launcher( system_config )
 
     # configure my pyro helper
-    pyro = pyrex.pyrex( system_config.get( 'pyro_ns_group' ))
+    pyro = pyrex.pyrex( system_config.get( 'system_name' ))
 
     # dummy mode accelerated clock
     if system_config.get('dummy_mode'):

@@ -9,7 +9,10 @@ class config:
     def __init__( self ):
 
         self.configured = {}
+        self.set_defaults()
 
+
+    def set_defaults( self ):
         # SET DEFAULTS FOR ALL USER CONFIG
 
         # SYSTEM NAME (used as Pyro nameserver group)
@@ -31,11 +34,15 @@ class config:
         self.configured['dummy_clock_offset'] = 10 
 
         # JOB LAUNCH METHOD (qsub or direct in background)
+        # default to qsub in real mode
         self.configured['use_qsub'] = True
         self.configured['job_queue'] = 'default'
 
-        # TOP LEVEL OUTPUT DIR
-        self.configured['output_dir'] = os.environ['HOME'] + '/sequenz-output' 
+        # LOGGING DIRECTORY
+        self.configured['logging_dir'] = os.environ['HOME'] + '/running/sequenz-logs' 
+
+        # STATE DUMP FILE
+        self.configured['state_dump_file'] = os.environ['HOME'] + '/running/sequenz-state' 
 
         # LOG VERBOSITY
         self.configured['logging_level'] = logging.INFO
@@ -44,51 +51,30 @@ class config:
         # LIST OF TASK NAMES
         self.configured['task_list'] = []
 
-        self.derive_the_rest()
-
-
-    def derive_the_rest( self ):
-
-        # LOG FILE LOCATION
-        self.configured['logging_dir'] = self.configured['output_dir'] + '/' + self.configured['system_name'] + '/log-files' 
-
-        # STATE DUMP FILE LOCATION
-        self.configured['state_dump_file'] = self.configured['output_dir'] + '/' + self.configured['system_name'] + '/state-dump'
-
-        # PYRO NAMESERVER CONFIGURATION 
-        # group must be unique per sequenz instance so that different systems don't interfere
-        self.configured['pyro_ns_group'] = self.configured['system_name']
 
     def load( self ):
         self.user_override()
         self.check()
         self.dump()
        
+
     def user_override( self ):
+        # override config items with those in the user_config module
         for key in user_config.config.keys():
             self.configured[ key ] = user_config.config[ key ]
 
-        self.derive_the_rest()
 
     def check( self ):
+        # make sure all compulsory config items have been defined
 
         die = False
 
         if self.configured['start_time'] == None:
-            print "ERROR: you must define a start time in your user_config.py"
-            print "module for system " + self.configured['system_name']
-            die = True
-
-        if self.configured['dummy_mode'] and self.configured['use_qsub']:
-            print "ERROR: you can't use qsub in dummy mode."
-            print "change the 'use_qsub' config in your user_config.py"
-            print "module for system " + self.configured['system_name']
-            die = True
+            print "WARNING: no start time defined for " + self.configured['system_name']
+            print "This will fail if you are not restarting from a state dump file" 
 
         if len( self.configured[ 'task_list' ] ) == 0:
-            print "ERROR: your task list is empty"
-            print "define config[ 'task_list' ] in your user_config.py"
-            print "module for system " + self.configured['system_name']
+            print "ERROR: empty task list for system " + self.configured['system_name']
             die = True
 
         if die:
@@ -99,8 +85,10 @@ class config:
     def get( self, key ):
         return self.configured[ key ]
 
+
     def set( self, key, value ):
         self.configured[ key ] = value
+
 
     def dump( self ):
             
@@ -122,6 +110,7 @@ class config:
 
         print "START TIME..............",
         print self.configured['start_time']
+
         print "STOP TIME...............",
         if self.configured['stop_time']:
             print self.configured['stop_time']

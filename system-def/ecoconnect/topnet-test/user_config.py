@@ -10,16 +10,16 @@ config = {}
 
 config[ 'system_name' ] = 'topnet-test'
 
-config[ 'start_time' ] = '2009071206'
-config[ 'stop_time'  ] = '2009072606'
+config[ 'start_time' ] = '2009072706'
+#config[ 'stop_time'  ] = '2009072806'
 
 #config[ 'logging_level' ] = logging.INFO
 config[ 'logging_level' ] = logging.DEBUG
 
 config[ 'max_runahead_hours' ] = 48
 
-config[ 'dummy_mode' ] = True
-config[ 'use_qsub' ] = False
+config[ 'dummy_mode' ] = False
+config[ 'use_qsub' ] = True
 
 config[ 'dummy_clock_rate' ] = 20
 config[ 'dummy_clock_offset' ] = 10

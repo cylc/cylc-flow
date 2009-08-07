@@ -61,3 +61,6 @@ Sequenz To Do List
 * retrofit proper exception handling (current use is sporadic).
 
 * allow multiple outputs at the same time.
+
+* state dump information should be a dict, like config, to allow
+  arbitrary additional information to be added by new task classes.
