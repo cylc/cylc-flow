@@ -4,6 +4,9 @@
 %NAME
     topnet_products
 
+%TYPE
+    parallel
+
 %OWNER
     hydrology_oper
 
@@ -18,9 +21,6 @@
 
 %PREREQUISITES
     topnet_vis finished for $(MY_REFERENCE_TIME)
-
-%SELF_PARALLEL
-    True
 
 %RUN_LENGTH
     2 min

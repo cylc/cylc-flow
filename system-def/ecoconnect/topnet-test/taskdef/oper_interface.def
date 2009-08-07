@@ -4,6 +4,12 @@
 %NAME
     oper_interface
 
+%TYPE
+    contact
+
+%DELAY
+    4.5
+
 %OWNER
     hydrology_oper
 
@@ -15,9 +21,6 @@
 
 %EXTERNAL_TASK
     oper_interface.sh
-
-%SELF_PARALLEL
-    False
 
 %PREREQUISITES
     # NONE

@@ -24,9 +24,6 @@ class manager:
 
         self.config = config
 
-        if config.get( 'restrict_unconstrained_tasks' ):
-            task.parallel_task.restrict_unconstrained = True
-
         self.finished_task_dict = []
         self.system_hold = False
 

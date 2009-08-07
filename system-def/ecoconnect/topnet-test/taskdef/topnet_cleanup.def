@@ -4,6 +4,11 @@
 %NAME
     topnet_cleanup
 
+%TYPE
+    # this task deletes all files older than a given reference time
+    # so running several instances in parallel could cause problems
+    sequential
+
 %OWNER
     hydrology_oper
 
@@ -20,11 +25,6 @@
 
 %PREREQUISITES
     topnet_products finished for $(MY_REFERENCE_TIME)
-
-%SELF_PARALLEL
-    # this task deletes all files older than a given reference time
-    # so running several instances in parallel could cause problems
-    False
 
 %RUN_LENGTH
     2 min 

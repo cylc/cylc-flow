@@ -12,7 +12,7 @@ import os
 import re
 from time import sleep
 
-class dummy_task_base:
+class dummy_task:
 
     def __init__( self, task_name, ref_time ):
 
@@ -45,15 +45,15 @@ class dummy_task_base:
         done = {}
         stop_time = {}
 
-        if self.fast_complete:
-            speedup = 20.
-        else:
-            speedup = 1.
-            
         # time to stop counting and generate the output
         for output_time in times:
             done[ output_time ] = False
-            hours = output_time / 60.0 / speedup
+
+            if self.fast_complete:
+                hours = 0
+            else:
+                hours = output_time / 60.0
+
             stop_time[ output_time ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
 
         # wait until the stop time for each output, and then generate the output
@@ -75,73 +75,23 @@ class dummy_task_base:
                 break
             
     def delay( self ):
-        # override this to delay dummy tasks that have non-standard
-        # behavior after startup (external tasks can usually start
-        # executing immediately, but some (e.g. download, streamflow)
-        # are delayed by having to wait from some external
-        pass
 
+        current_time = self.clock.get_datetime()
+        rt = reference_time._rt_to_dt( self.ref_time )
+        delay = self.task.get_real_time_delay()
 
-#----------------------------------------------------------------------
-class dummy_task( dummy_task_base ):
+        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,delay,0 ) 
 
-    def delay( self ):
-
-        if self.name == 'download':
-
-            rt = reference_time._rt_to_dt( self.ref_time )
-            rt_3p25 = rt + datetime.timedelta( 0,0,0,0,0,3.25,0 )  # 3hr:15min after the hour
-            if self.clock.get_datetime() >= rt_3p25:
-                # THE FOLLOWING MESSAGES MUST MATCH THOSE EXPECTED IN download_foo.incoming()
-                self.task.incoming( 'NORMAL', 'CATCHINGUP: input files already exist' )
-                self.fast_complete = True
-            else:
-                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for input files' )
-                while True:
-                    sleep(1)
-                    if self.clock.get_datetime() >= rt_3p25:
-                        break
-
-        elif self.name == "oper_interface":
-
-            current_time = self.clock.get_datetime()
-            rt = reference_time._rt_to_dt( self.ref_time )
-            delayed_start = rt + datetime.timedelta( 0,0,0,0,0,4.5,0 )  # 4.5 hours 
-            #print "oper_interface: current time   " + current_time.isoformat()
-            #print "oper_interface: reference time " + rt.isoformat()
-            #print "oper_interface: delayed start  " + delayed_start.isoformat()
-
-            # UNCOMMENT THIS TO SIMULATE A STUCK TASK (when Met Office files
-            # fail to arrive and nzlam therefore can't run):
-            #if self.ref_time == '2009052218':
-            #    print self.identity, "STUCK (for one hour real time)"
-            #    sleep(3600)
-
-            if current_time >= delayed_start:
-                self.task.incoming( 'NORMAL', 'CATCHINGUP: operational tn file already exists' )
-                self.fast_complete = True
-            else:
-                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for operational tn file' )
-                while True:
-                    sleep(1)
-                    if self.clock.get_datetime() >= delayed_start:
-                        break
-
-
-        elif self.name == "streamflow":
-
-            current_time = self.clock.get_datetime()
-            rt = reference_time._rt_to_dt( self.ref_time )
-            rt_p25 = rt + datetime.timedelta( 0,0,0,0,0,0.25,0 ) # 15 min past the hour
-            # THE FOLLOWING MESSAGES MUST MATCH WHAT'S EXPECTED IN streamflow.incoming()
-            if current_time >= rt_p25:
-                self.task.incoming( 'NORMAL', 'CATCHINGUP: streamflow data available' )
-            else:
-                self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting for streamflow' ) 
-                while True:
-                    sleep(1)
-                    if self.clock.get_datetime() >= rt_p25:
-                        break
+        if current_time >= delayed_start:
+            self.task.incoming( 'NORMAL', 'CATCHINGUP: real world event already occurred' )
+            self.fast_complete = True
+        else:
+            self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting on real world event' )
+            # TO DO: change this to a single long sleep of the right length
+            while True:
+                sleep(1)
+                if self.clock.get_datetime() >= delayed_start:
+                    break
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':

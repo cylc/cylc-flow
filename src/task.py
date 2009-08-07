@@ -361,6 +361,9 @@ class task( Pyro.core.ObjBase ):
         return self.state
 
 
+    def get_real_time_delay( self ):
+        # override for real world interface tasks; see below
+        return 0
 
     def dump_state( self, FILE ):
         # Write state information to the state dump file, reference time
@@ -440,7 +443,7 @@ class task( Pyro.core.ObjBase ):
 
 
 class parallel_task( task ) :
-    # Embodies non forecast model type tasks that do not depend on their
+    # For non forecast model type tasks that do not depend on their
     # own previous instance.  This task therefore abdicates to the next
     # instance as soon as it starts running (so multiple instances can
     # run in parallel if other dependencies allow). 
@@ -448,21 +451,128 @@ class parallel_task( task ) :
     # There's no need to call task.__init__ explicitly unless I define
     # an __init__ function here.
 
-    restrict_unconstrained = False
-
     def ready_to_abdicate( self ):
 
-        if self.prerequisites.count() == 0 and self.restrict_unconstrained:
-            # force totally unconstrained tasks to run sequentially
-            if self.state == "finished":
-                return True
-            else:
-                return False
-
-        elif self.state == "running" or self.state == "finished":
+        if self.state == "running" or self.state == "finished":
             # ("or finished" not necessary here?)
             # launch my successor as soon as I start running
             return True
 
         else:
             return False
+
+
+class contact( parallel_task ):
+    # For tasks with no prerequisites that wait on external events
+    # such as incoming external data. These are the only tasks for whom
+    # it matters (and can detect) if they are caught up or not.
+    
+    # The external task:
+    # * is launched immediately after object creation
+    # * returns only when the external event is detected
+    # * in real time operation, returns approximately after some known
+    #     delay relative to the task's reference time (e.g. data arrives
+    #     15 min after the hour).  This delay interval needs to be
+    #     defined for accurate dummy mode simulation.
+    # * in catch up operation, returns immediately because the external
+    #     event has already happened (the required data already exists).
+
+    def __init__( self, ref_time, abdicated, initial_state, relative_state ):
+
+        # catch up status is held as a class variable
+        # (i.e. one for each *type* of task proxy object) 
+        if relative_state == 'catching_up':
+            self.__class__.catchup_mode = True
+        else:
+            # 'caught_up'
+            self.__class__.catchup_mode = False
+
+        # Catchup status needs to be written to the state dump file so
+        # that we don't need to assume catching up at restart. 
+        # Topnet, via its fuzzy prerequisites, can run out to
+        # 48 hours ahead of nzlam when caught up, and only 12 hours
+        # ahead when catching up.  Therefore if topnet is 18 hours, say,
+        # ahead of nzlam when we stop the system, on restart the first
+        # topnet to be created will have only a 12 hour fuzzy window,
+        # which will cause it to wait for the next nzlam instead of
+        # running immediately.
+
+        # CHILD CLASS MUST DEFINE:
+        #   self.real_time_delay
+ 
+        parallel_task.__init__( self, ref_time, abdicated, initial_state )
+
+        # logging undefined until parent class initialized
+        if self.prerequisites.count() != 0:
+            self.log.critical( 'ERROR: A contact class should have no prerequisites' )
+            sys.exit(1)
+ 
+
+    def ready_to_abdicate( self ):
+
+        # FORCE CONTACT TASKS TO RUN SEQUENTIALLY.
+        # In principle they are parallel tasks, but they have no
+        # prerequisites and generally almost no computation time. 
+        # Thus, in parallel, they "all go off at once" out to the 
+        # run-ahead limit and just sit in the queue waiting ...
+        # which isn't particularly desirable. 
+        if self.state == "finished":
+            return True
+        else:
+            return False
+
+
+    def get_real_time_delay( self ):
+
+        return self.real_time_delay
+
+
+    def get_state_string( self ):
+        # for state dump file
+        # see comment above on catchup_mode and restarts
+
+        if self.__class__.catchup_mode:
+            relative_state = 'catching_up'
+        else:
+            relative_state = 'caught_up'
+
+        return self.state + ':' + relative_state
+
+
+    def get_state_summary( self ):
+        summary = task.get_state_summary( self )
+        summary[ 'catching_up' ] = self.__class__.catchup_mode
+        return summary
+
+
+    def incoming( self, priority, message ):
+
+        # pass on to the base class message handling function
+        task.incoming( self, priority, message)
+        
+        # but intercept messages to do with catchup mode
+        catchup_re  = re.compile( "^CATCHINGUP:" )
+        uptodate_re = re.compile( "^CAUGHTUP:" )
+
+        if catchup_re.match( message ):
+            # message says we're catching up to real time
+            if not self.__class__.catchup_mode:
+                # We were caught up and have apparently slipped back a
+                # bit. Do NOT revert to catching up mode because this
+                # will suddenly reduce topnet's cutoff time
+                # and may result in deletion of a finished nzlam task
+                # that is still needed to satsify topnet prerequisites
+                self.log.debug( 'falling behind the pace a bit here' )
+            else:
+                # We were already catching up; no change.
+                pass
+
+        elif uptodate_re.match( message ):
+            # message says we've caught up to real time
+            if not self.__class__.catchup_mode:
+                # were already caught up; no change
+                pass
+            else:
+                # we have just caught up
+                self.log.debug( 'just caught up' )
+                self.__class__.catchup_mode = False

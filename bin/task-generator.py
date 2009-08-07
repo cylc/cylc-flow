@@ -178,7 +178,7 @@ def main( argv ):
     task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK', 'EXPORT',
-        'DELAYED_DEATH', 'PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH', 'SELF_PARALLEL' ]
+        'DELAYED_DEATH', 'PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH', 'TYPE', 'DELAY' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -188,7 +188,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import task, parallel_task
+from task import task, parallel_task, contact
 import execution
 
 import reference_time
@@ -258,16 +258,31 @@ import logging
 
         # print_parsed_info()
 
-        # SELF_PARALLEL => no previous instance dependence, so
-        # successive instances can potentially run in parallel.
-        # Default to False (safer).
+        # defaults
         parent_class = 'task'
-        if 'SELF_PARALLEL' in parsed_def.keys():
-            self_parallel = parsed_def[ 'SELF_PARALLEL' ][0]
-            if self_parallel == 'False' or self_parallel == 'false':
+        type = 'sequential'
+        delay = 0
+        def_init_args = 'ref_time, abdicated, initial_state'
+        par_init_args = 'ref_time, abdicated, initial_state'
+        if 'TYPE' in parsed_def.keys():
+            type = parsed_def[ 'TYPE' ][0]
+            if type == 'sequential':
                 parent_class = 'task'
-            elif self_parallel == 'True' or self_parallel == 'true':
+
+            elif type == 'parallel':
                 parent_class = 'parallel_task'
+
+            elif type == 'contact':
+                if 'DELAY' not in parsed_def.keys():
+                    print "Error: contact class must define %DELAY"
+                    sys.exit(1)
+
+                delay = parsed_def[ 'DELAY' ][0]
+
+                parent_class = 'contact'
+                def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"
+                par_init_args = "ref_time, abdicated, initial_state, relative_state"
+
             else:
                 print "Error: illegal value for key PREVIOUS_INSTANCE_DEPENDENCE"
                 sys.exit(1)
@@ -309,13 +324,15 @@ import logging
             FILE.write( indent + 'quick_death = ' + quick_death + '\n\n' )
 
         # class init function
-        FILE.write( indent + 'def __init__( self, ref_time, abdicated, initial_state ):\n\n' )
+        FILE.write( indent + 'def __init__( self, ' + def_init_args + ' ):\n\n' )
 
         indent_more()
 
         FILE.write( indent + '# adjust reference time to next valid for this task\n' )
         FILE.write( indent + 'ref_time = self.nearest_ref_time( ref_time )\n' )
         FILE.write( indent + 'hour = ref_time[8:10]\n\n' )
+
+        FILE.write( indent + 'self.real_time_delay = ' + str( delay ) + '\n' )
 
         # extra environment variables
         if 'EXPORT' in parsed_def.keys():
@@ -340,7 +357,7 @@ import logging
         write_requisites( 'OUTPUTS' )
 
         # call parent's init method
-        FILE.write( indent + parent_class + '.__init__( self, ref_time, abdicated, initial_state )\n\n' )
+        FILE.write( indent + parent_class + '.__init__( self, ' + par_init_args + ' )\n\n' )
 
         if 'EXPORT' in parsed_def.keys():
             # override run_external_task() for the export case
