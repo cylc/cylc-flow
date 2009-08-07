@@ -18,12 +18,12 @@ class topnet_vis( parallel_task ):
  
         self.my_cutoff = ref_time
 
-        self.prerequisites = requisites( self.name + '%' + ref_time, [ 
-            "topnet finished for " + ref_time ])
+        self.prerequisites = requisites( self.name, ref_time )
+        self.prerequisites.add( "topnet finished for " + ref_time )
 
-        self.postrequisites = timed_requisites( self.name + '%' + ref_time, [ 
-            [1, self.name + " started for " + ref_time],
-            [3, self.name + " finished for " + ref_time] ])
+        self.postrequisites = timed_requisites( self.name, ref_time )
+        self.postrequisites.add( 1, self.name + " started for " + ref_time )
+        self.postrequisites.add( 3, self.name + " finished for " + ref_time )
 
         parallel_task.__init__( self, ref_time, abdicated, initial_state )
 

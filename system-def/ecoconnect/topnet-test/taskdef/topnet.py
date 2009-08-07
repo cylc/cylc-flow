@@ -33,13 +33,13 @@ class topnet( task ):
 
         fuzzy_limits = cutoff + ':' + ref_time
  
-        self.prerequisites = fuzzy_requisites( self.name + '%' + ref_time, [ 
-            "got streamflow data for " + ref_time + ':' + ref_time, 
-            "file tn_" + fuzzy_limits + "_utc_nzlam_12.nc ready" ])
+        self.prerequisites = fuzzy_requisites( self.name, ref_time )
+        self.prerequisites.add( "got streamflow data for " + ref_time + ':' + ref_time ) 
+        self.prerequisites.add( "file tn_" + fuzzy_limits + "_utc_nzlam_12.nc ready" )
 
-        self.postrequisites = timed_requisites( self.name + '%' + ref_time, [ 
-            [1,  self.name + " started for " + ref_time],
-            [10, self.name + " finished for " + ref_time] ])
+        self.postrequisites = timed_requisites( self.name, ref_time )
+        self.postrequisites.add( 1,  self.name + " started for " + ref_time )
+        self.postrequisites.add( 10, self.name + " finished for " + ref_time )
 
         task.__init__( self, ref_time, abdicated, initial_state )
 

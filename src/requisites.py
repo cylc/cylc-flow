@@ -2,15 +2,16 @@
 A class that holds a list of 
 
 PREREQUISITES,
-  usually of the form "input file X required", or
+  usually of the form "file X ready"
+
+or,
 
 POSTREQUISITES,
-  usually of the form "output file Y completed" 
+  usually of the form "file Y ready" 
   
 Each requisite is in a state of "satisfied" or "not satisfied".  
 
-All prerequisites must be matched by someone else's postrequisites, but
-there may be extra postrequisites, to be used for monitoring progress.
+All prerequisites must be matched by someone else's postrequisites.
 """
 
 import sys
@@ -19,17 +20,21 @@ import logging
 
 class requisites:
 
-    def __init__( self, task_id, reqs ):
+    def __init__( self, name, ref_time ):
 
         # name and id of my "host task" 
-        self.task_id = task_id
-        self.task_name = re.sub( '%.*$', '', self.task_id )
+        self.task_name = name
+        self.task_id = name + '%' + ref_time
 
-        # TO DO: check the given requisites are unique
-
+        # dict of requisites to populate using self.add()
         self.satisfied = {}
-        for req in reqs:
+
+    def add( self, req ):
+        # add a requisite
+        if req not in self.satisfied:
             self.satisfied[req] = False
+        else:
+            print "WARNING: attempted to add a duplicate requisite, ' + self.task_id
 
     def count( self ):
         return len( self.satisfied.keys() )
@@ -109,16 +114,13 @@ class requisites:
 class timed_requisites( requisites ):
     # use for postrequisites with estimated completion times
 
-    def __init__( self, task_id, timed_reqs ):
-
-        reqs = []
+    def __init__( self, name, ref_time ):
         self.timed_reqs = {}
-        for entry in timed_reqs:
-            [ time, req ] = entry
-            reqs.append( req )
-            self.timed_reqs[ time ] = req
+        requisites.__init__( self, name, ref_time )
 
-        requisites.__init__( self, task_id, reqs )
+    def add( self, time, req ):
+        self.timed_reqs[ time ] = req
+        requisites.add( self, req )
 
     def get_timed_requisites( self ):
         return self.timed_reqs
@@ -129,8 +131,8 @@ class fuzzy_requisites( requisites ):
     # for reference-time based prerequisites of the form 
     # "more recent than or equal to this reference time"
 
-    def __init__( self, task_id, reqs ):
-        requisites.__init__( self, task_id, reqs ) 
+    # same as requites except that a delimited cutoff is expected in the
+    # string
 
     def sharpen_up( self, fuzzy, sharp ):
         # replace a fuzzy prerequisite with the actual postrequisite
