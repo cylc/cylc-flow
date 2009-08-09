@@ -34,7 +34,7 @@ class requisites:
         if req not in self.satisfied:
             self.satisfied[req] = False
         else:
-            print "WARNING: attempted to add a duplicate requisite, ' + self.task_id
+            print 'WARNING: attempted to add a duplicate requisite, ' + self.task_id
 
     def count( self ):
         return len( self.satisfied.keys() )

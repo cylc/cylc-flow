@@ -10,7 +10,7 @@ from requisites import requisites
 class broker:
 
     def __init__( self ):
-        self.requisites = requisites( 'broker', [] )
+        self.requisites = requisites( 'broker', '2999010203' )
 
     def register( self, task_requisites ):
         # task updates me with its completed postrequisites
