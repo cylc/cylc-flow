@@ -58,7 +58,7 @@ def main( argv ):
     print "      .    Pyro nameserver required: 'pyro-ns'    ."
     print "__________________________________________________________"
 
-    # load system config defaults
+    # load system configuration
     system_config = config.config()
     system_config.load()
 

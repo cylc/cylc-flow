@@ -2,7 +2,9 @@
 
 import user_config
 import logging
-import os, sys
+import sys
+import os
+import re
 
 class config:
 
@@ -13,13 +15,19 @@ class config:
 
 
     def set_defaults( self ):
-        # SET DEFAULTS FOR ALL USER CONFIG
+        # SET DEFAULT CONFIG VALUES
 
-        # SYSTEM NAME (used as Pyro nameserver group)
-        self.configured['system_name'] = 'REPLACE_ME'
-
-        # START AND STOP (OPTIONAL) REFERENCE TIMES
-        self.configured['start_time'] = 'YYYYMMDDHH' 
+        # SYSTEM NAME (also used as Pyro nameserver group)
+        self.configured['system_name'] = None
+        # LOGGING DIRECTORY
+        self.configured['logging_dir'] = None
+        # STATE DUMP FILE
+        self.configured['state_dump_file'] = None
+        # LIST OF TASK NAMES
+        self.configured['task_list'] = []
+        # START REFERENCE TIME
+        self.configured['start_time'] = None
+        # STOP REFERENCE TIME
         self.configured['stop_time'] = None   
 
         # MAXIMUM TIME ANY TASK IS ALLOWED TO GET AHEAD OF THE SLOWEST
@@ -38,18 +46,9 @@ class config:
         self.configured['use_qsub'] = True
         self.configured['job_queue'] = 'default'
 
-        # LOGGING DIRECTORY
-        self.configured['logging_dir'] = os.environ['HOME'] + '/running/sequenz-logs' 
-
-        # STATE DUMP FILE
-        self.configured['state_dump_file'] = os.environ['HOME'] + '/running/sequenz-state' 
-
         # LOG VERBOSITY
         self.configured['logging_level'] = logging.INFO
         #self.configured['logging_level'] = logging.DEBUG
-
-        # LIST OF TASK NAMES
-        self.configured['task_list'] = []
 
 
     def load( self ):
@@ -65,9 +64,17 @@ class config:
 
 
     def check( self ):
-        # make sure all compulsory config items have been defined
 
         die = False
+
+        # check compulsory items have been defined in user_config.py
+        env = os.environ[ 'SEQUENZ_ENV' ]
+        user_config_file = re.sub( 'environment.sh', 'user_config.py', env )
+        compulsory = [ 'system_name', 'logging_dir', 'state_dump_file' ]
+        for item in compulsory:
+            if self.configured[ item ] == None:
+                print "ERROR: you must define " + item + " in " + user_config_file
+                die = True
 
         if self.configured['start_time'] == None:
             print "WARNING: no start time defined for " + self.configured['system_name']
