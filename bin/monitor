@@ -72,9 +72,6 @@ print
 print "here we go ..."
 sleep(2)
 
-topnet_nzlam_time = None
-streamflow_catchup_found = False
-
 while True:
 
     try: 
@@ -108,6 +105,7 @@ while True:
 
             task_ids = states.keys()
             task_ids.sort()
+            catchup_info = {}
 
             for task_id in task_ids:
                 name     =      states[ task_id ][ 'name' ]
@@ -117,12 +115,8 @@ while True:
                 total    = str( states[ task_id ][ 'n_total_postrequisites' ] )
                 latest   =      states[ task_id ][ 'latest_message' ]
 
-                if states[ task_id ][ 'name' ] == 'topnet':
-                    topnet_nzlam_time = states[ task_id ][ 'nzlam_time' ]
-
-                if states[ task_id ][ 'name' ] == 'streamflow':
-                    streamflow_catchup_found = True
-                    streamflow_catchup_mode = states[ task_id ][ 'catching_up' ]
+                if 'catching_up' in states[ task_id ].keys():
+                    catchup_info[ name ] = states[ task_id ][ 'catching_up' ]
 
                 ctrl_end = "\033[0m"
 
@@ -163,14 +157,11 @@ while True:
             
             blit.append( "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
 
-            if topnet_nzlam_time:
-                blit.append( 'TopNet NZLAM time: ' + topnet_nzlam_time )
-
-            if streamflow_catchup_found:
-                if streamflow_catchup_mode:
-                    blit.append( 'streamflow: catching up' )
+            for name in catchup_info.keys():
+                if catchup_info[ name ]:
+                    blit.append( name + ': catching up' )
                 else:
-                    blit.append( 'streamflow: caught up' )
+                    blit.append( name + ': caught up' )
 
             blit.append("")
 
