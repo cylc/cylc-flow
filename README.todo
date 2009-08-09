@@ -2,8 +2,6 @@ Sequenz To Do List
 
 * new RUN_LENGTH def field must be reference hour dependent
 
-* easier requisite initialisation by an 'add( req )' method.
-
 * use hasattr to check that required attributes have been defined in the 
   highest level class definition?
 
