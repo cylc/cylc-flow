@@ -109,8 +109,17 @@ while True:
                 print ''.join(Pyro.util.getPyroTraceback(x))
                 sys.exit(1)
 
+            try:
+                name_list = god.get_name_list()
+            except Exception,x:
+                print ''.join(Pyro.util.getPyroTraceback(x))
+                sys.exit(1)
+
             task_ids = states.keys()
             task_ids.sort()
+            # name_list can be used to define a distinct display column
+            # for each task (NOT YET IMPLEMENTED).
+            name_list.sort()
             catchup_info = {}
 
             for task_id in task_ids:

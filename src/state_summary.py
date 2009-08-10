@@ -17,9 +17,17 @@ class state_summary( Pyro.core.ObjBase ):
  
     def update( self, tasks ):
         self.summary = {}
+        self.name_list = []
+        seen = {}
         for task in tasks:
+            if task.name not in seen.keys():
+                seen[ task.name ] = True
+                self.name_list.append( task.name )
+
             self.summary[ task.identity ] = task.get_state_summary()
            
+        # update deprecated old-style summary
+        # (delete when no longer needed)
         self.get_summary()
 
     def get_dummy_mode( self ):
@@ -31,6 +39,9 @@ class state_summary( Pyro.core.ObjBase ):
 
     def get_state_summary( self ):
         return self.summary
+
+    def get_name_list( self ):
+        return self.name_list
 
     def get_summary( self ):
         # DEPRECATED. Remove when Bernard's monitor has been updated
