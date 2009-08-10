@@ -10,6 +10,9 @@ class state_summary( Pyro.core.ObjBase ):
     def __init__( self, config ):
         Pyro.core.ObjBase.__init__(self)
         summary = {}
+        # external monitors should access config via methods in this
+        # class, in case config items are ever updated dynamically by
+        # remote control
         self.config = config
  
     def update( self, tasks ):
@@ -21,6 +24,10 @@ class state_summary( Pyro.core.ObjBase ):
 
     def get_dummy_mode( self ):
         return self.config.get( 'dummy_mode' )
+
+    def get_dummy_clock_rate( self ):
+        return self.config.get( 'dummy_clock_rate' )
+
 
     def get_state_summary( self ):
         return self.summary

@@ -26,8 +26,6 @@
     # NONE
 
 %RUN_LENGTH_MINUTES
-    #6 | 3
-    #18 | 10
     3
 
 %OUTPUTS

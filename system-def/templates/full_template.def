@@ -8,9 +8,9 @@
 %TYPE
     # sequential: consecutive instances may not overlap, e.g. forecast
     #             models, so abdicate after previous instance finished
-    # parallel: consecutive instance may overlap, so abdicate when
+    # parallel:   consecutive instance may overlap, so abdicate when
     #             previous instance starts running
-    # contact: tasks with no prerequisites that wait on external events
+    # contact:    tasks with no prerequisites that wait on external events
 
     sequential
 
@@ -93,6 +93,7 @@
     # THIS KEY IS OPTIONAL
     # specify additional environment variable name value pairs to pass
     # to the external task (other than $MY_REFERENCE_TIME and $NAME).
+    # May contain $(MY_REFERENCE_TIME) and $(NAME), as for outputs.
 
     FOO foo
     BAR bar

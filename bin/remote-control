@@ -36,7 +36,8 @@ parser.add_option( "-v", "--verbosity",
         choices=verbosity_choices,
         dest="verbosity" )
 
-parser.add_option( "-b", "--bump", help="bump dummy clock forward (hours)",
+# NOTE: BUMP WON'T AFFECT DUMMY TASKS THAT ARE ALREADY RUNNING
+parser.add_option( "-b", "--bump", help= "bump dummy clock forward (hours)",
         type="int", action="store", dest="bump_hours" )
 
 #if len( sys.argv ) == 1:

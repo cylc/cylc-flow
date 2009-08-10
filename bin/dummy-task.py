@@ -24,8 +24,6 @@ class dummy_task:
         # get a pyro proxy for the dummy clock
         self.clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.dummy_clock' )
 
-        # fast completion            
-        self.fast_complete = False
 
     def run( self ):
 
@@ -35,70 +33,48 @@ class dummy_task:
         # ordered list of times
         times = outputs.keys()
         times.sort()
-        
+
         # task-specific delay
         self.delay()
 
-        # time to start counting from 
-        start_time = self.clock.get_datetime()
-
-        done = {}
-        stop_time = {}
-
         # time to stop counting and generate the output
-        for output_time in times:
-            done[ output_time ] = False
+        # [ 0, 28, 30 ] dummy minutes
+        prev_time = times[0]
+        for time in times:
+            # wait until the stop time for each output, and then generate the output
+            diff_hrs = ( time - prev_time )/60.0
+            dt_diff = datetime.timedelta( 0,0,0,0,0,diff_hrs,0 )
+            dt_diff_sec = dt_diff.seconds
+            dt_diff_sec_real = dt_diff_sec * dummy_clock_rate / 60.0 / 60.0 
+            sleep( dt_diff_sec_real )
 
-            if self.fast_complete:
-                hours = 0
-            else:
-                hours = output_time / 60.0
+            self.task.incoming( "NORMAL", outputs[ time ] )
 
-            stop_time[ output_time ] = start_time + datetime.timedelta( 0,0,0,0,0,hours,0)
-
-        # wait until the stop time for each output, and then generate the output
-        while True:
-            sleep(1)
-            dt = self.clock.get_datetime()
-            all_done = True
-            for output_time in times:
-                output = outputs[ output_time ]
-                if not done[ output_time ]:
-                    if dt >= stop_time[ output_time ]:
-                        #print "SENDING MESSAGE: ", output_time, output
-                        self.task.incoming( "NORMAL", output )
-                        done[ output_time ] = True
-                    else:
-                        all_done = False
-
-            if all_done:
-                break
+            prev_time = time
             
     def delay( self ):
 
-        current_time = self.clock.get_datetime()
         rt = reference_time._rt_to_dt( self.ref_time )
-        delay = self.task.get_real_time_delay()
-
-        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,delay,0 ) 
+        real_time_delay = self.task.get_real_time_delay()
+        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,real_time_delay,0 ) 
+        current_time = self.clock.get_datetime()
 
         if current_time >= delayed_start:
-            self.task.incoming( 'NORMAL', 'CATCHINGUP: real world event already occurred' )
-            self.fast_complete = True
+            # already past the delayed start time
+            self.task.incoming( 'NORMAL', 'CATCHINGUP: external event already occurred' )
         else:
-            self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting on real world event' )
-            # TO DO: change this to a single long sleep of the right length
-            while True:
-                sleep(1)
-                if self.clock.get_datetime() >= delayed_start:
-                    break
+            # sleep until the delayed start time
+            self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting on external event' )
+            diff_real_secs = (delayed_start - current_time).seconds * dummy_clock_rate / ( 60. * 60.)
+            sleep( diff_real_secs )
+
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
     task_name = os.environ['TASK_NAME']
     ref_time = os.environ['REFERENCE_TIME']
     system_name = os.environ['SYSTEM_NAME'] 
-    dummy_clock_rate = os.environ['CLOCK_RATE']
+    dummy_clock_rate = int( os.environ['CLOCK_RATE'] )
     dummy_clock_offset = os.environ['CLOCK_OFFSET']
         
     #print "DUMMY TASK STARTING: " + task_name + " " + ref_time

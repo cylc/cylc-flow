@@ -23,5 +23,4 @@
     20 
 
 %OUTPUTS
-    6,18 | 18: file typical_task-foo_$(MY_REFERENCE_TIME).nc ready
-    0,12 | 18: file typical_task-bar_$(MY_REFERENCE_TIME).nc ready
+    18: file typical_task-foo_$(MY_REFERENCE_TIME).nc ready

@@ -83,9 +83,7 @@ while True:
         if dummy_mode:
             remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.dummy_clock' )
             remote_clock._setTimeout(10)
-            mode = 'dummy mode' 
-        else:
-            mode = 'production'
+            rate = str( god.get_dummy_clock_rate() )
 
         while True:
 
@@ -153,7 +151,11 @@ while True:
             blit.append( '\033[1;37;40m Sequenz  System  Monitor  ' + ctrl_end )
             blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
             blit.append( '\033[1;37;43m' + '*' + '\033[0m' + ' -> task not yet abdicated' )
-            blit.append( '--------(' + mode + ')-------' )
+
+            if dummy_mode:
+                blit.append( 'DUMMY MODE: ' + rate + ' sec = 1 hr' )
+            else:
+                blit.append( 'REAL MODE' )
             
             blit.append( "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
 
