@@ -14,6 +14,13 @@
 
     sequential
 
+%DELAY_HOURS
+    # contact type tasks only, for use in dummy mode: estimated time
+    # delay, in hours, after reference time, that the external event
+    # occurs when in real time (caught up) operation.
+
+    4.5
+
 %OWNER
     # what username to run the task as.
     # defaults to sequenz owner if unspecified.
