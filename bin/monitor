@@ -36,6 +36,9 @@ parser.add_option( "-n", "--name", help="system name",
 parser.add_option( "-p", "--print", help="print registered systems",
         action="store_true", default=False, dest="print_systems" )
 
+parser.add_option( "-f", "--fraction", help="show completion fraction",
+        action="store_true", default=False, dest="show_completion" )
+
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
@@ -60,6 +63,11 @@ elif options.system_name:
         print "system: " + system_name
     else:
         print "WARNING: no " + system_name + " registered yet ..." 
+
+elif options.print_systems:
+    # print registered systems
+    ns_groups.print_info()
+    sys.exit(0)
 
 else:
     # print available systems and exit
@@ -116,32 +124,43 @@ while True:
                 if 'catching_up' in states[ task_id ].keys():
                     catchup_info[ name ] = states[ task_id ][ 'catching_up' ]
 
-                ctrl_end = "\033[0m"
-
-                frac = "(" + str(complete) + "/" + str(total) + ")"
-
                 if state == "running":
-                    foo = "\033[1;37;42m" + name + frac + ctrl_end  # bold white on green
+                    ctrl_start = "\033[1;37;42m"
 
                 elif state == "waiting":
-                    foo = "\033[35m" + name + ctrl_end              # magenta
+                    ctrl_start = "\033[35m"
 
                 elif state == "failed":
-                    foo = "\033[1;37;41m" + name + ctrl_end         # bold white on red
+                    ctrl_start = "\033[1;37;41m"
 
                 else:
-                    foo = name
+                    # finished
+                    ctrl_start = ""
 
-                # identify any tasks that have not abdicated yet
+                ctrl_end = "\033[0m"
+
+                if options.show_completion:
+                    frac = "(" + str(complete) + "/" + str(total) + ")"
+                    disp = name + frac
+                else:
+                    disp = name
+
+                disp = ctrl_start + disp + ctrl_end
+
                 if not states[ task_id ][ 'abdicated' ]:
-                    foo = "\033[1;37;43m" + '*' + ctrl_end + foo
+                    # identify any tasks that have not abdicated yet
+                    #disp = "\033[1;37;43m" + '*' + ctrl_end + disp
+                    disp = disp + '*'
+                else:
+                    # space of same length
+                    disp = disp + ' '
 
                 hour = int( reftime[8:10] )
 
                 if reftime in lines.keys():
-                    lines[reftime] += ' ' + foo
+                    lines[reftime] += ' ' + disp
                 else:
-                    lines[reftime] = reftime + "\033[0m " + foo
+                    lines[reftime] = reftime + "\033[0m " + disp
                 
             # sort reference times using int( string )
             reftimes = lines.keys()
@@ -150,7 +169,7 @@ while True:
             blit = []
             blit.append( '\033[1;37;40m Sequenz  System  Monitor  ' + ctrl_end )
             blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
-            blit.append( '\033[1;37;43m' + '*' + '\033[0m' + ' -> task not yet abdicated' )
+            blit.append( '*' + ' => task not yet abdicated' )
 
             if dummy_mode:
                 blit.append( 'DUMMY MODE: ' + rate + ' sec = 1 hr' )
@@ -171,10 +190,10 @@ while True:
                 # colour reference time relative to clock time
                 rtdt = _rt_to_dt( rt )
                 if dt > rtdt:
-                    foo = '\033[1;34m'
+                    disp = '\033[1;34m'
                 else:
-                    foo = '\033[1;31m'
-                blit.append( foo + lines[rt] )
+                    disp = '\033[1;31m'
+                blit.append( disp + lines[rt] )
 
             os.system( "clear" )
             for line in blit:
