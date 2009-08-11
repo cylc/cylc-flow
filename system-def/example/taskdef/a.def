@@ -5,7 +5,10 @@
     a
 
 %TYPE
-    sequential
+    sequential, contact
+
+%DELAY_HOURS
+    1.0
 
 %VALID_HOURS
     0,6,12,18
@@ -20,7 +23,7 @@
     # None
 
 %RUN_LENGTH_MINUTES
-    15
+    90
 
 %OUTPUTS
     # Defaults only

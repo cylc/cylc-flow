@@ -20,7 +20,7 @@
     a finished for $(MY_REFERENCE_TIME) 
 
 %RUN_LENGTH_MINUTES
-    10
+    60
 
 %OUTPUTS
     # Defaults only

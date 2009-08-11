@@ -396,21 +396,6 @@ class task( Pyro.core.ObjBase ):
             return False
 
 
-    def ready_to_abdicate( self ):
-        # DEFAULT BEHAVIOUR IS FOR FORECAST MODEL TYPE TASKS, which
-        # depend on their own previous instance, to abdicate as soon as
-        # they achieve a 'finished' state (this forces successive
-        # instances of them to run sequentially).
-
-        # TASKS THAT DO NOT DEPEND ON THEIR PREVIOUS INSTANCE can be
-        # handled by the derived parallel_task class below.
-
-        if self.state == "finished":
-            return True
-        else:
-            return False
-
-
     def set_abdicated( self ):
         self.abdicated = True
 
@@ -445,40 +430,44 @@ class task( Pyro.core.ObjBase ):
         return summary
 
 
-class parallel_task( task ) :
-    # For non forecast model type tasks that do not depend on their
-    # own previous instance.  This task therefore abdicates to the next
-    # instance as soon as it starts running (so multiple instances can
-    # run in parallel if other dependencies allow). 
-
-    # There's no need to call task.__init__ explicitly unless I define
-    # an __init__ function here.
+class sequential:
+    # FORECAST MODEL TYPE TASKS, which depend on their own previous
+    # instance and therefore abdicate as soon as they achieve a
+    # 'finished' state, forcing successive instances to run
+    # in sequence.
 
     def ready_to_abdicate( self ):
-
-        if self.state == "running" or self.state == "finished":
-            # ("or finished" not necessary here?)
-            # launch my successor as soon as I start running
+        if self.state == "finished":
             return True
-
         else:
             return False
 
+class parallel:
+    # NON FORECAST MODEL TYPE TASKS, which do not depend on their
+    # own previous instance. Abdicates as soon as it starts running so
+    # that multiple instances can run in parallel if other dependencies
+    # allow. 
 
-class contact( parallel_task ):
-    # For tasks with no prerequisites that wait on external events
-    # such as incoming external data. These are the only tasks for whom
-    # it matters (and can detect) if they are caught up or not.
-    
-    # The external task:
-    # * is launched immediately after object creation
-    # * returns only when the external event is detected
-    # * in real time operation, returns approximately after some known
-    #     delay relative to the task's reference time (e.g. data arrives
-    #     15 min after the hour).  This delay interval needs to be
-    #     defined for accurate dummy mode simulation.
-    # * in catch up operation, returns immediately because the external
-    #     event has already happened (the required data already exists).
+    def ready_to_abdicate( self ):
+        if self.state == "running" or self.state == "finished":
+            return True
+        else:
+            return False
+
+class contact( task ):
+    # For tasks that wait on external events such as incoming external
+    # data. These are the only tasks that can know if they are are
+    # "caught up" or not, according to how their reference time relates
+    # to current clock time.
+
+    # The real contact task, once running (which occurs when all of its
+    # prerequistes are satisfied), returns only when the external event
+    # has occurred. This will be approximately after some known delay
+    # relative to the task's reference time (e.g. data arrives 15 min
+    # past the hour).  This delay interval needs to be defined for
+    # accurate dummy mode simulation.  In catch up operation the
+    # external task returns immediately because the external event has
+    # already happened (i.e. the required data already exists).
 
     def __init__( self, ref_time, abdicated, initial_state, relative_state ):
 
@@ -503,27 +492,13 @@ class contact( parallel_task ):
         # CHILD CLASS MUST DEFINE:
         #   self.real_time_delay
  
-        parallel_task.__init__( self, ref_time, abdicated, initial_state )
+        task.__init__( self, ref_time, abdicated, initial_state )
 
         # logging undefined until parent class initialized
         if self.prerequisites.count() != 0:
             self.log.critical( 'ERROR: A contact class should have no prerequisites' )
             sys.exit(1)
  
-
-    def ready_to_abdicate( self ):
-
-        # FORCE CONTACT TASKS TO RUN SEQUENTIALLY.
-        # In principle they are parallel tasks, but they have no
-        # prerequisites and generally almost no computation time. 
-        # Thus, in parallel, they "all go off at once" out to the 
-        # run-ahead limit and just sit in the queue waiting ...
-        # which isn't particularly desirable. 
-        if self.state == "finished":
-            return True
-        else:
-            return False
-
 
     def get_real_time_delay( self ):
 
@@ -579,3 +554,30 @@ class contact( parallel_task ):
                 # we have just caught up
                 self.log.debug( 'just caught up' )
                 self.__class__.catchup_mode = False
+
+
+class sequential_task( task, sequential ):
+    pass
+
+class parallel_task( task, parallel ):
+    pass
+
+class sequential_contact_task( contact, sequential ):
+    pass
+
+class parallel_contact_task( contact, parallel ):
+
+    def ready_to_abdicate( self ):
+
+        # FORCE PARALLEL CONTACT TASKS TO RUN SEQUENTIALLY IF THEY HAVE
+        # NO PREREQUISITES. These tasks have no prerequisites and
+        # generally little computation time. Thus, in parallel, they
+        # "all go off at once" out to the run-ahead limit and just sit
+        # in the queue waiting ... which isn't particularly desirable. 
+        if self.prerequisites.count() != 0:
+            return
+
+        if self.state == "finished":
+            return True
+        else:
+            return False

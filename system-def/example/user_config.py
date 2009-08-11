@@ -19,6 +19,7 @@ config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/' + config[ 'system_name'
 
 config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 20
+config[ 'dummy_clock_offset' ] = 24
 config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'default'
 

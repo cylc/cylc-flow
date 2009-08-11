@@ -21,7 +21,7 @@
     c finished for $(MY_REFERENCE_TIME)
 
 %RUN_LENGTH_MINUTES
-    14
+    75 
 
 %OUTPUTS
     # Defaults only

@@ -92,7 +92,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import task, parallel_task, contact
+from task import sequential_task, parallel_task, sequential_contact_task, parallel_contact_task
 import execution
 
 import reference_time
@@ -171,19 +171,30 @@ import logging
         if 'TYPE' in parsed_def.keys():
             type = parsed_def[ 'TYPE' ][0]
             if type == 'sequential':
-                parent_class = 'task'
+                parent_class = 'sequential_task'
 
             elif type == 'parallel':
                 parent_class = 'parallel_task'
 
-            elif type == 'contact':
+            elif re.match( 'sequential,\s*contact', type ):
                 if 'DELAY_HOURS' not in parsed_def.keys():
                     print "Error: contact class must define %DELAY_HOURS"
                     sys.exit(1)
 
                 delay = parsed_def[ 'DELAY_HOURS' ][0]
 
-                parent_class = 'contact'
+                parent_class = 'sequential_contact_task'
+                def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"
+                par_init_args = "ref_time, abdicated, initial_state, relative_state"
+
+            elif re.match( 'parallel,\s*contact', type ):
+                if 'DELAY_HOURS' not in parsed_def.keys():
+                    print "Error: contact class must define %DELAY_HOURS"
+                    sys.exit(1)
+
+                delay = parsed_def[ 'DELAY_HOURS' ][0]
+
+                parent_class = 'parallel_contact_task'
                 def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"
                 par_init_args = "ref_time, abdicated, initial_state, relative_state"
 
