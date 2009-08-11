@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# sequenz example system
+# cycon example system
 # task e
 # depends on task b
 

@@ -1,38 +1,38 @@
-# Basic scons build control file for sequenz
+# Basic scons build control file for cycon
 # Hilary Oliver,  April 2009
 
 import os, sys
 
 version=""
 
-# Read $SEQUENZ_VERSION from the environment and refuse to build if
+# Read $CYCON_VERSION from the environment and refuse to build if
 # the variable is not defined
 
 try:
-	version = os.environ['SEQUENZ_VERSION']
+	version = os.environ['CYCON_VERSION']
 except:
-	print "ERROR: environment variable $SEQUENZ_VERSION not defined"
+	print "ERROR: environment variable $CYCON_VERSION not defined"
 	sys.exit()
 
 if len( version ) == 0:
-	print "ERROR: environment variable $SEQUENZ_VERSION empty"
+	print "ERROR: environment variable $CYCON_VERSION empty"
 	sys.exit()
 
-print "Installing SEQUENZ version " + version
-# For now, just copy into a top level directory called 'sequenz'
+print "Installing CYCON version " + version
+# For now, just copy into a top level directory called 'cycon'
 
-install_dir = os.environ.get("HOME") + '/sequenz'
+install_dir = os.environ.get("HOME") + '/cycon'
 
 # MODIFY THE SOURCE CODE BEFORE INSTALLING
-# insert the version tag into banner in sequenz.py
+# insert the version tag into the banner in the cycon main program
 command = """
 	cd bin; 
-	cat sequenz.py | sed -e 's/\(\s*sequenz_version =\).*/\\1 \"""" + version + """\";/' > tmp1 || exit 1;
-	mv tmp1 sequenz.py || exit 1
-	chmod +x sequenz.py || exit 1
+	cat cycon | sed -e 's/\(\s*cycon_version =\).*/\\1 \"""" + version + """\";/' > tmp1 || exit 1;
+	mv tmp1 cycon || exit 1
+	chmod +x cycon || exit 1
 	"""
 if os.system( command ):
-	print "Failed to insert sequenz version number into sequenz.py"
+	print "Failed to insert cycon version number into cycon"
 	sys.exit()
 
 # INSTALL FILES

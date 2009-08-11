@@ -68,7 +68,7 @@ class config:
         die = False
 
         # check compulsory items have been defined in user_config.py
-        env = os.environ[ 'SEQUENZ_ENV' ]
+        env = os.environ[ 'CYCON_ENV' ]
         user_config_file = re.sub( 'environment.sh', 'user_config.py', env )
         compulsory = [ 'system_name', 'logging_dir', 'state_dump_file' ]
         for item in compulsory:

@@ -4,7 +4,7 @@
 Display the state of all existing tasks.
 
 NOTE: ONLY DETECTS DUMMY MODE VS REAL TIME MODE AT STARTUP
-(so restart this if you restart sequenz in different mode)
+(so restart this if you restart cycon in different mode)
 
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
@@ -19,7 +19,7 @@ import Pyro.naming
 from time import sleep
 from optparse import OptionParser
 
-# sequenz modules:
+# cycon modules:
 import pyrex
 from reference_time import _rt_to_dt
 
@@ -172,7 +172,7 @@ while True:
 
             # MONITOR HEADER
             blit = []
-            blit.append( '\033[1;37;40m Sequenz  System  Monitor  ' + ctrl_end )
+            blit.append( '\033[1;37;40m cycon  system  monitor  ' + ctrl_end )
             blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
             blit.append( '*' + ' => task not yet abdicated' )
 

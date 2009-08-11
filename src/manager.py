@@ -19,7 +19,7 @@ import re
 class manager:
     def __init__( self, config, pyro, restart, dummy_clock ):
         
-        self.pyro = pyro  # pyrex (sequenz Pyro helper) object
+        self.pyro = pyro  # pyrex (cycon Pyro helper) object
         self.log = logging.getLogger( "main" )
 
         self.config = config

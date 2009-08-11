@@ -80,7 +80,7 @@ else:
 
 
 try:
-    # connect to the remote switch object in sequenz
+    # connect to the remote switch object in cycon
     control = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'remote_control' )
 except:
     print "ERROR: failed to connect to control"

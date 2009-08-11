@@ -1,31 +1,33 @@
-HOW TO RUN SEQUENZ FOR SYSTEM FOO
+HOW TO RUN CYCON for system 'foo'
 
-[paths below are relative to the sequenz repo top level]
+[paths below are relative to the top level cycon directory]
 
-1/ write your task definition files: system-def/foo/taskdef/(*.def, *.pydef)
+1/ Define your system using cycon task definition files. Maintain this
+as a separate repository with version tags to indicate compatibility
+with cycon versions, but install it into [cycon-top]/system-def/foo/
+(or any sub-directory under system-def).
 
-2/ write your sequenz config file: system-def/foo/config.py
+2/ write your cycon user config file: system-def/foo/user_config.py
 
+3/ run bin/configure-system on your system definition directory, to
+generate the task class code (system-def/foo/task_classes.py) and cycon
+environment script (system-def/foo/environment.sh)
 
-3/ generate the task class code (system-def/foo/task_classes.py)
-   and sequenz environment script (system-def/foo/environment.sh)
-
-    $ bin/configure-system
-
-
-4/ source the sequenz environment file for system foo (sets the PATH and
-   PYTHONPATH environment variables for access to general sequenz and 
-   system foo-specific code modules).  This needs to be done in the shell that
-   runs the sequenz instance that handles system foo, and in any other shells
-   that need to interact with the same sequenz instance (e.g. system monitors).
+4/ source the cycon environment file for system foo (sets the PATH and
+PYTHONPATH environment variables for access to general cycon and system
+foo-specific code modules).  This needs to be done in the shell that
+runs the cycon instance that handles system foo, and in any other shells
+that need to interact with the same cycon instance (e.g. system
+monitors).
 
    $ . system-def/foo/environment.sh
 
 
-5/ run sequenz
+5/ run cycon
 
-   $ bin/sequenz.py
+   $ cycon [-r]
 
-To switch to a controlling an entirely different existing set of tasks, just
-source the environment.sh file for that system and run sequenz again.
-
+6/ To control an entirely different system using the same cycon
+installation, just source the appropriate
+[cycon-top]/system-def/[system-name]/environment.sh 
+before running cycon.

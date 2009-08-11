@@ -1,13 +1,12 @@
-1/ Get a copy of sequenz:
-	darcs get http://matiu.niwa.co.nz/repos/sequenz
+At run time cycon makes use of python source files in its own src/
+directory and in the configured system definition directory.
 
-2/ sequenz is designed to run from the top level sequenz directoy.
-
-    2a/ For development purposes, you can do this from within an actual
-	sequenz repository, so that any changes can be recorded directly.
-  	Be careful not to corrupt the repository, however.	
-
-    2b/ You can install to, and run from, a non-repository location 
-	(run 'scons install' after modifying the SConstruct file;
-	appropriately; this installs to an identical source tree, 
-	except that it is not a darcs repository).    
+Currently cycon is designed to be run from the top level cycon
+directory. For development purposes you can do this from within an
+actual cycon repository branch, so that any changes can be recorded
+directly (be careful not to corrupt the repository!). However, cycon can
+be install to, and run from, a non-repository location (run 
+'scons install' 
+after modifying the SConstruct file appropriately; this installs to an
+identical source tree, except that it will no longer be a darcs
+repository).    

@@ -1,20 +1,18 @@
-SEQUENZ DARCS REPOSITORY SETUP
+CYCON DARCS REPOSITORY SETUP
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-bin/     - sequenz main program and utility programs that can be directly invoked.
+bin/     - cycon main program and utility programs that can be directly invoked.
 
-src/     - python modules used by sequenz
+src/     - python modules used by cycon
 
-doc/     - sequenz documentation
+doc/     - cycon documentation
 
 system-def/ - top level system (task set) definition directory
 
-	example/ - example task set, with sequenz task definition and config files
+	example/ - example task set, with cycon task definition and config files
 
 	templates/ - task definition file templates, with some documentation
 
-	ecoconnect/ - ecoconnect task definition and config files 
-
-		operational/ - ecoconnect operational tasks
-
-		topnet-test/ - ecoconnect topnet parallel test tasks
+    YOUR SYSTEM DEFINITION DIRECTORY TREES SHOULD BE MAINTAINED AS
+    SEPARATE REPOSITORIES THAT ARE TAGGED TO INDICATE COMPATIBILITY WITH
+    CYCON VERSIONS, BUT THEY SHOULD BE INSTALLED HERE UNDER system-def/.

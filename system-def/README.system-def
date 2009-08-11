@@ -1,5 +1,5 @@
-sequenz systems (i.e. sets of related tasks to be controlled by sequenz)
+cycon systems (i.e. sets of related tasks to be controlled by cycon)
 should be defined and maintained in their own repositories with version
-tags to indicate which version of sequenz they are compatible with. This
-allows sequenz development to continue without having to constantly
+tags to indicate which version of cycon they are compatible with. This
+allows cycon development to continue without having to constantly
 upgrade multiple task sets in the main repository.

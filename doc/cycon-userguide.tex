@@ -6,7 +6,7 @@
 
 \lstset{language=Python}
 
-\title{How To Use Sequenz}
+\title{How To Use cycon}
 \author{Hilary Oliver, NIWA}
 
 \begin{document}
@@ -16,7 +16,7 @@
 
 \section{Overview}
 
-Sequenz is a metascheduling controller for systems of interdependent
+cycon is a metascheduling controller for systems of interdependent
 tasks, where a {\em task} is defined to be a group of one or more
 processes treated as a unit for scheduling purposes, and invoked via a
 single top level script or executable.  It can do task-completion based
@@ -25,29 +25,29 @@ upstream tasks) {\em without any modification of the existing tasks}:
 the only requirement is a simple \textbf{task definition file} that
 describes each task. However, if some tasks have long execution times
 and several significant internal outputs (i.e. prior to task
-completion), you can have sequenz trigger downstream tasks off internal
+completion), you can have cycon trigger downstream tasks off internal
 outputs with minor modification of external tasks to get completion of
-internal outputs reported back to sequenz. 
+internal outputs reported back to cycon. 
 
-Section \ref{config} below describes how to configure sequenz in order to
-control a new system.  Section \ref{usage} describes how to run sequenz
-once sequenz has been configured.
+Section \ref{config} below describes how to configure cycon in order to
+control a new system.  Section \ref{usage} describes how to run cycon
+once cycon has been configured.
 
 \label{config}
 \section{Task Definition Files}
 
-A {\em Task Definition File} defines the properties of a sequenz task:
+A {\em Task Definition File} defines the properties of a cycon task:
 name, valid run times, prerequisites and postrequisites, the task
-control script used to invoke the task, etc.  A sequenz utility,
+control script used to invoke the task, etc.  A cycon utility,
 \verb=task_generator.py= parses task definition files and auto-generates
 Python code that defines the objects that represent each task within
-sequenz.
+cycon.
 
 \subsection{Typical Example}
 
 Most tasks have only cotemporal (same reference time) upstream and
 downstream dependencies (recall that every task is implicitly dependent
-on the previous instance of its own class, in sequenz). The following
+on the previous instance of its own class, in cycon). The following
 task definition file is sufficient to completely define such a task.
 Different postrequisites can be specified depending on reference time. 
 
@@ -86,7 +86,7 @@ code must currently be written directly.
 Each external task must:
 
 \begin{itemize}
-\item report (to sequenz) when the task has started
+\item report (to cycon) when the task has started
 \item report when the task has finished
 \item report when every other registered task postrequisite has
 completed
@@ -103,17 +103,17 @@ In addition, tasks can optionally:
 messages, for debugging, logging, or progress monitoring purposes.
 \end{itemize}
 
-All incoming messages are logged by sequenz, but only postrequisite
+All incoming messages are logged by cycon, but only postrequisite
 messages can affect the state of other task objects.
 
 Task messages don't necessarily have to originate from top level task
 control scripts. It's a probably a good idea to do this if possible, but
 lower level scripts that are invoked as the task runs can communicate
-directly with sequenz if necessary.
+directly with cycon if necessary.
 
 \section{wrapper}
 
-A simple a simple wrapper script invoked by sequenz reports task
+A simple a simple wrapper script invoked by cycon reports task
 startup, invokes the task, and reports task completion or failure. 
 
 

@@ -1,4 +1,4 @@
-Sequenz To Do List
+To Do
 
 * use hasattr to check that required attributes have been defined in the 
   highest level class definition?

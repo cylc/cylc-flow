@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # USE $PYTHONPATH IN YOUR ENVIRONMENT TO MAKE AVAILABLE:
-# 1/ sequenz 'src' module directory
+# 1/ cycon 'src' module directory
 # 2/ user config module (for user_config.py and task_classes.py)
 
 import re
@@ -23,10 +23,10 @@ import pimp_my_logger
 import dummy_mode_clock 
 
 # auto-replace with version tag at build/install:
-sequenz_version = "foo-bar-baz";
+cycon_version = "foo-bar-baz";
 
 def usage():
-    print "sequenz [-r]"
+    print "cycon [-r]"
     print "Options:"
     print "  + [-r] restart from state dump file (overriding"
     print "         the configured start time and task list)."
@@ -51,8 +51,8 @@ def main( argv ):
 
     print "__________________________________________________________"
     print
-    print "      .       Sequenz Dynamic Metascheduler       ."
-    print "version: " + sequenz_version
+    print "      .       cycon Dynamic Metascheduler       ."
+    print "version: " + cycon_version
     print "      .         Hilary Oliver, NIWA, 2008         ."
     print "              See repository documentation"
     print "      .    Pyro nameserver required: 'pyro-ns'    ."

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# sequenz user configuration file
+# cycon user configuration file
 
 # config[ 'item_name' ] = item_value
 
