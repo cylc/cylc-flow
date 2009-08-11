@@ -15,7 +15,7 @@ set -e  # ABORT on error
 
 [[ $# != 1 ]] && {
 	echo "USAGE: $0 <system definition dir>"
-	echo "should be run in cycon repo top level"
+	echo "run in cycon top level directory"
 	exit 1
 }
 

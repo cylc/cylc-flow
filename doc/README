@@ -3,5 +3,5 @@ documents in the source repository before installing elsewhere for use
 (some source files are read into the document during LaTeX processing
 so relative file paths must be as expected at document processing time).
 
-notes directory: temporary documentation files whose contents should 
-eventually make it into the main documentation.
+The notes directory is for temporary documentation files whose contents
+might eventually end up in the main documentation files.
