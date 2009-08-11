@@ -1,0 +1,27 @@
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    d
+
+%TYPE
+    parallel
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    task-wrapper
+
+%EXPORT
+    WRAP task-d.sh
+
+%PREREQUISITES
+    b finished for $(MY_REFERENCE_TIME)
+    c finished for $(MY_REFERENCE_TIME)
+
+%RUN_LENGTH_MINUTES
+    14
+
+%OUTPUTS
+    # Defaults only

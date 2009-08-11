@@ -2,7 +2,10 @@
 # See full_template.def for documented entries
 
 %NAME
-    B
+    b
+
+%TYPE
+    sequential
 
 %VALID_HOURS
     0,6,12,18
@@ -11,12 +14,13 @@
     task-wrapper
 
 %EXPORT
-    # task-b.sh must be in $PATH
     WRAP task-b.sh
 
 %PREREQUISITES
-    A finished for $(MY_REFERENCE_TIME)
+    a finished for $(MY_REFERENCE_TIME) 
 
-%POSTREQUISITES
-    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
-    1 min: $(NAME) finished for $(MY_REFERENCE_TIME)
+%RUN_LENGTH_MINUTES
+    10
+
+%OUTPUTS
+    # Defaults only

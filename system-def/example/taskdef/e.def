@@ -2,7 +2,10 @@
 # See full_template.def for documented entries
 
 %NAME
-    A
+    e
+
+%TYPE
+    parallel
 
 %VALID_HOURS
     0,6,12,18
@@ -11,11 +14,13 @@
     task-wrapper
 
 %EXPORT
-    # task-a.sh must be in $PATH
-    WRAP task-a.sh
+    WRAP task-e.sh
 
 %PREREQUISITES
+    b finished for $(MY_REFERENCE_TIME)
 
-%POSTREQUISITES
-    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
-    1 min: $(NAME) finished for $(MY_REFERENCE_TIME)
+%RUN_LENGTH_MINUTES
+    20
+
+%OUTPUTS
+    # Defaults only

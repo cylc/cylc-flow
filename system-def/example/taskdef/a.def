@@ -1,0 +1,26 @@
+# THIS IS A SEQUENZ TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    a
+
+%TYPE
+    sequential
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    task-wrapper
+
+%EXPORT
+    WRAP task-a.sh
+
+%PREREQUISITES
+    # None
+
+%RUN_LENGTH_MINUTES
+    15
+
+%OUTPUTS
+    # Defaults only
