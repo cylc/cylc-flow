@@ -44,8 +44,9 @@ class dummy_task:
             # wait until the stop time for each output, and then generate the output
             diff_hrs = ( time - prev_time )/60.0
             dt_diff = datetime.timedelta( 0,0,0,0,0,diff_hrs,0 )
-            dt_diff_sec = dt_diff.seconds
-            dt_diff_sec_real = dt_diff_sec * dummy_clock_rate / 60.0 / 60.0 
+            # timedeltas are stored as days, seconds, milliseconds.
+            dt_diff_sec = dt_diff.days * 24 * 3600 + dt_diff.seconds
+            dt_diff_sec_real = dt_diff_sec * dummy_clock_rate / 3600.0
             sleep( dt_diff_sec_real )
 
             self.task.incoming( "NORMAL", outputs[ time ] )
@@ -69,7 +70,10 @@ class dummy_task:
         else:
             # sleep until the delayed start time
             self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting on external event' )
-            diff_real_secs = (delayed_start - current_time).seconds * dummy_clock_rate / ( 60. * 60.)
+            diff_dummy = delayed_start - current_time
+            # timedeltas are stored as days, seconds, milliseconds.
+            diff_dummy_secs = diff_dummy.days * 24 * 3600 + diff_dummy.seconds
+            diff_real_secs = diff_dummy_secs * dummy_clock_rate / 3600.0
             sleep( diff_real_secs )
 
 
