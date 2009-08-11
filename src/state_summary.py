@@ -18,10 +18,16 @@ class state_summary( Pyro.core.ObjBase ):
     def update( self, tasks ):
         self.summary = {}
         self.name_list = []
-        seen = {}
+        self.ref_time_list = []
+        seen_name = {}
+        seen_time = {}
         for task in tasks:
-            if task.name not in seen.keys():
-                seen[ task.name ] = True
+            if task.ref_time not in seen_time.keys():
+                seen_time[ task.ref_time ] = True
+                self.ref_time_list.append( task.ref_time )
+
+            if task.name not in seen_name.keys():
+                seen_name[ task.name ] = True
                 self.name_list.append( task.name )
 
             self.summary[ task.identity ] = task.get_state_summary()
@@ -39,6 +45,9 @@ class state_summary( Pyro.core.ObjBase ):
 
     def get_state_summary( self ):
         return self.summary
+
+    def get_ref_time_list( self ):
+        return self.ref_time_list
 
     def get_name_list( self ):
         return self.name_list

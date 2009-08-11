@@ -17,7 +17,6 @@ import datetime
 import Pyro.core
 import Pyro.naming
 from time import sleep
-from string import split
 from optparse import OptionParser
 
 # sequenz modules:
@@ -35,9 +34,6 @@ parser.add_option( "-n", "--name", help="system name",
 
 parser.add_option( "-p", "--print", help="print registered systems",
         action="store_true", default=False, dest="print_systems" )
-
-parser.add_option( "-f", "--fraction", help="show completion fraction",
-        action="store_true", default=False, dest="show_completion" )
 
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
@@ -81,112 +77,115 @@ print "here we go ..."
 sleep(2)
 
 while True:
+    # keep try to connect to the chosen remote system
 
     try: 
+        # connect to remote state summary object for the chosen system
         god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
         god._setTimeout(10)
 
+        # are we in dummy mode or not?
         dummy_mode = god.get_dummy_mode()
-
         if dummy_mode:
+            # connect to the accelerated dummy mode clock
             remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.dummy_clock' )
             remote_clock._setTimeout(10)
             rate = str( god.get_dummy_clock_rate() )
 
         while True:
+            # continual redisplay loop
 
             if dummy_mode:
+                # get current time from dummy clock
                 dt = remote_clock.get_datetime()
             else:
+                # get current real time
                 dt = datetime.datetime.now()
 
-            lines = {}
-            # TO DO: wrap all remote calls like this, to get remote
-            # traceback in case of error:
             try:
+                # get state summary, list of task names, and list of
+                # reference times
                 states = god.get_state_summary()
-            except Exception,x:
-                print ''.join(Pyro.util.getPyroTraceback(x))
-                sys.exit(1)
-
-            try:
                 name_list = god.get_name_list()
+                ref_time_list = god.get_ref_time_list()
             except Exception,x:
                 print ''.join(Pyro.util.getPyroTraceback(x))
                 sys.exit(1)
 
             task_ids = states.keys()
             task_ids.sort()
-            # name_list can be used to define a distinct display column
-            # for each task (NOT YET IMPLEMENTED).
             name_list.sort()
+            ref_time_list.sort()
             catchup_info = {}
 
+            # initialize a dict-of-dicts to store display information
+            # for all tasks at each current reference time
+            #   task_info[ ref_time ][ task_name ] = info
+            task_info = {}
+            for rt in ref_time_list:
+                task_info[ rt ] = {}
+                for name in name_list:
+                    # initialise with blank string of the same size as
+                    # the real info that we will use below
+                    tmp = name + '*'  # name plus abdication indicator
+                    tmp = re.sub( '.', ' ', tmp )
+                    task_info[ rt ][name] = tmp
+
+            ctrl_end = "\033[0m"
+
+            # now loop through all tasks in the system and assign their
+            # disply info to the correct place in the task_info structure
             for task_id in task_ids:
                 name     =      states[ task_id ][ 'name' ]
                 reftime  =      states[ task_id ][ 'reference_time' ]
                 state    =      states[ task_id ][ 'state' ]
-                complete = str( states[ task_id ][ 'n_completed_postrequisites' ] )
-                total    = str( states[ task_id ][ 'n_total_postrequisites' ] )
-                latest   =      states[ task_id ][ 'latest_message' ]
+
+                if not states[ task_id ][ 'abdicated' ]:
+                    # identify any tasks that have not abdicated yet
+                    abd = '*'
+                else:
+                    # space of same length
+                    abd = ' '
 
                 if 'catching_up' in states[ task_id ].keys():
+                    # get catchup status for any contact tasks
+                    # (this is a class variable for each task type,
+                    # not stored for each individual task object).
                     catchup_info[ name ] = states[ task_id ][ 'catching_up' ]
 
+                # color displayed info according to run status
                 if state == "running":
                     ctrl_start = "\033[1;37;42m"
-
                 elif state == "waiting":
                     ctrl_start = "\033[35m"
-
                 elif state == "failed":
                     ctrl_start = "\033[1;37;41m"
-
                 else:
                     # finished
                     ctrl_start = ""
 
-                ctrl_end = "\033[0m"
-
-                if options.show_completion:
-                    frac = "(" + str(complete) + "/" + str(total) + ")"
-                    disp = name + frac
-                else:
-                    disp = name
-
-                disp = ctrl_start + disp + ctrl_end
-
-                if not states[ task_id ][ 'abdicated' ]:
-                    # identify any tasks that have not abdicated yet
-                    #disp = "\033[1;37;43m" + '*' + ctrl_end + disp
-                    disp = disp + '*'
-                else:
-                    # space of same length
-                    disp = disp + ' '
-
-                hour = int( reftime[8:10] )
-
-                if reftime in lines.keys():
-                    lines[reftime] += ' ' + disp
-                else:
-                    lines[reftime] = reftime + "\033[0m " + disp
+                # construct the display string for this task
+                task_info[ reftime ][ name ] = ctrl_start + name + ctrl_end + abd
                 
-            # sort reference times using int( string )
-            reftimes = lines.keys()
-            reftimes.sort( key = int )
 
+            # construct an array of lines to blit to the screen
+
+            # MONITOR HEADER
             blit = []
             blit.append( '\033[1;37;40m Sequenz  System  Monitor  ' + ctrl_end )
             blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
             blit.append( '*' + ' => task not yet abdicated' )
 
+            # DUMMY MODE, or not
             if dummy_mode:
                 blit.append( 'DUMMY MODE: ' + rate + ' sec = 1 hr' )
             else:
                 blit.append( 'REAL MODE' )
             
+            # CURRENT SYSTEM TIME
             blit.append( "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
 
+            # CATCHUP INFO for any contact tasks
             for name in catchup_info.keys():
                 if catchup_info[ name ]:
                     blit.append( name + ': catching up' )
@@ -195,15 +194,27 @@ while True:
 
             blit.append("")
 
-            for rt in reftimes:
-                # colour reference time relative to clock time
+            # construct a line of text to display for each reference time
+            for rt in ref_time_list:
+                line = ''
+                # colour reference time according to whether it has
+                # caught up to the current clock time or not.
                 rtdt = _rt_to_dt( rt )
                 if dt > rtdt:
-                    disp = '\033[1;34m'
+                    # behind
+                    line = '\033[1;34m' + rt + ctrl_end
                 else:
-                    disp = '\033[1;31m'
-                blit.append( disp + lines[rt] )
+                    # caught up
+                    line = '\033[1;31m' + rt + ctrl_end
 
+                # add info for each task to the line
+                for name in name_list:
+                    disp = task_info[rt][name]
+                    line = line + ' ' + disp
+
+                blit.append( line )
+
+            # clear screen and blit the new information up
             os.system( "clear" )
             for line in blit:
                 print line
@@ -211,6 +222,6 @@ while True:
 
     except:
         # uncomment 'raise' to identify errors
-        #raise
+        # raise
         print "failed..."
         sleep( 1 )
