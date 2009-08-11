@@ -77,6 +77,12 @@ class task( Pyro.core.ObjBase ):
         # tasks when loading tasks from the state dump file).
         self.abdicated = abdicated
 
+        # External sequential tasks can send a 'ready to abdicate'
+        # message (below) to indicate early abdication (otherwise 
+        # sequential tasks are ready to abdicate when they are
+        # finished).
+        self.received_abdication_notice = False
+
         # count instances of each top level object derived from task
         # top level derived classes must define:
         #   <class>.instance_count = 0
@@ -304,6 +310,13 @@ class task( Pyro.core.ObjBase ):
 
         self.latest_message = message
 
+        if message == self.name + " ready to abdicate for " + self.ref_time:
+            # external task says we can abdicate already (i.e. it has
+            # generated the restart file (or similar) required by its
+            # successor).
+            self.log.debug( 'early abdication ok for ' + self.ref_time )
+            self.received_abdication_notice = True
+
         # make sure log messages end in 'for YYYYMMDDHH', and 
         # distinguish incoming task messages from internal logging
         log_message = '(INCOMING) ' + message
@@ -437,7 +450,7 @@ class sequential:
     # in sequence.
 
     def ready_to_abdicate( self ):
-        if self.state == "finished":
+        if self.received_abdication_notice or self.state == "finished":
             return True
         else:
             return False
@@ -449,7 +462,7 @@ class parallel:
     # allow. 
 
     def ready_to_abdicate( self ):
-        if self.state == "running" or self.state == "finished":
+        if self.state == "running" or self.received_abdication_notice or self.state == "finished":
             return True
         else:
             return False

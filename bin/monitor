@@ -172,7 +172,7 @@ while True:
 
             # MONITOR HEADER
             blit = []
-            blit.append( '\033[1;37;40m cycon  system  monitor  ' + ctrl_end )
+            blit.append( '\033[1;37;40m  cycon  system  monitor   ' + ctrl_end )
             blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
             blit.append( '*' + ' => task not yet abdicated' )
 

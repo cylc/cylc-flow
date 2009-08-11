@@ -1,18 +1,15 @@
 To Do
 
+* does 'caught up' detection work properly for prerequisiteless parallel
+  contact tasks?
+
+* no messages need to start with task name?
+
 * use hasattr to check that required attributes have been defined in the 
   highest level class definition?
 
 * all sys.exit(1) calls should be routed through a clean shutdown, so
   that Pyro nameserver group entries can be deleted automatically.
-
-* define abdication of "sequential" tasks by a message, which can
-  default to "task finished". This would allow new forecasts to 
-  start as soon as their predecessors have written out the "model
-  background state". 
-
-* only topnet-test tasks have been updated for the change that adds
-  abdication status to the state dump file.
 
 * go through all 'requisite' class methods, get rid of those that
   aren't used, and make sure the remaining ones are sensibly named
