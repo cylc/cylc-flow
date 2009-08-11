@@ -54,8 +54,12 @@ class dummy_task:
             
     def delay( self ):
 
-        rt = reference_time._rt_to_dt( self.ref_time )
         real_time_delay = self.task.get_real_time_delay()
+        if real_time_delay == None:
+            # not a contact task
+            return
+
+        rt = reference_time._rt_to_dt( self.ref_time )
         delayed_start = rt + datetime.timedelta( 0,0,0,0,0,real_time_delay,0 ) 
         current_time = self.clock.get_datetime()
 

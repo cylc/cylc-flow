@@ -362,8 +362,11 @@ class task( Pyro.core.ObjBase ):
 
 
     def get_real_time_delay( self ):
-        # override for real world interface tasks; see below
-        return 0
+        # Return hours after reference to start running.
+        # Used by dummy contact tasks in dummy mode.
+        # Default, here, is to return None, which implies not a contact task
+        # returning 0 => contact task starts running at reference time
+        return None
 
     def dump_state( self, FILE ):
         # Write state information to the state dump file, reference time
