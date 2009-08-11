@@ -566,18 +566,4 @@ class sequential_contact_task( contact, sequential ):
     pass
 
 class parallel_contact_task( contact, parallel ):
-
-    def ready_to_abdicate( self ):
-
-        # FORCE PARALLEL CONTACT TASKS TO RUN SEQUENTIALLY IF THEY HAVE
-        # NO PREREQUISITES. These tasks have no prerequisites and
-        # generally little computation time. Thus, in parallel, they
-        # "all go off at once" out to the run-ahead limit and just sit
-        # in the queue waiting ... which isn't particularly desirable. 
-        if self.prerequisites.count() != 0:
-            return
-
-        if self.state == "finished":
-            return True
-        else:
-            return False
+    pass
