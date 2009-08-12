@@ -28,7 +28,7 @@ class dummy_task:
     def run( self ):
 
         # get a list of output messages to fake: outputs[ time ] = output
-        outputs = self.task.get_timed_postrequisites()
+        outputs = self.task.get_timed_outputs()
 
         # ordered list of times
         times = outputs.keys()

@@ -8,8 +8,8 @@ interact, etc.
 
 import reference_time
 import pimp_my_logger
+import requisites
 import logging
-import broker
 import task
 import os
 import re
@@ -28,7 +28,7 @@ class manager:
         self.system_hold = False
 
         if config.get('use_broker'):
-            self.broker = broker.broker()
+            self.broker = requisites.broker()
         
         # instantiate the initial task list and create task logs 
         self.tasks = []
@@ -160,7 +160,7 @@ class manager:
 
     def negotiate_dependencies( self ):
         # run time dependency negotiation: tasks attempt to get their
-        # prerequisites satisfied by other tasks' postrequisites.
+        # prerequisites satisfied by other tasks' outputs.
         #--
         if self.config.get('use_broker'):
             self.negotiate_via_broker()
@@ -175,14 +175,14 @@ class manager:
             task.get_satisfaction( self.tasks )
 
     def negotiate_via_broker( self ):
-        # each task registers its postrequisites with the broker
+        # each task registers its outputs with the broker
         #--
         for task in self.tasks:
-            self.broker.register( task.get_fullpostrequisites() )
+            self.broker.register( task.get_fulloutputs() )
 
         # each task asks the broker to satisfy its prerequisites
         for task in self.tasks:
-            task.prerequisites.satisfy_me( self.broker.get_requisites() )
+            task.prerequisites.satisfy_me( self.broker )
 
     def run_tasks( self, launcher ):
         # tell each task to run if it is ready
@@ -309,7 +309,7 @@ class manager:
                 self.pyro.disconnect( lame )
                 lame.log.debug( "lame task disconnected for " + lame.ref_time )
                 if self.config.get('use_broker'):
-                    self.broker.unregister( lame.get_fullpostrequisites() )
+                    self.broker.unregister( lame.get_fulloutputs() )
                 lame.prepare_for_death()
                 del lame
 
@@ -404,7 +404,7 @@ class manager:
             self.tasks.remove( task )
             self.pyro.disconnect( task )
             if self.config.get('use_broker'):
-                self.broker.unregister( task.get_fullpostrequisites() )
+                self.broker.unregister( task.get_fulloutputs() )
             task.prepare_for_death()
 
         del spent_tasks
@@ -449,6 +449,6 @@ class manager:
         self.tasks.remove( task )
         self.pyro.disconnect( task )
         if self.config.get('use_broker'):
-            self.broker.unregister( task.get_fullpostrequisites() )
+            self.broker.unregister( task.get_fulloutputs() )
         task.prepare_for_death()
         del task

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import reference_time
-from requisites import requisites, timed_requisites, fuzzy_requisites
+from requisites import prerequisites, outputs, fuzzy_prerequisites
 from time import sleep
 
 import os, sys, re
@@ -125,11 +125,11 @@ class task( Pyro.core.ObjBase ):
         # initial states: 
         #  + waiting 
         #  + ready (prerequisites satisfied)
-        #  + finished (postrequisites satisfied)
+        #  + finished (outputs satisfied)
         if initial_state == "waiting": 
             self.state = "waiting"
         elif initial_state == "finished":  
-            self.postrequisites.set_all_satisfied()
+            self.outputs.set_all_satisfied()
             self.log.warning( self.identity + " starting in FINISHED state" )
             self.state = "finished"
         elif initial_state == "ready":
@@ -248,12 +248,12 @@ class task( Pyro.core.ObjBase ):
 
     def get_satisfaction( self, tasks ):
         for task in tasks:
-            self.prerequisites.satisfy_me( task.postrequisites )
+            self.prerequisites.satisfy_me( task.outputs )
 
     def will_get_satisfaction( self, tasks ):
         temp_prereqs = deepcopy( self.prerequisites )
         for task in tasks:
-            temp_prereqs.will_satisfy_me( task.postrequisites )
+            temp_prereqs.will_satisfy_me( task.outputs )
     
         if not temp_prereqs.all_satisfied(): 
             return False
@@ -261,7 +261,7 @@ class task( Pyro.core.ObjBase ):
             return True
 
     def is_complete( self ):  # not needed?
-        if self.postrequisites.all_satisfied():
+        if self.outputs.all_satisfied():
             return True
         else:
             return False
@@ -284,17 +284,14 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
-    def get_postrequisites( self ):
-        return self.postrequisites.get_requisites()
-
-    def get_fullpostrequisites( self ):
-        return self.postrequisites
+    def get_fulloutputs( self ):
+        return self.outputs
 
     def get_postrequisite_list( self ):
-        return self.postrequisites.get_list()
+        return self.outputs.get_list()
 
-    def get_timed_postrequisites( self ):
-        return self.postrequisites.get_timed_requisites()
+    def get_timed_outputs( self ):
+        return self.outputs.get_timed_requisites()
 
     def get_latest_message( self ):
         return self.latest_message
@@ -327,13 +324,13 @@ class task( Pyro.core.ObjBase ):
             # message from a task that's not supposed to be running
             self.log.warning( "MESSAGE FROM NON-RUNNING TASK: " + log_message )
 
-        if self.postrequisites.requisite_exists( message ):
+        if self.outputs.exists( message ):
             # an expected postrequisite from a running task
-            if self.postrequisites.is_satisfied( message ):
+            if self.outputs.is_satisfied( message ):
                 self.log.warning( "POSTREQUISITE ALREADY SATISFIED: " + log_message )
 
             self.log.info( log_message )
-            self.postrequisites.set_satisfied( message )
+            self.outputs.set_satisfied( message )
 
         elif message == self.name + " failed for " + self.ref_time:
             # lone "failed" message required to indicate failure
@@ -352,7 +349,7 @@ class task( Pyro.core.ObjBase ):
             else:
                 self.log.warning( log_message )
 
-        if self.postrequisites.all_satisfied():
+        if self.outputs.all_satisfied():
             self.set_finished()
             self.__class__.last_finished_ref_time = self.ref_time
 
@@ -421,22 +418,18 @@ class task( Pyro.core.ObjBase ):
 
 
     def get_state_summary( self ):
-        # derived classes can call task.get_state_summary() and then 
+        # derived classes can call this method and then 
         # add more information to the summary if necessary.
 
-        postreqs = self.get_postrequisites()
-        n_total = len( postreqs )
-        n_satisfied = 0
-        for key in postreqs.keys():
-            if postreqs[ key ]:
-                n_satisfied += 1
+        n_total = self.outputs.count()
+        n_satisfied = self.outputs.count_satisfied()
 
         summary = {}
         summary[ 'name' ] = self.name
         summary[ 'state' ] = self.state
         summary[ 'reference_time' ] = self.ref_time
-        summary[ 'n_total_postrequisites' ] = n_total
-        summary[ 'n_completed_postrequisites' ] = n_satisfied
+        summary[ 'n_total_outputs' ] = n_total
+        summary[ 'n_completed_outputs' ] = n_satisfied
         summary[ 'abdicated' ] = self.abdicated
         summary[ 'latest_message' ] = self.latest_message
  

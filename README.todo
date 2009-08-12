@@ -19,9 +19,6 @@ To Do
 * all sys.exit(1) calls should be routed through a clean shutdown, so
   that Pyro nameserver group entries can be deleted automatically.
 
-* go through all 'requisite' class methods, get rid of those that
-  aren't used, and make sure the remaining ones are sensibly named
-
 * rationalize CRITICAL and "failed" message processing? Should the
   former always imply the latter? Currently critical status affects
   logging, but a task is only considered failed if a "failed"

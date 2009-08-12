@@ -71,9 +71,8 @@ def main( argv ):
             
         FILE.write( 
             """
-%POSTREQUISITES
-    0 min: $(NAME) started for $(MY_REFERENCE_TIME)
-    1 min: $(NAME) finished for $(MY_REFERENCE_TIME)\n""" )
+%OUTPUTS
+    # defaults only
     
         FILE.close() 
 

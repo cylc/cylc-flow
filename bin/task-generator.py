@@ -96,7 +96,7 @@ from task import sequential_task, parallel_task, sequential_contact_task, parall
 import execution
 
 import reference_time
-from requisites import requisites, timed_requisites, fuzzy_requisites
+from requisites import prerequisites, outputs, fuzzy_prerequisites
 from time import sleep
 
 import os, sys, re
@@ -264,7 +264,7 @@ import logging
             FILE.write( strng )
 
         # ... prerequisites
-        FILE.write( indent + 'self.prerequisites = requisites( self.name, ref_time )\n' )
+        FILE.write( indent + 'self.prerequisites = prerequisites( self.name, ref_time )\n' )
         for line in parsed_def[ 'PREREQUISITES' ]:
             # look for conditionals
             m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
@@ -286,9 +286,9 @@ import logging
                 FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
  
 
-        # ... postrequisites
+        # ... outputs
         FILE.write( '\n' )
-        FILE.write( indent + 'self.postrequisites = timed_requisites( self.name, ref_time )\n' )
+        FILE.write( indent + 'self.outputs = outputs( self.name, ref_time )\n' )
 
         # automatic 'task started' message
         parsed_def[ 'OUTPUTS' ].append( '0: $(NAME) started for $(MY_REFERENCE_TIME)' )
@@ -311,14 +311,14 @@ import logging
                 for hour in hours:
                     FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                     indent_more()
-                    FILE.write( indent + 'self.postrequisites.add( ' + time + ', ' + req + ' )\n' )
+                    FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
                     indent_less()
             else:
                 timed_req = line
                 [ time, req ] = timed_req.split( ':' )
                 req = "'" + req + "'"
                 req = interpolate_variables( req )
-                FILE.write( indent + 'self.postrequisites.add( ' + time + ', ' + req + ' )\n' )
+                FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
 
         # call parent's init method
         FILE.write( '\n' )
