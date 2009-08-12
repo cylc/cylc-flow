@@ -1,5 +1,13 @@
 To Do
 
+* ALLOW MULTIPLE OUTPUTS AT THE SAME TIME: important for single output
+  tasks which report their output at the same time as finished.
+
+* what happens if several cotemporal tasks report the same output
+  message (e.g. 'processing finished for ref_time' )?
+
+* DELAY_HOURS (contact tasks) needs to depend on reference hour
+
 * does 'caught up' detection work properly for prerequisiteless parallel
   contact tasks?
 
@@ -52,8 +60,6 @@ To Do
   (plus any configured offset) on a restart.
 
 * retrofit proper exception handling (current use is sporadic).
-
-* allow multiple outputs at the same time.
 
 * state dump information should be a dict, like config, to allow
   arbitrary additional information to be added by new task classes.

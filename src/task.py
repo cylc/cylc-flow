@@ -507,11 +507,6 @@ class contact( task ):
  
         task.__init__( self, ref_time, abdicated, initial_state )
 
-        # logging undefined until parent class initialized
-        if self.prerequisites.count() != 0:
-            self.log.critical( 'ERROR: A contact class should have no prerequisites' )
-            sys.exit(1)
- 
 
     def get_real_time_delay( self ):
 
