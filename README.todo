@@ -3,10 +3,10 @@ To Do
 * ALLOW MULTIPLE OUTPUTS AT THE SAME TIME: important for single output
   tasks which report their output at the same time as finished.
 
-* what happens if several cotemporal tasks report the same output
-  message (e.g. 'processing finished for ref_time' )?
-
 * DELAY_HOURS (contact tasks) needs to depend on reference hour
+
+* NOTE: outputs must be unique, but prerequisites cannot be unique;
+  find a way to enforce this. 
 
 * does 'caught up' detection work properly for prerequisiteless parallel
   contact tasks?
