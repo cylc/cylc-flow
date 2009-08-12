@@ -3,8 +3,9 @@
 """
 Display the state of all existing tasks.
 
-NOTE: ONLY DETECTS DUMMY MODE VS REAL TIME MODE AT STARTUP
-(so restart this if you restart cycon in different mode)
+NOT SUITABLE FOR VERY LARGE TASK SETS.
+
+ONLY DETECTS DUMMY VS REAL TIME AT STARTUP
 
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
@@ -23,6 +24,8 @@ from optparse import OptionParser
 import pyrex
 from reference_time import _rt_to_dt
 
+compress = True
+
 # construct a command line parser
 parser = OptionParser( "%prog [options]" )
 
@@ -31,6 +34,9 @@ parser.add_option( "-c", "--configured", help="use configured system",
 
 parser.add_option( "-n", "--name", help="system name",
         metavar="SYSTEM-NAME", action="store", dest="system_name" )
+
+parser.add_option( "-a", "--align", help="align columns",
+        action="store_true", default=False, dest="align_columns" )
 
 parser.add_option( "-p", "--print", help="print registered systems",
         action="store_true", default=False, dest="print_systems" )
@@ -210,7 +216,12 @@ while True:
                 # add info for each task to the line
                 for name in name_list:
                     disp = task_info[rt][name]
-                    line = line + ' ' + disp
+                    if not options.align_columns and re.match( '^\s+$', disp ): 
+                        # don't add white space unless align_columns has
+                        # been requested by the user
+                        pass
+                    else:
+                        line = line + ' ' + disp
 
                 blit.append( line )
 
