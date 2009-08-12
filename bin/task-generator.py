@@ -273,12 +273,12 @@ import logging
                 # get a list of hours
                 hours = left.split(',')
                 req = re.sub( '^\s+', '', req )
+                req = "'" + req + "'"
+                req = interpolate_variables( req )
                 for hour in hours:
                     FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                     indent_more()
-                    req = "'" + line + "'"
-                    req = interpolate_variables( req )
-                    FILE.write( indent + 'self.prerequisites.add( ' + req + '" )\n' )
+                    FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
                     indent_less()
             else:
                 req = "'" + line + "'"
@@ -305,12 +305,12 @@ import logging
                 [ left, timed_req ] = m.groups()
                 # get a list of hours
                 hours = left.split(',')
+                [ time, req ] = timed_req.split( ':' )
+                req = "'" + req + "'"
+                req = interpolate_variables( req )
                 for hour in hours:
                     FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                     indent_more()
-                    [ time, req ] = timed_req.split( ':' )
-                    req = "'" + req + "'"
-                    req = interpolate_variables( req )
                     FILE.write( indent + 'self.postrequisites.add( ' + time + ', ' + req + ' )\n' )
                     indent_less()
             else:
