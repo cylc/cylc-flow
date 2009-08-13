@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Clean existing cycon paths from a supplied PATH variable
-# Enables reconfiguring cycon to a different task system
+# Clean existing cyclon paths from a supplied PATH variable
+# Enables reconfiguring cyclon to a different task system
 # without logging out and in again.
 
 [[ $# > 1 ]] && {
@@ -16,7 +16,7 @@ OUT_PATH=''
 OIFS=$IFS
 IFS=':'
 for P in $IN_PATH; do
-	if [[ $P !=  *cycon* ]]; then
+	if [[ $P !=  *cyclon* ]]; then
 		OUT_PATH=${OUT_PATH}:$P
 	fi
 done

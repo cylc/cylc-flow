@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cycon example system
+# cyclon example system
 # task c
 # depends on task a
 

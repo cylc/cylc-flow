@@ -4,9 +4,9 @@
 Display progress of currently running tasks objects.
 
 NOTE: ONLY DETECTS DUMMY MODE VS REAL TIME MODE AT STARTUP
-MUST BE RUN IN SAME PYTHONPATH ENVIRONMENT AS CYCON SO
-WE ACCESS THE SAME CYCON CONFIG FILE
-(so restart this if you restart cycon in different mode)
+MUST BE RUN IN SAME PYTHONPATH ENVIRONMENT AS CYCLON SO
+WE ACCESS THE SAME CYCLON CONFIG FILE
+(so restart this if you restart cyclon in different mode)
 
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
@@ -42,7 +42,7 @@ class kit:
 
         return [a] 
 
-title = kit( "cycon system monitor" )
+title = kit( "cyclon system monitor" )
 
 config = config.config()
 config.load()

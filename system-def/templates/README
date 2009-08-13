@@ -1,6 +1,6 @@
-Example task definition files for cycon. Task definitions based on
+Example task definition files for cyclon. Task definitions based on
 these templates are processed by task_generator.py, which
-auto-generates the task class module (task_classes.py) used by cycon.  
+auto-generates the task class module (task_classes.py) used by cyclon.  
 
 + <task-name>.def
   task definition file, suitable for all normal tasks: those that
@@ -22,7 +22,7 @@ time, you can choose to represent it as several different task classes
 OR define reference time dependent prerequisites and outputs in the one
 task class.
 
-Keep in mind, however, that cycon creates new task objects by
+Keep in mind, however, that cyclon creates new task objects by
 abdication: when a particular instance of a given task type achieves its
 abdication condition (e.g. by finishing in the case of sequential tasks) 
 the next instance (at the next valid reference time for that task type)

@@ -219,7 +219,7 @@ import logging
         if 'OWNER' in parsed_def.keys():
             owner = parsed_def[ 'OWNER' ][0]
         else:
-            # run as cycon user
+            # run as cyclon user
             owner = os.environ[ 'USER' ]
  
         FILE.write( indent + 'owner = \'' + owner + '\'\n' )

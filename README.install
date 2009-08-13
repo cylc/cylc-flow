@@ -1,10 +1,10 @@
-At run time cycon makes use of python source files in its own src/
+At run time cyclon makes use of python source files in its own src/
 directory and in the configured system definition directory.
 
-Currently cycon is designed to be run from the top level cycon
+Currently cyclon is designed to be run from the top level cyclon
 directory. For development purposes you can do this from within an
-actual cycon repository branch, so that any changes can be recorded
-directly (be careful not to corrupt the repository!). However, cycon can
+actual cyclon repository branch, so that any changes can be recorded
+directly (be careful not to corrupt the repository!). However, cyclon can
 be install to, and run from, a non-repository location (run 
 'scons install' 
 after modifying the SConstruct file appropriately; this installs to an

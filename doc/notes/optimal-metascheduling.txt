@@ -26,7 +26,7 @@ the system, so:
   around to satisfy the prerequisites in the rest of the system that will be
   lagging behind.
 
-Sequenz actually applies the max_runahead_hours restriction to all tasks, but
+cyclon actually applies the max_runahead_hours restriction to all tasks, but
 this has the same affect as applying the restriction to just the free tasks
 (because the rest of the system depends on the free tasks). Actually, this
 restriction would also be important for fast prerequisiteless tasks that do
@@ -43,13 +43,13 @@ the model itself: if the background file is not used for any other purpose it
 may be written and read from some kind of model "running" directory so that
 the user does not have to know about it.
 
-In sequenz, this could potentially be handled through explicit prerequisites.
+In cyclon, this could potentially be handled through explicit prerequisites.
 For example, forecast model foo would have a prequisite 
  "file foo-background-YYYYMMDDHH.nc is ready", or 
  "foo finished for YYYYMMDDHH" 
 where YYYYMMDDHH is the previous instance reference time.
 
-Instead, however, sequenz makes this kind of dependence implicit in its task
+Instead, however, cyclon makes this kind of dependence implicit in its task
 proxy object creation mechanism: For a forecast model foo, instance foo(T2)
 should not be created until foo(T1) achieves a "finished" state (i.e. foo(T2)
 can't run before foo(T1) is finished, because it doesn't exist before then).
@@ -71,7 +71,7 @@ declared as having previous instance dependence, like a forecast model, which
 will force it to run sequentially. 
 
 
-HANDLING OF PREVIOUS INSTANCE DEPENDENCE IN SEQUENZ: TASK CREATION 
+HANDLING OF PREVIOUS INSTANCE DEPENDENCE IN cyclon: TASK CREATION 
 
  (1) new forecast model tasks should be created only when their previous
  instance achieves a "finished" state. This forces them to run in sequence.
@@ -100,13 +100,13 @@ some external event - to prevent them swamping the system or running too far
 ahead).
 
 Forecast models must wait on their previous instances because one forecast
-generates the background state for the next.  The new controller, sequenz,
+generates the background state for the next.  The new controller, cyclon,
 handles this previous-instance dependence implicitly via its task proxy object
 creation mechanism: in effect, if T1 and T2 are successive reference times for
 task foo, then foo(T2) can't run before foo(T1) finishes because it doesn't
 exist before then.
 
-Currently, however, sequenz treats *all* tasks in this way, not just forecast
+Currently, however, cyclon treats *all* tasks in this way, not just forecast
 models.  Thus it is sub-optimal to the extent that system throughput is slowed
 by forcing tasks that don't naturally depend on their previous instance to run
 sequentially as if they did.  This affects prerequisiteless tasks, which could
@@ -117,7 +117,7 @@ forecast models that do have previous instance dependence) BUT they could
 potentially overlap IF the post processing task takes longer to run than the
 model run time plus whatever happens between model runs. 
 
-Now, I've realised that with a very small change I can turn sequenz into a
+Now, I've realised that with a very small change I can turn cyclon into a
 fully optimal meta-scheduler, which in addition to sounding good will have
 some impact on system throughput in catchup mode.  The question is, can we
 guarantee that all of our post processing tasks can safely overlap if the

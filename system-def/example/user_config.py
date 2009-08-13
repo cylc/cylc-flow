@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# cycon user configuration file
+# cyclon user configuration file
 
 # config[ 'item_name' ] = item_value
 
@@ -14,8 +14,8 @@ config = {}                          # !
 # USER CONFIGURATION SECTION BEGINS  # !
 
 config[ 'system_name' ] = 'example'
-config[ 'logging_dir' ] = os.environ[ 'HOME' ] + '/cycon-' + config[ 'system_name' ] + '/log'
-config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/cycon-' + config[ 'system_name' ] + '/state'
+config[ 'logging_dir' ] = os.environ[ 'HOME' ] + '/cyclon-' + config[ 'system_name' ] + '/log'
+config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/cyclon-' + config[ 'system_name' ] + '/state'
 
 config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 10

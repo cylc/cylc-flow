@@ -1,33 +1,33 @@
-HOW TO RUN CYCON for system 'foo'
+HOW TO RUN CYCLON for system 'foo'
 
-[paths below are relative to the top level cycon directory]
+[paths below are relative to the top level cyclon directory]
 
-1/ Define your system using cycon task definition files. Maintain this
+1/ Define your system using cyclon task definition files. Maintain this
 as a separate repository with version tags to indicate compatibility
-with cycon versions, but install it into [cycon-top]/system-def/foo/
+with cyclon versions, but install it into [cyclon-top]/system-def/foo/
 (or any sub-directory under system-def).
 
-2/ write your cycon user config file: system-def/foo/user_config.py
+2/ write your cyclon user config file: system-def/foo/user_config.py
 
 3/ run bin/configure-system on your system definition directory, to
-generate the task class code (system-def/foo/task_classes.py) and cycon
+generate the task class code (system-def/foo/task_classes.py) and cyclon
 environment script (system-def/foo/environment.sh)
 
-4/ source the cycon environment file for system foo (sets the PATH and
-PYTHONPATH environment variables for access to general cycon and system
+4/ source the cyclon environment file for system foo (sets the PATH and
+PYTHONPATH environment variables for access to general cyclon and system
 foo-specific code modules).  This needs to be done in the shell that
-runs the cycon instance that handles system foo, and in any other shells
-that need to interact with the same cycon instance (e.g. system
+runs the cyclon instance that handles system foo, and in any other shells
+that need to interact with the same cyclon instance (e.g. system
 monitors).
 
    $ . system-def/foo/environment.sh
 
 
-5/ run cycon
+5/ run cyclon
 
-   $ cycon [-r]
+   $ cyclon [-r]
 
-6/ To control an entirely different system using the same cycon
+6/ To control an entirely different system using the same cyclon
 installation, just source the appropriate
-[cycon-top]/system-def/[system-name]/environment.sh 
-before running cycon.
+[cyclon-top]/system-def/[system-name]/environment.sh 
+before running cyclon.

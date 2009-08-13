@@ -37,14 +37,14 @@ Multi-Model Forecasting Systems}
     from many different cycles to run at once.
     %particularly for systems that have little down time between
     %forecast cycles.  
-    The metascheduler presented in this paper, {\em cycon}, is able to
+    The metascheduler presented in this paper, {\em cyclon}, is able to
     schedule tasks for execution as soon as their prerequisites are
     satisfied, regardless of forecast cycle, to achieve optimal
     throughput in all modes of operation. It is also extremely flexible
     and widely applicable because it uses no system-specific scheduling
     logic: each task simply registers its own prerequisites and reports
     its own outputs, and dependencies are negotiated dynamically so that
-    correct execution order emerges naturally at run time. {\em cycon}
+    correct execution order emerges naturally at run time. {\em cyclon}
     is easily interfaced to existing tasks (models etc.), new tasks will
     automatically run at the right time, and control of any configured
     task set can be fully tested without running the real tasks. It is
@@ -586,7 +586,7 @@ beginning no matter how big the bump.
 
 The object oriented dynamic metascheduling concept is quite general and
 could in principle be implemented for any set of interdependent tasks.
-cycon, however, is specialized toward cycling forecast systems in that
+cyclon, however, is specialized toward cycling forecast systems in that
 each task must have an associated {\em forecast reference time} that is
 part of a predetermined series for a given task type and is not
 necessarily related to the real time at which the task actually runs.  
@@ -668,7 +668,7 @@ the 'waiting' state.
 
 \section{Essential OOP Concepts}
 
-The simplicity of the dynamic scheduling implementation in {\em cycon}
+The simplicity of the dynamic scheduling implementation in {\em cyclon}
 is critically dependent on the {\em polymorphic} nature of the {\em task
 objects} in the program.  This section contains a minimal introduction
 to these Object Oriented Programming concepts.  Refer to any OOP
@@ -742,7 +742,7 @@ which results in a lot of unnecessary task processing when nothing
 important is happening.
 
 
-\subsection{Interfacing Tasks To cycon}
+\subsection{Interfacing Tasks To cyclon}
 blah.
 
 \subsection{Utility Programs}
