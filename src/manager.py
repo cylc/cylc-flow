@@ -177,6 +177,12 @@ class manager:
     def negotiate_via_broker( self ):
         # each task registers its outputs with the broker
         #--
+
+        # every task re-registers all outputs every time, 
+        # so resetting the broker first allows it to check that outputs
+        # are unique.
+        self.broker.reset()
+
         for task in self.tasks:
             self.broker.register( task.get_fulloutputs() )
 
@@ -308,8 +314,6 @@ class manager:
                 self.tasks.remove( lame )
                 self.pyro.disconnect( lame )
                 lame.log.debug( "lame task disconnected for " + lame.ref_time )
-                if self.config.get('use_broker'):
-                    self.broker.unregister( lame.get_fulloutputs() )
                 lame.prepare_for_death()
                 del lame
 
@@ -403,8 +407,6 @@ class manager:
             self.log.debug( "removing spent " + task.identity )
             self.tasks.remove( task )
             self.pyro.disconnect( task )
-            if self.config.get('use_broker'):
-                self.broker.unregister( task.get_fulloutputs() )
             task.prepare_for_death()
 
         del spent_tasks
@@ -448,7 +450,5 @@ class manager:
         # now kill the task
         self.tasks.remove( task )
         self.pyro.disconnect( task )
-        if self.config.get('use_broker'):
-            self.broker.unregister( task.get_fulloutputs() )
         task.prepare_for_death()
         del task

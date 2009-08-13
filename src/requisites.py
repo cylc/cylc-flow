@@ -1,8 +1,12 @@
 #!/usr/bin/python
 
-import sys
 import re
+import sys
 import logging
+
+# requisites have to 'get' the main log anew each time logging is
+# required, because thread locking in the logging module is incompatible
+# with 'deep copying' of requisites elsewhere in the code.
 
 class requisites:
 
@@ -83,6 +87,7 @@ class prerequisites( requisites ):
 
     def satisfy_me( self, outputs ):
         log = logging.getLogger( "main." + self.task_name ) 
+
         # can another's completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
@@ -132,8 +137,10 @@ class outputs( requisites ):
         # as this would cause problems for anything that depend on them, 
         # so check the new message has not already been registered.
         if message in self.satisfied.keys():
-            print 'ERROR: output already registered: '
-            print message
+            log = logging.getLogger( "main." + self.task_name ) 
+
+            err = 'output already registered: ' + message
+            log.critical( err )
             sys.exit(1)
 
         self.satisfied[message] = False
@@ -161,6 +168,8 @@ class fuzzy_prerequisites( prerequisites ):
 
     def satisfy_me( self, outputs ):
         log = logging.getLogger( "main." + self.task_name ) 
+
+
         # can another's completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
@@ -262,14 +271,36 @@ class broker ( requisites ):
     def __init__( self ):
         requisites.__init__( self, 'broker', '2999010101' )
 
+
     def register( self, outputs ):
         # add a new batch of output messages
         for output in outputs.get_list():
+            if output in self.satisfied.keys():
+                # across the whole system, prerequisites need not be
+                # unique (many tasks can depend on the same upstream
+                # output) but outputs should be unique (if two tasks are
+                # claiming to have generated the same file, for
+                # instance, this would almost certainly indicate a
+                # system configuration error). 
+                log = logging.getLogger( "main." + self.task_name ) 
+
+                err = 'duplicate output detected: ' + output
+                log.critical( err )
+                sys.exit(1)
+
             self.satisfied[ output ] = outputs.is_satisfied( output )
 
-    def unregister( self, outputs ):
-        # delete a batch of output messages
-        for output in outputs.get_list():
-            del self.satisfied[output]
+
+    def reset( self ):
+        # throw away all messages
+        self.satisfied = {}
+
+
+    #def unregister( self, outputs ):
+    # THIS METHOD WAS USED TO UNREGISTER THE OUTPUT MESSAGES OF A
+    # SPENT TASK BEFORE DELETING IT, BUT IT IS NOT NEEDED IF WE
+    # CALL BROKER.RESET() BEFORE EACH DEPENDENCY NEGOTIATION CYCLE
+    #    for output in outputs.get_list():
+    #        del self.satisfied[output]
 
 
