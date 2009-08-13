@@ -82,7 +82,7 @@ def main( argv ):
 
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK',
             'EXPORT', 'DELAYED_DEATH', 'PREREQUISITES', 'OUTPUTS',
-            'RUN_LENGTH_MINUTES', 'TYPE', 'DELAY_HOURS', 'UPSTREAM' ]
+            'RUN_LENGTH_MINUTES', 'TYPE', 'DELAY_HOURS', 'CUTOFF' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -343,36 +343,67 @@ import logging
         FILE.write( indent + parent_class + '.__init__( self, ' + par_init_args + ' )\n\n' )
 
 
-        if 'UPSTREAM' in parsed_def.keys():
-            # override get_cutoff()
-            indent_less()
+        if 'CUTOFF' in parsed_def.keys():
             FILE.write( indent + 'def get_cutoff( self, finished_task_dict ):\n' )
             indent_more()
-            FILE.write( indent + '# set cutoff to most recent finished ' + parsed_def[ 'UPSTREAM' ][0] + '\n\n' )
             FILE.write( indent + "if self.state == 'waiting' or ( self.state == 'running' and not self.abdicated ) or ( self.state == 'finished' and not self.abdicated ):\n" )
             indent_more()
 
-            FILE.write( indent + 'cutoff = self.ref_time\n' )
-            FILE.write( indent + 'ref_times = []\n' )
-            FILE.write( indent + 'if "' + parsed_def[ 'UPSTREAM' ][0] + '" in finished_task_dict.keys():\n' )
-            indent_more()
-            FILE.write( indent + 'ref_times = finished_task_dict[ "' + parsed_def[ 'UPSTREAM' ][0] + '" ]\n' )
+            for line in parsed_def[ 'CUTOFF' ]:
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, cutoff ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    cutoff = "'" + cutoff + "'"
+                    cutoff = interpolate_variables( cutoff )
+                    for hour in hours:
+                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        FILE.write( indent + 'return ' + cutoff + '\n' )
+                        indent_less()
+                else:
+                     cutoff = "'" + cutoff + "'"
+                     cutoff = interpolate_variables( cutoff )
+                     FILE.write( indent + 'return ' + cutoff + '\n' )
 
-            FILE.write( indent + "ref_times.sort( key = int, reverse = True )\n" + \
-                    indent + "for rt in ref_times:\n" )
-            indent_more()
-            FILE.write( indent + "if int( rt ) <= int( self.ref_time ):\n" )
-            indent_more()
-            FILE.write( indent + "cutoff = rt\n" + indent + "break\n" )
-            indent_less()
-            indent_less()
-            indent_less()
-            indent_less()
-            FILE.write( indent + "else:\n" )
-            indent_more()
-            FILE.write( indent + "cutoff = None\n\n" )
-            indent_less()
-            FILE.write( indent + "return cutoff\n\n\n" )
+            FILE.write( '\n' )
+
+
+        # USE THE FOLLOWING FOR GENERATING CUTOFF CODE BASED ON 'MOST
+        # RECENT' PREVIOUS TASK OF SOME TYPE (not necessary unless the
+        # reference time gap between dependent tasks is variable).
+        #if 'UPSTREAM' in parsed_def.keys():
+        #    # override get_cutoff()
+        #    indent_less()
+        #    FILE.write( indent + 'def get_cutoff( self, finished_task_dict ):\n' )
+        #    indent_more()
+        #    FILE.write( indent + '# set cutoff to most recent finished ' + parsed_def[ 'UPSTREAM' ][0] + '\n\n' )
+        #    FILE.write( indent + "if self.state == 'waiting' or ( self.state == 'running' and not self.abdicated ) or ( self.state == 'finished' and not self.abdicated ):\n" )
+        #    indent_more()
+
+        #    FILE.write( indent + 'cutoff = self.ref_time\n' )
+        #    FILE.write( indent + 'ref_times = []\n' )
+        #    FILE.write( indent + 'if "' + parsed_def[ 'UPSTREAM' ][0] + '" in finished_task_dict.keys():\n' )
+        #    indent_more()
+        #    FILE.write( indent + 'ref_times = finished_task_dict[ "' + parsed_def[ 'UPSTREAM' ][0] + '" ]\n' )
+
+        #    FILE.write( indent + "ref_times.sort( key = int, reverse = True )\n" + \
+        #            indent + "for rt in ref_times:\n" )
+        #    indent_more()
+        #    FILE.write( indent + "if int( rt ) <= int( self.ref_time ):\n" )
+        #    indent_more()
+        #    FILE.write( indent + "cutoff = rt\n" + indent + "break\n" )
+        #    indent_less()
+        #    indent_less()
+        #    indent_less()
+        #    indent_less()
+        #    FILE.write( indent + "else:\n" )
+        #    indent_more()
+        #    FILE.write( indent + "cutoff = None\n\n" )
+        #    indent_less()
+        #    FILE.write( indent + "return cutoff\n\n\n" )
 
 
         if 'EXPORT' in parsed_def.keys():
