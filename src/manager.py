@@ -284,7 +284,7 @@ class manager:
             for lame in lame_tasks:
                 # abdicate the lame task and create its successor
                 if lame.abdicate():
-                    lame.log.warning( "ABDICATED A LAME TASK " + lame.identity )
+                    lame.log.warning( "abdicated a lame task " + lame.identity )
 
                 new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), 'False', "waiting" )
                 new_task.log.debug( "new task connected for " + new_task.ref_time )
@@ -295,7 +295,7 @@ class manager:
                 oldest_batch.remove( lame )
                 self.tasks.remove( lame )
                 self.pyro.disconnect( lame )
-                lame.log.debug( "lame task disconnected for " + lame.ref_time )
+                lame.log.warning( "lame task disconnected for " + lame.ref_time )
                 lame.prepare_for_death()
                 del lame
 
