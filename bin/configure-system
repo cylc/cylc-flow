@@ -40,7 +40,7 @@ cd $SYSDIR
 echo
 echo "> generating $SYSDIR/task_classes.py"
 
-task-generator.py taskdef/*
+task-generator.py taskdef/*.def taskdef/*.py
 
 echo
 echo "> generating environment script for this system:"
