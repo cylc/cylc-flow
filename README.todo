@@ -12,6 +12,8 @@ To Do
 
 * can reference time be appended to messages automatically?
 
+* can cutoff be determined from prerequisites?
+
 * all sys.exit(1) calls should be routed through a clean shutdown, so
   that Pyro nameserver group entries can be deleted automatically.
 
