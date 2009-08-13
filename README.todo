@@ -3,16 +3,16 @@ To Do
 * a task should be allowed to declare multiple outputs at the same time.
 
 * STATE DUMP INFORMATION SHOULD BE A DICT, LIKE CONFIG, TO ALLOW
-  arbitrary additional information to be added by new task classes.* DELAY_HOURS (contact tasks) needs to depend on reference hour
+  arbitrary additional information to be added by new task classes.
+  
+* DELAY_HOURS (contact tasks) needs to depend on reference hour
 
 * does 'caught up' detection work properly for prerequisiteless parallel
   contact tasks?
 
 * do messages need to have task name preprended?
-* can reference time be appended to messages automatically?
 
-* use hasattr to check that required attributes have been defined in the 
-  highest level class definition?
+* can reference time be appended to messages automatically?
 
 * all sys.exit(1) calls should be routed through a clean shutdown, so
   that Pyro nameserver group entries can be deleted automatically.
@@ -45,4 +45,3 @@ To Do
   (plus any configured offset) on a restart.
 
 * retrofit proper exception handling (current use is sporadic).
-
