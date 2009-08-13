@@ -18,6 +18,7 @@ class state_summary( Pyro.core.ObjBase ):
     def update( self, tasks ):
         self.summary = {}
         self.name_list = []
+        self.short_name_list = []
         self.ref_time_list = []
         seen_name = {}
         seen_time = {}
@@ -29,6 +30,8 @@ class state_summary( Pyro.core.ObjBase ):
             if task.name not in seen_name.keys():
                 seen_name[ task.name ] = True
                 self.name_list.append( task.name )
+                self.short_name_list.append( task.short_name )
+
 
             self.summary[ task.identity ] = task.get_state_summary()
            
@@ -51,6 +54,9 @@ class state_summary( Pyro.core.ObjBase ):
 
     def get_name_list( self ):
         return self.name_list
+
+    def get_short_name_list( self ):
+        return self.short_name_list
 
     def get_summary( self ):
         # DEPRECATED. Remove when Bernard's monitor has been updated

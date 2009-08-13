@@ -203,6 +203,12 @@ import logging
                 sys.exit(1)
 
         task_name = parsed_def[ 'NAME' ][0]
+        short_name = task_name
+        m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
+        if m:
+            # short name given as well
+            [ task_name, short_name ] = m.groups()
+
         # class definition
         FILE.write( 'class ' + task_name + '(' + parent_class + '):\n' )
 
@@ -212,6 +218,7 @@ import logging
    
         # task name
         FILE.write( indent + 'name = \'' + task_name + '\'\n' )
+        FILE.write( indent + 'short_name = \'' + short_name + '\'\n' )
 
         FILE.write( indent + 'instance_count = 0\n\n' )
 

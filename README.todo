@@ -1,9 +1,8 @@
 To Do
 
-* ALLOW MULTIPLE OUTPUTS AT THE SAME TIME: important for single output
-  tasks which report their output at the same time as finished.
+* a task should be allowed to declare multiple outputs at the same time.
 
-* state dump information should be a dict, like config, to allow
+* STATE DUMP INFORMATION SHOULD BE A DICT, LIKE CONFIG, TO ALLOW
   arbitrary additional information to be added by new task classes.* DELAY_HOURS (contact tasks) needs to depend on reference hour
 
 * does 'caught up' detection work properly for prerequisiteless parallel

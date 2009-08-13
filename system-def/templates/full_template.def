@@ -2,8 +2,9 @@
 # See full_template.def for documented entries
 
 %NAME
-
-    foo
+    # task name, optionally followed by a short name for display by
+    # system monitors
+    foo, f
 
 %TYPE
     # sequential: consecutive instances may not overlap, e.g. forecast

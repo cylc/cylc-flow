@@ -41,6 +41,9 @@ parser.add_option( "-a", "--align", help="align columns",
 parser.add_option( "-p", "--print", help="print registered systems",
         action="store_true", default=False, dest="print_systems" )
 
+parser.add_option( "-l", "--longnames", help="display long tasknames",
+        action="store_true", default=False, dest="longnames" )
+
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
@@ -112,7 +115,12 @@ while True:
                 # get state summary, list of task names, and list of
                 # reference times
                 states = god.get_state_summary()
-                name_list = god.get_name_list()
+
+                if options.longnames:
+                    name_list = god.get_name_list()
+                else:
+                    name_list = god.get_short_name_list()
+
                 ref_time_list = god.get_ref_time_list()
             except Exception,x:
                 print ''.join(Pyro.util.getPyroTraceback(x))
@@ -142,7 +150,12 @@ while True:
             # now loop through all tasks in the system and assign their
             # disply info to the correct place in the task_info structure
             for task_id in task_ids:
-                name     =      states[ task_id ][ 'name' ]
+
+                if options.longnames:
+                    name     =      states[ task_id ][ 'name' ]
+                else:
+                    name     =      states[ task_id ][ 'short_name' ]
+
                 reftime  =      states[ task_id ][ 'reference_time' ]
                 state    =      states[ task_id ][ 'state' ]
 
