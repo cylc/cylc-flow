@@ -33,9 +33,6 @@ class config:
         # MAXIMUM TIME ANY TASK IS ALLOWED TO GET AHEAD OF THE SLOWEST
         self.configured['max_runahead_hours'] = 24
 
-        # SCHEDULING ALGORITHM (task interaction or requisite broker)
-        self.configured['use_broker'] = True
-
         # DUMMY MODE
         self.configured['dummy_mode'] = False
         self.configured['dummy_clock_rate'] = 10      
@@ -109,12 +106,6 @@ class config:
         else:
             print "real mode"
  
-        print "SCHEDULING METHOD ......",
-        if self.configured['use_broker']:
-            print "broker negotiation"
-        else:
-            print "task interaction (may be slow for large task numbers)" 
-
         print "START TIME..............",
         print self.configured['start_time']
 

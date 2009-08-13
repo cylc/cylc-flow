@@ -1,11 +1,5 @@
 #!/usr/bin/python
 
-"""
-The task manager maintains a pool of task objects, decides when to
-create and destroy tasks, and provides methods for getting them to
-interact, etc.
-"""
-
 import reference_time
 import pimp_my_logger
 import requisites
@@ -13,8 +7,6 @@ import logging
 import task
 import os
 import re
-
-# See system documentation for OPTIMAL METASCHEDULING details.
 
 class manager:
     def __init__( self, config, pyro, restart, dummy_clock ):
@@ -27,8 +19,8 @@ class manager:
         self.finished_task_dict = []
         self.system_hold = False
 
-        if config.get('use_broker'):
-            self.broker = requisites.broker()
+        # initialise the dependency broker
+        self.broker = requisites.broker()
         
         # instantiate the initial task list and create task logs 
         self.tasks = []
@@ -162,33 +154,23 @@ class manager:
         # run time dependency negotiation: tasks attempt to get their
         # prerequisites satisfied by other tasks' outputs.
         #--
-        if self.config.get('use_broker'):
-            self.negotiate_via_broker()
-        else:
-            self.direct_interaction()
+    
+        # O(n^2) DIRECT INTERACTION: NO LONGER USED 
+        # for task in self.tasks:
+        #     task.get_satisfaction( self.tasks )
 
+        # O(n) BROKERED NEGOTIATION
 
-    def direct_interaction( self ):
-        # each task asks the others to satisfy its prerequisites
-        #--
-        for task in self.tasks:
-            task.get_satisfaction( self.tasks )
-
-    def negotiate_via_broker( self ):
-        # each task registers its outputs with the broker
-        #--
-
-        # every task re-registers all outputs every time, 
-        # so resetting the broker first allows it to check that outputs
-        # are unique.
         self.broker.reset()
 
+        # each task registers its outputs
         for task in self.tasks:
             self.broker.register( task.get_fulloutputs() )
 
         # each task asks the broker to satisfy its prerequisites
         for task in self.tasks:
             task.prerequisites.satisfy_me( self.broker )
+
 
     def run_tasks( self, launcher ):
         # tell each task to run if it is ready
