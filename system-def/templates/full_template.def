@@ -4,21 +4,50 @@
 %NAME
     # task name, optionally followed by a short name for display by
     # system monitors
+
     foo, f
 
 %TYPE
-    # sequential: consecutive instances may not overlap, e.g. forecast
-    #             models, so abdicate after previous instance finished
-    # parallel:   consecutive instance may overlap, so abdicate when
-    #             previous instance starts running
-    # contact:    tasks with no prerequisites that wait on external events
+    # Type of task:
 
+    #  (a) *sequential* tasks (e.g. forecast models)
+    #   The next instance may not start until this one is finished,
+    #   UNLESS a special abdication message is received before then
+    #   (see %OUTPUTS below).
+    
+    #  (b) *parallel* tasks (e.g. non forecat model tasks)
+    #   The next instance can start, other dependencies allowing, as
+    #   soon as this one starts running. 
+
+    # Tasks that wait on external events, such as incoming external
+    # data, should declare the *contact* attribute here. This is the
+    # only kind of task that "makes contact" with the real time clock.
+    # In real time operation a running contact task will report its
+    # external event related output at an estimated %CONTACT_DELAY_HOURS
+    # (below) after its own reference time (e.g. atmospheric
+    # observations might be ready 3 hours after their nominal validity
+    # time. In catchup operation a contact task will report its external
+    # event related outputs immediately because the external even will
+    # have already occured.
+
+    # Contact tasks that are inherently parallel but have no
+    # prerequisites should be declared as 'sequential, contact',
+    # to prevent them all 'going off at once' out to the system max
+    # runahead time (where they will then just take up space in the job
+    # queue waiting on events that could be some time in the future).
+        
+    # Specify ONE of:
+    
     sequential
+    sequential, contact
+    parallel
+    parallel, contact
 
-%DELAY_HOURS
-    # contact type tasks only, for use in dummy mode: estimated time
-    # delay, in hours, after reference time, that the external event
-    # occurs when in real time (caught up) operation.
+%CONTACT_DELAY_HOURS
+    # For tasks with the 'contact' attribute only (see %TYPE above).
+    # Estimated time delay, in hours, after reference time, that the
+    # external event occurs in real time operation. This is used in
+    # dummy mode to properly simulate the behaviour of contact tasks. 
 
     4.5
 
@@ -35,8 +64,9 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    # external program or script to invoke when all of my prerequisites
-    # have been satisfied
+    # The external program or script to invoke when all of my
+    # prerequisites have been satisfied. This script is expected to be
+    # in $PATH for the owner, or in the system 'tasks' subdirectory.
 
     run-foo.sh
 
@@ -49,7 +79,7 @@
     6,18 | 35
 
 %PREREQUISITES
-    # zero or more prerequisite messages, on separate lines
+    # Zero or more prerequisite messages on separate lines
 
     # These are LITERAL STRINGS, with some from variable substitution:
     #  1. $(MY_REFERENCE_TIME)
@@ -84,16 +114,48 @@
     0,12 | 15: file foo_1_$(MY_REFERENCE_TIME).nc ready
     6,18 | 15: file foo_2_$(MY_REFERENCE_TIME).nc ready
 
+    # Optional early abdication for sequential tasks: these can abdicate
+    # before they are finished if the following special message can be
+    # sent when the restart files (or similar) for the next forecast
+    # have been completed: 
 
-%DELAYED_DEATH 
-    # THIS KEY IS OPTIONAL and defaults to 'False'.  
+    30: $(NAME) ready to abdicate for $(MY_REFERENCE_TIME)
 
-    # Tasks that have only cotemporal downstream dependents can be
-    # deleted as soon as they are finished AND there are no other tasks
-    # yet to be finished at their reference time or earlier. Set this
-    # key 'True' for tasks that have downstream dependents in OTHER
-    # FORECAST CYCLES. These will be deleted only when the cutoff time
-    # specified by their dependents is reached.
+%CUTOFF
+    # Defaults: $(MY_REFERENCE_TIME)
+
+    # The reference time beyond which older finished tasks can be
+    # deleted as far as this task is concerned (tasks in later reference
+    # times could still be needed to satisfy the prerequisites of this
+    # task). Set this for tasks that depend on outputs from a previous
+    # reference time. The system cutoff time (the reference time beyond
+    # which old finished tasks can be deleted) is the oldest cutoff time
+    # declared by any task in the system.
+
+    $(MY_REFERENCE_TIME - 6)
+
+    # May be conditional on hour:
+
+    0,12 | $(MY_REFERENCE_TIME - 6)
+    6,18 | $(MY_REFERENCE_TIME - 12)
+    
+
+%COTEMPORAL_DEPENDANTS_ONLY 
+    # This key is optional and defaults to False.  
+    # NOTE SPELLING: 'dependAnts' not 'dependEnts'!
+
+    # If you set this to True for tasks that are known to have only
+    # cotemporal (same reference time) downstream dependants, they will
+    # be deleted as soon as they are finished AND there are no other
+    # tasks yet to be finished at their reference time or earlier.
+
+    # It is not necessary to use this if no tasks in the system declare
+    # a cutoff (i.e. if all tasks have only cotemporal dependants)
+    # because the default cutoff for a task is its own reference time. 
+
+    # DO NOT SET THIS 'True' FOR TASKS THAT HAVE DOWNSTREAM DEPENDANTS
+    # IN OTHER FORECAST CYCLES. These will be deleted, when finished,
+    # only when they reach the system cutoff time. 
 
     True
 

@@ -81,8 +81,9 @@ def main( argv ):
     task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK',
-            'EXPORT', 'DELAYED_DEATH', 'PREREQUISITES', 'OUTPUTS',
-            'RUN_LENGTH_MINUTES', 'TYPE', 'DELAY_HOURS', 'CUTOFF' ]
+            'EXPORT', 'COTEMPORAL_DEPENDANTS_ONLY', 'PREREQUISITES',
+            'OUTPUTS', 'RUN_LENGTH_MINUTES', 'TYPE', 'CONTACT_DELAY_HOURS',
+            'CUTOFF' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -190,8 +191,8 @@ import logging
         def_init_args = 'ref_time, abdicated, initial_state'
         par_init_args = 'ref_time, abdicated, initial_state'
         if contact:
-            if 'DELAY_HOURS' not in parsed_def.keys():
-                print "Error: contact classes must define %DELAY_HOURS"
+            if 'CONTACT_DELAY_HOURS' not in parsed_def.keys():
+                print "Error: contact classes must define %CONTACT_DELAY_HOURS"
                 sys.exit(1)
 
             def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"
@@ -232,13 +233,13 @@ import logging
         FILE.write( indent + 'valid_hours = [' + parsed_def[ 'VALID_HOURS' ][0] + ']\n\n' )
 
         # quick death? (DEFAULT False)
-        quick_death = 'True'
-        if 'DELAYED_DEATH' in parsed_def.keys():
-            delayed_death = parsed_def[ 'DELAYED_DEATH' ][0]
+        quick_death = 'False'
+        if 'COTEMPORAL_DEPENDANTS_ONLY' in parsed_def.keys():
+            delayed_death = parsed_def[ 'COTEMPORAL_DEPENDANTS_ONLY' ][0]
             if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
-                quick_death = 'False'
+                quick_death = 'True'
 
-            FILE.write( indent + 'quick_death = ' + quick_death + '\n\n' )
+        FILE.write( indent + 'quick_death = ' + quick_death + '\n\n' )
 
         # class init function
         FILE.write( indent + 'def __init__( self, ' + def_init_args + ' ):\n\n' )
@@ -250,7 +251,7 @@ import logging
         FILE.write( indent + 'hour = ref_time[8:10]\n\n' )
 
         if contact:
-            for line in parsed_def[ 'DELAY_HOURS' ]:
+            for line in parsed_def[ 'CONTACT_DELAY_HOURS' ]:
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:

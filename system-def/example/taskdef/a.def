@@ -7,7 +7,7 @@
 %TYPE
     sequential, contact
 
-%DELAY_HOURS
+%CONTACT_DELAY_HOURS
     1.0
 
 %VALID_HOURS

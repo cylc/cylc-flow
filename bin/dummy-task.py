@@ -27,6 +27,11 @@ class dummy_task:
 
     def run( self ):
 
+        #if self.name == 'c':
+        #   print 'TESTING ABORT!'
+        #   self.task.incoming( 'CRITICAL', self.name + ' failed for ' + self.ref_time )
+        #   sys.exit(1)
+
         # get a list of output messages to fake: outputs[ time ] = output
         outputs = self.task.get_timed_outputs()
 

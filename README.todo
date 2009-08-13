@@ -12,7 +12,12 @@ To Do
 
 * can reference time be appended to messages automatically?
 
-* can cutoff be determined from prerequisites?
+* can cutoff be determined from prerequisites instead of specified
+  explicitly? Only if all requisites are required to end in 'for [ref
+  time of generating task]', because filenames in output messages (for
+  instance) don't necessarily contain the reference time of the
+  generating task.  Knowing the reference time of the generating task is
+  a requirement in either case, so this may be a good idea.
 
 * all sys.exit(1) calls should be routed through a clean shutdown, so
   that Pyro nameserver group entries can be deleted automatically.
