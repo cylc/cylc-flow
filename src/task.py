@@ -191,7 +191,7 @@ class task( Pyro.core.ObjBase ):
         incr = None
         first_vh = self.valid_hours[ 0 ]
         extra_vh = 24 + first_vh 
-        foo = self.valid_hours
+        foo = deepcopy( self.valid_hours )
         foo.append( extra_vh )
 
         for vh in foo:
@@ -209,7 +209,8 @@ class task( Pyro.core.ObjBase ):
         #--
 
         if not rt:
-            # can't use self.foo as a default argument
+            # set proper default argument here (python does not allow
+            # self.foo as a default argument)
             rt = self.ref_time
 
         n_times = len( self.valid_hours )

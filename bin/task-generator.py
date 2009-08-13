@@ -344,10 +344,15 @@ import logging
 
 
         if 'CUTOFF' in parsed_def.keys():
+            indent_less()
             FILE.write( indent + 'def get_cutoff( self, finished_task_dict ):\n' )
             indent_more()
             FILE.write( indent + "if self.state == 'waiting' or ( self.state == 'running' and not self.abdicated ) or ( self.state == 'finished' and not self.abdicated ):\n" )
             indent_more()
+            FILE.write( '\n' )
+
+            FILE.write( indent + 'hour = self.ref_time[8:10]\n' )
+            FILE.write( indent + 'ref_time = self.ref_time\n\n' )
 
             for line in parsed_def[ 'CUTOFF' ]:
                 # look for conditionals
@@ -361,14 +366,14 @@ import logging
                     for hour in hours:
                         FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
-                        FILE.write( indent + 'return ' + cutoff + '\n' )
+                        FILE.write( indent + 'cutoff = ' + cutoff + '\n\n' )
                         indent_less()
                 else:
-                     cutoff = "'" + cutoff + "'"
+                     cutoff = "'" + line + "'"
                      cutoff = interpolate_variables( cutoff )
-                     FILE.write( indent + 'return ' + cutoff + '\n' )
+                     FILE.write( indent + 'cutoff = ' + cutoff + '\n\n' )
 
-            FILE.write( '\n' )
+            FILE.write( indent + 'return cutoff\n\n\n' )
 
 
         # USE THE FOLLOWING FOR GENERATING CUTOFF CODE BASED ON 'MOST
