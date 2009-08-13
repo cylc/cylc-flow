@@ -166,8 +166,7 @@ import logging
         parent_class = 'task'
         type = 'sequential'
         delay = 0
-        def_init_args = 'ref_time, abdicated, initial_state'
-        par_init_args = 'ref_time, abdicated, initial_state'
+        contact = False
         if 'TYPE' in parsed_def.keys():
             type = parsed_def[ 'TYPE' ][0]
             if type == 'sequential':
@@ -177,30 +176,26 @@ import logging
                 parent_class = 'parallel_task'
 
             elif re.match( 'sequential,\s*contact', type ):
-                if 'DELAY_HOURS' not in parsed_def.keys():
-                    print "Error: contact class must define %DELAY_HOURS"
-                    sys.exit(1)
-
-                delay = parsed_def[ 'DELAY_HOURS' ][0]
-
+                contact = True
                 parent_class = 'sequential_contact_task'
-                def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"
-                par_init_args = "ref_time, abdicated, initial_state, relative_state"
 
             elif re.match( 'parallel,\s*contact', type ):
-                if 'DELAY_HOURS' not in parsed_def.keys():
-                    print "Error: contact class must define %DELAY_HOURS"
-                    sys.exit(1)
-
-                delay = parsed_def[ 'DELAY_HOURS' ][0]
-
+                contact = True
                 parent_class = 'parallel_contact_task'
-                def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"
-                par_init_args = "ref_time, abdicated, initial_state, relative_state"
 
-            else:
-                print "Error: illegal value for key PREVIOUS_INSTANCE_DEPENDENCE"
+        else:
+            print "Error: no %TYPE specified"
+            sys.exit(1)
+
+        def_init_args = 'ref_time, abdicated, initial_state'
+        par_init_args = 'ref_time, abdicated, initial_state'
+        if contact:
+            if 'DELAY_HOURS' not in parsed_def.keys():
+                print "Error: contact classes must define %DELAY_HOURS"
                 sys.exit(1)
+
+            def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"
+            par_init_args = "ref_time, abdicated, initial_state, relative_state"
 
         task_name = parsed_def[ 'NAME' ][0]
         short_name = task_name
@@ -254,7 +249,23 @@ import logging
         FILE.write( indent + 'ref_time = self.nearest_ref_time( ref_time )\n' )
         FILE.write( indent + 'hour = ref_time[8:10]\n\n' )
 
-        FILE.write( indent + 'self.real_time_delay = ' + str( delay ) + '\n' )
+        if contact:
+            for line in parsed_def[ 'DELAY_HOURS' ]:
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, delay ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    for hour in hours:
+                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        FILE.write( indent + 'self.real_time_delay = ' + str( delay ) + '\n' )
+                        indent_less()
+                else:
+                    FILE.write( indent + 'self.real_time_delay = ' + str( line ) + '\n' )
+
+            FILE.write( '\n' )
 
         # extra environment variables
         if 'EXPORT' in parsed_def.keys():

@@ -5,8 +5,6 @@ To Do
 * STATE DUMP INFORMATION SHOULD BE A DICT, LIKE CONFIG, TO ALLOW
   arbitrary additional information to be added by new task classes.
   
-* DELAY_HOURS (contact tasks) needs to depend on reference hour
-
 * does 'caught up' detection work properly for prerequisiteless parallel
   contact tasks?
 
