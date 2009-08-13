@@ -133,15 +133,26 @@ class outputs( requisites ):
         # Add a new output message, with estimated completion time t, in
         # an UNSATISFIED state.
 
-        # Identical outputs should not be generated at different times
-        # as this would cause problems for anything that depend on them, 
-        # so check the new message has not already been registered.
         if message in self.satisfied.keys():
-            log = logging.getLogger( "main." + self.task_name ) 
+            # Identical outputs should not be generated at different
+            # times; this would cause problems for anything that depends
+            # on them. 
 
-            err = 'output already registered: ' + message
-            log.critical( err )
+            log = logging.getLogger( "main." + self.task_name ) 
+            log.critical( 'output already registered: ' + message )
             sys.exit(1)
+
+        if t in self.timed_reqs.keys():
+            # The system cannot currently handle multiple outputs
+            # generated at the same time; only the last will be
+            # registered, the others get overwritten. 
+
+            log = logging.getLogger( "main." + self.task_name ) 
+            log.critical( 'multiple ' + self.task_name + ' outputs registered for ' + str(t) + ' minutes' )
+            log.critical( '(this may mean the last output is at the task finish time)' )
+            sys.exit(1)
+
+
 
         self.satisfied[message] = False
         self.timed_reqs[ t ] = message
@@ -283,9 +294,7 @@ class broker ( requisites ):
                 # instance, this would almost certainly indicate a
                 # system configuration error). 
                 log = logging.getLogger( "main." + self.task_name ) 
-
-                err = 'duplicate output detected: ' + output
-                log.critical( err )
+                log.critical( 'duplicate output detected: ' + output )
                 sys.exit(1)
 
             self.satisfied[ output ] = outputs.is_satisfied( output )
