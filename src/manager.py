@@ -325,10 +325,17 @@ class manager:
 
 
     def kill_spent_tasks( self ):
-        # Delete FINISHED tasks that have ABDICATED already AND:
-        # (i) if quick_death is True: are older than all non-finished tasks 
+        # Delete tasks that are no longer needed to satisfy the
+        # prerequisites of any other tasks. 
+        
+        # i.e. Those that have abdicated and finished, AND:
+        # (i) are older than all non-abdicated tasks (abdicated tasks
+        # have had their prerequisites satisfied already), IF
+        # quick_death is True (which means they have only cotemporal
+        # downstream dependants)
         #   OR
-        # (ii) if quick_death is False: are older than the system cutoff time
+        # (ii) are older than the system cutoff ref time, IF quick_death
+        # is False. 
 
         # System cutoff time is the oldest task cutoff time.
 
@@ -343,7 +350,7 @@ class manager:
         # list of candidates for deletion
         finished_and_abdicated = []
         # list of ref times of non-finished tasks
-        ref_times_not_finished = []
+        ref_times_not_abdicated = []
         # list of all task cutoff times
         cutoff_times = []
 
@@ -356,19 +363,17 @@ class manager:
 
             if task.state == 'finished' and task.has_abdicated():
                 finished_and_abdicated.append( task )
-            else:
-                # waiting, running, or failed, 
-                # or finished but not abdicated yet.
-                ref_times_not_finished.append( task.ref_time )
 
+            if not task.has_abdicated():
+                ref_times_not_abdicated.append( task.ref_time )
 
         # find reference time of the oldest non-finished task
-        all_tasks_finished = True
-        if len( ref_times_not_finished ) > 0:
-            all_tasks_finished = False
-            ref_times_not_finished.sort( key = int )
-            oldest_ref_time_not_finished = ref_times_not_finished[0]
-            self.log.debug( "oldest non-finished task ref time is " + oldest_ref_time_not_finished )
+        all_tasks_abdicated = True
+        if len( ref_times_not_abdicated ) > 0:
+            all_tasks_abdicated = False
+            ref_times_not_abdicated.sort( key = int )
+            oldest_ref_time_not_abdicated = ref_times_not_abdicated[0]
+            self.log.debug( "oldest non-abdicated task is " + oldest_ref_time_not_abdicated )
 
         # find the system cutoff reference time
         no_cutoff_times = True
@@ -384,13 +389,11 @@ class manager:
         for task in finished_and_abdicated:
             if task.quick_death: 
                 # case (i) tasks to delete
-                if all_tasks_finished or \
-                        int( task.ref_time ) < int( oldest_ref_time_not_finished ):
+                if all_tasks_abdicated or int( task.ref_time ) < int( oldest_ref_time_not_abdicated ):
                     spent_tasks.append( task )
             else:
                 # case (ii) tasks to delete
-                if not no_cutoff_times and \
-                        int( task.ref_time ) < int( system_cutoff ):
+                if not no_cutoff_times and int( task.ref_time ) < int( system_cutoff ):
                     spent_tasks.append( task )
 
         # delete spent tasks
