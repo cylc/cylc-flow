@@ -1,6 +1,7 @@
 To Do
 
-* a task should be allowed to declare multiple outputs at the same time.
+* a task should be allowed to declare multiple outputs at the same time
+  (currently this is detected as an error condition)
 
 * STATE DUMP INFORMATION SHOULD BE A DICT, LIKE CONFIG, TO ALLOW
   arbitrary additional information to be added by new task classes.

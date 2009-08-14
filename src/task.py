@@ -70,7 +70,7 @@ class task( Pyro.core.ObjBase ):
         # (which alters requisites based on initial state)
 
         # Derived classes MUST call nearest_ref_time() and define their 
-        # prerequistes and outptus before calling this __init__.
+        # prerequistes and outputs before calling this __init__.
         self.ref_time = ref_time
 
         # cutoff; see get_cutoff below
