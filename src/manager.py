@@ -112,7 +112,7 @@ class manager:
             state_list = state_string.split( ':' )
             # main state (waiting, running, finished, failed)
             state = state_list[0]
-            # convert running to waiting on restart
+
             if state == 'running' or state == 'failed':
                 state_list[0] = 'waiting'
 
@@ -323,15 +323,12 @@ class manager:
 
         # System cutoff time is the oldest task cutoff time.
 
-        # A task's cutoff time is the reference time of the earliest
-        # upstream dependency that it has.
-        
-        # For a waiting task with only cotemporal upstream dependencies
-        # the cutoff time is its own reference time.  
-
-        # For a running task with only cotemporal upstream dependencies
-        # the cutoff time is the reference time of its immediate
-        # successor, i.e. the next instance of that task type. 
+        # A task should only return a cutoff if it has not abdicated yet
+        # (otherwise it is either running or finished, in which case
+        # its prerequisites have all been satisfied).  The cutoff is the
+        # reference time of the earliest/oldest upstream dependency that
+        # a task has. For a waiting task with only cotemporal upstream
+        # dependencies the cutoff is its own reference time.  
         #--
 
         # list of candidates for deletion

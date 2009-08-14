@@ -27,7 +27,7 @@ class dummy_task:
 
     def run( self ):
 
-        #if self.name == 'c':
+        #if self.name == 'f':
         #   print 'TESTING ABORT!'
         #   self.task.incoming( 'CRITICAL', self.name + ' failed for ' + self.ref_time )
         #   sys.exit(1)

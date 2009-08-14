@@ -73,6 +73,9 @@ class task( Pyro.core.ObjBase ):
         # prerequistes and outptus before calling this __init__.
         self.ref_time = ref_time
 
+        # cutoff; see get_cutoff below
+        self.my_cutoff_reftime = ref_time
+
         # Has this object abdicated yet (used for recreating abdicated
         # tasks when loading tasks from the state dump file).
         self.abdicated = abdicated
@@ -106,9 +109,6 @@ class task( Pyro.core.ObjBase ):
 
         # unique task identity
         self.identity = self.name + '%' + self.ref_time
-
-        # my cutoff reference time
-        self.my_cutoff = self.ref_time
 
         # task-specific log file
         self.log = logging.getLogger( "main." + self.name ) 
@@ -162,26 +162,38 @@ class task( Pyro.core.ObjBase ):
 
     def get_cutoff( self, finished_task_dict ):
         # Return the reference time of the oldest tasks that the system
-        # must retain in order to satisfy my prerequisites (if I am
-        # waiting) or those of my immediate successor (if I am running
-        # or finished but have not abdicated). 
+        # must retain in order to satisfy my prerequisites or, if my 
+        # prerequisites have been satisfied but I have not abdicated
+        # yet, those of my immediate successor. 
 
-        if self.state == 'waiting' or \
-            ( self.state == 'running' and not self.abdicated ) or \
-            ( self.state == 'finished' and not self.abdicated ):
+        # Tasks that depend on outputs from a previous reference time
+        # can simply override self.my_cutoff_reftime with some fixed
+        # offset, e.g. self.ref_time - 6 hours
+        # MUST BE DONE AFTER BASE CLASS INIT or it won't override!
 
-            # running and not abdicated, OR finished and not abdicated:
-            # my prerequisites are already satisfied but my successor
-            # has not been created yet so I must speak for it.
-            # Technically my successor's cutoff will be later than mine
-            # (next_ref_time() in the simplest case) but just using my
-            # cutoff is simpler and safe (because it is more
-            # conservative).
-            return self.ref_time
+
+        # For horribly complicated variable scheduling behaviour
+        # (e.g. EcoConnect's TopNet, we can override this method
+        # and used finished_task_dict to find the most recent instance
+        # of the task whose output we need.
+
+        if not self.abdicated:
+            # If I'm waiting then my own prerequisites have not been
+            # satisfied, so I must return my own cutoff time.
+            # If I'm running and not abdicated (or just finished and
+            # just about to be abdicated) then my prerequisites have
+            # been satisfied but my successor has not been created yet
+            # so I must speak for it.  Technically my successor's cutoff
+            # will be later than mine (next_ref_time() in the simplest
+            # case) but just using my cutoff is simpler, and safe
+            # because it is more conservative.
+
+            return self.my_cutoff_reftime
 
         else:
-            # finished and abdicated, or running and abdicated:
-            # no cutoff required on my account
+            # I've abdicated already (either running or finished)
+            # Do not return a cutoff or else no spent tasks will ever
+            # get deleted!
             return None
 
 
@@ -334,7 +346,6 @@ class task( Pyro.core.ObjBase ):
             self.outputs.set_satisfied( message )
 
         elif message == self.name + " failed for " + self.ref_time:
-            # lone "failed" message required to indicate failure
             self.log.critical( log_message )
             self.state = "failed"
 

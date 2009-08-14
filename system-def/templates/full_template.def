@@ -121,8 +121,8 @@
 
     30: $(NAME) ready to abdicate for $(MY_REFERENCE_TIME)
 
-%CUTOFF
-    # Defaults: $(MY_REFERENCE_TIME)
+%CUTOFF_REFERENCE_TIME
+    # Defaults to: $(MY_REFERENCE_TIME)
 
     # The reference time beyond which older finished tasks can be
     # deleted as far as this task is concerned (tasks in later reference
