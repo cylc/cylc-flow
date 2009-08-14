@@ -27,12 +27,6 @@ To Do
 
 * will_get_satisfaction() is still O(n^2)
 
-* THE SYSTEM SHOULD NOT DELETE ANY SPENT TASKS AFTER A TASK HAS FAILED,
-  to prevent deletion of prerequisites of the failed task that will be
-  needed again at restart, after fixing the problem. This won't cause a
-  massive overpopulation problem as the failed task will soon hold up
-  the whole system anyway, because of the runahead limit.
-
 * just before a task runs, try to re-satisfy fuzzy prerequisites in case
   a more up-to-date satisfier has shown up while the task was waiting
   for other prerequisites to be satisfied ... OR (better?!) don't try to

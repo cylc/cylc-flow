@@ -114,7 +114,12 @@ class manager:
             state = state_list[0]
 
             if state == 'running' or state == 'failed':
-                state_list[0] = 'waiting'
+                # To be safe we have to assume that running and failed
+                # tasks need to re-run on a restart. The fact that they
+                # were running (or did run before failing) implies their
+                # prerequisites were already satisfied so they can
+                # restart in a 'ready' state
+                state_list[0] = 'ready'
 
             # instantiate the task object
             task = self.get_task_instance( 'task_classes', name )( ref_time, abdicated, *state_list )
@@ -282,14 +287,18 @@ class manager:
                 break
 
             for lame in lame_tasks:
-                # abdicate the lame task and create its successor
+
                 if lame.abdicate():
+                    # abdicate the lame task and create its successor
                     lame.log.warning( "abdicated a lame task " + lame.identity )
 
-                new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), 'False', "waiting" )
-                new_task.log.debug( "new task connected for " + new_task.ref_time )
-                self.pyro.connect( new_task, new_task.identity )
-                self.tasks.append( new_task )
+                    new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), 'False', "waiting" )
+                    new_task.log.debug( "new task connected for " + new_task.ref_time )
+                    self.pyro.connect( new_task, new_task.identity )
+                    self.tasks.append( new_task )
+                else:
+                    # already abdicated: the successor already exists.
+                    pass
 
                 # delete the lame task
                 oldest_batch.remove( lame )
@@ -344,11 +353,14 @@ class manager:
             coft = task.get_cutoff( self.finished_task_dict ) 
             if coft:
                 cutoff_times.append( coft )
-            if task.state == 'waiting' or task.state == 'running':
-                ref_times_not_finished.append( task.ref_time )
+
             if task.state == 'finished' and task.has_abdicated():
-                # we don't tag 'failed' tasks for deletion
                 finished_and_abdicated.append( task )
+            else:
+                # waiting, running, or failed, 
+                # or finished but not abdicated yet.
+                ref_times_not_finished.append( task.ref_time )
+
 
         # find reference time of the oldest non-finished task
         all_tasks_finished = True
