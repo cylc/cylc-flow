@@ -9,7 +9,7 @@ from time import sleep
 
 def prompt( reason ):
 
-    print reason + ' ' + system_name + ':',
+    print reason + " '" + system_name + "':",
     response = raw_input( 'ARE YOU SURE (y/n)? ' )
     if response == 'y':
         return True
