@@ -288,8 +288,8 @@ class manager:
 
             for lame in lame_tasks:
 
-                if lame.abdicate():
-                    # abdicate the lame task and create its successor
+                if not lame.has_abdicated():
+                    # forcibly abdicate the lame task and create its successor
                     lame.log.warning( "abdicated a lame task " + lame.identity )
 
                     new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), 'False', "waiting" )
