@@ -126,6 +126,7 @@ while True:
                 print ''.join(Pyro.util.getPyroTraceback(x))
                 sys.exit(1)
 
+            n_tasks = len( name_list )
             task_ids = states.keys()
             task_ids.sort()
             name_list.sort()
@@ -202,8 +203,14 @@ while True:
                 blit.append( 'REAL MODE' )
             
             # CURRENT SYSTEM TIME
-            blit.append( "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
+            if dummy_mode:
+                blit.append( 'dummy time ' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
+            else:
+                blit.append( 'real time '  + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
 
+            # SYSTEM NAME + NUMBER OF TASKS
+            blit.append( "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m  (' + str( n_tasks ) + ' tasks)\033[0m' )
+            
             # CATCHUP INFO for any contact tasks
             for name in catchup_info.keys():
                 if catchup_info[ name ]:
@@ -211,7 +218,7 @@ while True:
                 else:
                     blit.append( name + ': caught up' )
 
-            blit.append("")
+            blit.append("------------------------------")
 
             # construct a line of text to display for each reference time
             for rt in ref_time_list:
@@ -246,6 +253,6 @@ while True:
 
     except:
         # uncomment 'raise' to identify errors
-        # raise
+        #raise
         print "failed..."
         sleep( 1 )
