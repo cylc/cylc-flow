@@ -13,11 +13,10 @@ class requisites:
     # A collection of text messages  each of which are either
     # "satisfied" or "not satisfied", and methods to work with them.  
 
-    def __init__( self, name, ref_time ):
+    def __init__( self, name ):
 
         # name and id of my "host task" 
         self.task_name = name
-        self.task_id = name + '%' + ref_time
 
         # dict of requisites to populate using self.add()
         self.satisfied = {}
@@ -125,9 +124,9 @@ class outputs( requisites ):
     # with each message, which is used to simulate task execution in
     # dummy mode.
 
-    def __init__( self, name, ref_time ):
+    def __init__( self, name ):
         self.timed_reqs = {}
-        requisites.__init__( self, name, ref_time )
+        requisites.__init__( self, name )
 
     def add( self, t, message ):
         # Add a new output message, with estimated completion time t, in
@@ -280,7 +279,7 @@ class broker ( requisites ):
     # the output time information here.
 
     def __init__( self ):
-        requisites.__init__( self, 'broker', '2999010101' )
+        requisites.__init__( self, 'broker' )
 
 
     def register( self, outputs ):
