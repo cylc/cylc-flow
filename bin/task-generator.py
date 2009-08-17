@@ -93,7 +93,10 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import sequential_task, parallel_task, sequential_contact_task, parallel_contact_task
+from task import sequential_task, parallel_task, \\
+            sequential_contact_task, parallel_contact_task, \\
+            oneoff_contact_task, oneoff_task
+
 import execution
 
 import reference_time
@@ -178,6 +181,9 @@ import logging
             elif type == 'parallel':
                 parent_class = 'parallel_task'
 
+            elif type == 'oneoff':
+                parent_class = 'oneoff_task'
+
             elif re.match( 'sequential,\s*contact', type ):
                 contact = True
                 parent_class = 'sequential_contact_task'
@@ -185,6 +191,10 @@ import logging
             elif re.match( 'parallel,\s*contact', type ):
                 contact = True
                 parent_class = 'parallel_contact_task'
+
+            elif re.match( 'oneoff,\s*contact', type ):
+                contact = True
+                parent_class = 'oneoff_contact_task'
 
         else:
             print "Error: no %TYPE specified"

@@ -46,6 +46,9 @@ state_changed = True
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
+# the abdication mechanism ASSUMES that the task manager creates the
+# successor task as soon as the current task abdicates.
+
 class task( Pyro.core.ObjBase ):
     
     # Default task deletion: quick_death = True
@@ -410,7 +413,7 @@ class task( Pyro.core.ObjBase ):
     def abdicate( self ):
         # the task manager should instantiate a new task when this one
         # abdicates (which only happens once per task). 
-        if not self.abdicated and self.ready_to_abdicate():
+        if not self.has_abdicated() and self.ready_to_abdicate():
             self.abdicated = True
             self.__class__.last_abdicated_ref_time = self.ref_time
             return True
@@ -428,6 +431,18 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
+    #def ready_to_abdicate( self ):
+    #    # all derived class need to override this
+    ##    # IS THERE A BETTER WAY TO DO THIS?:
+    #    self.log.critical( 'class definition error')
+    #    sys.exit(1)
+    #    return False
+
+    def ready_to_die( self ):
+        if self.state == "finished" and self.abdicated:
+            return True
+        else:
+            return False
 
     def get_state_summary( self ):
         # derived classes can call this method and then 
@@ -472,6 +487,7 @@ class parallel:
             return True
         else:
             return False
+
 
 class contact( task ):
     # For tasks that wait on external events such as incoming external
@@ -569,6 +585,19 @@ class contact( task ):
                 self.log.debug( 'just caught up' )
                 self.__class__.catchup_mode = False
 
+class oneoff:
+
+    def ready_to_abdicate( self ):
+        # is this needed?
+        return False
+
+    def ready_to_die( self ):
+        # ready to die if finished
+        if state == 'finished':
+            return True
+        else:
+            return False
+
 
 class sequential_task( task, sequential ):
     pass
@@ -581,3 +610,15 @@ class sequential_contact_task( contact, sequential ):
 
 class parallel_contact_task( contact, parallel ):
     pass
+
+class oneoff_task( task, oneoff ):
+    def __init__( self, ref_time, abdicated, initial_state, relative_state):
+        # initialise task with abdicated = True
+        # NOTE THIS IS STRING 'True' not logical True!
+        task.__init__( self, ref_time, 'True', initial_state, relative_state )
+
+class oneoff_contact_task( contact, oneoff ):
+    def __init__( self, ref_time, abdicated, initial_state, relative_state):
+        # initialise contat with abdicated = True
+        # NOTE THIS IS STRING 'True' not logical True!
+        contact.__init__( self, ref_time, 'True', initial_state, relative_state )

@@ -348,9 +348,9 @@ class manager:
         #--
 
         # list of candidates for deletion
-        finished_and_abdicated = []
+        kill_me_please = []
         # list of ref times of non-finished tasks
-        ref_times_not_abdicated = []
+        live_ref_times = []
         # list of all task cutoff times
         cutoff_times = []
 
@@ -361,19 +361,19 @@ class manager:
             if coft:
                 cutoff_times.append( coft )
 
-            if task.state == 'finished' and task.has_abdicated():
-                finished_and_abdicated.append( task )
+            if task.ready_to_die():
+                kill_me_please.append( task )
 
             if not task.has_abdicated():
-                ref_times_not_abdicated.append( task.ref_time )
+                live_ref_times.append( task.ref_time )
 
-        # find reference time of the oldest non-finished task
+        # find reference time of the oldest live task
         all_tasks_abdicated = True
-        if len( ref_times_not_abdicated ) > 0:
+        if len( live_ref_times ) > 0:
             all_tasks_abdicated = False
-            ref_times_not_abdicated.sort( key = int )
-            oldest_ref_time_not_abdicated = ref_times_not_abdicated[0]
-            self.log.debug( "oldest non-abdicated task is " + oldest_ref_time_not_abdicated )
+            live_ref_times.sort( key = int )
+            oldest_live_ref_time = live_ref_times[0]
+            self.log.debug( "oldest non-abdicated task is " + oldest_live_ref_time )
 
         # find the system cutoff reference time
         no_cutoff_times = True
@@ -386,10 +386,10 @@ class manager:
         # find list of tasks to delete
         spent_tasks = []
 
-        for task in finished_and_abdicated:
+        for task in kill_me_please:
             if task.quick_death: 
                 # case (i) tasks to delete
-                if all_tasks_abdicated or int( task.ref_time ) < int( oldest_ref_time_not_abdicated ):
+                if all_tasks_abdicated or int( task.ref_time ) < int( oldest_live_ref_time ):
                     spent_tasks.append( task )
             else:
                 # case (ii) tasks to delete
