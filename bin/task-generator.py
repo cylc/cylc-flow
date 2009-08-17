@@ -305,8 +305,7 @@ import logging
             FILE.write( strng )
 
         # ... prerequisites
-
-        FILE.write( indent + 'self.prerequisites = prerequisites( self.name )\n' )
+        FILE.write( indent + 'self.prerequisites = prerequisites( self.name, ref_time )\n' )
         for line in parsed_def[ 'PREREQUISITES' ]:
             # look for conditionals
             m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
@@ -361,7 +360,7 @@ import logging
 
         # ... outputs
         FILE.write( '\n' )
-        FILE.write( indent + 'self.outputs = outputs( self.name )\n' )
+        FILE.write( indent + 'self.outputs = outputs( self.name, ref_time )\n' )
 
         # automatic 'task started' message
         parsed_def[ 'OUTPUTS' ].append( '0: $(NAME) started for $(MY_REFERENCE_TIME)' )

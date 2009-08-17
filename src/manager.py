@@ -160,22 +160,17 @@ class manager:
         # prerequisites satisfied by other tasks' outputs.
         #--
     
-        # O(n^2) DIRECT INTERACTION: NO LONGER USED 
-        # for task in self.tasks:
-        #     task.get_satisfaction( self.tasks )
-
-        # O(n) BROKERED NEGOTIATION
+        # Instead: O(n) BROKERED NEGOTIATION
 
         self.broker.reset()
 
-        # each task registers its outputs
         for task in self.tasks:
-            self.broker.register( task.get_fulloutputs() )
+            # register task outputs
+            self.broker.register( task.identity, task.outputs )
 
-        # each task asks the broker to satisfy its prerequisites
         for task in self.tasks:
+            # get the broker to satisfy tasks prerequisites
             task.prerequisites.satisfy_me( self.broker )
-
 
     def run_tasks( self, launcher ):
         # tell each task to run if it is ready

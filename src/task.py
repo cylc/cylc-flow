@@ -299,9 +299,6 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
-    def get_fulloutputs( self ):
-        return self.outputs
-
     def get_postrequisite_list( self ):
         return self.outputs.get_list()
 

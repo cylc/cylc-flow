@@ -23,8 +23,5 @@
 %RUN_LENGTH_MINUTES
     75 
 
-#%CUTOFF_REFERENCE_TIME
-#    $(MY_REFERENCE_TIME - 12)
-
 %OUTPUTS
     # Defaults only
