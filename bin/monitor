@@ -41,8 +41,8 @@ parser.add_option( "-a", "--align", help="align columns",
 parser.add_option( "-p", "--print", help="print registered systems",
         action="store_true", default=False, dest="print_systems" )
 
-parser.add_option( "-l", "--longnames", help="display long tasknames",
-        action="store_true", default=False, dest="longnames" )
+parser.add_option( "-s", "--shortnames", help="display short tasknames",
+        action="store_true", default=False, dest="shortnames" )
 
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
@@ -116,10 +116,10 @@ while True:
                 # reference times
                 states = god.get_state_summary()
 
-                if options.longnames:
-                    name_list = god.get_name_list()
-                else:
+                if options.shortnames:
                     name_list = god.get_short_name_list()
+                else:
+                    name_list = god.get_name_list()
 
                 ref_time_list = god.get_ref_time_list()
             except Exception,x:
@@ -151,10 +151,10 @@ while True:
             # disply info to the correct place in the task_info structure
             for task_id in task_ids:
 
-                if options.longnames:
-                    name     =      states[ task_id ][ 'name' ]
-                else:
+                if options.shortnames:
                     name     =      states[ task_id ][ 'short_name' ]
+                else:
+                    name     =      states[ task_id ][ 'name' ]
 
                 reftime  =      states[ task_id ][ 'reference_time' ]
                 state    =      states[ task_id ][ 'state' ]
