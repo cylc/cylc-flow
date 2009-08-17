@@ -10,14 +10,19 @@
 %TYPE
     # Type of task:
 
-    #  (a) *sequential* tasks (e.g. forecast models)
+    #  (a) sequential (e.g. forecast models)
     #   The next instance may not start until this one is finished,
     #   UNLESS a special abdication message is received before then
     #   (see %OUTPUTS below).
     
-    #  (b) *parallel* tasks (e.g. non forecat model tasks)
+    #  (b) parallel (e.g. non forecat model tasks)
     #   The next instance can start, other dependencies allowing, as
     #   soon as this one starts running. 
+
+    #  (c) oneoff (once instance only, does not spawn a successor)
+    #   Can be used to supply initial inputs for tasks that have
+    #   different input requirements for an initial 'cold start'
+    #   (see %STARTUP_PREREQUISITES below).
 
     # Tasks that wait on external events, such as incoming external
     # data, should declare the *contact* attribute here. This is the
@@ -39,9 +44,11 @@
     # Specify ONE of:
     
     sequential
-    sequential, contact
     parallel
+    oneoff
+    sequential, contact
     parallel, contact
+    oneoff, contact
 
 %CONTACT_DELAY_HOURS
     # For tasks with the 'contact' attribute only (see %TYPE above).
@@ -90,6 +97,12 @@
            foo finished for $(MY_REFERENCE_TIME)
            file bar_$(MY_REFERENCE_TIME)_utc.nc ready
     0,12 | file baz_$(MY_REFERENCE_TIME)_utc.nc ready
+
+%STARTUP_PREQUISITES
+    # As for %PREREQUISITES above, but only used once at start time.
+    # Can be used in conjunction with a 'oneoff' task (above) if
+    # a task has different input requirements for a 'cold start'
+    # than for normal warm cycling operation.
 
 %OUTPUTS
     # List of all output messages that are important for task scheduling

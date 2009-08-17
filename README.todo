@@ -48,3 +48,6 @@ To Do
 
 * task.quick_death should default to False, as for the task 
   def key that maps to it (%COTEMPORAL_DEPENDANTS_ONLY).
+
+* user_config is imported in task_classes.py to get start_time. It may
+  be better to pass this in at task initialisation?

@@ -82,8 +82,8 @@ def main( argv ):
 
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK',
             'EXPORT', 'COTEMPORAL_DEPENDANTS_ONLY', 'PREREQUISITES',
-            'OUTPUTS', 'RUN_LENGTH_MINUTES', 'TYPE', 'CONTACT_DELAY_HOURS',
-            'CUTOFF_REFERENCE_TIME' ]
+            'STARTUP_PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH_MINUTES',
+            'TYPE', 'CONTACT_DELAY_HOURS', 'CUTOFF_REFERENCE_TIME' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -97,6 +97,7 @@ from task import sequential_task, parallel_task, \\
             sequential_contact_task, parallel_contact_task, \\
             oneoff_contact_task, oneoff_task
 
+import user_config            
 import execution
 
 import reference_time
@@ -304,6 +305,7 @@ import logging
             FILE.write( strng )
 
         # ... prerequisites
+
         FILE.write( indent + 'self.prerequisites = prerequisites( self.name, ref_time )\n' )
         for line in parsed_def[ 'PREREQUISITES' ]:
             # look for conditionals
@@ -325,6 +327,37 @@ import logging
                 req = interpolate_variables( req )
                 FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
  
+
+        # are the prerequisites different for the first instance?
+        if 'STARTUP_PREREQUISITES' in parsed_def.keys():
+            # TO DO: use a function to re-use the normal prerequisite
+            # code (as above) here.
+            FILE.write( '\n' + indent + "if ref_time == user_config.config['start_time']:\n" )
+            FILE.write( indent + '# overwrite prerequisites for startup case\n' )
+            indent_more()
+                
+            FILE.write( indent + 'self.prerequisites = prerequisites( self.name, ref_time )\n' )
+            for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, req ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    req = re.sub( '^\s+', '', req )
+                    req = "'" + req + "'"
+                    req = interpolate_variables( req )
+                    for hour in hours:
+                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
+                        indent_less()
+                else:
+                    req = "'" + line + "'"
+                    req = interpolate_variables( req )
+                    FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
+ 
+            indent_less()
 
         # ... outputs
         FILE.write( '\n' )
