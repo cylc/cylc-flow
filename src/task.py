@@ -1,7 +1,6 @@
 #!/usr/bin/python
 
 import reference_time
-from requisites import prerequisites, outputs, fuzzy_prerequisites
 from time import sleep
 
 import os, sys, re
