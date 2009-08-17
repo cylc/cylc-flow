@@ -45,3 +45,6 @@ To Do
   (plus any configured offset) on a restart.
 
 * retrofit proper exception handling (current use is sporadic).
+
+* task.quick_death should default to False, as for the task 
+  def key that maps to it (%COTEMPORAL_DEPENDANTS_ONLY).
