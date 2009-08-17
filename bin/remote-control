@@ -103,15 +103,15 @@ except:
     raise
 
 if options.pause:
-    if prompt( 'pause' ):
+    if prompt( 'Pause' ):
         control.hold()
 
 if options.resume:
-    if prompt( 'resume' ):
+    if prompt( 'Resume' ):
         control.resume()
 
 if options.shutdown:
-    if prompt( 'shutdown' ):
+    if prompt( 'Shutdown' ):
         if control.get_config( 'dummy_mode' ):
             # pause to prevent new dummy tasks being launched after the pkill 
             control.hold()
@@ -129,7 +129,7 @@ if options.verbosity:
     control.set_verbosity( options.verbosity )
 
 if options.kill_task_id:
-    if prompt( 'kill ' + options.kill_task_id + ' in' ):
+    if prompt( 'Kill ' + options.kill_task_id + ' in' ):
         print "requesting abdicate and kill for " + options.kill_task_id
         print "WARNING: you may also need to manually kill the REAL stuck task"
         control.abdicate_and_kill( options.kill_task_id )
