@@ -190,27 +190,18 @@ while True:
 
             # construct an array of lines to blit to the screen
 
-            # MONITOR HEADER
+            # MONITOR HEADER, and SYSTEM NAME and NUMBER OF TASKS
             blit = []
-            blit.append( '\033[1;37;40m  cyclon  system  monitor  ' + ctrl_end )
-            blit.append( "\033[0;35mwaiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m")
-            blit.append( '*' + ' => task not yet abdicated' )
+            blit.append( '\033[1;37;40mcyclon  system  monitor' + ctrl_end + " < \033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m > " +  "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m(' + str( n_tasks ) + ' tasks)\033[0m' )
+            # blit.append( '*' + ' => task not yet abdicated' )
 
-            # DUMMY MODE, or not
+            # MODE and  CURRENT SYSTEM TIME
             if dummy_mode:
-                blit.append( 'DUMMY MODE: ' + rate + ' sec = 1 hr' )
+                blit.append( 'DUMMY MODE: ' + rate + ' sec = 1 hr;' + ' Time ' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
             else:
-                blit.append( 'REAL MODE' )
+                blit.append( 'REAL MODE; ' + 'Time '  + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
             
-            # CURRENT SYSTEM TIME
-            if dummy_mode:
-                blit.append( 'dummy time ' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
-            else:
-                blit.append( 'real time '  + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
-
-            # SYSTEM NAME + NUMBER OF TASKS
-            blit.append( "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m  (' + str( n_tasks ) + ' tasks)\033[0m' )
-            
+           
             # CATCHUP INFO for any contact tasks
             for name in catchup_info.keys():
                 if catchup_info[ name ]:
@@ -218,7 +209,7 @@ while True:
                 else:
                     blit.append( name + ': caught up' )
 
-            blit.append("------------------------------")
+            blit.append('')
 
             # construct a line of text to display for each reference time
             for rt in ref_time_list:
