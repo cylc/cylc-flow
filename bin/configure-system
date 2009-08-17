@@ -38,12 +38,16 @@ PATH=$PWD/bin:$PATH
 cd $SYSDIR
 
 echo
-echo "> generating $SYSDIR/task_classes.py"
+echo "Generating $SYSDIR/task_classes.py"
 
-find taskdef -name '*.def' -o -name '*.py' | xargs task-generator.py
+# if the command line gets too big we'll have to use xargs:
+#    find taskdef -name '*.def' -o -name '*.py' | xargs task-generator.py 
+# and modify task-generator.py so that it appends to the output
+# task_classes.py file rather than overwriting it each time.
+task-generator.py $( find taskdef -name '*.def' -o -name '*.py' ) 
 
 echo
-echo "> generating environment script for this system:"
+echo "Generating environment script for this system:"
 echo "     $SYSDIR/environment.sh"
 
 cat > $ENV_SCRIPT <<EOF
@@ -75,12 +79,12 @@ EOF
 # copy task-wrapper
 
 echo
-echo "> copying task-wrapper to system tasks dir"
+echo "Copying task-wrapper to system tasks dir"
 mkdir -p $TOPDIR/$SYSDIR/tasks
 cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/tasks
 
 echo
-echo "> SOURCE THE SYSTEM ENVIRONMENT SCRIPT BEFORE RUNNING CYCLON"
+echo "SOURCE THE SYSTEM ENVIRONMENT SCRIPT BEFORE RUNNING CYCLON"
 echo "  \$ . $TOPDIR/$SYSDIR/environment.sh"
 echo "  \$ cyclon"
 echo

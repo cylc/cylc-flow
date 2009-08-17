@@ -110,6 +110,8 @@ import logging
     n_files = len(task_def_files)
     i = 0
 
+    seen = {}
+
     for task_def_file in task_def_files:
 
         i = i + 1
@@ -199,6 +201,13 @@ import logging
             par_init_args = "ref_time, abdicated, initial_state, relative_state"
 
         task_name = parsed_def[ 'NAME' ][0]
+
+        if task_name in seen.keys():
+            print "ERROR: task name '" + task_name + "' has been defined already!"
+            sys.exit(1)
+        else:
+            seen[ task_name ] = True
+
         short_name = task_name
         m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
         if m:
