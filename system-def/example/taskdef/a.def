@@ -26,10 +26,4 @@
     90
 
 %OUTPUTS
-    # If no outputs are listed only the default 'started' and 'finished'
-    # messages will be sent and the task will run sequentially. But the 
-    # following early abdication message allows the next instance to
-    # start early (this message could be sent as soon as the restart
-    # file for the next forecast (by task a) has been generated).
-
-    30: ready to abdicate
+    # None
