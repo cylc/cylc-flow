@@ -190,18 +190,17 @@ while True:
 
             # construct an array of lines to blit to the screen
 
-            # MONITOR HEADER, and SYSTEM NAME and NUMBER OF TASKS
+            # MONITOR HEADER and CURRENT TIME
             blit = []
-            blit.append( '\033[1;37;40mcyclon  system  monitor' + ctrl_end + " < \033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed\033[0m > " +  "\033[1;37;46m" + system_name + ctrl_end + ' \033[1;37;31m(' + str( n_tasks ) + ' tasks)\033[0m' )
-            # blit.append( '*' + ' => task not yet abdicated' )
+            blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end + ' ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
-            # MODE and  CURRENT SYSTEM TIME
+            # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
             if dummy_mode:
-                blit.append( 'DUMMY MODE: ' + rate + ' sec = 1 hr;' + ' Time ' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
+                blit.append( '\033[1;37;45m' + system_name + ' (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' DUMMY MODE (' + rate + ' sec = 1 hr)' )
             else:
-                blit.append( 'REAL MODE; ' + 'Time '  + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + '\033[0m' )
-            
-           
+                blit.append( '\033[1;37;45m' + system_name + ' (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' REAL MODE' )
+
+          
             # CATCHUP INFO for any contact tasks
             for name in catchup_info.keys():
                 if catchup_info[ name ]:
