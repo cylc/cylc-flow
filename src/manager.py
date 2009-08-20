@@ -79,13 +79,13 @@ class manager:
             skip = False
             if self.config.get('stop_time'):
                 if int( task.ref_time ) > int( self.config.get('stop_time') ):
-                    task.log.warning( task.name + " STOPPING at " + self.config.get('stop_time') )
+                    task.log( 'WARNING', "STOPPING at " + self.config.get('stop_time') )
                     task.prepare_for_death()
                     del task
                     skip = True
 
             if not skip:
-                task.log.debug( "new " + task.name + " connected for " + task.ref_time )
+                task.log( 'DEBUG', "connected" )
                 self.pyro.connect( task, task.identity )
                 self.tasks.append( task )
 
@@ -136,13 +136,13 @@ class manager:
             skip = False
             if self.config.get('stop_time'):
                 if int( task.ref_time ) > int( self.config.get('stop_time') ):
-                    task.log.warning( task.name + " STOPPING at " + self.config.get('stop_time') )
+                    task.log( 'WARNING', " STOPPING at " + self.config.get('stop_time') )
                     task.prepare_for_death()
                     del task
                     skip = True
 
             if not skip:
-                task.log.debug( "new " + task.name + " connected for " + task.ref_time )
+                task.log( 'DEBUG', "connected" )
                 self.pyro.connect( task, task.identity )
                 self.tasks.append( task )
 
@@ -202,19 +202,19 @@ class manager:
                 continue
 
             if task.abdicate():
-                task.log.debug( "abdicating " + task.identity )
+                task.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
                 new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), 'False', "waiting" )
                 if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
                     # we've reached the stop time: delete the new task 
-                    new_task.log.warning( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
+                    new_task.log( 'WARNING', "STOPPING at configured stop time " + self.config.get('stop_time') )
                     new_task.prepare_for_death()
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
                     self.pyro.connect( new_task, new_task.identity )
-                    new_task.log.debug( "New " + new_task.name + " connected for " + new_task.ref_time )
+                    new_task.log('DEBUG', "connected" )
                     self.tasks.append( new_task )
 
     def dump_state( self ):
@@ -289,10 +289,10 @@ class manager:
                 if not lame.has_abdicated():
                     # forcibly abdicate the lame task and create its successor
                     lame.set_abdicated()
-                    lame.log.warning( "abdicated a lame task " + lame.identity )
+                    lame.log( 'WARNING', "abdicated (lame)" )
 
                     new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), 'False', "waiting" )
-                    new_task.log.debug( "new task connected for " + new_task.ref_time )
+                    new_task.log('DEBUG', "connected" )
                     self.pyro.connect( new_task, new_task.identity )
                     self.tasks.append( new_task )
                 else:
@@ -303,7 +303,7 @@ class manager:
                 oldest_batch.remove( lame )
                 self.tasks.remove( lame )
                 self.pyro.disconnect( lame )
-                lame.log.warning( "lame task disconnected for " + lame.ref_time )
+                lame.log( 'warning', "disconnected (lame)" )
                 lame.prepare_for_death()
                 del lame
 
@@ -418,24 +418,24 @@ class manager:
             self.log.warning( "task not found for remote kill request: " + task_id )
             return
 
-        task.log.debug( "suicide by remote request " + task.identity )
+        task.log( 'DEBUG', "killing myself by remote request" )
 
         if not task.has_abdicated():
             # forcibly abdicate the task and create its successor
             task.set_abdicated()
-            task.log.debug( 'forcing abdication, for ' + task.ref_time )
+            task.log( 'DEBUG', 'forced abdication' )
             # TO DO: the following should reuse code in regenerate_tasks()?
             # dynamic task object creation by task and module name
             new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), 'False', "waiting" )
             if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
                 # we've reached the stop time: delete the new task 
-                new_task.log.warning( 'STOPPING at configured stop time, for ' + new_task.ref_time )
+                new_task.log( 'WARNING', 'STOPPING at configured stop time' )
                 new_task.prepare_for_death()
                 del new_task
             else:
                 # no stop time, or we haven't reached it yet.
                 self.pyro.connect( new_task, new_task.identity )
-                new_task.log.debug( 'New task connected for ' + new_task.ref_time )
+                new_task.log( 'DEBUG', 'connected' )
                 self.tasks.append( new_task )
 
         else:
@@ -445,6 +445,6 @@ class manager:
         # now kill the task
         self.tasks.remove( task )
         self.pyro.disconnect( task )
-        task.log.warning( "disconnected, for " + task.ref_time )
+        task.log( 'WARNING', "disconnected" )
         task.prepare_for_death()
         del task

@@ -112,9 +112,6 @@ class task( Pyro.core.ObjBase ):
         # unique task identity
         self.identity = self.name + '%' + self.ref_time
 
-        # task-specific log file
-        self.log = logging.getLogger( "main." + self.name ) 
-
         self.latest_message = ""
 
         if abdicated == 'True':
@@ -132,19 +129,42 @@ class task( Pyro.core.ObjBase ):
             self.state = "waiting"
         elif initial_state == "finished":  
             self.outputs.set_all_satisfied()
-            self.log.warning( self.identity + " starting in FINISHED state" )
+            self.log( 'WARNING', " starting in FINISHED state" )
             self.state = "finished"
         elif initial_state == "ready":
             # waiting, but ready to go
             self.state = "waiting"
-            self.log.warning( self.identity + " starting in READY state" )
+            self.log( 'WARNING', " starting in READY state" )
             self.prerequisites.set_all_satisfied()
         else:
-            self.log.critical( "unknown initial task state: " + initial_state )
+            self.log( 'CRITICAL',  "unknown initial task state: " + initial_state )
             sys.exit(1)
 
-        self.log.debug( "Creating new task in " + initial_state + " state, for " + self.ref_time )
+        #self.log( 'DEBUG', "initial state: " + initial_state )
 
+
+    def log( self, priority, message ):
+        # task-specific log file
+
+        # is it better to "get" this each time as here, or to get a
+        # 'self.logger' once in __init__?
+        logger = logging.getLogger( "main." + self.name ) 
+
+        # task logs are already specific to type so we only need to
+        # preface each entry with reference time, not whole task id.
+        message = '[' + self.ref_time + '] ' + message
+
+        if priority == "WARNING":
+            logger.warning( message )
+        elif priority == "NORMAL":
+            logger.info( message )
+        elif priority == "DEBUG":
+            logger.debug( message )
+        elif priority == "CRITICAL":
+            logger.critical( message )
+        else:
+            logger.warning( 'UNKNOWN PRIORITY: ' + priority )
+            logger.warning( '-> ' + message )
 
     def prepare_for_death( self ):
         # The task manager MUST call this immediately before deleting a
@@ -247,7 +267,7 @@ class task( Pyro.core.ObjBase ):
             self.run_external_task( launcher )
 
     def run_external_task( self, launcher, extra_vars = [] ):
-        self.log.debug( 'launching task ' + self.name + ' for ' + self.ref_time )
+        self.log( 'DEBUG',  'launching extnernal task' )
         launcher.run( self.owner, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
@@ -325,36 +345,33 @@ class task( Pyro.core.ObjBase ):
         if message == 'started' or message == 'finished':
             message = self.identity + ' ' + message
 
-        # logging is task type specific, so prefix ref time
-        log_message = '[' + self.ref_time + '] ' + message
-
         if self.state != "running":
             # my external task should not be running!
-            self.log.warning( "UNEXPECTED MESSAGE (task should not be running)" )
-            self.log.warning( '-> ' + log_message )
+            self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running)" )
+            self.log( 'WARNING', '-> ' + message )
 
         if message == "failed":
             # process task failure messages
             if priority == "CRITICAL":
-                self.log.critical( log_message )
+                self.log( 'CRITICAL',  message )
                 self.state = "failed"
             else:
-                self.log.warning( 'non-critical task failure message: ' )
-                self.log.warning( "-> " + log_message )
+                self.log( 'WARNING', 'non-critical task failure message: ' )
+                self.log( 'WARNING', "-> " + message )
   
         elif self.outputs.exists( message ):
             # process registered output messages
             if self.outputs.is_satisfied( message ):
                 # this output has already been satisfied
-                self.log.warning( "UNEXPECTED OUTPUT (already satisfied):" )
-                self.log.warning( "-> " + log_message )
+                self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )
+                self.log( 'WARNING', "-> " + message )
             else:
                 # log the completed output and set it satisfied
                 if priority == 'NORMAL':
-                    self.log.info( log_message )
+                    self.log( 'NORMAL',  message )
                 else:
-                    self.log.warning( "UNEXPECTED PRIORITY FOR REGISTERED OUTPUT: " + priority )
-                    self.log.warning( '-> ' + log_message )
+                    self.log( 'WARNING', "UNEXPECTED PRIORITY FOR REGISTERED OUTPUT: " + priority )
+                    self.log( 'WARNING', '-> ' + message )
 
                 self.outputs.set_satisfied( message )
                 state_changed = True
@@ -365,16 +382,16 @@ class task( Pyro.core.ObjBase ):
                     self.__class__.last_finished_ref_time = self.ref_time
         else:
             # log unregistered messages
-            log_message = '*' + log_message
+            message = '*' + message
             if priority == "NORMAL":
-                self.log.info( log_message )
+                self.log( 'NORMAL',  message )
             elif priority == "WARNING":
-                self.log.warning( log_message )
+                self.log( 'WARNING', message )
             elif priority == "CRITICAL":
-                self.log.critical( log_message )
+                self.log( 'CRITICAL',  message )
             else:
-                self.log.warning( "unknown priority " + priority )
-                self.log.warning( '-> ' + log_message )
+                self.log( 'WARNING', "unknown priority " + priority )
+                self.log( 'WARNING', '-> ' + message )
 
 
     def update( self, reqs ):
@@ -443,7 +460,7 @@ class task( Pyro.core.ObjBase ):
     #def ready_to_abdicate( self ):
     #    # all derived class need to override this
     ##    # IS THERE A BETTER WAY TO DO THIS?:
-    #    self.log.critical( 'class definition error')
+    #    self.log( 'CRITICAL',  'class definition error')
     #    sys.exit(1)
     #    return False
 
@@ -579,7 +596,7 @@ class contact( task ):
                 # will suddenly reduce topnet's cutoff time
                 # and may result in deletion of a finished nzlam task
                 # that is still needed to satsify topnet prerequisites
-                self.log.debug( 'falling behind the pace a bit here' )
+                self.log( 'DEBUG',  'falling behind the pace a bit here' )
             else:
                 # We were already catching up; no change.
                 pass
@@ -591,7 +608,7 @@ class contact( task ):
                 pass
             else:
                 # we have just caught up
-                self.log.debug( 'just caught up' )
+                self.log( 'DEBUG',  'just caught up' )
                 self.__class__.catchup_mode = False
 
 class oneoff:
