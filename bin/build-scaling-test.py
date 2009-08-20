@@ -15,8 +15,8 @@ def usage():
     print 'large number of external dummy programs all running at the same time.'
     print ''
     print 'Output locations relative to script running directory:'
-    print '  system-def/scaling-test/user_config.py'
-    print '  system-def/scaling-test/taskdef/(task definition files)'
+    print '  sys/scaling-test/user_config.py'
+    print '  sys/scaling-test/taskdef/(task definition files)'
     sys.exit(1)
 
 def main( argv ):
