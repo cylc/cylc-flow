@@ -1,5 +1,12 @@
 To Do
 
+* oneoff non-contact class init problem:
+    oneoff_task.__init__( self, ref_time, abdicated, initial_state )
+    TypeError: __init__() takes exactly 5 arguments (4 given)
+
+* remote controlled prerequisite dump for specified tasks, to allow
+  operator to see which prerequisites have yet to be satisfied.
+
 * consider using ONLY PREREQUISITES to control tasks, not 'parallel' and
   'sequential'
 
