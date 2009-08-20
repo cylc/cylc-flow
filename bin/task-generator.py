@@ -46,20 +46,27 @@ def interpolate_variables( strng ):
     strng = re.sub( "\$\(NAME\)'$", "' + self.name"   ,  strng ) # end line
     strng = re.sub( "\$\(NAME\)" , "'  + self.name + '", strng ) # mid line
    
-    # replace "$(MY_REFERENCE_TIME)" or "$(MY_REFERENCE_TIME - XX )"
+    # replace "$(MY_REFERENCE_TIME)"
+    strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)'$",   "ref_time",     strng ) # alone
+    strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)",     "ref_time + '", strng ) # start line
+    strng = re.sub( "\$\(MY_REFERENCE_TIME\)'$", "' + ref_time"   ,  strng ) # end line
+    strng = re.sub( "\$\(MY_REFERENCE_TIME\)" , "'  + ref_time + '", strng ) # mid line
+
+    # replace "$(MY_REFERENCE_TIME - XX )"
     m = re.search( '\$\(\s*MY_REFERENCE_TIME\s*-\s*(\d+)\s*\)', strng )
-    if not m:
-        # straight
-        strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)'$",   "ref_time",     strng ) # alone
-        strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)",     "ref_time + '", strng ) # start line
-        strng = re.sub( "\$\(MY_REFERENCE_TIME\)'$", "' + ref_time"   ,  strng ) # end line
-        strng = re.sub( "\$\(MY_REFERENCE_TIME\)" , "'  + ref_time + '", strng ) # mid line
-    else:
-        # arithmetic
+    if m:
         strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)'$",   "reference_time.decrement( ref_time, " + m.group(1) + ")",     strng ) # alone
         strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)",     "reference_time.decrement( ref_time, " + m.group(1) + ") + '", strng ) # start line
         strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)'$", "' + reference_time.decrement( ref_time, " + m.group(1) + ")",     strng ) # mid line
         strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)",   "' + reference_time.decrement( ref_time, " + m.group(1) + ") + '", strng ) # end line
+
+    # replace "$(MY_REFERENCE_TIME + XX )"
+    m = re.search( '\$\(\s*MY_REFERENCE_TIME\s*\+\s*(\d+)\s*\)', strng )
+    if m:
+        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)'$",   "reference_time.increment( ref_time, " + m.group(1) + ")",     strng ) # alone
+        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)",     "reference_time.increment( ref_time, " + m.group(1) + ") + '", strng ) # start line
+        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)'$", "' + reference_time.increment( ref_time, " + m.group(1) + ")",     strng ) # mid line
+        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)",   "' + reference_time.increment( ref_time, " + m.group(1) + ") + '", strng ) # end line
 
     return strng
 
