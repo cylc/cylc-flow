@@ -20,10 +20,15 @@
     WRAP task-a.sh
 
 %PREREQUISITES
+    restart files ready for $(MY_REFERENCE_TIME)
+
+%STARTUP_PREREQUISITES
     # None
 
 %RUN_LENGTH_MINUTES
     90
 
 %OUTPUTS
-    # None
+    30: restart files ready for $(MY_REFERENCE_TIME + 6 )
+    60: restart files ready for $(MY_REFERENCE_TIME + 12 )
+    89: restart files ready for $(MY_REFERENCE_TIME + 18 )
