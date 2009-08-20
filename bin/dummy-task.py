@@ -27,11 +27,6 @@ class dummy_task:
 
     def run( self ):
 
-        #if self.name == 'f':
-        #   print 'TESTING ABORT!'
-        #   self.task.incoming( 'CRITICAL', self.name + ' failed for ' + self.ref_time )
-        #   sys.exit(1)
-
         # get a list of output messages to fake: outputs[ time ] = output
         outputs = self.task.get_timed_outputs()
 
@@ -55,6 +50,12 @@ class dummy_task:
             sleep( dt_diff_sec_real )
 
             self.task.incoming( "NORMAL", outputs[ time ] )
+
+            if failout:
+                # fail after the first message (and a small delay)
+                sleep(2)
+                self.task.incoming( 'CRITICAL', self.name + ' failed for ' + self.ref_time )
+                sys.exit(1)
 
             prev_time = time
             
@@ -89,6 +90,13 @@ if __name__ == '__main__':
     system_name = os.environ['SYSTEM_NAME'] 
     dummy_clock_rate = int( os.environ['CLOCK_RATE'] )
     dummy_clock_offset = os.environ['CLOCK_OFFSET']
+
+    failout = False
+    if 'FAILOUT_TASK_ID' in os.environ:
+        failout_task_id = os.environ['FAILOUT_TASK_ID']
+        if failout_task_id == task_name + '%' + ref_time:
+            print "DUMMY TASK PROGRAMMED TO FAIL: " + failout_task_id
+            failout = True
         
     #print "DUMMY TASK STARTING: " + task_name + " " + ref_time
     dummy = dummy_task( task_name, ref_time )

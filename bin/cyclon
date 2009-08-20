@@ -41,6 +41,9 @@ def main( argv ):
     parser.add_option( "-r", "--restart", help="restart from state dump",
         action="store_true", default=False, dest="restart" )
 
+    parser.add_option( "-f", "--fail", help="fail out a dummy task",
+        metavar=" <name>%<YYYYMMDDHH>", action="store", dest="failout_task_id" )
+
     # get command line options and positional args
     ( options, args ) = parser.parse_args()
 
@@ -69,8 +72,17 @@ def main( argv ):
                                                        system_config.get('dummy_clock_rate'), 
                                                        system_config.get('dummy_clock_offset') ) 
         pyro.connect( dummy_clock, 'dummy_clock' )
+
     else:
         dummy_clock = None
+
+
+    if options.failout_task_id:
+        if not system_config.get('dummy_mode'):
+            print 'ERROR: failout is only for dummy mode'
+            sys.exit(1)
+        # export a variable to be read by the dummy task script
+        os.putenv( 'FAILOUT_TASK_ID', options.failout_task_id )
 
     state_dump_file = system_config.get('state_dump_file')
     if os.path.exists( state_dump_file ):
