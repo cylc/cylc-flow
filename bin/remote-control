@@ -46,9 +46,8 @@ parser.add_option( "-v", "--verbosity",
         choices=verbosity_choices,
         dest="verbosity" )
 
-# NOTE: BUMP WON'T AFFECT DUMMY TASKS THAT ARE ALREADY RUNNING
-parser.add_option( "-b", "--bump", help= "bump dummy clock forward (hours)",
-        type="int", action="store", dest="bump_hours" )
+parser.add_option( "-b", "--bump", help= "bump the system",
+        action="store_true", default=False, dest="bump" )
 
 #if len( sys.argv ) == 1:
 #    # no options or args supplied
@@ -134,11 +133,16 @@ if options.kill_task_id:
         print "WARNING: you may also need to manually kill the REAL stuck task"
         control.abdicate_and_kill( options.kill_task_id )
 
-if options.bump_hours:
-    try:
-        dummy_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'dummy_clock' )
-    except:
-        print "ERROR: failed to connect to the dummy clock"
-        sys.exit(1)
-    print "current time: " + str( dummy_clock.get_datetime() )
-    print "bumped on to: " + str( dummy_clock.bump( options.bump_hours ))
+if options.bump:
+    control.nudge()
+
+#if options.bump_hours:
+#DISABLED, NOT VERY USEFUL. 
+#    # bump the dummy time forward. 
+#    try:
+#        dummy_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'dummy_clock' )
+#    except:
+#        print "ERROR: failed to connect to the dummy clock"
+#        sys.exit(1)
+#    print "current time: " + str( dummy_clock.get_datetime() )
+##    print "bumped on to: " + str( dummy_clock.bump( options.bump_hours ))

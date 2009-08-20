@@ -26,6 +26,12 @@ class remote_switch( Pyro.core.ObjBase ):
         self.go_psycho = False
         self.kill_task_id = None
 
+    def nudge( self ):
+        # pretend a task has changed state in order to invoke the event
+        # handling loop
+        self.log.warning( "REMOTE: nudge requested" )
+        task.state_changed = True
+
     def hold( self ):
         self.log.warning( "REMOTE: system hold requested" )
         self.system_hold_requested = True
