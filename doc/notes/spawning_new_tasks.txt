@@ -1,0 +1,30 @@
+
+When an existing task runs depends entirely on its prerequisites.
+
+But a task must exist before it can get its prerequisites satisfied.
+
+When a new task should be created is currently determined by its TYPE: 
+
+ 1/ PARALLEL (e.g. non forecast models) do not depend on their previous
+ instance; they are created as soon as the previous instance starts
+ running. They could be created as soon as the previous instance exists,
+ but there does not appear to be any advantage to this(?)
+
+ 2/ SEQUENTIAL (e.g. forecast models) depend on their previous instance,
+ so they are not created until the previous instance has finished (OR
+ tells the controller it is ready to abdicate early). Therefore:
+  (i) previous instance prerequisites need not be explicitly defined, 
+  (ii) tasks can be considered "spent" as soon as they have abdicated;
+  i.e. they don't need to wait around to satisfy the next instance, and
+  can therefore be deleted from the system somewhat earlier.
+  (iii) system start up, when there is no "previous cycle" is simple. 
+
+ BUT: (iii) hides the truth somewhat: in a cold start, any previous
+ instance dependence must be satisfied by some other means, so perhaps
+ it would be best to recognize this with an explicit cold start task?
+ THEN we could forget the distinction between 'parallel' and
+ 'sequential', and have the system determine abdication time according
+ to whether or not any explicit previous-instance dependence was defined
+ in the task definition files.  THIS would also allow (via fuzzy
+ prerequisites) automatic ommission of stuck tasks, if a forecast task
+ dumps out a succession of restart files?
