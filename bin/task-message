@@ -4,13 +4,9 @@
 Standalone interface between external EcoConnect tasks/models and the
 task objects that represent them in the controller.
 
-(1) Takes <task name> and <reference time> arguments 
-    (which uniquely identifies the task object in the controller),
-    and a <message> string to send directly to the task object.
-  
-(2) Connects to the controller task object via Pyro. 
-
-(3) Calls [task object].incoming(<message>) to send the message.
+Sends a message to task proxy object in a cyclon instance, by calling
+[task object].incoming(<message>). The task is identified by its
+unique "task id" <NAME>%<REFTIME>.
 """
 
 import sys
