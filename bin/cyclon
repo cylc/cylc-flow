@@ -21,15 +21,10 @@ import remote_switch
 import state_summary
 import pimp_my_logger
 import dummy_mode_clock 
+from optparse import OptionParser
 
 # auto-replace with version tag at build/install:
 cyclon_version = "foo-bar-baz";
-
-def usage():
-    print "cyclon [-r]"
-    print "Options:"
-    print "  + [-r] restart from state dump file (overriding"
-    print "         the configured start time and task list)."
 
 def clean_shutdown( pyro, reason ):
     log = logging.getLogger( 'main' )
@@ -40,19 +35,19 @@ def clean_shutdown( pyro, reason ):
 #---
 def main( argv ):
 
-    if len( argv ) > 2:
-        usage()
-        sys.exit(1)
+    # construct a command line parser
+    parser = OptionParser( "%prog [options]" )
 
-    if len( argv ) == 2 and argv[1] == '-r':
-        restart = True
-    else:
-        restart = False
+    parser.add_option( "-r", "--restart", help="restart from state dump",
+        action="store_true", default=False, dest="restart" )
+
+    # get command line options and positional args
+    ( options, args ) = parser.parse_args()
 
     print "__________________________________________________________"
     print
     print "      .       cyclon Dynamic Metascheduler       ."
-    print "version: " + cyclon_version
+    print "              version: " + cyclon_version
     print "      .         Hilary Oliver, NIWA, 2008         ."
     print "              See repository documentation"
     print "      .    Pyro nameserver required: 'pyro-ns'    ."
@@ -106,7 +101,7 @@ def main( argv ):
     pyro.connect( dead_letter_box, 'dead_letter_box' )
 
     # initialize the task manager from general config file or state dump
-    god = manager.manager( system_config, pyro, restart, dummy_clock )
+    god = manager.manager( system_config, pyro, options.restart, dummy_clock )
 
     print "\nBeginning task processing now\n"
 
