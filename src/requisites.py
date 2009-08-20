@@ -103,30 +103,30 @@ class prerequisites( requisites ):
         # information.
         self.satisfied[message] = False
 
-    def satisfy_me( self, broker ):
+    def satisfy_me( self, outputs, owner_id ):
         log = logging.getLogger( "main." + self.task_name )            
-        # can the broker's completed outputs satisfy any of my prequisites?
+        # can any completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
             if not self.satisfied[ prereq ]:
                 # if my prerequisite is not already satisfied
-                for output in broker.satisfied.keys():
-                    # compare it with each of the broker's outputs
-                    if output == prereq and broker.satisfied[output]:
+                for output in outputs.satisfied.keys():
+                    # compare it with each of the outputs
+                    if output == prereq and outputs.satisfied[output]:
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
-                        log.warning( 'Got "' + output + '" from ' + broker.owner_id[ output ] + ', for ' + self.ref_time )
+                        log.warning( 'Got "' + output + '" from ' + owner_id + ', for ' + self.ref_time )
 
-    def will_satisfy_me( self, broker ):
-        # will broker, when completed, satisfy any of my prequisites?
+    def will_satisfy_me( self, outputs, owner_id ):
+        # will the outputs, when completed, satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             #print "PRE: " + prereq
             # for each of my prerequisites
             if not self.satisfied[ prereq ]:
                 # if my prerequisite is not already satisfied
-                for output in broker.satisfied.keys():
+                for output in outputs.satisfied.keys():
                     #print "POST: " + output
-                    # compare it with each of the broker's outputs
+                    # compare it with each of the outputs
                     if output == prereq:   # (DIFFERENT FROM ABOVE HERE)
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
@@ -148,9 +148,9 @@ class fuzzy_prerequisites( prerequisites ):
         del self.satisfied[ fuzzy ]
         self.satisfied[ sharp ] = True
 
-    def satisfy_me( self, broker ):
+    def satisfy_me( self, outputs, owner_id ):
         log = logging.getLogger( "main." + self.task_name )            
-        # can broker's completed outputs satisfy any of my prequisites?
+        # can any completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
             if not self.satisfied[ prereq ]:
@@ -167,9 +167,9 @@ class fuzzy_prerequisites( prerequisites ):
 
                 possible_satisfiers = {}
                 found_at_least_one = False
-                for output in broker.satisfied.keys():
+                for output in outputs.satisfied.keys():
 
-                    if broker.satisfied[output]:
+                    if outputs.satisfied[output]:
                         # extract reference time from other's output
                         # message
 
@@ -199,7 +199,7 @@ class fuzzy_prerequisites( prerequisites ):
 
                     # replace fuzzy prereq with the actual output that satisfied it
                     self.sharpen_up( prereq, chosen_output )
-                    log.warning( 'Got "' + chosen_output + '" from ' + broker.owner_id[ chosen_output ] + ', for ' + self.ref_time )
+                    log.warning( 'Got "' + chosen_output + '" from ' + owner_id + ', for ' + self.ref_time )
 
     def will_satisfy_me( self, outputs ):
         # will another's outputs, if/when completed, satisfy any of my
@@ -240,12 +240,11 @@ class fuzzy_prerequisites( prerequisites ):
 class outputs( requisites ):
 
     # outputs are requisites for which each message represents an
-    # output or milestone (e.g. 'file X ready' or 'task Y completed') 
-    # that has either been completed (satisfied) or not (not satisfied).
+    # output or milestone that has either been completed (satisfied) or
+    # not (not satisfied).
 
-    # additionally, outputs have an estimated completion time associated
-    # with each message, which is used to simulate task execution in
-    # dummy mode.
+    # additionally, each output message has an associated estimated
+    # completion time, used to simulate task execution in dummy mode.
 
     def __init__( self, task_name, ref_time ):
         self.task_name = task_name
@@ -257,9 +256,13 @@ class outputs( requisites ):
         requisites.__init__( self )
 
     def add( self, t, message ):
-        # Add a new output message for estimated completion time t,
-        # (in an UNSATISFIED state).
+        # Add a new unsatisfied output message for time t
+
         log = logging.getLogger( "main." + self.task_name )            
+
+        # prefix task id to special 'started' and 'finished' outputs
+        if message == 'started' or message == 'finished':
+            message = self.task_name + '%' + self.ref_time + ' ' + message
 
         if message in self.satisfied.keys():
             # duplicate output messages are an error.
@@ -285,7 +288,7 @@ class outputs( requisites ):
         return self.message
 
 
-class broker ( requisites ):
+class broker:
 
     # A broker aggregates output messages from many objects.
 
@@ -293,36 +296,39 @@ class broker ( requisites ):
     # task tries to get its prerequisites satisfied by the broker's
     # outputs.
 
-    # Depends on requisites rather than outputs because we don't need
-    # the output time information here.
-
     def __init__( self ):
-        self.owner_id = {} # self.owner_id[ "message" ] = owner_id
-        requisites.__init__( self )
+        self.all_outputs = {}   # all_outputs[ taskid ] = [ taskid's requisites ]
 
     def register( self, owner_id, outputs ):
-        # add a new batch of output messages
-        for output in outputs.get_list():
-            if output in self.satisfied.keys():
-                # outputs must be unique (two tasks claiming to
-                # generate the same output this would almost certainly
-                # indicate a system configuration error). 
-                print 'ERROR: duplicate output from', owner_id, 'and', self.owner_id[ output ]
-                print '   ', output
-                sys.exit(1)
+        # because task ids are unique, and all tasks register their
+        # outputs anew in each dependency negotiation round, register 
+        # should only be called once by each task
 
-            self.satisfied[ output ] = outputs.is_satisfied( output )
-            self.owner_id[ output ] = owner_id
+        if owner_id in self.all_outputs.keys():
+            print "ERROR:", owner_id, "has already registered its outputs"
+            sys.exit(1)
+
+        self.all_outputs[ owner_id ] = outputs
+
+        # TO DO: CHECK FOR DUPLICATE OUTPUTS NOT OWNED BY THE SAME TASK
+        # type (successive tasks of the same type can register identical
+        # outputs if they write staggered restart files.
 
 
     def reset( self ):
         # throw away all messages
-        self.satisfied = {}
-        self.owner_id = {}
+        # NOTE IF RESET IS NOT USED BEFORE EACH DEPENDENCY ROUND, AN
+        # UNREGISTER METHOD WILL BE REQUIRED
+        self.all_outputs = {}
 
-    #def unregister( self, outputs ):
-    # THIS METHOD WAS USED TO UNREGISTER THE OUTPUT MESSAGES OF A
-    # SPENT TASK BEFORE DELETING IT, BUT IT IS NOT NEEDED IF WE
-    # CALL BROKER.RESET() BEFORE EACH DEPENDENCY NEGOTIATION CYCLE
-    #    for output in outputs.get_list():
-    #        del self.satisfied[output]
+    def dump( self ):
+        # for debugging
+        print "BROKER DUMP:"
+        for id in self.all_outputs.keys():
+            print " " + id
+            for output in self.all_outputs[ id ].get_list():
+                print " + " + output
+
+    def negotiate( self, prerequisites ):
+        for id in self.all_outputs.keys():
+            prerequisites.satisfy_me( self.all_outputs[ id ], id )

@@ -168,9 +168,12 @@ class manager:
             # register task outputs
             self.broker.register( task.identity, task.outputs )
 
+        # for debugging;            
+        #self.broker.dump()
+
         for task in self.tasks:
             # get the broker to satisfy tasks prerequisites
-            task.prerequisites.satisfy_me( self.broker )
+            self.broker.negotiate( task.prerequisites )
 
     def run_tasks( self, launcher ):
         # tell each task to run if it is ready

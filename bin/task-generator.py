@@ -370,12 +370,16 @@ import logging
         FILE.write( indent + 'self.outputs = outputs( self.name, ref_time )\n' )
 
         # automatic 'task started' message
-        parsed_def[ 'OUTPUTS' ].append( '0: $(NAME) started for $(MY_REFERENCE_TIME)' )
+        parsed_def[ 'OUTPUTS' ].append( '0: started' )
     
         # automatic 'task finished' message
+        if 'RUN_LENGTH_MINUTES' not in parsed_def:
+            print "ERROR: no %RUN_LENGTH_MINUTES found"
+            sys.exit(1)
+
         for line in parsed_def[ 'RUN_LENGTH_MINUTES' ]:
             line = re.sub( '\s+$', '', line )
-            parsed_def[ 'OUTPUTS' ].append( line + ': $(NAME) finished for $(MY_REFERENCE_TIME)' )
+            parsed_def[ 'OUTPUTS' ].append( line + ': finished' )
         
         for line in parsed_def[ 'OUTPUTS' ]:
             # look for conditionals

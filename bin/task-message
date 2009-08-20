@@ -12,27 +12,50 @@ unique "task id" <NAME>%<REFTIME>.
 import sys
 import Pyro.core
 import config
+from optparse import OptionParser
 
-# command line arguments
-if len( sys.argv ) != 5:
-    print "USAGE:", sys.argv[0], "<priority> <task name> <REFERENCE_TIME> <quoted message>"
-    print "   priority: CRITICAL, WARNING, or NORMAL"
-    sys.exit(1)
-    
+# construct a command line parser
+parser = OptionParser( "%prog [options] MESSAGE\n" 
+                        "the following options are not optional")
+
+parser.add_option( "-p", "--priority", help="message priority",
+        metavar="NORMAL, WARNING, CRITICAL",
+        action="store", dest="priority" )
+
+parser.add_option( "-n", "--name", help="task name",
+        action="store", dest="taskname" )
+
+parser.add_option( "-r", "--reftime", help="task reference time",
+        action="store", dest="reftime" )
+
+# get command line options and positional args
+( options, args ) = parser.parse_args()
+
+if not options.priority or not options.taskname or not options.reftime:
+    parser.error( "options -p, -t, -r are not optional!" )
+
+if len( args ) == 0:
+    parser.error( "no message supplied" )
+elif len( args ) == 1:
+    # user sent a quoted string
+    message = args[0]
+else:
+    # user sent a bar string, so join all the words together
+    message = ' '.join(args)
+
+# load the configured system (the system's enviroment.sh script must
+# have been sourced in the current shell)
 config = config.config()
 config.user_override()
 config.check()
-
-[priority, task_name, ref_time] = sys.argv[1:4]
-message = sys.argv[4]
 
 # TO DO: use exception handling when I know how to report the real error
 # (which is generally more useful than my own error message)
 
 # connect to the task object inside the control program
 #try:
-task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.' + task_name + '%' + ref_time )
-task.incoming( priority, message )
+task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.' + options.taskname + '%' + options.reftime )
+task.incoming( options.priority, message )
 #except:
 #    # nameserver not found, or object not registered with it?
 #    print "ERROR: failed to connect to " + task_name + "_" + ref_time

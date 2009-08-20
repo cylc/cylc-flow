@@ -261,14 +261,14 @@ class task( Pyro.core.ObjBase ):
         # could do this automatically off the "name finished for ref_time" message
         self.state = "finished"
 
-    def get_satisfaction( self, tasks ):
-        for task in tasks:
-            self.prerequisites.satisfy_me( task.outputs )
+    #def get_satisfaction( self, tasks ):
+    #    for task in tasks:
+    #        self.prerequisites.satisfy_me( task.outputs )
 
     def will_get_satisfaction( self, tasks ):
         temp_prereqs = deepcopy( self.prerequisites )
         for task in tasks:
-            temp_prereqs.will_satisfy_me( task.outputs )
+            temp_prereqs.will_satisfy_me( task.outputs, task.identity )
     
         if not temp_prereqs.all_satisfied(): 
             return False
@@ -313,43 +313,58 @@ class task( Pyro.core.ObjBase ):
 
     def incoming( self, priority, message ):
         # receive all incoming pyro messages for this task 
-
-        global state_changed
-        state_changed = True
-
         self.latest_message = message
 
-        if message == self.name + " ready to abdicate for " + self.ref_time:
-            # external task says we can abdicate already (i.e. it has
-            # generated the restart file (or similar) required by its
-            # successor).
-            self.log.debug( 'early abdication ok for ' + self.ref_time )
-            self.received_abdication_notice = True
+        # set state_changed if this message satisfies any registered
+        # output (indicates that the task manager needs to instigate a
+        # new round of dependency renegotiations)
+        global state_changed
 
-        # make sure log messages end in 'for YYYYMMDDHH', and 
-        # distinguish incoming task messages from internal logging
-        log_message = '(INCOMING) ' + message
-        if not re.search( 'for \d\d\d\d\d\d\d\d\d\d$', message ):
-            log_message =  log_message + '; for ' + self.ref_time
+        # prefix task id to special 'started' and 'finished' messages.
+        # (other tasks may refer to "foo%finished" as a prerequisite).
+        if message == 'started' or message == 'finished':
+            message = self.identity + ' ' + message
+
+        # logging is task type specific, so prefix ref time
+        log_message = '[' + self.ref_time + '] ' + message
 
         if self.state != "running":
-            # message from a task that's not supposed to be running
-            self.log.warning( "MESSAGE FROM NON-RUNNING TASK: " + log_message )
+            # my external task should not be running!
+            self.log.warning( "UNEXPECTED MESSAGE (task should not be running)" )
+            self.log.warning( '-> ' + log_message )
 
-        if self.outputs.exists( message ):
-            # an expected postrequisite from a running task
+        if message == "failed":
+            # process task failure messages
+            if priority == "CRITICAL":
+                self.log.critical( log_message )
+                self.state = "failed"
+            else:
+                self.log.warning( 'non-critical task failure message: ' )
+                self.log.warning( "-> " + log_message )
+  
+        elif self.outputs.exists( message ):
+            # process registered output messages
             if self.outputs.is_satisfied( message ):
-                self.log.warning( "POSTREQUISITE ALREADY SATISFIED: " + log_message )
+                # this output has already been satisfied
+                self.log.warning( "UNEXPECTED OUTPUT (already satisfied):" )
+                self.log.warning( "-> " + log_message )
+            else:
+                # log the completed output and set it satisfied
+                if priority == 'NORMAL':
+                    self.log.info( log_message )
+                else:
+                    self.log.warning( "UNEXPECTED PRIORITY FOR REGISTERED OUTPUT: " + priority )
+                    self.log.warning( '-> ' + log_message )
 
-            self.log.info( log_message )
-            self.outputs.set_satisfied( message )
+                self.outputs.set_satisfied( message )
+                state_changed = True
 
-        elif message == self.name + " failed for " + self.ref_time:
-            self.log.critical( log_message )
-            self.state = "failed"
-
+                # SET TASK FINISHED INDICATOR IF ALL OUTPUTS NOW SATISFIED
+                if self.outputs.all_satisfied():
+                    self.set_finished()
+                    self.__class__.last_finished_ref_time = self.ref_time
         else:
-            # a non-postrequisite message, e.g. progress report
+            # log unregistered messages
             log_message = '*' + log_message
             if priority == "NORMAL":
                 self.log.info( log_message )
@@ -358,11 +373,9 @@ class task( Pyro.core.ObjBase ):
             elif priority == "CRITICAL":
                 self.log.critical( log_message )
             else:
-                self.log.warning( log_message )
+                self.log.warning( "unknown priority " + priority )
+                self.log.warning( '-> ' + log_message )
 
-        if self.outputs.all_satisfied():
-            self.set_finished()
-            self.__class__.last_finished_ref_time = self.ref_time
 
     def update( self, reqs ):
         for req in reqs.get_list():

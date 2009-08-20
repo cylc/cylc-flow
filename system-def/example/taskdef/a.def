@@ -32,4 +32,4 @@
     # start early (this message could be sent as soon as the restart
     # file for the next forecast (by task a) has been generated).
 
-    30: $(NAME) ready to abdicate for $(MY_REFERENCE_TIME)
+    30: ready to abdicate

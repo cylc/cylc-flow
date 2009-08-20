@@ -36,7 +36,9 @@ To Do
 * allow remote-control to set a proper stop time (as opposed to an
   instant shutdown).
 
-* will_get_satisfaction() is still O(n^2)
+* consider use of the broker for task.will_get_satisfaction()? The is
+  method as is is O(n^2), but n is only the size of the oldest batch of
+  tasks, not all tasks (used in identifying lame tasks). 
 
 * just before a task runs, try to re-satisfy fuzzy prerequisites in case
   a more up-to-date satisfier has shown up while the task was waiting

@@ -49,12 +49,12 @@ class dummy_task:
             dt_diff_sec_real = dt_diff_sec * dummy_clock_rate / 3600.0
             sleep( dt_diff_sec_real )
 
-            self.task.incoming( "NORMAL", outputs[ time ] )
+            self.task.incoming( 'NORMAL', outputs[ time ] )
 
             if failout:
                 # fail after the first message (and a small delay)
                 sleep(2)
-                self.task.incoming( 'CRITICAL', self.name + ' failed for ' + self.ref_time )
+                self.task.incoming( 'CRITICAL', 'failed' )
                 sys.exit(1)
 
             prev_time = time

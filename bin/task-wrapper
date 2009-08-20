@@ -2,38 +2,41 @@
 
 set -e  # abort on error
 
-trap 'task-message CRITICAL failed' ERR
+CRITARGS="-p CRITICAL -n $TASK_NAME -r $REFERENCE_TIME"
+
+trap "task-message $CRITARGS failed" ERR
 
 #   1. $REFERENCE_TIME  
 #   2. $TASK_NAME      
 #   3. $WRAP          
 
 if [[ -z $REFERENCE_TIME ]]; then
-	task-message CRITICAL "REFERENCE_TIME not defined"
-	task-message CRITICAL failed 
+	task-message $CRITARGS "REFERENCE_TIME not defined"
+	task-message $CRITARGS failed 
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
-	task-message CRITICAL "TASK_NAME not defined"
-	task-message CRITICAL failed 
+	task-message $CRITARGS "TASK_NAME not defined"
+	task-message $CRITARGS failed 
 	exit 1
 fi
 
 if [[ -z $WRAP ]]; then
-	task-message CRITICAL "WRAP not defined"
-	task-message CRITICAL failed 
+	task-message $CRITARGS "WRAP not defined"
+	task-message $CRITARGS failed 
 	exit 1
 fi
 
 echo "task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
-task-message NORMAL started
+task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME started
 
 # call the wrapped task
 if $WRAP; then 
     # succeeded
-    task-message NORMAL finished
+    task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME finished
+
 else
     # failed
-	task-message CRITICAL failed 
+	task-message $CRITARGS failed 
 fi
