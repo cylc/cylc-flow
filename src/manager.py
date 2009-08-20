@@ -290,6 +290,7 @@ class manager:
 
                 if not lame.has_abdicated():
                     # forcibly abdicate the lame task and create its successor
+                    lame.set_abdicated()
                     lame.log.warning( "abdicated a lame task " + lame.identity )
 
                     new_task = self.get_task_instance( 'task_classes', lame.name )( lame.next_ref_time(), 'False', "waiting" )
@@ -421,28 +422,31 @@ class manager:
 
         task.log.debug( "suicide by remote request " + task.identity )
 
-        if task.abdicate():
-            # task had not abdicated yet; need to create its successor
-            task.log.debug( task.identity + " abdicated" )
+        if not task.has_abdicated():
+            # forcibly abdicate the task and create its successor
+            task.set_abdicated()
+            task.log.debug( 'forcing abdication, for ' + task.ref_time )
             # TO DO: the following should reuse code in regenerate_tasks()?
             # dynamic task object creation by task and module name
             new_task = self.get_task_instance( 'task_classes', task.name )( task.next_ref_time(), 'False', "waiting" )
             if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
                 # we've reached the stop time: delete the new task 
-                new_task.log.warning( new_task.name + " STOPPING at configured stop time " + self.config.get('stop_time') )
+                new_task.log.warning( 'STOPPING at configured stop time, for ' + new_task.ref_time )
                 new_task.prepare_for_death()
                 del new_task
             else:
                 # no stop time, or we haven't reached it yet.
                 self.pyro.connect( new_task, new_task.identity )
-                new_task.log.debug( "New " + new_task.name + " connected for " + new_task.ref_time )
+                new_task.log.debug( 'New task connected for ' + new_task.ref_time )
                 self.tasks.append( new_task )
 
         else:
-            task.log.debug( task.identity + " already abdicated" )
+            # already abdicated: the successor already exists
+            pass
 
         # now kill the task
         self.tasks.remove( task )
         self.pyro.disconnect( task )
+        task.log.warning( "disconnected, for " + task.ref_time )
         task.prepare_for_death()
         del task
