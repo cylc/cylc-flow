@@ -198,9 +198,9 @@ while True:
 
             # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
             if dummy_mode:
-                blit.append( '\033[1;37;45m' + system_name + ' (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' DUMMY MODE (' + rate + ' sec = 1 hr)' )
+                blit.append( '\033[1;37;45m"' + system_name + '" (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' DUMMY MODE (' + rate + ' sec = 1 hr)' )
             else:
-                blit.append( '\033[1;37;45m' + system_name + ' (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' REAL MODE' )
+                blit.append( '\033[1;37;45m"' + system_name + '" (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' REAL MODE' )
 
           
             # CATCHUP INFO for any contact tasks

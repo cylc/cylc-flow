@@ -2,10 +2,10 @@
 # See full_template.def for documented entries
 
 %NAME
-    c
+    E
 
 %TYPE
-    sequential
+    normal
 
 %VALID_HOURS
     0,6,12,18
@@ -14,14 +14,16 @@
     task-wrapper
 
 %EXPORT
-    WRAP task-c.sh
+    WRAP E.sh
 
 %PREREQUISITES
-    a%$(MY_REFERENCE_TIME) finished
-
+    B%$(MY_REFERENCE_TIME) finished
 
 %RUN_LENGTH_MINUTES
-    120
+    150
 
 %OUTPUTS
     # Defaults only
+
+%COTEMPORAL_DEPENDANTS_ONLY
+    True

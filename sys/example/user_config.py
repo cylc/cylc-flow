@@ -29,14 +29,15 @@ config[ 'start_time' ] = '2009072706'
 #config[ 'logging_level' ] = logging.INFO
 config[ 'logging_level' ] = logging.DEBUG
 
-config[ 'max_runahead_hours' ] = 48
+config[ 'max_runahead_hours' ] = 18
 
 config[ 'task_list' ] = \
         [
-        'a',
-        'b',
-        'c',
-        'd',
-        'e',
-        'f'
+        'Z',
+        'A',
+        'B',
+        'C',
+        'D',
+        'E',
+        'F'
         ]

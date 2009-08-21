@@ -1,0 +1,34 @@
+# THIS IS A cyclon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    A
+
+%TYPE
+    normal
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    task-wrapper
+
+%EXPORT
+    WRAP A.sh
+
+%PREREQUISITES
+    external data ready for $(MY_REFERENCE_TIME)
+    A restart files ready for $(MY_REFERENCE_TIME)
+
+%STARTUP_PREREQUISITES
+    external data ready for $(MY_REFERENCE_TIME)
+
+%CUTOFF_REFERENCE_TIME
+    # depends on previous instance
+    $(MY_REFERENCE_TIME - 6)
+
+%RUN_LENGTH_MINUTES
+    90
+
+%OUTPUTS
+    89: A restart files ready for $(MY_REFERENCE_TIME + 6 )

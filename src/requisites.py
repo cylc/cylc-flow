@@ -115,7 +115,8 @@ class prerequisites( requisites ):
                     if output == prereq and outputs.satisfied[output]:
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
-                        log.warning( 'Got "' + output + '" from ' + owner_id + ', for ' + self.ref_time )
+                        # TO LOG WHAT GOT SATISFIED BY WHOM:
+                        log.warning( '[' + self.ref_time + '] Got "' + output + '" from ' + owner_id )
 
     def will_satisfy_me( self, outputs, owner_id ):
         # will the outputs, when completed, satisfy any of my prequisites?
@@ -199,7 +200,7 @@ class fuzzy_prerequisites( prerequisites ):
 
                     # replace fuzzy prereq with the actual output that satisfied it
                     self.sharpen_up( prereq, chosen_output )
-                    log.warning( 'Got "' + chosen_output + '" from ' + owner_id + ', for ' + self.ref_time )
+                    log.debug( '[' + self.ref_time + '] Got "' + chosen_output + '" from ' + owner_id )
 
     def will_satisfy_me( self, outputs ):
         # will another's outputs, if/when completed, satisfy any of my
@@ -253,10 +254,14 @@ class outputs( requisites ):
         self.message = {}    # self.message[ t ] = "message"
         self.time = {}       # self.time[ "message" ] = t
 
+        self.previous_instance_dependence = False
         requisites.__init__( self )
 
     def add( self, t, message ):
         # Add a new unsatisfied output message for time t
+
+        if re.search( 'restart files ready', message ):
+            self.previous_instance_dependence = True
 
         log = logging.getLogger( "main." + self.task_name )            
 
@@ -286,6 +291,7 @@ class outputs( requisites ):
 
     def get_timed_requisites( self ):
         return self.message
+
 
 
 class broker:

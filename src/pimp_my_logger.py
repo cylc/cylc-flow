@@ -31,7 +31,7 @@ def pimp_it( log, name, config, dummy_clock = None ):
 
     originator = ""
     if name == "main":
-        originator = '%(name)-20s'
+        originator = '%(name)-10s'
 
     f = logging.Formatter( '%(asctime)s %(levelname)-8s ' + originator + ' - %(message)s', '%Y/%m/%d %H:%M:%S' )
 

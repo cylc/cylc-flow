@@ -100,9 +100,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import sequential_task, parallel_task, \\
-            sequential_contact_task, parallel_contact_task, \\
-            oneoff_contact_task, oneoff_task
+from task import task, contact_task, oneoff_task, oneoff_contact_task
 
 import user_config            
 import execution
@@ -176,37 +174,34 @@ import logging
 
         # print_parsed_info()
 
-        # defaults
-        parent_class = 'task'
-        type = 'sequential'
         delay = 0
         contact = False
         if 'TYPE' in parsed_def.keys():
+
             type = parsed_def[ 'TYPE' ][0]
-            if type == 'sequential':
-                parent_class = 'sequential_task'
 
-            elif type == 'parallel':
-                parent_class = 'parallel_task'
-
-            elif type == 'oneoff':
-                parent_class = 'oneoff_task'
-
-            elif re.match( 'sequential,\s*contact', type ):
+            if re.match( 'normal,\s*contact', type ):
                 contact = True
-                parent_class = 'sequential_contact_task'
-
-            elif re.match( 'parallel,\s*contact', type ):
-                contact = True
-                parent_class = 'parallel_contact_task'
+                parent_class = 'contact_task'
 
             elif re.match( 'oneoff,\s*contact', type ):
                 contact = True
                 parent_class = 'oneoff_contact_task'
 
+            elif type == 'normal':
+                parent_class = 'task'
+
+            elif type == 'oneoff':
+                parent_class = 'oneoff_task'
+
+            else:
+                print "ERROR: unknown %TYPE: " + type
+                sys.exit(1)
+
         else:
-            print "Error: no %TYPE specified"
+            print "ERROR: no %TYPE specified"
             sys.exit(1)
+
 
         def_init_args = 'ref_time, abdicated, initial_state'
         par_init_args = 'ref_time, abdicated, initial_state'

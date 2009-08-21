@@ -187,22 +187,19 @@ class task( Pyro.core.ObjBase ):
         # offset, e.g. self.ref_time - 6 hours
         # MUST BE DONE AFTER BASE CLASS INIT or it won't override!
 
-
         # For horribly complicated variable scheduling behaviour
         # (e.g. EcoConnect's TopNet, we can override this method
         # and used finished_task_dict to find the most recent instance
         # of the task whose output we need.
 
-        if not self.abdicated:
-            # If I'm waiting then my own prerequisites have not been
-            # satisfied, so I must return my own cutoff time.
-            # If I'm running and not abdicated (or just finished and
-            # just about to be abdicated) then my prerequisites have
-            # been satisfied but my successor has not been created yet
-            # so I must speak for it.  Technically my successor's cutoff
-            # will be later than mine (next_ref_time() in the simplest
-            # case) but just using my cutoff is simpler, and safe
-            # because it is more conservative.
+        if not self.abdicated or not self.prerequisites.all_satisfied():
+
+            # If I have not abdicated then my successor has not been
+            # created yet so I must speak for it. Technically my
+            # successor's cutoff  will be later than mine
+            # (next_ref_time() in the simplest case) but just using my
+            # cutoff is simpler, and safe because it is more
+            # conservative.
 
             return self.my_cutoff_reftime
 
@@ -451,14 +448,39 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
-    #def ready_to_abdicate( self ):
-    #    # all derived class need to override this
-    ##    # IS THERE A BETTER WAY TO DO THIS?:
-    #    self.log( 'CRITICAL',  'class definition error')
-    #    sys.exit(1)
-    #    return False
 
-    def ready_to_die( self ):
+    def ready_to_abdicate( self ):
+
+        if not self.outputs.previous_instance_dependence:
+            # always ready
+            return True
+
+        elif self.state == 'waiting':
+            return False
+
+        elif self.state == 'finished':
+            return True
+
+        else: 
+            # running task with previous instance dep
+
+            # ready only if all prev inst outputs are completed
+            # (otherwise my successor's successor could trigger
+            # off me, and so on).
+
+            result = True
+            for message in self.outputs.satisfied.keys():
+                if re.search( 'restart files ready', message ) and \
+                not self.outputs.satisfied[ message ]:
+                result = False
+                break
+
+        return result
+
+
+    def done( self ):
+        # return True if task has finished its active work
+        # i.e. has (i) finished and (ii) abdicated
         if self.state == "finished" and self.abdicated:
             return True
         else:
@@ -483,33 +505,7 @@ class task( Pyro.core.ObjBase ):
  
         return summary
 
-
-class sequential:
-    # FORECAST MODEL TYPE TASKS, which depend on their own previous
-    # instance and therefore abdicate as soon as they achieve a
-    # 'finished' state, forcing successive instances to run
-    # in sequence.
-
-    def ready_to_abdicate( self ):
-        if self.state == "finished":
-            return True
-        else:
-            return False
-
-class parallel:
-    # NON FORECAST MODEL TYPE TASKS, which do not depend on their
-    # own previous instance. Abdicates as soon as it starts running so
-    # that multiple instances can run in parallel if other dependencies
-    # allow. 
-
-    def ready_to_abdicate( self ):
-        if self.state == "running" or self.state == "finished":
-            return True
-        else:
-            return False
-
-
-class contact( task ):
+class contact_task( task ):
     # For tasks that wait on external events such as incoming external
     # data. These are the only tasks that can know if they are are
     # "caught up" or not, according to how their reference time relates
@@ -608,28 +604,14 @@ class contact( task ):
 class oneoff:
 
     def ready_to_abdicate( self ):
-        # is this needed?
+        # never abdicate (no successor)
         return False
 
-    def ready_to_die( self ):
-        # ready to die if finished
+    def done( self ):
         if state == 'finished':
             return True
         else:
             return False
-
-
-class sequential_task( task, sequential ):
-    pass
-
-class parallel_task( task, parallel ):
-    pass
-
-class sequential_contact_task( contact, sequential ):
-    pass
-
-class parallel_contact_task( contact, parallel ):
-    pass
 
 class oneoff_task( task, oneoff ):
     def __init__( self, ref_time, abdicated, initial_state, relative_state):
@@ -637,7 +619,7 @@ class oneoff_task( task, oneoff ):
         # NOTE THIS IS STRING 'True' not logical True!
         task.__init__( self, ref_time, 'True', initial_state, relative_state )
 
-class oneoff_contact_task( contact, oneoff ):
+class oneoff_contact_task( contact_task, oneoff ):
     def __init__( self, ref_time, abdicated, initial_state, relative_state):
         # initialise contat with abdicated = True
         # NOTE THIS IS STRING 'True' not logical True!

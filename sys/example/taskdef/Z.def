@@ -2,10 +2,13 @@
 # See full_template.def for documented entries
 
 %NAME
-    b
+    Z
 
 %TYPE
-    sequential
+    normal, contact
+
+%CONTACT_DELAY_HOURS
+    1.0
 
 %VALID_HOURS
     0,6,12,18
@@ -14,13 +17,16 @@
     task-wrapper
 
 %EXPORT
-    WRAP task-b.sh
+    WRAP Z.sh
 
 %PREREQUISITES
-    a%$(MY_REFERENCE_TIME) finished
+    # None
 
 %RUN_LENGTH_MINUTES
-    60
+    10
 
 %OUTPUTS
-    # Defaults only
+    9: external data ready for $(MY_REFERENCE_TIME)
+
+%COTEMPORAL_DEPENDANTS_ONLY
+    True
