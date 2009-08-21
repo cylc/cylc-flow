@@ -252,6 +252,26 @@ class task( Pyro.core.ObjBase ):
         return reference_time.increment( rt, increment )
 
 
+    def prev_ref_time( self ):
+        # return the previous reference time valid for this task.
+        #--
+
+        rt = self.ref_time
+
+        n_times = len( self.valid_hours )
+        if n_times == 1:
+            increment = 24
+        else:
+            i_now = self.valid_hours.index( int( rt[8:10]) )
+            # list indices start at zero
+            if i_now > 0 :
+                decrement = self.valid_hours[ i_now ] - self.valid_hours[ i_now - 1 ] 
+            else:
+                decrement = self.valid_hours[ i_now ] - self.valid_hours[ n_times - 1 ] + 24
+
+        return reference_time.decrement( rt, decrement )
+
+
     def run_if_ready( self, launcher ):
         # run if I am 'waiting' AND my prequisites are satisfied
         if self.state == 'waiting' and self.prerequisites.all_satisfied(): 

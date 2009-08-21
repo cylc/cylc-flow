@@ -1,14 +1,22 @@
 To Do
 
+DUMP THE EXISTING CUTOFF CODE. INSTEAD, CUTOFF BEYOND 
+THE OLDEST( NEWEST FINISHED OF EACH TASK )
+
+* can cutoff be determined from prerequisites instead of specified
+  explicitly? Only if all requisites are required to end in 'for [ref
+  time of generating task]', because filenames in output messages (for
+  instance) don't necessarily contain the reference time of the
+  generating task.  Knowing the reference time of the generating task is
+  a requirement in either case, so this may be a good idea.
+
+
 * oneoff non-contact class init problem:
     oneoff_task.__init__( self, ref_time, abdicated, initial_state )
     TypeError: __init__() takes exactly 5 arguments (4 given)
 
 * remote controlled prerequisite dump for specified tasks, to allow
   operator to see which prerequisites have yet to be satisfied.
-
-* consider using ONLY PREREQUISITES to control tasks, not 'parallel' and
-  'sequential'
 
 * a task should be allowed to declare multiple outputs at the same time
   (currently this is detected as an error condition)
@@ -18,17 +26,6 @@ To Do
   
 * does 'caught up' detection work properly for prerequisiteless parallel
   contact tasks?
-
-* do messages need to have task name preprended?
-
-* can reference time be appended to messages automatically?
-
-* can cutoff be determined from prerequisites instead of specified
-  explicitly? Only if all requisites are required to end in 'for [ref
-  time of generating task]', because filenames in output messages (for
-  instance) don't necessarily contain the reference time of the
-  generating task.  Knowing the reference time of the generating task is
-  a requirement in either case, so this may be a good idea.
 
 * all sys.exit(1) calls should be routed through a clean shutdown, so
   that Pyro nameserver group entries can be deleted automatically.
