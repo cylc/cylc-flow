@@ -430,7 +430,10 @@ class task( Pyro.core.ObjBase ):
     def abdicate( self ):
         # the task manager should instantiate a new task when this one
         # abdicates (which only happens once per task). 
-        if not self.has_abdicated() and self.ready_to_abdicate():
+        if self.has_abdicated():
+            return False
+
+        if self.ready_to_abdicate():
             self.abdicated = True
             self.__class__.last_abdicated_ref_time = self.ref_time
             return True
@@ -443,26 +446,34 @@ class task( Pyro.core.ObjBase ):
 
 
     def has_abdicated( self ):
-        if self.abdicated:
-            return True
-        else:
-            return False
+        return self.abdicated
 
 
     def ready_to_abdicate( self ):
 
         if not self.outputs.previous_instance_dependence:
-            # always ready
+            # tasks with no PID (previous instance dependence) can
+            # be abdicated at any time. 
             return True
 
         elif self.state == 'waiting':
+            # never abdicate a waiting PID task 
+            # (1) by definition, its successor has to wait on it running
+            # (2) if the successor is created before then, it could get
+            #     satisfied by later restart outputs of an earlier task
+            #     (which we want to happen ONLY if the previous one
+            #     fails).
             return False
 
         elif self.state == 'finished':
+            # always abdicate a finished PID task
             return True
 
         else: 
-            # running task with previous instance dep
+            # running (and failed) PID tasks
+            # (failed PID tasks are running before they fail, so will
+            # already have abdicated or not, according to whether they
+            # fail before or after the PID outputs).
 
             # ready only if all prev inst outputs are completed
             # (otherwise my successor's successor could trigger
@@ -470,12 +481,11 @@ class task( Pyro.core.ObjBase ):
 
             result = True
             for message in self.outputs.satisfied.keys():
-                if re.search( 'restart files ready', message ) and \
-                not self.outputs.satisfied[ message ]:
-                result = False
-                break
+                if re.search( 'restart files ready', message ) and not self.outputs.satisfied[ message ]:
+                    result = False
+                    break
 
-        return result
+            return result
 
 
     def done( self ):

@@ -26,8 +26,8 @@ config[ 'job_queue' ] = 'default'
 config[ 'start_time' ] = '2009072706'
 #config[ 'stop_time'  ] = '2009072806'
 
-#config[ 'logging_level' ] = logging.INFO
-config[ 'logging_level' ] = logging.DEBUG
+config[ 'logging_level' ] = logging.INFO
+#config[ 'logging_level' ] = logging.DEBUG
 
 config[ 'max_runahead_hours' ] = 18
 

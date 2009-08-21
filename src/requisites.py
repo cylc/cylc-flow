@@ -116,7 +116,7 @@ class prerequisites( requisites ):
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
                         # TO LOG WHAT GOT SATISFIED BY WHOM:
-                        log.warning( '[' + self.ref_time + '] Got "' + output + '" from ' + owner_id )
+                        log.debug( '[' + self.ref_time + '] Got "' + output + '" from ' + owner_id )
 
     def will_satisfy_me( self, outputs, owner_id ):
         # will the outputs, when completed, satisfy any of my prequisites?
