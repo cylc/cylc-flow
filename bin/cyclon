@@ -148,7 +148,6 @@ def main( argv ):
 
             go_ahead = False
             if remote_control.go_psycho:
-                print "KILLING NOW"
                 god.abdicate_and_kill( remote_control.kill_task_id )
                 remote_control.go_psycho = False
                 go_ahead = True

@@ -17,11 +17,11 @@
     WRAP B.sh
 
 %PREREQUISITES
-    #   A%$(MY_REFERENCE_TIME) finished
+    A%$(MY_REFERENCE_TIME) finished
     B restart files ready for $(MY_REFERENCE_TIME)
 
 %STARTUP_PREREQUISITES
-    #   A%$(MY_REFERENCE_TIME) finished
+    A%$(MY_REFERENCE_TIME) finished
 
 %CUTOFF_REFERENCE_TIME
     # depends on previous instance, potentially back 3 cycles (18 hours) 
