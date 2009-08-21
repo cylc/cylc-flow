@@ -81,6 +81,10 @@ else:
     ns_groups.print_info()
     sys.exit(0)
 
+ctrl_end = "\033[0m"
+failed = False
+
+
 print
 print "here we go ..."
 sleep(2)
@@ -145,8 +149,6 @@ while True:
                     tmp = name + '*'  # name plus abdication indicator
                     tmp = re.sub( '.', ' ', tmp )
                     task_info[ rt ][name] = tmp
-
-            ctrl_end = "\033[0m"
 
             # now loop through all tasks in the system and assign their
             # disply info to the correct place in the task_info structure
@@ -237,12 +239,15 @@ while True:
 
             # clear screen and blit the new information up
             os.system( "clear" )
-            for line in blit:
-                print line
+            print '\n'.join( blit )
             sleep(0.5)
+            failed = False
 
     except:
         # uncomment 'raise' to identify errors
         #raise
-        print "failed..."
+        if not failed:
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end
+            print   "\033[1;37;41m or: monitor bug " + ctrl_end
+            failed = True
         sleep( 1 )
