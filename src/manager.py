@@ -15,7 +15,6 @@ class manager:
 
         self.config = config
 
-        self.finished_task_dict = []
         self.system_hold = False
 
         # initialise the dependency broker
@@ -305,92 +304,61 @@ class manager:
                 del lame
 
 
-    def update_finished_task_dict( self ):
-        # compile a dict for possible use by task.get_cutoff():
-        # finished_task_dict[ name ] = [ list of ref times ] 
-
-        self.finished_task_dict = {}
-
-        for itask in self.tasks:
-
-            if itask.is_not_finished():
-                continue
-            if itask.name not in self.finished_task_dict.keys():
-                self.finished_task_dict[ itask.name ] = [ itask.ref_time ]
-            else:
-                self.finished_task_dict[ itask.name ].append( itask.ref_time )
-
-
     def kill_spent_tasks( self ):
         # Delete tasks that are no longer needed to satisfy the
         # prerequisites of any other tasks, or to spawn a successor: 
         
-        # First, do not delete tasks that have not abdicated yet, then:
+        # done (finished AND abdicated for normal tasks; finished for
+        # oneoff tasks) AND, if quick_death is False, older than system
+        # cutoff time.
 
-        # [i] If task.quick_death is True (tasks declared to have only
-        # cotemporal downstream dependants): finished tasks that are
-        # older than any task with unsatisfied prerequisites. 
-        
-        # [ii] If task.quick_death is False, finished tasks that are older
-        # than the system cutoff ref time.
-
-        # System cutoff time is the oldest task cutoff time.
-
-        # A task should only return a cutoff if it still needs to rely
-        # on one: see documentation in task.get_cutoff()
+        # system cutoff is the oldest "most recently finished" time 
         #--
 
-        # list of tasks that are "done" (i.e. finished and abdicated)
+        # list of tasks that are "done"
         tasks_done = []
-        # list of ref times of tasks with unsatisfied prerequisites
-        unsatisfied_ref_times = []
-        # list of all task cutoff times
-        cutoff_times = []
+        
+        oldest_unsat_ref_time = None
+        all_tasks_satisfied = True
+        cutoff = None
 
-        self.update_finished_task_dict()
-        # compile the above lists
         for itask in self.tasks:
-            coft = itask.get_cutoff( self.finished_task_dict ) 
-            if coft:
-                cutoff_times.append( coft )
 
             if itask.done():
                 tasks_done.append( itask )
 
-            elif not itask.prerequisites.all_satisfied():
-                unsatisfied_ref_times.append( itask.ref_time )
+            if not itask.prerequisites.all_satisfied():
+                all_tasks_satisfied = False
+                if not oldest_unsat_ref_time:
+                    oldest_unsat_ref_time = itask.ref_time
+                elif int( itask.ref_time ) < int( oldest_unsat_ref_time ):
+                    oldest_unsat_ref_time = itask.ref_time
 
-            else:
-                # task has unsatisfied prerequisites or is not done yet
-                pass
+            if itask.__class__.last_finished_ref_time:
+                if not cutoff:
+                    cutoff = itask.__class__.last_finished_ref_time
+                else:
+                    if int( itask.__class__.last_finished_ref_time ) < int( cutoff) :
+                        cutoff = itask.__class__.last_finished_ref_time 
 
-        # find reference time of the oldest unsatisfied task
-        all_tasks_satisfied = True
-        if len( unsatisfied_ref_times ) > 0:
-            all_tasks_satisfied = False
-            unsatisfied_ref_times.sort( key = int )
-            oldest_unsatisfied_ref_time = unsatisfied_ref_times[0]
-            self.log.debug( "oldest unsatisfied task is at " + oldest_unsatisfied_ref_time )
+        if oldest_unsat_ref_time:
+            self.log.debug( "oldest unsatisfied: " + oldest_unsat_ref_time )
 
-        # find the system cutoff reference time
-        no_cutoff_times = True
-        if len( cutoff_times ) > 0:
-            no_cutoff_times = False
-            cutoff_times.sort( key = int )
-            system_cutoff = cutoff_times[0]
-            self.log.debug( "system cutoff is " + system_cutoff )
+        if cutoff:
+            self.log.debug( "task deletion cutoff is " + cutoff )
 
-        # find list of tasks to delete
+        # list of tasks to delete
         spent_tasks = []
         for itask in tasks_done:
             if itask.quick_death: 
                 # case [i] tasks to delete
-                if all_tasks_satisfied or int( itask.ref_time ) < int( oldest_unsatisfied_ref_time ):
+                if all_tasks_satisfied or int( itask.ref_time ) < int( oldest_unsat_ref_time ):
                     spent_tasks.append( itask )
             else:
                 # case [ii] tasks to delete
-                if not no_cutoff_times and int( itask.ref_time ) < int( system_cutoff ):
-                    spent_tasks.append( itask )
+                if cutoff:
+                    if int( itask.ref_time ) < int( cutoff ):
+                        spent_tasks.append( itask )
 
         # delete spent tasks
         for itask in spent_tasks:

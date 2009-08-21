@@ -23,10 +23,6 @@
 %STARTUP_PREREQUISITES
     external data ready for $(MY_REFERENCE_TIME)
 
-%CUTOFF_REFERENCE_TIME
-    # depends on previous instance
-    $(MY_REFERENCE_TIME - 6)
-
 %RUN_LENGTH_MINUTES
     90
 

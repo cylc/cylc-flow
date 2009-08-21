@@ -66,7 +66,8 @@ class task( Pyro.core.ObjBase ):
     # which case they will be removed according to system cutoff time.
 
     quick_death = True
-
+    last_finished_ref_time = None
+ 
     def __init__( self, ref_time, abdicated, initial_state ):
         # Call this AFTER derived class initialisation
         # (which alters requisites based on initial state)
@@ -74,9 +75,6 @@ class task( Pyro.core.ObjBase ):
         # Derived classes MUST call nearest_ref_time() and define their 
         # prerequistes and outputs before calling this __init__.
         self.ref_time = ref_time
-
-        # cutoff; see get_cutoff below
-        self.my_cutoff_reftime = ref_time
 
         # Has this object abdicated yet (used for recreating abdicated
         # tasks when loading tasks from the state dump file).
@@ -124,7 +122,8 @@ class task( Pyro.core.ObjBase ):
         elif initial_state == "finished":  
             self.outputs.set_all_satisfied()
             self.log( 'WARNING', " starting in FINISHED state" )
-            self.state = "finished"
+            #self.state = "finished"
+            self.set_finished()
         elif initial_state == "ready":
             # waiting, but ready to go
             self.state = "waiting"
@@ -174,41 +173,6 @@ class task( Pyro.core.ObjBase ):
         # of hours that any task can get ahead of the slowest one.
 
         self.__class__.instance_count -= 1
-
-
-    def get_cutoff( self, finished_task_dict ):
-        # Return the reference time of the oldest tasks that the system
-        # must retain in order to satisfy my prerequisites or, if my 
-        # prerequisites have been satisfied but I have not abdicated
-        # yet, those of my immediate successor. 
-
-        # Tasks that depend on outputs from a previous reference time
-        # can simply override self.my_cutoff_reftime with some fixed
-        # offset, e.g. self.ref_time - 6 hours
-        # MUST BE DONE AFTER BASE CLASS INIT or it won't override!
-
-        # For horribly complicated variable scheduling behaviour
-        # (e.g. EcoConnect's TopNet, we can override this method
-        # and used finished_task_dict to find the most recent instance
-        # of the task whose output we need.
-
-        if not self.abdicated or not self.prerequisites.all_satisfied():
-
-            # If I have not abdicated then my successor has not been
-            # created yet so I must speak for it. Technically my
-            # successor's cutoff  will be later than mine
-            # (next_ref_time() in the simplest case) but just using my
-            # cutoff is simpler, and safe because it is more
-            # conservative.
-
-            return self.my_cutoff_reftime
-
-        else:
-            # I've abdicated already (either running or finished)
-            # Do not return a cutoff or else no spent tasks will ever
-            # get deleted!
-            return None
-
 
     def nearest_ref_time( self, rt ):
         # return the next time >= rt for which this task is valid
@@ -289,7 +253,6 @@ class task( Pyro.core.ObjBase ):
         return self.name + "(" + self.ref_time + "): " + self.state
 
     def set_finished( self ):
-        # could do this automatically off the "name finished for ref_time" message
         self.state = "finished"
 
     #def get_satisfaction( self, tasks ):
@@ -611,11 +574,6 @@ class contact_task( task ):
         if catchup_re.match( message ):
             # message says we're catching up to real time
             if not self.__class__.catchup_mode:
-                # We were caught up and have apparently slipped back a
-                # bit. Do NOT revert to catching up mode because this
-                # will suddenly reduce topnet's cutoff time
-                # and may result in deletion of a finished nzlam task
-                # that is still needed to satsify topnet prerequisites
                 self.log( 'DEBUG',  'falling behind the pace a bit here' )
             else:
                 # We were already catching up; no change.

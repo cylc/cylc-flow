@@ -23,10 +23,6 @@
 %STARTUP_PREREQUISITES
     A%$(MY_REFERENCE_TIME) finished
 
-%CUTOFF_REFERENCE_TIME
-    # depends on previous instance, potentially back 18 hours
-    $(MY_REFERENCE_TIME - 18)
-
 %RUN_LENGTH_MINUTES
     120
 
