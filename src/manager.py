@@ -334,12 +334,11 @@ class manager:
                 elif int( itask.ref_time ) < int( oldest_unsat_ref_time ):
                     oldest_unsat_ref_time = itask.ref_time
 
-            if itask.__class__.last_finished_ref_time:
-                if not cutoff:
-                    cutoff = itask.__class__.last_finished_ref_time
-                else:
-                    if int( itask.__class__.last_finished_ref_time ) < int( cutoff) :
-                        cutoff = itask.__class__.last_finished_ref_time 
+            if not cutoff:
+                cutoff = itask.__class__.cutoff_time
+            else:
+                if int( itask.__class__.cutoff_time ) < int( cutoff) :
+                    cutoff = itask.__class__.cutoff_time 
 
         if oldest_unsat_ref_time:
             self.log.debug( "oldest unsatisfied: " + oldest_unsat_ref_time )

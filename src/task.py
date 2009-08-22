@@ -64,9 +64,13 @@ class task( Pyro.core.ObjBase ):
     # Tasks that are needed to satisfy the prerequisites of other tasks
     # in subsequent cycles, however, must set quick_death = False, in
     # which case they will be removed according to system cutoff time.
-
     quick_death = True
-    last_finished_ref_time = None
+
+    # cutoff time, a class variable, is the time beyond which
+    # finished-and-abdicated instances of a particular task type can be
+    # deleted.  Set initially to the ref time of the first instance,
+    # then to that of the most recently finished task.
+    cutoff_time = None
  
     def __init__( self, ref_time, abdicated, initial_state ):
         # Call this AFTER derived class initialisation
@@ -93,6 +97,9 @@ class task( Pyro.core.ObjBase ):
         # it finds in the state dump file.
 
         self.__class__.instance_count += 1
+
+        if not self.__class__.cutoff_time:
+            self.__class__.cutoff_time = self.ref_time
 
         Pyro.core.ObjBase.__init__(self)
 
@@ -353,7 +360,7 @@ class task( Pyro.core.ObjBase ):
                 # SET TASK FINISHED INDICATOR IF ALL OUTPUTS NOW SATISFIED
                 if self.outputs.all_satisfied():
                     self.set_finished()
-                    self.__class__.last_finished_ref_time = self.ref_time
+                    self.__class__.cutoff_time = self.ref_time
         else:
             # log unregistered messages
             message = '*' + message
