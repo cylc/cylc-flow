@@ -92,13 +92,9 @@ if __name__ == '__main__':
     dummy_clock_offset = os.environ['CLOCK_OFFSET']
 
     failout = False
-    if 'FAILOUT_TASK_ID' in os.environ:
-        failout_task_id = os.environ['FAILOUT_TASK_ID']
-        if failout_task_id == task_name + '%' + ref_time:
-            print "DUMMY TASK PROGRAMMED TO FAIL: " + failout_task_id
-            failout = True
+    if '--fail' in sys.argv:
+        failout = True
+        print "DUMMY TASK WILL FAIL (" + task_name + '%' + ref_time + ")"
         
-    #print "DUMMY TASK STARTING: " + task_name + " " + ref_time
     dummy = dummy_task( task_name, ref_time )
     dummy.run()
-    #print "DUMMY TASK FINISHED: " + task_name + " " + ref_time

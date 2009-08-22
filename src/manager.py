@@ -308,7 +308,7 @@ class manager:
         # Delete tasks that are no longer needed to satisfy the
         # prerequisites of any other tasks, or to spawn a successor: 
         
-        # done (finished AND abdicated for normal tasks; finished for
+        # i.e. done (finished AND abdicated for normal tasks; finished for
         # oneoff tasks) AND, if quick_death is False, older than system
         # cutoff time.
 

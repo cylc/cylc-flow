@@ -13,7 +13,7 @@ import re
 
 class launcher:
 
-    def __init__( self, config ):
+    def __init__( self, config, failout_task = None ):
 
         self.system_name = config.get('system_name')
         self.clock_rate = config.get('dummy_clock_rate')
@@ -21,6 +21,14 @@ class launcher:
         self.dummy_mode = config.get('dummy_mode')
         self.use_qsub = config.get('use_qsub')
         self.job_queue = config.get('job_queue')
+
+        self.failout = False
+        self.failout_task = failout_task
+        if failout_task:
+            self.failout = True
+            print "FAILOUT TASK: " + failout_task
+            if not self.dummy_mode:
+                print 'WARNING: failout only affects dummy mode'
 
     def run( self, owner, task_name, ref_time, task, extra_vars=[] ):
 
@@ -41,6 +49,11 @@ class launcher:
         if self.dummy_mode:
             # dummy task
             external_program = cyclon_bin + '/dummy-task.py'
+            if self.failout:
+                if self.failout_task == task_name + '%' + ref_time:
+                    external_program += ' --fail'
+                    # now turn failout off, in case the task gets reinserted
+                    self.failout = False
         else:
             # real task
             external_program = task

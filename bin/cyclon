@@ -61,7 +61,7 @@ def main( argv ):
     system_config.load()
 
     # external task launcher
-    launcher = execution.launcher( system_config )
+    launcher = execution.launcher( system_config, options.failout_task_id )
 
     # configure my pyro helper
     pyro = pyrex.pyrex( system_config.get( 'system_name' ))
@@ -75,14 +75,6 @@ def main( argv ):
 
     else:
         dummy_clock = None
-
-
-    if options.failout_task_id:
-        if not system_config.get('dummy_mode'):
-            print 'ERROR: failout is only for dummy mode'
-            sys.exit(1)
-        # export a variable to be read by the dummy task script
-        os.putenv( 'FAILOUT_TASK_ID', options.failout_task_id )
 
     state_dump_file = system_config.get('state_dump_file')
     if os.path.exists( state_dump_file ):
