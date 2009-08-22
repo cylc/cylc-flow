@@ -1,21 +1,16 @@
 To Do
 
-DUMP THE EXISTING CUTOFF CODE. INSTEAD, CUTOFF BEYOND 
-THE OLDEST( NEWEST FINISHED OF EACH TASK )
-
 * re slipping back into catchup mode with TopNet:  We were caught up and
   have apparently slipped back a bit. reverting to catching up mode will
   suddenly reduce topnet's cutoff time and may result in deletion of a
   finished nzlam task that is still needed to satisfy topnet prereqs.
   => FIX TOPNET'S CUTOFF VARIABLE ONCE CAUGHT UP?
 
-* can cutoff be determined from prerequisites instead of specified
-  explicitly? Only if all requisites are required to end in 'for [ref
-  time of generating task]', because filenames in output messages (for
-  instance) don't necessarily contain the reference time of the
-  generating task.  Knowing the reference time of the generating task is
-  a requirement in either case, so this may be a good idea.
+* simplify contact class def: just initialise a normal task with
+  abdicated = True
 
+* disable deletion of lame tasks now that we have proper startup
+  capability
 
 * oneoff non-contact class init problem:
     oneoff_task.__init__( self, ref_time, abdicated, initial_state )
