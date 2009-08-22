@@ -369,6 +369,37 @@ class manager:
 
         del spent_tasks
 
+    def insert_task( self, task_id, dummy_clock ):
+        # insert a new task in a waiting state
+
+        [ name, ref_time ] = task_id.split( '%' )
+        abdicated = False
+        state_list = [ 'waiting' ]
+
+        # instantiate the task object
+        itask = self.get_task_instance( 'task_classes', name )( ref_time, abdicated, *state_list )
+
+        if itask.instance_count == 1:
+            # first task of its type, so create the log
+            log = logging.getLogger( 'main.' + name )
+            pimp_my_logger.pimp_it( log, name, self.config, dummy_clock )
+ 
+        # the initial task reference time can be altered during
+        # creation, so we have to create the task before
+        # checking if stop time has been reached.
+        skip = False
+        if self.config.get('stop_time'):
+            if int( itask.ref_time ) > int( self.config.get('stop_time') ):
+                itask.log( 'WARNING', " STOPPING at " + self.config.get('stop_time') )
+                itask.prepare_for_death()
+                del itask
+                skip = True
+
+        if not skip:
+            itask.log( 'DEBUG', "connected" )
+            self.pyro.connect( itask, itask.identity )
+            self.tasks.append( itask )
+
 
     def abdicate_and_kill( self, task_id ):
         # find the task

@@ -152,6 +152,11 @@ def main( argv ):
                 remote_control.go_psycho = False
                 go_ahead = True
  
+            if remote_control.task_to_insert:
+                god.insert_task( remote_control.task_to_insert, dummy_clock )
+                remote_control.task_to_insert = None
+                go_ahead = True
+
             god.dump_state()
 
             system_state.update( god.tasks )

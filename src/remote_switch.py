@@ -14,6 +14,7 @@ class remote_switch( Pyro.core.ObjBase ):
         Pyro.core.ObjBase.__init__(self)
         self.config = config
         self.tasknames = tasknames
+        self.task_to_insert = None
 
         # record remote system halt requests
         self.system_halt_requested = False
@@ -31,6 +32,11 @@ class remote_switch( Pyro.core.ObjBase ):
         # handling loop
         self.log.warning( "REMOTE: nudge requested" )
         task.state_changed = True
+
+    def insert( self, taskid ):
+        # insert a new task into the system
+        self.task_to_insert = taskid
+        self.log.warning( "REMOTE: task insertion request: " + taskid )
 
     def hold( self ):
         self.log.warning( "REMOTE: system hold requested" )
