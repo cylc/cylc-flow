@@ -202,7 +202,7 @@ class fuzzy_prerequisites( prerequisites ):
                     self.sharpen_up( prereq, chosen_output )
                     log.debug( '[' + self.ref_time + '] Got "' + chosen_output + '" from ' + owner_id )
 
-    def will_satisfy_me( self, outputs ):
+    def will_satisfy_me( self, outputs, owner_id ):
         # will another's outputs, if/when completed, satisfy any of my
         # prequisites?
 
