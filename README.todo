@@ -6,15 +6,8 @@ To Do
   finished nzlam task that is still needed to satisfy topnet prereqs.
   => FIX TOPNET'S CUTOFF VARIABLE ONCE CAUGHT UP?
 
-* simplify contact class def: just initialise a normal task with
-  abdicated = True
-
 * disable deletion of lame tasks now that we have proper startup
   capability
-
-* oneoff non-contact class init problem:
-    oneoff_task.__init__( self, ref_time, abdicated, initial_state )
-    TypeError: __init__() takes exactly 5 arguments (4 given)
 
 * remote controlled prerequisite dump for specified tasks, to allow
   operator to see which prerequisites have yet to be satisfied.

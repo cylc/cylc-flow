@@ -505,6 +505,7 @@ class task( Pyro.core.ObjBase ):
  
         return summary
 
+
 class contact_task( task ):
     # For tasks that wait on external events such as incoming external
     # data. These are the only tasks that can know if they are are
@@ -596,25 +597,15 @@ class contact_task( task ):
                 self.log( 'DEBUG',  'just caught up' )
                 self.__class__.catchup_mode = False
 
-class oneoff:
 
-    def ready_to_abdicate( self ):
-        # never abdicate (no successor)
-        return False
-
-    def done( self ):
-        if state == 'finished':
-            return True
-        else:
-            return False
-
-class oneoff_task( task, oneoff ):
+class oneoff_task( task ):
     def __init__( self, ref_time, abdicated, initial_state ):
         # initialise task with abdicated = True
         # NOTE THIS IS STRING 'True' not logical True!
         task.__init__( self, ref_time, 'True', initial_state )
 
-class oneoff_contact_task( contact_task, oneoff ):
+
+class oneoff_contact_task( contact_task ):
     def __init__( self, ref_time, abdicated, initial_state, relative_state):
         # initialise contat with abdicated = True
         # NOTE THIS IS STRING 'True' not logical True!
