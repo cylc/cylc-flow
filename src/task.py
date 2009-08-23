@@ -425,7 +425,6 @@ class task( Pyro.core.ObjBase ):
 
         if self.ready_to_abdicate():
             self.abdicated = True
-            self.__class__.last_abdicated_ref_time = self.ref_time
             return True
         else:
             return False
