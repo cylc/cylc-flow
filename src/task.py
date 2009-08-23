@@ -609,10 +609,10 @@ class oneoff:
             return False
 
 class oneoff_task( task, oneoff ):
-    def __init__( self, ref_time, abdicated, initial_state, relative_state):
+    def __init__( self, ref_time, abdicated, initial_state ):
         # initialise task with abdicated = True
         # NOTE THIS IS STRING 'True' not logical True!
-        task.__init__( self, ref_time, 'True', initial_state, relative_state )
+        task.__init__( self, ref_time, 'True', initial_state )
 
 class oneoff_contact_task( contact_task, oneoff ):
     def __init__( self, ref_time, abdicated, initial_state, relative_state):
