@@ -1,54 +1,34 @@
 # THIS IS A cyclon TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
-%NAME
-    # task name, optionally followed by a short name for display by
-    # system monitors
+# [foo] => foo is optional.
 
-    foo, f
+%NAME
+    # task name, and optional short display name
+
+    foo[, f]
 
 %TYPE
     # Type of task:
 
-    #  (a) sequential (e.g. forecast models)
-    #   The next instance may not start until this one is finished,
-    #   UNLESS a special abdication message is received before then
-    #   (see %OUTPUTS below).
+    #  (a) normal[, contact]
+    #  a normal task spawns a successor as soon as its last "restart"
+    #  output is completed, or right away if it has no resetart outputs.
     
-    #  (b) parallel (e.g. non forecat model tasks)
-    #   The next instance can start, other dependencies allowing, as
-    #   soon as this one starts running. 
+    #  (b) oneoff[, contact]
+    #  a oneoff task does not spawn a successor. Can be used to supply
+    #  initial inputs for starting up a system (cold start). See also
+    #  the %STARTUP_PREREQUISITES key below.
 
-    #  (c) oneoff (once instance only, does not spawn a successor)
-    #   Can be used to supply initial inputs for tasks that have
-    #   different input requirements for an initial 'cold start'
-    #   (see %STARTUP_PREREQUISITES below).
-
-    # Tasks that wait on external events, such as incoming external
-    # data, should declare the *contact* attribute here. This is the
-    # only kind of task that "makes contact" with the real time clock.
-    # In real time operation a running contact task will report its
-    # external event related output at an estimated %CONTACT_DELAY_HOURS
-    # (below) after its own reference time (e.g. atmospheric
-    # observations might be ready 3 hours after their nominal validity
-    # time. In catchup operation a contact task will report its external
-    # event related outputs immediately because the external even will
-    # have already occured.
-
-    # Contact tasks that are inherently parallel but have no
-    # prerequisites should be declared as 'sequential, contact',
-    # to prevent them all 'going off at once' out to the system max
-    # runahead time (where they will then just take up space in the job
-    # queue waiting on events that could be some time in the future).
-        
-    # Specify ONE of:
-    
-    sequential
-    parallel
-    oneoff
-    sequential, contact
-    parallel, contact
-    oneoff, contact
+    # Tasks that wait on external events (i.e. they "make contact" with
+    # the external world) such as incoming external data, should declare
+    # the 'contact' attribute. In real time operation a running contact
+    # task will begin reporting its outputs at an estimated
+    # %CONTACT_DELAY_HOURS (below) hours after its own reference time
+    # (e.g. some set of observational data might be ready 3 hours after
+    # its nominal validity time). In catchup operation a contact task
+    # will begin reporting its outputs immediately because the external
+    # event has already occurred.
 
 %CONTACT_DELAY_HOURS
     # For tasks with the 'contact' attribute only (see %TYPE above).
@@ -58,10 +38,9 @@
 
     4.5
 
-%OWNER
-    # what username to run the task as.
-    # defaults to cyclon owner if unspecified.
-    # EcoConnect: user the oper username (e.g. hydrology_oper)
+[%OWNER]
+    # What username the task should run as. Defaults to the owner of the
+    # running cyclon instance.
 
     bob
 
@@ -77,6 +56,14 @@
 
     run-foo.sh
 
+[ %EXPORT ]
+    # specify additional environment variable name value pairs to pass
+    # to the external task (other than $MY_REFERENCE_TIME and $NAME).
+    # May contain $(MY_REFERENCE_TIME) and $(NAME), as for outputs.
+
+    FOO foo
+    BAR bar
+
 %RUN_LENGTH_MINUTES
     # Estimated run length in minutes, used in dummy mode.
     # May be conditional on valid hours, as for %PREREQUISITES.
@@ -88,17 +75,17 @@
 %PREREQUISITES
     # Zero or more prerequisite messages on separate lines
 
-    # These are LITERAL STRINGS, with some from variable substitution:
-    #  1. $(MY_REFERENCE_TIME)
-    #  2. $(MY_REFERENCE_TIME - <hours>)
+    # These are LITERAL STRINGS with some variable substitution:
+    # $(MY_REFERENCE_TIME [+/- <hours>])
 
-    # May be conditional on a comma separated list of %VALID_HOURS
+    # May be conditional on a comma separated list of HOURS
+    # (which must occur in %VALID_HOURS).
 
            foo finished for $(MY_REFERENCE_TIME)
            file bar_$(MY_REFERENCE_TIME)_utc.nc ready
     0,12 | file baz_$(MY_REFERENCE_TIME)_utc.nc ready
 
-%STARTUP_PREQUISITES
+[%STARTUP_PREQUISITES]
     # As for %PREREQUISITES above, but only used once at start time.
     # Can be used in conjunction with a 'oneoff' task (above) if
     # a task has different input requirements for a 'cold start'
@@ -110,15 +97,13 @@
     # prerequisites), prefixed by the approximate time in minutes that
     # the output is completed (the time is used in dummy mode).
 
-    # These are LITERAL STRINGS, with some from variable substitution:
-    #  1. $(NAME) 
-    #  2. $(MY_REFERENCE_TIME)
-    #  3. $(MY_REFERENCE_TIME - <hours>)
+    # These are LITERAL STRINGS with some variable substitution:
+    # $(MY_REFERENCE_TIME [+/- <hours>])
 
-    # Do not add task 'started' and 'finished' messages, these are
-    # generated automatically according to the estimated run length:
-    #   0: $(NAME) started for $(MY_REFERENCE_TIME)
-    #   <%RUN_LENGTH_MINUTES>: $(NAME) finished for $(MY_REFERENCE_TIME)
+    # DO NOT REGISTER TASK 'started' AND 'finished' MESSAGES.
+    # These are generated automatically: 
+    #                       0: <NAME> started
+    #   <%RUN_LENGTH_MINUTES>: <NAME> finished
     # Other tasks may depend on these automatically supplied outputs.
 
     # May be conditional on %VALID_HOURS as for prerequisites.
@@ -126,35 +111,9 @@
            10: file foo_0_$(MY_REFERENCE_TIME).nc ready
     0,12 | 15: file foo_1_$(MY_REFERENCE_TIME).nc ready
     6,18 | 15: file foo_2_$(MY_REFERENCE_TIME).nc ready
+           20: <NAME> restart files ready for $(MY_REFERENCE_TIME+6)
 
-    # Optional early abdication for sequential tasks: these can abdicate
-    # before they are finished if the following special message can be
-    # sent when the restart files (or similar) for the next forecast
-    # have been completed: 
-
-    30: $(NAME) ready to abdicate for $(MY_REFERENCE_TIME)
-
-%CUTOFF_REFERENCE_TIME
-    # Defaults to: $(MY_REFERENCE_TIME)
-
-    # The reference time beyond which older finished tasks can be
-    # deleted as far as this task is concerned (tasks in later reference
-    # times could still be needed to satisfy the prerequisites of this
-    # task). Set this for tasks that depend on outputs from a previous
-    # reference time. The system cutoff time (the reference time beyond
-    # which old finished tasks can be deleted) is the oldest cutoff time
-    # declared by any task in the system.
-
-    $(MY_REFERENCE_TIME - 6)
-
-    # May be conditional on hour:
-
-    0,12 | $(MY_REFERENCE_TIME - 6)
-    6,18 | $(MY_REFERENCE_TIME - 12)
-    
-
-%COTEMPORAL_DEPENDANTS_ONLY 
-    # This key is optional and defaults to False.  
+[%COTEMPORAL_DEPENDANTS_ONLY] 
     # NOTE SPELLING: 'dependAnts' not 'dependEnts'!
 
     # If you set this to True for tasks that are known to have only
@@ -162,21 +121,9 @@
     # be deleted as soon as they are finished AND there are no other
     # tasks yet to be finished at their reference time or earlier.
 
-    # It is not necessary to use this if no tasks in the system declare
-    # a cutoff (i.e. if all tasks have only cotemporal dependants)
-    # because the default cutoff for a task is its own reference time. 
-
     # DO NOT SET THIS 'True' FOR TASKS THAT HAVE DOWNSTREAM DEPENDANTS
-    # IN OTHER FORECAST CYCLES. These will be deleted, when finished,
-    # only when they reach the system cutoff time. 
+    # IN OTHER FORECAST CYCLES.
+
+    # default: False.  
 
     True
-
-%EXPORT
-    # THIS KEY IS OPTIONAL
-    # specify additional environment variable name value pairs to pass
-    # to the external task (other than $MY_REFERENCE_TIME and $NAME).
-    # May contain $(MY_REFERENCE_TIME) and $(NAME), as for outputs.
-
-    FOO foo
-    BAR bar

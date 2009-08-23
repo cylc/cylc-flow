@@ -9,6 +9,9 @@ To Do
 * disable deletion of lame tasks now that we have proper startup
   capability
 
+* lame tasks can be detected beyond the oldest running task, not just in
+  the last ref time batch
+
 * remote controlled prerequisite dump for specified tasks, to allow
   operator to see which prerequisites have yet to be satisfied.
 

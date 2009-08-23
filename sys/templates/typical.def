@@ -2,10 +2,10 @@
 # See full_template.def for documented entries
 
 %NAME
-    typical_task, typ
+    typical, typ
 
 %TYPE
-    sequential
+    normal
 
 %OWNER
     bob 
@@ -14,13 +14,13 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    run-typical_task.sh
+    run-typical.sh
 
 %PREREQUISITES
-    file met_$(MY_REFERENCE_TIME)_utc.nc ready
+    file foo_$(MY_REFERENCE_TIME).nc ready
 
 %RUN_LENGTH
     20 
 
 %OUTPUTS
-    18: file typical_task-foo_$(MY_REFERENCE_TIME).nc ready
+    18: file bar_$(MY_REFERENCE_TIME).nc ready
