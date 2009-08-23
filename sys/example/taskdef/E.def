@@ -25,5 +25,5 @@
 %OUTPUTS
     # Defaults only
 
-%COTEMPORAL_DEPENDANTS_ONLY
-    True
+#%COTEMPORAL_DEPENDANTS_ONLY
+#    True

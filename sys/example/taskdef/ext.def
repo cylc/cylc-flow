@@ -2,7 +2,7 @@
 # See full_template.def for documented entries
 
 %NAME
-    Z
+    ext
 
 %TYPE
     normal, contact
@@ -17,7 +17,7 @@
     task-wrapper
 
 %EXPORT
-    WRAP Z.sh
+    WRAP ext.sh
 
 %PREREQUISITES
     # None
@@ -28,5 +28,5 @@
 %OUTPUTS
     9: external data ready for $(MY_REFERENCE_TIME)
 
-%COTEMPORAL_DEPENDANTS_ONLY
-    True
+#%COTEMPORAL_DEPENDANTS_ONLY
+#    True

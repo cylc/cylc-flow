@@ -20,9 +20,6 @@
     external data ready for $(MY_REFERENCE_TIME)
     A restart files ready for $(MY_REFERENCE_TIME)
 
-%STARTUP_PREREQUISITES
-    external data ready for $(MY_REFERENCE_TIME)
-
 %RUN_LENGTH_MINUTES
     90
 

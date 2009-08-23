@@ -33,7 +33,8 @@ config[ 'max_runahead_hours' ] = 18
 
 config[ 'task_list' ] = \
         [
-        'Z',
+        'cold',
+        'ext',
         'A',
         'B',
         'C',
