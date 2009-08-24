@@ -440,9 +440,16 @@ class task( Pyro.core.ObjBase ):
 
     def ready_to_abdicate( self ):
 
+        if self.has_abdicated():
+            return False
+
+        if self.state == 'finished':
+            # always abdicate a finished task
+            return True
+
         ready = False
 
-        # PID = Previous Instance Dependence
+        # below, PID = Previous Instance Dependence
 
         if not self.outputs.previous_instance_dependence:
             # Tasks with no PID can in principle abdicate immediately,
@@ -482,11 +489,7 @@ class task( Pyro.core.ObjBase ):
             # (which we want to happen ONLY if the previous task fails
             # and is killed by the system operator).
 
-            if self.state == 'finished':
-                # always abdicate a finished PID task
-                ready = True
-
-            elif self.state == 'running' or self.state == 'failed': 
+            if self.state == 'running' or self.state == 'failed': 
                 # (failed PID tasks are running before they fail, so will
                 # already have abdicated or not, according to whether they
                 # fail before or after the PID outputs).
