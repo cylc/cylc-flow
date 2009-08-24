@@ -1,5 +1,8 @@
 To Do
 
+* contact tasks need not start *running* until their time is up
+  (after doing this see if task.ready_to_abdicate can be simplified). 
+
 * re slipping back into catchup mode with TopNet:  We were caught up and
   have apparently slipped back a bit. reverting to catching up mode will
   suddenly reduce topnet's cutoff time and may result in deletion of a

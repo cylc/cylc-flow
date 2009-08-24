@@ -440,41 +440,69 @@ class task( Pyro.core.ObjBase ):
 
     def ready_to_abdicate( self ):
 
+        ready = False
+
+        # PID = Previous Instance Dependence
+
         if not self.outputs.previous_instance_dependence:
-            # tasks with no PID (previous instance dependence) can
-            # be abdicated at any time. 
-            return True
+            # Tasks with no PID can in principle abdicate immediately,
+            # but this creates waiting tasks out to the max runahead,
+            # which clutters up monitor views and carries some task
+            # processing overhead.
+            
+            # Waiting until they are running prevents excess waiting
+            # tasks without preventing instances from running in
+            # parallel if the opportunity arises.
+            
+            # BUT this does mean that a failed or lame task's successor
+            # won't exist until the system operator abdicates and kills
+            # the offender.
 
-        elif self.state == 'waiting':
-            # never abdicate a waiting PID task 
-            # (1) by definition, its successor has to wait on it running
-            # (2) if the successor is created before then, it could get
-            #     satisfied by later restart outputs of an earlier task
-            #     (which we want to happen ONLY if the previous one
-            #     fails).
-            return False
+            # Also, tasks with no PID and  NO PREREQUISITES need to be
+            # constrained to run in sequence so that they don't all "go
+            # off at once". These are normally contact tasks that get
+            # external data, and they return quickly if the data exists
+            # already, or else just wait, so running them all at once is
+            # of no particular advantage.
+            
+            if self.prerequisites.count() == 0:
+                if self.state == 'finished':
+                    ready = True
 
-        elif self.state == 'finished':
-            # always abdicate a finished PID task
-            return True
+            elif self.state == 'running':
+                ready = True
 
-        else: 
-            # running (and failed) PID tasks
-            # (failed PID tasks are running before they fail, so will
-            # already have abdicated or not, according to whether they
-            # fail before or after the PID outputs).
+        else:
+            # PID tasks
 
-            # ready only if all prev inst outputs are completed
-            # (otherwise my successor's successor could trigger
-            # off me, and so on).
+            # Never abdicate a waiting PID task because (i) its
+            # successor has to wait for it to finish, by definition, and
+            # (ii) if the successor exists before then it could get
+            # satisfied by later restart outputs of an earlier task
+            # (which we want to happen ONLY if the previous task fails
+            # and is killed by the system operator).
 
-            result = True
-            for message in self.outputs.satisfied.keys():
-                if re.search( 'restart files ready', message ) and not self.outputs.satisfied[ message ]:
-                    result = False
-                    break
+            if self.state == 'finished':
+                # always abdicate a finished PID task
+                ready = True
 
-            return result
+            elif self.state == 'running' or self.state == 'failed': 
+                # (failed PID tasks are running before they fail, so will
+                # already have abdicated or not, according to whether they
+                # fail before or after the PID outputs).
+
+                # ready only if all prev inst outputs are completed
+                # (otherwise my successor's successor could trigger
+                # off me, and so on).
+
+                ready = True
+                for message in self.outputs.satisfied.keys():
+                    if re.search( 'restart files ready', message ) and \
+                            not self.outputs.satisfied[ message ]:
+                        ready = False
+                        break
+
+        return ready
 
 
     def done( self ):
