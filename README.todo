@@ -3,6 +3,14 @@ To Do
 * contact tasks need not start *running* until their time is up
   (after doing this see if task.ready_to_abdicate can be simplified). 
 
+* allow mixed fuzzy and non-fuzzy prerequisites (currently have to 
+  set identical fuzzy bounds to simulate the non-fuzzy case; see
+  topnet.py).
+
+* the same user can't currently run multiple cyclon instances in dummy
+  mode, because the 'pkill dummy-task.py' on shutdown will kill all of
+  his dummy tasks.
+
 * re slipping back into catchup mode with TopNet:  We were caught up and
   have apparently slipped back a bit. reverting to catching up mode will
   suddenly reduce topnet's cutoff time and may result in deletion of a
