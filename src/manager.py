@@ -167,7 +167,7 @@ class manager:
             self.broker.register( itask.identity, itask.outputs )
 
         # for debugging;            
-        #self.broker.dump()
+        # self.broker.dump()
 
         for itask in self.tasks:
             # get the broker to satisfy tasks prerequisites
@@ -305,14 +305,15 @@ class manager:
 
 
     def kill_spent_tasks( self ):
-        # Delete tasks that are no longer needed to satisfy the
-        # prerequisites of any other tasks, or to spawn a successor: 
+        # Delete tasks that have spawned a successor and are no longer
+        # needed to satisfy the prerequisites of any other task.
         
         # i.e. done (finished AND abdicated for normal tasks; finished for
         # oneoff tasks) AND, if quick_death is False, older than system
         # cutoff time.
 
-        # system cutoff is the oldest "most recently finished" time 
+        # system cutoff: we need to keep at least one finished task of
+        # each type beyond the oldest unsatisfied task. 
         #--
 
         # list of tasks that are "done"
@@ -321,6 +322,7 @@ class manager:
         oldest_unsat_ref_time = None
         all_tasks_satisfied = True
         cutoff = None
+        batch = {}
 
         for itask in self.tasks:
 
@@ -334,15 +336,37 @@ class manager:
                 elif int( itask.ref_time ) < int( oldest_unsat_ref_time ):
                     oldest_unsat_ref_time = itask.ref_time
 
-            if not cutoff:
-                cutoff = itask.__class__.cutoff_time
-            else:
-                if int( itask.__class__.cutoff_time ) < int( cutoff) :
-                    cutoff = itask.__class__.cutoff_time 
+                rt = itask.ref_time
+                name = itask.name
+                if rt not in batch.keys():
+                    batch[ rt ] = [ name ]
+                else:
+                    if name not in batch[ rt ]:
+                        batch[ rt ].append( name )
 
         if oldest_unsat_ref_time:
             self.log.debug( "oldest unsatisfied: " + oldest_unsat_ref_time )
 
+        reftimes = batch.keys()
+        reftimes.sort()
+        seen = {}
+        for rt in reftimes:
+            if int( rt ) >= int( oldest_unsat_ref_time ):
+                continue
+            
+            for name in batch[ rt ]:
+                seen[ name ] = True
+            
+            seen_all = True
+            for itask in self.tasks:
+                if itask.name not in seen.keys():
+                    seen_all = False
+                    break
+
+            if seen_all:
+                cutoff = rt
+                break
+             
         if cutoff:
             self.log.debug( "task deletion cutoff is " + cutoff )
 
