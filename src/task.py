@@ -634,6 +634,10 @@ class oneoff_task( task ):
         # NOTE THIS IS STRING 'True' not logical True!
         task.__init__( self, ref_time, 'True', initial_state )
 
+    def incoming( self, priority, message ):
+        task.incoming( self, priority, message)
+        if self.state == 'finished':
+            self.__class__.cutoff_time = None
 
 class oneoff_contact_task( contact_task ):
     def __init__( self, ref_time, abdicated, initial_state, relative_state):
