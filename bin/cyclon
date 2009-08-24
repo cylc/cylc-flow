@@ -136,7 +136,7 @@ def main( argv ):
 
             god.kill_spent_tasks()
 
-            god.kill_lame_tasks()
+            #god.kill_lame_tasks()
 
             go_ahead = False
             if remote_control.go_psycho:

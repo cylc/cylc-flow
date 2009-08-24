@@ -9,8 +9,7 @@ To Do
   finished nzlam task that is still needed to satisfy topnet prereqs.
   => FIX TOPNET'S CUTOFF VARIABLE ONCE CAUGHT UP?
 
-* disable deletion of lame tasks now that we have proper startup
-  capability
+* allow automatic deletion of lame tasks by remote request? 
 
 * lame tasks can be detected beyond the oldest running task, not just in
   the last ref time batch
