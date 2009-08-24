@@ -4,6 +4,7 @@ import reference_time
 import pimp_my_logger
 import requisites
 import logging
+import pdb
 import os
 import re
 
@@ -316,8 +317,7 @@ class manager:
         # each type beyond the oldest unsatisfied task. 
         #--
 
-        # list of tasks that are "done"
-        tasks_done = []
+        done = []
         
         oldest_unsat_ref_time = None
         all_tasks_satisfied = True
@@ -327,15 +327,7 @@ class manager:
         for itask in self.tasks:
 
             if itask.done():
-                tasks_done.append( itask )
-
-            if not itask.prerequisites.all_satisfied():
-                all_tasks_satisfied = False
-                if not oldest_unsat_ref_time:
-                    oldest_unsat_ref_time = itask.ref_time
-                elif int( itask.ref_time ) < int( oldest_unsat_ref_time ):
-                    oldest_unsat_ref_time = itask.ref_time
-
+                done.append( itask )
                 rt = itask.ref_time
                 name = itask.name
                 if rt not in batch.keys():
@@ -344,13 +336,24 @@ class manager:
                     if name not in batch[ rt ]:
                         batch[ rt ].append( name )
 
+            if not itask.prerequisites.all_satisfied():
+                all_tasks_satisfied = False
+                if not oldest_unsat_ref_time:
+                    oldest_unsat_ref_time = itask.ref_time
+                elif int( itask.ref_time ) < int( oldest_unsat_ref_time ):
+                    oldest_unsat_ref_time = itask.ref_time
+
         if oldest_unsat_ref_time:
             self.log.debug( "oldest unsatisfied: " + oldest_unsat_ref_time )
 
         reftimes = batch.keys()
         reftimes.sort()
         seen = {}
+
         for rt in reftimes:
+            if not oldest_unsat_ref_time:
+                continue
+
             if int( rt ) >= int( oldest_unsat_ref_time ):
                 continue
             
@@ -359,6 +362,8 @@ class manager:
             
             seen_all = True
             for itask in self.tasks:
+                if itask.quick_death:
+                    continue
                 if itask.name not in seen.keys():
                     seen_all = False
                     break
@@ -372,7 +377,7 @@ class manager:
 
         # list of tasks to delete
         spent_tasks = []
-        for itask in tasks_done:
+        for itask in done:
             if itask.quick_death: 
                 # case [i] tasks to delete
                 if all_tasks_satisfied or int( itask.ref_time ) < int( oldest_unsat_ref_time ):
