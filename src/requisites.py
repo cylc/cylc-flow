@@ -142,6 +142,20 @@ class fuzzy_prerequisites( prerequisites ):
 
     # requires more complex satisfy_me() and will_satisfy_me() methods.
 
+    def add( self, message ):
+
+        # check for fuzziness before pass on to the base class method
+
+        # extract fuzzy reference time bounds from my prerequisite
+        m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( message )
+        if not m:
+            log = logging.getLogger( "main." + self.task_name )            
+            log.critical( '[' + self.ref_time + '] No fuzzy bounds MIN:MAX detected:' )
+            log.critical( '[' + self.ref_time + '] -> ' + message )
+            sys.exit(1)
+
+        prerequisites.add( self, message )
+
     def sharpen_up( self, fuzzy, sharp ):
         # replace a fuzzy prerequisite with the actual output message
         # that satisfied it, and set it satisfied. This allows the task
@@ -159,9 +173,10 @@ class fuzzy_prerequisites( prerequisites ):
 
                 # extract fuzzy reference time bounds from my prerequisite
                 m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
-                if not m:
-                    #log.critical( "FAILED TO MATCH MIN:MAX IN " + prereq )
-                    sys.exit(1)
+                #if not m:
+                #NOT NEEDED: CHECKING IN ADD() NOW, ABOVE
+                #    log.critical( '[' + self.ref_time + '] FAILED TO MATCH MIN:MAX IN ' + prereq )
+                #    sys.exit(1)
 
                 [ my_start, my_minmax, my_end ] = m.groups()
                 [ my_min, my_max ] = my_minmax.split(':')
