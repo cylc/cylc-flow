@@ -34,9 +34,6 @@ class dummy_task:
         times = outputs.keys()
         times.sort()
 
-        # task-specific delay
-        self.delay()
-
         # time to stop counting and generate the output
         # [ 0, 28, 30 ] dummy minutes
         prev_time = times[0]
@@ -59,29 +56,6 @@ class dummy_task:
 
             prev_time = time
             
-    def delay( self ):
-
-        real_time_delay = self.task.get_real_time_delay()
-        if real_time_delay == None:
-            # not a contact task
-            return
-
-        rt = reference_time._rt_to_dt( self.ref_time )
-        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,real_time_delay,0 ) 
-        current_time = self.clock.get_datetime()
-
-        if current_time >= delayed_start:
-            # already past the delayed start time
-            self.task.incoming( 'NORMAL', 'CATCHINGUP: external event already occurred' )
-        else:
-            # sleep until the delayed start time
-            self.task.incoming( 'NORMAL', 'CAUGHTUP: waiting on external event' )
-            diff_dummy = delayed_start - current_time
-            # timedeltas are stored as days, seconds, milliseconds.
-            diff_dummy_secs = diff_dummy.days * 24 * 3600 + diff_dummy.seconds
-            diff_real_secs = diff_dummy_secs * dummy_clock_rate / 3600.0
-            sleep( diff_real_secs )
-
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':

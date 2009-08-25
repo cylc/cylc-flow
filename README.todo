@@ -7,10 +7,6 @@ To Do
 * oneoff tasks need special treatment in manager.kill_spent_tasks() if 
   they do not have quick_death = True.
 
-* contact tasks need not start *running* until their time is up
-  (after doing this see if task.ready_to_abdicate can be simplified). 
-  CHECK THAT all real_time_delay is still needed after this.
-
 * allow mixed fuzzy and non-fuzzy prerequisites (currently have to 
   set identical fuzzy bounds to simulate the non-fuzzy case; see
   topnet.py).

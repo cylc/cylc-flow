@@ -589,52 +589,43 @@ class contact_task( task ):
 
 
     def run_if_ready( self, launcher, dummy_clock ):
-        # only run if my contact delay time is up (otherwise I'll take
-        # up queue space waiting on my external event).
+        # run if ready *and* the contact delay time is up (there's no
+        # point in running earlier as the task will just sit in the
+        # queue waiting on the external event).
 
-        rt = reference_time._rt_to_dt( self.ref_time )
-        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
-        if not dummy_clock:
-            current_time = datetime.datetime.now()
-        else:
-            current_time = dummy_clock.get_datetime()
+        if self.state == 'waiting' and self.prerequisites.all_satisfied():
 
-        if current_time >= delayed_start:
-            #self.task.incoming( 'DEBUG', 'CATCHINGUP: external event already occurred' )
-            task.run_if_ready( self, launcher, dummy_clock )
-
-        else:
-            # keep waiting 
-            #self.task.incoming( 'DEBUG', 'CAUGHTUP: waiting on external event' )
-            pass
-
-
-    def incoming( self, priority, message ):
-
-        # pass on to the base class message handling function
-        task.incoming( self, priority, message)
-        
-        # but intercept messages to do with catchup mode
-        catchup_re  = re.compile( "^CATCHINGUP:" )
-        uptodate_re = re.compile( "^CAUGHTUP:" )
-
-        if catchup_re.match( message ):
-            # message says we're catching up to real time
-            if not self.__class__.catchup_mode:
-                self.log( 'DEBUG',  'falling behind the pace a bit here' )
+            # check current time against expected start time
+            rt = reference_time._rt_to_dt( self.ref_time )
+            delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
+            if not dummy_clock:
+                current_time = datetime.datetime.now()
             else:
-                # We were already catching up; no change.
-                pass
+                current_time = dummy_clock.get_datetime()
 
-        elif uptodate_re.match( message ):
-            # message says we've caught up to real time
-            if not self.__class__.catchup_mode:
-                # were already caught up; no change
-                pass
+            if current_time >= delayed_start:
+                # time to run the task
+
+                self.log( 'DEBUG', 'delayed start time has already passed' )
+                if self.__class__.catchup_mode:
+                    # already catching up
+                    pass
+                else:
+                    # don't reset catchup_mode once catchup has occurred.
+                    self.log( 'DEBUG',  'falling behind' )
+
+                # run the external task
+                self.run_external_task( launcher )
+
             else:
-                # we have just caught up
-                self.log( 'DEBUG',  'just caught up' )
-                self.__class__.catchup_mode = False
+                # not yet time to run the task
+                
+                if self.__class__.catchup_mode:
+                    self.log( 'DEBUG',  'just caught up' )
+                    self.__class__.catchup_mode = False
+                else:
+                    # keep waiting 
+                    pass
 
 class sequential_task( task ):
     # force tasks of this type to run in sequence  
