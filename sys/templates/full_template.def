@@ -14,6 +14,12 @@
     #  (a) normal[, contact]
     #  a normal task spawns a successor as soon as its last "restart"
     #  output is completed, or right away if it has no resetart outputs.
+
+    # (b) sequential[, contact]
+    #  a sequential task only spawns a successor when it is finished.
+    #  This is only needed for tasks that should in principle be able to
+    #  overlap with their previous instance, but can't because their
+    #  external task is poorly designed.
     
     #  (b) oneoff[, contact]
     #  a oneoff task does not spawn a successor. Can be used to supply

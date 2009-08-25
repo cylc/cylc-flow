@@ -100,7 +100,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import task, contact_task, oneoff_task, oneoff_contact_task
+from task import task, contact_task, oneoff_task, oneoff_contact_task, sequential_task, sequential_contact_task
 
 import user_config            
 import execution
@@ -188,8 +188,15 @@ import logging
                 contact = True
                 parent_class = 'oneoff_contact_task'
 
+            elif re.match( 'sequential,\s*contact', type ):
+                contact = True
+                parent_class = 'sequential_contact_task'
+
             elif type == 'normal':
                 parent_class = 'task'
+
+            elif type == 'sequential':
+                parent_class = 'sequential_task'
 
             elif type == 'oneoff':
                 parent_class = 'oneoff_task'

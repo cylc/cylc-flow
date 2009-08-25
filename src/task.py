@@ -627,6 +627,21 @@ class contact_task( task ):
                 self.log( 'DEBUG',  'just caught up' )
                 self.__class__.catchup_mode = False
 
+class sequential_task( task ):
+    # force tasks of this type to run in sequence  
+    def ready_to_abdicate( self ):
+
+        if self.has_abdicated():
+            return False
+
+        if self.state == 'finished':
+            # only abdicate if finished
+            return True
+        else:
+            return False
+
+class sequential_contact_task( sequential_task ):
+    pass
 
 class oneoff_task( task ):
     def __init__( self, ref_time, abdicated, initial_state ):
