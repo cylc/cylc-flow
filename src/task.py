@@ -4,6 +4,7 @@ import reference_time
 from time import sleep
 
 import os, sys, re
+import datetime
 from copy import deepcopy
 from time import strftime
 import Pyro.core
@@ -234,13 +235,13 @@ class task( Pyro.core.ObjBase ):
         return reference_time.decrement( rt, decrement )
 
 
-    def run_if_ready( self, launcher ):
+    def run_if_ready( self, launcher, dummy_clock ):
         # run if I am 'waiting' AND my prequisites are satisfied
         if self.state == 'waiting' and self.prerequisites.all_satisfied(): 
             self.run_external_task( launcher )
 
     def run_external_task( self, launcher, extra_vars = [] ):
-        self.log( 'DEBUG',  'launching extnernal task' )
+        self.log( 'DEBUG',  'launching external task' )
         launcher.run( self.owner, self.name, self.ref_time, self.external_task, extra_vars )
         self.state = 'running'
 
@@ -566,7 +567,6 @@ class contact_task( task ):
 
 
     def get_real_time_delay( self ):
-
         return self.real_time_delay
 
 
@@ -586,6 +586,27 @@ class contact_task( task ):
         summary = task.get_state_summary( self )
         summary[ 'catching_up' ] = self.__class__.catchup_mode
         return summary
+
+
+    def run_if_ready( self, launcher, dummy_clock ):
+        # only run if my contact delay time is up (otherwise I'll take
+        # up queue space waiting on my external event).
+
+        rt = reference_time._rt_to_dt( self.ref_time )
+        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
+        if not dummy_clock:
+            current_time = datetime.datetime.now()
+        else:
+            current_time = dummy_clock.get_datetime()
+
+        if current_time >= delayed_start:
+            #self.task.incoming( 'DEBUG', 'CATCHINGUP: external event already occurred' )
+            task.run_if_ready( self, launcher, dummy_clock )
+
+        else:
+            # keep waiting 
+            #self.task.incoming( 'DEBUG', 'CAUGHTUP: waiting on external event' )
+            pass
 
 
     def incoming( self, priority, message ):

@@ -49,7 +49,7 @@ def main( argv ):
 
     print "__________________________________________________________"
     print
-    print "      .       cyclon Dynamic Metascheduler       ."
+    print "      .       cyclon Dynamic Metascheduler        ."
     print "              version: " + cyclon_version
     print "      .         Hilary Oliver, NIWA, 2008         ."
     print "              See repository documentation"
@@ -132,7 +132,7 @@ def main( argv ):
 
             god.negotiate_dependencies()
 
-            god.run_tasks( launcher )
+            god.run_tasks( launcher, dummy_clock )
 
             god.kill_spent_tasks()
 

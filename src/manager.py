@@ -174,7 +174,7 @@ class manager:
             # get the broker to satisfy tasks prerequisites
             self.broker.negotiate( itask.prerequisites )
 
-    def run_tasks( self, launcher ):
+    def run_tasks( self, launcher, dummy_clock ):
         # tell each task to run if it is ready
         # unless the system is on hold
         #--
@@ -182,7 +182,7 @@ class manager:
             return
 
         for itask in self.tasks:
-                itask.run_if_ready( launcher )
+                itask.run_if_ready( launcher, dummy_clock )
 
     def regenerate_tasks( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
