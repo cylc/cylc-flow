@@ -12,17 +12,18 @@
     # Type of task:
 
     #  (a) normal[, contact]
-    #  a normal task spawns a successor as soon as its last "restart"
+    #  A normal task spawns a successor as soon as its last "restart"
     #  output is completed, or right away if it has no resetart outputs.
 
     # (b) sequential[, contact]
-    #  a sequential task only spawns a successor when it is finished.
-    #  This is only needed for tasks that should in principle be able to
-    #  overlap with their previous instance, but can't because their
-    #  external task is poorly designed.
+    #  A sequential task only spawns a successor when it is finished.
+    #  Can be used to force tasks to run sequentially without using
+    #  artifical prerequisites, in cases where prerequisites naturally
+    #  allow successive instances to overlap but the actual external
+    #  tasks cannot be allowed to overlap for some reason.
     
     #  (b) oneoff[, contact]
-    #  a oneoff task does not spawn a successor. Can be used to supply
+    #  A oneoff task does not spawn a successor. Can be used to supply
     #  initial inputs for starting up a system (cold start). See also
     #  the %STARTUP_PREREQUISITES key below.
 

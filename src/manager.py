@@ -306,28 +306,62 @@ class manager:
 
 
     def kill_spent_tasks( self ):
-        # Delete tasks that have spawned a successor and are no longer
-        # needed to satisfy the prerequisites of any other task.
+        # Delete tasks that are no longer needed, 
+        # i.e. tasks that:
         
-        # i.e. done (finished AND abdicated for normal tasks; finished for
-        # oneoff tasks) AND, if quick_death is False, older than system
-        # cutoff time.
+        # 1/ have finished and abdicated, 
+        #  AND
+        # 2/ are no longer needed to satisfy prerequisites.
 
-        # system cutoff: we need to keep at least one finished task of
-        # each type beyond the oldest unsatisfied task. 
+        # Tasks with 'quick_death = True' are relatively easy. By
+        # definition they have only cotemporal downstream dependents, so
+        # they are no longer needed to satisfy prerequisites once all
+        # their cotemporal peers have finished. The only complication is
+        # that new cotemporal peers can appear, in principle, so long as
+        # there are unabdicated tasks with earlier reference times.
+        # Therefore, finished-and-abdicated quick death tasks can be
+        # deleted IF there are no earlier unabdicated tasks AND all
+        # their cotemporal peers are finished.
+
+        # For the general case we can compute a generic 'system cutoff'
+        # reference time that does not violate requirement 2 as follows:
+
+        # No finished-and-abdicated task that is later than the earliest
+        # unsatisfied task can be deleted yet because it may still be
+        # needed to satisfy new tasks that may appear when earlier (but
+        # currently unsatisfied) tasks abdicate. Therefore only
+        # finished-and-abdicated tasks that are earlier than the
+        # earliest unsatisfied task are candidates for deletion. Of
+        # these, we need to keep one finished task of each type (i.e.
+        # all possible "satisfiers"). TO DO: EXPLAIN WHY NO EARLIER TASK
+        # COULD BE DEPENDED UPON?
         #--
 
+        # list of candidates for deletion 
+        # (done => finished and abdicated)
         done = []
-        
-        oldest_unsat_ref_time = None
-        all_tasks_satisfied = True
-        cutoff = None
+        # list of tasks to actually delete 
+        spent = []
+
+        all_abdicated = None
+        # ref time of earliest unabdicated task
+        earliest_unabdicated = None
+
+        all_satisfied = True
+        # ref time of earliest unsatisfied task
+        earliest_unsatisfied = None
+
+        # done task names in ref time batches
         batch = {}
 
         for itask in self.tasks:
+            # loop through all tasks
 
             if itask.done():
+                # this task is a candidate for deletion
                 done.append( itask )
+
+                # compile batched names of done tasks
                 rt = itask.ref_time
                 name = itask.name
                 if rt not in batch.keys():
@@ -336,32 +370,43 @@ class manager:
                     if name not in batch[ rt ]:
                         batch[ rt ].append( name )
 
+            if not itask.abdicated:
+                # is this the earliest unabdicated so far? 
+                all_abdicated = False
+                if not earliest_unabdicated:
+                    earliest_unabdicated = itask.ref_time
+                elif int( itask.ref_time ) < int( earliest_unabdicated ):
+                    earliest_unabdicated = itask.ref_time
+
             if not itask.prerequisites.all_satisfied():
-                all_tasks_satisfied = False
-                if not oldest_unsat_ref_time:
-                    oldest_unsat_ref_time = itask.ref_time
-                elif int( itask.ref_time ) < int( oldest_unsat_ref_time ):
-                    oldest_unsat_ref_time = itask.ref_time
+                # is this the earliest unsatisfied so far? 
+                all_satisfied = False
+                if not earliest_unsatisfied:
+                    earliest_unsatisfied = itask.ref_time
+                elif int( itask.ref_time ) < int( earliest_unsatisfied ):
+                    earliest_unsatisfied = itask.ref_time
 
-        if oldest_unsat_ref_time:
-            self.log.debug( "oldest unsatisfied: " + oldest_unsat_ref_time )
-
-        reftimes = batch.keys()
-        reftimes.sort()
         seen = {}
-
+        cutoff = None
+        # get a descending list of done task ref times
+        reftimes = batch.keys()
+        reftimes.sort( key = int, reverse = True )
+        
         for rt in reftimes:
-            if not oldest_unsat_ref_time:
-                continue
+            # loop through all ref times of done tasks
 
-            if int( rt ) >= int( oldest_unsat_ref_time ):
+            if int( rt ) >= int( earliest_unsatisfied ):
+                # can't delete any past the earliest unsatisfied
                 continue
             
+            # now we're earlier than the earliest unsatisfied task
+            # so continue until we've found a done instance of each task
             for name in batch[ rt ]:
                 seen[ name ] = True
             
             seen_all = True
             for itask in self.tasks:
+                # check if any task type has not been seen yet
                 if itask.quick_death:
                     continue
                 if itask.name not in seen.keys():
@@ -369,33 +414,35 @@ class manager:
                     break
 
             if seen_all:
+                # here's the cutoff
                 cutoff = rt
                 break
              
         if cutoff:
-            self.log.debug( "task deletion cutoff is " + cutoff )
+            self.log.debug( "spent task cutoff: " + cutoff )
 
-        # list of tasks to delete
-        spent_tasks = []
+        # now compile the list of tasks to delete
         for itask in done:
+            # loop through all candidates for deletion
+
             if itask.quick_death: 
-                # case [i] tasks to delete
-                if all_tasks_satisfied or int( itask.ref_time ) < int( oldest_unsat_ref_time ):
-                    spent_tasks.append( itask )
+                # quick death tasks
+                if all_abdicated or int( itask.ref_time ) < int( earliest_unabdicated ):
+                    spent.append( itask )
             else:
-                # case [ii] tasks to delete
+                # general case
                 if cutoff:
                     if int( itask.ref_time ) < int( cutoff ):
-                        spent_tasks.append( itask )
+                        spent.append( itask )
 
-        # delete spent tasks
-        for itask in spent_tasks:
+        # now delete the spent tasks
+        for itask in spent:
             self.tasks.remove( itask )
             self.pyro.disconnect( itask )
             itask.log( 'NORMAL', "disconnected (spent)" )
             itask.prepare_for_death()
 
-        del spent_tasks
+        del spent
 
     def insert_task( self, task_id, dummy_clock ):
         # insert a new task in a waiting state

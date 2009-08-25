@@ -66,12 +66,6 @@ class task( Pyro.core.ObjBase ):
     # which case they will be removed according to system cutoff time.
     quick_death = True
 
-    # cutoff time, a class variable, is the time beyond which
-    # finished-and-abdicated instances of a particular task type can be
-    # deleted.  Set initially to the ref time of the first instance,
-    # then to that of the most recently finished task.
-    cutoff_time = None
- 
     def __init__( self, ref_time, abdicated, initial_state ):
         # Call this AFTER derived class initialisation
         # (which alters requisites based on initial state)
@@ -97,9 +91,6 @@ class task( Pyro.core.ObjBase ):
         # it finds in the state dump file.
 
         self.__class__.instance_count += 1
-
-        if not self.__class__.cutoff_time:
-            self.__class__.cutoff_time = self.ref_time
 
         Pyro.core.ObjBase.__init__(self)
 
@@ -360,7 +351,6 @@ class task( Pyro.core.ObjBase ):
                 # SET TASK FINISHED INDICATOR IF ALL OUTPUTS NOW SATISFIED
                 if self.outputs.all_satisfied():
                     self.set_finished()
-                    self.__class__.cutoff_time = self.ref_time
         else:
             # log unregistered messages
             message = '*' + message
@@ -509,8 +499,7 @@ class task( Pyro.core.ObjBase ):
 
 
     def done( self ):
-        # return True if task has finished its active work
-        # i.e. has (i) finished and (ii) abdicated
+        # return True if task has finished and abdicated
         if self.state == "finished" and self.abdicated:
             return True
         else:
@@ -535,9 +524,8 @@ class task( Pyro.core.ObjBase ):
  
         return summary
 
-
 class contact_task( task ):
-    # For tasks that wait on external events such as incoming external
+    # A task that waits on external events such as incoming external
     # data. These are the only tasks that can know if they are are
     # "caught up" or not, according to how their reference time relates
     # to current clock time.
@@ -649,13 +637,10 @@ class oneoff_task( task ):
         # NOTE THIS IS STRING 'True' not logical True!
         task.__init__( self, ref_time, 'True', initial_state )
 
-    def incoming( self, priority, message ):
-        task.incoming( self, priority, message)
-        if self.state == 'finished':
-            self.__class__.cutoff_time = None
-
 class oneoff_contact_task( contact_task ):
     def __init__( self, ref_time, abdicated, initial_state, relative_state):
-        # initialise contat with abdicated = True
+        # initialise with abdicated = True
         # NOTE THIS IS STRING 'True' not logical True!
-        contact.__init__( self, ref_time, 'True', initial_state, relative_state )
+        contact_task.__init__( self, ref_time, 'True', initial_state, relative_state )
+
+

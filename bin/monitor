@@ -248,6 +248,6 @@ while True:
         #raise
         if not failed:
             print "\n\033[1;37;41mfailed to connect" + ctrl_end
-            print   "\033[1;37;41m or: monitor bug " + ctrl_end
+            print   "\033[1;37;41mor bug in monitor" + ctrl_end
             failed = True
         sleep( 1 )

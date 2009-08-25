@@ -1,5 +1,12 @@
 To Do
 
+* forecast tasks can no longer be 'quick death' because they depend on
+  previous instance. However, they could die as soon as their successor
+  is satisfied. 
+
+* oneoff tasks need special treatment in manager.kill_spent_tasks() if 
+  they do not have quick_death = True.
+
 * contact tasks need not start *running* until their time is up
   (after doing this see if task.ready_to_abdicate can be simplified). 
 
