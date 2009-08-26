@@ -3,6 +3,7 @@
 set -e  # abort on error
 
 CRITARGS="-p CRITICAL -n $TASK_NAME -r $REFERENCE_TIME"
+NORMARGS="-p NORMAL -n $TASK_NAME -r $REFERENCE_TIME"
 
 trap "task-message $CRITARGS failed" ERR
 
@@ -29,12 +30,12 @@ if [[ -z $WRAP ]]; then
 fi
 
 echo "task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
-task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME started
+task-message $NORMARGS started
 
 # call the wrapped task
 if $WRAP; then 
     # succeeded
-    task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME finished
+    task-message $NORMARGS finished
 
 else
     # failed
