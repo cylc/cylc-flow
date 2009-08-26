@@ -1,5 +1,7 @@
 To Do
 
+* use a special remote request handling call in the main prog. 
+
 * forecast tasks can no longer be 'quick death' because they depend on
   previous instance. However, they could die as soon as their successor
   is satisfied. 
@@ -14,12 +16,6 @@ To Do
 * the same user can't currently run multiple cyclon instances in dummy
   mode, because the 'pkill dummy-task.py' on shutdown will kill all of
   his dummy tasks.
-
-* re slipping back into catchup mode with TopNet:  We were caught up and
-  have apparently slipped back a bit. reverting to catching up mode will
-  suddenly reduce topnet's cutoff time and may result in deletion of a
-  finished nzlam task that is still needed to satisfy topnet prereqs.
-  => FIX TOPNET'S CUTOFF VARIABLE ONCE CAUGHT UP?
 
 * allow automatic deletion of lame tasks by remote request? 
 
