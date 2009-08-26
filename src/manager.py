@@ -4,7 +4,7 @@ import reference_time
 import pimp_my_logger
 import requisites
 import logging
-import pdb
+#import pdb
 import os
 import re
 
@@ -395,9 +395,10 @@ class manager:
         for rt in reftimes:
             # loop through all ref times of done tasks
 
-            if int( rt ) >= int( earliest_unsatisfied ):
-                # can't delete any past the earliest unsatisfied
-                continue
+            if not all_satisfied:
+                if int( rt ) >= int( earliest_unsatisfied ):
+                    # can't delete any past the earliest unsatisfied
+                    continue
             
             # now we're earlier than the earliest unsatisfied task
             # so continue until we've found a done instance of each task
@@ -420,6 +421,18 @@ class manager:
              
         if cutoff:
             self.log.debug( "spent task cutoff: " + cutoff )
+        else:
+            self.log.debug( "no spent task cutoff" )
+
+        if not all_satisfied:
+            self.log.debug( "earliest unsatisfied: " + earliest_unsatisfied )
+        else:
+            self.log.debug( "all tasks satisfied" )
+            
+        if not all_abdicated:
+            self.log.debug( "earliest unabdicated: " + earliest_unabdicated )
+        else:
+            self.log.debug( "all tasks abdicated")
 
         # now compile the list of tasks to delete
         for itask in done:
