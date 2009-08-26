@@ -21,13 +21,10 @@
     A%$(MY_REFERENCE_TIME) finished
     B restart files ready for $(MY_REFERENCE_TIME)
 
-%STARTUP_PREREQUISITES
-    A%$(MY_REFERENCE_TIME) finished
-
 %RUN_LENGTH_MINUTES
     60
 
 %OUTPUTS
     20: B restart files ready for $(MY_REFERENCE_TIME +  6 )
-    40: B restart files ready for $(MY_REFERENCE_TIME + 12 )
-    59: B restart files ready for $(MY_REFERENCE_TIME + 18 )
+#    40: B restart files ready for $(MY_REFERENCE_TIME + 12 )
+#    59: B restart files ready for $(MY_REFERENCE_TIME + 18 )

@@ -19,3 +19,4 @@ done
 # generate outputs
 touch $TMPDIR/C.${REFERENCE_TIME}
 touch $TMPDIR/C.${NEXT_REFERENCE_TIME}.restart
+task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $TASK_NAME restart files ready for $NEXT_REFERENCE_TIME

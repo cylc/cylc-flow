@@ -25,7 +25,9 @@
     10
 
 %OUTPUTS
-    9: A restart files ready for $(MY_REFERENCE_TIME)
+    7: A restart files ready for $(MY_REFERENCE_TIME)
+    8: B restart files ready for $(MY_REFERENCE_TIME)
+    9: C restart files ready for $(MY_REFERENCE_TIME)
 
 %COTEMPORAL_DEPENDANTS_ONLY
     True
