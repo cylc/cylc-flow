@@ -22,7 +22,7 @@ class dummy_task:
         self.task = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + self.name + '%' + self.ref_time )
         
         # get a pyro proxy for the dummy clock
-        self.clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.dummy_clock' )
+        self.clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.clock' )
 
 
     def run( self ):

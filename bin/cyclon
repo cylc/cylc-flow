@@ -20,7 +20,7 @@ import dead_letter
 import remote_switch
 import state_summary
 import pimp_my_logger
-import dummy_mode_clock 
+import accelerated_clock 
 from optparse import OptionParser
 
 # auto-replace with version tag at build/install:
@@ -66,15 +66,16 @@ def main( argv ):
     # configure my pyro helper
     pyro = pyrex.pyrex( system_config.get( 'system_name' ))
 
-    # dummy mode accelerated clock
-    if system_config.get('dummy_mode'):
-        dummy_clock = dummy_mode_clock.time_converter( system_config.get('start_time'), 
-                                                       system_config.get('dummy_clock_rate'), 
-                                                       system_config.get('dummy_clock_offset') ) 
-        pyro.connect( dummy_clock, 'dummy_clock' )
+    # system clock for accelerated time in dummy mode
+    clock = accelerated_clock.clock() 
+    pyro.connect( clock, 'clock' )
 
-    else:
-        dummy_clock = None
+    if system_config.get( 'dummy_mode' ):
+        clock.accelerate(
+                system_config.get('alarm_seconds' ),
+                system_config.get('start_time'), 
+                system_config.get('dummy_clock_rate'), 
+                system_config.get('dummy_clock_offset')) 
 
     state_dump_file = system_config.get('state_dump_file')
     if os.path.exists( state_dump_file ):
@@ -90,7 +91,7 @@ def main( argv ):
 
     # top level logging
     log = logging.getLogger( 'main' )
-    pimp_my_logger.pimp_it( log, 'main', system_config, dummy_clock )
+    pimp_my_logger.pimp_it( log, 'main', system_config, clock )
 
     # remote control switch
     remote_control = remote_switch.remote_switch( system_config, system_config.get('task_list') )
@@ -105,7 +106,7 @@ def main( argv ):
     pyro.connect( dead_letter_box, 'dead_letter_box' )
 
     # initialize the task manager from general config file or state dump
-    god = manager.manager( system_config, pyro, options.restart, dummy_clock )
+    god = manager.manager( system_config, pyro, options.restart, clock )
 
     print "\nBeginning task processing now\n"
 
@@ -122,7 +123,7 @@ def main( argv ):
         if remote_control.get_resume():
             god.unset_system_hold()
 
-        if task.state_changed:
+        if task.state_changed or clock.get_alarm():
             # PROCESS ALL TASKS whenever one has changed state
             # as a result of a remote task message coming in: 
             # then run, create new, and kill spent tasks
@@ -132,7 +133,7 @@ def main( argv ):
 
             god.negotiate_dependencies()
 
-            god.run_tasks( launcher, dummy_clock )
+            god.run_tasks( launcher, clock )
 
             god.kill_spent_tasks()
 
@@ -145,7 +146,7 @@ def main( argv ):
                 go_ahead = True
  
             if remote_control.task_to_insert:
-                god.insert_task( remote_control.task_to_insert, dummy_clock )
+                god.insert_task( remote_control.task_to_insert, clock )
                 remote_control.task_to_insert = None
                 go_ahead = True
 

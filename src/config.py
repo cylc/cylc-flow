@@ -30,6 +30,13 @@ class config:
         # STOP REFERENCE TIME
         self.configured['stop_time'] = None   
 
+        # ALARM WAIT TIME IN SECONDS (real in real time, accelerated
+        # seconds in accelerated dummy time). Used for triggering the
+        # event loop in the absence of incoming task messages; this is
+        # required when the whole system is waiting on a contact task
+        # that hasn't started running yet.
+        self.configured['alarm_seconds'] = 10.0
+
         # MAXIMUM TIME ANY TASK IS ALLOWED TO GET AHEAD OF THE SLOWEST
         self.configured['max_runahead_hours'] = 24
 

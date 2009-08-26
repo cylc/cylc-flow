@@ -235,7 +235,7 @@ class task( Pyro.core.ObjBase ):
         return reference_time.decrement( rt, decrement )
 
 
-    def run_if_ready( self, launcher, dummy_clock ):
+    def run_if_ready( self, launcher, clock ):
         # run if I am 'waiting' AND my prequisites are satisfied
         if self.state == 'waiting' and self.prerequisites.all_satisfied(): 
             self.run_external_task( launcher )
@@ -588,7 +588,7 @@ class contact_task( task ):
         return summary
 
 
-    def run_if_ready( self, launcher, dummy_clock ):
+    def run_if_ready( self, launcher, clock ):
         # run if ready *and* the contact delay time is up (there's no
         # point in running earlier as the task will just sit in the
         # queue waiting on the external event).
@@ -598,10 +598,7 @@ class contact_task( task ):
             # check current time against expected start time
             rt = reference_time._rt_to_dt( self.ref_time )
             delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
-            if not dummy_clock:
-                current_time = datetime.datetime.now()
-            else:
-                current_time = dummy_clock.get_datetime()
+            current_time = clock.get_datetime()
 
             if current_time >= delayed_start:
                 # time to run the task

@@ -61,7 +61,7 @@ while True:
         mode = 'REAL TIME OPERATION'
         if config.get('dummy_mode') :
             mode = 'ACCELERATED CLOCK DUMMY MODE' 
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + config.get('system_name') + '.' + 'dummy_clock' )
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + config.get('system_name') + '.' + 'clock' )
             remote_clock._setTimeout(1)
 
         while True:

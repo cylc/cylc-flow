@@ -60,8 +60,7 @@ To Do
   determine how far ahead of nzlam we allow topnet to get (? I need 
   to think about this).
 
-* replace use of dummy clock vs real clock with a single clock object
-  that knows whether we are in dummy mode or not.
+* use the custom clock everywhere (it knows about dummy mode).
 
 * in dummy mode, the dummy clock time should be written to the state
   dump file so that the clock doesn't reset to the configured start time

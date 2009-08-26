@@ -101,7 +101,7 @@ while True:
         dummy_mode = god.get_dummy_mode()
         if dummy_mode:
             # connect to the accelerated dummy mode clock
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.dummy_clock' )
+            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.clock' )
             remote_clock._setTimeout(10)
             rate = str( god.get_dummy_clock_rate() )
 
@@ -179,7 +179,7 @@ while True:
                 if state == "running":
                     ctrl_start = "\033[1;37;42m"
                 elif state == "waiting":
-                    ctrl_start = "\033[35m"
+                    ctrl_start = "\033[1;35m"
                 elif state == "failed":
                     ctrl_start = "\033[1;37;41m"
                 else:
@@ -194,7 +194,7 @@ while True:
 
             # MONITOR HEADER and CURRENT TIME
             blit = []
-            blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end + ' ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+            blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[1;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end + ' ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
             # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
             if dummy_mode:

@@ -3,22 +3,26 @@
 import logging, logging.handlers
 import os, sys, re
 
-# function to format all task logs in the same way, and to replace
-# the message timestamp with dummy clock time in dummy mode.
+# format all task logs in the same way, and in dummy mode replace the
+# message timestamp with dummy clock time.
+
+# NOTE: the dummy mode dummy clock has been replaced with a general
+# clock that returns dummy time in dummy mode, so we could replace
+# the normal log time universally now... 
 
 class LogFilter(logging.Filter):
     # replace log message timestamps with dummy clock times
 
-    def __init__(self, dclock, name = "" ):
+    def __init__(self, clock, name = "" ):
         logging.Filter.__init__( self, name )
-        self.dummy_clock = dclock
+        self.clock = clock
 
     def filter(self, record):
         # replace log message time stamp with dummy time
-        record.created = self.dummy_clock.get_epoch()
+        record.created = self.clock.get_epoch()
         return True
     
-def pimp_it( log, name, config, dummy_clock = None ):
+def pimp_it( log, name, config, clock = None ):
     log.setLevel( config.get('logging_level') )
     max_bytes = 1000000
     backups = 5
@@ -47,4 +51,4 @@ def pimp_it( log, name, config, dummy_clock = None ):
 
     if config.get('dummy_mode'):
         # replace logged real time with dummy clock time 
-        log.addFilter( LogFilter( dummy_clock, "main" ))
+        log.addFilter( LogFilter( clock, "main" ))
