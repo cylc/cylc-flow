@@ -15,6 +15,7 @@
 
 %EXPORT
     WRAP A.sh
+    NEXT_REFERENCE_TIME $(MY_REFERENCE_TIME + 6)
 
 %PREREQUISITES
     external data ready for $(MY_REFERENCE_TIME)
