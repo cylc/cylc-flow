@@ -3,9 +3,6 @@
 # cyclon example system, task F
 # depends on task C
 
-TMPDIR=${TMPDIR:-/tmp/$USER/example}
-mkdir -p $TMPDIR
-
 # check prerequistes
 PRE=$TMPDIR/C.${REFERENCE_TIME}
 [[ ! -f $PRE ]] && {

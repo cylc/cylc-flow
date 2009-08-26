@@ -60,6 +60,11 @@ def main( argv ):
     system_config = config.config()
     system_config.load()
 
+    # set configured environment variables
+    env = system_config.get('environment')
+    for VAR in env.keys():
+        os.environ[ VAR ] = env[ VAR ]
+
     # external task launcher
     launcher = execution.launcher( system_config, options.failout_task_id )
 

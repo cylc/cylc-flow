@@ -21,6 +21,9 @@
 %PREREQUISITES
     # None
 
+%STARTUP_PREREQUISITES
+    startup%$(MY_REFERENCE_TIME) finished 
+
 %RUN_LENGTH_MINUTES
     10
 

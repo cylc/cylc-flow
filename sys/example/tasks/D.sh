@@ -3,9 +3,6 @@
 # cyclon example system, task D
 # depends on tasks B and C
 
-TMPDIR=${TMPDIR:-/tmp/$USER/example}
-mkdir -p $TMPDIR
-
 # check prerequistes
 ONE=$TMPDIR/B.${REFERENCE_TIME}
 TWO=$TMPDIR/C.${REFERENCE_TIME}

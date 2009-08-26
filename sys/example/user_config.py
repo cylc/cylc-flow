@@ -17,7 +17,7 @@ config[ 'system_name' ] = 'example'
 config[ 'logging_dir' ] = os.environ[ 'HOME' ] + '/running/cyclon/' + config[ 'system_name' ] + '/log'
 config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/running/cyclon/' + config[ 'system_name' ] + '/state'
 
-config[ 'dummy_mode' ] = False
+config[ 'dummy_mode' ] = True
 config[ 'dummy_clock_rate' ] = 10
 config[ 'dummy_clock_offset' ] = 24
 config[ 'use_qsub' ] = False
@@ -31,8 +31,11 @@ config[ 'logging_level' ] = logging.DEBUG
 
 config[ 'max_runahead_hours' ] = 18
 
+config[ 'environment' ] = { 'TMPDIR':'/tmp/' + os.environ['USER'] + '/cyclon/example' }
+
 config[ 'task_list' ] = \
         [
+        'startup',
         'cold',
         'ext',
         'A',

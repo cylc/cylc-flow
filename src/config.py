@@ -30,6 +30,9 @@ class config:
         # STOP REFERENCE TIME
         self.configured['stop_time'] = None   
 
+        # ENVIRONMENT VARIABLES TO SET
+        self.configured['environment'] = {}
+
         # ALARM WAIT TIME IN SECONDS (real in real time, accelerated
         # seconds in accelerated dummy time). Used for triggering the
         # event loop in the absence of incoming task messages; this is

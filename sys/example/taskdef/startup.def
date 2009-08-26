@@ -1,14 +1,13 @@
 # THIS IS A cyclon TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
+# startup task to clean out the example system working directory. 
+
 %NAME
-    ext
+    startup
 
 %TYPE
-    normal, contact
-
-%CONTACT_DELAY_HOURS
-    1.0
+    oneoff
 
 %VALID_HOURS
     0,6,12,18
@@ -17,19 +16,16 @@
     task-wrapper
 
 %EXPORT
-    WRAP ext.sh
+    WRAP startup.sh
 
 %PREREQUISITES
     # None
-
-%STARTUP_PREREQUISITES
-    startup%$(MY_REFERENCE_TIME) finished
 
 %RUN_LENGTH_MINUTES
     10
 
 %OUTPUTS
-    9: external data ready for $(MY_REFERENCE_TIME)
+    # defaults only
 
-#%COTEMPORAL_DEPENDANTS_ONLY
-#    True
+%COTEMPORAL_DEPENDANTS_ONLY
+    True

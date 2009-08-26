@@ -5,9 +5,6 @@
 # generates restart files for task A
 # no prerequisites
 
-TMPDIR=${TMPDIR:-/tmp/$USER/example}
-mkdir -p $TMPDIR
-
 # generate outputs
 touch $TMPDIR/A.${REFERENCE_TIME}.restart
 task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME A restart files ready for $REFERENCE_TIME

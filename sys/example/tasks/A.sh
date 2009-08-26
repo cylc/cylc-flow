@@ -3,9 +3,6 @@
 # cyclon example system, task A
 # depends on task ext and its own restart file.
 
-TMPDIR=${TMPDIR:-/tmp/$USER/example}
-mkdir -p $TMPDIR
-
 # check prerequistes
 ONE=$TMPDIR/ext.${REFERENCE_TIME}
 TWO=$TMPDIR/A.${REFERENCE_TIME}.restart

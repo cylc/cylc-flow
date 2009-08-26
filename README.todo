@@ -1,5 +1,10 @@
 To Do
 
+* spent tasks not being identified after a restart.
+
+* detect receipt of 'finished' message when not all outputs have been
+  completed.
+
 * allow a special oneoff startup task that runs before the main task
   list is loaded.
 
