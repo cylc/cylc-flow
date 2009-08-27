@@ -32,7 +32,7 @@ class clock( Pyro.core.ObjBase ):
         # (use to trigger the event loop regularly even when
         # no task messages come in, as happens when the whole
         # system waits on a contact task that isn't running yet).
-        self.alarm_seconds = 60.0
+        self.alarm_seconds = 10.0
 
         # remember last time an alarm was used
         self.last_alarm_realtime = self.base_realtime

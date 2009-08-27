@@ -9,54 +9,40 @@ class state_summary( Pyro.core.ObjBase ):
 
     def __init__( self, config ):
         Pyro.core.ObjBase.__init__(self)
-        summary = {}
+        self.task_summary = {}
+        self.global_summary = {}
         # external monitors should access config via methods in this
         # class, in case config items are ever updated dynamically by
         # remote control
         self.config = config
  
-    def update( self, tasks ):
-        self.summary = {}
-        self.name_list = []
-        self.short_name_list = []
-        self.ref_time_list = []
-        seen_name = {}
-        seen_time = {}
+    def update( self, tasks, clock ):
+        self.task_summary = {}
+        self.global_summary = {}
+
         for task in tasks:
-            if task.ref_time not in seen_time.keys():
-                seen_time[ task.ref_time ] = True
-                self.ref_time_list.append( task.ref_time )
+            self.task_summary[ task.identity ] = task.get_state_summary()
 
-            if task.name not in seen_name.keys():
-                seen_name[ task.name ] = True
-                self.name_list.append( task.name )
-                self.short_name_list.append( task.short_name )
+        self.global_summary[ 'last_updated' ] = clock.get_datetime()
+        self.global_summary[ 'dummy_mode' ] = self.config.get( 'dummy_mode' )
+        self.global_summary[ 'dummy_clock_rate' ] = self.config.get( 'dummy_clock_rate' )
 
-
-            self.summary[ task.identity ] = task.get_state_summary()
            
-        # update deprecated old-style summary
-        # (delete when no longer needed)
+        # update deprecated old-style summary (DELETE WHEN NO LONGER NEEDED)
         self.get_summary()
-
-    def get_dummy_mode( self ):
-        return self.config.get( 'dummy_mode' )
-
-    def get_dummy_clock_rate( self ):
-        return self.config.get( 'dummy_clock_rate' )
 
 
     def get_state_summary( self ):
-        return self.summary
+        return [ self.global_summary, self.task_summary ]
 
-    def get_ref_time_list( self ):
-        return self.ref_time_list
+    #def get_ref_time_list( self ):
+    #    return self.ref_time_list
 
-    def get_name_list( self ):
-        return self.name_list
+    #def get_name_list( self ):
+    #    return self.name_list
 
-    def get_short_name_list( self ):
-        return self.short_name_list
+    #def get_short_name_list( self ):
+    #    return self.short_name_list
 
     def get_summary( self ):
         # DEPRECATED. Remove when Bernard's monitor has been updated
@@ -64,11 +50,11 @@ class state_summary( Pyro.core.ObjBase ):
 
         old_style_summary = {}
 
-        for task_id in self.summary.keys():
+        for task_id in self.task_summary.keys():
             old_style_summary[ task_id ] = [ \
-                         self.summary[ task_id ][ 'state' ], \
-                    str( self.summary[ task_id ][ 'n_completed_outputs' ] ), \
-                    str( self.summary[ task_id ][ 'n_total_outputs' ] ), \
-                         self.summary[ task_id ]['latest_message' ] ]
+                         self.task_summary[ task_id ][ 'state' ], \
+                    str( self.task_summary[ task_id ][ 'n_completed_outputs' ] ), \
+                    str( self.task_summary[ task_id ][ 'n_total_outputs' ] ), \
+                         self.task_summary[ task_id ]['latest_message' ] ]
 
         return old_style_summary

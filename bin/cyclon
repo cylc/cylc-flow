@@ -157,7 +157,7 @@ def main( argv ):
 
             god.dump_state()
 
-            system_state.update( god.tasks )
+            system_state.update( god.tasks, clock )
 
             if god.all_finished():
                 clean_shutdown( pyro, "ALL TASKS FINISHED" )

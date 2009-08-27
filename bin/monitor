@@ -14,9 +14,9 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import re
 import sys
-import datetime
 import Pyro.core
 import Pyro.naming
+from Pyro.errors import PyroError,NamingError,ConnectionClosedError
 from time import sleep
 from optparse import OptionParser
 
@@ -82,172 +82,172 @@ else:
     sys.exit(0)
 
 ctrl_end = "\033[0m"
-failed = False
-
 
 print
 print "here we go ..."
 sleep(2)
 
+alerted = False
 while True:
-    # keep try to connect to the chosen remote system
-
+    # connect to remote state summary object for the chosen system
     try: 
-        # connect to remote state summary object for the chosen system
         god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
-        god._setTimeout(10)
+    except NamingError:
+        if not alerted:
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end + ' to state summary object for "' + system_name + '"'
+            alerted = True
+        sleep(1)
+        continue
 
-        # are we in dummy mode or not?
-        dummy_mode = god.get_dummy_mode()
+    alerted = False
+    god._setTimeout(10)
+
+    while True:
+        # continual redisplay loop
+
+        # get state summary, task names, reference times
+        try:
+            [glbl, states] = god.get_state_summary()
+        except ConnectionClosedError:
+            print "\n\033[1;37;41mconnection closed" + ctrl_end + ' to state summary object for "' + system_name + '"'
+            sleep(1)
+            break
+
+        dt = glbl[ 'last_updated' ]
+        rate = glbl[ 'dummy_clock_rate' ]
+        dummy_mode = glbl[ 'dummy_mode' ]
+
+        task_ids = states.keys()
+        task_ids.sort()
+
+        seen_time = {}
+        seen_name = {}
+        ref_time_list = []
+        name_list = []
+
+        for task_id in task_ids:
+            [ name, ref_time ] = task_id.split( '%' )
+
+            if ref_time not in seen_time.keys():
+                seen_time[ ref_time ] = True
+                ref_time_list.append( ref_time )
+
+            if name not in seen_name.keys():
+                seen_name[ name ] = True
+                if options.shortnames:
+                    name_list.append( states[ task_id ][ 'short_name' ] )
+                else:
+                    name_list.append( name )
+
+        n_tasks = len( name_list )
+        name_list.sort()
+        ref_time_list.sort()
+        catchup_info = {}
+
+        # initialize a dict-of-dicts to store display information
+        # for all tasks at each current reference time
+        #   task_info[ ref_time ][ task_name ] = info
+        task_info = {}
+        for rt in ref_time_list:
+            task_info[ rt ] = {}
+            for name in name_list:
+                # initialise with blank string of the same size as
+                # the real info that we will use below
+                tmp = name + '*'  # name plus abdication indicator
+                tmp = re.sub( '.', ' ', tmp )
+                task_info[ rt ][name] = tmp
+
+        # now loop through all tasks in the system and assign their
+        # display info to the correct place in the task_info structure
+        for task_id in task_ids:
+
+            if options.shortnames:
+                name     =      states[ task_id ][ 'short_name' ]
+            else:
+                name     =      states[ task_id ][ 'name' ]
+
+            reftime  =      states[ task_id ][ 'reference_time' ]
+            state    =      states[ task_id ][ 'state' ]
+
+            if not states[ task_id ][ 'abdicated' ]:
+                # identify any tasks that have not abdicated yet
+                abd = '*'
+            else:
+                # space of same length
+                abd = ' '
+
+            if 'catching_up' in states[ task_id ].keys():
+                # get catchup status for any contact tasks
+                # (this is a class variable for each task type,
+                # not stored for each individual task object).
+                catchup_info[ name ] = states[ task_id ][ 'catching_up' ]
+
+            # color displayed info according to run status
+            if state == "running":
+                ctrl_start = "\033[1;37;42m"
+            elif state == "waiting":
+                ctrl_start = "\033[1;35m"
+            elif state == "failed":
+                ctrl_start = "\033[1;37;41m"
+            else:
+                # finished
+                ctrl_start = ""
+
+            # construct the display string for this task
+            task_info[ reftime ][ name ] = ctrl_start + name + ctrl_end + abd
+               
+
+        # construct an array of lines to blit to the screen
+        
+        # MONITOR HEADER and CURRENT TIME
+        blit = []
+        blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[1;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end )
+        blit.append( 'last updated: ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+
+        # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
         if dummy_mode:
-            # connect to the accelerated dummy mode clock
-            remote_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.clock' )
-            remote_clock._setTimeout(10)
-            rate = str( god.get_dummy_clock_rate() )
-
-        while True:
-            # continual redisplay loop
-
-            if dummy_mode:
-                # get current time from dummy clock
-                dt = remote_clock.get_datetime()
-            else:
-                # get current real time
-                dt = datetime.datetime.now()
-
-            try:
-                # get state summary, list of task names, and list of
-                # reference times
-                states = god.get_state_summary()
-
-                if options.shortnames:
-                    name_list = god.get_short_name_list()
-                else:
-                    name_list = god.get_name_list()
-
-                ref_time_list = god.get_ref_time_list()
-            except Exception,x:
-                print ''.join(Pyro.util.getPyroTraceback(x))
-                sys.exit(1)
-
-            n_tasks = len( name_list )
-            task_ids = states.keys()
-            task_ids.sort()
-            name_list.sort()
-            ref_time_list.sort()
-            catchup_info = {}
-
-            # initialize a dict-of-dicts to store display information
-            # for all tasks at each current reference time
-            #   task_info[ ref_time ][ task_name ] = info
-            task_info = {}
-            for rt in ref_time_list:
-                task_info[ rt ] = {}
-                for name in name_list:
-                    # initialise with blank string of the same size as
-                    # the real info that we will use below
-                    tmp = name + '*'  # name plus abdication indicator
-                    tmp = re.sub( '.', ' ', tmp )
-                    task_info[ rt ][name] = tmp
-
-            # now loop through all tasks in the system and assign their
-            # disply info to the correct place in the task_info structure
-            for task_id in task_ids:
-
-                if options.shortnames:
-                    name     =      states[ task_id ][ 'short_name' ]
-                else:
-                    name     =      states[ task_id ][ 'name' ]
-
-                reftime  =      states[ task_id ][ 'reference_time' ]
-                state    =      states[ task_id ][ 'state' ]
-
-                if not states[ task_id ][ 'abdicated' ]:
-                    # identify any tasks that have not abdicated yet
-                    abd = '*'
-                else:
-                    # space of same length
-                    abd = ' '
-
-                if 'catching_up' in states[ task_id ].keys():
-                    # get catchup status for any contact tasks
-                    # (this is a class variable for each task type,
-                    # not stored for each individual task object).
-                    catchup_info[ name ] = states[ task_id ][ 'catching_up' ]
-
-                # color displayed info according to run status
-                if state == "running":
-                    ctrl_start = "\033[1;37;42m"
-                elif state == "waiting":
-                    ctrl_start = "\033[1;35m"
-                elif state == "failed":
-                    ctrl_start = "\033[1;37;41m"
-                else:
-                    # finished
-                    ctrl_start = ""
-
-                # construct the display string for this task
-                task_info[ reftime ][ name ] = ctrl_start + name + ctrl_end + abd
-                
-
-            # construct an array of lines to blit to the screen
-
-            # MONITOR HEADER and CURRENT TIME
-            blit = []
-            blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[1;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end + ' ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
-
-            # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
-            if dummy_mode:
-                blit.append( '\033[1;37;45m"' + system_name + '" (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' DUMMY MODE (' + rate + ' sec = 1 hr)' )
-            else:
-                blit.append( '\033[1;37;45m"' + system_name + '" (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' REAL MODE' )
+            blit.append( '\033[1;37;45m"' + system_name + '" (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' DUMMY MODE (' + str(rate) + ' sec = 1 hr)' )
+        else:
+            blit.append( '\033[1;37;45m"' + system_name + '" (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' REAL MODE' )
 
           
-            # CATCHUP INFO for any contact tasks
-            for name in catchup_info.keys():
-                if catchup_info[ name ]:
-                    blit.append( name + ': catching up' )
+        # CATCHUP INFO for any contact tasks
+        for name in catchup_info.keys():
+            if catchup_info[ name ]:
+                blit.append( name + ': catching up' )
+            else:
+                blit.append( name + ': caught up' )
+
+        blit.append('')
+
+        # construct a line of text to display for each reference time
+        for rt in ref_time_list:
+            line = ''
+            # colour reference time according to whether it has
+            # caught up to the current clock time or not.
+            rtdt = _rt_to_dt( rt )
+            if dt > rtdt:
+                # behind
+                line = '\033[1;34m' + rt + ctrl_end
+            else:
+                # caught up
+                line = '\033[1;31m' + rt + ctrl_end
+
+            # add info for each task to the line
+            for name in name_list:
+                disp = task_info[rt][name]
+                if not options.align_columns and re.match( '^\s+$', disp ): 
+                    # don't add white space unless align_columns has
+                    # been requested by the user
+                    pass
                 else:
-                    blit.append( name + ': caught up' )
+                    line = line + ' ' + disp
 
-            blit.append('')
+            blit.append( line )
+                        
+        # clear screen and blit the new information up
+        os.system( "clear" )
+        print '\n'.join( blit )
+        sleep(0.5)
 
-            # construct a line of text to display for each reference time
-            for rt in ref_time_list:
-                line = ''
-                # colour reference time according to whether it has
-                # caught up to the current clock time or not.
-                rtdt = _rt_to_dt( rt )
-                if dt > rtdt:
-                    # behind
-                    line = '\033[1;34m' + rt + ctrl_end
-                else:
-                    # caught up
-                    line = '\033[1;31m' + rt + ctrl_end
-
-                # add info for each task to the line
-                for name in name_list:
-                    disp = task_info[rt][name]
-                    if not options.align_columns and re.match( '^\s+$', disp ): 
-                        # don't add white space unless align_columns has
-                        # been requested by the user
-                        pass
-                    else:
-                        line = line + ' ' + disp
-
-                blit.append( line )
-
-            # clear screen and blit the new information up
-            os.system( "clear" )
-            print '\n'.join( blit )
-            sleep(0.5)
-            failed = False
-
-    except:
-        # uncomment 'raise' to identify errors
-        #raise
-        if not failed:
-            print "\n\033[1;37;41mfailed to connect" + ctrl_end
-            print   "\033[1;37;41mor bug in monitor" + ctrl_end
-            failed = True
-        sleep( 1 )
+    sleep( 1 )
