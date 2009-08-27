@@ -29,7 +29,7 @@ if [[ -z $WRAP ]]; then
 	exit 1
 fi
 
-echo "task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
+#echo "task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
 task-message $NORMARGS started
 
 # call the wrapped task

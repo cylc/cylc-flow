@@ -7,9 +7,9 @@
 # 1/ generate task class code for cyclon
 # 2/ generate system environment script 
 #    + this exports PATH and PYTHONPATH, and 
-#      CYCLON_ENV (its own path) for system tasks
+#      CYCLON_ENV (its own path) for system scripts
 #      and CYCLON_BIN for utility scripts
-# 3/ copy task-wrapper from cyclon/bin to system/tasks
+# 3/ copy task-wrapper from cyclon/bin to system/scripts
 
 set -e  # ABORT on error
 
@@ -63,7 +63,7 @@ cat > $ENV_SCRIPT <<EOF
 PYTHONPATH=\$( $TOPDIR/bin/clean-cyclon-path.sh \$PYTHONPATH )
 
 # not using \$HOME or relative path; may be sourced by other users
-PATH=$TOPDIR/bin:$TOPDIR/$SYSDIR/tasks:\$PATH
+PATH=$TOPDIR/bin:$TOPDIR/$SYSDIR/scripts:\$PATH
 PATH=\${PATH%:}  # in case variable was empty before
 PYTHONPATH=$TOPDIR/src:$TOPDIR/$SYSDIR:\$PYTHONPATH
 PYTHONPATH=\${PYTHONPATH%:}  # in case was empty before
@@ -79,9 +79,9 @@ EOF
 # copy task-wrapper
 
 echo
-echo "Copying task-wrapper to system tasks dir"
-mkdir -p $TOPDIR/$SYSDIR/tasks
-cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/tasks
+echo "Copying task-wrapper to system scripts dir"
+mkdir -p $TOPDIR/$SYSDIR/scripts
+cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/scripts
 
 echo
 echo "SOURCE THE SYSTEM ENVIRONMENT SCRIPT BEFORE RUNNING CYCLON"

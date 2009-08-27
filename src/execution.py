@@ -58,9 +58,9 @@ class launcher:
             # real task
             external_program = task
             if not re.match( '^/', task ):
-                # relative path: use tasks in the '<system>/tasks' sub-directory
+                # relative path: use scripts in the '<system>/scripts' sub-directory
                 sysdir = re.sub( '[^/]*$', '', cyclon_env )
-                external_program = sysdir + 'tasks/' + task
+                external_program = sysdir + 'scripts/' + task
 
         # CONSTRUCT THE FULL COMMAND TO RUN
         command = ''
