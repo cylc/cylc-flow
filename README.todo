@@ -3,9 +3,6 @@ To Do
 * detect receipt of 'finished' message when not all outputs have been
   completed.
 
-* allow a special oneoff startup task that runs before the main task
-  list is loaded.
-
 * use a special remote request handling call in the main prog. 
 
 * forecast tasks can no longer be 'quick death' because they depend on
