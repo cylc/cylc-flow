@@ -2,6 +2,10 @@ To Do
 
 * allow auto-generated 'restart' outputs?
 
+* tasks with conditional outputs may have trouble with the "keep one
+  finished task of each kind" procedure in kill_spent_tasks(). best to
+  have multiple tasks instead? 
+
 * detect receipt of 'finished' message when not all outputs have been
   completed.
 
