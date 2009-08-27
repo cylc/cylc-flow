@@ -1,5 +1,7 @@
 To Do
 
+* allow auto-generated 'restart' outputs?
+
 * detect receipt of 'finished' message when not all outputs have been
   completed.
 
