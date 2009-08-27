@@ -2,6 +2,8 @@ To Do
 
 * allow auto-generated 'restart' outputs?
 
+* add a long name or description to task defs
+
 * tasks with conditional outputs may have trouble with the "keep one
   finished task of each kind" procedure in kill_spent_tasks(). best to
   have multiple tasks instead? 
