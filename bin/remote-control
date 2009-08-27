@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import re
 import sys
 import pyrex
 import Pyro.core
@@ -38,8 +39,9 @@ parser.add_option( "-c", "--configured", help="use configured system",
 parser.add_option( "-n", "--name", help="system name",
         metavar="SYSTEM-NAME", action="store", dest="system_name" )
 
-parser.add_option( "-k", "--kill", help="abdicate and kill a failed or hung task",
-        metavar=" <name>%<YYYYMMDDHH>", action="store", dest="kill_task_id" )
+parser.add_option( "-k", "--kill", help="abdicate and kill a task",
+        metavar=" <name>%<YYYYMMDDHH>, <name1,name2,...>%YYYYMMDDHH", 
+        action="store", dest="kill_task_id" )
 
 parser.add_option( "-i", "--insert", help="insert a new task",
         metavar=" <name>%<YYYYMMDDHH>", action="store", dest="insert_task_id" )
@@ -140,9 +142,19 @@ if options.insert_task_id:
 
 if options.kill_task_id:
     if prompt( 'Kill ' + options.kill_task_id + ' in' ):
-        print "requesting abdicate and kill for " + options.kill_task_id
-        print "WARNING: you may also need to manually kill the REAL task"
-        control.abdicate_and_kill( options.kill_task_id )
+        [ tmp, reftime ] = options.kill_task_id.split( '%' )
+        if re.search( ',', tmp ):
+            names = tmp.split( ',' )
+        else:
+            names = [ tmp ]
+
+        for name in names:
+            id = name + '%' + reftime
+            print "requesting abdicate and kill for " + id
+            control.abdicate_and_kill( id )
+
+        print "WARNING: you may also need to kill the REAL task(s)"
+
 
 if options.bump:
     control.nudge()
