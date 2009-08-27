@@ -110,11 +110,13 @@ class config:
         print "SYSTEM NAME.............", 
         print self.configured['system_name']
 
-        print "MODE....................",
-        if self.configured['dummy_mode']:
-            print "DUMMY MODE"
-        else:
-            print "real mode"
+        # dummy mode alert is now printed from the main program 
+        # because it can be set on the command line.
+        #print "MODE....................",
+        #if self.configured['dummy_mode']:
+        #    print "DUMMY MODE"
+        #else:
+        #    print "real mode"
  
         print "START TIME..............",
         print self.configured['start_time']

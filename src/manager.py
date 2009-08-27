@@ -9,8 +9,9 @@ import os
 import re
 
 class manager:
-    def __init__( self, config, pyro, restart, clock ):
+    def __init__( self, config, dummy_mode, pyro, restart, clock ):
         
+        self.dummy_mode = dummy_mode
         self.pyro = pyro  # pyrex (cyclon Pyro helper) object
         self.log = logging.getLogger( "main" )
 
@@ -70,7 +71,7 @@ class manager:
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, self.config, clock )
+            pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, clock )
 
             # the initial task reference time can be altered during
             # creation, so we have to create the task before
@@ -126,7 +127,7 @@ class manager:
             # create the task log
             if name not in log_created.keys():
                 log = logging.getLogger( 'main.' + name )
-                pimp_my_logger.pimp_it( log, name, self.config, clock )
+                pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, clock )
                 log_created[ name ] = True
  
             # the initial task reference time can be altered during

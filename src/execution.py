@@ -13,12 +13,13 @@ import re
 
 class launcher:
 
-    def __init__( self, config, failout_task = None ):
+    def __init__( self, config, dummy_mode, failout_task = None ):
+
+        self.dummy_mode = dummy_mode
 
         self.system_name = config.get('system_name')
         self.clock_rate = config.get('dummy_clock_rate')
         self.clock_offset = config.get('dummy_clock_offset')
-        self.dummy_mode = config.get('dummy_mode')
         self.use_qsub = config.get('use_qsub')
         self.job_queue = config.get('job_queue')
 

@@ -22,7 +22,7 @@ class LogFilter(logging.Filter):
         record.created = self.clock.get_epoch()
         return True
     
-def pimp_it( log, name, config, clock = None ):
+def pimp_it( log, name, config, dummy_mode, clock = None ):
     log.setLevel( config.get('logging_level') )
     max_bytes = 1000000
     backups = 5
@@ -49,6 +49,6 @@ def pimp_it( log, name, config, clock = None ):
     h.setFormatter(f)
     log.addHandler(h)
 
-    if config.get('dummy_mode'):
+    if dummy_mode:
         # replace logged real time with dummy clock time 
         log.addFilter( LogFilter( clock, "main" ))

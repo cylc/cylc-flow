@@ -41,7 +41,10 @@ def main( argv ):
     parser.add_option( "-r", "--restart", help="restart from state dump",
         action="store_true", default=False, dest="restart" )
 
-    parser.add_option( "-f", "--fail", help="fail out a dummy task",
+    parser.add_option( "-d", "--dummy_mode", help="run in dummy (simulation) mode",
+       action="store_true", default=False, dest="dummy_mode" )
+
+    parser.add_option( "-f", "--fail", help="fail out a task in dummy mode",
         metavar=" <name>%<YYYYMMDDHH>", action="store", dest="failout_task_id" )
 
     # get command line options and positional args
@@ -65,9 +68,6 @@ def main( argv ):
     for VAR in env.keys():
         os.environ[ VAR ] = env[ VAR ]
 
-    # external task launcher
-    launcher = execution.launcher( system_config, options.failout_task_id )
-
     # configure my pyro helper
     pyro = pyrex.pyrex( system_config.get( 'system_name' ))
 
@@ -75,12 +75,22 @@ def main( argv ):
     clock = accelerated_clock.clock() 
     pyro.connect( clock, 'clock' )
 
-    if system_config.get( 'dummy_mode' ):
+    dummy_mode = False
+    if options.dummy_mode or system_config.get( 'dummy_mode' ):
+        print
+        print "RUNNING IN DUMMY MODE!"
+        print
+        dummy_mode = True
+
+    if dummy_mode:
         clock.accelerate(
                 system_config.get('alarm_seconds' ),
                 system_config.get('start_time'), 
                 system_config.get('dummy_clock_rate'), 
                 system_config.get('dummy_clock_offset')) 
+
+    # external task launcher
+    launcher = execution.launcher( system_config, dummy_mode, options.failout_task_id )
 
     state_dump_file = system_config.get('state_dump_file')
     if os.path.exists( state_dump_file ):
@@ -96,14 +106,14 @@ def main( argv ):
 
     # top level logging
     log = logging.getLogger( 'main' )
-    pimp_my_logger.pimp_it( log, 'main', system_config, clock )
+    pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
 
     # remote control switch
     remote_control = remote_switch.remote_switch( system_config, system_config.get('task_list') )
     pyro.connect( remote_control, 'remote_control' )
 
     # remotely accessible system state summary
-    system_state = state_summary.state_summary( system_config )
+    system_state = state_summary.state_summary( system_config, dummy_mode )
     pyro.connect( system_state, 'state_summary' )
 
     # dead letter box for remote use
@@ -111,7 +121,7 @@ def main( argv ):
     pyro.connect( dead_letter_box, 'dead_letter_box' )
 
     # initialize the task manager from general config file or state dump
-    god = manager.manager( system_config, pyro, options.restart, clock )
+    god = manager.manager( system_config, dummy_mode, pyro, options.restart, clock )
 
     print "\nBeginning task processing now\n"
 

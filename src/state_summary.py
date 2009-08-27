@@ -7,7 +7,7 @@ import sys
 class state_summary( Pyro.core.ObjBase ):
     "class to supply system state summary to external monitoring programs"
 
-    def __init__( self, config ):
+    def __init__( self, config, dummy_mode ):
         Pyro.core.ObjBase.__init__(self)
         self.task_summary = {}
         self.global_summary = {}
@@ -15,6 +15,7 @@ class state_summary( Pyro.core.ObjBase ):
         # class, in case config items are ever updated dynamically by
         # remote control
         self.config = config
+        self.dummy_mode = dummy_mode
  
     def update( self, tasks, clock ):
         self.task_summary = {}
@@ -24,7 +25,7 @@ class state_summary( Pyro.core.ObjBase ):
             self.task_summary[ task.identity ] = task.get_state_summary()
 
         self.global_summary[ 'last_updated' ] = clock.get_datetime()
-        self.global_summary[ 'dummy_mode' ] = self.config.get( 'dummy_mode' )
+        self.global_summary[ 'dummy_mode' ] = self.dummy_mode
         self.global_summary[ 'dummy_clock_rate' ] = self.config.get( 'dummy_clock_rate' )
 
            
@@ -34,15 +35,6 @@ class state_summary( Pyro.core.ObjBase ):
 
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary ]
-
-    #def get_ref_time_list( self ):
-    #    return self.ref_time_list
-
-    #def get_name_list( self ):
-    #    return self.name_list
-
-    #def get_short_name_list( self ):
-    #    return self.short_name_list
 
     def get_summary( self ):
         # DEPRECATED. Remove when Bernard's monitor has been updated
