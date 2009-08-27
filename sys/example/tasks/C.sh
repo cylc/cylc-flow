@@ -14,10 +14,10 @@ for PRE in $ONE $TWO; do
 done
 
 # ARTIFICIAL ERROR
-#[[ $REFERENCE_TIME == 2009072712 ]] && {
-#    echo "C: ERROR!!!!!!"
-#    exit 1
-#}
+[[ $REFERENCE_TIME == 2009082512 ]] && {
+    echo "C: ERROR!!!!!!"
+    exit 1
+}
 
 # generate outputs
 touch $TMPDIR/C.${REFERENCE_TIME}

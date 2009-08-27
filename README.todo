@@ -20,11 +20,6 @@ To Do
   mode, because the 'pkill dummy-task.py' on shutdown will kill all of
   his dummy tasks.
 
-* allow automatic deletion of lame tasks by remote request? 
-
-* lame tasks can be detected beyond the oldest running task, not just in
-  the last ref time batch
-
 * remote controlled prerequisite dump for specified tasks, to allow
   operator to see which prerequisites have yet to be satisfied.
 
@@ -42,10 +37,6 @@ To Do
 
 * allow remote-control to set a proper stop time (as opposed to an
   instant shutdown).
-
-* consider use of the broker for task.will_get_satisfaction()? The is
-  method as is is O(n^2), but n is only the size of the oldest batch of
-  tasks, not all tasks (used in identifying lame tasks). 
 
 * just before a task runs, try to re-satisfy fuzzy prerequisites in case
   a more up-to-date satisfier has shown up while the task was waiting

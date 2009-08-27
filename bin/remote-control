@@ -6,6 +6,9 @@ import pyrex
 import Pyro.core
 from optparse import OptionParser
 from time import sleep
+from Pyro.errors import PyroError,NamingError
+
+ctrl_end = "\033[0m"
 
 def prompt( reason ):
 
@@ -100,9 +103,9 @@ else:
 try:
     # connect to the remote switch object in cyclon
     control = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'remote_control' )
-except:
-    print "ERROR: failed to connect to control"
-    raise
+except NamingError:
+    print "\n\033[1;37;41mfailed to connect" + ctrl_end + ' to remote switch in "' + system_name + '"'
+    raise SystemExit
 
 if options.pause:
     if prompt( 'Pause' ):

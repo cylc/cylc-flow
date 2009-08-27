@@ -142,14 +142,11 @@ def main( argv ):
 
             god.kill_spent_tasks()
 
-            #god.kill_lame_tasks()
-
             go_ahead = False
-            if remote_control.go_psycho:
+            if remote_control.kill:
                 god.abdicate_and_kill( remote_control.kill_task_id )
-                remote_control.go_psycho = False
+                remote_control.kill = False
                 go_ahead = True
- 
             if remote_control.task_to_insert:
                 god.insert_task( remote_control.task_to_insert, clock )
                 remote_control.task_to_insert = None

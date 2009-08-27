@@ -24,7 +24,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.system_resume_requested = False
 
         # task to abdicate and kill
-        self.go_psycho = False
+        self.kill = False
         self.kill_task_id = None
 
     def nudge( self ):
@@ -77,9 +77,9 @@ class remote_switch( Pyro.core.ObjBase ):
             return result
 
     def abdicate_and_kill( self, task_id ):
-        # main prog must reset go_psycho after doin' the killin'
+        # main prog must reset kill after doin' the killin'
         self.log.warning( "REMOTE: abdicate and kill request for " + task_id )
-        self.go_psycho = True
+        self.kill = True
         self.kill_task_id = task_id
         # ensure we resume task processing immediately
         task.state_changed = True

@@ -255,20 +255,6 @@ class task( Pyro.core.ObjBase ):
     def set_finished( self ):
         self.state = "finished"
 
-    #def get_satisfaction( self, tasks ):
-    #    for task in tasks:
-    #        self.prerequisites.satisfy_me( task.outputs )
-
-    def will_get_satisfaction( self, tasks ):
-        temp_prereqs = deepcopy( self.prerequisites )
-        for task in tasks:
-            temp_prereqs.will_satisfy_me( task.outputs, task.identity )
-    
-        if not temp_prereqs.all_satisfied(): 
-            return False
-        else:
-            return True
-
     def is_complete( self ):  # not needed?
         if self.outputs.all_satisfied():
             return True
