@@ -120,6 +120,7 @@ class task( Pyro.core.ObjBase ):
             self.state = "waiting"
         elif initial_state == "finished":  
             self.outputs.set_all_satisfied()
+            self.prerequisites.set_all_satisfied()
             self.log( 'WARNING', " starting in FINISHED state" )
             #self.state = "finished"
             self.set_finished()
