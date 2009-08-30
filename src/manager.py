@@ -415,6 +415,31 @@ class manager:
             self.tasks.append( itask )
 
 
+    def dump_task_requisites( self, task_ids ):
+        for id in task_ids.keys():
+            # find the task
+            found = False
+            itask = None
+            for t in self.tasks:
+                if t.identity == id:
+                    found = True
+                    itask = t
+                    break
+
+            if not found:
+                self.log.warning( 'task not found for remote requisite dump request: ' + id )
+                return
+
+            itask.log( 'DEBUG', 'dumping requisites to stdout, by remote request' )
+
+            print
+            print 'PREREQUISITE DUMP', itask.identity 
+            itask.prerequisites.dump()
+            print
+            print 'OUTPUT DUMP', itask.identity 
+            itask.outputs.dump()
+            print
+ 
     def abdicate_and_kill( self, task_id ):
         # find the task
         found = False

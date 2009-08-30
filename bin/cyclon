@@ -164,7 +164,10 @@ def main( argv ):
             if remote_control.set_stop:
                 god.set_stop_time( remote_control.stop_time )
                 remote_control.set_stop = False
-                go_ahead = True
+            if remote_control.requisite_dump:
+                god.dump_task_requisites( remote_control.dump_task_ids )
+                remote_control.requisite_dump = False
+                remote_control.dump_task_ids = {}
 
             god.dump_state()
 

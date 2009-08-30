@@ -30,6 +30,10 @@ class remote_switch( Pyro.core.ObjBase ):
         self.kill = False
         self.kill_task_id = None
 
+        # task to dump requisites
+        self.requisite_dump = False
+        self.dump_task_ids = {}
+
     def nudge( self ):
         # pretend a task has changed state in order to invoke the event
         # handling loop
@@ -83,6 +87,14 @@ class remote_switch( Pyro.core.ObjBase ):
             self.log.warning( "no such config item: " + item )
         else:
             return result
+
+    def dump_task_requisites( self, task_ids ):
+        self.log.warning( "REMOTE: requisite dump request for:")
+        for task_id in task_ids:
+            self.dump_task_ids[ task_id ] = True
+            self.log.info( '-> ' + task_id )
+        self.requisite_dump = True
+
 
     def abdicate_and_kill( self, task_id ):
         # main prog must reset kill after doin' the killin'

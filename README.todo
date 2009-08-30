@@ -28,9 +28,6 @@ To Do
   mode, because the 'pkill dummy-task.py' on shutdown will kill all of
   his dummy tasks.
 
-* remote controlled prerequisite dump for specified tasks, to allow
-  operator to see which prerequisites have yet to be satisfied.
-
 * a task should be allowed to declare multiple outputs at the same time
   (currently this is detected as an error condition)
 

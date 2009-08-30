@@ -47,6 +47,11 @@ parser.add_option( "-k", "--kill",
         metavar="<name1,name2,...>%YYYYMMDDHH", 
         action="store", dest="kill_task_id" )
 
+parser.add_option( "-d", "--dump", 
+        help="dump the outputs and prerequisites of one or more tasks",
+        metavar="<name1,name2,...>%YYYYMMDDHH", 
+        action="store", dest="dump_task_id" )
+
 parser.add_option( "-i", "--insert", help="insert a new task (EXPERIMENTAL!)",
         metavar=" <name>%<YYYYMMDDHH>", action="store", dest="insert_task_id" )
 
@@ -147,6 +152,26 @@ if options.insert_task_id:
     if prompt( 'Insert ' + options.insert_task_id + ' in' ):
         print "requesting insertion of " + options.insert_task_id
         control.insert( options.insert_task_id )
+
+if options.dump_task_id:
+    # TO DO: this currently uses cyclon's remote switch to get cyclon to
+    # dump the requested information to stdout. It might be better to
+    # connect to the requested task objects directly and dump their
+    # requisites at the remote side.
+    [ tmp, reftime ] = options.dump_task_id.split( '%' )
+    if re.search( ',', tmp ):
+        names = tmp.split( ',' )
+    else:
+        names = [ tmp ]
+
+    print "requesting (pre)requisite dump for " + options.dump_task_id
+
+    ids = []
+    for name in names:
+        id = name + '%' + reftime
+        ids.append(id)
+
+    control.dump_task_requisites( ids )
 
 if options.kill_task_id:
     if prompt( 'Kill ' + options.kill_task_id + ' in' ):

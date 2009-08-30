@@ -50,7 +50,7 @@ class requisites:
     def dump( self ):
         # print out each message and its state; use for debugging
         for key in self.satisfied.keys():
-            print key + " ... ", self.satisfied[ key ]
+            print ' + ' + key + " ... ", self.satisfied[ key ]
 
     def all_satisfied( self ):
         if False in self.satisfied.values(): 
