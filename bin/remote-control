@@ -33,6 +33,9 @@ parser.add_option( "-r", "--resume", help="unhold/resume system",
 parser.add_option( "-s", "--shutdown", help="shutdown system",
         action="store_true", default=False, dest="shutdown" )
 
+parser.add_option( "-t", "--stop_time", help="set stop_time",
+        metavar="YYYYMMDDHH", action="store", dest="stop_time" )
+
 parser.add_option( "-c", "--configured", help="use configured system",
         action="store_true", default=False, dest="use_configured" )
 
@@ -113,6 +116,10 @@ except NamingError:
 if options.pause:
     if prompt( 'Pause' ):
         control.hold()
+
+if options.stop_time:
+    if prompt( 'Set stop time ' + options.stop_time + ' for'):
+        control.set_stop_time( options.stop_time )
 
 if options.resume:
     if prompt( 'Resume' ):

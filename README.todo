@@ -43,9 +43,6 @@ To Do
 * all sys.exit(1) calls should be routed through a clean shutdown, so
   that Pyro nameserver group entries can be deleted automatically.
 
-* allow remote-control to set a proper stop time (as opposed to an
-  instant shutdown).
-
 * just before a task runs, try to re-satisfy fuzzy prerequisites in case
   a more up-to-date satisfier has shown up while the task was waiting
   for other prerequisites to be satisfied ... OR (better?!) don't try to

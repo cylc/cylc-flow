@@ -15,6 +15,8 @@ class manager:
         self.pyro = pyro  # pyrex (cyclon Pyro helper) object
         self.log = logging.getLogger( "main" )
 
+        self.stop_time = config.get('stop_time')
+ 
         self.config = config
 
         self.system_hold = False
@@ -28,6 +30,10 @@ class manager:
             self.load_from_state_dump( clock )
         else:
             self.load_from_config( clock )
+
+    def set_stop_time( self, stop_time ):
+        self.log.debug( "Setting new stop time: " + stop_time )
+        self.stop_time = stop_time
 
     def set_system_hold( self ):
         self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run")
@@ -77,9 +83,9 @@ class manager:
             # creation, so we have to create the task before
             # checking if stop time has been reached.
             skip = False
-            if self.config.get('stop_time'):
-                if int( itask.ref_time ) > int( self.config.get('stop_time') ):
-                    itask.log( 'WARNING', "STOPPING at " + self.config.get('stop_time') )
+            if self.stop_time:
+                if int( itask.ref_time ) > int( self.stop_time ):
+                    itask.log( 'WARNING', "STOPPING at " + self.stop_time )
                     itask.prepare_for_death()
                     del itask
                     skip = True
@@ -134,9 +140,9 @@ class manager:
             # creation, so we have to create the task before
             # checking if stop time has been reached.
             skip = False
-            if self.config.get('stop_time'):
-                if int( itask.ref_time ) > int( self.config.get('stop_time') ):
-                    itask.log( 'WARNING', " STOPPING at " + self.config.get('stop_time') )
+            if self.stop_time:
+                if int( itask.ref_time ) > int( self.stop_time ):
+                    itask.log( 'WARNING', " STOPPING at " + self.stop_time )
                     itask.prepare_for_death()
                     del itask
                     skip = True
@@ -206,9 +212,9 @@ class manager:
 
                 # dynamic task object creation by task and module name
                 new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_ref_time(), 'False', "waiting" )
-                if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
+                if self.stop_time and int( new_task.ref_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
-                    new_task.log( 'WARNING', "STOPPING at configured stop time " + self.config.get('stop_time') )
+                    new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
                     new_task.prepare_for_death()
                     del new_task
                 else:
@@ -263,7 +269,6 @@ class manager:
         # list of tasks to actually delete 
         spent = []
 
-        all_abdicated = None
         # ref time of earliest unabdicated task
         earliest_unabdicated = None
 
@@ -290,6 +295,7 @@ class manager:
                     if name not in batch[ rt ]:
                         batch[ rt ].append( name )
 
+            all_abdicated = True
             if not itask.abdicated:
                 # is this the earliest unabdicated so far? 
                 all_abdicated = False
@@ -396,9 +402,9 @@ class manager:
         # creation, so we have to create the task before
         # checking if stop time has been reached.
         skip = False
-        if self.config.get('stop_time'):
-            if int( itask.ref_time ) > int( self.config.get('stop_time') ):
-                itask.log( 'WARNING', " STOPPING at " + self.config.get('stop_time') )
+        if self.stop_time:
+            if int( itask.ref_time ) > int( self.stop_time ):
+                itask.log( 'WARNING', " STOPPING at " + self.stop_time )
                 itask.prepare_for_death()
                 del itask
                 skip = True
@@ -431,7 +437,7 @@ class manager:
             # TO DO: the following should reuse code in regenerate_tasks()?
             # dynamic task object creation by task and module name
             new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_ref_time(), 'False', "waiting" )
-            if self.config.get('stop_time') and int( new_task.ref_time ) > int( self.config.get('stop_time') ):
+            if self.stop_time and int( new_task.ref_time ) > int( self.stop_time ):
                 # we've reached the stop time: delete the new task 
                 new_task.log( 'WARNING', 'STOPPING at configured stop time' )
                 new_task.prepare_for_death()

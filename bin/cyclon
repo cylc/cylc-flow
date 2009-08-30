@@ -161,6 +161,10 @@ def main( argv ):
                 god.insert_task( remote_control.task_to_insert, clock )
                 remote_control.task_to_insert = None
                 go_ahead = True
+            if remote_control.set_stop:
+                god.set_stop_time( remote_control.stop_time )
+                remote_control.set_stop = False
+                go_ahead = True
 
             god.dump_state()
 
