@@ -28,7 +28,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         # task to abdicate and kill
         self.kill = False
-        self.kill_task_id = None
+        self.kill_task_ids = {}
 
         # task to dump requisites
         self.requisite_dump = False
@@ -96,12 +96,12 @@ class remote_switch( Pyro.core.ObjBase ):
         self.requisite_dump = True
 
 
-    def abdicate_and_kill( self, task_id ):
-        # main prog must reset kill after doin' the killin'
-        self.log.warning( "REMOTE: abdicate and kill request for " + task_id )
+    def abdicate_and_kill( self, task_ids ):
+        self.log.warning( "REMOTE: abdicate and kill request for:" )
+        for task_id in task_ids:
+            self.kill_task_ids[ task_id ] = True
+            self.log.info( '-> ' + task_id )
         self.kill = True
-        self.kill_task_id = task_id
-        # ensure we resume task processing immediately
         task.state_changed = True
 
     def set_verbosity( self, level ):

@@ -169,7 +169,7 @@ if options.dump_task_id:
     ids = []
     for name in names:
         id = name + '%' + reftime
-        ids.append(id)
+        ids.append( id )
 
     control.dump_task_requisites( ids )
 
@@ -181,13 +181,16 @@ if options.kill_task_id:
         else:
             names = [ tmp ]
 
+        print "requesting abdicate and kill for " + options.kill_task_id
+
+        ids = []
         for name in names:
             id = name + '%' + reftime
-            print "requesting abdicate and kill for " + id
-            control.abdicate_and_kill( id )
+            ids.append( id )
+
+        control.abdicate_and_kill( ids )
 
         print "WARNING: you may also need to kill the REAL task(s)"
-
 
 if options.bump:
     control.nudge()

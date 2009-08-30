@@ -154,8 +154,9 @@ def main( argv ):
 
             go_ahead = False
             if remote_control.kill:
-                god.abdicate_and_kill( remote_control.kill_task_id )
+                god.abdicate_and_kill( remote_control.kill_task_ids )
                 remote_control.kill = False
+                remote_control.kill_task_ids = {}
                 go_ahead = True
             if remote_control.task_to_insert:
                 god.insert_task( remote_control.task_to_insert, clock )

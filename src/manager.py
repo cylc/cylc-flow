@@ -440,46 +440,48 @@ class manager:
             itask.outputs.dump()
             print
  
-    def abdicate_and_kill( self, task_id ):
-        # find the task
-        found = False
-        for t in self.tasks:
-            if t.identity == task_id:
-                found = True
-                itask = t
-                break
+    def abdicate_and_kill( self, task_ids ):
+        for id in task_ids.keys():
+            # find the task
+            found = False
+            itask = None
+            for t in self.tasks:
+                if t.identity == id:
+                    found = True
+                    itask = t
+                    break
 
-        if not found:
-            self.log.warning( "task not found for remote kill request: " + task_id )
-            return
+            if not found:
+                self.log.warning( "task not found for remote kill request: " + task_id )
+                return
 
-        itask.log( 'DEBUG', "killing myself by remote request" )
+            itask.log( 'DEBUG', "killing myself by remote request" )
 
-        if not itask.has_abdicated():
-            # forcibly abdicate the task and create its successor
-            itask.set_abdicated()
-            itask.log( 'DEBUG', 'forced abdication' )
-            # TO DO: the following should reuse code in regenerate_tasks()?
-            # dynamic task object creation by task and module name
-            new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_ref_time(), 'False', "waiting" )
-            if self.stop_time and int( new_task.ref_time ) > int( self.stop_time ):
-                # we've reached the stop time: delete the new task 
-                new_task.log( 'WARNING', 'STOPPING at configured stop time' )
-                new_task.prepare_for_death()
-                del new_task
+            if not itask.has_abdicated():
+                # forcibly abdicate the task and create its successor
+                itask.set_abdicated()
+                itask.log( 'DEBUG', 'forced abdication' )
+                # TO DO: the following should reuse code in regenerate_tasks()?
+                # dynamic task object creation by task and module name
+                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_ref_time(), 'False', "waiting" )
+                if self.stop_time and int( new_task.ref_time ) > int( self.stop_time ):
+                    # we've reached the stop time: delete the new task 
+                    new_task.log( 'WARNING', 'STOPPING at configured stop time' )
+                    new_task.prepare_for_death()
+                    del new_task
+                else:
+                    # no stop time, or we haven't reached it yet.
+                    self.pyro.connect( new_task, new_task.identity )
+                    new_task.log( 'DEBUG', 'connected' )
+                    self.tasks.append( new_task )
+
             else:
-                # no stop time, or we haven't reached it yet.
-                self.pyro.connect( new_task, new_task.identity )
-                new_task.log( 'DEBUG', 'connected' )
-                self.tasks.append( new_task )
+                # already abdicated: the successor already exists
+                pass
 
-        else:
-            # already abdicated: the successor already exists
-            pass
-
-        # now kill the task
-        self.tasks.remove( itask )
-        self.pyro.disconnect( itask )
-        itask.log( 'WARNING', "disconnected (remote request)" )
-        itask.prepare_for_death()
-        del itask
+            # now kill the task
+            self.tasks.remove( itask )
+            self.pyro.disconnect( itask )
+            itask.log( 'WARNING', "disconnected (remote request)" )
+            itask.prepare_for_death()
+            del itask
