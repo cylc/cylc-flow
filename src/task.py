@@ -300,58 +300,47 @@ class task( Pyro.core.ObjBase ):
         # new round of dependency renegotiations)
         global state_changed
 
-        # prefix task id to special 'started' and 'finished' messages.
-        # (other tasks may refer to "foo%finished" as a prerequisite).
-        if message == 'started' or message == 'finished':
-            message = self.identity + ' ' + message
-
         if self.state != "running":
             # my external task should not be running!
             self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running)" )
             self.log( 'WARNING', '-> ' + message )
 
-        if message == "failed":
-            # process task failure messages
-            if priority == "CRITICAL":
-                self.log( 'CRITICAL',  message )
-                self.state = "failed"
+        # prefix task id to special messages.
+        raw_message = message
+        if message == 'started' or message == 'finished' or message == 'failed':
+            message = self.identity + ' ' + message
+ 
+        if self.outputs.exists( message ):
+            # registered output messages
+
+            if not self.outputs.is_satisfied( message ):
+                # message indicates completion of a registered output.
+                state_changed = True
+                self.log( priority,  message )
+                self.outputs.set_satisfied( message )
+
+                if message == self.identity + ' finished':
+                    # TASK HAS FINISHED
+                    self.set_finished()
+                    if not self.outputs.all_satisfied():
+                        self.log( 'WARNING', 'finished before all outputs completed' )
+
             else:
-                self.log( 'WARNING', 'non-critical task failure message: ' )
-                self.log( 'WARNING', "-> " + message )
-  
-        elif self.outputs.exists( message ):
-            # process registered output messages
-            if self.outputs.is_satisfied( message ):
                 # this output has already been satisfied
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )
                 self.log( 'WARNING', "-> " + message )
-            else:
-                # log the completed output and set it satisfied
-                if priority == 'NORMAL':
-                    self.log( 'NORMAL',  message )
-                else:
-                    self.log( 'WARNING', "UNEXPECTED PRIORITY FOR REGISTERED OUTPUT: " + priority )
-                    self.log( 'WARNING', '-> ' + message )
 
-                self.outputs.set_satisfied( message )
-                state_changed = True
+        elif raw_message == 'failed':
+            # process task failure messages
+            if priority != 'CRITICAL':
+                self.log( 'WARNING', 'non-critical priority for task failure' )
+            self.log( 'CRITICAL',  message )
+            self.state = 'failed'
 
-                # SET TASK FINISHED INDICATOR IF ALL OUTPUTS NOW SATISFIED
-                if self.outputs.all_satisfied():
-                    self.set_finished()
         else:
-            # log unregistered messages
+            # log other (non-failed) unregistered messages with a '*' prefix
             message = '*' + message
-            if priority == "NORMAL":
-                self.log( 'NORMAL',  message )
-            elif priority == "WARNING":
-                self.log( 'WARNING', message )
-            elif priority == "CRITICAL":
-                self.log( 'CRITICAL',  message )
-            else:
-                self.log( 'WARNING', "unknown priority " + priority )
-                self.log( 'WARNING', '-> ' + message )
-
+            self.log( priority, message )
 
     def update( self, reqs ):
         for req in reqs.get_list():
