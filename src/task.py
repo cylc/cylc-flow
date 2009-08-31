@@ -67,6 +67,13 @@ class task( Pyro.core.ObjBase ):
     # which case they will be removed according to system cutoff time.
     quick_death = True
 
+    @classmethod
+    def describe( cls ):
+        return cls.description 
+        #for line in cls.description:
+        #    print line
+
+
     def __init__( self, ref_time, abdicated, initial_state ):
         # Call this AFTER derived class initialisation
         # (which alters requisites based on initial state)
@@ -158,6 +165,7 @@ class task( Pyro.core.ObjBase ):
         else:
             logger.warning( 'UNKNOWN PRIORITY: ' + priority )
             logger.warning( '-> ' + message )
+
 
     def prepare_for_death( self ):
         # The task manager MUST call this immediately before deleting a

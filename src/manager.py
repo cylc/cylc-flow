@@ -5,6 +5,7 @@ import pimp_my_logger
 import requisites
 import logging
 #import pdb
+import task_classes
 import os
 import re
 
@@ -414,6 +415,15 @@ class manager:
             self.pyro.connect( itask, itask.identity )
             self.tasks.append( itask )
 
+
+    def describe_tasks( self, task_names ):
+        for n in task_names:
+            print
+            print 'TASK DESCRIPTION FOR', n
+            descr = eval( 'task_classes.' + n + '.describe()' )
+            for line in descr:
+                print ' ', line
+            print
 
     def dump_task_requisites( self, task_ids ):
         for id in task_ids.keys():

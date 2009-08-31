@@ -90,7 +90,7 @@ def main( argv ):
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK',
             'EXPORT', 'COTEMPORAL_DEPENDANTS_ONLY', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH_MINUTES',
-            'TYPE', 'CONTACT_DELAY_HOURS' ]
+            'TYPE', 'CONTACT_DELAY_HOURS', 'DESCRIPTION' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -246,6 +246,18 @@ import logging
         FILE.write( indent + 'short_name = \'' + short_name + '\'\n' )
 
         FILE.write( indent + 'instance_count = 0\n\n' )
+
+        # task description
+        if 'DESCRIPTION' in parsed_def.keys():
+            FILE.write( indent + 'description = [\n' )
+            indent_more()
+            for line in  parsed_def[ 'DESCRIPTION' ]:
+                FILE.write( indent + "'" + line + "',\n" )
+            indent_less()
+            FILE.write( indent + ']\n\n' )
+        else:
+            print "ERROR: no %DESCRIPTION provided for task " + task_name
+            sys.exit(1)
 
         # owner
         if 'OWNER' in parsed_def.keys():

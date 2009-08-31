@@ -165,6 +165,10 @@ def main( argv ):
             if remote_control.set_stop:
                 god.set_stop_time( remote_control.stop_time )
                 remote_control.set_stop = False
+            if remote_control.describe_tasks:
+                god.describe_tasks( remote_control.describe_task_names )
+                remote_control.describe_tasks = False
+                remote_control.describe_task_names = []
             if remote_control.requisite_dump:
                 god.dump_task_requisites( remote_control.dump_task_ids )
                 remote_control.requisite_dump = False

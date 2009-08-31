@@ -33,7 +33,7 @@ parser.add_option( "-r", "--resume", help="unhold/resume system",
 parser.add_option( "-s", "--shutdown", help="shutdown system",
         action="store_true", default=False, dest="shutdown" )
 
-parser.add_option( "-t", "--stop_time", help="set stop_time",
+parser.add_option( "-t", "--stop-time", help="set stop_time",
         metavar="YYYYMMDDHH", action="store", dest="stop_time" )
 
 parser.add_option( "-c", "--configured", help="use configured system",
@@ -47,16 +47,20 @@ parser.add_option( "-k", "--kill",
         metavar="<name1,name2,...>%YYYYMMDDHH", 
         action="store", dest="kill_task_id" )
 
-parser.add_option( "-d", "--dump", 
-        help="dump the outputs and prerequisites of one or more tasks",
+parser.add_option( "-d", "--dump-requisites", 
+        help="dump the prerequisites and outputs of one or more tasks",
         metavar="<name1,name2,...>%YYYYMMDDHH", 
         action="store", dest="dump_task_id" )
+
+parser.add_option( "-x", "--describe-tasks", 
+        help="dump the descriptive information on one or more tasks",
+        metavar="<name1,name2,...>", 
+        action="store", dest="describe_names" )
 
 parser.add_option( "-i", "--insert", help="insert a new task (EXPERIMENTAL!)",
         metavar=" <name>%<YYYYMMDDHH>", action="store", dest="insert_task_id" )
 
 verbosity_choices = ['debug','info', 'warning', 'error', 'critical'] 
-
 parser.add_option( "-v", "--verbosity",
         help="set verbosity: " + ', '.join(verbosity_choices),
         action="store", 
@@ -152,6 +156,19 @@ if options.insert_task_id:
     if prompt( 'Insert ' + options.insert_task_id + ' in' ):
         print "requesting insertion of " + options.insert_task_id
         control.insert( options.insert_task_id )
+
+if options.describe_names:
+    # TO DO: this currently uses cyclon's remote switch to get cyclon to
+    # dump the requested information to stdout. It might be better to
+    # connect to the requested task objects directly and dump their
+    # descriptions at the remote side.
+    if re.search( ',', options.describe_names ):
+        names = options.describe_names.split( ',' )
+    else:
+        names = [ options.describe_names ]
+
+    print "requesting descriptive information for " + options.describe_names
+    control.dump_task_info( names )
 
 if options.dump_task_id:
     # TO DO: this currently uses cyclon's remote switch to get cyclon to

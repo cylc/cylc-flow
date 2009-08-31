@@ -4,6 +4,10 @@
 %NAME
     ext
 
+%DESCRIPTION
+    Example system task to provide the external input required by task A.
+    Depends only on the system startup task at start time.
+
 %TYPE
     normal, contact
 

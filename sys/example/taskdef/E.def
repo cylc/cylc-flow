@@ -4,6 +4,10 @@
 %NAME
     E
 
+%DESCRIPTION
+    Example system task E, represents a post processing task. 
+    Depends only on task B.
+
 %TYPE
     normal
 

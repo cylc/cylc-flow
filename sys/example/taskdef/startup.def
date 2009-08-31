@@ -1,10 +1,12 @@
 # THIS IS A cyclon TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
-# startup task to clean out the example system working directory. 
-
 %NAME
     startup
+
+%DESCRIPTION
+    Example system startup task, used in real mode to clean out the
+    system working directory. Runs only once at startup. 
 
 %TYPE
     oneoff
