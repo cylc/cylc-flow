@@ -18,4 +18,4 @@ touch $TMPDIR/B.${REFERENCE_TIME}
 touch $TMPDIR/B.${NEXT_REFERENCE_TIME}.restart
 task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $TASK_NAME restart files ready for $NEXT_REFERENCE_TIME
 touch $TMPDIR/B.${NEXT_NEXT_REFERENCE_TIME}.restart
-#task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $TASK_NAME restart files ready for $NEXT_NEXT_REFERENCE_TIME
+task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $TASK_NAME restart files ready for $NEXT_NEXT_REFERENCE_TIME
