@@ -3,6 +3,7 @@
 import Pyro.core
 import logging
 import task
+import task_classes
 import sys
 
 class remote_switch( Pyro.core.ObjBase ):
@@ -33,10 +34,6 @@ class remote_switch( Pyro.core.ObjBase ):
         # tasks to dump requisites
         self.requisite_dump = False
         self.dump_task_ids = {}
-
-        # task names to dump descriptive info
-        self.describe_tasks = True
-        self.describe_task_names = []
 
     def nudge( self ):
         # pretend a task has changed state in order to invoke the event
@@ -92,12 +89,18 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return result
 
-    def dump_task_info( self, task_names ):
-        self.log.warning( "REMOTE: task info request for:")
-        for task_name in task_names:
-            self.describe_task_names.append( task_name )
-            self.log.warning( '-> ' + task_name )
-        self.describe_tasks = True
+    def get_task_info( self, task_names ):
+        self.log.warning( "REMOTE: task info request for: " + ','.join(task_names ))
+        info = {}
+        for n in task_names:
+            try:
+                descr = eval( 'task_classes.' + n + '.describe()' )
+            except AttributeError:
+                info[ n ] = ['ERROR: No Such Task Class']
+            else:
+                info[ n ] = descr
+
+        return info
 
     def dump_task_requisites( self, task_ids ):
         self.log.warning( "REMOTE: requisite dump request for:")

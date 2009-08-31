@@ -149,39 +149,41 @@ if options.shutdown:
         control.shutdown()
 
 if options.verbosity:
-    print "requesting verbosity " + options.verbosity
+    print "Requesting verbosity " + options.verbosity
     control.set_verbosity( options.verbosity )
 
 if options.insert_task_id:
     if prompt( 'Insert ' + options.insert_task_id + ' in' ):
-        print "requesting insertion of " + options.insert_task_id
+        print "Requesting insertion of " + options.insert_task_id
         control.insert( options.insert_task_id )
 
 if options.describe_names:
-    # TO DO: this currently uses cyclon's remote switch to get cyclon to
-    # dump the requested information to stdout. It might be better to
-    # connect to the requested task objects directly and dump their
-    # descriptions at the remote side.
+    # retrieve and print task class descriptions
     if re.search( ',', options.describe_names ):
         names = options.describe_names.split( ',' )
     else:
         names = [ options.describe_names ]
 
-    print "requesting descriptive information for " + options.describe_names
-    control.dump_task_info( names )
+    print "Getting descriptive information for " + options.describe_names
+    info = control.get_task_info( names )
+    for name in info.keys():
+        print
+        print name + ':'
+        for line in info[name]:
+            print '  ' + line
+    print
 
 if options.dump_task_id:
-    # TO DO: this currently uses cyclon's remote switch to get cyclon to
-    # dump the requested information to stdout. It might be better to
-    # connect to the requested task objects directly and dump their
-    # requisites at the remote side.
+    # TO DO: this currently gets cyclon to dump the requested
+    # information to stdout. It might be better to connect to the
+    # task objects themselves and print the information here. 
     [ tmp, reftime ] = options.dump_task_id.split( '%' )
     if re.search( ',', tmp ):
         names = tmp.split( ',' )
     else:
         names = [ tmp ]
 
-    print "requesting (pre)requisite dump for " + options.dump_task_id
+    print "Requesting (pre)requisite dump for " + options.dump_task_id
 
     ids = []
     for name in names:
@@ -198,7 +200,7 @@ if options.kill_task_id:
         else:
             names = [ tmp ]
 
-        print "requesting abdicate and kill for " + options.kill_task_id
+        print "Requesting abdicate and kill for " + options.kill_task_id
 
         ids = []
         for name in names:
