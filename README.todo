@@ -29,6 +29,9 @@ To Do
 * a task should be allowed to declare multiple outputs at the same time
   (currently this is detected as an error condition)
 
+* detect when taskdef files are newer than task_classes file, and warn
+  that use of configure-system may be required.
+
 * STATE DUMP INFORMATION SHOULD BE A DICT, LIKE CONFIG, TO ALLOW
   arbitrary additional information to be added by new task classes.
   
