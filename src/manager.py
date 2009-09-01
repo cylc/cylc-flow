@@ -279,6 +279,7 @@ class manager:
         # done task names in ref time batches
         batch = {}
 
+        all_abdicated = True
         for itask in self.tasks:
             # loop through all tasks
 
@@ -295,7 +296,6 @@ class manager:
                     if name not in batch[ rt ]:
                         batch[ rt ].append( name )
 
-            all_abdicated = True
             if not itask.abdicated:
                 # is this the earliest unabdicated so far? 
                 all_abdicated = False
@@ -378,7 +378,7 @@ class manager:
         for itask in spent:
             self.tasks.remove( itask )
             self.pyro.disconnect( itask )
-            itask.log( 'DEBUG', "disconnected (spent)" )
+            itask.log( 'NORMAL', "disconnected (spent)" )
             itask.prepare_for_death()
 
         del spent
