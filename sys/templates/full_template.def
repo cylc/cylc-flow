@@ -8,7 +8,9 @@
     foo[, f]
 
 %DESCRIPTION
-    # a description of what this task does, when it runs, etc.
+    # a concise description of what this task does
+    the quick brown fox
+    jumped over the lazy dog
 
 %TYPE
     # Type of task:
