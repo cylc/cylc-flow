@@ -35,9 +35,9 @@ def pimp_it( log, name, config, dummy_mode, clock = None ):
 
     originator = ""
     if name == "main":
-        originator = '%(name)-10s'
+        originator = '%(name)-23s'
 
-    f = logging.Formatter( '%(asctime)s %(levelname)-8s ' + originator + ' - %(message)s', '%Y/%m/%d %H:%M:%S' )
+    f = logging.Formatter( '%(asctime)s %(levelname)-2s ' + originator + ' - %(message)s', '%Y/%m/%d %H:%M:%S' )
 
     if name == "main":
         # write warnings and worse to stderr as well as to the log
