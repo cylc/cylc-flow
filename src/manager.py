@@ -378,7 +378,7 @@ class manager:
         for itask in spent:
             self.tasks.remove( itask )
             self.pyro.disconnect( itask )
-            itask.log( 'NORMAL', "disconnected (spent)" )
+            itask.log( 'DEBUG', "disconnected (spent)" )
             itask.prepare_for_death()
 
         del spent
