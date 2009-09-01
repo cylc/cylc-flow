@@ -5,8 +5,10 @@
 
 %NAME
     # task name, and optional short display name
-
     foo[, f]
+
+%DESCRIPTION
+    # a description of what this task does, when it runs, etc.
 
 %TYPE
     # Type of task:

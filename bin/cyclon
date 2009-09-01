@@ -38,7 +38,7 @@ def main( argv ):
     # construct a command line parser
     parser = OptionParser( "%prog [options]" )
 
-    parser.add_option( "-r", "--restart", help="restart from state dump",
+    parser.add_option( "-r", "--restart", help="restart from configured state dump",
         action="store_true", default=False, dest="restart" )
 
     parser.add_option( "-d", "--dummy_mode", help="run in dummy (simulation) mode",
