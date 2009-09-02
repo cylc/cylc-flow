@@ -1,5 +1,9 @@
 To Do
 
+* remote setting of 'ready' state for artificially tied tasks (nztide)
+  whose artificial tie has failed but whose real prerequisites are known
+  to be satisfied
+
 * forecast models with restart dependencies cannot have quick_death =
   True; cyclon should check for this.
 

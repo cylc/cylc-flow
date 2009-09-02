@@ -396,6 +396,12 @@ class manager:
 
         del spent
 
+    def reset_task( self, task_id ):
+        for itask in self.tasks:
+            if itask.identity == task_id:
+                itask.log( 'WARNING', "resetting to waiting state" )
+                itask.state = 'waiting'
+
     def insert_task( self, task_id, clock ):
         # insert a new task in a waiting state
 

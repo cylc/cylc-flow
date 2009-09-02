@@ -40,16 +40,27 @@ class remote_switch( Pyro.core.ObjBase ):
         self.requisite_dump = False
         self.dump_task_ids = {}
 
+        # task to reset from failed to waiting
+        self.reset_a_task = False
+        self.reset_task_id = None
+
     def nudge( self ):
         # pretend a task has changed state in order to invoke the event
         # handling loop
         self.log.warning( "REMOTE: nudge requested" )
         task.state_changed = True
 
-    def insert( self, taskid ):
+    def reset_to_waiting( self, task_id ):
+        # reset a failed task to the waiting state
+        # (after it has been fixed, presumably!)
+        self.log.warning( "REMOTE: reset to waiting: " + task_id )
+        self.reset_a_task = True
+        self.reset_task_id = task_id
+
+    def insert( self, task_id ):
         # insert a new task into the system
-        self.task_to_insert = taskid
-        self.log.warning( "REMOTE: task insertion request: " + taskid )
+        self.task_to_insert = task_id
+        self.log.warning( "REMOTE: task insertion request: " + task_id )
 
     def hold( self ):
         self.log.warning( "REMOTE: system hold requested" )

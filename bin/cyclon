@@ -163,6 +163,11 @@ def main( argv ):
                 remote_control.kill_rt = False
                 remote_control.kill_reftime = None
                 go_ahead = True
+            if remote_control.reset_a_task:
+                god.reset_task( remote_control.reset_task_id )
+                remote_control.reset_a_task = False
+                remote_control.reset_task_id = None
+                go_ahead = True
             if remote_control.task_to_insert:
                 god.insert_task( remote_control.task_to_insert, clock )
                 remote_control.task_to_insert = None

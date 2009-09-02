@@ -30,6 +30,9 @@ parser.add_option( "-p", "--pause", help="pause system now",
 parser.add_option( "--hold", help="set system hold time",
         metavar="YYYYMMDDHH", action="store", dest="hold_time" )
 
+parser.add_option( "--reset-task", help="reset a failed task to the waiting state",
+        metavar="name%YYYYMMDDHH", action="store", dest="reset_id" )
+
 parser.add_option( "-r", "--resume", help="unhold/resume system",
         action="store_true", default=False, dest="resume" )
 
@@ -124,6 +127,10 @@ try:
 except NamingError:
     print "\n\033[1;37;41mfailed to connect" + ctrl_end + ' to remote switch in "' + system_name + '"'
     raise SystemExit
+
+if options.reset_id:
+    if prompt( 'Reset ' + options.reset_id + ' to the waiting state for' ):
+        control.reset_to_waiting( options.reset_id )
 
 if options.pause:
     if prompt( 'Pause' ):
