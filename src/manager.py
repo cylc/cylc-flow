@@ -302,7 +302,11 @@ class manager:
 
                 # compile batched names of done tasks
                 rt = itask.ref_time
-                name = itask.name
+                try:
+                    name = itask.oneoff_follow_on
+                except AttributeError:
+                    name = itask.name
+
                 if rt not in batch.keys():
                     batch[ rt ] = [ name ]
                 else:
@@ -349,7 +353,13 @@ class manager:
                 # check if any task type has not been seen yet
                 if itask.quick_death:
                     continue
-                if itask.name not in seen.keys():
+
+                try:
+                    name = itask.oneoff_follow_on
+                except AttributeError:
+                    name = itask.name
+
+                if name not in seen.keys():
                     seen_all = False
                     break
 
@@ -480,7 +490,7 @@ class manager:
                 continue
 
             if itask.prerequisites.will_satisfy_me( parent.outputs, parent.identity ):
-                print 'dependee: ' + itask.identity
+                #print 'dependee: ' + itask.identity
                 deps[ itask.identity ] = True
 
         for item in deps:

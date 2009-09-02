@@ -54,7 +54,7 @@ parser.add_option( "-k", "--kill",
         action="store", dest="kill_task_id" )
 
 parser.add_option( "--purge", 
-        help="abdicate and kill a task and all of its dependees down to a given time",
+        help="abdicate and kill a task and its dependees down to a given time",
         metavar="name%YYYYMMDDHH,YYYYMMDDHH", 
         action="store", dest="purge" )
 
@@ -128,7 +128,7 @@ else:
 
 try:
     # connect to the remote switch object in cyclon
-    control = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'remote_control' )
+    control = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'remote' )
 except NamingError:
     print "\n\033[1;37;41mfailed to connect" + ctrl_end + ' to remote switch in "' + system_name + '"'
     raise SystemExit

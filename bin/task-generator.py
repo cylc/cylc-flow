@@ -90,7 +90,7 @@ def main( argv ):
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK',
             'EXPORT', 'COTEMPORAL_DEPENDANTS_ONLY', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH_MINUTES',
-            'TYPE', 'CONTACT_DELAY_HOURS', 'DESCRIPTION' ]
+            'TYPE', 'CONTACT_DELAY_HOURS', 'DESCRIPTION', 'ONEOFF_FOLLOW_ON' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -174,8 +174,16 @@ import logging
 
         # print_parsed_info()
 
+        # quick death (DEFAULT False)
+        quick_death = False
+        if 'COTEMPORAL_DEPENDANTS_ONLY' in parsed_def.keys():
+            delayed_death = parsed_def[ 'COTEMPORAL_DEPENDANTS_ONLY' ][0]
+            if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
+                quick_death = True
+
         delay = 0
         contact = False
+        oneoff = False
         if 'TYPE' in parsed_def.keys():
 
             type = parsed_def[ 'TYPE' ][0]
@@ -185,6 +193,7 @@ import logging
                 parent_class = 'contact_task'
 
             elif re.match( 'oneoff,\s*contact', type ):
+                oneoff = True
                 contact = True
                 parent_class = 'oneoff_contact_task'
 
@@ -199,6 +208,7 @@ import logging
                 parent_class = 'sequential_task'
 
             elif type == 'oneoff':
+                oneoff = True
                 parent_class = 'oneoff_task'
 
             else:
@@ -209,6 +219,14 @@ import logging
             print "ERROR: no %TYPE specified"
             sys.exit(1)
 
+        oneoff_follow_on = False
+        if oneoff and not quick_death:
+            if 'ONEOFF_FOLLOW_ON' not in parsed_def.keys():
+                print "Error: oneoff tasks that have non-cotemporal dependants"
+                print "must define %ONEOFF_FOLLOW_ON"
+                sys.exit(1)
+            else:
+                oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
         def_init_args = 'ref_time, abdicated, initial_state'
         par_init_args = 'ref_time, abdicated, initial_state'
@@ -273,14 +291,10 @@ import logging
         # valid hours
         FILE.write( indent + 'valid_hours = [' + parsed_def[ 'VALID_HOURS' ][0] + ']\n\n' )
 
-        # quick death? (DEFAULT False)
-        quick_death = 'False'
-        if 'COTEMPORAL_DEPENDANTS_ONLY' in parsed_def.keys():
-            delayed_death = parsed_def[ 'COTEMPORAL_DEPENDANTS_ONLY' ][0]
-            if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
-                quick_death = 'True'
+        FILE.write( indent + 'quick_death = ' + str(quick_death) + '\n\n' )
 
-        FILE.write( indent + 'quick_death = ' + quick_death + '\n\n' )
+        if oneoff_follow_on:
+            FILE.write( indent + 'oneoff_follow_on = "' + oneoff_follow_on + '"\n\n' )
 
         # class init function
         FILE.write( indent + 'def __init__( self, ' + def_init_args + ' ):\n\n' )

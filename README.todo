@@ -40,9 +40,6 @@ To Do
   previous instance. However, they could die as soon as their successor
   is satisfied. 
 
-* oneoff tasks need special treatment in manager.kill_spent_tasks() if 
-  they do not have quick_death = True.
-
 * allow mixed fuzzy and non-fuzzy prerequisites (currently have to 
   set identical fuzzy bounds to simulate the non-fuzzy case; see
   topnet.py).

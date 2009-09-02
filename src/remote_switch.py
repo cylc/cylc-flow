@@ -139,6 +139,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def purge( self, task_id, stop ):
         self.log.warning( "REMOTE: purge request" )
         self.log.warning( '-> ' + task_id + ' and dependees, to ' + stop )
+
         self.do_purge = True
         self.purge_id = task_id
         self.purge_stop = stop

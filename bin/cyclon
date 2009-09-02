@@ -109,8 +109,8 @@ def main( argv ):
     pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
 
     # remote control switch
-    remote_control = remote_switch.remote_switch( system_config, system_config.get('task_list') )
-    pyro.connect( remote_control, 'remote_control' )
+    remote = remote_switch.remote_switch( system_config, system_config.get('task_list') )
+    pyro.connect( remote, 'remote' )
 
     # remotely accessible system state summary
     system_state = state_summary.state_summary( system_config, dummy_mode )
@@ -128,14 +128,14 @@ def main( argv ):
     task.state_changed = True
     while True: # MAIN LOOP
 
-        if remote_control.system_halt_requested:
+        if remote.system_halt_requested:
             clean_shutdown( pyro, 'remote request' )
             return
 
-        if remote_control.get_hold():
+        if remote.get_hold():
             god.set_system_hold()
 
-        if remote_control.get_resume():
+        if remote.get_resume():
             god.unset_system_hold()
 
         if task.state_changed or clock.get_alarm():
@@ -153,41 +153,41 @@ def main( argv ):
             god.kill_spent_tasks()
 
             go_ahead = False
-            if remote_control.do_purge:
-                god.purge( remote_control.purge_id, remote_control.purge_stop )
-                remote_control.do_purge = False
-                remote_control.purge_id = None
-                remote_control.purge_stop = None
+            if remote.do_purge:
+                god.purge( remote.purge_id, remote.purge_stop )
+                remote.do_purge = False
+                remote.purge_id = None
+                remote.purge_stop = None
                 go_ahead = True
-            if remote_control.kill_ids:
-                god.abdicate_and_kill( remote_control.kill_task_ids )
-                remote_control.kill = False
-                remote_control.kill_task_ids = {}
+            if remote.kill_ids:
+                god.abdicate_and_kill( remote.kill_task_ids )
+                remote.kill = False
+                remote.kill_task_ids = {}
                 go_ahead = True
-            if remote_control.kill_rt:
-                god.abdicate_and_kill_rt( remote_control.kill_reftime )
-                remote_control.kill_rt = False
-                remote_control.kill_reftime = None
+            if remote.kill_rt:
+                god.abdicate_and_kill_rt( remote.kill_reftime )
+                remote.kill_rt = False
+                remote.kill_reftime = None
                 go_ahead = True
-            if remote_control.reset_a_task:
-                god.reset_task( remote_control.reset_task_id )
-                remote_control.reset_a_task = False
-                remote_control.reset_task_id = None
+            if remote.reset_a_task:
+                god.reset_task( remote.reset_task_id )
+                remote.reset_a_task = False
+                remote.reset_task_id = None
                 go_ahead = True
-            if remote_control.task_to_insert:
-                god.insert_task( remote_control.task_to_insert, clock )
-                remote_control.task_to_insert = None
+            if remote.task_to_insert:
+                god.insert_task( remote.task_to_insert, clock )
+                remote.task_to_insert = None
                 go_ahead = True
-            if remote_control.set_stop:
-                god.set_stop_time( remote_control.stop_time )
-                remote_control.set_stop = False
-            if remote_control.set_hold:
-                god.set_system_hold( remote_control.hold_time )
-                remote_control.set_hold = False
-            if remote_control.requisite_dump:
-                god.dump_task_requisites( remote_control.dump_task_ids )
-                remote_control.requisite_dump = False
-                remote_control.dump_task_ids = {}
+            if remote.set_stop:
+                god.set_stop_time( remote.stop_time )
+                remote.set_stop = False
+            if remote.set_hold:
+                god.set_system_hold( remote.hold_time )
+                remote.set_hold = False
+            if remote.requisite_dump:
+                god.dump_task_requisites( remote.dump_task_ids )
+                remote.requisite_dump = False
+                remote.dump_task_ids = {}
 
             god.dump_state()
 
