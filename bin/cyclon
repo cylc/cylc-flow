@@ -153,6 +153,12 @@ def main( argv ):
             god.kill_spent_tasks()
 
             go_ahead = False
+            if remote_control.do_purge:
+                god.purge( remote_control.purge_id, remote_control.purge_stop )
+                remote_control.do_purge = False
+                remote_control.purge_id = None
+                remote_control.purge_stop = None
+                go_ahead = True
             if remote_control.kill_ids:
                 god.abdicate_and_kill( remote_control.kill_task_ids )
                 remote_control.kill = False

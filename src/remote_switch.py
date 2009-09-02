@@ -44,6 +44,11 @@ class remote_switch( Pyro.core.ObjBase ):
         self.reset_a_task = False
         self.reset_task_id = None
 
+        # task to purge
+        self.do_purge = False
+        self.purge_id = None
+        self.purge_stop = None
+
     def nudge( self ):
         # pretend a task has changed state in order to invoke the event
         # handling loop
@@ -130,6 +135,14 @@ class remote_switch( Pyro.core.ObjBase ):
             self.log.warning( '-> ' + task_id )
         self.requisite_dump = True
 
+    
+    def purge( self, task_id, stop ):
+        self.log.warning( "REMOTE: purge request" )
+        self.log.warning( '-> ' + task_id + ' and dependees, to ' + stop )
+        self.do_purge = True
+        self.purge_id = task_id
+        self.purge_stop = stop
+        task.state_changed = True
 
     def abdicate_and_kill_rt( self, reftime ):
         self.log.warning( "REMOTE: abdicate and kill request" )

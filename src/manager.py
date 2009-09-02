@@ -459,6 +459,64 @@ class manager:
             itask.outputs.dump()
             print
 
+    def find_dependees( self, id ):
+        # find task
+        parent = None
+        for itask in self.tasks:
+            if itask.identity == id:
+                parent = itask
+                break
+
+        if not parent:
+            self.log.warning( "parent task not found" )
+            # RETURN?
+            return None
+
+        [ id_name, id_ref ] = id.split( '%' ) 
+        deps = {}
+        for itask in self.tasks:
+            # FOR NOW, SAME REF TIME ONLY
+            if itask.ref_time != id_ref:
+                continue
+
+            if itask.prerequisites.will_satisfy_me( parent.outputs, parent.identity ):
+                print 'dependee: ' + itask.identity
+                deps[ itask.identity ] = True
+
+        for item in deps:
+            res = self.find_dependees( item )
+            deps = self.addDicts( res, deps ) 
+
+        deps[ parent.identity ] = True
+
+        return deps
+
+
+    def addDicts(self, a, b):
+        c = {}
+        for item in a:
+            c[item] = a[item]
+            for item in b:
+                c[item] = b[item]
+        return c
+
+
+    def purge( self, id, stop ):
+        # abdicate and kill a task and all its dependees, to stop time
+
+        # find task
+        for itask in self.tasks:
+            if itask.identity == id:
+                next = itask.next_ref_time()
+                name = itask.name
+                break
+
+        condemned = self.find_dependees( id )
+        self.abdicate_and_kill( condemned )
+
+        if int( next ) <= int( stop ):
+            self.purge( name + '%' + next, stop )
+
 
     def abdicate_and_kill_rt( self, reftime ):
         # abdicate and kill all WAITING tasks currently at reftime
@@ -485,7 +543,7 @@ class manager:
                     break
 
             if not found:
-                self.log.warning( "task not found for remote kill request: " + task_id )
+                self.log.warning( "task to kill not found: " + id )
                 return
 
             itask.log( 'DEBUG', "killing myself by remote request" )
