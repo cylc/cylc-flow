@@ -1,5 +1,9 @@
 To Do
 
+* get "real dummy tasks", which wrap the 'true' command, to report
+  outputs other than 'started' and 'finished': consider making them
+  run dummy-task.py to do this, and/or making them a special task class.
+
 * remote setting of 'ready' state for artificially tied tasks (nztide)
   whose artificial tie has failed but whose real prerequisites are known
   to be satisfied
