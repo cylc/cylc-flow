@@ -1,5 +1,8 @@
 To Do
 
+* user config for restricted start time (e.g. 06 UTC only) and other
+  system-specific restrictions?
+
 * save an explicit state dump file prior to every major remote change.
   And maybe a day long (say) rolling archive of all changes to the state
   dump file?
