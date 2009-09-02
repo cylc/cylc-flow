@@ -1,5 +1,9 @@
 To Do
 
+* save an explicit state dump file prior to every major remote change.
+  And maybe a day long (say) rolling archive of all changes to the state
+  dump file?
+
 * get "real dummy tasks", which wrap the 'true' command, to report
   outputs other than 'started' and 'finished': consider making them
   run dummy-task.py to do this, and/or making them a special task class.
