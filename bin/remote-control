@@ -46,8 +46,8 @@ parser.add_option( "-n", "--name", help="system name",
         metavar="SYSTEM-NAME", action="store", dest="system_name" )
 
 parser.add_option( "-k", "--kill", 
-        help="abdicate and kill one or more tasks at a given reference time",
-        metavar="<name1,name2,...>%YYYYMMDDHH", 
+        help="abdicate and kill one or more, or all, tasks at a given reference time",
+        metavar="[<name1,name2,...>%]YYYYMMDDHH", 
         action="store", dest="kill_task_id" )
 
 parser.add_option( "-d", "--dump-requisites", 
@@ -200,21 +200,31 @@ if options.dump_task_id:
     control.dump_task_requisites( ids )
 
 if options.kill_task_id:
-    if prompt( 'Kill ' + options.kill_task_id + ' in' ):
-        [ tmp, reftime ] = options.kill_task_id.split( '%' )
-        if re.search( ',', tmp ):
-            names = tmp.split( ',' )
+    if prompt( 'Kill all waiting tasks at ' + options.kill_task_id + ' in' ):
+
+        if not re.search( '%', options.kill_task_id ):
+            # kill all tasks in given reference time
+            # TO DO: check validity of given ref time
+            reftime = options.kill_task_id
+            print "Requesting abdicate and kill all WAITING tasks at " + reftime
+            control.abdicate_and_kill_rt( reftime )
+
         else:
-            names = [ tmp ]
 
-        print "Requesting abdicate and kill for " + options.kill_task_id
+            [ tmp, reftime ] = options.kill_task_id.split( '%' )
+            if re.search( ',', tmp ):
+                names = tmp.split( ',' )
+            else:
+                names = [ tmp ]
 
-        ids = []
-        for name in names:
-            id = name + '%' + reftime
-            ids.append( id )
+            print "Requesting abdicate and kill for " + options.kill_task_id
 
-        control.abdicate_and_kill( ids )
+            ids = []
+            for name in names:
+                id = name + '%' + reftime
+                ids.append( id )
+
+            control.abdicate_and_kill( ids )
 
         print "WARNING: you may also need to kill the REAL task(s)"
 

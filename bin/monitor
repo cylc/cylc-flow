@@ -186,7 +186,7 @@ while True:
             if state == "running":
                 ctrl_start = "\033[1;37;42m"
             elif state == "waiting":
-                ctrl_start = "\033[1;35m"
+                ctrl_start = "\033[0;35m"
             elif state == "failed":
                 ctrl_start = "\033[1;37;41m"
             else:
@@ -201,7 +201,7 @@ while True:
         
         # MONITOR HEADER and CURRENT TIME
         blit = []
-        blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[1;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end )
+        blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end )
         blit.append( 'last updated: ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
         # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
@@ -212,12 +212,16 @@ while True:
 
           
         # CATCHUP INFO for any contact tasks
+        catching_up = []
+        caught_up = []
         for name in catchup_info.keys():
             if catchup_info[ name ]:
-                blit.append( name + ': catching up' )
+                catching_up.append(name)
             else:
-                blit.append( name + ': caught up' )
+                caught_up.append(name)
 
+        blit.append( 'catching up: ' + ', '.join( catching_up) )
+        blit.append( 'caught up:   ' + ', '.join( caught_up) )
         blit.append('')
 
         # construct a line of text to display for each reference time

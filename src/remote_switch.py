@@ -31,8 +31,10 @@ class remote_switch( Pyro.core.ObjBase ):
         self.system_resume_requested = False
 
         # task to abdicate and kill
-        self.kill = False
+        self.kill_ids = False
         self.kill_task_ids = {}
+        self.kill_rt = False
+        self.kill_reftime = None
 
         # tasks to dump requisites
         self.requisite_dump = False
@@ -118,12 +120,19 @@ class remote_switch( Pyro.core.ObjBase ):
         self.requisite_dump = True
 
 
+    def abdicate_and_kill_rt( self, reftime ):
+        self.log.warning( "REMOTE: abdicate and kill request" )
+        self.log.warning( '-> all tasks currently in ' + reftime )
+        self.kill_rt = True
+        self.kill_reftime = reftime
+        task.state_changed = True
+
     def abdicate_and_kill( self, task_ids ):
-        self.log.warning( "REMOTE: abdicate and kill request for:" )
+        self.log.warning( "REMOTE: abdicate and kill request" )
         for task_id in task_ids:
             self.kill_task_ids[ task_id ] = True
-            self.log.info( '-> ' + task_id )
-        self.kill = True
+            self.log.warning( '-> ' + task_id )
+        self.kill_ids = True
         task.state_changed = True
 
     def set_verbosity( self, level ):

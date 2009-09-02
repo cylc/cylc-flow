@@ -452,8 +452,22 @@ class manager:
             print 'OUTPUT DUMP', itask.identity 
             itask.outputs.dump()
             print
+
+
+    def abdicate_and_kill_rt( self, reftime ):
+        # abdicate and kill all WAITING tasks currently at reftime
+        # (use to kill lame tasks that will never run because some
+        # upstream dependency has failed).
+        task_ids = {}
+        for itask in self.tasks:
+            if itask.ref_time == reftime and itask.state == 'waiting':
+                task_ids[ itask.identity ] = True
+
+        self.abdicate_and_kill( task_ids )
+
  
     def abdicate_and_kill( self, task_ids ):
+        # abdicate and kill all tasks in task_ids.keys()
         for id in task_ids.keys():
             # find the task
             found = False
