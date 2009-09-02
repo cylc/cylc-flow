@@ -1,5 +1,12 @@
 To Do
 
+* forecast models with restart dependencies cannot have quick_death =
+  True; cyclon should check for this.
+
+* when remote killing all waiting tasks at a ref time, check that (a)
+  the systems has moved on passed that time, and (b) none of the waiting
+  tasks are contact tasks whose time has not come up yet.
+
 * allow auto-generated 'restart' outputs?
 
 * tasks with conditional outputs may have trouble with the "keep one
