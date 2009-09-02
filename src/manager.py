@@ -409,7 +409,7 @@ class manager:
         if itask.instance_count == 1:
             # first task of its type, so create the log
             log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, self.config, clock )
+            pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, clock )
  
         # the initial task reference time can be altered during
         # creation, so we have to create the task before
