@@ -445,13 +445,15 @@ class task( Pyro.core.ObjBase ):
             # off at once". These are normally contact tasks that get
             # external data, and they return quickly if the data exists
             # already, or else just wait, so running them all at once is
-            # of no particular advantage.
+            # of no particular advantage. DISABLED - NOT NECESSARY NOW
+            # THAT CONTACT TASKS DON'T RUN UNTIL THEIR TIME IS UP.
             
-            if self.prerequisites.count() == 0:
-                if self.state == 'finished':
-                    ready = True
+            #if self.prerequisites.count() == 0:
+            #    if self.state == 'finished':
+            #        ready = True
 
-            elif self.state == 'running':
+            #elif self.state == 'running':
+            if self.state == 'running':
                 ready = True
 
         else:
