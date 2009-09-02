@@ -24,8 +24,11 @@ def prompt( reason ):
 # construct a command line parser
 parser = OptionParser( "%prog [options]" )
 
-parser.add_option( "-p", "--pause", help="hold/pause system",
+parser.add_option( "-p", "--pause", help="pause system now",
         action="store_true", default=False, dest="pause" )
+
+parser.add_option( "--hold", help="set system hold time",
+        metavar="YYYYMMDDHH", action="store", dest="hold_time" )
 
 parser.add_option( "-r", "--resume", help="unhold/resume system",
         action="store_true", default=False, dest="resume" )
@@ -33,7 +36,7 @@ parser.add_option( "-r", "--resume", help="unhold/resume system",
 parser.add_option( "-s", "--shutdown", help="shutdown system",
         action="store_true", default=False, dest="shutdown" )
 
-parser.add_option( "-t", "--stop-time", help="set stop_time",
+parser.add_option( "-t", "--stop-time", help="set stop time",
         metavar="YYYYMMDDHH", action="store", dest="stop_time" )
 
 parser.add_option( "-c", "--configured", help="use configured system",
@@ -125,6 +128,10 @@ except NamingError:
 if options.pause:
     if prompt( 'Pause' ):
         control.hold()
+
+if options.hold_time:
+    if prompt( 'Set hold time ' + options.hold_time + ' for'):
+        control.set_hold_time( options.hold_time )
 
 if options.stop_time:
     if prompt( 'Set stop time ' + options.stop_time + ' for'):

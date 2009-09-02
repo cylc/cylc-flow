@@ -20,6 +20,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.set_stop = False
         self.stop_time = None
 
+        self.set_hold = False
+        self.hold_time = None
+
         # record remote system halt requests
         self.system_halt_requested = False
 
@@ -75,6 +78,11 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.warning( "REMOTE: set stop time requested" )
         self.set_stop = True
         self.stop_time = reftime
+
+    def set_hold_time( self, reftime ):
+        self.log.warning( "REMOTE: set stop time requested" )
+        self.set_hold = True
+        self.hold_time = reftime
 
     def shutdown( self ):
         self.log.warning( "REMOTE: system halt requested" )

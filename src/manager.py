@@ -19,7 +19,8 @@ class manager:
  
         self.config = config
 
-        self.system_hold = False
+        self.system_hold_now = False
+        self.system_hold_reftime = None
 
         # initialise the dependency broker
         self.broker = requisites.broker()
@@ -35,13 +36,18 @@ class manager:
         self.log.debug( "Setting new stop time: " + stop_time )
         self.stop_time = stop_time
 
-    def set_system_hold( self ):
-        self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run")
-        self.system_hold = True
+    def set_system_hold( self, reftime = None ):
+        if reftime:
+            self.system_hold_reftime = reftime
+            self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run from " + reftime )
+        else:
+            self.system_hold_now = True
+            self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run FROM NOW")
 
     def unset_system_hold( self ):
         self.log.critical( "UNSETTING SYSTEM HOLD: new tasks will run when ready")
-        self.system_hold = False
+        self.system_hold_now = False
+        self.system_hold_reftime = None
 
     def get_task_instance( self, module, class_name ):
         # task object instantiation by module and class name
@@ -185,10 +191,17 @@ class manager:
         # tell each task to run if it is ready
         # unless the system is on hold
         #--
-        if self.system_hold:
+        if self.system_hold_now:
+            # general system hold
+            self.log.debug( 'not asking any tasks to run (general system hold in place)' )
             return
 
         for itask in self.tasks:
+                if self.system_hold_reftime:
+                    if int( itask.ref_time ) >= int( self.system_hold_reftime ):
+                        self.log.debug( 'not asking ' + itask.identity + ' to run (' + self.system_hold_reftime + ' hold in place)' )
+                        continue
+
                 itask.run_if_ready( launcher, clock )
 
     def regenerate_tasks( self ):
