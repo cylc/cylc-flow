@@ -508,11 +508,17 @@ class manager:
         # to the given stop time
 
         # find the task
+        found = False
         for itask in self.tasks:
             if itask.identity == id:
+                found = True
                 next = itask.next_ref_time()
                 name = itask.name
                 break
+
+        if not found:
+            self.log.warning( 'task to purge not found: ' + id )
+            return
 
         # find then abdicate and kill all cotemporal dependees
         condemned = self.find_cotemporal_dependees( itask )
