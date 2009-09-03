@@ -265,6 +265,9 @@ import logging
 
         FILE.write( indent + 'instance_count = 0\n\n' )
 
+        if contact:
+            FILE.write( indent + 'catchup_mode = False\n\n' )
+
         # task description
         if 'DESCRIPTION' in parsed_def.keys():
             FILE.write( indent + 'description = [\n' )
