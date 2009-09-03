@@ -118,6 +118,7 @@ while True:
         dummy_mode = glbl[ 'dummy_mode' ]
 
         task_ids = states.keys()
+        n_tasks_all = len( task_ids )
         task_ids.sort()
 
         seen_time = {}
@@ -139,7 +140,7 @@ while True:
                 else:
                     name_list.append( name )
 
-        n_tasks = len( name_list )
+        n_task_types = len( name_list )
         name_list.sort()
         ref_time_list.sort()
         catchup_info = {}
@@ -205,11 +206,9 @@ while True:
         blit.append( 'last updated: ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
         # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
+        blit.append( '\033[1;37;45m"' + system_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'  + ctrl_end )
         if dummy_mode:
-            blit.append( '\033[1;37;45m"' + system_name + '" (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' DUMMY MODE (' + str(rate) + ' sec = 1 hr)' )
-        else:
-            blit.append( '\033[1;37;45m"' + system_name + '" (' + str( n_tasks ) + ' tasks)' + ctrl_end + ' REAL MODE' )
-
+            blit.append( 'DUMMY MODE (' + str(rate) + ' sec = 1 hr)' )
           
         # CATCHUP INFO for any contact tasks
         catching_up = []
