@@ -471,35 +471,25 @@ class manager:
             itask.outputs.dump()
             print
 
-    def find_dependees( self, id ):
-        # find task
-        parent = None
-        for itask in self.tasks:
-            if itask.identity == id:
-                parent = itask
-                break
+    def find_cotemporal_dependees( self, parent ):
+        # recursively find the group of all cotemporal tasks that depend
+        # directly or indirectly on parent
 
-        if not parent:
-            self.log.warning( "parent task not found" )
-            # RETURN?
-            return None
-
-        [ id_name, id_ref ] = id.split( '%' ) 
         deps = {}
         for itask in self.tasks:
-            # FOR NOW, SAME REF TIME ONLY
-            if itask.ref_time != id_ref:
+            if itask.ref_time != parent.ref_time:
+                # not cotemporal
                 continue
 
             if itask.prerequisites.will_satisfy_me( parent.outputs, parent.identity ):
                 #print 'dependee: ' + itask.identity
-                deps[ itask.identity ] = True
+                deps[ itask ] = True
 
-        for item in deps:
-            res = self.find_dependees( item )
+        for itask in deps:
+            res = self.find_cotemporal_dependees( itask )
             deps = self.addDicts( res, deps ) 
 
-        deps[ parent.identity ] = True
+        deps[ parent ] = True
 
         return deps
 
@@ -514,18 +504,25 @@ class manager:
 
 
     def purge( self, id, stop ):
-        # abdicate and kill a task and all its dependees, to stop time
+        # recursively abdicate and kill a task and its dependees, down
+        # to the given stop time
 
-        # find task
+        # find the task
         for itask in self.tasks:
             if itask.identity == id:
                 next = itask.next_ref_time()
                 name = itask.name
                 break
 
-        condemned = self.find_dependees( id )
-        self.abdicate_and_kill( condemned )
+        # find then abdicate and kill all cotemporal dependees
+        condemned = self.find_cotemporal_dependees( itask )
+        cond = {}
+        for itask in condemned:
+            cond[ itask.identity ] = True
+        
+        self.abdicate_and_kill( cond )
 
+        # now do the same for the next instance of the task
         if int( next ) <= int( stop ):
             self.purge( name + '%' + next, stop )
 

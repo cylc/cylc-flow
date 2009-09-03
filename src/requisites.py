@@ -119,7 +119,7 @@ class prerequisites( requisites ):
                         log.debug( '[' + self.ref_time + '] Got "' + output + '" from ' + owner_id )
 
     def will_satisfy_me( self, outputs, owner_id ):
-        # will the outputs, when completed, satisfy any of my prequisites?
+        # return True if the outputs, when completed, would satisfy any of my prequisites
         for prereq in self.satisfied.keys():
             #print "PRE: " + prereq
             # for each of my prerequisites
@@ -219,40 +219,41 @@ class fuzzy_prerequisites( prerequisites ):
                     self.sharpen_up( prereq, chosen_output )
                     log.debug( '[' + self.ref_time + '] Got "' + chosen_output + '" from ' + owner_id )
 
-    def will_satisfy_me( self, outputs, owner_id ):
-        # will another's outputs, if/when completed, satisfy any of my
-        # prequisites?
-
-        # this is similar to satisfy_me() but we don't need to know the most
-        # recent satisfying output message, just if any one can do it.
-
-        for prereq in self.satisfied.keys():
-            # for each of my prerequisites
-            if not self.satisfied[ prereq ]:
-                # if my prerequisite is not already satisfied
-
-                # extract reference time from my prerequisite
-                m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
-                if not m:
-                    #log.critical( "FAILED TO MATCH MIN:MAX IN " + prereq )
-                    sys.exit(1)
-
-                [ my_start, my_minmax, my_end ] = m.groups()
-                [ my_min, my_max ] = my_minmax.split(':')
-
-                for output in outputs.satisfied.keys():
-
-                    # extract reference time from other's output message
-                    m = re.compile( "^(.*)(\d{10})(.*)$").match( output )
-                    if not m:
-                        # this output can't possibly satisfy a
-                        # fuzzy; move on to the next one.
-                        continue
-
-                    [ other_start, other_reftime, other_end ] = m.groups()
-
-                    if other_start == my_start and other_end == my_end and other_reftime >= my_min and other_reftime <= my_max:
-                        self.sharpen_up( prereq, output )
+#    def will_satisfy_me( self, outputs, owner_id ):
+# TO DO: THINK ABOUT HOW FUZZY PREREQS AFFECT THIS FUNCTION ...
+#        # will another's outputs, if/when completed, satisfy any of my
+#        # prequisites?
+#
+#        # this is similar to satisfy_me() but we don't need to know the most
+#        # recent satisfying output message, just if any one can do it.
+#
+#        for prereq in self.satisfied.keys():
+#            # for each of my prerequisites
+#            if not self.satisfied[ prereq ]:
+##                # if my prerequisite is not already satisfied
+#
+#                # extract reference time from my prerequisite
+#                m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
+#                if not m:
+#                    #log.critical( "FAILED TO MATCH MIN:MAX IN " + prereq )
+#                    sys.exit(1)
+#
+#                [ my_start, my_minmax, my_end ] = m.groups()
+#                [ my_min, my_max ] = my_minmax.split(':')
+#
+#                for output in outputs.satisfied.keys():
+#
+#                    # extract reference time from other's output message
+#                    m = re.compile( "^(.*)(\d{10})(.*)$").match( output )
+#                    if not m:
+#                        # this output can't possibly satisfy a
+#                        # fuzzy; move on to the next one.
+#                        continue
+#
+#                    [ other_start, other_reftime, other_end ] = m.groups()
+#
+#                    if other_start == my_start and other_end == my_end and other_reftime >= my_min and other_reftime <= my_max:
+#                        self.sharpen_up( prereq, output )
 
 
 class outputs( requisites ):
