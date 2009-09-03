@@ -74,10 +74,6 @@ To Do
 
 * use the custom clock everywhere (it knows about dummy mode).
 
-* in dummy mode, the dummy clock time should be written to the state
-  dump file so that the clock doesn't reset to the configured start time
-  (plus any configured offset) on a restart.
-
 * retrofit proper exception handling (current use is sporadic).
 
 * task.quick_death should default to False, as for the task 

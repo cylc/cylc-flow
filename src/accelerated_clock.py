@@ -15,51 +15,70 @@ class clock( Pyro.core.ObjBase ):
     rate of seconds per hour.
     """
 
-    def __init__( self ):
-        # initialise as a real time clock
-        self.dummy_mode = False
-
+    def __init__( self, alarm_seconds, reftime, rate, offset, dummy_mode ):
+        
         Pyro.core.ObjBase.__init__(self)
-        self.base_realtime = datetime.datetime.now() 
-
-        # time acceleration (N real seconds = 1 dummy hour)
-        self.acceleration = 3600.0
-
-        # start time offset (relative to start reference time)
-        self.offset_hours = 0.0
+        
+        self.dummy_mode = dummy_mode
 
         # how many accelerated seconds to wait between alarms
         # (use to trigger the event loop regularly even when
         # no task messages come in, as happens when the whole
         # system waits on a contact task that isn't running yet).
-        self.alarm_seconds = 10.0
+        self.alarm_seconds = alarm_seconds
+        # time acceleration (N real seconds = 1 dummy hour)
+        self.acceleration = rate
+        # start time offset (relative to start reference time)
+        self.offset_hours = offset
+
+        self.base_realtime = datetime.datetime.now() 
 
         # remember last time an alarm was used
         self.last_alarm_realtime = self.base_realtime
 
         print "CLOCK ........"
-        print " - start time:", datetime.datetime.now()
-        print " - alarm:  " + str( self.alarm_seconds ) + " seconds"
 
-    def accelerate( self, alarm, base_reftime, accel, offset ):
-        # call this only to accelerate the clock in dummy mode
+        self.base_dummytime = datetime.datetime( 
+                int(reftime[0:4]), int(reftime[4:6]), 
+                int(reftime[6:8]), int(reftime[8:10]))
+                
+        self.base_dummytime += datetime.timedelta( 0,0,0,0,0, offset, 0) 
 
-        self.dummy_mode = True
+        print " - accel:  " + str( self.acceleration ) + "s = 1 dummy hour"
+        print " - start:  " + str( self.base_dummytime )
+        print " - offset: " + str( self.offset_hours )
+        print " - alarm:  " + str( self.alarm_seconds ) + "s"
 
-        self.alarm_seconds = alarm
-        self.acceleration = accel
-        self.offset_hours = offset
+    def reset( self, dstr ):
+        # set clock from string of the form made by self.dump_to_str()
+        # Y:M:D:H:m:s
+
+        if not self.dummy_mode:
+            print "(ignoring clock reset in real time)"
+            return
+
+        YMDHms = dstr.split( ':' )
+        Y = YMDHms[0]
+        M = YMDHms[1]
+        D = YMDHms[2]
+        H = YMDHms[3]
+
+        if len( M ) == 1:
+            M = '0' + M
+        if len( D ) == 1:
+            D = '0' + D
+        if len( H ) == 1:
+            H = '0' + H
+
+        base_reftime = Y + M + D + H
 
         self.base_dummytime = datetime.datetime( 
                 int(base_reftime[0:4]), int(base_reftime[4:6]), 
                 int(base_reftime[6:8]), int(base_reftime[8:10]))
                 
-        self.base_dummytime += datetime.timedelta( 0,0,0,0,0, offset, 0) 
-
-        print "ACCELERATING THE CLOCK........" 
+        print "CLOCK RESET ......."
         print " - accel:  " + str( self.acceleration ) + "s = 1 dummy hour"
         print " - start:  " + str( self.base_dummytime )
-        print " - offset: " + str( self.offset_hours )
         print " - alarm:  " + str( self.alarm_seconds ) + "s"
 
     def get_datetime( self ):
@@ -82,6 +101,12 @@ class clock( Pyro.core.ObjBase ):
 
             return self.base_dummytime + datetime.timedelta( 0,0,0,0,0, dummy_hours_passed, 0 )
 
+    def dump_to_str( self ):
+        # dump current clock time to a string: Y:M:D:H:m:s
+        # ignore microseconds
+        now =  self.get_datetime()
+        YMDHms = [ str( now.year), str( now.month ), str( now.day ), str( now.hour), str( now.minute ), str( now.second ) ]
+        return ':'.join( YMDHms )
 
     def get_alarm( self ):
         # return True if more than self.alarm_seconds has passed since

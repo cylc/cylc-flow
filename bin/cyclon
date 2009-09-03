@@ -63,6 +63,13 @@ def main( argv ):
     system_config = config.config()
     system_config.load()
 
+    dummy_mode = False
+    if options.dummy_mode or system_config.get( 'dummy_mode' ):
+        print
+        print "RUNNING IN DUMMY MODE!"
+        print
+        dummy_mode = True
+
     # set configured environment variables
     env = system_config.get('environment')
     for VAR in env.keys():
@@ -72,22 +79,14 @@ def main( argv ):
     pyro = pyrex.pyrex( system_config.get( 'system_name' ))
 
     # system clock for accelerated time in dummy mode
-    clock = accelerated_clock.clock() 
-    pyro.connect( clock, 'clock' )
-
-    dummy_mode = False
-    if options.dummy_mode or system_config.get( 'dummy_mode' ):
-        print
-        print "RUNNING IN DUMMY MODE!"
-        print
-        dummy_mode = True
-
-    if dummy_mode:
-        clock.accelerate(
+    clock = accelerated_clock.clock( 
                 system_config.get('alarm_seconds' ),
-                system_config.get('start_time'), 
+                system_config.get('start_time' ),
                 system_config.get('dummy_clock_rate'), 
-                system_config.get('dummy_clock_offset')) 
+                system_config.get('dummy_clock_offset'),
+                dummy_mode ) 
+
+    pyro.connect( clock, 'clock' )
 
     # external task launcher
     launcher = execution.launcher( system_config, dummy_mode, options.failout_task_id )

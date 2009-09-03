@@ -115,10 +115,14 @@ class manager:
         lines = FILE.readlines()
         FILE.close()
 
+        # reset time first
+        [ junk, time ] = lines[0].split( ' ' )
+        self.clock.reset( time )
+
         log_created = {}
 
         # parse each line and create the task it represents
-        for line in lines:
+        for line in lines[1:]:
             # strip trailing newlines
             line = line.rstrip( '\n' )
             # ref_time task_name abdicated task_state_string
@@ -244,6 +248,7 @@ class manager:
     def dump_state( self ):
         filename = self.config.get('state_dump_file')
         FILE = open( filename, 'w' )
+        FILE.write( 'time ' + self.clock.dump_to_str() + '\n' )
         for itask in self.tasks:
             itask.dump_state( FILE )
         FILE.close()
