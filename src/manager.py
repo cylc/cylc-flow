@@ -15,6 +15,8 @@ class manager:
         self.pyro = pyro  # pyrex (cyclon Pyro helper) object
         self.log = logging.getLogger( "main" )
 
+        self.clock = clock
+
         self.stop_time = config.get('stop_time')
  
         self.config = config
@@ -28,9 +30,9 @@ class manager:
         # instantiate the initial task list and create task logs 
         self.tasks = []
         if restart:
-            self.load_from_state_dump( clock )
+            self.load_from_state_dump()
         else:
-            self.load_from_config( clock )
+            self.load_from_config()
 
     def set_stop_time( self, stop_time ):
         self.log.debug( "Setting new stop time: " + stop_time )
@@ -61,7 +63,7 @@ class manager:
                 oldest = itask.ref_time
         return oldest
 
-    def load_from_config ( self, clock ):
+    def load_from_config ( self ):
         # load initial system state from configured tasks and start time
         #--
         print '\nCLEAN START: INITIAL STATE FROM CONFIGURED TASK LIST\n'
@@ -83,7 +85,7 @@ class manager:
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, clock )
+            pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
 
             # the initial task reference time can be altered during
             # creation, so we have to create the task before
@@ -102,7 +104,7 @@ class manager:
                 self.tasks.append( itask )
 
 
-    def load_from_state_dump( self, clock ):
+    def load_from_state_dump( self ):
         # load initial system state from the configured state dump file
         #--
         filename = self.config.get('state_dump_file')
@@ -142,7 +144,7 @@ class manager:
             # create the task log
             if name not in log_created.keys():
                 log = logging.getLogger( 'main.' + name )
-                pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, clock )
+                pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
                 log_created[ name ] = True
  
             # the initial task reference time can be altered during
@@ -190,7 +192,7 @@ class manager:
             # get the broker to satisfy tasks prerequisites
             self.broker.negotiate( itask.prerequisites )
 
-    def run_tasks( self, launcher, clock ):
+    def run_tasks( self, launcher ):
         # tell each task to run if it is ready
         # unless the system is on hold
         #--
@@ -205,7 +207,7 @@ class manager:
                         self.log.debug( 'not asking ' + itask.identity + ' to run (' + self.system_hold_reftime + ' hold in place)' )
                         continue
 
-                itask.run_if_ready( launcher, clock )
+                itask.run_if_ready( launcher, self.clock )
 
     def regenerate_tasks( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -386,7 +388,7 @@ class manager:
                 itask.log( 'WARNING', "resetting to waiting state" )
                 itask.state = 'waiting'
 
-    def insert_task( self, task_id, clock ):
+    def insert_task( self, task_id ):
         # insert a new task in a waiting state
 
         [ name, ref_time ] = task_id.split( '%' )
@@ -399,7 +401,7 @@ class manager:
         if itask.instance_count == 1:
             # first task of its type, so create the log
             log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, clock )
+            pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
  
         # the initial task reference time can be altered during
         # creation, so we have to create the task before

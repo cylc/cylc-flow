@@ -148,7 +148,7 @@ def main( argv ):
 
             god.negotiate_dependencies()
 
-            god.run_tasks( launcher, clock )
+            god.run_tasks( launcher )
 
             god.kill_spent_tasks()
 
@@ -175,7 +175,7 @@ def main( argv ):
                 remote.reset_task_id = None
                 go_ahead = True
             if remote.task_to_insert:
-                god.insert_task( remote.task_to_insert, clock )
+                god.insert_task( remote.task_to_insert )
                 remote.task_to_insert = None
                 go_ahead = True
             if remote.set_stop:
