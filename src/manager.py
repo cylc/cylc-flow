@@ -393,36 +393,57 @@ class manager:
                 itask.log( 'WARNING', "resetting to waiting state" )
                 itask.state = 'waiting'
 
-    def insert_task( self, task_id ):
-        # insert a new task in a waiting state
+    def insertion( self, ins ):
+        # insert a new task or task group in a waiting state
 
-        [ name, ref_time ] = task_id.split( '%' )
-        abdicated = False
-        state_list = [ 'waiting' ]
+        if re.match( '^GROUP:', ins ):
+            # task group
+            [ junk, group ] = ins.split(':')
+            [ groupname, ref_time ] = group.split( '%' )
 
-        # instantiate the task object
-        itask = self.get_task_instance( 'task_classes', name )( ref_time, abdicated, *state_list )
+            try:
+                tasknames = self.config.get( 'task_groups')[groupname]
+            except KeyError:
+                self.log.warning( 'insertion group ' + groupname + ' not defined' )
+                return
 
-        if itask.instance_count == 1:
-            # first task of its type, so create the log
-            log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
+            ids = []
+            for name in tasknames:
+                ids.append( name + '%' + ref_time )
+
+        else:
+            # single task id
+            ids = [ ins ]
+
+
+        for task_id in ids:
+            [ name, ref_time ] = task_id.split( '%' )
+            abdicated = False
+            state_list = [ 'waiting' ]
+
+            # instantiate the task object
+            itask = self.get_task_instance( 'task_classes', name )( ref_time, abdicated, *state_list )
+
+            if itask.instance_count == 1:
+                # first task of its type, so create the log
+                log = logging.getLogger( 'main.' + name )
+                pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
  
-        # the initial task reference time can be altered during
-        # creation, so we have to create the task before
-        # checking if stop time has been reached.
-        skip = False
-        if self.stop_time:
-            if int( itask.ref_time ) > int( self.stop_time ):
-                itask.log( 'WARNING', " STOPPING at " + self.stop_time )
-                itask.prepare_for_death()
-                del itask
-                skip = True
+            # the initial task reference time can be altered during
+            # creation, so we have to create the task before
+            # checking if stop time has been reached.
+            skip = False
+            if self.stop_time:
+                if int( itask.ref_time ) > int( self.stop_time ):
+                    itask.log( 'WARNING', " STOPPING at " + self.stop_time )
+                    itask.prepare_for_death()
+                    del itask
+                    skip = True
 
-        if not skip:
-            itask.log( 'DEBUG', "connected" )
-            self.pyro.connect( itask, itask.identity )
-            self.tasks.append( itask )
+            if not skip:
+                itask.log( 'DEBUG', "connected" )
+                self.pyro.connect( itask, itask.identity )
+                self.tasks.append( itask )
 
 
     def dump_task_requisites( self, task_ids ):

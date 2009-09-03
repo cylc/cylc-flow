@@ -173,9 +173,9 @@ def main( argv ):
                 remote.reset_a_task = False
                 remote.reset_task_id = None
                 go_ahead = True
-            if remote.task_to_insert:
-                god.insert_task( remote.task_to_insert )
-                remote.task_to_insert = None
+            if remote.insert_this:
+                god.insertion( remote.insert_this )
+                remote.insert_this = None
                 go_ahead = True
             if remote.set_stop:
                 god.set_stop_time( remote.stop_time )

@@ -25,6 +25,8 @@ class config:
         self.configured['state_dump_file'] = None
         # LIST OF TASK NAMES
         self.configured['task_list'] = []
+        # TASK GROUPS
+        self.configured['task_groups'] = {}
         # START REFERENCE TIME
         self.configured['start_time'] = None
         # STOP REFERENCE TIME

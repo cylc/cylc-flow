@@ -15,7 +15,7 @@ class remote_switch( Pyro.core.ObjBase ):
         Pyro.core.ObjBase.__init__(self)
         self.config = config
         self.tasknames = tasknames
-        self.task_to_insert = None
+        self.insert_this = None
 
         self.set_stop = False
         self.stop_time = None
@@ -62,10 +62,10 @@ class remote_switch( Pyro.core.ObjBase ):
         self.reset_a_task = True
         self.reset_task_id = task_id
 
-    def insert( self, task_id ):
-        # insert a new task into the system
-        self.task_to_insert = task_id
-        self.log.warning( "REMOTE: task insertion request: " + task_id )
+    def insert( self, ins ):
+        # insert a new task or task group into the system
+        self.insert_this = ins
+        self.log.warning( "REMOTE: task insertion request: " + ins )
 
     def hold( self ):
         self.log.warning( "REMOTE: system hold requested" )

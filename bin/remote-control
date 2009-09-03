@@ -69,7 +69,7 @@ parser.add_option( "-x", "--describe-tasks",
         action="store", dest="describe_names" )
 
 parser.add_option( "-i", "--insert", help="insert a new task (EXPERIMENTAL!)",
-        metavar=" <name>%<YYYYMMDDHH>", action="store", dest="insert_task_id" )
+        metavar="[GROUP:]<name>%<YYYYMMDDHH>", action="store", dest="insert_task_id" )
 
 verbosity_choices = ['debug','info', 'warning', 'error', 'critical'] 
 parser.add_option( "-v", "--verbosity",
