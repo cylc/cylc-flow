@@ -126,12 +126,15 @@ class manager:
             state = state_list[0]
 
             if state == 'running' or state == 'failed':
-                # To be safe we have to assume that running and failed
-                # tasks need to re-run on a restart. The fact that they
-                # were running (or did run before failing) implies their
-                # prerequisites were already satisfied so they can
-                # restart in a 'ready' state
-                state_list[0] = 'ready'
+                state_list[0] = 'waiting'
+                # we have to assume that running and failed tasks need
+                # to re-run on a restart. The fact that they were
+                # running (or did run before failing) implies their
+                # prerequisites were already satisfied so they COULD
+                # restart in a 'ready' state instead of 'waiting' BUT
+                # this doesn't work for tasks with fuzzy prerequisites
+                # (which will still be fuzzy at startup and therefore 
+                # need to be resatisfied, to "sharpen them up".
 
             # instantiate the task object
             itask = self.get_task_instance( 'task_classes', name )( ref_time, abdicated, *state_list )

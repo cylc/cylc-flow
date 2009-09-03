@@ -1,8 +1,5 @@
 To Do
 
-* test restart with failed nzlam => 'failed to find nzlam time' error
-  from task_classes.py
-
 * user config for restricted start time (e.g. 06 UTC only) and other
   system-specific restrictions?
 
