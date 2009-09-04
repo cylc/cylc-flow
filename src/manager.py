@@ -296,7 +296,7 @@ class manager:
         all_abdicated = True
         earliest_unabdicated = None
         for itask in self.tasks:
-            if not itask.abdicated:
+            if not itask.has_abdicated():
                 all_abdicated = False
                 if not earliest_unabdicated:
                     earliest_unabdicated = itask.ref_time

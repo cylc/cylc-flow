@@ -34,7 +34,7 @@ state_changed = True
 # most recent available 12-hourly task bar, but is allowed to run ahead
 # of bar to some extent, and changes its behavior according whether or
 # not it was triggered by a "old" bar (i.e. one already used by the
-# previous foo instance) or an "old" one. In this case, currently, we
+# previous foo instance) or a "new" one. In this case, currently, we
 # use a class variable in task type foo to record the reference time of
 # the most recent bar used by any foo instance. This is written to the
 # the state dump file so that task foo does not have to automatically
@@ -42,7 +42,7 @@ state_changed = True
 
 # To handle this difference in initial state information (between normal
 # start and restart) task initialisation must use a default value of
-# 'None' for the additional variables, and for a restart the tast
+# 'None' for the additional variables, and for a restart the task
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
@@ -487,7 +487,7 @@ class task( Pyro.core.ObjBase ):
 
     def done( self ):
         # return True if task has finished and abdicated
-        if self.state == "finished" and self.abdicated:
+        if self.state == "finished" and self.has_abdicated():
             return True
         else:
             return False
@@ -506,7 +506,7 @@ class task( Pyro.core.ObjBase ):
         summary[ 'reference_time' ] = self.ref_time
         summary[ 'n_total_outputs' ] = n_total
         summary[ 'n_completed_outputs' ] = n_satisfied
-        summary[ 'abdicated' ] = self.abdicated
+        summary[ 'abdicated' ] = self.has_abdicated()
         summary[ 'latest_message' ] = self.latest_message
  
         return summary
@@ -610,44 +610,37 @@ class contact_task( task ):
                     # keep waiting 
                     pass
 
-class sequential_task( task ):
+class oneoff:
+    # a task that claims it has abdicated already
+    def has_abdicated( self ):
+        return True
+
+# ALTERNATIVE DEFINITION FOR ONEOFF TASKS:
+#class oneoff( task ):
+#    def __init__( self, ref_time, abdicated, initial_state ):
+#        # initialise task with abdicated = True
+#        # NOTE THIS IS STRING 'True' not logical True!
+#        task.__init__( self, ref_time, 'True', initial_state )
+
+class sequential:
     # force tasks of this type to run in sequence  
     def ready_to_abdicate( self ):
-
         if self.has_abdicated():
             return False
-
         if self.state == 'finished':
             # only abdicate if finished
             return True
         else:
             return False
 
-class sequential_contact_task( contact_task ):
-    # force tasks of this type to run in sequence  
-    def ready_to_abdicate( self ):
+class dummy:
+    # always launch a dummy task, even in real mode
+    def run_external_task( self, launcher, extra_vars = [] ):
+        self.log( 'DEBUG',  'launching external dummy task' )
+        launcher.run( self.owner, self.name, self.ref_time, 'dummy_task.py', extra_vars )
+        self.state = 'running'
 
-        if self.has_abdicated():
-            return False
-
-        if self.state == 'finished':
-            # only abdicate if finished
-            return True
-        else:
-            return False
-
-# TO DO: use multiple inheritence to reuse sequential code above
-
-class oneoff_task( task ):
-    def __init__( self, ref_time, abdicated, initial_state ):
-        # initialise task with abdicated = True
-        # NOTE THIS IS STRING 'True' not logical True!
-        task.__init__( self, ref_time, 'True', initial_state )
-
-class oneoff_contact_task( contact_task ):
-    def __init__( self, ref_time, abdicated, initial_state, relative_state):
-        # initialise with abdicated = True
-        # NOTE THIS IS STRING 'True' not logical True!
-        contact_task.__init__( self, ref_time, 'True', initial_state, relative_state )
-
-
+# use multiple inheritance (precedence is left first!) to use sequential
+# or dummy with the main task types, e.g. a oneoff contact task:
+#     class foo( oneoff, task ):
+#           pass

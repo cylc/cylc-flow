@@ -100,7 +100,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import task, contact_task, oneoff_task, oneoff_contact_task, sequential_task, sequential_contact_task
+from task import task, contact_task, oneoff, sequential 
 
 import user_config            
 import execution
@@ -185,7 +185,6 @@ import logging
         contact = False
         oneoff = False
         if 'TYPE' in parsed_def.keys():
-
             type = parsed_def[ 'TYPE' ][0]
 
             if re.match( 'normal,\s*contact', type ):
@@ -195,21 +194,21 @@ import logging
             elif re.match( 'oneoff,\s*contact', type ):
                 oneoff = True
                 contact = True
-                parent_class = 'oneoff_contact_task'
+                parent_class = 'oneoff, contact_task'
 
             elif re.match( 'sequential,\s*contact', type ):
                 contact = True
-                parent_class = 'sequential_contact_task'
+                parent_class = 'sequential, contact_task'
 
             elif type == 'normal':
                 parent_class = 'task'
 
             elif type == 'sequential':
-                parent_class = 'sequential_task'
+                parent_class = 'sequential, task'
 
             elif type == 'oneoff':
                 oneoff = True
-                parent_class = 'oneoff_task'
+                parent_class = 'oneoff, task'
 
             else:
                 print "ERROR: unknown %TYPE: " + type
