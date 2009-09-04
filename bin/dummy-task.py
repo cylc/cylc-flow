@@ -68,7 +68,7 @@ if __name__ == '__main__':
     failout = False
     if '--fail' in sys.argv:
         failout = True
-        print "DUMMY TASK WILL FAIL (" + task_name + '%' + ref_time + ")"
+        print 'dummy ' + task_name + '%' + ref_time + ": will fail, by user request"
         
     dummy = dummy_task( task_name, ref_time )
     dummy.run()

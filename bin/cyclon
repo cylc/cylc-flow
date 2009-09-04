@@ -153,27 +153,32 @@ def main( argv ):
 
             go_ahead = False
             if remote.do_purge:
+                log.info( 'pre-purge state dump: ' + god.dump_state( new_file = True ))
                 god.purge( remote.purge_id, remote.purge_stop )
                 remote.do_purge = False
                 remote.purge_id = None
                 remote.purge_stop = None
                 go_ahead = True
             if remote.kill_ids:
+                log.info( 'pre-kill state dump: ' + god.dump_state( new_file = True ))
                 god.abdicate_and_kill( remote.kill_task_ids )
                 remote.kill = False
                 remote.kill_task_ids = {}
                 go_ahead = True
             if remote.kill_rt:
+                log.info( 'pre-kill state dump: ' + god.dump_state( new_file = True ))
                 god.abdicate_and_kill_rt( remote.kill_reftime )
                 remote.kill_rt = False
                 remote.kill_reftime = None
                 go_ahead = True
             if remote.reset_a_task:
+                log.info( 'pre-reset state dump: ' + god.dump_state( new_file = True ))
                 god.reset_task( remote.reset_task_id )
                 remote.reset_a_task = False
                 remote.reset_task_id = None
                 go_ahead = True
             if remote.insert_this:
+                log.info( 'pre-insert state dump: ' + god.dump_state( new_file = True ))
                 god.insertion( remote.insert_this )
                 remote.insert_this = None
                 go_ahead = True
@@ -181,6 +186,7 @@ def main( argv ):
                 god.set_stop_time( remote.stop_time )
                 remote.set_stop = False
             if remote.set_hold:
+                log.info( 'pre-hold state dump: ' + god.dump_state( new_file = True ))
                 god.set_system_hold( remote.hold_time )
                 remote.set_hold = False
             if remote.requisite_dump:

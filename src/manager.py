@@ -245,13 +245,17 @@ class manager:
                     new_task.log('DEBUG', "connected" )
                     self.tasks.append( new_task )
 
-    def dump_state( self ):
+
+    def dump_state( self, new_file = False ):
         filename = self.config.get('state_dump_file')
+        if new_file:
+            filename += '.' + self.clock.dump_to_str()
         FILE = open( filename, 'w' )
         FILE.write( 'time ' + self.clock.dump_to_str() + '\n' )
         for itask in self.tasks:
             itask.dump_state( FILE )
         FILE.close()
+        return filename
 
 
     def kill_spent_tasks( self ):
