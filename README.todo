@@ -1,5 +1,16 @@
 To Do
 
+* task.quick_death should default to False? (as for the task 
+  def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
+
+* use a special remote request handling call in the main prog. 
+
+* forecast tasks can no longer be 'quick death' because they depend on
+  previous instance. Cyclon should check for this. However, they could
+  die as soon as their successor is satisfied. DEFINE A FORECAST TASK
+  CLASS THAT REQUIRES RESTART PREREQUISITES. And auto-generated
+  'restart' outputs?
+
 * user config for restricted start time (e.g. 06 UTC only) and other
   system-specific restrictions?
 
@@ -11,27 +22,13 @@ To Do
   whose artificial tie has failed but whose real prerequisites are known
   to be satisfied
 
-* forecast models with restart dependencies cannot have quick_death =
-  True; cyclon should check for this.
-
 * when remote killing all waiting tasks at a ref time, check that (a)
   the systems has moved on passed that time, and (b) none of the waiting
   tasks are contact tasks whose time has not come up yet.
 
-* allow auto-generated 'restart' outputs?
-
 * tasks with conditional outputs may have trouble with the "keep one
   finished task of each kind" procedure in kill_spent_tasks(). best to
   have multiple tasks instead? 
-
-* detect receipt of 'finished' message when not all outputs have been
-  completed.
-
-* use a special remote request handling call in the main prog. 
-
-* forecast tasks can no longer be 'quick death' because they depend on
-  previous instance. However, they could die as soon as their successor
-  is satisfied. 
 
 * allow mixed fuzzy and non-fuzzy prerequisites (currently have to 
   set identical fuzzy bounds to simulate the non-fuzzy case; see
@@ -71,9 +68,6 @@ To Do
 * use the custom clock everywhere (it knows about dummy mode).
 
 * retrofit proper exception handling (current use is sporadic).
-
-* task.quick_death should default to False, as for the task 
-  def key that maps to it (%COTEMPORAL_DEPENDANTS_ONLY).
 
 * user_config is imported in task_classes.py to get start_time. It may
   be better to pass this in at task initialisation?
