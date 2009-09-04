@@ -36,7 +36,7 @@ if os.system( command ):
 	sys.exit()
 
 # INSTALL FILES
-all = [ 'bin', 'doc', 'system-def', 'src', 'README.install', 'README.dirs', 'README.run' ]
+all = [ 'bin', 'doc', 'sys', 'src', 'README.install', 'README.dirs', 'README.run' ]
 env = Environment()
 i_a = env.Install( install_dir, all )
 

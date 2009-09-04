@@ -4,30 +4,32 @@ HOW TO RUN CYCLON for system 'foo'
 
 1/ Define your system using cyclon task definition files. Maintain this
 as a separate repository with version tags to indicate compatibility
-with cyclon versions, but install it into [cyclon-top]/system-def/foo/
-(or any sub-directory under system-def).
+with cyclon versions, but install it into [cyclon-top]/sys/foo/
+(or any sub-directory under sys/).
 
-2/ write your cyclon user config file: system-def/foo/user_config.py
+2/ write your cyclon user config file: [cyclon-top]/sys/foo/user_config.py
 
 3/ run bin/configure-system on your system definition directory, to
-generate the task class code (system-def/foo/task_classes.py) and cyclon
-environment script (system-def/foo/environment.sh)
+generate the task class code ([cyclon-top]/sys/foo/task_classes.py) and
+cyclon environment script ([cyclon-top]/sys/foo/environment.sh). This
+only needs to be done before the first run, or after changing the task
+definition files.
 
 4/ source the cyclon environment file for system foo (sets the PATH and
-PYTHONPATH environment variables for access to general cyclon and system
-foo-specific code modules).  This needs to be done in the shell that
-runs the cyclon instance that handles system foo, and in any other shells
-that need to interact with the same cyclon instance (e.g. system
+PYTHONPATH environment variables for access to general cyclon and
+system-specific code modules).  This needs to be done in the shell that
+runs the cyclon instance that handles system foo, and in any other
+shells that need to interact with the same cyclon instance (e.g. system
 monitors).
 
-   $ . system-def/foo/environment.sh
+   $ . [cyclon-top]/sys/foo/environment.sh
 
 
 5/ run cyclon
 
-   $ cyclon [-r]
+   $ cyclon [options] [args]
 
 6/ To control an entirely different system using the same cyclon
 installation, just source the appropriate
-[cyclon-top]/system-def/[system-name]/environment.sh 
+[cyclon-top]/sys/[system-name]/environment.sh 
 before running cyclon.

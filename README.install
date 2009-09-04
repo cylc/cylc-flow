@@ -4,8 +4,8 @@ directory and in the configured system definition directory.
 Currently cyclon is designed to be run from the top level cyclon
 directory. For development purposes you can do this from within an
 actual cyclon repository branch, so that any changes can be recorded
-directly (be careful not to corrupt the repository!). However, cyclon can
-be installed to, and run from, a non-repository location (run 
+directly (be careful not to corrupt the repository!). However, cyclon
+can be installed to, and run from, a non-repository location (run 
   'scons install' 
 after modifying the SConstruct file appropriately; this installs to an
 identical source tree, except that it will no longer be a darcs
