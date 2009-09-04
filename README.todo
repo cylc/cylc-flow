@@ -14,9 +14,9 @@ To Do
 * user config for restricted start time (e.g. 06 UTC only) and other
   system-specific restrictions?
 
-* get "real dummy tasks", which wrap the 'true' command, to report
-  outputs other than 'started' and 'finished': consider making them
-  run dummy-task.py to do this, and/or making them a special task class.
+* make a "dummy" task class which always calls dummy-task.py instead of
+  using a manual wrap of the 'true' command - easy way to report
+  outputs other than just 'started' and 'finished'.
 
 * remote setting of 'ready' state for artificially tied tasks (nztide)
   whose artificial tie has failed but whose real prerequisites are known
