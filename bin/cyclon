@@ -36,16 +36,25 @@ def clean_shutdown( pyro, reason ):
 def main( argv ):
 
     # construct a command line parser
-    parser = OptionParser( "%prog [options]" )
+    usage =  """
+    %prog [options]
+    %prog -r, --restart <filename>
+    """
+             
+    parser = OptionParser( usage )
 
-    parser.add_option( "-r", "--restart", help="restart from configured state dump",
-        action="store_true", default=False, dest="restart" )
+    parser.add_option( "-r", "--restart", 
+            help="""Restart from the named state dump file, which is
+assumed to be in the directory of the configured state dump file unless
+an absolute path is supplied. Defaults to the configured state dump
+file.""",
+            action="store_true", default=False, dest="restart" )
 
     parser.add_option( "-d", "--dummy_mode", help="run in dummy (simulation) mode",
        action="store_true", default=False, dest="dummy_mode" )
 
     parser.add_option( "-f", "--fail", help="fail out a task in dummy mode",
-        metavar=" <name>%<YYYYMMDDHH>", action="store", dest="failout_task_id" )
+        metavar="<name>%<YYYYMMDDHH>", action="store", dest="failout_task_id" )
 
     # get command line options and positional args
     ( options, args ) = parser.parse_args()
@@ -70,6 +79,17 @@ def main( argv ):
         print
         dummy_mode = True
 
+    # check restart
+    restart_statedump = None
+    if options.restart:
+        if len( args ) == 0:
+            # default
+            pass
+        elif len( args ) == 1:
+            restart_statedump = args[0]
+        else:
+            parser.error( "too many arguments" )
+            
     # set configured environment variables
     env = system_config.get('environment')
     for VAR in env.keys():
@@ -120,7 +140,7 @@ def main( argv ):
     pyro.connect( dead_letter_box, 'dead_letter_box' )
 
     # initialize the task manager from general config file or state dump
-    god = manager.manager( system_config, dummy_mode, pyro, options.restart, clock )
+    god = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, restart_statedump )
 
     print "\nBeginning task processing now\n"
 
@@ -162,7 +182,7 @@ def main( argv ):
             if remote.kill_ids:
                 log.info( 'pre-kill state dump: ' + god.dump_state( new_file = True ))
                 god.abdicate_and_kill( remote.kill_task_ids )
-                remote.kill = False
+                remote.kill_ids = False
                 remote.kill_task_ids = {}
                 go_ahead = True
             if remote.kill_rt:

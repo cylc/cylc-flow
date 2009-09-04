@@ -9,7 +9,7 @@ import os
 import re
 
 class manager:
-    def __init__( self, config, dummy_mode, pyro, restart, clock ):
+    def __init__( self, config, dummy_mode, pyro, clock, restart, restart_statedump = None ):
         
         self.dummy_mode = dummy_mode
         self.pyro = pyro  # pyrex (cyclon Pyro helper) object
@@ -30,7 +30,7 @@ class manager:
         # instantiate the initial task list and create task logs 
         self.tasks = []
         if restart:
-            self.load_from_state_dump()
+            self.load_from_state_dump( restart_statedump )
         else:
             self.load_from_config()
 
@@ -104,10 +104,25 @@ class manager:
                 self.tasks.append( itask )
 
 
-    def load_from_state_dump( self ):
+    def load_from_state_dump( self, filename = None ):
         # load initial system state from the configured state dump file
         #--
-        filename = self.config.get('state_dump_file')
+        configured_file = self.config.get('state_dump_file')
+        if filename:
+            if filename == os.path.basename( filename ):
+                # is a plain filename; append to configured path
+                dirname = os.path.dirname( configured_file )
+                filename = dirname + '/' + filename
+            elif re.match( '^/' ):
+                # is an absolute path
+                pass
+            else:
+                # relative path; append to cwd
+                filename = os.getcwd() + '/' + filename
+
+        else:
+            filename = configured_path
+
         # state dump file format: ref_time:name:state, one per line 
         self.log.info( 'Loading previous state from ' + filename )
 
@@ -255,7 +270,8 @@ class manager:
         for itask in self.tasks:
             itask.dump_state( FILE )
         FILE.close()
-        return filename
+        # return the filename (minus path)
+        return os.path.basename( filename )
 
 
     def kill_spent_tasks( self ):
