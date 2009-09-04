@@ -408,10 +408,19 @@ class manager:
 
 
     def reset_task( self, task_id ):
+        found = False
         for itask in self.tasks:
             if itask.identity == task_id:
-                itask.log( 'WARNING', "resetting to waiting state" )
-                itask.state = 'waiting'
+                found = True
+                break
+
+        if found:
+            itask.log( 'WARNING', "resetting to waiting state" )
+            itask.state = 'waiting'
+            itask.prerequisites.set_all_unsatisfied()
+            itask.outputs.set_all_incomplete()
+        else:
+            self.log.warning( "task to reset not found: " + task_id )
 
     def insertion( self, ins ):
         # insert a new task or task group in a waiting state

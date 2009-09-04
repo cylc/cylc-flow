@@ -73,6 +73,10 @@ class requisites:
         else:
             return False
 
+    def set_all_unsatisfied( self ):
+        for message in self.satisfied.keys():
+            self.satisfied[ message ] = False
+
     def set_all_satisfied( self ):
         for message in self.satisfied.keys():
             self.satisfied[ message ] = True
@@ -310,7 +314,11 @@ class outputs( requisites ):
     def get_timed_requisites( self ):
         return self.message
 
+    def set_all_incomplete( self ):
+        requisites.set_all_unsatisfied( self )
 
+    def set_all_completed( self ):
+        requisites.set_all_satisfied( self )
 
 class broker:
 
