@@ -157,6 +157,7 @@ file.""",
         if remote.get_resume():
             god.unset_system_hold()
 
+        go_ahead = False
         if task.state_changed or clock.get_alarm():
             # PROCESS ALL TASKS whenever one has changed state
             # as a result of a remote task message coming in: 
@@ -171,7 +172,6 @@ file.""",
 
             god.kill_spent_tasks()
 
-            go_ahead = False
             if remote.do_purge:
                 log.info( 'pre-purge state dump: ' + god.dump_state( new_file = True ))
                 god.purge( remote.purge_id, remote.purge_stop )
@@ -228,6 +228,7 @@ file.""",
         # are not just task messages, hence the use of the
         # state_changed variable above).
         #--
+
         if go_ahead:
             task.state_changed = True
         else:
