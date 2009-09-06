@@ -49,7 +49,9 @@ class launcher:
         # EXTERNAL PROGRAM TO RUN
         if self.dummy_mode:
             # dummy task
-            external_program = cyclon_bin + '/dummy-task.py'
+            #external_program = cyclon_bin + '/dummy-task.py'
+            # explicit path not required thanks to environment.sh
+            external_program = 'dummy-task.py'
             if self.failout:
                 if self.failout_task == task_name + '%' + ref_time:
                     external_program += ' --fail'
@@ -58,10 +60,10 @@ class launcher:
         else:
             # real task
             external_program = task
-            if not re.match( '^/', task ):
-                # relative path: use scripts in the '<system>/scripts' sub-directory
-                sysdir = re.sub( '[^/]*$', '', cyclon_env )
-                external_program = sysdir + 'scripts/' + task
+            #if not re.match( '^/', task ):
+            #    # relative path: use scripts in the '<system>/scripts' sub-directory
+            #    sysdir = re.sub( '[^/]*$', '', cyclon_env )
+            #    external_program = sysdir + 'scripts/' + task
 
         # CONSTRUCT THE FULL COMMAND TO RUN
         command = ''
