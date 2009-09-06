@@ -314,7 +314,7 @@ class manager:
             if not itask.done():
                 continue
 
-            if itask.quick_death: 
+            if itask.quick_death and not all_abdicated: 
                 if all_abdicated or int( itask.ref_time ) < int( earliest_unabdicated ):
                     spent.append( itask )
  
@@ -361,8 +361,9 @@ class manager:
             if not itask.done():
                 continue
 
-            if int( itask.ref_time ) >= int( earliest_unsatisfied ):
-                continue
+            if not all_satisfied:
+                if int( itask.ref_time ) >= int( earliest_unsatisfied ):
+                    continue
             
             if itask.ref_time in candidates.keys():
                 candidates[ itask.ref_time ].append( itask )
