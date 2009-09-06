@@ -279,6 +279,10 @@ class manager:
         #   (1) have finished and abdicated, 
         #       AND
         #   (2) are no longer needed to satisfy prerequisites.
+
+        # Also, do not delete any task with the same reference time 
+        # as a failed task, because these could be needed to satisfy the
+        # failed task when it gets re-run after the problem is fixed.
         #--
 
         # A/ QUICK DEATH TASKS
@@ -292,10 +296,14 @@ class manager:
         # at the same reference time or earlier.
         #--
 
-        # find the earlieset unabdicated task
+        # find the earliest unabdicated task, and times of any failed 
+        failed_rt = {}
         all_abdicated = True
         earliest_unabdicated = None
         for itask in self.tasks:
+            if itask.has_failed():
+                failed_rt[ itask.ref_time ] = True
+
             if not itask.has_abdicated():
                 all_abdicated = False
                 if not earliest_unabdicated:
@@ -312,6 +320,8 @@ class manager:
         spent = []
         for itask in self.tasks:
             if not itask.done():
+                continue
+            if itask.ref_time in failed_rt.keys():
                 continue
 
             if itask.quick_death and not all_abdicated: 
@@ -359,6 +369,8 @@ class manager:
         for itask in self.tasks:
 
             if not itask.done():
+                continue
+            if itask.ref_time in failed_rt.keys():
                 continue
 
             if not all_satisfied:

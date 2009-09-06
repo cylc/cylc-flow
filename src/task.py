@@ -412,6 +412,12 @@ class task( Pyro.core.ObjBase ):
     def has_abdicated( self ):
         return self.abdicated
 
+    def has_failed( self ):
+        if self.state == 'failed':
+            return True
+        else:
+            return False
+            
 
     def ready_to_abdicate( self ):
 
