@@ -121,7 +121,7 @@ class manager:
                 filename = os.getcwd() + '/' + filename
 
         else:
-            filename = configured_path
+            filename = configured_file
 
         # state dump file format: ref_time:name:state, one per line 
         self.log.info( 'Loading previous state from ' + filename )
