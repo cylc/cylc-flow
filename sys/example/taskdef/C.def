@@ -25,12 +25,9 @@
 
 %PREREQUISITES
     A%$(MY_REFERENCE_TIME) finished
-    C restart files ready for $(MY_REFERENCE_TIME)
 
 %RUN_LENGTH_MINUTES
     120
 
-%OUTPUTS
-    20: C restart files ready for $(MY_REFERENCE_TIME +  6 )
-    40: C restart files ready for $(MY_REFERENCE_TIME + 12 )
-#    59: C restart files ready for $(MY_REFERENCE_TIME + 18 )
+%RESTART_LIST_MINUTES
+    20, 40, 59

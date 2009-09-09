@@ -90,7 +90,8 @@ def main( argv ):
     allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK',
             'EXPORT', 'COTEMPORAL_DEPENDANTS_ONLY', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH_MINUTES',
-            'TYPE', 'CONTACT_DELAY_HOURS', 'DESCRIPTION', 'ONEOFF_FOLLOW_ON' ]
+            'TYPE', 'CONTACT_DELAY_HOURS', 'DESCRIPTION',
+            'ONEOFF_FOLLOW_ON', 'RESTART_LIST_MINUTES' ]
 
     allowed_types = ['forecast_model', 'general_purpose' ]
     allowed_attributes = ['dummy', 'contact', 'sequential', 'oneoff' ]
@@ -191,6 +192,7 @@ import logging
         else:
 
             delay = 0
+            fcmodel = False
             contact = False
             oneoff = False
             dummy = False
@@ -204,6 +206,9 @@ import logging
             if task_type not in allowed_types:
                 print 'ERROR, unknown task class:', task_type
                 sys.exit(1)
+
+            if task_type == 'forecast_model':
+                fcmodel = True
 
             attributes = typelist[1:]
             if len(attributes) > 0:
@@ -259,6 +264,13 @@ import logging
 
             task_init_def_args += ", relative_state = 'catching_up'"
             contact_init_args = 'relative_state'
+
+        if fcmodel:
+            if 'RESTART_LIST_MINUTES' not in parsed_def.keys():
+                print 'Error: forecast models must define %RESTART_LIST_MINUTES'
+                sys.exit(1)
+            else:
+                restart_list = parsed_def[ 'RESTART_LIST_MINUTES' ][0]
 
         task_name = parsed_def[ 'NAME' ][0]
 
@@ -411,7 +423,10 @@ import logging
         FILE.write( indent + 'self.outputs = outputs( self.name, ref_time )\n' )
 
         # automatic 'task started' message
-        parsed_def[ 'OUTPUTS' ].append( '0: started' )
+        if 'OUTPUTS' not in parsed_def.keys():
+            parsed_def[ 'OUTPUTS' ] = [ '0: started' ]
+        else:
+            parsed_def[ 'OUTPUTS' ].append( '0: started' )
     
         # automatic 'task finished' message
         if 'RUN_LENGTH_MINUTES' not in parsed_def:
@@ -453,6 +468,12 @@ import logging
             FILE.write( indent + 'dummy.__init__( self )\n\n' )
 
         FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
+
+        # forecast model restarts
+        # (after parent init as requires # self.ref_time)
+        if fcmodel:
+            FILE.write( indent + 'restart_times = [' + restart_list + ']\n' )
+            FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
 
         # extra environment variables (override the default empty list
         # in the task base class).

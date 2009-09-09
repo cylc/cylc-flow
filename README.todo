@@ -7,9 +7,7 @@ To Do
 
 * forecast tasks can no longer be 'quick death' because they depend on
   previous instance. Cyclon should check for this. However, they could
-  die as soon as their successor is satisfied. DEFINE A FORECAST TASK
-  CLASS THAT REQUIRES RESTART PREREQUISITES. And auto-generated
-  'restart' outputs?
+  die as soon as their successor is satisfied. 
 
 * the task-generator script should check that the user-defined task
   names do not clash with parent class or attribute names.

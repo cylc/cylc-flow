@@ -502,6 +502,18 @@ class forecast_model( task_base ):
     # start too soon (we want this to happen ONLY if the previous task
     # fails and is subsequently abdicated-and-killed by the system operator).
 
+    def register_restarts( self, output_times ):
+        # call after parent init, so that self.ref_time is defined!
+
+        msg = self.name + ' restart files ready for '
+        self.prerequisites.add(  msg + self.ref_time )
+
+        rt = self.ref_time
+        for t in output_times:
+            next_rt = self.next_ref_time( rt )
+            self.outputs.add( t, msg + next_rt )
+            rt = next_rt
+
     def ready_to_abdicate( self ):
 
         if self.has_abdicated():
