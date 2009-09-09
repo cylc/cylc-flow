@@ -10,7 +10,7 @@
     Also depends on task A.
 
 %TYPE
-    normal
+    forecast_model
 
 %VALID_HOURS
     0,6,12,18

@@ -92,6 +92,9 @@ def main( argv ):
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH_MINUTES',
             'TYPE', 'CONTACT_DELAY_HOURS', 'DESCRIPTION', 'ONEOFF_FOLLOW_ON' ]
 
+    allowed_types = ['forecast_model', 'general_purpose' ]
+    allowed_attributes = ['dummy', 'contact', 'sequential', 'oneoff' ]
+
     # open the output file
     FILE = open( task_class_file, 'w' )
     # python interpreter location
@@ -100,7 +103,7 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import task, contact_task, oneoff, sequential 
+from task import forecast_model, general_purpose, contact, oneoff, sequential, dummy 
 
 import user_config            
 import execution
@@ -181,42 +184,61 @@ import logging
             if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
                 quick_death = True
 
-        delay = 0
-        contact = False
-        oneoff = False
-        if 'TYPE' in parsed_def.keys():
-            type = parsed_def[ 'TYPE' ][0]
-
-            if re.match( 'normal,\s*contact', type ):
-                contact = True
-                parent_class = 'contact_task'
-
-            elif re.match( 'oneoff,\s*contact', type ):
-                oneoff = True
-                contact = True
-                parent_class = 'oneoff, contact_task'
-
-            elif re.match( 'sequential,\s*contact', type ):
-                contact = True
-                parent_class = 'sequential, contact_task'
-
-            elif type == 'normal':
-                parent_class = 'task'
-
-            elif type == 'sequential':
-                parent_class = 'sequential, task'
-
-            elif type == 'oneoff':
-                oneoff = True
-                parent_class = 'oneoff, task'
-
-            else:
-                print "ERROR: unknown %TYPE: " + type
-                sys.exit(1)
-
-        else:
+        if 'TYPE' not in parsed_def.keys():
             print "ERROR: no %TYPE specified"
             sys.exit(1)
+
+        else:
+
+            delay = 0
+            contact = False
+            oneoff = False
+            dummy = False
+            sequential = False
+
+            tmp = parsed_def[ 'TYPE' ][0]
+            typelist = tmp.split(',')
+
+            task_type = typelist[0]
+            derived_from = task_type
+            if task_type not in allowed_types:
+                print 'ERROR, unknown task class:', task_type
+                sys.exit(1)
+
+            attributes = typelist[1:]
+            if len(attributes) > 0:
+                got_attributes = True
+
+                # strip white space
+                attributes = [ x.strip() for x in attributes ]
+
+                for attribute in attributes:
+                    if attribute not in allowed_attributes:
+                        print 'ERROR, unknown task attribute:', attribute
+                        print allowed_attributes
+                        isys.exit(1)
+
+                    if attribute == 'contact':
+                        contact = True
+                    elif attribute == 'dummy':
+                        dummy = True
+                    elif attribute == 'sequential':
+                        sequential = True
+                    elif attribute == 'oneoff':
+                        oneoff = True
+
+                # this assumes the order of attributes does not matter.
+                derived_from = ','.join( attributes ) + ', ' + derived_from
+
+        if 'EXTERNAL_TASK' in parsed_def.keys():
+            external_task = parsed_def[ 'EXTERNAL_TASK' ][0]
+            if dummy:
+                print "WARNING: this task has the 'dummy' attribute; it will never use", external_task
+        else:
+            # no external task: dummy tasks only
+            if not dummy:
+                print 'ERROR: no external task specified'
+                sys.exit(1)
 
         oneoff_follow_on = False
         if oneoff and not quick_death:
@@ -227,15 +249,16 @@ import logging
             else:
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
-        def_init_args = 'ref_time, abdicated, initial_state'
-        par_init_args = 'ref_time, abdicated, initial_state'
+        task_init_def_args = 'ref_time, abdicated, initial_state'
+        task_init_args = 'ref_time, abdicated, initial_state'
+
         if contact:
             if 'CONTACT_DELAY_HOURS' not in parsed_def.keys():
                 print "Error: contact classes must define %CONTACT_DELAY_HOURS"
                 sys.exit(1)
 
-            def_init_args = "ref_time, abdicated, initial_state, relative_state = 'catching_up'"
-            par_init_args = "ref_time, abdicated, initial_state, relative_state"
+            task_init_def_args += ", relative_state = 'catching_up'"
+            contact_init_args = 'relative_state'
 
         task_name = parsed_def[ 'NAME' ][0]
 
@@ -252,7 +275,7 @@ import logging
             [ task_name, short_name ] = m.groups()
 
         # class definition
-        FILE.write( 'class ' + task_name + '(' + parent_class + '):\n' )
+        FILE.write( 'class ' + task_name + '(' + derived_from + '):\n' )
 
         indent_more()
  
@@ -289,7 +312,9 @@ import logging
         FILE.write( indent + 'owner = \'' + owner + '\'\n' )
 
         # external task
-        FILE.write( indent + 'external_task = \'' + parsed_def[ 'EXTERNAL_TASK' ][0] + '\'\n\n' )
+        if not dummy:
+            FILE.write( indent + 'external_task = \'' + external_task + '\'\n\n' )
+
         # valid hours
         FILE.write( indent + 'valid_hours = [' + parsed_def[ 'VALID_HOURS' ][0] + ']\n\n' )
 
@@ -299,7 +324,7 @@ import logging
             FILE.write( indent + 'oneoff_follow_on = "' + oneoff_follow_on + '"\n\n' )
 
         # class init function
-        FILE.write( indent + 'def __init__( self, ' + def_init_args + ' ):\n\n' )
+        FILE.write( indent + 'def __init__( self, ' + task_init_def_args + ' ):\n\n' )
 
         indent_more()
 
@@ -326,20 +351,6 @@ import logging
                     FILE.write( indent + 'self.real_time_delay = ' + str( line ) + '\n' )
 
             FILE.write( '\n' )
-
-        # extra environment variables
-        if 'EXPORT' in parsed_def.keys():
-            strng = indent + 'self.env_vars = [\n'
-            for pair in parsed_def[ 'EXPORT' ]:
-                [ var, val ] = pair.split( ' ', 1 )
-                var = "'" + var + "'"
-                # replace NAME and MY_REFERENCE_TIME variables
-                val = interpolate_variables( "'" + val + "'" )
-                strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
-
-            strng = re.sub( ',\s*$', '', strng )
-            strng = strng + ' ]\n\n' 
-            FILE.write( strng )
 
         # ... prerequisites
         FILE.write( indent + 'self.prerequisites = prerequisites( self.name, ref_time )\n' )
@@ -433,15 +444,36 @@ import logging
                 req = interpolate_variables( req )
                 FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
 
-        # call parent's init method
+        # call parent init methods
         FILE.write( '\n' )
-        FILE.write( indent + parent_class + '.__init__( self, ' + par_init_args + ' )\n\n' )
+        if contact:
+            FILE.write( indent + 'contact.__init__( self, ' + contact_init_args + ' )\n\n' )
 
+        if dummy:
+            FILE.write( indent + 'dummy.__init__( self )\n\n' )
+
+        FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
+
+        # extra environment variables (override the default empty list
+        # in the task base class).
         if 'EXPORT' in parsed_def.keys():
-            # override run_external_task() for the export case
-            indent_less()
-            FILE.write( indent + 'def run_external_task( self, launcher ):\n' )
-            FILE.write( indent + indent_unit + parent_class + '.run_external_task( self, launcher, self.env_vars )\n\n' )
+            strng = indent + 'self.env_vars = [\n'
+            for pair in parsed_def[ 'EXPORT' ]:
+                [ var, val ] = pair.split( ' ', 1 )
+                var = "'" + var + "'"
+                # replace NAME and MY_REFERENCE_TIME variables
+                val = interpolate_variables( "'" + val + "'" )
+                strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
+
+            strng = re.sub( ',\s*$', '', strng )
+            strng = strng + ' ]\n\n' 
+            FILE.write( strng )
+
+        #if 'EXPORT' in parsed_def.keys():
+        #    # override run_external_task() for the export case
+        #    indent_less()
+        #    FILE.write( indent + 'def run_external_task( self, launcher ):\n' )
+        #    FILE.write( indent + indent_unit + parent_class + '.run_external_task( self, launcher, self.env_vars )\n\n' )
 
         indent_less()
         indent_less()

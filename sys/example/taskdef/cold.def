@@ -10,7 +10,7 @@
     Depends only on the system startup task at start time.
 
 %TYPE
-    oneoff
+    general_purpose, oneoff
 
 %VALID_HOURS
     0,6,12,18

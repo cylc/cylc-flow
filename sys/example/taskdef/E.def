@@ -9,7 +9,7 @@
     Depends only on task B.
 
 %TYPE
-    normal
+    general_purpose
 
 %VALID_HOURS
     0,6,12,18

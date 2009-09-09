@@ -2,32 +2,27 @@
 # See full_template.def for documented entries
 
 %NAME
-    F
+    dum
 
 %DESCRIPTION
-    Example system task F, represents a post processing task. 
-    Depends only on task C.
+    Example system task dummy, runs as a dummy task even in real mode.
 
 %TYPE
-    general_purpose
+    general_purpose, dummy
 
 %VALID_HOURS
     0,6,12,18
-
-%EXTERNAL_TASK
-    task-wrapper
-
-%EXPORT
-    WRAP F.sh
 
 %PREREQUISITES
     C%$(MY_REFERENCE_TIME) finished
 
 %RUN_LENGTH_MINUTES
-    50
+    20 
 
 %OUTPUTS
-    # Defaults only
+    4: munge
+    5: lunge
+    6: funge
 
 #%COTEMPORAL_DEPENDANTS_ONLY
 #    True

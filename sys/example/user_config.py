@@ -36,6 +36,7 @@ config[ 'environment' ] = { 'TMPDIR':'/tmp/' + os.environ['USER'] + '/cyclon/exa
 config[ 'task_list' ] = \
         [
         'startup',
+        'dum',
         'cold',
         'ext',
         'A',

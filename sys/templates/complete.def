@@ -13,33 +13,62 @@
     jumped over the lazy dog
 
 %TYPE
-    # Type of task:
+    # Task type, and one or more optional attributes 
+    # Either:
+    forecast_model[, oneoff, sequential, dummy, contact]
+    # or
+    general_purpose[, oneoff, sequential, dummy, contact]
 
-    #  (a) normal[, contact]
-    #  A normal task spawns a successor as soon as its last "restart"
-    #  output is completed, or right away if it has no resetart outputs.
+    # TASK TYPES:
 
-    # (b) sequential[, contact]
-    #  A sequential task only spawns a successor when it is finished.
-    #  Can be used to force tasks to run sequentially without using
-    #  artifical prerequisites, in cases where prerequisites naturally
-    #  allow successive instances to overlap but the actual external
-    #  tasks cannot be allowed to overlap for some reason.
+    # (A) forecast_model 
+    # These tasks depend on their own previous instance through
+    # special restart outputs and prerequisites, which WILL SOON BE
+    # AUTOMATED via this task type. Multiple restart outputs can be 
+    # defined to allow a model to trigger off of earlier previous 
+    # instances if one or more cycles has to be skipped because of 
+    # problems (missing external input, say). A successor is spawned as
+    # soon as the last restart output is completed, but not after the
+    # first one, if there is more than one, otherwise the next-plus-one
+    # instance could trigger off the current instance, and so on, in
+    # normal operation. 
+
+    # (B) general_purpose
+    # These tasks spawn a successor as soon as they start running (i.e.
+    # successive instances can run in parallel or overlap if the
+    # opportunity arises). 
+
+    # ATTRIBUTES 
+
+    # These are properties that are additional to, or override,
+    # properties of the main task type
+
+    # (a) sequential
+    # Sequential tasks do not spawn a successor until they are finished.
+    # Use this when the prerequisites naturally allow successive
+    # instances of a task to overlap but its external task must be run
+    # sequentially for some reason.
     
-    #  (b) oneoff[, contact]
-    #  A oneoff task does not spawn a successor. Can be used to supply
-    #  initial inputs for starting up a system (cold start). See also
-    #  the %STARTUP_PREREQUISITES key below.
+    # (b) oneoff
+    # Oneoff tasks never spawn a successor. Can be used to supply
+    # initial inputs for starting up a system (cold start). See also
+    # the %STARTUP_PREREQUISITES key below.
 
-    # Tasks that wait on external events (i.e. they "make contact" with
-    # the external world) such as incoming external data, should declare
-    # the 'contact' attribute. In real time operation a running contact
-    # task will begin reporting its outputs at an estimated
-    # %CONTACT_DELAY_HOURS (below) hours after its own reference time
-    # (e.g. some set of observational data might be ready 3 hours after
-    # its nominal validity time). In catchup operation a contact task
-    # will begin reporting its outputs immediately because the external
-    # event has already occurred.
+    # (c) contact 
+    # Contact tasks wait on external events (i.e. they "make contact"
+    # with the external world) such as incoming external data. In real
+    # time operation a running contact task will begin reporting its
+    # outputs at an estimated %CONTACT_DELAY_HOURS (below) hours after
+    # its own reference time (e.g. some set of observational data might
+    # be ready 3 hours after its nominal validity time). In catchup
+    # operation a contact task will begin reporting its outputs
+    # immediately because the external event has already occurred.
+
+    # (d) dummy
+    # A dummy task always uses the dummy mode dummy task for its 
+    # external task, even in real mode. Can be used to provide 'fake'
+    # cold start outputs in cases where (for example) a model has been
+    # 'spun up' to a ready state prior to running cyclon.
 
 %CONTACT_DELAY_HOURS
     # For tasks with the 'contact' attribute only (see %TYPE above).
@@ -64,6 +93,8 @@
     # The external program or script to invoke when all of my
     # prerequisites have been satisfied. This script is expected to be
     # in $PATH for the owner, or in the system 'tasks' subdirectory.
+
+    # tasks with the 'dummy' attribute do not need to define this.
 
     run-foo.sh
 

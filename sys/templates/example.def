@@ -2,10 +2,10 @@
 # See full_template.def for documented entries
 
 %NAME
-    typical, typ
+    global_circulation_model, gcw
 
 %TYPE
-    normal
+    forecast_model 
 
 %OWNER
     bob 
@@ -14,13 +14,13 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    run-typical.sh
+    run-gcw.sh
 
 %PREREQUISITES
-    file foo_$(MY_REFERENCE_TIME).nc ready
+    file global_obs_$(MY_REFERENCE_TIME).nc ready
 
 %RUN_LENGTH
     20 
 
 %OUTPUTS
-    18: file bar_$(MY_REFERENCE_TIME).nc ready
+    18: file global_winds_$(MY_REFERENCE_TIME).nc ready

@@ -31,7 +31,7 @@ class launcher:
             if not self.dummy_mode:
                 print 'WARNING: failout only affects dummy mode'
 
-    def run( self, owner, task_name, ref_time, task, extra_vars=[] ):
+    def run( self, owner, task_name, ref_time, task, dummy_out, extra_vars=[] ):
 
         # who is running the control system
         cyclon_owner = os.environ[ 'USER' ]
@@ -47,7 +47,7 @@ class launcher:
             owner = re.sub( '_oper$', '_' + system, owner )
 
         # EXTERNAL PROGRAM TO RUN
-        if self.dummy_mode:
+        if self.dummy_mode or dummy_out:
             # dummy task
             #external_program = cyclon_bin + '/dummy-task.py'
             # explicit path not required thanks to environment.sh

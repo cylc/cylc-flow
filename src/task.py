@@ -49,7 +49,8 @@ state_changed = True
 # the abdication mechanism ASSUMES that the task manager creates the
 # successor task as soon as the current task abdicates.
 
-class task( Pyro.core.ObjBase ):
+############ TASK BASE CLASS
+class task_base( Pyro.core.ObjBase ):
     
     # Default task deletion: quick_death = True
     # This amounts to a statement that the task has only cotemporal
@@ -101,6 +102,12 @@ class task( Pyro.core.ObjBase ):
         self.__class__.instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
+
+        # derived classes must define self.env_vars (environment
+        # variables to export for use by my external task) AFTER
+        # calling this base class init (or else the following default
+        # setting will wipe them out).
+        self.env_vars = []
 
         # set state_changed True if any task's state changes 
         # as a result of a remote method call
@@ -170,7 +177,7 @@ class task( Pyro.core.ObjBase ):
     def prepare_for_death( self ):
         # The task manager MUST call this immediately before deleting a
         # task object. It decrements the instance count of top level
-        # objects derived from task. It would be nice to use Python's
+        # objects derived from task_base. It would be nice to use Python's
         # __del__() function for this, but that is only called when a
         # deleted object is about to be garbage collected (which is not
         # guaranteed to be right away).
@@ -243,15 +250,15 @@ class task( Pyro.core.ObjBase ):
 
         return reference_time.decrement( rt, decrement )
 
-
     def run_if_ready( self, launcher, clock ):
         # run if I am 'waiting' AND my prequisites are satisfied
         if self.state == 'waiting' and self.prerequisites.all_satisfied(): 
             self.run_external_task( launcher )
 
-    def run_external_task( self, launcher, extra_vars = [] ):
+    def run_external_task( self, launcher ):
         self.log( 'DEBUG',  'launching external task' )
-        launcher.run( self.owner, self.name, self.ref_time, self.external_task, extra_vars )
+        dummy_out = False
+        launcher.run( self.owner, self.name, self.ref_time, self.external_task, dummy_out, self.env_vars )
         self.state = 'running'
 
     def get_state( self ):
@@ -517,7 +524,17 @@ class task( Pyro.core.ObjBase ):
  
         return summary
 
-class contact_task( task ):
+############ MAIN TASK CLASS FOR FORECAST MODELS
+class forecast_model( task_base ):
+    # TO DO: automatic handling of restart prerequisites
+    pass
+
+############ MAIN TASK CLASS FOR NON FORECAST MODELS
+class general_purpose( task_base ):
+    pass
+
+############ TASK CLASS ATTRIBUTES
+class contact:
     # A task that waits on external events such as incoming external
     # data. These are the only tasks that can know if they are are
     # "caught up" or not, according to how their reference time relates
@@ -532,7 +549,7 @@ class contact_task( task ):
     # external task returns immediately because the external event has
     # already happened (i.e. the required data already exists).
 
-    def __init__( self, ref_time, abdicated, initial_state, relative_state ):
+    def __init__( self, relative_state ):
 
         # catch up status is held as a class variable
         # (i.e. one for each *type* of task proxy object) 
@@ -555,8 +572,6 @@ class contact_task( task ):
         # CHILD CLASS MUST DEFINE:
         #   self.real_time_delay
  
-        task.__init__( self, ref_time, abdicated, initial_state )
-
 
     def get_real_time_delay( self ):
         return self.real_time_delay
@@ -575,7 +590,7 @@ class contact_task( task ):
 
 
     def get_state_summary( self ):
-        summary = task.get_state_summary( self )
+        summary = task_base.get_state_summary( self )
         summary[ 'catching_up' ] = self.__class__.catchup_mode
         return summary
 
@@ -617,19 +632,13 @@ class contact_task( task ):
                     pass
 
 class oneoff:
-    # a task that claims it has abdicated already
+    # instances of this class always claim they have abdicated already
     def has_abdicated( self ):
         return True
 
-# ALTERNATIVE DEFINITION FOR ONEOFF TASKS:
-#class oneoff( task ):
-#    def __init__( self, ref_time, abdicated, initial_state ):
-#        # initialise task with abdicated = True
-#        # NOTE THIS IS STRING 'True' not logical True!
-#        task.__init__( self, ref_time, 'True', initial_state )
-
 class sequential:
-    # force tasks of this type to run in sequence  
+    # instances of this class are not "ready to abdicate" unless they
+    # have achieved the 'finished' state.
     def ready_to_abdicate( self ):
         if self.has_abdicated():
             return False
@@ -640,13 +649,17 @@ class sequential:
             return False
 
 class dummy:
-    # always launch a dummy task, even in real mode
-    def run_external_task( self, launcher, extra_vars = [] ):
+    # instances of this class always launch a dummy task, even in real mode
+
+    def __init__( self ):
+        self.external_task = 'NO_EXTERNAL_TASK'
+
+    def run_external_task( self, launcher ):
         self.log( 'DEBUG',  'launching external dummy task' )
-        launcher.run( self.owner, self.name, self.ref_time, 'dummy_task.py', extra_vars )
+        dummy_out = True
+        launcher.run( self.owner, self.name, self.ref_time, self.external_task, dummy_out, self.env_vars )
         self.state = 'running'
 
-# use multiple inheritance (precedence is left first!) to use sequential
-# or dummy with the main task types, e.g. a oneoff contact task:
-#     class foo( oneoff, task ):
-#           pass
+# NOTE: USE MULTIPLE INHERITANCE TO DERIVE FINAL TASK CLASSES
+# Precedence is left first, e.g. for a "oneoff contact task":
+#     class foo( oneoff, contact, task ):

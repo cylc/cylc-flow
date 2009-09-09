@@ -8,28 +8,6 @@ auto-generates the task class module (task_classes.py) used by cyclon.
   and which don't need to override class methods to define special
   behaviour.
 
-+ <task-name>.pydef
-  verbatim python code for tasks with complex behaviour that is not 
-  yet handled by generate_task_classes.py: e.g. those that trigger off
-  non-cotemporal tasks via fuzzy prerequisites, or need to override
-  class methods other than __init__().
-
-===================================================================
-NOTE ON tasks that behave differently at different reference times:
-
-If a task has different prerequisites or outputs depending on reference
-time, you can choose to represent it as several different task classes
-OR define reference time dependent prerequisites and outputs in the one
-task class.
-
-Keep in mind, however, that cyclon creates new task objects by
-abdication: when a particular instance of a given task type achieves its
-abdication condition (e.g. by finishing in the case of sequential tasks) 
-the next instance (at the next valid reference time for that task type)
-will be created, i.e. previous-instance dependence within a task type is
-handled implicitly, NOT via explicit prerequisites. So, IF YOUR TASK
-TYPE DOES DEPEND ON ITS PREVIOUS INSTANCE (as most scientific models do)
-AND it behaves differently at different reference times, you will need 
-to encode that behavior in the one class definition OR otherwise use
-explicit prerequisites to ensure that foo_b(T+1) does not run before
-foo_a(T) is finished (for example).
++ <task-name>.py
+  verbatim python class code for tasks with complex behaviour that is
+  not handled by task-generator.py

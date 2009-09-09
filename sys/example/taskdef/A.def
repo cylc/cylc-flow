@@ -10,7 +10,7 @@
     Also depends on external input data.
 
 %TYPE
-    normal
+    forecast_model
 
 %VALID_HOURS
     0,6,12,18

@@ -11,19 +11,22 @@ To Do
   CLASS THAT REQUIRES RESTART PREREQUISITES. And auto-generated
   'restart' outputs?
 
+* the task-generator script should check that the user-defined task
+  names do not clash with parent class or attribute names.
+
+* rethink the task launcher mechanism. E.g. real mode dummy tasks 
+  must define an external task for task.run_external_task() even 
+  though, by definition, they don't have one.
+
 * user config for restricted start time (e.g. 06 UTC only) and other
   system-specific restrictions?
-
-* make a "dummy" task class which always calls dummy-task.py instead of
-  using a manual wrap of the 'true' command - easy way to report
-  outputs other than just 'started' and 'finished'.
 
 * remote setting of 'ready' state for artificially tied tasks (nztide)
   whose artificial tie has failed but whose real prerequisites are known
   to be satisfied
 
 * when remote killing all waiting tasks at a ref time, check that (a)
-  the systems has moved on passed that time, and (b) none of the waiting
+  the system has moved on passed that time, and (b) none of the waiting
   tasks are contact tasks whose time has not come up yet.
 
 * tasks with conditional outputs may have trouble with the "keep one

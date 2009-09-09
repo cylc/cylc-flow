@@ -9,7 +9,7 @@
     system working directory. Runs only once at startup. 
 
 %TYPE
-    oneoff
+    general_purpose, oneoff
 
 %VALID_HOURS
     0,6,12,18
