@@ -13,6 +13,9 @@ ctrl_end = "\033[0m"
 
 def prompt( reason ):
 
+    if options.force:
+        return True
+
     print reason + " '" + system_name + "':",
     response = raw_input( 'ARE YOU SURE (y/n)? ' )
     if response == 'y':
@@ -24,13 +27,16 @@ def prompt( reason ):
 # construct a command line parser
 parser = OptionParser( "%prog [options]" )
 
+parser.add_option( "-f", "--force", help="don't prompt before acting",
+        action="store_true", default=False, dest="force" )
+
 parser.add_option( "-p", "--pause", help="pause system now",
         action="store_true", default=False, dest="pause" )
 
 parser.add_option( "--hold", help="set system hold time",
         metavar="YYYYMMDDHH", action="store", dest="hold_time" )
 
-parser.add_option( "--reset-task", help="reset a failed task to the waiting state",
+parser.add_option( "--reset", help="reset a failed task to the waiting state",
         metavar="name%YYYYMMDDHH", action="store", dest="reset_id" )
 
 parser.add_option( "-r", "--resume", help="unhold/resume system",
