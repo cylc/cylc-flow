@@ -46,7 +46,7 @@ state_changed = True
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
-# the abdication mechanism ASSUMES that the task manager creates the
+# The abdication mechanism ASSUMES that the task manager creates the
 # successor task as soon as the current task abdicates.
 
 ############ TASK BASE CLASS
@@ -425,78 +425,11 @@ class task_base( Pyro.core.ObjBase ):
         else:
             return False
             
-
     def ready_to_abdicate( self ):
-
-        if self.has_abdicated():
-            return False
-
-        if self.state == 'finished':
-            # always abdicate a finished task
-            return True
-
-        ready = False
-
-        # below, PID = Previous Instance Dependence
-
-        if not self.outputs.previous_instance_dependence:
-            # Tasks with no PID can in principle abdicate immediately,
-            # but this creates waiting tasks out to the max runahead,
-            # which clutters up monitor views and carries some task
-            # processing overhead.
-            
-            # Waiting until they are running prevents excess waiting
-            # tasks without preventing instances from running in
-            # parallel if the opportunity arises.
-            
-            # BUT this does mean that a failed or lame task's successor
-            # won't exist until the system operator abdicates and kills
-            # the offender.
-
-            # Also, tasks with no PID and  NO PREREQUISITES need to be
-            # constrained to run in sequence so that they don't all "go
-            # off at once". These are normally contact tasks that get
-            # external data, and they return quickly if the data exists
-            # already, or else just wait, so running them all at once is
-            # of no particular advantage. DISABLED - NOT NECESSARY NOW
-            # THAT CONTACT TASKS DON'T RUN UNTIL THEIR TIME IS UP.
-            
-            #if self.prerequisites.count() == 0:
-            #    if self.state == 'finished':
-            #        ready = True
-
-            #elif self.state == 'running':
-            if self.state == 'running':
-                ready = True
-
-        else:
-            # PID tasks
-
-            # Never abdicate a waiting PID task because (i) its
-            # successor has to wait for it to finish, by definition, and
-            # (ii) if the successor exists before then it could get
-            # satisfied by later restart outputs of an earlier task
-            # (which we want to happen ONLY if the previous task fails
-            # and is killed by the system operator).
-
-            if self.state == 'running' or self.state == 'failed': 
-                # (failed PID tasks are running before they fail, so will
-                # already have abdicated or not, according to whether they
-                # fail before or after the PID outputs).
-
-                # ready only if all prev inst outputs are completed
-                # (otherwise my successor's successor could trigger
-                # off me, and so on).
-
-                ready = True
-                for message in self.outputs.satisfied.keys():
-                    if re.search( 'restart files ready', message ) and \
-                            not self.outputs.satisfied[ message ]:
-                        ready = False
-                        break
-
-        return ready
-
+        # DERIVED CLASSES MUST OVERRIDE THIS METHOD
+        print 'ERROR, illegal task base method called!'
+        self.log( 'CRITICAL', 'illegal task base method called!' )
+        sys.exit(1)
 
     def done( self ):
         # return True if task has finished and abdicated
@@ -524,16 +457,87 @@ class task_base( Pyro.core.ObjBase ):
  
         return summary
 
-############ MAIN TASK CLASS FOR FORECAST MODELS
-class forecast_model( task_base ):
-    # TO DO: automatic handling of restart prerequisites
-    pass
-
 ############ MAIN TASK CLASS FOR NON FORECAST MODELS
 class general_purpose( task_base ):
-    pass
 
-############ TASK CLASS ATTRIBUTES
+    # Tasks with no previous instance dependence can in principle
+    # abdicate immediately, but this creates waiting tasks out to the
+    # max runahead, which clutters up monitor views and carries some
+    # task processing overhead.
+            
+    # Waiting until they are running prevents excess waiting tasks
+    # without preventing instances from running in parallel if the
+    # opportunity arises.
+            
+    # BUT this does mean that a failed or lame task's successor won't
+    # exist until the system operator abdicates and kills the offender.
+
+    # Note that tasks with no previous instance dependence and  NO
+    # PREREQUISITES will all "go off at once" out to the runahead 
+    # limit (unless they are contact tasks whose time isn't up yet). 
+    # These can be constrained with the sequential attribute if
+    # that is preferred. 
+ 
+    def ready_to_abdicate( self ):
+
+        if self.has_abdicated():
+            # already abdicated
+            return False
+
+        if self.state == 'finished':
+            # always abdicate a finished task
+            return True
+
+        if self.state == 'running':
+            # see documentation above
+            return True
+
+############ MAIN TASK CLASS FOR FORECAST MODELS
+class forecast_model( task_base ):
+
+    # Forecast models have previous instance dependence via their
+    # restart files. Never abdicate a waiting task of this type because
+    # the successor's restart prerequisites could get satisfied by the
+    # later restart outputs of an earlier previous instance, and thereby
+    # start too soon (we want this to happen ONLY if the previous task
+    # fails and is subsequently abdicated-and-killed by the system operator).
+
+    def ready_to_abdicate( self ):
+
+        if self.has_abdicated():
+            # already abdicated
+            return False
+
+        if self.state == 'finished':
+            # always abdicate a finished task
+            return True
+
+        ready = False
+
+        if self.state == 'running' or self.state == 'failed': 
+            # failed tasks are running before they fail, so will already
+            # have abdicated, or not, according to whether they fail
+            # before or after completing their restart outputs.
+
+            # ready only if all restart outputs are completed
+            # as explained above
+
+            ready = True
+            for message in self.outputs.satisfied.keys():
+                if re.search( 'restart files ready', message ) and not self.outputs.satisfied[ message ]:
+                    ready = False
+                    break
+
+        return ready
+
+
+############ TASK CLASS ATTRIBUTES FOLLOW
+
+# USE MULTIPLE INHERITANCE TO DERIVE FINAL TASK CLASSES WITH ATTRIBUTES
+# Precedence is left first, e.g.:
+#     class foo( oneoff, contact, general_purpose ):
+#           pass
+
 class contact:
     # A task that waits on external events such as incoming external
     # data. These are the only tasks that can know if they are are
@@ -660,6 +664,4 @@ class dummy:
         launcher.run( self.owner, self.name, self.ref_time, self.external_task, dummy_out, self.env_vars )
         self.state = 'running'
 
-# NOTE: USE MULTIPLE INHERITANCE TO DERIVE FINAL TASK CLASSES
-# Precedence is left first, e.g. for a "oneoff contact task":
-#     class foo( oneoff, contact, task ):
+
