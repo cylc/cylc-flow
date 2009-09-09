@@ -73,11 +73,17 @@ file.""",
     system_config.load()
 
     dummy_mode = False
-    if options.dummy_mode or system_config.get( 'dummy_mode' ):
+    if system_config.get( 'dummy_mode' ):
+        dummy_mode = True
+
+    elif options.dummy_mode:
+        system_config.put( 'dummy_mode', True )
+        dummy_mode = True
+
+    if dummy_mode:
         print
         print "RUNNING IN DUMMY MODE!"
         print
-        dummy_mode = True
 
     # check restart
     restart_statedump = None

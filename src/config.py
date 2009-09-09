@@ -101,6 +101,8 @@ class config:
     def get( self, key ):
         return self.configured[ key ]
 
+    def put( self, key, value ):
+        self.configured[ key ] = value
 
     def set( self, key, value ):
         self.configured[ key ] = value
