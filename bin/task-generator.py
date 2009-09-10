@@ -104,7 +104,9 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task import forecast_model, general_purpose, contact, oneoff, sequential, dummy 
+from task_forecast import forecast_model
+from task_general import general_purpose
+from task_attributes import contact, oneoff, sequential, dummy 
 
 import user_config            
 import execution
