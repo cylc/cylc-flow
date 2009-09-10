@@ -367,8 +367,8 @@ import logging
             FILE.write( '\n' )
 
         # ... prerequisites
+        FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
         if 'PREREQUISITES' in parsed_def.keys():
-            FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
             for line in parsed_def[ 'PREREQUISITES' ]:
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
@@ -392,8 +392,7 @@ import logging
 
         # are the prerequisites different for the first instance?
         if 'STARTUP_PREREQUISITES' in parsed_def.keys():
-            # TO DO: use a function to re-use the normal prerequisite
-            # code (as above) here.
+            # TO DO: use a function to re-use the normal prerequisite code (as above) here.
             FILE.write( '\n' + indent + "if self.ref_time == user_config.config['start_time']:\n" )
             FILE.write( indent + '# overwrite prerequisites for startup case\n' )
             indent_more()
