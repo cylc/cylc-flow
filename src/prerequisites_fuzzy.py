@@ -23,10 +23,18 @@ class fuzzy_prerequisites( prerequisites ):
         # extract fuzzy reference time bounds from my prerequisite
         m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( message )
         if not m:
-            log = logging.getLogger( "main." + self.task_name )            
-            log.critical( '[' + self.ref_time + '] No fuzzy bounds MIN:MAX detected:' )
-            log.critical( '[' + self.ref_time + '] -> ' + message )
-            sys.exit(1)
+            # ADD ARTIFICIAL BOUNDS
+            # TO DO: this is a hack, find a better way.
+            m = re.compile( "^(.*)(\d{10})(.*)$").match( message )
+            if m:
+                [ one, two, three ] = m.groups()
+                bounds = two + ':' + two
+                message = re.sub( '\d{10}', bounds, message )
+            else:
+                log = logging.getLogger( "main." + self.task_name )            
+                log.critical( '[' + self.ref_time + '] No fuzzy bounds or ref time detected:' )
+                log.critical( '[' + self.ref_time + '] -> ' + message )
+                sys.exit(1)
 
         prerequisites.add( self, message )
 
@@ -47,11 +55,6 @@ class fuzzy_prerequisites( prerequisites ):
 
                 # extract fuzzy reference time bounds from my prerequisite
                 m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
-                #if not m:
-                #NOT NEEDED: CHECKING IN ADD() NOW, ABOVE
-                #    log.critical( '[' + self.ref_time + '] FAILED TO MATCH MIN:MAX IN ' + prereq )
-                #    sys.exit(1)
-
                 [ my_start, my_minmax, my_end ] = m.groups()
                 [ my_min, my_max ] = my_minmax.split(':')
 
