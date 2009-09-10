@@ -108,9 +108,6 @@ class task_base( Pyro.core.ObjBase ):
         global state_changed 
         state_changed = True
 
-        # unique task identity
-        self.identity = self.name + '%' + self.ref_time
-
         self.latest_message = ""
 
         if abdicated == 'True':
@@ -142,6 +139,14 @@ class task_base( Pyro.core.ObjBase ):
 
         #self.log( 'DEBUG', "initial state: " + initial_state )
 
+    def get_identity( self ):
+        # unique task id
+        return self.name + '%' + self.ref_time
+
+    def register_run_length( self, run_len_minutes ):
+        # automatically define special 'started' and 'finished' outputs
+        self.outputs.add( 0, self.get_identity() + ' started' )
+        self.outputs.add( run_len_minutes, self.get_identity() + ' finished' )
 
     def log( self, priority, message ):
         # task-specific log file
@@ -316,7 +321,7 @@ class task_base( Pyro.core.ObjBase ):
         # prefix task id to special messages.
         raw_message = message
         if message == 'started' or message == 'finished' or message == 'failed':
-            message = self.identity + ' ' + message
+            message = self.get_identity() + ' ' + message
  
         if self.outputs.exists( message ):
             # registered output messages
@@ -327,7 +332,7 @@ class task_base( Pyro.core.ObjBase ):
                 self.log( priority,  message )
                 self.outputs.set_satisfied( message )
 
-                if message == self.identity + ' finished':
+                if message == self.get_identity() + ' finished':
                     # TASK HAS FINISHED
                     self.set_finished()
                     if not self.outputs.all_satisfied():

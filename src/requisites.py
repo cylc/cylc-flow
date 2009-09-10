@@ -287,10 +287,6 @@ class outputs( requisites ):
 
         log = logging.getLogger( "main." + self.task_name )            
 
-        # prefix task id to special 'started' and 'finished' outputs
-        if message == 'started' or message == 'finished':
-            message = self.task_name + '%' + self.ref_time + ' ' + message
-
         if message in self.satisfied.keys():
             # duplicate output messages are an error.
             log.critical( 'already registered: ' + message ) 

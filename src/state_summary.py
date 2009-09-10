@@ -22,7 +22,7 @@ class state_summary( Pyro.core.ObjBase ):
         self.global_summary = {}
 
         for task in tasks:
-            self.task_summary[ task.identity ] = task.get_state_summary()
+            self.task_summary[ task.get_identity() ] = task.get_state_summary()
 
         self.global_summary[ 'last_updated' ] = clock.get_datetime()
         self.global_summary[ 'dummy_mode' ] = self.dummy_mode

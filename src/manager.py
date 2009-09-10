@@ -100,7 +100,7 @@ class manager:
 
             if not skip:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, itask.identity )
+                self.pyro.connect( itask, itask.get_identity() )
                 self.tasks.append( itask )
 
 
@@ -179,7 +179,7 @@ class manager:
 
             if not skip:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, itask.identity )
+                self.pyro.connect( itask, itask.get_identity() )
                 self.tasks.append( itask )
 
     def no_tasks_running( self ):
@@ -210,7 +210,7 @@ class manager:
 
         for itask in self.tasks:
             # register task outputs
-            self.broker.register( itask.identity, itask.outputs )
+            self.broker.register( itask.get_identity(), itask.outputs )
 
         # for debugging;            
         # self.broker.dump()
@@ -231,7 +231,7 @@ class manager:
         for itask in self.tasks:
                 if self.system_hold_reftime:
                     if int( itask.ref_time ) >= int( self.system_hold_reftime ):
-                        self.log.debug( 'not asking ' + itask.identity + ' to run (' + self.system_hold_reftime + ' hold in place)' )
+                        self.log.debug( 'not asking ' + itask.get_identity() + ' to run (' + self.system_hold_reftime + ' hold in place)' )
                         continue
 
                 itask.run_if_ready( launcher, self.clock )
@@ -264,7 +264,7 @@ class manager:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro.connect( new_task, new_task.identity )
+                    self.pyro.connect( new_task, new_task.get_identity() )
                     new_task.log('DEBUG', "connected" )
                     self.tasks.append( new_task )
 
@@ -431,7 +431,7 @@ class manager:
     def reset_task( self, task_id ):
         found = False
         for itask in self.tasks:
-            if itask.identity == task_id:
+            if itask.get_identity() == task_id:
                 found = True
                 break
 
@@ -492,7 +492,7 @@ class manager:
 
             if not skip:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, itask.identity )
+                self.pyro.connect( itask, itask.get_identity() )
                 self.tasks.append( itask )
 
 
@@ -502,7 +502,7 @@ class manager:
             found = False
             itask = None
             for t in self.tasks:
-                if t.identity == id:
+                if t.get_identity() == id:
                     found = True
                     itask = t
                     break
@@ -514,10 +514,10 @@ class manager:
             itask.log( 'DEBUG', 'dumping requisites to stdout, by remote request' )
 
             print
-            print 'PREREQUISITE DUMP', itask.identity 
+            print 'PREREQUISITE DUMP', itask.get_identity() 
             itask.prerequisites.dump()
             print
-            print 'OUTPUT DUMP', itask.identity 
+            print 'OUTPUT DUMP', itask.get_identity() 
             itask.outputs.dump()
             print
 
@@ -531,8 +531,8 @@ class manager:
                 # not cotemporal
                 continue
 
-            if itask.prerequisites.will_satisfy_me( parent.outputs, parent.identity ):
-                #print 'dependee: ' + itask.identity
+            if itask.prerequisites.will_satisfy_me( parent.outputs, parent.get_identity() ):
+                #print 'dependee: ' + itask.get_identity()
                 deps[ itask ] = True
 
         for itask in deps:
@@ -560,7 +560,7 @@ class manager:
         # find the task
         found = False
         for itask in self.tasks:
-            if itask.identity == id:
+            if itask.get_identity() == id:
                 found = True
                 next = itask.next_ref_time()
                 name = itask.name
@@ -574,7 +574,7 @@ class manager:
         condemned = self.find_cotemporal_dependees( itask )
         cond = {}
         for itask in condemned:
-            cond[ itask.identity ] = True
+            cond[ itask.get_identity() ] = True
         
         self.abdicate_and_kill( cond )
 
@@ -590,7 +590,7 @@ class manager:
         task_ids = {}
         for itask in self.tasks:
             if itask.ref_time == reftime and itask.state == 'waiting':
-                task_ids[ itask.identity ] = True
+                task_ids[ itask.get_identity() ] = True
 
         self.abdicate_and_kill( task_ids )
 
@@ -602,7 +602,7 @@ class manager:
             found = False
             itask = None
             for t in self.tasks:
-                if t.identity == id:
+                if t.get_identity() == id:
                     found = True
                     itask = t
                     break
@@ -627,7 +627,7 @@ class manager:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro.connect( new_task, new_task.identity )
+                    self.pyro.connect( new_task, new_task.get_identity() )
                     new_task.log( 'DEBUG', 'connected' )
                     self.tasks.append( new_task )
 
