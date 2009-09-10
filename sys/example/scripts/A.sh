@@ -3,9 +3,14 @@
 # cyclon example system, task A
 # depends on task ext and its own restart file.
 
+# run length 90 minutes, one restart file
+
+ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
+SLEEP=$(( 90 * 60 / ACCEL ))
+
 # check prerequistes
-ONE=$TMPDIR/ext.${REFERENCE_TIME}
-TWO=$TMPDIR/A.${REFERENCE_TIME}.restart
+ONE=$TMPDIR/ext_${REFERENCE_TIME}.output
+TWO=$TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.restart
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         echo "ERROR, file not found: $PRE"
@@ -13,8 +18,11 @@ for PRE in $ONE $TWO; do
     }
 done
 
-# generate outputs
-touch $TMPDIR/A.${REFERENCE_TIME}.1
-touch $TMPDIR/A.${REFERENCE_TIME}.2
-touch $TMPDIR/A.${NEXT_REFERENCE_TIME}.restart
+sleep $SLEEP # 90 min
+
+touch $TMPDIR/${TASK_NAME}_${NEXT_REFERENCE_TIME}.restart
 task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $TASK_NAME restart files ready for $NEXT_REFERENCE_TIME
+
+OUTPUT=$TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output
+touch $OUTPUT
+task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $OUTPUT ready

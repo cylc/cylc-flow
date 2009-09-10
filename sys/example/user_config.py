@@ -29,7 +29,7 @@ config[ 'start_time' ] = '2009082506'
 #config[ 'logging_level' ] = logging.INFO
 config[ 'logging_level' ] = logging.DEBUG
 
-config[ 'max_runahead_hours' ] = 18
+config[ 'max_runahead_hours' ] = 30
 
 config[ 'environment' ] = { 'TMPDIR':'/tmp/' + os.environ['USER'] + '/cyclon/example' }
 

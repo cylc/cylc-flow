@@ -5,8 +5,7 @@
     startup
 
 %DESCRIPTION
-    Example system startup task, used in real mode to clean out the
-    system working directory. Runs only once at startup. 
+    Clean out the system working directory at startup.
 
 %TYPE
     general_purpose, oneoff

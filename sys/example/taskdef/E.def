@@ -5,8 +5,7 @@
     E
 
 %DESCRIPTION
-    Example system task E, represents a post processing task. 
-    Depends only on task B.
+    Post processing for task B. 
 
 %TYPE
     general_purpose
@@ -25,9 +24,3 @@
 
 %RUN_LENGTH_MINUTES
     150
-
-%OUTPUTS
-    # Defaults only
-
-#%COTEMPORAL_DEPENDANTS_ONLY
-#    True

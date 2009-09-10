@@ -3,9 +3,14 @@
 # cyclon example system, task C
 # depends on task A and its own restart file
 
+# run length 120 minutes, two restart files
+
+ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
+SLEEP=$(( 40 * 60 / ACCEL )) 
+
 # check prerequistes
-ONE=$TMPDIR/A.${REFERENCE_TIME}.2
-TWO=$TMPDIR/C.${REFERENCE_TIME}.restart
+ONE=$TMPDIR/A_${REFERENCE_TIME}.output
+TWO=$TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.restart
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         echo "ERROR, file not found: $PRE"
@@ -14,14 +19,20 @@ for PRE in $ONE $TWO; do
 done
 
 # ARTIFICIAL ERROR
-[[ $REFERENCE_TIME == 2009082512 ]] && {
-    echo "C: ERROR!!!!!!"
-    exit 1
-}
+#[[ $REFERENCE_TIME == 2009082512 ]] && {
+#    echo "C: ERROR!!!!!!"
+#    exit 1
+#}
 
-# generate outputs
-touch $TMPDIR/C.${REFERENCE_TIME}
-touch $TMPDIR/C.${NEXT_REFERENCE_TIME}.restart
+sleep $SLEEP  # 40 min
+touch $TMPDIR/${TASK_NAME}_${NEXT_REFERENCE_TIME}.restart
 task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $TASK_NAME restart files ready for $NEXT_REFERENCE_TIME
-touch $TMPDIR/C.${NEXT_NEXT_REFERENCE_TIME}.restart
+
+sleep $SLEEP  # 80 min
+touch $TMPDIR/${TASK_NAME}_${NEXT_NEXT_REFERENCE_TIME}.restart
 task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $TASK_NAME restart files ready for $NEXT_NEXT_REFERENCE_TIME
+
+sleep $SLEEP  # 120 min
+OUTPUT=$TMPDIR/C_${REFERENCE_TIME}.output
+touch $OUTPUT
+task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $OUTPUT ready

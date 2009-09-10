@@ -5,7 +5,8 @@
     dum
 
 %DESCRIPTION
-    Example system task dummy, runs as a dummy task even in real mode.
+    A dummy task (runs the external dummy task even in real mode).
+    Depends on task C finishing.
 
 %TYPE
     general_purpose, dummy
@@ -23,6 +24,3 @@
     4: munge
     5: lunge
     6: funge
-
-#%COTEMPORAL_DEPENDANTS_ONLY
-#    True

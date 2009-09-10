@@ -4,6 +4,12 @@
 # gets external data
 # no prerequisites
 
-# generate outputs
-touch $TMPDIR/ext.${REFERENCE_TIME}
+# run length 10 minutes
+
+ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
+SLEEP=$(( 10 * 60 / ACCEL )) 
+
+sleep $SLEEP 
+
+touch $TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output
 task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME external data ready for $REFERENCE_TIME

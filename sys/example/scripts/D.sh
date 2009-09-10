@@ -3,9 +3,14 @@
 # cyclon example system, task D
 # depends on tasks B and C
 
+# run length 75 minutes
+
+ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
+SLEEP=$(( 75 * 60 / ACCEL )) 
+
 # check prerequistes
-ONE=$TMPDIR/B.${REFERENCE_TIME}
-TWO=$TMPDIR/C.${REFERENCE_TIME}
+ONE=$TMPDIR/B_${REFERENCE_TIME}.output
+TWO=$TMPDIR/C_${REFERENCE_TIME}.output
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         echo "ERROR, file not found: $PRE"
@@ -13,5 +18,8 @@ for PRE in $ONE $TWO; do
     }
 done
 
-# generate outputs
-touch $TMPDIR/D.${REFERENCE_TIME}
+sleep $SLEEP   # 75 min
+
+OUTPUT=$TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output
+touch $OUTPUT
+task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $OUTPUT ready
