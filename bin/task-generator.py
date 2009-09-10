@@ -420,42 +420,51 @@ import logging
         FILE.write( '\n' )
         FILE.write( indent + 'self.outputs = outputs( self.name, self.ref_time )\n' )
 
-        # automatic 'task started' message
-        if 'OUTPUTS' not in parsed_def.keys():
-            parsed_def[ 'OUTPUTS' ] = [ '0: started' ]
-        else:
-            parsed_def[ 'OUTPUTS' ].append( '0: started' )
-    
-        # automatic 'task finished' message
+        # automatic 'started' and 'finished' outputs
         if 'RUN_LENGTH_MINUTES' not in parsed_def:
-            print "ERROR: no %RUN_LENGTH_MINUTES found"
+            print "ERROR: %RUN_LENGTH_MINUTES not defined"
             sys.exit(1)
 
+        FILE.write( '\n' )
         for line in parsed_def[ 'RUN_LENGTH_MINUTES' ]:
             line = re.sub( '\s+$', '', line )
-            parsed_def[ 'OUTPUTS' ].append( line + ': finished' )
-        
-        for line in parsed_def[ 'OUTPUTS' ]:
             # look for conditionals
             m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
             if m:
-                [ left, timed_req ] = m.groups()
+                [ left, rlen ] = m.groups()
                 # get a list of hours
                 hours = left.split(',')
-                [ time, req ] = timed_req.split( ':' )
-                req = "'" + req + "'"
-                req = interpolate_variables( req )
                 for hour in hours:
                     FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                     indent_more()
-                    FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
+                    FILE.write( indent + 'self.register_run_length( ' + rlen + ' )\n' )
                     indent_less()
             else:
-                timed_req = line
-                [ time, req ] = timed_req.split( ':' )
-                req = "'" + req + "'"
-                req = interpolate_variables( req )
-                FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
+                rlen = line
+                FILE.write( indent + 'self.register_run_length( ' + rlen + ' )\n\n' )
+       
+        if 'OUTPUTS' in parsed_def.keys():
+            for line in parsed_def[ 'OUTPUTS' ]:
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, timed_req ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    [ time, req ] = timed_req.split( ':' )
+                    req = "'" + req + "'"
+                    req = interpolate_variables( req )
+                    for hour in hours:
+                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
+                        indent_less()
+                else:
+                    timed_req = line
+                    [ time, req ] = timed_req.split( ':' )
+                    req = "'" + req + "'"
+                    req = interpolate_variables( req )
+                    FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
 
         # environment variables
         strng = indent + 'self.env_vars = [\n'

@@ -44,7 +44,7 @@ class manager:
             self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run from " + reftime )
         else:
             self.system_hold_now = True
-            self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run FROM NOW")
+            self.log.critical( "SETTING SYSTEM HOLD: won't run any more tasks")
 
     def unset_system_hold( self ):
         self.log.critical( "UNSETTING SYSTEM HOLD: new tasks will run when ready")
