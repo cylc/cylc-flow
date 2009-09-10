@@ -12,4 +12,4 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 sleep $SLEEP 
 
 touch $TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output
-task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME external data ready for $REFERENCE_TIME
+task-message external data ready for $REFERENCE_TIME

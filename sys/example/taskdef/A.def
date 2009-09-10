@@ -16,10 +16,11 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    task-wrapper
+    #task-wrapper
+    A.sh
 
 %EXPORT
-    WRAP A.sh
+    #WRAP A.sh
     NEXT_REFERENCE_TIME $(MY_REFERENCE_TIME + 6)
 
 %PREREQUISITES

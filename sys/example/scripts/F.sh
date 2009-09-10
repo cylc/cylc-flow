@@ -19,4 +19,4 @@ sleep $SLEEP
 
 OUTPUT=$TMPDIR/F_${REFERENCE_TIME}.output
 touch $OUTPUT
-task-message -p NORMAL -n $TASK_NAME -r $REFERENCE_TIME $OUTPUT ready
+task-message $OUTPUT ready

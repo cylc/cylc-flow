@@ -4,36 +4,69 @@
 Standalone interface between external EcoConnect tasks/models and the
 task objects that represent them in the controller.
 
-Sends a message to task proxy object in a cyclon instance, by calling
-[task object].incoming(<message>). The task is identified by its
-unique "task id" <NAME>%<REFTIME>.
+Sends a message to a task proxy object in a cyclon instance, by calling
+[task object].incoming(<priority>, <message>). The task is identified by
+its unique task ID, <NAME>%<REFTIME>.
 """
 
+import os
 import sys
 import Pyro.core
 import config
 from optparse import OptionParser
 
 # construct a command line parser
-parser = OptionParser( "%prog [options] MESSAGE\n" 
-                        "the following options are not optional")
+parser = OptionParser( "%prog [options] <message>\n" )
 
-parser.add_option( "-p", "--priority", help="message priority",
-        metavar="NORMAL, WARNING, CRITICAL",
+parser.add_option( "-p", "--priority", 
+        metavar="PRIORITY",
+        help="message priority "
+             "(NORMAL, WARNING, CRITICAL) "
+             "defaults to NORMAL.",
         action="store", dest="priority" )
 
-parser.add_option( "-n", "--name", help="task name",
+parser.add_option( "-n", "--name", 
+        metavar='TASKNAME',
+        help="task name, defaults to $TASK_NAME",
         action="store", dest="taskname" )
 
-parser.add_option( "-r", "--reftime", help="task reference time",
+parser.add_option( "-r", "--reftime", 
+        metavar="YYYYMMDDHH",
+        help="task reference time, defaults to $REFERENCE_TIME",
         action="store", dest="reftime" )
 
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
-if not options.priority or not options.taskname or not options.reftime:
-    parser.error( "options -p, -t, -r are not optional!" )
+#if not options.priority or not options.taskname or not options.reftime:
+#    parser.error( "options -p, -t, -r are not optional!" )
 
+if options.priority:
+    priority = options.priority
+else:
+    # Default to NORMAL
+    priority = 'NORMAL'
+
+if options.taskname:
+    taskname = options.taskname
+else:
+    # Default to $TASK_NAME
+    if 'TASK_NAME' in os.environ.keys():
+        taskname = os.environ[ 'TASK_NAME' ]
+    else:
+        print 'ERROR, task-message: no task name provided!'
+        sys.exit(1)
+    
+if options.reftime:
+    reftime = options.reftime
+else:
+    # Default to $REFERENCE_TIME
+    if 'REFERENCE_TIME' in os.environ.keys():
+        reftime = os.environ[ 'REFERENCE_TIME' ]
+    else:
+        print 'ERROR, task-message: no reference time provided!'
+        sys.exit(1)
+ 
 if len( args ) == 0:
     parser.error( "no message supplied" )
 elif len( args ) == 1:
@@ -54,8 +87,8 @@ config.check()
 
 # connect to the task object inside the control program
 #try:
-task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.' + options.taskname + '%' + options.reftime )
-task.incoming( options.priority, message )
+task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.' + taskname + '%' + reftime )
+task.incoming( priority, message )
 #except:
 #    # nameserver not found, or object not registered with it?
 #    print "ERROR: failed to connect to " + task_name + "_" + ref_time
