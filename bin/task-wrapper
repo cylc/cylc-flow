@@ -1,5 +1,24 @@
 #!/bin/bash
 
+# Cyclon task wrapper script
+
+# Cyclon tasks must provide, at the least, their own 'started',
+# 'finished', and 'failure' messages.  This script is intended to allow
+# control over existing tasks without having to modify them in any way.
+
+# Accordingly, it does the following for the wrapped task:
+# (1) sends special 'started' message
+# (2) executes the task
+# (3) send the special 'finished' message on success,
+#       or the special 'failed' message if error occurs.
+
+# Thus WRAPPED TASKS do not need to send any messages, but they must
+# provide the standard exit codes: '0' for success, '1' (or more) for
+# failure. If you want, however, a wrapped task *can* send cyclon
+# messages as well, but in that case you might as well dispense with
+# wrapping and provide your own started, finished, and failure messages
+# as well.
+
 set -e  # abort on error
 
 CRITARGS="-p CRITICAL -n $TASK_NAME -r $REFERENCE_TIME"
