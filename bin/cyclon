@@ -150,12 +150,16 @@ file.""",
 
     print "\nBeginning task processing now\n"
 
+    halt = False
     task.state_changed = True
     while True: # MAIN LOOP
 
-        if remote.system_halt_requested:
-            clean_shutdown( pyro, 'remote request' )
-            return
+        if remote.get_halt():
+            # stop launching new tasks, but wait on running ones before
+            # shutting down (otherwise they will generate screeds of
+            # pyro-related error messages when they try to phone home).
+            halt = True
+            god.set_system_hold()
 
         if remote.get_hold():
             god.set_system_hold()
@@ -224,8 +228,12 @@ file.""",
 
             system_state.update( god.tasks, clock )
 
-            if god.all_finished():
+            if god.all_tasks_finished():
                 clean_shutdown( pyro, "ALL TASKS FINISHED" )
+                return
+
+            if halt and god.no_tasks_running():
+                clean_shutdown( pyro, "all running tasks finished" )
                 return
 
         # REMOTE METHOD HANDLING; with no timeout and single-

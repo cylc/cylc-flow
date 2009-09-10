@@ -52,7 +52,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def nudge( self ):
         # pretend a task has changed state in order to invoke the event
         # handling loop
-        self.log.warning( "REMOTE: nudge requested" )
+        self.log.warning( "REMOTE: nudge" )
         task.state_changed = True
 
     def reset_to_waiting( self, task_id ):
@@ -68,7 +68,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.warning( "REMOTE: task insertion request: " + ins )
 
     def hold( self ):
-        self.log.warning( "REMOTE: system hold requested" )
+        self.log.warning( "REMOTE: system hold" )
         self.system_hold_requested = True
 
     def get_hold( self ):
@@ -78,8 +78,16 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return False
 
+    def get_halt( self ):
+        if self.system_halt_requested:
+            self.system_halt_requested = False
+            return True
+        else:
+            return False
+
+
     def resume( self ):
-        self.log.warning( "REMOTE: system resume requested" )
+        self.log.warning( "REMOTE: system resume" )
         self.system_resume_requested = True 
         self.system_hold_requested = False 
         # ensure we resume task processing immediately
@@ -93,21 +101,21 @@ class remote_switch( Pyro.core.ObjBase ):
             return False
 
     def set_stop_time( self, reftime ):
-        self.log.warning( "REMOTE: set stop time requested" )
+        self.log.warning( "REMOTE: set stop time" )
         self.set_stop = True
         self.stop_time = reftime
 
     def set_hold_time( self, reftime ):
-        self.log.warning( "REMOTE: set stop time requested" )
+        self.log.warning( "REMOTE: set stop time" )
         self.set_hold = True
         self.hold_time = reftime
 
     def shutdown( self ):
-        self.log.warning( "REMOTE: system halt requested" )
+        self.log.warning( "REMOTE: system halt, after running tasks finish" )
         self.system_halt_requested = True
 
     def get_config( self, item ):
-        self.log.warning( "REMOTE: config item " + item + " requested" )
+        self.log.warning( "REMOTE: config item " + item )
         try:
             result = self.config.get( item )
         except:
@@ -163,7 +171,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def set_verbosity( self, level ):
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
-        self.log.warning( "REMOTE: verbosity change to " + level + " requested"  )
+        self.log.warning( "REMOTE: verbosity change to " + level )
         
         if level == 'debug':
             new_level = logging.DEBUG

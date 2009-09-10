@@ -161,16 +161,6 @@ if options.resume:
 
 if options.shutdown:
     if prompt( 'Shutdown' ):
-        if control.get_config( 'dummy_mode' ):
-            # pause to prevent new dummy tasks being launched after the pkill 
-            control.hold()
-            print 'pausing system ...'
-            sleep(5)
-            print 'killing any dummy tasks ...'
-            # kill any running 'dummy_task's
-            os.system( 'pkill -9 -u $USER dummy-task.py' )
-            sleep(5)
-
         control.shutdown()
 
 if options.verbosity:

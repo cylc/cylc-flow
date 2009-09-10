@@ -182,7 +182,15 @@ class manager:
                 self.pyro.connect( itask, itask.identity )
                 self.tasks.append( itask )
 
-    def all_finished( self ):
+    def no_tasks_running( self ):
+        # return True if no tasks are running
+        #--
+        for itask in self.tasks:
+            if itask.is_running():
+                return False
+        return True
+
+    def all_tasks_finished( self ):
         # return True if all tasks have finished AND abdicated
         #--
         for itask in self.tasks:
