@@ -75,13 +75,13 @@ class task_base( Pyro.core.ObjBase ):
         #    print line
 
 
-    def __init__( self, ref_time, abdicated, initial_state ):
+    def __init__( self, abdicated, initial_state ):
         # Call this AFTER derived class initialisation
-        # (which alters requisites based on initial state)
 
-        # Derived classes MUST call nearest_ref_time() and define their 
-        # prerequistes and outputs before calling this __init__.
-        self.ref_time = ref_time
+        # Derived class init MUST define:
+        #  * self.ref_time, using self.nearest_ref_time()
+        #  * prerequisites and outputs
+        #  * self.env_vars 
 
         # Has this object abdicated yet (used for recreating abdicated
         # tasks when loading tasks from the state dump file).
@@ -102,12 +102,6 @@ class task_base( Pyro.core.ObjBase ):
         self.__class__.instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
-
-        # derived classes must define self.env_vars (environment
-        # variables to export for use by my external task) AFTER
-        # calling this base class init (or else the following default
-        # setting will wipe them out).
-        self.env_vars = []
 
         # set state_changed True if any task's state changes 
         # as a result of a remote method call
@@ -133,10 +127,9 @@ class task_base( Pyro.core.ObjBase ):
         if initial_state == "waiting": 
             self.state = "waiting"
         elif initial_state == "finished":  
+            self.log( 'WARNING', " starting in FINISHED state" )
             self.outputs.set_all_satisfied()
             self.prerequisites.set_all_satisfied()
-            self.log( 'WARNING', " starting in FINISHED state" )
-            #self.state = "finished"
             self.set_finished()
         elif initial_state == "ready":
             # waiting, but ready to go

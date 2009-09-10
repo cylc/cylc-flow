@@ -47,26 +47,26 @@ def interpolate_variables( strng ):
     strng = re.sub( "\$\(NAME\)" , "'  + self.name + '", strng ) # mid line
    
     # replace "$(MY_REFERENCE_TIME)"
-    strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)'$",   "ref_time",     strng ) # alone
-    strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)",     "ref_time + '", strng ) # start line
-    strng = re.sub( "\$\(MY_REFERENCE_TIME\)'$", "' + ref_time"   ,  strng ) # end line
-    strng = re.sub( "\$\(MY_REFERENCE_TIME\)" , "'  + ref_time + '", strng ) # mid line
+    strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)'$",   "self.ref_time",     strng ) # alone
+    strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)",     "self.ref_time + '", strng ) # start line
+    strng = re.sub( "\$\(MY_REFERENCE_TIME\)'$", "' + self.ref_time"   ,  strng ) # end line
+    strng = re.sub( "\$\(MY_REFERENCE_TIME\)" , "'  + self.ref_time + '", strng ) # mid line
 
     # replace "$(MY_REFERENCE_TIME - XX )"
     m = re.search( '\$\(\s*MY_REFERENCE_TIME\s*-\s*(\d+)\s*\)', strng )
     if m:
-        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)'$",   "reference_time.decrement( ref_time, " + m.group(1) + ")",     strng ) # alone
-        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)",     "reference_time.decrement( ref_time, " + m.group(1) + ") + '", strng ) # start line
-        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)'$", "' + reference_time.decrement( ref_time, " + m.group(1) + ")",     strng ) # mid line
-        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)",   "' + reference_time.decrement( ref_time, " + m.group(1) + ") + '", strng ) # end line
+        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)'$",   "reference_time.decrement( self.ref_time, " + m.group(1) + ")",     strng ) # alone
+        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)",     "reference_time.decrement( self.ref_time, " + m.group(1) + ") + '", strng ) # start line
+        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)'$", "' + reference_time.decrement( self.ref_time, " + m.group(1) + ")",     strng ) # mid line
+        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)",   "' + reference_time.decrement( self.ref_time, " + m.group(1) + ") + '", strng ) # end line
 
     # replace "$(MY_REFERENCE_TIME + XX )"
     m = re.search( '\$\(\s*MY_REFERENCE_TIME\s*\+\s*(\d+)\s*\)', strng )
     if m:
-        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)'$",   "reference_time.increment( ref_time, " + m.group(1) + ")",     strng ) # alone
-        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)",     "reference_time.increment( ref_time, " + m.group(1) + ") + '", strng ) # start line
-        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)'$", "' + reference_time.increment( ref_time, " + m.group(1) + ")",     strng ) # mid line
-        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)",   "' + reference_time.increment( ref_time, " + m.group(1) + ") + '", strng ) # end line
+        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)'$",   "reference_time.increment( self.ref_time, " + m.group(1) + ")",     strng ) # alone
+        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)",     "reference_time.increment( self.ref_time, " + m.group(1) + ") + '", strng ) # start line
+        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)'$", "' + reference_time.increment( self.ref_time, " + m.group(1) + ")",     strng ) # mid line
+        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)",   "' + reference_time.increment( self.ref_time, " + m.group(1) + ") + '", strng ) # end line
 
     return strng
 
@@ -255,7 +255,7 @@ import logging
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
         task_init_def_args = 'ref_time, abdicated, initial_state'
-        task_init_args = 'ref_time, abdicated, initial_state'
+        task_init_args = 'abdicated, initial_state'
 
         if contact:
             if 'CONTACT_DELAY_HOURS' not in parsed_def.keys():
@@ -341,10 +341,8 @@ import logging
         indent_more()
 
         FILE.write( indent + '# adjust reference time to next valid for this task\n' )
-        FILE.write( indent + 'ref_time = self.nearest_ref_time( ref_time )\n' )
-        FILE.write( indent + 'hour = ref_time[8:10]\n\n' )
-
-
+        FILE.write( indent + 'self.ref_time = self.nearest_ref_time( ref_time )\n' )
+        FILE.write( indent + 'hour = self.ref_time[8:10]\n\n' )
 
         if contact:
             for line in parsed_def[ 'CONTACT_DELAY_HOURS' ]:
@@ -365,7 +363,7 @@ import logging
             FILE.write( '\n' )
 
         # ... prerequisites
-        FILE.write( indent + 'self.prerequisites = prerequisites( self.name, ref_time )\n' )
+        FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
         for line in parsed_def[ 'PREREQUISITES' ]:
             # look for conditionals
             m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
@@ -391,11 +389,11 @@ import logging
         if 'STARTUP_PREREQUISITES' in parsed_def.keys():
             # TO DO: use a function to re-use the normal prerequisite
             # code (as above) here.
-            FILE.write( '\n' + indent + "if ref_time == user_config.config['start_time']:\n" )
+            FILE.write( '\n' + indent + "if self.ref_time == user_config.config['start_time']:\n" )
             FILE.write( indent + '# overwrite prerequisites for startup case\n' )
             indent_more()
                 
-            FILE.write( indent + 'self.prerequisites = prerequisites( self.name, ref_time )\n' )
+            FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
             for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
@@ -420,7 +418,7 @@ import logging
 
         # ... outputs
         FILE.write( '\n' )
-        FILE.write( indent + 'self.outputs = outputs( self.name, ref_time )\n' )
+        FILE.write( indent + 'self.outputs = outputs( self.name, self.ref_time )\n' )
 
         # automatic 'task started' message
         if 'OUTPUTS' not in parsed_def.keys():
@@ -459,6 +457,25 @@ import logging
                 req = interpolate_variables( req )
                 FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
 
+        # environment variables
+        strng = indent + 'self.env_vars = [\n'
+        if 'EXPORT' in parsed_def.keys():
+            for pair in parsed_def[ 'EXPORT' ]:
+                [ var, val ] = pair.split( ' ', 1 )
+                var = "'" + var + "'"
+                # replace NAME and MY_REFERENCE_TIME variables
+                val = interpolate_variables( "'" + val + "'" )
+                strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
+
+            strng = re.sub( ',\s*$', '', strng )
+        strng = strng + ' ]\n\n' 
+        FILE.write( strng )
+
+        # forecast model restarts
+        if fcmodel:
+            FILE.write( indent + 'restart_times = [' + restart_list + ']\n' )
+            FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
+
         # call parent init methods
         FILE.write( '\n' )
         if contact:
@@ -469,26 +486,6 @@ import logging
 
         FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
 
-        # forecast model restarts
-        # (after parent init as requires # self.ref_time)
-        if fcmodel:
-            FILE.write( indent + 'restart_times = [' + restart_list + ']\n' )
-            FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
-
-        # extra environment variables (override the default empty list
-        # in the task base class).
-        if 'EXPORT' in parsed_def.keys():
-            strng = indent + 'self.env_vars = [\n'
-            for pair in parsed_def[ 'EXPORT' ]:
-                [ var, val ] = pair.split( ' ', 1 )
-                var = "'" + var + "'"
-                # replace NAME and MY_REFERENCE_TIME variables
-                val = interpolate_variables( "'" + val + "'" )
-                strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
-
-            strng = re.sub( ',\s*$', '', strng )
-            strng = strng + ' ]\n\n' 
-            FILE.write( strng )
 
         #if 'EXPORT' in parsed_def.keys():
         #    # override run_external_task() for the export case
