@@ -2,11 +2,11 @@
 
 import reference_time
 import pimp_my_logger
-import requisites
 import logging
 #import pdb
 import os
 import re
+from broker import broker
 
 class manager:
     def __init__( self, config, dummy_mode, pyro, clock, restart, restart_statedump = None ):
@@ -25,7 +25,7 @@ class manager:
         self.system_hold_reftime = None
 
         # initialise the dependency broker
-        self.broker = requisites.broker()
+        self.broker = broker()
         
         # instantiate the initial task list and create task logs 
         self.tasks = []

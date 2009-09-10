@@ -112,7 +112,9 @@ import user_config
 import execution
 
 import reference_time
-from requisites import prerequisites, outputs, fuzzy_prerequisites
+from prerequisites import prerequisites
+from prerequisites_fuzzy import fuzzy_prerequisites
+from outputs import outputs
 from time import sleep
 
 import os, sys, re
