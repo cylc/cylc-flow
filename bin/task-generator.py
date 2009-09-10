@@ -367,26 +367,27 @@ import logging
             FILE.write( '\n' )
 
         # ... prerequisites
-        FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
-        for line in parsed_def[ 'PREREQUISITES' ]:
-            # look for conditionals
-            m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
-            if m:
-                [ left, req ] = m.groups()
-                # get a list of hours
-                hours = left.split(',')
-                req = re.sub( '^\s+', '', req )
-                req = "'" + req + "'"
-                req = interpolate_variables( req )
-                for hour in hours:
-                    FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
-                    indent_more()
+        if 'PREREQUISITES' in parsed_def.keys():
+            FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
+            for line in parsed_def[ 'PREREQUISITES' ]:
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, req ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    req = re.sub( '^\s+', '', req )
+                    req = "'" + req + "'"
+                    req = interpolate_variables( req )
+                    for hour in hours:
+                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
+                        indent_less()
+                else:
+                    req = "'" + line + "'"
+                    req = interpolate_variables( req )
                     FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
-                    indent_less()
-            else:
-                req = "'" + line + "'"
-                req = interpolate_variables( req )
-                FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
  
 
         # are the prerequisites different for the first instance?
