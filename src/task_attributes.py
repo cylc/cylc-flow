@@ -120,9 +120,9 @@ class sequential:
     # instances of this class are not "ready to abdicate" unless they
     # have achieved the 'finished' state.
     def ready_to_abdicate( self ):
-        if self.has_abdicated():
+        if self.state.has_abdicated():
             return False
-        if self.state == 'finished':
+        if self.state.is_finished():
             # only abdicate if finished
             return True
         else:

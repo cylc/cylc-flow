@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys
+import task_state
 import logging
 import Pyro.core
 import reference_time
@@ -71,7 +72,7 @@ class task_base( Pyro.core.ObjBase ):
         #    print line
 
 
-    def __init__( self, abdicated, initial_state ):
+    def __init__( self, state = None ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
@@ -79,9 +80,7 @@ class task_base( Pyro.core.ObjBase ):
         #  * prerequisites and outputs
         #  * self.env_vars 
 
-        # Has this object abdicated yet (used for recreating abdicated
-        # tasks when loading tasks from the state dump file).
-        self.abdicated = abdicated
+        self.state = task_state.task_state( state )
 
         # count instances of each top level object derived from task
         # top level derived classes must define:
@@ -106,34 +105,11 @@ class task_base( Pyro.core.ObjBase ):
 
         self.latest_message = ""
 
-        if abdicated == 'True':
-            # my successor has been created already
-            self.abdicated = True
-        else:
-            # my successor has not been created yet
-            self.abdicated = False 
-
-        # initial states: 
-        #  + waiting 
-        #  + ready (prerequisites satisfied)
-        #  + finished (outputs satisfied)
-        if initial_state == "waiting": 
-            self.state = "waiting"
-        elif initial_state == "finished":  
+        # check initial state 
+        if self.state.is_finished():  
             self.log( 'WARNING', " starting in FINISHED state" )
             self.outputs.set_all_satisfied()
             self.prerequisites.set_all_satisfied()
-            self.set_finished()
-        elif initial_state == "ready":
-            # waiting, but ready to go
-            self.state = "waiting"
-            self.log( 'WARNING', " starting in READY state" )
-            self.prerequisites.set_all_satisfied()
-        else:
-            self.log( 'CRITICAL',  "unknown initial task state: " + initial_state )
-            sys.exit(1)
-
-        #self.log( 'DEBUG', "initial state: " + initial_state )
 
     def get_identity( self ):
         # unique task id
@@ -246,44 +222,17 @@ class task_base( Pyro.core.ObjBase ):
 
     def run_if_ready( self, launcher, clock ):
         # run if I am 'waiting' AND my prequisites are satisfied
-        if self.state == 'waiting' and self.prerequisites.all_satisfied(): 
+        if self.state.is_waiting() and self.prerequisites.all_satisfied(): 
             self.run_external_task( launcher )
 
     def run_external_task( self, launcher ):
         self.log( 'DEBUG',  'launching external task' )
         dummy_out = False
         launcher.run( self.owner, self.name, self.ref_time, self.external_task, dummy_out, self.env_vars )
-        self.state = 'running'
-
-    def get_state( self ):
-        return self.name + ": " + self.state
-
-    def display( self ):
-        return self.name + "(" + self.ref_time + "): " + self.state
-
-    def set_finished( self ):
-        self.state = "finished"
+        self.state.set_status( 'running' )
 
     def is_complete( self ):  # not needed?
         if self.outputs.all_satisfied():
-            return True
-        else:
-            return False
-
-    def is_running( self ): 
-        if self.state == "running":
-            return True
-        else:
-            return False
-
-    def is_finished( self ): 
-        if self.state == "finished":
-            return True
-        else:
-            return False
-
-    def is_not_finished( self ):
-        if self.state != "finished":
             return True
         else:
             return False
@@ -309,7 +258,7 @@ class task_base( Pyro.core.ObjBase ):
         # new round of dependency renegotiations)
         global state_changed
 
-        if self.state != "running":
+        if not self.state.is_running():
             # my external task should not be running!
             self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running)" )
             self.log( 'WARNING', '-> ' + message )
@@ -344,7 +293,7 @@ class task_base( Pyro.core.ObjBase ):
             if priority != 'CRITICAL':
                 self.log( 'WARNING', 'non-critical priority for task failure' )
             self.log( 'CRITICAL',  message )
-            self.state = 'failed'
+            self.state.set_status( 'failed' )
 
         else:
             # log other (non-failed) unregistered messages with a '*' prefix
@@ -358,17 +307,6 @@ class task_base( Pyro.core.ObjBase ):
                 if reqs.is_satisfied(req):
                     self.prerequisites.set_satisfied( req )
 
-    def get_state_string( self ):
-        # Derived classes should override this function if they require
-        # non-standard state information to be written to the state dump
-        # file.
-
-        # Currently only single string values allowed, FORMAT: 
-        #    state:foo:bar:baz (etc.)
-
-        return self.state
-
-
     def get_real_time_delay( self ):
         # Return hours after reference to start running.
         # Used by dummy contact tasks in dummy mode.
@@ -380,45 +318,30 @@ class task_base( Pyro.core.ObjBase ):
         # Write state information to the state dump file, reference time
         # first to allow users to sort the file easily in case they need
         # to edit it:
-        #   reftime name abdicated state
+        #   reftime name state
 
-        # Derived classes can override get_state_string() to add
-        # information to the state dump file.
-        
         # This must be compatible with __init__() on reload
 
-        FILE.write( self.ref_time           + ' ' + 
-                    self.name               + ' ' + 
-                    str(self.abdicated)     + ' ' + 
-                    self.get_state_string() + '\n' )
+        FILE.write( self.ref_time     + ' ' + 
+                    self.name         + ' ' + 
+                    self.state.dump() + '\n' )
 
 
     def abdicate( self ):
-        # the task manager should instantiate a new task when this one
-        # abdicates (which only happens once per task). 
-        if self.has_abdicated():
+        if self.state.has_abdicated():
             return False
 
         if self.ready_to_abdicate():
-            self.abdicated = True
+            self.state.set_abdicated()
             return True
         else:
             return False
-
-
-    def set_abdicated( self ):
-        self.abdicated = True
-
 
     def has_abdicated( self ):
-        return self.abdicated
+        # this exists in task class because the derived oneoff class 
+        # needs to override it.
+        return self.state.has_abdicated()
 
-    def has_failed( self ):
-        if self.state == 'failed':
-            return True
-        else:
-            return False
-            
     def ready_to_abdicate( self ):
         # DERIVED CLASSES MUST OVERRIDE THIS METHOD
         print 'ERROR, illegal task base method called!'
@@ -427,7 +350,7 @@ class task_base( Pyro.core.ObjBase ):
 
     def done( self ):
         # return True if task has finished and abdicated
-        if self.state == "finished" and self.has_abdicated():
+        if self.state.is_finished() and self.state.has_abdicated():
             return True
         else:
             return False
@@ -442,11 +365,11 @@ class task_base( Pyro.core.ObjBase ):
         summary = {}
         summary[ 'name' ] = self.name
         summary[ 'short_name' ] = self.short_name
-        summary[ 'state' ] = self.state
+        summary[ 'state' ] = self.state.get_status()
         summary[ 'reference_time' ] = self.ref_time
         summary[ 'n_total_outputs' ] = n_total
         summary[ 'n_completed_outputs' ] = n_satisfied
-        summary[ 'abdicated' ] = self.has_abdicated()
+        summary[ 'abdicated' ] = self.state.has_abdicated()
         summary[ 'latest_message' ] = self.latest_message
  
         return summary

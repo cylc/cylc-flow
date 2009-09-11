@@ -41,7 +41,6 @@ def diff_hours( rt2, rt1 ):
 
     return delta.days * 24 + delta.seconds/3600
 
-
 def is_valid( rt ):
     if re.compile( "^\d{10}$" ).match( rt ):
         return True

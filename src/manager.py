@@ -68,20 +68,14 @@ class manager:
         #--
         print '\nCLEAN START: INITIAL STATE FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
-        # config.task_list = [ taskname(:state), taskname(:state), ...]
-        # where (:state) is optional and defaults to 'waiting'.
+        # config.task_list = [ taskname1, taskname2, ...]
 
         start_time = self.config.get('start_time')
 
-        for item in self.config.get('task_list'):
-            state = 'waiting'
-            name = item
-
-            if re.compile( "^.*:").match( item ):
-                [name, state] = item.split(':')
+        for name in self.config.get('task_list'):
 
             # instantiate the task
-            itask = self.get_task_instance( 'task_classes', name )( start_time, 'False', state )
+            itask = self.get_task_instance( 'task_classes', name )( start_time )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -123,14 +117,21 @@ class manager:
         else:
             filename = configured_file
 
-        # state dump file format: ref_time:name:state, one per line 
+        # The state dump file format is:
+        # LINE1: time <time>
+        # LINE2: <ref_time>:<taskname>:<state>
+        # LINE3: <ref_time>:<taskname>:<state>
+        #    (and so on)
+        # The time format is defined by the clock.reset()
+        # The task state format is defined by task_state.dump()
+
         self.log.info( 'Loading previous state from ' + filename )
 
         FILE = open( filename, 'r' )
         lines = FILE.readlines()
         FILE.close()
 
-        # reset time first
+        # reset time first (only has an effect in dummy mode)
         [ junk, time ] = lines[0].split( ' ' )
         self.clock.reset( time )
 
@@ -140,25 +141,11 @@ class manager:
         for line in lines[1:]:
             # strip trailing newlines
             line = line.rstrip( '\n' )
-            # ref_time task_name abdicated task_state_string
-            [ ref_time, name, abdicated, state_string ] = line.split()
-            state_list = state_string.split( ':' )
-            # main state (waiting, running, finished, failed)
-            state = state_list[0]
 
-            if state == 'running' or state == 'failed':
-                state_list[0] = 'waiting'
-                # we have to assume that running and failed tasks need
-                # to re-run on a restart. The fact that they were
-                # running (or did run before failing) implies their
-                # prerequisites were already satisfied so they COULD
-                # restart in a 'ready' state instead of 'waiting' BUT
-                # this doesn't work for tasks with fuzzy prerequisites
-                # (which will still be fuzzy at startup and therefore 
-                # need to be resatisfied, to "sharpen them up".
+            [ ref_time, name, state ] = line.split(':')
 
             # instantiate the task object
-            itask = self.get_task_instance( 'task_classes', name )( ref_time, abdicated, *state_list )
+            itask = self.get_task_instance( 'task_classes', name )( ref_time, state )
 
             # create the task log
             if name not in log_created.keys():
@@ -186,7 +173,7 @@ class manager:
         # return True if no tasks are running
         #--
         for itask in self.tasks:
-            if itask.is_running():
+            if itask.state.is_running():
                 return False
         return True
 
@@ -194,7 +181,7 @@ class manager:
         # return True if all tasks have finished AND abdicated
         #--
         for itask in self.tasks:
-            if itask.is_not_finished() or not itask.has_abdicated():
+            if not itask.state.is_finished() or not itask.state.has_abdicated():
                 return False
         return True
 
@@ -309,10 +296,10 @@ class manager:
         all_abdicated = True
         earliest_unabdicated = None
         for itask in self.tasks:
-            if itask.has_failed():
+            if itask.state.is_failed():
                 failed_rt[ itask.ref_time ] = True
 
-            if not itask.has_abdicated():
+            if not itask.state.has_abdicated():
                 all_abdicated = False
                 if not earliest_unabdicated:
                     earliest_unabdicated = itask.ref_time
@@ -613,7 +600,7 @@ class manager:
 
             itask.log( 'DEBUG', "killing myself by remote request" )
 
-            if not itask.has_abdicated():
+            if not itask.state.has_abdicated():
                 # forcibly abdicate the task and create its successor
                 itask.set_abdicated()
                 itask.log( 'DEBUG', 'forced abdication' )
