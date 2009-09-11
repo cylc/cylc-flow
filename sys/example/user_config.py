@@ -20,7 +20,7 @@ config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/running/cyclon/' + config
 config[ 'dummy_mode' ] = False
 config[ 'dummy_clock_rate' ] = 10
 config[ 'dummy_clock_offset' ] = 24
-config[ 'use_qsub' ] = False
+config[ 'use_qsub' ] = True
 config[ 'job_queue' ] = 'default'
 
 config[ 'start_time' ] = '2009082506'
