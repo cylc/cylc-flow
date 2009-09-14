@@ -269,6 +269,46 @@ class manager:
         # return the filename (minus path)
         return os.path.basename( filename )
 
+    def earliest_unabdicated( self ):
+        all_abdicated = True
+        earliest_unabdicated = None
+        for itask in self.tasks:
+            if not itask.state.has_abdicated():
+                all_abdicated = False
+                if not earliest_unabdicated:
+                    earliest_unabdicated = itask.ref_time
+                elif int( itask.ref_time ) < int( earliest_unabdicated ):
+                    earliest_unabdicated = itask.ref_time
+
+        return [ all_abdicated, earliest_unabdicated ]
+
+    def earliest_unsatisfied( self ):
+        # find the earliest unsatisfied task
+        all_satisfied = True
+        earliest_unsatisfied = None
+        for itask in self.tasks:
+            if not itask.prerequisites.all_satisfied():
+                all_satisfied = False
+                if not earliest_unsatisfied:
+                    earliest_unsatisfied = itask.ref_time
+                elif int( itask.ref_time ) < int( earliest_unsatisfied ):
+                    earliest_unsatisfied = itask.ref_time
+
+        return [ all_satisfied, earliest_unsatisfied ]
+
+    def earliest_unfinished( self ):
+        # find the earliest unfinished task
+        all_finished = True
+        earliest_unfinished = None
+        for itask in self.tasks:
+            if not itask.state.is_finished():
+                all_finished = False
+                if not earliest_unfinished:
+                    earliest_unfinished = itask.ref_time
+                elif int( itask.ref_time ) < int( earliest_unfinished ):
+                    earliest_unfinished = itask.ref_time
+
+        return [ all_finished, earliest_unfinished ]
 
     def kill_spent_tasks( self ):
         # Delete tasks that are no longer needed, i.e. those that:
@@ -292,21 +332,14 @@ class manager:
         # at the same reference time or earlier.
         #--
 
-        # find the earliest unabdicated task, and times of any failed 
+        # find the earliest unabdicated task, 
+        # and ref times of any failed tasks. 
         failed_rt = {}
-        all_abdicated = True
-        earliest_unabdicated = None
         for itask in self.tasks:
             if itask.state.is_failed():
                 failed_rt[ itask.ref_time ] = True
 
-            if not itask.state.has_abdicated():
-                all_abdicated = False
-                if not earliest_unabdicated:
-                    earliest_unabdicated = itask.ref_time
-                elif int( itask.ref_time ) < int( earliest_unabdicated ):
-                    earliest_unabdicated = itask.ref_time
-
+        [all_abdicated, earliest_unabdicated] = self.earliest_unabdicated()
         if all_abdicated:
             self.log.debug( "all tasks abdicated")
         else:
@@ -328,7 +361,7 @@ class manager:
         for itask in spent:
             self.tasks.remove( itask )
             self.pyro.disconnect( itask )
-            itask.log( 'NORMAL', "disconnected (spent)" )
+            itask.log( 'NORMAL', "disconnected (spent; quickdeath)" )
             itask.prepare_for_death()
 
         del spent
@@ -344,21 +377,31 @@ class manager:
         # it exists at a later time (but still earlier than the earliest
         # unsatisfied task) 
 
-        # find the earliest unsatisfied task
-        all_satisfied = True
-        earliest_unsatisfied = None
-        for itask in self.tasks:
-            if not itask.prerequisites.all_satisfied():
-                all_satisfied = False
-                if not earliest_unsatisfied:
-                    earliest_unsatisfied = itask.ref_time
-                elif int( itask.ref_time ) < int( earliest_unsatisfied ):
-                    earliest_unsatisfied = itask.ref_time
+        # BUT while the above paragraph is correct, the method can fail
+        # at restart: just before shutdown, when all running tasks have
+        # finished, we briefly have 'all tasks satisfied', which allows 
+        # deletion without the 'earliest unsatisfied' limit, and can
+        # result in deletion of finished tasks that are still required
+        # to satisfy others after a restart.
 
-        if all_satisfied:
-            self.log.debug( "all tasks satisfied" )
+        # THEREFORE the correct deletion cutoff is 'earliest unfinished'
+        # (members of which will remain in, or be reset to, the waiting
+        # state on a restart. The only way to use 'earliest unsatisfied'
+        # over a restart would be to record the state of all
+        # prerequisites for each task in the state dump - THIS MAY BE A
+        # GOOD THING TO DO, HOWEVER!
+
+        #[ all_satisfied, earliest_unsatisfied ] = self.earliest_unsatisfied()
+        #if all_satisfied:
+        #    self.log.debug( "all tasks satisfied" )
+        #else:
+        #    self.log.debug( "earliest unsatisfied: " + earliest_unsatisfied )
+
+        [ all_finished, earliest_unfinished ] = self.earliest_unfinished()
+        if all_finished:
+            self.log.debug( "all tasks finished" )
         else:
-            self.log.debug( "earliest unsatisfied: " + earliest_unsatisfied )
+            self.log.debug( "earliest unfinished: " + earliest_unfinished )
 
          # find candidates for deletion
         candidates = {}
@@ -366,11 +409,15 @@ class manager:
 
             if not itask.done():
                 continue
+
             if itask.ref_time in failed_rt.keys():
                 continue
 
-            if not all_satisfied:
-                if int( itask.ref_time ) >= int( earliest_unsatisfied ):
+            #if not all_satisfied:
+            #    if int( itask.ref_time ) >= int( earliest_unsatisfied ):
+            #        continue
+            if not all_finished:
+                if int( itask.ref_time ) >= int( earliest_unfinished ):
                     continue
             
             if itask.ref_time in candidates.keys():
@@ -379,15 +426,18 @@ class manager:
                 candidates[ itask.ref_time ] = [ itask ]
 
         # searching from newest tasks to oldest, after the earliest
-        # unsatisfied task, find any done task typess that appear more
-        # than once - the second or later occurences can be deleted.
+        # unsatisfied task, find any done task types that appear more
+        # than once - the second or later occurrences can be deleted.
         reftimes = candidates.keys()
         reftimes.sort( key = int, reverse = True )
         seen = {}
         spent = []
         for rt in reftimes:
-            if not all_satisfied:
-                if int( rt ) >= int( earliest_unsatisfied ):
+            #if not all_satisfied:
+            #    if int( rt ) >= int( earliest_unsatisfied ):
+            #        continue
+            if not all_finished:
+                if int( rt ) >= int( earliest_unfinished ):
                     continue
             
             for itask in candidates[ rt ]:
@@ -410,7 +460,7 @@ class manager:
         for itask in spent:
             self.tasks.remove( itask )
             self.pyro.disconnect( itask )
-            itask.log( 'NORMAL', "disconnected (spent)" )
+            itask.log( 'NORMAL', "disconnected (spent; general)" )
             itask.prepare_for_death()
 
         del spent
