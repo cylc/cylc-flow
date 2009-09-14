@@ -1,5 +1,8 @@
 To Do
 
+* python script for easy viewing of configured log files without having
+  to know their location.
+
 * task.quick_death should default to False? (as for the task 
   def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
 
@@ -11,10 +14,6 @@ To Do
 
 * the task-generator script should check that the user-defined task
   names do not clash with parent class or attribute names.
-
-* rethink the task launcher mechanism. E.g. real mode dummy tasks 
-  must define an external task for task.run_external_task() even 
-  though, by definition, they don't have one.
 
 * user config for restricted start time (e.g. 06 UTC only) and other
   system-specific restrictions?
@@ -35,19 +34,12 @@ To Do
   set identical fuzzy bounds to simulate the non-fuzzy case; see
   topnet.py).
 
-* the same user can't currently run multiple cyclon instances in dummy
-  mode, because the 'pkill dummy-task.py' on shutdown will kill all of
-  his dummy tasks.
-
 * a task should be allowed to declare multiple outputs at the same time
   (currently this is detected as an error condition)
 
 * detect when taskdef files are newer than task_classes file, and warn
   that use of configure-system may be required.
 
-* STATE DUMP INFORMATION SHOULD BE A DICT, LIKE CONFIG, TO ALLOW
-  arbitrary additional information to be added by new task classes.
-  
 * does 'caught up' detection work properly for prerequisiteless parallel
   contact tasks?
 
@@ -59,12 +51,6 @@ To Do
   for other prerequisites to be satisfied ... OR (better?!) don't try to
   satisfy fuzzy prerequistes until after all non-fuzzy ones have been
   satsified. 
-
-* streamflow 'caughtup' indicator does not need to specify the
-  reference time that catchup was achieved even though streamflow
-  catches up long before nzlam, because the indicator is only used to
-  determine how far ahead of nzlam we allow topnet to get (? I need 
-  to think about this).
 
 * use the custom clock everywhere (it knows about dummy mode).
 

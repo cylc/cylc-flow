@@ -9,8 +9,7 @@
     Depends only on the system startup task at start time.
 
 %TYPE
-    #general_purpose, contact, sequential
-    general_purpose, contact
+    free_task, contact
 
 %CONTACT_DELAY_HOURS
     1.0

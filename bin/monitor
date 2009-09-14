@@ -181,7 +181,7 @@ while True:
                 # get catchup status for any contact tasks
                 # (this is a class variable for each task type,
                 # not stored for each individual task object).
-                catchup_info[ name ] = states[ task_id ][ 'catching_up' ]
+                catchup_info[ task_id ] = states[ task_id ][ 'catching_up' ]
 
             # color displayed info according to run status
             if state == "running":
@@ -213,11 +213,11 @@ while True:
         # CATCHUP INFO for any contact tasks
         catching_up = []
         caught_up = []
-        for name in catchup_info.keys():
-            if catchup_info[ name ]:
-                catching_up.append(name)
+        for id in catchup_info.keys():
+            if catchup_info[ id ]:
+                catching_up.append(id)
             else:
-                caught_up.append(name)
+                caught_up.append(id)
 
         blit.append( 'catching up: ' + ', '.join( catching_up) )
         blit.append( 'caught up:   ' + ', '.join( caught_up) )

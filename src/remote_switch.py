@@ -2,7 +2,7 @@
 
 import Pyro.core
 import logging
-import task
+import task_base
 import task_classes
 import sys
 

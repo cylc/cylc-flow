@@ -142,7 +142,7 @@ class manager:
             # strip trailing newlines
             line = line.rstrip( '\n' )
 
-            [ ref_time, name, state ] = line.split(':')
+            [ ref_time, name, state ] = line.split(' : ')
 
             # instantiate the task object
             itask = self.get_task_instance( 'task_classes', name )( ref_time, state )
@@ -218,6 +218,7 @@ class manager:
         for itask in self.tasks:
                 if self.system_hold_reftime:
                     if int( itask.ref_time ) >= int( self.system_hold_reftime ):
+                        self.system_hold_now = True
                         self.log.debug( 'not asking ' + itask.get_identity() + ' to run (' + self.system_hold_reftime + ' hold in place)' )
                         continue
 
@@ -243,7 +244,7 @@ class manager:
                 itask.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_ref_time(), 'False', "waiting" )
+                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_ref_time() )
                 if self.stop_time and int( new_task.ref_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
@@ -455,11 +456,9 @@ class manager:
 
         for task_id in ids:
             [ name, ref_time ] = task_id.split( '%' )
-            abdicated = False
-            state_list = [ 'waiting' ]
 
             # instantiate the task object
-            itask = self.get_task_instance( 'task_classes', name )( ref_time, abdicated, *state_list )
+            itask = self.get_task_instance( 'task_classes', name )( ref_time )
 
             if itask.instance_count == 1:
                 # first task of its type, so create the log
@@ -606,7 +605,7 @@ class manager:
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in regenerate_tasks()?
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_ref_time(), 'False', "waiting" )
+                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_ref_time() )
                 if self.stop_time and int( new_task.ref_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', 'STOPPING at configured stop time' )

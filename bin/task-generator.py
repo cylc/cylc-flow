@@ -93,8 +93,8 @@ def main( argv ):
             'TYPE', 'CONTACT_DELAY_HOURS', 'DESCRIPTION',
             'ONEOFF_FOLLOW_ON', 'RESTART_LIST_MINUTES' ]
 
-    allowed_types = ['forecast_model', 'general_purpose' ]
-    allowed_attributes = ['dummy', 'contact', 'sequential', 'oneoff' ]
+    allowed_types = ['forecast_model', 'free_task' ]
+    allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -104,18 +104,18 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from task_forecast import forecast_model
-from task_general import general_purpose
-from task_attributes import contact, oneoff, sequential, dummy 
-
-import user_config            
-import execution
-
-import reference_time
-from prerequisites import prerequisites
+from catchup_aware import catchup_aware_free_task
+from task_types import forecast_model, free_task
+from task_modifiers import oneoff, sequential, dummy, contact
 from prerequisites_fuzzy import fuzzy_prerequisites
+from prerequisites import prerequisites
 from outputs import outputs
 from time import sleep
+
+import reference_time
+import task_launcher
+import user_config            
+import task_state
 
 import os, sys, re
 from copy import deepcopy
@@ -196,11 +196,13 @@ import logging
         else:
 
             delay = 0
+            catchup_aware = False
+            sequential = False
             fcmodel = False
             contact = False
             oneoff = False
             dummy = False
-            sequential = False
+            freet = False
 
             tmp = parsed_def[ 'TYPE' ][0]
             typelist = tmp.split(',')
@@ -213,38 +215,41 @@ import logging
 
             if task_type == 'forecast_model':
                 fcmodel = True
+            elif task_type == 'free_task':
+                freet = True
 
-            attributes = typelist[1:]
-            if len(attributes) > 0:
-                got_attributes = True
+            modifiers = typelist[1:]
+            if len(modifiers) > 0:
+                got_modifiers = True
 
                 # strip white space
-                attributes = [ x.strip() for x in attributes ]
+                modifiers = [ x.strip() for x in modifiers ]
 
-                for attribute in attributes:
-                    if attribute not in allowed_attributes:
-                        print 'ERROR, unknown task attribute:', attribute
-                        print allowed_attributes
-                        isys.exit(1)
+                for modifier in modifiers:
+                    if modifier not in allowed_modifiers:
+                        print 'ERROR, unknown task modifier:', modifier
+                        print allowed_modifiers
+                        sys.exit(1)
 
-                    if attribute == 'contact':
-                        contact = True
-                    elif attribute == 'dummy':
+                    if modifier == 'dummy':
                         dummy = True
-                    elif attribute == 'sequential':
+                    elif modifier == 'sequential':
                         sequential = True
-                    elif attribute == 'oneoff':
+                    elif modifier == 'oneoff':
                         oneoff = True
+                    elif modifier == 'contact':
+                        contact = True
 
-                # this assumes the order of attributes does not matter.
-                derived_from = ','.join( attributes ) + ', ' + derived_from
+                # this assumes the order of modifiers does not matter.
+                derived_from = ','.join( modifiers ) + ', ' + derived_from
 
         if 'EXTERNAL_TASK' in parsed_def.keys():
             external_task = parsed_def[ 'EXTERNAL_TASK' ][0]
             if dummy:
-                print "WARNING: this task has the 'dummy' attribute; it will never use", external_task
+                print "WARNING: this task has the 'dummy' modifier; it will never use", external_task
         else:
             # no external task: dummy tasks only
+            external_task = 'NO-EXTERNAL-TASK'
             if not dummy:
                 print 'ERROR: no external task specified'
                 sys.exit(1)
@@ -258,16 +263,16 @@ import logging
             else:
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
-        task_init_def_args = 'ref_time, abdicated, initial_state'
-        task_init_args = 'abdicated, initial_state'
+        task_init_def_args = 'ref_time, initial_state = None'
+        task_init_args = 'initial_state'
 
         if contact:
             if 'CONTACT_DELAY_HOURS' not in parsed_def.keys():
                 print "Error: contact classes must define %CONTACT_DELAY_HOURS"
                 sys.exit(1)
 
-            task_init_def_args += ", relative_state = 'catching_up'"
-            contact_init_args = 'relative_state'
+            #task_init_def_args += ", relative_state = 'catching_up'"
+            #contact_init_args = 'relative_state'
 
         if fcmodel:
             if 'RESTART_LIST_MINUTES' not in parsed_def.keys():
@@ -303,9 +308,6 @@ import logging
 
         FILE.write( indent + 'instance_count = 0\n\n' )
 
-        if contact:
-            FILE.write( indent + 'catchup_mode = False\n\n' )
-
         # task description
         if 'DESCRIPTION' in parsed_def.keys():
             FILE.write( indent + 'description = [\n' )
@@ -328,8 +330,7 @@ import logging
         FILE.write( indent + 'owner = \'' + owner + '\'\n' )
 
         # external task
-        if not dummy:
-            FILE.write( indent + 'external_task = \'' + external_task + '\'\n\n' )
+        FILE.write( indent + 'external_task = \'' + external_task + '\'\n\n' )
 
         # valid hours
         FILE.write( indent + 'valid_hours = [' + parsed_def[ 'VALID_HOURS' ][0] + ']\n\n' )
@@ -491,11 +492,9 @@ import logging
 
         # call parent init methods
         FILE.write( '\n' )
-        if contact:
-            FILE.write( indent + 'contact.__init__( self, ' + contact_init_args + ' )\n\n' )
 
-        if dummy:
-            FILE.write( indent + 'dummy.__init__( self )\n\n' )
+        if catchup_aware:
+            FILE.write( indent + 'catchup_aware_free_task.__init__( self )\n\n' )
 
         FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
 

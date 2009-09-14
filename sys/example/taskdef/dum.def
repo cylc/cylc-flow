@@ -9,7 +9,7 @@
     Depends on task C finishing.
 
 %TYPE
-    general_purpose, dummy
+    free_task, dummy
 
 %VALID_HOURS
     0,6,12,18

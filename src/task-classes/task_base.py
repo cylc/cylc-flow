@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+# TASK BASE CLASS:
+
 import sys
 import task_state
 import logging
@@ -46,7 +48,6 @@ state_changed = True
 # The abdication mechanism ASSUMES that the task manager creates the
 # successor task as soon as the current task abdicates.
 
-############ TASK BASE CLASS
 class task_base( Pyro.core.ObjBase ):
     
     # Default task deletion: quick_death = True
@@ -86,14 +87,6 @@ class task_base( Pyro.core.ObjBase ):
         # top level derived classes must define:
         #   <class>.instance_count = 0
 
-        # task types that need to DUMP and LOAD MORE STATE INFORMATION
-        # should override __init__() but make the new state variables
-        # default to None so that they aren't required for normal
-        # startup: __init__( self, initial_state, foo = None )
-        # On reload from state dump the task manager will call the 
-        # task __init__() with a flattened list of whatever state values 
-        # it finds in the state dump file.
-
         self.__class__.instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
@@ -105,11 +98,20 @@ class task_base( Pyro.core.ObjBase ):
 
         self.latest_message = ""
 
-        # check initial state 
         if self.state.is_finished():  
+            # finished tasks must have satisfied prerequisites
+            # and completed outputs
             self.log( 'WARNING', " starting in FINISHED state" )
             self.outputs.set_all_satisfied()
             self.prerequisites.set_all_satisfied()
+
+        #elif self.state.is_satisfied():
+        #    # a waiting state can be satisfied (i.e. ready to go)
+        #    # particular if the system has been paused before 
+        #    # shutdown (which happens in normal shutdown).
+        #    self.log( 'WARNING', " starting in SATISFIED state" )
+        #    self.prerequisites.set_all_satisfied()
+
 
     def get_identity( self ):
         # unique task id
@@ -220,9 +222,15 @@ class task_base( Pyro.core.ObjBase ):
 
         return reference_time.decrement( rt, decrement )
 
-    def run_if_ready( self, launcher, clock ):
-        # run if I am 'waiting' AND my prequisites are satisfied
+    def ready_to_run( self, clock ):
+        # ready if 'waiting' AND all prequisites satisfied
+        ready = False
         if self.state.is_waiting() and self.prerequisites.all_satisfied(): 
+            ready = True
+        return ready
+
+    def run_if_ready( self, launcher, clock ):
+        if self.ready_to_run( clock ):
             self.run_external_task( launcher )
 
     def run_external_task( self, launcher ):
@@ -279,7 +287,7 @@ class task_base( Pyro.core.ObjBase ):
 
                 if message == self.get_identity() + ' finished':
                     # TASK HAS FINISHED
-                    self.set_finished()
+                    self.state.set_status( 'finished' )
                     if not self.outputs.all_satisfied():
                         self.log( 'WARNING', 'finished before all outputs completed' )
 
@@ -312,6 +320,7 @@ class task_base( Pyro.core.ObjBase ):
         # Used by dummy contact tasks in dummy mode.
         # Default, here, is to return None, which implies not a contact task
         # returning 0 => contact task starts running at reference time
+        # (TO DO: THERE MIGHT BE A BETTER WAY TO DO THIS...)
         return None
 
     def dump_state( self, FILE ):
@@ -322,8 +331,8 @@ class task_base( Pyro.core.ObjBase ):
 
         # This must be compatible with __init__() on reload
 
-        FILE.write( self.ref_time     + ' ' + 
-                    self.name         + ' ' + 
+        FILE.write( self.ref_time     + ' : ' + 
+                    self.name         + ' : ' + 
                     self.state.dump() + '\n' )
 
 
@@ -338,14 +347,11 @@ class task_base( Pyro.core.ObjBase ):
             return False
 
     def has_abdicated( self ):
-        # this exists in task class because the derived oneoff class 
-        # needs to override it.
+        # this exists because the oneoff modifier needs to override it.
         return self.state.has_abdicated()
 
     def ready_to_abdicate( self ):
-        # DERIVED CLASSES MUST OVERRIDE THIS METHOD
-        print 'ERROR, illegal task base method called!'
-        self.log( 'CRITICAL', 'illegal task base method called!' )
+        self.log( 'CRITICAL', 'derived classes must override ready_to_abdicate()')
         sys.exit(1)
 
     def done( self ):

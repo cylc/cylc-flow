@@ -1,18 +1,20 @@
 #!/usr/bin/python
 
-#import reference_time
 import sys
 
 """
-Store, and provide methods to interact with, the internal task state
-information that needs to be dumped and reloaded from state dump file.
+Store task state information, and provide methods to dump and reload
+this information from the cyclon state dump file. Use of a dict data
+structure allows derived task classes to set arbitrary new state
+variables that will automatically be written to and read from the state
+dump file.
 """
 
 class task_state:
 
     allowed_status = [ 'waiting', 'running', 'finished', 'failed' ]
     # INTERNALLY TO THIS CLASS, ABDICATION STATUS IS A STRING
-    allowed_abdicated = [ 'true', 'false' ]
+    allowed_bool = [ 'true', 'false' ]
 
     def __init__( self, initial_state = None ):
 
@@ -22,7 +24,7 @@ class task_state:
             # defaults
             self.state[ 'status' ] = 'waiting'
             self.state[ 'abdicated' ] = 'false'
-            #self.state[ 'reference_time' ] = '9999010100'
+            #self.state[ 'satisfied' ] = 'false'
 
         else:
             self.state = self.parse( initial_state )
@@ -32,6 +34,11 @@ class task_state:
                 # Running or failed tasks need to re-run at startup.
                 self.set_status( 'waiting' )
 
+    def has_key( self, key ):
+        if key in self.state.keys():
+            return True
+        else:
+            return False
 
     def set_status( self, value ):
         if value in task_state.allowed_status:
@@ -46,11 +53,20 @@ class task_state:
     def set_abdicated( self ):
         self.state[ 'abdicated' ] = 'true'
 
+    #def set_satisfied( self ):
+    #    self.state[ 'satisfied' ] = 'true'
+
     def has_abdicated( self ):
         if self.state[ 'abdicated' ] == 'true':
             return True
         else:
             return False
+
+    #def is_satisfied( self ):
+    #    if self.state[ 'satisfied' ] == 'true':
+    #        return True
+    #    else:
+    #        return False
 
     def is_finished( self ):
         if self.state[ 'status' ] == 'finished':
@@ -98,7 +114,7 @@ class task_state:
             print 'ERROR, abdication status not defined'
             sys.exit(1)
 
-        if self.state[ 'abdicated' ] not in task_state.allowed_abdicated:
+        if self.state[ 'abdicated' ] not in task_state.allowed_bool:
             print 'ERROR, illegal abdication status:', self.state[ 'abdicated' ]
             sys.exit(1)
 
