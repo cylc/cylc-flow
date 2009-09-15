@@ -97,11 +97,14 @@ while True:
             print "\n\033[1;37;41mfailed to connect" + ctrl_end + ' to state summary object for "' + system_name + '"'
             alerted = True
         sleep(1)
+        #raise
         continue
 
     alerted = False
-    god._setTimeout(10)
+    god._setTimeout(1)
+    #god._setTimeout(30)
 
+    alerted2 = False
     while True:
         # continual redisplay loop
 
@@ -109,8 +112,11 @@ while True:
         try:
             [glbl, states] = god.get_state_summary()
         except ConnectionClosedError:
-            print "\n\033[1;37;41mconnection closed" + ctrl_end + ' to state summary object for "' + system_name + '"'
+            if not alerted2:
+                print "\n\033[1;37;41mconnection closed" + ctrl_end + ' to state summary object for "' + system_name + '"'
+                alerted2 = True
             sleep(1)
+            #raise
             break
 
         dt = glbl[ 'last_updated' ]
