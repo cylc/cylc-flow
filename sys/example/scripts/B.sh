@@ -20,11 +20,13 @@ done
 
 sleep $SLEEP   # 20 min
 touch $TMPDIR/${TASK_NAME}_${NEXT_REFERENCE_TIME}.restart
-task-message $TASK_NAME restart files ready for $NEXT_REFERENCE_TIME
+#task-message $TASK_NAME restart files ready for $NEXT_REFERENCE_TIME
 
 sleep $SLEEP   # 40 min
 touch $TMPDIR/${TASK_NAME}_${NEXT_NEXT_REFERENCE_TIME}.restart
-task-message $TASK_NAME restart files ready for $NEXT_NEXT_REFERENCE_TIME
+#task-message $TASK_NAME restart files ready for $NEXT_NEXT_REFERENCE_TIME
+
+task-message --all-restart-outputs-completed
 
 sleep $SLEEP   # 60 min
 OUTPUT=$TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output

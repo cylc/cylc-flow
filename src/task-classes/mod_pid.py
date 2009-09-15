@@ -22,6 +22,15 @@ class pid:
             self.outputs.add( t, msg + next_rt )
             rt = next_rt
 
+    def set_all_restarts_completed( self ):
+        # convenience for external tasks that don't report restart
+        # outputs one at a time.
+        self.log( 'WARNING', 'setting ALL restart outputs completed' )
+        for message in self.outputs.satisfied.keys():
+            if re.search( 'restart files ready for', message ):
+                self.outputs.set_satisfied( message )
+
+
     def ready_to_abdicate( self ):
         # Never abdicate a waiting task of this type because the
         # successor's restart prerequisites could get satisfied by the
