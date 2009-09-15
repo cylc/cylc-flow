@@ -501,7 +501,7 @@ class manager:
 
         if found:
             itask.log( 'WARNING', "resetting to waiting state" )
-            itask.state = 'waiting'
+            itask.state.set_status( 'waiting' )
             itask.prerequisites.set_all_unsatisfied()
             itask.outputs.set_all_incomplete()
         else:
@@ -651,7 +651,7 @@ class manager:
         # upstream dependency has failed).
         task_ids = {}
         for itask in self.tasks:
-            if itask.ref_time == reftime and itask.state == 'waiting':
+            if itask.ref_time == reftime and itask.get_status() == 'waiting':
                 task_ids[ itask.get_identity() ] = True
 
         self.abdicate_and_kill( task_ids )
