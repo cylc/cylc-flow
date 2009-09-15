@@ -118,12 +118,13 @@ class manager:
             filename = configured_file
 
         # The state dump file format is:
-        # LINE1: time <time>
-        # LINE2: <ref_time>:<taskname>:<state>
-        # LINE3: <ref_time>:<taskname>:<state>
+        # system time <time>
+        # class <classname>: item1=value1, item2=value2, ... 
+        # <ref_time> : <taskname> : <state>
+        # <ref_time> : <taskname> : <state>
         #    (and so on)
         # The time format is defined by the clock.reset()
-        # The task state format is defined by task_state.dump()
+        # task <state> format is defined by task_state.dump()
 
         self.log.info( 'Loading previous state from ' + filename )
 
@@ -132,16 +133,31 @@ class manager:
         FILE.close()
 
         # reset time first (only has an effect in dummy mode)
-        [ junk, time ] = lines[0].split( ' ' )
+        [ junk, time ] = lines[0].split( ' : ' )
         self.clock.reset( time )
 
         log_created = {}
+
+        mod = __import__( 'task_classes' )
 
         # parse each line and create the task it represents
         for line in lines[1:]:
             # strip trailing newlines
             line = line.rstrip( '\n' )
 
+            if re.match( '^class', line ):
+                # class variables
+                [ left, right ] = line.split( ' : ' )
+                [ junk, classname ] = left.split( ' ' ) 
+                cls = getattr( mod, classname )
+                pairs = right.split( ', ' )
+                for pair in pairs:
+                    [ item, value ] = pair.split( '=' )
+                    cls.set_class_var( item, value )
+                 
+                continue
+
+            # instance variables
             [ ref_time, name, state ] = line.split(' : ')
 
             # instantiate the task object
@@ -261,8 +277,18 @@ class manager:
         filename = self.config.get('state_dump_file')
         if new_file:
             filename += '.' + self.clock.dump_to_str()
+
+        # system time
         FILE = open( filename, 'w' )
-        FILE.write( 'time ' + self.clock.dump_to_str() + '\n' )
+        FILE.write( 'system time : ' + self.clock.dump_to_str() + '\n' )
+
+        # task class variables
+        for name in self.config.get('task_list'):
+            mod = __import__( 'task_classes' )
+            cls = getattr( mod, name )
+            cls.dump_class_vars( FILE )
+            
+        # task instance variables
         for itask in self.tasks:
             itask.dump_state( FILE )
         FILE.close()

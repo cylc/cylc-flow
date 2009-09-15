@@ -143,7 +143,6 @@ while True:
         n_task_types = len( name_list )
         name_list.sort()
         ref_time_list.sort()
-        catchup_info = {}
 
         # initialize a dict-of-dicts to store display information
         # for all tasks at each current reference time
@@ -177,12 +176,6 @@ while True:
                 # space of same length
                 abd = ' '
 
-            if 'catching_up' in states[ task_id ].keys():
-                # get catchup status for any contact tasks
-                # (this is a class variable for each task type,
-                # not stored for each individual task object).
-                catchup_info[ task_id ] = states[ task_id ][ 'catching_up' ]
-
             # color displayed info according to run status
             if state == "running":
                 ctrl_start = "\033[1;37;42m"
@@ -210,19 +203,6 @@ while True:
         if dummy_mode:
             blit.append( 'DUMMY MODE (' + str(rate) + ' sec = 1 hr)' )
           
-        # CATCHUP INFO for any contact tasks
-        catching_up = []
-        caught_up = []
-        for id in catchup_info.keys():
-            if catchup_info[ id ]:
-                catching_up.append(id)
-            else:
-                caught_up.append(id)
-
-        blit.append( 'catching up: ' + ', '.join( catching_up) )
-        blit.append( 'caught up:   ' + ', '.join( caught_up) )
-        blit.append('')
-
         # construct a line of text to display for each reference time
         for rt in ref_time_list:
             line = ''

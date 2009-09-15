@@ -94,7 +94,7 @@ def main( argv ):
             'ONEOFF_FOLLOW_ON', 'RESTART_LIST_MINUTES' ]
 
     allowed_types = ['forecast_model', 'free_task' ]
-    allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact' ]
+    allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
 
     # open the output file
     FILE = open( task_class_file, 'w' )
@@ -104,9 +104,12 @@ def main( argv ):
     # preamble
     FILE.write( 
 '''
-from catchup_aware import catchup_aware_free_task
 from task_types import forecast_model, free_task
-from task_modifiers import oneoff, sequential, dummy, contact
+from mod_oneoff import oneoff
+from mod_sequential import sequential
+from mod_dummy import dummy
+from mod_contact import contact
+from mod_catchup_contact import catchup_contact
 from prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites import prerequisites
 from outputs import outputs
@@ -196,7 +199,7 @@ import logging
         else:
 
             delay = 0
-            catchup_aware = False
+            catchup_contact = False
             sequential = False
             fcmodel = False
             contact = False
@@ -239,6 +242,9 @@ import logging
                         oneoff = True
                     elif modifier == 'contact':
                         contact = True
+                    elif modifier == 'catchup_contact':
+                        contact = True
+                        catchup_contact = True
 
                 # this assumes the order of modifiers does not matter.
                 derived_from = ','.join( modifiers ) + ', ' + derived_from
@@ -270,9 +276,6 @@ import logging
             if 'CONTACT_DELAY_HOURS' not in parsed_def.keys():
                 print "Error: contact classes must define %CONTACT_DELAY_HOURS"
                 sys.exit(1)
-
-            #task_init_def_args += ", relative_state = 'catching_up'"
-            #contact_init_args = 'relative_state'
 
         if fcmodel:
             if 'RESTART_LIST_MINUTES' not in parsed_def.keys():
@@ -481,8 +484,9 @@ import logging
                 val = interpolate_variables( "'" + val + "'" )
                 strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
 
-            strng = re.sub( ',\s*$', '', strng )
-        strng = strng + ' ]\n\n' 
+            #strng = re.sub( ',\s*$', '', strng )
+        #strng = strng + '\n' + indent + ']\n\n' 
+        strng += indent + ']\n\n' 
         FILE.write( strng )
 
         # forecast model restarts
@@ -493,8 +497,8 @@ import logging
         # call parent init methods
         FILE.write( '\n' )
 
-        if catchup_aware:
-            FILE.write( indent + 'catchup_aware_free_task.__init__( self )\n\n' )
+        if catchup_contact:
+            FILE.write( indent + 'catchup_contact.__init__( self )\n\n' )
 
         FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
 

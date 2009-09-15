@@ -34,6 +34,13 @@ To Do
   set identical fuzzy bounds to simulate the non-fuzzy case; see
   topnet.py).
 
+* FUZZY MATCHING CURRENTLY ASSUMES AT MOST ONE COMPATIBLE OLDER FINISHED
+  VERSION OF THE UPSTREAM TASK IS PRESENT, otherwise the match occurs
+  with the first one found, whichever it is. This can fail if a system
+  problem puts a hold on spent task deletion! E.g.: topnet and oper
+  interface go on ahead when topnet_vis has failed (unlikely to happen
+  though!)
+
 * a task should be allowed to declare multiple outputs at the same time
   (currently this is detected as an error condition)
 

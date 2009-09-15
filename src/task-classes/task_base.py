@@ -73,6 +73,45 @@ class task_base( Pyro.core.ObjBase ):
         #    print line
 
 
+    @classmethod
+    def set_class_var( cls, item, value ):
+        # set the value of a class variable 
+        # that will be written to the state dump file
+        try:
+            cls.class_vars[ item ] = value
+        except AttributeError:
+            cls.class_vars = {}
+            cls.class_vars[ item ] = value
+
+
+    @classmethod
+    def get_class_var( cls, item ):
+        # get the value of a class variable that is
+        # written to the state dump file
+        try:
+            return cls.class_vars[ item ]
+        except AttributeError:
+            # no class vars defined
+            return None
+        except KeyError:
+            # this var not defined
+            return None
+
+
+    @classmethod
+    def dump_class_vars( cls, FILE ):
+        # dump special class variables to the state dump file
+        try:
+            result = ''
+            for key in cls.class_vars:
+                result += key + '=' + str( cls.class_vars[ key ] ) + ', '
+            result = result.rstrip( ', ' )
+            FILE.write( 'class ' + cls.__name__ + ' : ' + result + '\n')
+        except AttributeError:
+            # class has no class_vars defined
+            pass
+
+
     def __init__( self, state = None ):
         # Call this AFTER derived class initialisation
 
@@ -81,6 +120,7 @@ class task_base( Pyro.core.ObjBase ):
         #  * prerequisites and outputs
         #  * self.env_vars 
 
+        class_vars = {}
         self.state = task_state.task_state( state )
 
         # count instances of each top level object derived from task
