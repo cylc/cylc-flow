@@ -2,7 +2,7 @@
 
 import Pyro.core
 import logging
-import task_base
+from task_base import task_base
 import task_classes
 import sys
 
@@ -53,7 +53,7 @@ class remote_switch( Pyro.core.ObjBase ):
         # pretend a task has changed state in order to invoke the event
         # handling loop
         self.log.warning( "REMOTE: nudge" )
-        task.state_changed = True
+        task_base.state_changed = True
 
     def reset_to_waiting( self, task_id ):
         # reset a failed task to the waiting state
@@ -91,7 +91,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.system_resume_requested = True 
         self.system_hold_requested = False 
         # ensure we resume task processing immediately
-        task.state_changed = True
+        task_base.state_changed = True
 
     def get_resume( self ):
         if self.system_resume_requested:
@@ -151,14 +151,14 @@ class remote_switch( Pyro.core.ObjBase ):
         self.do_purge = True
         self.purge_id = task_id
         self.purge_stop = stop
-        task.state_changed = True
+        task_base.state_changed = True
 
     def abdicate_and_kill_rt( self, reftime ):
         self.log.warning( "REMOTE: abdicate and kill request" )
         self.log.warning( '-> all tasks currently in ' + reftime )
         self.kill_rt = True
         self.kill_reftime = reftime
-        task.state_changed = True
+        task_base.state_changed = True
 
     def abdicate_and_kill( self, task_ids ):
         self.log.warning( "REMOTE: abdicate and kill request" )
@@ -166,7 +166,7 @@ class remote_switch( Pyro.core.ObjBase ):
             self.kill_task_ids[ task_id ] = True
             self.log.warning( '-> ' + task_id )
         self.kill_ids = True
-        task.state_changed = True
+        task_base.state_changed = True
 
     def set_verbosity( self, level ):
         # change the verbosity of all the logs:
