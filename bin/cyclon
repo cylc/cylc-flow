@@ -64,11 +64,6 @@ def service_remote_requests( remote, task_manager, log ):
         task_manager.unset_system_hold()
         process_tasks = True
 
-    if remote.requisite_dump:
-        task_manager.dump_task_requisites( remote.dump_task_ids )
-        remote.requisite_dump = False
-        remote.dump_task_ids = {}
-
     if remote.set_stop:
         task_manager.set_stop_time( remote.stop_time )
         remote.set_stop = False
@@ -212,10 +207,6 @@ def main( argv ):
     log = logging.getLogger( 'main' )
     pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
 
-    # remote control switch
-    remote = remote_switch.remote_switch( system_config, system_config.get('task_list') )
-    pyro.connect( remote, 'remote' )
-
     # remotely accessible system state summary
     system_state = state_summary.state_summary( system_config, dummy_mode )
     pyro.connect( system_state, 'state_summary' )
@@ -226,6 +217,10 @@ def main( argv ):
 
     # initialize the task manager from general config file or state dump
     task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, restart_statedump )
+
+    # remote control switch
+    remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )
+    pyro.connect( remote, 'remote' )
 
     print "\nBeginning task processing now\n"
 

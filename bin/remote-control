@@ -205,7 +205,28 @@ if options.dump_task_id:
         id = name + '%' + reftime
         ids.append( id )
 
-    control.dump_task_requisites( ids )
+    result = control.dump_task_requisites( ids )
+    for id in result.keys():
+        [ pre, out ] = result[ id ]
+        print
+        print id + ' prerequisites:'
+        for item in pre:
+            [ msg, state ] = item
+            if state:
+                descr = 'satisfied:     '
+            else:
+                descr = 'not satisfied: '
+            print descr + msg
+        print
+        print id + ' outputs:'
+        for item in out:
+            [ msg, state ] = item
+            if state:
+                descr = 'completed:     '
+            else:
+                descr = 'not completed: '
+            print descr + msg
+
 
 if options.purge:
     if prompt( 'Purge ' + options.purge + ' in' ):

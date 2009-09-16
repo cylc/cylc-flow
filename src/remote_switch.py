@@ -9,7 +9,7 @@ class remote_switch( Pyro.core.ObjBase ):
     "class to take remote system control requests" 
     # the task manager can take action on these when convenient.
 
-    def __init__( self, config, tasknames ):
+    def __init__( self, config, tasknames, tasks ):
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
         self.config = config
@@ -24,6 +24,9 @@ class remote_switch( Pyro.core.ObjBase ):
 
         self.set_nudge = False
 
+        # reference to the system task list!
+        self.tasks = tasks
+
         # record remote system halt requests
         self.system_halt_requested = False
 
@@ -36,10 +39,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.kill_task_ids = {}
         self.kill_rt = False
         self.kill_reftime = None
-
-        # tasks to dump requisites
-        self.requisite_dump = False
-        self.dump_task_ids = {}
 
         # task to reset from failed to waiting
         self.reset_a_task = False
@@ -141,10 +140,20 @@ class remote_switch( Pyro.core.ObjBase ):
     def dump_task_requisites( self, task_ids ):
         self.log.warning( "REMOTE: requisite dump request for:")
         for task_id in task_ids:
-            self.dump_task_ids[ task_id ] = True
             self.log.warning( '-> ' + task_id )
-        self.requisite_dump = True
 
+        dump = {}
+        found = False
+        for task in self.tasks:
+            id = task.get_identity()
+            if id in task_ids:
+                found = True
+                dump[ id ] = [ task.prerequisites.dump(), task.outputs.dump() ]
+
+        if not found:
+            self.log.warning( 'No tasks found for the requisite dump request' )
+ 
+        return dump
     
     def purge( self, task_id, stop ):
         self.log.warning( "REMOTE: purge request" )

@@ -34,6 +34,9 @@ class manager:
         else:
             self.load_from_config()
 
+    def get_tasks( self ):
+        return self.tasks
+
     def set_stop_time( self, stop_time ):
         self.log.debug( "Setting new stop time: " + stop_time )
         self.stop_time = stop_time
@@ -557,31 +560,6 @@ class manager:
                 self.pyro.connect( itask, itask.get_identity() )
                 self.tasks.append( itask )
 
-
-    def dump_task_requisites( self, task_ids ):
-        for id in task_ids.keys():
-            # find the task
-            found = False
-            itask = None
-            for t in self.tasks:
-                if t.get_identity() == id:
-                    found = True
-                    itask = t
-                    break
-
-            if not found:
-                self.log.warning( 'task not found for remote requisite dump request: ' + id )
-                return
-
-            itask.log( 'DEBUG', 'dumping requisites to stdout, by remote request' )
-
-            print
-            print 'PREREQUISITE DUMP', itask.get_identity() 
-            itask.prerequisites.dump()
-            print
-            print 'OUTPUT DUMP', itask.get_identity() 
-            itask.outputs.dump()
-            print
 
     def find_cotemporal_dependees( self, parent ):
         # recursively find the group of all cotemporal tasks that depend

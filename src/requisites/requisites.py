@@ -27,9 +27,11 @@ class requisites:
         return n
 
     def dump( self ):
-        # print out each message and its state; use for debugging
+        # return a string representing each message and its state
+        res = []
         for key in self.satisfied.keys():
-            print ' + ' + key + " ... ", self.satisfied[ key ]
+            res.append( [ key, self.satisfied[ key ] ]  )
+        return res
 
     def all_satisfied( self ):
         if False in self.satisfied.values(): 
