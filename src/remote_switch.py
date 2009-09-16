@@ -137,10 +137,8 @@ class remote_switch( Pyro.core.ObjBase ):
 
         return info
 
-    def dump_task_requisites( self, task_ids ):
-        self.log.warning( "REMOTE: requisite dump request for:")
-        for task_id in task_ids:
-            self.log.warning( '-> ' + task_id )
+    def get_task_requisites( self, task_ids ):
+        self.log.warning( "REMOTE: requisite request")
 
         dump = {}
         found = False

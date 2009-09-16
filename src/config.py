@@ -60,11 +60,16 @@ class config:
         #self.configured['logging_level'] = logging.DEBUG
 
 
-    def load( self ):
+    def load( self, dump = False ):
         self.user_override()
         self.check()
-        self.dump()
-       
+        if dump:
+            self.dump()
+        else:
+            print
+            print "SYSTEM: " + self.configured['system_name']
+
+
 
     def user_override( self ):
         # override config items with those in the user_config module

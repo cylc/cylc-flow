@@ -142,7 +142,7 @@ try:
     # connect to the remote switch object in cyclon
     control = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'remote' )
 except NamingError:
-    print "\n\033[1;37;41mfailed to connect" + ctrl_end + ' to remote switch in "' + system_name + '"'
+    print "\n\033[1;37;41mfailed to connect" + ctrl_end 
     raise SystemExit
 
 if options.reset_id:
@@ -170,12 +170,10 @@ if options.shutdown:
         control.shutdown()
 
 if options.verbosity:
-    print "Requesting verbosity " + options.verbosity
     control.set_verbosity( options.verbosity )
 
 if options.insert_task_id:
     if prompt( 'Insert ' + options.insert_task_id + ' in' ):
-        print "Requesting insertion of " + options.insert_task_id
         control.insert( options.insert_task_id )
 
 if options.describe_names:
@@ -185,7 +183,6 @@ if options.describe_names:
     else:
         names = [ options.describe_names ]
 
-    print "Getting descriptive information for " + options.describe_names
     info = control.get_task_info( names )
     for name in info.keys():
         print
@@ -204,14 +201,17 @@ if options.dump_task_id:
     else:
         names = [ tmp ]
 
-    print "Requesting (pre)requisite dump for " + options.dump_task_id
-
     ids = []
     for name in names:
         id = name + '%' + reftime
         ids.append( id )
 
-    result = control.dump_task_requisites( ids )
+    result = control.get_task_requisites( ids )
+
+    for id in ids:
+        if id not in result.keys():
+            print id + ': task not found'
+
     for id in result.keys():
         [ pre, out ] = result[ id ]
         print_heading( id + ' prerequisites:')
@@ -236,17 +236,15 @@ if options.purge:
     if prompt( 'Purge ' + options.purge + ' in' ):
 
         [ task_id, stop_purge_time ] = options.purge.split( ',' )
-        print "Requesting purge for " + options.purge
         control.purge( task_id, stop_purge_time )
 
 if options.kill_task_id:
-    if prompt( 'Kill all waiting tasks at ' + options.kill_task_id + ' in' ):
+    if prompt( 'abdicate and kill ' + options.kill_task_id + ' in' ):
 
         if not re.search( '%', options.kill_task_id ):
             # kill all tasks in given reference time
             # TO DO: check validity of given ref time
             reftime = options.kill_task_id
-            print "Requesting abdicate and kill all WAITING tasks at " + reftime
             control.abdicate_and_kill_rt( reftime )
 
         else:
@@ -256,8 +254,6 @@ if options.kill_task_id:
                 names = tmp.split( ',' )
             else:
                 names = [ tmp ]
-
-            print "Requesting abdicate and kill for " + options.kill_task_id
 
             ids = []
             for name in names:
