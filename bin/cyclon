@@ -139,6 +139,10 @@ def main( argv ):
     parser.add_option( "-f", "--fail", help="fail out a task in dummy mode",
         metavar="<name>%<YYYYMMDDHH>", action="store", dest="failout_task_id" )
 
+    parser.add_option( "--task-proc-reason", 
+            help="explain why the task processing loop was invoked in each case",
+            action="store_true", default=False, dest="task_proc_reason" )
+
     # get command line options and positional args
     ( options, args ) = parser.parse_args()
 
@@ -241,11 +245,9 @@ def main( argv ):
         # PROCESS ALL TASKS whenever something has changed that might
         # require renegotiation of dependencies, etc.
         #--
-        if task_base.state_changed or \
-                process_tasks_remote or \
-                process_tasks_contact:
+        if task_base.state_changed or process_tasks_remote or process_tasks_contact:
 
-            if system_config.get( 'logging_level' ) == logging.DEBUG:
+            if options.task_proc_reason:
                 # log reason for invoking task processing
                 count = count + 1
                 reasons = []
@@ -256,7 +258,7 @@ def main( argv ):
                 if process_tasks_contact:
                     reasons.append( 'waiting contact task ready' )
                 msg = ', '.join( reasons )
-                # log with warning level, which goes to stdout
+                # should really be log.debug() but warnings go to stdout...
                 log.warning( 'task processing, ' + str( count ) + ': ' + msg )
 
             task_manager.regenerate_tasks()
