@@ -94,7 +94,7 @@ while True:
         god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
     except NamingError:
         if not alerted:
-            print "\n\033[1;37;41mfailed to connect" + ctrl_end + ' to state summary object for "' + system_name + '"'
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end 
             alerted = True
         sleep(1)
         #raise
