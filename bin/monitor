@@ -16,7 +16,7 @@ import re
 import sys
 import Pyro.core
 import Pyro.naming
-from Pyro.errors import PyroError,NamingError,ConnectionClosedError
+from Pyro.errors import PyroError,NamingError,TimeoutError,ConnectionClosedError
 from time import sleep
 from optparse import OptionParser
 
@@ -105,15 +105,25 @@ while True:
     #god._setTimeout(30)
 
     alerted2 = False
+    alerted3 = False
     while True:
         # continual redisplay loop
 
         # get state summary, task names, reference times
         try:
             [glbl, states] = god.get_state_summary()
+
+        except TimeoutError:
+            if not alerted3:
+                print "\n\033[1;37;41mconnection timed out" + ctrl_end
+                alerted3 = True
+            sleep(1)
+            #raise
+            break
+
         except ConnectionClosedError:
             if not alerted2:
-                print "\n\033[1;37;41mconnection closed" + ctrl_end + ' to state summary object for "' + system_name + '"'
+                print "\n\033[1;37;41mconnection closed" + ctrl_end 
                 alerted2 = True
             sleep(1)
             #raise
