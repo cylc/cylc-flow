@@ -684,7 +684,7 @@ class manager:
 
             if not itask.state.has_abdicated():
                 # forcibly abdicate the task and create its successor
-                itask.set_abdicated()
+                itask.state.set_abdicated()
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in regenerate_tasks()?
                 # dynamic task object creation by task and module name
