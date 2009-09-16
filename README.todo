@@ -3,13 +3,6 @@ To Do
 * python script for easy viewing of configured log files without having
   to know their location.
 
-* task.quick_death should default to False? (as for the task 
-  def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
-
-* forecast tasks can no longer be 'quick death' because they depend on
-  previous instance. Cyclon should check for this. However, they could
-  die as soon as their successor is satisfied. 
-
 * the task-generator script should check that the user-defined task
   names do not clash with parent class or attribute names.
 
@@ -39,23 +32,20 @@ To Do
   interface go on ahead when topnet_vis has failed (unlikely to happen
   though!)
 
+* just before a task runs, try to re-satisfy fuzzy prerequisites in case
+  a more up-to-date satisfier has shown up while the task was waiting
+  for other prerequisites to be satisfied ... OR (better?!) don't try to
+  satisfy fuzzy prerequistes until after all non-fuzzy ones have been
+  satsified. 
+
 * a task should be allowed to declare multiple outputs at the same time
   (currently this is detected as an error condition)
 
 * detect when taskdef files are newer than task_classes file, and warn
   that use of configure-system may be required.
 
-* does 'caught up' detection work properly for prerequisiteless parallel
-  contact tasks?
-
 * all sys.exit(1) calls should be routed through a clean shutdown, so
   that Pyro nameserver group entries can be deleted automatically.
-
-* just before a task runs, try to re-satisfy fuzzy prerequisites in case
-  a more up-to-date satisfier has shown up while the task was waiting
-  for other prerequisites to be satisfied ... OR (better?!) don't try to
-  satisfy fuzzy prerequistes until after all non-fuzzy ones have been
-  satsified. 
 
 * use the custom clock everywhere (it knows about dummy mode).
 
@@ -63,3 +53,10 @@ To Do
 
 * user_config is imported in task_classes.py to get start_time. It may
   be better to pass this in at task initialisation?
+
+* task.quick_death should default to False? (as for the task 
+  def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
+
+* forecast tasks can no longer be 'quick death' because they depend on
+  previous instance. Cyclon should check for this. However, they could
+  die as soon as their successor is satisfied. 
