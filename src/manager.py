@@ -644,6 +644,13 @@ class manager:
         if int( next ) <= int( stop ):
             self.purge( name + '%' + next, stop )
 
+    def waiting_contact_task_ready( self, clock ):
+        result = False
+        for itask in self.tasks:
+            if itask.ready_to_run( clock ):
+                result = True
+                break
+        return result
 
     def abdicate_and_kill_rt( self, reftime ):
         # abdicate and kill all WAITING tasks currently at reftime

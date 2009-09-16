@@ -31,80 +31,80 @@ def clean_shutdown( pyro, reason ):
     log.critical( 'System Halt: ' + reason )
     pyro.shutdown( True ) 
 
-def process_remote_requests( remote, god, log ):
+def service_remote_requests( remote, task_manager, log ):
 
     halt = False
-    do_task_loop = False
+    process_tasks = False
 
     if remote.get_halt():
         # stop launching new tasks, but wait on running ones before
         # shutting down (otherwise they will generate screeds of
         # pyro-related error messages when they try to phone home).
-        god.set_system_hold()
+        task_manager.set_system_hold()
         halt = True
 
     if remote.get_nudge():
-        do_task_loop = True
+        process_tasks = True
         remote.set_nudge = False
 
     if remote.get_hold():
-        god.set_system_hold()
+        task_manager.set_system_hold()
 
     if remote.get_resume():
-        god.unset_system_hold()
-        do_task_loop = True
+        task_manager.unset_system_hold()
+        process_tasks = True
 
     if remote.requisite_dump:
-        god.dump_task_requisites( remote.dump_task_ids )
+        task_manager.dump_task_requisites( remote.dump_task_ids )
         remote.requisite_dump = False
         remote.dump_task_ids = {}
 
     if remote.set_stop:
-        god.set_stop_time( remote.stop_time )
+        task_manager.set_stop_time( remote.stop_time )
         remote.set_stop = False
 
     if remote.set_hold:
-        log.info( 'pre-hold state dump: ' + god.dump_state( new_file = True ))
-        god.set_system_hold( remote.hold_time )
+        log.info( 'pre-hold state dump: ' + task_manager.dump_state( new_file = True ))
+        task_manager.set_system_hold( remote.hold_time )
         remote.set_hold = False
 
     if remote.do_purge:
-        log.info( 'pre-purge state dump: ' + god.dump_state( new_file = True ))
-        god.purge( remote.purge_id, remote.purge_stop )
+        log.info( 'pre-purge state dump: ' + task_manager.dump_state( new_file = True ))
+        task_manager.purge( remote.purge_id, remote.purge_stop )
         remote.do_purge = False
         remote.purge_id = None
         remote.purge_stop = None
-        do_task_loop = True
+        process_tasks = True
 
     if remote.kill_ids:
-        log.info( 'pre-kill state dump: ' + god.dump_state( new_file = True ))
-        god.abdicate_and_kill( remote.kill_task_ids )
+        log.info( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
+        task_manager.abdicate_and_kill( remote.kill_task_ids )
         remote.kill_ids = False
         remote.kill_task_ids = {}
-        do_task_loop = True
+        process_tasks = True
         
     if remote.kill_rt:
-        log.info( 'pre-kill state dump: ' + god.dump_state( new_file = True ))
-        god.abdicate_and_kill_rt( remote.kill_reftime )
+        log.info( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
+        task_manager.abdicate_and_kill_rt( remote.kill_reftime )
         remote.kill_rt = False
         remote.kill_reftime = None
-        do_task_loop = True
+        process_tasks = True
 
     if remote.reset_a_task:
-        log.info( 'pre-reset state dump: ' + god.dump_state( new_file = True ))
-        god.reset_task( remote.reset_task_id )
+        log.info( 'pre-reset state dump: ' + task_manager.dump_state( new_file = True ))
+        task_manager.reset_task( remote.reset_task_id )
         remote.reset_a_task = False
         remote.reset_task_id = None
-        do_task_loop = True
+        process_tasks = True
 
     if remote.insert_this:
-        log.info( 'pre-insert state dump: ' + god.dump_state( new_file = True ))
-        god.insertion( remote.insert_this )
+        log.info( 'pre-insert state dump: ' + task_manager.dump_state( new_file = True ))
+        task_manager.insertion( remote.insert_this )
         remote.insert_this = None
-        do_task_loop = True
+        process_tasks = True
 
 
-    return [ halt, do_task_loop ]
+    return [ halt, process_tasks ]
 
 # MAIN PROGRAM
 #---
@@ -181,7 +181,6 @@ def main( argv ):
 
     # system clock for accelerated time in dummy mode
     clock = accelerated_clock.clock( 
-                system_config.get('alarm_seconds' ),
                 system_config.get('start_time' ),
                 system_config.get('dummy_clock_rate'), 
                 system_config.get('dummy_clock_offset'),
@@ -221,7 +220,7 @@ def main( argv ):
     pyro.connect( dead_letter_box, 'dead_letter_box' )
 
     # initialize the task manager from general config file or state dump
-    god = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, restart_statedump )
+    task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, restart_statedump )
 
     print "\nBeginning task processing now\n"
 
@@ -230,50 +229,52 @@ def main( argv ):
     system_halt = False
 
     while True: # MAIN LOOP
-
-        [ halt, do_task_loop ] = process_remote_requests( remote, god, log )
+        [ halt, process_tasks_remote ] = service_remote_requests( remote, task_manager, log )
         if halt:
             system_halt = True
 
-        alarm = clock.get_alarm()
-        #if task_base.state_changed or do_task_loop or alarm:
-        if task_base.state_changed or do_task_loop:
-        #if task_base.state_changed:
+        process_tasks_contact = False
+        if task_manager.waiting_contact_task_ready( clock ):
+            process_tasks_contact = True
 
-            # PROCESS ALL TASKS whenever one has changed state
-            # as a result of a remote task message coming in: 
-            # then run, create new, and kill spent tasks
-            #--
+        # PROCESS ALL TASKS whenever something has changed that might
+        # require renegotiation of dependencies, etc.
+        #--
+        if task_base.state_changed or \
+                process_tasks_remote or \
+                process_tasks_contact:
 
-            # log reason for invoking the task loop
-            count = count + 1
-            reasons = []
-            if task_base.state_changed:
-                reasons.append( 'a task received a message' )
-            if do_task_loop:
-                reasons.append( 'a remote request was serviced' )
-            
-            msg = ', '.join( reasons )
-            #log.debug( 'TASK LOOP invoked: ' + msg )
-            log.warning( 'TASK LOOP ' + str( count ) + ' invoked: ' + msg )
+            if system_config.get( 'logging_level' ) == logging.DEBUG:
+                # log reason for invoking task processing
+                count = count + 1
+                reasons = []
+                if task_base.state_changed:
+                    reasons.append( 'task message received' )
+                if process_tasks_remote:
+                    reasons.append( 'remote request serviced' )
+                if process_tasks_contact:
+                    reasons.append( 'waiting contact task ready' )
+                msg = ', '.join( reasons )
+                # log with warning level, which goes to stdout
+                log.warning( 'task processing, ' + str( count ) + ': ' + msg )
 
-            god.regenerate_tasks()
+            task_manager.regenerate_tasks()
 
-            god.negotiate_dependencies()
+            task_manager.negotiate_dependencies()
 
-            god.run_tasks( launcher )
+            task_manager.run_tasks( launcher )
 
-            god.kill_spent_tasks()
+            task_manager.kill_spent_tasks()
 
-            god.dump_state()
+            task_manager.dump_state()
 
-            system_state.update( god.tasks, clock )
+            system_state.update( task_manager.tasks, clock )
 
-        if god.all_tasks_finished():
+        if task_manager.all_tasks_finished():
             clean_shutdown( pyro, "ALL TASKS FINISHED" )
             return
 
-        if system_halt and god.no_tasks_running():
+        if system_halt and task_manager.no_tasks_running():
             clean_shutdown( pyro, "all running tasks finished" )
             return
 
@@ -284,12 +285,13 @@ def main( argv ):
         # state_changed variable above).
         #--
 
+        # incoming task messages set this to True
         task_base.state_changed = False
-
-        # incoming task messages set task_base.state_changed = True 
+        # handle all remote calls
         pyro.handleRequests( timeout = None )
 
      # END MAIN LOOP
+
 
 if __name__ == "__main__":
     
