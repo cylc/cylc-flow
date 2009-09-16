@@ -11,6 +11,12 @@ from Pyro.errors import PyroError,NamingError
 
 ctrl_end = "\033[0m"
 
+def print_heading( strng ):
+        print
+        print strng
+        underline = re.sub( '.', '-', strng )
+        print underline
+
 def prompt( reason ):
 
     if options.force:
@@ -208,8 +214,7 @@ if options.dump_task_id:
     result = control.dump_task_requisites( ids )
     for id in result.keys():
         [ pre, out ] = result[ id ]
-        print
-        print id + ' prerequisites:'
+        print_heading( id + ' prerequisites:')
         for item in pre:
             [ msg, state ] = item
             if state:
@@ -217,8 +222,7 @@ if options.dump_task_id:
             else:
                 descr = 'not satisfied: '
             print descr + msg
-        print
-        print id + ' outputs:'
+        print_heading( id + ' outputs:' )
         for item in out:
             [ msg, state ] = item
             if state:
