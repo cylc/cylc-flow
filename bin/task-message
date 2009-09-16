@@ -40,6 +40,10 @@ parser.add_option( "--all-restart-outputs-completed",
         help="report all forecast model restart outputs completed at once",
         action="store_true", default=False, dest="all_restarts_completed" )
 
+parser.add_option( "--all-outputs-completed", 
+        help="report all task outputs completed at once",
+        action="store_true", default=False, dest="all_outputs_completed" )
+
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
@@ -72,8 +76,9 @@ else:
         print 'ERROR, task-message: no reference time provided!'
         sys.exit(1)
  
-if len( args ) == 0 and not options.all_restarts_completed:
-    parser.error( "no message supplied" )
+if len( args ) == 0:
+    if not options.all_restarts_completed and not options.all_outputs_completed:
+        parser.error( "no message supplied" )
 elif len( args ) == 1:
     # user sent a quoted string
     message = args[0]
@@ -96,6 +101,8 @@ task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.'
 
 if options.all_restarts_completed:
     task.set_all_restarts_completed()
+elif options.all_outputs_completed:
+    task.set_all_outputs_completed()
 else:
     task.incoming( priority, message )
 #except:

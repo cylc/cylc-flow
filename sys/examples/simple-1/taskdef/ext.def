@@ -1,0 +1,36 @@
+# THIS IS A cyclon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    ext
+
+%DESCRIPTION
+    Example system task to provide the external input required by task A.
+    Depends only on the system startup task at start time.
+
+%TYPE
+    free_task, contact
+
+%CONTACT_DELAY_HOURS
+    1.0
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    task-wrapper
+
+%EXPORT
+    WRAP ext.sh
+
+%PREREQUISITES
+    # None
+
+%STARTUP_PREREQUISITES
+    startup%$(MY_REFERENCE_TIME) finished
+
+%RUN_LENGTH_MINUTES
+    10
+
+#%COTEMPORAL_DEPENDANTS_ONLY
+#    True

@@ -1,0 +1,33 @@
+# THIS IS A cyclon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    C
+
+%DESCRIPTION
+    Forecast model.
+    Generates restart files for the next two cycles.
+    Depends on task A finishing.
+
+%TYPE
+    forecast_model
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    task-wrapper
+
+%EXPORT
+    WRAP C.sh
+    NEXT_REFERENCE_TIME $(MY_REFERENCE_TIME + 6)
+    NEXT_NEXT_REFERENCE_TIME $(MY_REFERENCE_TIME + 12)
+
+%PREREQUISITES
+    A%$(MY_REFERENCE_TIME) finished
+
+%RUN_LENGTH_MINUTES
+    120
+
+%RESTART_LIST_MINUTES
+    40, 80

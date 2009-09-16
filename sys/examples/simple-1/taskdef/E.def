@@ -1,0 +1,26 @@
+# THIS IS A cyclon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    E
+
+%DESCRIPTION
+    Post processing for task B. 
+
+%TYPE
+    free_task
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    task-wrapper
+
+%EXPORT
+    WRAP E.sh
+
+%PREREQUISITES
+    B%$(MY_REFERENCE_TIME) finished
+
+%RUN_LENGTH_MINUTES
+    150

@@ -13,10 +13,5 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 sleep $SLEEP 
 
 touch $TMPDIR/A_${REFERENCE_TIME}.restart
-task-message A restart files ready for $REFERENCE_TIME
-
 touch $TMPDIR/B_${REFERENCE_TIME}.restart
-task-message B restart files ready for $REFERENCE_TIME
-
 touch $TMPDIR/C_${REFERENCE_TIME}.restart
-task-message C restart files ready for $REFERENCE_TIME

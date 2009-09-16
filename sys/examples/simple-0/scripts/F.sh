@@ -19,4 +19,3 @@ sleep $SLEEP
 
 OUTPUT=$TMPDIR/F_${REFERENCE_TIME}.output
 touch $OUTPUT
-task-message $OUTPUT ready

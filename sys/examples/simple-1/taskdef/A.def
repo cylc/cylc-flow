@@ -7,7 +7,7 @@
 %DESCRIPTION
     Forecast model. 
     Generates restart files for the next cycle only.
-    Depends on external input data.
+    Depends on the external data task finishing.
 
 %TYPE
     forecast_model
@@ -16,15 +16,14 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    #task-wrapper
-    A.sh
+    task-wrapper
 
 %EXPORT
-    #WRAP A.sh
+    WRAP A.sh
     NEXT_REFERENCE_TIME $(MY_REFERENCE_TIME + 6)
 
 %PREREQUISITES
-    external data ready for $(MY_REFERENCE_TIME)
+    ext%$(MY_REFERENCE_TIME) finished
 
 %RUN_LENGTH_MINUTES
     90

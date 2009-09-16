@@ -1,0 +1,29 @@
+# THIS IS A cyclon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    startup
+
+%DESCRIPTION
+    Clean out the system working directory at startup.
+
+%TYPE
+    free_task, oneoff
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    startup.sh
+
+%PREREQUISITES
+    # None
+
+%RUN_LENGTH_MINUTES
+    10
+
+%OUTPUTS
+    # defaults only
+
+%COTEMPORAL_DEPENDANTS_ONLY
+    True

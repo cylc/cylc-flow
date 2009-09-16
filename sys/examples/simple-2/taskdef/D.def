@@ -14,13 +14,9 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    task-wrapper
-
-%EXPORT
-    WRAP D.sh
+    D.sh
 
 %PREREQUISITES
-    external data ready for $(MY_REFERENCE_TIME)
     B%$(MY_REFERENCE_TIME) finished
     C%$(MY_REFERENCE_TIME) finished
 

@@ -32,8 +32,5 @@
 %RUN_LENGTH_MINUTES
     10
 
-%OUTPUTS
-    9: external data ready for $(MY_REFERENCE_TIME)
-
 #%COTEMPORAL_DEPENDANTS_ONLY
 #    True
