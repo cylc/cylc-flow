@@ -26,6 +26,16 @@ from optparse import OptionParser
 # auto-replace with version tag at build/install:
 cyclon_version = "foo-bar-baz";
 
+def print_banner():
+    print "__________________________________________________________"
+    print
+    print "      .       cyclon Dynamic Metascheduler        ."
+    print "              version: " + cyclon_version
+    print "      .         Hilary Oliver, NIWA, 2008         ."
+    print "              See repository documentation"
+    print "      .    Pyro nameserver required: 'pyro-ns'    ."
+    print "__________________________________________________________"
+
 def clean_shutdown( pyro, reason ):
     log = logging.getLogger( 'main' )
     log.critical( 'System Halt: ' + reason )
@@ -106,8 +116,6 @@ def service_remote_requests( remote, task_manager, log ):
 
     return [ halt, process_tasks ]
 
-# MAIN PROGRAM
-#---
 def main( argv ):
 
     # construct a command line parser
@@ -134,14 +142,7 @@ def main( argv ):
     # get command line options and positional args
     ( options, args ) = parser.parse_args()
 
-    print "__________________________________________________________"
-    print
-    print "      .       cyclon Dynamic Metascheduler        ."
-    print "              version: " + cyclon_version
-    print "      .         Hilary Oliver, NIWA, 2008         ."
-    print "              See repository documentation"
-    print "      .    Pyro nameserver required: 'pyro-ns'    ."
-    print "__________________________________________________________"
+    print_banner()
 
     # load system configuration
     system_config = config.config()
