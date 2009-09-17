@@ -17,10 +17,13 @@
     run-gcw.sh
 
 %PREREQUISITES
-    file global_obs_$(MY_REFERENCE_TIME).nc ready
+    file data_assmilation_increments_$(MY_REFERENCE_TIME).nc ready
 
-%RUN_LENGTH
+%RUN_LENGTH_MINUTES
     20 
 
+%RESTART_LIST_MINUTES
+    5,10
+
 %OUTPUTS
-    18: file global_winds_$(MY_REFERENCE_TIME).nc ready
+    18: file gcw_fields_$(MY_REFERENCE_TIME).nc ready
