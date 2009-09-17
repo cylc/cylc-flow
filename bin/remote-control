@@ -221,6 +221,8 @@ if options.dump_task_id:
 
     print
     print 'system: ' + system_name
+    print ' + => prerequisite satisfied, or output completed' 
+    print ' - => prerequisite NOT satisfied, or output NOT completed' 
 
     for id in ids:
         if id not in result.keys():
@@ -232,17 +234,17 @@ if options.dump_task_id:
         for item in pre:
             [ msg, state ] = item
             if state:
-                descr = 'satisfied:     '
+                descr = ' + '
             else:
-                descr = 'not satisfied: '
+                descr = ' - '
             print descr + msg
         print_heading( id + ' outputs:' )
         for item in out:
             [ msg, state ] = item
             if state:
-                descr = 'completed:     '
+                descr = ' + '
             else:
-                descr = 'not completed: '
+                descr = ' - '
             print descr + msg
 
     print
