@@ -26,8 +26,7 @@ class state_summary( Pyro.core.ObjBase ):
 
         self.global_summary[ 'last_updated' ] = clock.get_datetime()
         self.global_summary[ 'dummy_mode' ] = self.dummy_mode
-        self.global_summary[ 'dummy_clock_rate' ] = self.config.get( 'dummy_clock_rate' )
-
+        self.global_summary[ 'dummy_clock_rate' ] = clock.get_rate()
            
         # update deprecated old-style summary (DELETE WHEN NO LONGER NEEDED)
         self.get_summary()

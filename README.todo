@@ -49,6 +49,9 @@ To Do
 
 * use the custom clock everywhere (it knows about dummy mode).
 
+* clean up the clock class with respect to dummy vs real time, and move
+  it into task manager?
+
 * retrofit proper exception handling (current use is sporadic).
 
 * user_config is imported in task_classes.py to get start_time. It may

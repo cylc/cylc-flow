@@ -3,23 +3,22 @@
 import reference_time
 import pimp_my_logger
 import logging
-#import pdb
+import pdb
+import sys
 import os
 import re
 from broker import broker
 
 class manager:
-    def __init__( self, config, dummy_mode, pyro, clock, restart, restart_statedump = None ):
-        
+    def __init__( self, config, dummy_mode, pyro, clock, restart, start_time = None, stop_time = None, restart_statedump = None ):
+
         self.dummy_mode = dummy_mode
+        self.clock = clock
+        self.stop_time = stop_time
+        self.config = config
+
         self.pyro = pyro  # pyrex (cyclon Pyro helper) object
         self.log = logging.getLogger( "main" )
-
-        self.clock = clock
-
-        self.stop_time = config.get('stop_time')
- 
-        self.config = config
 
         self.system_hold_now = False
         self.system_hold_reftime = None
@@ -31,8 +30,11 @@ class manager:
         self.tasks = []
         if restart:
             self.load_from_state_dump( restart_statedump )
+        elif start_time:
+            self.load_from_config( start_time )
         else:
-            self.load_from_config()
+            self.log.critical( 'start time and restart both undefined' )
+            sys.exit(1)
 
     def get_tasks( self ):
         return self.tasks
@@ -66,19 +68,22 @@ class manager:
                 oldest = itask.ref_time
         return oldest
 
-    def load_from_config ( self ):
+    def load_from_config ( self, start_time ):
         # load initial system state from configured tasks and start time
         #--
+        
+        # set clock before using log (affects dummy mode only)
+        self.clock.set( start_time )
+
         print '\nCLEAN START: INITIAL STATE FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname1, taskname2, ...]
 
-        start_time = self.config.get('start_time')
 
         for name in self.config.get('task_list'):
 
             # instantiate the task
-            itask = self.get_task_instance( 'task_classes', name )( start_time )
+            itask = self.get_task_instance( 'task_classes', name )( start_time, startup = True )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -104,6 +109,7 @@ class manager:
     def load_from_state_dump( self, filename = None ):
         # load initial system state from the configured state dump file
         #--
+
         configured_file = self.config.get('state_dump_file')
         if filename:
             if filename == os.path.basename( filename ):
@@ -129,15 +135,18 @@ class manager:
         # The time format is defined by the clock.reset()
         # task <state> format is defined by task_state.dump()
 
-        self.log.info( 'Loading previous state from ' + filename )
-
         FILE = open( filename, 'r' )
         lines = FILE.readlines()
         FILE.close()
 
         # reset time first (only has an effect in dummy mode)
         [ junk, time ] = lines[0].split( ' : ' )
+        # strip newline
+        time.rstrip()
         self.clock.reset( time )
+
+        # can't log before clock is reset (affects dummy mode)
+        self.log.info( 'Loading previous state from ' + filename )
 
         log_created = {}
 
@@ -163,15 +172,15 @@ class manager:
             # instance variables
             [ ref_time, name, state ] = line.split(' : ')
 
-            # instantiate the task object
-            itask = self.get_task_instance( 'task_classes', name )( ref_time, state )
-
             # create the task log
             if name not in log_created.keys():
                 log = logging.getLogger( 'main.' + name )
                 pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
                 log_created[ name ] = True
- 
+
+            # instantiate the task object
+            itask = self.get_task_instance( 'task_classes', name )( ref_time, state )
+
             # the initial task reference time can be altered during
             # creation, so we have to create the task before
             # checking if stop time has been reached.

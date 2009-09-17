@@ -13,44 +13,39 @@ class clock( Pyro.core.ObjBase ):
     In dummy mode, equate a given dummy YYYYMMDDHH with the real time at
     initialisation, and thereafter advance dummy time at the requested
     rate of seconds per hour.
-
-    ALARM code disabled, it is no longer needed.
     """
 
-    def __init__( self, reftime, rate, offset, dummy_mode ):
+    def __init__( self, rate, offset, dummy_mode ):
         
         Pyro.core.ObjBase.__init__(self)
         
         self.dummy_mode = dummy_mode
 
-        # how many accelerated seconds to wait between alarms
-        # (use to trigger the event loop regularly even when
-        # no task messages come in, as happens when the whole
-        # system waits on a contact task that isn't running yet).
-        # self.alarm_seconds = alarm_seconds
-
         # time acceleration (N real seconds = 1 dummy hour)
         self.acceleration = rate
+        
         # start time offset (relative to start reference time)
         self.offset_hours = offset
 
         self.base_realtime = datetime.datetime.now() 
 
-        # remember last time an alarm was used
-        # self.last_alarm_realtime = self.base_realtime
+        if dummy_mode:
+            print "DUMMY CLOCK ........"
+            print " - accel:  " + str( self.acceleration ) + "s = 1 simulated hour"
+            print " - offset: " + str( self.offset_hours )
 
-        print "CLOCK ........"
+
+    def set( self, reftime ):
 
         self.base_dummytime = datetime.datetime( 
                 int(reftime[0:4]), int(reftime[4:6]), 
                 int(reftime[6:8]), int(reftime[8:10]))
                 
-        self.base_dummytime += datetime.timedelta( 0,0,0,0,0, offset, 0) 
+        self.base_dummytime += datetime.timedelta( 0,0,0,0,0, self.offset_hours, 0) 
 
-        print " - accel:  " + str( self.acceleration ) + "s = 1 dummy hour"
-        print " - start:  " + str( self.base_dummytime )
-        print " - offset: " + str( self.offset_hours )
-        # print " - alarm:  " + str( self.alarm_seconds ) + "s"
+
+    def get_rate( self ):
+        return self.acceleration
 
     def reset( self, dstr ):
         # set clock from string of the form made by self.dump_to_str()
@@ -82,7 +77,6 @@ class clock( Pyro.core.ObjBase ):
         print "CLOCK RESET ......."
         print " - accel:  " + str( self.acceleration ) + "s = 1 dummy hour"
         print " - start:  " + str( self.base_dummytime )
-        # print " - alarm:  " + str( self.alarm_seconds ) + "s"
 
     def get_datetime( self ):
 
@@ -111,37 +105,6 @@ class clock( Pyro.core.ObjBase ):
         YMDHms = [ str( now.year), str( now.month ), str( now.day ), str( now.hour), str( now.minute ), str( now.second ) ]
         return ':'.join( YMDHms )
 
-    #def get_alarm( self ):
-    #    # return True if more than self.alarm_seconds has passed since
-    #    # the last alarm was triggered.
-    #    alarm = False
-    #    current_real = datetime.datetime.now()
-    #    delta_realtime = current_real - self.last_alarm_realtime
-    #    days = delta_realtime.days
-    #    seconds = delta_realtime.seconds
-    #    microseconds = delta_realtime.microseconds
-    #    seconds_passed_realtime = microseconds / 1000000. + seconds + days * 24 * 3600
-    #    if self.dummy_mode:
-    #        dummy_seconds_passed = seconds_passed_realtime / self.acceleration * 3600
-    #        if dummy_seconds_passed > self.alarm_seconds:
-    #            alarm = True
-    #    else:
-    #        if seconds_passed_realtime > self.alarm_seconds:
-    #            alarm = True
-    #    if alarm:
-    #        #print 'ALARM: ', current_real
-    #        self.last_alarm_realtime = current_real
-    #    return alarm
-
-
-    def bump( self, hours ):
-        if not self.dummy_mode:
-            print "WARNING: bump is for dummy mode only"
-
-        else:
-            # bump the dummy time clock forward by some hours
-            self.base_dummytime += datetime.timedelta( 0,0,0,0,0, int(hours), 0 )
-            return self.get_datetime()
 
     def get_epoch( self ):
         dt = self.get_datetime()

@@ -27,28 +27,15 @@ class config:
         self.configured['task_list'] = []
         # TASK GROUPS
         self.configured['task_groups'] = {}
-        # START REFERENCE TIME
-        self.configured['start_time'] = None
-        # STOP REFERENCE TIME
-        self.configured['stop_time'] = None   
 
         # ENVIRONMENT VARIABLES TO SET
         self.configured['environment'] = {}
-
-        # ALARM WAIT TIME IN SECONDS (real in real time, accelerated
-        # seconds in accelerated dummy time). Used for triggering the
-        # event loop in the absence of incoming task messages; this is
-        # required when the whole system is waiting on a contact task
-        # that hasn't started running yet. NO LONGER NEEDED.
-        # self.configured['alarm_seconds'] = 10.0
 
         # MAXIMUM TIME ANY TASK IS ALLOWED TO GET AHEAD OF THE SLOWEST
         self.configured['max_runahead_hours'] = 24
 
         # DUMMY MODE
         self.configured['dummy_mode'] = False
-        self.configured['dummy_clock_rate'] = 10      
-        self.configured['dummy_clock_offset'] = 10 
 
         # JOB LAUNCH METHOD (qsub or direct in background)
         # default to qsub in real mode
@@ -90,10 +77,6 @@ class config:
                 print "ERROR: you must define " + item + " in " + user_config_file
                 die = True
 
-        if self.configured['start_time'] == None:
-            print "WARNING: no start time defined for " + self.configured['system_name']
-            print "This will fail if you are not restarting from a state dump file" 
-
         if len( self.configured[ 'task_list' ] ) == 0:
             print "ERROR: empty task list for system " + self.configured['system_name']
             die = True
@@ -118,23 +101,6 @@ class config:
         print
         print "SYSTEM NAME.............", 
         print self.configured['system_name']
-
-        # dummy mode alert is now printed from the main program 
-        # because it can be set on the command line.
-        #print "MODE....................",
-        #if self.configured['dummy_mode']:
-        #    print "DUMMY MODE"
-        #else:
-        #    print "real mode"
- 
-        print "START TIME..............",
-        print self.configured['start_time']
-
-        print "STOP TIME...............",
-        if self.configured['stop_time']:
-            print self.configured['stop_time']
-        else:
-            print "(none)"
 
         print "MAX RUNAHEAD ...........",
         print self.configured['max_runahead_hours'], "hours"

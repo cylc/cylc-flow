@@ -21,6 +21,9 @@ def usage():
 
 def main( argv ):
 
+    print 'ABORTING: this program needs to be updated for the latest version of cyclon"
+    sys.exit(0)
+
     if len( argv ) != 2:
         usage()
 
@@ -96,16 +99,11 @@ config = {}
 
 config[ 'system_name' ] = 'scaling-test'
 
-config[ 'start_time' ] = '2009030200'
-config[ 'stop_time' ] = '2009030300'
-
 config[ 'logging_level' ] = logging.DEBUG
 
 #config[ 'use_broker' ] = False
 
 config[ 'dummy_mode' ] = True
-config[ 'dummy_clock_rate' ] = 10      
-config[ 'dummy_clock_offset' ] = 10 
 
 config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'default'

@@ -13,13 +13,15 @@ import re
 
 class launcher:
 
-    def __init__( self, config, dummy_mode, failout_task = None ):
+    def __init__( self, config, dummy_mode, clock_rate, failout_task = None ):
 
         self.dummy_mode = dummy_mode
 
         self.system_name = config.get('system_name')
-        self.clock_rate = config.get('dummy_clock_rate')
-        self.clock_offset = config.get('dummy_clock_offset')
+
+        # The clock rate determines how fast dummy tasks run.
+        self.clock_rate = clock_rate
+
         self.use_qsub = config.get('use_qsub')
         self.job_queue = config.get('job_queue')
 
@@ -75,7 +77,6 @@ class launcher:
             command += 'export CYCLON_ENV='  + cyclon_env + '; '
             command += 'export SYSTEM_NAME='  + self.system_name + '; '
             command += 'export CLOCK_RATE='   + str(self.clock_rate) + '; '
-            command += 'export CLOCK_OFFSET=' + str(self.clock_offset) + '; '
 
             for entry in extra_vars:
                 [ var_name, value ] = entry
@@ -99,7 +100,6 @@ class launcher:
 
             # the following required for dummy mode operation
             command += ',CLOCK_RATE='   + str(self.clock_rate)
-            command += ',CLOCK_OFFSET=' + str(self.clock_offset)
             command += ',PYTHONPATH=' + os.environ['PYTHONPATH']
 
             for entry in extra_vars:

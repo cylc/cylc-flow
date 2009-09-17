@@ -21,13 +21,9 @@ config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/running/cyclon/' + config
 config[ 'environment' ] = { 'TMPDIR':'/tmp/' + os.environ['USER'] + '/cyclon/' + config[ 'system_name' ] }
 
 config[ 'dummy_mode' ] = False
-config[ 'dummy_clock_rate' ] = 10
-config[ 'dummy_clock_offset' ] = 24
+
 config[ 'use_qsub' ] = False
 config[ 'job_queue' ] = 'default'
-
-config[ 'start_time' ] = '2009082506'
-#config[ 'stop_time'  ] = '2009082506'
 
 #config[ 'logging_level' ] = logging.INFO
 config[ 'logging_level' ] = logging.DEBUG

@@ -117,7 +117,6 @@ from time import sleep
 
 import reference_time
 import task_launcher
-import user_config            
 import task_state
 
 import os, sys, re
@@ -269,7 +268,7 @@ import logging
             else:
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
-        task_init_def_args = 'ref_time, initial_state = None'
+        task_init_def_args = 'ref_time, initial_state = None, startup = False'
         task_init_args = 'initial_state'
 
         if contact:
@@ -397,9 +396,9 @@ import logging
         # are the prerequisites different for the first instance?
         if 'STARTUP_PREREQUISITES' in parsed_def.keys():
             # TO DO: use a function to re-use the normal prerequisite code (as above) here.
-            FILE.write( '\n' + indent + "if self.ref_time == user_config.config['start_time']:\n" )
-            FILE.write( indent + '# overwrite prerequisites for startup case\n' )
+            FILE.write( '\n' + indent + "if startup:\n" )
             indent_more()
+            FILE.write( indent + '# overwrite prerequisites for startup case\n' )
                 
             FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
             for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:

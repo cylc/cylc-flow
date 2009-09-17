@@ -138,6 +138,14 @@ while True:
             # if connection lost, try to reconnect
             break
 
+        except ProtocolError:
+            if not alerted:
+                print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+                alerted = True
+            #raise
+            # wh'th'fu'?
+            continue
+
         alerted2 = False
         alerted3 = False
 

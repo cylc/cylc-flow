@@ -281,14 +281,3 @@ if options.kill_task_id:
 
 if options.bump:
     control.nudge()
-
-#if options.bump_hours:
-#DISABLED, NOT VERY USEFUL. 
-#    # bump the dummy time forward. 
-#    try:
-#        dummy_clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'clock' )
-#    except:
-#        print "ERROR: failed to connect to the dummy clock"
-#        sys.exit(1)
-#    print "current time: " + str( dummy_clock.get_datetime() )
-##    print "bumped on to: " + str( dummy_clock.bump( options.bump_hours ))

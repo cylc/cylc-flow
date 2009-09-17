@@ -63,7 +63,6 @@ if __name__ == '__main__':
     ref_time = os.environ['REFERENCE_TIME']
     system_name = os.environ['SYSTEM_NAME'] 
     dummy_clock_rate = int( os.environ['CLOCK_RATE'] )
-    dummy_clock_offset = os.environ['CLOCK_OFFSET']
 
     print 'dummy task, masquerading as ' + task_name + '%' + ref_time,
     failout = False

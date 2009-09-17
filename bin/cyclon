@@ -70,12 +70,12 @@ def service_remote_requests( remote, task_manager, log ):
         remote.set_stop = False
 
     if remote.set_hold:
-        log.info( 'pre-hold state dump: ' + task_manager.dump_state( new_file = True ))
+        log.warning( 'pre-hold state dump: ' + task_manager.dump_state( new_file = True ))
         task_manager.set_system_hold( remote.hold_time )
         remote.set_hold = False
 
     if remote.do_purge:
-        log.info( 'pre-purge state dump: ' + task_manager.dump_state( new_file = True ))
+        log.warning( 'pre-purge state dump: ' + task_manager.dump_state( new_file = True ))
         task_manager.purge( remote.purge_id, remote.purge_stop )
         remote.do_purge = False
         remote.purge_id = None
@@ -83,28 +83,28 @@ def service_remote_requests( remote, task_manager, log ):
         process_tasks = True
 
     if remote.kill_ids:
-        log.info( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
+        log.warning( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
         task_manager.abdicate_and_kill( remote.kill_task_ids )
         remote.kill_ids = False
         remote.kill_task_ids = {}
         process_tasks = True
         
     if remote.kill_rt:
-        log.info( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
+        log.warning( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
         task_manager.abdicate_and_kill_rt( remote.kill_reftime )
         remote.kill_rt = False
         remote.kill_reftime = None
         process_tasks = True
 
     if remote.reset_a_task:
-        log.info( 'pre-reset state dump: ' + task_manager.dump_state( new_file = True ))
+        log.warning( 'pre-reset state dump: ' + task_manager.dump_state( new_file = True ))
         task_manager.reset_task( remote.reset_task_id )
         remote.reset_a_task = False
         remote.reset_task_id = None
         process_tasks = True
 
     if remote.insert_this:
-        log.info( 'pre-insert state dump: ' + task_manager.dump_state( new_file = True ))
+        log.warning( 'pre-insert state dump: ' + task_manager.dump_state( new_file = True ))
         task_manager.insertion( remote.insert_this )
         remote.insert_this = None
         process_tasks = True
@@ -116,10 +116,12 @@ def main( argv ):
 
     # construct a command line parser
     usage =  """
-    %prog [options]
-    %prog -r, --restart <filename>
-    """
-             
+    %prog [options] start-time [stop-time]
+       cold start from the configured system's task list
+
+    %prog -r [filename] [stop-time]
+       restart the configured system from default [or named] state dump"""
+
     parser = OptionParser( usage )
 
     parser.add_option( "-r", "--restart", 
@@ -129,14 +131,22 @@ def main( argv ):
                  "configured state dump file.",
             action="store_true", default=False, dest="restart" )
 
-    parser.add_option( "-d", "--dummy_mode", help="run in dummy (simulation) mode",
+    parser.add_option( "-d", "--dummy-mode", help="Run in dummy (simulation) mode",
        action="store_true", default=False, dest="dummy_mode" )
 
-    parser.add_option( "-f", "--fail", help="fail out a task in dummy mode",
+    parser.add_option( "--dummy-clock-rate", 
+        help="dummy clock rate in seconds per simulated hour (default 10)",
+        metavar="INTEGER", action="store", default=10, dest="clock_rate" )
+
+    parser.add_option( "--dummy-clock-offset", 
+        help="dummy clock offset from start time at startup (default 24)",
+        metavar="INTEGER", action="store", default=24, dest="clock_offset" )
+
+    parser.add_option( "-f", "--fail", help="Fail out a task in dummy mode",
         metavar="<name>%<YYYYMMDDHH>", action="store", dest="failout_task_id" )
 
     parser.add_option( "--task-proc-reason", 
-            help="explain why the task processing loop was invoked in each case",
+            help="Explain why task processing was invoked each time",
             action="store_true", default=False, dest="task_proc_reason" )
 
     # get command line options and positional args
@@ -161,17 +171,36 @@ def main( argv ):
         print "RUNNING IN DUMMY MODE!"
         print
 
-    # check restart
     restart_statedump = None
+    start_time = None
+    stop_time = None
+
     if options.restart:
+        # restarting the system
         if len( args ) == 0:
             # default
             pass
         elif len( args ) == 1:
             restart_statedump = args[0]
+        elif len( args ) == 2:
+            restart_statedump = args[0]
+            stop_time = args[1]
         else:
             parser.error( "too many arguments" )
-            
+
+    else:
+        # cold starting the system
+        if len( args ) == 1:
+            start_time = args[0]
+        elif len( args ) == 2:
+            start_time = args[0]
+            stop_time = args[1]
+        else:
+            parser.error( "wrong number of arguments" )
+     
+    if not start_time and not options.restart: 
+        parser.error( 'start time and restart both undefined' )
+       
     # set configured environment variables
     env = system_config.get('environment')
     for VAR in env.keys():
@@ -182,15 +211,14 @@ def main( argv ):
 
     # system clock for accelerated time in dummy mode
     clock = accelerated_clock.clock( 
-                system_config.get('start_time' ),
-                system_config.get('dummy_clock_rate'), 
-                system_config.get('dummy_clock_offset'),
-                dummy_mode ) 
+            int(options.clock_rate),
+            int(options.clock_offset),
+            dummy_mode ) 
 
     pyro.connect( clock, 'clock' )
 
     # external task launcher
-    launcher = task_launcher.launcher( system_config, dummy_mode, options.failout_task_id )
+    launcher = task_launcher.launcher( system_config, dummy_mode, int(options.clock_rate), options.failout_task_id )
 
     state_dump_file = system_config.get('state_dump_file')
     if os.path.exists( state_dump_file ):
@@ -217,7 +245,7 @@ def main( argv ):
     pyro.connect( dead_letter_box, 'dead_letter_box' )
 
     # initialize the task manager from general config file or state dump
-    task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, restart_statedump )
+    task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, start_time, stop_time, restart_statedump )
 
     # remote control switch
     remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )
