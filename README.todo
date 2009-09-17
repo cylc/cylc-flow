@@ -44,9 +44,6 @@ To Do
 * detect when taskdef files are newer than task_classes file, and warn
   that use of configure-system may be required.
 
-* all sys.exit(1) calls should be routed through a clean shutdown, so
-  that Pyro nameserver group entries can be deleted automatically.
-
 * use the custom clock everywhere (it knows about dummy mode).
 
 * clean up the clock class with respect to dummy vs real time, and move

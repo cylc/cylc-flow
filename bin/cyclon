@@ -26,15 +26,14 @@ from optparse import OptionParser
 from time import sleep
 
 # auto-replace with version tag at build/install:
-cyclon_version = "foo-bar-baz";
+cyclon_version = "foo-bar-baz"
 
 def print_banner():
     print "__________________________________________________________"
     print
     print "      .       cyclon Dynamic Metascheduler        ."
-    print "              version: " + cyclon_version
-    print "      .         Hilary Oliver, NIWA, 2008         ."
-    print "              See repository documentation"
+    #print "              version: " + cyclon_version
+    print "      .         Hilary Oliver, NIWA, 2008/9       ."
     print "      .    Pyro nameserver required: 'pyro-ns'    ."
     print "__________________________________________________________"
 
@@ -211,6 +210,7 @@ def main( argv ):
         os.environ[ VAR ] = env[ VAR ]
 
     # configure my pyro helper
+    # this will abort if the nameserver group already exists
     pyro = pyrex.pyrex( system_config.get( 'system_name' ))
 
     # system clock for accelerated time in dummy mode
@@ -218,124 +218,130 @@ def main( argv ):
             int(options.clock_rate),
             int(options.clock_offset),
             dummy_mode ) 
-
     pyro.connect( clock, 'clock' )
-
-    # external task launcher
-    launcher = task_launcher.launcher( system_config, dummy_mode, int(options.clock_rate), options.failout_task_id )
-
-    state_dump_file = system_config.get('state_dump_file')
-    if os.path.exists( state_dump_file ):
-        print "STATE DUMP BACKUP..."
-        backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
-        print ' + ' + backup
-        shutil.copyfile( state_dump_file, backup )
 
     print "CREATING MAIN LOG......."
     # create logging dirs
     if not os.path.exists( system_config.get('logging_dir') ):
        os.makedirs( system_config.get('logging_dir') )
-
     # top level logging
     log = logging.getLogger( 'main' )
     pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
 
-    # remotely accessible system state summary
-    system_state = state_summary.state_summary( system_config, dummy_mode )
-    pyro.connect( system_state, 'state_summary' )
+    try:
+        # attempt a clean shutdown if anything goes wrong from here on
 
-    # dead letter box for remote use
-    dead_letter_box = dead_letter.letter_box()
-    pyro.connect( dead_letter_box, 'dead_letter_box' )
+        # external task launcher
+        launcher = task_launcher.launcher( system_config, dummy_mode, int(options.clock_rate), options.failout_task_id )
 
-    # initialize the task manager from general config file or state dump
-    task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, start_time, stop_time, restart_statedump )
+        state_dump_file = system_config.get('state_dump_file')
+        if os.path.exists( state_dump_file ):
+            print "STATE DUMP BACKUP..."
+            backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
+            print ' + ' + backup
+            shutil.copyfile( state_dump_file, backup )
 
-    # remote control switch
-    remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )
-    pyro.connect( remote, 'remote' )
+        # remotely accessible system state summary
+        system_state = state_summary.state_summary( system_config, dummy_mode )
+        pyro.connect( system_state, 'state_summary' )
 
-    print "\nBeginning task processing now\n"
+        # dead letter box for remote use
+        dead_letter_box = dead_letter.letter_box()
+        pyro.connect( dead_letter_box, 'dead_letter_box' )
 
-    count = 0
-    task_base.state_changed = True
-    system_halt = False
+        # initialize the task manager from general config file or state dump
+        task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, start_time, stop_time, restart_statedump )
 
-    while True: # MAIN LOOP
-        [ halt, process_tasks_remote ] = service_remote_requests( remote, task_manager, log )
-        if halt:
-            system_halt = True
+        # remote control switch
+        remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )
+        pyro.connect( remote, 'remote' )
 
-        process_tasks_contact = False
-        if task_manager.waiting_contact_task_ready( clock ):
-            process_tasks_contact = True
+        print "\nBeginning task processing now\n"
 
-        # PROCESS ALL TASKS whenever something has changed that might
-        # require renegotiation of dependencies, etc.
-        #--
-        if task_base.state_changed or process_tasks_remote or process_tasks_contact:
+        count = 0
+        task_base.state_changed = True
+        system_halt = False
 
-            if options.task_proc_reason:
-                # log reason for invoking task processing
-                count = count + 1
-                reasons = []
-                if task_base.state_changed:
-                    reasons.append( 'task message received' )
-                if process_tasks_remote:
-                    reasons.append( 'remote request serviced' )
-                if process_tasks_contact:
-                    reasons.append( 'waiting contact task ready' )
-                msg = ', '.join( reasons )
-                # should really be log.debug() but warnings go to stdout...
-                log.warning( 'task processing, ' + str( count ) + ': ' + msg )
+        while True: # MAIN LOOP
+            [ halt, process_tasks_remote ] = service_remote_requests( remote, task_manager, log )
+            if halt:
+                system_halt = True
 
-                # simulate the effect on monitoring etc. of long task
-                # processing time (many many tasks...)
-                #if count % 50 == 0:
-                #    # every 50th time, sleep for 30s
-                #    print 'SLEEPING 30s!'
-                #    sleep(30)
+            process_tasks_contact = False
+            if task_manager.waiting_contact_task_ready( clock ):
+                process_tasks_contact = True
 
-            task_manager.regenerate_tasks()
+            # PROCESS ALL TASKS whenever something has changed that might
+            # require renegotiation of dependencies, etc.
+            #--
+            if task_base.state_changed or process_tasks_remote or process_tasks_contact:
 
-            task_manager.negotiate_dependencies()
+                if options.task_proc_reason:
+                    # log reason for invoking task processing
+                    count = count + 1
+                    reasons = []
+                    if task_base.state_changed:
+                        reasons.append( 'task message received' )
+                    if process_tasks_remote:
+                        reasons.append( 'remote request serviced' )
+                    if process_tasks_contact:
+                        reasons.append( 'waiting contact task ready' )
+                    msg = ', '.join( reasons )
+                    # should really be log.debug() but warnings go to stdout...
+                    log.warning( 'task processing, ' + str( count ) + ': ' + msg )
 
-            task_manager.run_tasks( launcher )
+                    # simulate the effect on monitoring etc. of long task
+                    # processing time (many many tasks...)
+                    #if count % 50 == 0:
+                    #    # every 50th time, sleep for 30s
+                    #    print 'SLEEPING 30s!'
+                    #    sleep(30)
 
-            task_manager.kill_spent_tasks()
+                task_manager.regenerate_tasks()
 
-            task_manager.dump_state()
+                task_manager.negotiate_dependencies()
 
-            system_state.update( task_manager.tasks, clock )
+                task_manager.run_tasks( launcher )
 
-        if task_manager.all_tasks_finished():
-            clean_shutdown( pyro, "ALL TASKS FINISHED" )
-            return
+                task_manager.kill_spent_tasks()
 
-        if system_halt and task_manager.no_tasks_running():
-            clean_shutdown( pyro, "all running tasks finished" )
-            return
+                task_manager.dump_state()
 
-        # REMOTE METHOD HANDLING; with no timeout and single-
-        # threaded pyro, handleRequests() returns after one or
-        # more remote method invocations are processed (these 
-        # are not just task messages, hence the use of the
-        # state_changed variable above).
-        #--
+                system_state.update( task_manager.tasks, clock )
 
-        # incoming task messages set this to True
-        task_base.state_changed = False
-        # handle all remote calls
-        pyro.handleRequests( timeout = None )
+            if task_manager.all_tasks_finished():
+                clean_shutdown( pyro, "ALL TASKS FINISHED" )
+                return
 
-     # END MAIN LOOP
+            if system_halt and task_manager.no_tasks_running():
+                clean_shutdown( pyro, "all running tasks finished" )
+                return
+
+            # REMOTE METHOD HANDLING; with no timeout and single-
+            # threaded pyro, handleRequests() returns after one or
+            # more remote method invocations are processed (these 
+            # are not just task messages, hence the use of the
+            # state_changed variable above).
+            #--
+
+            # incoming task messages set this to True
+            task_base.state_changed = False
+            # handle all remote calls
+            pyro.handleRequests( timeout = None )
+
+         # END MAIN LOOP
+
+    except Exception:
+        clean_shutdown( pyro, 'Error Occurred' )
 
 
 if __name__ == "__main__":
     
-	# Do this to get performance profiling information
-	# This method has a big performance hit itself, so
-	# maybe there is a better way to do it?!)
+    # performance profiling:
     #profile.run( 'main( sys.argv )' )
+	# has a big performance hit itself, any better way?
 
+    #try:
   	main( sys.argv )
+    #except:
+    #    print 'fuck it'

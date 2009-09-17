@@ -28,6 +28,7 @@ class clock( Pyro.core.ObjBase ):
         self.offset_hours = offset
 
         self.base_realtime = datetime.datetime.now() 
+        self.base_dummytime = self.base_realtime
 
         if dummy_mode:
             print "DUMMY CLOCK ........"
@@ -37,6 +38,7 @@ class clock( Pyro.core.ObjBase ):
 
     def set( self, reftime ):
 
+        print 'Setting dummy mode clock time'
         self.base_dummytime = datetime.datetime( 
                 int(reftime[0:4]), int(reftime[4:6]), 
                 int(reftime[6:8]), int(reftime[8:10]))
@@ -54,6 +56,8 @@ class clock( Pyro.core.ObjBase ):
         if not self.dummy_mode:
             print "(ignoring clock reset in real time)"
             return
+        
+        print 'Setting dummy mode clock time'
 
         YMDHms = dstr.split( ':' )
         Y = YMDHms[0]
