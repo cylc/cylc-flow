@@ -1,5 +1,8 @@
 To Do
 
+* exception handling in task-message script: retry and/or alert in case
+  of failure to contact the control system
+
 * python script for easy viewing of configured log files without having
   to know their location.
 
