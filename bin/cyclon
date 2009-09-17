@@ -19,6 +19,7 @@ import dead_letter
 import task_launcher
 import remote_switch
 import state_summary
+import reference_time
 import pimp_my_logger
 import accelerated_clock 
 from optparse import OptionParser
@@ -181,7 +182,10 @@ def main( argv ):
             # default
             pass
         elif len( args ) == 1:
-            restart_statedump = args[0]
+            if reference_time.is_valid( args[0] ):
+                stop_time = args[0]
+            else:
+                restart_statedump = args[0]
         elif len( args ) == 2:
             restart_statedump = args[0]
             stop_time = args[1]
@@ -329,10 +333,9 @@ def main( argv ):
 
 if __name__ == "__main__":
     
-    if False:
 	# Do this to get performance profiling information
 	# This method has a big performance hit itself, so
 	# maybe there is a better way to do it?!)
-        profile.run( 'main( sys.argv )' )
-    else:
-    	main( sys.argv )
+    #profile.run( 'main( sys.argv )' )
+
+  	main( sys.argv )
