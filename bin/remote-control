@@ -76,8 +76,8 @@ parser.add_option( "-d", "--dump-requisites",
         metavar="<name1,name2,...>%YYYYMMDDHH", 
         action="store", dest="dump_task_id" )
 
-parser.add_option( "-x", "--describe-tasks", 
-        help="dump the descriptive information on one or more tasks",
+parser.add_option( "-x", "--explain-tasks", 
+        help="get description of one or more tasks",
         metavar="<name1,name2,...>", 
         action="store", dest="describe_names" )
 
@@ -179,11 +179,19 @@ if options.insert_task_id:
         control.insert( options.insert_task_id )
 
 if options.describe_names:
+
+    print 'System: ' + system_name
+
     # retrieve and print task class descriptions
     if re.search( ',', options.describe_names ):
+        # multiple names
         names = options.describe_names.split( ',' )
     else:
+        # one name
         names = [ options.describe_names ]
+
+    # strip off reference time, if given
+    names = [ re.sub( '%.*', '', name ) for name in names ]
 
     info = control.get_task_info( names )
     for name in info.keys():
@@ -235,6 +243,7 @@ if options.dump_task_id:
                 descr = 'not completed: '
             print descr + msg
 
+    print
 
 if options.purge:
     if prompt( 'Purge ' + options.purge + ' in' ):
