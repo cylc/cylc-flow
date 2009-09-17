@@ -20,16 +20,15 @@ set -e  # ABORT on error
 }
 
 [[ ! -f bin/cyclon ]] && {
-	echo "RUN THIS IN CYCLON REPO TOP LEVEL"
+	echo "RUN THIS IN THE TOP LEVEL CYCLON DIRECTORY"
 	exit 1
 }
+
+ENV_SCRIPT='environment.sh'
 
 SYSDIR=$1
 # remove any trailing '/'
 SYSDIR=${SYSDIR%/}
-
-ENV_SCRIPT='environment.sh'
-
 TOPDIR=$PWD
 
 # access to cyclon bin/ for this script
@@ -37,18 +36,32 @@ PATH=$PWD/bin:$PATH
 
 cd $SYSDIR
 
+# extract system name from user_config.py
+SYSNAME=$( egrep "^ *config\[ *'system_name" user_config.py  | sed -e "s/.*= *'//" | sed -e "s/'.*$//" )
 echo
-echo "Generating $SYSDIR/task_classes.py"
+echo "Detected system name: $SYSNAME"
+
+echo
+echo "Processing task definition files ..."
 
 # if the command line gets too big we'll have to use xargs:
 #    find taskdef -name '*.def' -o -name '*.py' | xargs task-generator.py 
 # and modify task-generator.py so that it appends to the output
 # task_classes.py file rather than overwriting it each time.
+
 task-generator.py $( find taskdef -name '*.def' -o -name '*.py' ) 
+echo "  => $SYSDIR/task_classes.py"
+echo "done"
+
 
 echo
-echo "Generating environment script for this system:"
-echo "     $SYSDIR/environment.sh"
+echo -n "Installing $SYSDIR/scripts/task-wrapper ... "
+mkdir -p $TOPDIR/$SYSDIR/scripts
+cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/scripts
+echo "done"
+
+echo
+echo -n "Generating environment script ... "
 
 cat > $ENV_SCRIPT <<EOF
 #!/bin/bash
@@ -76,15 +89,9 @@ export CYCLON_ENV=$TOPDIR/$SYSDIR/$ENV_SCRIPT
 export CYCLON_BIN=$TOPDIR/bin
 EOF
 
-# copy task-wrapper
+echo "done"
 
 echo
-echo "Copying task-wrapper to system scripts dir"
-mkdir -p $TOPDIR/$SYSDIR/scripts
-cp $TOPDIR/bin/task-wrapper $TOPDIR/$SYSDIR/scripts
-
-echo
-echo "SOURCE THE SYSTEM ENVIRONMENT SCRIPT BEFORE RUNNING CYCLON"
-echo "  \$ . $TOPDIR/$SYSDIR/environment.sh"
-echo "  \$ cyclon"
+echo "SOURCE THE $SYSNAME ENVIRONMENT SCRIPT BEFORE RUNNING CYCLON:"
+echo ". $TOPDIR/$SYSDIR/environment.sh"
 echo
