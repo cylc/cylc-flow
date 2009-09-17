@@ -180,7 +180,8 @@ if options.insert_task_id:
 
 if options.describe_names:
 
-    print 'System: ' + system_name
+    print
+    print 'system: ' + system_name
 
     # retrieve and print task class descriptions
     if re.search( ',', options.describe_names ):
@@ -218,7 +219,8 @@ if options.dump_task_id:
 
     result = control.get_task_requisites( ids )
 
-    print 'System: ' + system_name
+    print
+    print 'system: ' + system_name
 
     for id in ids:
         if id not in result.keys():
