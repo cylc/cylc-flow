@@ -88,24 +88,25 @@ print "here we go ..."
 sleep(2)
 
 alerted = False
+alerted2 = False
+alerted3 = False
 while True:
     # connect to remote state summary object for the chosen system
     try: 
         god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
+        # timeout (sec) determines max wait for an answer from god.
+        god._setTimeout(60)
     except NamingError:
         if not alerted:
             print "\n\033[1;37;41mfailed to connect" + ctrl_end 
             alerted = True
-        sleep(1)
         #raise
+        # if no connection, try again to connect
         continue
 
-    alerted = False
-    god._setTimeout(1)
-    #god._setTimeout(30)
 
-    alerted2 = False
-    alerted3 = False
+    alerted = False
+
     while True:
         # continual redisplay loop
 
@@ -117,17 +118,19 @@ while True:
             if not alerted3:
                 print "\n\033[1;37;41mconnection timed out" + ctrl_end
                 alerted3 = True
-            sleep(1)
-            #raise
-            break
+            # if timed out, try again on same connection
+            continue
+            #break
 
         except ConnectionClosedError:
             if not alerted2:
                 print "\n\033[1;37;41mconnection closed" + ctrl_end 
                 alerted2 = True
-            sleep(1)
-            #raise
+            # if connection lost, try to reconnect
             break
+
+        alerted2 = False
+        alerted3 = False
 
         dt = glbl[ 'last_updated' ]
         rate = glbl[ 'dummy_clock_rate' ]
@@ -205,14 +208,15 @@ while True:
 
             # construct the display string for this task
             task_info[ reftime ][ name ] = ctrl_start + name + ctrl_end + abd
-               
 
         # construct an array of lines to blit to the screen
-        
+
         # MONITOR HEADER and CURRENT TIME
         blit = []
         blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end )
-        blit.append( 'last updated: ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+        # last time state summary was updated by cyclon (only happens
+        # when task processing is invoked).
+        blit.append( 'summary updated ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
         # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
         blit.append( '\033[1;37;45m"' + system_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'  + ctrl_end )
@@ -247,6 +251,9 @@ while True:
         # clear screen and blit the new information up
         os.system( "clear" )
         print '\n'.join( blit )
-        sleep(0.5)
+        # sleep here determines minimum display time before trying to
+        # update the information and redisplay it. 
+        sleep(1)
 
-    sleep( 1 )
+    # sleep here determines how long to wait before trying to reconnect
+    # sleep( 1 )
