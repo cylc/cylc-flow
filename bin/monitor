@@ -47,6 +47,9 @@ parser.add_option( "-s", "--shortnames", help="display short tasknames",
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
+header = 'CYCLON! waiting running done failed'
+header = '                                   '
+
 #if len( args ) != 0:
 #    parser.print_help()
 #    sys.exit(1)
@@ -113,6 +116,9 @@ while True:
         # if no connection, try again to connect
         continue
 
+    except KeyboardInterrupt:
+        print 'ok, whatever'
+        sys.exit(1)
 
     alerted = False
 
@@ -230,15 +236,28 @@ while True:
 
         # MONITOR HEADER and CURRENT TIME
         blit = []
-        blit.append( '\033[1;37;40mCYCLON!' + ctrl_end + "\033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end )
+        # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
+        foo = header
+        bar = system_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
+        foo = re.sub( '^.{' + str(len('cyclon!')) + '}', 'cyclon!', foo )
+        foo = re.sub( '.{' + str(len(system_name)) + '}$', system_name, foo )
+
+        blit.append( '\033[1;37;43m' + foo + ctrl_end )
+
+        blit.append( '\033[1;37;40mkey -> ' + ctrl_end + "\033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end )
         # last time state summary was updated by cyclon (only happens
         # when task processing is invoked).
         blit.append( 'summary updated ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 
-        # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
-        blit.append( '\033[1;37;45m"' + system_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'  + ctrl_end )
         if dummy_mode:
-            blit.append( 'DUMMY MODE (' + str(rate) + ' sec = 1 hr)' )
+            foo = 'DUMMY MODE:'
+            bar = str(rate) + ' seconds = 1 hour' 
+            baz = header
+            baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
+            baz = re.sub( '.{' + str(len(bar)) + '}$', bar, baz )
+            blit.append( baz )
+
+        blit.append( '' )
           
         # construct a line of text to display for each reference time
         for rt in ref_time_list:
@@ -273,4 +292,4 @@ while True:
         sleep(1)
 
     # sleep here determines how long to wait before trying to reconnect
-    # sleep( 1 )
+    sleep( 1 )
