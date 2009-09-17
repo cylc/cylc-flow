@@ -16,7 +16,7 @@ import re
 import sys
 import Pyro.core
 import Pyro.naming
-from Pyro.errors import PyroError,NamingError,TimeoutError,ConnectionClosedError
+from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 from time import sleep
 from optparse import OptionParser
 
@@ -96,6 +96,15 @@ while True:
         god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
         # timeout (sec) determines max wait for an answer from god.
         god._setTimeout(60)
+
+    except ProtocolError:
+        if not alerted:
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+            alerted = True
+        #raise
+        # if no connection, try again to connect
+        continue
+
     except NamingError:
         if not alerted:
             print "\n\033[1;37;41mfailed to connect" + ctrl_end 
