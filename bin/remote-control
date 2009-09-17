@@ -19,11 +19,12 @@ def print_heading( strng ):
 
 def prompt( reason ):
 
+    msg =  reason + " '" + system_name + "'"
     if options.force:
+        print msg + " NOW"
         return True
 
-    print reason + " '" + system_name + "':",
-    response = raw_input( 'ARE YOU SURE (y/n)? ' )
+    response = raw_input( msg + ': ARE YOU SURE (y/n)? ' )
     if response == 'y':
         return True
     else:
@@ -118,7 +119,8 @@ elif options.system_name:
     # use the given system name
     system_name = options.system_name
     if ns_groups.registered( system_name ):
-        print "system: " + system_name
+        #print "system: " + system_name
+        pass
     else:
         print "WARNING: no " + system_name + " registered yet ..." 
         ns_groups.print_info()
@@ -207,6 +209,8 @@ if options.dump_task_id:
         ids.append( id )
 
     result = control.get_task_requisites( ids )
+
+    print 'System: ' + system_name
 
     for id in ids:
         if id not in result.keys():

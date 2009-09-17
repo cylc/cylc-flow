@@ -65,9 +65,9 @@ class config:
         self.check()
         if dump:
             self.dump()
-        else:
-            print
-            print "SYSTEM: " + self.configured['system_name']
+        #else:
+        #    print
+        #    print "SYSTEM: " + self.configured['system_name']
 
 
 
