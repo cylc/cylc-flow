@@ -22,6 +22,7 @@ import state_summary
 import pimp_my_logger
 import accelerated_clock 
 from optparse import OptionParser
+from time import sleep
 
 # auto-replace with version tag at build/install:
 cyclon_version = "foo-bar-baz";
@@ -255,6 +256,13 @@ def main( argv ):
                 msg = ', '.join( reasons )
                 # should really be log.debug() but warnings go to stdout...
                 log.warning( 'task processing, ' + str( count ) + ': ' + msg )
+
+                # simulate the effect on monitoring etc. of long task
+                # processing time (many many tasks...)
+                #if count % 50 == 0:
+                #    # every 50th time, sleep for 30s
+                #    print 'SLEEPING 30s!'
+                #    sleep(30)
 
             task_manager.regenerate_tasks()
 
