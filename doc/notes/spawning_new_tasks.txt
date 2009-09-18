@@ -1,30 +1,39 @@
 
-When an existing task runs depends entirely on its prerequisites.
+WHEN an existing task can run depends entirely on its prerequisites (and, for
+contact tasks, the delayed real start time).
 
-But a task must exist before it can get its prerequisites satisfied.
+But a task must exist before it can get its prerequisites satisfied; in other
+words we have to ensure that tasks exist by the time they are needed.
 
-When a new task should be created is currently determined by its TYPE: 
+The entity that best knows when a new of a particular task is needed is the
+previous instance of that same task type, because: the task class ("type")
+knows what the next valid reference time, etc., is for that task and, most
+importantly, it knows how tasks of its own type depend on their previous
+instances.  
 
- 1/ PARALLEL (e.g. non forecast models) do not depend on their previous
- instance; they are created as soon as the previous instance starts
- running. They could be created as soon as the previous instance exists,
- but there does not appear to be any advantage to this(?)
+Previous Instance Dependence: a general post processing task, for instance,
+does not depend on its own previous instance at all; i.e. successive instances
+can overlap or run entirely in parallel if the opportunity arises (i.e. if all
+other prerequisites are satisfied in time). Forecast models, on the other
+hand, do depend on their own previous instance: each forecast writes out
+'restart' files used in initialising the next forecast (i.e. a model state
+dump valid at the start time of the next forecast).
 
- 2/ SEQUENTIAL (e.g. forecast models) depend on their previous instance,
- so they are not created until the previous instance has finished (OR
- it tells the controller it is ready to abdicate early). Therefore:
-  (i) previous instance prerequisites need not be explicitly defined, 
-  (ii) tasks can be considered "spent" as soon as they have abdicated;
-  i.e. they don't need to wait around to satisfy the next instance, and
-  can therefore be deleted from the system somewhat earlier.
-  (iii) system start up, when there is no "previous cycle" is simple. 
+In the original cyclon, previous instance dependence was handled implicitly
+through the task creation mechanism. The next instance of non-forecast model
+task N was created as soon as N started running (this means complete
+functional parallelism is possible, but the system isn't cluttered with
+waiting tasks out to the max runahead time). The next instance of a forecast
+model task F, on the other hand, was created as soon as F finished (this
+constrained forecast models to run in sequence).  This method has two
+advantages: (i) simplicity, and (ii) the lack of explicit previous instance
+dependence makes system startup, when there are no previous intances, easy.
+On the downside though, (i) the real system at startup does have these
+dependencies, which have to be satisfied externally prior to system startup or
+by explicit cold start tasks that effectively masquerade as previous
+instances, and (ii) cyclon does not know about restart prerequisites and
+outputs, so it can't (semi)automatically recover from problems that require
+some tasks to omit one or more cycles.
 
- BUT: in a cold start, any previous instance dependence must be satisfied by
- some other means, so perhaps it would be best to acknowledge this with
- explicit cold start tasks? (iii) ASSUMES that every external model can detect
- if it needs to cold start and will act accordingly.  THEN we could forget the
- distinction between 'parallel' and 'sequential', and have the system
- determine abdication time according to whether or not any explicit
- previous-instance dependence was defined in the task definition files.  THIS
- would also allow (via fuzzy prerequisites) automatic ommission of stuck
- tasks, if a forecast task dumps out a succession of restart files?
+In the new cyclon ...:
+
