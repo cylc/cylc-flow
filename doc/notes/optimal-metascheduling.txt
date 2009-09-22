@@ -15,13 +15,16 @@ handled implicitly in early versions of cyclon, through the task proxy
 creation mechanism: a new forecast task was not created before the previous
 instance had finished, thus it could not beginning running before prior to
 that point. This had the advantage of simplicity, particular at system startup
-when there are no previous instances.  However, it meant that the system was
-unaware of actual restart dependencies. For instance, if one weather forecast
-had to be ommitted because of missing data, say, downstream models that write
-out restart files for several subsequent forecast can continue warm cycling
-over the gap. Cyclon now uses explicit restart dependencies which makes it
-possible to continue running over most operational problems with minimal human
-intervention and (no need to shut the system down).
+when there are no previous instances.  However, (i) the real system does have
+these dependencies and they have to be satisfied externally prior to system
+startup, or by oneoff cold start tasks that masquerade as previous instances,
+and, and (ii) there are advantages to having the system know about actual
+restart dependencies: if one weather forecast has to be ommitted because of
+missing data, say, downstream models that write out restart files for several
+subsequent forecast can continue warm cycling over the gap. Cyclon now uses
+explicit restart dependencies which makes it possible to continue running over
+most operational problems with minimal human intervention and (no need to shut
+the system down).
 
 Postprocessing tasks don't have previous instance dependence, but they depend
 directly or indirectly on forecast models that do. So, in practice successive
@@ -56,6 +59,7 @@ that is desirable.
 -----------
 
 WHEN A TASK RUNS CAN RUN IS DETERMINED ENTIRELY BY:
+
   (a) EXISTENCE -it must be created by the time it is needed. This is
       determined by task ABDICATION: each task object tells the task manager
       when its next instance can be created: forecast models abdicate when
@@ -67,3 +71,12 @@ WHEN A TASK RUNS CAN RUN IS DETERMINED ENTIRELY BY:
 
   (c) DELAYED REAL START TIME - contact tasks only; these won't start running
       until their delayed start time is up.
+
+
+Note on ABDICATION
+
+The entity that best knows when a new of a particular task is needed is the
+previous instance of that same task type, because: the task class ("type")
+knows what the next valid reference time, etc., is for that task and, most
+importantly, it knows how tasks of its own type depend on their previous
+instances.  
