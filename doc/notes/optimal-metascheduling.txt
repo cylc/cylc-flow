@@ -1,135 +1,69 @@
 OPTIMAL METASCHEDULING
 
-Every task in the system should be submitted at the instant its prerequisites
-are satisfied, regardless of reference time or any other consideration, EXCEPT
-where this is not desirable. This is desirable for the forecast models (which
-have previous instance dependence) and model postprocessing tasks (which don't
-have previous instance dependence, but do depend directly or indirectly on
-forecast models that do), but it is not desirable for tasks that have no
-prerequisites and no previous instance dependence. These include tide forecast
-models and any task that runs as soon as it is created (no prerequisites) and
-then waits on some external event such as arrival of real time data before
-reporting completion (it would be possible for the task proxy object to wait
-on the known earliest data arrival time before launching the task, but this
-would not be desirable during catchup when all such data is already
-available). The natural behaviour of these FREE TASKS is to ALL (up to the
-system stop time, or otherwise infinitely many) run at once and thereby swamp
-the system, so: 
+An optimal metascheduler would queue every task for execution at the instant
+its prerequisites are satisfied, regardless of reference time or any other
+consideration, except where we want to stop certain kinds of task from running
+too far ahead of the rest.  
 
-  Free tasks are:
-     (1) forced to run in sequence, and 
-     (2) not allowed to get more than max_runahead_hours ahead of the oldest
-         task in the system at any given time. 
+Forecast models have previous instance dependence: they can't begin running
+before their 'restart files' (i.e. background model state information valid at
+the start of the new forecast) have been written out by the previous forecast.
+This is often treated implicitly in the model: if the restart file is not used
+for any other purpose it may be written and read from some model "running
+directory" so that the user does not have to know about it.  This was also
+handled implicitly in early versions of cyclon, through the task proxy
+creation mechanism: a new forecast task was not created before the previous
+instance had finished, thus it could not beginning running before prior to
+that point. This had the advantage of simplicity, particular at system startup
+when there are no previous instances.  However, it meant that the system was
+unaware of actual restart dependencies. For instance, if one weather forecast
+had to be ommitted because of missing data, say, downstream models that write
+out restart files for several subsequent forecast can continue warm cycling
+over the gap. Cyclon now uses explicit restart dependencies which makes it
+possible to continue running over most operational problems with minimal human
+intervention and (no need to shut the system down).
 
-  Together these restrictions prevent (a) multiple instances from running at
-  once, and (b) appearance of too many finished instances that have to be kept
-  around to satisfy the prerequisites in the rest of the system that will be
-  lagging behind.
+Postprocessing tasks don't have previous instance dependence, but they depend
+directly or indirectly on forecast models that do. So, in practice successive
+instances will never be able to run entirely in parallel, but they may be able
+to overlap somewhat (this happens when the post processing task takes longer
+to run than the total time between the previous and current model instances
+finishing (i.e. significantly longer than the model itself). If it is not safe
+to run multiple instances of the same post processing job at the same time in
+the same area without interference between instances, then the task can be
+artificially constrained to run sequentially. 
 
-cyclon actually applies the max_runahead_hours restriction to all tasks, but
-this has the same affect as applying the restriction to just the free tasks
-(because the rest of the system depends on the free tasks). Actually, this
-restriction would also be important for fast prerequisiteless tasks that do
-have previous instance dependence, if there are any ... these would also tend
-to run far ahead of the system, albeit sequentially.
+The difference between preprocessing and postprocessing tasks is somewhat ill
+defined, but some preprocessing tasks are  of the "contact" type: they make
+contact with the external world where they wait on some event to occur at
+some known real time interval (approximately) after their reference time.
+Waiting on incoming real time observations, for example. These tasks, in
+addition to having to wait for their prerequisites to be satisifed, also wait
+for their particular delayed start time to arrive before running. If the
+systme is running behind ('catching up') then they begin running as soon as
+their prerequisites are satisfied). There has to be at least one of these
+tasks in every system.  They constrain the system in real time operation and
+create a gap between successive cycles.
 
------- more detail:
+Tasks with no prerequisites and no previous instance dependence, e.g. (some?)
+ocean tide model(s), would naturally 'all go off at once' out to the configured
+stop time (if there is one!). These are constrained by the maximum allowed
+runahead time, i.e. the reference time interval between the fastest and
+slowest tasks in the system.  They can additionally be forced to run in
+sequence, or given artificial prerequisites that tie them to other tasks, if
+that is desirable.
 
-PREVIOUS INSTANCE DEPENDENCE.
+-----------
 
-Forecast models depend on their previous instance: each forecast generates the
-"model background" fields for the next. This is often treated implicitly in
-the model itself: if the background file is not used for any other purpose it
-may be written and read from some kind of model "running" directory so that
-the user does not have to know about it.
+WHEN A TASK RUNS CAN RUN IS DETERMINED ENTIRELY BY:
+  (a) EXISTENCE -it must be created by the time it is needed. This is
+      determined by task ABDICATION: each task object tells the task manager
+      when its next instance can be created: forecast models abdicate when
+      their restart files have been written out, forced sequential tasks
+      abdicate only when they have finished.
 
-In cyclon, this could potentially be handled through explicit prerequisites.
-For example, forecast model foo would have a prequisite 
- "file foo-background-YYYYMMDDHH.nc is ready", or 
- "foo finished for YYYYMMDDHH" 
-where YYYYMMDDHH is the previous instance reference time.
+  (b) PREREQUISITES - these must be satisfied before a task can run. This
+      includes explicit restart prerequisites for forecast models. 
 
-Instead, however, cyclon makes this kind of dependence implicit in its task
-proxy object creation mechanism: For a forecast model foo, instance foo(T2)
-should not be created until foo(T1) achieves a "finished" state (i.e. foo(T2)
-can't run before foo(T1) is finished, because it doesn't exist before then).
-
-TASKS WITH NO PREVIOUS INSTANCE DEPENDENCE
-
-This includes FREE TASKS (see above) and model postprocessing tasks.
-
-Model post processing tasks don't strictly depend on their previous instance,
-but they necessarily depend on upstream cotemporal tasks that do (i.e. the
-forecast models). This means that two successive instances of the same post
-processing task will not be able to run in parallel, but they can potentially
-OVERLAP. This can happen  when the post processing task takes longer to run
-than the total time between the previous and current model instances finishing
-(i.e. significantly longer than the model itself). If it is not safe to run
-multiple instances of the same post processing job at the same time in
-the same area, without interference between instances, then the task should be
-declared as having previous instance dependence, like a forecast model, which
-will force it to run sequentially. 
-
-
-HANDLING OF PREVIOUS INSTANCE DEPENDENCE IN cyclon: TASK CREATION 
-
- (1) new forecast model tasks should be created only when their previous
- instance achieves a "finished" state. This forces them to run in sequence.
-
- (2) other tasks should be created as soon as their previous instance enters
- the "running" state (except for restriction of free tasks, as above) - this
- allows successive instances of these tasks to overlap if the opportunity
- arises (i.e. when dependencies allow).
-
-
-== an email on the topic, from just prior to achieving optimal metascheduling
-
-From: Hilary Oliver
-To: Michael Uddstrom; Colin Tinker; Chris Edsall; Bernard Miville
-Date: Monday, May 18, 2009 1:57 PM
-Subject: optimal multi-flighting under the new controller?
-
-
-Hi all,
-
-For optimum multi-flight capability a meta-scheduler should submit every task
-to the queue(s) at the instant its prerequisites are satisfied, regardless of
-reference time or any other consideration (except for deliberate cobbling of
-prerequisiteless tasks - e.g. nztide and any task that goes off to wait on
-some external event - to prevent them swamping the system or running too far
-ahead).
-
-Forecast models must wait on their previous instances because one forecast
-generates the background state for the next.  The new controller, cyclon,
-handles this previous-instance dependence implicitly via its task proxy object
-creation mechanism: in effect, if T1 and T2 are successive reference times for
-task foo, then foo(T2) can't run before foo(T1) finishes because it doesn't
-exist before then.
-
-Currently, however, cyclon treats *all* tasks in this way, not just forecast
-models.  Thus it is sub-optimal to the extent that system throughput is slowed
-by forcing tasks that don't naturally depend on their previous instance to run
-sequentially as if they did.  This affects prerequisiteless tasks, which could
-potentially run in parallel (albeit cobbled, as above), and it affects some
-post processing tasks to a limited extent: successive instances of the same
-post processing task can't ever run in parallel (because they depend on
-forecast models that do have previous instance dependence) BUT they could
-potentially overlap IF the post processing task takes longer to run than the
-model run time plus whatever happens between model runs. 
-
-Now, I've realised that with a very small change I can turn cyclon into a
-fully optimal meta-scheduler, which in addition to sounding good will have
-some impact on system throughput in catchup mode.  The question is, can we
-guarantee that all of our post processing tasks can safely overlap if the
-opportunity arises?  In other words, can multiple different-reference-time
-instances of the same post processing task run at the same time in the same
-area without interfering with each other?  (most that I can think of are
-entirely reference time dependent, so should be fine, but ... create_images
-processes anything it finds doesn't it, not just the one reference time ... if
-so, is that strictly necessary?)
-
-Hilary
-
-==
-(note that simon wood's task creation scheme, based on satisfaction of special
-"primary" prerequisites, would not work for my prerequisiteless tasks).
+  (c) DELAYED REAL START TIME - contact tasks only; these won't start running
+      until their delayed start time is up.
