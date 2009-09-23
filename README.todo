@@ -1,5 +1,14 @@
 To Do
 
+* when there are multiple finished tasks that can satisfy a new task's
+  restart prerequisites, the one that actually satisfies the new task
+  will be an essentially random choice (the first one that comes along). 
+  This is OK because the only thing that matters is that at least one
+  task can satisfy the restart dependency, then the new task calls the
+  prerequisite satisfied. However, we could get tasks to record the ID
+  of the satisfier task as well, for each prerequisite, and also to
+  choose the latest task as satisfier if more than one can do it.
+
 * exception handling in task-message script: retry and/or alert in case
   of failure to contact the control system
 
