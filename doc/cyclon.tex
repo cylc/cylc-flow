@@ -9,8 +9,8 @@
 
 \lstset{language=Python}
 
-\title{An Optimal Dynamic Metascheduler for Continuously Cycling
-Multi-Model Forecasting Systems}
+%\title{An Optimal Dynamic Metascheduler for Continuously Cycling Multi-Model Forecasting Systems}
+\title{A Next-General Control System For Cycling Multi-Model Forecasting Operations}
 
 \author{Hilary Oliver, NIWA}
 
@@ -20,34 +20,40 @@ Multi-Model Forecasting Systems}
 
 \begin{abstract}
 
-    A metascheduler is a control system that determines when members of
-    a set of tasks with dependencies are ready to be scheduled for
-    execution.\footnote{The term can also refer to {\it a single
-    aggregate view of multiple Distributed Resource Managers}, which is
-    not the topic of this paper.} Environmental forecasting systems
-    consist of cycling (indefinitely repeating) task sets that have
-    dependencies within and between cycles. Existing forecast control
-    systems ignore intercycle dependencies, which greatly increase a
-    system's apparent complexity, because they are automatically
-    satisfied in normal real time operation. This assumes a linear
-    sequence of distinct forecast cycles at all times, however, which is
-    very inefficient when catching up from operational delays or running
-    historical case studies; then the driving data for the next cycle(s)
-    are available in advance and intercycle dependencies may allow tasks
-    from many different cycles to run at once.
+    A control system for a forecasting operation is a form of {\em
+    metascheduler} - it determines when members of a set of tasks with
+    dependencies are ready to be scheduled for execution.\footnote{The
+    term can also refer to {\it a single aggregate view of multiple
+    Distributed Resource Managers}, which is not the topic of this
+    paper.} Environmental forecasting systems consist of a set of tasks
+    that repeat indefinitely in the presence of dependencies within and
+    between cycles, and the cycle period may be task dependent.
+    Intercycle dependencies greatly increase a system's apparent
+    complexity, and existing forecast systems controllers ignore them
+    because they are automatically satisfied in normal real time
+    operation. This assumes a linear sequence of distinct forecast
+    cycles at all times, however, which is very inefficient when
+    catching up from operational delays or running over historical data
+    (case studies); the driving data for the next cycle(s) are then
+    available in advance and tasks from many different cycles may be
+    able to run at once when all dependencies are accounted for.
     %particularly for systems that have little down time between
     %forecast cycles.  
-    The metascheduler presented in this paper, {\em cyclon}, is able to
-    schedule tasks for execution as soon as their prerequisites are
-    satisfied, regardless of forecast cycle, to achieve optimal
-    throughput in all modes of operation. It is also extremely flexible
-    and widely applicable because it uses no system-specific scheduling
-    logic: each task simply registers its own prerequisites and reports
-    its own outputs, and dependencies are negotiated dynamically so that
-    correct execution order emerges naturally at run time. {\em cyclon}
-    is easily interfaced to existing tasks (models etc.), new tasks will
-    automatically run at the right time, and control of any configured
-    task set can be fully tested without running the real tasks. It is
+    Our dynamic metascheduler, {\em cyclon}, is able to queue tasks for
+    execution as soon as their prerequisites are satisfied, regardless
+    of forecast cycle, to achieve optimal throughput in all modes of
+    operation. It is also extremely flexible and widely applicable
+    because it uses no system-specific scheduling logic: each task
+    simply registers its own prerequisites and reports its own outputs,
+    and dependencies are negotiated dynamically so that correct
+    execution order, with maximum functional parallelism, emerges
+    naturally at run time. {\em Cyclon} is easily interfaced to existing
+    tasks (models etc.), and control of complex task sets, and failure
+    scenarios, can be tested quickly via a simulation mode that is
+    indistinguishable, to the controller, from real operation. Forecast
+    models can register their own restart dependencies; this allows the
+    system to continue running over operational failures that involve
+    omitted cycles with very little human intervention. Cyclon is
     written in Python and uses the Python Remote Object Protocol ({\em
     Pyro}) to control tasks on multiple platforms at once. 
 
@@ -89,20 +95,19 @@ including a massively parallel supercomputer and several Linux servers.
 
 \section{Control Systems and Dependencies}
 
-A control system should ideally schedule tasks for execution as soon as
+A control system should ideally queue tasks for execution as soon as
 they are ready, but not before.  This is the best that can be done
-whether or not the scheduled tasks always begin executing immediately,
-which is determined by the batch queue scheduler(s). A task is {\em
-ready} to execute when its prerequisites have been satisfied by other
-tasks in the system,\footnote{Prerequisites that are external to the
-system can be reformulated as outputs of tasks that wait on an external
-events.} usually by generating, or otherwise making available, required
-input data. The dependencies between tasks do not respect forecast cycle
-boundaries; they can exist between different tasks in the same cycle
-(e.g.\ a sea state forecast might depend on wind fields generated by a
-cotemporal weather forecast), between instances of the same task in
-different cycles (e.g.\ a forecast model generally writes out a
-``background model state'' that is used in initializing its next
+whether or not the queued tasks begin executing immediately (which is
+determined by the batch queue scheduler(s). A task is {\em ready} to
+execute when its prerequisites have been satisfied by other tasks in the
+system,\footnote{A task that depends on external data can be treated as
+depending on the output of another task that waits on arrival of the
+external data.} usually by generating, or otherwise making available,
+required input data. Dependencies can exist between different tasks in
+the same cycle (e.g.\ a sea state forecast might depend on wind fields
+generated by a cotemporal weather forecast), between instances of the
+same task in different cycles (e.g.\ a forecast model generally writes
+out a ``background model state'' that is used in initializing its next
 forecast), and between different tasks in different cycles (e.g.\ the
 EcoConnect catchment models run on an hourly cycle as they assimilate
 real time streamflow observations, but they depend on precipitation data
@@ -166,29 +171,25 @@ execution times represented by the horizontal extent of the task bars.
 There is a time gap between cycles as the system waits on new external
 driving data, and the schedule is optimal in the sense that every task
 begins executing as soon as its prerequisites are satisfied. All tasks
-here predicate on upstream tasks {\em finishing} rather than on
+here depend on upstream tasks {\em finishing} rather than on any
 intermediate outputs, but this is just to make clearer
-diagrams.\footnote{Model background states are written early in a
-forecast, assuming the forecast length is much longer than the cycle
-period, so in principle forecast models don't actually have to wait on
-their previous instance {\em finishing} - the new system could easily
-handle this using ``background state ready'' messages instead ``task
-finished'' messages to trigger task abdication; more on this later.}   
+diagrams.
 
-The simplest metascheduling algorithm is probably one in which the user
-must explicitly specify the task execution order and guarantee that it
-will not violate any dependencies, perhaps with some crude means of
-specifying tasks that can run in parallel as well. This is clearly
-sub-optimal and puts a heavy burden on the user. A more sophisticated
-design capable of achieving the optimal single cycle job schedule of
-Figure \ref{fig-time-one} is a Finite State Machine that, within an
-event loop that waits on tasks finishing, enforces a predetermined
-non-linear order of events using hard coded scheduling logic: {\em if
-task A has just finished, then begin executing tasks B and C}, and so
-on. Unfortunately this is highly system-specific and rapidly becomes
-convoluted as system complexity increases, inevitably leading to
-inflexibility and fragility.  As far as the author is aware all existing
-forecast control systems are of one type or the other.
+The simplest kind of metascheduler just iterates through a user-defined
+list of tasks that are assumed not to violate any dependencies, possibly
+with some crude means of specifying tasks that can run in parallel. This
+is clearly sub-optimal, puts a heavy burden on the user, and would be
+impractical for large complex systems. A more sophisticated design
+capable of achieving the optimal single cycle job schedule of Figure
+\ref{fig-time-one} is a Finite State Machine that, within an event loop
+that waits on tasks finishing, enforces a predetermined non-linear order
+of events using hard coded scheduling logic: {\em if task A has just
+finished, then begin executing tasks B and C}, and so on.  This works
+well for sequential cycling but it is highly system-specific and rapidly
+becomes convoluted as system complexity increases, which inevitably
+leads to inflexibility and fragility. As far as the author is aware all
+existing forecast control systems belong to one of these two groups.
+
 \subsection{Optimal Metascheduling}
 
 When catching up from operational delays, and in historical case
@@ -232,16 +233,15 @@ forecast model ($a$, $b$, and $c$) depends on its own previous instance.
 \end{figure} 
 
 Figure \ref{fig-time-three}, below the time axis, shows the effect of an
-operational delay of almost one whole forecast cycle on a sequential
-cycling system: it takes many cycles to catch up again. Above the time
-axis is the optimal schedule that is possible, in principle, when
-intercycle dependencies are taken into account: the second cycle after
-the delay is hardly affected, and subsequent cycles all run on time.
-Note that simply overlapping the single cycle schedules of Figure
-\ref{fig-time-one} from the same start point would have resulted in a
-dependency violation in task {\em c}.  Lack of ability to do this is a
-serious problem for complex operations like EcoConnect that have little
-downtime between cycles. 
+operational delay of almost one whole forecast cycle on a sequentially
+cycling system that normally has little downtime between cycles: it
+takes many cycles to catch up again. Above the time axis is the optimal
+schedule that is possible, in principle, when intercycle dependencies
+are taken into account: the second cycle after the delay is hardly
+affected, and subsequent cycles all run on time.  Note that simply
+overlapping the single cycle schedules of Figure \ref{fig-time-one} from
+the same start point would have resulted in a dependency violation in
+task {\em c}.
 
 \begin{figure} 
     \begin{center} 
