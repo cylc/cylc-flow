@@ -268,8 +268,8 @@ import logging
             else:
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
-        task_init_def_args = 'ref_time, initial_state = None, startup = False'
-        task_init_args = 'initial_state'
+        task_init_def_args = 'clock, ref_time, initial_state = None, startup = False'
+        task_init_args = 'clock, initial_state'
 
         if contact:
             if 'CONTACT_DELAY_HOURS' not in parsed_def.keys():

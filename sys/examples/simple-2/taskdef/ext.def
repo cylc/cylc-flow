@@ -9,7 +9,7 @@
     Depends only on the system startup task at start time.
 
 %TYPE
-    free_task, contact
+    free_task, catchup_contact
 
 %CONTACT_DELAY_HOURS
     1.0

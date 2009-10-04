@@ -203,9 +203,6 @@ if options.describe_names:
     print
 
 if options.dump_task_id:
-    # TO DO: this currently gets cyclon to dump the requested
-    # information to stdout. It might be better to connect to the
-    # task objects themselves and print the information here. 
     [ tmp, reftime ] = options.dump_task_id.split( '%' )
     if re.search( ',', tmp ):
         names = tmp.split( ',' )
@@ -220,17 +217,23 @@ if options.dump_task_id:
     result = control.get_task_requisites( ids )
 
     print
-    print 'system: ' + system_name
+    print 'System:  ' + system_name
+    print 'Task ID: ' + id
+    print
     print ' + => prerequisite satisfied, or output completed' 
     print ' - => prerequisite NOT satisfied, or output NOT completed' 
 
     for id in ids:
         if id not in result.keys():
-            print id + ': task not found'
+            print
+            print 'ERROR: task not found'
 
     for id in result.keys():
-        [ pre, out ] = result[ id ]
-        print_heading( id + ' prerequisites:')
+        [ pre, out, extra_info ] = result[ id ]
+
+        print_heading( 'Prerequisites:')
+        if len( pre ) == 0:
+            print '(None)'
         for item in pre:
             [ msg, state ] = item
             if state:
@@ -238,7 +241,10 @@ if options.dump_task_id:
             else:
                 descr = ' - '
             print descr + msg
-        print_heading( id + ' outputs:' )
+
+        print_heading( 'Outputs:' )
+        if len( out ) == 0:
+            print '(None)'
         for item in out:
             [ msg, state ] = item
             if state:
@@ -246,6 +252,11 @@ if options.dump_task_id:
             else:
                 descr = ' - '
             print descr + msg
+
+        if len( extra_info.keys() ) > 0:
+            print_heading( 'Extra Info' )
+            for item in extra_info:
+                print item, '...', extra_info[ item ]
 
     print
 

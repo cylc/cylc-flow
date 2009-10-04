@@ -23,19 +23,27 @@ class contact:
     def get_real_time_delay( self ):
         return self.real_time_delay
 
-    def ready_to_run( self, clock ):
+    def start_time_reached( self ):
+        reached = False
+        # check current time against expected start time
+        rt = _rt_to_dt( self.ref_time )
+        delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
+        current_time = self.clock.get_datetime()
+
+        if current_time >= delayed_start:
+           reached = True
+
+        return reached
+
+    def ready_to_run( self ):
         # ready IF waiting AND all prerequisites satisfied AND if my
         # delayed start time is up.
         ready = False
         if self.state.is_waiting() and self.prerequisites.all_satisfied():
-            # check current time against expected start time
-            rt = _rt_to_dt( self.ref_time )
-            delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
-            current_time = clock.get_datetime()
 
-            if current_time >= delayed_start:
+            if self.start_time_reached():
                 ready = True
             else:
-                self.log( 'DEBUG', 'ready, but waiting on delayed start time' )
+                self.log( 'DEBUG', 'prerequisites satisfied but waiting on delayed start time' )
 
         return ready

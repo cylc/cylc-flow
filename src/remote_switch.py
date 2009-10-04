@@ -146,7 +146,24 @@ class remote_switch( Pyro.core.ObjBase ):
             id = task.get_identity()
             if id in task_ids:
                 found = True
-                dump[ id ] = [ task.prerequisites.dump(), task.outputs.dump() ]
+
+                extra_info = {}
+
+                # extra info for contact tasks
+                try:
+                    extra_info[ 'delayed start time reached' ] = task.start_time_reached() 
+                except AttributeError:
+                    # not a contact task
+                    pass
+
+                # extra info for catchup_contact tasks
+                try:
+                    extra_info[ task.__class__.name + ' caught up' ] = task.__class__.get_class_var( 'caughtup' )
+                except:
+                    # not a catchup_contact task
+                    pass
+
+                dump[ id ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
 
         if not found:
             self.log.warning( 'No tasks found for the requisite dump request' )

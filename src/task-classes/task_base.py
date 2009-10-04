@@ -90,13 +90,8 @@ class task_base( Pyro.core.ObjBase ):
         # written to the state dump file
         try:
             return cls.class_vars[ item ]
-        except AttributeError:
-            # no class vars defined
-            return None
-        except KeyError:
-            # this var not defined
-            return None
-
+        except:
+            raise AttributeError
 
     @classmethod
     def dump_class_vars( cls, FILE ):
@@ -112,13 +107,15 @@ class task_base( Pyro.core.ObjBase ):
             pass
 
 
-    def __init__( self, state = None ):
+    def __init__( self, clock, state = None ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
         #  * self.ref_time, using self.nearest_ref_time()
         #  * prerequisites and outputs
         #  * self.env_vars 
+
+        self.clock = clock
 
         class_vars = {}
         self.state = task_state.task_state( state )
@@ -262,15 +259,15 @@ class task_base( Pyro.core.ObjBase ):
 
         return reference_time.decrement( rt, decrement )
 
-    def ready_to_run( self, clock ):
+    def ready_to_run( self ):
         # ready if 'waiting' AND all prequisites satisfied
         ready = False
         if self.state.is_waiting() and self.prerequisites.all_satisfied(): 
             ready = True
         return ready
 
-    def run_if_ready( self, launcher, clock ):
-        if self.ready_to_run( clock ):
+    def run_if_ready( self, launcher ):
+        if self.ready_to_run():
             self.run_external_task( launcher )
 
     def run_external_task( self, launcher ):
@@ -364,14 +361,6 @@ class task_base( Pyro.core.ObjBase ):
                 # req is one of my prerequisites
                 if reqs.is_satisfied(req):
                     self.prerequisites.set_satisfied( req )
-
-    def get_real_time_delay( self ):
-        # Return hours after reference to start running.
-        # Used by dummy contact tasks in dummy mode.
-        # Default, here, is to return None, which implies not a contact task
-        # returning 0 => contact task starts running at reference time
-        # (TO DO: THERE MIGHT BE A BETTER WAY TO DO THIS...)
-        return None
 
     def dump_state( self, FILE ):
         # Write state information to the state dump file, reference time
