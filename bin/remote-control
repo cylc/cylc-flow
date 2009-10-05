@@ -254,7 +254,7 @@ if options.dump_task_id:
             print descr + msg
 
         if len( extra_info.keys() ) > 0:
-            print_heading( 'Extra Info' )
+            print_heading( 'Other:' )
             for item in extra_info:
                 print item, '...', extra_info[ item ]
 

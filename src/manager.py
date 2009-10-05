@@ -83,7 +83,7 @@ class manager:
         for name in self.config.get('task_list'):
 
             # instantiate the task
-            itask = self.get_task_instance( 'task_classes', name )( self.clock, start_time, startup = True )
+            itask = self.get_task_instance( 'task_classes', name )( self.clock, start_time )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
