@@ -520,54 +520,67 @@ class manager:
             self.log.warning( "task to reset not found: " + task_id )
 
     def insertion( self, ins ):
-        # insert a new task or task group in a waiting state
+        try:
+            # insert a new task or task group in a waiting state
 
-        if re.match( '^GROUP:', ins ):
-            # task group
-            [ junk, group ] = ins.split(':')
-            [ groupname, ref_time ] = group.split( '%' )
+            if re.match( '^GROUP:', ins ):
+                # task group
+                [ junk, group ] = ins.split(':')
+                [ groupname, ref_time ] = group.split( '%' )
 
-            try:
-                tasknames = self.config.get( 'task_groups')[groupname]
-            except KeyError:
-                self.log.warning( 'insertion group ' + groupname + ' not defined' )
+                try:
+                    tasknames = self.config.get( 'task_groups')[groupname]
+                except KeyError:
+                    self.log.warning( 'insertion group ' + groupname + ' not defined' )
                 return
 
-            ids = []
-            for name in tasknames:
-                ids.append( name + '%' + ref_time )
+                ids = []
+                for name in tasknames:
+                    ids.append( name + '%' + ref_time )
 
-        else:
-            # single task id
-            ids = [ ins ]
+            else:
+                # single task id
+                ids = [ ins ]
 
+            for task_id in ids:
+                [ name, ref_time ] = task_id.split( '%' )
 
-        for task_id in ids:
-            [ name, ref_time ] = task_id.split( '%' )
+                # instantiate the task object
+                try:
+                    itask = self.get_task_instance( 'task_classes', name )( self.clock, ref_time )
 
-            # instantiate the task object
-            itask = self.get_task_instance( 'task_classes', name )( self.clock, ref_time )
+                except AttributeError:
+                    print 'ERROR: task class', name, 'not found'
 
-            if itask.instance_count == 1:
-                # first task of its type, so create the log
-                log = logging.getLogger( 'main.' + name )
-                pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
+                else:
+                    if itask.instance_count == 1:
+                        # first task of its type, so create the log
+                        log = logging.getLogger( 'main.' + name )
+                        pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
  
-            # the initial task reference time can be altered during
-            # creation, so we have to create the task before
-            # checking if stop time has been reached.
-            skip = False
-            if self.stop_time:
-                if int( itask.ref_time ) > int( self.stop_time ):
-                    itask.log( 'WARNING', " STOPPING at " + self.stop_time )
-                    itask.prepare_for_death()
-                    del itask
-                    skip = True
+                    # the initial task reference time can be altered during
+                    # creation, so we have to create the task before
+                    # checking if stop time has been reached.
+                    skip = False
+                    if self.stop_time:
+                        if int( itask.ref_time ) > int( self.stop_time ):
+                            itask.log( 'WARNING', " STOPPING at " + self.stop_time )
+                            itask.prepare_for_death()
+                            del itask
+                            skip = True
 
-            if not skip:
-                itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, itask.get_identity() )
-                self.tasks.append( itask )
+                    if not skip:
+                        itask.log( 'DEBUG', "connected" )
+                        self.pyro.connect( itask, itask.get_identity() )
+                        self.tasks.append( itask )
+
+        except Exception, x:
+            # a failed remote insertion should not bring the system 
+            # down for any reason (badly formatted input or whatever).
+            print 
+            print 'WARNING: INSERTION FAILED; reason:'
+            print x
+            print 
 
 
     def find_cotemporal_dependees( self, parent ):
