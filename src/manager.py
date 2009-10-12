@@ -4,6 +4,7 @@ import reference_time
 import pimp_my_logger
 import logging
 import pdb
+import traceback
 import sys
 import os
 import re
@@ -528,11 +529,11 @@ class manager:
                 [ junk, group ] = ins.split(':')
                 [ groupname, ref_time ] = group.split( '%' )
 
-                try:
-                    tasknames = self.config.get( 'task_groups')[groupname]
-                except KeyError:
-                    self.log.warning( 'insertion group ' + groupname + ' not defined' )
-                return
+                #try:
+                tasknames = self.config.get( 'task_groups')[groupname]
+                #except KeyError:
+                #    self.log.warning( 'insertion group ' + groupname + ' not defined' )
+                #    return
 
                 ids = []
                 for name in tasknames:
@@ -574,12 +575,12 @@ class manager:
                         self.pyro.connect( itask, itask.get_identity() )
                         self.tasks.append( itask )
 
-        except Exception, x:
+        except:
             # a failed remote insertion should not bring the system 
             # down for any reason (badly formatted input or whatever).
             print 
             print 'WARNING: INSERTION FAILED; reason:'
-            print x
+            traceback.print_exc()
             print 
 
 
