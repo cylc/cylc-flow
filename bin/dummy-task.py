@@ -64,13 +64,11 @@ if __name__ == '__main__':
     system_name = os.environ['SYSTEM_NAME'] 
     dummy_clock_rate = int( os.environ['CLOCK_RATE'] )
 
-    print 'dummy task, masquerading as ' + task_name + '%' + ref_time,
     failout = False
     if '--fail' in sys.argv:
+        print 'dummy task, masquerading as ' + task_name + '%' + ref_time,
         print ': programmed to FAIL!'
         failout = True
-    else:
-        print
 
     dummy = dummy_task( task_name, ref_time )
     dummy.run()
