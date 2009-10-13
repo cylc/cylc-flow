@@ -45,6 +45,7 @@ def clean_shutdown( pyro, reason ):
 def service_remote_requests( remote, task_manager, log ):
 
     halt = False
+    halt_now = False
     process_tasks = False
 
     if remote.get_halt():
@@ -53,6 +54,12 @@ def service_remote_requests( remote, task_manager, log ):
         # pyro-related error messages when they try to phone home).
         task_manager.set_system_hold()
         halt = True
+
+    if remote.get_halt_now():
+        # stop launching new tasks, NOW.
+        # This must be used to shutdown the system if an external task
+        # dies without notifying cyclon.
+        halt_now = True
 
     if remote.get_nudge():
         process_tasks = True
@@ -110,7 +117,7 @@ def service_remote_requests( remote, task_manager, log ):
         process_tasks = True
 
 
-    return [ halt, process_tasks ]
+    return [ halt, halt_now, process_tasks ]
 
 def main( argv ):
 
@@ -261,11 +268,14 @@ def main( argv ):
         count = 0
         task_base.state_changed = True
         system_halt = False
+        system_halt_now = False
 
         while True: # MAIN LOOP
-            [ halt, process_tasks_remote ] = service_remote_requests( remote, task_manager, log )
+            [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, task_manager, log )
             if halt:
                 system_halt = True
+            if halt_now:
+                system_halt_now = True
 
             process_tasks_contact = False
             if task_manager.waiting_contact_task_ready( clock ):
@@ -313,7 +323,7 @@ def main( argv ):
                 clean_shutdown( pyro, "ALL TASKS FINISHED" )
                 return
 
-            if system_halt and task_manager.no_tasks_running():
+            if system_halt_now or system_halt and task_manager.no_tasks_running():
                 clean_shutdown( pyro, "all running tasks finished" )
                 return
 

@@ -29,6 +29,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         # record remote system halt requests
         self.system_halt_requested = False
+        self.system_halt_now_requested = False
 
         # record remote system hold requests
         self.system_hold_requested = False
@@ -81,6 +82,13 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return False
 
+    def get_halt_now( self ):
+        if self.system_halt_now_requested:
+            self.system_halt_now_requested = False
+            return True
+        else:
+            return False
+
     def get_halt( self ):
         if self.system_halt_requested:
             self.system_halt_requested = False
@@ -114,6 +122,10 @@ class remote_switch( Pyro.core.ObjBase ):
     def shutdown( self ):
         self.log.warning( "REMOTE: system halt, after running tasks finish" )
         self.system_halt_requested = True
+
+    def shutdown_now( self ):
+        self.log.warning( "REMOTE: system halt, NOW" )
+        self.system_halt_now_requested = True
 
     def get_config( self, item ):
         self.log.warning( "REMOTE: config item " + item )

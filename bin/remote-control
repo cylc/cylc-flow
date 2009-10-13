@@ -49,8 +49,11 @@ parser.add_option( "--reset", help="reset a failed task to the waiting state",
 parser.add_option( "-r", "--resume", help="unhold/resume system",
         action="store_true", default=False, dest="resume" )
 
-parser.add_option( "-s", "--shutdown", help="shutdown system",
+parser.add_option( "-s", "--shutdown", help="halt system when all running tasks have finished",
         action="store_true", default=False, dest="shutdown" )
+
+parser.add_option( "--shutdown-now", help="halt system NOW",
+        action="store_true", default=False, dest="shutdownnow" )
 
 parser.add_option( "-t", "--stop-time", help="set stop time",
         metavar="YYYYMMDDHH", action="store", dest="stop_time" )
@@ -170,6 +173,10 @@ if options.resume:
 if options.shutdown:
     if prompt( 'Shutdown' ):
         control.shutdown()
+
+if options.shutdownnow:
+    if prompt( 'Shutdown NOW' ):
+        control.shutdown_now()
 
 if options.verbosity:
     control.set_verbosity( options.verbosity )
