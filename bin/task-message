@@ -12,6 +12,7 @@ its unique task ID, <NAME>%<REFTIME>.
 import os
 import sys
 import Pyro.core
+from Pyro.errors import NamingError, ProtocolError
 import config
 from optparse import OptionParser
 
@@ -92,12 +93,39 @@ config = config.config()
 config.user_override()
 config.check()
 
-# TO DO: use exception handling when I know how to report the real error
-# (which is generally more useful than my own error message)
-
 # connect to the task object inside the control program
-#try:
-task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.' + taskname + '%' + reftime )
+while True:
+    try:
+        task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.' + taskname + '%' + reftime )
+       
+    except ProtocolError:
+        # retry if temporary network problems prevented connection
+
+        # TO DO: do we need to single out just the 'connection failed error?'
+
+        # http://pyro.sourceforge.net/manual/10-errors.html
+        # Exception: ProtocolError,
+        #    Error string: connection failed
+        #    Raised by: bindToURI method of PYROAdapter
+        #    Description: Network problems caused the connection to fail.
+        #                 Also the Pyro server may have crashed.
+        #                 (presumably after connection established - hjo)
+
+        print 'Network Problems, RETRYING'
+
+    except NamingError:
+        # can't find nameserver, or no such object registered ...
+        print 'PYRO NAMESERVER ERROR'
+        raise
+
+    except Exception:
+        # all other exceptions
+        print 'ERROR'
+        raise
+
+    else:
+        # successful connection; continue on.
+        break
 
 if options.all_restarts_completed:
     task.set_all_restarts_completed()
@@ -105,11 +133,10 @@ elif options.all_outputs_completed:
     task.set_all_outputs_completed()
 else:
     task.incoming( priority, message )
-#except:
+
 #    # nameserver not found, or object not registered with it?
 #    print "ERROR: failed to connect to " + task_name + "_" + ref_time
 #    print "Trying dead letter box"
-
 #    try:
 #        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + config.get('system_name') + '.' + 'dead_letter_box' )
 #        dead_box.incoming( message )
