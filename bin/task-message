@@ -15,6 +15,7 @@ import Pyro.core
 from Pyro.errors import NamingError, ProtocolError
 import config
 from optparse import OptionParser
+from time import sleep
 
 # construct a command line parser
 usage = "%prog [options] <message>" 
@@ -94,7 +95,9 @@ config.user_override()
 config.check()
 
 # connect to the task object inside the control program
+count = 0
 while True:
+    count += 1
     try:
         task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.' + taskname + '%' + reftime )
        
@@ -111,7 +114,8 @@ while True:
         #                 Also the Pyro server may have crashed.
         #                 (presumably after connection established - hjo)
 
-        print 'Network Problems, RETRYING'
+        print 'task-message [' + str( count ) + ']: Network Problems, RETRYING in 5 seconds'
+        sleep(5)
 
     except NamingError:
         # can't find nameserver, or no such object registered ...
