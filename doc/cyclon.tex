@@ -10,7 +10,7 @@
 \lstset{language=Python}
 
 %\title{An Optimal Dynamic Metascheduler for Continuously Cycling Multi-Model Forecasting Systems}
-\title{A Next-Generation Control System For Cycling Multi-Model Forecasting Operations}
+\title{A Next-Generation Control System For Multi-Model Forecasting Operations}
 
 \author{Hilary Oliver, NIWA}
 
@@ -22,30 +22,33 @@
 \tableofcontents
 \pagebreak
 
-\begin{abstract} This document describes a new control system for
-forecasting operations, {\em cyclon}, which uses a novel simulation-like
-algorithm to dramatically reduce the complexity of the general
-metascheduling problem. It is able to present tasks to the job
-scheduler(s) as soon as their prerequisites are satisfied regardless of
-forecast cycle, to achieve optimal throughput in all modes of operation.
-The development of cyclon was largely motivated by the need, for a
-complex system with little downtime between cycles, to run tasks from
-several forecast cycles at once during catchup operation. As a
-consequence of its lack of system-specific scheduling logic, however, it
-is also extremely flexible and widely applicable. Each task simply
-registers its own prerequisites and reports its own outputs as they are
-generated, and dependencies are negotiated dynamically so that correct
-execution order emerges naturally at run time.
-    %, with maximum functional parallelism,
-{\em Cyclon} is easily interfaced to existing tasks (models etc.), and
-control of complex systems, failure and recovery scenarios, etc., can be
-tested quickly via a simulation mode that is indistinguishable, to the
-controller, from real operation. Forecast model `restart' dependencies
-are also handled explicity, which allows the system to continue
-operating, with very little human intervention, over failures that
-involve omitted cycles in the driving models. Cyclon is written in
-Python and uses the Python Remote Object Protocol ({\em Pyro}) to
-control tasks on multiple platforms at once.  \end{abstract}
+\begin{abstract}
+
+This document describes a new control system for forecasting operations,
+{\em cyclon}, which implements a novel algorithm that avoids the
+apparent complexities of multi-cycle metascheduling and automatically
+provides optimal throughput, with maxim functional parallelism, in all
+modes of operation. Each system task is configured simply, as if it were
+to run alone, but registers its prerequisites with the controller and
+reports outputs as they are generated. Dependencies are then negotiated
+dynamically so that correct execution order emerges naturally at run
+time and tasks are presented to the job scheduler(s) at the earliest
+possible moment, regardless of forecast cycle.  The development of
+cyclon was largely motivated by the need to run tasks from several
+forecast cycles at once during catchup operation, for complex systems
+with little downtime between cycles. Cyclon's lack of system-specific
+scheduling logic, however, also makes it extremely flexible, easy to
+use, and widely applicable. {\em Cyclon} can control tasks across a
+heterogenous network is easily interfaced to existing tasks (models
+etc.). Control of specific complex systems can be simulated in a dummy
+mode that is indistinguishable, to the controller, from real operation.
+Forecast model `restart' dependencies are handled explicity, which
+allows the system to continue operating with very little human
+intervention over failures that involve omitted cycles in the driving
+models. Cyclon is written in Python and uses the Python Remote Object
+Protocol ({\em Pyro}).
+
+\end{abstract}
 
 
 \section{Environmental Forecasting Systems}
