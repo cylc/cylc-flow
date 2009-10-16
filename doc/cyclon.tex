@@ -24,53 +24,56 @@
 
 \begin{abstract}
 
-This document describes a new control system for forecasting operations,
-{\em cyclon}, which implements a novel algorithm that avoids the
-apparent complexities of multi-cycle metascheduling and automatically
-provides optimal throughput, with maxim functional parallelism, in all
-modes of operation. Each system task is configured simply, as if it were
-to run alone, but registers its prerequisites with the controller and
-reports outputs as they are generated. Dependencies are then negotiated
-dynamically so that correct execution order emerges naturally at run
-time and tasks are presented to the job scheduler(s) at the earliest
-possible moment, regardless of forecast cycle.  The development of
-cyclon was largely motivated by the need to run tasks from several
-forecast cycles at once during catchup operation, for complex systems
-with little downtime between cycles. Cyclon's lack of system-specific
-scheduling logic, however, also makes it extremely flexible, easy to
-use, and widely applicable. {\em Cyclon} can control tasks across a
-heterogenous network is easily interfaced to existing tasks (models
-etc.). Control of specific complex systems can be simulated in a dummy
-mode that is indistinguishable, to the controller, from real operation.
-Forecast model `restart' dependencies are handled explicity, which
-allows the system to continue operating with very little human
-intervention over failures that involve omitted cycles in the driving
-models. Cyclon is written in Python and uses the Python Remote Object
-Protocol ({\em Pyro}).
+This document describes a new control system for complex environmental
+forecasting operations, {\em cyclon}, that automatically achieves
+optimal metascheduling performance in all modes of operation. During
+catchup from delays, in historical case studies, and in parallel trials
+that are delayed with respect to the main operation, tasks from many
+forecast cycles can run at once where dependencies allow. 
+
+%Each task (forecast models, post-processing jobs, etc.) are represented
+%by proxy objects that communicate with their real tasks across the
+%network. Each task proxy is unaware of what other tasks exist in the
+%system (tasks are is configured without reference to other tasks in the
+%system (i.e.\ as if for standalone runs) but 
+Dependencies are negotiated dynamically amongst the current task pool,
+regardless of forecast cycle, so that correct execution order emerges
+naturally at run time. Development of cyclon was largely motivated by
+the need for faster catchup operation in a complex system with little
+downtime between cycles, but the complete lack of system-specific
+scheduling logic in the new method also makes it extremely flexible,
+easy to use, and widely applicable. {\em Cyclon} can control tasks
+across a heterogenous distributed network and is easily interfaced to
+existing tasks. Control of the configured task set, and recovery from
+failure scenarios, can be tested in a simulation mode that to the
+control system is indistinguishable from real operation. Explicit
+handling of forecast model `restart' dependencies allows continued
+operation, with very little human intervention, over failures that
+involve omitted cycles in the driving models. Cyclon is written in
+Python and uses the Python Remote Object Protocol ({\em Pyro}).
 
 \end{abstract}
 
 
 \section{Environmental Forecasting Systems}
 
-Environmental forecasting operations generate forecast products at
-regular intervals using a set of linked scientific models and associated
-data processing tasks\footnote{A {\em task} is any group of processes
-treated as a single entity for scheduling purposes.} driven by real time
-external data (observations and/or forecast fields from another
-operation).  From a job scheduling perspective, this is a large set of
-cycling (repeating) interdependent tasks whose execution order must be
-carefully controlled to avoid dependency violations.  
+Environmental forecasting operations generate products at regular
+intervals using a set of linked scientific models and associated data
+processing tasks.\footnote{A {\em task} is any group of processes
+treated as a single entity for scheduling purposes.}  From a job
+scheduling perspective, such systems are large sets of ever-repeating
+interdependent tasks whose execution order must be carefully controlled
+to avoid dependency violations.  
 
-Normal real time operation necessarily takes the form of a series of
-distinct {\em forecast cycles} initiated, after a gap in processing, by
+Normal real time operation necessarily consists of a series of distinct
+{\em forecast cycles} that are initiated, after a gap in processing, by
 new external driving data (typically real time observational data and/or
-forecast data from an external system). Each forecast cycle consists of
-a set of tasks all with the same {\em forecast reference time}, which is
-the nominal forecast start time for a forecast model, or that of the
-associated forecast model for data processing tasks. Some tasks may run
-more frequently than others (i.e.\ not all tasks necessarily run in
-every cycle). 
+forecast data from an external system). For the purposes of this
+document we associate a {\em reference time} with all tasks that run in
+a given forecast cycle; it is the nominal forecast start time for
+forecast models, or that of the associated forecast model for data
+processing tasks. Note that some tasks may run more frequently than
+others; i.e.\ not all tasks necessarily run in every cycle. 
 
 
 \subsection{EcoConnect}
@@ -78,7 +81,7 @@ every cycle).
 The EcoConnect Forecasting System at the National Institute of Water and
 Atmospheric Research (NIWA) in New Zealand takes real time atmospheric
 and stream flow observations, and operational global weather forecasts
-from the Met Office (UK), and uses them to drive global sea state and
+from the Met Office (UK), and uses these to drive global sea state and
 regional data assimilating weather models, which in turn drive regional
 sea state, storm surge, and catchment river models, plus tide
 prediction, and a large number of associated data collection, quality
@@ -96,27 +99,24 @@ including a massively parallel supercomputer and several Linux servers.
 
 \section{Control Systems and Dependencies}
 
-A control system that automates this can be termed a {\em metascheduler}
-because it must determine, taking account of dependencies, when each
-task is ready to be sent to the batch queue scheduler to be queued for
-execution.\footnote{The term can also refer to {\it a single aggregate
-view of multiple Distributed Resource Managers}, which is not the topic
-of this paper.}  Ideally each task should be queued as soon as it is
-ready, but not before; this is the best that can be done whether or not
-the queued tasks can begin executing immediately, which is determined by
-the batch queue scheduler(s). A task's state of readiness is determined
-by its dependencies, i.e.\ whether or not its prerequisites have been
-satisfied yet by other tasks in the system,\footnote{A task that depends
-on external data can be treated as depending on the output of another
-task that waits on arrival of the external data.}. Usually this means
-other tasks must have generated, or otherwise made available, all
-required input data. 
+A control system to automate this can be described as a {\em
+metascheduler}: it must decide, taking account of dependencies, when
+each task is {\em ready to be scheduled for execution} by the batch
+queue scheduler(s).\footnote{The term can also refer to {\it a single
+aggregate view of multiple Distributed Resource Managers}, which is not
+the topic of this paper.}  Ideally tasks should be queued as soon as
+their prerequisites are satisfied, but not before, so that they will
+begin executing immediately sufficient resource becomes available. 
+
+%\footnote{A task that depends on external data can be treated as
+%depending on the output of another task that waits on arrival of the
+%external data.}
 
 One normally thinks of task dependencies as operating within a forecast
 cycle. A sea state forecast, for example, might depend on surface wind
 fields generated by an upstream weather forecast over the same forecast
-range; and a forecast product generation task clearly can't run before
-the forecast itself is finished. Perhaps less obviously, because they
+range; and a forecast product generation task can't run before its
+associated forecast is finished. Perhaps less obviously, because they
 are usually handled implicitly, there are also dependencies between
 tasks in different forecast cycles. For instance, a model forecast would
 typically depend on a recent previous forecast (by the same model) for
