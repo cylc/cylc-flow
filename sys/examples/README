@@ -1,12 +1,12 @@
 
 simple-0
 ========
-This is the simple example system described in the cyclon documentation
+This is the simple example system described in the cylon documentation
 paper, with an additional oneoff 'startup' task that provides initital
 restart input to the forecast models (A,B,C) and cleans out the work
 space for the system in real mode.  The external tasks, located in the
 scripts sub-directory, are 'unmodified' in that they do not know about
-cyclon. Cyclon runs them via its task wrapping mechanism, and all tasks
+cylon. Cylon runs them via its task wrapping mechanism, and all tasks
 necessarily depend on their upstream dependers finishing (actually, they
 can depend on defined internal outputs of the upstream tasks, but the
 task-wrapper can only set these completed when the task has finished).
@@ -24,7 +24,7 @@ functionality is part of task A)
 
 simple-2
 ========
-In this system the external tasks have been modified so that cyclon can
+In this system the external tasks have been modified so that cylon can
 run them directly without using the task wrapping mechanism: the tasks
 send their own 'started', 'finished', 'failed', and output messages when
 appropriate. Thus:
@@ -34,11 +34,11 @@ appropriate. Thus:
    replacing one forecast model with another) so long as they provide
    the same outputs.
 
-Simple-2 also includes a 'dummy task' that uses cyclon's external dummy
+Simple-2 also includes a 'dummy task' that uses cylon's external dummy
 task program to simulate the defined outputs even in real mode. This can
 be used to "provide initial restart inputs" for forecast models that are
 in reality provided by external means (e.g. a spinup experiment) prior to
-starting cyclon. We don't do this in the simple examples, however,
+starting cylon. We don't do this in the simple examples, however,
 because their real tasks do require these restart inputs, but we haven't
 provided a standalone external means of providing them.
 
@@ -53,7 +53,7 @@ checking for the existence of the expected files. Also, task run
 time is simulated using the unix 'sleep' command, but accelerated so
 that 10 sec = 1 hour for quick completion. 
 
-In dummy mode, cyclon runs external dummy programs that simulate the
+In dummy mode, cylon runs external dummy programs that simulate the
 real tasks by reporting each of the registered outputs completed at the
 right time. This can be done using the same time 10s = 1hr time
 acceleration for comparison with real mode runs.

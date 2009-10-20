@@ -11,7 +11,7 @@ the start of the new forecast) have been written out by the previous forecast.
 This is often treated implicitly in the model: if the restart file is not used
 for any other purpose it may be written and read from some model "running
 directory" so that the user does not have to know about it.  This was also
-handled implicitly in early versions of cyclon, through the task proxy
+handled implicitly in early versions of cylon, through the task proxy
 creation mechanism: a new forecast task was not created before the previous
 instance had finished, thus it could not beginning running before prior to
 that point. This had the advantage of simplicity, particular at system startup
@@ -21,7 +21,7 @@ startup, or by oneoff cold start tasks that masquerade as previous instances,
 and, and (ii) there are advantages to having the system know about actual
 restart dependencies: if one weather forecast has to be ommitted because of
 missing data, say, downstream models that write out restart files for several
-subsequent forecast can continue warm cycling over the gap. Cyclon now uses
+subsequent forecast can continue warm cycling over the gap. Cylon now uses
 explicit restart dependencies which makes it possible to continue running over
 most operational problems with minimal human intervention and (no need to shut
 the system down).

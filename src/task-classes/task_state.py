@@ -4,7 +4,7 @@ import sys
 
 """
 Store task state information, and provide methods to dump and reload
-this information from the cyclon state dump file. Use of a dict data
+this information from the cylon state dump file. Use of a dict data
 structure allows derived task classes to set arbitrary new state
 variables that will automatically be written to and read from the state
 dump file.

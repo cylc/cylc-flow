@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-# cyclon user configuration file
+# cylon user configuration file
 
 # config[ 'item_name' ] = item_value
 
@@ -15,10 +15,10 @@ config = {}                          # !
 
 config[ 'system_name' ] = 'simple-0'
 
-config[ 'logging_dir' ] = os.environ[ 'HOME' ] + '/running/cyclon/' + config[ 'system_name' ] + '/log'
-config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/running/cyclon/' + config[ 'system_name' ] + '/state'
+config[ 'logging_dir' ] = os.environ[ 'HOME' ] + '/running/cylon/' + config[ 'system_name' ] + '/log'
+config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/running/cylon/' + config[ 'system_name' ] + '/state'
 
-config[ 'environment' ] = { 'TMPDIR':'/tmp/' + os.environ['USER'] + '/cyclon/' + config[ 'system_name' ] }
+config[ 'environment' ] = { 'TMPDIR':'/tmp/' + os.environ['USER'] + '/cylon/' + config[ 'system_name' ] }
 
 config[ 'dummy_mode' ] = False
 

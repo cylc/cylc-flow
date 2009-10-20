@@ -1,18 +1,18 @@
-CYCLON DARCS REPOSITORY SETUP
+CYLON DARCS REPOSITORY SETUP
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-bin/     - cyclon main program and utility programs that can be directly invoked.
+bin/     - cylon main program and utility programs that can be directly invoked.
 
-src/     - python modules used by cyclon
+src/     - python modules used by cylon
 
-doc/     - cyclon documentation
+doc/     - cylon documentation
 
 system-def/ - top level system (task set) definition directory
 
-	example/ - example task set, with cyclon task definition and config files
+	example/ - example task set, with cylon task definition and config files
 
 	templates/ - task definition file templates, with some documentation
 
     YOUR SYSTEM DEFINITION DIRECTORY TREES SHOULD BE MAINTAINED AS
     SEPARATE REPOSITORIES THAT ARE TAGGED TO INDICATE COMPATIBILITY WITH
-    CYCLON VERSIONS, BUT THEY SHOULD BE INSTALLED HERE UNDER system-def/.
+    CYLON VERSIONS, BUT THEY SHOULD BE INSTALLED HERE UNDER system-def/.

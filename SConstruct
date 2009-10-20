@@ -1,38 +1,38 @@
-# Basic scons build control file for cyclon
+# Basic scons build control file for cylon
 # Hilary Oliver,  April 2009
 
 import os, sys
 
 version=""
 
-# Read $CYCLON_VERSION from the environment and refuse to build if
+# Read $CYLON_VERSION from the environment and refuse to build if
 # the variable is not defined
 
 try:
-	version = os.environ['CYCLON_VERSION']
+	version = os.environ['CYLON_VERSION']
 except:
-	print "ERROR: environment variable $CYCLON_VERSION not defined"
+	print "ERROR: environment variable $CYLON_VERSION not defined"
 	sys.exit()
 
 if len( version ) == 0:
-	print "ERROR: environment variable $CYCLON_VERSION empty"
+	print "ERROR: environment variable $CYLON_VERSION empty"
 	sys.exit()
 
-print "Installing CYCLON version " + version
-# For now, just copy into a top level directory called 'cyclon'
+print "Installing CYLON version " + version
+# For now, just copy into a top level directory called 'cylon'
 
-install_dir = os.environ.get("HOME") + '/cyclon'
+install_dir = os.environ.get("HOME") + '/cylon'
 
 # MODIFY THE SOURCE CODE BEFORE INSTALLING
-# insert the version tag into the banner in the cyclon main program
+# insert the version tag into the banner in the cylon main program
 command = """
 	cd bin; 
-	cat cyclon | sed -e 's/\(\s*cyclon_version =\).*/\\1 \"""" + version + """\";/' > tmp1 || exit 1;
-	mv tmp1 cyclon || exit 1
-	chmod +x cyclon || exit 1
+	cat cylon | sed -e 's/\(\s*cylon_version =\).*/\\1 \"""" + version + """\";/' > tmp1 || exit 1;
+	mv tmp1 cylon || exit 1
+	chmod +x cylon || exit 1
 	"""
 if os.system( command ):
-	print "Failed to insert cyclon version number into cyclon"
+	print "Failed to insert cylon version number into cylon"
 	sys.exit()
 
 # INSTALL FILES

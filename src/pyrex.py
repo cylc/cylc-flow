@@ -8,7 +8,7 @@
 #ns_thread.start()
 #ns_starter.waitUntilStarted(10)
 
-# Different cyclon instances must use different Pyro nameserver 
+# Different cylon instances must use different Pyro nameserver 
 # group names to prevent the different systems interfering with
 # each other via the common nameserver. 
 
@@ -45,7 +45,7 @@ class pyrex:
         print " - creating nameserver group '" + groupname + "'"
         try:
             # abort if any existing objects are registered in my group name
-            # (this may indicate another instance of cyclon is running
+            # (this may indicate another instance of cylon is running
             # with the same groupname; must be unique for each instance
             # else the different systems will interfere with each other) 
             self.nameserver.createGroup( groupname )
@@ -109,7 +109,7 @@ class discover:
             # E.g. ':Default.ecoconnect.name'
             group = obj[0].rsplit('.', 1)[0]
             # now strip off ':Default'
-            # TO DO: use 'cyclon' group!
+            # TO DO: use 'cylon' group!
             group = re.sub( '^:Default\.', '', group )
             if re.match( ':Pyro', group ):
                 # avoid Pyro.nameserver itself

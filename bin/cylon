@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # USE $PYTHONPATH IN YOUR ENVIRONMENT TO MAKE AVAILABLE:
-# 1/ cyclon 'src' module directory
+# 1/ cylon 'src' module directory
 # 2/ user config module (for user_config.py and task_classes.py)
 
 import re
@@ -26,13 +26,13 @@ from optparse import OptionParser
 from time import sleep
 
 # auto-replace with version tag at build/install:
-cyclon_version = "foo-bar-baz"
+cylon_version = "foo-bar-baz"
 
 def print_banner():
     print "__________________________________________________________"
     print
-    print "      .       cyclon Dynamic Metascheduler        ."
-    #print "              version: " + cyclon_version
+    print "      .       cylon Dynamic Metascheduler        ."
+    #print "              version: " + cylon_version
     print "      .         Hilary Oliver, NIWA, 2008/9       ."
     print "      .    Pyro nameserver required: 'pyro-ns'    ."
     print "__________________________________________________________"

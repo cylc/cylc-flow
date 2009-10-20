@@ -18,7 +18,7 @@ class manager:
         self.stop_time = stop_time
         self.config = config
 
-        self.pyro = pyro  # pyrex (cyclon Pyro helper) object
+        self.pyro = pyro  # pyrex (cylon Pyro helper) object
         self.log = logging.getLogger( "main" )
 
         self.system_hold_now = False

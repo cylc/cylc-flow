@@ -74,5 +74,5 @@ To Do
   def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
 
 * forecast tasks can no longer be 'quick death' because they depend on
-  previous instance. Cyclon should check for this. However, they could
+  previous instance. Cylon should check for this. However, they could
   die as soon as their successor is satisfied. 

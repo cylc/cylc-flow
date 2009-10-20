@@ -5,7 +5,7 @@ tasks, but should processes that are necessarily connected and sequential
 (e.g. retrieval of a file and subsequent format conversion) be done in
 different tasks? 
 
-Cyclon can easily handle a large number of tasks, so there are definite
+Cylon can easily handle a large number of tasks, so there are definite
 advantages to fine-graining the system:
 
  * a more modular and transparent system

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cyclon example system, task A
+# cylon example system, task A
 # depends on task ext and its own restart file.
 
 # run length 90 minutes, one restart file

@@ -144,7 +144,7 @@ else:
 
 
 try:
-    # connect to the remote switch object in cyclon
+    # connect to the remote switch object in cylon
     control = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'remote' )
 except NamingError:
     print "\n\033[1;37;41mfailed to connect" + ctrl_end 

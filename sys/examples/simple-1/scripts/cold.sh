@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cyclon example system, task cold
+# cylon example system, task cold
 # one off cold start task
 # generates restart files for task A
 # no prerequisites

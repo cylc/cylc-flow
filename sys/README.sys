@@ -1,5 +1,5 @@
-cyclon systems (i.e. sets of related tasks to be controlled by cyclon)
+cylon systems (i.e. sets of related tasks to be controlled by cylon)
 should be defined and maintained in their own repositories with version
-tags to indicate which version of cyclon they are compatible with. This
-allows cyclon development to continue without having to constantly
+tags to indicate which version of cylon they are compatible with. This
+allows cylon development to continue without having to constantly
 upgrade multiple task sets in the main repository.

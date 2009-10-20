@@ -10,13 +10,18 @@ mkdir bkp
 for FILE in $FILES; do
     echo $FILE ...
 
+    if [[ -d $FILE ]]; then
+        echo skipping directory $FILE
+        continue
+    fi
+
     [[ $FILE = *namechange.sh ]] && {
         echo 'SKIPPING SELF'
         continue
     }
 
-    IN=cycon
-    OUT=cyclon
+    IN=cyclon
+    OUT=cylon
 
     INBIG=$( echo $IN | tr 'a-z' 'A-Z' )
     OUTBIG=$( echo $OUT | tr 'a-z' 'A-Z' )

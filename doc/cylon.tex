@@ -26,7 +26,7 @@
 \begin{abstract}
 
 This document describes a new control system for complex multi-model
-environmental forecast operations, {\em cyclon}. It is an optimal
+environmental forecast operations, {\em cylon}. It is an optimal
 metascheduler in the sense that tasks are presented to the scheduler to
 be queued for execution at the earliest possible time regardless of
 forecast cycle. During catchup from delays, and throughout historical
@@ -35,8 +35,8 @@ from multiple forecast cycles at once to the full extent allowed by
 inter-task dependencies. This development was largely motivated by the
 need for faster catchup operation in a complex system with little
 downtime between forecast cycles, but the total lack of system-specific
-scheduling logic in cyclon also makes it extremely flexible, easy to
-use, and widely applicable.  Cyclon can control tasks across a
+scheduling logic in cylon also makes it extremely flexible, easy to
+use, and widely applicable.  Cylon can control tasks across a
 heterogenous distributed network and is easily interfaced to existing
 systems. The system can be stopped and restarted in any state of
 operation (running or failed tasks will automatically be restarted) and
@@ -46,7 +46,7 @@ quickly tested in a simulation mode that to the control system is
 indistinguishable from real operation.  Explicit handling of forecast
 model `restart' dependencies allows continued operation, with very
 little human intervention, over failures that involve omitted cycles in
-the driving models. Cyclon is written in Python and uses the Python
+the driving models. Cylon is written in Python and uses the Python
 Remote Object Protocol ({\em Pyro}).  
 
 \end{abstract}
@@ -86,8 +86,8 @@ inevitably becomes convoluted and inflexible as system complexity
 increases, and handling of intercycle dependencies is probably not
 feasible.  
 
-Cyclon solves these problems by means of a novel dynamic dependency
-negotiation algorithm [Section~\ref{sec:cyclon}]. A pool of task proxy
+Cylon solves these problems by means of a novel dynamic dependency
+negotiation algorithm [Section~\ref{sec:cylon}]. A pool of task proxy
 objects represent, and can interact with, external system tasks. A task
 proxy object knows its task's prerequisites and keeps track of its
 completed outputs, but is unaware of other tasks in the system. The task
@@ -100,7 +100,7 @@ cycle, to negotiate dependencies. Correct task ordering thus emerges
 naturally at run time even though tasks do not know who is supposed to
 supply their inputs, and optimal throughput is achieved in all modes of
 operation.  During catchup from delays, and similarly for historical
-case studies or delayed parallel trials, cyclon runs tasks from multiple
+case studies or delayed parallel trials, cylon runs tasks from multiple
 forecast cycles simultaneously, to the full extent allowed by inter-task
 dependencies.
 
@@ -369,13 +369,13 @@ A new approach is required to achieve this because the hard coded
 scheduling logic of the sequential cycling Finite State design above
 already suffers from complexity-related problems, and extending it to
 this more general system hardly seems feasible. The following section
-describes the means by which cyclon achieves continuous optimal
+describes the means by which cylon achieves continuous optimal
 metascheduling. It smoothly transitions to a linear sequence of distinct
 forecast cycles, as in Figure \ref{fig-time-one}, as the system catches
 up to real time.  
 
 
-\section{Cyclon Implementation}
+\section{Cylon Implementation}
 
 \subsection{The Main Algorithm}
 
@@ -673,7 +673,7 @@ beginning no matter how big the bump.
 
 The object oriented dynamic metascheduling concept is quite general and
 could in principle be implemented for any set of interdependent tasks.
-cyclon, however, is specialized toward cycling forecast systems in that
+cylon, however, is specialized toward cycling forecast systems in that
 each task must have an associated {\em forecast reference time} that is
 part of a predetermined series for a given task type and is not
 necessarily related to the real time at which the task actually runs.  
@@ -755,7 +755,7 @@ the 'waiting' state.
 
 \section{Essential OOP Concepts}
 
-The simplicity of the dynamic scheduling implementation in {\em cyclon}
+The simplicity of the dynamic scheduling implementation in {\em cylon}
 is critically dependent on the {\em polymorphic} nature of the {\em task
 objects} in the program.  This section contains a minimal introduction
 to these Object Oriented Programming concepts.  Refer to any OOP
@@ -829,7 +829,7 @@ which results in a lot of unnecessary task processing when nothing
 important is happening.
 
 
-\subsection{Interfacing Tasks To cyclon}
+\subsection{Interfacing Tasks To cylon}
 blah.
 
 \subsection{Utility Programs}

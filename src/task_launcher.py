@@ -36,16 +36,16 @@ class launcher:
     def run( self, owner, task_name, ref_time, task, dummy_out, extra_vars=[] ):
 
         # who is running the control system
-        cyclon_owner = os.environ[ 'USER' ]
+        cylon_owner = os.environ[ 'USER' ]
 
-        # cyclon environment script for this system
-        cyclon_env = os.environ[ 'CYCLON_ENV' ]
-        cyclon_bin = os.environ[ 'CYCLON_BIN' ]
+        # cylon environment script for this system
+        cylon_env = os.environ[ 'CYLON_ENV' ]
+        cylon_bin = os.environ[ 'CYLON_BIN' ]
 
         # ECOCONNECT: if the system is running on /test or /dvel then
         # replace the '_oper' owner postfix with '_test' or '_dvel'
-        if re.search( '_test$', cyclon_owner) or re.search( '_dvel$', cyclon_owner ): 
-            system = re.split( '_', cyclon_owner )[-1]
+        if re.search( '_test$', cylon_owner) or re.search( '_dvel$', cylon_owner ): 
+            system = re.split( '_', cylon_owner )[-1]
             owner = re.sub( '_oper$', '_' + system, owner )
 
         # EXTERNAL PROGRAM TO RUN
@@ -53,7 +53,7 @@ class launcher:
             # dummy task
             # explicit path not required thanks to environment.sh
             # external_program = 'dummy-task.py'
-            external_program = cyclon_bin + '/dummy-task.py'
+            external_program = cylon_bin + '/dummy-task.py'
             if self.failout:
                 if self.failout_task == task_name + '%' + ref_time:
                     external_program += ' --fail'
@@ -64,7 +64,7 @@ class launcher:
             external_program = task
             if not re.match( '^/', task ):
                 # relative path: use scripts in the '<system>/scripts' sub-directory
-                sysdir = re.sub( '[^/]*$', '', cyclon_env )
+                sysdir = re.sub( '[^/]*$', '', cylon_env )
                 external_program = sysdir + 'scripts/' + task
 
         # CONSTRUCT THE FULL COMMAND TO RUN
@@ -74,7 +74,7 @@ class launcher:
             # DIRECT EXECUTION 
             command =  'export REFERENCE_TIME=' + ref_time + '; '
             command += 'export TASK_NAME='    + task_name + '; '
-            command += 'export CYCLON_ENV='  + cyclon_env + '; '
+            command += 'export CYLON_ENV='  + cylon_env + '; '
             command += 'export SYSTEM_NAME='  + self.system_name + '; '
             command += 'export CLOCK_RATE='   + str(self.clock_rate) + '; '
 
@@ -87,7 +87,7 @@ class launcher:
         else:
             # QSUB EXECUTION
 
-            if owner != cyclon_owner: 
+            if owner != cylon_owner: 
                 # sudo run the task as its proper owner; only for qsub,
                 # else owner needs sudo access to the task itself
                 command  = 'sudo -u ' + owner 
@@ -95,7 +95,7 @@ class launcher:
             command += ' qsub -q ' + self.job_queue + ' -z'
             command += ' -v REFERENCE_TIME=' + ref_time
             command += ',TASK_NAME='    + task_name
-            command += ',CYCLON_ENV='  + cyclon_env
+            command += ',CYLON_ENV='  + cylon_env
             command += ',SYSTEM_NAME='  + self.system_name
 
             # the following required for dummy mode operation

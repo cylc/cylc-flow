@@ -14,14 +14,14 @@
 
 # Thus WRAPPED TASKS do not need to send any messages, but they must
 # provide the standard exit codes: '0' for success, '1' (or more) for
-# failure. If you want, however, a wrapped task *can* send cyclon
+# failure. If you want, however, a wrapped task *can* send cylon
 # messages as well, but in that case you might as well dispense with
 # wrapping and provide your own started, finished, and failure messages
 # as well.
 
 set -e  # abort on error
 
-# cyclon exports the following environment variables for each task:
+# cylon exports the following environment variables for each task:
 #   1. $REFERENCE_TIME  
 #   2. $TASK_NAME      
 #   3. $WRAP          

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cyclon example system, task ext
+# cylon example system, task ext
 # gets external data
 # no prerequisites
 
