@@ -9,9 +9,8 @@
 
 \lstset{language=Python}
 
-%\title{An Optimal Dynamic Metascheduler for Continuously Cycling Multi-Model Forecasting Systems}
+\title{An Optimal Dynamic Metascheduler for Multi-Model Environmental Forecasting Operations}
 %\title{A Next-Generation Control System For Multi-Model Forecasting Operations}
-\title{An Optimal Dynamic Metascheduler (Control System) For Complex Multi-Model Forecasting Operations}
 
 \author{Hilary Oliver, NIWA}
 
@@ -25,29 +24,30 @@
 
 \begin{abstract}
 
-This document describes a new control system for complex multi-model
-environmental forecast operations, {\em cylon}. It is an optimal
-metascheduler in the sense that tasks are presented to the scheduler to
-be queued for execution at the earliest possible time regardless of
-forecast cycle. During catchup from delays, and throughout historical
-case studies or delayed parallel trials, it automatically runs tasks
-from multiple forecast cycles at once to the full extent allowed by
-inter-task dependencies. This development was largely motivated by the
-need for faster catchup operation in a complex system with little
-downtime between forecast cycles, but the total lack of system-specific
-scheduling logic in cylon also makes it extremely flexible, easy to
-use, and widely applicable.  Cylon can control tasks across a
-heterogenous distributed network and is easily interfaced to existing
-systems. The system can be stopped and restarted in any state of
-operation (running or failed tasks will automatically be restarted) and
-tasks can be added and removed instantly, even in a running system.
-Control of a configured task set, and failure recovery scenarios, can be
-quickly tested in a simulation mode that to the control system is
-indistinguishable from real operation.  Explicit handling of forecast
-model `restart' dependencies allows continued operation, with very
-little human intervention, over failures that involve omitted cycles in
-the driving models. Cylon is written in Python and uses the Python
-Remote Object Protocol ({\em Pyro}).  
+This document describes a new dynamic metascheduler (a type of control
+system) for multi-model environmental forecast operations. {\em Cylon}
+is optimal in the sense that it is able to present tasks to the batch
+queue scheduler at the earliest possible time, regardless of forecast
+cycle, and automatically achieves maximum functional parallelism. During
+catchup from delays, and throughout historical case studies or delayed
+parallel trials, it runs tasks from multiple forecast cycles at once to
+the full extent allowed by inter-task dependencies.  This development
+was largely motivated by the need for faster catchup operation in a
+complex system with little downtime between forecast cycles, but the
+total lack of system-specific scheduling logic in cylon also makes it
+extremely flexible, easy to use, and widely applicable.  Cylon can
+control tasks across a heterogenous distributed network and is easily
+interfaced to existing systems. It can stop and restart the entire
+forecasting operation in any state of operation (running or failed tasks
+are automatically restarted) and tasks can be added and removed
+instantly, even in a running system.  Control of a configured task set,
+and failure recovery scenarios, can be quickly tested in a simulation
+mode that to the control system is indistinguishable from real
+operation.  Explicit handling of forecast model `restart' dependencies
+allows continued operation, with very little human intervention, over
+failures that involve omitted cycles in the driving models. Cylon is
+written in Python and uses the Python Remote Object Protocol ({\em
+Pyro}).  
 
 \end{abstract}
 
