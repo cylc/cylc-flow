@@ -10,8 +10,9 @@
 \lstset{language=Python}
 
 %\title{An Optimal Dynamic Metascheduler for Multi-Model Environmental Forecasting Systems}
-%\title{A Next-Generation Control System for Complex Environment %Forecasting Operations}
-\title{A Continuous Task Scheduler for Complex Environmental Forecasting Systems}
+%\title{A Next-Generation Control System for Multi-Model Environment Forecasting Operations}
+\title{Cylon: a Continuous Task Scheduler for Multi-Model Environmental
+Forecasting Systems}
 
 \author{Hilary Oliver, NIWA}
 
@@ -25,31 +26,30 @@
 
 \begin{abstract}
 
-{\em Cylon} is a new task scheduling system for complex multi-model
-environmental forecasting operations that uniquely, as far as the author
-is aware, manages continuously interdependent task networks with no
-division into global (system-wide) forecast cycles, and thus achieves
-optimal scheduling in all modes of operation. A series of distinct
-forecast cycles emerges naturally in normal real time operation but
-during catch up operation, delayed parallel trials, or historical case
-studies, tasks with many different cycle times can run simultaneously to
-the full extent allowed by their dependencies. Cylon's development was
-largely motivated by the need for much faster catchup operation in a
-complex system with little downtime between cycles, but it is also
-extremely flexible, easy to use, widely applicable, and easily
-interfaced to existing systems.  Dependencies between tasks do not need
-to be defined explicitly by the user but are resolved at run-time (each
-task simply registers its own prerequisites and outputs as if it was to
-run alone). Tasks can be added and removed the fly, and the system can
-be stopped and restarted in any state of operation.
-%(running or failed tasks are automatically restarted) 
-Control of the configured task set, and failure recovery scenarios, can
-be tested quickly in a simulation mode that is indistinguishable (to the
-control system) from real operation. Explicit handling of forecast model
-`restart' dependencies allows continued operation, with very little
-human intervention, over failures that involve omitted cycles in the
-driving models. Cylon is written in Python and uses the Python Remote
-Object Protocol ({\em Pyro}) to control tasks across a network.  
+    {\em Cylon} is a new task scheduler for multi-model environmental
+    forecasting systems that abandons the system-wide ``forecast cycle''
+    in favour of explicit handling of intercycle dependencies between
+    individual tasks. A series of distinct forecast cycles emerges
+    naturally in normal real time operation, but in catch up operation,
+    delayed parallel trials, or historical runs, tasks from any number
+    of forecast cycles can run simultaneously to the full extent allowed
+    by the dependencies.  Cylon's development was largely motivated by
+    the need for much faster catchup operation in a complex system with
+    little downtime between cycles, but it is also extremely flexible,
+    easy to use, widely applicable, and easily interfaced to existing
+    tasks (models, post-processing, etc.). Dependencies are not defined
+    explicitly by the user but are resolved at run-time (each task
+    simply registers its own prerequisites and outputs as if to run
+    alone). Tasks can be added and removed the fly, the system can be
+    stopped and restarted in any state of operation, and explicit
+    handling of forecast model `restart' dependencies allows continued
+    operation, with very little human intervention, over major failures
+    that involve omitted cycles of the driving models. Control of the
+    configured task set, and failure recovery scenarios, can be tested
+    quickly in a simulation mode that is indistinguishable (to the
+    control system) from real operation. Cylon is written in Python and
+    uses the Python Remote Object Protocol ({\em Pyro}) to control tasks
+    across a network.  
 
 \end{abstract}
 
@@ -378,6 +378,8 @@ up to real time.
 
 
 \section{Cylon Implementation}
+
+{\huge THIS SECTION IS VERY OUT OF DATE!}
 
 \subsection{The Main Algorithm}
 
