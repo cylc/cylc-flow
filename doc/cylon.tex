@@ -29,27 +29,27 @@ Forecasting Systems}
     {\em Cylon} is a new task scheduler for multi-model environmental
     forecasting systems that abandons the system-wide ``forecast cycle''
     in favour of explicit handling of intercycle dependencies between
-    individual tasks. A series of distinct forecast cycles emerges
-    naturally in normal real time operation, but in catch up operation,
-    delayed parallel trials, or historical runs, tasks from any number
-    of forecast cycles can run simultaneously to the full extent allowed
-    by the dependencies.  Cylon's development was largely motivated by
-    the need for much faster catchup operation in a complex system with
-    little downtime between cycles, but it is also extremely flexible,
-    easy to use, widely applicable, and easily interfaced to existing
-    tasks (models, post-processing, etc.). Dependencies are not defined
-    explicitly by the user but are resolved at run-time (each task
-    simply registers its own prerequisites and outputs as if to run
-    alone). Tasks can be added and removed the fly, the system can be
-    stopped and restarted in any state of operation, and explicit
-    handling of forecast model `restart' dependencies allows continued
-    operation, with very little human intervention, over major failures
-    that involve omitted cycles of the driving models. Control of the
-    configured task set, and failure recovery scenarios, can be tested
-    quickly in a simulation mode that is indistinguishable (to the
-    control system) from real operation. Cylon is written in Python and
-    uses the Python Remote Object Protocol ({\em Pyro}) to control tasks
-    across a network.  
+    individual tasks. In a cyclon system a series of distinct forecast
+    cycles emerges naturally in normal real time operation, but in catch
+    up operation, delayed parallel trials, or historical runs, tasks
+    from any number of forecast cycles can run simultaneously to the
+    full extent allowed by the dependencies.  Cylon's development was
+    largely motivated by the need for much faster catchup operation in a
+    complex system with little downtime between cycles, but it is also
+    extremely flexible, easy to use, widely applicable, and easily
+    interfaced to existing tasks (models, post-processing, etc.).
+    Dependencies are not defined explicitly by the user but are resolved
+    at run-time (each task simply registers its own prerequisites and
+    outputs as if to run alone). Tasks can be added and removed the fly,
+    the system can be stopped and restarted in any state of operation,
+    and explicit handling of forecast model `restart' dependencies
+    allows continued operation, with very little human intervention,
+    over major failures that involve omitted cycles of the driving
+    models. Control of the configured task set, and failure recovery
+    scenarios, can be tested quickly in a simulation mode that is
+    indistinguishable (to the control system) from real operation. Cylon
+    is written in Python and uses the Python Remote Object Protocol
+    ({\em Pyro}) to control tasks across a network.  
 
 \end{abstract}
 
