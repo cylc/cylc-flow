@@ -1,5 +1,11 @@
 To Do
 
+* allow cylon task proxies to kill their external tasks at shutdown (and
+  otherwise)
+
+* connection failure retry for dummy tasks, as is currently done in
+  task-message
+
 * use exception handling as in task_manager.insert() to prevent remote
   control operations that throw an exception (e.g. due to mis-formatted 
   user input) from bringing the system down.
