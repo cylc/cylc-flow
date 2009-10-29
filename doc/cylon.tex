@@ -23,22 +23,21 @@
 
 \begin{abstract}
 
-    {\em Cylon} is a metascheduler\footnote{A {\em metascheduler}
-    determines the order in which tasks are sent to the job
-    scheduler(s), i.e.\ it decides when dependent tasks are {\em ready}
-    to run. The term also describes a single aggregate view of multiple
-    distributed resource managers, which is not the topic of this
-    paper.} for forecasting systems that abandons the system-wide
-    forecast cycle in favour of explicit handling of intercycle
-    dependencies between individual tasks.\footnote{A {\em task} is any
-    group of processes treated as a single entity for scheduling
-    purposes.} In a system controlled by cylon a series of distinct
-    forecast cycles emerges naturally in real time operation, but in
-    catch up operation, delayed parallel trials, or historical case
-    studies, tasks from any number of forecast cycles can run
-    simultaneously to the full extent allowed by dependencies, with the
-    potential for greatly increased system throughput. Cylon is also
-    extremely flexible and easy to use because each task simply
+    {\em Cylon} is a forecasting systems metascheduler\footnote{A {\em
+    metascheduler} determines the order in which tasks are sent to the
+    job scheduler(s), i.e.\ it decides when dependent tasks are {\em
+    ready} to run. The term also describes a single aggregate view of
+    multiple distributed resource managers, which is not the topic of
+    this paper.} that abandons the system-wide forecast cycle in favour
+    of explicit handling of intercycle dependencies between individual
+    tasks.\footnote{A {\em task} is any group of processes treated as a
+    single entity for scheduling purposes.} In a system controlled by
+    cylon a series of distinct forecast cycles emerges naturally in real
+    time operation, but in catch up operation, delayed parallel trials,
+    or historical case studies, tasks from any number of forecast cycles
+    can run simultaneously to the full extent allowed by dependencies,
+    with the potential for greatly increased system throughput. Cylon is
+    also extremely flexible and easy to use because each task simply
     registers its own inputs and outputs, as if to run alone, and
     dependencies are resolved at run time. The system thus adapts
     dynamically to insertion or removal of tasks at run time. Explicit
@@ -54,61 +53,12 @@
 
 \end{abstract}
 
-
-Existing metaschedulers suited to controlling forecasting systems, as
-far as the author is aware, invariably assume/require a series of
-distinct {\em forecast cycles}. This represents normal real time
-operation perfectly well, but it can be a serious impediment whenever
-advance availability of external driving data makes it possible, in
-principle, to run tasks from future cycles before the current cycle is
-finished [Section~\ref{sec:Existing}]. The more primitive existing
-systems place the burden on the user to define a list of tasks to cycle
-through, perhaps with some way of specifying some functional
-parallelism.  This is a recipe for sub-optimal scheduling and fragility
-because task ordering has to be re-evaluated manually whenever the
-system is changed. Another option is system-specific finite state
-scheduling logic. Optimal job scheduling within a forecast cycle is
-possible in this case but the coded logic inevitably becomes convoluted
-and inflexible as system complexity increases, and handling of
-intercycle dependencies is almost certainly not feasible. Finally, a
-general scheduling tool for jobs with dependencies, such as SMS, is
-probably the best option. but as discussed, this does not allow
-successive cycles to interleave.
-
-Notably, this occurs after delays
-or downtime, when better system throughput would result in faster catch
-up operation. But allowing this, in the general case, requires explicit
-handling of intercycle dependencies, which dramatically increases the
-apparent complexity of even the simplest systems
-[Section~\ref{sec:ICD}].\footnote{A crude system-specific overlap of
-consecutive ``sequential'' cycles may be feasible for specific systems,
-but not in general because of intercycle dependencies.} 
-
-
-Cylon uses a novel run time dependency negotiation algorithm
-[Section~\ref{sec:cylon}]. A pool of task proxy objects represent, and
-can interact with, external system tasks. A task proxy object knows its
-prerequisites (inputs) and keeps track of its completed outputs, but is
-unaware of other tasks in the system. The task pool must include
-``waiting'' and finished tasks from previous, current, and future
-cycles, as well as those currently running (the life cycle of a proxy
-object is such that it always exists by the time it is needed, and dies
-not long after it is no longer needed). The entire task pool is then
-enabled to interact indiscriminately, and regardless of forecast cycle,
-to negotiate dependencies. Correct task ordering thus emerges naturally
-at run time even though tasks do not know who is supposed to supply
-their inputs, and optimal throughput is achieved in all modes of
-operation. During catch up from delays, and similarly for historical
-case studies or delayed parallel trials, cylon runs tasks from multiple
-forecast cycles simultaneously, to the full extent allowed by inter-task
-dependencies.
-
 \section{Forecasting Systems}
 \label{sec:FS}
 
-Environmental forecasting operations generate products at regular
-intervals using a set of linked scientific models and associated data
-processing tasks. From a job scheduling perspective a forecasting system
+Environmental forecasting systems generate forecast products at regular
+intervals from a set of linked scientific models and associated data
+processing tasks. From a job scheduling perspective such a system
 is a set of regularly repeating interdependent tasks, possibly with
 different cycle periods, whose execution order must be carefully
 controlled to avoid dependency violations. 
@@ -116,11 +66,11 @@ controlled to avoid dependency violations.
 Normal real time operation necessarily consists of a series of distinct
 {\em forecast cycles} that are initiated, after a gap in processing, by
 new external driving data (typically real time observations and/or
-forecast fields from an external system). 
-Tasks are therefore naturally grouped by {\em forecast cycle}, wherein
-each task has the same {\em forecast reference time}, which is the
-nominal start time of the forecast models in the group, or that 
-of the associated forecast model run(s) for data processing tasks.
+forecast fields from an external system). Tasks are therefore naturally
+grouped by {\em forecast cycle}, wherein each task has the same {\em
+forecast reference time}, which is the nominal start time of the
+forecast models in the cycle group, or that of the associated forecast
+model run(s) for data processing tasks.
 
 \subsection{EcoConnect}
 
@@ -133,105 +83,121 @@ sea state, storm surge, and catchment river models, plus tide
 prediction, and a large number of associated data collection, quality
 control, preprocessing, postprocessing, product generation, and
 archiving tasks.\footnote{Plans for EcoConnect include additional
-deterministic regional weather models and a statistical ensemble of
-weather models.}  The regional weather model runs four times daily in
-the 00, 06, 12, and 18 UTC cycles, but it supplies surface pressures to
-a regional storm surge model that runs only twice daily, in the 00 and
-12 UTC cycles, and precipitation accumulations to catchment river models
-that run on an hourly cycle as they assimilate real time stream flow
-observations. EcoConnect runs on heterogenous distributed hardware,
-including a massively parallel supercomputer and several Linux servers. 
+deterministic regional weather models and an weather model ensemble.}
+The regional weather model runs four times daily in the 00, 06, 12, and
+18 UTC cycles, but it supplies surface pressures to a regional storm
+surge model that runs only twice daily, in the 00 and 12 UTC cycles, and
+precipitation accumulations to catchment river models that run on an
+hourly cycle as they assimilate real time stream flow observations.
+EcoConnect runs on heterogenous distributed hardware, including a
+massively parallel supercomputer and several Linux servers. 
 
+\section{Task Dependencies}
 
-
-\section{Control Systems and Dependencies}
-
-An ideal forecasting control system would queue tasks as soon as
-their prerequisites are satisfied, but not before, so they can
-begin executing immediately sufficient resource becomes available. 
-
-%\footnote{A task that depends on external data can be treated as
-%depending on the output of another task that waits on arrival of the
-%external data.}
-
-One normally thinks of task dependencies as operating within a forecast
+One normally thinks of these dependencies as operating within a forecast
 cycle. A sea state forecast, for example, might depend on surface wind
 fields generated by an upstream weather forecast over the same forecast
-range; and a forecast product generation task can't run before its
-associated forecast is finished. Perhaps less obviously, because they
-are usually handled implicitly, there are also dependencies between
-tasks in different forecast cycles. For instance, a model forecast would
-typically depend on a recent previous forecast (by the same model) for
-its initial ``background state'', and there can also be connections
-between different kinds of tasks in different forecast cycles. 
+range, and a product generation task can't run before its associated
+forecast is finished. There are also dependencies between tasks in
+different forecast cycles though: model forecasts typically depend on a
+recent previous forecast (by the same model) for their initial
+``background state'', and different kinds of tasks in different forecast
+cycles can also be linked (c.f.\ the way in which the TopNet catchment
+model depends on the weather model in EcoConnect). 
 
-If the system's external driving data are available in advance, however,
-(see below) some tasks belonging to subsequent cycles may be able to
-start, in principle, before the current cycle has finished. 
+In real time operation, however, intercycle dependencies can be treated
+as implicitly satisfied because one cycle necessarily finishes before
+the next begins. Which is just as well because intercyle dependencies
+dramatically increase apparent complexity of even the simplest systems,
+by destroying the clean boundary between forecast cycles.
 
-From a control systems perspective intercycle dependencies drastically
-increase the apparent complexity of a system, but current controllers
-can get away with ignoring them because in normal real time operation,
-where one cycle necessarily finishes before the next begins, they are
-implicitly satisfied.\footnote{As far as the author is aware all
-existing forecast control systems do this, although it is difficult to
-be sure of this as they are invariably highly system-specific in-house
-designs that have not been published. DAGMan, which is part of the
-Condor distributed workload management system [REF:...], is a
-metascheduler for job sets with dependencies, but it does not appear to
-be suited to continuously cycling systems.}\footnote{Taking account of
-all dependencies, however, does enable new modes of operation for which
-this isn't true.}  But this means, in the general case, that sequential
-cycling must be strictly adhered to even if it is possible in principle
-to start some next-cycle tasks early because of advance availability of
-the external driving data.\footnote{For specific systems it may be
-possible to find a point beyond which distinct forecast cycles can
-simply overlap without violating any intercycle dependencies, but this
-is not optimal and must be revised every time the system is changed.}
-This can easily happen as a result of delays in previous cycles (late
-arrival of external data, system maintenance, etc.)\footnote{And, to an
-even greater extent, in historical case studies and parallel test
-systems that are delayed with respect to the main operation; external
-driving data is then available many cycles in advance.} and it is a
-serious problem for complex systems that have little downtime between
-forecast cycles: it can take many cycles to catch back up to ``on time''
-operation. 
+All existing forecasting control systems, as far as the author is aware,
+therefore assume/enforce a series of distinct forecast cycles at all
+times. This is fine for real time operation but it can be a serious
+impediment if advance availability of external driving data makes it
+possible, in principle, to run tasks from future cycles before the
+current cycle is finished. This situation occurs after delays (late
+arrival of external data, system maintenance, etc.) and, to an even
+greater extent, in historical case studies and parallel test systems
+that are delayed with respect to the main operation. It is in fact a
+serious problem for systems that have little downtime between forecast
+cycles because it can cause them to take many cycles to catch back up to
+real time operation. If restricted to sequential cycling, the best that
+can be done in general is to reduce the gap between cycles to zero (a
+limited crude overlap of the single cycle job schedule may be possible
+for specific task sets, but we are interested in automatic optimal
+metascheduling for any system).
 
-The simplest kind of metascheduler just iterates through a user-defined
-list of tasks that are assumed not to violate any dependencies, possibly
-with some crude means of specifying tasks that can run in parallel. This
-is clearly sub-optimal, puts a heavy burden on the user, and would be
-impractical for large complex systems. A more sophisticated design
-capable of achieving the optimal single cycle job schedule of Figure
-\ref{fig-time-one} is a Finite State Machine that, within an event loop
-that waits on tasks finishing, enforces a predetermined non-linear order
-of events using hard coded scheduling logic: {\em if task A has just
-finished, then begin executing tasks B and C}, and so on.  This works
-well for sequential cycling but it is highly system-specific and rapidly
-becomes convoluted as system complexity increases, which inevitably
-leads to inflexibility and fragility. As far as the author is aware all
-existing forecast control systems belong to one of these two groups.
+\section{Control Systems / Metaschedulers}
 
-\subsection{Optimal Operation}
+A forecasting control system should ideally queue each task as soon as
+its prerequisites are satisfied (by other tasks); this is the best that
+can be done even if queued tasks are not able to execute immediately
+because of resource contention. As discussed in the previous section,
+this can only be achieved in normal real time operation if intercycle
+dependencies are ignored, as in existing sytems.  To achieve optimal
+scheduling (and much better system throughput) in the general case,
+including catchup operation etc., requires a new approach.
 
-In order to automatically run tasks as soon as possible, regardless of
-forecast cycle and without violating any intercycle dependencies,  we
-need to properly account for all dependencies. Unfortunately, as the
-example below shows, this removes the clear division into distinct
-forecast cycles and makes the system dependency graph an unbounded
-continuous network that is too complex to handle with traditional
-scheduling logic ({\em if A is finished and B is finished then begin
-executing B}, and so on).  
+\subsection{Existing Systems}
 
-%If we are restricted to sequential cycling, the best that can be done in
-%general is to eliminate the gap between cycles (a limited crude overlap
-%of the single cycle job schedule may be possible for specific task sets,
-%but we are interested in automatic optimal metascheduling for any
-%system).
+Existing control systems fall into several categories. One kind places
+the burden on the user to define a list of tasks to cycle through in
+order, perhaps with some way of specifying some functional parallelism.
+This is clearly a recipe for sub-optimal scheduling in complex systems,
+task ordering has to be re-evaluated manually whenever the system is
+changed, and extension to intercyle dependencies is impossible. Another
+option is system-specific finite state scheduling logic that enforces a
+predetermined order of operations: {\em if A and B have finished, then
+start C} and so on. Optimal job scheduling within a forecast cycle is
+possible in this case but the coded logic inevitably becomes convoluted
+and inflexible as system complexity increases, and extension to
+intercycle dependencies is almost certainly not feasible.  Finally,
+there are general scheduling tools for dependent jobs, such as ECMWF's
+SMS which is powerful and well established but, again, does not handle
+intercycle dependencies.  
 
+\subsection{Cylon}
 
+Cylon has no system wide forecast cycle concept; instead it uses a novel
+run time dependency negotiation algorithm that treats all tasks equally
+regardless of forecast cycle. This section provides a minimal
+description of how the algorithm works; see the abstract for a summary
+of the major consequences, and Section~\ref{sec:implementation} for
+implementation detail.  
+
+Cyclon maintains a pool of {\em task proxy objects} that represent each
+system task. Tasks are configured as if to run alone: they know their
+own prerequisites (required inputs, usually) and outputs, but are
+unaware of other tasks in the system.\footnote{A task can be made to
+trigger when another named task finishes, but framing prerequisites in
+terms of required input filenames, for example, results in a more
+flexible system - one task could be replaced with another that generates
+similar output without making any other changes to the system.} A task
+proxy can run its external task when all of its prerequisites are
+satisfied and then, by means of a messaging system, records completed
+outputs as it runs. Cylon then gets all tasks in the pool to interact
+indiscriminately, regardless of forecast cycle, to match completed
+outputs with unsatisfied prerequisites.\footnote{In reality this
+negotiation goes through a middleman or broker, which reduces the task
+interaction scaling from $n^2$ to $n$, where $n$ is the number of tasks}
+For this to work the task pool must include waiting tasks (whose
+prerequisites are yet to be satisfied) and any finished tasks whose
+outputs might still be needed, as well as tasks that are currently
+running. In other words, the life cycle of a proxy object must be such
+that it always exists by the time it is needed, and does not die before
+it is no longer needed. By this means, correct task ordering emerges
+naturally at run time, in all modes of operation, with optimal
+scheduling (and therefore maximal functional parallelism) regardless of
+forecast cycle. In particular, during catch up from delays, historical
+case studies, and delayed parallel trials, cylon runs tasks from
+multiple forecast cycles simultaneously, to the full extent allowed by
+the dependencies.
 
 \section{A Simple Example}
+
+This sections illustrates the above discussion by means of a toy
+forecasting system.
 
 \begin{figure} 
     \begin{center}
