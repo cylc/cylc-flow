@@ -28,24 +28,24 @@
     scheduler(s), i.e.\ it decides when dependent tasks are {\em ready}
     to run. The term also describes a single aggregrate view of multiple
     distributed resource managers, which is not the topic of this
-    paper.} for forecasting systems that abandons the concept of a
-    system-wide forecast cycle in favour of explicit handling of
-    intercycle dependencies between individual tasks. In a system
-    controlled by cylon a series of distinct forecast cycles emerges
-    naturally in real time operation, but in catch up operation, delayed
-    parallel trials, or historical case studies, tasks from any number
-    of forecast cycles can run simultaneously to the full extent allowed
-    by dependencies, potentially providing greatly improved system
-    throughput. Cylon is also extremely flexible and easy to use because
-    each task simply registers its own inputs and outputs, as if to run
-    alone, and dependencies are resolved at run time. Tasks can thus be
-    added or removed the fly and the system will adapt dynamically.
-    Explicit handling of forecast model `restart' dependencies allows
-    continued operation, with very little human intervention, over major
-    failures that involve omitted forecast cycles in the driving models.
-    Control of the configured task set, and failure recovery scenarios,
-    can be tested quickly in a simulation mode that is indistinguishable
-    (to cylon) from real operation. Cylon is written in object oriented
+    paper.} for forecasting systems that abandons the system-wide
+    forecast cycle in favour of explicit handling of intercycle
+    dependencies between individual tasks. In a system controlled by
+    cylon a series of distinct forecast cycles emerges naturally in real
+    time operation, but in catch up operation, delayed parallel trials,
+    or historical case studies, tasks from any number of forecast cycles
+    can run simultaneously to the full extent allowed by dependencies,
+    with the potential for greatly increased system throughput. Cylon is
+    also extremely flexible and easy to use because each task simply
+    registers its own inputs and outputs, as if to run alone, and
+    dependencies are resolved at run time. The system thus adapts
+    dynamically to insertion or removal of tasks at run time. Explicit
+    handling of forecast model `restart' dependencies allows continued
+    operation, with very little human intervention, over major failures
+    that involve omitted forecast cycles in the driving models.  Control
+    of the configured task set, and failure recovery scenarios, can be
+    tested quickly in a simulation mode that is indistinguishable (to
+    cylon) from real operation. Cylon is written in object oriented
     Python and uses the Python Remote Object Protocol ({\em Pyro}) to
     control tasks across a network. It is easily interfaced to existing
     tasks (models, post-processing, etc.).
