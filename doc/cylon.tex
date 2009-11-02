@@ -9,7 +9,7 @@
 
 \lstset{language=Python}
 
-\title{Cylon: An Optimal Dynamic Metascheduler For Forecasting Systems}
+\title{Cylon: A Self-Organising Job Scheduler For Complex Forecasting Systems}
 
 \author{Hilary Oliver, NIWA}
 
@@ -23,48 +23,59 @@
 
 \begin{abstract}
 
-    {\em Cylon} is a metascheduler\footnote{A {\em metascheduler} sends
-    dependent tasks to the batch queue job scheduler(s) when they are
-    {\em ready} to run. A metascheduler is still a form of scheduler,
-    however, so we drop the 'meta' prefix from here on. The term
-    'metascheduler' can also refer to a single aggregate view of
+    {\em Cylon} is a self-organising metascheduler\footnote{A
+    metascheduler sends dependent tasks to the batch queue job
+    scheduler(s) when it has determined that they are {\em ready to
+    run}. However, we drop the ``meta'' prefix from here on because a
+    metascheduler is also just a type of scheduler. The term
+    ``metascheduler'' can also refer to a single aggregate view of
     multiple distributed resource managers, but that is not the topic of
-    this paper.} designed to control complex environmental forecasting
-    systems comprising any number of linked scientific models and
-    associated data collection, preprocessing, postprocessing, and
-    product generation jobs. Its novel scheduling algorithm is based on
-    an evolving, self-organising pool of tasks\footnote{A {\em task} is
-    any group of processes treated as a single entity for scheduling
-    purposes} from multiple forecast cycles.\footnote{For our purposes a
-    {\em forecast cycle} comprises all tasks with a common {\em forecast
-    reference time}, i.e.\ the analysis time or nominal start time for
-    forecast models, or for a data processing task, that of its
-    associated forecast models. Under cylon, tasks from various forecast
-    cycles may run at the same time.} Each task is configured in
-    isolation, knowing only its own prerequisites (but not who will
-    satisfy them) and its own outputs (but not who will use them), but
-    there is no need to write a ``suite'' to define dependencies or
-    specify execution order; it all works out dynamically as the task
-    pool interacts. If the system is running behind, cylon can run tasks
+    this paper.} for complex environmental forecasting systems
+    comprising any number of linked scientific models and associated
+    data collection, preprocessing, postprocessing, and product
+    generation tasks.\footnote{A {\em task} is any group of processes
+    treated as a single entity for scheduling purposes.} Its novel
+    scheduling algorithm maintains an evolving pool of tasks from
+    multiple forecast cycles\footnote{For our purposes a {\em forecast
+    cycle} comprises all tasks with a common {\em forecast reference
+    time}, which is the analysis time or nominal start time for forecast
+    models or, for data processing tasks, that of the associated
+    forecast model(s).} that interact to resolve
+    dependencies.\footnote{Strictly speaking the task pool contains
+    proxy objects that represent real tasks.} Each task is defined in
+    isolation and knows its own prerequisites (but not who will satisfy
+    them) and outputs (but not who will use them), and there is no need
+    for a global ``suite'' definition that specifies dependencies or
+    execution order.  If the external driving data\footnote{Forecast
+    systems are typically driven by observational data and/or timely
+    model fields from an external forecasting system.} for upcoming
+    forecast cycles are available in advance {\em cylon} can run tasks
     from multiple cycles at once to the full extent allowed by
-    intercycle dependencies, and a series of distinct forecast cycles
-    emerges naturally only when the system catches up. This means that
-    parallel test systems started (or restarted) behind the main
-    operation will quickly catch up and then keep pace with it; systems
-    with little downtime between forecast cycles can catch up from
-    delays very much faster; and historical case studies achieve can
-    optimal throughput throughout.  In addition to all of this cylon is
-    also extremely flexible and easy to use. It adapts dynamically to
-    insertion or removal of tasks.  Explicit handling of forecast model
-    `restart' dependencies allows continued operation, with very little
-    human intervention, over major failures that require omitted
-    forecast cycles in the driving models.  Ability to control the
-    configured task set, and failure recovery scenarios, can be
-    completely tested in an accelerated simulation mode that is
-    indistinguishable (to cylon) from real operation. Cylon is written
-    in object oriented Python and uses the Python Remote Object Protocol
-    ({\em Pyro}) to control tasks across a network. It is easily
-    interfaced to existing tasks (models, post-processing, etc.).
+    intercycle dependencies; a series of distinct forecast cycles
+    emerges only when the system catches up to real time
+    operation.\footnote{Actually, {\em cylon} also enables new modes of
+    real time operation: EcoConnect's TopNet catchment river model runs
+    hourly, ahead of the less frequent weather forecasts, assimilating
+    real time stream flow observations and using the {\em most recent}
+    precipitation forecast.} This means that parallel test systems can
+    be started (or restarted) behind the main operation and will catch
+    up as quickly as possible, systems with little downtime between
+    forecast cycles can catch up from delays very much faster, and
+    historical case studies can achieve maximal throughput. {\em Cylon}
+    is easily interfaced to existing tasks and is extremely flexible and
+    easy to use. It can be restarted in arbitrarily complex states of
+    operation and dynamically adapts to insertion or removal of tasks.
+    Failed tasks delay their own downstream dependencies but the rest of
+    the system carries on unaffected while the problem is addressed.
+    {\em Cylon}'s handling of forecast model `restart' dependencies
+    allows continued operation, with very little human intervention,
+    over major failures that result in omitted forecast cycles in the
+    driving (upstream) models.  Ability to control the configured task
+    set, and failure recovery scenarios, can be completely tested in an
+    accelerated simulation mode that is indistinguishable (to {\em
+    cylon}) from real operation.  {\em Cylon} is written in object
+    oriented Python and uses the Python Remote Object Protocol ({\em
+    Pyro}) to control tasks across a network.  
 
 \end{abstract}
 
