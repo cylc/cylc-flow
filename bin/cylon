@@ -29,13 +29,13 @@ from time import sleep
 cylon_version = "foo-bar-baz"
 
 def print_banner():
-    print "__________________________________________________________"
+    print "___________________________________________"
     print
-    print "      .       cylon Dynamic Metascheduler        ."
-    #print "              version: " + cylon_version
-    print "      .         Hilary Oliver, NIWA, 2008/9       ."
-    print "      .    Pyro nameserver required: 'pyro-ns'    ."
-    print "__________________________________________________________"
+    print "   .    Cylon Dynamic Metascheduler    ."
+    #print "        version: " + cylon_version
+    print "   .    Hilary Oliver, NIWA, 2008/9    ."
+    print "   .    Pyro nameserver is required    ."
+    print "___________________________________________"
 
 def clean_shutdown( pyro, reason ):
     log = logging.getLogger( 'main' )
@@ -124,10 +124,11 @@ def main( argv ):
     # construct a command line parser
     usage =  """
     %prog [options] start-time [stop-time]
-       cold start from the configured system's task list
+       cold start the configured system
 
-    %prog -r [filename] [stop-time]
-       restart the configured system from default [or named] state dump"""
+    %prog [options] -r [file] [stop-time]
+       restart the configured system from
+       the default or named state dump file"""
 
     parser = OptionParser( usage )
 
