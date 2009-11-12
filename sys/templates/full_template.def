@@ -167,7 +167,6 @@
            10: file foo_0_$(MY_REFERENCE_TIME).nc ready
     0,12 | 15: file foo_1_$(MY_REFERENCE_TIME).nc ready
     6,18 | 15: file foo_2_$(MY_REFERENCE_TIME).nc ready
-           20: <NAME> restart files ready for $(MY_REFERENCE_TIME+6)
 
 %RESTART_LIST_MINUTES
     # comma separated list of times at which restart outputs are
@@ -191,4 +190,11 @@
     # depend on restart outputs from a previous cycle.
 
     # default: False.  
-True
+    True
+
+[%ONEOFF_FOLLOW_ON]
+    oneoff tasks that have non-cotemporal dependants must nominate a
+    follow on task to "hand the baton on to" so that cylon knows when it
+    can delete the oneoff task from the system (it will not be deleted
+    before the follow on task exists). 
+
