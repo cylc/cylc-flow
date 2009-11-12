@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
-# REQUISITES (base class for prerequisites and outputs)
-# A collection of messages, each "satisfied" or not.
+# REQUISITES, a base class for prerequisites and outputs
+# (postrequisites?). A collection of messages, each of which is
+# "satisfied" or not.
 
 # NOTE ON LOGGING: Requisite classes have to 'get' the log each time
 # logging is required, rather than hold a self.log, because thread

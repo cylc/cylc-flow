@@ -1,5 +1,7 @@
 To Do
 
+* make state dump directory if it doesn't already exist
+
 * check that task output times do not exceed the registered run time
 
 * exception handling for a graceful exit if cylon can't find a Pyro
@@ -64,9 +66,6 @@ To Do
   for other prerequisites to be satisfied ... OR (better?!) don't try to
   satisfy fuzzy prerequistes until after all non-fuzzy ones have been
   satsified. 
-
-* a task should be allowed to declare multiple outputs at the same time
-  (currently this is detected as an error condition)
 
 * detect when taskdef files are newer than task_classes file, and warn
   that use of configure-system may be required.

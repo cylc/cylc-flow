@@ -23,9 +23,10 @@ class outputs( requisites ):
         self.task_name = task_name
         self.ref_time = ref_time
 
-        self.message = {}    # self.message[ t ] = "message"
-        self.time = {}       # self.time[ "message" ] = t
+        self.message = {}    # self.message[ t ] = [ "message1", "message2", ...] 
+        self.time = {}       # self.time[ "message1" ] = t, etc.
 
+        # requisites contains self.satisfied
         requisites.__init__( self )
 
     def add( self, t, message ):
@@ -38,19 +39,12 @@ class outputs( requisites ):
             log.critical( 'already registered: ' + message ) 
             sys.exit(1)
 
-        if t in self.message.keys():
-            # The system cannot currently handle multiple outputs
-            # generated at the same time; only the last will be
-            # registered, the others get overwritten. 
-
-            log.critical( 'two outputs registered for ' + str(t) + ' minutes' )
-            log.critical( '(may mean the last output is at the task finish time)' ) 
-            log.critical( ' one: "' + self.message[ t ] + '"' )
-            log.critical( ' two: "' + message + '"' )
-            sys.exit(1)
-
         self.satisfied[message] = False
-        self.message[ t ] = message
+        if t not in self.message.keys():
+            self.message[ t ] = [ message ]
+        else:
+            self.message[ t ].append( message )
+
         self.time[message] = t
 
     def get_timed_requisites( self ):

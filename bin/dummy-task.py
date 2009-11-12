@@ -27,7 +27,7 @@ class dummy_task:
 
     def run( self ):
 
-        # get a list of output messages to fake: outputs[ time ] = output
+        # get a list of output messages to fake: outputs[ time ] = [ output, ... ]
         outputs = self.task.get_timed_outputs()
 
         # ordered list of times
@@ -46,7 +46,14 @@ class dummy_task:
             dt_diff_sec_real = dt_diff_sec * dummy_clock_rate / 3600.0
             sleep( dt_diff_sec_real )
 
-            self.task.incoming( 'NORMAL', outputs[ time ] )
+            # make sure the finished message is last
+            fin = self.name + '%' + self.ref_time + ' finished' 
+            if fin in outputs[time]:
+                outputs[time].remove( fin )
+                outputs[time].append( fin )
+
+            for output in outputs[ time ]:
+                self.task.incoming( 'NORMAL', output )
 
             if failout:
                 # fail after the first message (and a small delay)
@@ -55,7 +62,6 @@ class dummy_task:
                 # but first report 'completed' for dependent tasks that
                 # don't care if this one finishes successfully or fails
                 self.task.incoming( 'NORMAL', 'completed' )
-
                 self.task.incoming( 'CRITICAL', 'failed' )
                 sys.exit(1)
 
