@@ -1,5 +1,10 @@
 To Do
 
+* check that task output times do not exceed the registered run time
+
+* exception handling for a graceful exit if cylon can't find a Pyro
+  nameserver.
+
 * allow cylon task proxies to kill their external tasks at shutdown (and
   otherwise)
 

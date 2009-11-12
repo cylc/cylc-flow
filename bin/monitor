@@ -106,6 +106,7 @@ while True:
             alerted = True
         #raise
         # if no connection, try again to connect
+        sleep(1)
         continue
 
     except NamingError:
@@ -114,6 +115,7 @@ while True:
             alerted = True
         #raise
         # if no connection, try again to connect
+        sleep(1)
         continue
 
     except KeyboardInterrupt:
@@ -134,6 +136,7 @@ while True:
                 print "\n\033[1;37;41mconnection timed out" + ctrl_end
                 alerted3 = True
             # if timed out, try again on same connection
+            sleep(1)
             continue
             #break
 
@@ -141,6 +144,7 @@ while True:
             if not alerted2:
                 print "\n\033[1;37;41mconnection closed" + ctrl_end 
                 alerted2 = True
+            sleep(1)
             # if connection lost, try to reconnect
             break
 
@@ -150,6 +154,7 @@ while True:
                 alerted = True
             #raise
             # wh'th'fu'?
+            sleep(1)
             continue
 
         alerted2 = False
@@ -288,8 +293,8 @@ while True:
         os.system( "clear" )
         print '\n'.join( blit )
         # sleep here determines minimum display time before trying to
-        # update the information and redisplay it. 
+        # update the information and redisplay it (?). 
         sleep(1)
 
-    # sleep here determines how long to wait before trying to reconnect
+    # sleep here determines how long to wait before trying to reconnect (?)
     sleep( 1 )
