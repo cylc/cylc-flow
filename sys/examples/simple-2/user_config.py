@@ -34,7 +34,7 @@ config[ 'max_runahead_hours' ] = 30
 config[ 'task_list' ] = \
         [
         'startup',
-        'dum',
+        #'dum',
         'cold',
         'ext',
         'A',

@@ -51,6 +51,11 @@ class dummy_task:
             if failout:
                 # fail after the first message (and a small delay)
                 sleep(2)
+
+                # but first report 'completed' for dependent tasks that
+                # don't care if this one finishes successfully or fails
+                self.task.incoming( 'NORMAL', 'completed' )
+
                 self.task.incoming( 'CRITICAL', 'failed' )
                 sys.exit(1)
 

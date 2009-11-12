@@ -48,8 +48,10 @@ task-message "started"
 if $WRAP; then 
     # succeeded
     task-message --all-outputs-completed
+    task-message "completed"
     task-message "finished"
 else
     # failed
+    task-message "completed"
 	task-message -p CRITICAL "failed" 
 fi

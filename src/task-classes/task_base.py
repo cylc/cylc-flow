@@ -157,6 +157,9 @@ class task_base( Pyro.core.ObjBase ):
     def register_run_length( self, run_len_minutes ):
         # automatically define special 'started' and 'finished' outputs
         self.outputs.add( 0, self.get_identity() + ' started' )
+        # and 'completed' for dependant tasks that don't care about
+        # success or failure of this task, only completion
+        self.outputs.add( run_len_minutes - 0.01, self.get_identity() + ' completed' )
         self.outputs.add( run_len_minutes, self.get_identity() + ' finished' )
 
     def log( self, priority, message ):
@@ -318,7 +321,7 @@ class task_base( Pyro.core.ObjBase ):
 
         # prefix task id to special messages.
         raw_message = message
-        if message == 'started' or message == 'finished' or message == 'failed':
+        if message == 'started' or message == 'finished' or message == 'failed' or message == 'completed':
             message = self.get_identity() + ' ' + message
  
         if self.outputs.exists( message ):
