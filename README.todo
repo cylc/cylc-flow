@@ -1,5 +1,9 @@
 To Do
 
+* can a system that's not being monitored stall (i.e. never run through
+  the task processing loop)?  This seemed to happen to the topnet test
+  system while I was in the UK recently...
+
 * parse all command-line input to check for valid reference times 
 
 * make state dump directory if it doesn't already exist
