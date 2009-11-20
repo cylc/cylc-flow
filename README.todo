@@ -1,5 +1,7 @@
 To Do
 
+* parse all command-line input to check for valid reference times 
+
 * make state dump directory if it doesn't already exist
 
 * check that task output times do not exceed the registered run time
