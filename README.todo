@@ -1,5 +1,13 @@
 To Do
 
+* consider implementing "either or" and "self destruct"
+  prerequisites (Phil's idea) - this would allow automated
+  control-system initiated response to failed tasks.  EXAMPLE: if a
+  weather forecast fails, run a backup forecast configured with a
+  shorter timestep; if the original forecast succeeds, the backup can
+  self destruct. The forecast post-processing task(s) would trigger off
+  either the original or the backup forecast.
+
 * can a system that's not being monitored stall (i.e. never run through
   the task processing loop)?  This seemed to happen to the topnet test
   system while I was in the UK recently...
