@@ -9,20 +9,20 @@ To Do
   either the original or the backup forecast.
 
 * can a system that's not being monitored stall (i.e. never run through
-  the task processing loop)?  This seemed to happen to the topnet test
-  system while I was in the UK recently...
+  the task processing loop)?  This seemed to happen ONCE to the topnet
+  test system while I was in the UK recently...
 
 * parse all command-line input to check for valid reference times 
 
-* make state dump directory if it doesn't already exist
+* make the state dump directory if it doesn't already exist
 
 * check that task output times do not exceed the registered run time
 
 * exception handling for a graceful exit if cylon can't find a Pyro
   nameserver.
 
-* allow cylon task proxies to kill their external tasks at shutdown (and
-  otherwise)
+* allow cylon task proxies to kill their real external tasks at shutdown
+  (and otherwise)
 
 * connection failure retry for dummy tasks, as is currently done in
   task-message
@@ -44,7 +44,7 @@ To Do
   of failure to contact the control system
 
 * python script for easy viewing of configured log files without having
-  to know their location.
+  to know their location?
 
 * the task-generator script should check that the user-defined task
   names do not clash with parent class or attribute names.
@@ -64,6 +64,30 @@ To Do
   finished task of each kind" procedure in kill_spent_tasks(). best to
   have multiple tasks instead? 
 
+* detect when taskdef files are newer than task_classes file, and warn
+  that use of configure-system may be required.
+
+* use the custom clock everywhere (it knows about dummy mode).
+
+* clean up the clock class with respect to dummy vs real time, and move
+  it into task manager?
+
+* retrofit proper exception handling throughout (current use is sporadic).
+
+* user_config is imported in task_classes.py to get start_time. It may
+  be better to pass this in at task initialisation?
+
+* task.quick_death should default to False? (as for the task 
+  def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
+
+* forecast tasks can no longer be 'quick death' because they depend on
+  previous instance. Cylon should check for this. However, they could
+  die as soon as their successor is satisfied. 
+
+====================================
+FUZZY PREREQUISITES (only for infrequent 'advanced' usage - e.g. hourly
+TopNet in EcoConnect)
+
 * allow mixed fuzzy and non-fuzzy prerequisites (currently have to 
   set identical fuzzy bounds to simulate the non-fuzzy case; see
   topnet.py).
@@ -80,23 +104,3 @@ To Do
   for other prerequisites to be satisfied ... OR (better?!) don't try to
   satisfy fuzzy prerequistes until after all non-fuzzy ones have been
   satsified. 
-
-* detect when taskdef files are newer than task_classes file, and warn
-  that use of configure-system may be required.
-
-* use the custom clock everywhere (it knows about dummy mode).
-
-* clean up the clock class with respect to dummy vs real time, and move
-  it into task manager?
-
-* retrofit proper exception handling (current use is sporadic).
-
-* user_config is imported in task_classes.py to get start_time. It may
-  be better to pass this in at task initialisation?
-
-* task.quick_death should default to False? (as for the task 
-  def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
-
-* forecast tasks can no longer be 'quick death' because they depend on
-  previous instance. Cylon should check for this. However, they could
-  die as soon as their successor is satisfied. 
