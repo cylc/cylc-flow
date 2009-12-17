@@ -113,4 +113,7 @@ class launcher:
         if os.system( command ) != 0:
             # NOTE: this means JOB LAUNCH failed, i.e. 
             # the job itself did not begin to execute.
+
+            # TO DO: PRINT OUT ACTUAL COMMAND THAT FAILED
+
             raise Exception( 'job launch failed: ' + task_name + ' ' + ref_time )
