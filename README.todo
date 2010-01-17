@@ -10,7 +10,14 @@ To Do
 
 * can a system that's not being monitored stall (i.e. never run through
   the task processing loop)?  This seemed to happen ONCE to the topnet
-  test system while I was in the UK recently...
+  test system while I was in the UK recently. Jan 2009: possible cause
+  of this: if a task with no downstream dependencies fails
+  (topnet_cleanup), the rest will carry on until delayed at the max
+  maximum runahead time which results in a bunch of tasks at the front
+  end finished but not abdicated. When the failed task is killed no task
+  messages will come in to stimulate the event loop, because the
+  existing tasks are all finished, so the system needs a remote "bump"
+  to get going again.
 
 * parse all command-line input to check for valid reference times 
 
