@@ -27,55 +27,55 @@
     metascheduler sends dependent tasks to the batch queue job
     scheduler(s) when it has determined that they are {\em ready to
     run}. However, we drop the ``meta'' prefix from here on because a
-    metascheduler is also just a type of scheduler. The term
+    metascheduler is also a type of scheduler. The term
     ``metascheduler'' can also refer to a single aggregate view of
     multiple distributed resource managers, but that is not the topic of
-    this paper.} for complex environmental forecasting systems
-    comprising any number of linked scientific models and associated
-    data collection, preprocessing, postprocessing, and product
-    generation tasks.\footnote{A {\em task} is any group of processes
-    treated as a single entity for scheduling purposes.} Its novel
-    scheduling algorithm maintains an evolving pool of tasks from
-    multiple forecast cycles\footnote{For our purposes a {\em forecast
-    cycle} comprises all tasks with a common {\em forecast reference
-    time}, which is the analysis time or nominal start time for forecast
-    models or, for data processing tasks, that of the associated
-    forecast model(s).} that interact to resolve
-    dependencies.\footnote{Strictly speaking the task pool contains
-    proxy objects that represent real tasks.} Each task is defined in
-    isolation and knows its own prerequisites (but not who will satisfy
-    them) and outputs (but not who will use them), and there is no need
-    for a global ``suite'' definition that specifies dependencies or
-    execution order.  If the external driving data\footnote{Forecast
-    systems are typically driven by observational data and/or timely
-    model fields from an external forecasting system.} for upcoming
-    forecast cycles are available in advance {\em cylon} can run tasks
-    from multiple cycles at once to the full extent allowed by
-    intercycle dependencies; a series of distinct forecast cycles
-    emerges only when the system catches up to real time
-    operation.\footnote{Actually, {\em cylon} also enables new modes of
+    this paper.} for cycling environmental forecast systems comprising
+    any number of linked scientific models and associated data
+    collection, preprocessing, postprocessing, and product generation
+    tasks.\footnote{A {\em task} is any group of processes treated as a
+    single entity for scheduling purposes.} Its novel scheduling
+    algorithm maintains an evolving pool of tasks from multiple forecast
+    cycles\footnote{For our purposes a {\em forecast cycle} comprises
+    all tasks with a common {\em forecast reference time}, which is the
+    analysis time or nominal start time of a forecast model, or that of
+    the associated forecast model(s) other tasks.} that interact to
+    resolve dependencies.\footnote{Strictly speaking the task pool
+    contains proxy objects that represent real tasks.} Each task is
+    defined in isolation and knows its own prerequisites (but not who
+    will satisfy them) and outputs (but not who will use them), and
+    there is no need for a global ``suite'' definition that specifies
+    dependencies or execution order.  If the external driving
+    data\footnote{Forecast systems are typically driven by observational
+    data and/or timely model fields from an external forecasting
+    system.} for upcoming forecast cycles are available in advance {\em
+    cylon} can run tasks from multiple cycles at once to the full extent
+    allowed by intercycle dependencies; a series of distinct forecast
+    cycles emerges only when the system catches up to real time
+    operation.\footnote{{\em Cylon} also enables new modes of
     real time operation: EcoConnect's TopNet catchment river model runs
     hourly, ahead of the less frequent weather forecasts, assimilating
     real time stream flow observations and using the {\em most recent}
     precipitation forecast.} This means that parallel test systems can
-    be started (or restarted) behind the main operation and will catch
-    up as quickly as possible, systems with little downtime between
-    forecast cycles can catch up from delays very much faster, and
-    historical case studies can achieve maximal throughput. {\em Cylon}
-    is easily interfaced to existing tasks and is extremely flexible and
+    be started (or restarted) behind the main operation to catch up as
+    quickly as possible, systems with little downtime between forecast
+    cycles will catch up from delays much faster, and historical case
+    studies can achieve sustained maximal throughput. {\em Cylon} is
+    easily interfaced to existing tasks and is extremely flexible and
     easy to use. It can be restarted in arbitrarily complex states of
     operation and dynamically adapts to insertion or removal of tasks.
-    Failed tasks delay their own downstream dependencies but the rest of
-    the system carries on unaffected while the problem is addressed.
-    {\em Cylon}'s handling of forecast model `restart' dependencies
-    allows continued operation, with very little human intervention,
-    over major failures that result in omitted forecast cycles in the
-    driving (upstream) models.  Ability to control the configured task
-    set, and failure recovery scenarios, can be completely tested in an
-    accelerated simulation mode that is indistinguishable (to {\em
-    cylon}) from real operation.  {\em Cylon} is written in object
-    oriented Python and uses the Python Remote Object Protocol ({\em
-    Pyro}) to control tasks across a network.  
+    A failed task will necessarily delay its downstream dependants, but
+    the rest of the system can carry on unaffected while the problem is
+    addressed, after which time the delayed tasks can catch up as
+    quickly as possible.  {\em Cylon}'s handling of forecast model
+    `restart' dependencies allows continued operation, with very little
+    operator intervention, over major failures that result in omitted
+    forecast cycles in the driving (upstream) models.  Ability to
+    control the configured task set, and failure recovery scenarios, can
+    be completely tested in an accelerated simulation mode that is
+    indistinguishable (to {\em cylon}) from real operation.  {\em Cylon}
+    is written in object oriented Python and uses the Python Remote
+    Object Protocol ({\em Pyro}) to control tasks across a network.  
 
 \end{abstract}
 
@@ -101,21 +101,21 @@ model run(s) for data processing tasks.
 \subsection{EcoConnect}
 
 The EcoConnect Forecasting System at the National Institute of Water and
-Atmospheric Research (NIWA) in New Zealand takes real time atmospheric
-and stream flow observations, and operational global weather forecasts
-from the Met Office (UK), and uses these to drive global sea state and
-regional data assimilating weather models, which in turn drive regional
-sea state, storm surge, and catchment river models, plus tide
-prediction, and a large number of associated data collection, quality
-control, preprocessing, postprocessing, product generation, and
-archiving tasks.\footnote{Plans for EcoConnect include additional
-deterministic regional weather forecasts and a statistical ensemble.}
-The global sea state forecast runs once daily.  The regional weather
-forecast runs four times daily but it supplies surface pressures to
-several downstream models that run only twice daily, and precipitation
-accumulations to catchment river models that run on an hourly cycle
-assimilating real time stream flow observations and using the most
-recent available regional weather forecast.  EcoConnect runs on
+Atmospheric Research (NIWA) in New Zealand motivated this work. It takes
+real time atmospheric and stream flow observations, and operational
+global weather forecasts from the Met Office (UK), and uses these to
+drive global sea state and regional data assimilating weather models,
+which in turn drive regional sea state, storm surge, and catchment river
+models, plus tide prediction, and a large number of associated data
+collection, quality control, preprocessing, postprocessing, product
+generation, and archiving tasks.\footnote{Plans for EcoConnect include
+additional deterministic regional weather forecasts and a statistical
+ensemble.} The global sea state forecast runs once daily.  The regional
+weather forecast runs four times daily but it supplies surface pressures
+to several downstream models that run only twice daily, and
+precipitation accumulations to catchment river models that run on an
+hourly cycle assimilating real time stream flow observations and using
+the most recent available regional weather forecast.  EcoConnect runs on
 heterogenous distributed hardware, including a massively parallel
 supercomputer and several Linux servers. 
 
@@ -124,37 +124,36 @@ supercomputer and several Linux servers.
 Most task dependencies operate within a forecast cycle. A sea state
 forecast, for example, might depend on surface wind fields generated by
 an upstream weather forecast over the same forecast range, and a product
-generation task likely cannot run before its associated forecast has
-finished generating output. But there are also dependencies between
-tasks in different forecast cycles: model forecasts typically depend on
-a recent previous forecast (by the same model) for their initial
-``background state'', and different kinds of tasks in different forecast
-cycles can also be linked (c.f.\ the way in which the TopNet catchment
-model depends on the weather model in EcoConnect). 
+generation task cannot run before its associated forecast has finished
+generating output. But there are also dependencies between tasks in
+different forecast cycles: model forecasts typically depend on a recent
+previous forecast (by the same model) for their initial ``background
+state'', and different kinds of tasks in different forecast cycles can
+also be linked (c.f.\ the way in which the TopNet catchment model
+depends on the weather model in EcoConnect). 
 
 In real time operation intercycle dependencies can be ignored because
 they are implicitly satisfied when one cycle necessarily finishes before
-the next begins. Which is just as well because they dramatically
-increase apparent complexity of even the simplest systems by destroying
-the clean boundary between forecast cycles.
-
-All existing forecasting control systems do this, as far as the author
-is aware, and therefore require a series of distinct forecast cycles at
-all times. While this is fine for real time operation it can be a
-serious impediment if advance availability of external driving data
+the next begins. This is just as well because they dramatically increase
+the apparent complexity of even the simplest systems by destroying the
+clean boundary between forecast cycles. Consequently, as far as the
+author is aware, existing forecasting control systems make this
+simplification, thereby requiring a series of distinct forecast cycles
+at all times.  This is fine for real time operation but it can be a
+serious impediment when advance availability of external driving data
 makes it possible, in principle, to run tasks from future cycles before
-the current cycle is finished. This situation occurs after delays (late
-arrival of external data, system maintenance, etc.) and, to an even
-greater extent, in historical case studies and parallel test systems
-that are delayed with respect to the main operation. It is in fact a
-serious problem for systems that have little downtime between forecast
-cycles because it can cause them to take many cycles to catch back up to
-real time operation. The best that can be done in general is to reduce
-the gap between cycles to zero (a limited crude overlap of the single
-cycle job schedule may be possible for specific task sets in certain
-circumstances, but it is difficult to automate this in a way that will
-never result in violated dependencies, and we are interested in
-automatic optimal metascheduling for any system).
+the current cycle is finished.  This occurs after delays (late arrival
+of external data, system maintenance, etc.) and, to an even greater
+extent, in historical case studies and parallel test systems that are
+delayed with respect to the main operation. It is in fact a serious
+problem for systems that have little downtime between forecast cycles
+and consequently take many cycles to catch up after a delay. When
+intercycle dependencies are ignored, the best that can be done in these
+situations, in general, is to reduce the gap between cycles to zero. A
+limited crude overlap of the single cycle job schedule may be possible
+for specific task sets in certain circumstances, but even this is
+sub-optimal and it would be very difficult to guarantee that no
+dependencies will ever be violated.
 
 \section{Control Systems / Metaschedulers}
 
@@ -180,9 +179,9 @@ scheduling within a forecast cycle is possible in this case but the
 coded logic inevitably becomes convoluted and inflexible as system
 complexity increases, and extension to intercycle dependencies is almost
 certainly not feasible.  The best option currently available is probably
-the well established SMS from ECMWF, which is a general scheduling tools
+the well established SMS from ECMWF, which is a general scheduling tool
 for dependent jobs.  SMS users define suites of dependent tasks that can
-be cycled, but SMS also does not handle intercycle dependencies.  
+be cycled, but even SMS does not handle intercycle dependencies (????).  
 
 \subsection{Cylon}
 
