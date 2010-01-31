@@ -10,3 +10,7 @@ can be installed to, and run from, a non-repository location (run
 after modifying the SConstruct file appropriately; this installs to an
 identical source tree, except that it will no longer be a darcs
 repository).    
+
+The automatic documentation generation script, which generates PDF documents
+from the LaTeX source, requires a working LaTeX installation, and the epstopdf
+converter (which comes with the auctex package).
