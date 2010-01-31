@@ -132,11 +132,69 @@ state'', and different kinds of tasks in different forecast cycles can
 also be linked (c.f.\ the way in which the TopNet catchment model
 depends on the weather model in EcoConnect). 
 
+\begin{figure} 
+    \begin{center}
+    \includegraphics[width=4cm]{dependencies-one} 
+    \end{center}
+    \caption{\small Dependency diagram for a single forecast cycle in a
+    simple example system. Tasks {\em a, b,} and {\em c} represent
+    forecast models, and {\em d, e} and {\em f} are post processing or
+    product generation tasks.} 
+    \label{fig-dep-one} 
+\end{figure} 
+
+Figure \ref{fig-dep-one} shows a dependency diagram, which forms a {\em
+Directed Acyclic Graph}, for a single forecast cycle of a simple example
+system consisting of three forecast models ({\em a, b,} and {\em c}) and
+three post processing or product generation tasks ({\em d, e} and {\em
+f}).  Within a cycle each task may depend on one or more other
+``upstream'' tasks, and may itself be depended on by one or more other
+``downstream'' tasks.  A control system should therefore be capable of
+managing, within a single forecast cycle, multiple parallel streams of
+execution that branch when one task generates output for several
+downstream tasks, and merge when one task takes input from several
+upstream tasks. 
+\begin{figure}
+    \begin{center}
+        \includegraphics[width=8cm]{timeline-one}
+    \end{center}
+    \caption{\small Job schedule for two consecutive cycles of the
+    example system during real time operation. The horizontal extent of
+    a task bar represents execution time. Vertical sections through the
+    graph intersect all tasks executing at that time, but the vertical
+    ordering of tasks is not meaningful.}
+    \label{fig-time-one}
+\end{figure}
+Figure \ref{fig-time-one} shows the job schedule for two consecutive cycles of
+the example system in real time operation, given execution times represented by
+the horizontal extent of the task bars. There is a time gap between cycles as
+the system waits on new external driving data.  All tasks here depend on
+upstream tasks {\em finishing} rather than on any intermediate outputs, but
+this is just to make clearer diagrams.
+
+
+
 In real time operation intercycle dependencies can be ignored because
 they are implicitly satisfied when one cycle necessarily finishes before
 the next begins. This is just as well because they dramatically increase
 the apparent complexity of even the simplest systems by destroying the
-clean boundary between forecast cycles. Consequently, as far as the
+clean boundary between forecast cycles.
+
+\begin{figure} \begin{center}
+    \includegraphics[width=6cm]{dependencies-two} \end{center}
+    \caption{\small Complete dependency graph for the example
+    system, assuming the least possible intercycle dependence: the
+    forecast models ($a$, $b$, and $c$) depend on their own previous
+    instances. The dashed arrows show connections to previous and
+    subsequent forecast cycles.} 
+    \label{fig-dep-two}
+\end{figure}
+
+Figure \ref{fig-dep-two} shows the complete dependency graph for the
+example system, assuming the least possible intercycle dependence: each
+forecast model ($a$, $b$, and $c$) depends on its own previous instance.
+
+Consequently, as far as the
 author is aware, existing forecasting control systems make this
 simplification, thereby requiring a series of distinct forecast cycles
 at all times.  This is fine for real time operation but it can be a
@@ -154,6 +212,62 @@ limited crude overlap of the single cycle job schedule may be possible
 for specific task sets in certain circumstances, but even this is
 sub-optimal and it would be very difficult to guarantee that no
 dependencies will ever be violated.
+
+\begin{figure} 
+    \begin{center} 
+        \includegraphics[width=12cm]{timeline-three}
+    \end{center} 
+    \caption{\small Job schedules for the example system after a delay
+    of almost one whole forecast cycle, when intercycle dependencies are
+    taken into account (above the time axis), and when they are not
+    (below the time time axis). The colored lines indicate the time that
+    each cycle is delayed, and normal ``caught up'' cycles
+    are shaded gray.} 
+    \label{fig-time-three}
+\end{figure} 
+
+Figure \ref{fig-time-three}, below the time axis, shows the effect of an
+operational delay of almost one whole cycle on a sequentially cycling
+system that has little downtime between cycles - it takes many cycles to
+catch up. Above the time axis is the optimal schedule that is possible,
+in principle, when intercycle dependencies are taken into account: the
+second cycle after the delay is hardly affected, and subsequent cycles
+all run on time.  Note that simply overlapping the single cycle
+schedules of Figure \ref{fig-time-one} from the same start point would
+have resulted in a dependency violation in task {\em c}.
+
+\begin{figure} 
+    \begin{center} 
+        \includegraphics[width=8cm]{timeline-two}
+    \end{center} 
+    \caption{\small Job schedules for the example system in case study
+    mode, or after a long delay, when the external driving data are
+    available many cycles in advance. Above the time axis is the optimal
+    schedule obtained when the system is constrained only by its true
+    dependencies, as in Figure \ref{fig-dep-two}, and underneath it is
+    the best that can be achieved when intercycle dependencies are
+    ignored.} 
+    \label{fig-time-two}
+\end{figure} 
+
+Similarly, Figure \ref{fig-time-two} shows job schedules for the example
+system in case study mode, or when catching up after a very long delay,
+when the external driving data are available many cycles in advance.
+Task {\em a}, which as the most upstream forecast model is likely to be
+a resource intensive atmosphere or ocean model, has no dependence on
+cotemporal tasks and can therefore run continuously, regardless of how
+much downstream processing is yet to be completed in its own cycle or in
+any previous forecast cycle. In practice task {\em a} would depend on
+cotemporal upstream tasks that wait on the external driving data, but
+they would return immediately when the external data is available in
+advance, so the result stands. Other tasks can cycle at regular short
+intervals, the interval depending on [CHECK THIS] the task run length
+relative to that of its longest cotemporal upstream dependency path. In
+this case {\em c} can also run continuously, and consecutive instances
+of {\em e}, which has no previous-instance dependence, can overlap.
+Thus, even for this very simple example system, tasks from three or four
+different cycles can run simultaneously, in principle, at any given
+time. 
 
 \section{Control Systems / Metaschedulers}
 
@@ -220,125 +334,6 @@ case studies, and delayed parallel trials, cylon runs tasks from many
 forecast cycles simultaneously, to the full extent allowed by
 dependencies.
 
-\section{A Simple Example}
-
-This sections illustrates the above discussion by means of a toy
-forecasting system.
-
-\begin{figure} 
-    \begin{center}
-    \includegraphics[width=4cm]{dependencies-one} 
-    \end{center}
-    \caption{\small Dependency diagram for a single forecast cycle in a
-    simple example system. Tasks {\em a, b,} and {\em c} represent
-    forecast models, and {\em d, e} and {\em f} are post processing or
-    product generation tasks.} 
-    \label{fig-dep-one} 
-\end{figure} 
-
-Figure \ref{fig-dep-one} shows a dependency diagram, which forms a {\em
-Directed Acyclic Graph}, for a single forecast cycle of a simple example
-system consisting of three forecast models ({\em a, b,} and {\em c}) and
-three post processing or product generation tasks ({\em d, e} and {\em
-f}).  Within a cycle each task may depend on one or more other
-``upstream'' tasks, and may itself be depended on by one or more other
-``downstream'' tasks.  A control system should therefore be capable of
-managing, within a single forecast cycle, multiple parallel streams of
-execution that branch when one task generates output for several
-downstream tasks, and merge when one task takes input from several
-upstream tasks. 
-
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=8cm]{timeline-one}
-    \end{center}
-    \caption{\small Job schedule for two consecutive cycles of the
-    example system during real time operation. The horizontal extent of
-    a task bar represents execution time. Vertical sections through the
-    graph intersect all tasks executing at that time, but the vertical
-    ordering of tasks is not meaningful.}
-    \label{fig-time-one}
-\end{figure}
-
-Figure \ref{fig-time-one} shows the job schedule for two consecutive
-cycles of the example system in real time operation, given execution
-times represented by the horizontal extent of the task bars. There is a
-time gap between cycles as the system waits on new external driving
-data. 
-%and the schedule is optimal in the sense that every task begins
-%executing as soon as its prerequisites are satisfied. 
-All tasks here depend on upstream tasks {\em finishing} rather than on
-any intermediate outputs, but this is just to make clearer diagrams.
-
-\begin{figure} \begin{center}
-    \includegraphics[width=6cm]{dependencies-two} \end{center}
-    \caption{\small Complete dependency graph for the example
-    system, assuming the least possible intercycle dependence: the
-    forecast models ($a$, $b$, and $c$) depend on their own previous
-    instances. The dashed arrows show connections to previous and
-    subsequent forecast cycles.} 
-    \label{fig-dep-two}
-\end{figure}
-
-Figure \ref{fig-dep-two} shows the complete dependency graph for the
-example system, assuming the least possible intercycle dependence: each
-forecast model ($a$, $b$, and $c$) depends on its own previous instance.
-
-\begin{figure} 
-    \begin{center} 
-        \includegraphics[width=12cm]{timeline-three}
-    \end{center} 
-    \caption{\small Job schedules for the example system after a delay
-    of almost one whole forecast cycle, when intercycle dependencies are
-    taken into account (above the time axis), and when they are not
-    (below the time time axis). The colored lines indicate the time that
-    each cycle is delayed, and normal ``caught up'' cycles
-    are shaded gray.} 
-    \label{fig-time-three}
-\end{figure} 
-
-Figure \ref{fig-time-three}, below the time axis, shows the effect of an
-operational delay of almost one whole cycle on a sequentially cycling
-system that has little downtime between cycles - it takes many cycles to
-catch up. Above the time axis is the optimal schedule that is possible,
-in principle, when intercycle dependencies are taken into account: the
-second cycle after the delay is hardly affected, and subsequent cycles
-all run on time.  Note that simply overlapping the single cycle
-schedules of Figure \ref{fig-time-one} from the same start point would
-have resulted in a dependency violation in task {\em c}.
-
-\begin{figure} 
-    \begin{center} 
-        \includegraphics[width=8cm]{timeline-two}
-    \end{center} 
-    \caption{\small Job schedules for the example system in case study
-    mode, or after a long delay, when the external driving data are
-    available many cycles in advance. Above the time axis is the optimal
-    schedule obtained when the system is constrained only by its true
-    dependencies, as in Figure \ref{fig-dep-two}, and underneath it is
-    the best that can be achieved when intercycle dependencies are
-    ignored.} 
-    \label{fig-time-two}
-\end{figure} 
-
-Similarly, Figure \ref{fig-time-two} shows job schedules for the example
-system in case study mode, or when catching up after a very long delay,
-when the external driving data are available many cycles in advance.
-Task {\em a}, which as the most upstream forecast model is likely to be
-a resource intensive atmosphere or ocean model, has no dependence on
-cotemporal tasks and can therefore run continuously, regardless of how
-much downstream processing is yet to be completed in its own cycle or in
-any previous forecast cycle. In practice task {\em a} would depend on
-cotemporal upstream tasks that wait on the external driving data, but
-they would return immediately when the external data is available in
-advance, so the result stands. Other tasks can cycle at regular short
-intervals, the interval depending on [CHECK THIS] the task run length
-relative to that of its longest cotemporal upstream dependency path. In
-this case {\em c} can also run continuously, and consecutive instances
-of {\em e}, which has no previous-instance dependence, can overlap.
-Thus, even for this very simple example system, tasks from three or four
-different cycles can run simultaneously, in principle, at any given
-time. 
 
 A new approach is required to achieve this because the hard coded
 scheduling logic of the sequential cycling Finite State design above
@@ -351,6 +346,8 @@ up to real time.
 
 
 \section{Cylon Implementation}
+\label{sec:implementation}
+
 
 {\huge THIS SECTION IS VERY OUT OF DATE!}
 
