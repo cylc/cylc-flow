@@ -31,11 +31,16 @@ monitors and remote control).
 
    $ . [cylc-top]/sys/foo/environment.sh
 
-7/ run cylc
+7/ make sure the Pyro nameserver is running:
+   $ pyro-nsc ping
+   if not, start it with:
+   $ nohup pyro-ns &
+
+8/ run cylc
 
    $ cylc server --help 
 
-8/ To control an entirely different system using the same cylc
+9/ To control an entirely different system using the same cylc
 installation, just source the appropriate environment file
 ([cylc-top]/sys/[system-name]/environment.sh)
 before running cylc.
