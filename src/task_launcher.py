@@ -52,8 +52,8 @@ class launcher:
         if self.dummy_mode or dummy_out:
             # dummy task
             # explicit path not required thanks to environment.sh
-            # external_program = 'dummy-task.py'
-            external_program = cylc_bin + '/dummy-task.py'
+            # external_program = 'cylc-dummy-task.py'
+            external_program = cylc_bin + '/cylc-dummy-task'
             if self.failout:
                 if self.failout_task == task_name + '%' + ref_time:
                     external_program += ' --fail'

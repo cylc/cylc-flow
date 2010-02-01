@@ -7,21 +7,27 @@ allowed_sub_commands = \
     [ 
     'server', 
     'control',
-    'configure-system',
-    'monitor'
+    'monitor-all',
+    'monitor-dummies',
+    'monitor-pyro-ns',
+    'monitor-running'
     ]
 
 name = sys.argv[0]
 
 usage = \
     [ 
-    'USAGE: ' + name + ' [sub-command] <options> ',
-    'Sub-commands:',
-    '  server        ... start scheduling a cylc system',
-    '  control       ... control a running cylc system',
-    'Options:',
-    '  to see sub-command options:',
-    '  ' + name + ' sub-command --help'
+    'USAGE: ' + name + ' <command> [options] ',
+    'Commands:',
+    '  server              ... start scheduling a cylc system',
+    '  control             ... control a running cylc system',
+    '  configure-system    ... configure cylc to run a new system',
+    '  monitor-all       ... monitor all cylc task proxies',
+    '  monitor-dummies   ... monitor running external dummy tasks',
+    '  monitor-running   ... monitor running cylc task proxies',
+    '  monitor-pyro-ns   ... monitor the Pyro nameserver',
+    'Options are command-dependent; see:',
+    '  ' + name + ' <command> --help'
     ]
 
 def print_usage():
@@ -54,5 +60,5 @@ except OSError:
     # the sub-command was not invoked
     print >> sys.stderr, 'CYLC ERROR: unable to run sub-command ' + sub_command
     print >> sys.stderr, "Is everything under your cylc bin directory executable?"
-    print >> sys.stderr, "Have you run 'cylc configure-system' yet?"
+    print >> sys.stderr, "Have you run 'cylc-configure-system' yet?"
     sys.exit(1)

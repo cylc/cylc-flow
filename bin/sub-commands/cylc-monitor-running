@@ -3,22 +3,40 @@
 """
 Display progress of currently running tasks objects.
 
+TO DO: UPDATE THIS TO MATCH THE MONITOR FOR ALL PROCESSES.
+
 NOTE: ONLY DETECTS DUMMY MODE VS REAL TIME MODE AT STARTUP
 MUST BE RUN IN SAME PYTHONPATH ENVIRONMENT AS CYLC SO
-WE ACCESS THE SAME CYLC CONFIG FILE
-(so restart this if you restart cylc in different mode)
+WE ACCESS THE SAME CYLC CONFIG FILE.
+(so restart this if you restart cylc in the other mode)
 
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
 
 import os
+import sys
 import Pyro.core
 from time import sleep
 from string import ljust, rjust, split, upper, lower
 import datetime
 
 import config
+
+args = sys.argv[1:]
+
+def print_usage():
+	print 'USAGE: ' + sys.argv[0] + ' [options]'
+	print "Monitor running task proxy objects in the configured system" 
+	print "Options:"
+	print " -h (--help)   ... print this usage message"
+
+if len(args) != 0:
+	print_usage()
+	if args[0] == '-h' or args[0] == '--help':
+		sys.exit(0)
+	else:
+		sys.exit(1)
 
 class kit:
     def __init__( self, title ):

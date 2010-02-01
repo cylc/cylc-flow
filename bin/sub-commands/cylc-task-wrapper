@@ -42,16 +42,16 @@ if [[ -z $WRAP ]]; then
 fi
 
 #echo "cylc-task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
-task-message "started"
+cylc-message "started"
 
 # call the wrapped task
 if $WRAP; then 
     # succeeded
-    task-message --all-outputs-completed
-    task-message "completed"
-    task-message "finished"
+    cylc-message --all-outputs-completed
+    cylc-message "completed"
+    cylc-message "finished"
 else
     # failed
-    task-message "completed"
-	task-message -p CRITICAL "failed" 
+    cylc-message "completed"
+	cylc-message -p CRITICAL "failed" 
 fi

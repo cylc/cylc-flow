@@ -1,0 +1,24 @@
+#!/bin/bash
+
+print_usage() {
+	echo "USAGE: $0 [options]"
+	echo "Monitor the Pyro Nameserver"
+	echo "Options:"
+	echo "  -h (--help)   ... print this usage message"
+}
+
+if [[ $# != 0 ]]; then
+	print_usage
+	if [[ $1 == '--help' || $1 == '-h' ]]; then
+		exit 0
+	else
+		exit 1
+	fi
+fi
+
+while true; do
+    FOO="$(pyro-nsc listall)"
+    clear
+    echo "$FOO"
+    sleep 2
+done

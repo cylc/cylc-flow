@@ -29,13 +29,12 @@ from time import sleep
 cylc_version = "foo-bar-baz"
 
 def print_banner():
-    print "___________________________________________"
+    print "_______________C_Y_L_C___________________"
     print
-    print "   .    Cylc Dynamic Metascheduler    ."
+    print ". Self Organising Dynamic Metascheduler ."
     #print "        version: " + cylc_version
-    print "   .    Hilary Oliver, NIWA, 2008/9    ."
-    print "   .    Pyro nameserver is required    ."
-    print "___________________________________________"
+    print ".     Hilary Oliver, NIWA, 2008-2010    ."
+    print "_________________________________________"
 
 def clean_shutdown( pyro, reason ):
     log = logging.getLogger( 'main' )

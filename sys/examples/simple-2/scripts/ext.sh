@@ -6,7 +6,7 @@
 
 # run length 10 minutes
 
-task-message started
+cylc-message started
 
 ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 10 * 60 / ACCEL )) 
@@ -14,6 +14,6 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 sleep $SLEEP 
 
 touch $TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output
-task-message external data ready for $REFERENCE_TIME
+cylc-message external data ready for $REFERENCE_TIME
 
-task-message finished
+cylc-message finished

@@ -68,7 +68,7 @@ else:
     if 'TASK_NAME' in os.environ.keys():
         taskname = os.environ[ 'TASK_NAME' ]
     else:
-        print 'ERROR, task-message: no task name provided!'
+        print 'ERROR, cylc-message: no task name provided!'
         sys.exit(1)
     
 if options.reftime:
@@ -78,7 +78,7 @@ else:
     if 'REFERENCE_TIME' in os.environ.keys():
         reftime = os.environ[ 'REFERENCE_TIME' ]
     else:
-        print 'ERROR, task-message: no reference time provided!'
+        print 'ERROR, cylc-message: no reference time provided!'
         sys.exit(1)
  
 if len( args ) == 0:
@@ -117,7 +117,7 @@ while True:
         #                 Also the Pyro server may have crashed.
         #                 (presumably after connection established - hjo)
 
-        print 'task-message [' + str( count ) + ']: Network Problems, RETRYING in 5 seconds'
+        print 'cylc-message [' + str( count ) + ']: Network Problems, RETRYING in 5 seconds'
         sleep(5)
 
     except NamingError:

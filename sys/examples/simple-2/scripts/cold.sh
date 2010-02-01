@@ -7,7 +7,7 @@
 
 # run length 10 minutes
 
-task-message started
+cylc-message started
 
 ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 10 * 60 / ACCEL )) 
@@ -15,12 +15,12 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 sleep $SLEEP 
 
 touch $TMPDIR/A_${REFERENCE_TIME}.restart
-task-message A restart files ready for $REFERENCE_TIME
+cylc-message A restart files ready for $REFERENCE_TIME
 
 touch $TMPDIR/B_${REFERENCE_TIME}.restart
-task-message B restart files ready for $REFERENCE_TIME
+cylc-message B restart files ready for $REFERENCE_TIME
 
 touch $TMPDIR/C_${REFERENCE_TIME}.restart
-task-message C restart files ready for $REFERENCE_TIME
+cylc-message C restart files ready for $REFERENCE_TIME
 
-task-message finished
+cylc-message finished

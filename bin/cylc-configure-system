@@ -45,11 +45,11 @@ echo
 echo "Processing task definition files ..."
 
 # if the command line gets too big we'll have to use xargs:
-#    find taskdef -name '*.def' -o -name '*.py' | xargs task-generator.py 
+#    find taskdef -name '*.def' -o -name '*.py' | xargs cylc-task-generator
 # and modify task-generator.py so that it appends to the output
 # task_classes.py file rather than overwriting it each time.
 
-task-generator.py $( find taskdef -name '*.def' -o -name '*.py' ) 
+cylc-task-generator $( find taskdef -name '*.def' -o -name '*.py' ) 
 echo "  => $SYSDIR/task_classes.py"
 echo "done"
 
@@ -72,8 +72,8 @@ cat > $ENV_SCRIPT <<EOF
 # for running cylc on system $SYSDIR
 
 # clean existing cylc paths
-      PATH=\$( $TOPDIR/bin/clean-cylc-path.sh \$PATH )
-PYTHONPATH=\$( $TOPDIR/bin/clean-cylc-path.sh \$PYTHONPATH )
+      PATH=\$( $TOPDIR/bin/sub-commands/cylc-clean-path \$PATH )
+PYTHONPATH=\$( $TOPDIR/bin/sub-commands/cylc-clean-path \$PYTHONPATH )
 
 # not using \$HOME or relative path; may be sourced by other users
 PATH=$TOPDIR/bin:$TOPDIR/bin/sub-commands:$TOPDIR/$SYSDIR/scripts:\$PATH

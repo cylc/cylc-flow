@@ -1,35 +1,41 @@
-HOW TO RUN CYLC for system 'foo'
+HOW TO RUN CYLC for a NEW SYSTEM called 'foo'
 
 [paths below are relative to the top level cylc directory]
 
-1/ Define your system using cylc task definition files. Maintain this
-as a separate repository with version tags to indicate compatibility
-with cylc versions, but install it into [cylc-top]/sys/foo/
-(or any sub-directory under sys/).
+1/ Maintain your new foo system in a separate repository with version tags 
+that show compatibility with specific cylc versions. 
 
-2/ write your cylc user config file: [cylc-top]/sys/foo/user_config.py
+2/ Install foo into: 
+	[cylc-top]/sys/foo/ (or any sub-directory under sys/).
 
-3/ run bin/configure-system on your system definition directory, to
-generate the task class code ([cylc-top]/sys/foo/task_classes.py) and
-cylc environment script ([cylc-top]/sys/foo/environment.sh). This
-only needs to be done before the first run, or after changing the task
-definition files.
+3/ Write cylc task definition files for each task in foo, under:
+	[cylc-top]/sys/foo/task-defs/. 
 
-4/ source the cylc environment file for system foo (sets the PATH and
+4/ Write a cylc user config file for system foo: 
+	[cylc-top]/sys/foo/user_config.py
+
+5/ run '[cylc-top]/bin/cylc-configure-system sys/foo/' 
+this generates the task class code 
+(which ends up in [cylc-top]/sys/foo/task_classes.py) 
+and the cylc environment script 
+(which ends up in [cylc-top]/sys/foo/environment.sh). 
+Do this once before the first run, and thereafter only 
+if the task definition files are modified.
+
+6/ source the cylc environment file for system foo (sets the PATH and
 PYTHONPATH environment variables for access to general cylc and
-system-specific code modules).  This needs to be done in the shell that
+system-specific code modules).  This must be done in the shell that
 runs the cylc instance that handles system foo, and in any other
 shells that need to interact with the same cylc instance (e.g. system
-monitors).
+monitors and remote control).
 
    $ . [cylc-top]/sys/foo/environment.sh
 
+7/ run cylc
 
-5/ run cylc
+   $ cylc server --help 
 
-   $ cylc [options] [args]
-
-6/ To control an entirely different system using the same cylc
-installation, just source the appropriate
-[cylc-top]/sys/[system-name]/environment.sh 
+8/ To control an entirely different system using the same cylc
+installation, just source the appropriate environment file
+([cylc-top]/sys/[system-name]/environment.sh)
 before running cylc.
