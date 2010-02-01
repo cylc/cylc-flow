@@ -128,7 +128,7 @@ regional weather forecast.  EcoConnect runs on heterogenous distributed
 hardware, including a massively parallel supercomputer and several Linux
 servers. 
 
-\section{The Impact of Dependencies}
+\subsection{The Impact of Dependencies}
 
 Most dependencies occur between tasks within a single forecast cycle. A
 sea state forecast, for example, might depend on surface wind fields
@@ -274,7 +274,7 @@ different cycles can run simultaneously, in principle, at any given
 time. 
 
 
-\section{Existing Scheduling Systems}
+\subsection{Existing Scheduling Systems}
 
 As explained in the previous section, as far as the author is aware
 current forecast scheduling systems ignore intercycle dependencies and
@@ -308,12 +308,7 @@ trigger off the wall clock.
 
 \section{Cylon}
 
-This section provides a minimal description of Cylon's novel scheduling
-algorithm, which achieves the optimal cycle-independent scheduling of
-Figures~\ref{fig-time-one} and~\ref{fig-time-two}; see the abstract for
-a summary of major consequences, Section~\ref{sec:implementation} for
-implementation detail, and Section~\ref{sec:usage} for system usage.  
-
+\subsection{Introduction}
 Other systems cannot do optimal scheduling because they are unaware of
 intercycle dependencies {\em and} they invariably use global forecast
 cycle and/or date-time loops to advance the system forward in time,
@@ -362,31 +357,42 @@ are entirely hidden from the user.
 %by anyone). 
 
 
-\section{Cylon Implementation}
+\subsection{Implementation}
 \label{sec:implementation}
 
-
 {\huge TO DO: update and insert external file implementation.tex}
+
+
+\subsection{Usage}
+\label{sec:usage}
+
+
+
 
 \appendix
 
 \section{Essential OOP Concepts}
 
-The simplicity of the dynamic scheduling implementation in {\em cylon}
-is critically dependent on the {\em polymorphic} nature of the {\em task
-objects} in the program.  This section contains a minimal introduction
+The cylon Python implementation makes heavy use of object oriented
+programming concepts, particularly the {\em polymorphic} nature of
+the task proxy objects.  This section contains a minimal introduction
 to these Object Oriented Programming concepts.  Refer to any OOP
 reference for more detail.
 
-\subsection{Classes and Objects}
+\subsection{Class}
 
 A {\em class} is essentially a generalisation of {\em data type} to
 include {\em behaviour} (i.e.\ functions or {\em methods}) as well as
-state.  {\em Objects} are more or less self contained {\em instances} of
-a class. For example, a $shape$ class could define a $position$ data
+state. For example, a $shape$ class could define a $position$ data
 member that describes the location of each shape object, a $move()$
 method that causes a shape object to alter its position, and a $draw()$
 method that causes it to display itself in the right place on screen.
+
+\subsection{Object}
+
+{\em Objects} are more or less self contained specific {\em instances}
+of a class. This is analagous to specific integer variables being 
+instances of the general integer data type.
 
 \subsection{Inheritance}
 
@@ -418,7 +424,11 @@ class $draw()$. This is a very powerful mechanism because {\em it allows
 unmodified old code to call new code}: if we later derive an entirely
 new kind of shape ($hexagon$, say) with it's own unique behaviour, the
 existing program, without modification, will process the new objects in
-the proper hexagon-specific way.
+the proper hexagon-specific way.  In Cylon, all task proxy objects are
+derived from a common base class. The main algorithm works with
+instances of the base class so that any current or future derived task
+object can be handled by the program without modification (other than
+the derived class code, that is).
 
 
 \section{Threading in Pyro} \label{pyro-appendix}
@@ -434,78 +444,41 @@ loop (e.g.\ in dummy mode there are a lot of remote calls on the dummy
 clock object, which does not alter tasks at all). 
 
 In {\em multithreaded mode}, \verb#handleRequests()# returns immediately
-after creating a new request handling thread for a single remote object
+after creating a new request handling thread for a single remote object,
 and thereafter remote method calls on that object come in asynchronously
 in the dedicated thread. This is not good for the dynamic scheduling
 algorithm because tasks are only set running in the task processing
 block which can be delayed while \verb#handleRequests()# blocks waiting
-for a new connection to be established even as messages that warrent
+for a new connection to be established, even as messages that warrant
 task processing are coming in on existing connections. The only way
-around this is to do task processing on \verb#handleRequests()# timeouts
-which results in a lot of unnecessary task processing when nothing
+around this seems to be to do task processing on \verb#handleRequests()#
+timeouts which results in a lot of unnecessary processing when nothing
 important is happening.
 
 
-\subsection{Interfacing Tasks To cylon}
-blah.
-
-\subsection{Utility Programs}
-blah.
-
-\subsubsection{Configure System}
-blah.
-
-\subsubsection{Remote Control}
-blah.
-
-\subsubsection{System Monitors}
-blah.
-
-\subsection{Logging}
-blah.
-
 \section{Miscellaneous Notes}
 
-\subsection{Product Generation}
+\subsection{Orderly Product Generation}
 
-Note that ``correct scheduling'' is not necessarily equivalent to
-``orderly generation of products by reference time'' (the upstream 
-forecast model can run continuously regardless of any downstream
-processing that depends on it).
+Note that ``correct scheduling'' is not equivalent to ``orderly
+generation of products by cycle time'' - under cylon a product
+generation task will trigger as soon as its prerequisites are satisfied,
+whether or not other tasks associated with the same cycle time are
+running yet.  If your product delivery system demands that all products
+for a given cycle time are uploaded at once then (a) fix it!, or (b)
+you'll have to introduce artificial dependencies into your cylon system
+to enforce strict sequential cycling (but that, of course, nullifies the
+principal advantage of using cylon in the first place!)
 
 \subsection{Catching Up}
 
-The state of ``catching up'' is a property of the individual tasks, not
-the whole system. Where this matters, it can be detected by the relevant
-external task. E.g.\ if the external topnet(T) task starts up at real
-time t greater than the stream flow data time for T (i.e.\ $T+15$ min),
-i.e.\ the required stream flow data is already available, then we're
-still in catch up. If, on the other hand, the topnet task finds that it
-has to wait for its stream flow data time to arrive, then we're caught
-up to real time.  This matters because topnet is allowed to run ahead by
-a different amount of time depending on whether we're in catch up mode or
-not.
+The state of being ``caught up'' or not is a property of individual
+tasks, not the whole system, and additionally it should only matter to
+external contact tasks, i.e. those that wait on external data that is
+available at a wall clock time of T (task cycle time) + o (some offset
+insterval). Where this matters an external task can detect whether or
+not it has caught up (and signal this to its proxy object in cylon) by
+comparing its reference time (and offset) to the wall clock time.
 
-\subsection{Controlling Task Execution}
-
-\begin{itemize}
- \item  prerequisites
- \item artificial prerequisites (e.g.\ make nztide depend on nzlam)
- \item delayed instantiation (a task can't run if it doesn't exist yet).
- \item other contraints based on, for example, the number of previous
- instances that still exist in the system, or how far ahead of the 
- slowest/oldest task we can get.
-\end{itemize}
-
-\subsection{fuzzy prequisites}
-
-{\em Exact prerequisites} (most tasks): times are specified exactly,
-relative to the task's own reference time.  E.g.\ {\em file foo\_{T}.nc
-ready} where T is the task's reference time.
-
-{\em Fuzzy prerequisites} (topnet): a time boundary is specified
-relative to the task's own reference time; any task with a reference
-time greater than or equal to the boundary time can satisify the
-prerequisite.
 
 \end{document}
