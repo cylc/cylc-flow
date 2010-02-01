@@ -1,0 +1,58 @@
+#!/usr/bin/python
+
+import sys
+import subprocess
+
+allowed_sub_commands = \
+    [ 
+    'server', 
+    'control',
+    'configure-system',
+    'monitor'
+    ]
+
+name = sys.argv[0]
+
+usage = \
+    [ 
+    'USAGE: ' + name + ' [sub-command] <options> ',
+    'Sub-commands:',
+    '  server        ... start scheduling a cylc system',
+    '  control       ... control a running cylc system',
+    'Options:',
+    '  to see sub-command options:',
+    '  ' + name + ' sub-command --help'
+    ]
+
+def print_usage():
+    for line in usage:
+        print line
+
+try:
+    sub_command = sys.argv[1]
+    sub_command_options = sys.argv[2:]
+except:
+    print_usage()
+    sys.exit(1)
+
+if sub_command not in allowed_sub_commands:
+    print_usage()
+    sys.exit(1)
+
+command = 'cylc-' + sub_command + ' ' + ' '.join( sub_command_options )
+print command
+
+try:
+    # use of shell=True here provides access to PATH in the subprocess
+    retcode = subprocess.call( command, shell=True )
+    if retcode < 0:
+        # the sub-command returned non-zero exist status
+        print >> sys.stderr, command + ' failed: ', retcode
+        sys.exit(1)
+
+except OSError:
+    # the sub-command was not invoked
+    print >> sys.stderr, 'CYLC ERROR: unable to run sub-command ' + sub_command
+    print >> sys.stderr, "Is everything under your cylc bin directory executable?"
+    print >> sys.stderr, "Have you run 'cylc configure-system' yet?"
+    sys.exit(1)
