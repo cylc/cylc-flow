@@ -21,7 +21,6 @@ usage = \
     'Commands:',
     '  server              ... start scheduling a cylc system',
     '  control             ... control a running cylc system',
-    '  configure-system    ... configure cylc to run a new system',
     '  monitor-all       ... monitor all cylc task proxies',
     '  monitor-dummies   ... monitor running external dummy tasks',
     '  monitor-running   ... monitor running cylc task proxies',

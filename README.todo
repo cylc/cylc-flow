@@ -1,5 +1,12 @@
 To Do
 
+* 'cylc-message --all-outputs-completed' is confusing because it is not related
+  to the special 'completed' messages.
+
+* in the task wrapper script, the --all-outputs-completed argument sets
+  everything completed (including the 'completed' message) except for the
+ "finished" message: why is this?
+
 * consider implementing "either or" and "self destruct"
   prerequisites (Phil's idea) - this would allow automated
   control-system initiated response to failed tasks.  EXAMPLE: if a
