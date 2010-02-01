@@ -1,6 +1,6 @@
-Example task definition files for cylon. Task definitions based on
+Example task definition files for cylc. Task definitions based on
 these templates are processed by task_generator.py, which
-auto-generates the task class module (task_classes.py) used by cylon.  
+auto-generates the task class module (task_classes.py) used by cylc.  
 
 + <task-name>.def
   task definition file, suitable for all normal tasks: those that

@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # USE $PYTHONPATH IN YOUR ENVIRONMENT TO MAKE AVAILABLE:
-# 1/ cylon 'src' module directory
+# 1/ cylc 'src' module directory
 # 2/ user config module (for user_config.py and task_classes.py)
 
 import re
@@ -26,13 +26,13 @@ from optparse import OptionParser
 from time import sleep
 
 # auto-replace with version tag at build/install:
-cylon_version = "foo-bar-baz"
+cylc_version = "foo-bar-baz"
 
 def print_banner():
     print "___________________________________________"
     print
-    print "   .    Cylon Dynamic Metascheduler    ."
-    #print "        version: " + cylon_version
+    print "   .    Cylc Dynamic Metascheduler    ."
+    #print "        version: " + cylc_version
     print "   .    Hilary Oliver, NIWA, 2008/9    ."
     print "   .    Pyro nameserver is required    ."
     print "___________________________________________"
@@ -58,7 +58,7 @@ def service_remote_requests( remote, task_manager, log ):
     if remote.get_halt_now():
         # stop launching new tasks, NOW.
         # This must be used to shutdown the system if an external task
-        # dies without notifying cyclon.
+        # dies without notifying cylc.
         halt_now = True
 
     if remote.get_nudge():

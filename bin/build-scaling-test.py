@@ -4,14 +4,14 @@ import os, sys
 
 def usage():
     print 'USAGE: ' + sys.argv[0] + ' <n (number of tasks)>'
-    print 'Generate a system of n interdependent cylon task definition files,'
-    print 'and a cylon config file to run the system in dummy mode. For use'
-    print 'in testing cylon performance on large task numbers (dummy mode'
-    print 'and real mode are the same as far as cylon is concerned).'
+    print 'Generate a system of n interdependent cylc task definition files,'
+    print 'and a cylc config file to run the system in dummy mode. For use'
+    print 'in testing cylc performance on large task numbers (dummy mode'
+    print 'and real mode are the same as far as cylc is concerned).'
     print ''
     print 'Each task depends only on the previous one, i.e. a simple linear'
     print 'sequence so that only a few external dummy task programs run at once.'
-    print 'This prevents the system (hardware, not cylon) being swamped by a'
+    print 'This prevents the system (hardware, not cylc) being swamped by a'
     print 'large number of external dummy programs all running at the same time.'
     print ''
     print 'Output locations relative to script running directory:'
@@ -21,7 +21,7 @@ def usage():
 
 def main( argv ):
 
-    print 'ABORTING: this program needs to be updated for the latest version of cylon"
+    print 'ABORTING: this program needs to be updated for the latest version of cylc"
     sys.exit(0)
 
     if len( argv ) != 2:
@@ -48,7 +48,7 @@ def main( argv ):
      
         FILE.write(
                 """
-# THIS IS A cylon TASK CLASS DEFINITION FILE
+# THIS IS A cylc TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
 %NAME
@@ -89,7 +89,7 @@ def main( argv ):
             """
 #!/usr/bin/python
 
-# cylon user configuration file
+# cylc user configuration file
 # see config.py for other options
 
 # DO NOT REMOVE THE FOLLOWING TWO LINES >>>>

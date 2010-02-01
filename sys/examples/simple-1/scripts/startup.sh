@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cylon example system, task startup
+# cylc example system, task startup
 # one off initial task to clean the example system working directory
 # no prerequisites
 

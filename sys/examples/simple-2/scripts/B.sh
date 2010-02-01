@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cylon example system, task B
+# cylc example system, task B
 # depends on task A and its own restart file
 
 # run length 60 minutes, 2 restart files

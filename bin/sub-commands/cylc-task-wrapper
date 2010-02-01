@@ -1,8 +1,8 @@
 #!/bin/bash
 
-# Cyclon task wrapper script
+# Cylc task wrapper script
 
-# Cyclon tasks must provide, at the least, their own 'started',
+# Cylc tasks must provide, at the least, their own 'started',
 # 'finished', and 'failure' messages.  This script is intended to allow
 # control over existing tasks without having to modify them in any way.
 
@@ -14,34 +14,34 @@
 
 # Thus WRAPPED TASKS do not need to send any messages, but they must
 # provide the standard exit codes: '0' for success, '1' (or more) for
-# failure. If you want, however, a wrapped task *can* send cylon
+# failure. If you want, however, a wrapped task *can* send cylc
 # messages as well, but in that case you might as well dispense with
 # wrapping and provide your own started, finished, and failure messages
 # as well.
 
 set -e  # abort on error
 
-# cylon exports the following environment variables for each task:
+# cylc exports the following environment variables for each task:
 #   1. $REFERENCE_TIME  
 #   2. $TASK_NAME      
 #   3. $WRAP          
 
 if [[ -z $REFERENCE_TIME ]]; then
-	echo "ERROR, task-wrapper: \$REFERENCE_TIME not found"
+	echo "ERROR, cylc-task-wrapper: \$REFERENCE_TIME not found"
 	exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
-	echo "ERROR, task-wrapper: \$TASK_NAME not found"
+	echo "ERROR, cylc-task-wrapper: \$TASK_NAME not found"
 	exit 1
 fi
 
 if [[ -z $WRAP ]]; then
-	echo "ERROR, task-wrapper: \$WRAP not found"
+	echo "ERROR, cylc-task-wrapper: \$WRAP not found"
 	exit 1
 fi
 
-#echo "task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
+#echo "cylc-task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
 task-message "started"
 
 # call the wrapped task

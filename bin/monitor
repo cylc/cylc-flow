@@ -20,7 +20,7 @@ from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,Connect
 from time import sleep
 from optparse import OptionParser
 
-# cylon modules:
+# cylc modules:
 import pyrex
 from reference_time import _rt_to_dt
 
@@ -47,7 +47,7 @@ parser.add_option( "-s", "--shortnames", help="display short tasknames",
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
-header = 'CYLON! waiting running done failed'
+header = 'CYLC! waiting running done failed'
 header = '                                   '
 
 #if len( args ) != 0:
@@ -244,13 +244,13 @@ while True:
         # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
         foo = header
         bar = system_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
-        foo = re.sub( '^.{' + str(len('cylon!')) + '}', 'cylon!', foo )
+        foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
         foo = re.sub( '.{' + str(len(system_name)) + '}$', system_name, foo )
 
         blit.append( '\033[1;37;43m' + foo + ctrl_end )
 
         blit.append( '\033[1;37;40mkey -> ' + ctrl_end + "\033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end )
-        # last time state summary was updated by cylon (only happens
+        # last time state summary was updated by cylc (only happens
         # when task processing is invoked).
         blit.append( 'summary updated ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
 

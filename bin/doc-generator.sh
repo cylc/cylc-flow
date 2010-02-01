@@ -2,12 +2,12 @@
 
 set -e
 
-# generate pdf documentation from cylon LaTeX source
+# generate pdf documentation from cylc LaTeX source
 
 usage() {
 	echo "USAGE: [-f] $0"
     echo ' -f, force re-conversion of eps figures to PDF'
-	echo "Run script in the cylon top level directory"
+	echo "Run script in the cylc top level directory"
 }
 
 [[ $# > 1 ]] && {
@@ -25,8 +25,8 @@ if [[ $# == 1 ]]; then
     fi
 fi
 
-[[ ! -f bin/cylon ]] && {
-	echo "RUN THIS SCRIPT IN THE CYLON TOP LEVEL DIRECTORY"
+[[ ! -f bin/cylc ]] && {
+	echo "RUN THIS SCRIPT IN THE CYLC TOP LEVEL DIRECTORY"
     usage
 	exit 1
 }
@@ -40,4 +40,4 @@ for F in *.eps; do
     }
 done
 
-pdflatex cylon.tex
+pdflatex cylc.tex

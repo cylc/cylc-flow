@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# Clean existing cylon paths from a supplied PATH variable
-# Enables reconfiguring cylon to a different task system
+# Clean existing cylc paths from a supplied PATH variable
+# Enables reconfiguring cylc to a different task system
 # without logging out and in again.
 
 [[ $# > 1 ]] && {
@@ -16,7 +16,7 @@ OUT_PATH=''
 OIFS=$IFS
 IFS=':'
 for P in $IN_PATH; do
-	if [[ $P !=  *cylon* ]]; then
+	if [[ $P !=  *cylc* ]]; then
 		OUT_PATH=${OUT_PATH}:$P
 	fi
 done

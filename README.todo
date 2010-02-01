@@ -25,10 +25,10 @@ To Do
 
 * check that task output times do not exceed the registered run time
 
-* exception handling for a graceful exit if cylon can't find a Pyro
+* exception handling for a graceful exit if cylc can't find a Pyro
   nameserver.
 
-* allow cylon task proxies to kill their real external tasks at shutdown
+* allow cylc task proxies to kill their real external tasks at shutdown
   (and otherwise)
 
 * connection failure retry for dummy tasks, as is currently done in
@@ -88,7 +88,7 @@ To Do
   def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
 
 * forecast tasks can no longer be 'quick death' because they depend on
-  previous instance. Cylon should check for this. However, they could
+  previous instance. Cylc should check for this. However, they could
   die as soon as their successor is satisfied. 
 
 ====================================

@@ -6,7 +6,7 @@
 
 \lstset{language=Python}
 
-\title{How To Use cylon}
+\title{How To Use cylc}
 \author{Hilary Oliver, NIWA}
 
 \begin{document}
@@ -16,7 +16,7 @@
 
 \section{Overview}
 
-cylon is a metascheduling controller for systems of interdependent
+cylc is a metascheduling controller for systems of interdependent
 tasks, where a {\em task} is defined to be a group of one or more
 processes treated as a unit for scheduling purposes, and invoked via a
 single top level script or executable.  It can do task-completion based
@@ -25,29 +25,29 @@ upstream tasks) {\em without any modification of the existing tasks}:
 the only requirement is a simple \textbf{task definition file} that
 describes each task. However, if some tasks have long execution times
 and several significant internal outputs (i.e. prior to task
-completion), you can have cylon trigger downstream tasks off internal
+completion), you can have cylc trigger downstream tasks off internal
 outputs with minor modification of external tasks to get completion of
-internal outputs reported back to cylon. 
+internal outputs reported back to cylc. 
 
-Section \ref{config} below describes how to configure cylon in order to
-control a new system.  Section \ref{usage} describes how to run cylon
-once cylon has been configured.
+Section \ref{config} below describes how to configure cylc in order to
+control a new system.  Section \ref{usage} describes how to run cylc
+once cylc has been configured.
 
 \label{config}
 \section{Task Definition Files}
 
-A {\em Task Definition File} defines the properties of a cylon task:
+A {\em Task Definition File} defines the properties of a cylc task:
 name, valid run times, prerequisites and postrequisites, the task
-control script used to invoke the task, etc.  A cylon utility,
+control script used to invoke the task, etc.  A cylc utility,
 \verb=task_generator.py= parses task definition files and auto-generates
 Python code that defines the objects that represent each task within
-cylon.
+cylc.
 
 \subsection{Typical Example}
 
 Most tasks have only cotemporal (same reference time) upstream and
 downstream dependencies (recall that every task is implicitly dependent
-on the previous instance of its own class, in cylon). The following
+on the previous instance of its own class, in cylc). The following
 task definition file is sufficient to completely define such a task.
 Different postrequisites can be specified depending on reference time. 
 
@@ -86,7 +86,7 @@ code must currently be written directly.
 Each external task must:
 
 \begin{itemize}
-\item report (to cylon) when the task has started
+\item report (to cylc) when the task has started
 \item report when the task has finished
 \item report when every other registered task postrequisite has
 completed
@@ -103,17 +103,17 @@ In addition, tasks can optionally:
 messages, for debugging, logging, or progress monitoring purposes.
 \end{itemize}
 
-All incoming messages are logged by cylon, but only postrequisite
+All incoming messages are logged by cylc, but only postrequisite
 messages can affect the state of other task objects.
 
 Task messages don't necessarily have to originate from top level task
 control scripts. It's a probably a good idea to do this if possible, but
 lower level scripts that are invoked as the task runs can communicate
-directly with cylon if necessary.
+directly with cylc if necessary.
 
 \section{wrapper}
 
-A simple a simple wrapper script invoked by cylon reports task
+A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
 
 

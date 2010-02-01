@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cylon example system, task D
+# cylc example system, task D
 # depends on tasks B and C
 
 # run length 75 minutes

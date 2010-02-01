@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# THIS IS A CYLON TASK SCRIPT
+# THIS IS A CYLC TASK SCRIPT
 
 set -e  # ABORT ON ERROR
 
-# source cylon environment
-. $CYLON_ENV
+# source cylc environment
+. $CYLC_ENV
 
-# ABORT IN CASE OF ANY ERROR, AND ALERT CYLON
+# ABORT IN CASE OF ANY ERROR, AND ALERT CYLC
 # (this means we do not need to explicitly check for success of simple
 # operations like directory creation, etc.
 trap 'task-message -p CRITICAL failed' ERR  
@@ -29,6 +29,6 @@ fi
 
 task-message finished  # COMPULSORY FINISHED MESSAGE
 
-# NOTE: all task scripts are supplied $CYLON_ENV, $TASK_NAME, and
-# $REFERENCE_TIME by cylon, but do not need to check that these 
+# NOTE: all task scripts are supplied $CYLC_ENV, $TASK_NAME, and
+# $REFERENCE_TIME by cylc, but do not need to check that these 
 # inputs have been defined (task-message checks for that).

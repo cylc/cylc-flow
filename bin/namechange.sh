@@ -20,11 +20,14 @@ for FILE in $FILES; do
         continue
     }
 
-    IN=cyclon
-    OUT=cylon
+    IN=cylon
+    OUT=cylc
 
     INBIG=$( echo $IN | tr 'a-z' 'A-Z' )
     OUTBIG=$( echo $OUT | tr 'a-z' 'A-Z' )
+
+    INCAP=$( echo $IN | sed -e 's/./\U&/' )
+    OUTCAP=$( echo $OUT | sed -e 's/./\U&/' )
 
     echo ... backing up
     cp $FILE bkp/${FILE}.bkp
@@ -32,8 +35,13 @@ for FILE in $FILES; do
     echo ... substituting $IN for $OUT
     cat $FILE | sed -e "s/$IN/$OUT/g" > tmp
     mv tmp $FILE
+
     echo ... substituting $INBIG for $OUTBIG
     cat $FILE | sed -e "s/$INBIG/$OUTBIG/g" > tmp
+    mv tmp $FILE
+
+    echo ... substituting $INCAP for $OUTCAP
+    cat $FILE | sed -e "s/$INCAP/$OUTCAP/g" > tmp
     mv tmp $FILE
 
 done

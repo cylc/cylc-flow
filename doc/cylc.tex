@@ -9,7 +9,7 @@
 
 \lstset{language=Python}
 
-\title{Cylon: A Self-Organising Optimal Job Scheduler 
+\title{Cylc: A Self-Organising Optimal Job Scheduler 
 For Complex Environmental Forecasting Systems}
 
 \author{Hilary Oliver, NIWA}
@@ -24,7 +24,7 @@ For Complex Environmental Forecasting Systems}
 
 \begin{abstract}
 
-    {\em Cylon} is a self-organising metascheduler\footnote{A
+    {\em Cylc} is a self-organising metascheduler\footnote{A
     metascheduler sends dependent tasks to the batch queue job
     scheduler(s) when it has determined that they are {\em ready to
     run}. However, we drop the ``meta'' prefix from here on because a
@@ -50,10 +50,10 @@ For Complex Environmental Forecasting Systems}
     data\footnote{Forecast systems are typically driven by observational
     data and/or timely model fields from an external forecasting
     system.} for upcoming forecast cycles are available in advance {\em
-    cylon} can run tasks from multiple cycles at once to the full extent
+    cylc} can run tasks from multiple cycles at once to the full extent
     allowed by intercycle dependencies; a series of distinct forecast
     cycles emerges only when the system catches up to real time
-    operation.\footnote{{\em Cylon} also enables new modes of real time
+    operation.\footnote{{\em Cylc} also enables new modes of real time
     operation, for example a catchment river model that runs hourly
     assimilating real time stream flow observations and using the {\em
     most recent} 6-hourly precipitation forecast - see EcoConnect,
@@ -61,20 +61,20 @@ For Complex Environmental Forecasting Systems}
     restarted) behind the main operation to catch up as quickly as
     possible, systems with little downtime between forecast cycles will
     catch up from delays much faster, and historical case studies can
-    achieve sustained maximal throughput. {\em Cylon} is easily
+    achieve sustained maximal throughput. {\em Cylc} is easily
     interfaced to existing tasks and is extremely flexible and easy to
     use. It can be restarted in arbitrarily complex states of operation
     and dynamically adapts to insertion or removal of tasks.  A failed
     task will necessarily delay its downstream dependants, but the rest
     of the system can carry on unaffected while the problem is
     addressed, after which time the delayed tasks will catch up as
-    quickly as possible.  {\em Cylon}'s handling of forecast model
+    quickly as possible.  {\em Cylc}'s handling of forecast model
     `restart' dependencies allows continued operation, with very little
     operator intervention, over major failures that result in omitted
     forecast cycles in the driving (upstream) models.  Ability to
     control the configured task set, and failure recovery scenarios, can
     be completely tested in an accelerated simulation mode that is
-    indistinguishable (to {\em cylon}) from real operation.  {\em Cylon}
+    indistinguishable (to {\em cylc}) from real operation.  {\em Cylc}
     is written in object oriented Python and uses the Python Remote
     Object Protocol ({\em Pyro}) to control tasks across a network.  
 
@@ -306,14 +306,14 @@ because it still relies on global cycling mechanisms to either loop
 over successive forecast reference times or, for real time operation,
 trigger off the wall clock.
 
-\section{Cylon}
+\section{Cylc}
 
 \subsection{Introduction}
 Other systems cannot do optimal scheduling because they are unaware of
 intercycle dependencies {\em and} they invariably use global forecast
 cycle and/or date-time loops to advance the system forward in time,
 which maintains the artificial boundary between cycles.  In contrast,
-cylon has no system-wide looping mechansim: instead it maintains an
+cylc has no system-wide looping mechansim: instead it maintains an
 evolving pool of task proxy objects (representing the real tasks) each
 of which has its own private cycle time and spawns its own successor
 when it is ready (exactly when this is depends on task type; see
@@ -322,7 +322,7 @@ prerequisites (including those from previous cycles), but not who is
 expected to provide them; and its own outputs, but not who is expected
 to use them. It also knows how to invoke its external task once its
 prerequisites are satisfied and, by means of a messaging system, can
-record the external task's outputs as they are completed. Cylon then
+record the external task's outputs as they are completed. Cylc then
 gets the task pool to interact indiscriminately, {\em regardless of
 cycle time}, to match unsatisfied prerequisites with completed
 outputs.\footnote{In fact this negotiation goes through a middleman or
@@ -373,7 +373,7 @@ are entirely hidden from the user.
 
 \section{Essential OOP Concepts}
 
-The cylon Python implementation makes heavy use of object oriented
+The cylc Python implementation makes heavy use of object oriented
 programming concepts, particularly the {\em polymorphic} nature of
 the task proxy objects.  This section contains a minimal introduction
 to these Object Oriented Programming concepts.  Refer to any OOP
@@ -424,7 +424,7 @@ class $draw()$. This is a very powerful mechanism because {\em it allows
 unmodified old code to call new code}: if we later derive an entirely
 new kind of shape ($hexagon$, say) with it's own unique behaviour, the
 existing program, without modification, will process the new objects in
-the proper hexagon-specific way.  In Cylon, all task proxy objects are
+the proper hexagon-specific way.  In Cylc, all task proxy objects are
 derived from a common base class. The main algorithm works with
 instances of the base class so that any current or future derived task
 object can be handled by the program without modification (other than
@@ -461,14 +461,14 @@ important is happening.
 \subsection{Orderly Product Generation}
 
 Note that ``correct scheduling'' is not equivalent to ``orderly
-generation of products by cycle time'' - under cylon a product
+generation of products by cycle time'' - under cylc a product
 generation task will trigger as soon as its prerequisites are satisfied,
 whether or not other tasks associated with the same cycle time are
 running yet.  If your product delivery system demands that all products
 for a given cycle time are uploaded at once then (a) fix it!, or (b)
-you'll have to introduce artificial dependencies into your cylon system
+you'll have to introduce artificial dependencies into your cylc system
 to enforce strict sequential cycling (but that, of course, nullifies the
-principal advantage of using cylon in the first place!)
+principal advantage of using cylc in the first place!)
 
 \subsection{Catching Up}
 
@@ -477,7 +477,7 @@ tasks, not the whole system, and additionally it should only matter to
 external contact tasks, i.e. those that wait on external data that is
 available at a wall clock time of T (task cycle time) + o (some offset
 insterval). Where this matters an external task can detect whether or
-not it has caught up (and signal this to its proxy object in cylon) by
+not it has caught up (and signal this to its proxy object in cylc) by
 comparing its reference time (and offset) to the wall clock time.
 
 

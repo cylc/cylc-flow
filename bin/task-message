@@ -4,11 +4,11 @@
 Standalone interface between external EcoConnect tasks/models and the
 task objects that represent them in the controller.
 
-Sends a message to a task proxy object in a cylon instance, by calling
+Sends a message to a task proxy object in a cylc instance, by calling
 [task object].incoming(<priority>, <message>). The task is identified by
 its unique task ID, <NAME>%<REFTIME>.
 
-Cylon provides $REFERENCE_TIME and $TASK_NAME to external tasks that all
+Cylc provides $REFERENCE_TIME and $TASK_NAME to external tasks that all
 this messaging interface.
 """
 

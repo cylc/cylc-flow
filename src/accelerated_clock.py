@@ -8,7 +8,7 @@ import datetime, time
 
 class clock( Pyro.core.ObjBase ):
     """
-    REAL TIME or ACCELERATED DUMMY MODE clock for cylon.
+    REAL TIME or ACCELERATED DUMMY MODE clock for cylc.
 
     In dummy mode, equate a given dummy YYYYMMDDHH with the real time at
     initialisation, and thereafter advance dummy time at the requested

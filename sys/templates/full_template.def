@@ -1,4 +1,4 @@
-# THIS IS A cylon TASK CLASS DEFINITION FILE
+# THIS IS A cylc TASK CLASS DEFINITION FILE
 # See full_template.def for documented entries
 
 # [foo] => foo is optional.
@@ -37,7 +37,7 @@
     # next N valid times for the task class).  A forecast model cannot
     # start running until its restart prerequisites is satisfied, but
     # the same prerequisite can be satisfied by the previous N instances
-    # if one or more cycles has to be omitted. This allows cylon to
+    # if one or more cycles has to be omitted. This allows cylc to
     # continue running over seemingly dire system problems with minimal
     # intervention.  The successor of a forecast model is spawned as
     # soon as its last restart output is completed (not after the first
@@ -72,13 +72,13 @@
     # dependent task needs to behave differently according to whether
     # its upstream contact task has caught up or not.
 
-    # (d) A DUMMY task always uses the cylon dummy task program for its
+    # (d) A DUMMY task always uses the cylc dummy task program for its
     # external task, even in real mode. The dummy task program
     # masquerades as the task it represents by reporting its outputs
     # completed at the right time. This can be used to provide 'fake'
     # cold start prerequisites to get the system running when they real
     # inputs have been put in place by some external means prior to
-    # running cylon.
+    # running cylc.
 
 %CONTACT_DELAY_HOURS
     # For tasks with the 'contact' attribute only (see %TYPE above).
@@ -90,7 +90,7 @@
 
 [%OWNER]
     # What username the task should run as. Defaults to the owner of the
-    # running cylon instance.
+    # running cylc instance.
 
     bob
 
@@ -194,7 +194,7 @@
 
 [%ONEOFF_FOLLOW_ON]
     oneoff tasks that have non-cotemporal dependants must nominate a
-    follow on task to "hand the baton on to" so that cylon knows when it
+    follow on task to "hand the baton on to" so that cylc knows when it
     can delete the oneoff task from the system (it will not be deleted
     before the follow on task exists). 
 

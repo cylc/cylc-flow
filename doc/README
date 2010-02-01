@@ -1,4 +1,4 @@
-LaTeX source for cylon documentation: Generate the final ps or pdf
+LaTeX source for cylc documentation: Generate the final ps or pdf
 documents in the source repository before installing elsewhere for use 
 (some source files are read into the document during LaTeX processing
 so relative file paths must be as expected at document processing time).
