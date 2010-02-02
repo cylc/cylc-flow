@@ -34,7 +34,7 @@ def prompt( reason ):
 # construct a command line parser
 parser = OptionParser( "%prog [options]" )
 
-parser.add_option( "-f", "--force", help="don't prompt before acting",
+parser.add_option( "-f", "--force", help="do not prompt before acting",
         action="store_true", default=False, dest="force" )
 
 parser.add_option( "-p", "--pause", help="pause system now",

@@ -367,6 +367,217 @@ are entirely hidden from the user.
 \label{sec:usage}
 
 
+\lstset{language=Python}
+
+\section{Introduction/Overview}
+
+\section{How To Define and Configure A New System}
+
+\section{How To Run and Interact With A System}
+
+\section{Cylc Command Reference}
+
+\subsection{cylc}
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{command-usage/cylc.txt}
+%\end{lstlisting}
+}
+
+
+\subsection{cylc server}
+
+This is the forecast systems task scheduler program.  Multiple systems 
+can run at once, and multiple instances of the same system can be run at once 
+so long as each system (or instance of the same system) is configured with a
+different name.
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{command-usage/cylc-server.txt}
+%\end{lstlisting}
+}
+
+
+\subsection{cylc control}
+
+A remote contorl program than can interact with running systems.
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{command-usage/cylc-control.txt}
+%\end{lstlisting}
+}
+
+
+\subsection{System Monitor Commands}
+
+\subsubsection{cylc monitor-all}
+{\small
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{command-usage/monitor-all.txt}
+%\end{lstlisting}
+}
+
+
+\subsubsection{cylc monitor-running}
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{command-usage/monitor-running.txt}
+%\end{lstlisting}
+}
+
+\subsubsection{cylc monitor-dummies}
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{command-usage/monitor-dummies.txt}
+%\end{lstlisting}
+}
+
+
+\subsubsection{cylc monitor-pyro-ns}
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{command-usage/monitor-pyro-ns.txt}
+%\end{lstlisting}
+}
+
+
+
+\label{config}
+\section{Task Definition Files}
+
+A {\em Task Definition File} defines the properties of a cylc task:
+name, valid run times, prerequisites and postrequisites, the task
+control script used to invoke the task, etc.  A cylc utility,
+\verb=task_generator.py= parses task definition files and auto-generates
+Python code that defines the objects that represent each task within
+cylc.
+
+\subsection{Typical Example}
+
+Most tasks have only cotemporal (same reference time) upstream and
+downstream dependencies (recall that every task is implicitly dependent
+on the previous instance of its own class, in cylc). The following
+task definition file is sufficient to completely define such a task.
+Different postrequisites can be specified depending on reference time. 
+
+\lstset{language=sh, numbers=left}
+
+{\tiny
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{../sys/templates/example.def}
+%\end{lstlisting}
+}
+
+\subsection{Full Task Definition Template}
+
+\lstset{language=sh, numbers=left}
+
+{\tiny
+\noindent
+\rule{5cm}{.2mm}
+%\begin{lstlisting}
+\lstinputlisting{../sys/templates/full_template.def}
+%\end{lstlisting}
+}
+
+\subsection{More Complex Task Behaviour}
+
+\textit{In EcoConnect: only streamflow and topnet}
+
+For tasks that have non-cotemporal upstream dependencies and/or need to  
+override task class methods to define new behaviour, the Python task
+code must currently be written directly. 
+
+\section{Task Messaging Mechanism}
+
+Each external task must:
+
+\begin{itemize}
+\item report (to cylc) when the task has started
+\item report when the task has finished
+\item report when every other registered task postrequisite has
+completed
+\end{itemize}
+
+(Technically, the `started' and `finished' messages are just
+postrequisites too, but they are special in that every task
+must have them).
+
+In addition, tasks can optionally:
+
+\begin{itemize}
+\item report any arbitrary unregistered (i.e. non-postrequisite)
+messages, for debugging, logging, or progress monitoring purposes.
+\end{itemize}
+
+All incoming messages are logged by cylc, but only postrequisite
+messages can affect the state of other task objects.
+
+Task messages don't necessarily have to originate from top level task
+control scripts. It's a probably a good idea to do this if possible, but
+lower level scripts that are invoked as the task runs can communicate
+directly with cylc if necessary.
+
+\section{wrapper}
+
+A simple a simple wrapper script invoked by cylc reports task
+startup, invokes the task, and reports task completion or failure. 
+
+
+\label{usage}
+\section{Usage}
+
+All user-configurable parameters are set in \verb#config.py#. There is
+one commandline option to force a restart from the state dump file
+(which may have been edited) instead of the configured start time and
+task list:
+
+\lstset{language=sh}
+
+{\small
+
+\noindent
+\rule{5cm}{.2mm}
+\begin{lstlisting}
+ecocontroller [-r]
+Options:
+    + most inputs should be configured in config.py
+    + [-r] restart from the state dump file
+\end{lstlisting}
+}
+
+\lstset{language=Python}
+
+\subsection{Config File}
+
+{\small
+\noindent
+\rule{5cm}{.2mm}
+\lstinputlisting{../sys/examples/simple-0/user_config.py}
+}
+
 
 
 \appendix
