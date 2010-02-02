@@ -121,13 +121,19 @@ def service_remote_requests( remote, task_manager, log ):
 def main( argv ):
 
     # construct a command line parser
-    usage =  """
-    %prog [options] start-time [stop-time]
-       cold start the configured system
+    
+    # don't use '%prog' as program name in the usage string, as we
+    # invoke this program through the cylc user interface script.
 
-    %prog [options] -r [file] [stop-time]
-       restart the configured system from
-       the default or named state dump file"""
+    usage = \
+    """
+    cylc server [options] start-time [stop-time]
+       Cold start the configured system.
+
+    cylc server [options] -r [file] [stop-time]
+       Restart the configured system from
+       the default or named state dump file.
+    """
 
     parser = OptionParser( usage )
 

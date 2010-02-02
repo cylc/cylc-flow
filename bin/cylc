@@ -19,11 +19,13 @@ usage = \
     [ 
     'USAGE: ' + name + ' <command> [options] ',
     'Commands:',
-    '  server              ... start scheduling a cylc system',
-    '  control             ... control a running cylc system',
+    '',
+    '  server            ... start up a scheduler for the configured system',
+    '  control           ... control a running system',
+    '',
     '  monitor-all       ... monitor all cylc task proxies',
-    '  monitor-dummies   ... monitor running external dummy tasks',
     '  monitor-running   ... monitor running cylc task proxies',
+    '  monitor-dummies   ... monitor running external dummy tasks',
     '  monitor-pyro-ns   ... monitor the Pyro nameserver',
     'Options are command-dependent; see:',
     '  ' + name + ' <command> --help'

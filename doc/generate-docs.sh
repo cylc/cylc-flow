@@ -50,4 +50,6 @@ for F in *.eps; do
     }
 done
 
-pdflatex cylc.tex
+#pdflatex cylc.tex
+latex cylc.tex
+dvipdf cylc.dvi

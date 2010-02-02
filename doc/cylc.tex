@@ -6,6 +6,7 @@
 \usepackage{amsmath}
 \usepackage{verbatim}
 \usepackage{graphicx}
+\usepackage[usenames,dvipsnames]{color}
 
 \lstset{language=Python}
 
@@ -367,97 +368,89 @@ are entirely hidden from the user.
 \label{sec:usage}
 
 
-\lstset{language=Python}
-
 \section{Introduction/Overview}
 
-\section{How To Define and Configure A New System}
+\section{How to Set Up a New System}
 
-\section{How To Run and Interact With A System}
+\section{How to Modify an Existing System}
 
-\section{Cylc Command Reference}
+\section{How to Start Up a System}
+
+\section{How to Interact with a Running System}
+
+\section{Command Reference}
+
+\lstset{
+language=,
+xleftmargin=2em,
+basicstyle=\tiny
+}
+
 
 \subsection{cylc}
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+This is the top level user interface to all cylc sub-commands.
+
+{
+\color{MidnightBlue}
 \lstinputlisting{command-usage/cylc.txt}
-%\end{lstlisting}
 }
 
 
 \subsection{cylc server}
 
-This is the forecast systems task scheduler program.  Multiple systems 
-can run at once, and multiple instances of the same system can be run at once 
-so long as each system (or instance of the same system) is configured with a
-different name.
+This is the scheduler program. Multiple instances of the server can run
+at once, to control different forecasting systems (e.g. a main operation
+and several parallel test systems), so long as each system is configured
+with a different ``system name'' in its user config file (this
+distinguishes the objects registered by the different systems in the
+single Pyro nameserver).
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+{
+\color{MidnightBlue}
 \lstinputlisting{command-usage/cylc-server.txt}
-%\end{lstlisting}
 }
 
 
 \subsection{cylc control}
 
-A remote contorl program than can interact with running systems.
+Remote control for running systems.
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+{
+\color{MidnightBlue}
 \lstinputlisting{command-usage/cylc-control.txt}
-%\end{lstlisting}
 }
 
 
 \subsection{System Monitor Commands}
 
 \subsubsection{cylc monitor-all}
-{\small
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+{
+\color{MidnightBlue}
 \lstinputlisting{command-usage/monitor-all.txt}
-%\end{lstlisting}
 }
 
 
 \subsubsection{cylc monitor-running}
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+{
+\color{MidnightBlue}
 \lstinputlisting{command-usage/monitor-running.txt}
-%\end{lstlisting}
 }
 
 \subsubsection{cylc monitor-dummies}
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+{
+\color{MidnightBlue}
 \lstinputlisting{command-usage/monitor-dummies.txt}
-%\end{lstlisting}
 }
 
 
 \subsubsection{cylc monitor-pyro-ns}
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+{
+\color{MidnightBlue}
 \lstinputlisting{command-usage/monitor-pyro-ns.txt}
-%\end{lstlisting}
 }
 
 
@@ -482,24 +475,18 @@ Different postrequisites can be specified depending on reference time.
 
 \lstset{language=sh, numbers=left}
 
-{\tiny
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+{
+\color{MidnightBlue}
 \lstinputlisting{../sys/templates/example.def}
-%\end{lstlisting}
 }
 
 \subsection{Full Task Definition Template}
 
 \lstset{language=sh, numbers=left}
 
-{\tiny
-\noindent
-\rule{5cm}{.2mm}
-%\begin{lstlisting}
+{
+\color{MidnightBlue}
 \lstinputlisting{../sys/templates/full_template.def}
-%\end{lstlisting}
 }
 
 \subsection{More Complex Task Behaviour}
@@ -556,10 +543,7 @@ task list:
 
 \lstset{language=sh}
 
-{\small
-
-\noindent
-\rule{5cm}{.2mm}
+{
 \begin{lstlisting}
 ecocontroller [-r]
 Options:
@@ -572,9 +556,8 @@ Options:
 
 \subsection{Config File}
 
-{\small
-\noindent
-\rule{5cm}{.2mm}
+{
+\color{MidnightBlue}
 \lstinputlisting{../sys/examples/simple-0/user_config.py}
 }
 
