@@ -1,10 +1,10 @@
 #!/bin/bash
 
 print_usage() {
-	echo "usage: ${0##*/} [options]"
-	echo "Monitor the Pyro Nameserver"
+	echo "usage: cylc monitor-pyro-ns [options]"
+	echo "  Monitor the Pyro Nameserver"
 	echo "Options:"
-	echo "  -h (--help)   ... print this usage message"
+	echo "  -h (--help)   ... print this message and exit"
 }
 
 if [[ $# != 0 ]]; then

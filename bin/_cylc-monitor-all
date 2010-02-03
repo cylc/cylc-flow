@@ -29,13 +29,11 @@ compress = True
 # construct a command line parser
 parser = OptionParser( "cylc monitor-all [options]" )
 
-parser.add_option( "-c", "--configured", help="use configured system",
-        action="store_true", default=False, dest="use_configured" )
+parser.add_option( "-n", "--name", 
+	help="system name (defaults to configured system)",
+        metavar="NAME", action="store", dest="system_name" )
 
-parser.add_option( "-n", "--name", help="system name",
-        metavar="SYSTEM-NAME", action="store", dest="system_name" )
-
-parser.add_option( "-a", "--align", help="align columns",
+parser.add_option( "-l", "--align", help="align columns",
         action="store_true", default=False, dest="align_columns" )
 
 parser.add_option( "-p", "--print", help="print registered systems",
@@ -57,14 +55,12 @@ header = '                                   '
 # get systems currently registered in the Pyro nameserver
 ns_groups = pyrex.discover()
 
-if options.use_configured:
-    # use the configured system
-    import config
-    config = config.config()
-    config.load()
-    system_name = config.get( 'system_name' )
+if options.print_systems:
+    # print registered systems
+    ns_groups.print_info()
+    sys.exit(0)
 
-elif options.system_name:
+if options.system_name:
     # use the given system name
     system_name = options.system_name
     if ns_groups.registered( system_name ):
@@ -72,17 +68,19 @@ elif options.system_name:
     else:
         print "WARNING: no " + system_name + " registered yet ..." 
 
-elif options.print_systems:
-    # print registered systems
-    ns_groups.print_info()
-    sys.exit(0)
+else: 
+    # use the configured system
+    import config
+    config = config.config()
+    config.load()
+    system_name = config.get( 'system_name' )
 
-else:
-    # print available systems and exit
-    parser.print_help()
-    print
-    ns_groups.print_info()
-    sys.exit(0)
+#else:
+#    # print available systems and exit
+#    parser.print_help()
+#    print
+#    ns_groups.print_info()
+#    sys.exit(0)
 
 ctrl_end = "\033[0m"
 

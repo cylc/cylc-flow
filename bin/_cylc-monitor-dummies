@@ -3,10 +3,12 @@
 # display currently running external dummy tasks
  
 print_usage() {
-	echo "usage: ${0##*/} [options]"
-	echo "Monitor running external dummy tasks"
+	echo "usage: cylc monitor-dummies [options]"
+	echo "  show running external dummy task programs"
+	echo "  spawned by any cylc instances running"
+	echo "  under your username."
 	echo "Options:"
-	echo "  -h (--help)   ... print this usage message"
+	echo "  -h (--help)   ... print this message and exit"
 }
 
 if [[ $# != 0 ]]; then
@@ -18,7 +20,6 @@ if [[ $# != 0 ]]; then
 	fi
 fi
 
-   
 HEADING1="Running External Dummy Tasks"
 HEADING2=$(ps -fu $USER | grep UID | grep -v grep)
 

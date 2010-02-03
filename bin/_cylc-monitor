@@ -1,0 +1,114 @@
+#!/usr/bin/python
+
+import os
+import sys
+import subprocess
+import pdb
+
+# construct a command line parser
+
+def print_usage():
+	print \
+'''
+usage: cylc monitor [options]
+
+cylc monitor -h            ... print this message and exit
+
+cylc monitor -p            ... print registered systems and exit
+
+cylc monitor -a [options]  ... monitor all task proxies
+	options:
+	     -n NAME           ... system name (default: configured)
+	     -l                ... align columns
+	     -s                ... use short task names
+
+cylc monitor -r            ... monitor running task proxies
+
+cylc monitor -d            ... monitor dummy tasks
+
+cylc monitor -x            ... monitor Pyro nameserver
+'''
+
+args = sys.argv[1:]
+
+printsys = False
+align = False
+short = False
+mon_all = False
+mon_running = False
+mon_pyro = False
+mon_dummy = False
+
+#pdb.set_trace()
+
+while len(args) > 0:
+	arg = args.pop(0)
+	if arg == '-h':
+		print_usage()
+		sys.exit(0)
+	elif arg == '-p':
+		printsys = True
+	elif arg == '-a':
+		mon_all = True
+	elif arg == '-r':
+		mon_running = True
+	elif arg == '-d':
+		mon_dummy = True
+	elif arg == '-x':
+		mon_pyro = True
+	elif arg == '-l':
+		align = True
+	elif arg == '-s':
+		short = True
+	elif arg == '-n':
+		named = True
+		name = args.pop(0)
+	else:
+		print_usage()
+		sys.exit(1)
+
+test = [ mon_all, mon_running, mon_pyro, mon_dummy, printsys ]
+if test.count( True ) != 1:
+	print_usage()
+	sys.exit(1)
+
+
+if printsys: 
+	command = '_cylc-monitor-all -p'
+
+elif mon_running:
+	command = '_cylc-monitor-running'
+
+elif mon_dummy:
+	command = '_cylc-monitor-dummies'
+
+elif mon_pyro:
+	command = '_cylc-monitor-pyro-ns'
+
+elif mon_all:
+	command = '_cylc-monitor-all'
+	if align:
+		command += ' -l'
+	if short:
+		command += ' -s'
+	if name:
+		command += ' -n ' + name
+
+else:
+	print_usage()
+	sys.exit(1)
+
+try:
+    # use of shell=True here provides access to PATH in the subprocess
+    retcode = subprocess.call( command, shell=True )
+    if retcode < 0:
+        # the sub-command returned non-zero exist status
+        print >> sys.stderr, command + ' failed: ', retcode
+        sys.exit(1)
+
+except OSError:
+    # the sub-command was not invoked
+    print >> sys.stderr, 'CYLC ERROR: unable to run sub-command ' + sub_command
+    print >> sys.stderr, "Is everything under your cylc bin directory executable?"
+    print >> sys.stderr, "Have you run 'cylc-configure-system' yet?"
+    sys.exit(1)

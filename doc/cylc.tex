@@ -368,17 +368,24 @@ are entirely hidden from the user.
 \label{sec:usage}
 
 
-\section{Introduction/Overview}
+\subsubsection{How to Set Up a New System}
 
-\section{How to Set Up a New System}
+\begin{itemize}
 
-\section{How to Modify an Existing System}
+\item divide your forecasting system into {\em tasks}, where each tasks
+consists of one or more processes that will be treated as a single schedulable
+unit.
 
-\section{How to Start Up a System}
+\end{itemize}
 
-\section{How to Interact with a Running System}
 
-\section{Command Reference}
+\subsubsection{How to Modify an Existing System}
+
+\subsubsection{How to Start Up a System}
+
+\subsubsection{How to Interact with a Running System}
+
+\subsection{Command Reference}
 
 \lstset{
 language=,
@@ -391,7 +398,7 @@ In the documentation below, the ``configured system'' means the system
 environment. This is achieved by sourcing the cylc environment file 
 (which is created by 'cylc configure-system') for that system.
 
-\subsection{cylc}
+\subsubsection{cylc}
 
 The top level user interface to all cylc sub-commands.
 
@@ -400,7 +407,7 @@ The top level user interface to all cylc sub-commands.
 \lstinputlisting{command-usage/cylc.txt}
 }
 
-\subsection{cylc configure-system}
+\subsubsection{cylc configure-system}
 
 Configure a new system (or reconfigure an existing one after 
 modification): this generates Python task class code based on 
@@ -414,7 +421,7 @@ python source and system scripts needed to run the system.
 
 
 
-\subsection{cylc server}
+\subsubsection{cylc server}
 
 Start scheduling the configured system. Multiple server instances can run at once
 (e.g. to control a main operation and several parallel test systems) so
@@ -428,7 +435,7 @@ the different systems in the Pyro nameserver).
 }
 
 
-\subsection{cylc control}
+\subsubsection{cylc control}
 
 Remote control for running systems.
 
@@ -437,8 +444,6 @@ Remote control for running systems.
 \lstinputlisting{command-usage/cylc-control.txt}
 }
 
-
-\subsection{System Monitor Commands}
 
 \subsubsection{cylc monitor-all}
 {

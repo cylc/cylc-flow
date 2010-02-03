@@ -9,10 +9,7 @@ allowed_sub_commands = \
     'configure-system',
     'server', 
     'control',
-    'monitor-all',
-    'monitor-dummies',
-    'monitor-pyro-ns',
-    'monitor-running'
+    'monitor'
     ]
 
 # extract basename of the invoked command, so that we 
@@ -35,11 +32,7 @@ usage = \
     '  configure-system  ... configure a system for scheduling', 
     '  server            ... start up a scheduler for the configured system',
     '  control           ... control a running system',
-    '',
-    '  monitor-all       ... monitor all cylc task proxies',
-    '  monitor-running   ... monitor running cylc task proxies',
-    '  monitor-dummies   ... monitor running external dummy tasks',
-    '  monitor-pyro-ns   ... monitor the Pyro nameserver',
+    '  monitor           ... monitor running cylc systems',
     '',
     'Command Options:',
     '  see ' + basename + ' <command> --help'
