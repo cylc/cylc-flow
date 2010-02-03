@@ -9,30 +9,52 @@
 #    + this exports PATH and PYTHONPATH, and 
 #      CYLC_ENV (its own path) for system scripts
 #      and CYLC_BIN for utility scripts
-# 3/ copy cylc-task-wrapper from cylc/bin/sub-commands to system/scripts
+# 3/ copy cylc-task-wrapper from cylc/bin to system/scripts
 
 set -e  # ABORT on error
 
-[[ $# != 1 ]] && {
-	echo "USAGE: $0 <system definition dir>"
-	echo "run in cylc top level directory"
-	exit 1
+function print_usage() 
+{
+	echo "USAGE: ${0##*/} [<cylc-top-dir>] <system-def-dir>"
+	echo "Run in the cylc installation top level directory"
+    echo "OR supply its absolute path as the first argument."
 }
 
-[[ ! -f bin/cylc ]] && {
-	echo "RUN THIS IN THE TOP LEVEL CYLC DIRECTORY"
+if [[ $# == 2 ]]; then 
+    CYLC_TOP_DIR=$1
+    CYLC_SYS_DIR=$2
+elif [[ $# == 1 ]]; then
+    CYLC_TOP_DIR=$PWD
+    CYLC_SYS_DIR=$1
+else
+    print_usage
 	exit 1
-}
+fi
+
+CYLC=$CYLC_TOP_DIR/bin/cylc 
+if [[ ! -f $CYLC ]]; then
+	echo "ERROR: $CYLC not found!"
+    print_usage
+	exit 1
+fi
+
+CONFIG=$CYLC_SYS_DIR/user_config.py
+if [[ ! -f $CONFIG ]]; then
+    echo "File not found: $CONFIG"
+    exit 1
+fi
 
 ENV_SCRIPT='environment.sh'
 
-SYSDIR=$1
+TOPDIR=$CYLC_TOP_DIR
+SYSDIR=$CYLC_SYS_DIR
+
 # remove any trailing '/'
 SYSDIR=${SYSDIR%/}
 TOPDIR=$PWD
 
 # access to cylc utilities and sub-commands for this script
-PATH=$PWD/bin:$PWD/bin/sub-commands:$PATH
+PATH=$PWD/bin:$PATH
 
 cd $SYSDIR
 
@@ -45,11 +67,11 @@ echo
 echo "Processing task definition files ..."
 
 # if the command line gets too big we'll have to use xargs:
-#    find taskdef -name '*.def' -o -name '*.py' | xargs cylc-task-generator
+#    find taskdef -name '*.def' -o -name '*.py' | xargs _cylc-task-generator
 # and modify task-generator.py so that it appends to the output
 # task_classes.py file rather than overwriting it each time.
 
-cylc-task-generator $( find taskdef -name '*.def' -o -name '*.py' ) 
+_cylc-task-generator $( find taskdef -name '*.def' -o -name '*.py' ) 
 echo "  => $SYSDIR/task_classes.py"
 echo "done"
 
@@ -57,7 +79,7 @@ echo "done"
 echo
 echo -n "Installing $SYSDIR/scripts/cylc-task-wrapper ... "
 mkdir -p $TOPDIR/$SYSDIR/scripts
-cp $TOPDIR/bin/sub-commands/cylc-task-wrapper $TOPDIR/$SYSDIR/scripts
+cp $TOPDIR/bin/_cylc-task-wrapper $TOPDIR/$SYSDIR/scripts/cylc-task-wrapper
 echo "done"
 
 echo
@@ -72,11 +94,11 @@ cat > $ENV_SCRIPT <<EOF
 # for running cylc on system $SYSDIR
 
 # clean existing cylc paths
-      PATH=\$( $TOPDIR/bin/sub-commands/cylc-clean-path \$PATH )
-PYTHONPATH=\$( $TOPDIR/bin/sub-commands/cylc-clean-path \$PYTHONPATH )
+      PATH=\$( $TOPDIR/bin/_cylc-clean-path \$PATH )
+PYTHONPATH=\$( $TOPDIR/bin/_cylc-clean-path \$PYTHONPATH )
 
 # not using \$HOME or relative path; may be sourced by other users
-PATH=$TOPDIR/bin:$TOPDIR/bin/sub-commands:$TOPDIR/$SYSDIR/scripts:\$PATH
+PATH=$TOPDIR/bin:$TOPDIR/$SYSDIR/scripts:\$PATH
 PATH=\${PATH%:}  # in case variable was empty before
 PYTHONPATH=$TOPDIR/src:$TOPDIR/src/task-classes:$TOPDIR/src/requisites:$TOPDIR/$SYSDIR:\$PYTHONPATH
 PYTHONPATH=\${PYTHONPATH%:}  # in case was empty before
@@ -86,7 +108,7 @@ export PATH PYTHONPATH
 export CYLC_ENV=$TOPDIR/$SYSDIR/$ENV_SCRIPT
 
 # export cylc bin path for utility scripts
-export CYLC_BIN=$TOPDIR/bin/sub-commands
+export CYLC_BIN=$TOPDIR/bin
 EOF
 
 echo "done"

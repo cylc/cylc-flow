@@ -32,7 +32,7 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-parser = OptionParser( "%prog [options]" )
+parser = OptionParser( "cylc control [options]" )
 
 parser.add_option( "-f", "--force", help="do not prompt before acting",
         action="store_true", default=False, dest="force" )

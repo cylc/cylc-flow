@@ -27,7 +27,7 @@ from reference_time import _rt_to_dt
 compress = True
 
 # construct a command line parser
-parser = OptionParser( "%prog [options]" )
+parser = OptionParser( "cylc monitor-all [options]" )
 
 parser.add_option( "-c", "--configured", help="use configured system",
         action="store_true", default=False, dest="use_configured" )

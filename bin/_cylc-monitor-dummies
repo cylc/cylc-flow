@@ -3,8 +3,8 @@
 # display currently running external dummy tasks
  
 print_usage() {
-	echo "USAGE: $0 [options]"
-	echo "Monitor the Pyro Nameserver"
+	echo "usage: ${0##*/} [options]"
+	echo "Monitor running external dummy tasks"
 	echo "Options:"
 	echo "  -h (--help)   ... print this usage message"
 }

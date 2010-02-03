@@ -399,12 +399,11 @@ This is the top level user interface to all cylc sub-commands.
 
 \subsection{cylc server}
 
-This is the scheduler program. Multiple instances of the server can run
-at once, to control different forecasting systems (e.g. a main operation
-and several parallel test systems), so long as each system is configured
-with a different ``system name'' in its user config file (this
-distinguishes the objects registered by the different systems in the
-single Pyro nameserver).
+This is the scheduler program. Multiple server instances can run at once
+(e.g. to control a main operation and several parallel test systems) so
+long as each system is configured (via its user config file) with a
+different ``system name'' (this distinguishes the objects registered by
+the different systems in the single Pyro nameserver).
 
 {
 \color{MidnightBlue}
