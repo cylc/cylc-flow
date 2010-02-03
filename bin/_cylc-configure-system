@@ -15,7 +15,7 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "usage: cycl configure-system [options] [DIR] <system-def-dir>"
+	echo "usage: cylc configure-system [options] [DIR] <system-def-dir>"
     echo "Options:"
     echo "  -h, --help    ... print this message and exit"
     echo "  DIR           ... path to top of the cylc installation"
