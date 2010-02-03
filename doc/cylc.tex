@@ -393,10 +393,12 @@ xleftmargin=2em,
 basicstyle=\tiny
 }
 
-In the documentation below, the ``configured system'' means the system
-(set of defined tasks) that is accessible to cylc via the user's shell
-environment. This is achieved by sourcing the cylc environment file 
-(which is created by 'cylc configure-system') for that system.
+In the documentation below, the ``configured system'' is the system
+(set of defined tasks) that has been made accessible to cylc via the
+user's shell environment. This is achieved by sourcing the cylc
+environment file (which is created by 'cylc configure-system') for that
+system. This must be done in order to start up a system, but other
+systems can be remote controlled or monitored by name.
 
 \subsubsection{cylc}
 
@@ -445,36 +447,11 @@ Remote control for running systems.
 }
 
 
-\subsubsection{cylc monitor-all}
+\subsubsection{cylc monitor}
 {
 \color{Magenta}
-\lstinputlisting{command-usage/monitor-all.txt}
+\lstinputlisting{command-usage/monitor.txt}
 }
-
-
-\subsubsection{cylc monitor-running}
-
-{
-\color{Magenta}
-\lstinputlisting{command-usage/monitor-running.txt}
-}
-
-\subsubsection{cylc monitor-dummies}
-
-{
-\color{Magenta}
-\lstinputlisting{command-usage/monitor-dummies.txt}
-}
-
-
-\subsubsection{cylc monitor-pyro-ns}
-
-{
-\color{Magenta}
-\lstinputlisting{command-usage/monitor-pyro-ns.txt}
-}
-
-
 
 \label{config}
 \section{Task Definition Files}

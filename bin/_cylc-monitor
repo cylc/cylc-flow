@@ -11,22 +11,18 @@ def print_usage():
 	print \
 '''
 usage: cylc monitor [options]
-
-cylc monitor -h            ... print this message and exit
-
-cylc monitor -p            ... print registered systems and exit
+Monitor running cylc schedulers.
 
 cylc monitor -a [options]  ... monitor all task proxies
-	options:
-	     -n NAME           ... system name (default: configured)
-	     -l                ... align columns
-	     -s                ... use short task names
-
+  options:
+    -n NAME           ... system name (default: configured)
+    -l                ... align columns
+    -s                ... use short task names
 cylc monitor -r            ... monitor running task proxies
-
-cylc monitor -d            ... monitor dummy tasks
-
-cylc monitor -x            ... monitor Pyro nameserver
+cylc monitor -d            ... monitor external dummy tasks
+cylc monitor -x            ... monitor the Pyro nameserver
+cylc monitor -p            ... print registered systems and exit
+cylc monitor -h            ... print this message and exit
 '''
 
 args = sys.argv[1:]

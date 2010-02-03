@@ -31,10 +31,7 @@ cylc                 --help > doc/command-usage/cylc.txt
 cylc server          --help > doc/command-usage/cylc-server.txt
 cylc control         --help > doc/command-usage/cylc-control.txt
 cylc configure-system --help > doc/command-usage/cylc-configure-system.txt
-cylc monitor-all     --help > doc/command-usage/monitor-all.txt
-cylc monitor-running --help > doc/command-usage/monitor-running.txt
-cylc monitor-pyro-ns --help > doc/command-usage/monitor-pyro-ns.txt
-cylc monitor-dummies --help > doc/command-usage/monitor-dummies.txt
+cylc monitor         --help > doc/command-usage/monitor.txt
 
 cd doc
 

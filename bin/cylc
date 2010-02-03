@@ -23,10 +23,10 @@ if dirname != '':
 
 usage = \
     [ 
-    'usage: ' + basename + ' [options] <command> [command-options] ',
+    'Usage: ' + basename + ' [options] <command> [command-options] ',
     '',
     'Options:',
-    '-h, --help          ... print this message and exit',
+    '  -h, --help          ... print this message and exit',
     '',
     'Commands:',
     '  configure-system  ... configure a system for scheduling', 
