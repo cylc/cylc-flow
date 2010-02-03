@@ -60,7 +60,7 @@ if [[ ! -f $CONFIG ]]; then
     exit 1
 fi
 
-ENV_SCRIPT='environment.sh'
+ENV_SCRIPT='cylc-env.sh'
 
 TOPDIR=$CYLC_TOP_DIR
 SYSDIR=$CYLC_SYS_DIR
@@ -125,11 +125,13 @@ export CYLC_ENV=$TOPDIR/$SYSDIR/$ENV_SCRIPT
 
 # export cylc bin path for utility scripts
 export CYLC_BIN=$TOPDIR/bin
+
+echo "YOUR CYLC ENVIRONMENT IS NOW CONFIGURED FOR SYSTEM $SYSDIR"
 EOF
 
 echo "done"
 
 echo
 echo "SOURCE THE $SYSNAME ENVIRONMENT SCRIPT BEFORE RUNNING CYLC:"
-echo ". $TOPDIR/$SYSDIR/environment.sh"
+echo ". $TOPDIR/$SYSDIR/cylc-env.sh"
 echo
