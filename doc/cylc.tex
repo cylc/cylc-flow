@@ -82,8 +82,10 @@ For Complex Environmental Forecasting Systems}
 
 \end{abstract}
 
-\section{Forecasting Systems}
+\section{Environmental Forecasting Systems}
 \label{sec:FS}
+
+\subsection{General Properties}
 
 Environmental forecasting systems generate forecast products at regular
 intervals using potentially large sets of scientific models and
@@ -130,7 +132,9 @@ regional weather forecast.  EcoConnect runs on heterogenous distributed
 hardware, including a massively parallel supercomputer and several Linux
 servers. 
 
-\subsection{The Impact of Dependencies}
+\section{Scheduling with Dependencies}
+
+\subsection{Real Time Operation - Intracycle Dependencies}
 
 Most dependencies occur between tasks within a single forecast cycle. A
 sea state forecast, for example, might depend on surface wind fields
@@ -176,6 +180,8 @@ time gap between cycles as the system waits on new external driving
 data.  Each task in the example system is assumed to depend on upstream
 tasks finishing, rather than on intermediate outputs; this is merely 
 a simplification that makes for clearer diagrams.
+
+\subsection{Running Behind Real Time - Intercycle Dependencies}
 
 Now it must be noted that there are also dependencies between tasks in
 different forecast cycles: model runs typically depend on their own most
@@ -276,57 +282,29 @@ different cycles can run simultaneously, in principle, at any given
 time. 
 
 
-\subsection{Existing Scheduling Systems}
 
-As explained in the previous section, as far as the author is aware
-current forecast scheduling systems ignore intercycle dependencies and
-therefore require strict sequential cycling, which is very much
-sub-optimal outside of normal real time operation. The simplest such
-``scheduler'' places the burden of scheduling almost entirely on the
-user, who must supply a list of tasks that the system will run through
-sequence, perhaps with some way of specifying some crude functional
-parallelism. This is clearly sub-optimal even for quite simple systems
-and strict sequential cycling, and task ordering has to be re-evaluated
-manually whenever the system is changed. 
+\section{Cylc Overview}
 
-Another method is system-specific finite state scheduling logic that
-enforces a predetermined order of events: {\em if tasks A and B have
-finished, then start task C} and so on. Optimal scheduling within a
-forecast cycle is possible in this case but the hard coded logic
-inevitably becomes convoluted and inflexible as system complexity
-increases, and extension to intercycle dependencies is almost certainly
-not feasible.  
-
-Finally, the well established SMS system from ECMWF is an industrial
-strength general scheduling tool for dependent jobs. Users define ``SMS
-suites'' that group tasks into ``families'' and define explicit
-dependency relationships. SMS does not appear to be able to do optimal
-cycle-independent scheduling as shown in Figures~\ref{fig-time-one}
-and~\ref{fig-time-two}, however, or at least is not able to do so when
-configured for normal usage (THIS IS STILL NOT ENTIRELY RESOLVED!)
-because it still relies on global cycling mechanisms to either loop
-over successive forecast reference times or, for real time operation,
-trigger off the wall clock.
-
-\section{Cylc}
-
-\subsection{Introduction}
-Other systems cannot do optimal scheduling because they are unaware of
-intercycle dependencies {\em and} they invariably use global forecast
-cycle and/or date-time loops to advance the system forward in time,
-which maintains the artificial boundary between cycles.  In contrast,
-cylc has no system-wide looping mechansim: instead it maintains an
-evolving pool of task proxy objects (representing the real tasks) each
-of which has its own private cycle time and spawns its own successor
-when it is ready (exactly when this is depends on task type; see
-Section~\ref{sec:implementation}). Each task proxy knows its own
+Cylc is a new forecast systems scheduler that naturally and easily
+achieves the optimal scheduling performance illustrated in the previous
+section, in all modes of operation (and seamlessly transitions to
+distinct real time cycles as it catches up).  Other systems cannot do
+this because (i) they are unaware of intercycle dependencies and (ii)
+they invariably use global cycling methods to advance the system forward
+in time (i.e. all tasks with the same cycle time must finish before the
+cycle time increments), maintaining the artificial boundary between
+cycles. In contrast, cylc has no system-wide looping mechansim: it
+maintains an evolving pool of task proxy objects (representing the real
+tasks) each of which has its own private cycle time and spawns its own
+successor when it is ready (exactly when this is depends on task type;
+see Section~\ref{sec:implementation}). Each task proxy knows its own
 prerequisites (including those from previous cycles), but not who is
 expected to provide them; and its own outputs, but not who is expected
 to use them. It also knows how to invoke its external task once its
 prerequisites are satisfied and, by means of a messaging system, can
-record the external task's outputs as they are completed. Cylc then
-gets the task pool to interact indiscriminately, {\em regardless of
-cycle time}, to match unsatisfied prerequisites with completed
+record the external task's outputs as they are completed. Cylc then gets
+the task pool to interact indiscriminately, {\em regardless of cycle
+time}, to match unsatisfied prerequisites with completed
 outputs.\footnote{In fact this negotiation goes through a middleman or
 broker, which reduces the task interaction scaling from $n^2$ to $n$,
 where $n$ is the number of tasks.} Thus optimal task scheduling emerges
@@ -349,6 +327,39 @@ not too long after it is no longer needed.  This requires some thought
 at the program design stage, but only once, and the complexities therein
 are entirely hidden from the user. 
 
+\subsection{Comparison with Existing Schedulers}
+
+As explained earlier, as far as the author is aware current forecast
+scheduling systems ignore intercycle dependencies and therefore require
+strict sequential cycling, which is very much sub-optimal outside of
+normal real time operation. The simplest of these schedulers places the
+burden of scheduling almost entirely on the user, who must supply a list
+of tasks that the system will run through in order, perhaps with some
+way of manually specifying crude functional parallelism.  This is
+clearly sub-optimal even for quite simple systems and strict sequential
+cycling, and task ordering has to be re-evaluated manually whenever the
+system is changed. 
+
+Another method is hardwired system-specific finite state scheduling
+logic that enforces a predetermined order of events: {\em if tasks A and
+B have finished, then start task C} and so on. Optimal scheduling within
+a forecast cycle is possible in this case, assuming correct coding, but
+the hard coded logic inevitably becomes convoluted and inflexible as
+system complexity increases, and extension to intercycle dependencies is
+almost certainly not feasible.  
+
+Finally, the well established SMS system from ECMWF is an industrial
+strength general scheduling tool for dependent jobs. Users define ``SMS
+suites'' that group tasks into ``families'' and define explicit
+dependency relationships between tasks and/or/? families. SMS does not
+appear to be able to do optimal cycle-independent scheduling, however,
+or at least is not able to do so when configured for normal usage (THIS
+IS STILL NOT ENTIRELY RESOLVED!) because (a) whole families trigger 
+at once(?), rather than individual tasks, and global cycling mechanisms
+are used to advance the system forward in time (either looping
+over successive analysis times for ``catch up'' OR
+triggering off the wall clock for real time operation. Note that Cylc
+seamlessly transitions between catchup and real time operation without
 
 %In other words the task pool must include waiting tasks whose
 %prerequisites may {\em soon} be satisfied (but preferably no waiting
@@ -359,36 +370,79 @@ are entirely hidden from the user.
 %by anyone). 
 
 
-\subsection{Implementation}
-\label{sec:implementation}
 
-{\huge TO DO: update and insert external file implementation.tex}
-
-
-\subsection{Usage}
+\section{Configuring and Running Cylc Systems}
 \label{sec:usage}
 
+\subsection{Working Examples}
 
-\subsubsection{How to Set Up a New System}
+\subsection{Quick Start Summary}
+
+\subsection{Task Definition Files}
 
 \begin{itemize}
-
 \item divide your forecasting system into {\em tasks}, where each tasks
 consists of one or more processes that will be treated as a single schedulable
 unit.
 
 \end{itemize}
 
+\subsection{Task Scripts}
 
-\subsubsection{How to Modify an Existing System}
+\subsubsection{Task Messaging}
 
-\subsubsection{How to Start Up a System}
+Each external task must:
 
-\subsubsection{How to Interact with a Running System}
+\begin{itemize}
+\item report (to cylc) when the task has started
+\item report when the task has finished
+\item report when every other registered task postrequisite has
+completed
+\end{itemize}
+
+(Technically, the `started' and `finished' messages are just
+postrequisites too, but they are special in that every task
+must have them).
+
+In addition, tasks can optionally:
+
+\begin{itemize}
+\item report any arbitrary unregistered (i.e. non-postrequisite)
+messages, for debugging, logging, or progress monitoring purposes.
+\end{itemize}
+
+All incoming messages are logged by cylc, but only postrequisite
+messages can affect the state of other task objects.
+
+Task messages don't necessarily have to originate from top level task
+control scripts. It's a probably a good idea to do this if possible, but
+lower level scripts that are invoked as the task runs can communicate
+directly with cylc if necessary.
+
+\subsubsection{wrapper}
+
+A simple a simple wrapper script invoked by cylc reports task
+startup, invokes the task, and reports task completion or failure. 
+
+\subsection{User Config File}
+
+{
+\color{Magenta}
+\lstinputlisting{../sys/examples/simple-0/user_config.py}
+}
+
+
+
+
+\subsection{Running Cylc}
+
+\subsection{Monitoring Running Systems}
+
+\subsection{Interacting With Running Systems}
 
 
 \pagebreak
-\subsection{Command Reference}
+\section{Cylc Command Reference}
 
 \lstset{
 language=,
@@ -404,7 +458,7 @@ environment file \verb=cylc-env.sh= created by running
 start up a system, but other running systems can optionally be remote
 controlled or monitored by name.
 
-\subsubsection{cylc}
+\subsection{cylc}
 
 The top level user interface to all cylc sub-commands.
 
@@ -415,7 +469,7 @@ The top level user interface to all cylc sub-commands.
 
 
 \pagebreak
-\subsubsection{cylc configure}
+\subsection{cylc configure}
 
 Configure a new system (or reconfigure an existing one after 
 modification): this generates Python task class code based on 
@@ -431,7 +485,7 @@ python source and system scripts needed to run the system.
 
 
 \pagebreak
-\subsubsection{cylc server}
+\subsection{cylc server}
 
 Start scheduling the configured system. Multiple server instances can run at once
 (e.g. to control a main operation and several parallel test systems) so
@@ -447,7 +501,7 @@ the different systems in the Pyro nameserver).
 
 
 \pagebreak
-\subsubsection{cylc control}
+\subsection{cylc control}
 
 Remote control for running systems.
 
@@ -459,7 +513,7 @@ Remote control for running systems.
 
 
 \pagebreak
-\subsubsection{cylc monitor}
+\subsection{cylc monitor}
 {
 \color{Magenta}
 \lstinputlisting{command-usage/monitor.txt}
@@ -468,7 +522,7 @@ Remote control for running systems.
 \label{config}
 
 \pagebreak
-\section{Task Definition Files}
+\section{Cylc Task Definition Reference}
 
 A {\em Task Definition File} defines the properties of a cylc task:
 name, valid run times, prerequisites and postrequisites, the task
@@ -508,70 +562,6 @@ Different postrequisites can be specified depending on reference time.
 For tasks that have non-cotemporal upstream dependencies and/or need to  
 override task class methods to define new behaviour, the Python task
 code must currently be written directly. 
-
-\section{Task Messaging Mechanism}
-
-Each external task must:
-
-\begin{itemize}
-\item report (to cylc) when the task has started
-\item report when the task has finished
-\item report when every other registered task postrequisite has
-completed
-\end{itemize}
-
-(Technically, the `started' and `finished' messages are just
-postrequisites too, but they are special in that every task
-must have them).
-
-In addition, tasks can optionally:
-
-\begin{itemize}
-\item report any arbitrary unregistered (i.e. non-postrequisite)
-messages, for debugging, logging, or progress monitoring purposes.
-\end{itemize}
-
-All incoming messages are logged by cylc, but only postrequisite
-messages can affect the state of other task objects.
-
-Task messages don't necessarily have to originate from top level task
-control scripts. It's a probably a good idea to do this if possible, but
-lower level scripts that are invoked as the task runs can communicate
-directly with cylc if necessary.
-
-\section{wrapper}
-
-A simple a simple wrapper script invoked by cylc reports task
-startup, invokes the task, and reports task completion or failure. 
-
-
-\label{usage}
-\section{Usage}
-
-All user-configurable parameters are set in \verb#config.py#. There is
-one commandline option to force a restart from the state dump file
-(which may have been edited) instead of the configured start time and
-task list:
-
-\lstset{language=sh}
-
-{
-\begin{lstlisting}
-ecocontroller [-r]
-Options:
-    + most inputs should be configured in config.py
-    + [-r] restart from the state dump file
-\end{lstlisting}
-}
-
-\lstset{language=Python}
-
-\subsection{Config File}
-
-{
-\color{Magenta}
-\lstinputlisting{../sys/examples/simple-0/user_config.py}
-}
 
 
 
