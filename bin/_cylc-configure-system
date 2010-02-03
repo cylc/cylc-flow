@@ -15,10 +15,17 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "USAGE: ${0##*/} [<cylc-top-dir>] <system-def-dir>"
-	echo "Run in the cylc installation top level directory"
-    echo "OR supply its absolute path as the first argument."
+	echo "usage: cycl configure-system [options] [DIR] <system-def-dir>"
+    echo "Options:"
+    echo "  -h, --help    ... print this message and exit"
+    echo "  DIR           ... path to top of the cylc installation"
+    echo "You can omit the DIR option if you run this script from DIR"
 }
+
+if [[ $1 == '-h' ]] || [[ $1 == "--help" ]]; then
+    print_usage
+    exit 0
+fi
 
 if [[ $# == 2 ]]; then 
     CYLC_TOP_DIR=$1

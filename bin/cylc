@@ -26,9 +26,12 @@ if dirname != '':
 
 usage = \
     [ 
-    'usage: ' + basename + ' <command> [options] ',
-    'Commands:',
+    'usage: ' + basename + ' [options] <command> [command-options] ',
     '',
+    'Options:',
+    '-h, --help          ... print this message and exit',
+    '',
+    'Commands:',
     '  configure-system  ... configure a system for scheduling', 
     '  server            ... start up a scheduler for the configured system',
     '  control           ... control a running system',
@@ -38,13 +41,17 @@ usage = \
     '  monitor-dummies   ... monitor running external dummy tasks',
     '  monitor-pyro-ns   ... monitor the Pyro nameserver',
     '',
-    'Options are command-dependent; see:',
-    '  ' + basename + ' <command> --help'
+    'Command Options:',
+    '  see ' + basename + ' <command> --help'
     ]
 
 def print_usage():
     for line in usage:
         print line
+
+if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+    print_usage()
+    sys.exit(0)
 
 try:
     sub_command = sys.argv[1]
@@ -58,7 +65,7 @@ if sub_command not in allowed_sub_commands:
     sys.exit(1)
 
 command = dirname + '_cylc-' + sub_command + ' ' + ' '.join( sub_command_options )
-print "cylc sub-command: " + command
+#print "(cylc sub-command: " + command + ")"
 
 try:
     # use of shell=True here provides access to PATH in the subprocess

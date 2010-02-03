@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#set -e
+set -e
 
 # generate pdf documentation from cylc LaTeX source
 
@@ -25,17 +25,12 @@ if [[ $# == 1 ]]; then
     fi
 fi
 
-[[ ! -f bin/cylc ]] && {
-	echo "RUN THIS SCRIPT FROM THE CYLC TOP LEVEL DIRECTORY"
-    usage
-	exit 1
-}
-
 # extract command help output
 mkdir -p doc/command-usage
 cylc                 --help > doc/command-usage/cylc.txt
 cylc server          --help > doc/command-usage/cylc-server.txt
 cylc control         --help > doc/command-usage/cylc-control.txt
+cylc configure-system --help > doc/command-usage/cylc-configure-system.txt
 cylc monitor-all     --help > doc/command-usage/monitor-all.txt
 cylc monitor-running --help > doc/command-usage/monitor-running.txt
 cylc monitor-pyro-ns --help > doc/command-usage/monitor-pyro-ns.txt

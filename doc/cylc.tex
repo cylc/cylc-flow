@@ -392,9 +392,22 @@ basicstyle=\tiny
 This is the top level user interface to all cylc sub-commands.
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{command-usage/cylc.txt}
 }
+
+\subsection{cylc configure-system}
+
+Configures a new system (or reconfigures an existing one after 
+modification): this generates Python task class code based on 
+the system's task definition files, and creates an environment 
+file that, when sourced in the user's shell, gives cylc access to the
+python source and system scripts needed to run the system.
+{
+\color{Magenta}
+\lstinputlisting{command-usage/cylc-configure-system.txt}
+}
+
 
 
 \subsection{cylc server}
@@ -406,7 +419,7 @@ different ``system name'' (this distinguishes the objects registered by
 the different systems in the single Pyro nameserver).
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{command-usage/cylc-server.txt}
 }
 
@@ -416,7 +429,7 @@ the different systems in the single Pyro nameserver).
 Remote control for running systems.
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{command-usage/cylc-control.txt}
 }
 
@@ -425,7 +438,7 @@ Remote control for running systems.
 
 \subsubsection{cylc monitor-all}
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{command-usage/monitor-all.txt}
 }
 
@@ -433,14 +446,14 @@ Remote control for running systems.
 \subsubsection{cylc monitor-running}
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{command-usage/monitor-running.txt}
 }
 
 \subsubsection{cylc monitor-dummies}
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{command-usage/monitor-dummies.txt}
 }
 
@@ -448,7 +461,7 @@ Remote control for running systems.
 \subsubsection{cylc monitor-pyro-ns}
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{command-usage/monitor-pyro-ns.txt}
 }
 
@@ -475,7 +488,7 @@ Different postrequisites can be specified depending on reference time.
 \lstset{language=sh, numbers=left}
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{../sys/templates/example.def}
 }
 
@@ -484,7 +497,7 @@ Different postrequisites can be specified depending on reference time.
 \lstset{language=sh, numbers=left}
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{../sys/templates/full_template.def}
 }
 
@@ -556,7 +569,7 @@ Options:
 \subsection{Config File}
 
 {
-\color{MidnightBlue}
+\color{Magenta}
 \lstinputlisting{../sys/examples/simple-0/user_config.py}
 }
 
