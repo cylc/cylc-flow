@@ -3,6 +3,7 @@
 %\documentclass[11pt,a4paper]{amsart}
 
 \usepackage{listings}
+  \usepackage{courier}
 \usepackage{amsmath}
 \usepackage{verbatim}
 \usepackage{graphicx}
@@ -279,7 +280,7 @@ time.
 
 As explained in the previous section, as far as the author is aware
 current forecast scheduling systems ignore intercycle dependencies and
-therefore require strict sequential cycle, which is very much
+therefore require strict sequential cycling, which is very much
 sub-optimal outside of normal real time operation. The simplest such
 ``scheduler'' places the burden of scheduling almost entirely on the
 user, who must supply a list of tasks that the system will run through
@@ -385,20 +386,23 @@ unit.
 
 \subsubsection{How to Interact with a Running System}
 
+
+\pagebreak
 \subsection{Command Reference}
 
 \lstset{
 language=,
 xleftmargin=2em,
-basicstyle=\tiny
+basicstyle=\tiny\ttfamily
 }
 
 In the documentation below, the ``configured system'' is the system
 (set of defined tasks) that has been made accessible to cylc via the
 user's shell environment. This is achieved by sourcing the cylc
-environment file (which is created by 'cylc configure-system') for that
-system. This must be done in order to start up a system, but other
-systems can be remote controlled or monitored by name.
+environment file \verb=cylc-env.sh= created by running 
+\verb=cylc configure= for the system. This must be done in order to
+start up a system, but other running systems can optionally be remote
+controlled or monitored by name.
 
 \subsubsection{cylc}
 
@@ -409,7 +413,9 @@ The top level user interface to all cylc sub-commands.
 \lstinputlisting{command-usage/cylc.txt}
 }
 
-\subsubsection{cylc configure-system}
+
+\pagebreak
+\subsubsection{cylc configure}
 
 Configure a new system (or reconfigure an existing one after 
 modification): this generates Python task class code based on 
@@ -418,11 +424,13 @@ file that, when sourced in the user's shell, gives cylc access to the
 python source and system scripts needed to run the system.
 {
 \color{Magenta}
-\lstinputlisting{command-usage/cylc-configure-system.txt}
+\lstinputlisting{command-usage/cylc-configure.txt}
 }
 
 
 
+
+\pagebreak
 \subsubsection{cylc server}
 
 Start scheduling the configured system. Multiple server instances can run at once
@@ -437,6 +445,8 @@ the different systems in the Pyro nameserver).
 }
 
 
+
+\pagebreak
 \subsubsection{cylc control}
 
 Remote control for running systems.
@@ -447,6 +457,8 @@ Remote control for running systems.
 }
 
 
+
+\pagebreak
 \subsubsection{cylc monitor}
 {
 \color{Magenta}
@@ -454,6 +466,8 @@ Remote control for running systems.
 }
 
 \label{config}
+
+\pagebreak
 \section{Task Definition Files}
 
 A {\em Task Definition File} defines the properties of a cylc task:

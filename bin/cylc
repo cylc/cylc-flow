@@ -6,7 +6,7 @@ import subprocess
 
 allowed_sub_commands = \
     [ 
-    'configure-system',
+    'configure',
     'server', 
     'control',
     'monitor'
@@ -26,13 +26,13 @@ usage = \
     'Usage: ' + basename + ' [options] <command> [command-options] ',
     '',
     'Options:',
-    '  -h, --help          ... print this message and exit',
+    '  -h, --help    ... print this message and exit',
     '',
     'Commands:',
-    '  configure-system  ... configure a system for scheduling', 
-    '  server            ... start up a scheduler for the configured system',
-    '  control           ... control a running system',
-    '  monitor           ... monitor running cylc systems',
+    '  configure     ... configure a new system for scheduling', 
+    '  server        ... start up a scheduler for the configured system',
+    '  control       ... control a running system',
+    '  monitor       ... monitor running cylc systems',
     '',
     'Command Options:',
     '  see ' + basename + ' <command> --help'

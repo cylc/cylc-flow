@@ -15,11 +15,20 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "usage: cylc configure-system [options] [DIR] <system-def-dir>"
+	echo "Usage: cylc configure [options] [DIR] <system-def-dir>"
+    echo ""
+    echo "Configure a new system for scheduling, or reconfigure"
+    echo "a system after changing its task definition files."
+    echo "This generates Python task class code from the system's"
+    echo "task definition files, and creates a script to configure"
+    echo "the environment so that cylc can run the new system."
+    echo ""
     echo "Options:"
     echo "  -h, --help    ... print this message and exit"
     echo "  DIR           ... path to top of the cylc installation"
-    echo "You can omit the DIR option if you run this script from DIR"
+    echo ""
+    echo "The DIR option can be ommitted if you run this in the"
+    echo "cylc installation top level directory."
 }
 
 if [[ $1 == '-h' ]] || [[ $1 == "--help" ]]; then
