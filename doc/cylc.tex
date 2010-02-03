@@ -386,10 +386,14 @@ xleftmargin=2em,
 basicstyle=\tiny
 }
 
+In the documentation below, the ``configured system'' means the system
+(set of defined tasks) that is accessible to cylc via the user's shell
+environment. This is achieved by sourcing the cylc environment file 
+(which is created by 'cylc configure-system') for that system.
 
 \subsection{cylc}
 
-This is the top level user interface to all cylc sub-commands.
+The top level user interface to all cylc sub-commands.
 
 {
 \color{Magenta}
@@ -398,7 +402,7 @@ This is the top level user interface to all cylc sub-commands.
 
 \subsection{cylc configure-system}
 
-Configures a new system (or reconfigures an existing one after 
+Configure a new system (or reconfigure an existing one after 
 modification): this generates Python task class code based on 
 the system's task definition files, and creates an environment 
 file that, when sourced in the user's shell, gives cylc access to the
@@ -412,11 +416,11 @@ python source and system scripts needed to run the system.
 
 \subsection{cylc server}
 
-This is the scheduler program. Multiple server instances can run at once
+Start scheduling the configured system. Multiple server instances can run at once
 (e.g. to control a main operation and several parallel test systems) so
 long as each system is configured (via its user config file) with a
 different ``system name'' (this distinguishes the objects registered by
-the different systems in the single Pyro nameserver).
+the different systems in the Pyro nameserver).
 
 {
 \color{Magenta}
