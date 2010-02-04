@@ -371,14 +371,62 @@ seamlessly transitions between catchup and real time operation without
 
 
 
+\pagebreak
 \section{Configuring and Running Cylc Systems}
 \label{sec:usage}
 
-\subsection{Working Examples}
-
 \subsection{Quick Start Summary}
 
+\begin{itemize}
+    \item divide your system into {\em tasks} of known {\em type}
+        (Section~\ref{sec:tasktype} with defined {\em prerequisites} and
+        {\em outputs} (\ref{sec:requisites}. 
+
+    \item write a {\em task definition file} 
+        (Section~\ref{sec:taskdef}) for each task.
+
+    \item write a single {\em user config file} 
+        (Section~\ref{sec:config}) for your system.
+
+    \item run \verb=cylc configure <system-dir>= to generate the 
+        generates Python task class code and environment script 
+        for your system (Section~\ref{sec:configure}).
+
+    \item source the newly genearted cylc environment script in 
+        your shell.
+        
+    \item test run your system in {\em dummy mode}: 
+        \verb=cycl scheduler -d YYYYMMDDHH=
+        (Section~\ref{sec:dummymode}). 
+
+    \item write a {\em task script} for each task, to execute real
+        external tasks (Section~\ref{sec:taskscripts}).
+
+    \item run your system for real: \verb=cylc scheduler YYYYMMDDHH=
+        (Section~\ref{sec:run}).
+
+    \item monitor your running system(s) with \verb=cylc monitor=.
+        (Section~\ref{sec:monitor})
+
+    \item interact with / control your running system(s) with
+        \verb=cylc control=
+        (Section~\ref{sec:control}).
+
+\end{itemize}
+
+\pagebreak
+\subsection{Working Examples}
+
+\pagebreak
+\label{sec:tasktype}
+\subsection{Task Type}
+
+\label{sec:requisites}
+\subsection{Task Prerequisites and Outputs}
+
+\label{sec:taskdef}
 \subsection{Task Definition Files}
+\pagebreak
 
 \begin{itemize}
 \item divide your forecasting system into {\em tasks}, where each tasks
@@ -387,8 +435,13 @@ unit.
 
 \end{itemize}
 
+\pagebreak
 \subsection{Task Scripts}
 
+(note that several tasks may use the same script with different
+arguments, e.g. for moving files around).
+
+\pagebreak
 \subsubsection{Task Messaging}
 
 Each external task must:
@@ -419,11 +472,13 @@ control scripts. It's a probably a good idea to do this if possible, but
 lower level scripts that are invoked as the task runs can communicate
 directly with cylc if necessary.
 
-\subsubsection{wrapper}
+\pagebreak
+\subsubsection{Task Wrapping}
 
 A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
 
+\pagebreak
 \subsection{User Config File}
 
 {
@@ -433,11 +488,13 @@ startup, invokes the task, and reports task completion or failure.
 
 
 
-
+\pagebreak
 \subsection{Running Cylc}
 
+\pagebreak
 \subsection{Monitoring Running Systems}
 
+\pagebreak
 \subsection{Interacting With Running Systems}
 
 
@@ -458,6 +515,7 @@ environment file \verb=cylc-env.sh= created by running
 start up a system, but other running systems can optionally be remote
 controlled or monitored by name.
 
+\pagebreak
 \subsection{cylc}
 
 The top level user interface to all cylc sub-commands.
@@ -485,17 +543,17 @@ python source and system scripts needed to run the system.
 
 
 \pagebreak
-\subsection{cylc server}
+\subsection{cylc scheduler}
 
-Start scheduling the configured system. Multiple server instances can run at once
-(e.g. to control a main operation and several parallel test systems) so
-long as each system is configured (via its user config file) with a
-different ``system name'' (this distinguishes the objects registered by
-the different systems in the Pyro nameserver).
+Start scheduling the configured system. Multiple scheduler instances can
+run at once (e.g. to control a main operation and several parallel test
+systems) so long as each system is configured (via its user config file)
+with a different ``system name'' (this distinguishes the objects
+registered by the different systems in the Pyro nameserver).
 
 {
 \color{Magenta}
-\lstinputlisting{command-usage/cylc-server.txt}
+\lstinputlisting{command-usage/cylc-scheduler.txt}
 }
 
 

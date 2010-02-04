@@ -127,10 +127,10 @@ def main( argv ):
 
     usage = \
     """
-    cylc server [options] start-time [stop-time]
+    cylc scheduler [options] start-time [stop-time]
        Cold start the configured system.
 
-    cylc server [options] -r [file] [stop-time]
+    cylc scheduler [options] -r [file] [stop-time]
        Restart the configured system from
        the default or named state dump file.
     """

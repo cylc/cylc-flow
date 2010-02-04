@@ -7,7 +7,7 @@ import subprocess
 allowed_sub_commands = \
     [ 
     'configure',
-    'server', 
+    'scheduler', 
     'control',
     'monitor'
     ]
@@ -30,7 +30,7 @@ usage = \
     '',
     'Commands:',
     '  configure     ... configure a new system for scheduling', 
-    '  server        ... start up a scheduler for the configured system',
+    '  scheduler     ... start scheduling the configured system',
     '  control       ... control a running system',
     '  monitor       ... monitor running cylc systems',
     '',
