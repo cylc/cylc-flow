@@ -371,66 +371,111 @@ seamlessly transitions between catchup and real time operation without
 
 
 
-\pagebreak
-\section{Configuring and Running Cylc Systems}
+\section{Cylc Userguide}
 \label{sec:usage}
 
-\subsection{Quick Start Summary}
+\subsection{System Requirements}
 
 \begin{itemize}
-    \item divide your system into {\em tasks} of known {\em type}
-        (Section~\ref{sec:tasktype} with defined {\em prerequisites} and
-        {\em outputs} (\ref{sec:requisites}. 
-
-    \item write a {\em task definition file} 
-        (Section~\ref{sec:taskdef}) for each task.
-
-    \item write a single {\em user config file} 
-        (Section~\ref{sec:config}) for your system.
-
-    \item run \verb=cylc configure <system-dir>= to generate the 
-        generates Python task class code and environment script 
-        for your system (Section~\ref{sec:configure}).
-
-    \item source the newly genearted cylc environment script in 
-        your shell.
-        
-    \item test run your system in {\em dummy mode}: 
-        \verb=cycl scheduler -d YYYYMMDDHH=
-        (Section~\ref{sec:dummymode}). 
-
-    \item write a {\em task script} for each task, to execute real
-        external tasks (Section~\ref{sec:taskscripts}).
-
-    \item run your system for real: \verb=cylc scheduler YYYYMMDDHH=
-        (Section~\ref{sec:run}).
-
-    \item monitor your running system(s) with \verb=cylc monitor=.
-        (Section~\ref{sec:monitor})
-
-    \item interact with / control your running system(s) with
-        \verb=cylc controller=
-        (Section~\ref{sec:control}).
-
+    \item Unix or Linux OS
+    \item Python
+    \item Pyro (Python Remote Objects)
 \end{itemize}
 
-\pagebreak
+Python is standard issue on most modern computer systems.
+
+Cylc has been tested with Python 2.4.2 and 2.6.x, and Pyro 3.9 and 3.10, 
+but it should work well with any recent versions or Python 2 and Pyro.
+Note, however, that {\em Pyro is not compatible with Python 3} as yet.
+
+
+\subsection{Installation}
+
+\subsubsection{Pyro}
+Download Pyro from {\em http://pyro.sourceforge.net}. It comes
+with simple installation instructions and installs into the standard
+modules directory.
+
+\subsubsection{Cylc}
+Cylc is currently maintained using {\em darcs}, a distributed revision
+control system. If you need to develop cylc you can request access to
+clone the central repository, otherwise you will receive a cylc
+distribution tarball.
+
+Cylc does not require a system-level installation, it can be installed
+into a single directory under any user account: simply unpack the
+tarball. There is no ``build'' required because cylc is written entirely 
+in Python (and a few bash scripts).
+
+\subsubsection{Testing}
+Test the installation by running one of the packaged example systems
+(Section~\ref{sec:examples}).
+
+\subsection{Quick Start}
+
+This section provides a quick summary of the steps required to get a new
+system running under cylc.
+
+\subsubsection{Configuring a System}
+
+These steps only need to be done once, initially, and again whenever the system's task 
+definition files are modified. 
+
+\begin{itemize}
+    \item divide your system into distinct {\em tasks} (Section~\ref{sec:tasks}).
+
+    \item write a {\em task definition file} for each task (Section~\ref{sec:taskdefs}).
+
+    \item write a {\em task script} for (at most) each task (Section~\ref{sec:taskscripts}).
+
+    \item write a single {\em user config file} for the system (Section~\ref{sec:config}).
+
+    \item run \verb=cylc configure= to configure the new system (Section~\ref{sec:configure}).
+\end{itemize}
+
+\subsubsection{Running a System}
+
+\begin{itemize}
+    \item source the system's environment script in your shell (Section~\ref{sec:env}).
+        
+    \item run \verb=cycl scheduler= to cold start or restart a system (Section~\ref{sec:run}).
+\end{itemize}
+
+
+\subsubsection{Monitoring and Controlling}
+
+\begin{itemize}
+    \item monitor running systems using \verb=cylc monitor= (Section~\ref{sec:monitor}).
+
+    \item control running systems using \verb=cylc controller= (Section~\ref{sec:control}).
+\end{itemize}
+
+
+\subsubsection{General Guidelines}
+
+\begin{itemize}
+
+    \item Construct and test your system incrementally using cylc's {\em
+        dummy mode} (Section~\ref{sec:dummymode}).
+
+    \item Rerun \verb=cylc configure= on your system whenever you add
+        new task definition files or modify existing ones.
+\end{itemize}
+
 \label{sec:tasktype}
-\subsection{Task Type}
+\subsection{Defining Tasks}
 
 \label{sec:requisites}
-\subsection{Task Prerequisites and Outputs}
+\subsubsection{Prerequisites and Outputs}
 
 \label{sec:taskdef}
-\subsection{Task Definition Files}
-\pagebreak
+\subsubsection{Task Definition Files}
 
-\subsection{Task Scripts}
+\subsubsection{Task Scripts}
 
 (note that several tasks may use the same script with different
 arguments, e.g. for moving files around).
 
-\pagebreak
 \subsubsection{Task Messaging}
 
 Each external task must:
@@ -461,7 +506,6 @@ control scripts. It's a probably a good idea to do this if possible, but
 lower level scripts that are invoked as the task runs can communicate
 directly with cylc if necessary.
 
-\pagebreak
 \subsubsection{Task Wrapping}
 
 A simple a simple wrapper script invoked by cylc reports task
@@ -477,7 +521,6 @@ startup, invokes the task, and reports task completion or failure.
 
 
 
-\pagebreak
 \subsection{Running Cylc}
 
 \label{sec:dummymode}
@@ -492,16 +535,11 @@ task set. Dummy mode allows very quick testing of scheduling and failure
 recovery scenarios for arbitrarily complicated task sets.
 
 
-\pagebreak
-\subsection{Monitoring Running Systems}
+\subsection{System Monitors}
 
-\pagebreak
 \subsection{Interacting With Running Systems}
 
-
-\pagebreak
-\subsection{Packaged Working Examples}
-
+\subsection{Packaged Example Systems}
 
 \pagebreak
 \section{Cylc Command Reference}
@@ -534,29 +572,26 @@ The top level user interface to all cylc sub-commands.
 \pagebreak
 \subsection{cylc configure}
 
-Configure a new system, or reconfigure an existing one after modifying
-its task definition files. This automatically generates a Python 
-source module that defines task classes for the system, based on its
-task definition files, and creates a script \verb=cylc-env.sh= that,
-when sourced in the user's shell, configures the environment so that
-cylc can run the system.  
+Configure a new system, or reconfigure it after modifying task
+definition files. This generates a Python module that defines
+task classes for the system, and creates a script \verb=cylc-env.sh=
+that can be sourced in the user's shell to provide access to the
+system's task module, user config file, and task scripts.
 
 { \color{Magenta}
 \lstinputlisting{command-usage/cylc-configure.txt} 
 }
 
-
-
-
 \pagebreak
 \subsection{cylc scheduler}
 
-Start up a cylc scheduler for the configured system. Multiple scheduler
-instances can run at once (e.g.\ to control a main operation and several
-parallel test systems) so long as each system is configured, via its
-user config file (Section~\ref{sec:config}), with a different {\em
-system name} (which distinguishes objects registered by each system in
-the Pyro nameserver).
+Start up a cylc scheduler for the configured system (i.e.\ the system
+whose environment file has been sourced in your environment). Multiple
+scheduler instances can run at once (e.g.\ to control a main operation
+and several parallel test systems) so long as each system is configured,
+via its user config file (Section~\ref{sec:config}), with a different
+{\em system name} (which distinguishes objects registered by each system
+in the Pyro nameserver).
 
 {
 \color{Magenta}

@@ -134,7 +134,7 @@ when all tasks have reached it.
 
 (2) cylc scheduler [options] --restart [STATE-DUMP] [STOP]
 Restart the configured system from the configured or (optionally) named state dump
-file, and (optionally) stop at time STOP.
+file, and (optionally) stop when all tasks have reached cycle time STOP.
 
 Cycle time format: YYYYMMHHDD."""
 
