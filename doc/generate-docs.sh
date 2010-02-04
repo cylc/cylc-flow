@@ -28,7 +28,7 @@ fi
 # extract command help output
 mkdir -p doc/command-usage
 cylc            --help > doc/command-usage/cylc.txt
-cylc server     --help > doc/command-usage/cylc-server.txt
+cylc scheduler  --help > doc/command-usage/cylc-scheduler.txt
 cylc control    --help > doc/command-usage/cylc-control.txt
 cylc configure  --help > doc/command-usage/cylc-configure.txt
 cylc monitor    --help > doc/command-usage/monitor.txt
