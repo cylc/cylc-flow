@@ -29,7 +29,7 @@ fi
 mkdir -p doc/command-usage
 cylc            --help > doc/command-usage/cylc.txt
 cylc scheduler  --help > doc/command-usage/cylc-scheduler.txt
-cylc control    --help > doc/command-usage/cylc-control.txt
+cylc controller --help > doc/command-usage/cylc-controller.txt
 cylc configure  --help > doc/command-usage/cylc-configure.txt
 cylc monitor    --help > doc/command-usage/monitor.txt
 

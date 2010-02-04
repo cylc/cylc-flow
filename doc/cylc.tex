@@ -110,31 +110,31 @@ if queued tasks are not able to execute immediately because of resource
 contention.
 
 
-\subsection{EcoConnect}
+\subsection{An Example: EcoConnect}
 
 This work was motivated by the EcoConnect Forecasting System at NIWA
-(National Institute of Water and Atmospheric Research, New Zealand).  As
-of mid 2009, EcoConnect takes real time atmospheric and stream flow
+(National Institute of Water and Atmospheric Research, New Zealand). As
+of 2009, EcoConnect takes real time atmospheric and stream flow
 observations, and operational global weather forecasts from the Met
 Office (UK), and uses these to drive global sea state and regional data
 assimilating weather models, which in turn drive regional sea state,
 storm surge, and catchment river models, plus tide prediction, and a
 large number of associated data collection, quality control,
 preprocessing, postprocessing, product generation, and archiving
-tasks.\footnote{Plans for EcoConnect include additional deterministic
-regional weather forecasts and a statistical ensemble.} The global sea
-state forecast runs once daily.  The regional weather forecast runs four
-times daily but it supplies surface pressures to several downstream
-models that run only twice daily, and precipitation accumulations to
-catchment river models that run on an hourly cycle assimilating real
-time stream flow observations and using the most recent available
-regional weather forecast.  EcoConnect runs on heterogenous distributed
-hardware, including a massively parallel supercomputer and several Linux
-servers. 
+tasks.\footnote{Future plans for EcoConnect include additional
+deterministic regional weather forecasts and a statistical ensemble.}
+The global sea state forecast runs once daily.  The regional weather
+forecast runs four times daily but it supplies surface pressures to
+several downstream models that run only twice daily, and precipitation
+accumulations to catchment river models that run on an hourly cycle
+assimilating real time stream flow observations and using the most
+recent available regional weather forecast.  EcoConnect runs on
+heterogenous distributed hardware, including a massively parallel
+supercomputer and several Linux servers. 
 
-\section{Scheduling with Dependencies}
+\section{Scheduling Dependent Tasks }
 
-\subsection{Real Time Operation - Intracycle Dependencies}
+\subsection{Real Time Operation}
 
 Most dependencies occur between tasks within a single forecast cycle. A
 sea state forecast, for example, might depend on surface wind fields
@@ -181,7 +181,7 @@ data.  Each task in the example system is assumed to depend on upstream
 tasks finishing, rather than on intermediate outputs; this is merely 
 a simplification that makes for clearer diagrams.
 
-\subsection{Running Behind Real Time - Intercycle Dependencies}
+\subsection{Intercycle Dependencies}
 
 Now it must be noted that there are also dependencies between tasks in
 different forecast cycles: model runs typically depend on their own most
@@ -409,13 +409,10 @@ seamlessly transitions between catchup and real time operation without
         (Section~\ref{sec:monitor})
 
     \item interact with / control your running system(s) with
-        \verb=cylc control=
+        \verb=cylc controller=
         (Section~\ref{sec:control}).
 
 \end{itemize}
-
-\pagebreak
-\subsection{Working Examples}
 
 \pagebreak
 \label{sec:tasktype}
@@ -491,11 +488,27 @@ startup, invokes the task, and reports task completion or failure.
 \pagebreak
 \subsection{Running Cylc}
 
+\label{sec:dummymode}
+\subsubsection{Dummy Mode}
+
+In {\em dummy mode}, \verb=cylc scheduler -d=, in place of each real
+system task cylc executes an external program that masquerades as the
+real task by reporting its registered outputs complete at the approprite
+times. This is essentially indistinguishable, to cylc, from the real
+thing, and is therefore a complete test of scheduling for the configured
+task set. Dummy mode allows very quick testing of scheduling and failure
+recovery scenarios for arbitrarily complicated task sets.
+
+
 \pagebreak
 \subsection{Monitoring Running Systems}
 
 \pagebreak
 \subsection{Interacting With Running Systems}
+
+
+\pagebreak
+\subsection{Packaged Working Examples}
 
 
 \pagebreak
@@ -529,14 +542,15 @@ The top level user interface to all cylc sub-commands.
 \pagebreak
 \subsection{cylc configure}
 
-Configure a new system (or reconfigure an existing one after 
-modification): this generates Python task class code based on 
-the system's task definition files, and creates an environment 
-file that, when sourced in the user's shell, gives cylc access to the
-python source and system scripts needed to run the system.
-{
-\color{Magenta}
-\lstinputlisting{command-usage/cylc-configure.txt}
+Configure a new system, or reconfigure an existing one after modifying
+its task definition files. This automatically generates a Python 
+source module that defines task classes for the system, based on its
+task definition files, and creates a script \verb=cylc-env.sh= that,
+when sourced in the user's shell, configures the environment so that
+cylc can run the system.  
+
+{ \color{Magenta}
+\lstinputlisting{command-usage/cylc-configure.txt} 
 }
 
 
@@ -545,11 +559,12 @@ python source and system scripts needed to run the system.
 \pagebreak
 \subsection{cylc scheduler}
 
-Start scheduling the configured system. Multiple scheduler instances can
-run at once (e.g. to control a main operation and several parallel test
-systems) so long as each system is configured (via its user config file)
-with a different ``system name'' (this distinguishes the objects
-registered by the different systems in the Pyro nameserver).
+Start up a cylc scheduler for the configured system. Multiple scheduler
+instances can run at once (e.g.\ to control a main operation and several
+parallel test systems) so long as each system is configured, via its
+user config file (Section~\ref{sec:config}), with a different {\em
+system name} (which distinguishes objects registered by each system in
+the Pyro nameserver).
 
 {
 \color{Magenta}
@@ -559,13 +574,13 @@ registered by the different systems in the Pyro nameserver).
 
 
 \pagebreak
-\subsection{cylc control}
+\subsection{cylc controller}
 
 Remote control for running systems.
 
 {
 \color{Magenta}
-\lstinputlisting{command-usage/cylc-control.txt}
+\lstinputlisting{command-usage/cylc-controller.txt}
 }
 
 

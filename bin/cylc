@@ -8,7 +8,7 @@ allowed_sub_commands = \
     [ 
     'configure',
     'scheduler', 
-    'control',
+    'controller',
     'monitor'
     ]
 
@@ -23,7 +23,7 @@ if dirname != '':
 
 usage = \
     [ 
-    'Usage: ' + basename + ' [options] <command> [command-options] ',
+    'Usage: ' + basename + ' [options] COMMAND [command-options] ',
     '',
     'Options:',
     '  -h, --help    ... print this message and exit',
@@ -31,11 +31,11 @@ usage = \
     'Commands:',
     '  configure     ... configure a new system for scheduling', 
     '  scheduler     ... start scheduling the configured system',
-    '  control       ... control a running system',
+    '  controller    ... control running cylc systems',
     '  monitor       ... monitor running cylc systems',
     '',
     'Command Options:',
-    '  see ' + basename + ' <command> --help'
+    '  see ' + basename + ' COMMAND --help'
     ]
 
 def print_usage():
