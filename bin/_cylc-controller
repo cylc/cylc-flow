@@ -32,60 +32,73 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-parser = OptionParser( "cylc controller [options]" )
+usage = "cylc controller [options]"
+parser = OptionParser( usage )
 
-parser.add_option( "-f", "--force", help="do not prompt before acting",
-        action="store_true", default=False, dest="force" )
-
-parser.add_option( "-p", "--pause", help="pause system now",
-        action="store_true", default=False, dest="pause" )
-
-parser.add_option( "--hold", help="set system hold time",
-        metavar="YYYYMMDDHH", action="store", dest="hold_time" )
-
-parser.add_option( "--reset", help="reset a failed task to the waiting state",
-        metavar="name%YYYYMMDDHH", action="store", dest="reset_id" )
-
-parser.add_option( "-r", "--resume", help="unhold/resume system",
-        action="store_true", default=False, dest="resume" )
-
-parser.add_option( "-s", "--shutdown", help="halt when all running tasks have finished",
-        action="store_true", default=False, dest="shutdown" )
-
-parser.add_option( "--shutdown-now", help="halt system NOW",
-        action="store_true", default=False, dest="shutdownnow" )
-
-parser.add_option( "-t", "--stop-time", help="set stop time",
-        metavar="YYYYMMDDHH", action="store", dest="stop_time" )
-
-parser.add_option( "-c", "--configured", help="control the configured system",
+parser.add_option( "-c", "--configured", help="Interact with the currently configured system",
         action="store_true", default=False, dest="use_configured" )
 
-parser.add_option( "-n", "--name", help="contrl the named system",
-        metavar="SYSTEM-NAME", action="store", dest="system_name" )
+parser.add_option( "-n", "--name", 
+	help="Interact the named system",
+        metavar="NAME", action="store", dest="system_name" )
 
-parser.add_option( "-k", "--kill", 
-        help="abdicate and kill one or more named tasks, or all waiting tasks, at a given  cycle time",
-        metavar="[<name1,name2,...>%]YYYYMMDDHH", 
+parser.add_option( "-f", "--force", 
+	help="Do not ask for confirmation before acting",
+        action="store_true", default=False, dest="force" )
+
+parser.add_option( "--pause", 
+	help="Pause the system now, i.e. do not launch any new tasks",
+        action="store_true", default=False, dest="pause" )
+
+parser.add_option( "--hold", 
+	help="Tell the system to pause all tasks when the reach cycle time HOLD (YYYYMMHHDD)",
+        metavar="HOLD", action="store", dest="hold_time" )
+
+parser.add_option( "--resume", 
+	help="Unhold/Resume the system",
+        action="store_true", default=False, dest="resume" )
+
+parser.add_option( "-s", "--shutdown", 
+	help="Halt the system as soon as all running tasks have finished",
+        action="store_true", default=False, dest="shutdown" )
+
+parser.add_option( "--shutdown-now", 
+	help="Halt the system NOW, even if tasks are still running",
+        action="store_true", default=False, dest="shutdownnow" )
+
+parser.add_option( "--stop-time", 
+	help="Tell the system to shut down when all tasks have reached STOP (YYYYMMDDHH)",
+        metavar="STOP", action="store", dest="stop_time" )
+
+parser.add_option( "--reset", 
+	help="Reset a (failed) task to the waiting state. TASK_ID = 'NAME%YYYYMMDDHH'",
+        metavar="TASK_ID", action="store", dest="reset_id" )
+
+parser.add_option( "--kill", 
+	help="Kill the named task(s) or all waiting tasks at the given cycle time "
+        "(after spawing their successors if necessary)",
+        metavar="[NAME1,NAME2,...%]YYYYMMDDHH", 
         action="store", dest="kill_task_id" )
 
 parser.add_option( "--purge", 
-        help="abdicate and kill a task and its dependents through to a given cycle time",
-        metavar="name%YYYYMMDDHH,YYYYMMDDHH", 
+	help="Kill a task and, recursively, all of its dependents through to a given cycle time"
+	"TASK_ID = NAME%YYYYMMDDHH, STOP = YYYYMMDDHH",
+        metavar="TASK_ID,STOP", 
         action="store", dest="purge" )
 
-parser.add_option( "-d", "--dump-requisites", 
-        help="dump the state of one or more tasks prerequisites and outputs",
-        metavar="<name1,name2,...>%YYYYMMDDHH", 
+parser.add_option( "--insert", help="Insert a new task or task group into a running system.",
+        metavar="[GROUP:]NAME%YYYYMMDDHH", action="store", dest="insert_task_id" )
+
+parser.add_option( "--dump", 
+        help="Show if the named tasks prerequisites are satisfied yet, and if their outputs are"
+	"completed yet.",
+        metavar="NAME1,NAME2,...%YYYYMMDDHH", 
         action="store", dest="dump_task_id" )
 
-parser.add_option( "-x", "--explain-tasks", 
-        help="get the description of one or more tasks",
-        metavar="<name1,name2,...>", 
+parser.add_option( "--describe", 
+        help="Get the description of the named task(s)",
+        metavar="NAME1,NAME2,...", 
         action="store", dest="describe_names" )
-
-parser.add_option( "-i", "--insert", help="insert a new task",
-        metavar="[GROUP:]<name>%<YYYYMMDDHH>", action="store", dest="insert_task_id" )
 
 verbosity_choices = ['debug','info', 'warning', 'error', 'critical'] 
 parser.add_option( "-v", "--verbosity",
@@ -94,7 +107,9 @@ parser.add_option( "-v", "--verbosity",
         choices=verbosity_choices,
         dest="verbosity" )
 
-parser.add_option( "-b", "--bump", help= "bump the system (invokes the task processing loop)",
+parser.add_option( "--bump", 
+	help= "Bump the system (i.e. invoke the task processing loop)"
+	"even if nothing is happening at the moment.",
         action="store_true", default=False, dest="bump" )
 
 #if len( sys.argv ) == 1:
