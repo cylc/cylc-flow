@@ -30,11 +30,10 @@ cylc_version = "foo-bar-baz"
 
 def print_banner():
     print "_______________C_Y_L_C___________________"
-    print
     print ". Self Organising Dynamic Metascheduler ."
     #print "        version: " + cylc_version
     print ".     Hilary Oliver, NIWA, 2008-2010    ."
-    print "_________________________________________"
+    print "_______________C_Y_L_C___________________"
 
 def clean_shutdown( pyro, reason ):
     log = logging.getLogger( 'main' )
@@ -127,12 +126,12 @@ def main( argv ):
 
     usage = \
     """
-(1) cylc scheduler [options] START [STOP]
+(1) cylc schedule [options] START [STOP]
 Cold start the configured system with initial cycle time START.  If the
 optional STOP cycle time is supplied the system will automatically shut down
 when all tasks have reached it.
 
-(2) cylc scheduler [options] --restart [STATE-DUMP] [STOP]
+(2) cylc schedule [options] --restart [STATE-DUMP] [STOP]
 Restart the configured system from the configured or (optionally) named state dump
 file, and (optionally) stop when all tasks have reached cycle time STOP.
 

@@ -7,8 +7,8 @@ import subprocess
 allowed_sub_commands = \
     [ 
     'configure',
-    'scheduler', 
-    'controller',
+    'schedule', 
+    'control',
     'monitor'
     ]
 
@@ -30,8 +30,8 @@ usage = \
     '',
     'Commands:',
     '  configure     ... configure a new system for scheduling', 
-    '  scheduler     ... start scheduling the configured system',
-    '  controller    ... control running cylc systems',
+    '  schedule      ... start scheduling the configured system',
+    '  control       ... control running cylc systems',
     '  monitor       ... monitor running cylc systems',
     '',
     'Command Options:',
@@ -72,5 +72,5 @@ except OSError:
     # the sub-command was not invoked
     print >> sys.stderr, 'CYLC ERROR: unable to run sub-command ' + sub_command
     print >> sys.stderr, "Is everything under your cylc bin directory executable?"
-    print >> sys.stderr, "Have you run 'cylc-configure-system' yet?"
+    print >> sys.stderr, "Have you run 'cylc configure' yet?"
     sys.exit(1)

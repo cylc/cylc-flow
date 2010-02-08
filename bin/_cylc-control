@@ -32,7 +32,7 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-usage = "cylc controller [options]"
+usage = "cylc control [options]"
 parser = OptionParser( usage )
 
 parser.add_option( "-c", "--configured", help="Interact with the currently configured system",
