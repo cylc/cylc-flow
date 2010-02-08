@@ -118,6 +118,9 @@ class config:
         print self.configured['state_dump_file']
 
         print 'CONFIGURED TASK LIST....',
-        print '- ' + self.configured['task_list'][0]
-        for task in self.configured['task_list'][1:]:
+        #print '- ' + self.configured['task_list'][0]
+        #for task in self.configured['task_list'][1:]:
+        #    print '                         - ' + task
+        for task in self.configured['task_list']:
             print '                         - ' + task
+
