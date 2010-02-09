@@ -15,9 +15,6 @@ config = {}                          # !
 
 config[ 'system_name' ] = 'simple-0'
 
-config[ 'logging_dir' ] = os.environ[ 'HOME' ] + '/running/cylc/' + config[ 'system_name' ] + '/log'
-config[ 'state_dump_file' ] = os.environ[ 'HOME' ] + '/running/cylc/' + config[ 'system_name' ] + '/state'
-
 config[ 'environment' ] = { 'TMPDIR':'/tmp/' + os.environ['USER'] + '/cylc/' + config[ 'system_name' ] }
 
 config[ 'dummy_mode' ] = False

@@ -111,7 +111,7 @@ class manager:
         # load initial system state from the configured state dump file
         #--
 
-        configured_file = self.config.get('state_dump_file')
+        configured_file = self.config.get('state_dump_dir') + '/' + self.config.get('state_dump_file')
         if filename:
             if filename == os.path.basename( filename ):
                 # is a plain filename; append to configured path
@@ -287,7 +287,7 @@ class manager:
 
 
     def dump_state( self, new_file = False ):
-        filename = self.config.get('state_dump_file')
+        filename = self.config.get('state_dump_dir') + '/' + self.config.get('state_dump_file')
         if new_file:
             filename += '.' + self.clock.dump_to_str()
 

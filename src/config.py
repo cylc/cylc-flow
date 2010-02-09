@@ -19,10 +19,13 @@ class config:
 
         # SYSTEM NAME (also used as Pyro nameserver group)
         self.configured['system_name'] = None
-        # LOGGING DIRECTORY
-        self.configured['logging_dir'] = None
-        # STATE DUMP FILE
-        self.configured['state_dump_file'] = None
+
+        # LOGGING DIRECTORY (default: in cwd)
+        self.configured['logging_dir'] = 'CYLC-LOGS'
+        # STATE DUMP FILE (default: in cwd)
+        self.configured['state_dump_dir'] = 'CYLC-STATE'
+        self.configured['state_dump_file'] = 'state'
+
         # LIST OF TASK NAMES
         self.configured['task_list'] = []
         # TASK GROUPS
@@ -69,12 +72,10 @@ class config:
         die = False
 
         # check compulsory items have been defined in user_config.py
-        env = os.environ[ 'CYLC_ENV' ]
-        user_config_file = re.sub( 'environment.sh', 'user_config.py', env )
-        compulsory = [ 'system_name', 'logging_dir', 'state_dump_file' ]
+        compulsory = [ 'system_name' ]
         for item in compulsory:
             if self.configured[ item ] == None:
-                print "ERROR: you must define " + item + " in " + user_config_file
+                print "ERROR: you must define " + item + " in user_config.py"
                 die = True
 
         if len( self.configured[ 'task_list' ] ) == 0:
@@ -114,8 +115,8 @@ class config:
         print 'LOGGING DIRECTORY.......',
         print self.configured['logging_dir']
 
-        print "STATE DUMP FILE.........",
-        print self.configured['state_dump_file']
+        print 'STATE DUMP DIRECTORY....',
+        print self.configured['state_dump_dir']
 
         print 'CONFIGURED TASK LIST....',
         #print '- ' + self.configured['task_list'][0]

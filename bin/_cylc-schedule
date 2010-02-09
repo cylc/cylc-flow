@@ -256,12 +256,18 @@ scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.""",
         # external task launcher
         launcher = task_launcher.launcher( system_config, dummy_mode, int(options.clock_rate), options.failout_task_id )
 
-        state_dump_file = system_config.get('state_dump_file')
+        state_dump_dir = system_config.get('state_dump_dir')
+        state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')
+
         if os.path.exists( state_dump_file ):
             print "STATE DUMP BACKUP..."
             backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
             print ' + ' + backup
             shutil.copyfile( state_dump_file, backup )
+
+        elif not os.path.exists( state_dump_dir ):
+            print "STATE DUMP DIR..."
+            os.makedirs( state_dump_dir )
 
         # remotely accessible system state summary
         system_state = state_summary.state_summary( system_config, dummy_mode )
