@@ -178,7 +178,6 @@ scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.""",
 
     # load system configuration
     system_config = config.config()
-    system_config.load()
 
     dummy_mode = False
     if system_config.get( 'dummy_mode' ):

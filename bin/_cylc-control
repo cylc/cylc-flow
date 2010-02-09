@@ -35,9 +35,6 @@ def prompt( reason ):
 usage = "cylc control [options]"
 parser = OptionParser( usage )
 
-parser.add_option( "-c", "--configured", help="Interact with the currently configured system",
-        action="store_true", default=False, dest="use_configured" )
-
 parser.add_option( "-n", "--name", 
 	help="Interact the named system",
         metavar="NAME", action="store", dest="system_name" )
@@ -126,34 +123,19 @@ parser.add_option( "--bump",
 # get systems currently registered in the Pyro nameserver
 ns_groups = pyrex.discover()
 
-if options.use_configured:
-    # use the configured system
-    import config
-    config = config.config()
-    config.load()
-    system_name = config.get( 'system_name' )
-
-elif options.system_name:
-    # use the given system name
-    system_name = options.system_name
-    if ns_groups.registered( system_name ):
-        #print "system: " + system_name
-        pass
-    else:
-        print "WARNING: no " + system_name + " registered yet ..." 
-        ns_groups.print_info()
-        sys.exit(1)
-
+system_name = options.system_name
+if ns_groups.registered( system_name ):
+    #print "system: " + system_name
+    pass
 else:
+    print "WARNING: no " + system_name + " registered yet ..." 
+    ns_groups.print_info()
+
     # print available systems and exit
-    print
-    print "ERROR: you must specify a system name; use '-c' or '-n'"
     print
     parser.print_help()
     print
     ns_groups.print_info()
-    print
-    print "ERROR: you must specify a system name; use '-c' or '-n'"
     print
     sys.exit(1)
 

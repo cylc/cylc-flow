@@ -9,82 +9,43 @@ import re
 class config:
 
     def __init__( self ):
-
         self.configured = {}
-        self.set_defaults()
-
-
-    def set_defaults( self ):
-        # SET DEFAULT CONFIG VALUES
-
-        # SYSTEM NAME (also used as Pyro nameserver group)
-        self.configured['system_name'] = None
-
-        # LOGGING DIRECTORY (default: in cwd)
-        self.configured['logging_dir'] = 'CYLC-LOGS'
-        # STATE DUMP FILE (default: in cwd)
-        self.configured['state_dump_dir'] = 'CYLC-STATE'
-        self.configured['state_dump_file'] = 'state'
-
-        # LIST OF TASK NAMES
-        self.configured['task_list'] = []
-        # TASK GROUPS
-        self.configured['task_groups'] = {}
-
-        # ENVIRONMENT VARIABLES TO SET
-        self.configured['environment'] = {}
-
-        # MAXIMUM TIME ANY TASK IS ALLOWED TO GET AHEAD OF THE SLOWEST
-        self.configured['max_runahead_hours'] = 24
-
-        # DUMMY MODE
-        self.configured['dummy_mode'] = False
-
-        # JOB LAUNCH METHOD (qsub or direct in background)
-        # default to qsub in real mode
-        self.configured['use_qsub'] = True
-        self.configured['job_queue'] = 'default'
-
-        # LOG VERBOSITY
-        self.configured['logging_level'] = logging.INFO
-        #self.configured['logging_level'] = logging.DEBUG
-
-
-    def load( self, dump = False ):
-        self.user_override()
-        self.check()
-        if dump:
-            self.dump()
-        #else:
-        #    print
-        #    print "SYSTEM: " + self.configured['system_name']
-
-
-
-    def user_override( self ):
-        # override config items with those in the user_config module
-        for key in user_config.config.keys():
-            self.configured[ key ] = user_config.config[ key ]
+        self.item_list = \
+                [
+                        'system_name',
+                        'logging_dir',
+                        'state_dump_dir',
+                        'state_dump_file',
+                        'task_list',
+                        'task_groups',
+                        'environment',
+                        'max_runahead_hours',
+                        'dummy_mode',
+                        'use_qsub',
+                        'job_queue',
+                        'logging_level'
+                 ]
+        self.load_system_config()
+        if not self.check():
+            print "ERROR: there were undefined config items"
+            sys.exit(1)
 
 
     def check( self ):
+        items = self.configured.keys()
+        ok = True
+        for item in self.item_list:
+            if item not in items:
+                print 'UNDEFINED CONFIG ITEM:', item
+                ok = False
+        return ok
 
-        die = False
 
-        # check compulsory items have been defined in user_config.py
-        compulsory = [ 'system_name' ]
-        for item in compulsory:
-            if self.configured[ item ] == None:
-                print "ERROR: you must define " + item + " in user_config.py"
-                die = True
 
-        if len( self.configured[ 'task_list' ] ) == 0:
-            print "ERROR: empty task list for system " + self.configured['system_name']
-            die = True
-
-        if die:
-            print "ABORTING due to aforementioned errors"
-            sys.exit(1)
+    def load_system_config( self ):
+        # set config items from those in the system user_config module
+        for key in user_config.config.keys():
+            self.configured[ key ] = user_config.config[ key ]
 
 
     def get( self, key ):
