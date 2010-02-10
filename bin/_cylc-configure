@@ -11,35 +11,38 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "Usage: cylc configure [options] [CYLC_TOP] [SYS_NAME] SYS_PATH"
     echo ""
-    echo "Configure a system for scheduling with cylc (or reconfigure"
-    echo "an existing system after changing its task definition files)."
+	echo "Usage: cylc configure [options] CYLC-PATH SYSTEM-PATH"
+    echo ""
+    echo "Configure a cylc system definition directory for scheduling"
     echo ""
     echo "Arguments:"
-    echo "  CYLC_TOP  ... top level of your cylc installation"
-    echo "  SYS_NAME  ... name of the system"
-    echo "  SYS_PATH  ... top level system defintion directory"
+    echo "  CYLC-PATH   ... path to the cylc installation"
+    echo "                  (with bin/ and src/ sub-dirs, etc.)"
+    echo "  SYSTEM-PATH ... path to the system defintion directory"
+    echo "                  (with taskdef/ and scripts/ sub-dirs, etc.)" 
+    echo ""
+    echo "Compulsory Options:"
+    echo "  -n NAME     ... name of the system to configure"
     echo ""
     echo "Options:"
-    echo "  -h         ... print this message and exit"
-    echo "  -f         ... force overwrite the system config file"
-    echo "  -q QUEUE   ... configure cylc to launch jobs with qsub"
+    echo "  -h          ... print this message and exit"
+    echo "  -f          ... force overwrite the system config file"
+    echo "  -q QUEUE    ... submit jobs to QUEUE using qsub (default"
+    echo "                  is direct execution in background)". 
     echo ""
-    echo "CYLC_TOP can be omitted if you cd into the cylc top level."
-    echo "If SYS_NAME is omitted the last directory of SYS_DIR will"
-    echo "be registered as the system name."
+    echo "This command generates, in the system definition directory:"
+    echo " * A Python task class module for the system"
+    echo " * A Python config module for the system"
+    echo " * A environment script providing access to the system"
+    echo "And registers the system under \$HOME/.cylc/configured/"
     echo ""
-    echo "This command generates:"
-    echo " * A Python task class module for the system task definitions."
-    echo " * A default Python config module for the system."
-    echo " * A environment script that gives cylc access to the system."
-    echo "and registers the system in \$HOME/.cylc/configured-systems."
 }
 
 FORCE=false
 QSUB=false
-while getopts "hfq:" opt; do
+NAMED=false
+while getopts "hfq:n:" opt; do
     case $opt in
         h)
         print_usage
@@ -52,38 +55,26 @@ while getopts "hfq:" opt; do
         QSUB=true
         QUEUE=$OPTARG
         ;;
+        n)
+        NAMED=true
+        SYS_NAME=$OPTARG
+        ;;
     esac
 done
 
 shift $(( OPTIND -1 ))
 
-if [[ $# == 3 ]]; then 
+# check compulsory options
+if ! $NAMED; then
+    echo "ERROR: '-n NAME' is required"
+    print_usage
+    exit 1
+fi
+
+if [[ $# == 2 ]]; then 
     # all args supplied
-    SYS_NAME=$1
-    CYLC_TOP_DIR=$2
-    CYLC_SYS_DIR=$3
-
-elif [[ $# == 2 ]]; then
+    CYLC_TOP_DIR=$1
     CYLC_SYS_DIR=$2
-    # first arg must be either CYLC_TOP_DIR or SYS_NAME
-    if [[ -d $1/taskdef ]]; then
-        # first arg is the system dir
-        CYLC_TOP_DIR=$1
-        # system name is implied
-        SYS_NAME=$( basename $CYLC_SYS_DIR )
-    else
-        # first arg is system name
-        SYS_NAME=$1
-        # cylc top dir is implied
-        CYLC_TOP_DIR=$PWD
-    fi
-
-elif [[ $# == 1 ]]; then 
-    # only system path supplied
-    CYLC_SYS_DIR=$1
-    # others implied
-    SYS_NAME=$( basename $CYLC_SYS_DIR )
-    CYLC_TOP_DIR=$PWD
 
 else
     echo "WRONG NUMBER OF ARGS"
@@ -255,7 +246,7 @@ echo "=> $SYSDIR/$ENV_SCRIPT"
 
 echo
 echo "Updating your cylc global config"
-CONF_DIR=$HOME/.cylc/configured-systems
+CONF_DIR=$HOME/.cylc/configured
 [[ ! -d $CONF_DIR ]] && mkdir -p $CONF_DIR
 
 echo $TOPDIR/$SYSDIR > $CONF_DIR/$SYS_NAME

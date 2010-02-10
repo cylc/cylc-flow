@@ -68,7 +68,7 @@ if command != 'configure':
 
     sysname = sys.argv[i+1]
 
-    FILE = open( os.environ['HOME'] + '/.cylc/configured-systems/' + sysname, 'r' )
+    FILE = open( os.environ['HOME'] + '/.cylc/configured/' + sysname, 'r' )
     line = FILE.read()
     system_dir = line.rstrip() 
     FILE.close()
