@@ -133,10 +133,9 @@ all tasks have reached it.
 
 (2) cylc schedule [options] --restart [STATE-DUMP] [STOP]
 Restart a cylc system from the configured or (optionally) named state
-dump file, and (optionally) stop when all tasks have reached cycle time
-STOP.
+dump file, and (optionally) stop when all tasks have reached STOP.
 
-Cycle time format: YYYYMMHHDD."""
+START and STOP format: YYYYMMHHDD."""
 
     parser = OptionParser( usage )
 
