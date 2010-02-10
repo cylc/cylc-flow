@@ -12,9 +12,9 @@ set -e  # ABORT on error
 function print_usage() 
 {
     echo ""
-	echo "Usage: cylc configure [options] CYLC-PATH SYSTEM-PATH"
+	echo "cylc configure [options] CYLC-PATH SYSTEM-PATH"
+    echo "   Configure a cylc system for scheduling"
     echo ""
-    echo "Configure a cylc system definition directory for scheduling"
     echo "This generates, in the system definition directory:"
     echo " * A Python task class module"
     echo " * A Python default config module, which you can customize"
@@ -31,13 +31,19 @@ function print_usage()
     echo "  -n NAME     ... name of the system to configure"
     echo ""
     echo "Optional Options:"
-    echo "  -h          ... print this message and exit"
+    echo "  -h, --help  ... print this message and exit"
     echo "  -f          ... force: replace an existing system config file"
     echo "                  (which may have been customized) with defaults"
     echo "  -q QUEUE    ... submit jobs to QUEUE using qsub (default"
     echo "                  is direct execution in background)". 
     echo ""
 }
+
+# cheap hack to get '--help', which isn't allowed by getopts
+if [[ $1 == '--help' ]]; then
+    print_usage
+    exit 0
+fi
 
 FORCE=false
 QSUB=false
@@ -249,7 +255,7 @@ export CYLC_ENV=$TOPDIR/$SYSDIR/$ENV_SCRIPT
 # export cylc bin path for utility scripts
 export CYLC_BIN=$TOPDIR/bin
 
-echo "ENVIRONMENT CONFIGURED FOR CYLC SYSTEM $TOPDIR/$SYSDIR"
+echo "ENVIRONMENT CONFIGURED FOR $TOPDIR/$SYSDIR"
 EOF
 echo "=> $SYSDIR/$ENV_SCRIPT"
 

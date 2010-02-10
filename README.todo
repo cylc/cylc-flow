@@ -1,5 +1,7 @@
 To Do
 
+* rewrite configure script in Python, for consistency.
+
 * use the subprocess module as in the cylc front end script, in 
   task_launcher.py, instead of os.system().
 
