@@ -3,6 +3,9 @@ To Do
 * use the subprocess module as in the cylc front end script, in 
   task_launcher.py, instead of os.system().
 
+* think about task launch: qsub, loadleveller, other machines
+  (queue and machine name should be task-specific?)
+
 * 'cylc-message --all-outputs-completed' is confusing because it is not related
   to the special 'completed' messages.
 
