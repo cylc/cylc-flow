@@ -20,14 +20,14 @@ class config:
                         'task_groups',
                         'environment',
                         'max_runahead_hours',
-                        'dummy_mode',
                         'use_qsub',
                         'job_queue',
+                        'dummy_mode',
                         'logging_level'
                  ]
         self.load_system_config()
         if not self.check():
-            print "ERROR: there were undefined config items"
+            print "ABORTING due to undefined config items"
             sys.exit(1)
 
 
@@ -36,7 +36,7 @@ class config:
         ok = True
         for item in self.item_list:
             if item not in items:
-                print 'UNDEFINED CONFIG ITEM:', item
+                print 'ERROR: REQUIRED CONFIG ITEM UNDEFINED:', item
                 ok = False
         return ok
 
@@ -46,7 +46,8 @@ class config:
         # set config items from those in the system user_config module
         for key in user_config.config.keys():
             self.configured[ key ] = user_config.config[ key ]
-
+        # set dummy mode default here
+        self.configured['dummy_mode'] = False
 
     def get( self, key ):
         return self.configured[ key ]
