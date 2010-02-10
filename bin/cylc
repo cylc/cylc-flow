@@ -23,19 +23,21 @@ if dirname != '':
 
 usage = \
     [ 
+    '',
     'Usage: ' + basename + ' [options] COMMAND [command-options] ',
     '',
     'Options:',
     '  -h, --help    ... print this message and exit',
     '',
     'COMMAND:',
-    '  configure     ... configure a new system for scheduling', 
-    '  schedule      ... start scheduling the configured system',
-    '  control       ... control running cylc systems',
-    '  monitor       ... monitor running cylc systems',
+    '  configure     ... configure a system for scheduling', 
+    '  schedule      ... start scheduling a configured system',
+    '  control       ... interact with a running cylc system',
+    '  monitor       ... monitor a running cylc system',
     '',
-    'Command Options:',
-    '  see ' + basename + ' COMMAND --help'
+    'Command Options, see:',
+    '  ' + basename + ' COMMAND --help',
+    ''
     ]
 
 def print_usage():
