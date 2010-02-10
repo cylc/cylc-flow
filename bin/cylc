@@ -4,7 +4,7 @@ import os
 import sys
 import subprocess
 
-allowed_sub_commands = \
+allowed_commands = \
     [ 
     'configure',
     'schedule', 
@@ -13,7 +13,7 @@ allowed_sub_commands = \
     ]
 
 # extract basename of the invoked command, so that we 
-# can access sub-commands at first invocation, when the
+# can access commands at first invocation, when the
 # environment has not yet been configured for cylc.
 invoked_name = sys.argv[0]
 basename = os.path.basename( invoked_name )
@@ -28,7 +28,7 @@ usage = \
     'Options:',
     '  -h, --help    ... print this message and exit',
     '',
-    'Commands:',
+    'COMMAND:',
     '  configure     ... configure a new system for scheduling', 
     '  schedule      ... start scheduling the configured system',
     '  control       ... control running cylc systems',
@@ -47,30 +47,48 @@ if sys.argv[1] == "-h" or sys.argv[1] == "--help":
     sys.exit(0)
 
 try:
-    sub_command = sys.argv[1]
-    sub_command_options = sys.argv[2:]
+    command = sys.argv[1]
+    # TO DO: THIS WILL FAIL IF NO OPTIONS SUPPLIED?
+    command_options = sys.argv[2:]
 except:
     print_usage()
     sys.exit(1)
 
-if sub_command not in allowed_sub_commands:
+if command not in allowed_commands:
     print_usage()
     sys.exit(1)
 
-command = dirname + '_cylc-' + sub_command + ' ' + ' '.join( sub_command_options )
-#print "(cylc sub-command: " + command + ")"
+execute = ''
+if command != 'configure':
+    # read system dir for the named system
+
+    i = 2
+    while sys.argv[i] != '-n':
+        i += 1
+
+    sysname = sys.argv[i+1]
+
+    FILE = open( os.environ['HOME'] + '/.cylc/configured-systems/' + sysname, 'r' )
+    line = FILE.read()
+    system_dir = line.rstrip() 
+    FILE.close()
+
+    execute = ". " + system_dir + "/cylc-env.sh; "
+
+execute += dirname + '_cylc-' + command + ' ' + ' '.join( command_options )
+print "cylc command:\n" + execute 
 
 try:
     # use of shell=True here provides access to PATH in the subprocess
-    retcode = subprocess.call( command, shell=True )
+    retcode = subprocess.call( execute, shell=True )
     if retcode < 0:
-        # the sub-command returned non-zero exist status
-        print >> sys.stderr, command + ' failed: ', retcode
+        # the command returned non-zero exist status
+        print >> sys.stderr, execute + ' failed: ', retcode
         sys.exit(1)
 
 except OSError:
-    # the sub-command was not invoked
-    print >> sys.stderr, 'CYLC ERROR: unable to run sub-command ' + sub_command
+    # the command was not invoked
+    print >> sys.stderr, 'CYLC ERROR: unable to run command ' + execute
     print >> sys.stderr, "Is everything under your cylc bin directory executable?"
     print >> sys.stderr, "Have you run 'cylc configure' yet?"
     sys.exit(1)

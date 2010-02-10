@@ -36,8 +36,8 @@ usage = "cylc control [options]"
 parser = OptionParser( usage )
 
 parser.add_option( "-n", "--name", 
-	help="Interact the named system",
-        metavar="NAME", action="store", dest="system_name" )
+	help="Control the named system",
+        metavar="SYSTEM-NAME", action="store", dest="system_name" )
 
 parser.add_option( "-f", "--force", 
 	help="Do not ask for confirmation before acting",

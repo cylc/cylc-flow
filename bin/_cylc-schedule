@@ -1,8 +1,8 @@
 #!/usr/bin/python
 
-# USE $PYTHONPATH IN YOUR ENVIRONMENT TO MAKE AVAILABLE:
-# 1/ cylc 'src' module directory
-# 2/ user config module (for user_config.py and task_classes.py)
+# USE $PYTHONPATH IN YOUR ENVIRONMENT TO MAKE AVAILABLE the
+# cylc 'src' module directory, and system definition modules
+# (user_config and task_classes).
 
 import re
 import os
@@ -127,17 +127,22 @@ def main( argv ):
     usage = \
     """
 (1) cylc schedule [options] START [STOP]
-Cold start the configured system with initial cycle time START.  If the
-optional STOP cycle time is supplied the system will automatically shut down
-when all tasks have reached it.
+Cold start a cylc system with initial cycle time START. If the optional
+STOP cycle time is supplied the system will automatically shut down when
+all tasks have reached it.
 
 (2) cylc schedule [options] --restart [STATE-DUMP] [STOP]
-Restart the configured system from the configured or (optionally) named state dump
-file, and (optionally) stop when all tasks have reached cycle time STOP.
+Restart a cylc system from the configured or (optionally) named state
+dump file, and (optionally) stop when all tasks have reached cycle time
+STOP.
 
 Cycle time format: YYYYMMHHDD."""
 
     parser = OptionParser( usage )
+
+    parser.add_option( "-n", "--name", help=\
+            "Name of system to scheduler",
+        metavar="SYSTEM-NAME", action="store", dest="system_name" )
 
     parser.add_option( "-r", "--restart", 
             help="Restart from the named state dump file, which is assumed "
@@ -147,24 +152,24 @@ Cycle time format: YYYYMMHHDD."""
             action="store_true", default=False, dest="restart" )
 
     parser.add_option( "-d", "--dummy-mode", 
-	help="Run in dummy mode: external dummy programs will masquerade as"
-	     "the configured real tasks, in accelerated time.",
-       action="store_true", default=False, dest="dummy_mode" )
+            help="Run in dummy mode: external dummy programs will masquerade as"
+            "the configured real tasks, in accelerated time.",
+            action="store_true", default=False, dest="dummy_mode" )
 
     parser.add_option( "--clock-rate", 
-        help="Dummy mode accelerated clock rate in seconds per simulated hour"
-	     "(default 10, i.e. 10 sec = 1 hour).",
-        metavar="SECONDS", action="store", default=10, dest="clock_rate" )
+            help="Dummy mode accelerated clock rate in seconds per simulated hour"
+            "(default 10, i.e. 10 sec = 1 hour).",
+            metavar="SECONDS", action="store", default=10, dest="clock_rate" )
 
     parser.add_option( "--clock-offset", 
-        help="Dummy mode clock offset from initial cycle time at startup (default 24)."
-             "Use to simulate catch up to real time operation.",
-        metavar="HOURS", action="store", default=24, dest="clock_offset" )
+            help="Dummy mode clock offset from initial cycle time at startup (default 24)."
+            "Use to simulate catch up to real time operation.",
+            metavar="HOURS", action="store", default=24, dest="clock_offset" )
 
     parser.add_option( "--fail", help=\
-"""In dummy mode, get this task to abort after reporting that
-it has failed. You can use this to test failure and recovery
-scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.""",
+            "In dummy mode, get this task to abort after reporting that"
+            "it has failed. You can use this to test failure and recovery"
+            "scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.",
         metavar="TASK-ID", action="store", dest="failout_task_id" )
 
     parser.add_option( "--task-proc-reason", 
@@ -177,6 +182,7 @@ scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.""",
     print_banner()
 
     # load system configuration
+    # cylc front end has already exported the system environment.
     system_config = config.config()
 
     dummy_mode = False

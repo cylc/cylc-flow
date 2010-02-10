@@ -14,6 +14,7 @@ http://ascii-table.com/ansi-escape-sequences.php
 import os
 import re
 import sys
+import config
 import Pyro.core
 import Pyro.naming
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
@@ -30,7 +31,7 @@ compress = True
 parser = OptionParser( "cylc monitor-all [options]" )
 
 parser.add_option( "-n", "--name", 
-	help="system name (defaults to configured system)",
+	help="system name",
         metavar="NAME", action="store", dest="system_name" )
 
 parser.add_option( "-l", "--align", help="align columns",
@@ -68,12 +69,12 @@ if options.system_name:
     else:
         print "WARNING: no " + system_name + " registered yet ..." 
 
-else: 
-    # use the configured system
-    import config
-    config = config.config()
-    config.load()
-    system_name = config.get( 'system_name' )
+# use the configured system
+config = config.config()
+system_name_2 = config.get( 'system_name' )
+if system_name != system_name:
+    print 'ERROR!'
+    sys.exit(1)
 
 #else:
 #    # print available systems and exit
