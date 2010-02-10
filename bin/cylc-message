@@ -1,22 +1,20 @@
 #!/usr/bin/python
 
 """ 
-Standalone interface between external EcoConnect tasks/models and the
-task objects that represent them in the controller.
+This is a messaging interface between external tasks and the proxy
+objects that represent them inside a cylc scheduler instance: the
+message is sent by calling [proxy].incoming( PRIORITY, MESSAGE )
+through the Pyro RPC mechanism. 
+The task proxy is identified by its unique ID, NAME%YYYYMMDDHH
 
-Sends a message to a task proxy object in a cylc instance, by calling
-[task object].incoming(<priority>, <message>). The task is identified by
-its unique task ID, <NAME>%<REFTIME>.
-
-Cylc provides $REFERENCE_TIME and $TASK_NAME to external tasks that all
-this messaging interface.
+Cylc exports $SYSTEM_NAME, $REFERENCE_TIME, and $TASK_NAME into 
+the environment of each external task.
 """
 
 import os
 import sys
 import Pyro.core
 from Pyro.errors import NamingError, ProtocolError
-import config
 from optparse import OptionParser
 from time import sleep
 
@@ -35,6 +33,11 @@ parser.add_option( "-n", "--name",
         metavar='TASKNAME',
         help="task name, defaults to $TASK_NAME",
         action="store", dest="taskname" )
+
+parser.add_option( "-s", "--system-name", 
+        metavar="SYSTEM-NAME",
+        help="Name of the running cylc instance, defaults to $SYSTEM_NAME",
+        action="store", dest="system_name" )
 
 parser.add_option( "-r", "--reftime", 
         metavar="YYYYMMDDHH",
@@ -70,7 +73,17 @@ else:
     else:
         print 'ERROR, cylc-message: no task name provided!'
         sys.exit(1)
-    
+
+if options.system_name:
+    system_name = options.system_name
+else:
+    # Default to $SYSTEM_NAME
+    if 'SYSTEM_NAME' in os.environ.keys():
+        system_name = os.environ[ 'SYSTEM_NAME' ]
+    else:
+        print 'ERROR, cylc-message: no system name provided!'
+        sys.exit(1)
+     
 if options.reftime:
     reftime = options.reftime
 else:
@@ -91,18 +104,12 @@ else:
     # user sent a bar string, so join all the words together
     message = ' '.join(args)
 
-# load the configured system (the system's enviroment.sh script must
-# have been sourced in the current shell)
-config = config.config()
-config.user_override()
-config.check()
-
 # connect to the task object inside the control program
 count = 0
 while True:
     count += 1
     try:
-        task = Pyro.core.getProxyForURI('PYRONAME://' +  config.get('system_name') + '.' + taskname + '%' + reftime )
+        task = Pyro.core.getProxyForURI('PYRONAME://' +  system_name + '.' + taskname + '%' + reftime )
        
     except ProtocolError:
         # retry if temporary network problems prevented connection
@@ -145,7 +152,7 @@ else:
 #    print "ERROR: failed to connect to " + task_name + "_" + ref_time
 #    print "Trying dead letter box"
 #    try:
-#        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + config.get('system_name') + '.' + 'dead_letter_box' )
+#        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'dead_letter_box' )
 #        dead_box.incoming( message )
 #    except:
 #        # nameserver not found, or object not registered with it?
