@@ -17,6 +17,7 @@ from time import sleep
 cylc_version = "foo-bar-baz"
 
 def print_banner():
+    print ""
     print "_______________C_Y_L_C___________________"
     print ". Self Organising Dynamic Metascheduler ."
     #print "        version: " + cylc_version
@@ -349,7 +350,7 @@ when it reaches that time, and then the system will shut down."""
         remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )
         pyro.connect( remote, 'remote' )
 
-        print "\nBeginning task processing now\n"
+        print "\nBeginning task scheduling NOW\n"
 
         count = 0
         task_base.state_changed = True

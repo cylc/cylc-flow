@@ -76,10 +76,9 @@ class manager:
         # set clock before using log (affects dummy mode only)
         self.clock.set( start_time )
 
-        print '\nCLEAN START: INITIAL STATE FROM CONFIGURED TASK LIST\n'
+        print '\nSTARTING AT ' + start_time + ' FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname1, taskname2, ...]
-
 
         for name in self.config.get('task_list'):
 
@@ -127,6 +126,9 @@ class manager:
         else:
             filename = configured_file
 
+        print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
+        self.log.info( 'Loading previous state from ' + filename )
+
         # The state dump file format is:
         # system time : <time>
         # OR
@@ -141,15 +143,6 @@ class manager:
         FILE = open( filename, 'r' )
         lines = FILE.readlines()
         FILE.close()
-
-        # reset time first (only has an effect in dummy mode)
-        # DONE IN MAIN PROG NOW
-        #[ junk, time ] = lines[0].split( ' : ' )
-        #time.rstrip() # strip newline
-        #self.clock.reset( time )
-
-        # can't log before clock is reset (affects dummy mode)
-        self.log.info( 'Loading previous state from ' + filename )
 
         log_created = {}
 

@@ -32,7 +32,7 @@ parser.add_option( "-s", "--system",
 	help="Name of the system to monitor",
         metavar="NAME", action="store", dest="system_name" )
 
-parser.add_option( "-l", "--align", help="align task name columns",
+parser.add_option( "-a", "--align", help="align task name columns",
         action="store_true", default=False, dest="align_columns" )
 
 #parser.add_option( "-p", "--print", help="print registered systems and exit",
