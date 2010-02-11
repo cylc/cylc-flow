@@ -62,14 +62,10 @@ class launcher:
 
         if not self.use_qsub:
             # DIRECT EXECUTION 
-            command =  'export REFERENCE_TIME=' + ref_time + '; '
-            command += 'export TASK_NAME='    + task_name + '; '
-            command += 'export SYSTEM_NAME='  + self.system_name + '; '
-            command += 'export CLOCK_RATE='   + str(self.clock_rate) + '; '
-
-            for entry in extra_vars:
-                [ var_name, value ] = entry
-                command += 'export ' + var_name + '="' + value + '"; '
+            os.environ['REFERENCE_TIME'] = ref_time
+            os.environ['TASK_NAME'] = task_name
+            os.environ['SYSTEM_NAME'] = self.system_name
+            os.environ['CLOCK_RATE'] = str( self.clock_rate )
 
             command += external_program + ' &' 
 
