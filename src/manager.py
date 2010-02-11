@@ -128,7 +128,9 @@ class manager:
             filename = configured_file
 
         # The state dump file format is:
-        # system time <time>
+        # system time : <time>
+        # OR
+        # dummy time : <time>,rate
         # class <classname>: item1=value1, item2=value2, ... 
         # <ref_time> : <taskname> : <state>
         # <ref_time> : <taskname> : <state>
@@ -141,10 +143,10 @@ class manager:
         FILE.close()
 
         # reset time first (only has an effect in dummy mode)
-        [ junk, time ] = lines[0].split( ' : ' )
-        # strip newline
-        time.rstrip()
-        self.clock.reset( time )
+        # DONE IN MAIN PROG NOW
+        #[ junk, time ] = lines[0].split( ' : ' )
+        #time.rstrip() # strip newline
+        #self.clock.reset( time )
 
         # can't log before clock is reset (affects dummy mode)
         self.log.info( 'Loading previous state from ' + filename )
@@ -293,7 +295,10 @@ class manager:
 
         # system time
         FILE = open( filename, 'w' )
-        FILE.write( 'system time : ' + self.clock.dump_to_str() + '\n' )
+        if self.dummy_mode:
+            FILE.write( 'dummy time : ' + self.clock.dump_to_str() + ',' + str( self.clock.get_rate()) + '\n' )
+        else:
+            FILE.write( 'system time : ' + self.clock.dump_to_str() + '\n' )
 
         # task class variables
         for name in self.config.get('task_list'):

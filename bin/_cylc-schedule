@@ -193,21 +193,19 @@ when it reaches that time, and then the system will shut down."""
         system_config.put( 'dummy_mode', True )
         dummy_mode = True
 
-    if dummy_mode:
-        print
-        print "RUNNING IN DUMMY MODE!"
-        print
-
     if options.system_name != system_config.get( 'system_name' ):
         # this should never happen
         print 'ERROR: configured system and command line disagree'
         sys.exit(1)
 
     restart_from = None
+    restart = False
     start_time = None
     stop_time = None
 
+    reset_time = None
     if options.restart or options.restart_from:
+        restart = True
         # cylc schedule --system=NAME --restart [STOP]
         # cylc schedule --system=NAME --restart-from=STATE [STOP]
         if len( args ) == 0:
@@ -217,6 +215,48 @@ when it reaches that time, and then the system will shut down."""
             stop_time = args[0]
         else:
             parser.error( "too many arguments" )
+
+        if not dummy_mode:
+            # If a restart state dump indicates dummy mode then restart
+            # in dummy mode even if the command line does not force it.
+            # TO DO: THIS DUPLICATES CODE IN MANAGER but we need to 
+            # know dummy mode or not here.
+
+            configured_file = system_config.get('state_dump_dir') + '/' + system_config.get('state_dump_file')
+            if options.restart_from:
+                filename = options.restart_from
+                if filename == os.path.basename( filename ):
+                    # is a plain filename; append to configured path
+                    dirname = os.path.dirname( configured_file )
+                    filename = dirname + '/' + filename
+                elif re.match( '^/' ):
+                    # is an absolute path
+                    pass
+                else:
+                    # relative path; append to cwd
+                    filename = os.getcwd() + '/' + filename
+
+            else:
+                filename = configured_file
+
+            # The state dump file first line is:
+            # system time : <time>
+            #   OR
+            # dummy time : <time>,rate
+
+            FILE = open( filename, 'r' )
+            lines = FILE.readlines()
+            FILE.close()
+
+            [ junk, tmp ] = lines[0].split( ' : ' )
+
+            if junk == 'dummy time':
+                system_config.put( 'dummy_mode', True )
+                dummy_mode = True
+                [ reset_time, rate ] = tmp.split( ',' )
+                rate.rstrip() # strip newline
+            else:
+                reset_time.rstrip() # strip newline
 
     else:
         # cylc schedule --system=NAME START [STOP]
@@ -228,7 +268,6 @@ when it reaches that time, and then the system will shut down."""
         else:
             parser.error( "too many arguments" )
      
-
     if start_time:
         if not reference_time.is_valid( start_time ):
             parser.error( "invalid START time" )
@@ -248,6 +287,11 @@ when it reaches that time, and then the system will shut down."""
     for VAR in env.keys():
         os.environ[ VAR ] = env[ VAR ]
 
+    if dummy_mode:
+        print
+        print "RUNNING IN DUMMY MODE!"
+        print
+
     # configure my pyro helper
     # this will abort if the nameserver group already exists
     pyro = pyrex.pyrex( options.system_name )
@@ -257,6 +301,10 @@ when it reaches that time, and then the system will shut down."""
             int(options.clock_rate),
             int(options.clock_offset),
             dummy_mode ) 
+
+    if reset_time:
+        clock.reset( reset_time )
+
     pyro.connect( clock, 'clock' )
 
     print "CREATING MAIN LOG......."
@@ -295,7 +343,7 @@ when it reaches that time, and then the system will shut down."""
         pyro.connect( dead_letter_box, 'dead_letter_box' )
 
         # initialize the task manager from general config file or state dump
-        task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, start_time, stop_time, restart_from )
+        task_manager = manager.manager( system_config, dummy_mode, pyro, clock, restart, start_time, stop_time, restart_from )
 
         # remote control switch
         remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )
