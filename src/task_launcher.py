@@ -38,10 +38,6 @@ class launcher:
         # who is running the control system
         cylc_owner = os.environ[ 'USER' ]
 
-        # cylc environment script for this system
-        cylc_env = os.environ[ 'CYLC_ENV' ]
-        cylc_bin = os.environ[ 'CYLC_BIN' ]
-
         # ECOCONNECT: if the system is running on /test or /dvel then
         # replace the '_oper' owner postfix with '_test' or '_dvel'
         if re.search( '_test$', cylc_owner) or re.search( '_dvel$', cylc_owner ): 
@@ -51,9 +47,7 @@ class launcher:
         # EXTERNAL PROGRAM TO RUN
         if self.dummy_mode or dummy_out:
             # dummy task
-            # explicit path not required thanks to environment.sh
-            # external_program = '_cylc-dummy-task.py'
-            external_program = cylc_bin + '/_cylc-dummy-task'
+            external_program = '_cylc-dummy-task'
             if self.failout:
                 if self.failout_task == task_name + '%' + ref_time:
                     external_program += ' --fail'
@@ -62,10 +56,6 @@ class launcher:
         else:
             # real task
             external_program = task
-            if not re.match( '^/', task ):
-                # relative path: use scripts in the '<system>/scripts' sub-directory
-                sysdir = re.sub( '[^/]*$', '', cylc_env )
-                external_program = sysdir + 'scripts/' + task
 
         # CONSTRUCT THE FULL COMMAND TO RUN
         command = ''
@@ -74,7 +64,6 @@ class launcher:
             # DIRECT EXECUTION 
             command =  'export REFERENCE_TIME=' + ref_time + '; '
             command += 'export TASK_NAME='    + task_name + '; '
-            command += 'export CYLC_ENV='  + cylc_env + '; '
             command += 'export SYSTEM_NAME='  + self.system_name + '; '
             command += 'export CLOCK_RATE='   + str(self.clock_rate) + '; '
 
@@ -95,7 +84,6 @@ class launcher:
             command += ' qsub -q ' + self.job_queue + ' -z'
             command += ' -v REFERENCE_TIME=' + ref_time
             command += ',TASK_NAME='    + task_name
-            command += ',CYLC_ENV='  + cylc_env
             command += ',SYSTEM_NAME='  + self.system_name
 
             # the following required for dummy mode operation

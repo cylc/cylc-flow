@@ -34,7 +34,7 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-usage = """cylc control --s NAME [options]
+usage = """cylc control -s NAME [options]
 
 Remote control the cylc instance that is running system NAME. 
 Below, START, STOP, and TIME, are cycle times: YYYYMMDDHH

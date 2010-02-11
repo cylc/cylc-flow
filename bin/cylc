@@ -17,18 +17,11 @@ allowed_commands = \
     'show-pyro',
     ]
 
-# extract basename of the invoked command, so that we 
-# can access commands at first invocation, when the
-# environment has not yet been configured for cylc.
-invoked_name = sys.argv[0]
-basename = os.path.basename( invoked_name )
-dirname = os.path.dirname( invoked_name )
-if dirname != '':
-    dirname = dirname + '/'
-
 usage = \
     [ 
-    'Usage: ' + basename + ' COMMAND [options] ',
+    'Usage: cylc COMMAND [options] ',
+    '',
+    'This is the cylc scheduler command line interface.',
     '',
     'COMMANDS:',
     '  help          Print this usage message and exit.',
@@ -45,12 +38,20 @@ usage = \
     '  show-pyro [TO DO]   List systems registered with Pyro.',
     '',
     'Command Options:',
-    '  ' + basename + ' COMMAND --help'
+    '  cylc COMMAND --help'
     ]
 
 def print_usage():
     for line in usage:
         print line
+
+# check that the cylc core modules are accessible
+try:
+    import requisites
+except:
+    print >> sys.stderr, "ERROR: the cylc core modules are not accessible to Python"
+    print >> sys.stderr, "Please add [cylc-top-dir]/src to your $PYTHONPATH." 
+    sys.exit(1)
 
 if len( sys.argv ) < 1:
     # COMMAND must be supplied
@@ -92,23 +93,33 @@ if command != "configure":
             system_dir = line.rstrip() 
             FILE.close()
 
-            execute = ". " + system_dir + "/cylc-env.sh; "
+            print "Configuring your environment for system " + sysname
+            print system_dir
+            # add system scripts to $PATH
+            os.environ[ 'PATH' ] += ':' + system_dir + '/scripts'
+            # add system Python modules to $PYTHONPATH
+            os.environ[ 'PYTHONPATH' ] += ':' + system_dir
             break
 
-execute += dirname + '_cylc-' + command + ' ' + ' '.join( command_options )
-# print "cylc command: " + execute 
+# construct the actual command name
+command = '_cylc-' + command 
+
+# subprocess.call() takes a list: [ command, arg1, arg2, ...]
+execute = [ command ]
+for f in command_options:
+    execute.append( f )
 
 try:
-    # use of shell=True here provides access to PATH in the subprocess
-    retcode = subprocess.call( execute, shell=True )
-    if retcode < 0:
+    retcode = subprocess.call( execute )
+    if retcode != 0:
         # the command returned non-zero exist status
-        print >> sys.stderr, execute + ' failed: ', retcode
+        print >> sys.stderr, command + ' failed: ', retcode
         sys.exit(1)
 
 except OSError:
     # the command was not invoked
-    print >> sys.stderr, 'CYLC ERROR: unable to run command ' + execute
-    print >> sys.stderr, "Is everything under your cylc bin directory executable?"
-    print >> sys.stderr, "Have you run 'cylc configure' yet?"
+    print >> sys.stderr, 'ERROR: unable to execute ' + command
+    print >> sys.stderr, ' * Is [cylc]/bin in your $PATH?'
+    print >> sys.stderr, " * Are all cylc scripts executable?"
+    print >> sys.stderr, " * Have you run 'cylc configure' yet?"
     sys.exit(1)
