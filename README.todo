@@ -36,8 +36,6 @@ To Do
 
 * parse all command-line input to check for valid reference times 
 
-* make the state dump directory if it doesn't already exist
-
 * check that task output times do not exceed the registered run time
 
 * exception handling for a graceful exit if cylc can't find a Pyro
@@ -95,9 +93,6 @@ To Do
   it into task manager?
 
 * retrofit proper exception handling throughout (current use is sporadic).
-
-* user_config is imported in task_classes.py to get start_time. It may
-  be better to pass this in at task initialisation?
 
 * task.quick_death should default to False? (as for the task 
   def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
