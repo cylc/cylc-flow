@@ -23,10 +23,10 @@ from optparse import OptionParser
 compress = True
 
 # construct a command line parser
-parser = OptionParser( """cylc monitor --system SYSTEM [options]
+parser = OptionParser( """cylc monitor -s NAME [options]
 
-Simple terminal-based monitor to display the state of all
-task proxy objects in the cylc instance running system NAME.""" )
+A simple terminal-based monitor that displays the state of all task
+proxy objects in the cylc instance that is running system NAME.""" )
 
 parser.add_option( "-s", "--system", 
 	help="Name of the system to monitor",
