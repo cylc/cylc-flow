@@ -27,11 +27,14 @@ fi
 
 # extract command help output
 mkdir -p doc/command-usage
-cylc            --help > doc/command-usage/cylc.txt
-cylc scheduler  --help > doc/command-usage/cylc-scheduler.txt
-cylc controller --help > doc/command-usage/cylc-controller.txt
-cylc configure  --help > doc/command-usage/cylc-configure.txt
-cylc monitor    --help > doc/command-usage/monitor.txt
+cylc           --help > doc/command-usage/cylc.txt
+cylc schedule  --help > doc/command-usage/cylc-scheduler.txt
+cylc control   --help > doc/command-usage/cylc-controller.txt
+cylc configure --help > doc/command-usage/cylc-configure.txt
+cylc monitor   --help > doc/command-usage/monitor.txt
+cylc monitor-r   --help > doc/command-usage/monitor-r.txt
+cylc monitor-d   --help > doc/command-usage/monitor-d.txt
+cylc monitor-p   --help > doc/command-usage/monitor-p.txt
 
 cd doc
 

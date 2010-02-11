@@ -106,7 +106,6 @@ def service_remote_requests( remote, task_manager, log ):
     return [ halt, halt_now, process_tasks ]
 
 def main( argv ):
-
     # construct a command line parser
     
     # don't use '%prog' as program name in the usage string, as we
@@ -114,20 +113,19 @@ def main( argv ):
 
     usage = \
     """
-(1) cylc schedule [options] START [STOP]
-Cold start a cylc system with initial cycle time START. If the optional
-STOP cycle time is supplied the system will automatically shut down when
-all tasks have reached it.
+(1) cylc schedule --system SYSTEM [options] START [STOP]
+Cold start system SYSTEM with initial cycle time START, and (optionally)
+shut down the system when all tasks have reached cylce time STOP.
 
-(2) cylc schedule [options] --restart [STATE-DUMP] [STOP]
-Restart a cylc system from the configured or (optionally) named state
+(2) cylc schedule --system SYSTEM --restart [STATE-DUMP] [options] [STOP]
+Restart system SYSTEM from its configured or (optionally) a named state
 dump file, and (optionally) stop when all tasks have reached STOP.
 
 START and STOP format: YYYYMMHHDD."""
 
     parser = OptionParser( usage )
 
-    parser.add_option( "-n", "--name", help=\
+    parser.add_option( "-s", "--system", help=\
             "Name of system to scheduler",
         metavar="NAME", action="store", dest="system_name" )
 

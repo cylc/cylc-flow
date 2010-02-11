@@ -24,11 +24,11 @@ compress = True
 
 # construct a command line parser
 parser = OptionParser( """
-cylc monitor --name NAME [options]
+cylc monitor --system SYSTEM [options]
 Simple terminal-based monitor to display the state of all
 task proxy objects in the cylc instance running system NAME.""" )
 
-parser.add_option( "-n", "--name", 
+parser.add_option( "-s", "--system", 
 	help="Name of the system to monitor",
         metavar="NAME", action="store", dest="system_name" )
 

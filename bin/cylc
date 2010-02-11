@@ -80,11 +80,11 @@ else:
 # construct command to execute
 execute = ''
 
-# If command options includes '-n SYSTEM NAME', then find the system's
-# environment configuration script and source it before executing the
-# command. 
+# If command options include '--system SYSTEM-NAME' or '-s SYSTEM-NAME'
+# then find the named system's environment configuration script and
+# source it before executing the command. 
 for i in range( 0, len( command_options) ):
-    if command_options[i] == '-n':
+    if command_options[i] == '-s' or command_options[i] == '--system':
         sysname = command_options[i+1]
 
         FILE = open( os.environ['HOME'] + '/.cylc/configured/' + sysname, 'r' )

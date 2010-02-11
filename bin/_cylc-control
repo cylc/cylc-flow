@@ -34,12 +34,12 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-usage = """cylc control [options]
+usage = """cylc control --system SYSTEM [options]
 Below, START, STOP, and TIME, are cycle times: YYYYMMDDHH
 and TASK-ID is a task's unique ID <task-name>%<cycle-time>"""
 parser = OptionParser( usage )
 
-parser.add_option( "-n", "--name", 
+parser.add_option( "-s", "--system", 
 	help="The name of the system you want to interact with.",
         metavar="NAME", action="store", dest="system_name" )
 
@@ -59,7 +59,7 @@ parser.add_option( "-r", "--resume",
 	help="Resume (unhold or unpause) the system NOW.",
         action="store_true", default=False, dest="resume" )
 
-parser.add_option( "-s", "--stop", 
+parser.add_option( "--stop", 
 	help="Halt the system when all running tasks have finished.",
         action="store_true", default=False, dest="shutdown" )
 

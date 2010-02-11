@@ -447,7 +447,7 @@ definition files are modified.
 \begin{itemize}
     \item monitor running systems using \verb=cylc monitor= (Section~\ref{sec:monitor}).
 
-    \item control running systems using \verb=cylc controller= (Section~\ref{sec:control}).
+    \item control running systems using \verb=cylc control= (Section~\ref{sec:control}).
 \end{itemize}
 
 
@@ -526,7 +526,7 @@ startup, invokes the task, and reports task completion or failure.
 \label{sec:dummymode}
 \subsubsection{Dummy Mode}
 
-In {\em dummy mode}, \verb=cylc scheduler -d=, in place of each real
+In {\em dummy mode}, \verb=cylc schedule -d=, in place of each real
 system task cylc executes an external program that masquerades as the
 real task by reporting its registered outputs complete at the approprite
 times. This is essentially indistinguishable, to cylc, from the real
@@ -561,7 +561,7 @@ controlled or monitored by name.
 \pagebreak
 \subsection{cylc}
 
-The top level user interface to all cylc sub-commands.
+The top level user interface to all cylc commands.
 
 {
 \color{Magenta}
@@ -583,7 +583,7 @@ system's task module, user config file, and task scripts.
 }
 
 \pagebreak
-\subsection{cylc scheduler}
+\subsection{cylc schedule}
 
 Start up a cylc scheduler for the configured system (i.e.\ the system
 whose environment file has been sourced in your environment). Multiple
@@ -601,7 +601,7 @@ in the Pyro nameserver).
 
 
 \pagebreak
-\subsection{cylc controller}
+\subsection{cylc control}
 
 Remote control for running systems.
 
@@ -619,7 +619,23 @@ Remote control for running systems.
 \lstinputlisting{command-usage/monitor.txt}
 }
 
-\label{config}
+\subsection{cylc monitor-r}
+{
+\color{Magenta}
+\lstinputlisting{command-usage/monitor-r.txt}
+}
+
+\subsection{cylc monitor-d}
+{
+\color{Magenta}
+\lstinputlisting{command-usage/monitor-d.txt}
+}
+
+\subsection{cylc monitor-p}
+{
+\color{Magenta}
+\lstinputlisting{command-usage/monitor-p.txt}
+}
 
 \pagebreak
 \section{Cylc Task Definition Reference}

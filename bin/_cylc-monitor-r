@@ -23,14 +23,13 @@ from optparse import OptionParser
 
 # construct a command line parser
 parser = OptionParser( """
-cylc monitor-r [options]
-A simple terminal-based monitor that displays extra"
-information about task proxy objects that are currently"
-in the 'running' state, for a given system.""" ) 
+cylc monitor-r --system SYSTEM [options]
+A simple terminal-based monitor that displays extra information about
+task proxy objects that are currently in the 'running' state.""" ) 
 
-parser.add_option( "-n", "--name", 
-	help="(COMPULSORY) name of the system to monitor",
-        metavar="NAME", action="store", dest="system_name" )
+parser.add_option( "-s", "--system", 
+	help="Name of the system to monitor",
+    metavar="NAME", action="store", dest="system_name" )
 
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
