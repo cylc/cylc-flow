@@ -4,11 +4,12 @@
  
 print_usage() {
 	echo "Usage: cylc monitor-d [options]"
+    echo ""
     echo "A simple terminal-based monitor to display dummy task programs"
     echo "spawned by any cylc instances running under your username."
     echo ""
 	echo "Options:"
-	echo "  -h, --help    ... print this message and exit"
+	echo "  -h, --help    Print this usage message and exit."
 }
 
 if [[ $# != 0 ]]; then

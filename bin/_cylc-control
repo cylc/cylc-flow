@@ -34,7 +34,9 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-usage = """cylc control --system SYSTEM [options]
+usage = """cylc control --s NAME [options]
+
+Remote control the cylc instance that is running system NAME. 
 Below, START, STOP, and TIME, are cycle times: YYYYMMDDHH
 and TASK-ID is a task's unique ID <task-name>%<cycle-time>"""
 parser = OptionParser( usage )
@@ -120,6 +122,9 @@ parser.add_option( "--bump",
 
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
+
+if not options.system_name:
+    parser.error( "NO SYSTEM NAME" )
 
 # import cylc modules now (the reason for this is explained above)
 import pyrex

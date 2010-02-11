@@ -23,8 +23,8 @@ from optparse import OptionParser
 compress = True
 
 # construct a command line parser
-parser = OptionParser( """
-cylc monitor --system SYSTEM [options]
+parser = OptionParser( """cylc monitor --system SYSTEM [options]
+
 Simple terminal-based monitor to display the state of all
 task proxy objects in the cylc instance running system NAME.""" )
 
@@ -38,7 +38,7 @@ parser.add_option( "-l", "--align", help="align task name columns",
 #parser.add_option( "-p", "--print", help="print registered systems and exit",
 #        action="store_true", default=False, dest="print_systems" )
 
-parser.add_option( "-s", "--shortnames", help="display short tasknames, if defined",
+parser.add_option( "--shortnames", help="display short tasknames, if defined",
         action="store_true", default=False, dest="shortnames" )
 
 # get command line options and positional args

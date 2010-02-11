@@ -6,6 +6,7 @@ import subprocess
 
 allowed_commands = \
     [ 
+    'help',
     'configure',
     'schedule', 
     'control',
@@ -27,39 +28,30 @@ if dirname != '':
 
 usage = \
     [ 
+    'Usage: ' + basename + ' COMMAND [options] ',
     '',
-    'Usage: ' + basename + ' [options] COMMAND [command-options] ',
+    'COMMANDS:',
+    '  help          Print this usage message and exit.',
     '',
-    'Options:',
-    '  -h, --help    ... print this message and exit',
+    '  configure     Configure a system for scheduling.', 
+    '  schedule      Start scheduling a configured system.',
+    '  control       Interact with a running system.',
     '',
-    'COMMAND:',
-    '  configure     ... configure a system for scheduling', 
-    '  schedule      ... start scheduling a configured system',
-    '  control       ... interact with a running cylc system',
+    '  monitor       Monitor all task proxy objects.',
+    '  monitor-r     Monitor running task proxies.',
+    '  monitor-d     Monitor running dummy task programs.',
+    '  monitor-p     Monitor the Pyro namesever.',
     '',
-    '  monitor       ... monitor the state of task proxy objects',
-    '  monitor-r     ... monitor task proxies in the running state',
-    '  monitor-d     ... monitor running dummy task programs',
-    '  monitor-p     ... monitor the Pyro namesever',
+    '  show-pyro [TO DO]   List systems registered with Pyro.',
     '',
-    '  show-pyro [TO DO] ... list systems currently registered with Pyro',
-    '',
-    'Command Options, see:',
-    '  ' + basename + ' COMMAND --help',
-    ''
+    'Command Options:',
+    '  ' + basename + ' COMMAND --help'
     ]
 
 def print_usage():
     for line in usage:
         print line
 
-if sys.argv[1] == "-h" or sys.argv[1] == "--help":
-    # top level usage message requested
-    print_usage()
-    sys.exit(0)
-
-# now we have: cylc COMMAND [command-options]
 if len( sys.argv ) < 1:
     # COMMAND must be supplied
     print_usage()
@@ -70,6 +62,10 @@ command = sys.argv[1]
 if command not in allowed_commands:
     print_usage()
     sys.exit(1)
+
+if command == 'help': 
+    print_usage()
+    sys.exit(0)
 
 # remaining arguments must be command options
 if len( sys.argv ) == 1:
@@ -83,17 +79,21 @@ execute = ''
 # If command options include '--system SYSTEM-NAME' or '-s SYSTEM-NAME'
 # then find the named system's environment configuration script and
 # source it before executing the command. 
-for i in range( 0, len( command_options) ):
-    if command_options[i] == '-s' or command_options[i] == '--system':
-        sysname = command_options[i+1]
+if command != "configure":
+    # configure's -s option is used in *creating* the environment
+    # script; so it doesn't actually exist yet.
 
-        FILE = open( os.environ['HOME'] + '/.cylc/configured/' + sysname, 'r' )
-        line = FILE.read()
-        system_dir = line.rstrip() 
-        FILE.close()
+    for i in range( 0, len( command_options) ):
+        if command_options[i] == '-s' or command_options[i] == '--system':
+            sysname = command_options[i+1]
 
-        execute = ". " + system_dir + "/cylc-env.sh; "
-        break
+            FILE = open( os.environ['HOME'] + '/.cylc/configured/' + sysname, 'r' )
+            line = FILE.read()
+            system_dir = line.rstrip() 
+            FILE.close()
+
+            execute = ". " + system_dir + "/cylc-env.sh; "
+            break
 
 execute += dirname + '_cylc-' + command + ' ' + ' '.join( command_options )
 # print "cylc command: " + execute 

@@ -1,11 +1,13 @@
 #!/bin/bash
 
 print_usage() {
-	echo "usage: cylc monitor-pyro-ns [options]"
+	echo "Usage: cylc monitor-pyro-ns [options]"
+    echo ""
 	echo "A simple terminal-based monitor to display objects"
     echo "currently registered in the Pyro Nameserver."
+    echo ""
 	echo "Options:"
-	echo "  -h (--help)   ... print this message and exit"
+	echo "  -h (--help)   Print this usage message and exit."
 }
 
 if [[ $# != 0 ]]; then

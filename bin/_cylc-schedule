@@ -107,62 +107,64 @@ def service_remote_requests( remote, task_manager, log ):
 
 def main( argv ):
     # construct a command line parser
-    
     # don't use '%prog' as program name in the usage string, as we
     # invoke this program through the cylc user interface script.
 
-    usage = \
-    """
-(1) cylc schedule --system SYSTEM [options] START [STOP]
-Cold start system SYSTEM with initial cycle time START, and (optionally)
-shut down the system when all tasks have reached cylce time STOP.
+    usage = """cylc schedule -s NAME [options] [START] [STOP]
 
-(2) cylc schedule --system SYSTEM --restart [STATE-DUMP] [options] [STOP]
-Restart system SYSTEM from its configured or (optionally) a named state
-dump file, and (optionally) stop when all tasks have reached STOP.
-
-START and STOP format: YYYYMMHHDD."""
+Start up a new cylc instance for scheduling the configured system NAME.
+(1) To cold start a system, supply an initial cycle time START (YYYYMMDDHH). 
+(2) To restart a system, use the '--restart' or '--restart-from' options.
+(3) If you supply a final cycle time STOP (YYYYMMDDHH) each task will stop
+when it reaches that time, and then the system will shut down."""
 
     parser = OptionParser( usage )
 
-    parser.add_option( "-s", "--system", help=\
-            "Name of system to scheduler",
-        metavar="NAME", action="store", dest="system_name" )
+    parser.add_option( "-s", "--system", 
+            help="Registered name of the configured system",
+            metavar="NAME", action="store", dest="system_name" )
 
     parser.add_option( "-r", "--restart", 
-            help="Restart from the named state dump file, which is assumed "
-                 "to be in the directory of the configured state dump file "
-                 "unless an absolute path is supplied. Defaults to the "
-                 "configured state dump file.",
+            help="Restart from the system's configured state dump file",
             action="store_true", default=False, dest="restart" )
 
+    parser.add_option( "--restart-from", 
+            help="Restart from a named state dump file, assumed to be"
+            "located in the system's configured state dump directory"
+            "unless you give an absolute file path.",
+            metavar="STATE", action="store", dest="restart_from" )
+
     parser.add_option( "-d", "--dummy-mode", 
-            help="Run in dummy mode: external dummy programs will masquerade as"
-            "the configured real tasks, in accelerated time.",
+            help="Run in accelerated time dummy mode. System tasks will be"
+            "faked by an external dummy program.",
             action="store_true", default=False, dest="dummy_mode" )
 
-    parser.add_option( "--clock-rate", 
-            help="Dummy mode accelerated clock rate in seconds per simulated hour"
-            "(default 10, i.e. 10 sec = 1 hour).",
-            metavar="SECONDS", action="store", default=10, dest="clock_rate" )
+    parser.add_option( "--rate", 
+            help="(Dummy mode) accelerated clock rate, INT seconds = 1 hour"
+            "(defaults to 10 sec = 1 hour).",
+            metavar="INT", action="store", default=10, dest="clock_rate" )
 
-    parser.add_option( "--clock-offset", 
-            help="Dummy mode clock offset from initial cycle time at startup (default 24)."
-            "Use to simulate catch up to real time operation.",
+    parser.add_option( "--offset", 
+            help="(Dummy mode) clock offset at start up. The dummy clock will"
+            "start at INT hours prior to START cycle time (default 24 hours)."
+            "Use to simulate catching up to real time operation.",
             metavar="HOURS", action="store", default=24, dest="clock_offset" )
 
     parser.add_option( "--fail", help=\
-            "In dummy mode, get this task to abort after reporting that"
-            "it has failed. You can use this to test failure and recovery"
+            "(Dummy mode) get a task to abort after reporting that"
+            "it has failed. Use this to test failure and recovery"
             "scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.",
         metavar="TASK-ID", action="store", dest="failout_task_id" )
 
-    parser.add_option( "--task-proc-reason", 
-            help="(debug) explain why the task processing loop was invoked",
+    parser.add_option( "--reason", 
+            help="(Debug) explain why the task processing loop was invoked",
             action="store_true", default=False, dest="task_proc_reason" )
 
     # get command line options and positional args
     ( options, args ) = parser.parse_args()
+
+    if not options.system_name:
+        parser.error( "NO SYSTEM NAME" )
 
     # import cylc modules now (the reason for this is explained above)
     import pyrex
@@ -196,47 +198,59 @@ START and STOP format: YYYYMMHHDD."""
         print "RUNNING IN DUMMY MODE!"
         print
 
-    restart_statedump = None
+    if options.system_name != system_config.get( 'system_name' ):
+        # this should never happen
+        print 'ERROR: configured system and command line disagree'
+        sys.exit(1)
+
+    restart_from = None
     start_time = None
     stop_time = None
 
-    if options.restart:
-        # restarting the system
+    if options.restart or options.restart_from:
+        # cylc schedule --system=NAME --restart [STOP]
+        # cylc schedule --system=NAME --restart-from=STATE [STOP]
         if len( args ) == 0:
             # default
             pass
         elif len( args ) == 1:
-            if reference_time.is_valid( args[0] ):
-                stop_time = args[0]
-            else:
-                restart_statedump = args[0]
-        elif len( args ) == 2:
-            restart_statedump = args[0]
-            stop_time = args[1]
+            stop_time = args[0]
         else:
             parser.error( "too many arguments" )
 
     else:
-        # cold starting the system
+        # cylc schedule --system=NAME START [STOP]
         if len( args ) == 1:
             start_time = args[0]
         elif len( args ) == 2:
             start_time = args[0]
             stop_time = args[1]
         else:
-            parser.error( "wrong number of arguments" )
+            parser.error( "too many arguments" )
      
-    if not start_time and not options.restart: 
-        parser.error( 'start time and restart both undefined' )
+
+    if start_time:
+        if not reference_time.is_valid( start_time ):
+            parser.error( "invalid START time" )
+
+    if stop_time:
+        if not reference_time.is_valid( stop_time ):
+            parser.error( "invalid STOP time" )
+
+    if not start_time and \
+            not options.restart and \
+            not options.restart_from: 
+        parser.error( 'Either supply start time or restart' )
        
     # set configured environment variables
+    # WHY HERE (SHOULD BE IN TASK LAUNCHER?)
     env = system_config.get('environment')
     for VAR in env.keys():
         os.environ[ VAR ] = env[ VAR ]
 
     # configure my pyro helper
     # this will abort if the nameserver group already exists
-    pyro = pyrex.pyrex( system_config.get( 'system_name' ))
+    pyro = pyrex.pyrex( options.system_name )
 
     # system clock for accelerated time in dummy mode
     clock = accelerated_clock.clock( 
@@ -281,7 +295,7 @@ START and STOP format: YYYYMMHHDD."""
         pyro.connect( dead_letter_box, 'dead_letter_box' )
 
         # initialize the task manager from general config file or state dump
-        task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, start_time, stop_time, restart_statedump )
+        task_manager = manager.manager( system_config, dummy_mode, pyro, clock, options.restart, start_time, stop_time, restart_from )
 
         # remote control switch
         remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )

@@ -22,8 +22,8 @@ from string import ljust, rjust, split, upper, lower
 from optparse import OptionParser
 
 # construct a command line parser
-parser = OptionParser( """
-cylc monitor-r --system SYSTEM [options]
+parser = OptionParser( """cylc monitor-r --system SYSTEM [options]
+
 A simple terminal-based monitor that displays extra information about
 task proxy objects that are currently in the 'running' state.""" ) 
 

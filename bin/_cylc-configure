@@ -11,32 +11,29 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
+	echo "Usage: cylc configure -s NAME [options] CYLC-PATH SYSTEM-PATH"
     echo ""
-	echo "Usage: cylc configure [options] CYLC-PATH SYSTEM-PATH"
-    echo "          Configure a cylc system for scheduling"
-    echo ""
-    echo "This generates, in the system definition directory:"
+    echo "Configure the cylc system NAME for scheduling. This generates"
+    echo "in the system definition directory:"
     echo " * A Python task class module"
     echo " * A Python default config module, which you can customize"
     echo " * A environment script that provides access to the system"
-    echo "And: registers the system under \$HOME/.cylc/configured."
+    echo "And registers the system under \$HOME/.cylc/configured."
     echo ""
     echo "Arguments:"
-    echo "  CYLC-PATH   ... path to the cylc installation"
-    echo "                  (with bin/ and src/ sub-dirs, etc.)"
-    echo "  SYSTEM-PATH ... path to the system defintion directory"
-    echo "                  (with taskdef/ and scripts/ sub-dirs, etc.)" 
+    echo "  CYLC-PATH       Path to the cylc installation (with bin and"
+    echo "                  src sub-dirs, etc.)."
+    echo "  SYSTEM-PATH     Path to the system to be configured (with"
+    echo "                  taskdef and scripts sub-dirs, etc.)." 
     echo ""
-    echo "Compulsory Options:"
-    echo "  -n NAME     ... name of the system to configure"
-    echo ""
-    echo "Optional Options:"
-    echo "  -h, --help  ... print this message and exit"
-    echo "  -f          ... force overwrite an existing system config file"
-    echo "                  (which may have been customized) with defaults"
-    echo "  -q QUEUE    ... submit jobs to QUEUE using qsub (default"
-    echo "                  is direct execution in background)". 
-    echo ""
+    echo "Options:"
+    echo "  -h, --help      Print this usage message and exit"
+    echo "  -f              Force overwrite an existing system config file"
+    echo "                  (which may have been customized) with defaults."
+    echo "  -s NAME, --system=NAME"
+    echo "                  Name to use in registering the configured system."
+    echo "  -q QUEUE        Submit jobs to QUEUE using qsub, instead of using"
+    echo "                  direct execution in the background." 
 }
 
 # cheap hack to get '--help', which isn't allowed by getopts
@@ -48,7 +45,7 @@ fi
 FORCE=false
 QSUB=false
 NAMED=false
-while getopts "hfq:n:" opt; do
+while getopts "hfq:s:" opt; do
     case $opt in
         h)
         print_usage
@@ -61,7 +58,7 @@ while getopts "hfq:n:" opt; do
         QSUB=true
         QUEUE=$OPTARG
         ;;
-        n)
+        s)
         NAMED=true
         SYS_NAME=$OPTARG
         ;;
@@ -72,7 +69,7 @@ shift $(( OPTIND -1 ))
 
 # check compulsory options
 if ! $NAMED; then
-    echo "ERROR: '-n NAME' is required"
+    echo "ERROR: '-s NAME' is required"
     print_usage
     exit 1
 fi
@@ -128,15 +125,15 @@ echo "=> $SYSDIR/task_classes.py"
 echo
 WRITE_CONFIG=true
 if [[ -f user_config.py ]]; then
-    echo "Config file already exists for $SYS_NAME"
+    echo -n "Config file already exists for ${SYS_NAME}, "
     if ! $FORCE; then
-        echo "I won't overwrite with default values in"
-        echo "case of customization; use '-f' to force"
+        echo "NOT OVERWRITING"
+        echo "(in case of customization)"
         WRITE_CONFIG=false
     else
         BACKUP=user_config.py.OLD.$$
-        echo "Overwrite with default values requested"
-        echo "Backing up old file to $BACKUP"
+        echo "OVERWRITING"
+        echo "(backed up old file to $BACKUP)"
         cp user_config.py $BACKUP
     fi
 fi
