@@ -9,7 +9,11 @@ allowed_commands = \
     'configure',
     'schedule', 
     'control',
-    'monitor'
+    'monitor',
+    'monitor-r',
+    'monitor-d',
+    'monitor-p',
+    'show-pyro',
     ]
 
 # extract basename of the invoked command, so that we 
@@ -33,7 +37,13 @@ usage = \
     '  configure     ... configure a system for scheduling', 
     '  schedule      ... start scheduling a configured system',
     '  control       ... interact with a running cylc system',
-    '  monitor       ... monitor a running cylc system',
+    '',
+    '  monitor       ... monitor the state of task proxy objects',
+    '  monitor-r     ... monitor task proxies in the running state',
+    '  monitor-d     ... monitor running dummy task programs',
+    '  monitor-p     ... monitor the Pyro namesever',
+    '',
+    '  show-pyro [TO DO] ... list systems currently registered with Pyro',
     '',
     'Command Options, see:',
     '  ' + basename + ' COMMAND --help',
@@ -45,37 +55,45 @@ def print_usage():
         print line
 
 if sys.argv[1] == "-h" or sys.argv[1] == "--help":
+    # top level usage message requested
     print_usage()
     sys.exit(0)
 
-try:
-    command = sys.argv[1]
-    # TO DO: THIS WILL FAIL IF NO OPTIONS SUPPLIED?
-    command_options = sys.argv[2:]
-except:
+# now we have: cylc COMMAND [command-options]
+if len( sys.argv ) < 1:
+    # COMMAND must be supplied
     print_usage()
     sys.exit(1)
 
+# first argument must be COMMAND
+command = sys.argv[1]
 if command not in allowed_commands:
     print_usage()
     sys.exit(1)
 
+# remaining arguments must be command options
+if len( sys.argv ) == 1:
+    command_options = []
+else:
+    command_options = sys.argv[2:]
+
+# construct command to execute
 execute = ''
-if command != 'configure':
-    # read system dir for the named system
 
-    i = 2
-    while sys.argv[i] != '-n':
-        i += 1
+# If command options includes '-n SYSTEM NAME', then find the system's
+# environment configuration script and source it before executing the
+# command. 
+for i in range( 0, len( command_options) ):
+    if command_options[i] == '-n':
+        sysname = command_options[i+1]
 
-    sysname = sys.argv[i+1]
+        FILE = open( os.environ['HOME'] + '/.cylc/configured/' + sysname, 'r' )
+        line = FILE.read()
+        system_dir = line.rstrip() 
+        FILE.close()
 
-    FILE = open( os.environ['HOME'] + '/.cylc/configured/' + sysname, 'r' )
-    line = FILE.read()
-    system_dir = line.rstrip() 
-    FILE.close()
-
-    execute = ". " + system_dir + "/cylc-env.sh; "
+        execute = ". " + system_dir + "/cylc-env.sh; "
+        break
 
 execute += dirname + '_cylc-' + command + ' ' + ' '.join( command_options )
 # print "cylc command: " + execute 

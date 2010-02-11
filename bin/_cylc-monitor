@@ -1,110 +1,294 @@
 #!/usr/bin/python
 
+"""
+Display the state of all existing tasks.
+ONLY DETECTS DUMMY VS REAL TIME AT STARTUP
+
+For color terminal ASCII escape codes, see
+http://ascii-table.com/ansi-escape-sequences.php
+"""
+
+# import standard Python modules
+# cylc modules are imported after parsing the command line, so that we
+# don't need access to a specific system to print the usage message.
 import os
+import re
 import sys
-import subprocess
-import pdb
+import Pyro.core
+#import Pyro.naming
+from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
+from time import sleep
+from optparse import OptionParser
+
+compress = True
 
 # construct a command line parser
+parser = OptionParser( """
+cylc monitor --name NAME [options]
+Simple terminal-based monitor to display the state of all
+task proxy objects in the cylc instance running system NAME.""" )
 
-def print_usage():
-	print \
-'''
-usage: cylc monitor [options]
-Monitor running cylc schedulers.
+parser.add_option( "-n", "--name", 
+	help="Name of the system to monitor",
+        metavar="NAME", action="store", dest="system_name" )
 
-cylc monitor -a [options]  ... monitor all task proxies
-  options:
-    -n NAME           ... system name (default: configured)
-    -l                ... align columns
-    -s                ... use short task names
-cylc monitor -r            ... monitor running task proxies
-cylc monitor -d            ... monitor external dummy tasks
-cylc monitor -x            ... monitor the Pyro nameserver
-cylc monitor -p            ... print registered systems and exit
-cylc monitor -h            ... print this message and exit
-'''
+parser.add_option( "-l", "--align", help="align task name columns",
+        action="store_true", default=False, dest="align_columns" )
 
-args = sys.argv[1:]
+#parser.add_option( "-p", "--print", help="print registered systems and exit",
+#        action="store_true", default=False, dest="print_systems" )
 
-printsys = False
-align = False
-short = False
-mon_all = False
-mon_running = False
-mon_pyro = False
-mon_dummy = False
+parser.add_option( "-s", "--shortnames", help="display short tasknames, if defined",
+        action="store_true", default=False, dest="shortnames" )
 
-#pdb.set_trace()
+# get command line options and positional args
+( options, args ) = parser.parse_args()
 
-while len(args) > 0:
-	arg = args.pop(0)
-	if arg == '-h':
-		print_usage()
-		sys.exit(0)
-	elif arg == '-p':
-		printsys = True
-	elif arg == '-a':
-		mon_all = True
-	elif arg == '-r':
-		mon_running = True
-	elif arg == '-d':
-		mon_dummy = True
-	elif arg == '-x':
-		mon_pyro = True
-	elif arg == '-l':
-		align = True
-	elif arg == '-s':
-		short = True
-	elif arg == '-n':
-		named = True
-		name = args.pop(0)
-	else:
-		print_usage()
-		sys.exit(1)
+# import cylc modules now (the reason for this is explained above)
+import pyrex
+from reference_time import _rt_to_dt
 
-test = [ mon_all, mon_running, mon_pyro, mon_dummy, printsys ]
-if test.count( True ) != 1:
-	print_usage()
-	sys.exit(1)
+header = 'CYLC! waiting running done failed'
+header = '                                   '
 
+#if len( args ) != 0:
+#    parser.print_help()
+#    sys.exit(1)
 
-if printsys: 
-	command = '_cylc-monitor-all -p'
+# get systems currently registered in the Pyro nameserver
+ns_groups = pyrex.discover()
 
-elif mon_running:
-	command = '_cylc-monitor-running'
+#if options.print_systems:
+#    # print registered systems
+#    ns_groups.print_info()
+#    sys.exit(0)
 
-elif mon_dummy:
-	command = '_cylc-monitor-dummies'
+if options.system_name:
+    # use the given system name
+    system_name = options.system_name
+    if ns_groups.registered( system_name ):
+        print "system: " + system_name
+    else:
+        print "WARNING: no " + system_name + " registered yet ..." 
 
-elif mon_pyro:
-	command = '_cylc-monitor-pyro-ns'
+#else:
+#    # print available systems and exit
+#    parser.print_help()
+#    print
+#    ns_groups.print_info()
+#    sys.exit(0)
 
-elif mon_all:
-	command = '_cylc-monitor-all'
-	if align:
-		command += ' -l'
-	if short:
-		command += ' -s'
-	if name:
-		command += ' -n ' + name
+ctrl_end = "\033[0m"
 
-else:
-	print_usage()
-	sys.exit(1)
+print
+print "here we go ..."
+sleep(2)
 
-try:
-    # use of shell=True here provides access to PATH in the subprocess
-    retcode = subprocess.call( command, shell=True )
-    if retcode < 0:
-        # the sub-command returned non-zero exist status
-        print >> sys.stderr, command + ' failed: ', retcode
+alerted = False
+alerted2 = False
+alerted3 = False
+while True:
+    # connect to remote state summary object
+    try: 
+        god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
+        # timeout (sec) determines max wait for an answer from god.
+        god._setTimeout(60)
+
+    except ProtocolError:
+        if not alerted:
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+            alerted = True
+        #raise
+        # if no connection, try again to connect
+        sleep(1)
+        continue
+
+    except NamingError:
+        if not alerted:
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+            alerted = True
+        #raise
+        # if no connection, try again to connect
+        sleep(1)
+        continue
+
+    except KeyboardInterrupt:
+        print 'ok, whatever'
         sys.exit(1)
 
-except OSError:
-    # the sub-command was not invoked
-    print >> sys.stderr, 'CYLC ERROR: unable to run sub-command ' + sub_command
-    print >> sys.stderr, "Is everything under your cylc bin directory executable?"
-    print >> sys.stderr, "Have you run 'cylc-configure-system' yet?"
-    sys.exit(1)
+    alerted = False
+
+    while True:
+        # continual redisplay loop
+
+        # get state summary, task names, reference times
+        try:
+            [glbl, states] = god.get_state_summary()
+
+        except TimeoutError:
+            if not alerted3:
+                print "\n\033[1;37;41mconnection timed out" + ctrl_end
+                alerted3 = True
+            # if timed out, try again on same connection
+            sleep(1)
+            continue
+            #break
+
+        except ConnectionClosedError:
+            if not alerted2:
+                print "\n\033[1;37;41mconnection closed" + ctrl_end 
+                alerted2 = True
+            sleep(1)
+            # if connection lost, try to reconnect
+            break
+
+        except ProtocolError:
+            if not alerted:
+                print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+                alerted = True
+            #raise
+            # wh'th'fu'?
+            sleep(1)
+            continue
+
+        alerted2 = False
+        alerted3 = False
+
+        dt = glbl[ 'last_updated' ]
+        rate = glbl[ 'dummy_clock_rate' ]
+        dummy_mode = glbl[ 'dummy_mode' ]
+
+        task_ids = states.keys()
+        n_tasks_all = len( task_ids )
+        task_ids.sort()
+
+        seen_time = {}
+        seen_name = {}
+        ref_time_list = []
+        name_list = []
+
+        for task_id in task_ids:
+            [ name, ref_time ] = task_id.split( '%' )
+
+            if ref_time not in seen_time.keys():
+                seen_time[ ref_time ] = True
+                ref_time_list.append( ref_time )
+
+            if name not in seen_name.keys():
+                seen_name[ name ] = True
+                if options.shortnames:
+                    name_list.append( states[ task_id ][ 'short_name' ] )
+                else:
+                    name_list.append( name )
+
+        n_task_types = len( name_list )
+        name_list.sort()
+        ref_time_list.sort()
+
+        # initialize a dict-of-dicts to store display information
+        # for all tasks at each current reference time
+        #   task_info[ ref_time ][ task_name ] = info
+        task_info = {}
+        for rt in ref_time_list:
+            task_info[ rt ] = {}
+            for name in name_list:
+                # initialise with blank string of the same size as
+                # the real info that we will use below
+                tmp = name + '*'  # name plus abdication indicator
+                tmp = re.sub( '.', ' ', tmp )
+                task_info[ rt ][name] = tmp
+
+        # now loop through all tasks in the system and assign their
+        # display info to the correct place in the task_info structure
+        for task_id in task_ids:
+
+            if options.shortnames:
+                name     =      states[ task_id ][ 'short_name' ]
+            else:
+                name     =      states[ task_id ][ 'name' ]
+
+            reftime  =      states[ task_id ][ 'reference_time' ]
+            state    =      states[ task_id ][ 'state' ]
+
+            if not states[ task_id ][ 'abdicated' ]:
+                # identify any tasks that have not abdicated yet
+                abd = '*'
+            else:
+                # space of same length
+                abd = ' '
+
+            # color displayed info according to run status
+            if state == "running":
+                ctrl_start = "\033[1;37;42m"
+            elif state == "waiting":
+                ctrl_start = "\033[0;35m"
+            elif state == "failed":
+                ctrl_start = "\033[1;37;41m"
+            else:
+                # finished
+                ctrl_start = ""
+
+            # construct the display string for this task
+            task_info[ reftime ][ name ] = ctrl_start + name + ctrl_end + abd
+
+        # construct an array of lines to blit to the screen
+
+        # MONITOR HEADER and CURRENT TIME
+        blit = []
+        # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
+        foo = header
+        bar = system_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
+        foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
+        foo = re.sub( '.{' + str(len(system_name)) + '}$', system_name, foo )
+
+        blit.append( '\033[1;37;43m' + foo + ctrl_end )
+
+        blit.append( '\033[1;37;40mkey -> ' + ctrl_end + "\033[0;35m waiting\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end )
+        # last time state summary was updated by cylc (only happens
+        # when task processing is invoked).
+        blit.append( 'summary updated ' + '\033[1;38m' + dt.strftime( "%Y/%m/%d %H:%M:%S" ) + ctrl_end )
+
+        if dummy_mode:
+            foo = 'DUMMY MODE:'
+            bar = str(rate) + ' seconds = 1 hour' 
+            baz = header
+            baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
+            baz = re.sub( '.{' + str(len(bar)) + '}$', bar, baz )
+            blit.append( baz )
+
+        blit.append( '' )
+          
+        # construct a line of text to display for each reference time
+        for rt in ref_time_list:
+            line = ''
+            # colour reference time according to whether it has
+            # caught up to the current clock time or not.
+            rtdt = _rt_to_dt( rt )
+            if dt > rtdt:
+                # behind
+                line = '\033[1;34m' + rt + ctrl_end
+            else:
+                # caught up
+                line = '\033[1;31m' + rt + ctrl_end
+
+            # add info for each task to the line
+            for name in name_list:
+                disp = task_info[rt][name]
+                if not options.align_columns and re.match( '^\s+$', disp ): 
+                    # don't add white space unless align_columns has
+                    # been requested by the user
+                    pass
+                else:
+                    line = line + ' ' + disp
+
+            blit.append( line )
+                        
+        # clear screen and blit the new information up
+        os.system( "clear" )
+        print '\n'.join( blit )
+        # sleep here determines minimum display time before trying to
+        # update the information and redisplay it (?). 
+        sleep(1)
+
+    # sleep here determines how long to wait before trying to reconnect (?)
+    sleep( 1 )

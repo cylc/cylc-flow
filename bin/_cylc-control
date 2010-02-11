@@ -1,9 +1,11 @@
 #!/usr/bin/python
 
+# import standard Python modules
+# cylc modules are imported after parsing the command line, so that we
+# don't need access to a specific system to print the usage message.
 import os
 import re
 import sys
-import pyrex
 import Pyro.core
 from optparse import OptionParser
 from time import sleep
@@ -32,67 +34,69 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-usage = "cylc control [options]"
+usage = """cylc control [options]
+Below, START, STOP, and TIME, are cycle times: YYYYMMDDHH
+and TASK-ID is a task's unique ID <task-name>%<cycle-time>"""
 parser = OptionParser( usage )
 
 parser.add_option( "-n", "--name", 
-	help="Control the named system",
-        metavar="SYSTEM-NAME", action="store", dest="system_name" )
+	help="The name of the system you want to interact with.",
+        metavar="NAME", action="store", dest="system_name" )
 
 parser.add_option( "-f", "--force", 
-	help="Do not ask for confirmation before acting",
+	help="Do not ask for confirmation before acting.",
         action="store_true", default=False, dest="force" )
 
-parser.add_option( "--pause", 
-	help="Pause the system now, i.e. do not launch any new tasks",
+parser.add_option( "-p", "--pause", 
+	help="Pause the system NOW: do not launch any new tasks.",
         action="store_true", default=False, dest="pause" )
 
-parser.add_option( "--hold", 
-	help="Tell the system to pause all tasks when the reach cycle time HOLD (YYYYMMHHDD)",
-        metavar="HOLD", action="store", dest="hold_time" )
+parser.add_option( "--pause-at", 
+	help="Pause when all tasks reach cycle time TIME",
+        metavar="TIME", action="store", dest="hold_time" )
 
-parser.add_option( "--resume", 
-	help="Unhold/Resume the system",
+parser.add_option( "-r", "--resume", 
+	help="Resume (unhold or unpause) the system NOW.",
         action="store_true", default=False, dest="resume" )
 
-parser.add_option( "-s", "--shutdown", 
-	help="Halt the system as soon as all running tasks have finished",
+parser.add_option( "-s", "--stop", 
+	help="Halt the system when all running tasks have finished.",
         action="store_true", default=False, dest="shutdown" )
 
-parser.add_option( "--shutdown-now", 
-	help="Halt the system NOW, even if tasks are still running",
+parser.add_option( "--stop-now", 
+	help="Halt the system NOW, even if tasks are still running"
+         " (this does not kill running external tasks)",
         action="store_true", default=False, dest="shutdownnow" )
 
-parser.add_option( "--stop-time", 
-	help="Tell the system to shut down when all tasks have reached STOP (YYYYMMDDHH)",
-        metavar="STOP", action="store", dest="stop_time" )
+parser.add_option( "--stop-at", 
+	help="Tell the system to shut down when all tasks have reached TIME",
+        metavar="TIME", action="store", dest="stop_time" )
 
-parser.add_option( "--reset", 
-	help="Reset a (failed) task to the waiting state. TASK_ID = 'NAME%YYYYMMDDHH'",
+parser.add_option( "--reset-task", 
+	help="Reset a (failed) task to the waiting state. TASK-ID = 'NAME%TIME'",
         metavar="TASK_ID", action="store", dest="reset_id" )
 
-parser.add_option( "--kill", 
+parser.add_option( "--kill-tasks", 
 	help="Kill the named task(s) or all waiting tasks at the given cycle time "
-        "(after spawing their successors if necessary)",
-        metavar="[NAME1,NAME2,...%]YYYYMMDDHH", 
+        "(after spawning their successors if necessary)",
+        metavar="[NAME1,NAME2,...%]TIME", 
         action="store", dest="kill_task_id" )
 
 parser.add_option( "--purge", 
-	help="Kill a task and, recursively, all of its dependents through to a given cycle time"
-	"TASK_ID = NAME%YYYYMMDDHH, STOP = YYYYMMDDHH",
-        metavar="TASK_ID,STOP", 
+	help="Kill a task and, recursively, all of its dependents through to STOP",
+        metavar="TASK-ID,STOP", 
         action="store", dest="purge" )
 
 parser.add_option( "--insert", help="Insert a new task or task group into a running system.",
-        metavar="[GROUP:]NAME%YYYYMMDDHH", action="store", dest="insert_task_id" )
+        metavar="[GROUP:]GROUPNAME%TIME", action="store", dest="insert_task_id" )
 
-parser.add_option( "--dump", 
-        help="Show if the named tasks prerequisites are satisfied yet, and if their outputs are"
+parser.add_option( "--task-state", 
+        help="Show the current status of each named task's prerequisites and outputs"
 	"completed yet.",
         metavar="NAME1,NAME2,...%YYYYMMDDHH", 
         action="store", dest="dump_task_id" )
 
-parser.add_option( "--describe", 
+parser.add_option( "--task-info", 
         help="Get the description of the named task(s)",
         metavar="NAME1,NAME2,...", 
         action="store", dest="describe_names" )
@@ -116,6 +120,9 @@ parser.add_option( "--bump",
 
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
+
+# import cylc modules now (the reason for this is explained above)
+import pyrex
 
 #if len( args ) > 1:
 #    parser.error( "incorrect number of arguments" )

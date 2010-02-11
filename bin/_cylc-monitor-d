@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# display currently running external dummy tasks
+# A simple terminal-based monitor to display running dummy tasks
  
 print_usage() {
-	echo "usage: cylc monitor-dummies [options]"
-	echo "  show running external dummy task programs"
-	echo "  spawned by any cylc instances running"
-	echo "  under your username."
+	echo "Usage: cylc monitor-d [options]"
+    echo "A simple terminal-based monitor to display dummy task programs"
+    echo "spawned by any cylc instances running under your username."
+    echo ""
 	echo "Options:"
-	echo "  -h (--help)   ... print this message and exit"
+	echo "  -h, --help    ... print this message and exit"
 }
 
 if [[ $# != 0 ]]; then
@@ -20,7 +20,7 @@ if [[ $# != 0 ]]; then
 	fi
 fi
 
-HEADING1="Running External Dummy Tasks"
+HEADING1="Cylc External Dummy Tasks Currently Running"
 HEADING2=$(ps -fu $USER | grep UID | grep -v grep)
 
 OIFS=$IFS
@@ -37,4 +37,3 @@ while true; do
         done
     sleep 2
 done
-

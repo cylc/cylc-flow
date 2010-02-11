@@ -1,0 +1,249 @@
+#!/usr/bin/python
+
+"""
+Display progress of currently running tasks objects.
+TO DO: UPDATE THIS TO MATCH THE MONITOR FOR ALL PROCESSES.
+
+For color terminal ASCII escape codes, see
+http://ascii-table.com/ansi-escape-sequences.php
+"""
+
+# import standard Python modules
+# cylc modules are imported after parsing the command line, so that we
+# don't need access to a specific system to print the usage message.
+import os
+import re
+import sys
+import Pyro.core
+from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
+import datetime
+from time import sleep
+from string import ljust, rjust, split, upper, lower
+from optparse import OptionParser
+
+# construct a command line parser
+parser = OptionParser( """
+cylc monitor-r [options]
+A simple terminal-based monitor that displays extra"
+information about task proxy objects that are currently"
+in the 'running' state, for a given system.""" ) 
+
+parser.add_option( "-n", "--name", 
+	help="(COMPULSORY) name of the system to monitor",
+        metavar="NAME", action="store", dest="system_name" )
+
+# get command line options and positional args
+( options, args ) = parser.parse_args()
+
+# import cylc modules now (the reason for this is explained above)
+import pyrex
+
+header = 'CYLC! waiting running done failed'
+header = '                                   '
+
+# get systems currently registered in the Pyro nameserver
+ns_groups = pyrex.discover()
+
+if options.system_name:
+    # use the given system name
+    system_name = options.system_name
+    if ns_groups.registered( system_name ):
+        print "system: " + system_name
+    else:
+        print "WARNING: no " + system_name + " registered yet ..." 
+
+ctrl_end = "\033[0m"
+
+print
+print "here we go ..."
+sleep(2)
+
+alerted = False
+alerted2 = False
+alerted3 = False
+while True:
+    # connect to remote state summary object
+    try: 
+        god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary' )
+        # timeout (sec) determines max wait for an answer from god.
+        god._setTimeout(60)
+
+    except ProtocolError:
+        if not alerted:
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+            alerted = True
+        #raise
+        # if no connection, try again to connect
+        sleep(1)
+        continue
+
+    except NamingError:
+        if not alerted:
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+            alerted = True
+        #raise
+        # if no connection, try again to connect
+        sleep(1)
+        continue
+
+    except KeyboardInterrupt:
+        print 'ok, whatever'
+        sys.exit(1)
+
+    alerted = False
+
+    while True:
+        # continual redisplay loop
+
+        # get state summary, task names, reference times
+        try:
+            [glbl, states] = god.get_state_summary()
+
+        except TimeoutError:
+            if not alerted3:
+                print "\n\033[1;37;41mconnection timed out" + ctrl_end
+                alerted3 = True
+            # if timed out, try again on same connection
+            sleep(1)
+            continue
+            #break
+
+        except ConnectionClosedError:
+            if not alerted2:
+                print "\n\033[1;37;41mconnection closed" + ctrl_end 
+                alerted2 = True
+            sleep(1)
+            # if connection lost, try to reconnect
+            break
+
+        except ProtocolError:
+            if not alerted:
+                print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+                alerted = True
+            #raise
+            # wh'th'fu'?
+            sleep(1)
+            continue
+
+        alerted2 = False
+        alerted3 = False
+
+        dt = glbl[ 'last_updated' ]
+        rate = glbl[ 'dummy_clock_rate' ]
+        dummy_mode = glbl[ 'dummy_mode' ]
+
+        max_name_len = 0
+        max_total_len = 0
+        max_prog_len = 0
+        lines = {}
+        all_waiting = {}
+
+        task_ids = states.keys()
+        n_tasks_all = len( task_ids )
+        task_ids.sort()
+
+        for task_id in task_ids:
+            [name, reftime] = split( task_id, "%" )
+            
+            state = states[ task_id ]['state']
+            complete = states[ task_id ]['n_completed_outputs']
+            total = states[ task_id ][ 'n_total_outputs' ]
+            latest = states[ task_id ][ 'latest_message' ]
+
+            if len( name ) > max_name_len:
+                max_name_len = len( name )
+
+            if len( str( total ) ) > max_total_len:
+                max_total_len = len( str( total ) )
+
+            if int( total ) > max_prog_len:
+                max_prog_len = int( total )
+
+        seen_time = {}
+        seen_name = {}
+        ref_time_list = []
+        name_list = []
+
+        for task_id in states.keys():
+            [name, reftime] = split( task_id, "%" )
+            
+            if name not in seen_name.keys():
+                seen_name[ name ] = True
+                name_list.append( name )
+
+            n_task_types = len( name_list )
+            name_list.sort()
+ 
+            state = states[ task_id ]['state']
+            complete = states[ task_id ]['n_completed_outputs']
+            total = states[ task_id ][ 'n_total_outputs' ]
+            latest = states[ task_id ][ 'latest_message' ]
+
+            prog = ""
+            for k in range( 1, int(total) + 1):
+                if k <= int(complete):
+                    prog += "|"
+                else:
+                    prog += "-"
+
+            prog = ljust( prog, max_prog_len + 1 )
+
+            name = ljust( name, max_name_len + 1 )
+            frac = rjust( str( complete) + "/" + str( total), 2 * max_total_len + 1 )
+
+            ctrl_end = "\033[0m"
+
+            if state == "running":
+                foo_start = "\033[1;37;42m"   # bold white on blue
+                bar_start = "\033[0;34m"  # bold blue
+                line = bar_start + "  " + ctrl_end + foo_start + name + ctrl_end + " " + bar_start + " " + frac + " " + prog + " " + latest + ctrl_end
+
+                if reftime in lines.keys(): 
+                    lines[ reftime ].append( line )
+
+                else:
+                    # first appearane of rt
+                    lines[ reftime ] = [ line ]
+
+        # sort reference times using int( string )
+        reftimes = lines.keys()
+        reftimes.sort( key = int )
+
+        # construct an array of lines to blit to the screen
+
+        # MONITOR HEADER and CURRENT TIME
+        blit = []
+        # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
+        foo = header
+        bar = system_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
+        foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
+        foo = re.sub( '.{' + str(len(system_name)) + '}$', system_name, foo )
+
+        blit.append( '\033[1;37;43m' + foo + ctrl_end )
+
+        if dummy_mode:
+            foo = 'DUMMY MODE:'
+            bar = str(rate) + ' seconds = 1 hour' 
+            baz = header
+            baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
+            baz = re.sub( '.{' + str(len(bar)) + '}$', bar, baz )
+            blit.append( baz )
+
+        blit.append( dt )
+        for rt in reftimes:
+            if len( lines[rt] ) != 0:
+                blit.append( "\033[1;31m" + "__________" + "\033[0m" ) # red
+                blit.append( "\033[1;31m" + rt + "\033[0m" )  # red
+
+                for line in lines[rt]:
+                    blit.append( line )
+
+        os.system( "clear" )
+        for line in blit:
+            print line
+        # sleep here determines minimum display time before trying to
+        # update the information and redisplay it (?). 
+        sleep(0.5)
+
+    # sleep here determines how long to wait before trying to reconnect (?)
+    sleep( 1 )

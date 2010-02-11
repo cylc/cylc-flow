@@ -12,14 +12,14 @@ set -e  # ABORT on error
 function print_usage() 
 {
     echo ""
-	echo "cylc configure [options] CYLC-PATH SYSTEM-PATH"
-    echo "   Configure a cylc system for scheduling"
+	echo "Usage: cylc configure [options] CYLC-PATH SYSTEM-PATH"
+    echo "          Configure a cylc system for scheduling"
     echo ""
     echo "This generates, in the system definition directory:"
     echo " * A Python task class module"
     echo " * A Python default config module, which you can customize"
     echo " * A environment script that provides access to the system"
-    echo "And registers the system under \$HOME/.cylc/configured/"
+    echo "And: registers the system under \$HOME/.cylc/configured."
     echo ""
     echo "Arguments:"
     echo "  CYLC-PATH   ... path to the cylc installation"
@@ -32,7 +32,7 @@ function print_usage()
     echo ""
     echo "Optional Options:"
     echo "  -h, --help  ... print this message and exit"
-    echo "  -f          ... force: replace an existing system config file"
+    echo "  -f          ... force overwrite an existing system config file"
     echo "                  (which may have been customized) with defaults"
     echo "  -q QUEUE    ... submit jobs to QUEUE using qsub (default"
     echo "                  is direct execution in background)". 

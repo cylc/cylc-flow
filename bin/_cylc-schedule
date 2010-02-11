@@ -1,27 +1,15 @@
 #!/usr/bin/python
 
-# USE $PYTHONPATH IN YOUR ENVIRONMENT TO MAKE AVAILABLE the
-# cylc 'src' module directory, and system definition modules
-# (user_config and task_classes).
-
+# import standard Python modules
+# cylc modules are imported after parsing the command line, so that we
+# don't need access to a specific system to print the usage message.
 import re
 import os
 import sys
-import pyrex
-import config
 import shutil
-import profile
-import manager
+#import profile
 import logging
 import datetime
-import task_base
-import dead_letter
-import task_launcher
-import remote_switch
-import state_summary
-import reference_time
-import pimp_my_logger
-import accelerated_clock 
 from optparse import OptionParser
 from time import sleep
 
@@ -141,7 +129,7 @@ START and STOP format: YYYYMMHHDD."""
 
     parser.add_option( "-n", "--name", help=\
             "Name of system to scheduler",
-        metavar="SYSTEM-NAME", action="store", dest="system_name" )
+        metavar="NAME", action="store", dest="system_name" )
 
     parser.add_option( "-r", "--restart", 
             help="Restart from the named state dump file, which is assumed "
@@ -172,11 +160,24 @@ START and STOP format: YYYYMMHHDD."""
         metavar="TASK-ID", action="store", dest="failout_task_id" )
 
     parser.add_option( "--task-proc-reason", 
-            help="Print why the task processing loop was invoked each time",
+            help="(debug) explain why the task processing loop was invoked",
             action="store_true", default=False, dest="task_proc_reason" )
 
     # get command line options and positional args
     ( options, args ) = parser.parse_args()
+
+    # import cylc modules now (the reason for this is explained above)
+    import pyrex
+    import config
+    import manager
+    import task_base
+    import dead_letter
+    import task_launcher
+    import remote_switch
+    import state_summary
+    import reference_time
+    import pimp_my_logger
+    import accelerated_clock 
 
     print_banner()
 

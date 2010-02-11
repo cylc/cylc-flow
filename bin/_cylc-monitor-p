@@ -2,7 +2,8 @@
 
 print_usage() {
 	echo "usage: cylc monitor-pyro-ns [options]"
-	echo "  Monitor the Pyro Nameserver"
+	echo "A simple terminal-based monitor to display objects"
+    echo "currently registered in the Pyro Nameserver."
 	echo "Options:"
 	echo "  -h (--help)   ... print this message and exit"
 }
