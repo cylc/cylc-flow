@@ -121,7 +121,7 @@ echo "=> $SYS_DIR/task_classes.py"
 echo
 WRITE_CONFIG=true
 if [[ -f system_config.py ]]; then
-    echo "Config file already exists for ${SYS_NAME}, "
+    echo "System config file already exists, "
     if ! $FORCE; then
         echo "NOT OVERWRITING in case of customization"
         WRITE_CONFIG=false
@@ -130,6 +130,8 @@ if [[ -f system_config.py ]]; then
         echo "OVERWRITING (backup: $BACKUP)"
         cp system_config.py $BACKUP
     fi
+else
+    echo "Writing the system config file"
 fi
 
 if $WRITE_CONFIG; then
