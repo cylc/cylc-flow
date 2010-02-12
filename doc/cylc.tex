@@ -550,33 +550,26 @@ xleftmargin=2em,
 basicstyle=\tiny\ttfamily
 }
 
-In the documentation below, the ``configured system'' is the system
-(set of defined tasks) that has been made accessible to cylc via the
-user's shell environment. This is achieved by sourcing the cylc
-environment file \verb=cylc-env.sh= created by running 
-\verb=cylc configure= for the system. This must be done in order to
-start up a system, but other running systems can optionally be remote
-controlled or monitored by name.
+Cylc commands are self documenting so this section is automatically
+generated, during document processing, from actual command output.
 
-\pagebreak
 \subsection{cylc}
 
-The top level user interface to all cylc commands.
+This is the command line interface to all cylc commands.
 
 {
 \color{Magenta}
 \lstinputlisting{command-usage/cylc.txt}
 }
 
-
 \pagebreak
 \subsection{cylc configure}
 
-Configure a new system, or reconfigure it after modifying task
-definition files. This generates a Python module that defines
-task classes for the system, and creates a script \verb=cylc-env.sh=
-that can be sourced in the user's shell to provide access to the
-system's task module, user config file, and task scripts.
+Run this command whenever a system's task definition files have been
+modified. It generates a Python task class module for the system, and a
+default config file that can be customized by the user, and it registers
+the configured system by name under your cylc preferences directory
+(\verb=.cylc/=).
 
 { \color{Magenta}
 \lstinputlisting{command-usage/cylc-configure.txt} 
@@ -585,32 +578,24 @@ system's task module, user config file, and task scripts.
 \pagebreak
 \subsection{cylc schedule}
 
-Start up a cylc scheduler for the configured system (i.e.\ the system
-whose environment file has been sourced in your environment). Multiple
-scheduler instances can run at once (e.g.\ to control a main operation
-and several parallel test systems) so long as each system is configured,
-via its user config file (Section~\ref{sec:config}), with a different
-{\em system name} (which distinguishes objects registered by each system
-in the Pyro nameserver).
-
+This is the actual scheduler program. You can run multiple scheduler
+instances can at once (e.g.\ to control a main operation
+and several parallel test systems) so long as each system is configured
+with a different name. 
 {
 \color{Magenta}
 \lstinputlisting{command-usage/cylc-scheduler.txt}
 }
 
-
-
 \pagebreak
 \subsection{cylc control}
 
-Remote control for running systems.
+This command lets you interact with running systems.
 
 {
 \color{Magenta}
 \lstinputlisting{command-usage/cylc-controller.txt}
 }
-
-
 
 \pagebreak
 \subsection{cylc monitor}
