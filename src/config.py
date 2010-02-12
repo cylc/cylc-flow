@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import user_config
+import system_config
 import logging
 import sys
 import os
@@ -43,9 +43,9 @@ class config:
 
 
     def load_system_config( self ):
-        # set config items from those in the system user_config module
-        for key in user_config.config.keys():
-            self.configured[ key ] = user_config.config[ key ]
+        # set config items from those in the system_config module
+        for key in system_config.config.keys():
+            self.configured[ key ] = system_config.config[ key ]
         # set dummy mode default here
         self.configured['dummy_mode'] = False
 
