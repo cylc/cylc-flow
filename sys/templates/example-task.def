@@ -17,10 +17,10 @@
     run-foo.sh
 
 %PREREQUISITES
-    file model-output-$(MY_REFERENCE_TIME).nc ready
+    file model-output-$(MY_CYCLE_TIME).nc ready
 
 %RUN_LENGTH_MINUTES
     10 
 
 %OUTPUTS
-    8: file forecast-products-$(MY_REFERENCE_TIME).nc ready
+    8: file forecast-products-$(MY_CYCLE_TIME).nc ready

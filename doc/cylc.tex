@@ -2,6 +2,9 @@
 \documentclass[11pt,a4paper]{article}
 %\documentclass[11pt,a4paper]{amsart}
 
+% 1 inch margins
+\usepackage{fullpage}
+
 \usepackage{listings}
   \usepackage{courier}
 \usepackage{amsmath}
@@ -82,6 +85,7 @@ For Complex Environmental Forecasting Systems}
 
 \end{abstract}
 
+\pagebreak
 \section{Environmental Forecasting Systems}
 \label{sec:FS}
 
@@ -132,6 +136,7 @@ recent available regional weather forecast.  EcoConnect runs on
 heterogenous distributed hardware, including a massively parallel
 supercomputer and several Linux servers. 
 
+\pagebreak
 \section{Scheduling Dependent Tasks }
 
 \subsection{Real Time Operation}
@@ -283,6 +288,7 @@ time.
 
 
 
+\pagebreak
 \section{Cylc Overview}
 
 Cylc is a new forecast systems scheduler that naturally and easily
@@ -371,6 +377,7 @@ seamlessly transitions between catchup and real time operation without
 
 
 
+\pagebreak
 \section{Cylc Userguide}
 \label{sec:usage}
 
@@ -436,8 +443,6 @@ definition files are modified.
 \subsubsection{Running a System}
 
 \begin{itemize}
-    \item source the system's environment script in your shell (Section~\ref{sec:env}).
-        
     \item run \verb=cycl schedule= to cold start or restart a system (Section~\ref{sec:run}).
 \end{itemize}
 
@@ -475,10 +480,11 @@ definition files are modified.
 \lstset{language=, numbers=left}
 
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{../sys/templates/example-task.def}
 }
 
+\pagebreak
 \subsubsection{Task Scripts}
 
 (note that several tasks may use the same script with different
@@ -523,12 +529,13 @@ startup, invokes the task, and reports task completion or failure.
 \subsection{System Config File}
 
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{../sys/examples/simple-0/system_config.py}
 }
 
 
 
+\pagebreak
 \subsection{Running Cylc}
 
 \label{sec:dummymode}
@@ -555,7 +562,8 @@ recovery scenarios for arbitrarily complicated task sets.
 \lstset{
 language=,
 xleftmargin=2em,
-basicstyle=\tiny\ttfamily
+%basicstyle=\tiny\ttfamily
+basicstyle=\footnotesize\ttfamily
 }
 
 Cylc commands are self documenting so this section is automatically
@@ -566,7 +574,7 @@ generated, during document processing, from actual command output.
 This is the command line interface to all cylc commands.
 
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{command-usage/cylc.txt}
 }
 
@@ -579,7 +587,7 @@ default config file that can be customized by the user, and it registers
 the configured system by name under your cylc preferences directory
 (\verb=.cylc/=).
 
-{ \color{Magenta}
+{ \color{Brown}
 \lstinputlisting{command-usage/cylc-configure.txt} 
 }
 
@@ -591,7 +599,7 @@ instances can at once (e.g.\ to control a main operation
 and several parallel test systems) so long as each system is configured
 with a different name. 
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{command-usage/cylc-scheduler.txt}
 }
 
@@ -601,32 +609,32 @@ with a different name.
 This command lets you interact with running systems.
 
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{command-usage/cylc-controller.txt}
 }
 
 \pagebreak
 \subsection{cylc monitor}
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{command-usage/monitor.txt}
 }
 
 \subsection{cylc monitor-r}
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{command-usage/monitor-r.txt}
 }
 
 \subsection{cylc monitor-d}
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{command-usage/monitor-d.txt}
 }
 
 \subsection{cylc monitor-p}
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{command-usage/monitor-p.txt}
 }
 
@@ -642,10 +650,11 @@ generates the Python task class module required by cylc to run the system.
 \lstset{language=, numbers=left}
 
 {
-\color{Magenta}
+\color{Brown}
 \lstinputlisting{../sys/templates/full-template.def}
 }
 
+\pagebreak
 \subsection{More Complex Task Behaviour}
 
 \textit{In EcoConnect: only streamflow and topnet}
@@ -655,7 +664,7 @@ override task class methods to define new behaviour, the Python task
 code must currently be written directly. 
 
 
-
+\pagebreak
 \appendix
 
 \section{Essential OOP Concepts}

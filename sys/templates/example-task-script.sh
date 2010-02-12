@@ -30,5 +30,5 @@ fi
 task-message finished  # COMPULSORY FINISHED MESSAGE
 
 # NOTE: all task scripts are supplied $CYLC_ENV, $TASK_NAME, and
-# $REFERENCE_TIME by cylc, but do not need to check that these 
+# $CYCLE_TIME by cylc, but do not need to check that these 
 # inputs have been defined (task-message checks for that).
