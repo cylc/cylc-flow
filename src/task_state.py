@@ -118,12 +118,12 @@ class task_state:
             print 'ERROR, illegal abdication status:', self.state[ 'abdicated' ]
             sys.exit(1)
 
-        #if 'reference_time' not in self.state:
-        #    print 'ERROR, reference time not defined'
+        #if 'cycle_time' not in self.state:
+        #    print 'ERROR, cycle time not defined'
         #    sys.exit(1)
 
-        #if not reference_time.is_valid( self.state[ 'reference_time' ] ):
-        #    print 'ERROR, invalid reference time', self.state[ 'reference_time' ]
+        #if not cycle_time.is_valid( self.state[ 'cycle_time' ] ):
+        #    print 'ERROR, invalid cycle time', self.state[ 'cycle_time' ]
         #    sys.exit(1)
 
     def dump( self ):

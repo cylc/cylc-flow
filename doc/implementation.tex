@@ -1,6 +1,6 @@
 
 
-!!!!!!!!!!MUCH OF THIS IS OBSOLete OR NEEDS UPDATING!!!!!!!!!!!!!!!
+!!!!!!!!!!MUCH OF THIS IS OBSOLETE OR NEEDS UPDATING!!!!!!!!!!!!!!!
 
 \subsection{The Main Algorithm}
 
@@ -8,10 +8,10 @@ From the discussion above it is apparent that the additional complexity
 due to explicitly handling intercycle dependencies is too difficult to
 deal with in a Finite State Machine, and that the ``forecast cycle'' as
 a global control system parameter has to be replaced with an independent
-``forecast reference time'' for each task. This devolving of cycle
+``forecast cycle time'' for each task. This devolving of cycle
 timing to the individual tasks suggests treating the system as a {\em
 simulation} of autonomous proxy objects that represent the external
-tasks and interact regardless of reference time to negotiate
+tasks and interact regardless of cycle time to negotiate
 dependencies at run time (i.e.\ by matching completed outputs against
 prerequisites). If this can be made to work it provides extraordinary
 power and flexibility because it treats all dependencies equally and it
@@ -54,7 +54,7 @@ and will be discussed later.
             \item owner of the real task, if necessary (who the task
                 should run as).
 
-            \item UTC {\em forecast reference time}, e.g. $2010012418$
+            \item UTC {\em forecast cycle time}, e.g. $2010012418$
         
             \item current execution status: {\em waiting}, {\em running}, 
                 {\em finished}, or {\em failed}. 
@@ -71,7 +71,7 @@ and will be discussed later.
         when all of its prerequisites are satisfied.
 
     \item A task proxy object can interact with other task proxy
-        objects (regardless of reference time; all dependencies are now
+        objects (regardless of cycle time; all dependencies are now
         equal) to determine if any of their completed outputs can
         satisfy any of its prerequisites.
 
@@ -151,11 +151,11 @@ A task is spent if it finished {\em and} no longer needed to satisfy the
 prequisites of any other task. Most tasks are only needed by other
 cotemporal downstream tasks; these can be removed when they are finished
 {\em and} older than the oldest non-finished task. For rare cases that
-are needed by tasks in later reference times (e.g.\ nzlam post
+are needed by tasks in later cycle times (e.g.\ nzlam post
 processing: multiple hourly topnet tasks need the same most recent
 previously finished 06 or 18Z nzlam post processing task), each
-non-finished task reports its {\em cutoff reference time} which is the
-oldest reference time that may contain tasks still needed to satisfy its
+non-finished task reports its {\em cutoff cycle time} which is the
+oldest cycle time that may contain tasks still needed to satisfy its
 own prerequisites (if it is waiting) or those of its immediate
 post-abdication successor (if it is running already), then the task
 manager can then kill any finished tasks that are also older than the
@@ -182,7 +182,7 @@ any instance of $bar$ will be lame.
 \subsection{Constraining The System}
 
 No task is allowed to get more than 48 hours (user configurable) ahead
-of the slowest task in the system (with respect to reference time).
+of the slowest task in the system (with respect to cycle time).
 
 
 \subsection{Coupling Task Proxies to Tasks} 
@@ -255,14 +255,14 @@ contention, and the dummy mode can be run according to an accelerated
 clock, rather than real time, for quick testing.  Dummy tasks therefore
 complete in approximately the same dummy clock time as the real tasks do
 in real time. An initial dummy clock offset relative to the initial
-reference time can also be specified, which allows simulation of the
+cycle time can also be specified, which allows simulation of the
 transition between catch up and real time operation, and vice versa. Log
 messages are stamped with dummy clock time instead of real time.
 
 The same script is used for all external dummy tasks but it has special
 behaviour in certain cases: the dummy downloader ``waits for incoming
-files'' until 3:15 past its reference time, and the dummy topnet ``waits
-for stream flow data'' until 0:15 past its reference time.
+files'' until 3:15 past its cycle time, and the dummy topnet ``waits
+for stream flow data'' until 0:15 past its cycle time.
 
 The dummy clock can be bumped forward a number of hours by remote
 control, while the system is running. This affects the postrequisite
@@ -299,14 +299,14 @@ beginning no matter how big the bump.
 The object oriented dynamic metascheduling concept is quite general and
 could in principle be implemented for any set of interdependent tasks.
 cylc, however, is specialized toward cycling forecast systems in that
-each task must have an associated {\em forecast reference time} that is
+each task must have an associated {\em forecast cycle time} that is
 part of a predetermined series for a given task type and is not
 necessarily related to the real time at which the task actually runs.  
 
 \subsection{Environment}
 
 EcoConnect operates in a well defined environment so that each real task
-knows what its input files look like for a given reference time
+knows what its input files look like for a given cycle time
 (through filenaming conventions) and where to get them from (e.g.\ from
 their own input directories, or upstream output directories).
 Consequently the control system does not need to know the location of
@@ -316,9 +316,9 @@ to move files around as needed.
 
 \subsection{Startup and Initialization}
 
-An initial reference time and list of task object names are read in from
+An initial cycle time and list of task object names are read in from
 the config file, then each task object is created at the initial
-reference time {\em or} at the first subsequent reference time that is
+cycle time {\em or} at the first subsequent cycle time that is
 valid for the task type. Optionally, we can tell the controller to
 reload the current state dump file (which may have been edited); this
 will override the configured start time and task list. After startup,

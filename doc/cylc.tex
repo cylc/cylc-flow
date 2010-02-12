@@ -40,7 +40,7 @@ For Complex Environmental Forecasting Systems}
     single entity for scheduling purposes.} Its novel scheduling
     algorithm maintains an evolving pool of tasks from multiple forecast
     cycles\footnote{For our purposes a {\em forecast cycle} comprises
-    all tasks with a common {\em forecast reference time}, which is the
+    all tasks with a common {\em forecast cycle time}, which is the
     analysis time or nominal start time of a forecast model, or that of
     the associated forecast model(s) other tasks.} that interact to
     resolve dependencies.\footnote{Strictly speaking the task pool
@@ -96,7 +96,7 @@ level'' tasks depend on; these drive other ``downstream'' task, and so
 on. The dependency diagram for such a system consists of one or more
 (possibly linked) {\em Directed Acyclic Graphs}, which may vary
 according to ``forecast cycle'' (wherein each task has the same {\em
-forecast reference time}, namely the nominal analysis time or start time
+forecast cycle time}, namely the nominal analysis time or start time
 of the forecast models or, for data processing tasks, that of their
 associated forecast model). Normal real time operation necessarily
 consists of a series of distinct forecast cycles that are initiated,
@@ -634,11 +634,11 @@ cylc.
 
 \subsection{Typical Example}
 
-Most tasks have only cotemporal (same reference time) upstream and
+Most tasks have only cotemporal (same cycle time) upstream and
 downstream dependencies (recall that every task is implicitly dependent
 on the previous instance of its own class, in cylc). The following
 task definition file is sufficient to completely define such a task.
-Different postrequisites can be specified depending on reference time. 
+Different postrequisites can be specified depending on cycle time. 
 
 \lstset{language=bash, numbers=left}
 
@@ -775,7 +775,7 @@ external contact tasks, i.e. those that wait on external data that is
 available at a wall clock time of T (task cycle time) + o (some offset
 insterval). Where this matters an external task can detect whether or
 not it has caught up (and signal this to its proxy object in cylc) by
-comparing its reference time (and offset) to the wall clock time.
+comparing its cycle time (and offset) to the wall clock time.
 
 
 \end{document}

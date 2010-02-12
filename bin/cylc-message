@@ -7,7 +7,7 @@ message is sent by calling [proxy].incoming( PRIORITY, MESSAGE )
 through the Pyro RPC mechanism. 
 The task proxy is identified by its unique ID, NAME%YYYYMMDDHH
 
-Cylc exports $SYSTEM_NAME, $REFERENCE_TIME, and $TASK_NAME into 
+Cylc exports $SYSTEM_NAME, $CYCLE_TIME, and $TASK_NAME into 
 the environment of each external task.
 """
 
@@ -39,10 +39,10 @@ parser.add_option( "-s", "--system-name",
         help="Name of the running cylc instance, defaults to $SYSTEM_NAME",
         action="store", dest="system_name" )
 
-parser.add_option( "-r", "--reftime", 
+parser.add_option( "-c", "--cycle-time", 
         metavar="YYYYMMDDHH",
-        help="task reference time, defaults to $REFERENCE_TIME",
-        action="store", dest="reftime" )
+        help="task cycle time, defaults to $CYCLE_TIME",
+        action="store", dest="ctime" )
 
 parser.add_option( "--all-restart-outputs-completed", 
         help="report all forecast model restart outputs completed at once",
@@ -55,7 +55,7 @@ parser.add_option( "--all-outputs-completed",
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
-#if not options.priority or not options.taskname or not options.reftime:
+#if not options.priority or not options.taskname or not options.ctime:
 #    parser.error( "options -p, -t, -r are not optional!" )
 
 if options.priority:
@@ -84,14 +84,14 @@ else:
         print 'ERROR, cylc-message: no system name provided!'
         sys.exit(1)
      
-if options.reftime:
-    reftime = options.reftime
+if options.ctime:
+    ctime = options.ctime
 else:
-    # Default to $REFERENCE_TIME
-    if 'REFERENCE_TIME' in os.environ.keys():
-        reftime = os.environ[ 'REFERENCE_TIME' ]
+    # Default to $CYCLE_TIME
+    if 'CYCLE_TIME' in os.environ.keys():
+        ctime = os.environ[ 'CYCLE_TIME' ]
     else:
-        print 'ERROR, cylc-message: no reference time provided!'
+        print 'ERROR, cylc-message: no cycle time provided!'
         sys.exit(1)
  
 if len( args ) == 0:
@@ -109,7 +109,7 @@ count = 0
 while True:
     count += 1
     try:
-        task = Pyro.core.getProxyForURI('PYRONAME://' +  system_name + '.' + taskname + '%' + reftime )
+        task = Pyro.core.getProxyForURI('PYRONAME://' +  system_name + '.' + taskname + '%' + ctime )
        
     except ProtocolError:
         # retry if temporary network problems prevented connection
@@ -149,7 +149,7 @@ else:
     task.incoming( priority, message )
 
 #    # nameserver not found, or object not registered with it?
-#    print "ERROR: failed to connect to " + task_name + "_" + ref_time
+#    print "ERROR: failed to connect to " + task_name + "_" + ctime
 #    print "Trying dead letter box"
 #    try:
 #        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'dead_letter_box' )

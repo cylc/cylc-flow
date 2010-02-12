@@ -31,7 +31,7 @@ import re
 import datetime
 from mod_contact import contact
 from task_types import free_task
-from reference_time import _rt_to_dt
+from cycle_time import _rt_to_dt
 
 class catchup_contact( contact ):
 
@@ -57,9 +57,9 @@ class catchup_contact( contact ):
                     # this must be the first call after a clean start
                     # so default to 'catching up'
                     self.__class__.set_class_var( 'caughtup', False )
-                    self.__class__.set_class_var( 'caughtup_rt', self.ref_time )
+                    self.__class__.set_class_var( 'caughtup_rt', self.c_time )
                     caughtup = True
-                    caughtup_rt = self.ref_time
+                    caughtup_rt = self.c_time
                      
             if self.start_time_reached():
                 # READY TO RUN
@@ -69,9 +69,9 @@ class catchup_contact( contact ):
                 # passed already, thus we are still catching up.
                 if not self.catchup_status_determined:
                     self.catchup_status_determined = True
-                    if int( self.ref_time ) >= int( caughtup_rt ):
+                    if int( self.c_time ) >= int( caughtup_rt ):
                         self.__class__.set_class_var( 'caughtup', False )
-                        self.__class__.set_class_var( 'caughtup_rt', self.ref_time )
+                        self.__class__.set_class_var( 'caughtup_rt', self.c_time )
  
             else:
                 # NOT READY, WAITING ON DELAYED START TIME
@@ -82,8 +82,8 @@ class catchup_contact( contact ):
                 # not arrived yet, thus we have caught up.
                 if not self.catchup_status_determined:
                     self.catchup_status_determined = True
-                    if int( self.ref_time ) >= int( caughtup_rt ):
+                    if int( self.c_time ) >= int( caughtup_rt ):
                         self.__class__.set_class_var( 'caughtup', True )
-                        self.__class__.set_class_var( 'caughtup_rt', self.ref_time )
+                        self.__class__.set_class_var( 'caughtup_rt', self.c_time )
 
         return ready

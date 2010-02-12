@@ -34,7 +34,7 @@ To Do
   existing tasks are all finished, so the system needs a remote "bump"
   to get going again.
 
-* parse all command-line input to check for valid reference times 
+* parse all command-line input to check for valid cycle times 
 
 * check that task output times do not exceed the registered run time
 

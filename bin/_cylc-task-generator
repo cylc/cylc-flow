@@ -46,27 +46,27 @@ def interpolate_variables( strng ):
     strng = re.sub( "\$\(NAME\)'$", "' + self.name"   ,  strng ) # end line
     strng = re.sub( "\$\(NAME\)" , "'  + self.name + '", strng ) # mid line
    
-    # replace "$(MY_REFERENCE_TIME)"
-    strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)'$",   "self.ref_time",     strng ) # alone
-    strng = re.sub( "^'\$\(MY_REFERENCE_TIME\)",     "self.ref_time + '", strng ) # start line
-    strng = re.sub( "\$\(MY_REFERENCE_TIME\)'$", "' + self.ref_time"   ,  strng ) # end line
-    strng = re.sub( "\$\(MY_REFERENCE_TIME\)" , "'  + self.ref_time + '", strng ) # mid line
+    # replace "$(MY_CYCLE_TIME)"
+    strng = re.sub( "^'\$\(MY_CYCLE_TIME\)'$",   "self.c_time",     strng ) # alone
+    strng = re.sub( "^'\$\(MY_CYCLE_TIME\)",     "self.c_time + '", strng ) # start line
+    strng = re.sub( "\$\(MY_CYCLE_TIME\)'$", "' + self.c_time"   ,  strng ) # end line
+    strng = re.sub( "\$\(MY_CYCLE_TIME\)" , "'  + self.c_time + '", strng ) # mid line
 
-    # replace "$(MY_REFERENCE_TIME - XX )"
-    m = re.search( '\$\(\s*MY_REFERENCE_TIME\s*-\s*(\d+)\s*\)', strng )
+    # replace "$(MY_CYCLE_TIME - XX )"
+    m = re.search( '\$\(\s*MY_CYCLE_TIME\s*-\s*(\d+)\s*\)', strng )
     if m:
-        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)'$",   "reference_time.decrement( self.ref_time, " + m.group(1) + ")",     strng ) # alone
-        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)",     "reference_time.decrement( self.ref_time, " + m.group(1) + ") + '", strng ) # start line
-        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)'$", "' + reference_time.decrement( self.ref_time, " + m.group(1) + ")",     strng ) # mid line
-        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)",   "' + reference_time.decrement( self.ref_time, " + m.group(1) + ") + '", strng ) # end line
+        strng = re.sub( "^'\$\(\s*MY_CYCLE_TIME.*\)'$",   "cycle_time.decrement( self.c_time, " + m.group(1) + ")",     strng ) # alone
+        strng = re.sub( "^'\$\(\s*MY_CYCLE_TIME.*\)",     "cycle_time.decrement( self.c_time, " + m.group(1) + ") + '", strng ) # start line
+        strng = re.sub( "\$\(\s*MY_CYCLE_TIME.*\)'$", "' + cycle_time.decrement( self.c_time, " + m.group(1) + ")",     strng ) # mid line
+        strng = re.sub( "\$\(\s*MY_CYCLE_TIME.*\)",   "' + cycle_time.decrement( self.c_time, " + m.group(1) + ") + '", strng ) # end line
 
-    # replace "$(MY_REFERENCE_TIME + XX )"
-    m = re.search( '\$\(\s*MY_REFERENCE_TIME\s*\+\s*(\d+)\s*\)', strng )
+    # replace "$(MY_CYCLE_TIME + XX )"
+    m = re.search( '\$\(\s*MY_CYCLE_TIME\s*\+\s*(\d+)\s*\)', strng )
     if m:
-        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)'$",   "reference_time.increment( self.ref_time, " + m.group(1) + ")",     strng ) # alone
-        strng = re.sub( "^'\$\(\s*MY_REFERENCE_TIME.*\)",     "reference_time.increment( self.ref_time, " + m.group(1) + ") + '", strng ) # start line
-        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)'$", "' + reference_time.increment( self.ref_time, " + m.group(1) + ")",     strng ) # mid line
-        strng = re.sub( "\$\(\s*MY_REFERENCE_TIME.*\)",   "' + reference_time.increment( self.ref_time, " + m.group(1) + ") + '", strng ) # end line
+        strng = re.sub( "^'\$\(\s*MY_CYCLE_TIME.*\)'$",   "cycle_time.increment( self.c_time, " + m.group(1) + ")",     strng ) # alone
+        strng = re.sub( "^'\$\(\s*MY_CYCLE_TIME.*\)",     "cycle_time.increment( self.c_time, " + m.group(1) + ") + '", strng ) # start line
+        strng = re.sub( "\$\(\s*MY_CYCLE_TIME.*\)'$", "' + cycle_time.increment( self.c_time, " + m.group(1) + ")",     strng ) # mid line
+        strng = re.sub( "\$\(\s*MY_CYCLE_TIME.*\)",   "' + cycle_time.increment( self.c_time, " + m.group(1) + ") + '", strng ) # end line
 
     return strng
 
@@ -115,7 +115,7 @@ from prerequisites import prerequisites
 from outputs import outputs
 from time import sleep
 
-import reference_time
+import cycle_time
 import task_launcher
 import task_state
 
@@ -268,7 +268,7 @@ import logging
             else:
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
-        task_init_def_args = 'clock, ref_time, initial_state = None, startup = False'
+        task_init_def_args = 'clock, c_time, initial_state = None, startup = False'
         task_init_args = 'clock, initial_state'
 
         if contact:
@@ -347,9 +347,9 @@ import logging
 
         indent_more()
 
-        FILE.write( indent + '# adjust reference time to next valid for this task\n' )
-        FILE.write( indent + 'self.ref_time = self.nearest_ref_time( ref_time )\n' )
-        FILE.write( indent + 'hour = self.ref_time[8:10]\n\n' )
+        FILE.write( indent + '# adjust cycle time to next valid for this task\n' )
+        FILE.write( indent + 'self.c_time = self.nearest_c_time( c_time )\n' )
+        FILE.write( indent + 'hour = self.c_time[8:10]\n\n' )
 
         if contact:
             for line in parsed_def[ 'CONTACT_DELAY_HOURS' ]:
@@ -370,7 +370,7 @@ import logging
             FILE.write( '\n' )
 
         # ... prerequisites
-        FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
+        FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.c_time )\n' )
         if 'PREREQUISITES' in parsed_def.keys():
             for line in parsed_def[ 'PREREQUISITES' ]:
                 # look for conditionals
@@ -400,7 +400,7 @@ import logging
             indent_more()
             FILE.write( indent + '# overwrite prerequisites for startup case\n' )
                 
-            FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.ref_time )\n' )
+            FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.c_time )\n' )
             for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
@@ -425,7 +425,7 @@ import logging
 
         # ... outputs
         FILE.write( '\n' )
-        FILE.write( indent + 'self.outputs = outputs( self.name, self.ref_time )\n' )
+        FILE.write( indent + 'self.outputs = outputs( self.name, self.c_time )\n' )
 
         # automatic 'started' and 'finished' outputs
         if 'RUN_LENGTH_MINUTES' not in parsed_def:
@@ -479,7 +479,7 @@ import logging
             for pair in parsed_def[ 'EXPORT' ]:
                 [ var, val ] = pair.split( ' ', 1 )
                 var = "'" + var + "'"
-                # replace NAME and MY_REFERENCE_TIME variables
+                # replace NAME and MY_CYCLE_TIME variables
                 val = interpolate_variables( "'" + val + "'" )
                 strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
 

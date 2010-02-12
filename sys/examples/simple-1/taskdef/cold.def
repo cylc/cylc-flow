@@ -1,5 +1,4 @@
-# THIS IS A cylc TASK CLASS DEFINITION FILE
-# See full_template.def for documented entries
+# THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
     cold
@@ -22,7 +21,7 @@
     WRAP cold.sh
 
 %STARTUP_PREREQUISITES
-    startup%$(MY_REFERENCE_TIME) finished 
+    startup%$(MY_CYCLE_TIME) finished 
 
 %PREREQUISITES
     # None
@@ -31,9 +30,9 @@
     10
 
 %OUTPUTS
-    7: A restart files ready for $(MY_REFERENCE_TIME)
-    8: B restart files ready for $(MY_REFERENCE_TIME)
-    9: C restart files ready for $(MY_REFERENCE_TIME)
+    7: A restart files ready for $(MY_CYCLE_TIME)
+    8: B restart files ready for $(MY_CYCLE_TIME)
+    9: C restart files ready for $(MY_CYCLE_TIME)
 
 %COTEMPORAL_DEPENDANTS_ONLY
     True

@@ -14,13 +14,13 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 
 sleep $SLEEP 
 
-touch $TMPDIR/A_${REFERENCE_TIME}.restart
-cylc-message A restart files ready for $REFERENCE_TIME
+touch $TMPDIR/A_${CYCLE_TIME}.restart
+cylc-message A restart files ready for $CYCLE_TIME
 
-touch $TMPDIR/B_${REFERENCE_TIME}.restart
-cylc-message B restart files ready for $REFERENCE_TIME
+touch $TMPDIR/B_${CYCLE_TIME}.restart
+cylc-message B restart files ready for $CYCLE_TIME
 
-touch $TMPDIR/C_${REFERENCE_TIME}.restart
-cylc-message C restart files ready for $REFERENCE_TIME
+touch $TMPDIR/C_${CYCLE_TIME}.restart
+cylc-message C restart files ready for $CYCLE_TIME
 
 cylc-message finished

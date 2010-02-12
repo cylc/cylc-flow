@@ -85,9 +85,9 @@ def service_remote_requests( remote, task_manager, log ):
         
     if remote.kill_rt:
         log.warning( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
-        task_manager.abdicate_and_kill_rt( remote.kill_reftime )
+        task_manager.abdicate_and_kill_rt( remote.kill_ctime )
         remote.kill_rt = False
-        remote.kill_reftime = None
+        remote.kill_ctime = None
         process_tasks = True
 
     if remote.reset_a_task:
@@ -176,7 +176,7 @@ when it reaches that time, and then the system will shut down."""
     import task_launcher
     import remote_switch
     import state_summary
-    import reference_time
+    import cycle_time
     import pimp_my_logger
     import accelerated_clock 
 
@@ -270,11 +270,11 @@ when it reaches that time, and then the system will shut down."""
             parser.error( "too many arguments" )
      
     if start_time:
-        if not reference_time.is_valid( start_time ):
+        if not cycle_time.is_valid( start_time ):
             parser.error( "invalid START time" )
 
     if stop_time:
-        if not reference_time.is_valid( stop_time ):
+        if not cycle_time.is_valid( stop_time ):
             parser.error( "invalid STOP time" )
 
     if not start_time and \

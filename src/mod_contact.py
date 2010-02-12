@@ -2,12 +2,12 @@
 
 import sys
 import datetime
-from reference_time import _rt_to_dt
+from cycle_time import _rt_to_dt
 
 class contact:
     # A task that waits on an event in the external world, such as
     # incoming data, that occurs at some known (but approximate) time
-    # interval relative to the task reference time.  There's no point in
+    # interval relative to the task cycle time.  There's no point in
     # running the task earlier than this delayed start time as the task
     # would just sit in the queue waiting on the external event.
 
@@ -26,7 +26,7 @@ class contact:
     def start_time_reached( self ):
         reached = False
         # check current time against expected start time
-        rt = _rt_to_dt( self.ref_time )
+        rt = _rt_to_dt( self.c_time )
         delayed_start = rt + datetime.timedelta( 0,0,0,0,0,self.real_time_delay,0 ) 
         current_time = self.clock.get_datetime()
 

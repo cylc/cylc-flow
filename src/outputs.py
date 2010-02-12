@@ -19,9 +19,9 @@ class outputs( requisites ):
     # additionally, each output message has an associated estimated
     # completion time, used to simulate task execution in dummy mode.
 
-    def __init__( self, task_name, ref_time ):
+    def __init__( self, task_name, c_time ):
         self.task_name = task_name
-        self.ref_time = ref_time
+        self.c_time = c_time
 
         self.message = {}    # self.message[ t ] = [ "message1", "message2", ...] 
         self.time = {}       # self.time[ "message1" ] = t, etc.

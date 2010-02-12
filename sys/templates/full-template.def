@@ -1,5 +1,4 @@
-# THIS IS A cylc TASK CLASS DEFINITION FILE
-# See full_template.def for documented entries
+# THIS IS A CYLC TASK DEFINITION FILE
 
 # [foo] => foo is optional.
 
@@ -60,7 +59,7 @@
     # (c) A CONTACT task waits on an external event, such as incoming
     # external data, i.e. it "makes contact" with the external world. 
     # The event is expected at some defined time interval after the task
-    # reference time (e.g. observational data might come 3.5 hours after 
+    # cycle time (e.g. observational data might come 3.5 hours after 
     # its nominal validity time); see %CONTACT_DELAY_HOURS below. In
     # real time operation a contact task will not begin running until
     # the clock time has reached this delayed start time. In catchup
@@ -82,7 +81,7 @@
 
 %CONTACT_DELAY_HOURS
     # For tasks with the 'contact' attribute only (see %TYPE above).
-    # Estimated time delay, in hours, after reference time, that the
+    # Estimated time delay, in hours, after cycle time, that the
     # external event occurs in real time operation. This is used in
     # dummy mode to properly simulate the behaviour of contact tasks. 
 
@@ -110,8 +109,8 @@
 
 [ %EXPORT ]
     # specify additional environment variable name value pairs to pass
-    # to the external task (other than $MY_REFERENCE_TIME and $NAME).
-    # May contain $(MY_REFERENCE_TIME) and $(NAME), as for outputs.
+    # to the external task (other than $MY_CYCLE_TIME and $NAME).
+    # May contain $(MY_CYCLE_TIME) and $(NAME), as for outputs.
 
     FOO foo
     BAR bar
@@ -128,16 +127,16 @@
     # Zero or more prerequisite messages on separate lines
 
     # These are LITERAL STRINGS with some variable substitution:
-    # $(MY_REFERENCE_TIME [+/- <hours>])
+    # $(MY_CYCLE_TIME [+/- <hours>])
 
     # May be conditional on a comma separated list of HOURS
     # (which must occur in %VALID_HOURS).
 
     # Note that defined RESTARTs create an additional prerequisite.
 
-           foo finished for $(MY_REFERENCE_TIME)
-           file bar_$(MY_REFERENCE_TIME)_utc.nc ready
-    0,12 | file baz_$(MY_REFERENCE_TIME)_utc.nc ready
+           foo finished for $(MY_CYCLE_TIME)
+           file bar_$(MY_CYCLE_TIME)_utc.nc ready
+    0,12 | file baz_$(MY_CYCLE_TIME)_utc.nc ready
 
 [%STARTUP_PREQUISITES]
     # As for %PREREQUISITES above, but only used once at start time.
@@ -152,7 +151,7 @@
     # the output is completed (the time is used in dummy mode).
 
     # These are LITERAL STRINGS with some variable substitution:
-    # $(MY_REFERENCE_TIME [+/- <hours>])
+    # $(MY_CYCLE_TIME [+/- <hours>])
 
     # DO NOT REGISTER TASK 'started' AND 'finished' MESSAGES.
     # These are generated automatically: 
@@ -164,9 +163,9 @@
 
     # Note that defined RESTARTs create additional outputs.
 
-           10: file foo_0_$(MY_REFERENCE_TIME).nc ready
-    0,12 | 15: file foo_1_$(MY_REFERENCE_TIME).nc ready
-    6,18 | 15: file foo_2_$(MY_REFERENCE_TIME).nc ready
+           10: file foo_0_$(MY_CYCLE_TIME).nc ready
+    0,12 | 15: file foo_1_$(MY_CYCLE_TIME).nc ready
+    6,18 | 15: file foo_2_$(MY_CYCLE_TIME).nc ready
 
 %RESTART_LIST_MINUTES
     # comma separated list of times at which restart outputs are
@@ -181,9 +180,9 @@
     # NOTE SPELLING: 'dependAnts' not 'dependEnts'!
 
     # If you set this to True for tasks that are known to have only
-    # cotemporal (same reference time) downstream dependants, they will
+    # cotemporal (same cycle time) downstream dependants, they will
     # be deleted as soon as they are finished AND there are no other
-    # tasks yet to be finished at their reference time or earlier.
+    # tasks yet to be finished at their cycle time or earlier.
 
     # DO NOT SET THIS 'True' FOR TASKS THAT HAVE DOWNSTREAM DEPENDANTS
     # IN OTHER FORECAST CYCLES.  This includes FORECAST MODELS, which

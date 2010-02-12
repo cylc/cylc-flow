@@ -1,5 +1,4 @@
-# THIS IS A cylc TASK CLASS DEFINITION FILE
-# See full_template.def for documented entries
+# THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
     E
@@ -20,7 +19,7 @@
     WRAP E.sh
 
 %PREREQUISITES
-    B%$(MY_REFERENCE_TIME) finished
+    B%$(MY_CYCLE_TIME) finished
 
 %RUN_LENGTH_MINUTES
     150

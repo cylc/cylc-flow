@@ -1,5 +1,4 @@
-# THIS IS A cylc TASK CLASS DEFINITION FILE
-# See full_template.def for documented entries
+# THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
     ext
@@ -27,7 +26,7 @@
     # None
 
 %STARTUP_PREREQUISITES
-    startup%$(MY_REFERENCE_TIME) finished
+    startup%$(MY_CYCLE_TIME) finished
 
 %RUN_LENGTH_MINUTES
     10

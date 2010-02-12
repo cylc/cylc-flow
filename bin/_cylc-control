@@ -207,7 +207,7 @@ if options.describe_names:
         # one name
         names = [ options.describe_names ]
 
-    # strip off reference time, if given
+    # strip off cycle time, if given
     names = [ re.sub( '%.*', '', name ) for name in names ]
 
     info = control.get_task_info( names )
@@ -219,7 +219,7 @@ if options.describe_names:
     print
 
 if options.dump_task_id:
-    [ tmp, reftime ] = options.dump_task_id.split( '%' )
+    [ tmp, ctime ] = options.dump_task_id.split( '%' )
     if re.search( ',', tmp ):
         names = tmp.split( ',' )
     else:
@@ -227,7 +227,7 @@ if options.dump_task_id:
 
     ids = []
     for name in names:
-        id = name + '%' + reftime
+        id = name + '%' + ctime
         ids.append( id )
 
     result = control.get_task_requisites( ids )
@@ -286,14 +286,14 @@ if options.kill_task_id:
     if prompt( 'abdicate and kill ' + options.kill_task_id + ' in' ):
 
         if not re.search( '%', options.kill_task_id ):
-            # kill all tasks in given reference time
-            # TO DO: check validity of given ref time
-            reftime = options.kill_task_id
-            control.abdicate_and_kill_rt( reftime )
+            # kill all tasks in given cycle time
+            # TO DO: check validity of given cycle time
+            ctime = options.kill_task_id
+            control.abdicate_and_kill_rt( ctime )
 
         else:
 
-            [ tmp, reftime ] = options.kill_task_id.split( '%' )
+            [ tmp, ctime ] = options.kill_task_id.split( '%' )
             if re.search( ',', tmp ):
                 names = tmp.split( ',' )
             else:
@@ -301,7 +301,7 @@ if options.kill_task_id:
 
             ids = []
             for name in names:
-                id = name + '%' + reftime
+                id = name + '%' + ctime
                 ids.append( id )
 
             control.abdicate_and_kill( ids )

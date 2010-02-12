@@ -5,7 +5,7 @@
 
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
-import reference_time
+import cycle_time
 import datetime
 import sys
 import os
@@ -14,12 +14,12 @@ from time import sleep
 
 class dummy_task:
 
-    def __init__( self, task_name, ref_time ):
+    def __init__( self, task_name, c_time ):
 
         # get a pyro proxy for the task object that I'm masquerading as
         self.name = task_name
-        self.ref_time = ref_time
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + self.name + '%' + self.ref_time )
+        self.c_time = c_time
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + self.name + '%' + self.c_time )
         
         # get a pyro proxy for the dummy clock
         self.clock = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.clock' )
@@ -47,7 +47,7 @@ class dummy_task:
             sleep( dt_diff_sec_real )
 
             # make sure the finished message is last
-            fin = self.name + '%' + self.ref_time + ' finished' 
+            fin = self.name + '%' + self.c_time + ' finished' 
             if fin in outputs[time]:
                 outputs[time].remove( fin )
                 outputs[time].append( fin )
@@ -71,15 +71,15 @@ class dummy_task:
 #----------------------------------------------------------------------
 if __name__ == '__main__':
     task_name = os.environ['TASK_NAME']
-    ref_time = os.environ['REFERENCE_TIME']
+    c_time = os.environ['CYCLE_TIME']
     system_name = os.environ['SYSTEM_NAME'] 
     dummy_clock_rate = int( os.environ['CLOCK_RATE'] )
 
     failout = False
     if '--fail' in sys.argv:
-        print 'dummy task, masquerading as ' + task_name + '%' + ref_time,
+        print 'dummy task, masquerading as ' + task_name + '%' + c_time,
         print ': programmed to FAIL!'
         failout = True
 
-    dummy = dummy_task( task_name, ref_time )
+    dummy = dummy_task( task_name, c_time )
     dummy.run()

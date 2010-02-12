@@ -11,8 +11,8 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 75 * 60 / ACCEL )) 
 
 # check prerequistes
-ONE=$TMPDIR/B_${REFERENCE_TIME}.output
-TWO=$TMPDIR/C_${REFERENCE_TIME}.output
+ONE=$TMPDIR/B_${CYCLE_TIME}.output
+TWO=$TMPDIR/C_${CYCLE_TIME}.output
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         MSG="file not found: $PRE"
@@ -25,7 +25,7 @@ done
 
 sleep $SLEEP   # 75 min
 
-OUTPUT=$TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output
+OUTPUT=$TMPDIR/${TASK_NAME}_${CYCLE_TIME}.output
 touch $OUTPUT
 cylc-message $OUTPUT ready
 

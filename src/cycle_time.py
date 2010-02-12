@@ -1,14 +1,14 @@
 #!/usr/bin/python
 
 """ 
-Ecoconnect REFERENCE_TIME (YYYYMMDDHH)
+Ecoconnect CYCLE_TIME (YYYYMMDDHH)
 
-This was a class to define reference time objects that know how to
+This was a class to define cycle time objects that know how to
 increment themselves, etc. But now that the controller does not have a
-global reference time a procedural module will do.
+global cycle time a procedural module will do.
 """
 
-# do logical comparisons of reference times in integer form: int( rt )
+# do logical comparisons of cycle times in integer form: int( rt )
 
 import datetime
 import re
@@ -37,7 +37,7 @@ def diff_hours( rt2, rt1 ):
     delta = dt2 - dt1
 
     if delta.microseconds != 0:
-        print "WARNING: reference_time.difference_hours(): unexpected timedelta"
+        print "WARNING: cycle_time.difference_hours(): unexpected timedelta"
 
     return delta.days * 24 + delta.seconds/3600
 

@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-import reference_time
+import cycle_time
 import pimp_my_logger
 import logging
 import pdb
@@ -22,7 +22,7 @@ class manager:
         self.log = logging.getLogger( "main" )
 
         self.system_hold_now = False
-        self.system_hold_reftime = None
+        self.system_hold_ctime = None
 
         # initialise the dependency broker
         self.broker = broker()
@@ -44,10 +44,10 @@ class manager:
         self.log.debug( "Setting new stop time: " + stop_time )
         self.stop_time = stop_time
 
-    def set_system_hold( self, reftime = None ):
-        if reftime:
-            self.system_hold_reftime = reftime
-            self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run from " + reftime )
+    def set_system_hold( self, ctime = None ):
+        if ctime:
+            self.system_hold_ctime = ctime
+            self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run from " + ctime )
         else:
             self.system_hold_now = True
             self.log.critical( "SETTING SYSTEM HOLD: won't run any more tasks")
@@ -55,18 +55,18 @@ class manager:
     def unset_system_hold( self ):
         self.log.critical( "UNSETTING SYSTEM HOLD: new tasks will run when ready")
         self.system_hold_now = False
-        self.system_hold_reftime = None
+        self.system_hold_ctime = None
 
     def get_task_instance( self, module, class_name ):
         # task object instantiation by module and class name
 	    mod = __import__( module )
 	    return getattr( mod, class_name)
 
-    def get_oldest_ref_time( self ):
+    def get_oldest_c_time( self ):
         oldest = 9999887766
         for itask in self.tasks:
-            if int( itask.ref_time ) < int( oldest ):
-                oldest = itask.ref_time
+            if int( itask.c_time ) < int( oldest ):
+                oldest = itask.c_time
         return oldest
 
     def load_from_config ( self, start_time ):
@@ -89,12 +89,12 @@ class manager:
             log = logging.getLogger( 'main.' + name )
             pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
 
-            # the initial task reference time can be altered during
+            # the initial task cycle time can be altered during
             # creation, so we have to create the task before
             # checking if stop time has been reached.
             skip = False
             if self.stop_time:
-                if int( itask.ref_time ) > int( self.stop_time ):
+                if int( itask.c_time ) > int( self.stop_time ):
                     itask.log( 'WARNING', "STOPPING at " + self.stop_time )
                     itask.prepare_for_death()
                     del itask
@@ -134,8 +134,8 @@ class manager:
         # OR
         # dummy time : <time>,rate
         # class <classname>: item1=value1, item2=value2, ... 
-        # <ref_time> : <taskname> : <state>
-        # <ref_time> : <taskname> : <state>
+        # <c_time> : <taskname> : <state>
+        # <c_time> : <taskname> : <state>
         #    (and so on)
         # The time format is defined by the clock.reset()
         # task <state> format is defined by task_state.dump()
@@ -166,7 +166,7 @@ class manager:
                 continue
 
             # instance variables
-            [ ref_time, name, state ] = line.split(' : ')
+            [ c_time, name, state ] = line.split(' : ')
 
             # create the task log
             if name not in log_created.keys():
@@ -175,14 +175,14 @@ class manager:
                 log_created[ name ] = True
 
             # instantiate the task object
-            itask = self.get_task_instance( 'task_classes', name )( self.clock, ref_time, state )
+            itask = self.get_task_instance( 'task_classes', name )( self.clock, c_time, state )
 
-            # the initial task reference time can be altered during
+            # the initial task cycle time can be altered during
             # creation, so we have to create the task before
             # checking if stop time has been reached.
             skip = False
             if self.stop_time:
-                if int( itask.ref_time ) > int( self.stop_time ):
+                if int( itask.c_time ) > int( self.stop_time ):
                     itask.log( 'WARNING', " STOPPING at " + self.stop_time )
                     itask.prepare_for_death()
                     del itask
@@ -240,10 +240,10 @@ class manager:
             return
 
         for itask in self.tasks:
-                if self.system_hold_reftime:
-                    if int( itask.ref_time ) >= int( self.system_hold_reftime ):
+                if self.system_hold_ctime:
+                    if int( itask.c_time ) >= int( self.system_hold_ctime ):
                         self.system_hold_now = True
-                        self.log.debug( 'not asking ' + itask.get_identity() + ' to run (' + self.system_hold_reftime + ' hold in place)' )
+                        self.log.debug( 'not asking ' + itask.get_identity() + ' to run (' + self.system_hold_ctime + ' hold in place)' )
                         continue
 
                 itask.run_if_ready( launcher )
@@ -253,13 +253,13 @@ class manager:
         # the slowest task, and if foo(T) abdicates
         #--
 
-        # update oldest system reference time
-        oldest_ref_time = self.get_oldest_ref_time()
+        # update oldest system cycle time
+        oldest_c_time = self.get_oldest_c_time()
 
         for itask in self.tasks:
 
-            tdiff = reference_time.decrement( itask.ref_time, self.config.get('max_runahead_hours') )
-            if int( tdiff ) > int( oldest_ref_time ):
+            tdiff = cycle_time.decrement( itask.c_time, self.config.get('max_runahead_hours') )
+            if int( tdiff ) > int( oldest_c_time ):
                 # too far ahead: don't abdicate this task.
                 itask.log( 'DEBUG', "delaying abdication (too far ahead)" )
                 continue
@@ -268,8 +268,8 @@ class manager:
                 itask.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( self.clock, itask.next_ref_time() )
-                if self.stop_time and int( new_task.ref_time ) > int( self.stop_time ):
+                new_task = self.get_task_instance( 'task_classes', itask.name )( self.clock, itask.next_c_time() )
+                if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
                     new_task.prepare_for_death()
@@ -313,9 +313,9 @@ class manager:
             if not itask.state.has_abdicated():
                 all_abdicated = False
                 if not earliest_unabdicated:
-                    earliest_unabdicated = itask.ref_time
-                elif int( itask.ref_time ) < int( earliest_unabdicated ):
-                    earliest_unabdicated = itask.ref_time
+                    earliest_unabdicated = itask.c_time
+                elif int( itask.c_time ) < int( earliest_unabdicated ):
+                    earliest_unabdicated = itask.c_time
 
         return [ all_abdicated, earliest_unabdicated ]
 
@@ -327,9 +327,9 @@ class manager:
             if not itask.prerequisites.all_satisfied():
                 all_satisfied = False
                 if not earliest_unsatisfied:
-                    earliest_unsatisfied = itask.ref_time
-                elif int( itask.ref_time ) < int( earliest_unsatisfied ):
-                    earliest_unsatisfied = itask.ref_time
+                    earliest_unsatisfied = itask.c_time
+                elif int( itask.c_time ) < int( earliest_unsatisfied ):
+                    earliest_unsatisfied = itask.c_time
 
         return [ all_satisfied, earliest_unsatisfied ]
 
@@ -341,9 +341,9 @@ class manager:
             if not itask.state.is_finished():
                 all_finished = False
                 if not earliest_unfinished:
-                    earliest_unfinished = itask.ref_time
-                elif int( itask.ref_time ) < int( earliest_unfinished ):
-                    earliest_unfinished = itask.ref_time
+                    earliest_unfinished = itask.c_time
+                elif int( itask.c_time ) < int( earliest_unfinished ):
+                    earliest_unfinished = itask.c_time
 
         return [ all_finished, earliest_unfinished ]
 
@@ -353,7 +353,7 @@ class manager:
         #       AND
         #   (2) are no longer needed to satisfy prerequisites.
 
-        # Also, do not delete any task with the same reference time 
+        # Also, do not delete any task with the same cycle time 
         # as a failed task, because these could be needed to satisfy the
         # failed task when it gets re-run after the problem is fixed.
         #--
@@ -364,9 +364,9 @@ class manager:
         # to satisfy prerequisites once all their cotemporal peers have
         # finished. The only complication is that new cotemporal peers
         # can appear, in principle, so long as there are unabdicated
-        # tasks with earlier reference times. Therefore they are spent 
+        # tasks with earlier cycle times. Therefore they are spent 
         # IF finished-and-abdicated AND there are no unabdicated tasks
-        # at the same reference time or earlier.
+        # at the same cycle time or earlier.
         #--
 
         # find the earliest unabdicated task, 
@@ -374,7 +374,7 @@ class manager:
         failed_rt = {}
         for itask in self.tasks:
             if itask.state.is_failed():
-                failed_rt[ itask.ref_time ] = True
+                failed_rt[ itask.c_time ] = True
 
         [all_abdicated, earliest_unabdicated] = self.earliest_unabdicated()
         if all_abdicated:
@@ -387,11 +387,11 @@ class manager:
         for itask in self.tasks:
             if not itask.done():
                 continue
-            if itask.ref_time in failed_rt.keys():
+            if itask.c_time in failed_rt.keys():
                 continue
 
             if itask.quick_death and not all_abdicated: 
-                if all_abdicated or int( itask.ref_time ) < int( earliest_unabdicated ):
+                if all_abdicated or int( itask.c_time ) < int( earliest_unabdicated ):
                     spent.append( itask )
  
         # delete the spent quick death tasks
@@ -447,29 +447,29 @@ class manager:
             if not itask.done():
                 continue
 
-            if itask.ref_time in failed_rt.keys():
+            if itask.c_time in failed_rt.keys():
                 continue
 
             #if not all_satisfied:
-            #    if int( itask.ref_time ) >= int( earliest_unsatisfied ):
+            #    if int( itask.c_time ) >= int( earliest_unsatisfied ):
             #        continue
             if not all_finished:
-                if int( itask.ref_time ) >= int( earliest_unfinished ):
+                if int( itask.c_time ) >= int( earliest_unfinished ):
                     continue
             
-            if itask.ref_time in candidates.keys():
-                candidates[ itask.ref_time ].append( itask )
+            if itask.c_time in candidates.keys():
+                candidates[ itask.c_time ].append( itask )
             else:
-                candidates[ itask.ref_time ] = [ itask ]
+                candidates[ itask.c_time ] = [ itask ]
 
         # searching from newest tasks to oldest, after the earliest
         # unsatisfied task, find any done task types that appear more
         # than once - the second or later occurrences can be deleted.
-        reftimes = candidates.keys()
-        reftimes.sort( key = int, reverse = True )
+        ctimes = candidates.keys()
+        ctimes.sort( key = int, reverse = True )
         seen = {}
         spent = []
-        for rt in reftimes:
+        for rt in ctimes:
             #if not all_satisfied:
             #    if int( rt ) >= int( earliest_unsatisfied ):
             #        continue
@@ -526,35 +526,35 @@ class manager:
             if re.match( '^GROUP:', ins ):
                 # task group
                 [ junk, group ] = ins.split(':')
-                [ groupname, ref_time ] = group.split( '%' )
+                [ groupname, c_time ] = group.split( '%' )
 
                 tasknames = self.config.get( 'task_groups')[groupname]
 
                 ids = []
                 for name in tasknames:
-                    ids.append( name + '%' + ref_time )
+                    ids.append( name + '%' + c_time )
 
             else:
                 # single task id
                 ids = [ ins ]
 
             for task_id in ids:
-                [ name, ref_time ] = task_id.split( '%' )
+                [ name, c_time ] = task_id.split( '%' )
 
                 # instantiate the task object
-                itask = self.get_task_instance( 'task_classes', name )( self.clock, ref_time )
+                itask = self.get_task_instance( 'task_classes', name )( self.clock, c_time )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
                     log = logging.getLogger( 'main.' + name )
                     pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
  
-                # the initial task reference time can be altered during
+                # the initial task cycle time can be altered during
                 # creation, so we have to create the task before
                 # checking if stop time has been reached.
                 skip = False
                 if self.stop_time:
-                    if int( itask.ref_time ) > int( self.stop_time ):
+                    if int( itask.c_time ) > int( self.stop_time ):
                         itask.log( 'WARNING', " STOPPING at " + self.stop_time )
                         itask.prepare_for_death()
                         del itask
@@ -583,7 +583,7 @@ class manager:
 
         deps = {}
         for itask in self.tasks:
-            if itask.ref_time != parent.ref_time:
+            if itask.c_time != parent.c_time:
                 # not cotemporal
                 continue
 
@@ -618,7 +618,7 @@ class manager:
         for itask in self.tasks:
             if itask.get_identity() == id:
                 found = True
-                next = itask.next_ref_time()
+                next = itask.next_c_time()
                 name = itask.name
                 break
 
@@ -646,13 +646,13 @@ class manager:
                 break
         return result
 
-    def abdicate_and_kill_rt( self, reftime ):
-        # abdicate and kill all WAITING tasks currently at reftime
+    def abdicate_and_kill_rt( self, ctime ):
+        # abdicate and kill all WAITING tasks currently at ctime
         # (use to kill lame tasks that will never run because some
         # upstream dependency has failed).
         task_ids = {}
         for itask in self.tasks:
-            if itask.ref_time == reftime and itask.get_status() == 'waiting':
+            if itask.c_time == ctime and itask.get_status() == 'waiting':
                 task_ids[ itask.get_identity() ] = True
 
         self.abdicate_and_kill( task_ids )
@@ -682,8 +682,8 @@ class manager:
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in regenerate_tasks()?
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( self.clock, itask.next_ref_time() )
-                if self.stop_time and int( new_task.ref_time ) > int( self.stop_time ):
+                new_task = self.get_task_instance( 'task_classes', itask.name )( self.clock, itask.next_c_time() )
+                if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', 'STOPPING at configured stop time' )
                     new_task.prepare_for_death()

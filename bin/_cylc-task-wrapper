@@ -22,12 +22,12 @@
 set -e  # abort on error
 
 # cylc exports the following environment variables for each task:
-#   1. $REFERENCE_TIME  
+#   1. $CYCLE_TIME  
 #   2. $TASK_NAME      
 #   3. $WRAP          
 
-if [[ -z $REFERENCE_TIME ]]; then
-    echo "ERROR, cylc-task-wrapper: \$REFERENCE_TIME not found"
+if [[ -z $CYCLE_TIME ]]; then
+    echo "ERROR, cylc-task-wrapper: \$CYCLE_TIME not found"
     exit 1
 fi
 
@@ -41,7 +41,7 @@ if [[ -z $WRAP ]]; then
     exit 1
 fi
 
-#echo "cylc-task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
+#echo "cylc-task-wrapper: calling $TASK_NAME for $CYCLE_TIME"
 cylc-message "started"
 
 # call the wrapped task

@@ -39,7 +39,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.kill_ids = False
         self.kill_task_ids = {}
         self.kill_rt = False
-        self.kill_reftime = None
+        self.kill_ctime = None
 
         # task to reset from failed to waiting
         self.reset_a_task = False
@@ -109,15 +109,15 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return False
 
-    def set_stop_time( self, reftime ):
+    def set_stop_time( self, ctime ):
         self.log.warning( "REMOTE: set stop time" )
         self.set_stop = True
-        self.stop_time = reftime
+        self.stop_time = ctime
 
-    def set_hold_time( self, reftime ):
+    def set_hold_time( self, ctime ):
         self.log.warning( "REMOTE: set stop time" )
         self.set_hold = True
-        self.hold_time = reftime
+        self.hold_time = ctime
 
     def shutdown( self ):
         self.log.warning( "REMOTE: system halt, after running tasks finish" )
@@ -190,11 +190,11 @@ class remote_switch( Pyro.core.ObjBase ):
         self.purge_id = task_id
         self.purge_stop = stop
 
-    def abdicate_and_kill_rt( self, reftime ):
+    def abdicate_and_kill_rt( self, ctime ):
         self.log.warning( "REMOTE: abdicate and kill request" )
-        self.log.warning( '-> all tasks currently in ' + reftime )
+        self.log.warning( '-> all tasks currently in ' + ctime )
         self.kill_rt = True
-        self.kill_reftime = reftime
+        self.kill_ctime = ctime
 
     def abdicate_and_kill( self, task_ids ):
         self.log.warning( "REMOTE: abdicate and kill request" )

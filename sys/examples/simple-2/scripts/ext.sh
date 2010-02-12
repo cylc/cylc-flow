@@ -13,7 +13,7 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 
 sleep $SLEEP 
 
-touch $TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output
-cylc-message external data ready for $REFERENCE_TIME
+touch $TMPDIR/${TASK_NAME}_${CYCLE_TIME}.output
+cylc-message external data ready for $CYCLE_TIME
 
 cylc-message finished

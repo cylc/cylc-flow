@@ -11,4 +11,4 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 
 sleep $SLEEP 
 
-touch $TMPDIR/${TASK_NAME}_${REFERENCE_TIME}.output
+touch $TMPDIR/${TASK_NAME}_${CYCLE_TIME}.output

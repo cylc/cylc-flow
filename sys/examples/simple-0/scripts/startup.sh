@@ -17,6 +17,6 @@ echo "Cleaning $TMPDIR"
 rm -rf $TMPDIR/* || exit 1
 
 echo "Creating initial restart files for A, B, C"
-touch $TMPDIR/A_${REFERENCE_TIME}.restart
-touch $TMPDIR/B_${REFERENCE_TIME}.restart
-touch $TMPDIR/C_${REFERENCE_TIME}.restart
+touch $TMPDIR/A_${CYCLE_TIME}.restart
+touch $TMPDIR/B_${CYCLE_TIME}.restart
+touch $TMPDIR/C_${CYCLE_TIME}.restart

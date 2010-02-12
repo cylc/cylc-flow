@@ -1,5 +1,4 @@
-# THIS IS A cylc TASK CLASS DEFINITION FILE
-# See full_template.def for documented entries
+# THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
     A
@@ -19,10 +18,10 @@
     A.sh
 
 %EXPORT
-    NEXT_REFERENCE_TIME $(MY_REFERENCE_TIME + 6)
+    NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 6)
 
 %PREREQUISITES
-    external data ready for $(MY_REFERENCE_TIME)
+    external data ready for $(MY_CYCLE_TIME)
 
 %RUN_LENGTH_MINUTES
     90

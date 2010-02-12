@@ -2,7 +2,7 @@
 
 import Pyro.core
 import datetime
-import reference_time
+import cycle_time
 from time import sleep
 import datetime, time
 
@@ -24,7 +24,7 @@ class clock( Pyro.core.ObjBase ):
         # time acceleration (N real seconds = 1 dummy hour)
         self.acceleration = rate
         
-        # start time offset (relative to start reference time)
+        # start time offset (relative to start cycle time)
         self.offset_hours = offset
 
         self.base_realtime = datetime.datetime.now() 
@@ -36,12 +36,12 @@ class clock( Pyro.core.ObjBase ):
             print " - offset: " + str( self.offset_hours )
 
 
-    def set( self, reftime ):
+    def set( self, ctime ):
 
         print 'Setting dummy mode clock time'
         self.base_dummytime = datetime.datetime( 
-                int(reftime[0:4]), int(reftime[4:6]), 
-                int(reftime[6:8]), int(reftime[8:10]))
+                int(ctime[0:4]), int(ctime[4:6]), 
+                int(ctime[6:8]), int(ctime[8:10]))
                 
         self.base_dummytime += datetime.timedelta( 0,0,0,0,0, self.offset_hours, 0) 
 
@@ -72,11 +72,11 @@ class clock( Pyro.core.ObjBase ):
         if len( H ) == 1:
             H = '0' + H
 
-        base_reftime = Y + M + D + H
+        base_ctime = Y + M + D + H
 
         self.base_dummytime = datetime.datetime( 
-                int(base_reftime[0:4]), int(base_reftime[4:6]), 
-                int(base_reftime[6:8]), int(base_reftime[8:10]))
+                int(base_ctime[0:4]), int(base_ctime[4:6]), 
+                int(base_ctime[6:8]), int(base_ctime[8:10]))
                 
         print "CLOCK RESET ......."
         print " - accel:  " + str( self.acceleration ) + "s = 1 dummy hour"

@@ -33,7 +33,7 @@ class launcher:
             if not self.dummy_mode:
                 print 'WARNING: failout only affects dummy mode'
 
-    def run( self, owner, task_name, ref_time, task, dummy_out, extra_vars=[] ):
+    def run( self, owner, task_name, c_time, task, dummy_out, extra_vars=[] ):
 
         # who is running the control system
         cylc_owner = os.environ[ 'USER' ]
@@ -49,7 +49,7 @@ class launcher:
             # dummy task
             external_program = '_cylc-dummy-task'
             if self.failout:
-                if self.failout_task == task_name + '%' + ref_time:
+                if self.failout_task == task_name + '%' + c_time:
                     external_program += ' --fail'
                     # now turn failout off, in case the task gets reinserted
                     self.failout = False
@@ -62,7 +62,7 @@ class launcher:
 
         if not self.use_qsub:
             # DIRECT EXECUTION 
-            os.environ['REFERENCE_TIME'] = ref_time
+            os.environ['CYCLE_TIME'] = c_time
             os.environ['TASK_NAME'] = task_name
             os.environ['SYSTEM_NAME'] = self.system_name
             os.environ['CLOCK_RATE'] = str( self.clock_rate )
@@ -78,7 +78,7 @@ class launcher:
                 command  = 'sudo -u ' + owner 
 
             command += ' qsub -q ' + self.job_queue + ' -z'
-            command += ' -v REFERENCE_TIME=' + ref_time
+            command += ' -v CYCLE_TIME=' + c_time
             command += ',TASK_NAME='    + task_name
             command += ',SYSTEM_NAME='  + self.system_name
 
@@ -100,4 +100,4 @@ class launcher:
 
             # TO DO: PRINT OUT ACTUAL COMMAND THAT FAILED
 
-            raise Exception( 'job launch failed: ' + task_name + ' ' + ref_time )
+            raise Exception( 'job launch failed: ' + task_name + ' ' + c_time )

@@ -17,9 +17,9 @@ class prerequisites( requisites ):
     # satisfied if another object has a matching output message that is
     # satisfied (i.e. a completed output). 
 
-    def __init__( self, task_name, ref_time ):
+    def __init__( self, task_name, c_time ):
         self.task_name = task_name
-        self.ref_time = ref_time
+        self.c_time = c_time
 
         requisites.__init__( self )
 
@@ -43,7 +43,7 @@ class prerequisites( requisites ):
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
                         # TO LOG WHAT GOT SATISFIED BY WHOM:
-                        log.debug( '[' + self.ref_time + '] Got "' + output + '" from ' + owner_id )
+                        log.debug( '[' + self.c_time + '] Got "' + output + '" from ' + owner_id )
 
     def will_satisfy_me( self, outputs, owner_id ):
         # return True if the outputs, when completed, would satisfy any of my prequisites

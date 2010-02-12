@@ -11,14 +11,14 @@ class pid:
     # free_task.ready_to_abdicate() appropriately.
     
     def register_restarts( self, output_times ):
-        # call after parent init, so that self.ref_time is defined!
+        # call after parent init, so that self.c_time is defined!
 
         msg = self.name + ' restart files ready for '
-        self.prerequisites.add(  msg + self.ref_time )
+        self.prerequisites.add(  msg + self.c_time )
 
-        rt = self.ref_time
+        rt = self.c_time
         for t in output_times:
-            next_rt = self.next_ref_time( rt )
+            next_rt = self.next_c_time( rt )
             self.outputs.add( t, msg + next_rt )
             rt = next_rt
 
