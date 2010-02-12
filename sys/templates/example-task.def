@@ -1,0 +1,26 @@
+# AN EXAMPLE CYLC TASK DEFINITION FILE FOR A NON-FORECAST MODEL TASK
+# (forecast models typically have special 'restart' prerequisites that
+# are satisfied by outputs from a previous run of the same model). Most
+# tasks in a typical system can be defined very simply, like this, but
+# see full-template.def for complete task definition documentation.
+
+%NAME
+    foo
+
+%TYPE
+    free_task 
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    run-foo.sh
+
+%PREREQUISITES
+    file model-output-$(MY_REFERENCE_TIME).nc ready
+
+%RUN_LENGTH_MINUTES
+    10 
+
+%OUTPUTS
+    8: file forecast-products-$(MY_REFERENCE_TIME).nc ready

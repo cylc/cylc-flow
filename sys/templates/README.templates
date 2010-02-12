@@ -1,6 +1,6 @@
-Example task definition files for cylc. Task definitions based on
-these templates are processed by task_generator.py, which
-auto-generates the task class module (task_classes.py) used by cylc.  
+This directory contains:
+
+example task definition files for a simple cylc system. 
 
 + <task-name>.def
   task definition file, suitable for all normal tasks: those that
@@ -10,4 +10,4 @@ auto-generates the task class module (task_classes.py) used by cylc.
 
 + <task-name>.py
   verbatim python class code for tasks with complex behaviour that is
-  not handled by task-generator.py
+  currently not handled by task-generator.py
