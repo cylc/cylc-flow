@@ -377,26 +377,26 @@ seamlessly transitions between catchup and real time operation without
 \subsection{System Requirements}
 
 \begin{itemize}
-    \item Unix or Linux OS
-    \item Python
+    \item A *nix operating system
+    \item The Python programming language
     \item Pyro (Python Remote Objects)
 \end{itemize}
 
-Python is standard issue on most modern computer systems.
-
-Cylc has been tested with Python 2.4.2 and 2.6.x, and Pyro 3.9 and 3.10, 
+Cylc has been tested with Python 2.4.2 and 2.6.x, and Pyro 3.9 and 3.10,
 but it should work well with any recent versions or Python 2 and Pyro.
-Note, however, that {\em Pyro is not compatible with Python 3} as yet.
+Note, however, that as yet Pyro is not compatible with Python 3.
 
+Download Pyro from {\em http://pyro.sourceforge.net}. 
 
 \subsection{Installation}
 
 \subsubsection{Pyro}
-Download Pyro from {\em http://pyro.sourceforge.net}. It comes
-with simple installation instructions and installs into the standard
-modules directory.
+
+Follow Pyro's simple installation instructions (it installs into the
+standard Python modules directory).
 
 \subsubsection{Cylc}
+
 Cylc is currently maintained using {\em darcs}, a distributed revision
 control system. If you need to develop cylc you can request access to
 clone the central repository, otherwise you will receive a cylc
@@ -405,12 +405,14 @@ distribution tarball.
 Cylc does not require a system-level installation, it can be installed
 into a single directory under any user account: simply unpack the
 tarball. There is no ``build'' required because cylc is written entirely 
-in Python (and a few bash scripts).
+in Python and Bash.
 
 \subsubsection{Testing}
-Test the installation by running one of the packaged example systems
-(Section~\ref{sec:examples}).
 
+Test your installation by running the packaged example systems in dummy
+mode and real mode (Section~\ref{sec:examples}).
+
+\pagebreak
 \subsection{Quick Start}
 
 This section provides a quick summary of the steps required to get a new
@@ -428,8 +430,6 @@ definition files are modified.
 
     \item write a {\em task script} for (at most) each task (Section~\ref{sec:taskscripts}).
 
-    \item write a single {\em user config file} for the system (Section~\ref{sec:config}).
-
     \item run \verb=cylc configure= to configure the new system (Section~\ref{sec:configure}).
 \end{itemize}
 
@@ -438,16 +438,15 @@ definition files are modified.
 \begin{itemize}
     \item source the system's environment script in your shell (Section~\ref{sec:env}).
         
-    \item run \verb=cycl scheduler= to cold start or restart a system (Section~\ref{sec:run}).
+    \item run \verb=cycl schedule= to cold start or restart a system (Section~\ref{sec:run}).
 \end{itemize}
 
 
 \subsubsection{Monitoring and Controlling}
 
 \begin{itemize}
-    \item monitor running systems using \verb=cylc monitor= (Section~\ref{sec:monitor}).
-
-    \item control running systems using \verb=cylc control= (Section~\ref{sec:control}).
+    \item cylc comes with several terminal based monitors that display
+        real time views of the system as it runs (Section~\ref{sec:monitor}).
 \end{itemize}
 
 
@@ -455,13 +454,15 @@ definition files are modified.
 
 \begin{itemize}
 
-    \item Construct and test your system incrementally using cylc's {\em
-        dummy mode} (Section~\ref{sec:dummymode}).
+    \item Test your system incrementally as you build it, without
+        running the real tasks, using cylc's {\em dummy mode}
+        (Section~\ref{sec:dummymode}).
 
     \item Rerun \verb=cylc configure= on your system whenever you add
         new task definition files or modify existing ones.
 \end{itemize}
 
+\pagebreak
 \label{sec:tasktype}
 \subsection{Defining Tasks}
 
@@ -470,6 +471,13 @@ definition files are modified.
 
 \label{sec:taskdef}
 \subsubsection{Task Definition Files}
+
+\lstset{language=, numbers=left}
+
+{
+\color{Magenta}
+\lstinputlisting{../sys/templates/example-task.def}
+}
 
 \subsubsection{Task Scripts}
 
@@ -483,23 +491,23 @@ Each external task must:
 \begin{itemize}
 \item report (to cylc) when the task has started
 \item report when the task has finished
-\item report when every other registered task postrequisite has
+\item report when every other registered task output has
 completed
 \end{itemize}
 
 (Technically, the `started' and `finished' messages are just
-postrequisites too, but they are special in that every task
+outputs too, but they are special in that every task
 must have them).
 
 In addition, tasks can optionally:
 
 \begin{itemize}
-\item report any arbitrary unregistered (i.e. non-postrequisite)
+\item report any arbitrary unregistered (i.e. non-output)
 messages, for debugging, logging, or progress monitoring purposes.
 \end{itemize}
 
-All incoming messages are logged by cylc, but only postrequisite
-messages can affect the state of other task objects.
+All incoming messages are logged by cylc, but only output messages can
+affect the state of other task objects.
 
 Task messages don't necessarily have to originate from top level task
 control scripts. It's a probably a good idea to do this if possible, but
@@ -512,11 +520,11 @@ A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
 
 \pagebreak
-\subsection{User Config File}
+\subsection{System Config File}
 
 {
 \color{Magenta}
-\lstinputlisting{../sys/examples/simple-0/user_config.py}
+\lstinputlisting{../sys/examples/simple-0/system_config.py}
 }
 
 
@@ -626,34 +634,16 @@ This command lets you interact with running systems.
 \section{Cylc Task Definition Reference}
 
 A {\em Task Definition File} defines the properties of a cylc task:
-name, valid run times, prerequisites and postrequisites, the task
-control script used to invoke the task, etc.  A cylc utility,
-\verb=task_generator.py= parses task definition files and auto-generates
-Python code that defines the objects that represent each task within
-cylc.
+name, valid cycle times, prerequisites and outputs, the task
+control script used to invoke the external task, etc.  
+\verb=cylc configure= parses a system's task definition files and
+generates the Python task class module required by cylc to run the system.
 
-\subsection{Typical Example}
-
-Most tasks have only cotemporal (same cycle time) upstream and
-downstream dependencies (recall that every task is implicitly dependent
-on the previous instance of its own class, in cylc). The following
-task definition file is sufficient to completely define such a task.
-Different postrequisites can be specified depending on cycle time. 
-
-\lstset{language=bash, numbers=left}
+\lstset{language=, numbers=left}
 
 {
 \color{Magenta}
-\lstinputlisting{../sys/templates/example.def}
-}
-
-\subsection{Full Task Definition Template}
-
-\lstset{language=sh, numbers=left}
-
-{
-\color{Magenta}
-\lstinputlisting{../sys/templates/full_template.def}
+\lstinputlisting{../sys/templates/full-template.def}
 }
 
 \subsection{More Complex Task Behaviour}
