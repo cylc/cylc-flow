@@ -12,7 +12,36 @@
 \usepackage{graphicx}
 \usepackage[usenames,dvipsnames]{color}
 
-\lstset{language=Python}
+\lstset{
+language=,
+xleftmargin=2em,
+%basicstyle=\tiny\ttfamily
+basicstyle=\footnotesize\ttfamily,
+identifierstyle=\color{Sepia},
+keywordstyle=\color{Red},
+commentstyle=\color{RoyalBlue},
+stringstyle=\color{OliveGreen},
+numbers=left,
+numberstyle=\color{Gray}
+}
+
+\lstdefinelanguage{cylctaskdef}
+{
+morekeywords={NAME,DESCRIPTION,TYPE,CONTACT_DELAY_HOURS,OWNER,VALID_HOURS,EXTERNAL_TASK,EXPORT,RUN_LENGTH_MINUTES,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,RESTART_LIST_MINUTES,COTEMPORAL_DEPENDANTS_ONLY,ONEOFF_FOLLOW_ON},
+sensitive=false,
+morecomment=[l]{\#},
+}
+
+\lstdefinelanguage{usage}
+{
+morekeywords={},
+sensitive=false,
+morecomment=[l]{usage:},
+morecomment=[l]{arguments:},
+morecomment=[l]{options:},
+morecomment=[l]{commands:},
+}
+
 
 \title{Cylc: A Self-Organising Forecast Systems Scheduler With Optimal
 Multi-cycle Catchup Capability}
@@ -392,10 +421,9 @@ main operation and then keep pace with it.
 \section{Cylc Userguide}
 \label{sec:usage}
 
-All cylc commands and config files are intended to be self documenting,
-so the command help and file listings in this section are all
-auto-generated from from the actual commands and files during document
-processing.
+All cylc commands and config files are self documenting, so the command
+help and file listings in this section are auto-generated from the
+up-to-date commands and files during document processing.
 
 \subsection{System Requirements}
 
@@ -407,9 +435,8 @@ processing.
 
 Cylc has been tested with Python 2.4.2 and 2.6.x, and Pyro 3.9 and 3.10,
 but it should work well with any recent versions or Python 2 and Pyro.
-As yet Pyro is not compatible with Python 3.
-
-Download Pyro from {\em http://pyro.sourceforge.net}. 
+As yet Pyro is not compatible with Python 3. Download Pyro from {\em
+http://pyro.sourceforge.net}. 
 
 \subsection{Installation}
 
@@ -438,49 +465,41 @@ mode and real mode (Section~\ref{sec:examples}).
 \pagebreak
 \subsection{Quick Start}
 
-This section provides a quick summary of the steps required to get a new
-system running under cylc.
-
-\subsubsection{Configuring a System}
-
-These steps only need to be done once, initially, and again whenever the system's task 
-definition files are modified. 
+The following is a quick summary of the steps required to get a system
+running under cylc.
 
 \begin{itemize}
-    \item divide your system into distinct {\em tasks} (Section~\ref{sec:tasks}).
+    \item divide your system into {\em tasks} of known {\em type}
+        (Section~\ref{sec:tasks}).
 
-    \item write a {\em task definition file} for each task (Section~\ref{sec:taskdefs}).
+    \item write a {\em task definition file} for each task
+        (Section~\ref{sec:taskdefs}).
 
-    \item write a {\em task script} for (at most) each task (Section~\ref{sec:taskscripts}).
+    \item write {\em task scripts} to run the real external tasks 
+        (Section~\ref{sec:taskscripts}).
 
-    \item run \verb=cylc configure= to configure the new system (Section~\ref{sec:configure}).
-\end{itemize}
+    \item run \verb=cylc configure= to generate task classes and
+        a config file for the system (Section~\ref{sec:configure}).
 
-\subsubsection{Running a System}
+    \begin{itemize}
+        \item repeat this step whenever you change the task definition files.
+        \item customise the system config file if you like.
+    \end{itemize}
 
-\begin{itemize}
-    \item run \verb=cycl schedule= to cold start or restart a system (Section~\ref{sec:run}).
-\end{itemize}
+    \item run \verb=cycl schedule= to cold start or restart a system
+        (Section~\ref{sec:run}).
 
+    \begin{itemize}
 
-\subsubsection{Monitoring and Controlling}
+        \item build and test your system incrementally using cylc's {\em
+            dummy mode}, which does not require running the real tasks
+            (Section~\ref{sec:dummymode}).
 
-\begin{itemize}
-    \item cylc comes with several terminal based monitors that display
-        real time views of the system as it runs (Section~\ref{sec:monitor}).
-\end{itemize}
+        \item cylc has several terminal based monitors that display
+            real time information about the system as it runs
+            (Section~\ref{sec:monitor}).
+    \end{itemize}
 
-
-\subsubsection{General Guidelines}
-
-\begin{itemize}
-
-    \item Test your system incrementally as you build it, without
-        running the real tasks, using cylc's {\em dummy mode}
-        (Section~\ref{sec:dummymode}).
-
-    \item Rerun \verb=cylc configure= on your system whenever you add
-        new task definition files or modify existing ones.
 \end{itemize}
 
 \pagebreak
@@ -493,10 +512,9 @@ definition files are modified.
 \label{sec:taskdef}
 \subsubsection{Task Definition Files}
 
-\lstset{language=, numbers=left}
+\lstset{language=cylctaskdef}
 
 {
-\color{Brown}
 \lstinputlisting{../sys/templates/example-task.def}
 }
 
@@ -555,22 +573,9 @@ module, but as all configurable items are stored in a single Python dict
 (associative array) \verb*config['item'] = value*, how change the
 default values should be self-evident even to non Python programmers.
 
-The first listing below shows the config file for the 'simple-0' example
-system with all documentation stripped out, so that the configurable
-items are are easy to see. Following that is a listing of the fully
-documented file. 
-
-\lstset{language=Python}
+Listed below is the config file for the 'simple-0' example system.
+\lstset{ language=Python }
 {
-\color{Brown}
-\lstinputlisting{system_config.py.stripped}
-}
-
-\pagebreak
-And here is the fully documented version of the example system config file.
-
-{
-\color{Brown}
 \lstinputlisting{../sys/examples/simple-0/system_config.py}
 }
 
@@ -600,22 +605,17 @@ recovery scenarios for arbitrarily complicated task sets.
 \pagebreak
 \section{Cylc Command Reference}
 
-\lstset{
-language=,
-xleftmargin=2em,
-%basicstyle=\tiny\ttfamily
-basicstyle=\footnotesize\ttfamily
-}
 
 Cylc commands are self documenting so this section is automatically
 generated, during document processing, from actual command output.
 
 \subsection{cylc}
 
+\lstset{language=usage}
+
 This is the command line interface to all cylc commands.
 
 {
-\color{Brown}
 \lstinputlisting{command-usage/cylc.txt}
 }
 
@@ -628,7 +628,7 @@ default config file that can be customized by the user, and it registers
 the configured system by name under your cylc preferences directory
 (\verb=.cylc/=).
 
-{ \color{Brown}
+{ 
 \lstinputlisting{command-usage/cylc-configure.txt} 
 }
 
@@ -640,7 +640,6 @@ instances can at once (e.g.\ to control a main operation
 and several parallel test systems) so long as each system is configured
 with a different name. 
 {
-\color{Brown}
 \lstinputlisting{command-usage/cylc-scheduler.txt}
 }
 
@@ -650,32 +649,27 @@ with a different name.
 This command lets you interact with running systems.
 
 {
-\color{Brown}
 \lstinputlisting{command-usage/cylc-controller.txt}
 }
 
 \pagebreak
 \subsection{cylc monitor}
 {
-\color{Brown}
 \lstinputlisting{command-usage/monitor.txt}
 }
 
 \subsection{cylc monitor-r}
 {
-\color{Brown}
 \lstinputlisting{command-usage/monitor-r.txt}
 }
 
 \subsection{cylc monitor-d}
 {
-\color{Brown}
 \lstinputlisting{command-usage/monitor-d.txt}
 }
 
 \subsection{cylc monitor-p}
 {
-\color{Brown}
 \lstinputlisting{command-usage/monitor-p.txt}
 }
 
@@ -689,22 +683,15 @@ control script used to invoke the external task, etc.
 generates the Python task class module required by cylc to run the
 system.
 
-Here is the full task definitition template with documentation stripped
-out.
+Listed below is the full task definitition template with all items documented.
+
+\lstset{language=cylctaskdef}
 
 {
-\color{Brown}
-\lstinputlisting{full-template.def.stripped}
-}
-
-\pagebreak
-
-And here is the full task definitition template with documentation intact.
-
-{
-\color{Brown}
 \lstinputlisting{../sys/templates/full-template.def}
 }
+
+\lstset{language=}
 
 %\pagebreak
 %\subsection{More Complex Task Behaviour}
@@ -716,39 +703,31 @@ And here is the full task definitition template with documentation intact.
 \pagebreak
 \appendix
 
-\section{Essential OOP Concepts}
+\section{Object Oriented Programming}
 
-Cylc relies heavily on object oriented programming concepts,
+Cylc relies heavily on Object Oriented Programming (OOP) concepts,
 particularly the {\em polymorphic} nature of the task proxy objects.
-This section gives a minimal introduction to Object Oriented
-Programming for developers who need to modify cylc. Refer to an OOP
-reference for more detail.
+This section gives a very minimal explanation of what this means;
+please refer to an OOP reference for more detail.
 
-\subsection{Class}
-
-Class is a generalisation of data type to include behaviour (i.e.\
-functions or methods) as well as state. 
+A {\bf class} is a generalisation of data type to include behaviour
+(i.e.\ functions or methods) as well as state. 
 
 %For example, a $shape$ class could define a $position$ data member to
 %hold the location of a shape object, a $move()$ method that by which
 %a shape object can alter its position, and a $draw()$ method that
 %causes it to display itself on screen.
 
-\subsection{Object}
-
-An object is a more or less self contained specific instance
+An {\bf object} is a more or less self contained specific instance
 of a class. This is analagous to specific integer variables being 
 instances of the integer data type.
 
-\subsection{Inheritance}
-
-A {\em derived class} or {\em subclass} inherits the properties (methods
-and data members) of its parent or base class. It can also override
+A {\bf derived class} or {\bf subclass} {\em inherits} the properties
+(methods and data members) of its parent class. It can also override
 specific properties, or add new properties that aren't present in the
-base class. Calling a particular method on an object invokes the
-object's own class method if one is defined, otherwise the parent
-class is searched, and so on down to the root of the inheritance
-graph. 
+parent. Calling a particular method on an object invokes the object's
+own method if one is defined, otherwise the parent class is searched,
+and so on down to the root of the inheritance graph. 
 
 %For example, we could derive a $circle$ class from $shape$, adding a
 %`radius' data member and overriding the $draw()$ to get circle objects
@@ -757,13 +736,11 @@ graph.
 %method, $shape.move()$. 
 
 
-\subsection{Polymorphism}
-
-Polymorphism is the ability of one type to appear as and be used like
-another type.  In OOP languages with inheritance, this usually refers to
-the ability to treat derived/sub-class objects as if they were members
-of a common base class. In particular, a group of mixed-type objects
-can all be treated as members of a common base class. 
+{\bf Polymorphism} is the ability of one type to appear as and be used
+like another type.  In OOP languages with inheritance, this usually
+refers to the ability to treat derived/sub-class objects as if they were
+members of a common base class. In particular, a group of mixed-type
+objects can all be treated as members of a common base class. 
 %For example, a group of %$circles$, $triangles$, and $squares$ could 
 %be manipulated by code designed entirely to handel $shapes$; calling
 %$[shape].draw()$ will invoke the right derived class $draw()$ method. 
@@ -773,6 +750,7 @@ derive from the same base class as the original objects.
 %If we later derive an entirely new kind of shape ($hexagon$, say) with
 %it's own unique behaviour, the existing program, without modification,
 %will process the new objects in the proper hexagon-specific way.  
+
 In cylc, all task proxy objects are derived from a base class that 
 embodies the properties and behaviour common to all task proxies. 
 The scheduling algorithm works with instances of the base class so that

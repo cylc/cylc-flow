@@ -38,11 +38,11 @@ cylc monitor-p   --help > doc/command-usage/monitor-p.txt
 
 # 
 
-perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
-    sys/examples/simple-0/system_config.py > doc/system_config.py.stripped
-
-perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
-    sys/templates/full-template.def > doc/full-template.def.stripped
+#Comment-stripped taskdef files:
+#perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
+#    sys/examples/simple-0/system_config.py > doc/system_config.py.stripped
+#perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
+#    sys/templates/full-template.def > doc/full-template.def.stripped
 
 
 cd doc
