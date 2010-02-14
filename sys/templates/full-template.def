@@ -138,7 +138,7 @@
            file bar_$(MY_CYCLE_TIME)_utc.nc ready
     0,12 | file baz_$(MY_CYCLE_TIME)_utc.nc ready
 
-[%STARTUP_PREQUISITES]
+[%STARTUP_PREREQUISITES]
     # As for %PREREQUISITES above, but only used once at start time.
     # Can be used in conjunction with a 'oneoff' task (above) if
     # a task has different input requirements for a 'cold start'
@@ -192,8 +192,9 @@
     True
 
 [%ONEOFF_FOLLOW_ON]
-    oneoff tasks that have non-cotemporal dependants must nominate a
-    follow on task to "hand the baton on to" so that cylc knows when it
-    can delete the oneoff task from the system (it will not be deleted
-    before the follow on task exists). 
+    task_foo
+    #oneoff tasks that have non-cotemporal dependants must nominate a
+    #follow on task to "hand the baton on to" so that cylc knows when it
+    #can delete the oneoff task from the system (it will not be deleted
+    #before the follow on task exists). 
 
