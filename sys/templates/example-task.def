@@ -10,7 +10,7 @@
 %TYPE
     free_task 
 
-%VALID_HOURS
+%START_TIMES
     0,6,12,18
 
 %EXTERNAL_TASK
@@ -19,7 +19,7 @@
 %PREREQUISITES
     file model-output-$(MY_CYCLE_TIME).nc ready
 
-%RUN_LENGTH_MINUTES
+%ESTIMATED_RUN_TIME
     10 
 
 %OUTPUTS

@@ -87,11 +87,11 @@ def main( argv ):
 
     task_def_files = argv[1:]
 
-    allowed_keys = [ 'NAME', 'OWNER', 'VALID_HOURS', 'EXTERNAL_TASK',
-            'EXPORT', 'COTEMPORAL_DEPENDANTS_ONLY', 'PREREQUISITES',
-            'STARTUP_PREREQUISITES', 'OUTPUTS', 'RUN_LENGTH_MINUTES',
-            'TYPE', 'CONTACT_DELAY_HOURS', 'DESCRIPTION',
-            'ONEOFF_FOLLOW_ON', 'RESTART_LIST_MINUTES' ]
+    allowed_keys = [ 'NAME', 'OWNER', 'START_TIMES', 'EXTERNAL_TASK',
+            'ENVIRONMENT', 'SINGLE_CYCLE', 'PREREQUISITES',
+            'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
+            'TYPE', 'CONTACT_DELAY', 'DESCRIPTION',
+            'ONEOFF_FOLLOW_ON', 'ESTIMATED_RESTART_DUMP_TIMES' ]
 
     allowed_types = ['forecast_model', 'free_task' ]
     allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
@@ -186,8 +186,8 @@ import logging
 
         # quick death (DEFAULT False)
         quick_death = False
-        if 'COTEMPORAL_DEPENDANTS_ONLY' in parsed_def.keys():
-            delayed_death = parsed_def[ 'COTEMPORAL_DEPENDANTS_ONLY' ][0]
+        if 'SINGLE_CYCLE' in parsed_def.keys():
+            delayed_death = parsed_def[ 'SINGLE_CYCLE' ][0]
             if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
                 quick_death = True
 
@@ -272,16 +272,16 @@ import logging
         task_init_args = 'clock, initial_state'
 
         if contact:
-            if 'CONTACT_DELAY_HOURS' not in parsed_def.keys():
-                print "Error: contact classes must define %CONTACT_DELAY_HOURS"
+            if 'CONTACT_DELAY' not in parsed_def.keys():
+                print "Error: contact classes must define %CONTACT_DELAY"
                 sys.exit(1)
 
         if fcmodel:
-            if 'RESTART_LIST_MINUTES' not in parsed_def.keys():
-                print 'Error: forecast models must define %RESTART_LIST_MINUTES'
+            if 'ESTIMATED_RESTART_DUMP_TIMES' not in parsed_def.keys():
+                print 'Error: forecast models must define %ESTIMATED_RESTART_DUMP_TIMES'
                 sys.exit(1)
             else:
-                restart_list = parsed_def[ 'RESTART_LIST_MINUTES' ][0]
+                restart_list = parsed_def[ 'ESTIMATED_RESTART_DUMP_TIMES' ][0]
 
         task_name = parsed_def[ 'NAME' ][0]
 
@@ -335,7 +335,7 @@ import logging
         FILE.write( indent + 'external_task = \'' + external_task + '\'\n\n' )
 
         # valid hours
-        FILE.write( indent + 'valid_hours = [' + parsed_def[ 'VALID_HOURS' ][0] + ']\n\n' )
+        FILE.write( indent + 'valid_hours = [' + parsed_def[ 'START_TIMES' ][0] + ']\n\n' )
 
         FILE.write( indent + 'quick_death = ' + str(quick_death) + '\n\n' )
 
@@ -352,7 +352,7 @@ import logging
         FILE.write( indent + 'hour = self.c_time[8:10]\n\n' )
 
         if contact:
-            for line in parsed_def[ 'CONTACT_DELAY_HOURS' ]:
+            for line in parsed_def[ 'CONTACT_DELAY' ]:
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:
@@ -428,12 +428,12 @@ import logging
         FILE.write( indent + 'self.outputs = outputs( self.name, self.c_time )\n' )
 
         # automatic 'started' and 'finished' outputs
-        if 'RUN_LENGTH_MINUTES' not in parsed_def:
-            print "ERROR: %RUN_LENGTH_MINUTES not defined"
+        if 'ESTIMATED_RUN_TIME' not in parsed_def:
+            print "ERROR: %ESTIMATED_RUN_TIME not defined"
             sys.exit(1)
 
         FILE.write( '\n' )
-        for line in parsed_def[ 'RUN_LENGTH_MINUTES' ]:
+        for line in parsed_def[ 'ESTIMATED_RUN_TIME' ]:
             line = re.sub( '\s+$', '', line )
             # look for conditionals
             m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
@@ -475,8 +475,8 @@ import logging
 
         # environment variables
         strng = indent + 'self.env_vars = [\n'
-        if 'EXPORT' in parsed_def.keys():
-            for pair in parsed_def[ 'EXPORT' ]:
+        if 'ENVIRONMENT' in parsed_def.keys():
+            for pair in parsed_def[ 'ENVIRONMENT' ]:
                 [ var, val ] = pair.split( ' ', 1 )
                 var = "'" + var + "'"
                 # replace NAME and MY_CYCLE_TIME variables
@@ -502,7 +502,7 @@ import logging
         FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
 
 
-        #if 'EXPORT' in parsed_def.keys():
+        #if 'ENVIRONMENT' in parsed_def.keys():
         #    # override run_external_task() for the export case
         #    indent_less()
         #    FILE.write( indent + 'def run_external_task( self, launcher ):\n' )

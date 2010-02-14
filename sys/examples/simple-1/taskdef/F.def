@@ -9,17 +9,17 @@
 %TYPE
     free_task
 
-%VALID_HOURS
+%START_TIMES
     0,6,12,18
 
 %EXTERNAL_TASK
     task-wrapper
 
-%EXPORT
+%ENVIRONMENT
     WRAP F.sh
 
 %PREREQUISITES
     C%$(MY_CYCLE_TIME) finished
 
-%RUN_LENGTH_MINUTES
+%ESTIMATED_RUN_TIME
     50
