@@ -11,7 +11,7 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "Usage: cylc configure [options] -s SYSTEM-NAME SYSTEM-PATH"
+	echo "usage: cylc configure [options] -s SYSTEM-NAME SYSTEM-PATH"
     echo ""
     echo "Configure a cylc system defined under SYSTEM-PATH for scheduling."
     echo "Subsequently you can refer to a configured system by its name." 
@@ -25,11 +25,11 @@ function print_usage()
     echo "Finally, the configured system will be registered by name under"
     echo "your .cylc directory,  \$HOME/.cylc/configured, for future use."
     echo ""
-    echo "Arguments:"
+    echo "arguments:"
     echo "  SYSTEM-PATH     Path to the system to be configured (with"
     echo "                  taskdef and scripts sub-dirs, etc.)." 
     echo ""
-    echo "Options:"
+    echo "options:"
     echo "  -h, --help      Print this usage message and exit"
     echo "  -s NAME, --system=NAME"
     echo "                  Name to use in registering the configured system."

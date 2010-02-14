@@ -19,11 +19,11 @@ allowed_commands = \
 
 usage = \
     [ 
-    'Usage: cylc COMMAND [options] ',
+    'usage: cylc COMMAND [options] ',
     '',
     'This is the cylc scheduler command line interface.',
     '',
-    'COMMANDS:',
+    'commands:',
     '  help          Print this usage message and exit.',
     '',
     '  configure     Configure a system for scheduling.', 
@@ -37,7 +37,7 @@ usage = \
     '',
     '  show-pyro [TO DO]   List systems registered with Pyro.',
     '',
-    'Command Options:',
+    'options:',
     '  cylc COMMAND --help'
     ]
 

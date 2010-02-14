@@ -3,12 +3,12 @@
 # A simple terminal-based monitor to display running dummy tasks
  
 print_usage() {
-	echo "Usage: cylc monitor-d [options]"
+	echo "usage: cylc monitor-d [options]"
     echo ""
     echo "A simple terminal-based monitor to display dummy task programs"
     echo "spawned by any cylc instances running under your username."
     echo ""
-	echo "Options:"
+	echo "options:"
 	echo "  -h, --help    Print this usage message and exit."
 }
 

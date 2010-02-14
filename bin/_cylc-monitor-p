@@ -1,12 +1,12 @@
 #!/bin/bash
 
 print_usage() {
-	echo "Usage: cylc monitor-p [options]"
+	echo "usage: cylc monitor-p [options]"
     echo ""
 	echo "A simple terminal-based monitor to display objects"
     echo "currently registered in the Pyro Nameserver."
     echo ""
-	echo "Options:"
+	echo "options:"
 	echo "  -h (--help)   Print this usage message and exit."
 }
 
