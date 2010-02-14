@@ -36,6 +36,15 @@ cylc monitor-r   --help > doc/command-usage/monitor-r.txt
 cylc monitor-d   --help > doc/command-usage/monitor-d.txt
 cylc monitor-p   --help > doc/command-usage/monitor-p.txt
 
+# 
+
+perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
+    sys/examples/simple-0/system_config.py > doc/system_config.py.stripped
+
+perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
+    sys/templates/full-template.def > doc/full-template.def.stripped
+
+
 cd doc
 
 for F in *.eps; do

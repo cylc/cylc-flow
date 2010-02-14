@@ -14,8 +14,8 @@
 
 \lstset{language=Python}
 
-\title{Cylc: A Self-Organising Optimal Job Scheduler 
-For Complex Environmental Forecasting Systems}
+\title{Cylc: A Self-Organising Forecast Systems Scheduler With Optimal
+Multi-cycle Catchup Capability}
 
 \author{Hilary Oliver, NIWA}
 
@@ -36,53 +36,54 @@ For Complex Environmental Forecasting Systems}
     metascheduler is also a type of scheduler. The term
     ``metascheduler'' can also refer to a single aggregate view of
     multiple distributed resource managers, but that is not the topic of
-    this paper.} for cycling environmental forecast systems comprising
-    any number of linked scientific models and associated data
-    collection, preprocessing, postprocessing, and product generation
-    tasks.\footnote{A {\em task} is any group of processes treated as a
-    single entity for scheduling purposes.} Its novel scheduling
-    algorithm maintains an evolving pool of tasks from multiple forecast
-    cycles\footnote{For our purposes a {\em forecast cycle} comprises
-    all tasks with a common {\em forecast cycle time}, which is the
-    analysis time or nominal start time of a forecast model, or that of
-    the associated forecast model(s) other tasks.} that interact to
-    resolve dependencies.\footnote{Strictly speaking the task pool
-    contains proxy objects that represent real tasks.} Each task is
-    defined in isolation and knows its own prerequisites (but not who
-    will satisfy them) and outputs (but not who will use them), and
-    there is no need for a global ``suite'' definition that specifies
-    dependencies or execution order.  If the external driving
-    data\footnote{Forecast systems are typically driven by observational
-    data and/or timely model fields from an external forecasting
-    system.} for upcoming forecast cycles are available in advance {\em
-    cylc} can run tasks from multiple cycles at once to the full extent
-    allowed by intercycle dependencies; a series of distinct forecast
-    cycles emerges only when the system catches up to real time
-    operation.\footnote{{\em Cylc} also enables new modes of real time
-    operation, for example a catchment river model that runs hourly
-    assimilating real time stream flow observations and using the {\em
-    most recent} 6-hourly precipitation forecast - see EcoConnect,
-    below).} This means that parallel test systems can be started (or
-    restarted) behind the main operation to catch up as quickly as
-    possible, systems with little downtime between forecast cycles will
-    catch up from delays much faster, and historical case studies can
-    achieve sustained maximal throughput. {\em Cylc} is easily
-    interfaced to existing tasks and is extremely flexible and easy to
-    use. It can be restarted in arbitrarily complex states of operation
-    and dynamically adapts to insertion or removal of tasks.  A failed
-    task will necessarily delay its downstream dependants, but the rest
-    of the system can carry on unaffected while the problem is
-    addressed, after which time the delayed tasks will catch up as
-    quickly as possible.  {\em Cylc}'s handling of forecast model
-    `restart' dependencies allows continued operation, with very little
-    operator intervention, over major failures that result in omitted
-    forecast cycles in the driving (upstream) models.  Ability to
-    control the configured task set, and failure recovery scenarios, can
-    be completely tested in an accelerated simulation mode that is
-    indistinguishable (to {\em cylc}) from real operation.  {\em Cylc}
-    is written in object oriented Python and uses the Python Remote
-    Object Protocol ({\em Pyro}) to control tasks across a network.  
+    this paper.} for cycling environmental forecast systems consisting
+    of any number of linked scientific models and associated data
+    processing tasks.\footnote{A {\em task} is any group of processes
+    treated as a single entity for scheduling purposes.} Its novel
+    scheduling algorithm maintains an evolving pool of task proxy
+    objects that interact with each other to resolve all dependencies,
+    including those between tasks in different forecast
+    cycles.\footnote{For our purposes a {\em forecast cycle} comprises
+    all tasks with a common {\em cycle time}, i.e.\ the analysis time or
+    nominal start time of a forecast model, or that of the associated
+    forecast model(s) for other tasks.} Each task is defined in
+    isolation and knows its own prerequisites (but not who will satisfy
+    them) and outputs (but not who will use them), and there is no need
+    for a global ``suite'' definition that specifies dependencies or
+    execution order. Because cylc does not use global time loops to
+    advance the system, and treats all dependencies equally, it can run
+    tasks from multiple forecast cycles at once to the full extent
+    allowed by intercycle dependencies. This matters whenever the
+    external driving data\footnote{Forecast systems are typically driven
+    by observational data and/or timely model fields from an external
+    forecasting system.} for upcoming cycles are available in advance:
+    systems can catch up from delays very quickly, parallel test systems
+    can be started or restarted behind the main operation to catch up as
+    quickly as possible, and historical case studies can achieve
+    sustained maximal throughput. In cylc, a series of distinct forecast
+    cycles emerges only when and if a system catches up to real time
+    operation. Cylc is easily interfaced to existing tasks and is
+    extremely flexible and easy to use. It can be restarted in
+    arbitrarily complex states of operation and dynamically adapts to
+    insertion or removal of tasks in a running system.  Failed tasks
+    will necessarily delay their downstream dependants, but the rest of
+    the system can carry on unaffected while the problem is addressed,
+    after which time the delayed tasks will catch up as quickly as
+    possible.  Cylc's handling of forecast model `restart' dependencies
+    allows continued operation, with very little operator intervention,
+    over major failures that result in omitted forecasts in the driving
+    models.  Ability to control the configured task set, and failure
+    recovery scenarios, can be completely tested in an accelerated
+    simulation mode that is indistinguishable (to cylc) from real
+    operation.  Cylc is written in object oriented Python and uses {\em
+    Pyro} (Python Remote Objects). It can control tasks across a
+    heterogenous distributed network.  
 
+    %\footnote{Cylc also
+    %enables new modes of real time operation, for example a catchment
+    %river model that runs hourly assimilating real time stream flow
+    %observations and using the {\em most recent} 6-hourly precipitation
+    %forecast - see EcoConnect, below).} 
 \end{abstract}
 
 \pagebreak
@@ -95,23 +96,22 @@ Environmental forecasting systems generate forecast products at regular
 intervals using potentially large sets of scientific models and
 associated data processing tasks. They are constrained by availability
 of external driving data, typically real time observations and/or model
-data from an external forecasting system, which one or more ``top
-level'' tasks depend on; these drive other ``downstream'' task, and so
-on. The dependency diagram for such a system consists of one or more
-(possibly linked) {\em Directed Acyclic Graphs}, which may vary
-according to ``forecast cycle'' (wherein each task has the same {\em
-forecast cycle time}, namely the nominal analysis time or start time
-of the forecast models or, for data processing tasks, that of their
-associated forecast model). Normal real time operation necessarily
-consists of a series of distinct forecast cycles that are initiated,
-after a gap in processing, by arrival of new external driving data.
+data from an external forecasting system, which one or more tasks depend
+on, and these drive other ``downstream'' tasks, and so on. The
+dependency diagram for such a system consists of one or more (possibly
+linked) {\em Directed Acyclic Graphs}, which may vary according to the
+{\em forecast cycle} (wherein each task has the same {\em cycle time},
+namely the nominal analysis time or start time of the forecast models in
+the group). Normal real time operation necessarily consists of a series
+of distinct forecast cycles that are each initiated, after a gap in
+processing, by arrival of new external driving data.
 
 From a job scheduling perspective the execution order of the various
-tasks must be carefully controlled to avoid dependency violations.
-Ideally, each task should be queued for execution at the instant its
-last prerequisite is satisfied; this is the best that can be done even
-if queued tasks are not able to execute immediately because of resource
-contention.
+tasks must be carefully controlled in order to avoid dependency
+violations. Ideally, each task should be queued for execution at the
+instant its last prerequisite is satisfied; this is the best that can be
+done even if queued tasks are not able to execute immediately because of
+resource contention.
 
 
 \subsection{An Example: EcoConnect}
@@ -149,7 +149,7 @@ forecast model has generated output for it to process. Figure
 \ref{fig-dep-one} shows the dependency diagram for a single forecast
 cycle of a simple example system consisting of three forecast models
 ({\em a, b,} and {\em c}) and three post processing or product
-generation tasks ({\em d, e} and {\em f}).  A scheduling system capable
+generation tasks ({\em d, e} and {\em f}).  A scheduler capable
 of handling this must manage, within a single forecast cycle, multiple
 parallel streams of execution that branch when one task generates output
 for several downstream tasks, and merge when one task takes input from
@@ -182,26 +182,26 @@ Figure \ref{fig-time-one} shows the job schedule for two consecutive
 cycles of the example system in real time operation, given execution
 times represented by the horizontal extent of the task bars. There is a
 time gap between cycles as the system waits on new external driving
-data.  Each task in the example system is assumed to depend on upstream
-tasks finishing, rather than on intermediate outputs; this is merely 
-a simplification that makes for clearer diagrams.
+data.  Each task in the example system happens to trigger off upstream
+tasks {\em finishing}, rather than some intermediate output or event,
+but this is merely a simplification that makes for clearer diagrams.
 
 \subsection{Intercycle Dependencies}
 
-Now it must be noted that there are also dependencies between tasks in
-different forecast cycles: model runs typically depend on their own most
-recent previous forecast for an initial ``background model state''; and
-different kinds of tasks in different forecast cycles can also be linked
-(c.f.\ the way in which the catchment model depends on the weather model
-in EcoConnect). However, in real time operation these intercycle
-dependencies can be ignored: they are implicitly satisfied when one
-cycle necessarily finishes before the next begins. This is just as well
-because they dramatically increase the complexity of even the simplest
-systems by destroying the clean boundary between forecast cycles, as is
-apparent in Figure \ref{fig-dep-two} which shows the complete dependency
-graph for our example system assuming the least intercycle dependence
-that is likely to be present: each forecast model ($a$, $b$, and $c$)
-depends on its own previous instance.
+There are also dependencies between tasks in different cycles: forecast
+models typically depend on their own most recent previous forecast for
+an initial ``background state'', and different types of tasks in
+different forecast cycles can also be linked (e.g.\ the complicated
+relationship between the catchment river and weather models in
+EcoConnect). In real time operation these intercycle dependencies can be
+ignored because they are automatically satisfied when each cycle
+necessarily finishes before the next one begins. This is just as well
+because they dramatically increase the complexity of the dependency
+graph of even the simplest systems, by destroying the clean boundary
+between forecast cycles. Figure \ref{fig-dep-two} illustrates the
+problem for our simple example system assuming the least intercycle
+dependence likely to be present: the forecast models ($a$, $b$, and $c$)
+each depend on their own previous instances.
 
 \begin{figure} \begin{center}
     \includegraphics[width=6cm]{dependencies-two} \end{center}
@@ -213,26 +213,23 @@ depends on its own previous instance.
     \label{fig-dep-two}
 \end{figure}
 
-As far as the author is aware existing forecast schedulers, in one
-way or another, assume (and therefore require) a series of distinct
-forecast cycles at all times. This fits with our intuitive view of
-forecasting systems based on normal real time operations, and it means
-the aforementioned nasty inter-cycle dependencies can be avoided. But
-there is a cost to this simplification: strict seqential cycling is a
-serious impediment when advance availability of external driving data
-makes it possible, in principle, to run tasks from future cycles before
-the current cycle is finished.  This occurs after delays (late arrival
-of external data, system maintenance, etc.) and, to an even greater
-extent, in historical case studies and parallel test systems that are
-delayed with respect to the main operation. It is in fact a serious
-problem for systems that have little downtime between forecast cycles
-and consequently take many cycles to catch up after a delay. When
-intercycle dependencies are ignored, the best that can be done in these
-situations, in general, is to reduce the gap between cycles to zero. A
-limited crude overlap of the single cycle job schedule may be possible
-for specific task sets in certain circumstances, but even this is
-sub-optimal and it would be very difficult to guarantee that no
-dependencies will ever be violated.
+As far as the author is aware existing schedulers ignore intercycle
+dependencies and therefore require a series of distinct forecast cycles
+at all times. While this fits with our intuitive view of forecasting
+systems, based on normal real time operations, it is a serious
+impediment when advance availability of external driving data makes it
+possible, in principle, to run some tasks from upcoming cycles before
+the current cycle is finished. This occurs after delays (late arrival of
+external data, system maintenance, etc.) and, to an even greater extent,
+in historical case studies, and parallel test systems that are delayed
+with respect to the main operation. It is in fact a serious problem for
+systems that have little downtime between forecast cycles and
+consequently take many cycles to catch up after a delay. If intercycle
+dependencies are ignored the best that can be done, in general, is to
+reduce the gap between cycles to zero. A limited crude overlap of the
+single cycle job schedule may be possible for specific task sets in
+certain circumstances, but this is very much sub-optimal and it would be
+difficult to guarantee that dependencies will never be violated.
 
 \begin{figure} \begin{center}
     \includegraphics[width=12cm]{timeline-three} \end{center}
@@ -283,60 +280,73 @@ relative to that of its longest cotemporal upstream dependency path. In
 this case {\em c} can also run continuously, and consecutive instances
 of {\em e}, which has no previous-instance dependence, can overlap.
 Thus, even for this very simple example system, tasks from three or four
-different cycles can run simultaneously, in principle, at any given
+different cycles can in principle run simultaneously at any given
 time. 
 
 
-
 \pagebreak
-\section{Cylc Overview}
+\section{The Cylc Scheduling Algorithm}
 
-Cylc is a new forecast systems scheduler that naturally and easily
-achieves the optimal scheduling performance illustrated in the previous
-section, in all modes of operation (and seamlessly transitions to
-distinct real time cycles as it catches up).  Other systems cannot do
-this because (i) they are unaware of intercycle dependencies and (ii)
-they invariably use global cycling methods to advance the system forward
-in time (i.e. all tasks with the same cycle time must finish before the
-cycle time increments), maintaining the artificial boundary between
-cycles. In contrast, cylc has no system-wide looping mechansim: it
-maintains an evolving pool of task proxy objects (representing the real
-tasks) each of which has its own private cycle time and spawns its own
-successor when it is ready (exactly when this is depends on task type;
-see Section~\ref{sec:implementation}). Each task proxy knows its own
-prerequisites (including those from previous cycles), but not who is
-expected to provide them; and its own outputs, but not who is expected
-to use them. It also knows how to invoke its external task once its
-prerequisites are satisfied and, by means of a messaging system, can
-record the external task's outputs as they are completed. Cylc then gets
-the task pool to interact indiscriminately, {\em regardless of cycle
-time}, to match unsatisfied prerequisites with completed
-outputs.\footnote{In fact this negotiation goes through a middleman or
-broker, which reduces the task interaction scaling from $n^2$ to $n$,
-where $n$ is the number of tasks.} Thus optimal task scheduling emerges
-naturally at run time, in all modes of operation.
+Cylc manages a pool of task proxy objects that represent real tasks in
+the forecasting system. There is no global cycling mechanism to advance
+the system in time; instead each individual task proxy has a private
+cycle time and spawns its own successor at the right time, which does
+not depend at all on the state of other tasks in the system (it depends
+the state of the task itself, and on its type; see
+Section~\ref{sec:tasktypes}). Task proxies are self-contained and do not
+know what other tasks exist in the system, they just know their own
+prerequisites and outputs. Prerequisites can include files (say) that
+happen to be generated by other tasks with different cycle times, and
+the task pool can contain tasks with many different cycle times.  Now,
+whenever any task proxy changes state (as a result of an output
+completion message, for example) cylc gets the entire pool to interact
+indiscriminately, {\em regardless of cycle times}, in an attempt to
+match unsatisfied prerequisites with completed outputs.\footnote{In fact
+this dependency negotiation goes through a middleman or broker object,
+which reduces the task interaction scaling from $n^2$ to $n$, where $n$
+is the number of tasks.} Finally, a task proxy object can run its real
+task when its prerequisites are satisfied and, by means of a messaging
+system, can record completion of its own outputs as the system runs. 
+
+Thus without using global cycling mechanisms, and treating all
+dependencies equally, cylc in effect gets a set of tasks to
+self-schedule by negotiating its own dependencies: optimal scheduling,
+as illustrated in the previous section, emerges naturally at run time.
+In addition, cylc does not distinguish between delayed and real time
+operation at all. In delayed operation the tasks that gather the
+system's external driving data will return immediately (because the data
+is already available) and the system will only be constrained by its
+internal dependencies. In real time operation, the data gathering tasks
+will return only when the external data becomes available (normally at
+some known time interval after the task's nominal cycle time), delaying
+downstream tasks until then, by which time the previous forecast cycle
+will have completed. A cylc system thus transitions seamlessly from
+optimal multicycle scheduling to ``normal'' distinct forecast cycles as
+it catches up to real time operation.
 
 Note that in addition to achieving optimal scheduling, this algorithm is
-extremely simple. The entire forecasting system is defined by a simple
-list of tasks each of which, in effect, thinks it is alone in the world
-(even a standalone task must know its own prerequisites and
-outputs).\footnote{You can still use explicit task dependence if you
-wish: just make a task depend on an explicitly named upstream supplier
-{\em finishing} rather than on the upstream output that is the actual
-prerequisite of interest. However, framing prerequisites in terms of
-required input filenames, or similar, results in a more flexible system:
-tasks can easily be ``hot replaced'' by other tasks that generate
-similar outputs for instance.}  For this to work, of course, the life
-cycle of a task proxy object must be such that it is guaranteed to exist
-by the time it is needed, but not too much earlier, and it should die
-not too long after it is no longer needed.  This requires some thought
-at the program design stage, but only once, and the complexities therein
-are entirely hidden from the user. 
+extremely simple. The operator does not have to specify order of
+execution or system dependencies (except implicitly, in that each task's
+prerequisites must be matched by someone's outputs). The entire
+forecasting system is defined by a simple list of tasks each of which,
+in effect, thinks it is alone in the world (even a standalone task must
+know its own prerequisites and outputs).\footnote{You can still use
+explicit task dependence if you wish: just make a task depend on an
+explicitly named upstream supplier {\em finishing} rather than on the
+upstream output that is the actual prerequisite of interest. However,
+framing prerequisites in terms of required input filenames, or similar,
+results in a more flexible system: tasks can easily be ``hot replaced''
+by other tasks that generate similar outputs for instance.}  For this to
+work, of course, the life cycle of a task proxy object must be such that
+it is guaranteed to exist by the time it is needed, but not too much
+earlier, and it should die not too long after it is no longer needed.
+This requires some thought at the program design stage, but the
+complexities therein are entirely hidden from the user. 
 
 \subsection{Comparison with Existing Schedulers}
 
 As explained earlier, as far as the author is aware current forecast
-scheduling systems ignore intercycle dependencies and therefore require
+schedulers ignore intercycle dependencies and therefore require
 strict sequential cycling, which is very much sub-optimal outside of
 normal real time operation. The simplest of these schedulers places the
 burden of scheduling almost entirely on the user, who must supply a list
@@ -346,12 +356,12 @@ clearly sub-optimal even for quite simple systems and strict sequential
 cycling, and task ordering has to be re-evaluated manually whenever the
 system is changed. 
 
-Another method is hardwired system-specific finite state scheduling
+Another approach is hardwired system-specific finite state scheduling
 logic that enforces a predetermined order of events: {\em if tasks A and
 B have finished, then start task C} and so on. Optimal scheduling within
 a forecast cycle is possible in this case, assuming correct coding, but
 the hard coded logic inevitably becomes convoluted and inflexible as
-system complexity increases, and extension to intercycle dependencies is
+system complexity increases, and handling to intercycle dependencies is
 almost certainly not feasible.  
 
 Finally, the well established SMS system from ECMWF is an industrial
@@ -363,9 +373,10 @@ or at least is not able to do so when configured for normal usage (THIS
 IS STILL NOT ENTIRELY RESOLVED!) because (a) whole families trigger 
 at once(?), rather than individual tasks, and global cycling mechanisms
 are used to advance the system forward in time (either looping
-over successive analysis times for ``catch up'' OR
-triggering off the wall clock for real time operation. Note that Cylc
-seamlessly transitions between catchup and real time operation without
+over successive analysis times for ``catch up'' OR triggering off the
+wall clock for real time operation. Thus, in contrast to cylc, it would
+not be possible to have a delayed parallel test system catch up to the
+main operation and then keep pace with it.
 
 %In other words the task pool must include waiting tasks whose
 %prerequisites may {\em soon} be satisfied (but preferably no waiting
@@ -381,6 +392,11 @@ seamlessly transitions between catchup and real time operation without
 \section{Cylc Userguide}
 \label{sec:usage}
 
+All cylc commands and config files are intended to be self documenting,
+so the command help and file listings in this section are all
+auto-generated from from the actual commands and files during document
+processing.
+
 \subsection{System Requirements}
 
 \begin{itemize}
@@ -391,7 +407,7 @@ seamlessly transitions between catchup and real time operation without
 
 Cylc has been tested with Python 2.4.2 and 2.6.x, and Pyro 3.9 and 3.10,
 but it should work well with any recent versions or Python 2 and Pyro.
-Note, however, that as yet Pyro is not compatible with Python 3.
+As yet Pyro is not compatible with Python 3.
 
 Download Pyro from {\em http://pyro.sourceforge.net}. 
 
@@ -409,8 +425,8 @@ control system. If you need to develop cylc you can request access to
 clone the central repository, otherwise you will receive a cylc
 distribution tarball.
 
-Cylc does not require a system-level installation, it can be installed
-into a single directory under any user account: simply unpack the
+Cylc does not require system-level installation, it can be installed
+into a single directory under a user account: simply unpack the
 tarball. There is no ``build'' required because cylc is written entirely 
 in Python and Bash.
 
@@ -526,14 +542,39 @@ A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
 
 \pagebreak
-\subsection{System Config File}
+\subsection{System Config Files}
+
+The config file for a system is generated automatically by 
+\verb=cylc configure= after processing the system's task definition
+files. It defines a number of system-specific and user-configurable 
+items, such as the system name, task list, and log file locations. 
+If you customise the file it will not be overwritten by subsequent use of 
+\verb=cycl configure=, unless you force a rewrite, in which case the 
+old file will be backed up first. The config file happens to be a Python
+module, but as all configurable items are stored in a single Python dict
+(associative array) \verb*config['item'] = value*, how change the
+default values should be self-evident even to non Python programmers.
+
+The first listing below shows the config file for the 'simple-0' example
+system with all documentation stripped out, so that the configurable
+items are are easy to see. Following that is a listing of the fully
+documented file. 
+
+\lstset{language=Python}
+{
+\color{Brown}
+\lstinputlisting{system_config.py.stripped}
+}
+
+\pagebreak
+And here is the fully documented version of the example system config file.
 
 {
 \color{Brown}
 \lstinputlisting{../sys/examples/simple-0/system_config.py}
 }
 
-
+\lstset{language=}
 
 \pagebreak
 \subsection{Running Cylc}
@@ -543,7 +584,7 @@ startup, invokes the task, and reports task completion or failure.
 
 In {\em dummy mode}, \verb=cylc schedule -d=, in place of each real
 system task cylc executes an external program that masquerades as the
-real task by reporting its registered outputs complete at the approprite
+real task by reporting its registered outputs complete at the appropriate
 times. This is essentially indistinguishable, to cylc, from the real
 thing, and is therefore a complete test of scheduling for the configured
 task set. Dummy mode allows very quick testing of scheduling and failure
@@ -645,66 +686,75 @@ A {\em Task Definition File} defines the properties of a cylc task:
 name, valid cycle times, prerequisites and outputs, the task
 control script used to invoke the external task, etc.  
 \verb=cylc configure= parses a system's task definition files and
-generates the Python task class module required by cylc to run the system.
+generates the Python task class module required by cylc to run the
+system.
 
-\lstset{language=, numbers=left}
+Here is the full task definitition template with documentation stripped
+out.
+
+{
+\color{Brown}
+\lstinputlisting{full-template.def.stripped}
+}
+
+\pagebreak
+
+And here is the full task definitition template with documentation intact.
 
 {
 \color{Brown}
 \lstinputlisting{../sys/templates/full-template.def}
 }
 
-\pagebreak
-\subsection{More Complex Task Behaviour}
+%\pagebreak
+%\subsection{More Complex Task Behaviour}
 
-\textit{In EcoConnect: only streamflow and topnet}
-
-For tasks that have non-cotemporal upstream dependencies and/or need to  
-override task class methods to define new behaviour, the Python task
-code must currently be written directly. 
-
+%DETAIL WHEN IS IT NECESSARY TO DERIVE PYTHON TASK CLASSES DIRECTLY
+%I.E. WHEN ARE CYLC TASK DEFINITION FILES NOT SUFFICIENT.
+%(In EcoConnect: only streamflow and topnet)
 
 \pagebreak
 \appendix
 
 \section{Essential OOP Concepts}
 
-The cylc Python implementation makes heavy use of object oriented
-programming concepts, particularly the {\em polymorphic} nature of
-the task proxy objects.  This section contains a minimal introduction
-to these Object Oriented Programming concepts.  Refer to any OOP
+Cylc relies heavily on object oriented programming concepts,
+particularly the {\em polymorphic} nature of the task proxy objects.
+This section gives a minimal introduction to Object Oriented
+Programming for developers who need to modify cylc. Refer to an OOP
 reference for more detail.
 
 \subsection{Class}
 
-A {\em class} is essentially a generalisation of {\em data type} to
-include {\em behaviour} (i.e.\ functions or {\em methods}) as well as
-state. For example, a $shape$ class could define a $position$ data
-member that describes the location of each shape object, a $move()$
-method that causes a shape object to alter its position, and a $draw()$
-method that causes it to display itself in the right place on screen.
+Class is a generalisation of data type to include behaviour (i.e.\
+functions or methods) as well as state. 
+
+%For example, a $shape$ class could define a $position$ data member to
+%hold the location of a shape object, a $move()$ method that by which
+%a shape object can alter its position, and a $draw()$ method that
+%causes it to display itself on screen.
 
 \subsection{Object}
 
-{\em Objects} are more or less self contained specific {\em instances}
+An object is a more or less self contained specific instance
 of a class. This is analagous to specific integer variables being 
-instances of the general integer data type.
+instances of the integer data type.
 
 \subsection{Inheritance}
 
 A {\em derived class} or {\em subclass} inherits the properties (methods
-and data members) of a {\em base class}. It can also {\em override}
-specific base class properties, or add new properties that aren't
-present in the base class. Calling a particular method on an object
-invokes the object's own class method if one is defined, otherwise the
-immediate base class is searched, and so on down to the root of the
-inheritance graph. 
+and data members) of its parent or base class. It can also override
+specific properties, or add new properties that aren't present in the
+base class. Calling a particular method on an object invokes the
+object's own class method if one is defined, otherwise the parent
+class is searched, and so on down to the root of the inheritance
+graph. 
 
-For example, we could derive a $circle$ class from $shape$, adding a
-`radius' data member and overriding the $draw()$ to get circle objects
-to display themselves as actual circles.  Because we didn't override the
-$move()$ method, calling $circle.move()$ would invoke the base class
-method, $shape.move()$. 
+%For example, we could derive a $circle$ class from $shape$, adding a
+%`radius' data member and overriding the $draw()$ to get circle objects
+%to display themselves as actual circles.  Because we didn't override the
+%$move()$ method, calling $circle.move()$ would invoke the base class
+%method, $shape.move()$. 
 
 
 \subsection{Polymorphism}
@@ -712,37 +762,41 @@ method, $shape.move()$.
 Polymorphism is the ability of one type to appear as and be used like
 another type.  In OOP languages with inheritance, this usually refers to
 the ability to treat derived/sub-class objects as if they were members
-of a base class.  In particular, a group of mixed-type objects can all
-be treated as members of a common base class. For example, we could
-construct a list of $shape$ objects from $circles$, $triangles$, and
-$squares$; calling $[list member].draw()$ will invoke the right derived
-class $draw()$. This is a very powerful mechanism because {\em it allows
-unmodified old code to call new code}: if we later derive an entirely
-new kind of shape ($hexagon$, say) with it's own unique behaviour, the
-existing program, without modification, will process the new objects in
-the proper hexagon-specific way.  In Cylc, all task proxy objects are
-derived from a common base class. The main algorithm works with
-instances of the base class so that any current or future derived task
-object can be handled by the program without modification (other than
-the derived class code, that is).
+of a common base class. In particular, a group of mixed-type objects
+can all be treated as members of a common base class. 
+%For example, a group of %$circles$, $triangles$, and $squares$ could 
+%be manipulated by code designed entirely to handel $shapes$; calling
+%$[shape].draw()$ will invoke the right derived class $draw()$ method. 
+This is a powerful mechanism because it allows an existing program,
+without modification, to manipulate new objects so long as they 
+derive from the same base class as the original objects.
+%If we later derive an entirely new kind of shape ($hexagon$, say) with
+%it's own unique behaviour, the existing program, without modification,
+%will process the new objects in the proper hexagon-specific way.  
+In cylc, all task proxy objects are derived from a base class that 
+embodies the properties and behaviour common to all task proxies. 
+The scheduling algorithm works with instances of the base class so that
+any current or future derived task object can be handled by the program
+without modification (other than deriving the new subclass itself).
 
 
+\pagebreak
 \section{Threading in Pyro} \label{pyro-appendix}
 
-With Pyro in {\em single threaded mode}, \verb#handleRequests()# returns
-after {\em either} a timeout has occurred {\em or} at least one request
-(i.e.\ remote method call) was handled. With \verb#timeout = None# this
+In single threaded mode Pyro's \verb#handleRequests()# returns
+after either a timeout has occurred or at least one request
+(i.e.\ remote method call) was handled. Using \verb#timeout = None# 
 allows us to process tasks {\em only} after remote method invocations
 come in.  Further, we can detect the remote calls that actually change
 task states, and thereby drop into the task processing code only when
-necessary, which minimizes non-useful output from the task processing
-loop (e.g.\ in dummy mode there are a lot of remote calls on the dummy
-clock object, which does not alter tasks at all). 
+necessary, which eliminates a lot of extraneous output when debugging
+the task processing loop (e.g.\ in dummy mode there are a lot of remote
+calls on the dummy clock object, which does not alter tasks at all). 
 
 In {\em multithreaded mode}, \verb#handleRequests()# returns immediately
 after creating a new request handling thread for a single remote object,
 and thereafter remote method calls on that object come in asynchronously
-in the dedicated thread. This is not good for the dynamic scheduling
+in the dedicated thread. This is not good for cylc's scheduling
 algorithm because tasks are only set running in the task processing
 block which can be delayed while \verb#handleRequests()# blocks waiting
 for a new connection to be established, even as messages that warrant
@@ -752,6 +806,7 @@ timeouts which results in a lot of unnecessary processing when nothing
 important is happening.
 
 
+\pagebreak
 \section{Miscellaneous Notes}
 
 \subsection{Orderly Product Generation}
@@ -766,15 +821,14 @@ you'll have to introduce artificial dependencies into your cylc system
 to enforce strict sequential cycling (but that, of course, nullifies the
 principal advantage of using cylc in the first place!)
 
-\subsection{Catching Up}
-
-The state of being ``caught up'' or not is a property of individual
-tasks, not the whole system, and additionally it should only matter to
-external contact tasks, i.e. those that wait on external data that is
-available at a wall clock time of T (task cycle time) + o (some offset
-insterval). Where this matters an external task can detect whether or
-not it has caught up (and signal this to its proxy object in cylc) by
-comparing its cycle time (and offset) to the wall clock time.
-
+%\subsection{Catching Up}
+%
+%The state of being ``caught up'' or not is a property of individual
+%tasks, not the whole system, and additionally it should only matter to
+%external contact tasks, i.e. those that wait on external data that is
+%available at a wall clock time of T (task cycle time) + o (some offset
+%insterval). Where this matters an external task can detect whether or
+%not it has caught up (and signal this to its proxy object in cylc) by
+%comparing its cycle time (and offset) to the wall clock time.
 
 \end{document}

@@ -1,7 +1,7 @@
 #!/bin/bash
 
 print_usage() {
-	echo "Usage: cylc monitor-pyro-ns [options]"
+	echo "Usage: cylc monitor-p [options]"
     echo ""
 	echo "A simple terminal-based monitor to display objects"
     echo "currently registered in the Pyro Nameserver."

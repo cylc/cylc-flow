@@ -130,30 +130,30 @@ when it reaches that time, and then the system will shut down."""
             action="store_true", default=False, dest="restart" )
 
     parser.add_option( "--restart-from", 
-            help="Restart from a named state dump file, assumed to be"
-            "located in the system's configured state dump directory"
+            help="Restart from a named state dump file, assumed to be "
+            "located in the system's configured state dump directory "
             "unless you give an absolute file path.",
             metavar="STATE", action="store", dest="restart_from" )
 
     parser.add_option( "-d", "--dummy-mode", 
-            help="Run in accelerated time dummy mode. System tasks will be"
+            help="Run in accelerated time dummy mode. System tasks will be "
             "faked by an external dummy program.",
             action="store_true", default=False, dest="dummy_mode" )
 
     parser.add_option( "--rate", 
-            help="(Dummy mode) accelerated clock rate, INT seconds = 1 hour"
+            help="(Dummy mode) accelerated clock rate, INT seconds = 1 hour "
             "(defaults to 10 sec = 1 hour).",
             metavar="INT", action="store", default=10, dest="clock_rate" )
 
     parser.add_option( "--offset", 
-            help="(Dummy mode) clock offset at start up. The dummy clock will"
-            "start at INT hours prior to START cycle time (default 24 hours)."
+            help="(Dummy mode) clock offset at start up. The dummy clock will "
+            "start at INT hours prior to START cycle time (default 24 hours). "
             "Use to simulate catching up to real time operation.",
             metavar="HOURS", action="store", default=24, dest="clock_offset" )
 
     parser.add_option( "--fail", help=\
-            "(Dummy mode) get a task to abort after reporting that"
-            "it has failed. Use this to test failure and recovery"
+            "(Dummy mode) get a task to abort after reporting that "
+            "it has failed. Use this to test failure and recovery "
             "scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.",
         metavar="TASK-ID", action="store", dest="failout_task_id" )
 
