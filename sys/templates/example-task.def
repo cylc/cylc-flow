@@ -1,26 +1,31 @@
 # AN EXAMPLE CYLC TASK DEFINITION FILE FOR A NON-FORECAST MODEL TASK
-# (forecast models typically have special 'restart' prerequisites that
-# are satisfied by outputs from a previous run of the same model). Most
-# tasks in a typical system can be defined very simply, like this, but
-# see full-template.def for complete task definition documentation.
+# See the Cylc Userguide and/or the full task definition template
+# for the difference between the free_task and forecast_model types. 
+# The vast majority of tasks in a typical forecasting system are likely
+# to be no more complicated than this, but see full-template.def for
+# complete task definition documentation.
 
-%NAME
-    foo
+%NAME                  # task name
+    storm_surge_post
 
-%TYPE
+%DESCRIPTION           # 'cylc control' can access this at run time
+    storm surge model post-processing, generates site-specific XML
+    sea level data for use in combined-model seagrams
+
+%TYPE                  # free_task or forecast_model, with modifiers
     free_task 
 
 %CYCLE_TIMES           # hours in the day
     0,6,12,18
 
-%EXTERNAL_TASK
-    run-foo.sh
+%EXTERNAL_TASK         # the real task this task proxy represents
+    run-storm_surge_post.sh
 
 %PREREQUISITES         # run the external task when these are satisfied
     "file storm-surge-fc-1-$(MY_CYCLE_TIME).nc ready"
     "file storm-surge-fc-2-$(MY_CYCLE_TIME).nc ready"
 
-%ESTIMATED_RUN_TIME
+%ESTIMATED_RUN_TIME    # in minutes
     10 
 
 %OUTPUTS               # prefix with estimated completion time
