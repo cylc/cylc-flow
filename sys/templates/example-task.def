@@ -10,7 +10,7 @@
 %TYPE
     free_task 
 
-%START_TIMES
+%CYCLE_TIMES           # hours in the day
     0,6,12,18
 
 %EXTERNAL_TASK

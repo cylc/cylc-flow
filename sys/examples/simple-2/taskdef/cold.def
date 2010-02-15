@@ -11,7 +11,7 @@
 %TYPE
     free_task, oneoff
 
-%START_TIMES
+%CYCLE_TIMES
     0,6,12,18
 
 %EXTERNAL_TASK

@@ -9,7 +9,7 @@
 %TYPE
     free_task
 
-%START_TIMES
+%CYCLE_TIMES
     0,6,12,18
 
 %EXTERNAL_TASK

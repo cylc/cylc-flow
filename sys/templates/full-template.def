@@ -98,7 +98,7 @@
 
     bob
 
-%START_TIMES    # HOURS in the day
+%CYCLE_TIMES    # HOURS in the day
     # comma separated hours in the day valid for this task type
 
     0,6,12,18
@@ -135,7 +135,7 @@
     # $(MY_CYCLE_TIME [+/- <hours>])
 
     # May be conditional on a comma separated list of HOURS
-    # (which must occur in %START_TIMES).
+    # (which must occur in %CYCLE_TIMES).
 
     # Note that defined RESTARTs create an additional prerequisite.
 
@@ -164,7 +164,7 @@
     #   <%RUN_LENGTH_MINUTES>: <NAME> finished
     # Other tasks may depend on these automatically supplied outputs.
 
-    # May be conditional on %START_TIMES as for prerequisites.
+    # May be conditional on %CYCLE_TIMES as for prerequisites.
 
     # Note that defined RESTARTs create additional outputs.
 

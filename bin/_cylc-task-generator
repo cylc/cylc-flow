@@ -102,7 +102,7 @@ def main( argv ):
 
     task_def_files = argv[1:]
 
-    allowed_keys = [ 'NAME', 'OWNER', 'START_TIMES', 'EXTERNAL_TASK',
+    allowed_keys = [ 'NAME', 'OWNER', 'CYCLE_TIMES', 'EXTERNAL_TASK',
             'ENVIRONMENT', 'SINGLE_CYCLE', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION',
@@ -350,7 +350,7 @@ import logging
         FILE.write( indent + 'external_task = \'' + external_task + '\'\n\n' )
 
         # valid hours
-        FILE.write( indent + 'valid_hours = [' + parsed_def[ 'START_TIMES' ][0] + ']\n\n' )
+        FILE.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLE_TIMES' ][0] + ']\n\n' )
 
         FILE.write( indent + 'quick_death = ' + str(quick_death) + '\n\n' )
 
