@@ -47,12 +47,14 @@ cylc monitor-p   --help > doc/command-usage/monitor-p.txt
 
 cd doc
 
+cd inkscape-svg
 for F in *.eps; do
     [[ ! -f ${F%eps}pdf ]] || $FORCE && {
         echo converting $F to PDF
         epstopdf $F
     }
 done
+cd ..
 
 #pdflatex cylc.tex
 latex cylc.tex
