@@ -16,11 +16,12 @@
 %EXTERNAL_TASK
     run-foo.sh
 
-%PREREQUISITES
-    file model-output-$(MY_CYCLE_TIME).nc ready
+%PREREQUISITES         # run the external task when these are satisfied
+    "file storm-surge-fc-1-$(MY_CYCLE_TIME).nc ready"
+    "file storm-surge-fc-2-$(MY_CYCLE_TIME).nc ready"
 
 %ESTIMATED_RUN_TIME
     10 
 
-%OUTPUTS
-    8: file forecast-products-$(MY_CYCLE_TIME).nc ready
+%OUTPUTS               # prefix with estimated completion time
+    8: "file storm-surge-sites-$(MY_CYCLE_TIME).xml ready"

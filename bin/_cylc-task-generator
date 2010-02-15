@@ -70,6 +70,21 @@ def interpolate_variables( strng ):
 
     return strng
 
+def require_quotes( strng, item ):
+    # require enclosing quotes, then strip them off
+    
+    # first strip any whitespace
+    str = string.strip( strng )
+
+    m = re.match( '^".*"$', str )
+    if m:
+        stripped = string.strip( str, '"' )
+    else:
+        print 'ERROR: ' + item + ' must be enclosed in double quotes'
+        sys.exit(1)
+
+    return stripped
+
 #================= MAIN PROGRAM ========================================
 def main( argv ):
 
@@ -373,6 +388,7 @@ import logging
         FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.c_time )\n' )
         if 'PREREQUISITES' in parsed_def.keys():
             for line in parsed_def[ 'PREREQUISITES' ]:
+
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:
@@ -380,6 +396,9 @@ import logging
                     # get a list of hours
                     hours = left.split(',')
                     req = re.sub( '^\s+', '', req )
+
+                    req = require_quotes( req, 'prerequisites' )
+
                     req = "'" + req + "'"
                     req = interpolate_variables( req )
                     for hour in hours:
@@ -388,6 +407,8 @@ import logging
                         FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
                         indent_less()
                 else:
+                    line = require_quotes( line, 'prerequisites' )
+
                     req = "'" + line + "'"
                     req = interpolate_variables( req )
                     FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
@@ -402,6 +423,7 @@ import logging
                 
             FILE.write( indent + 'self.prerequisites = prerequisites( self.name, self.c_time )\n' )
             for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
+
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:
@@ -409,6 +431,9 @@ import logging
                     # get a list of hours
                     hours = left.split(',')
                     req = re.sub( '^\s+', '', req )
+
+                    req = require_quotes( req, 'prerequisites' )
+
                     req = "'" + req + "'"
                     req = interpolate_variables( req )
                     for hour in hours:
@@ -417,6 +442,9 @@ import logging
                         FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
                         indent_less()
                 else:
+
+                    line = require_quotes( line, 'prerequisites' )
+
                     req = "'" + line + "'"
                     req = interpolate_variables( req )
                     FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
@@ -452,6 +480,7 @@ import logging
        
         if 'OUTPUTS' in parsed_def.keys():
             for line in parsed_def[ 'OUTPUTS' ]:
+
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:
@@ -459,6 +488,9 @@ import logging
                     # get a list of hours
                     hours = left.split(',')
                     [ time, req ] = timed_req.split( ':' )
+
+                    req = require_quotes( req, 'outputs' )
+
                     req = "'" + req + "'"
                     req = interpolate_variables( req )
                     for hour in hours:
@@ -469,6 +501,9 @@ import logging
                 else:
                     timed_req = line
                     [ time, req ] = timed_req.split( ':' )
+
+                    req = require_quotes( req, 'outputs' )
+
                     req = "'" + req + "'"
                     req = interpolate_variables( req )
                     FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )

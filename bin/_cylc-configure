@@ -193,7 +193,7 @@ config['max_runahead_hours'] = 24
 
 # JOB LAUNCH METHOD
 # Currently: qsub as task owner, or direct background execution.
-# To change job lauch method, see src/task_launcher.py.
+# To modify the job launch method, or add additional methods, see src/task_launcher.py.
 eof
     if $QSUB; then
         echo "config['use_qsub'] = True" >> system_config.py

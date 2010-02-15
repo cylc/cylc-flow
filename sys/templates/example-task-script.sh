@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # THIS IS A CYLC TASK SCRIPT
+# !!!!!!!!!!!!!!! UPDATE ME - OBSOLETE VERSION!!!!!!!!!!!!!!!!!!!!!!!
 
 set -e  # ABORT ON ERROR
 

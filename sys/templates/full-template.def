@@ -139,9 +139,9 @@
 
     # Note that defined RESTARTs create an additional prerequisite.
 
-           foo finished for $(MY_CYCLE_TIME)
-           file bar_$(MY_CYCLE_TIME)_utc.nc ready
-    0,12 | file baz_$(MY_CYCLE_TIME)_utc.nc ready
+           "foo finished for $(MY_CYCLE_TIME)"
+           "file bar_$(MY_CYCLE_TIME)_utc.nc ready"
+    0,12 | "file baz_$(MY_CYCLE_TIME)_utc.nc ready"
 
 [%STARTUP_PREREQUISITES]
     # As for %PREREQUISITES above, but only used once at start time.
@@ -168,9 +168,9 @@
 
     # Note that defined RESTARTs create additional outputs.
 
-           10: file foo_0_$(MY_CYCLE_TIME).nc ready
-    0,12 | 15: file foo_1_$(MY_CYCLE_TIME).nc ready
-    6,18 | 15: file foo_2_$(MY_CYCLE_TIME).nc ready
+           10: "file foo_0_$(MY_CYCLE_TIME).nc ready"
+    0,12 | 15: "file foo_1_$(MY_CYCLE_TIME).nc ready"
+    6,18 | 15: "file foo_2_$(MY_CYCLE_TIME).nc ready"
 
 [%ESTIMATED_RESTART_DUMP_TIMES]
     # forecast_models only
