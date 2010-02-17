@@ -12,17 +12,17 @@
 \usepackage{graphicx}
 \usepackage[usenames,dvipsnames]{color}
 
-\definecolor{codeblock}{rgb}{0.97,0.97,0.98}
+\definecolor{codeblock}{rgb}{0.9,0.9,0.9}
 
 \lstset{
 language=,
 xleftmargin=2em,
-frame=single,
+%frame=single,
 backgroundcolor=\color{codeblock},
 basicstyle=\footnotesize\ttfamily,
-identifierstyle=\color{Plum},
-keywordstyle=\color{Magenta},
-commentstyle=\color{RoyalBlue},
+identifierstyle=\color{Black},
+keywordstyle=\color{RoyalBlue},
+commentstyle=\color{Red},
 stringstyle=\color{OliveGreen},
 showstringspaces=false,
 numbers=left,
@@ -125,10 +125,10 @@ Multi-cycle Catchup Capability}
 \end{abstract}
 
 \pagebreak
-\section{Environmental Forecasting Systems}
+\section{The Cylc Scheduling Algorithm}
 \label{sec:FS}
 
-\subsection{General Properties}
+\subsection{Properties of Environmental Forecast Systems}
 
 Environmental forecasting systems generate forecast products at regular
 intervals using potentially large sets of scientific models and
@@ -174,9 +174,9 @@ heterogenous distributed hardware, including a massively parallel
 supercomputer and several Linux servers. 
 
 \pagebreak
-\section{Scheduling Dependent Tasks }
+\subsection{Scheduling Dependent Tasks }
 
-\subsection{Real Time Operation}
+\subsubsection{Real Time Operation}
 
 Most dependencies occur between tasks within a single forecast cycle. A
 sea state forecast, for example, might depend on surface wind fields
@@ -230,7 +230,7 @@ but this is merely a simplification that makes for clearer diagrams.
     \label{fig-dep-two-linked}
 \end{figure}
 
-\subsection{Intercycle Dependencies}
+\subsubsection{Intercycle Dependencies}
 
 There are also dependencies between tasks in different cycles: forecast
 models typically depend on their own most recent previous forecast for
@@ -329,7 +329,7 @@ time.
 
 
 \pagebreak
-\section{The Cylc Scheduling Algorithm}
+\subsection{The Cylc Scheduling Algorithm}
 
 \begin{figure} 
     \begin{center} 
@@ -479,17 +479,13 @@ main operation and then keep pace with it.
 
 
 \pagebreak
-\section{Cylc Userguide}
+\section{Installation}
 \label{sec:usage}
-
-All cylc commands and config files are self documenting, so the command
-help and file listings in this section are auto-generated from the
-up-to-date commands and files during document processing.
 
 \subsection{System Requirements}
 
 \begin{itemize}
-    \item A *nix operating system
+    \item A Unix or Linux operating system
     \item The Python programming language
     \item Pyro (Python Remote Objects)
 \end{itemize}
@@ -501,30 +497,65 @@ http://pyro.sourceforge.net}.
 
 \subsection{Installation}
 
-\subsubsection{Pyro}
-
-Follow Pyro's simple installation instructions (it installs into the
-standard Python modules directory).
-
-\subsubsection{Cylc}
+First install Pyro according to its own requirements (this is very easy,
+it simply installs into the standard Python modules directory).
 
 Cylc is currently maintained using {\em darcs}, a distributed revision
 control system. If you need to develop cylc you can request access to
 clone the central repository, otherwise you will receive a cylc
-distribution tarball.
+distribution tarball. Cylc is designed to be installed into a directory
+under a normal user account: simply unpack the tarball. There is no
+``build'' required because cylc is written in Python (and a few small 
+bash scripts).
 
-Cylc does not require system-level installation, it can be installed
-into a single directory under a user account: simply unpack the
-tarball. There is no ``build'' required because cylc is written entirely 
-in Python and Bash.
+\subsection{Testing}
 
-\subsubsection{Testing}
+You can test the new installation by running the packaged example
+systems (Section~\ref{sec:examples}). They should work right away, ``out
+of the box'', but refer to the rest of this document, and/or type
+\lstinline=cylc help= for more information.  Start by modifying your
+login environment to provide access to cylc.  For the bash or ksh
+shells, for example, add the following to \lstinline=$HOME/.profile=: 
 
-Test your installation by running the packaged example systems in dummy
-mode and real mode (Section~\ref{sec:examples}).
+\lstset{language=bash}
+
+\begin{lstlisting}
+    # provide access to the cylc installation
+    CYLC_DIR=[cylc-top-dir]
+    export PATH=$CYLC/bin:$PATH
+    export PYTHONPATH=$CYLC/src:$PYTHONPATH
+\end{lstlisting}
+
+Now configure the system (only required the first time, and after
+changing the system's task set) and start scheduling it with cylc:
+
+\begin{lstlisting}
+    # configure the simple-0 system
+    cylc configure -s simple-0 $CYLC/sys/examples/simple-0
+    # start scheduling in dummy mode
+    cylc schedule -s simple-0 -d 2010081012
+\end{lstlisting}
+
+In another terminal window open a system monitor:
+
+\begin{lstlisting}
+    # monitor the running system
+    cylc monitor -s simple-0 -a
+\end{lstlisting}
+
+In yet another terminal use cylc's remote control to shut the system
+down:
+
+\begin{lstlisting}
+    # shut the system down
+    cylc control -s simple-0 --stop
+\end{lstlisting}
+
+And finally, run the system again for real (just omit the '-d' option
+above; what this all means is explained later).
 
 \pagebreak
-\subsection{Quick Start}
+\section{Quick Start Guide}
 
 The following is a quick summary of the steps required to get a system
 running under cylc.
@@ -564,13 +595,13 @@ running under cylc.
 
 \pagebreak
 \label{sec:tasktype}
-\subsection{Defining Tasks}
+\section{System Setup}
 
-To use cylc you need to divide your system into tasks of known {\bf
-type} and with defined {\bf prerequisites} and {\bf outputs}.
+First divide your system into tasks of known {\bf type}, with clearly
+defined {\bf prerequisites} and {\bf outputs}.
 
 \label{sec:tasktype}
-\subsubsection{Task Type}
+\subsection{Task Type}
 
 In other scheduling systems, as explained earlier, groups of tasks with
 the same cycle time must complete before a new batch of tasks, at the
@@ -598,12 +629,12 @@ type of task.
 
 
 \label{sec:requisites}
-\subsubsection{Prerequisites and Outputs}
+\subsection{Prerequisites and Outputs}
 
 
 \pagebreak
 \label{sec:taskdef}
-\subsubsection{Task Definition Files}
+\subsection{Task Definition Files}
 
 A task definition file declares the properties of each task in a simple
 text format.  \lstinline=cylc configure= parses a system's task definition
@@ -623,12 +654,12 @@ range of options available.
 }
 
 \pagebreak
-\subsubsection{Task Scripts}
+\subsection{Task Scripts}
 
 (note that several tasks may use the same script with different
 arguments, e.g. for moving files around).
 
-\subsubsection{Task Messaging}
+\subsection{Task Messaging}
 
 Each external task must:
 
@@ -658,7 +689,7 @@ control scripts. It's a probably a good idea to do this if possible, but
 lower level scripts that are invoked as the task runs can communicate
 directly with cylc if necessary.
 
-\subsubsection{Task Wrapping}
+\subsection{Task Wrapping}
 
 A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
@@ -791,7 +822,10 @@ config[ 'item' ] = value
 
 \pagebreak
 
-Here is the config file for the 'simple-0' example system: 
+\subsubsection{An Example Config File}
+
+This is the config file for the ``simple-0'' example system distributed
+with cylc: 
 
 \lstset{ language=Python }
 {
@@ -824,11 +858,11 @@ recovery scenarios for arbitrarily complicated task sets.
 \subsection{Packaged Example Systems}
 
 \pagebreak
-\section{Cylc Command Reference}
+\section{Command Reference}
 
 
-Cylc commands are self documenting so this section is automatically
-generated, during document processing, from actual command output.
+All cylc commands are self documenting, so this section is
+auto-generated during document processing.
 
 \subsection{cylc}
 
@@ -895,7 +929,7 @@ Use this command to interact with (interrogate and control) running systems.
 }
 
 \pagebreak
-\section{Cylc Task Definition Reference}
+\section{Task Definition Reference}
 
 A {\em Task Definition File} defines the properties of a cylc task:
 name, valid cycle times, prerequisites and outputs, the task
