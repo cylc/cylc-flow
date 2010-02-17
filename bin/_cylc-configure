@@ -177,9 +177,9 @@ config['state_dump_dir'] = 'CYLC-STATE'
 config['state_dump_file'] = 'state'
 
 # ENVIRONMENT VARIABLES THAT MAY BE USED BY TASKS IN THIS SYSTEM
-system_name = config[ 'system_name' ]
+sys_name = config[ 'system_name' ]
 user_name = os.environ['USER'] 
-config['environment'] = {'TMPDIR':'/tmp/' + user_name + '/' + name }
+config['environment'] = {'TMPDIR':'/tmp/' + user_name + '/' + sys_name }
 
 # MAXIMUM INTERVAL (IN CYCLE TIME) BETWEEN FASTEST AND SLOWEST TASKS
 config['max_runahead_hours'] = 24
