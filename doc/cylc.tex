@@ -20,7 +20,7 @@ xleftmargin=2em,
 %frame=single,
 backgroundcolor=\color{codeblock},
 basicstyle=\footnotesize\ttfamily,
-identifierstyle=\color{Black},
+identifierstyle=\color{Purple},
 keywordstyle=\color{RoyalBlue},
 commentstyle=\color{Red},
 stringstyle=\color{OliveGreen},
@@ -125,10 +125,10 @@ Multi-cycle Catchup Capability}
 \end{abstract}
 
 \pagebreak
-\section{The Cylc Scheduling Algorithm}
+\section{How Cylc Works}
 \label{sec:FS}
 
-\subsection{Properties of Environmental Forecast Systems}
+\subsection{Scheduling Forecast Systems}
 
 Environmental forecasting systems generate forecast products at regular
 intervals using potentially large sets of scientific models and
@@ -176,7 +176,7 @@ supercomputer and several Linux servers.
 \pagebreak
 \subsection{Scheduling Dependent Tasks }
 
-\subsubsection{Real Time Operation}
+\subsection{Real Time Operation}
 
 Most dependencies occur between tasks within a single forecast cycle. A
 sea state forecast, for example, might depend on surface wind fields
@@ -560,6 +560,8 @@ above; what this all means is explained later).
 The following is a quick summary of the steps required to get a system
 running under cylc.
 
+\subsection{Configuring A New System}
+
 \begin{itemize}
     \item divide your system into {\bf tasks} of known {\bf type}
         (Section~\ref{sec:tasks}).
@@ -570,32 +572,62 @@ running under cylc.
     \item write {\bf task scripts} to run the real external tasks 
         (Section~\ref{sec:taskscripts}).
 
-    \item run \lstinline=cylc configure= to generate a task class module and
-        sytem config file (Section~\ref{sec:configure}).
-
-    \begin{itemize}
-        \item repeat this step whenever you change the task definition files.
-        \item customise the system config file if necessary (e.g.\ for
-            log file location).
-    \end{itemize}
-
-    \item run \lstinline=cycl schedule= to cold start or restart a system
-        (Section~\ref{sec:run}).
-
-    \begin{itemize}
-
-        \item build and test your system incrementally using {\bf dummy
-            mode} (Section~\ref{sec:dummymode}).
-
-        \item use cylc's {\bf monitor} commands to display follow the
-            system as it runs (Section~\ref{sec:monitor}).
-    \end{itemize}
-
 \end{itemize}
+
+Now generate a task class module and config file for the new system
+(Section~\ref{sec:configure}), and customise the config file if
+necessary.
+\begin{lstlisting}
+    cylc configure -s SYSTEM [options]
+\end{lstlisting}
+
+
+\subsection{Reconfiguring An Existing System}
+
+To regenerate the system's task class module after adding, removing, or
+modifying its task definition files (Section~\ref{sec:configure}).
+
+\begin{lstlisting}
+    cylc configure -s SYSTEM [options]
+\end{lstlisting}
+
+Then customise the system config file if necessary.
+
+\subsection{Scheduling A Configured System}
+
+To cold start or restart a configured system (Section~\ref{sec:run}):
+
+\begin{lstlisting}
+    cycl schedule -s SYSTEM [options]
+\end{lstlisting}
+    
+\subsection{Monitoring A Running System}
+
+There are currently several terminal based system monitors for cylc
+(Section~\ref{sec:monitor}), for example: 
+
+\begin{lstlisting}
+    cylc monitor -s SYSTEM [options]
+\end{lstlisting}
+
+\subsection{Controlling A Running System}
+
+To interrogate, add or delete tasks, shutdown, etc. (Section~\ref{sec:control}):
+
+\begin{lstlisting}
+    cylc control -s SYSTEM [options]
+\end{lstlisting}
+
+
+\subsection{General Guidelines}
+
+Build and test your system incrementally using {\bf dummy mode}
+(Section~\ref{sec:dummymode}).
+
 
 \pagebreak
 \label{sec:tasktype}
-\section{System Setup}
+\section{Defining Tasks}
 
 First divide your system into tasks of known {\bf type}, with clearly
 defined {\bf prerequisites} and {\bf outputs}.
@@ -695,6 +727,8 @@ A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
 
 \pagebreak
+\section{Configuring A System}
+
 \subsection{System Config Files}
 
 Each task set to be scheduled by cylc requires a {\bf config file} that
@@ -715,7 +749,7 @@ associative array):
 config[ 'item' ] = value
 \end{lstlisting}
 
-\subsubsection{Configurable Items}
+\subsection{Configurable Items}
 
 \begin{itemize} \item {\bf system name}: the system is registered under
         this name in your cylc preferences directory. The system name is
@@ -822,7 +856,7 @@ config[ 'item' ] = value
 
 \pagebreak
 
-\subsubsection{An Example Config File}
+\subsection{An Example Config File}
 
 This is the config file for the ``simple-0'' example system distributed
 with cylc: 
@@ -837,10 +871,10 @@ with cylc:
 \lstset{language=}
 
 \pagebreak
-\subsection{Running Cylc}
+\section{Running Cylc}
 
 \label{sec:dummymode}
-\subsubsection{Dummy Mode}
+\subsection{Dummy Mode}
 
 In {\em dummy mode}, \lstinline=cylc schedule -d=, in place of each real
 system task cylc executes an external program that masquerades as the
@@ -851,11 +885,11 @@ task set. Dummy mode allows very quick testing of scheduling and failure
 recovery scenarios for arbitrarily complicated task sets.
 
 
-\subsection{System Monitors}
+\section{System Monitors}
 
-\subsection{Interacting With Running Systems}
+\section{Interacting With Running Systems}
 
-\subsection{Packaged Example Systems}
+\section{Packaged Example Systems}
 
 \pagebreak
 \section{Command Reference}
