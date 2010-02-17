@@ -172,9 +172,8 @@ config['task_groups'] = {}
 # LOGGING DIRECTORY
 config['logging_dir'] = 'CYLC-LOGS'
 
-# STATE DUMP DIRECTORY AND FILE
+# STATE DUMP DIRECTORY
 config['state_dump_dir'] = 'CYLC-STATE'
-config['state_dump_file'] = 'state'
 
 # ENVIRONMENT VARIABLES THAT MAY BE USED BY TASKS IN THIS SYSTEM
 sys_name = config[ 'system_name' ]
