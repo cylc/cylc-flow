@@ -12,12 +12,16 @@
 \usepackage{graphicx}
 \usepackage[usenames,dvipsnames]{color}
 
+\definecolor{codeblock}{rgb}{0.97,0.97,0.98}
+
 \lstset{
 language=,
 xleftmargin=2em,
+frame=single,
+backgroundcolor=\color{codeblock},
 basicstyle=\footnotesize\ttfamily,
-identifierstyle=\color{Sepia},
-keywordstyle=\color{Red},
+identifierstyle=\color{Plum},
+keywordstyle=\color{Magenta},
 commentstyle=\color{RoyalBlue},
 stringstyle=\color{OliveGreen},
 showstringspaces=false,
@@ -37,6 +41,10 @@ morestring=[b]\",
 {
 morekeywords={},
 sensitive=false,
+morecomment=[l]{Usage:},
+morecomment=[l]{Arguments:},
+morecomment=[l]{Options:},
+morecomment=[l]{Commands:},
 morecomment=[l]{usage:},
 morecomment=[l]{arguments:},
 morecomment=[l]{options:},
@@ -658,27 +666,139 @@ startup, invokes the task, and reports task completion or failure.
 \pagebreak
 \subsection{System Config Files}
 
-The config file for a system is generated automatically by 
-\lstinline=cylc configure= 
-after processing the system's task definition files. It
-defines a number of system-specific and user-configurable items, such as
-the system name, task list, and log file locations.  If you customise
-the file it will not be overwritten by subsequent use of 
-\lstinline=cycl configure=, 
-unless you force it, in which case the old file will be
-backed up automatically. The config file is actually a Python module
-that is imported directly into the program, but it is very simple: all
-configurable items are stored in a single Python {\em dict} (associative
-array); how to make the required modifications, if any, should clear by
-inspection, even to non-programmers.
+Each task set to be scheduled by cylc requires a {\bf config file} that
+specifies system-dependent parameters such as name, list of tasks to
+run, logging directory path, and so on. The config file is generated
+automatically by \lstinline=cylc configure= the first time the system's
+task definition files are parsed. Subsequent reconfiguration will not
+overwrite the config file unless you force it (in which case the
+original will be backed up), in case you have changed the default
+settings. The config file is a Python source module, but it is simply
+structured and should be easy for non-programmers to understand. 
 
-The following listing shows the config file for the 'simple-0' example
-system. Note, however, that only configured items that vary between
-systems, by default, are the system name and list of task names. 
+All configurable items are stored in a single {\em dict} (a Python
+associative array):
+
+\lstset{language=Python}
+\begin{lstlisting}
+config[ 'item' ] = value
+\end{lstlisting}
+
+\subsubsection{Configurable Items}
+
+\begin{itemize} \item {\bf system name}: the system is registered under
+        this name in your cylc preferences directory. The system name is
+        then used to refer to the system in cylc commands. It is also
+        used as a ``groupname'' under which to register system objects 
+        in the Pyro nameserver, to prevent conflicts with other systems
+        that may be running at the same time.
+
+        \begin{lstlisting}
+            config['system_name'] = 'foo'
+        \end{lstlisting}
+
+    \item {\bf task list}: list the name of each task to instantiate at
+        system startup.  For testing and debugging you can turn off
+        specific tasks by simply commenting them out of the task list.
+        
+        \begin{lstlisting}
+            config['task_list'] = \
+                [
+                    'foo',
+                    #'bar',
+                    'baz'
+                ]
+        \end{lstlisting}
+
+
+    \item {\bf task groups}: you can group several related tasks under a
+        single name for easy dynamic insertion of multiple tasks at
+        once into a running system. For example, you could define a 
+        group to hold all the tasks needed to cold start a particular
+        model.
+
+        \begin{lstlisting}
+            config['task_groups']['foo'] = [ 'bar', 'baz', ...]
+        \end{lstlisting}
+
+    \item {\bf job launch method}: the method by which cylc should
+        invoke the real external tasks when their prerequisites are
+        satisfied. Current methods are
+        \begin{itemize}
+            \item {\bf qsub}: sudo submit to a named queue as the task
+                owner.  
+            \item {\bf not qsub}: direct background execution.
+        \end{itemize}
+        To add additional methods (e.g. other queueing systems) you
+        will need to modify \lstinline{src/task_launcher.py}.
+
+        \begin{lstlisting}
+            config['use_qsub'] = True
+            config['job_queue'] = 'prime'
+        \end{lstlisting}
+
+    \item {\bf state dump directory}: the location of cylc's ``state
+        dump'' files (see Section~\ref{sec:state-dump}).  You may
+        specify an absolute directory path, or one relative to the
+        directory in which you run cylc.
+        
+        \begin{lstlisting}
+            config['logging_dir'] = '/foo/bar/baz/state'
+        \end{lstlisting}
+
+
+    \item {\bf logging directory location}: 
+        This items sets the location of the system's log files. You may
+        specify an absolute directory path, or one relative to the
+        directory in which you run cylc.
+
+        \begin{lstlisting}
+            config['logging_dir'] = '/foo/bar/baz/logging'
+        \end{lstlisting}
+
+    \item {\bf logging verbosity}: Cylc's logging subsystem is based on
+        the standard Python logging module (see
+        Section~\ref{sec:logging}). The 'info' level logs messages
+        relevant to task execution and scheduling, while the more
+        verbose 'debug' level adds messages that trace the execution of
+        cylc itself.
+
+        \begin{lstlisting}
+            config['logging_level'] = logging.INFO
+        \end{lstlisting}
+
+    \item {\bf environment variables}: You can export variables into the 
+        environment of all external tasks that the system runs. Note that
+        this can also be done, via task definition files, on a per-task
+        basis.
+
+        \begin{lstlisting}
+            config['environment'] = {'VAR1':'value1', 'VAR2':'value2', ... }
+        \end{lstlisting}
+
+    \item {\bf global system constraint}: if your system contains a
+        subset of tasks that do not depend on other tasks in the system, 
+        you can prevent these tasks from running out far ahead of the 
+        rest by setting the maximum interval (with respect to cycle
+        time) that the fast task is allowed to get ahead of the slowest.
+        
+        \begin{lstlisting}
+            config['max_runahead_hours'] = 24
+        \end{lstlisting}
+
+\end{itemize}
+
+
+\pagebreak
+
+Here is the config file for the 'simple-0' example system: 
+
 \lstset{ language=Python }
 {
 \lstinputlisting{../sys/examples/simple-0/system_config.py}
 }
+
+\pagebreak
 
 \lstset{language=}
 
