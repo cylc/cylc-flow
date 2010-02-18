@@ -557,7 +557,7 @@ option above).
 The following is a quick summary of the steps required to get a system
 running under cylc.
 
-\subsection{Define The System}
+\subsection{Task Definition}
 
 \begin{itemize}
     \item divide your system into {\bf tasks} with clearly defined 
@@ -571,7 +571,7 @@ running under cylc.
 
 \end{itemize}
 
-\subsection{(Re)Configuring A System}
+\subsection{(Re)Configuring A Defined System}
 
 Tell cylc to generate a task class module and config file for the new
 system (Section~\ref{sec:configure}): 
@@ -617,10 +617,134 @@ Build and test your system incrementally using {\bf dummy mode}
 
 \pagebreak
 \label{sec:tasktype}
-\section{Defining Tasks}
+\section{Task Definition}
 
-First divide your system into tasks of known {\bf type}, with clearly
-defined {\bf prerequisites} and {\bf outputs}.
+This section describes how to set up a forecasting system for scheduling
+with cylc. First the system must be divided into distinct {\bf tasks}
+(Section~\ref{sec:tasks}) with clearly defined {\bf prerequisites} and
+{\bf outputs} (Section~\ref{sec:requisites}). Then a simple {\bf task
+definition file} must be written for each task
+(Section~\ref{sec:taskdef}), and finally some {\bf task scripts} to run
+the real system tasks may need to be written
+(Section~\ref{sec:scripts}).
+
+\label{sec:tasks})
+\subsection{What is a Task?}
+
+A task is any group of one or more processes to be treated as a single
+entity for scheduling purposes, with clearly defined prerequisites and
+outputs. 
+
+For example, a task called ``weather_forecast'' might encompass
+preprocessing of atmospheric observations, data assimilation,
+atmospheric model forecast, and postprocessing of model output.
+However, it would be better to split this into four separate tasks. Cylc
+can handle large numbers of tasks and works out all dependencies itself
+at run time, so there are definite advantages to fine-graining,
+
+\begin{itemize}
+    \item a system that is more modular and transparent
+    \item after failures you can rerun just the process(es) that failed
+    \item the same external script (e.g.\ for file retrieval) can often
+        be invoked, with different arguments, for multiple tasks.
+\end{itemize}
+
+The a special {\bf task
+definition file} written for each task and, if necessary, {\bf task
+scripts} written to execute the external tasks. 
+
+\label{sec:requisites}
+\subsection{Prerequisites and Outputs}
+
+\subsubsection{Interpretation as Messages}
+
+Cylc's scheduling algorithm works by matching unsatisfied prerequisites
+with completed outputs (Section~\ref{sec:algorithm}).  These {\bf
+prerequisites and outputs are just literal text strings}, each
+representing a {\bf message} from a running task reporting that some
+important (scheduling-relevant) event has occurred. For example, the
+message ``file foo-2009101218.nc ready'' could be registered as an
+output by the task that generates said file (and reported by it when the
+event has occurred), and as a prerequisite by any tasks that require it
+as input.  A task considers a registered output ``completed'' if it has
+received a matching message from the external task that it represents.
+Similarly, a task considers a registered prerequisite ``satisfied'' if
+it has been told by any other task in the system that it has a completed
+output to match the prerequisite. 
+
+Prerequisites and outputs typically pertain to the completion of a file,
+or a group of files, but tasks can also trigger off any other event that
+a can conceiveably be reported: database interactions, downloaded
+from a network, copying, archiving, and so on.
+
+\subsubsection{The Truth Of Messages}
+
+For file outputs it may make sense to include filenames in the message
+strings, but there is no need to include actual file locations. The
+scheduler does not need to check that a reported output file actually
+exists, or more generally that any output message is true, because the
+external tasks must necessarily do their own error checking and
+immediately report any failure to cylc.
+
+
+\subsubsection{
+
+\subsubsection{Cycle Time in Messages}
+
+Prerequisites and outputs will almost always need to include a cycle
+time string whether inside a
+filename or not, to distinguish the outputs from instances of the same
+task in different forecast cycles. The time to use in messages would
+normally be the task's own cycle time, since intercycle dependencies
+(other than forecast model restart dependences) are rare, however cylc's
+task definition mechanism (below) provides some simple cycle time
+arithmetic operations for unusual cases. 
+
+\lstset{language=Python}
+\begin{lstlisting}
+# example: completion of a file with date-stamped filename
+"file foo_$(MY_CYCLE_TIME).bar ready"
+# example: other event
+"archiving completed for $(MY_CYCLE_TIME)"
+\end{lstlisting}
+
+
+\subsubsection{General Guidelines}
+
+\begin{itemize}
+
+    \item Prerequisites do not need to be unique across the system:
+        multiple tasks can trigger off the same event.
+
+    \item Outputs should be unique across the system, unless you want
+        all tasks that depend on a particular output to trigger off the
+        first task to provide it.
+
+\end{itemize}
+
+\subsubsection{Timed Output Messages}
+
+Outputs have to be registered with an {\bf estimated time of completion}
+in minutes. The timing information is currently only used in dummy mode
+to simulate system scheduling, so accuracy isn't critical. In the future
+it may also be used to check on system progress relative to expected
+behaviour.
+
+
+\subsubsection{Forecast Model Restart Messages}
+
+\subsubsection{Start and Finish Message}
+
+Cylc automatically supplies special 'started' and 'finished' output
+messages for each task. These are mainly intended for system monitoring
+and tracing purposes. Other tasks can use these as prerequisites, but be
+aware that introducing explicit dependence on specific tasks makes your
+system less flexible.
+
+\begin{lstlisting}
+    "Foo started for 2009101218"
+    "Bar finished for 2009101218"
+\end{lstlisting}
 
 \label{sec:tasktype}
 \subsection{Task Type}
@@ -650,9 +774,6 @@ type of task.
 \end{itemize}
 
 
-\label{sec:requisites}
-\subsection{Prerequisites and Outputs}
-
 
 \pagebreak
 \label{sec:taskdef}
@@ -681,7 +802,22 @@ range of options available.
 (note that several tasks may use the same script with different
 arguments, e.g. for moving files around).
 
-\subsection{Task Messaging}
+\subsubsection{Task Messages}
+
+The external tasks, or the scripts that execute them, need to report
+their outputs back to cylc as they run. Section~\ref{sec:message} shows
+how to add cylc messaging to tasks.  Ideally this reporting should be
+done as soon as each output is completed throughout the run. This is
+easy to achieve for scripted data processing tasks, for instance, but
+you may not want to do it for model executables (however, it should be
+noted that forecast models normally don't complete their major outputs
+until the end of a run). If that is the case a task can simply report
+all outputs completed at once before it finishes.  Cylc in fact has a
+task-wrapping mechanism that does this automatically
+(Section~\ref{sec:wrapping}), allowing you schedule a set of existing
+tasks without modifying them at all. The disadvantage of this approach
+is that in some cases a downstream could potentially have triggered
+earlier than this, before its parent finishes. 
 
 Each external task must:
 
