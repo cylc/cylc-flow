@@ -14,6 +14,7 @@
 \usepackage[dvipdf]{hyperref}
 
 \definecolor{codeblock}{rgb}{0.9,0.9,0.9}
+\definecolor{shadecolor}{rgb}{0.9,0.9,0.1}
 
 \lstset{
 language=,
@@ -631,14 +632,20 @@ to be written to allow cylc to execute the external tasks
 \label{sec:taskwhatis}
 \subsection{What is a Task?}
 
-A task is simply a group of one or more processes that is treated by the
-scheduler as a single entity. A system could be divided into a small
-number of large, internally complex tasks, or a large number of smaller,
-simpler tasks, or anything in between. However, cylc can handle large
-numbers of tasks and is self organising, so there are definite
-advantages to fine-graining your system, for instance:
+\begin{shaded}
+    A task is simply a group of one or more processes that is treated by
+    the scheduler as a single entity.
+\end{shaded}
+
+A system can be divided into a small number of large, internally
+complex tasks, a large number of smaller, simpler tasks, or anything
+in between. However, cylc can handle large numbers of tasks and is self
+organising, so there are definite advantages to fine-graining your
+system. For instance,
 
 \begin{itemize}
+    \item more efficient use of resources whenever multiple tasks can
+        run at the same time.
     \item a more modular and transparent system.
     \item faster recovery from failures - it is easy to rerun just the
         small part(s) of the system that failed. 
@@ -650,18 +657,20 @@ advantages to fine-graining your system, for instance:
 \label{sec:requisites}
 \subsection{Prerequisites and Outputs}
 
-Cylc's scheduling algorithm works by matching one task's unsatisfied
-prerequisites with another's completed outputs
-(Section~\ref{sec:algorithm}). This sections explains what form these
-prerequisites and outputs take in a cylc system, and how to register
-them in task definition files.
+%Cylc's scheduling algorithm works by matching one task's unsatisfied
+%prerequisites with another's completed outputs (Section~\ref{sec:algorithm}). 
+
+This sections explains how prerequisites and outputs are expressed in
+cylc, and how to register them in task definition files.
 
 \label{sec:requisiteasmessage}
 \subsubsection{Interpretation as Messages}
 
-{\bf Prerequisites and outputs are just literal text strings}, each
-representing a {\bf message} from a running task reporting that some
-important (scheduling-relevant) event has occurred.
+\begin{shaded}
+    Prerequisites and outputs are literal text strings. They
+    represent {\bf messages}, from running tasks, reporting that some
+    important (scheduling-relevant) event has occurred.
+\end{shaded}
 
 For example, the message ``file foo-2009101218.nc ready'' could be
 registered as an output by the task that generates said file (and
