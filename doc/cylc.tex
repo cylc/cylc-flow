@@ -13,19 +13,27 @@
 \usepackage[dvips,usenames,dvipsnames]{color}
 \usepackage[dvipdf]{hyperref}
 
-\definecolor{codeblock}{rgb}{0.9,0.9,0.9}
+\definecolor{codeblock}{rgb}{0.95,0.98,1.0}
+%\definecolor{keywords}{rgb}{1.0,0.3,0.0}
+\definecolor{keywords}{rgb}{1.0,0.1,1.0}
+%\definecolor{comments}{rgb}{0.0,0.7,0.8}
+\definecolor{comments}{rgb}{1.0,0.7,0.0}
+\definecolor{identifiers}{rgb}{0.1,0.0,1.0}
+\definecolor{strings}{rgb}{0.0,0.6,0.0}
+\definecolor{basic}{rgb}{0.0,0.4,0.0}
+
 \definecolor{shadecolor}{rgb}{0.9,0.9,0.1}
 
 \lstset{
 language=,
-xleftmargin=2em,
+%xleftmargin=2em,
 %frame=single,
 backgroundcolor=\color{codeblock},
-basicstyle=\footnotesize\ttfamily,
-identifierstyle=\color{Purple},
-keywordstyle=\color{OliveGreen},
-commentstyle=\color{Red},
-stringstyle=\color{RoyalBlue},
+basicstyle=\color{basic}\footnotesize\ttfamily,
+identifierstyle=\color{identifiers},
+keywordstyle=\color{keywords},
+commentstyle=\color{comments},
+stringstyle=\color{strings},
 showstringspaces=false,
 %numbers=left,
 %numberstyle=\color{Gray}
@@ -494,26 +502,33 @@ As yet Pyro is not compatible with Python 3.  Download Pyro from {\em
 http://pyro.sourceforge.net}, and follow its simple installation
 instructions (it installs in the standard Python modules path).
 
-
-\subsection{Installation}
+\subsection{Getting Cylc}
 
 Cylc is currently maintained using {\em darcs}, a distributed revision
 control system. If you need to develop cylc you can request access to
 clone the central repository, otherwise you will receive a cylc
-distribution tarball. Cylc is designed to be installed into a directory
-under a normal user account: simply unpack the tarball. There is no
-``build'' required because cylc is written in Python (and a few small 
-bash scripts).
+distribution tarball. 
 
-After installing cylc, modify your login environment to get access to
-the bin directory and Python source modules. For bash or ksh login
-shells, for example, add the following to \lstinline=$HOME/.profile= 
+\subsection{Installation}
+
+Cylc is designed to be installed into a normal user account: simply
+unpack the tarball, or move the repository, to the location of your
+choice. There is no ``build'' required because cylc is written in Python
+(plus a few small bash scripts).
+
+\subsection{Environment}
+
+The cylc bin directory must be in your executable search path, to
+provide access to cylc commands, and the cylc source directory must be
+in your Python module search path, to provide access to the cylc core
+modules. For sh-style login shells add the following to
+your \lstinline=$HOME/.profile=:
 
 \lstset{language=bash} 
 
 \begin{lstlisting}
     # provide access to the cylc scheduler
-    CYLC=#INSERT-PATH-TO-TOP-LEVEL-CYLC-INSTALLATION-DIR
+    CYLC=#INSERT-PATH-TO-TOP-LEVEL-CYLC-INSTALL-DIR#
     export PATH=$CYLC/bin:$PATH
     export PYTHONPATH=$CYLC/src:$PYTHONPATH
 \end{lstlisting}
