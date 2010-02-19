@@ -4,13 +4,13 @@
 
 % 1 inch margins
 \usepackage{fullpage}
-
+\usepackage{framed}
 \usepackage{listings}
   \usepackage{courier}
 \usepackage{amsmath}
 \usepackage{verbatim}
 \usepackage{graphicx}
-\usepackage[usenames,dvipsnames]{color}
+\usepackage[dvips,usenames,dvipsnames]{color}
 \usepackage[dvipdf]{hyperref}
 
 \definecolor{codeblock}{rgb}{0.9,0.9,0.9}
@@ -332,7 +332,7 @@ time.
     \begin{center} 
         \includegraphics[width=8cm]{inkscape-svg/task-pool}
     \end{center} 
-    \caption{\small How cycl sees the task pool, in contrast to the 
+    \caption{\small How cylc sees the task pool, in contrast to the 
     full dependency diagram of Figure~\ref{fig-full}.} 
     \label{fig-time-two}
 \end{figure} 
@@ -588,7 +588,7 @@ Customise the config file if necessary.
 To cold start or restart a configured system (Section~\ref{sec:run}):
 
 \begin{lstlisting}
-    cycl schedule --system SYSTEM [options]
+    cylc schedule --system SYSTEM [options]
 \end{lstlisting}
     
 \subsection{Monitoring A Running System}
@@ -616,61 +616,62 @@ Build and test your system incrementally using {\bf dummy mode}
 
 
 \pagebreak
-\label{sec:tasktype}
+\label{sec:tasks}
 \section{Task Definition}
 
 This section describes how to set up a forecasting system for scheduling
-with cylc. First the system must be divided into distinct {\bf tasks}
-(Section~\ref{sec:tasks}) with clearly defined {\bf prerequisites} and
+with cylc. First your system must be divided into distinct {\bf tasks}
+(Section~\ref{sec:taskwhatis}) with clearly defined {\bf prerequisites} and
 {\bf outputs} (Section~\ref{sec:requisites}). Then a simple {\bf task
 definition file} must be written for each task
-(Section~\ref{sec:taskdef}), and finally some {\bf task scripts} to run
-the real system tasks may need to be written
-(Section~\ref{sec:scripts}).
+(Section~\ref{sec:taskdeffiles}), and some {\bf task scripts} may need
+to be written to allow cylc to execute the external tasks
+(Section~\ref{sec:taskscripts}).
 
-\label{sec:tasks})
+\label{sec:taskwhatis}
 \subsection{What is a Task?}
 
-A task is any group of one or more processes to be treated as a single
-entity for scheduling purposes, with clearly defined prerequisites and
-outputs. 
-
-For example, a task called ``weather_forecast'' might encompass
-preprocessing of atmospheric observations, data assimilation,
-atmospheric model forecast, and postprocessing of model output.
-However, it would be better to split this into four separate tasks. Cylc
-can handle large numbers of tasks and works out all dependencies itself
-at run time, so there are definite advantages to fine-graining,
+A task is simply a group of one or more processes that is treated by the
+scheduler as a single entity. A system could be divided into a small
+number of large, internally complex tasks, or a large number of smaller,
+simpler tasks, or anything in between. However, cylc can handle large
+numbers of tasks and is self organising, so there are definite
+advantages to fine-graining your system, for instance:
 
 \begin{itemize}
-    \item a system that is more modular and transparent
-    \item after failures you can rerun just the process(es) that failed
-    \item the same external script (e.g.\ for file retrieval) can often
-        be invoked, with different arguments, for multiple tasks.
+    \item a more modular and transparent system.
+    \item faster recovery from failures - it is easy to rerun just the
+        small part(s) of the system that failed. 
+    \item the same external task script (e.g.\ for moving files around)
+        can often be invoked, with different arguments, for multiple tasks.
 \end{itemize}
 
-The a special {\bf task
-definition file} written for each task and, if necessary, {\bf task
-scripts} written to execute the external tasks. 
 
 \label{sec:requisites}
 \subsection{Prerequisites and Outputs}
 
+Cylc's scheduling algorithm works by matching one task's unsatisfied
+prerequisites with another's completed outputs
+(Section~\ref{sec:algorithm}). This sections explains what form these
+prerequisites and outputs take in a cylc system, and how to register
+them in task definition files.
+
+\label{sec:requisiteasmessage}
 \subsubsection{Interpretation as Messages}
 
-Cylc's scheduling algorithm works by matching unsatisfied prerequisites
-with completed outputs (Section~\ref{sec:algorithm}).  These {\bf
-prerequisites and outputs are just literal text strings}, each
+{\bf Prerequisites and outputs are just literal text strings}, each
 representing a {\bf message} from a running task reporting that some
-important (scheduling-relevant) event has occurred. For example, the
-message ``file foo-2009101218.nc ready'' could be registered as an
-output by the task that generates said file (and reported by it when the
-event has occurred), and as a prerequisite by any tasks that require it
-as input.  A task considers a registered output ``completed'' if it has
-received a matching message from the external task that it represents.
-Similarly, a task considers a registered prerequisite ``satisfied'' if
-it has been told by any other task in the system that it has a completed
-output to match the prerequisite. 
+important (scheduling-relevant) event has occurred.
+
+For example, the message ``file foo-2009101218.nc ready'' could be
+registered as an output by the task that generates said file (and
+reported by it when the event has occurred), and as a prerequisite by
+any tasks that require it as input.  A task considers a registered
+output ``completed'' if it has received a matching message from the
+external task that it represents.  Similarly, a task considers a
+registered prerequisite ``satisfied'' if it has been told by any other
+task in the system that it has a completed output to match the
+prerequisite. 
 
 Prerequisites and outputs typically pertain to the completion of a file,
 or a group of files, but tasks can also trigger off any other event that
@@ -687,7 +688,6 @@ external tasks must necessarily do their own error checking and
 immediately report any failure to cylc.
 
 
-\subsubsection{
 
 \subsubsection{Cycle Time in Messages}
 
