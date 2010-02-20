@@ -7,6 +7,7 @@
 #  (i) direct execution in the background ( 'task &' )
 #  (ii) qsub
 
+# TO DO: TASK-SPECIFIC LAUNCHER, LET TASKS OVERRIDE RUN METHOD.
 
 import os
 import re
@@ -16,8 +17,6 @@ class launcher:
     def __init__( self, config ):
 
         self.dummy_mode = config.get('dummy_mode')
-
-        self.system_name = config.get('system_name')
 
         self.use_qsub = config.get('use_qsub')
         self.job_queue = config.get('job_queue')
@@ -62,7 +61,6 @@ class launcher:
             # DIRECT EXECUTION 
             os.environ['CYCLE_TIME'] = c_time
             os.environ['TASK_NAME'] = task_name
-            os.environ['SYSTEM_NAME'] = self.system_name
 
             for entry in extra_vars:
                 [ var_name, value ] = entry
@@ -81,9 +79,8 @@ class launcher:
             command += ' qsub -q ' + self.job_queue + ' -z'
             command += ' -v CYCLE_TIME=' + c_time
             command += ',TASK_NAME='    + task_name
-            command += ',SYSTEM_NAME='  + self.system_name
-
-            # the following required for dummy mode operation
+            command += ',SYSTEM_NAME='  + os.environ['SYSTEM_NAME']
+            # clock rate required for dummy mode operation
             command += ',CLOCK_RATE='   + os.environ['CLOCK_RATE']
             command += ',PYTHONPATH=' + os.environ['PYTHONPATH']
 

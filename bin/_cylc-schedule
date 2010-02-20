@@ -280,6 +280,7 @@ when it reaches that time, and then the system will shut down."""
         parser.error( 'Either supply start time or restart' )
        
     # set configured global (all tasks) environment variables
+    os.environ[ 'SYSTEM_NAME' ] = str( options.system_name )
     if dummy_mode:
         os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
 
