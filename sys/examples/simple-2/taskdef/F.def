@@ -16,7 +16,7 @@
     F.sh
 
 %PREREQUISITES
-    C%$(MY_CYCLE_TIME) finished
+    "C%$(MY_CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     50

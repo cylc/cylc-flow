@@ -23,13 +23,13 @@
     # None
 
 %STARTUP_PREREQUISITES
-    startup%$(MY_CYCLE_TIME) finished
+    "startup%$(MY_CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     10
 
 %OUTPUTS
-    9: external data ready for $(MY_CYCLE_TIME)
+    9: "external data ready for $(MY_CYCLE_TIME)"
 
 #%SINGLE_CYCLE
 #    True

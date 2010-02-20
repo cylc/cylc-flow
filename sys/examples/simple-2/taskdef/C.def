@@ -22,7 +22,7 @@
     NEXT_NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 12)
 
 %PREREQUISITES
-    A%$(MY_CYCLE_TIME) finished
+    "A%$(MY_CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     120

@@ -15,12 +15,12 @@
     0,6,12,18
 
 %PREREQUISITES
-    C%$(MY_REFERENCE_TIME) finished
+    "C%$(MY_CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     20 
 
 %OUTPUTS
-    4: munge
-    5: lunge
-    6: funge
+    4: "munge"
+    5: "lunge"
+    6: "funge"

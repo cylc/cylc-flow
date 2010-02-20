@@ -16,7 +16,7 @@
     E.sh
 
 %PREREQUISITES
-    B%$(MY_CYCLE_TIME) finished
+    "B%$(MY_CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     150

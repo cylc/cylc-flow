@@ -21,7 +21,7 @@
     NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 6)
 
 %PREREQUISITES
-    external data ready for $(MY_CYCLE_TIME)
+    "external data ready for $(MY_CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
     90
