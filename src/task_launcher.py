@@ -19,7 +19,7 @@ class launcher:
         self.use_qsub = config.get('use_qsub')
         self.job_queue = config.get('job_queue')
 
-    def run( self, owner, task_name, c_time, task, dummy_out, extra_vars=[] ):
+    def run( self, owner, task_name, c_time, task, extra_vars=[] ):
 
         # who is running the control system
         cylc_owner = os.environ[ 'USER' ]
