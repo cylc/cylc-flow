@@ -11,9 +11,9 @@ import re
 from broker import broker
 
 class manager:
-    def __init__( self, config, dummy_mode, pyro, clock, restart, start_time = None, stop_time = None, restart_statedump = None ):
+    def __init__( self, config, pyro, clock, restart, start_time = None, stop_time = None, restart_statedump = None ):
 
-        self.dummy_mode = dummy_mode
+        self.dummy_mode = config.get('dummy_mode')
         self.clock = clock
         self.stop_time = stop_time
         self.config = config
