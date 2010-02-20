@@ -371,7 +371,7 @@ when it reaches that time, and then the system will shut down."""
                 system_halt_now = True
 
             process_tasks_contact = False
-            if task_manager.waiting_contact_task_ready( clock ):
+            if task_manager.waiting_contact_task_ready( clock.get_datetime() ):
                 process_tasks_contact = True
 
             # PROCESS ALL TASKS whenever something has changed that might

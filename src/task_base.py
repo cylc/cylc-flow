@@ -107,15 +107,13 @@ class task_base( Pyro.core.ObjBase ):
             pass
 
 
-    def __init__( self, clock, state = None ):
+    def __init__( self, state = None ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
         #  * self.c_time, using self.nearest_c_time()
         #  * prerequisites and outputs
         #  * self.env_vars 
-
-        self.clock = clock
 
         class_vars = {}
         self.state = task_state.task_state( state )
@@ -262,15 +260,15 @@ class task_base( Pyro.core.ObjBase ):
 
         return cycle_time.decrement( rt, decrement )
 
-    def ready_to_run( self ):
+    def ready_to_run( self, current_time ):
         # ready if 'waiting' AND all prequisites satisfied
         ready = False
         if self.state.is_waiting() and self.prerequisites.all_satisfied(): 
             ready = True
         return ready
 
-    def run_if_ready( self, launcher ):
-        if self.ready_to_run():
+    def run_if_ready( self, launcher, current_time ):
+        if self.ready_to_run( current_time ):
             self.run_external_task( launcher )
 
     def run_external_task( self, launcher ):

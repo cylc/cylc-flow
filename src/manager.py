@@ -3,7 +3,7 @@
 import cycle_time
 import pimp_my_logger
 import logging
-import pdb
+#import pdb
 import traceback
 import sys
 import os
@@ -87,7 +87,7 @@ class manager:
         for name in self.config.get('task_list'):
 
             # instantiate the task
-            itask = self.get_task_instance( 'task_classes', name )( self.clock, start_time )
+            itask = self.get_task_instance( 'task_classes', name )( start_time )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -179,7 +179,7 @@ class manager:
                 log_created[ name ] = True
 
             # instantiate the task object
-            itask = self.get_task_instance( 'task_classes', name )( self.clock, c_time, state )
+            itask = self.get_task_instance( 'task_classes', name )( c_time, state )
 
             # the initial task cycle time can be altered during
             # creation, so we have to create the task before
@@ -250,7 +250,9 @@ class manager:
                         self.log.debug( 'not asking ' + itask.get_identity() + ' to run (' + self.system_hold_ctime + ' hold in place)' )
                         continue
 
-                itask.run_if_ready( launcher )
+
+                current_time = self.clock.get_datetime()
+                itask.run_if_ready( launcher, current_time )
 
     def regenerate_tasks( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -272,7 +274,7 @@ class manager:
                 itask.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( self.clock, itask.next_c_time() )
+                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time() )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
@@ -546,7 +548,7 @@ class manager:
                 [ name, c_time ] = task_id.split( '%' )
 
                 # instantiate the task object
-                itask = self.get_task_instance( 'task_classes', name )( self.clock, c_time )
+                itask = self.get_task_instance( 'task_classes', name )( c_time )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
@@ -642,10 +644,10 @@ class manager:
         if int( next ) <= int( stop ):
             self.purge( name + '%' + next, stop )
 
-    def waiting_contact_task_ready( self, clock ):
+    def waiting_contact_task_ready( self, current_time ):
         result = False
         for itask in self.tasks:
-            if itask.ready_to_run():
+            if itask.ready_to_run(current_time):
                 result = True
                 break
         return result
@@ -686,7 +688,7 @@ class manager:
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in regenerate_tasks()?
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( self.clock, itask.next_c_time() )
+                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time() )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', 'STOPPING at configured stop time' )
