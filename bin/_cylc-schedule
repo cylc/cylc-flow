@@ -187,10 +187,7 @@ when it reaches that time, and then the system will shut down."""
     system_config = config.config()
 
     dummy_mode = False
-    if system_config.get( 'dummy_mode' ):
-        dummy_mode = True
-
-    elif options.dummy_mode:
+    if options.dummy_mode:
         system_config.put( 'dummy_mode', True )
         dummy_mode = True
 
@@ -282,8 +279,7 @@ when it reaches that time, and then the system will shut down."""
             not options.restart_from: 
         parser.error( 'Either supply start time or restart' )
        
-    # set configured environment variables
-    # WHY HERE (SHOULD BE IN TASK LAUNCHER?)
+    # set configured global (all tasks) environment variables
     env = system_config.get('environment')
     for VAR in env.keys():
         os.environ[ VAR ] = env[ VAR ]
