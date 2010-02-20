@@ -9,11 +9,10 @@ class remote_switch( Pyro.core.ObjBase ):
     "class to take remote system control requests" 
     # the task manager can take action on these when convenient.
 
-    def __init__( self, config, tasknames, tasks ):
+    def __init__( self, config, tasks ):
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
         self.config = config
-        self.tasknames = tasknames
         self.insert_this = None
 
         self.set_stop = False
@@ -232,9 +231,7 @@ class remote_switch( Pyro.core.ObjBase ):
         # assumes that the configured task list is the same as in the
         # state-dump file, which should be the case.
 
-        for task in self.tasknames:
-            # strip off any state string
-            foo = task.split(':')
-            name = 'main.' + foo[0]
+        for task in self.tasks:
+            name = 'main.' + task.name
             log = logging.getLogger( name )
             log.setLevel( new_level )

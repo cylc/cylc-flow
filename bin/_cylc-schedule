@@ -353,7 +353,7 @@ when it reaches that time, and then the system will shut down."""
         task_manager = manager.manager( system_config )
 
         # remote control switch
-        remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )
+        remote = remote_switch.remote_switch( system_config, task_manager.get_tasks() )
         pyro.connect( remote, 'remote' )
 
         print "\nBeginning task scheduling NOW\n"
