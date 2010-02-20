@@ -11,18 +11,22 @@ import re
 from broker import broker
 
 class manager:
-    def __init__( self, config, pyro, clock, restart, start_time = None, stop_time = None, restart_statedump = None ):
+    def __init__( self, config ):
 
-        self.dummy_mode = config.get('dummy_mode')
-        self.clock = clock
-        self.stop_time = stop_time
         self.config = config
+        self.dummy_mode = config.get('dummy_mode')
+        self.clock = config.get('clock')
+        self.stop_time = config.get('stop_time' )
+        self.pyro = config.get('pyro')  # pyrex (cylc Pyro helper) object
 
-        self.pyro = pyro  # pyrex (cylc Pyro helper) object
         self.log = logging.getLogger( "main" )
 
         self.system_hold_now = False
         self.system_hold_ctime = None
+
+        restart = config.get('restart')
+        start_time = config.get('start_time' )
+        restart_statedump = config.get('restart_from')
 
         # initialise the dependency broker
         self.broker = broker()

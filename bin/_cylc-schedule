@@ -340,7 +340,14 @@ when it reaches that time, and then the system will shut down."""
         pyro.connect( dead_letter_box, 'dead_letter_box' )
 
         # initialize the task manager from general config file or state dump
-        task_manager = manager.manager( system_config, pyro, clock, restart, start_time, stop_time, restart_from )
+        system_config.put( 'pyro', pyro )
+        system_config.put( 'clock', clock )
+        system_config.put( 'restart', restart )
+        system_config.put( 'start_time', start_time )
+        system_config.put( 'stop_time', stop_time )
+        system_config.put( 'restart_from', restart_from )
+
+        task_manager = manager.manager( system_config )
 
         # remote control switch
         remote = remote_switch.remote_switch( system_config, system_config.get('task_list'), task_manager.get_tasks() )
