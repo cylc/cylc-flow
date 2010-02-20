@@ -319,7 +319,7 @@ when it reaches that time, and then the system will shut down."""
         # attempt a clean shutdown if anything goes wrong from here on
 
         # external task launcher
-        launcher = task_launcher.launcher( system_config, dummy_mode, options.failout_task_id )
+        launcher = task_launcher.launcher( system_config, options.failout_task_id )
 
         state_dump_dir = system_config.get('state_dump_dir')
         state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')

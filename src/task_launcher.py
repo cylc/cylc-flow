@@ -13,9 +13,9 @@ import re
 
 class launcher:
 
-    def __init__( self, config, dummy_mode, failout_task = None ):
+    def __init__( self, config, failout_task = None ):
 
-        self.dummy_mode = dummy_mode
+        self.dummy_mode = config.get('dummy_mode')
 
         self.system_name = config.get('system_name')
 
