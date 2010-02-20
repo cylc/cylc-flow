@@ -13,14 +13,11 @@ import re
 
 class launcher:
 
-    def __init__( self, config, dummy_mode, clock_rate, failout_task = None ):
+    def __init__( self, config, dummy_mode, failout_task = None ):
 
         self.dummy_mode = dummy_mode
 
         self.system_name = config.get('system_name')
-
-        # The clock rate determines how fast dummy tasks run.
-        self.clock_rate = clock_rate
 
         self.use_qsub = config.get('use_qsub')
         self.job_queue = config.get('job_queue')
@@ -65,7 +62,6 @@ class launcher:
             os.environ['CYCLE_TIME'] = c_time
             os.environ['TASK_NAME'] = task_name
             os.environ['SYSTEM_NAME'] = self.system_name
-            os.environ['CLOCK_RATE'] = str( self.clock_rate )
 
             for entry in extra_vars:
                 [ var_name, value ] = entry
@@ -87,7 +83,7 @@ class launcher:
             command += ',SYSTEM_NAME='  + self.system_name
 
             # the following required for dummy mode operation
-            command += ',CLOCK_RATE='   + str(self.clock_rate)
+            command += ',CLOCK_RATE='   + os.environ['CLOCK_RATE']
             command += ',PYTHONPATH=' + os.environ['PYTHONPATH']
 
             for entry in extra_vars:
