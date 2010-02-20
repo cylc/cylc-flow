@@ -16,19 +16,8 @@ class launcher:
 
     def __init__( self, config ):
 
-        self.dummy_mode = config.get('dummy_mode')
-
         self.use_qsub = config.get('use_qsub')
         self.job_queue = config.get('job_queue')
-
-        failout_task = config.get('failout_task_id')
-        self.failout = False
-        self.failout_task = failout_task
-        if failout_task:
-            self.failout = True
-            print "FAILOUT TASK: " + failout_task
-            if not self.dummy_mode:
-                print 'WARNING: failout only affects dummy mode'
 
     def run( self, owner, task_name, c_time, task, dummy_out, extra_vars=[] ):
 
@@ -42,17 +31,7 @@ class launcher:
             owner = re.sub( '_oper$', '_' + system, owner )
 
         # EXTERNAL PROGRAM TO RUN
-        if self.dummy_mode or dummy_out:
-            # dummy task
-            external_program = '_cylc-dummy-task'
-            if self.failout:
-                if self.failout_task == task_name + '%' + c_time:
-                    external_program += ' --fail'
-                    # now turn failout off, in case the task gets reinserted
-                    self.failout = False
-        else:
-            # real task
-            external_program = task
+        external_program = task
 
         # CONSTRUCT THE FULL COMMAND TO RUN
         command = ''

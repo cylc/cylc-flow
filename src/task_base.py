@@ -107,7 +107,7 @@ class task_base( Pyro.core.ObjBase ):
             pass
 
 
-    def __init__( self, state = None ):
+    def __init__( self, dummy_mode, state = None ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
@@ -146,6 +146,10 @@ class task_base( Pyro.core.ObjBase ):
         #    # shutdown (which happens in normal shutdown).
         #    self.log( 'WARNING', " starting in SATISFIED state" )
         #    self.prerequisites.set_all_satisfied()
+
+        # in dummy mode, replace the external task with _cylc-dummy-task
+        if dummy_mode:
+            self.external_task = '_cylc-dummy-task'
 
 
     def get_identity( self ):
