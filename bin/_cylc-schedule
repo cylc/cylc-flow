@@ -78,7 +78,8 @@ def service_remote_requests( remote, task_manager, log, failout = None ):
 
     if remote.kill_ids:
         log.warning( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
-        task_manager.abdicate_and_kill( remote.kill_task_ids )
+        #task_manager.abdicate_and_kill( remote.kill_task_ids )
+        task_manager.kill( remote.kill_task_ids )
         remote.kill_ids = False
         remote.kill_task_ids = {}
         process_tasks = True
