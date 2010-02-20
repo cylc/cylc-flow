@@ -318,9 +318,6 @@ when it reaches that time, and then the system will shut down."""
     try:
         # attempt a clean shutdown if anything goes wrong from here on
 
-        # external task launcher
-        launcher = task_launcher.launcher( system_config, options.failout_task_id )
-
         state_dump_dir = system_config.get('state_dump_dir')
         state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')
 
@@ -349,7 +346,10 @@ when it reaches that time, and then the system will shut down."""
         system_config.put( 'start_time', start_time )
         system_config.put( 'stop_time', stop_time )
         system_config.put( 'restart_from', restart_from )
+        system_config.put( 'failout_task_id', options.failout_task_id )
 
+        # external task launcher
+        launcher = task_launcher.launcher( system_config )
         task_manager = manager.manager( system_config )
 
         # remote control switch

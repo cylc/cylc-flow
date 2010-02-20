@@ -13,7 +13,7 @@ import re
 
 class launcher:
 
-    def __init__( self, config, failout_task = None ):
+    def __init__( self, config ):
 
         self.dummy_mode = config.get('dummy_mode')
 
@@ -22,6 +22,7 @@ class launcher:
         self.use_qsub = config.get('use_qsub')
         self.job_queue = config.get('job_queue')
 
+        failout_task = config.get('failout_task_id')
         self.failout = False
         self.failout_task = failout_task
         if failout_task:
