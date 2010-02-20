@@ -67,6 +67,10 @@ class launcher:
             os.environ['SYSTEM_NAME'] = self.system_name
             os.environ['CLOCK_RATE'] = str( self.clock_rate )
 
+            for entry in extra_vars:
+                [ var_name, value ] = entry
+                os.environ[var_name] = value
+
             command += external_program + ' &' 
 
         else:
