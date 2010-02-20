@@ -1,6 +1,10 @@
 #!/bin/bash
 
-# Clean existing cylc paths from a supplied PATH variable
+# Clean existing cylc paths from a supplied PATH variable.
+# This is used by cylc-env.sh to configure a shell environment
+# on-the-fly for a cylc instance different to that set up in 
+# the users login scripts.
+
 # Enables reconfiguring cylc to a different task system
 # without logging out and in again.
 
