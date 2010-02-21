@@ -146,6 +146,8 @@ if options.all_restarts_completed:
 elif options.all_outputs_completed:
     task.set_all_outputs_completed()
 else:
+    if message == "finished" or message == "failed":
+        task.incoming( priority, "completed" )
     task.incoming( priority, message )
 
 #    # nameserver not found, or object not registered with it?

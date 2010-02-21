@@ -48,10 +48,9 @@ cylc-message "started"
 if $WRAP; then 
     # succeeded
     cylc-message --all-outputs-completed
-    # this sets the "completed" message finished, but not the "finished" message
+    # still need to send "finished"
     cylc-message "finished"
 else
     # failed
-    cylc-message "completed"
     cylc-message -p CRITICAL "failed" 
 fi
