@@ -1,8 +1,6 @@
 #!/bin/bash
 
-# Generate task class code, config module, and environment file for a
-# particular cylc system, and copy the task-wrapper from cylc/bin to the
-# system scripts directory.
+# Generate task class and config module for a particular cylc system
 
 # TO DO: rewrite this in Python to allow long options '--help' etc., for
 # consistency with other cylc commands.
@@ -204,11 +202,11 @@ eof
 fi
 echo "=> $SYS_DIR/system_config.py"
 
-echo
-echo "Installing the cylc task-wrapper script"
-mkdir -p scripts
-cp $CYLC_DIR/bin/_cylc-task-wrapper scripts/cylc-task-wrapper
-echo "=> $SYS_DIR/scripts/cylc-task-wrapper"
+#echo
+#echo "Installing the cylc task-wrapper script"
+#mkdir -p scripts
+#cp $CYLC_DIR/bin/_cylc-task-wrapper scripts/cylc-task-wrapper
+#echo "=> $SYS_DIR/scripts/cylc-task-wrapper"
 
 echo
 echo "Updating your cylc global config"
