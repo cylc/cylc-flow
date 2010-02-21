@@ -15,14 +15,14 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    task-wrapper
+    cylc-task-wrapper
 
 %ENVIRONMENT
     WRAP A.sh
     NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 6)
 
 %PREREQUISITES
-    ext%$(MY_CYCLE_TIME) finished
+    "ext%$(MY_CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     90

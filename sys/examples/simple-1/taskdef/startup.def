@@ -13,7 +13,7 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    task-wrapper
+    cylc-task-wrapper
 
 %ENVIRONMENT
     WRAP startup.sh

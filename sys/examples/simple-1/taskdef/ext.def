@@ -17,7 +17,7 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    task-wrapper
+    cylc-task-wrapper
 
 %ENVIRONMENT
     WRAP ext.sh
@@ -26,7 +26,7 @@
     # None
 
 %STARTUP_PREREQUISITES
-    startup%$(MY_CYCLE_TIME) finished
+    "startup%$(MY_CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     10

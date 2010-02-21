@@ -101,7 +101,7 @@ elif len( args ) == 1:
     # user sent a quoted string
     message = args[0]
 else:
-    # user sent a bar string, so join all the words together
+    # user sent a bare string, so join all the words together
     message = ' '.join(args)
 
 # connect to the task object inside the control program
