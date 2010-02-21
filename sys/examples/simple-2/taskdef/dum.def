@@ -23,6 +23,6 @@
     0.05 
 
 %OUTPUTS
-    4: "munge"
-    5: "lunge"
-    6: "funge"
+    0.02: "munge"
+    0.03: "lunge"
+    0.04: "funge"
