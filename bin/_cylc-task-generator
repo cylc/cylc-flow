@@ -122,7 +122,6 @@ def main( argv ):
 from task_types import forecast_model, free_task
 from mod_oneoff import oneoff
 from mod_sequential import sequential
-from mod_dummy import dummy
 from mod_contact import contact
 from mod_catchup_contact import catchup_contact
 from prerequisites_fuzzy import fuzzy_prerequisites
@@ -260,19 +259,30 @@ import logging
                         contact = True
                         catchup_contact = True
 
+                # removed 'dummy' from modifiers; it is handled below by
+                # simply replacing the external task, not class derivation.
+
+                if 'dummy' in modifiers:
+                    modifiers.remove( 'dummy' )
+
                 # this assumes the order of modifiers does not matter.
-                derived_from = ','.join( modifiers ) + ', ' + derived_from
+                if len( modifiers ) >= 1:
+                    derived_from = ','.join( modifiers ) + ', ' + derived_from
 
         if 'EXTERNAL_TASK' in parsed_def.keys():
             external_task = parsed_def[ 'EXTERNAL_TASK' ][0]
             if dummy:
-                print "WARNING: this task has the 'dummy' modifier; it will never use", external_task
+                print "WARNING: this task has the 'dummy' task type modifier, and therefore its"
+                print "external task, " + external_task + ", will be replaced by _cylc-dummy-task."
         else:
-            # no external task: dummy tasks only
-            external_task = 'NO-EXTERNAL-TASK'
+            # no external task specified
             if not dummy:
                 print 'ERROR: no external task specified'
                 sys.exit(1)
+
+        # set external task for dummy tasks
+        if dummy:
+            external_task = '_cylc-dummy-task'
 
         oneoff_follow_on = False
         if oneoff and not quick_death:
@@ -529,11 +539,12 @@ import logging
             FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
 
         # call parent init methods
+        # FOR PARENT CLASS TYPES THAT HAVE INIT METHODS!
         FILE.write( '\n' )
-
+    
         if catchup_contact:
             FILE.write( indent + 'catchup_contact.__init__( self )\n\n' )
-
+ 
         FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
 
 
