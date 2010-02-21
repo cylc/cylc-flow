@@ -15,7 +15,7 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    cylc-task-wrapper
+    cylc-wrapper
 
 %ENVIRONMENT
     WRAP A.sh

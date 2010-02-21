@@ -10,10 +10,12 @@ allowed_commands = \
     'configure',
     'schedule', 
     'control',
+    'message',
     'monitor',
     'monitor-r',
     'monitor-d',
     'monitor-p',
+    'show-configured',
     'show-pyro',
     ]
 
@@ -29,6 +31,7 @@ usage = \
     '  configure     Configure a system for scheduling.', 
     '  schedule      Start scheduling a configured system.',
     '  control       Interact with a running system.',
+    '  message       Send a message to a task proxy object.',
     '',
     '  monitor       Monitor all task proxy objects.',
     '  monitor-r     Monitor running task proxies.',
@@ -36,6 +39,7 @@ usage = \
     '  monitor-p     Monitor the Pyro namesever.',
     '',
     '  show-pyro [TO DO]   List systems registered with Pyro.',
+    '  show-configured [TO DO]   List your configured systems.',
     '',
     'options:',
     '  cylc COMMAND --help'

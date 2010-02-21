@@ -19,7 +19,16 @@ from optparse import OptionParser
 from time import sleep
 
 # construct a command line parser
-usage = "%prog [options] <message>" 
+usage = """
+cylc message [options] <message> 
+
+Send a message to a task proxy object in a running cylc instance.
+THIS IS MAINLY FOR USE BY EXTERNAL TASK SCRIPTS, but it can also
+be used manually by the system operator. In contrast to other
+cylc commands this one can get all of its inputs from the 
+environment (this is how it is used by external tasks which
+get their own cylc system name, task name, and cycle time from
+the execution environment set up by cylc)."""
 parser = OptionParser( usage )
 
 parser.add_option( "-p", "--priority", 
@@ -34,8 +43,8 @@ parser.add_option( "-n", "--name",
         help="task name, defaults to $TASK_NAME",
         action="store", dest="taskname" )
 
-parser.add_option( "-s", "--system-name", 
-        metavar="SYSTEM-NAME",
+parser.add_option( "-s", "--system", 
+        metavar="SYSTEM",
         help="Name of the running cylc instance, defaults to $SYSTEM_NAME",
         action="store", dest="system_name" )
 

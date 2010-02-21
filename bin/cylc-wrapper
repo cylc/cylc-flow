@@ -27,29 +27,29 @@ set -e  # abort on error
 #   3. $WRAP          
 
 if [[ -z $CYCLE_TIME ]]; then
-    echo "ERROR, cylc-task-wrapper: \$CYCLE_TIME not found"
+    echo "ERROR, cylc-wrapper: \$CYCLE_TIME not found"
     exit 1
 fi
 
 if [[ -z $TASK_NAME ]]; then
-    echo "ERROR, cylc-task-wrapper: \$TASK_NAME not found"
+    echo "ERROR, cylc-wrapper: \$TASK_NAME not found"
     exit 1
 fi
 
 if [[ -z $WRAP ]]; then
-    echo "ERROR, cylc-task-wrapper: \$WRAP not found"
+    echo "ERROR, cylc-wrapper: \$WRAP not found"
     exit 1
 fi
 
-#echo "cylc-task-wrapper: calling $TASK_NAME for $CYCLE_TIME"
-cylc-message "started"
+#echo "cylc-wrapper: calling $TASK_NAME for $CYCLE_TIME"
+cylc message "started"
 
 # call the wrapped task
 if $WRAP; then 
     # succeeded
-    cylc-message --all-outputs-completed
-    cylc-message "finished"
+    cylc message --all-outputs-completed
+    cylc message "finished"
 else
     # failed
-    cylc-message -p CRITICAL "failed" 
+    cylc message -p CRITICAL "failed" 
 fi

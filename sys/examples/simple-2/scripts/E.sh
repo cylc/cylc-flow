@@ -5,7 +5,7 @@
 
 # run length 150 minutes
 
-cylc-message started
+cylc message started
 
 ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 150 * 60 / ACCEL )) 
@@ -15,8 +15,8 @@ PRE=$TMPDIR/B_${CYCLE_TIME}.output
 [[ ! -f $PRE ]] && {
     MSG="file not found: $PRE"
     echo "ERROR, E: $MSG"
-    cylc-message -p CRITICAL $MSG
-    cylc-message -p CRITICAL failed
+    cylc message -p CRITICAL $MSG
+    cylc message -p CRITICAL failed
     exit 1
 }
 
@@ -24,6 +24,6 @@ sleep $SLEEP
 
 OUTPUT=$TMPDIR/${TASK_NAME}_${CYCLE_TIME}.output
 touch $OUTPUT
-cylc-message $OUTPUT ready
+cylc message $OUTPUT ready
 
-cylc-message finished
+cylc message finished
