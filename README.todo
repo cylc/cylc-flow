@@ -1,5 +1,8 @@
 To Do
 
+* INTERROGATE SIMPLE-2 EXT TASK: CURRENT TIME REQUIRED IN REMOTE CALL
+  TO START_TIME_REACHED().
+
 * rewrite configure script in Python, for consistency.
 
 * use the subprocess module as in the cylc front end script, in 

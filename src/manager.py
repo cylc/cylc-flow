@@ -87,7 +87,7 @@ class manager:
         for name in self.config.get('task_list'):
 
             # instantiate the task
-            itask = self.get_task_instance( 'task_classes', name )( start_time, self.dummy_mode )
+            itask = self.get_task_instance( 'task_classes', name )( start_time, self.dummy_mode, 'waiting', True )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -274,7 +274,7 @@ class manager:
                 itask.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode )
+                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode, 'waiting' )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
@@ -548,7 +548,7 @@ class manager:
                 [ name, c_time ] = task_id.split( '%' )
 
                 # instantiate the task object
-                itask = self.get_task_instance( 'task_classes', name )( c_time, self.dummy_mode )
+                itask = self.get_task_instance( 'task_classes', name )( c_time, self.dummy_mode, 'waiting' )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
@@ -687,7 +687,7 @@ class manager:
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in regenerate_tasks()?
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode )
+                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode, 'waiting' )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', 'STOPPING at configured stop time' )
