@@ -49,7 +49,8 @@ parser.add_option( "--all-restart-outputs-completed",
         action="store_true", default=False, dest="all_restarts_completed" )
 
 parser.add_option( "--all-outputs-completed", 
-        help="report all task outputs completed at once",
+        help="report all task outputs completed at once "
+             "EXCEPT for the special 'completed' and 'finished' outputs",
         action="store_true", default=False, dest="all_outputs_completed" )
 
 # get command line options and positional args
@@ -142,12 +143,19 @@ while True:
         break
 
 if options.all_restarts_completed:
+    # set all forecast model restart outputs completed
     task.set_all_restarts_completed()
+
 elif options.all_outputs_completed:
+    # set all outputs completed (except for 'finished' and 'completed')
     task.set_all_outputs_completed()
 else:
+    # send the message
+
     if message == "finished" or message == "failed":
+        # also send the 'completed' message in case of success or failure 
         task.incoming( priority, "completed" )
+
     task.incoming( priority, message )
 
 #    # nameserver not found, or object not registered with it?

@@ -1,8 +1,5 @@
 To Do
 
-* INTERROGATE SIMPLE-2 EXT TASK: CURRENT TIME REQUIRED IN REMOTE CALL
-  TO START_TIME_REACHED().
-
 * rewrite configure script in Python, for consistency.
 
 * use the subprocess module as in the cylc front end script, in 
@@ -36,6 +33,9 @@ To Do
   messages will come in to stimulate the event loop, because the
   existing tasks are all finished, so the system needs a remote "bump"
   to get going again.
+  22 Feb: this happened again without any failed tasks: topnet test
+  system was in hibernation for 10 days and reawoke when I hooked up a
+  new monitor process.
 
 * parse all command-line input to check for valid cycle times 
 

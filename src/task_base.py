@@ -284,7 +284,8 @@ class task_base( Pyro.core.ObjBase ):
         # used by task-wrapper 
         self.log( 'WARNING', 'setting ALL internal outputs completed' )
         for message in self.outputs.satisfied.keys():
-            if message != self.get_identity() + ' finished':
+            if message != self.get_identity() + ' finished' and \
+                    message != self.get_identity() + ' completed':
                 #print '-----: ', message
                 self.outputs.set_satisfied( message )
 

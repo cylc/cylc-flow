@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import re
 import sys
 
 """
@@ -9,6 +10,8 @@ structure allows derived task classes to set arbitrary new state
 variables that will automatically be written to and read from the state
 dump file.
 """
+
+# TO DO: need some exception handling in here
 
 class task_state:
 
@@ -26,7 +29,10 @@ class task_state:
             self.state[ 'abdicated' ] = 'false'
             #self.state[ 'satisfied' ] = 'false'
 
+
         else:
+            # could be a state dump file entry
+            # or a raw string ('waiting' etc.)
             self.state = self.parse( initial_state )
             self.check()
 
@@ -134,12 +140,23 @@ class task_state:
         result = result.rstrip( ', ' )
         return result
 
-    def parse( self, dump ):
-        # reconstruct state from a dumped state string
+    def parse( self, input ):
         state = {}
-        pairs = dump.split( ', ' )
-        for pair in pairs:
-            [ item, value ] = pair.split( '=' )
-            state[ item ] = value
+
+        if input in task_state.allowed_status:
+            state[ 'status' ] = input
+            # ASSUME THAT ONLY FINISHED TASKS, AT STARTUP, HAVE ABDICATED 
+            # (in fact this will only be used to start tasks in 'waiting')
+            if input == 'finished':
+                state[ 'abdicated' ] = 'true'
+            else:
+                state[ 'abdicated' ] = 'false'
+
+        else:
+            # reconstruct state from a dumped state string
+            pairs = input.split( ', ' )
+            for pair in pairs:
+                [ item, value ] = pair.split( '=' )
+                state[ item ] = value
 
         return state
