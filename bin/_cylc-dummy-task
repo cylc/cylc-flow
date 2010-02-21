@@ -43,7 +43,7 @@ class dummy_task:
             dt_diff = datetime.timedelta( 0,0,0,0,0,diff_hrs,0 )
             # timedeltas are stored as days, seconds, milliseconds.
             dt_diff_sec = dt_diff.days * 24 * 3600 + dt_diff.seconds
-            dt_diff_sec_real = dt_diff_sec * dummy_clock_rate / 3600.0
+            dt_diff_sec_real = dt_diff_sec * clock_rate / 3600.0
             sleep( dt_diff_sec_real )
 
             # make sure the finished message is last
@@ -73,7 +73,10 @@ if __name__ == '__main__':
     task_name = os.environ['TASK_NAME']
     c_time = os.environ['CYCLE_TIME']
     system_name = os.environ['SYSTEM_NAME'] 
-    dummy_clock_rate = int( os.environ['CLOCK_RATE'] )
+
+    clock_rate = 3600  # seconds per hour
+    if 'CLOCK_RATE' in os.environ:
+        clock_rate = int( os.environ['CLOCK_RATE'] )
 
     failout = False
     if 'FAILOUT_ID' in os.environ:
