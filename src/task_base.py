@@ -7,7 +7,6 @@ import task_state
 import logging
 import Pyro.core
 import cycle_time
-import background
 from copy import deepcopy
 
 global state_changed

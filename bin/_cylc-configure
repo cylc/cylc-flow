@@ -167,6 +167,9 @@ eof
 # TASK GROUPS
 config['task_groups'] = {}
 
+# JOB SUBMIT METHODS
+config['job_submit'] = 'background'
+
 # LOGGING DIRECTORY
 config['logging_dir'] = 'CYLC-LOGS'
 

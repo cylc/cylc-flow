@@ -1,4 +1,4 @@
 #!/usr/bin/python
 
-import background
-import background_foo
+from background import background
+from background_foo import background_foo
