@@ -600,6 +600,15 @@ system (Section~\ref{sec:configure}):
 This must be done whenever system tasks are added, removed, or modified.
 Customise the config file if necessary.
 
+\subsection{Starting a Pyro Nameserver}
+
+If you do not already have a Pyro nameserver running
+(Section~\ref{sec:pyro}): 
+
+\begin{lstlisting}
+    nohup pyro-ns &
+\end{lstlisting}
+
 \subsection{Running A Configured System}
 
 To cold start or restart a configured system (Section~\ref{sec:run}):
