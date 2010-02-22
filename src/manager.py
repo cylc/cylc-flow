@@ -21,7 +21,7 @@ class manager:
         self.clock = config.get('clock')
         self.stop_time = config.get('stop_time' )
         self.pyro = config.get('pyro')  # pyrex (cylc Pyro helper) object
-        self.job_submit = config.get('job_submit')
+        self.submit = config.get('submit' )
 
         self.log = logging.getLogger( "main" )
 
@@ -87,7 +87,7 @@ class manager:
 
             # instantiate the task
             itask = get_object( 'task_classes', name )\
-                    ( start_time, self.dummy_mode, 'waiting', self.job_submit, True )
+                    ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], True )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -180,7 +180,7 @@ class manager:
 
             # instantiate the task object
             itask = get_object( 'task_classes', name )\
-                    ( c_time, self.dummy_mode, state, self.job_submit )
+                    ( c_time, self.dummy_mode, state, self.submit[ name ] )
 
             # the initial task cycle time can be altered during
             # creation, so we have to create the task before
@@ -276,7 +276,7 @@ class manager:
 
                 # dynamic task object creation by task and module name
                 new_task = get_object( 'task_classes', itask.name )\
-                        ( itask.next_c_time(), self.dummy_mode, 'waiting', self.job_submit )
+                        ( itask.next_c_time(), self.dummy_mode, 'waiting', self.submit[ itask.name ] )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
@@ -551,7 +551,7 @@ class manager:
 
                 # instantiate the task object
                 itask = get_object( 'task_classes', name )\
-                        ( c_time, self.dummy_mode, 'waiting', self.job_submit )
+                        ( c_time, self.dummy_mode, 'waiting', self.submit[ name ] )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
@@ -691,7 +691,7 @@ class manager:
                 # TO DO: the following should reuse code in regenerate_tasks()?
                 # dynamic task object creation by task and module name
                 new_task = get_object( 'task_classes', itask.name )\
-                        ( itask.next_c_time(), self.dummy_mode, 'waiting', self.job_submit )
+                        ( itask.next_c_time(), self.dummy_mode, 'waiting', self.submit[ itask.name ] )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', 'STOPPING at configured stop time' )

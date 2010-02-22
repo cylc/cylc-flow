@@ -20,9 +20,9 @@ class config:
                         'task_groups',
                         'environment',
                         'max_runahead_hours',
-                        'use_qsub',
-                        'job_queue',
                         'dummy_mode',
+                        'job_submit_method',
+                        'job_submit_overrides',
                         'logging_level'
                  ]
         self.load_system_config()
@@ -41,15 +41,24 @@ class config:
         return ok
 
 
-
     def load_system_config( self ):
         # set config items from those in the system_config module
         for key in system_config.config.keys():
             self.configured[ key ] = system_config.config[ key ]
+
         # set dummy_mode here; now used via command line only
         self.configured['dummy_mode'] = False
+
         # set state_dump_file here; user set is unnecessary
         self.configured['state_dump_file'] = 'cylc-state'
+
+        # create dict of job submit methods by task name
+        self.configured['submit'] = {}
+        for task in self.configured['task_list']:
+            self.configured['submit'][ task ] = self.configured[ 'job_submit_method' ]
+            for method in self.configured[ 'job_submit_overrides' ]:
+                if task in self.configured[ 'job_submit_overrides' ][ method ]:
+                    self.configured['submit'][ task ] = method
 
     def get( self, key ):
         return self.configured[ key ]

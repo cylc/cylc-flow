@@ -1,5 +1,7 @@
 To Do
 
+* treat task groups names just like task names.
+
 * rewrite configure script in Python, for consistency.
 
 * print error message to stderr: print >> sys.stderr, 'message'

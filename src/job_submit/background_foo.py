@@ -8,8 +8,7 @@ class background_foo( job_submit ):
     def construct_command( self ):
         # direct background execution 
         return self.task + ' &' 
-        #return self.task
 
     def submit( self ):
-        print "FOOOOOOOOOOOOOOOOOOOOOOOOOOOOOO\n"
+        print "FOO: " + self.task
         job_submit.submit( self )

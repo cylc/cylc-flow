@@ -129,7 +129,7 @@ if [[ -f system_config.py ]]; then
         cp system_config.py $BACKUP
     fi
 else
-    echo "Writing the system config file"
+    echo "Writing the system config module"
 fi
 
 if $WRITE_CONFIG; then
@@ -146,7 +146,10 @@ if $WRITE_CONFIG; then
 import logging  # for logging level
 import os       # os.environ['HOME']
 
+# declare associative arrays
 config = {}
+config['task_groups'] = {}
+config['job_submit_overrides'] = {}
 
 # SYSTEM NAME
 config['system_name'] = '$SYS_NAME'
@@ -165,16 +168,17 @@ eof
     ]
 
 # TASK GROUPS
-config['task_groups'] = {}
+# config['task_groups']['example'] = [ 'foo', 'bar', 'baz' ]
 
 # JOB SUBMIT METHODS
-config['job_submit'] = 'background'
+config['job_submit_method'] = 'background'
+# config['job_submit_overrides']['background_foo'] = [ 'foo', 'bar' ]
 
 # LOGGING DIRECTORY
-config['logging_dir'] = 'CYLC-LOGS'
+config['logging_dir'] = 'CYLC/logfiles'
 
 # STATE DUMP DIRECTORY
-config['state_dump_dir'] = 'CYLC-STATE'
+config['state_dump_dir'] = 'CYLC/statedumps'
 
 # ENVIRONMENT VARIABLES THAT MAY BE USED BY TASKS IN THIS SYSTEM
 sys_name = config[ 'system_name' ]
@@ -183,18 +187,6 @@ config['environment'] = {'TMPDIR':'/tmp/' + user_name + '/' + sys_name }
 
 # MAXIMUM INTERVAL (IN CYCLE TIME) BETWEEN FASTEST AND SLOWEST TASKS
 config['max_runahead_hours'] = 24
-
-# JOB LAUNCH METHOD (currently qsub or direct background execution).
-eof
-    if $QSUB; then
-        echo "config['use_qsub'] = True" >> system_config.py
-        echo "config['job_queue'] = '$QUEUE'" >> system_config.py
-    else
-        echo "config['use_qsub'] = False" >> system_config.py
-        echo "config['job_queue'] = None" >> system_config.py
-    fi
-
-    cat >> system_config.py <<eof
 
 # LOG VERBOSITY
 config['logging_level'] = logging.INFO
@@ -205,11 +197,31 @@ eof
 fi
 echo "=> $SYS_DIR/system_config.py"
 
-#echo
-#echo "Installing the cylc task-wrapper script"
-#mkdir -p scripts
-#cp $CYLC_DIR/bin/_cylc-task-wrapper scripts/cylc-task-wrapper
-#echo "=> $SYS_DIR/scripts/cylc-task-wrapper"
+echo
+WRITE_JOBSUB=true
+if [[ -f job_submit_methods.py ]]; then
+    echo "job_submit_methods module already exists, "
+    if ! $FORCE; then
+        echo "NOT OVERWRITING in case of customization"
+        WRITE_JOBSUB=false
+    else
+        BACKUP=job_submit_methods.py.OLD.$$
+        echo "OVERWRITING (backup: $BACKUP)"
+        cp job_submit_methods.py $BACKUP
+    fi
+else
+    echo "Writing the job submit methods module"
+fi
+
+if $WRITE_CONFIG; then
+    cat > job_submit_methods.py <<eof
+#!/usr/bin/python
+
+from background import background
+from background_foo import background_foo
+eof
+fi
+echo "=> $SYS_DIR/job_submit_methods.py"
 
 echo
 echo "Updating your cylc global config"
