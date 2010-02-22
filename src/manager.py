@@ -8,6 +8,7 @@ import traceback
 import sys
 import os
 import re
+from dynamic_instantiation import get_object
 from broker import broker
 
 class manager:
@@ -20,6 +21,7 @@ class manager:
         self.clock = config.get('clock')
         self.stop_time = config.get('stop_time' )
         self.pyro = config.get('pyro')  # pyrex (cylc Pyro helper) object
+        self.job_submit = config.get('job_submit')
 
         self.log = logging.getLogger( "main" )
 
@@ -63,11 +65,6 @@ class manager:
         self.system_hold_now = False
         self.system_hold_ctime = None
 
-    def get_task_instance( self, module, class_name ):
-        # task object instantiation by module and class name
-	    mod = __import__( module )
-	    return getattr( mod, class_name)
-
     def get_oldest_c_time( self ):
         oldest = 9999887766
         for itask in self.tasks:
@@ -89,8 +86,8 @@ class manager:
         for name in self.config.get('task_list'):
 
             # instantiate the task
-            itask = self.get_task_instance( 'task_classes', name )\
-                    ( start_time, self.dummy_mode, 'waiting', True )
+            itask = get_object( 'task_classes', name )\
+                    ( start_time, self.dummy_mode, 'waiting', self.job_submit, True )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -182,8 +179,8 @@ class manager:
                 log_created[ name ] = True
 
             # instantiate the task object
-            itask = self.get_task_instance( 'task_classes', name )\
-                    ( c_time, self.dummy_mode, state )
+            itask = get_object( 'task_classes', name )\
+                    ( c_time, self.dummy_mode, state, self.job_submit )
 
             # the initial task cycle time can be altered during
             # creation, so we have to create the task before
@@ -278,8 +275,8 @@ class manager:
                 itask.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )\
-                        ( itask.next_c_time(), self.dummy_mode, 'waiting' )
+                new_task = get_object( 'task_classes', itask.name )\
+                        ( itask.next_c_time(), self.dummy_mode, 'waiting', self.job_submit )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
@@ -553,8 +550,8 @@ class manager:
                 [ name, c_time ] = task_id.split( '%' )
 
                 # instantiate the task object
-                itask = self.get_task_instance( 'task_classes', name )\
-                        ( c_time, self.dummy_mode, 'waiting' )
+                itask = get_object( 'task_classes', name )\
+                        ( c_time, self.dummy_mode, 'waiting', self.job_submit )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
@@ -693,8 +690,8 @@ class manager:
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in regenerate_tasks()?
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )\
-                        ( itask.next_c_time(), self.dummy_mode, 'waiting' )
+                new_task = get_object( 'task_classes', itask.name )\
+                        ( itask.next_c_time(), self.dummy_mode, 'waiting', self.job_submit )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', 'STOPPING at configured stop time' )
@@ -741,7 +738,7 @@ class manager:
             #    itask.log( 'DEBUG', 'forced abdication' )
             #    # TO DO: the following should reuse code in regenerate_tasks()?
             #    # dynamic task object creation by task and module name
-            #    new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode )
+            #    new_task = get_object( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode )
             #    if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
             #        # we've reached the stop time: delete the new task 
             #        new_task.log( 'WARNING', 'STOPPING at configured stop time' )
