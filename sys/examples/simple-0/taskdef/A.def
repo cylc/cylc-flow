@@ -20,6 +20,9 @@
 %EXTERNAL_TASK
     cylc-wrapper
 
+%JOB_SUBMIT_METHOD
+    background_foo
+
 %ENVIRONMENT
     WRAP A.sh
     NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 6)

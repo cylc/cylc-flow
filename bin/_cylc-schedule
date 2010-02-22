@@ -178,7 +178,6 @@ when it reaches that time, and then the system will shut down."""
     import manager
     import task_base
     import dead_letter
-    import task_launcher
     import remote_switch
     import state_summary
     import cycle_time
@@ -357,8 +356,6 @@ when it reaches that time, and then the system will shut down."""
         system_config.put( 'stop_time', stop_time )
         system_config.put( 'restart_from', restart_from )
 
-        # external task launcher
-        launcher = task_launcher.launcher( system_config )
         task_manager = manager.manager( system_config )
 
         # remote control switch
@@ -413,7 +410,7 @@ when it reaches that time, and then the system will shut down."""
 
                 task_manager.negotiate_dependencies()
 
-                task_manager.run_tasks( launcher )
+                task_manager.run_tasks()
 
                 task_manager.kill_spent_tasks()
 

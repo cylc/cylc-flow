@@ -14,6 +14,8 @@ class manager:
     def __init__( self, config ):
 
         self.config = config
+
+        # TO DO: just use self.config.get('foo') throughout
         self.dummy_mode = config.get('dummy_mode')
         self.clock = config.get('clock')
         self.stop_time = config.get('stop_time' )
@@ -87,7 +89,8 @@ class manager:
         for name in self.config.get('task_list'):
 
             # instantiate the task
-            itask = self.get_task_instance( 'task_classes', name )( start_time, self.dummy_mode, 'waiting', True )
+            itask = self.get_task_instance( 'task_classes', name )\
+                    ( start_time, self.dummy_mode, 'waiting', True )
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
@@ -179,7 +182,8 @@ class manager:
                 log_created[ name ] = True
 
             # instantiate the task object
-            itask = self.get_task_instance( 'task_classes', name )( c_time, self.dummy_mode, state )
+            itask = self.get_task_instance( 'task_classes', name )\
+                    ( c_time, self.dummy_mode, state )
 
             # the initial task cycle time can be altered during
             # creation, so we have to create the task before
@@ -234,7 +238,7 @@ class manager:
             # get the broker to satisfy tasks prerequisites
             self.broker.negotiate( itask.prerequisites )
 
-    def run_tasks( self, launcher ):
+    def run_tasks( self ):
         # tell each task to run if it is ready
         # unless the system is on hold
         #--
@@ -252,7 +256,7 @@ class manager:
 
 
                 current_time = self.clock.get_datetime()
-                itask.run_if_ready( launcher, current_time )
+                itask.run_if_ready( current_time )
 
     def regenerate_tasks( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -274,7 +278,8 @@ class manager:
                 itask.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode, 'waiting' )
+                new_task = self.get_task_instance( 'task_classes', itask.name )\
+                        ( itask.next_c_time(), self.dummy_mode, 'waiting' )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
@@ -548,7 +553,8 @@ class manager:
                 [ name, c_time ] = task_id.split( '%' )
 
                 # instantiate the task object
-                itask = self.get_task_instance( 'task_classes', name )( c_time, self.dummy_mode, 'waiting' )
+                itask = self.get_task_instance( 'task_classes', name )\
+                        ( c_time, self.dummy_mode, 'waiting' )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
@@ -687,7 +693,8 @@ class manager:
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in regenerate_tasks()?
                 # dynamic task object creation by task and module name
-                new_task = self.get_task_instance( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode, 'waiting' )
+                new_task = self.get_task_instance( 'task_classes', itask.name )\
+                        ( itask.next_c_time(), self.dummy_mode, 'waiting' )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', 'STOPPING at configured stop time' )

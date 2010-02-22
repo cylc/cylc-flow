@@ -7,6 +7,7 @@ import task_state
 import logging
 import Pyro.core
 import cycle_time
+import background
 from copy import deepcopy
 
 global state_changed
@@ -151,7 +152,6 @@ class task_base( Pyro.core.ObjBase ):
         if dummy_mode:
             self.external_task = '_cylc-dummy-task'
 
-
     def get_identity( self ):
         # unique task id
         return self.name + '%' + self.c_time
@@ -271,13 +271,13 @@ class task_base( Pyro.core.ObjBase ):
             ready = True
         return ready
 
-    def run_if_ready( self, launcher, current_time ):
+    def run_if_ready( self, current_time ):
         if self.ready_to_run( current_time ):
-            self.run_external_task( launcher )
+            self.run_external_task()
 
-    def run_external_task( self, launcher ):
+    def run_external_task( self ):
         self.log( 'DEBUG',  'launching external task' )
-        launcher.run( self.owner, self.name, self.c_time, self.external_task, self.env_vars )
+        self.launcher.submit()
         self.state.set_status( 'running' )
 
     def set_all_outputs_completed( self ):

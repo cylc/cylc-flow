@@ -1,5 +1,9 @@
 #!/usr/bin/python
 
+# TO DO: error check running dir etc.
+# os.getcwd()
+# (assumes top level system def dir).
+
 import string
 import glob
 import sys
@@ -105,7 +109,7 @@ def main( argv ):
     allowed_keys = [ 'NAME', 'OWNER', 'CYCLE_TIMES', 'EXTERNAL_TASK',
             'ENVIRONMENT', 'SINGLE_CYCLE', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
-            'TYPE', 'CONTACT_DELAY', 'DESCRIPTION',
+            'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'JOB_SUBMIT_METHOD',
             'ONEOFF_FOLLOW_ON', 'ESTIMATED_RESTART_DUMP_TIMES' ]
 
     allowed_types = ['forecast_model', 'free_task' ]
@@ -130,7 +134,6 @@ from outputs import outputs
 from time import sleep
 
 import cycle_time
-import task_launcher
 import task_state
 
 import os, sys, re
@@ -140,6 +143,23 @@ import Pyro.core
 import logging
 \n''')
 
+    defjobsubmit = 'default_job_submission.txt' 
+    djsmethod = 'background'
+    if os.path.exists( defjobsubmit ):
+        DJS = open( defjobsubmit, 'r' )
+        lines = DJS.readlines()
+        DJS.close()
+
+        if len( lines ) != 1:
+            print "ERROR: job submission file should contain ONE LINE"
+            sys.exit(1)
+
+        djsmethod = lines[0]
+        # strip trailing any white space and/or newline
+        djsmethod = djsmethod.rstrip()
+
+    FILE.write( "import job_submit_methods\n" )
+
     n_files = len(task_def_files)
     i = 0
 
@@ -147,7 +167,7 @@ import logging
 
     for task_def_file in task_def_files:
 
-        i = i + 1
+        i += 1
 
         DEF = open( task_def_file, 'r' )
         lines = DEF.readlines()
@@ -532,6 +552,12 @@ import logging
         #strng = strng + '\n' + indent + ']\n\n' 
         strng += indent + ']\n\n' 
         FILE.write( strng )
+
+        # job submission method (must be after env_vars)
+        if 'JOB_SUBMIT_METHOD' in parsed_def.keys():
+            djsmethod = parsed_def['JOB_SUBMIT_METHOD'][0]
+ 
+        FILE.write( indent + 'self.launcher = job_submit_methods.' + djsmethod + '.' + djsmethod + '( self.name, self.external_task, self.c_time, self.env_vars )\n\n' )
 
         # forecast model restarts
         if fcmodel:

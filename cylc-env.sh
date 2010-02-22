@@ -18,7 +18,7 @@ else
     PYTHONPATH=$(bin/_cylc-clean-path $PYTHONPATH)
 
     export PATH=$PWD/bin:$PATH
-    export PYTHONPATH=$PWD/src:$PYTHONPATH
+    export PYTHONPATH=$PWD/src:$PWD/src/job_submit:$PYTHONPATH
 
     echo "SHELL CONFIGURED FOR $(which cylc)"
 

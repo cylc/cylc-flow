@@ -1,25 +1,14 @@
 #!/usr/bin/python
 
-# Construct the command to run real or dummy external tasks, and run it.
-# A single instance of this class is used for the whole system
-
-# supported job launch methods:
-#  (i) direct execution in the background ( 'task &' )
-#  (ii) qsub
-
-# TO DO: TASK-SPECIFIC LAUNCHER, LET TASKS OVERRIDE RUN METHOD.
-
 import os
 import re
 
-class launcher:
+class qsub_ecoconnect( qsub, as_owner ):
 
-    def __init__( self, config ):
+    def __init__( self, task_name, task, cycle_time, queue, owner, extra_vars=[] ):
+        qsub.__init__( task_name, task, cycle_time, extra_vars )
 
-        self.use_qsub = config.get('use_qsub')
-        self.job_queue = config.get('job_queue')
-
-    def run( self, owner, task_name, c_time, task, extra_vars=[] ):
+    def construct_command( self ):
 
         # who is running the control system
         cylc_owner = os.environ[ 'USER' ]
