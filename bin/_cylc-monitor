@@ -2,7 +2,6 @@
 
 """
 Display the state of all existing tasks.
-ONLY DETECTS DUMMY VS REAL TIME AT STARTUP
 
 For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
@@ -23,16 +22,21 @@ from optparse import OptionParser
 compress = True
 
 # construct a command line parser
-parser = OptionParser( """cylc monitor -s NAME [options]
+parser = OptionParser( """cylc monitor -s NAME -n HOSTNAME [options]
 
-A simple terminal-based monitor that displays the state of all task
-proxy objects in the cylc instance that is running system NAME.""" )
+A terminal-based monitor that displays the state of all task
+proxy objects in the cylc instance running system NAME, via
+the Pyro nameserver running on HOSTNAME.""" )
 
-parser.add_option( "-s", "--system", 
-	help="Name of the system to monitor",
+parser.add_option( "-s", 
+        help="Name of the system to monitor",
         metavar="NAME", action="store", dest="system_name" )
 
-parser.add_option( "-a", "--align", help="align task name columns",
+parser.add_option( "-n", 
+        help="Hostname of the machine running the Pyro nameserver",
+        metavar="HOSTNAME", action="store", dest="pns_host" )
+
+parser.add_option( "-a", help="align task name columns",
         action="store_true", default=False, dest="align_columns" )
 
 #parser.add_option( "-p", "--print", help="print registered systems and exit",
@@ -55,21 +59,28 @@ header = '                                   '
 #    parser.print_help()
 #    sys.exit(1)
 
+if options.pns_host:
+    pns_host = options.pns_host
+else:
+    parser.error( 'Required: Pyro nameserver hostname' )
+
+if options.system_name:
+    system_name = options.system_name
+else:
+    parser.error( "Required: system name" )
+
 # get systems currently registered in the Pyro nameserver
-ns_groups = pyrex.discover()
+ns_groups = pyrex.discover( options.pns_host )
+
+if ns_groups.registered( system_name ):
+    print "System: " + system_name
+else:
+    print "No " + system_name + " registered yet, waiting ..." 
 
 #if options.print_systems:
 #    # print registered systems
 #    ns_groups.print_info()
 #    sys.exit(0)
-
-if options.system_name:
-    # use the given system name
-    system_name = options.system_name
-    if ns_groups.registered( system_name ):
-        print "system: " + system_name
-    else:
-        print "WARNING: no " + system_name + " registered yet ..." 
 
 #else:
 #    # print available systems and exit
@@ -90,7 +101,7 @@ alerted3 = False
 while True:
     # connect to remote state summary object
     try: 
-        god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary')
+        god = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + system_name + '.state_summary')
         # timeout (sec) determines max wait for an answer from god.
         god._setTimeout(60)
 

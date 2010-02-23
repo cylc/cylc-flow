@@ -31,24 +31,29 @@ get their own cylc system name, task name, and cycle time from
 the execution environment set up by cylc)."""
 parser = OptionParser( usage )
 
-parser.add_option( "-p", "--priority", 
+parser.add_option( "-p",
         metavar="PRIORITY",
         help="message priority "
              "(NORMAL, WARNING, CRITICAL) "
              "defaults to NORMAL.",
         action="store", dest="priority" )
 
-parser.add_option( "-n", "--name", 
+parser.add_option( "-t", 
         metavar='TASKNAME',
         help="task name, defaults to $TASK_NAME",
         action="store", dest="taskname" )
 
-parser.add_option( "-s", "--system", 
+parser.add_option( "-s",
         metavar="SYSTEM",
         help="Name of the running cylc instance, defaults to $SYSTEM_NAME",
         action="store", dest="system_name" )
 
-parser.add_option( "-c", "--cycle-time", 
+parser.add_option( "-n", 
+        help="Hostname of the machine running the Pyro nameserver, "
+            "defaults to $PNSHOST",
+        metavar="HOSTNAME", action="store", dest="pns_host" )
+
+parser.add_option( "-c",
         metavar="YYYYMMDDHH",
         help="task cycle time, defaults to $CYCLE_TIME",
         action="store", dest="ctime" )
@@ -81,7 +86,7 @@ else:
     if 'TASK_NAME' in os.environ.keys():
         taskname = os.environ[ 'TASK_NAME' ]
     else:
-        print 'ERROR, cylc-message: no task name provided!'
+        print 'ERROR, cylc message: no task name provided!'
         sys.exit(1)
 
 if options.system_name:
@@ -91,7 +96,17 @@ else:
     if 'SYSTEM_NAME' in os.environ.keys():
         system_name = os.environ[ 'SYSTEM_NAME' ]
     else:
-        print 'ERROR, cylc-message: no system name provided!'
+        print 'ERROR, cylc message: no system name provided!'
+        sys.exit(1)
+
+if options.pns_host:
+    pns_host = options.pns_host
+else:
+    # Default to $PNS_HOST
+    if 'PNS_HOST' in os.environ.keys():
+        pns_host = os.environ[ 'PNS_HOST' ]
+    else:
+        print 'ERROR, cylc message: no Pyro nameserver hostname provided!'
         sys.exit(1)
      
 if options.ctime:
@@ -101,7 +116,7 @@ else:
     if 'CYCLE_TIME' in os.environ.keys():
         ctime = os.environ[ 'CYCLE_TIME' ]
     else:
-        print 'ERROR, cylc-message: no cycle time provided!'
+        print 'ERROR, cylc message: no cycle time provided!'
         sys.exit(1)
  
 if len( args ) == 0:
@@ -119,7 +134,7 @@ count = 0
 while True:
     count += 1
     try:
-        task = Pyro.core.getProxyForURI('PYRONAME://' +  system_name + '.' + taskname + '%' + ctime )
+        task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + system_name + '.' + taskname + '%' + ctime )
        
     except ProtocolError:
         # retry if temporary network problems prevented connection
@@ -134,7 +149,7 @@ while True:
         #                 Also the Pyro server may have crashed.
         #                 (presumably after connection established - hjo)
 
-        print 'cylc-message [' + str( count ) + ']: Network Problems, RETRYING in 5 seconds'
+        print 'cylc message [' + str( count ) + ']: Network Problems, RETRYING in 5 seconds'
         sleep(5)
 
     except NamingError:

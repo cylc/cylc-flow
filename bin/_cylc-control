@@ -34,22 +34,27 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-usage = """cylc control -s NAME [options]
+usage = """cylc control -s NAME -n HOSTNAME [options]
 
-Remote control the cylc instance that is running system NAME. 
+Remote control the cylc instance running system NAME,
+via the Pyro nameserver running on HOSTNAME. 
 Below, START, STOP, and TIME, are cycle times: YYYYMMDDHH
 and TASK-ID is a task's unique ID <task-name>%<cycle-time>"""
 parser = OptionParser( usage )
 
-parser.add_option( "-s", "--system", 
+parser.add_option( "-s", 
 	help="The name of the system you want to interact with.",
         metavar="NAME", action="store", dest="system_name" )
 
-parser.add_option( "-f", "--force", 
+parser.add_option( "-n", 
+        help="Hostname of the machine running the Pyro nameserver",
+        metavar="HOSTNAME", action="store", dest="pns_host" )
+
+parser.add_option( "-f",
 	help="Do not ask for confirmation before acting.",
         action="store_true", default=False, dest="force" )
 
-parser.add_option( "-p", "--pause", 
+parser.add_option( "--pause", 
 	help="Pause the system NOW: do not launch any new tasks.",
         action="store_true", default=False, dest="pause" )
 
@@ -124,7 +129,14 @@ parser.add_option( "--bump",
 ( options, args ) = parser.parse_args()
 
 if not options.system_name:
-    parser.error( "NO SYSTEM NAME" )
+    parser.error( "Required: system name" )
+else:
+    system_name = options.system_name
+
+if not options.pns_host:
+    parser.error( "Required: Pyro nameserver hostname" )
+else:
+    pns_host = options.pns_host
 
 # import cylc modules now (the reason for this is explained above)
 import pyrex
@@ -133,9 +145,8 @@ import pyrex
 #    parser.error( "incorrect number of arguments" )
 
 # get systems currently registered in the Pyro nameserver
-ns_groups = pyrex.discover()
+ns_groups = pyrex.discover( pns_host )
 
-system_name = options.system_name
 if ns_groups.registered( system_name ):
     #print "system: " + system_name
     pass
@@ -154,7 +165,7 @@ else:
 
 try:
     # connect to the remote switch object in cylc
-    control = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'remote' )
+    control = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + system_name + '.' + 'remote' )
 except NamingError:
     print "\n\033[1;37;41mfailed to connect" + ctrl_end 
     raise SystemExit

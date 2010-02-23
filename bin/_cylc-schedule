@@ -116,9 +116,10 @@ def main( argv ):
     # don't use '%prog' as program name in the usage string, as we
     # invoke this program through the cylc user interface script.
 
-    usage = """cylc schedule -s NAME [options] [START] [STOP]
+    usage = """cylc schedule -s NAME -n HOSTNAME [options] [START] [STOP]
 
-Start up a new cylc instance for scheduling the configured system NAME.
+Start up a new cylc instance for scheduling system NAME via the Pyro
+nameserver running on HOSTNAME.
 (1) To cold start a system, supply an initial cycle time START (YYYYMMDDHH). 
 (2) To restart a system, use the '--restart' or '--restart-from' options.
 (3) If you supply a final cycle time STOP (YYYYMMDDHH) each task will stop
@@ -126,11 +127,15 @@ when it reaches that time, and then the system will shut down."""
 
     parser = OptionParser( usage )
 
-    parser.add_option( "-s", "--system", 
-            help="Registered name of the configured system",
+    parser.add_option( "-s", 
+            help="Name of the configured cylc system",
             metavar="NAME", action="store", dest="system_name" )
 
-    parser.add_option( "-r", "--restart", 
+    parser.add_option( "-n", 
+            help="Hostname of the machine running the Pyro nameserver",
+            metavar="HOSTNAME", action="store", dest="pns_host" )
+
+    parser.add_option( "-r", 
             help="Restart from the system's configured state dump file",
             action="store_true", default=False, dest="restart" )
 
@@ -140,17 +145,17 @@ when it reaches that time, and then the system will shut down."""
             "unless you give an absolute file path.",
             metavar="STATE", action="store", dest="restart_from" )
 
-    parser.add_option( "-d", "--dummy-mode", 
-            help="Run in accelerated time dummy mode. System tasks will be "
+    parser.add_option( "-d",
+            help="Run in accelerated time DUMMY MODE. System tasks will be "
             "faked by an external dummy program.",
             action="store_true", default=False, dest="dummy_mode" )
 
-    parser.add_option( "--rate", 
+    parser.add_option( "--clock-rate", 
             help="(Dummy mode) accelerated clock rate, INT seconds = 1 hour "
             "(defaults to 10 sec = 1 hour).",
             metavar="INT", action="store", default=10, dest="clock_rate" )
 
-    parser.add_option( "--offset", 
+    parser.add_option( "--clock-offset", 
             help="(Dummy mode) clock offset at start up. The dummy clock will "
             "start at INT hours prior to START cycle time (default 24 hours). "
             "Use to simulate catching up to real time operation.",
@@ -170,7 +175,10 @@ when it reaches that time, and then the system will shut down."""
     ( options, args ) = parser.parse_args()
 
     if not options.system_name:
-        parser.error( "NO SYSTEM NAME" )
+        parser.error( "Required: system name" )
+
+    if not options.pns_host:
+        parser.error( "Required: Pyro nameserver hostname" )
 
     # import cylc modules now (the reason for this is explained above)
     import pyrex
@@ -284,6 +292,7 @@ when it reaches that time, and then the system will shut down."""
         parser.error( 'Either supply start time or restart' )
        
     # set configured global (all tasks) environment variables
+    os.environ[ 'PNS_HOST' ] = str( options.pns_host )
     os.environ[ 'SYSTEM_NAME' ] = str( options.system_name )
     if dummy_mode:
         os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
@@ -303,7 +312,7 @@ when it reaches that time, and then the system will shut down."""
 
     # configure my pyro helper
     # this will abort if the nameserver group already exists
-    pyro = pyrex.pyrex( options.system_name )
+    pyro = pyrex.pyrex( options.system_name, options.pns_host )
 
     # system clock for accelerated time in dummy mode
     clock = accelerated_clock.clock( 

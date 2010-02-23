@@ -23,7 +23,7 @@ import re
 
 
 class pyrex:
-    def __init__( self, groupname ):
+    def __init__( self, groupname, hostname ):
 
         self.groupname = groupname
 
@@ -33,9 +33,9 @@ class pyrex:
         Pyro.config.PYRO_MULTITHREADED = 0
 
         # locate the Pyro nameserver
-        print " - locating nameserver ...",
+        print " - locating nameserver on " + hostname + " ...",
         try:
-            self.nameserver = Pyro.naming.NameServerLocator().getNS()
+            self.nameserver = Pyro.naming.NameServerLocator().getNS( hostname )
         except:
             print "ERROR: failed to find a Pyro nameserver"
             raise
@@ -98,9 +98,8 @@ class pyrex:
 class discover:
     # what groups are currently registered with the Pyro nameserver
 
-    def __init__( self ):
-        locator = Pyro.naming.NameServerLocator()
-        ns = locator.getNS()
+    def __init__( self, hostname ):
+        ns = Pyro.naming.NameServerLocator().getNS( hostname )
         self.ns_groups = {}
         # loop through registered objects
         for obj in ns.flatlist():
