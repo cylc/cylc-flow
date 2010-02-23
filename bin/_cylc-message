@@ -50,7 +50,7 @@ parser.add_option( "-s",
 
 parser.add_option( "-n", 
         help="Hostname of the machine running the Pyro nameserver, "
-            "defaults to $PNSHOST",
+            "defaults to $PNSHOST, then localhost",
         metavar="HOSTNAME", action="store", dest="pns_host" )
 
 parser.add_option( "-c",
@@ -101,13 +101,14 @@ else:
 
 if options.pns_host:
     pns_host = options.pns_host
+
+elif 'PNS_HOST' in os.environ.keys():
+   pns_host = os.environ[ 'PNS_HOST' ]
+
 else:
-    # Default to $PNS_HOST
-    if 'PNS_HOST' in os.environ.keys():
-        pns_host = os.environ[ 'PNS_HOST' ]
-    else:
-        print 'ERROR, cylc message: no Pyro nameserver hostname provided!'
-        sys.exit(1)
+    pns_host = 'localhost'
+    print 'WARNING, cylc message: no Pyro nameserver hostname provided!'
+    print 'will attempt to connect to a namerserver on localhost'
      
 if options.ctime:
     ctime = options.ctime

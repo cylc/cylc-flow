@@ -34,7 +34,7 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-usage = """cylc control -s NAME -n HOSTNAME [options]
+usage = """cylc control -s NAME [-n HOSTNAME] [options]
 
 Remote control the cylc instance running system NAME,
 via the Pyro nameserver running on HOSTNAME. 
@@ -47,8 +47,10 @@ parser.add_option( "-s",
         metavar="NAME", action="store", dest="system_name" )
 
 parser.add_option( "-n", 
-        help="Hostname of the machine running the Pyro nameserver",
-        metavar="HOSTNAME", action="store", dest="pns_host" )
+        help="Hostname of the machine running the Pyro nameserver, "
+        "defaults to localhost",
+        metavar="HOSTNAME", action="store", default='localhost',
+        dest="pns_host" )
 
 parser.add_option( "-f",
 	help="Do not ask for confirmation before acting.",

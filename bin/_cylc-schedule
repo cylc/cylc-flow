@@ -116,7 +116,7 @@ def main( argv ):
     # don't use '%prog' as program name in the usage string, as we
     # invoke this program through the cylc user interface script.
 
-    usage = """cylc schedule -s NAME -n HOSTNAME [options] [START] [STOP]
+    usage = """cylc schedule -s NAME [-n HOSTNAME] [options] [START] [STOP]
 
 Start up a new cylc instance for scheduling system NAME via the Pyro
 nameserver running on HOSTNAME.
@@ -132,8 +132,10 @@ when it reaches that time, and then the system will shut down."""
             metavar="NAME", action="store", dest="system_name" )
 
     parser.add_option( "-n", 
-            help="Hostname of the machine running the Pyro nameserver",
-            metavar="HOSTNAME", action="store", dest="pns_host" )
+            help="Hostname of the machine running the Pyro nameserver, "
+            "defaults to localhost",
+            metavar="HOSTNAME", action="store", default="localhost",
+            dest="pns_host" )
 
     parser.add_option( "-r", 
             help="Restart from the system's configured state dump file",

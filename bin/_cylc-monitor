@@ -22,7 +22,7 @@ from optparse import OptionParser
 compress = True
 
 # construct a command line parser
-parser = OptionParser( """cylc monitor -s NAME -n HOSTNAME [options]
+parser = OptionParser( """cylc monitor -s NAME [-n HOSTNAME] [options]
 
 A terminal-based monitor that displays the state of all task
 proxy objects in the cylc instance running system NAME, via
@@ -33,8 +33,10 @@ parser.add_option( "-s",
         metavar="NAME", action="store", dest="system_name" )
 
 parser.add_option( "-n", 
-        help="Hostname of the machine running the Pyro nameserver",
-        metavar="HOSTNAME", action="store", dest="pns_host" )
+        help="Hostname of the machine running the Pyro nameserver, "
+        "defaults to localhost",
+        metavar="HOSTNAME", action="store", default="localhost",
+        dest="pns_host" )
 
 parser.add_option( "-a", help="align task name columns",
         action="store_true", default=False, dest="align_columns" )
@@ -70,7 +72,7 @@ else:
     parser.error( "Required: system name" )
 
 # get systems currently registered in the Pyro nameserver
-ns_groups = pyrex.discover( options.pns_host )
+ns_groups = pyrex.discover( pns_host )
 
 if ns_groups.registered( system_name ):
     print "System: " + system_name
