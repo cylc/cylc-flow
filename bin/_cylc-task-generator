@@ -302,7 +302,7 @@ from dynamic_instantiation import get_object
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
         task_init_def_args = 'c_time, dummy_mode, initial_state, submit, startup = False'
-        task_init_args = 'dummy_mode, initial_state'
+        task_init_args = 'initial_state'
 
         if contact:
             if 'CONTACT_DELAY' not in parsed_def.keys():
@@ -541,6 +541,10 @@ from dynamic_instantiation import get_object
         strng += indent + ']\n\n' 
         FILE.write( strng )
 
+        FILE.write( indent + '# in dummy mode, replace the external task with _cylc-dummy-task\n' )
+        FILE.write( indent + 'if dummy_mode:\n' )
+        FILE.write( indent + indent + 'self.external_task = \'_cylc-dummy-task\'\n\n')
+
         # job submission method (must be after env_vars)
         FILE.write( indent + 'modname = \'job_submit_methods\'\n' )
         FILE.write( indent + 'clsname = submit\n' )
@@ -553,8 +557,6 @@ from dynamic_instantiation import get_object
 
         # call parent init methods
         # FOR PARENT CLASS TYPES THAT HAVE INIT METHODS!
-        FILE.write( '\n' )
-    
         if catchup_contact:
             FILE.write( indent + 'catchup_contact.__init__( self )\n\n' )
  
