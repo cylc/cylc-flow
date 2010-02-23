@@ -219,6 +219,7 @@ if $WRITE_CONFIG; then
 
 from background import background
 from background2 import background2
+from background_remote import background_remote
 eof
 fi
 echo "=> $SYS_DIR/job_submit_methods.py"
