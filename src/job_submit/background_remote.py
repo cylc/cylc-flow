@@ -8,11 +8,11 @@ from job_submit import job_submit
 # redirecting stdin to /dev/null, stdout to /dev/null, stderr to stdout, 
 # and backgrounding.
 
-class background( job_submit ):
+class background_remote( job_submit ):
 
     host = 'oliverh-ws.greta'
 
     def construct_command( self ):
         # direct background execution 
-        return 'ssh ' + host + ' + self.task + ' </dev/null >/dev/null 2>&1 &' 
+        return 'ssh ' + host + ' ' + self.task + ' </dev/null >/dev/null 2>&1 &' 
         #return self.task
