@@ -81,12 +81,9 @@ else:
 # construct command to execute
 execute = ''
 
-# If command options include '--system SYSTEM-NAME' or '-s SYSTEM-NAME'
-# then find the named system's environment configuration script and
-# source it before executing the command. 
-if command != "configure":
-    # configure's -s option is used in *creating* the environment
-    # script; so it doesn't actually exist yet.
+if command == "schedule":
+    # intercept the system name and configure the environment for access
+    # to the system source modules.
 
     for i in range( 0, len( command_options) ):
         if command_options[i] == '-s' or command_options[i] == '--system':
