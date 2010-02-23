@@ -172,7 +172,7 @@ eof
 
 # JOB SUBMIT METHODS
 config['job_submit_method'] = 'background'
-# config['job_submit_overrides']['background_foo'] = [ 'foo', 'bar' ]
+# config['job_submit_overrides']['background2'] = [ 'foo', 'bar' ]
 
 # LOGGING DIRECTORY
 config['logging_dir'] = 'CYLC/logfiles'
@@ -218,7 +218,7 @@ if $WRITE_CONFIG; then
 #!/usr/bin/python
 
 from background import background
-from background_foo import background_foo
+from background2 import background2
 eof
 fi
 echo "=> $SYS_DIR/job_submit_methods.py"
