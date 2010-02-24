@@ -24,6 +24,7 @@ usage = \
     'usage: cylc COMMAND [command-options] ',
     '',
     'This is the cylc scheduler command line interface.',
+    'Cylc is pronounced "silk", as in "smooth as silk".',
     '',
     'commands:',
     '  help          Print this usage message and exit.',
