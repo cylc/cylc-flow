@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import os
+import sys
 from job_submit import job_submit
 
 # invoke task on remote machine and exit immediately
@@ -15,10 +16,13 @@ class background_remote( job_submit ):
 
     def submit( self ):
 
-        tmp = self.task
-        [ host, task ] = task.split( ':' )
+        host = self.remote_host
+        task = self.task
 
-        print 'NOT IMPLEMENTED'
-        sys.exit(1)
-        #command = '(
-        #'ssh ' + host + ' ' + task + ' </dev/null >/dev/null 2>&1 &' 
+        remote_env = self.remote_environment_string()
+
+        command = "( " + remote_env + "; " + task + " )"
+        exe = command + " </dev/null >forecast.out 2>&1 &" 
+
+        #self.execute_local( [ 'ssh', host, "'" + exe + "'" ] )
+        self.execute_local( 'ssh ' + host + " '" + exe + "'" )

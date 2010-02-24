@@ -54,7 +54,7 @@ for T in $TARG; do
     cylc message "initiating file transfer from $T to $D"
 
     # check destination directory exists
-    if [[ D = *: ]]; then
+    if [[ $D = *:* ]]; then
         # remote destination
         RMACH=${D%:*}
         RPATH=${D#*:}
@@ -69,6 +69,7 @@ for T in $TARG; do
         #cylc message "making destination directory, $DIR"
         mkdir -p $DIR
     fi
+
 
     scp -B $T $D
 

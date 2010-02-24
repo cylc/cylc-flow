@@ -13,9 +13,11 @@ import subprocess
 
 class job_submit:
 
-    def __init__( self, task_name, task, cycle_time, extra_vars=[] ):
+    def __init__( self, task_name, task, cycle_time, extra_vars, host = None ):
 
         self.task = task
+        if host:
+            self.remote_host = host
         self.task_name = task_name
         self.cycle_time = cycle_time
         self.extra_vars = extra_vars
@@ -50,16 +52,21 @@ class job_submit:
             value = self.interpolate( value )
             os.environ[var_name] = value
 
-    def set_remote_environment( self ):
+    def remote_environment_string( self ):
         # export cycle time and task name
-        env = 'CYCLE_TIME=' + self.cycle_time
-        env += '; TASK_NAME=' + self.task_name
+        env = 'export CYCLE_TIME=' + self.cycle_time
+        env += ' TASK_NAME=' + self.task_name
+        # and system name and PNSHOST for this system
+        env += ' SYSTEM_NAME=' + os.environ[ 'SYSTEM_NAME' ]
+        # TO DO: THIS WILL FAIL FOR localhost!!!!!!!!!!!!!!!!!
+        env += ' PNS_HOST=' + os.environ[ 'PNS_HOST' ]
+
         # and any extra variables
         for entry in self.extra_vars:
             [ var_name, value ] = entry
-            # don't interpolate remote vars?
-            #value = self.interpolate( value )
-            env += '; ' + var_name + '=' + value
+            # don't interpolate remote vars!
+            env += ' ' + var_name + '=' + value
+        return env
 
     def submit( self ):
         # OVERRIDE ME TO CONSTRUCT THE COMMAND TO EXECUTE
@@ -68,14 +75,36 @@ class job_submit:
         print "ERROR jobs_submit: base class"
         sys.exit(1)
 
-    def execute_local( self, command_list ):
+    def execute_local( self, command ):
+
+        try:
+            os.system( command + ' &' )
+            #if retcode != 0:
+            #    # the command returned non-zero exist status
+            #    print >> sys.stderr, ' '.join( command_list ) + ' failed: ', retcode
+            #    sys.exit(1)
+
+        except:
+            raise
+            # the command was not invoked
+            #print >> sys.stderr, 'ERROR: unable to execute ' + command_list
+            #print >> sys.stderr, ' * Is [cylc]/bin in your $PATH?'
+            #print >> sys.stderr, " * Are all cylc scripts executable?"
+            #print >> sys.stderr, " * Have you run 'cylc configure' yet?"
+
+            #raise Exception( 'job launch failed: ' + task_name + ' ' + c_time )
+
+    def execute_local_BROKEN( self, command_list ):
+
+        #for entry in command_list:
+        #    print '---' + entry + '---'
 
         # command_list must be: [ command, arg1, arg2, ...]
         try:
             retcode = subprocess.call( command_list, shell=True )
             if retcode != 0:
                 # the command returned non-zero exist status
-                print >> sys.stderr, execute.join( ' ' ) + ' failed: ', retcode
+                print >> sys.stderr, ' '.join( command_list ) + ' failed: ', retcode
                 sys.exit(1)
 
         except OSError:

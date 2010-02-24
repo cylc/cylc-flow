@@ -17,6 +17,13 @@
 %EXTERNAL_TASK
     cold.sh
 
+%REMOTE_HOST
+    oliverh-ws.greta
+
+%ENVIRONMENT
+    PATH $PATH:$HOME/cylc/bin:$HOME/cylc/sys/examples/distributed/scripts
+    PYTHONPATH $PYTHONPATH:$HOME/cylc/src
+
 %STARTUP_PREREQUISITES
     "startup%$(MY_CYCLE_TIME) finished" 
 

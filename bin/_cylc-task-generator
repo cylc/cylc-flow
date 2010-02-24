@@ -107,6 +107,7 @@ def main( argv ):
     task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'CYCLE_TIMES', 'EXTERNAL_TASK',
+            'REMOTE_HOST', 
             'ENVIRONMENT', 'SINGLE_CYCLE', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', #'JOB_SUBMIT_METHOD',
@@ -288,6 +289,10 @@ from dynamic_instantiation import get_object
                 print 'ERROR: no external task specified'
                 sys.exit(1)
 
+        remote_host = None
+        if 'REMOTE_HOST' in parsed_def.keys():
+            remote_host = parsed_def[ 'REMOTE_HOST' ][0]
+
         # set external task for dummy tasks
         if dummy:
             external_task = '_cylc-dummy-task'
@@ -366,6 +371,10 @@ from dynamic_instantiation import get_object
 
         # external task
         FILE.write( indent + 'external_task = \'' + external_task + '\'\n\n' )
+
+        # remote host
+        if remote_host:
+            FILE.write( indent + 'remote_host = \'' + remote_host + '\'\n\n' )
 
         # valid hours
         FILE.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLE_TIMES' ][0] + ']\n\n' )
@@ -548,7 +557,10 @@ from dynamic_instantiation import get_object
         # job submission method (must be after env_vars)
         FILE.write( indent + 'modname = \'job_submit_methods\'\n' )
         FILE.write( indent + 'clsname = submit\n' )
-        FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.name, self.external_task, self.c_time, self.env_vars )\n\n' )
+        if remote_host:
+            FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.name, self.external_task, self.c_time, self.env_vars, self.remote_host )\n\n' )
+        else:
+            FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.name, self.external_task, self.c_time, self.env_vars )\n\n' )
 
         # forecast model restarts
         if fcmodel:

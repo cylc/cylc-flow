@@ -18,15 +18,15 @@
 
 %ENVIRONMENT
     WRAP file_transfer.sh
-    TARG $TMPDIR/ext/ouput/$(MY_CYCLE_TIME)/extdata
+    TARG $TMPDIR/ext/output/$(MY_CYCLE_TIME)/extdata
     DEST oliverh-ws.greta:/tmp/oliverh/forecast/input/$(MY_CYCLE_TIME)/extdata
 
 %PREREQUISITES
-    "forecast output ready for $(MY_CYCLE_TIME)"
+    "external data ready for $(MY_CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
     10
 
 %OUTPUTS
-    10: "forecast output at $(MY_CYCLE_TIME) ready for postprocessing"
+    10: "forecast input ready for $(MY_CYCLE_TIME)"
 

@@ -15,13 +15,18 @@
     0,6,12,18
 
 %EXTERNAL_TASK
-    oliverh-ws.greta:forecast.sh
+    forecast.sh
+
+%REMOTE_HOST
+    oliverh-ws.greta
 
 %ENVIRONMENT
     NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 6)
+    PATH $PATH:$HOME/cylc/bin:$HOME/cylc/sys/examples/distributed/scripts
+    PYTHONPATH $PYTHONPATH:$HOME/cylc/src
 
 %PREREQUISITES
-    "external data ready for $(MY_CYCLE_TIME)"
+    "forecast input ready for $(MY_CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
     90

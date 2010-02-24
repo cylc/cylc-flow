@@ -9,4 +9,5 @@ class background( job_submit ):
     def submit( self ):
 
         self.set_local_environment()
-        self.execute_local( [ self.task + ' &' ] )
+        #self.execute_local( [ self.task + ' &' ] )
+        self.execute_local( self.task )
