@@ -4,8 +4,9 @@ import os
 from job_submit import job_submit
 
 class background( job_submit ):
+# direct background execution 
 
-    def construct_command( self ):
-        # direct background execution 
-        return self.task + ' &' 
-        #return self.task
+    def submit( self ):
+
+        self.set_local_environment()
+        self.execute_local( [ self.task + ' &' ] )

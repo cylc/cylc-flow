@@ -20,10 +20,6 @@ class job_submit:
         self.cycle_time = cycle_time
         self.extra_vars = extra_vars
 
-    def construct_command( self ):
-        print >> sys.stderr, 'ERROR: use a job submission derived class'
-        sys.exit(1)
-
     def interpolate( self, string ):
 
         # $VARNAME
@@ -44,7 +40,7 @@ class job_submit:
 
         return string
 
-    def set_job_environment( self ):
+    def set_local_environment( self ):
         # export cycle time and task name
         os.environ['CYCLE_TIME'] = self.cycle_time
         os.environ['TASK_NAME'] = self.task_name
@@ -54,18 +50,29 @@ class job_submit:
             value = self.interpolate( value )
             os.environ[var_name] = value
 
+    def set_remote_environment( self ):
+        # export cycle time and task name
+        env = 'CYCLE_TIME=' + self.cycle_time
+        env += '; TASK_NAME=' + self.task_name
+        # and any extra variables
+        for entry in self.extra_vars:
+            [ var_name, value ] = entry
+            # don't interpolate remote vars?
+            #value = self.interpolate( value )
+            env += '; ' + var_name + '=' + value
+
     def submit( self ):
+        # OVERRIDE ME TO CONSTRUCT THE COMMAND TO EXECUTE
+        # AND EITHER SET THE LOCAL ENVIRONMENT OR ADD
+        # REMOTE ENVIRONMENT STRING TO THE COMMAND.
+        print "ERROR jobs_submit: base class"
+        sys.exit(1)
 
-        command = self.construct_command() 
-        self.set_job_environment()
-    
-        # subprocess.call() takes a list: [ command, arg1, arg2, ...]
-        #execute = [ command ]
-        #for f in command_options:
-        #execute.append( f )
+    def execute_local( self, command_list ):
 
+        # command_list must be: [ command, arg1, arg2, ...]
         try:
-            retcode = subprocess.call( command, shell=True )
+            retcode = subprocess.call( command_list, shell=True )
             if retcode != 0:
                 # the command returned non-zero exist status
                 print >> sys.stderr, execute.join( ' ' ) + ' failed: ', retcode
@@ -73,7 +80,7 @@ class job_submit:
 
         except OSError:
             # the command was not invoked
-            print >> sys.stderr, 'ERROR: unable to execute ' + command
+            print >> sys.stderr, 'ERROR: unable to execute ' + command_list
             print >> sys.stderr, ' * Is [cylc]/bin in your $PATH?'
             print >> sys.stderr, " * Are all cylc scripts executable?"
             print >> sys.stderr, " * Have you run 'cylc configure' yet?"

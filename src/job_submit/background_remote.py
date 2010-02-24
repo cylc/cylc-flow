@@ -13,9 +13,12 @@ from job_submit import job_submit
 
 class background_remote( job_submit ):
 
-    host = 'oliverh-ws.greta'
+    def submit( self ):
 
-    def construct_command( self ):
-        # direct background execution 
-        return 'ssh ' + host + ' ' + self.task + ' </dev/null >/dev/null 2>&1 &' 
-        #return self.task
+        tmp = self.task
+        [ host, task ] = task.split( ':' )
+
+        print 'NOT IMPLEMENTED'
+        sys.exit(1)
+        #command = '(
+        #'ssh ' + host + ' ' + task + ' </dev/null >/dev/null 2>&1 &' 
