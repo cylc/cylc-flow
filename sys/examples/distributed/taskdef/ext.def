@@ -1,0 +1,35 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    ext
+
+%DESCRIPTION
+    Provides the external input required by the forecast task.
+    Depends only on the system startup task at start time.
+
+%TYPE
+    free_task, catchup_contact
+
+%CONTACT_DELAY
+    1.0
+
+%CYCLE_TIMES
+    0,6,12,18
+
+%EXTERNAL_TASK
+    ext.sh
+
+%PREREQUISITES
+    # None
+
+%STARTUP_PREREQUISITES
+    "startup%$(MY_CYCLE_TIME) finished"
+
+%ESTIMATED_RUN_TIME
+    10
+
+%OUTPUTS
+    9: "external data ready for $(MY_CYCLE_TIME)"
+
+#%SINGLE_CYCLE
+#    True

@@ -1,0 +1,33 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    get_output
+
+%DESCRIPTION
+    retrieve the forecast model output file from the model output
+    directory and move it to where the post processing system expects it
+    to be.
+
+%TYPE
+    free_task
+
+%CYCLE_TIMES
+    0,6,12,18
+
+%EXTERNAL_TASK
+    cylc-wrapper
+
+%ENVIRONMENT
+    WRAP file_transfer.sh
+    TARG oliverh-ws.greta:/tmp/oliverh/forecast/output/$(MY_CYCLE_TIME)/forecast.nc
+    DEST $TMPDIR/postproc/input/$(MY_CYCLE_TIME)/forecast.nc
+
+%PREREQUISITES
+    "forecast output ready for $(MY_CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    10
+
+%OUTPUTS
+    10: "forecast output at $(MY_CYCLE_TIME) ready for postprocessing"
+

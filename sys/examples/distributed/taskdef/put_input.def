@@ -1,0 +1,32 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    put_input
+
+%DESCRIPTION
+    Copy forecast model import to the remote machine that the forecast
+    model runs on. 
+
+%TYPE
+    free_task
+
+%CYCLE_TIMES
+    0,6,12,18
+
+%EXTERNAL_TASK
+    cylc-wrapper
+
+%ENVIRONMENT
+    WRAP file_transfer.sh
+    TARG $TMPDIR/ext/ouput/$(MY_CYCLE_TIME)/extdata
+    DEST oliverh-ws.greta:/tmp/oliverh/forecast/input/$(MY_CYCLE_TIME)/extdata
+
+%PREREQUISITES
+    "forecast output ready for $(MY_CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    10
+
+%OUTPUTS
+    10: "forecast output at $(MY_CYCLE_TIME) ready for postprocessing"
+
