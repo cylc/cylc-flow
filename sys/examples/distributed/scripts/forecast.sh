@@ -13,6 +13,11 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 # check prerequistes
 ONE=/tmp/oliverh/forecast/input/$CYCLE_TIME/extdata
 TWO=/tmp/oliverh/forecast/running/$CYCLE_TIME/restart
+echo $ONE
+ls $ONE
+echo $TWO
+ls $TWO
+
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         MSG="file not found: $PRE"

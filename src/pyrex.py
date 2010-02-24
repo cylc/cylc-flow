@@ -36,9 +36,8 @@ class pyrex:
         print " - locating nameserver on " + hostname + " ...",
         try:
             self.nameserver = Pyro.naming.NameServerLocator().getNS( hostname )
-        except:
-            print "ERROR: failed to find a Pyro nameserver"
-            raise
+        except NamingError:
+            raise SystemExit("Failed to find a Pyro nameserver on " + hostname )
 
         print "found"
         # create a nameserver group for this system
@@ -70,6 +69,8 @@ class pyrex:
             #raise NamingError
             sys.exit(1)
 
+        Pyro.core.initServer()
+
         # create a pyro_daemon for this program
         self.daemon = Pyro.core.Daemon()
         self.daemon.useNameServer(self.nameserver)
@@ -99,7 +100,11 @@ class discover:
     # what groups are currently registered with the Pyro nameserver
 
     def __init__( self, hostname ):
-        ns = Pyro.naming.NameServerLocator().getNS( hostname )
+        try:
+            ns = Pyro.naming.NameServerLocator().getNS( hostname )
+        except NamingError:
+            raise SystemExit("Failed to find a Pyro nameserver on " + hostname )
+
         self.ns_groups = {}
         # loop through registered objects
         for obj in ns.flatlist():
