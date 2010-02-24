@@ -226,7 +226,7 @@ when it reaches that time, and then the system will shut down."""
         elif len( args ) == 1:
             stop_time = args[0]
         else:
-            parser.error( "too many arguments" )
+            parser.error( "wrong number of arguments" )
 
         if not dummy_mode:
             # If a restart state dump indicates dummy mode then restart
