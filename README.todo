@@ -1,20 +1,19 @@
 To Do
 
+* when initial f/c failed in the file-move example (real mode)
+  system required a 'bump' for monitor to show the task failed.
+
 * treat task groups names just like task names.
 
 * rewrite configure script in Python, for consistency.
 
-* print error message to stderr: print >> sys.stderr, 'message'
+* print error messages to stderr: print >> sys.stderr, 'message'
 
 * think about task launch: qsub, loadleveller, other machines
   (queue and machine name should be task-specific?)
 
-* 'cylc-message --all-outputs-completed' is confusing because it is not related
-  to the special 'completed' messages.
-
-* in the task wrapper script, the --all-outputs-completed argument sets
-  everything completed (including the 'completed' message) except for the
- "finished" message: why is this?
+* 'cylc message --all-outputs-completed' is confusing because it does not 
+  relate to the special 'completed' messages.
 
 * consider implementing "either or" and "self destruct"
   prerequisites (Phil's idea) - this would allow automated
@@ -46,10 +45,10 @@ To Do
   nameserver.
 
 * allow cylc task proxies to kill their real external tasks at shutdown
-  (and otherwise)
+  (and otherwise)?
 
 * connection failure retry for dummy tasks, as is currently done in
-  task-message
+  'cylc message'
 
 * use exception handling as in task_manager.insert() to prevent remote
   control operations that throw an exception (e.g. due to mis-formatted 
@@ -64,7 +63,7 @@ To Do
   of the satisfier task as well, for each prerequisite, and also to
   choose the latest task as satisfier if more than one can do it.
 
-* exception handling in task-message script: retry and/or alert in case
+* exception handling in message script: retry and/or alert in case
   of failure to contact the control system
 
 * python script for easy viewing of configured log files without having
