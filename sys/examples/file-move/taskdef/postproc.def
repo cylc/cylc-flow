@@ -1,0 +1,25 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    postproc
+
+%DESCRIPTION
+    Post processing for the forecast task
+
+%TYPE
+    free_task
+
+%CYCLE_TIMES
+    0,6,12,18
+
+%EXTERNAL_TASK
+    postproc.sh
+
+%PREREQUISITES
+    "forecast output at $(MY_CYCLE_TIME) ready for postprocessing"
+
+%ESTIMATED_RUN_TIME
+    10
+
+%OUTPUTS
+    10: "forecast products ready for $(MY_CYCLE_TIME)"

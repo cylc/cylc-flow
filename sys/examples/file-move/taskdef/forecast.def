@@ -1,0 +1,34 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    forecast
+
+%DESCRIPTION
+    Forecast model. 
+    Generates restart files for the next cycle only.
+    Depends on external input data.
+
+%TYPE
+    forecast_model
+
+%CYCLE_TIMES
+    0,6,12,18
+
+%EXTERNAL_TASK
+    forecast.sh
+
+%ENVIRONMENT
+    NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 6)
+
+%PREREQUISITES
+    "external data ready for $(MY_CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    90
+
+%ESTIMATED_RESTART_DUMP_TIMES
+    89
+
+%OUTPUTS
+    90: "forecast output ready for $(MY_CYCLE_TIME)"
+

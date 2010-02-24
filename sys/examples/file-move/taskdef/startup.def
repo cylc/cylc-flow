@@ -1,0 +1,28 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    startup
+
+%DESCRIPTION
+    Clean out the system working directory at startup.
+
+%TYPE
+    free_task, oneoff
+
+%CYCLE_TIMES
+    0,6,12,18
+
+%EXTERNAL_TASK
+    startup.sh
+
+%PREREQUISITES
+    # None
+
+%ESTIMATED_RUN_TIME
+    10
+
+%OUTPUTS
+    # defaults only
+
+%SINGLE_CYCLE
+    True
