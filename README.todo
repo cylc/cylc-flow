@@ -1,5 +1,7 @@
 To Do
 
+* catch deliberate exits in manager, in order cleanly shutdown pyro
+
 * 'finished' => 'success', 'failed' => 'failure', 'completed' => 'done'
 
 * consider 'set -e' and 'trap' in task scripts.

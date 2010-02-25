@@ -278,7 +278,6 @@ restart = False
 start_time = None
 stop_time = None
 
-reset_time = None
 if options.restart or options.restart_from:
     restart = True
     # cylc schedule --system=NAME --restart [STOP]
@@ -290,47 +289,6 @@ if options.restart or options.restart_from:
         stop_time = args[0]
     else:
         parser.error( "wrong number of arguments" )
-
-    if not dummy_mode:
-        # If a restart state dump indicates dummy mode then restart
-        # in dummy mode even if the command line does not force it.
-        # TO DO: THIS DUPLICATES CODE IN MANAGER but we need to 
-        # know dummy mode or not here.
-
-        configured_file = system_config.get('state_dump_dir') + '/' + system_config.get('state_dump_file')
-        if options.restart_from:
-            filename = options.restart_from
-            if filename == os.path.basename( filename ):
-                # is a plain filename; append to configured path
-                dirname = os.path.dirname( configured_file )
-                filename = dirname + '/' + filename
-            elif re.match( '^/' ):
-                # is an absolute path
-                pass
-            else:
-                # relative path; append to cwd
-                filename = os.getcwd() + '/' + filename
-
-        else:
-            filename = configured_file
-
-        # The state dump file first line is:
-        # system time : <time>
-        #   OR
-        # dummy time : <time>,rate
-
-        FILE = open( filename, 'r' )
-        lines = FILE.readlines()
-        FILE.close()
-
-        [ junk, tmp ] = lines[0].split( ' : ' )
-
-        if junk == 'dummy time':
-            dummy_mode = True
-            [ reset_time, rate ] = tmp.split( ',' )
-            rate.rstrip() # strip newline
-        else:
-            reset_time.rstrip() # strip newline
 
 else:
     # cylc schedule --system=NAME START [STOP]
@@ -392,8 +350,6 @@ clock = accelerated_clock.clock(
         int(options.clock_offset),
         dummy_mode ) 
 
-if reset_time:
-    clock.reset( reset_time )
 
 daemon.connect( clock, ns_obj_name( 'clock', system_name ))
 

@@ -152,6 +152,21 @@ class manager:
         lines = FILE.readlines()
         FILE.close()
 
+        # RESET THE TIME TO THE LATEST DUMPED TIME
+        # The state dump file first line is:
+        # system time : <time>
+        #   OR
+        # dummy time : <time>,rate
+        line1 = lines[0]
+        line1 = line1.rstrip()
+        [ time_type, time_string ] = line1.split(' : ')
+        if time_type == 'dummy time':
+            if not self.dummy_mode:
+                raise SystemExit( "For this state dump file you must restart in dummy mode" )
+            
+            [ time, rate ] = time_string.split( ',' )
+            self.clock.reset( time, rate )
+
         log_created = {}
 
         mod = __import__( 'task_classes' )

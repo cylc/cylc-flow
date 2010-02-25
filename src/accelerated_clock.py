@@ -49,9 +49,11 @@ class clock( Pyro.core.ObjBase ):
     def get_rate( self ):
         return self.acceleration
 
-    def reset( self, dstr ):
+    def reset( self, dstr, rate ):
         # set clock from string of the form made by self.dump_to_str()
         # Y:M:D:H:m:s
+
+        self.acceleration = int( rate )
 
         if not self.dummy_mode:
             print "(ignoring clock reset in real time)"
@@ -64,6 +66,8 @@ class clock( Pyro.core.ObjBase ):
         M = YMDHms[1]
         D = YMDHms[2]
         H = YMDHms[3]
+        m = YMDHms[4]
+        s = YMDHms[5]
 
         if len( M ) == 1:
             M = '0' + M
@@ -71,12 +75,18 @@ class clock( Pyro.core.ObjBase ):
             D = '0' + D
         if len( H ) == 1:
             H = '0' + H
+        if len( m ) == 1:
+            m = '0' + m
+        if len( s ) == 1:
+            s = '0' + s
 
-        base_ctime = Y + M + D + H
+        base_ctime = Y + M + D + H + m + s
+        #base_ctime = Y + M + D + H 
 
         self.base_dummytime = datetime.datetime( 
                 int(base_ctime[0:4]), int(base_ctime[4:6]), 
-                int(base_ctime[6:8]), int(base_ctime[8:10]))
+                int(base_ctime[6:8]), int(base_ctime[8:10]),
+                int(base_ctime[10:12]), int(base_ctime[12:14]))
                 
         print "CLOCK RESET ......."
         print " - accel:  " + str( self.acceleration ) + "s = 1 dummy hour"
