@@ -15,86 +15,10 @@
 # See Pyro manual for nameserver hierachical naming details ...
 # prepending ':' puts names or sub-groups under the root group. 
  
-import Pyro.core, Pyro.naming
+import Pyro.naming
 from Pyro.errors import NamingError
 
-import sys
 import re
-
-
-class pyrex:
-    def __init__( self, groupname, hostname ):
-
-        self.groupname = groupname
-
-        print "CONFIGURING Pyro........"
-        # REQUIRE SINGLE THREADED OPERATION (see documentation)
-        print " - single threaded" 
-        Pyro.config.PYRO_MULTITHREADED = 0
-
-        # locate the Pyro nameserver
-        print " - locating nameserver on " + hostname + " ...",
-        try:
-            self.nameserver = Pyro.naming.NameServerLocator().getNS( hostname )
-        except NamingError:
-            raise SystemExit("Failed to find a Pyro nameserver on " + hostname )
-
-        print "found"
-        # create a nameserver group for this system
-        print " - creating nameserver group '" + groupname + "'"
-        try:
-            # abort if any existing objects are registered in my group name
-            # (this may indicate another instance of cylc is running
-            # with the same groupname; must be unique for each instance
-            # else the different systems will interfere with each other) 
-            self.nameserver.createGroup( groupname )
-
-        except NamingError:
-            print "\nERROR: group '" + groupname + "' is already registered"
-            objs = self.nameserver.list( groupname )
-            if len( objs ) == 0:
-                print "(although it currently contains no registered objects)."
-            else:
-                print "And contains the following registered objects:"
-                for obj in objs:
-                    print '  + ' + obj[0]
-
-            print "\nOPTIONS:"
-            print "(i) if the group is yours from a previous aborted run you can"
-            print "    manually delete it with 'pyro-nsc deletegroup " + groupname +"'"
-            print "(ii) if the group is being used by another program, change"
-            print "    'system_name' in your config file to avoid interference.\n"
-
-            print "ABORTING NOW"
-            #raise NamingError
-            sys.exit(1)
-
-        Pyro.core.initServer()
-
-        # create a pyro_daemon for this program
-        self.daemon = Pyro.core.Daemon()
-        self.daemon.useNameServer(self.nameserver)
-
-    def object_id( self, name ):
-        return self.groupname + '.' + name
-    
-    def connect( self, object, name ):
-        self.daemon.connect( object, self.object_id( name ) )
-
-    def disconnect( self, object ):
-        self.daemon.disconnect( object )
-
-    def shutdown( self, bool ):
-        # shut down the daemon
-        print "Shutting down my Pyro daemon"
-        self.daemon.shutdown( bool )
-        print "Deleting group " + self.groupname + " from the Pyro nameserver"
-        # delete my group from the nameserver
-        self.nameserver.deleteGroup( self.groupname )
-
-    def handleRequests( self, timeout ):
-        self.daemon.handleRequests( timeout )
-
 
 class discover:
     # what groups are currently registered with the Pyro nameserver

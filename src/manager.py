@@ -11,6 +11,9 @@ import re
 from dynamic_instantiation import get_object
 from broker import broker
 
+def ns_obj_name( name, groupname ):
+    return groupname + '.' + name
+
 class manager:
     def __init__( self, config ):
 
@@ -20,7 +23,8 @@ class manager:
         self.dummy_mode = config.get('dummy_mode')
         self.clock = config.get('clock')
         self.stop_time = config.get('stop_time' )
-        self.pyro = config.get('pyro')  # pyrex (cylc Pyro helper) object
+        self.pyro = config.get('daemon')  
+        self.system_name = config.get('system_name' )
         self.submit = config.get('submit' )
 
         self.log = logging.getLogger( "main" )
@@ -106,7 +110,7 @@ class manager:
 
             if not skip:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, itask.get_identity() )
+                self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.system_name) )
                 self.tasks.append( itask )
 
 
@@ -195,7 +199,7 @@ class manager:
 
             if not skip:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, itask.get_identity() )
+                self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.system_name) )
                 self.tasks.append( itask )
 
     def no_tasks_running( self ):
@@ -284,7 +288,7 @@ class manager:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro.connect( new_task, new_task.get_identity() )
+                    self.pyro.connect( new_task, ns_obj_name( new_task.get_identity(), self.system_name) )
                     new_task.log('DEBUG', "connected" )
                     self.tasks.append( new_task )
 
@@ -571,7 +575,7 @@ class manager:
 
                 if not skip:
                     itask.log( 'DEBUG', "connected" )
-                    self.pyro.connect( itask, itask.get_identity() )
+                    self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.system_name) )
                     self.tasks.append( itask )
 
         except:
@@ -699,7 +703,7 @@ class manager:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro.connect( new_task, new_task.get_identity() )
+                    self.pyro.connect( new_task, ns_obj_name( new_task.get_identity(), self.system_name) )
                     new_task.log( 'DEBUG', 'connected' )
                     self.tasks.append( new_task )
 

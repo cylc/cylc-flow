@@ -13,8 +13,14 @@ import datetime
 from optparse import OptionParser
 from time import sleep
 
+import Pyro.core, Pyro.naming
+from Pyro.errors import NamingError
+
 # auto-replace with version tag at build/install:
 cylc_version = "foo-bar-baz"
+
+def ns_obj_name( name, groupname ):
+    return groupname + '.' + name
 
 def print_banner():
     print ""
@@ -24,10 +30,11 @@ def print_banner():
     print ".     Hilary Oliver, NIWA, 2008-2010    ."
     print "_______________C_Y_L_C___________________"
 
-def clean_shutdown( pyro, reason ):
+def clean_shutdown( pyrod, pyrons, groupname, reason ):
     log = logging.getLogger( 'main' )
     log.critical( 'System Halt: ' + reason )
-    pyro.shutdown( True ) 
+    pyrod.shutdown( True ) 
+    pyrons.deleteGroup( groupname ) 
 
 def service_remote_requests( remote, task_manager, log, failout = None ):
 
@@ -182,8 +189,10 @@ when it reaches that time, and then the system will shut down."""
     if not options.pns_host:
         parser.error( "Required: Pyro nameserver hostname" )
 
+    pns_host = options.pns_host
+    system_name = options.system_name
+
     # import cylc modules now (the reason for this is explained above)
-    import pyrex
     import config
     import manager
     import task_base
@@ -193,6 +202,7 @@ when it reaches that time, and then the system will shut down."""
     import cycle_time
     import pimp_my_logger
     import accelerated_clock 
+    import pyrex
 
     print_banner()
 
@@ -207,8 +217,7 @@ when it reaches that time, and then the system will shut down."""
 
     if options.system_name != system_config.get( 'system_name' ):
         # this should never happen
-        print 'ERROR: configured system and command line disagree'
-        sys.exit(1)
+        raise SystemExit( 'ERROR: configured system and command line disagree' )
 
     restart_from = None
     restart = False
@@ -294,8 +303,8 @@ when it reaches that time, and then the system will shut down."""
         parser.error( 'Either supply start time or restart' )
        
     # set configured global (all tasks) environment variables
-    os.environ[ 'PNS_HOST' ] = str( options.pns_host )
-    os.environ[ 'SYSTEM_NAME' ] = str( options.system_name )
+    os.environ[ 'PNS_HOST' ] = str( pns_host )
+    os.environ[ 'SYSTEM_NAME' ] = str( system_name )
     if dummy_mode:
         os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
         # communicate failout_task_id to the dummy task program
@@ -312,9 +321,48 @@ when it reaches that time, and then the system will shut down."""
         print "RUNNING IN DUMMY MODE!"
         print
 
-    # configure my pyro helper
-    # this will abort if the nameserver group already exists
-    pyro = pyrex.pyrex( options.system_name, options.pns_host )
+    # LOCATE THE PYRO NAMESERVER
+    try:
+        nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
+    except NamingError:
+        raise SystemExit("Failed to find a Pyro nameserver on " + pns_host )
+    else:
+        print "Using Pyro Nameserver on " + pns_host
+
+    # CREATE A UNIQUE GROUPNAME FOR THIS SYSTEM
+    try:
+        nameserver.createGroup( system_name )
+
+    except NamingError:
+        # abort if any existing objects are registered in my group name
+        # (this may indicate another instance of cylc is running
+        # with the same groupname; must be unique for each instance
+        # else the different systems will interfere with each other) 
+        print "\nERROR: group '" + system_name + "' is already registered"
+        objs = nameserver.list( system_name )
+        if len( objs ) == 0:
+            print "(although it currently contains no registered objects)."
+        else:
+            print "And contains the following registered objects:"
+            for obj in objs:
+                print '  + ' + obj[0]
+
+        print "\nOPTIONS:"
+        print "(i) if the group is yours from a previous aborted run you can"
+        print "    manually delete it with 'pyro-nsc deletegroup " + system_name +"'"
+        print "(ii) if the group is being used by another program, change"
+        print "    'system_name' in your config file to avoid interference.\n"
+
+        raise SystemExit( "ABORTING NOW" )
+ 
+    # REQUIRE SINGLE THREADED PYRO (see documentation)
+    print " - configuring Pyro for single-threaded operation"
+    Pyro.config.PYRO_MULTITHREADED = 0
+    Pyro.core.initServer()
+
+    # CREATE A PYRO DAEMON FOR THIS SYSTEM
+    daemon = Pyro.core.Daemon()
+    daemon.useNameServer(nameserver)
 
     # system clock for accelerated time in dummy mode
     clock = accelerated_clock.clock( 
@@ -325,7 +373,9 @@ when it reaches that time, and then the system will shut down."""
     if reset_time:
         clock.reset( reset_time )
 
-    pyro.connect( clock, 'clock' )
+    print "!!!!!!!!!!!!!!!!!", system_name
+    print ns_obj_name( 'clock', system_name )
+    daemon.connect( clock, ns_obj_name( 'clock', system_name ))
 
     print "CREATING MAIN LOG......."
     # create logging dirs
@@ -353,14 +403,15 @@ when it reaches that time, and then the system will shut down."""
 
         # remotely accessible system state summary
         system_state = state_summary.state_summary( system_config, dummy_mode )
-        pyro.connect( system_state, 'state_summary' )
+        daemon.connect( system_state, ns_obj_name( 'state_summary', system_name ))
 
         # dead letter box for remote use
         dead_letter_box = dead_letter.letter_box()
-        pyro.connect( dead_letter_box, 'dead_letter_box' )
+        daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', system_name))
 
         # initialize the task manager from general config file or state dump
-        system_config.put( 'pyro', pyro )
+        system_config.put( 'daemon', daemon )
+        system_config.put( 'system_name', system_name )
         system_config.put( 'clock', clock )
         system_config.put( 'restart', restart )
         system_config.put( 'start_time', start_time )
@@ -371,7 +422,7 @@ when it reaches that time, and then the system will shut down."""
 
         # remote control switch
         remote = remote_switch.remote_switch( system_config, task_manager.get_tasks() )
-        pyro.connect( remote, 'remote' )
+        daemon.connect( remote, ns_obj_name( 'remote', system_name) )
 
         print "\nBeginning task scheduling NOW\n"
 
@@ -430,11 +481,11 @@ when it reaches that time, and then the system will shut down."""
                 system_state.update( task_manager.tasks, clock )
 
             if task_manager.all_tasks_finished():
-                clean_shutdown( pyro, "ALL TASKS FINISHED" )
+                clean_shutdown( daemon, nameserver, system_name, "ALL TASKS FINISHED" )
                 return
 
             if system_halt_now or system_halt and task_manager.no_tasks_running():
-                clean_shutdown( pyro, "all running tasks finished" )
+                clean_shutdown( daemon, nameserver, system_name, "all running tasks finished" )
                 return
 
             # REMOTE METHOD HANDLING; with no timeout and single-
@@ -447,12 +498,12 @@ when it reaches that time, and then the system will shut down."""
             # incoming task messages set this to True
             task_base.state_changed = False
             # handle all remote calls
-            pyro.handleRequests( timeout = None )
+            daemon.handleRequests( timeout = None )
 
          # END MAIN LOOP
 
     except Exception:
-        clean_shutdown( pyro, 'Error Occurred' )
+        clean_shutdown( daemon, nameserver, system_name, 'Error Occurred' )
         raise
 
 if __name__ == "__main__":
