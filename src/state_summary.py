@@ -2,7 +2,6 @@
 
 import Pyro.core
 import logging
-import sys
 
 class state_summary( Pyro.core.ObjBase ):
     "class to supply system state summary to external monitoring programs"

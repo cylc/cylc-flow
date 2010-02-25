@@ -82,27 +82,6 @@ else:
 # construct command to execute
 execute = ''
 
-if command == "schedule":
-    # intercept the system name and configure the environment for access
-    # to the system source modules.
-
-    for i in range( 0, len( command_options) ):
-        if command_options[i] == '-s' or command_options[i] == '--system':
-            sysname = command_options[i+1]
-
-            FILE = open( os.environ['HOME'] + '/.cylc/configured/' + sysname, 'r' )
-            line = FILE.read()
-            system_dir = line.rstrip() 
-            FILE.close()
-
-            print "Configuring your environment for system " + sysname
-            print system_dir
-            # add system scripts to $PATH
-            os.environ[ 'PATH' ] += ':' + system_dir + '/scripts'
-            # add system Python modules to $PYTHONPATH
-            os.environ[ 'PYTHONPATH' ] += ':' + system_dir
-            break
-
 # construct the actual command name
 command = '_cylc-' + command 
 

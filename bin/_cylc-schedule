@@ -1,40 +1,75 @@
 #!/usr/bin/python
 
-# import standard Python modules
-# cylc modules are imported after parsing the command line, so that we
-# don't need access to a specific system to print the usage message.
-import re
-import os
-import sys
-import shutil
+# standard Python modules
+import re, os, sys, shutil
 #import profile
 import logging
 import datetime
-from optparse import OptionParser
 from time import sleep
+from optparse import OptionParser
 
+# cycl source modules
+import pyrex
+import manager
+import cycle_time
+import dead_letter
+import state_summary
+import pimp_my_logger
+import accelerated_clock 
+
+# pyro modules
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 
 # auto-replace with version tag at build/install:
-cylc_version = "foo-bar-baz"
-
-def ns_obj_name( name, groupname ):
-    return groupname + '.' + name
+cylc_version = "REPLACE-ME"
 
 def print_banner():
     print ""
     print "_______________C_Y_L_C___________________"
     print ". Self Organising Dynamic Metascheduler ."
-    #print "        version: " + cylc_version
     print ".     Hilary Oliver, NIWA, 2008-2010    ."
     print "_______________C_Y_L_C___________________"
+    print "version: " + cylc_version
+    print ""
 
-def clean_shutdown( pyrod, pyrons, groupname, reason ):
-    log = logging.getLogger( 'main' )
-    log.critical( 'System Halt: ' + reason )
-    pyrod.shutdown( True ) 
-    pyrons.deleteGroup( groupname ) 
+def locate_pyro_nameserver():
+    try:
+        nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
+    except NamingError:
+        raise SystemExit("Failed to find a Pyro nameserver on " + pns_host )
+    else:
+        print "Using Pyro Nameserver on " + pns_host
+        return nameserver
+
+def create_ns_groupname( nameserver, groupname ):
+    try:
+        nameserver.createGroup( groupname )
+
+    except NamingError:
+        # abort if any existing objects are registered in my group name
+        # (this may indicate another instance of cylc is running
+        # with the same groupname; must be unique for each instance
+        # else the different systems will interfere with each other) 
+        print "\nERROR: group '" + groupname + "' is already registered"
+        objs = nameserver.list( groupname )
+        if len( objs ) == 0:
+            print "(although it currently contains no registered objects)."
+        else:
+            print "And contains the following registered objects:"
+            for obj in objs:
+                print '  + ' + obj[0]
+
+        print "\nOPTIONS:"
+        print "(i) if the group is yours from a previous aborted run you can"
+        print "    manually delete it with 'pyro-nsc deletegroup " + groupname +"'"
+        print "(ii) if the group is being used by another program, change"
+        print "    'system_name' in your config file to avoid interference.\n"
+
+        raise SystemExit( "ABORTING NOW" )
+
+    else:
+        print "Created groupname '" + groupname + "' in the Pyro nameserver"
 
 def service_remote_requests( remote, task_manager, log, failout = None ):
 
@@ -118,20 +153,23 @@ def service_remote_requests( remote, task_manager, log, failout = None ):
 
     return [ halt, halt_now, process_tasks ]
 
-def main( argv ):
-    # construct a command line parser
-    # don't use '%prog' as program name in the usage string, as we
-    # invoke this program through the cylc user interface script.
+def ns_obj_name( name, groupname ):
+    # object name as registered with the Pyro nameserver
+    return groupname + '.' + name
 
-    usage = """cylc schedule -s NAME [-n HOSTNAME] [options] [START] [STOP]
+usage = """"cylc schedule -s NAME [-n HOSTNAME] [options] [START] [STOP]
 
-Start up a new cylc instance for scheduling system NAME via the Pyro
-nameserver running on HOSTNAME.
-(1) To cold start a system, supply an initial cycle time START (YYYYMMDDHH). 
-(2) To restart a system, use the '--restart' or '--restart-from' options.
-(3) If you supply a final cycle time STOP (YYYYMMDDHH) each task will stop
+Start up a cylc instance for scheduling system NAME via the Pyro
+nameserver running on HOSTNAME (which defaults to localhost). 
+
+To cold start a system, supply an initial cycle time START (YYYYMMDDHH). 
+
+To restart a system, use the '--restart' or '--restart-from' options. 
+
+If you supply a final cycle time STOP (YYYYMMDDHH) each task will stop 
 when it reaches that time, and then the system will shut down."""
 
+def commandline_parser():
     parser = OptionParser( usage )
 
     parser.add_option( "-s", 
@@ -174,344 +212,332 @@ when it reaches that time, and then the system will shut down."""
             "(Dummy mode) get a task to abort after reporting that "
             "it has failed. Use this to test failure and recovery "
             "scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.",
-        metavar="TASK-ID", action="store", dest="failout_task_id" )
+            metavar="TASK-ID", action="store", dest="failout_task_id" )
 
     parser.add_option( "--reason", 
             help="(Debug) explain why the task processing loop was invoked",
             action="store_true", default=False, dest="task_proc_reason" )
 
-    # get command line options and positional args
-    ( options, args ) = parser.parse_args()
+    return parser
 
-    if not options.system_name:
-        parser.error( "Required: system name" )
+# =====================================================================
+# MAIN PROGRAM
+# =====================================================================
 
-    if not options.pns_host:
-        parser.error( "Required: Pyro nameserver hostname" )
+# parse commandline options and arguments------------------------------
+parser = commandline_parser()
+( options, args ) = parser.parse_args()
 
-    pns_host = options.pns_host
-    system_name = options.system_name
+# check compulsory arguments-------------------------------------------
+if not options.system_name:
+    parser.error( "Required: system name" )
+if not options.pns_host:
+    # (this won't happen; defaults to localhost)
+    parser.error( "Required: Pyro nameserver hostname" )
 
-    # import cylc modules now (the reason for this is explained above)
-    import config
-    import manager
-    import task_base
-    import dead_letter
-    import remote_switch
-    import state_summary
-    import cycle_time
-    import pimp_my_logger
-    import accelerated_clock 
-    import pyrex
+pns_host = options.pns_host
+system_name = options.system_name
 
-    print_banner()
+# find location of the system task and config modules------------------
+FILE = open( os.environ['HOME'] + '/.cylc/configured/' + system_name, 'r' )
+line = FILE.read()
+system_dir = line.rstrip() 
+FILE.close()
 
-    # load system configuration
-    # cylc front end has already exported the system environment.
-    system_config = config.config()
+# configure the execution environment for task scripts launched by cylc
+print "Configuring your environment for system " + system_name
+print system_dir
+# add system scripts to $PATH
+os.environ[ 'PATH' ] += ':' + system_dir + '/scripts'
+# add system Python modules to $PYTHONPATH
+os.environ[ 'PYTHONPATH' ] += ':' + system_dir
 
-    dummy_mode = False
-    if options.dummy_mode:
-        system_config.put( 'dummy_mode', True )
-        dummy_mode = True
+# add system dir to the module search path for this program------------
+sys.path.append( system_dir )
 
-    if options.system_name != system_config.get( 'system_name' ):
-        # this should never happen
-        raise SystemExit( 'ERROR: configured system and command line disagree' )
+# import system-specific cylc modules now------------------------------ 
+import config        # loads system_config.py
+import task_base     # loads system_tasks.py
+import remote_switch # ditto
 
-    restart_from = None
-    restart = False
-    start_time = None
-    stop_time = None
+print_banner()
 
-    reset_time = None
-    if options.restart or options.restart_from:
-        restart = True
-        # cylc schedule --system=NAME --restart [STOP]
-        # cylc schedule --system=NAME --restart-from=STATE [STOP]
-        if len( args ) == 0:
-            # default
-            pass
-        elif len( args ) == 1:
-            stop_time = args[0]
-        else:
-            parser.error( "wrong number of arguments" )
+# load system configuration--------------------------------------------
+system_config = config.config()
 
-        if not dummy_mode:
-            # If a restart state dump indicates dummy mode then restart
-            # in dummy mode even if the command line does not force it.
-            # TO DO: THIS DUPLICATES CODE IN MANAGER but we need to 
-            # know dummy mode or not here.
+dummy_mode = False
+if options.dummy_mode:
+    system_config.put( 'dummy_mode', True )
+    dummy_mode = True
 
-            configured_file = system_config.get('state_dump_dir') + '/' + system_config.get('state_dump_file')
-            if options.restart_from:
-                filename = options.restart_from
-                if filename == os.path.basename( filename ):
-                    # is a plain filename; append to configured path
-                    dirname = os.path.dirname( configured_file )
-                    filename = dirname + '/' + filename
-                elif re.match( '^/' ):
-                    # is an absolute path
-                    pass
-                else:
-                    # relative path; append to cwd
-                    filename = os.getcwd() + '/' + filename
+if options.system_name != system_config.get( 'system_name' ):
+    # this should never happen
+    raise SystemExit( 'ERROR: configured system and command line disagree' )
 
-            else:
-                filename = configured_file
+restart_from = None
+restart = False
+start_time = None
+stop_time = None
 
-            # The state dump file first line is:
-            # system time : <time>
-            #   OR
-            # dummy time : <time>,rate
-
-            FILE = open( filename, 'r' )
-            lines = FILE.readlines()
-            FILE.close()
-
-            [ junk, tmp ] = lines[0].split( ' : ' )
-
-            if junk == 'dummy time':
-                system_config.put( 'dummy_mode', True )
-                dummy_mode = True
-                [ reset_time, rate ] = tmp.split( ',' )
-                rate.rstrip() # strip newline
-            else:
-                reset_time.rstrip() # strip newline
-
+reset_time = None
+if options.restart or options.restart_from:
+    restart = True
+    # cylc schedule --system=NAME --restart [STOP]
+    # cylc schedule --system=NAME --restart-from=STATE [STOP]
+    if len( args ) == 0:
+        # default
+        pass
+    elif len( args ) == 1:
+        stop_time = args[0]
     else:
-        # cylc schedule --system=NAME START [STOP]
-        if len( args ) == 1:
-            start_time = args[0]
-        elif len( args ) == 2:
-            start_time = args[0]
-            stop_time = args[1]
+        parser.error( "wrong number of arguments" )
+
+    if not dummy_mode:
+        # If a restart state dump indicates dummy mode then restart
+        # in dummy mode even if the command line does not force it.
+        # TO DO: THIS DUPLICATES CODE IN MANAGER but we need to 
+        # know dummy mode or not here.
+
+        configured_file = system_config.get('state_dump_dir') + '/' + system_config.get('state_dump_file')
+        if options.restart_from:
+            filename = options.restart_from
+            if filename == os.path.basename( filename ):
+                # is a plain filename; append to configured path
+                dirname = os.path.dirname( configured_file )
+                filename = dirname + '/' + filename
+            elif re.match( '^/' ):
+                # is an absolute path
+                pass
+            else:
+                # relative path; append to cwd
+                filename = os.getcwd() + '/' + filename
+
         else:
-            parser.error( "too many arguments" )
+            filename = configured_file
+
+        # The state dump file first line is:
+        # system time : <time>
+        #   OR
+        # dummy time : <time>,rate
+
+        FILE = open( filename, 'r' )
+        lines = FILE.readlines()
+        FILE.close()
+
+        [ junk, tmp ] = lines[0].split( ' : ' )
+
+        if junk == 'dummy time':
+            system_config.put( 'dummy_mode', True )
+            dummy_mode = True
+            [ reset_time, rate ] = tmp.split( ',' )
+            rate.rstrip() # strip newline
+        else:
+            reset_time.rstrip() # strip newline
+
+else:
+    # cylc schedule --system=NAME START [STOP]
+    if len( args ) == 1:
+        start_time = args[0]
+    elif len( args ) == 2:
+        start_time = args[0]
+        stop_time = args[1]
+    else:
+        parser.error( "too many arguments" )
      
-    if start_time:
-        if not cycle_time.is_valid( start_time ):
-            parser.error( "invalid START time" )
+if start_time:
+    if not cycle_time.is_valid( start_time ):
+        parser.error( "invalid START time" )
 
-    if stop_time:
-        if not cycle_time.is_valid( stop_time ):
-            parser.error( "invalid STOP time" )
+if stop_time:
+    if not cycle_time.is_valid( stop_time ):
+        parser.error( "invalid STOP time" )
 
-    if not start_time and \
-            not options.restart and \
-            not options.restart_from: 
-        parser.error( 'Either supply start time or restart' )
+if not start_time and \
+        not options.restart and \
+        not options.restart_from: 
+    parser.error( 'Either supply start time or restart' )
        
-    # set configured global (all tasks) environment variables
-    os.environ[ 'PNS_HOST' ] = str( pns_host )
-    os.environ[ 'SYSTEM_NAME' ] = str( system_name )
-    if dummy_mode:
-        os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
-        # communicate failout_task_id to the dummy task program
-        if options.failout_task_id:
-            print "FAILOUT: " + options.failout_task_id
-            os.environ[ 'FAILOUT_ID' ] = options.failout_task_id
+# set configured global (all tasks) environment variables
+os.environ[ 'PNS_HOST' ] = str( pns_host )
+os.environ[ 'SYSTEM_NAME' ] = str( system_name )
+if dummy_mode:
+    os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
+    # communicate failout_task_id to the dummy task program
+    if options.failout_task_id:
+        print "FAILOUT: " + options.failout_task_id
+        os.environ[ 'FAILOUT_ID' ] = options.failout_task_id
 
-    env = system_config.get('environment')
-    for VAR in env.keys():
-        os.environ[ VAR ] = env[ VAR ]
+env = system_config.get('environment')
+for VAR in env.keys():
+    os.environ[ VAR ] = env[ VAR ]
 
-    if dummy_mode:
-        print
-        print "RUNNING IN DUMMY MODE!"
-        print
+if dummy_mode:
+    print "RUNNING IN DUMMY MODE"
 
-    # LOCATE THE PYRO NAMESERVER
-    try:
-        nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
-    except NamingError:
-        raise SystemExit("Failed to find a Pyro nameserver on " + pns_host )
-    else:
-        print "Using Pyro Nameserver on " + pns_host
+# LOCATE THE PYRO NAMESERVER-------------------------------------------
+nameserver = locate_pyro_nameserver()
 
-    # CREATE A UNIQUE GROUPNAME FOR THIS SYSTEM
-    try:
-        nameserver.createGroup( system_name )
-
-    except NamingError:
-        # abort if any existing objects are registered in my group name
-        # (this may indicate another instance of cylc is running
-        # with the same groupname; must be unique for each instance
-        # else the different systems will interfere with each other) 
-        print "\nERROR: group '" + system_name + "' is already registered"
-        objs = nameserver.list( system_name )
-        if len( objs ) == 0:
-            print "(although it currently contains no registered objects)."
-        else:
-            print "And contains the following registered objects:"
-            for obj in objs:
-                print '  + ' + obj[0]
-
-        print "\nOPTIONS:"
-        print "(i) if the group is yours from a previous aborted run you can"
-        print "    manually delete it with 'pyro-nsc deletegroup " + system_name +"'"
-        print "(ii) if the group is being used by another program, change"
-        print "    'system_name' in your config file to avoid interference.\n"
-
-        raise SystemExit( "ABORTING NOW" )
+# CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
+create_ns_groupname( nameserver, system_name )
  
-    # REQUIRE SINGLE THREADED PYRO (see documentation)
-    print " - configuring Pyro for single-threaded operation"
-    Pyro.config.PYRO_MULTITHREADED = 0
-    Pyro.core.initServer()
+# REQUIRE SINGLE THREADED PYRO (see documentation)
+Pyro.config.PYRO_MULTITHREADED = 0
+Pyro.core.initServer()
 
-    # CREATE A PYRO DAEMON FOR THIS SYSTEM
-    daemon = Pyro.core.Daemon()
-    daemon.useNameServer(nameserver)
+# CREATE A PYRO DAEMON FOR THIS SYSTEM
+daemon = Pyro.core.Daemon()
+daemon.useNameServer(nameserver)
 
-    # system clock for accelerated time in dummy mode
-    clock = accelerated_clock.clock( 
-            int(options.clock_rate),
-            int(options.clock_offset),
-            dummy_mode ) 
+# system clock for accelerated time in dummy mode
+clock = accelerated_clock.clock( 
+        int(options.clock_rate),
+        int(options.clock_offset),
+        dummy_mode ) 
 
-    if reset_time:
-        clock.reset( reset_time )
+if reset_time:
+    clock.reset( reset_time )
 
-    print ns_obj_name( 'clock', system_name )
-    daemon.connect( clock, ns_obj_name( 'clock', system_name ))
+daemon.connect( clock, ns_obj_name( 'clock', system_name ))
 
-    print "CREATING MAIN LOG......."
-    # create logging dirs
-    if not os.path.exists( system_config.get('logging_dir') ):
-       os.makedirs( system_config.get('logging_dir') )
-    # top level logging
-    log = logging.getLogger( 'main' )
-    pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
+print "CREATING MAIN LOG......."
+# create logging dirs
+if not os.path.exists( system_config.get('logging_dir') ):
+   os.makedirs( system_config.get('logging_dir') )
+# top level logging
+log = logging.getLogger( 'main' )
+pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
 
-    try:
-        # attempt a clean shutdown if anything goes wrong from here on
+state_dump_dir = system_config.get('state_dump_dir')
+state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')
 
-        state_dump_dir = system_config.get('state_dump_dir')
-        state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')
+if os.path.exists( state_dump_file ):
+    print "STATE DUMP BACKUP..."
+    backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
+    print ' + ' + backup
+    shutil.copyfile( state_dump_file, backup )
 
-        if os.path.exists( state_dump_file ):
-            print "STATE DUMP BACKUP..."
-            backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
-            print ' + ' + backup
-            shutil.copyfile( state_dump_file, backup )
+elif not os.path.exists( state_dump_dir ):
+    print "STATE DUMP DIR..."
+    os.makedirs( state_dump_dir )
 
-        elif not os.path.exists( state_dump_dir ):
-            print "STATE DUMP DIR..."
-            os.makedirs( state_dump_dir )
+# remotely accessible system state summary
+system_state = state_summary.state_summary( system_config, dummy_mode )
+daemon.connect( system_state, ns_obj_name( 'state_summary', system_name ))
 
-        # remotely accessible system state summary
-        system_state = state_summary.state_summary( system_config, dummy_mode )
-        daemon.connect( system_state, ns_obj_name( 'state_summary', system_name ))
+# dead letter box for remote use
+dead_letter_box = dead_letter.letter_box()
+daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', system_name))
 
-        # dead letter box for remote use
-        dead_letter_box = dead_letter.letter_box()
-        daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', system_name))
+# load some command line options and dynamic stuff into config
+# module, for easy handling.
+system_config.put( 'daemon', daemon )
+system_config.put( 'system_name', system_name )
+system_config.put( 'clock', clock )
+system_config.put( 'restart', restart )
+system_config.put( 'start_time', start_time )
+system_config.put( 'stop_time', stop_time )
+system_config.put( 'restart_from', restart_from )
 
-        # initialize the task manager from general config file or state dump
-        system_config.put( 'daemon', daemon )
-        system_config.put( 'system_name', system_name )
-        system_config.put( 'clock', clock )
-        system_config.put( 'restart', restart )
-        system_config.put( 'start_time', start_time )
-        system_config.put( 'stop_time', stop_time )
-        system_config.put( 'restart_from', restart_from )
+# initialize the task manager
+task_manager = manager.manager( system_config )
 
-        task_manager = manager.manager( system_config )
+# remote control switch
+remote = remote_switch.remote_switch( system_config, task_manager.get_tasks() )
+daemon.connect( remote, ns_obj_name( 'remote', system_name) )
 
-        # remote control switch
-        remote = remote_switch.remote_switch( system_config, task_manager.get_tasks() )
-        daemon.connect( remote, ns_obj_name( 'remote', system_name) )
+print "\nBeginning task scheduling NOW\n"
 
-        print "\nBeginning task scheduling NOW\n"
+try:
+    # attempt a clean shutdown if anything goes wrong from here on
 
-        count = 0
-        task_base.state_changed = True
-        system_halt = False
-        system_halt_now = False
+    count = 0
+    task_base.state_changed = True
+    system_halt = False
+    system_halt_now = False
 
-        while True: # MAIN LOOP
-            [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, task_manager, log, options.failout_task_id )
-            if halt:
-                system_halt = True
-            if halt_now:
-                system_halt_now = True
+    while True: # MAIN LOOP
+        [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, task_manager, log, options.failout_task_id )
+        if halt:
+            system_halt = True
+        if halt_now:
+            system_halt_now = True
 
-            process_tasks_contact = False
-            if task_manager.waiting_contact_task_ready( clock.get_datetime() ):
-                process_tasks_contact = True
+        process_tasks_contact = False
+        if task_manager.waiting_contact_task_ready( clock.get_datetime() ):
+            process_tasks_contact = True
 
-            # PROCESS ALL TASKS whenever something has changed that might
-            # require renegotiation of dependencies, etc.
-            #--
-            if task_base.state_changed or process_tasks_remote or process_tasks_contact:
+        # PROCESS ALL TASKS whenever something has changed that might
+        # require renegotiation of dependencies, etc.
+        #--
+        if task_base.state_changed or process_tasks_remote or process_tasks_contact:
 
-                if options.task_proc_reason:
-                    # log reason for invoking task processing
-                    count = count + 1
-                    reasons = []
-                    if task_base.state_changed:
-                        reasons.append( 'task message received' )
-                    if process_tasks_remote:
-                        reasons.append( 'remote request serviced' )
-                    if process_tasks_contact:
-                        reasons.append( 'waiting contact task ready' )
-                    msg = ', '.join( reasons )
-                    # should really be log.debug() but warnings go to stdout...
-                    log.warning( 'task processing, ' + str( count ) + ': ' + msg )
+            if options.task_proc_reason:
+                # log reason for invoking task processing
+                count = count + 1
+                reasons = []
+                if task_base.state_changed:
+                    reasons.append( 'task message received' )
+                if process_tasks_remote:
+                    reasons.append( 'remote request serviced' )
+                if process_tasks_contact:
+                    reasons.append( 'waiting contact task ready' )
+                msg = ', '.join( reasons )
+                # should really be log.debug() but warnings go to stdout...
+                log.warning( 'task processing, ' + str( count ) + ': ' + msg )
 
-                    # simulate the effect on monitoring etc. of long task
-                    # processing time (many many tasks...)
-                    #if count % 50 == 0:
-                    #    # every 50th time, sleep for 30s
-                    #    print 'SLEEPING 30s!'
-                    #    sleep(30)
+                # simulate the effect on monitoring etc. of long task
+                # processing time (many many tasks...)
+                #if count % 50 == 0:
+                #    # every 50th time, sleep for 30s
+                #    print 'SLEEPING 30s!'
+                #    sleep(30)
 
-                task_manager.regenerate_tasks()
+            task_manager.regenerate_tasks()
 
-                task_manager.negotiate_dependencies()
+            task_manager.negotiate_dependencies()
 
-                task_manager.run_tasks()
+            task_manager.run_tasks()
 
-                task_manager.kill_spent_tasks()
+            task_manager.kill_spent_tasks()
 
-                task_manager.dump_state()
+            task_manager.dump_state()
 
-                system_state.update( task_manager.tasks, clock )
+            system_state.update( task_manager.tasks, clock )
 
-            if task_manager.all_tasks_finished():
-                clean_shutdown( daemon, nameserver, system_name, "ALL TASKS FINISHED" )
-                return
+        if task_manager.all_tasks_finished():
+            daemon.shutdown( True )
+            nameserver.deleteGroup( system_name )
+            msg = "ALL TASKS FINISHED" 
+            print msg
+            log.critical( msg )
+            raise SystemExit
 
-            if system_halt_now or system_halt and task_manager.no_tasks_running():
-                clean_shutdown( daemon, nameserver, system_name, "all running tasks finished" )
-                return
+        if system_halt_now or system_halt and task_manager.no_tasks_running():
+            daemon.shutdown( True )
+            nameserver.deleteGroup( system_name )
+            msg = "ALL RUNNING TASKS FINISHED" 
+            print msg
+            log.critical( msg )
+            raise SystemExit
 
-            # REMOTE METHOD HANDLING; with no timeout and single-
-            # threaded pyro, handleRequests() returns after one or
-            # more remote method invocations are processed (these 
-            # are not just task messages, hence the use of the
-            # state_changed variable above).
-            #--
+        # REMOTE METHOD HANDLING; with no timeout and single-
+        # threaded pyro, handleRequests() returns after one or
+        # more remote method invocations are processed (these 
+        # are not just task messages, hence the use of the
+        # state_changed variable above).
+        #--
 
-            # incoming task messages set this to True
-            task_base.state_changed = False
-            # handle all remote calls
-            daemon.handleRequests( timeout = None )
+        # incoming task messages set this to True
+        task_base.state_changed = False
+        # handle all remote calls
+        daemon.handleRequests( timeout = None )
 
-         # END MAIN LOOP
+     # END MAIN LOOP
 
-    except Exception:
-        clean_shutdown( daemon, nameserver, system_name, 'Error Occurred' )
-        raise
-
-if __name__ == "__main__":
-    
-    # performance profiling:
-    #profile.run( 'main( sys.argv )' )
-	# has a big performance hit itself, any better way?
-
-    #try:
-  	main( sys.argv )
-    #except:
-    #    print 'fuck it'
+except Exception:
+    daemon.shutdown( True )
+    nameserver.deleteGroup( system_name )
+    msg = "ERROR OCCURED IN CYCL"
+    print msg
+    log.critical( msg )
+    raise SystemExit( msg )
