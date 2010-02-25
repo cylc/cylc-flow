@@ -20,7 +20,6 @@ class config:
                         'task_groups',
                         'environment',
                         'max_runahead_hours',
-                        'dummy_mode',
                         'job_submit_method',
                         'job_submit_overrides',
                         'logging_level'
@@ -45,9 +44,6 @@ class config:
         # set config items from those in the system_config module
         for key in system_config.config.keys():
             self.configured[ key ] = system_config.config[ key ]
-
-        # set dummy_mode here; now used via command line only
-        self.configured['dummy_mode'] = False
 
         # set state_dump_file here; user set is unnecessary
         self.configured['state_dump_file'] = 'cylc-state'

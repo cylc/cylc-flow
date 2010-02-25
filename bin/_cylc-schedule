@@ -238,6 +238,10 @@ if not options.pns_host:
 pns_host = options.pns_host
 system_name = options.system_name
 
+dummy_mode = False
+if options.dummy_mode:
+    dummy_mode = True
+
 # find location of the system task and config modules------------------
 FILE = open( os.environ['HOME'] + '/.cylc/configured/' + system_name, 'r' )
 line = FILE.read()
@@ -264,11 +268,6 @@ print_banner()
 
 # load system configuration--------------------------------------------
 system_config = config.config()
-
-dummy_mode = False
-if options.dummy_mode:
-    system_config.put( 'dummy_mode', True )
-    dummy_mode = True
 
 if options.system_name != system_config.get( 'system_name' ):
     # this should never happen
@@ -327,7 +326,6 @@ if options.restart or options.restart_from:
         [ junk, tmp ] = lines[0].split( ' : ' )
 
         if junk == 'dummy time':
-            system_config.put( 'dummy_mode', True )
             dummy_mode = True
             [ reset_time, rate ] = tmp.split( ',' )
             rate.rstrip() # strip newline
@@ -439,7 +437,7 @@ system_config.put( 'stop_time', stop_time )
 system_config.put( 'restart_from', restart_from )
 
 # initialize the task manager
-task_manager = manager.manager( system_config )
+task_manager = manager.manager( system_config, dummy_mode )
 
 # remote control switch
 remote = remote_switch.remote_switch( system_config, task_manager.get_tasks() )

@@ -15,12 +15,12 @@ def ns_obj_name( name, groupname ):
     return groupname + '.' + name
 
 class manager:
-    def __init__( self, config ):
+    def __init__( self, config, dummy_mode ):
 
         self.config = config
+        self.dummy_mode = dummy_mode
 
         # TO DO: just use self.config.get('foo') throughout
-        self.dummy_mode = config.get('dummy_mode')
         self.clock = config.get('clock')
         self.stop_time = config.get('stop_time' )
         self.pyro = config.get('daemon')  
