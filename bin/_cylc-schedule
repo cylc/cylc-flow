@@ -224,6 +224,8 @@ def commandline_parser():
 # MAIN PROGRAM
 # =====================================================================
 
+print_banner()
+
 # parse commandline options and arguments------------------------------
 parser = commandline_parser()
 ( options, args ) = parser.parse_args()
@@ -240,7 +242,48 @@ system_name = options.system_name
 
 dummy_mode = False
 if options.dummy_mode:
+    print "RUNNING IN DUMMY MODE"
     dummy_mode = True
+
+# start and stop times
+restart_from = None
+restart = False
+start_time = None
+stop_time = None
+
+if options.restart or options.restart_from:
+    restart = True
+    # --restart [STOP]
+    # --restart-from=FILE [STOP]
+    if len( args ) == 0:
+        pass
+    elif len( args ) == 1:
+        stop_time = args[0]
+    else:
+        parser.error( "wrong number of arguments" )
+
+else:
+    # START [STOP]
+    if len( args ) == 1:
+        start_time = args[0]
+    elif len( args ) == 2:
+        start_time = args[0]
+        stop_time = args[1]
+    else:
+        parser.error( "too many arguments" )
+     
+if start_time:
+    if not cycle_time.is_valid( start_time ):
+        parser.error( "invalid START time" )
+
+if stop_time:
+    if not cycle_time.is_valid( stop_time ):
+        parser.error( "invalid STOP time" )
+
+if not start_time and \
+        not options.restart and \
+        not options.restart_from: 
+    parser.error( 'Either supply start time or restart' )
 
 # find location of the system task and config modules------------------
 FILE = open( os.environ['HOME'] + '/.cylc/configured/' + system_name, 'r' )
@@ -264,8 +307,6 @@ import config        # loads system_config.py
 import task_base     # loads system_tasks.py
 import remote_switch # ditto
 
-print_banner()
-
 # load system configuration--------------------------------------------
 system_config = config.config()
 
@@ -273,45 +314,6 @@ if options.system_name != system_config.get( 'system_name' ):
     # this should never happen
     raise SystemExit( 'ERROR: configured system and command line disagree' )
 
-restart_from = None
-restart = False
-start_time = None
-stop_time = None
-
-if options.restart or options.restart_from:
-    restart = True
-    # cylc schedule --system=NAME --restart [STOP]
-    # cylc schedule --system=NAME --restart-from=STATE [STOP]
-    if len( args ) == 0:
-        # default
-        pass
-    elif len( args ) == 1:
-        stop_time = args[0]
-    else:
-        parser.error( "wrong number of arguments" )
-
-else:
-    # cylc schedule --system=NAME START [STOP]
-    if len( args ) == 1:
-        start_time = args[0]
-    elif len( args ) == 2:
-        start_time = args[0]
-        stop_time = args[1]
-    else:
-        parser.error( "too many arguments" )
-     
-if start_time:
-    if not cycle_time.is_valid( start_time ):
-        parser.error( "invalid START time" )
-
-if stop_time:
-    if not cycle_time.is_valid( stop_time ):
-        parser.error( "invalid STOP time" )
-
-if not start_time and \
-        not options.restart and \
-        not options.restart_from: 
-    parser.error( 'Either supply start time or restart' )
        
 # set configured global (all tasks) environment variables
 os.environ[ 'PNS_HOST' ] = str( pns_host )
@@ -327,8 +329,6 @@ env = system_config.get('environment')
 for VAR in env.keys():
     os.environ[ VAR ] = env[ VAR ]
 
-if dummy_mode:
-    print "RUNNING IN DUMMY MODE"
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 nameserver = locate_pyro_nameserver()
