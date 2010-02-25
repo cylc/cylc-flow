@@ -16,7 +16,7 @@
 # provide the standard exit codes: '0' for success, '1' (or more) for
 # failure. If you want, however, a wrapped task *can* send cylc
 # messages as well, but in that case you might as well dispense with
-# wrapping and provide your own started, finished, and failure messages
+# wrapping and provide your own started, finished, and failed messages
 # as well.
 
 set -e  # abort on error
