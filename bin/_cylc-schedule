@@ -399,99 +399,88 @@ task_manager = manager.manager( system_config, dummy_mode )
 remote = remote_switch.remote_switch( system_config, task_manager.get_tasks() )
 daemon.connect( remote, ns_obj_name( 'remote', system_name) )
 
-print "\nBeginning task scheduling NOW\n"
+print "\nTASK PROCESSING STARTING\n"
 
-try:
-    # attempt a clean shutdown if anything goes wrong from here on
+count = 0
+task_base.state_changed = True
+system_halt = False
+system_halt_now = False
 
-    count = 0
-    task_base.state_changed = True
-    system_halt = False
-    system_halt_now = False
+while True: # MAIN LOOP
+    [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, task_manager, log, options.failout_task_id )
+    if halt:
+        system_halt = True
+    if halt_now:
+        system_halt_now = True
 
-    while True: # MAIN LOOP
-        [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, task_manager, log, options.failout_task_id )
-        if halt:
-            system_halt = True
-        if halt_now:
-            system_halt_now = True
+    process_tasks_contact = False
+    if task_manager.waiting_contact_task_ready( clock.get_datetime() ):
+        process_tasks_contact = True
 
-        process_tasks_contact = False
-        if task_manager.waiting_contact_task_ready( clock.get_datetime() ):
-            process_tasks_contact = True
+    # PROCESS ALL TASKS whenever something has changed that might
+    # require renegotiation of dependencies, etc.
+    #--
+    if task_base.state_changed or process_tasks_remote or process_tasks_contact:
 
-        # PROCESS ALL TASKS whenever something has changed that might
-        # require renegotiation of dependencies, etc.
-        #--
-        if task_base.state_changed or process_tasks_remote or process_tasks_contact:
+        if options.task_proc_reason:
+            # log reason for invoking task processing
+            count = count + 1
+            reasons = []
+            if task_base.state_changed:
+                reasons.append( 'task message received' )
+            if process_tasks_remote:
+                reasons.append( 'remote request serviced' )
+            if process_tasks_contact:
+                reasons.append( 'waiting contact task ready' )
+            msg = ', '.join( reasons )
+            # should really be log.debug() but warnings go to stdout...
+            log.warning( 'task processing, ' + str( count ) + ': ' + msg )
 
-            if options.task_proc_reason:
-                # log reason for invoking task processing
-                count = count + 1
-                reasons = []
-                if task_base.state_changed:
-                    reasons.append( 'task message received' )
-                if process_tasks_remote:
-                    reasons.append( 'remote request serviced' )
-                if process_tasks_contact:
-                    reasons.append( 'waiting contact task ready' )
-                msg = ', '.join( reasons )
-                # should really be log.debug() but warnings go to stdout...
-                log.warning( 'task processing, ' + str( count ) + ': ' + msg )
+            # simulate the effect on monitoring etc. of long task
+            # processing time (many many tasks...)
+            #if count % 50 == 0:
+            #    # every 50th time, sleep for 30s
+            #    print 'SLEEPING 30s!'
+            #    sleep(30)
 
-                # simulate the effect on monitoring etc. of long task
-                # processing time (many many tasks...)
-                #if count % 50 == 0:
-                #    # every 50th time, sleep for 30s
-                #    print 'SLEEPING 30s!'
-                #    sleep(30)
+        task_manager.regenerate_tasks()
 
-            task_manager.regenerate_tasks()
+        task_manager.negotiate_dependencies()
 
-            task_manager.negotiate_dependencies()
+        task_manager.run_tasks()
 
-            task_manager.run_tasks()
+        task_manager.kill_spent_tasks()
 
-            task_manager.kill_spent_tasks()
+        task_manager.dump_state()
 
-            task_manager.dump_state()
+        system_state.update( task_manager.tasks, clock )
 
-            system_state.update( task_manager.tasks, clock )
+    if task_manager.all_tasks_finished():
+        log.critical( "ALL TASKS FINISHED" )
+        break
 
-        if task_manager.all_tasks_finished():
-            daemon.shutdown( True )
-            nameserver.deleteGroup( system_name )
-            msg = "ALL TASKS FINISHED" 
-            print msg
-            log.critical( msg )
-            raise SystemExit
+    if system_halt_now or system_halt and task_manager.no_tasks_running():
+        log.critical( "ALL RUNNING TASKS FINISHED" )
+        break
 
-        if system_halt_now or system_halt and task_manager.no_tasks_running():
-            daemon.shutdown( True )
-            nameserver.deleteGroup( system_name )
-            msg = "ALL RUNNING TASKS FINISHED" 
-            print msg
-            log.critical( msg )
-            raise SystemExit
+    # REMOTE METHOD HANDLING; with no timeout and single-
+    # threaded pyro, handleRequests() returns after one or
+    # more remote method invocations are processed (these 
+    # are not just task messages, hence the use of the
+    # state_changed variable above).
+    #--
 
-        # REMOTE METHOD HANDLING; with no timeout and single-
-        # threaded pyro, handleRequests() returns after one or
-        # more remote method invocations are processed (these 
-        # are not just task messages, hence the use of the
-        # state_changed variable above).
-        #--
+    # incoming task messages set this to True
+    task_base.state_changed = False
+    # handle all remote calls
+    daemon.handleRequests( timeout = None )
 
-        # incoming task messages set this to True
-        task_base.state_changed = False
-        # handle all remote calls
-        daemon.handleRequests( timeout = None )
+# END MAIN LOOP
 
-     # END MAIN LOOP
-
-except Exception:
-    daemon.shutdown( True )
-    nameserver.deleteGroup( system_name )
-    msg = "ERROR OCCURED IN CYCL"
-    print msg
-    log.critical( msg )
-    raise SystemExit( msg )
+print ""
+print "TASK PROCESSING FINISHED"
+print "Shutting down my Pyro daemon"
+daemon.shutdown( True )
+print "Deleting Pyro nameserver group " + system_name
+nameserver.deleteGroup( system_name )
+print "Bye!"
