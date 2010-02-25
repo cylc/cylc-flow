@@ -22,7 +22,7 @@ class background_remote( job_submit ):
         remote_env = self.remote_environment_string()
 
         command = "( " + remote_env + "; " + task + " )"
-        exe = command + " </dev/null >" + task + ".log 2>&1 &" 
+        exe = command + " </dev/null >" + task + ".$$.log 2>&1 &" 
 
         #self.execute_local( [ 'ssh', host, "'" + exe + "'" ] )
         self.execute_local( 'ssh ' + host + " '" + exe + "'" )
