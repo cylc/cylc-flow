@@ -1,5 +1,7 @@
 To Do
 
+* 'finished' => 'success', 'failed' => 'failure', 'completed' => 'done'
+
 * consider 'set -e' and 'trap' in task scripts.
 
 * 'raise SystemExit(message)' instead of sys.exit(1)
