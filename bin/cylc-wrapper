@@ -9,7 +9,7 @@
 # Accordingly, it does the following for the wrapped task:
 # (1) sends special 'started' message
 # (2) executes the task
-# (3) send the special 'finished' message on success,
+# (3) send the special 'succeed' message on completion,
 #       or the special 'failed' message if error occurs.
 
 # Thus WRAPPED TASKS do not need to send any messages, but they must
@@ -21,35 +21,22 @@
 
 set -e  # abort on error
 
-# cylc exports the following environment variables for each task:
-#   1. $CYCLE_TIME  
-#   2. $TASK_NAME      
-#   3. $WRAP          
-
-if [[ -z $CYCLE_TIME ]]; then
-    echo "ERROR, cylc-wrapper: \$CYCLE_TIME not found"
-    exit 1
-fi
-
-if [[ -z $TASK_NAME ]]; then
-    echo "ERROR, cylc-wrapper: \$TASK_NAME not found"
-    exit 1
-fi
+# 'cylc message' checks for $TASK_NAME and $CYCLE_TIME  
+# so we only need to check for $WRAP here.
 
 if [[ -z $WRAP ]]; then
     echo "ERROR, cylc-wrapper: \$WRAP not found"
     exit 1
 fi
 
-#echo "cylc-wrapper: calling $TASK_NAME for $CYCLE_TIME"
-cylc message "started"
+cylc message --started
 
 # call the wrapped task
 if $WRAP; then 
     # succeeded
     cylc message --all-outputs-completed
-    cylc message "finished"
+    cylc message --succeeded
 else
     # failed
-    cylc message -p CRITICAL "failed" 
+    cylc message --failed 
 fi

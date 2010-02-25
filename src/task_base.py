@@ -275,13 +275,13 @@ class task_base( Pyro.core.ObjBase ):
         self.launcher.submit()
         self.state.set_status( 'running' )
 
-    def set_all_outputs_completed( self ):
-        # used by task-wrapper 
-        self.log( 'DEBUG', 'setting ALL internal outputs completed' )
+    def set_all_internal_outputs_completed( self ):
+        # used by the task wrapper 
+        self.log( 'DEBUG', 'setting all internal outputs completed' )
         for message in self.outputs.satisfied.keys():
-            if message != self.get_identity() + ' finished' and \
+            if message != self.get_identity() + ' started' and \
+                    message != self.get_identity() + ' finished' and \
                     message != self.get_identity() + ' completed':
-                #print '-----: ', message
                 self.outputs.set_satisfied( message )
 
     def is_complete( self ):  # not needed?
