@@ -1,5 +1,7 @@
 To Do
 
+* consider 'set -e' and 'trap' in task scripts.
+
 * 'raise SystemExit(message)' instead of sys.exit(1)
 
 * remote background tasks will fail if PNS_HOST is 'localhost'

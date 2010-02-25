@@ -70,7 +70,6 @@ for T in $TARG; do
         mkdir -p $DIR
     fi
 
-
-    scp -B $T $D
+    scp -B $T $D > /dev/null
 
 done

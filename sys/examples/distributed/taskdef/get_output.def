@@ -19,7 +19,7 @@
 
 %ENVIRONMENT
     WRAP file_transfer.sh
-    TARG oliverh-ws.greta:/tmp/oliverh/forecast/output/$(MY_CYCLE_TIME)/forecast.nc
+    TARG 192.168.56.78:/tmp/oliverh/forecast/output/$(MY_CYCLE_TIME)/forecast.nc
     DEST $TMPDIR/postproc/input/$(MY_CYCLE_TIME)/forecast.nc
 
 %PREREQUISITES

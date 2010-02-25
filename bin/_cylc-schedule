@@ -373,7 +373,6 @@ when it reaches that time, and then the system will shut down."""
     if reset_time:
         clock.reset( reset_time )
 
-    print "!!!!!!!!!!!!!!!!!", system_name
     print ns_obj_name( 'clock', system_name )
     daemon.connect( clock, ns_obj_name( 'clock', system_name ))
 

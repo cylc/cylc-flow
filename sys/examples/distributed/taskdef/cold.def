@@ -18,7 +18,7 @@
     cold.sh
 
 %REMOTE_HOST
-    oliverh-ws.greta
+    192.168.56.78
 
 %ENVIRONMENT
     PATH $PATH:$HOME/cylc/bin:$HOME/cylc/sys/examples/distributed/scripts

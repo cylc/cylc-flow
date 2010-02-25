@@ -277,7 +277,7 @@ class task_base( Pyro.core.ObjBase ):
 
     def set_all_outputs_completed( self ):
         # used by task-wrapper 
-        self.log( 'WARNING', 'setting ALL internal outputs completed' )
+        self.log( 'DEBUG', 'setting ALL internal outputs completed' )
         for message in self.outputs.satisfied.keys():
             if message != self.get_identity() + ' finished' and \
                     message != self.get_identity() + ' completed':
