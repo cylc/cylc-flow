@@ -4,7 +4,7 @@
 
 #set -e  # abort on error
 
-#trap 'cylc message -p CRITICAL failed' ERR
+#trap 'cylc message --failed' ERR
 
 # this is a cylc task utility script, meant to be WRAPPED by specific
 # cylc tasks
@@ -35,13 +35,13 @@
 
 if [[ -z $TARG ]]; then
     cylc message -p CRITICAL "TARG not defined"
-    cylc message -p CRITICAL failed
+    cylc message --failed
     exit 1
 fi
 
 if [[ -z $DEST ]]; then
     cylc message -p CRITICAL "DEST not defined"
-    cylc message -p CRITICAL failed
+    cylc message --failed
     exit 1
 fi
 

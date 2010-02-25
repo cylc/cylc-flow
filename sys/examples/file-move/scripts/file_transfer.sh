@@ -4,7 +4,7 @@
 
 #set -e  # abort on error
 
-#trap 'cylc message -p CRITICAL failed' ERR
+#trap 'cylc message --failed' ERR
 
 # this is a cylc task utility script, meant to be WRAPPED by specific
 # cylc tasks
@@ -35,13 +35,13 @@
 
 if [[ -z $TARG ]]; then
     cylc message -p CRITICAL "TARG not defined"
-    cylc message -p CRITICAL failed
+    cylc message --failed
     exit 1
 fi
 
 if [[ -z $DEST ]]; then
     cylc message -p CRITICAL "DEST not defined"
-    cylc message -p CRITICAL failed
+    cylc message --failed
     exit 1
 fi
 
@@ -54,7 +54,7 @@ for T in $TARG; do
     cylc message "initiating file transfer from $T to $D"
 
     # check destination directory exists
-    if [[ D = *: ]]; then
+    if [[ $D = *:* ]]; then
         # remote destination
         RMACH=${D%:*}
         RPATH=${D#*:}
@@ -70,6 +70,6 @@ for T in $TARG; do
         mkdir -p $DIR
     fi
 
-    scp -B $T $D
+    scp -B $T $D > /dev/null
 
 done

@@ -5,7 +5,7 @@
 
 # run length 90 minutes, one restart file
 
-cylc message started
+cylc message --started
 
 ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 90 * 60 / ACCEL ))
@@ -18,7 +18,7 @@ for PRE in $ONE $TWO; do
         MSG="file not found: $PRE"
         echo "ERROR, A: $MSG"
         cylc message -p CRITICAL $MSG
-        cylc message -p CRITICAL failed
+        cylc message --failed
         exit 1
     }
 done
@@ -26,10 +26,10 @@ done
 sleep $SLEEP # 90 min
 
 touch $TMPDIR/${TASK_NAME}_${NEXT_CYCLE_TIME}.restart
-cylc message $TASK_NAME restart files ready for $NEXT_CYCLE_TIME
+cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
 
 OUTPUT=$TMPDIR/${TASK_NAME}_${CYCLE_TIME}.output
 touch $OUTPUT
-cylc message $OUTPUT ready
+cylc message "$OUTPUT ready"
 
-cylc message finished
+cylc message --succeeded
