@@ -1,7 +1,10 @@
 #!/usr/bin/python
 
-# A program that masquerade's as a given tasks by reporting its outputs
+# A program that masquerade's as a given task by reporting its outputs
 # completed on time according to the controller's dummy clock.
+
+# NOTE that the dummy program calls the task proxy incoming() method
+# directly, rather than invoking the external 'cylc message' program.
 
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
