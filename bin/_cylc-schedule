@@ -71,7 +71,7 @@ def create_ns_groupname( nameserver, groupname ):
     else:
         print "Created groupname '" + groupname + "' in the Pyro nameserver"
 
-def service_remote_requests( remote, task_manager, log, failout = None ):
+def service_remote_requests( remote, pool, log, failout = None ):
 
     halt = False
     halt_now = False
@@ -81,7 +81,7 @@ def service_remote_requests( remote, task_manager, log, failout = None ):
         # stop launching new tasks, but wait on running ones before
         # shutting down (otherwise they will generate screeds of
         # pyro-related error messages when they try to phone home).
-        task_manager.set_system_hold()
+        pool.set_system_hold()
         halt = True
 
     if remote.get_halt_now():
@@ -95,47 +95,47 @@ def service_remote_requests( remote, task_manager, log, failout = None ):
         remote.set_nudge = False
 
     if remote.get_hold():
-        task_manager.set_system_hold()
+        pool.set_system_hold()
 
     if remote.get_resume():
-        task_manager.unset_system_hold()
+        pool.unset_system_hold()
         process_tasks = True
 
     if remote.set_stop:
-        task_manager.set_stop_time( remote.stop_time )
+        pool.set_stop_time( remote.stop_time )
         remote.set_stop = False
 
     if remote.set_hold:
-        log.warning( 'pre-hold state dump: ' + task_manager.dump_state( new_file = True ))
-        task_manager.set_system_hold( remote.hold_time )
+        log.warning( 'pre-hold state dump: ' + pool.dump_state( new_file = True ))
+        pool.set_system_hold( remote.hold_time )
         remote.set_hold = False
 
     if remote.do_purge:
-        log.warning( 'pre-purge state dump: ' + task_manager.dump_state( new_file = True ))
-        task_manager.purge( remote.purge_id, remote.purge_stop )
+        log.warning( 'pre-purge state dump: ' + pool.dump_state( new_file = True ))
+        pool.purge( remote.purge_id, remote.purge_stop )
         remote.do_purge = False
         remote.purge_id = None
         remote.purge_stop = None
         process_tasks = True
 
     if remote.kill_ids:
-        log.warning( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
-        #task_manager.abdicate_and_kill( remote.kill_task_ids )
-        task_manager.kill( remote.kill_task_ids )
+        log.warning( 'pre-kill state dump: ' + pool.dump_state( new_file = True ))
+        #pool.abdicate_and_kill( remote.kill_task_ids )
+        pool.kill( remote.kill_task_ids )
         remote.kill_ids = False
         remote.kill_task_ids = {}
         process_tasks = True
         
     if remote.kill_rt:
-        log.warning( 'pre-kill state dump: ' + task_manager.dump_state( new_file = True ))
-        task_manager.abdicate_and_kill_rt( remote.kill_ctime )
+        log.warning( 'pre-kill state dump: ' + pool.dump_state( new_file = True ))
+        pool.abdicate_and_kill_rt( remote.kill_ctime )
         remote.kill_rt = False
         remote.kill_ctime = None
         process_tasks = True
 
     if remote.reset_a_task:
-        log.warning( 'pre-reset state dump: ' + task_manager.dump_state( new_file = True ))
-        task_manager.reset_task( remote.reset_task_id )
+        log.warning( 'pre-reset state dump: ' + pool.dump_state( new_file = True ))
+        pool.reset_task( remote.reset_task_id )
         remote.reset_a_task = False
         remote.reset_task_id = None
         process_tasks = True
@@ -145,8 +145,8 @@ def service_remote_requests( remote, task_manager, log, failout = None ):
             if remote.insert_this == failout:
                 print "resetting failout on " + failout + " prior to insertion"
                 os.environ['FAILOUT_ID'] = ""
-        log.warning( 'pre-insert state dump: ' + task_manager.dump_state( new_file = True ))
-        task_manager.insertion( remote.insert_this )
+        log.warning( 'pre-insert state dump: ' + pool.dump_state( new_file = True ))
+        pool.insertion( remote.insert_this )
         remote.insert_this = None
         process_tasks = True
 
@@ -393,10 +393,10 @@ system_config.put( 'stop_time', stop_time )
 system_config.put( 'restart_from', restart_from )
 
 # initialize the task manager
-task_manager = manager.manager( system_config, dummy_mode )
+pool = manager.manager( system_config, dummy_mode )
 
 # remote control switch
-remote = remote_switch.remote_switch( system_config, task_manager.get_tasks() )
+remote = remote_switch.remote_switch( system_config, pool.get_tasks() )
 daemon.connect( remote, ns_obj_name( 'remote', system_name) )
 
 print "\nTASK PROCESSING STARTING\n"
@@ -407,14 +407,14 @@ system_halt = False
 system_halt_now = False
 
 while True: # MAIN LOOP
-    [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, task_manager, log, options.failout_task_id )
+    [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, pool, log, options.failout_task_id )
     if halt:
         system_halt = True
     if halt_now:
         system_halt_now = True
 
     process_tasks_contact = False
-    if task_manager.waiting_contact_task_ready( clock.get_datetime() ):
+    if pool.waiting_contact_task_ready( clock.get_datetime() ):
         process_tasks_contact = True
 
     # PROCESS ALL TASKS whenever something has changed that might
@@ -436,30 +436,23 @@ while True: # MAIN LOOP
             # should really be log.debug() but warnings go to stdout...
             log.warning( 'task processing, ' + str( count ) + ': ' + msg )
 
-            # simulate the effect on monitoring etc. of long task
-            # processing time (many many tasks...)
-            #if count % 50 == 0:
-            #    # every 50th time, sleep for 30s
-            #    print 'SLEEPING 30s!'
-            #    sleep(30)
+        pool.spawn()
 
-        task_manager.regenerate_tasks()
+        pool.negotiate()
 
-        task_manager.negotiate_dependencies()
+        pool.run_tasks()
 
-        task_manager.run_tasks()
+        pool.cleanup()
 
-        task_manager.kill_spent_tasks()
+        pool.dump_state()
 
-        task_manager.dump_state()
+        system_state.update( pool.tasks, clock )
 
-        system_state.update( task_manager.tasks, clock )
-
-    if task_manager.all_tasks_finished():
+    if pool.all_tasks_finished():
         log.critical( "ALL TASKS FINISHED" )
         break
 
-    if system_halt_now or system_halt and task_manager.no_tasks_running():
+    if system_halt_now or system_halt and pool.no_tasks_running():
         log.critical( "ALL RUNNING TASKS FINISHED" )
         break
 
@@ -484,3 +477,11 @@ daemon.shutdown( True )
 print "Deleting Pyro nameserver group " + system_name
 nameserver.deleteGroup( system_name )
 print "Bye!"
+
+
+# to simulate the effect on monitoring etc. of long task processing time
+# (many many tasks...), put this in the task processing loop:
+#if count % 50 == 0:
+#    # every 50th time, sleep for 30s
+#    print 'SLEEPING 30s!'
+#    sleep(30)

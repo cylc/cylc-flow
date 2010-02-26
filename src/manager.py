@@ -234,7 +234,7 @@ class manager:
         return True
 
 
-    def negotiate_dependencies( self ):
+    def negotiate( self ):
         # run time dependency negotiation: tasks attempt to get their
         # prerequisites satisfied by other tasks' outputs.
         #--
@@ -274,7 +274,7 @@ class manager:
                 current_time = self.clock.get_datetime()
                 itask.run_if_ready( current_time )
 
-    def regenerate_tasks( self ):
+    def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
         # the slowest task, and if foo(T) abdicates
         #--
@@ -374,7 +374,7 @@ class manager:
 
         return [ all_finished, earliest_unfinished ]
 
-    def kill_spent_tasks( self ):
+    def cleanup( self ):
         # Delete tasks that are no longer needed, i.e. those that:
         #   (1) have finished and abdicated, 
         #       AND
@@ -707,7 +707,7 @@ class manager:
                 # forcibly abdicate the task and create its successor
                 itask.state.set_abdicated()
                 itask.log( 'DEBUG', 'forced abdication' )
-                # TO DO: the following should reuse code in regenerate_tasks()?
+                # TO DO: the following should reuse code in spawn()?
                 # dynamic task object creation by task and module name
                 new_task = get_object( 'system_tasks', itask.name )\
                         ( itask.next_c_time(), self.dummy_mode, 'waiting', self.submit[ itask.name ] )
@@ -755,7 +755,7 @@ class manager:
             #    # forcibly abdicate the task and create its successor
             #    itask.state.set_abdicated()
             #    itask.log( 'DEBUG', 'forced abdication' )
-            #    # TO DO: the following should reuse code in regenerate_tasks()?
+            #    # TO DO: the following should reuse code in spawn()?
             #    # dynamic task object creation by task and module name
             #    new_task = get_object( 'system_tasks', itask.name )( itask.next_c_time(), self.dummy_mode )
             #    if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
