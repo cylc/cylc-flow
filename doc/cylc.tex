@@ -77,55 +77,56 @@ Multi-cycle Catchup Capability}
 
 \begin{abstract}
 
-    {\em Cylc} is a self-organising metascheduler\footnote{A
-    metascheduler sends dependent tasks to the batch queue job
-    scheduler(s) when it has determined that they are {\em ready to
-    run}. However, we drop the ``meta'' prefix from here on because a
-    metascheduler is also a type of scheduler. The term
-    ``metascheduler'' can also refer to a single aggregate view of
-    multiple distributed resource managers, but that is not the topic of
-    this paper.} for cycling environmental forecast systems consisting
-    of any number of linked scientific models and associated data
-    processing tasks.\footnote{A {\em task} is any group of processes
-    treated as a single entity for scheduling purposes.} Its novel
-    scheduling algorithm maintains an evolving pool of task proxy
-    objects that interact with each other to resolve all dependencies,
-    including those between tasks in different forecast
-    cycles.\footnote{For our purposes a {\em forecast cycle} comprises
-    all tasks with a common {\em cycle time}, i.e.\ the analysis time or
-    nominal start time of a forecast model, or that of the associated
-    forecast model(s) for other tasks.} Each task is defined in
-    isolation and knows its own prerequisites (but not who will satisfy
-    them) and outputs (but not who will use them), and there is no need
-    for a global ``suite'' definition that specifies dependencies or
+    {\em Cylc} (pronounced ``silk'') is a self-organising
+    metascheduler\footnote{A metascheduler sends dependent tasks to the
+    batch queue job scheduler(s) when it has determined that they are
+    {\em ready}to run. We drop the ``meta'' prefix from here on,
+    however, because a metascheduler is also a type of scheduler. The
+    term can also refer to a single aggregate view of multiple
+    distributed resource managers, but that is not the topic of this
+    paper.} for cycling environmental forecast systems that may include
+    many linked scientific models and associated data processing
+    tasks.\footnote{A {\em task} is any group of processes treated as a
+    single entity for scheduling purposes.} Its novel scheduling
+    algorithm maintains an evolving pool of task proxy objects that
+    interact with each other to resolve all dependencies so that correct
+    scheduling emerges naturally at run time.  Each task is defined in
+    isolation and knows just its own prerequisites (but not who will
+    satisfy them) and outputs (but not who will use them), and there is
+    no need for a global ``suite'' that specifies dependencies or
     execution order. Because cylc does not use global time loops to
-    advance the system, and treats all dependencies equally, it can run
-    tasks from multiple forecast cycles at once to the full extent
-    allowed by intercycle dependencies. This matters whenever the
-    external driving data\footnote{Forecast systems are typically driven
-    by observational data and/or timely model fields from an external
-    forecasting system.} for upcoming cycles are available in advance:
-    systems can catch up from delays very quickly, parallel test systems
-    can be started or restarted behind the main operation to catch up as
-    quickly as possible, and historical case studies can achieve
-    sustained maximal throughput. In cylc, a series of distinct forecast
-    cycles emerges only when and if a system catches up to real time
-    operation. Cylc is easily interfaced to existing tasks and is
-    extremely flexible and easy to use. It can be restarted in
-    arbitrarily complex states of operation and dynamically adapts to
-    insertion or removal of tasks in a running system.  Failed tasks
-    will necessarily delay their downstream dependants, but the rest of
-    the system can carry on unaffected while the problem is addressed,
-    after which time the delayed tasks will catch up as quickly as
-    possible.  Cylc's handling of forecast model `restart' dependencies
-    allows continued operation, with very little operator intervention,
-    over major failures that result in omitted forecasts in the driving
-    models.  Ability to control the configured task set, and failure
-    recovery scenarios, can be completely tested in an accelerated
-    simulation mode that is indistinguishable (to cylc) from real
-    operation.  Cylc is written in object oriented Python and uses {\em
-    Pyro} (Python Remote Objects). It can control tasks across a
-    heterogenous distributed network.  
+    advance the system and treats all dependencies equally, including
+    those between tasks in different forecast cycles.\footnote{For our
+    purposes a {\em forecast cycle} comprises all tasks with a common
+    {\em cycle time}, i.e.\ the analysis time or nominal start time of a
+    forecast model, or that of the forecast model(s) associated with the
+    other tasks.} it can run tasks from multiple forecast cycles at once
+    to the full extent allowed by intercycle dependencies. This matters
+    in particular whenever the external driving data\footnote{Forecast
+    systems are typically driven by observational data and/or timely
+    model fields from an external forecasting system.} for upcoming
+    cycles are available in advance: cylc systems can catch up from
+    delays very quickly, parallel test systems can be started or
+    restarted behind the main operation to catch up as quickly as
+    possible, and historical case studies can achieve sustained maximal
+    throughput. Catchup and real time operation are not treated
+    separately: in the one running system a series of distinct forecast
+    cycles will seamlessly emerge when and if its tasks catch up to real
+    time operation. Cylc is easily interfaced to existing tasks and is
+    extremely flexible and easy to use. It can be stopped and restarted
+    in arbitrarily complex states of operation and dynamically adapts to
+    insertion or removal of tasks. If a task fails and delays its
+    downstream dependants the rest of the system can carry on unaffected
+    while the problem is addressed, after which time the delayed tasks
+    will catch up as quickly as possible.  Cylc's handling of forecast
+    model `restart' dependencies allows continued operation, with very
+    little operator intervention, over major failures that result in
+    omitted forecasts in the driving models.  Ability to control the
+    configured task set, and failure recovery scenarios, can be
+    completely tested in an accelerated simulation mode that is
+    indistinguishable (to cylc) from real operation.  Cylc is written in
+    object oriented Python and uses {\em Pyro} (Python Remote Objects).
+    to control tasks across a heterogenous distributed network.  
 
     %\footnote{Cylc also
     %enables new modes of real time operation, for example a catchment
