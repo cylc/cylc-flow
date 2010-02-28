@@ -2,8 +2,6 @@ To Do
 
 * catch deliberate exits in manager, in order cleanly shutdown pyro
 
-* 'finished' => 'success', 'failed' => 'failure', 'completed' => 'done'
-
 * consider 'set -e' and 'trap' in task scripts.
 
 * 'raise SystemExit(message)' instead of sys.exit(1)
@@ -19,12 +17,6 @@ To Do
 * rewrite configure script in Python, for consistency.
 
 * print error messages to stderr: print >> sys.stderr, 'message'
-
-* think about task launch: qsub, loadleveller, other machines
-  (queue and machine name should be task-specific?)
-
-* 'cylc message --all-outputs-completed' is confusing because it does not 
-  relate to the special 'completed' messages.
 
 * consider implementing "either or" and "self destruct"
   prerequisites (Phil's idea) - this would allow automated
