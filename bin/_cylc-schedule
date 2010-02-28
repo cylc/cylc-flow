@@ -224,7 +224,7 @@ def commandline_parser():
 # MAIN PROGRAM
 # =====================================================================
 
-print_banner()
+banner = {}
 
 # parse commandline options and arguments------------------------------
 parser = commandline_parser()
@@ -240,10 +240,14 @@ if not options.pns_host:
 pns_host = options.pns_host
 system_name = options.system_name
 
+banner[ 'pns_host' ] = pns_host
+banner[ 'system_name' ] = system_name
+
 dummy_mode = False
 if options.dummy_mode:
-    print "RUNNING IN DUMMY MODE"
     dummy_mode = True
+
+banner[ 'dummy_mode' ] = dummy_mode
 
 # start and stop times
 restart_from = None
@@ -259,6 +263,7 @@ if options.restart or options.restart_from:
         pass
     elif len( args ) == 1:
         stop_time = args[0]
+        banner[ 'stop_time' ] = stop_time
     else:
         parser.error( "wrong number of arguments" )
 
@@ -271,6 +276,8 @@ else:
         stop_time = args[1]
     else:
         parser.error( "too many arguments" )
+    banner[ 'start_time' ] = start_time
+    banner[ 'stop_time' ] = stop_time
      
 if start_time:
     if not cycle_time.is_valid( start_time ):
@@ -329,7 +336,6 @@ env = system_config.get('environment')
 for VAR in env.keys():
     os.environ[ VAR ] = env[ VAR ]
 
-
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 nameserver = locate_pyro_nameserver()
 
@@ -350,10 +356,8 @@ clock = accelerated_clock.clock(
         int(options.clock_offset),
         dummy_mode ) 
 
-
 daemon.connect( clock, ns_obj_name( 'clock', system_name ))
 
-print "CREATING MAIN LOG......."
 # create logging dirs
 if not os.path.exists( system_config.get('logging_dir') ):
    os.makedirs( system_config.get('logging_dir') )
@@ -361,8 +365,12 @@ if not os.path.exists( system_config.get('logging_dir') ):
 log = logging.getLogger( 'main' )
 pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
 
+info[ 'logging_dir' ] = logging_dir
+
 state_dump_dir = system_config.get('state_dump_dir')
 state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')
+
+info [ 'state_dump_file ]
 
 if os.path.exists( state_dump_file ):
     print "STATE DUMP BACKUP..."
