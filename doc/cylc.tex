@@ -78,11 +78,11 @@ Multi-cycle Catchup Capability}
 \begin{abstract}
 
     {\em Cylc} (pronounced ``silk'') is a self-organising
-    metascheduler\footnote{A metascheduler sends dependent tasks to the
-    batch queue job scheduler(s) when it has determined that they are
-    {\em ready}to run. We drop the ``meta'' prefix from here on,
+    metascheduler\footnote{A metascheduler determines when dependent
+    jobs are {\em ready} to run, at which point they can be sent to a
+    batch queue scheduler. We drop the "meta" prefix from here on,
     however, because a metascheduler is also a type of scheduler. The
-    term can also refer to a single aggregate view of multiple
+    term is also used to refer to a single aggregate view of multiple
     distributed resource managers, but that is not the topic of this
     paper.} for cycling environmental forecast systems that may include
     many linked scientific models and associated data processing
@@ -96,7 +96,7 @@ Multi-cycle Catchup Capability}
     no need for a global ``suite'' that specifies dependencies or
     execution order. Because cylc does not use global time loops to
     advance the system and treats all dependencies equally, including
-    those between tasks in different forecast cycles.\footnote{For our
+    those between tasks in different forecast cycles\footnote{For our
     purposes a {\em forecast cycle} comprises all tasks with a common
     {\em cycle time}, i.e.\ the analysis time or nominal start time of a
     forecast model, or that of the forecast model(s) associated with the
@@ -109,24 +109,25 @@ Multi-cycle Catchup Capability}
     delays very quickly, parallel test systems can be started or
     restarted behind the main operation to catch up as quickly as
     possible, and historical case studies can achieve sustained maximal
-    throughput. Catchup and real time operation are not treated
-    separately: in the one running system a series of distinct forecast
-    cycles will seamlessly emerge when and if its tasks catch up to real
-    time operation. Cylc is easily interfaced to existing tasks and is
-    extremely flexible and easy to use. It can be stopped and restarted
-    in arbitrarily complex states of operation and dynamically adapts to
+    throughput. Under cylc delayed and real time operation are not
+    treated differently: if and when a system catches up to real time
+    operation a series of distinct forecast cycles will seamlessly
+    emerge. Cylc is easily interfaced to existing tasks and is extremely
+    flexible and easy to use. It can be stopped and restarted in
+    arbitrarily complex states of operation and dynamically adapts to
     insertion or removal of tasks. If a task fails and delays its
-    downstream dependants the rest of the system can carry on unaffected
-    while the problem is addressed, after which time the delayed tasks
-    will catch up as quickly as possible.  Cylc's handling of forecast
-    model `restart' dependencies allows continued operation, with very
-    little operator intervention, over major failures that result in
-    omitted forecasts in the driving models.  Ability to control the
-    configured task set, and failure recovery scenarios, can be
-    completely tested in an accelerated simulation mode that is
-    indistinguishable (to cylc) from real operation.  Cylc is written in
-    object oriented Python and uses {\em Pyro} (Python Remote Objects).
-    to control tasks across a heterogenous distributed network.  
+    downstream dependants the rest of the system will carry on
+    unaffected while the problem is addressed, after which time the
+    delayed tasks will catch up as quickly as possible.  Cylc's handling
+    of forecast model ``restart'' dependencies allows continued
+    operation, with very little operator intervention, over major
+    failures that result in omitted forecasts in the driving models.
+    Ability to control the configured task set, and failure recovery
+    scenarios, can be completely tested in an accelerated simulation
+    mode that is indistinguishable (to cylc) from real operation. Cylc
+    is written in object oriented Python and uses {\em Pyro} (Python
+    Remote Objects) to control tasks across heterogenous distributed
+    networks.  
 
     %\footnote{Cylc also
     %enables new modes of real time operation, for example a catchment

@@ -1,0 +1,58 @@
+
+Cylc: A Self-Organising Forecast Systems Scheduler With Optimal
+Multi-cycle Catchup Capability - Hilary Oliver, NIWA
+
+Cylc (pronounced "silk") is a self-organising metascheduler[1] for
+cycling environmental forecast systems that may include many linked
+scientific models and associated data processing tasks[2]. Its novel
+scheduling algorithm maintains an evolving pool of task proxy objects
+that interact with each other to resolve all dependencies so that
+correct scheduling emerges naturally at run time. Each task is defined
+in isolation and knows just its own prerequisites (but not who will
+satisfy them) and outputs (but not who will use them), and there is no
+need for a global "suite" that specifies dependencies or execution
+order. Because cylc does not use global time loops to advance the system
+and treats all dependencies equally, including those between tasks in
+different forecast cycles[3], it can run tasks from multiple forecast
+cycles at once to the full extent allowed by intercycle dependencies.
+This matters in particular whenever the external driving data[4] for
+upcoming cycles are available in advance: cylc systems can catch up from
+delays very quickly, parallel test systems can be started or restarted
+behind the main operation to catch up as quickly as possible, and
+historical case studies can achieve sustained maximal throughput. Under
+cylc delayed and real time operation are not treated differently: if and
+when a system catches up to real time operation a series of distinct
+forecast cycles will seamlessly emerge. Cylc is easily interfaced to
+existing tasks and is extremely flexible and easy to use. It can be
+stopped and restarted in arbitrarily complex states of operation and
+dynamically adapts to insertion or removal of tasks. If a task fails and
+delays its downstream dependants the rest of the system will carry on
+unaffected while the problem is addressed, after which time the delayed
+tasks will catch up as quickly as possible. Cylc's handling of forecast
+model "restart" dependencies allows continued operation, with very
+little operator intervention, over major failures that result in omitted
+forecasts in the driving models. Ability to control the configured task
+set, and failure recovery scenarios, can be completely tested in an
+accelerated simulation mode that is indistinguishable (to cylc) from
+real operation. Cylc is written in object oriented Python and uses Pyro
+(Python Remote Objects) to control tasks across heterogenous distributed
+networks.  
+
+[1] A metascheduler determines when dependent jobs are *ready* to run,
+at which point they can be sent to a batch queue scheduler. We drop the
+"meta" prefix from here on, however, because a metascheduler is also a
+type of scheduler. The term is also used to refer to a single aggregate
+view of multiple distributed resource managers, but that is not the
+topic of this paper.
+ 
+[2] A *task* is any group of processes treated as a single entity for
+scheduling purposes.
+ 
+[3] For our purposes a *forecast cycle* comprises all tasks with a
+common *cycle time*, i.e. the analysis time or nominal start time of a
+forecast model, or that of the forecast model(s) associated with the
+other tasks.
+ 
+[4] Forecast systems are typically driven by observational data and/or
+timely model fields from an external forecasting system.
+ 
