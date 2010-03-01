@@ -22,11 +22,11 @@ class LogFilter(logging.Filter):
         record.created = self.clock.get_epoch()
         return True
     
-def pimp_it( log, name, config, dummy_mode, clock = None ):
-    log.setLevel( config.get('logging_level') )
+def pimp_it( log, name, dir, level, dummy_mode, clock = None ):
+    log.setLevel( level )
     max_bytes = 1000000
     backups = 5
-    logfile = config.get('logging_dir') + '/' + name
+    logfile = dir + '/' + name
     h = logging.handlers.RotatingFileHandler( logfile, 'a', max_bytes, backups )
     # the above creates a zero-sized log file if one doesn't already exist
     if os.path.getsize( logfile ) > 0:

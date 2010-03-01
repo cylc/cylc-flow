@@ -41,7 +41,10 @@ class manager:
         # instantiate the initial task list and create task logs 
         self.tasks = []
         if startup[ 'restart' ]:
-            self.load_from_state_dump( startup[ 'state dump file' ] )
+            if 'initial start dump' in startup:
+                self.load_from_state_dump( startup[ 'initial start dump' ] )
+            else:
+                self.load_from_state_dump( config.get( 'state_dump_file' ) )
         else:
             self.load_from_config( startup[ 'start time' ] )
 
@@ -90,7 +93,8 @@ class manager:
 
             # create the task log
             log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
+            pimp_my_logger.pimp_it( log, name, self.config.get('logging_dir'), \
+                    self.config.get('logging_level'), self.dummy_mode, self.clock )
 
             # the initial task cycle time can be altered during
             # creation, so we have to create the task before
@@ -109,25 +113,9 @@ class manager:
                 self.tasks.append( itask )
 
 
-    def load_from_state_dump( self, filename = None ):
+    def load_from_state_dump( self, filename ):
         # load initial system state from the configured state dump file
         #--
-
-        configured_file = self.config.get('state_dump_dir') + '/' + self.config.get('state_dump_file')
-        if filename:
-            if filename == os.path.basename( filename ):
-                # is a plain filename; append to configured path
-                dirname = os.path.dirname( configured_file )
-                filename = dirname + '/' + filename
-            elif re.match( '^/' ):
-                # is an absolute path
-                pass
-            else:
-                # relative path; append to cwd
-                filename = os.getcwd() + '/' + filename
-
-        else:
-            filename = configured_file
 
         print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
         self.log.info( 'Loading previous state from ' + filename )
@@ -189,7 +177,8 @@ class manager:
             # create the task log
             if name not in log_created.keys():
                 log = logging.getLogger( 'main.' + name )
-                pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
+                pimp_my_logger.pimp_it( log, name, self.config.get('logging_dir'), \
+                        self.config.get('logging_level'), self.dummy_mode, self.clock )
                 log_created[ name ] = True
 
             # instantiate the task object
@@ -304,7 +293,7 @@ class manager:
 
 
     def dump_state( self, new_file = False ):
-        filename = self.config.get('state_dump_dir') + '/' + self.config.get('state_dump_file')
+        filename = self.config.get('state_dump_file') 
         if new_file:
             filename += '.' + self.clock.dump_to_str()
 
@@ -570,7 +559,8 @@ class manager:
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
                     log = logging.getLogger( 'main.' + name )
-                    pimp_my_logger.pimp_it( log, name, self.config, self.dummy_mode, self.clock )
+                    pimp_my_logger.pimp_it( log, name, self.config.get('logging_dir'), \
+                            self.config.get('logging_level'), self.dummy_mode, self.clock )
  
                 # the initial task cycle time can be altered during
                 # creation, so we have to create the task before

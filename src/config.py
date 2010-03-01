@@ -8,13 +8,14 @@ import re
 
 class config:
 
-    def __init__( self ):
+    def __init__( self, system_name ):
+
         self.configured = {}
-        self.item_list = \
+
+        self.system_item_list = \
                 [
                         'logging_dir',
                         'state_dump_dir',
-                        'state_dump_file',
                         'task_list',
                         'task_groups',
                         'environment',
@@ -23,29 +24,21 @@ class config:
                         'job_submit_overrides',
                         'logging_level'
                  ]
+
+
+        # load items in system_item_list from system config module
         self.load_system_config()
-        if not self.check():
-            print "ABORTING due to undefined config items"
-            sys.exit(1)
 
-
-    def check( self ):
+        # check all were defined
         items = self.configured.keys()
         ok = True
-        for item in self.item_list:
+        for item in self.system_item_list:
             if item not in items:
                 print 'ERROR: REQUIRED CONFIG ITEM UNDEFINED:', item
                 ok = False
-        return ok
 
-
-    def load_system_config( self ):
-        # set config items from those in the system_config module
-        for key in system_config.config.keys():
-            self.configured[ key ] = system_config.config[ key ]
-
-        # set state_dump_file here; user set is unnecessary
-        self.configured['state_dump_file'] = 'cylc-state'
+        if not ok:
+            raise SystemExit( "Required config items missing" )
 
         # create dict of job submit methods by task name
         self.configured['submit'] = {}
@@ -55,6 +48,30 @@ class config:
                 if task in self.configured[ 'job_submit_overrides' ][ method ]:
                     self.configured['submit'][ task ] = method
 
+        # DYNAMIC CONFIG
+        # add registered system name to the logging and state dump dirs
+        # to allow multiple instances of the same system (with different
+        # names) to coexist
+        statedir = self.configured['state_dump_dir'] + '/' + system_name
+
+        self.configured['state_dump_dir'] = statedir
+        self.configured['state_dump_file'] = statedir + '/state'
+
+        logdir = self.configured[ 'logging_dir' ] + '/' + system_name 
+        self.configured['logging_dir'] = logdir 
+
+        if not os.path.exists( statedir ):
+            os.makedirs(  statedir )
+
+        if not os.path.exists( logdir ):
+            os.makedirs(  logdir )
+
+    def load_system_config( self ):
+        # set config items from those in the system_config module
+        for key in system_config.config.keys():
+            self.configured[ key ] = system_config.config[ key ]
+
+
     def get( self, key ):
         return self.configured[ key ]
 
@@ -63,29 +80,3 @@ class config:
 
     def set( self, key, value ):
         self.configured[ key ] = value
-
-
-    def dump( self ):
-            
-        print "MAX RUNAHEAD ...........",
-        print self.configured['max_runahead_hours'], "hours"
-
-        print "TASK EXECUTION..........",
-        if self.configured['use_qsub']:
-            print "qsub, queue = " + self.configured['job_queue']
-        else:
-            print "direct, in background"
-
-        print 'LOGGING DIRECTORY.......',
-        print self.configured['logging_dir']
-
-        print 'STATE DUMP DIRECTORY....',
-        print self.configured['state_dump_dir']
-
-        print 'CONFIGURED TASK LIST....',
-        #print '- ' + self.configured['task_list'][0]
-        #for task in self.configured['task_list'][1:]:
-        #    print '                         - ' + task
-        for task in self.configured['task_list']:
-            print '                         - ' + task
-

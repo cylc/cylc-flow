@@ -275,6 +275,7 @@ else:
 # get startup configuration--------------------------------------------
 
 startup = {}
+
 if options.restart or options.restart_from:
     startup[ 'restart' ] = True
     if len( args ) == 0:
@@ -288,11 +289,6 @@ if options.restart or options.restart_from:
         startup[ 'stop time' ] = stop_time
     else:
         parser.error( "wrong number of arguments" )
-
-    if options.restart_from:
-        startup[ 'state dump file' ] = options.restart_from
-    else:
-        startup[ 'state dump file' ] = None
 
 else:
     startup[ 'restart' ] = False
@@ -349,7 +345,7 @@ import task_base     # loads system_tasks.py
 import remote_switch # ditto
 
 # load system configuration--------------------------------------------
-system_config = config.config()
+system_config = config.config( system_name )
 
 # set global (all tasks) environment variables-------------------------
 os.environ[ 'PNS_HOST' ] = str( pns_host )
@@ -388,24 +384,33 @@ clock = accelerated_clock.clock(
 
 daemon.connect( clock, ns_obj_name( 'clock', system_name ))
 
-# create logging dirs
-logging_dir = system_config.get('logging_dir') + '/' + system_name
-if not os.path.exists( logging_dir ):
-   os.makedirs(  logging_dir )
-# top level logging
-log = logging.getLogger( 'main' )
-pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
-banner[ 'logging_dir' ] = logging_dir
+# logging dir
+logging_dir = system_config.get('logging_dir')
+banner[ 'logging directory' ] = logging_dir
 
-state_dump_dir = system_config.get('state_dump_dir') + system_name
-state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')
+# set up main log already, for use in this module
+log = logging.getLogger( 'main' )
+pimp_my_logger.pimp_it( \
+        log, 'main', system_config.get('logging_dir'), \
+        system_config.get('logging_level'), dummy_mode, clock )
+
+# state dump file
+state_dump_file = system_config.get( 'state_dump_file' )
 banner[ 'state dump file' ] = state_dump_file
 if os.path.exists( state_dump_file ):
     backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
     shutil.copyfile( state_dump_file, backup )
-    banner[ 'initial state dump backup' ] = backup
-elif not os.path.exists( state_dump_dir ):
-    os.makedirs( state_dump_dir )
+    banner[ 'state dump backup' ] = backup
+
+if options.restart_from:
+    filename = options.restart_from
+    if not os.path.exists( filename ):
+        # assume located in state dump dir
+        filename = system_config.get('state_dump_dir') + '/' + filename
+        if not os.path.exists( filename ):
+            raise SystemExit( "ERROR: initial state dump not found" )
+
+    startup[ 'initial state dump' ] = filename
 
 # remotely accessible system state summary
 system_state = state_summary.state_summary( system_config, dummy_mode )
