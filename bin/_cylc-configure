@@ -26,8 +26,6 @@ function print_usage()
     echo ""
     echo "options:"
     echo "  -h, --help      Print this usage message and exit"
-    #echo "  -q QUEUE        Submit jobs to QUEUE using qsub, instead of using"
-    #echo "                  direct execution in the background." 
     echo "  -f              Force overwrite an existing system config file,"
     echo "                  after making a backup of the old config file."
     echo "                  By default we do not do this after reconfiguring"
@@ -41,9 +39,7 @@ if [[ $1 == '--help' ]]; then
 fi
 
 FORCE=false
-QSUB=false
-NAMED=false
-while getopts "hfq:s:" opt; do
+while getopts "hf" opt; do
     case $opt in
         h)
         print_usage
@@ -52,25 +48,10 @@ while getopts "hfq:s:" opt; do
         f)
         FORCE=true
         ;;
-        q)
-        QSUB=true
-        QUEUE=$OPTARG
-        ;;
-        s)
-        NAMED=true
-        SYS_NAME=$OPTARG
-        ;;
     esac
 done
 
 shift $(( OPTIND -1 ))
-
-# check compulsory options
-if ! $NAMED; then
-    echo "ERROR: '-s NAME' is required"
-    print_usage
-    exit 1
-fi
 
 if [[ $# == 1 ]]; then 
     # all args supplied
@@ -146,7 +127,7 @@ config = {}
 config['task_groups'] = {}
 config['job_submit_overrides'] = {}
 
-# TASK NAMES
+# LIST OF TASK NAMES (order irrelevant)
 config['task_list'] = \\
     [
 eof
