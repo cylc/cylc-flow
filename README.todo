@@ -1,5 +1,8 @@
 To Do
 
+* some way of using registered system name in config module, e.g. for
+  instance-specific tmpdir
+
 * register should warn (and ask) if overwriting an existing registration
 
 * create a log class so we can store the main logging dir ...
