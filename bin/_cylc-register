@@ -1,0 +1,138 @@
+#!/bin/bash
+
+set -e  # ABORT on error
+
+function print_usage() 
+{
+	echo "usage:"
+    echo "cylc register [options] -s NAME PATH"
+    echo "cylc register [options]"
+    echo ""
+    echo "Register a system of tasks, configured under the system"
+    echo "definition directory PATH, for use under the name NAME."
+    echo "The locations of your registered systems are stored, by"
+    echo "name, under \$HOME/.cylc/registered."
+    echo ""
+    echo "arguments:"
+    echo "  PATH         Path to the system definition directory."
+    echo ""
+    echo "options:"
+    echo "  -h, --help   Print this usage message and exit"
+    echo "  -s NAME      Name under which to register the system."
+    echo "  -c           Check all currently registered systems,"
+    echo "               print their names and locations, and"
+    echo "               unregister any found not to be valid."
+}
+
+function check_configured()
+{
+    SYS_DIR=$1
+
+    # is this a cylc system definition directory?
+    if [[ ! -d $SYS_DIR/taskdef/ || \
+        ! -d $SYS_DIR/scripts ]]; then
+        echo "ERROR: $SYS_DIR"
+        echo "is not a cylc system definition directory: it does"
+        echo "not contain taskdef and/or scripts sub-directories."
+        return 1
+    fi
+
+    # has this cylc system definition directory been configured yet?
+    if [[ ! -f $SYS_DIR/system_config.py || \
+        ! -f $SYS_DIR/system_tasks.py ]]; then
+        echo "ERROR: $SYS_DIR"
+        echo "has not been configured yet: it does not contain config"
+        echo "and/or task class modules. Use 'cylc configure' first."
+        return 1
+    fi
+
+    # all good
+    return 0
+}
+
+# cheap hack to get '--help', which isn't allowed by getopts
+if [[ $1 == '--help' ]]; then
+    print_usage
+    exit 0
+fi
+
+NAMED=false
+CHECK=false
+while getopts "chs:" opt; do
+    case $opt in
+        h)
+        print_usage
+        exit 0
+        ;;
+        s)
+        NAMED=true
+        NAME=$OPTARG
+        ;;
+        c)
+        CHECK=true
+        ;;
+    esac
+done
+
+shift $(( OPTIND -1 ))
+
+if ! $NAMED && ! $CHECK; then
+    print_usage
+    exit 1
+fi
+
+# make the registration directory if necessary
+REG_DIR=$HOME/.cylc/registered
+[[ ! -d $REG_DIR ]] && mkdir -p $REG_DIR
+
+if $NAMED; then
+    [[ $# != 1 ]] && { print_usage; exit 1; }
+    SYS_DIR=$1
+    if [[ $SYS_DIR != /* ]]; then
+        # make absolute path
+        SYS_DIR=$PWD/$SYS_DIR
+        # remove trailing '/'
+        SYS_DIR=${SYS_DIR%/}
+    fi
+
+    # check the new system has been configured
+    ! check_configured $SYS_DIR && exit 1
+    
+    # register it
+    echo $SYS_DIR > $REG_DIR/$NAME
+    echo
+
+    echo $SYS_DIR
+    echo "Registered as $NAME"
+    echo
+
+    exit 0
+fi
+
+if $CHECK; then
+    # go to user registration directory
+    cd $REG_DIR
+    # how many systems registered?
+    COUNT=$( ls -1 | wc -l )
+    echo
+    echo "You currently have $COUNT cylc systems registered"
+    echo "in $REG_DIR."
+
+    # check and print each registered system
+    COUNT=0
+    for NAME in *; do 
+        COUNT=$((COUNT + 1 ))
+        echo
+        SYS_DIR=$( cat $NAME )
+        if check_configured $SYS_DIR; then
+            echo "[${COUNT}] $SYS_DIR"
+            echo " Registered as $NAME"
+        else
+            echo " UNREGISTERING $NAME"
+            rm -f $NAME
+        fi
+    done
+
+    echo
+    exit 0
+fi

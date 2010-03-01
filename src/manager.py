@@ -15,16 +15,15 @@ def ns_obj_name( name, groupname ):
     return groupname + '.' + name
 
 class manager:
-    def __init__( self, config, dummy_mode ):
+    def __init__( self, config, system_name, dummy_mode, startup ):
 
         self.config = config
         self.dummy_mode = dummy_mode
+        self.system_name = system_name
 
         # TO DO: just use self.config.get('foo') throughout
         self.clock = config.get('clock')
-        self.stop_time = config.get('stop_time' )
         self.pyro = config.get('daemon')  
-        self.system_name = config.get('system_name' )
         self.submit = config.get('submit' )
 
         self.log = logging.getLogger( "main" )
@@ -32,22 +31,19 @@ class manager:
         self.system_hold_now = False
         self.system_hold_ctime = None
 
-        restart = config.get('restart')
-        start_time = config.get('start_time' )
-        restart_statedump = config.get('restart_from')
-
         # initialise the dependency broker
         self.broker = broker()
         
+        self.stop_time = None
+        if 'stop time' in startup.keys():
+            self.stop_time = startup[ 'stop time' ]
+
         # instantiate the initial task list and create task logs 
         self.tasks = []
-        if restart:
-            self.load_from_state_dump( restart_statedump )
-        elif start_time:
-            self.load_from_config( start_time )
+        if startup[ 'restart' ]:
+            self.load_from_state_dump( startup[ 'state dump file' ] )
         else:
-            self.log.critical( 'start time and restart both undefined' )
-            sys.exit(1)
+            self.load_from_config( startup[ 'start time' ] )
 
     def get_tasks( self ):
         return self.tasks
@@ -83,12 +79,11 @@ class manager:
         # set clock before using log (affects dummy mode only)
         self.clock.set( start_time )
 
-        print '\nSTARTING AT ' + start_time + ' FROM CONFIGURED TASK LIST\n'
+        #print '\nSTARTING AT ' + start_time + ' FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname1, taskname2, ...]
 
         for name in self.config.get('task_list'):
-
             # instantiate the task
             itask = get_object( 'system_tasks', name )\
                     ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], True )

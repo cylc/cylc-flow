@@ -9,28 +9,23 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "usage: cylc configure [options] -s SYSTEM-NAME SYSTEM-PATH"
+	echo "usage: cylc configure [options] PATH"
     echo ""
-    echo "Configure a cylc system defined under SYSTEM-PATH for scheduling."
-    echo "Subsequently you can refer to a configured system by its name." 
-    echo "This needs to be done once, initially, and thereafter only if"
-    echo "the system's task definition files have changed." 
+    echo "Generate task class and default config modules for a cylc system"
+    echo "Defined under PATH. This needs to be done once, initially, and"
+    echo "thereafter only after changing the task definition files." 
     echo ""
     echo "Several files are generated in the system definition directory (so"
     echo "you need write permissions there; copy the directory if necessary):" 
     echo " * A Python task class module based on the task definition files."
     echo " * A Python default config module, which you can customize."
-    echo "Finally, the configured system will be registered by name under"
-    echo "your .cylc directory,  \$HOME/.cylc/configured, for future use."
     echo ""
     echo "arguments:"
-    echo "  SYSTEM-PATH     Path to the system to be configured (with"
-    echo "                  taskdef and scripts sub-dirs, etc.)." 
+    echo "  PATH            Path to the system definition directory containing"
+    echo "                  taskdef files and task scripts." 
     echo ""
     echo "options:"
     echo "  -h, --help      Print this usage message and exit"
-    echo "  -s NAME, --system=NAME"
-    echo "                  Name to use in registering the configured system."
     #echo "  -q QUEUE        Submit jobs to QUEUE using qsub, instead of using"
     #echo "                  direct execution in the background." 
     echo "  -f              Force overwrite an existing system config file,"
@@ -151,9 +146,6 @@ config = {}
 config['task_groups'] = {}
 config['job_submit_overrides'] = {}
 
-# SYSTEM NAME
-config['system_name'] = '$SYS_NAME'
-
 # TASK NAMES
 config['task_list'] = \\
     [
@@ -181,9 +173,8 @@ config['logging_dir'] = 'CYLC/logfiles'
 config['state_dump_dir'] = 'CYLC/statedumps'
 
 # ENVIRONMENT VARIABLES THAT MAY BE USED BY TASKS IN THIS SYSTEM
-sys_name = config[ 'system_name' ]
 user_name = os.environ['USER'] 
-config['environment'] = {'TMPDIR':'/tmp/' + user_name + '/' + sys_name }
+config['environment'] = {'TMPDIR':'/tmp/' + user_name + '/junk' }
 
 # MAXIMUM INTERVAL (IN CYCLE TIME) BETWEEN FASTEST AND SLOWEST TASKS
 config['max_runahead_hours'] = 24
@@ -223,13 +214,4 @@ from background_remote import background_remote
 eof
 fi
 echo "=> $SYS_DIR/job_submit_methods.py"
-
-echo
-echo "Updating your cylc global config"
-CONF_DIR=$HOME/.cylc/configured
-[[ ! -d $CONF_DIR ]] && mkdir -p $CONF_DIR
-
-echo $SYS_DIR > $CONF_DIR/$SYS_NAME
-echo "=> $CONF_DIR/$SYS_NAME"
-
 echo

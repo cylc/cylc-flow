@@ -28,6 +28,7 @@ fi
 # extract command help output
 mkdir -p doc/command-usage
 cylc             help > doc/command-usage/cylc.txt
+cylc register  --help > doc/command-usage/cylc-register.txt
 cylc schedule  --help > doc/command-usage/cylc-scheduler.txt
 cylc control   --help > doc/command-usage/cylc-controller.txt
 cylc configure --help > doc/command-usage/cylc-configure.txt
@@ -39,7 +40,7 @@ cylc monitor-p   --help > doc/command-usage/monitor-p.txt
 
 #Comment-stripped taskdef files:
 #perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
-#    sys/examples/simple-0/system_config.py > doc/system_config.py.stripped
+#    sys/examples/userguide-1/system_config.py > doc/system_config.py.stripped
 #perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
 #    sys/templates/full-template.def > doc/full-template.def.stripped
 

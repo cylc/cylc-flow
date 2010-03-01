@@ -33,13 +33,27 @@ def print_banner():
     print "version: " + cylc_version
     print ""
 
+    items = banner.keys() + startup.keys()
+
+    longest_item = items[0]
+    for item in items:
+        if len(item) > len(longest_item):
+            longest_item = item
+
+    template = re.sub( '.', '.', longest_item )
+
+    print "STARTUP CONFIGURATION:"
+    for item in banner.keys():
+        print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( banner[ item ] )
+    for item in startup.keys():
+        print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( startup[ item ] )
+
 def locate_pyro_nameserver():
     try:
         nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
     except NamingError:
-        raise SystemExit("Failed to find a Pyro nameserver on " + pns_host )
+        raise SystemExit("No Pyro nameserver found on " + pns_host )
     else:
-        print "Using Pyro Nameserver on " + pns_host
         return nameserver
 
 def create_ns_groupname( nameserver, groupname ):
@@ -67,9 +81,6 @@ def create_ns_groupname( nameserver, groupname ):
         print "    'system_name' in your config file to avoid interference.\n"
 
         raise SystemExit( "ABORTING NOW" )
-
-    else:
-        print "Created groupname '" + groupname + "' in the Pyro nameserver"
 
 def service_remote_requests( remote, pool, log, failout = None ):
 
@@ -157,56 +168,64 @@ def ns_obj_name( name, groupname ):
     # object name as registered with the Pyro nameserver
     return groupname + '.' + name
 
-usage = """"cylc schedule -s NAME [-n HOSTNAME] [options] [START] [STOP]
+usage = """cylc schedule -s NAME [-n HOSTNAME] [options] [START] [STOP]
 
-Start up a cylc instance for scheduling system NAME via the Pyro
-nameserver running on HOSTNAME (which defaults to localhost). 
+Start scheduling a system registered under the name NAME, via the Pyro
+nameserver running on HOSTNAME (which defaults to localhost). You can
+run multiple systems (and even multiple instances of the same system)
+at once, so long as each instance is registered under a different name. 
 
-To cold start a system, supply an initial cycle time START (YYYYMMDDHH). 
+To cold start system NAME, give the initial cycle time START. 
 
-To restart a system, use the '--restart' or '--restart-from' options. 
+To restart system NAME, use '--restart' or '--restart-from=FILE'. 
 
-If you supply a final cycle time STOP (YYYYMMDDHH) each task will stop 
-when it reaches that time, and then the system will shut down."""
+If a final cycle time STOP is supplied, each task will stop when it
+reaches that time, and then the system will shut down.
+
+arguments:
+  START                 Initial cycle time (YYYYMMDDHH) for a cold start
+  STOP                  Optional final cycle time (YYYYMMDDHH)"""
 
 def commandline_parser():
     parser = OptionParser( usage )
 
+    parser.set_defaults( pns_host='localhost', restart=False, dummy_mode=False,
+            clock_rate=10, clock_offset=24, task_proc_reason=False )
+
     parser.add_option( "-s", 
-            help="Name of the configured cylc system",
+            help="Name of a registered cylc system to run",
             metavar="NAME", action="store", dest="system_name" )
 
     parser.add_option( "-n", 
             help="Hostname of the machine running the Pyro nameserver, "
             "defaults to localhost",
-            metavar="HOSTNAME", action="store", default="localhost",
-            dest="pns_host" )
+            metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "-r", 
             help="Restart from the system's configured state dump file",
-            action="store_true", default=False, dest="restart" )
+            action="store_true", dest="restart" )
 
     parser.add_option( "--restart-from", 
             help="Restart from a named state dump file, assumed to be "
             "located in the system's configured state dump directory "
             "unless you give an absolute file path.",
-            metavar="STATE", action="store", dest="restart_from" )
+            metavar="FILE", action="store", dest="restart_from" )
 
     parser.add_option( "-d",
             help="Run in accelerated time DUMMY MODE. System tasks will be "
             "faked by an external dummy program.",
-            action="store_true", default=False, dest="dummy_mode" )
+            action="store_true", dest="dummy_mode" )
 
     parser.add_option( "--clock-rate", 
             help="(Dummy mode) accelerated clock rate, INT seconds = 1 hour "
             "(defaults to 10 sec = 1 hour).",
-            metavar="INT", action="store", default=10, dest="clock_rate" )
+            metavar="INT", action="store", dest="clock_rate" )
 
     parser.add_option( "--clock-offset", 
             help="(Dummy mode) clock offset at start up. The dummy clock will "
             "start at INT hours prior to START cycle time (default 24 hours). "
             "Use to simulate catching up to real time operation.",
-            metavar="HOURS", action="store", default=24, dest="clock_offset" )
+            metavar="HOURS", action="store", dest="clock_offset" )
 
     parser.add_option( "--fail", help=\
             "(Dummy mode) get a task to abort after reporting that "
@@ -216,7 +235,7 @@ def commandline_parser():
 
     parser.add_option( "--reason", 
             help="(Debug) explain why the task processing loop was invoked",
-            action="store_true", default=False, dest="task_proc_reason" )
+            action="store_true", dest="task_proc_reason" )
 
     return parser
 
@@ -230,83 +249,98 @@ banner = {}
 parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
-# check compulsory arguments-------------------------------------------
+# get system name------------------------------------------------------
 if not options.system_name:
     parser.error( "Required: system name" )
+else:
+    system_name = options.system_name
+    banner[ 'system name' ] = system_name
+
+# get Pyro nameserver hostname-----------------------------------------
 if not options.pns_host:
     # (this won't happen; defaults to localhost)
     parser.error( "Required: Pyro nameserver hostname" )
+else:
+    pns_host = options.pns_host
+    banner[ 'Pyro nameserver hostname' ] = pns_host
 
-pns_host = options.pns_host
-system_name = options.system_name
-
-banner[ 'pns_host' ] = pns_host
-banner[ 'system_name' ] = system_name
-
-dummy_mode = False
+# get mode of operation------------------------------------------------
 if options.dummy_mode:
     dummy_mode = True
+    banner[ 'mode of operation' ] = 'real'
+else:
+    dummy_mode = False
+    banner[ 'mode of operation' ] = 'dummy'
 
-banner[ 'dummy_mode' ] = dummy_mode
+# get startup configuration--------------------------------------------
 
-# start and stop times
-restart_from = None
-restart = False
-start_time = None
-stop_time = None
-
+startup = {}
 if options.restart or options.restart_from:
-    restart = True
-    # --restart [STOP]
-    # --restart-from=FILE [STOP]
+    startup[ 'restart' ] = True
     if len( args ) == 0:
+        start_time = None
+        stop_time = None
+        # default
         pass
     elif len( args ) == 1:
+        # stop at given time
         stop_time = args[0]
-        banner[ 'stop_time' ] = stop_time
+        startup[ 'stop time' ] = stop_time
     else:
         parser.error( "wrong number of arguments" )
 
+    if options.restart_from:
+        startup[ 'state dump file' ] = options.restart_from
+    else:
+        startup[ 'state dump file' ] = None
+
 else:
-    # START [STOP]
+    startup[ 'restart' ] = False
     if len( args ) == 1:
-        start_time = args[0]
+        startup[ 'start time' ] = args[0]
     elif len( args ) == 2:
-        start_time = args[0]
-        stop_time = args[1]
+        startup[ 'start time' ] = args[0]
+        startup[ 'stop time' ] = args[1]
     else:
         parser.error( "too many arguments" )
-    banner[ 'start_time' ] = start_time
-    banner[ 'stop_time' ] = stop_time
-     
-if start_time:
+
+# check startup parameters---------------------------------------------
+if 'start time' in startup.keys():
+    start_time = startup['start time'] 
     if not cycle_time.is_valid( start_time ):
-        parser.error( "invalid START time" )
+        parser.error( "invalid START time: " + start_time )
 
-if stop_time:
+if 'stop time' in startup.keys():
+    stop_time = startup['stop time'] 
     if not cycle_time.is_valid( stop_time ):
-        parser.error( "invalid STOP time" )
+        parser.error( "invalid STOP time: " + stop_time )
 
-if not start_time and \
-        not options.restart and \
-        not options.restart_from: 
-    parser.error( 'Either supply start time or restart' )
+if 'start time' not in startup.keys() \
+        and not 'stop time' not in startup.keys() \
+        and not startup[ 'restart' ]:
+            parser.error( 'Supply a start time or specify a restart' )
 
 # find location of the system task and config modules------------------
-FILE = open( os.environ['HOME'] + '/.cylc/configured/' + system_name, 'r' )
-line = FILE.read()
-system_dir = line.rstrip() 
-FILE.close()
+registration_file = os.environ['HOME'] + '/.cylc/registered/' + system_name
+if os.path.exists( registration_file ):
+    FILE = open( registration_file, 'r' )
+    line = FILE.read()
+    system_dir = line.rstrip() 
+    FILE.close()
+else:
+    raise SystemExit( "No such system name registered: " + system_name )
 
-# configure the execution environment for task scripts launched by cylc
-print "Configuring your environment for system " + system_name
+banner[ 'system definition' ] = system_dir
+
+# provide access to the system scripts and source modules--------------
+# for external processes launched by this program.
 print system_dir
 # add system scripts to $PATH
 os.environ[ 'PATH' ] += ':' + system_dir + '/scripts'
 # add system Python modules to $PYTHONPATH
 os.environ[ 'PYTHONPATH' ] += ':' + system_dir
 
-# add system dir to the module search path for this program------------
+# provide access to the system source modules for THIS program---------
 sys.path.append( system_dir )
 
 # import system-specific cylc modules now------------------------------ 
@@ -317,12 +351,7 @@ import remote_switch # ditto
 # load system configuration--------------------------------------------
 system_config = config.config()
 
-if options.system_name != system_config.get( 'system_name' ):
-    # this should never happen
-    raise SystemExit( 'ERROR: configured system and command line disagree' )
-
-       
-# set configured global (all tasks) environment variables
+# set global (all tasks) environment variables-------------------------
 os.environ[ 'PNS_HOST' ] = str( pns_host )
 os.environ[ 'SYSTEM_NAME' ] = str( system_name )
 if dummy_mode:
@@ -332,6 +361,7 @@ if dummy_mode:
         print "FAILOUT: " + options.failout_task_id
         os.environ[ 'FAILOUT_ID' ] = options.failout_task_id
 
+# extra global vars set in the system config file
 env = system_config.get('environment')
 for VAR in env.keys():
     os.environ[ VAR ] = env[ VAR ]
@@ -359,27 +389,22 @@ clock = accelerated_clock.clock(
 daemon.connect( clock, ns_obj_name( 'clock', system_name ))
 
 # create logging dirs
-if not os.path.exists( system_config.get('logging_dir') ):
-   os.makedirs( system_config.get('logging_dir') )
+logging_dir = system_config.get('logging_dir') 
+if not os.path.exists( logging_dir ):
+   os.makedirs(  logging_dir )
 # top level logging
 log = logging.getLogger( 'main' )
 pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
-
-info[ 'logging_dir' ] = logging_dir
+banner[ 'logging_dir' ] = logging_dir
 
 state_dump_dir = system_config.get('state_dump_dir')
 state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')
-
-info [ 'state_dump_file ]
-
+banner[ 'state dump file' ] = state_dump_file
 if os.path.exists( state_dump_file ):
-    print "STATE DUMP BACKUP..."
     backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
-    print ' + ' + backup
     shutil.copyfile( state_dump_file, backup )
-
+    banner[ 'initial state dump backup' ] = backup
 elif not os.path.exists( state_dump_dir ):
-    print "STATE DUMP DIR..."
     os.makedirs( state_dump_dir )
 
 # remotely accessible system state summary
@@ -393,21 +418,18 @@ daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', system_name))
 # load some command line options and dynamic stuff into config
 # module, for easy handling.
 system_config.put( 'daemon', daemon )
-system_config.put( 'system_name', system_name )
 system_config.put( 'clock', clock )
-system_config.put( 'restart', restart )
-system_config.put( 'start_time', start_time )
-system_config.put( 'stop_time', stop_time )
-system_config.put( 'restart_from', restart_from )
 
 # initialize the task manager
-pool = manager.manager( system_config, dummy_mode )
+pool = manager.manager( system_config, system_name, dummy_mode, startup )
 
 # remote control switch
 remote = remote_switch.remote_switch( system_config, pool.get_tasks() )
 daemon.connect( remote, ns_obj_name( 'remote', system_name) )
 
-print "\nTASK PROCESSING STARTING\n"
+# print system information at startup----------------------------------
+print_banner()
+print "\nSTARTING\n"
 
 count = 0
 task_base.state_changed = True
@@ -479,13 +501,13 @@ while True: # MAIN LOOP
 # END MAIN LOOP
 
 print ""
-print "TASK PROCESSING FINISHED"
+print "STOPPING"
+print ""
 print "Shutting down my Pyro daemon"
 daemon.shutdown( True )
 print "Deleting Pyro nameserver group " + system_name
 nameserver.deleteGroup( system_name )
 print "Bye!"
-
 
 # to simulate the effect on monitoring etc. of long task processing time
 # (many many tasks...), put this in the task processing loop:

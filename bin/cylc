@@ -8,6 +8,7 @@ allowed_commands = \
     [ 
     'help',
     'configure',
+    'register',
     'schedule', 
     'control',
     'message',
@@ -15,7 +16,6 @@ allowed_commands = \
     'monitor-r',
     'monitor-d',
     'monitor-p',
-    'show-configured',
     'show-pyro',
     ]
 
@@ -23,15 +23,17 @@ usage = \
     [ 
     'usage: cylc COMMAND [command-options] ',
     '',
-    'This is the cylc scheduler command line interface.',
+    'This is the cylc self organising scheduler command line interface.',
     'Cylc is pronounced "silk", as in "smooth as silk".',
     '',
     'commands:',
     '  help          Print this usage message and exit.',
     '',
-    '  configure     Configure a system for scheduling.', 
-    '  schedule      Start scheduling a configured system.',
+    '  configure     Generate task class and config modules for a system.',
+    '  register      Register a configured system for use, by name.',
+    '  schedule      Start scheduling a registered system.',
     '  control       Interact with a running system.',
+    '',
     '  message       Send a message to a task proxy object.',
     '',
     '  monitor       Monitor all task proxy objects.',
@@ -40,7 +42,6 @@ usage = \
     '  monitor-p     Monitor the Pyro namesever.',
     '',
     '  show-pyro [TO DO]   List systems registered with Pyro.',
-    '  show-configured [TO DO]   List your configured systems.',
     '',
     'command-options:',
     '  cylc COMMAND --help'

@@ -12,7 +12,6 @@ class config:
         self.configured = {}
         self.item_list = \
                 [
-                        'system_name',
                         'logging_dir',
                         'state_dump_dir',
                         'state_dump_file',
@@ -68,10 +67,6 @@ class config:
 
     def dump( self ):
             
-        print
-        print "SYSTEM NAME.............", 
-        print self.configured['system_name']
-
         print "MAX RUNAHEAD ...........",
         print self.configured['max_runahead_hours'], "hours"
 

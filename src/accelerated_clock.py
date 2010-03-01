@@ -30,15 +30,15 @@ class clock( Pyro.core.ObjBase ):
         self.base_realtime = datetime.datetime.now() 
         self.base_dummytime = self.base_realtime
 
-        if dummy_mode:
-            print "DUMMY CLOCK ........"
-            print " - accel:  " + str( self.acceleration ) + "s = 1 simulated hour"
-            print " - offset: " + str( self.offset_hours )
+        #if dummy_mode:
+        #    print "DUMMY CLOCK ........"
+        #    print " - accel:  " + str( self.acceleration ) + "s = 1 simulated hour"
+        #    print " - offset: " + str( self.offset_hours )
 
 
     def set( self, ctime ):
 
-        print 'Setting dummy mode clock time'
+        #print 'Setting dummy mode clock time'
         self.base_dummytime = datetime.datetime( 
                 int(ctime[0:4]), int(ctime[4:6]), 
                 int(ctime[6:8]), int(ctime[8:10]))

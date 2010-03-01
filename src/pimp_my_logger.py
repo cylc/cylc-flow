@@ -30,7 +30,7 @@ def pimp_it( log, name, config, dummy_mode, clock = None ):
     h = logging.handlers.RotatingFileHandler( logfile, 'a', max_bytes, backups )
     # the above creates a zero-sized log file if one doesn't already exist
     if os.path.getsize( logfile ) > 0:
-        print ' + rotating log:', logfile
+        #print ' + rotating log:', logfile
         h.doRollover()
 
     originator = ""
