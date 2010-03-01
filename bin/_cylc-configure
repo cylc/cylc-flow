@@ -147,10 +147,10 @@ eof
 config['job_submit_method'] = 'background'
 # config['job_submit_overrides']['background2'] = [ 'foo', 'bar' ]
 
-# LOGGING DIRECTORY
+# LOGGING AND STATE DUMP DIRECTORIES
+# the registered system name will automatically be appended to these 
+# so that multiple instances of this system can run without interference.
 config['logging_dir'] = 'CYLC/logfiles'
-
-# STATE DUMP DIRECTORY
 config['state_dump_dir'] = 'CYLC/statedumps'
 
 # ENVIRONMENT VARIABLES THAT MAY BE USED BY TASKS IN THIS SYSTEM

@@ -389,7 +389,7 @@ clock = accelerated_clock.clock(
 daemon.connect( clock, ns_obj_name( 'clock', system_name ))
 
 # create logging dirs
-logging_dir = system_config.get('logging_dir') 
+logging_dir = system_config.get('logging_dir') + '/' + system_name
 if not os.path.exists( logging_dir ):
    os.makedirs(  logging_dir )
 # top level logging
@@ -397,7 +397,7 @@ log = logging.getLogger( 'main' )
 pimp_my_logger.pimp_it( log, 'main', system_config, dummy_mode, clock )
 banner[ 'logging_dir' ] = logging_dir
 
-state_dump_dir = system_config.get('state_dump_dir')
+state_dump_dir = system_config.get('state_dump_dir') + system_name
 state_dump_file = state_dump_dir + '/' + system_config.get('state_dump_file')
 banner[ 'state dump file' ] = state_dump_file
 if os.path.exists( state_dump_file ):
