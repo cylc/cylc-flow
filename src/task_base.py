@@ -46,7 +46,7 @@ state_changed = True
 # state values found in the state dump file.
 
 # The abdication mechanism ASSUMES that the task manager creates the
-# successor task as soon as the current task abdicates.
+# successor task as soon as the current task spawns.
 
 class task_base( Pyro.core.ObjBase ):
     
@@ -375,27 +375,27 @@ class task_base( Pyro.core.ObjBase ):
                     self.state.dump() + '\n' )
 
 
-    def abdicate( self ):
-        if self.state.has_abdicated():
+    def spawn( self ):
+        if self.state.has_spawned():
             return False
 
-        if self.ready_to_abdicate():
-            self.state.set_abdicated()
+        if self.ready_to_spawn():
+            self.state.set_spawned()
             return True
         else:
             return False
 
-    def has_abdicated( self ):
+    def has_spawned( self ):
         # this exists because the oneoff modifier needs to override it.
-        return self.state.has_abdicated()
+        return self.state.has_spawned()
 
-    def ready_to_abdicate( self ):
-        self.log( 'CRITICAL', 'derived classes must override ready_to_abdicate()')
+    def ready_to_spawn( self ):
+        self.log( 'CRITICAL', 'derived classes must override ready_to_spawn()')
         sys.exit(1)
 
     def done( self ):
-        # return True if task has finished and abdicated
-        if self.state.is_finished() and self.state.has_abdicated():
+        # return True if task has finished and spawned
+        if self.state.is_finished() and self.state.has_spawned():
             return True
         else:
             return False
@@ -414,7 +414,7 @@ class task_base( Pyro.core.ObjBase ):
         summary[ 'cycle_time' ] = self.c_time
         summary[ 'n_total_outputs' ] = n_total
         summary[ 'n_completed_outputs' ] = n_satisfied
-        summary[ 'abdicated' ] = self.state.has_abdicated()
+        summary[ 'spawned' ] = self.state.has_spawned()
         summary[ 'latest_message' ] = self.latest_message
  
         return summary

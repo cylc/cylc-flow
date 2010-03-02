@@ -34,7 +34,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.system_hold_requested = False
         self.system_resume_requested = False
 
-        # task to abdicate and kill
+        # task to spawn and die
         self.kill_ids = False
         self.kill_task_ids = {}
         self.kill_rt = False
@@ -190,14 +190,14 @@ class remote_switch( Pyro.core.ObjBase ):
         self.purge_id = task_id
         self.purge_stop = stop
 
-    def abdicate_and_kill_rt( self, ctime ):
-        self.log.warning( "REMOTE: abdicate and kill request" )
+    def spawn_and_die_rt( self, ctime ):
+        self.log.warning( "REMOTE: spawn and die request" )
         self.log.warning( '-> all tasks currently in ' + ctime )
         self.kill_rt = True
         self.kill_ctime = ctime
 
-    def abdicate_and_kill( self, task_ids ):
-        self.log.warning( "REMOTE: abdicate and kill request" )
+    def spawn_and_die( self, task_ids ):
+        self.log.warning( "REMOTE: spawn and die request" )
         for task_id in task_ids:
             self.kill_task_ids[ task_id ] = True
             self.log.warning( '-> ' + task_id )

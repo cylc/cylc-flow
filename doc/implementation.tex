@@ -137,7 +137,7 @@ information is specific to the task type so the best place to hold it is
 in the task proxy class definitions. 
 
 New tasks are therefore created after their previous instance {\em
-abdicates}; for forecast models this happens when the previous instance
+spawns}; for forecast models this happens when the previous instance
 finishes\footnote{But see previous footnote}; and otherwise as soon as
 the previous instance starts running. This ensures that a task cannot
 run before its previous instance without use of explicit intercycle
@@ -168,9 +168,9 @@ satisfied by any other task in the system) are removed from the {\em
 oldest batch} of tasks.  If not removed they would prevent the spent
 task deletion algorithm from working properly. Lame tasks can only be
 detected in the oldest task batch; in younger batches some tasks may yet
-appear as their predecessors abdicate.
+appear as their predecessors spawn.
 
-Lame tasks are abdicated rather than just deleted, because their
+Lame tasks are spawned rather than just deleted, because their
 descendents will not necessarily be lame: e.g.\ if the system is started
 at 12Z with topnet turned on, all topnet tasks from 12Z through 17Z will
 be valid but lame, because they will want to take input from a

@@ -26,7 +26,7 @@ class task_state:
         if not initial_state:
             # defaults
             self.state[ 'status' ] = 'waiting'
-            self.state[ 'abdicated' ] = 'false'
+            self.state[ 'spawned' ] = 'false'
             #self.state[ 'satisfied' ] = 'false'
 
 
@@ -56,14 +56,14 @@ class task_state:
     def get_status( self ):
         return self.state[ 'status' ]
 
-    def set_abdicated( self ):
-        self.state[ 'abdicated' ] = 'true'
+    def set_spawned( self ):
+        self.state[ 'spawned' ] = 'true'
 
     #def set_satisfied( self ):
     #    self.state[ 'satisfied' ] = 'true'
 
-    def has_abdicated( self ):
-        if self.state[ 'abdicated' ] == 'true':
+    def has_spawned( self ):
+        if self.state[ 'spawned' ] == 'true':
             return True
         else:
             return False
@@ -116,12 +116,12 @@ class task_state:
             print 'ERROR, illegal run status:', self.state[ 'status' ]
             sys.exit(1)
 
-        if 'abdicated' not in self.state:
+        if 'spawned' not in self.state:
             print 'ERROR, abdication status not defined'
             sys.exit(1)
 
-        if self.state[ 'abdicated' ] not in task_state.allowed_bool:
-            print 'ERROR, illegal abdication status:', self.state[ 'abdicated' ]
+        if self.state[ 'spawned' ] not in task_state.allowed_bool:
+            print 'ERROR, illegal abdication status:', self.state[ 'spawned' ]
             sys.exit(1)
 
         #if 'cycle_time' not in self.state:
@@ -145,12 +145,12 @@ class task_state:
 
         if input in task_state.allowed_status:
             state[ 'status' ] = input
-            # ASSUME THAT ONLY FINISHED TASKS, AT STARTUP, HAVE ABDICATED 
+            # ASSUME THAT ONLY FINISHED TASKS, AT STARTUP, HAVE spawned 
             # (in fact this will only be used to start tasks in 'waiting')
             if input == 'finished':
-                state[ 'abdicated' ] = 'true'
+                state[ 'spawned' ] = 'true'
             else:
-                state[ 'abdicated' ] = 'false'
+                state[ 'spawned' ] = 'false'
 
         else:
             # reconstruct state from a dumped state string

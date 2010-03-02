@@ -85,9 +85,8 @@ parser.add_option( "--reset-task",
 	help="Reset a (failed) task to the waiting state. TASK-ID = 'NAME%TIME'",
         metavar="TASK_ID", action="store", dest="reset_id" )
 
-parser.add_option( "--kill-tasks", 
-	help="Kill the named task(s) or all waiting tasks at the given cycle time "
-        "(after spawning their successors if necessary)",
+parser.add_option( "--spawn-and-die", 
+	help="Kill the named task(s) or all waiting tasks at the given cycle time ",
         metavar="[NAME1,NAME2,...%]TIME", 
         action="store", dest="kill_task_id" )
 
@@ -296,13 +295,13 @@ if options.purge:
         control.purge( task_id, stop_purge_time )
 
 if options.kill_task_id:
-    if prompt( 'abdicate and kill ' + options.kill_task_id + ' in' ):
+    if prompt( 'spawn and die ' + options.kill_task_id + ' in' ):
 
         if not re.search( '%', options.kill_task_id ):
             # kill all tasks in given cycle time
             # TO DO: check validity of given cycle time
             ctime = options.kill_task_id
-            control.abdicate_and_kill_rt( ctime )
+            control.spawn_and_die_rt( ctime )
 
         else:
 
@@ -317,7 +316,7 @@ if options.kill_task_id:
                 id = name + '%' + ctime
                 ids.append( id )
 
-            control.abdicate_and_kill( ids )
+            control.spawn_and_die( ids )
 
         print "WARNING: you may also need to kill the REAL task(s)"
 

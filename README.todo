@@ -4,10 +4,6 @@ To Do
   validated for type (e.g. ID must be name%YYYYMMDDHH) before being
   passed into the program.
 
-* treat task groups names just like task names.
-
-* change 'abdicated' to 'spawned'
-
 * some way of using registered system name in config module, e.g. for
   instance-specific tmpdir
 

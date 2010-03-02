@@ -223,8 +223,8 @@ while True:
             ctime  =      states[ task_id ][ 'cycle_time' ]
             state    =      states[ task_id ][ 'state' ]
 
-            if not states[ task_id ][ 'abdicated' ]:
-                # identify any tasks that have not abdicated yet
+            if not states[ task_id ][ 'spawned' ]:
+                # identify any tasks that have not spawned yet
                 abd = '*'
             else:
                 # space of same length

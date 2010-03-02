@@ -211,10 +211,10 @@ class manager:
         return True
 
     def all_tasks_finished( self ):
-        # return True if all tasks have finished AND abdicated
+        # return True if all tasks have finished AND spawned
         #--
         for itask in self.tasks:
-            if not itask.state.is_finished() or not itask.state.has_abdicated():
+            if not itask.state.is_finished() or not itask.state.has_spawned():
                 return False
         return True
 
@@ -261,7 +261,7 @@ class manager:
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
-        # the slowest task, and if foo(T) abdicates
+        # the slowest task, and if foo(T) spawns
         #--
 
         # update oldest system cycle time
@@ -271,11 +271,11 @@ class manager:
 
             tdiff = cycle_time.decrement( itask.c_time, self.config.get('max_runahead_hours') )
             if int( tdiff ) > int( oldest_c_time ):
-                # too far ahead: don't abdicate this task.
+                # too far ahead: don't spawn this task.
                 itask.log( 'DEBUG', "delaying abdication (too far ahead)" )
                 continue
 
-            if itask.abdicate():
+            if itask.spawn():
                 itask.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
@@ -318,18 +318,18 @@ class manager:
         # return the filename (minus path)
         return os.path.basename( filename )
 
-    def earliest_unabdicated( self ):
-        all_abdicated = True
-        earliest_unabdicated = None
+    def earliest_unspawned( self ):
+        all_spawned = True
+        earliest_unspawned = None
         for itask in self.tasks:
-            if not itask.state.has_abdicated():
-                all_abdicated = False
-                if not earliest_unabdicated:
-                    earliest_unabdicated = itask.c_time
-                elif int( itask.c_time ) < int( earliest_unabdicated ):
-                    earliest_unabdicated = itask.c_time
+            if not itask.state.has_spawned():
+                all_spawned = False
+                if not earliest_unspawned:
+                    earliest_unspawned = itask.c_time
+                elif int( itask.c_time ) < int( earliest_unspawned ):
+                    earliest_unspawned = itask.c_time
 
-        return [ all_abdicated, earliest_unabdicated ]
+        return [ all_spawned, earliest_unspawned ]
 
     def earliest_unsatisfied( self ):
         # find the earliest unsatisfied task
@@ -361,7 +361,7 @@ class manager:
 
     def cleanup( self ):
         # Delete tasks that are no longer needed, i.e. those that:
-        #   (1) have finished and abdicated, 
+        #   (1) have finished and spawned, 
         #       AND
         #   (2) are no longer needed to satisfy prerequisites.
 
@@ -375,24 +375,24 @@ class manager:
         # cotemporal downstream dependents, so they are no longer needed
         # to satisfy prerequisites once all their cotemporal peers have
         # finished. The only complication is that new cotemporal peers
-        # can appear, in principle, so long as there are unabdicated
+        # can appear, in principle, so long as there are unspawned
         # tasks with earlier cycle times. Therefore they are spent 
-        # IF finished-and-abdicated AND there are no unabdicated tasks
+        # IF finished-and-spawned AND there are no unspawned tasks
         # at the same cycle time or earlier.
         #--
 
-        # find the earliest unabdicated task, 
+        # find the earliest unspawned task, 
         # and ref times of any failed tasks. 
         failed_rt = {}
         for itask in self.tasks:
             if itask.state.is_failed():
                 failed_rt[ itask.c_time ] = True
 
-        [all_abdicated, earliest_unabdicated] = self.earliest_unabdicated()
-        if all_abdicated:
-            self.log.debug( "all tasks abdicated")
+        [all_spawned, earliest_unspawned] = self.earliest_unspawned()
+        if all_spawned:
+            self.log.debug( "all tasks spawned")
         else:
-            self.log.debug( "earliest unabdicated task at: " + earliest_unabdicated )
+            self.log.debug( "earliest unspawned task at: " + earliest_unspawned )
 
         # find the spent quick death tasks
         spent = []
@@ -402,8 +402,8 @@ class manager:
             if itask.c_time in failed_rt.keys():
                 continue
 
-            if itask.quick_death and not all_abdicated: 
-                if all_abdicated or int( itask.c_time ) < int( earliest_unabdicated ):
+            if itask.quick_death and not all_spawned: 
+                if all_spawned or int( itask.c_time ) < int( earliest_unspawned ):
                     spent.append( itask )
  
         # delete the spent quick death tasks
@@ -416,11 +416,11 @@ class manager:
         del spent
 
         # B/ THE GENERAL CASE
-        # No finished-and-abdicated task that is later than the earliest
+        # No finished-and-spawned task that is later than the earliest
         # unsatisfied task can be deleted yet because it may still be
         # needed to satisfy new tasks that may appear when earlier (but
-        # currently unsatisfied) tasks abdicate. Therefore only
-        # finished-and-abdicated tasks that are earlier than the
+        # currently unsatisfied) tasks spawn. Therefore only
+        # finished-and-spawned tasks that are earlier than the
         # earliest unsatisfied task are candidates for deletion. Of
         # these, we can delete a task only IF another spent instance of
         # it exists at a later time (but still earlier than the earliest
@@ -626,8 +626,8 @@ class manager:
 
 
     def purge( self, id, stop ):
-        # recursively abdicate and kill a task and its dependees, down
-        # to the given stop time
+        # get a task and, recursively, its dependants down to the given
+        # stop time, to spawn and die.
 
         # find the task
         found = False
@@ -642,13 +642,13 @@ class manager:
             self.log.warning( 'task to purge not found: ' + id )
             return
 
-        # find then abdicate and kill all cotemporal dependees
+        # find then spawn and kill all cotemporal dependees
         condemned = self.find_cotemporal_dependees( itask )
         cond = {}
         for itask in condemned:
             cond[ itask.get_identity() ] = True
         
-        self.abdicate_and_kill( cond )
+        self.spawn_and_die( cond )
 
         # now do the same for the next instance of the task
         if int( next ) <= int( stop ):
@@ -662,8 +662,8 @@ class manager:
                 break
         return result
 
-    def abdicate_and_kill_rt( self, ctime ):
-        # abdicate and kill all WAITING tasks currently at ctime
+    def spawn_and_die_rt( self, ctime ):
+        # spawn and kill all WAITING tasks currently at ctime
         # (use to kill lame tasks that will never run because some
         # upstream dependency has failed).
         task_ids = {}
@@ -671,10 +671,10 @@ class manager:
             if itask.c_time == ctime and itask.get_status() == 'waiting':
                 task_ids[ itask.get_identity() ] = True
 
-        self.abdicate_and_kill( task_ids )
+        self.spawn_and_die( task_ids )
 
-    def abdicate_and_kill( self, task_ids ):
-        # abdicate and kill all tasks in task_ids.keys()
+    def spawn_and_die( self, task_ids ):
+        # spawn and kill all tasks in task_ids.keys()
         for id in task_ids.keys():
             # find the task
             found = False
@@ -691,9 +691,9 @@ class manager:
 
             itask.log( 'DEBUG', "killing myself by remote request" )
 
-            if not itask.state.has_abdicated():
-                # forcibly abdicate the task and create its successor
-                itask.state.set_abdicated()
+            if not itask.state.has_spawned():
+                # forcibly spawn the task and create its successor
+                itask.state.set_spawned()
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in spawn()?
                 # dynamic task object creation by task and module name
@@ -711,7 +711,7 @@ class manager:
                     self.tasks.append( new_task )
 
             else:
-                # already abdicated: the successor already exists
+                # already spawned: the successor already exists
                 pass
 
             # now kill the task
@@ -739,9 +739,9 @@ class manager:
 
             itask.log( 'DEBUG', "killing myself by remote request" )
 
-            #if not itask.state.has_abdicated():
-            #    # forcibly abdicate the task and create its successor
-            #    itask.state.set_abdicated()
+            #if not itask.state.has_spawned():
+            #    # forcibly spawn the task and create its successor
+            #    itask.state.set_spawned()
             #    itask.log( 'DEBUG', 'forced abdication' )
             #    # TO DO: the following should reuse code in spawn()?
             #    # dynamic task object creation by task and module name
@@ -758,7 +758,7 @@ class manager:
             #        self.tasks.append( new_task )
 
             #else:
-            #    # already abdicated: the successor already exists
+            #    # already spawned: the successor already exists
             #    pass
 
             # now kill the task

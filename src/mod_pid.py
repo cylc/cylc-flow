@@ -8,7 +8,7 @@ class pid:
     # Forecast models depend on a previous instance via their restart
     # files. This class provides a method to register special restart
     # prerequisites and outputs, and overrides
-    # free_task.ready_to_abdicate() appropriately.
+    # free_task.ready_to_spawn() appropriately.
     
     def register_restarts( self, output_times ):
         # call after parent init, so that self.c_time is defined!
@@ -31,27 +31,27 @@ class pid:
                 self.outputs.set_satisfied( message )
 
 
-    def ready_to_abdicate( self ):
-        # Never abdicate a waiting task of this type because the
+    def ready_to_spawn( self ):
+        # Never spawn a waiting task of this type because the
         # successor's restart prerequisites could get satisfied by the
         # later restart outputs of an earlier previous instance, and
         # thereby start too soon (we want this to happen ONLY if the
-        # previous task fails and is subsequently abdicated-and-killed
-        # by the system operator).
+        # previous task fails and is subsequently made to spawn and 
+        # die by the system operator).
 
-        if self.has_abdicated():
-            # already abdicated
+        if self.has_spawned():
+            # already spawned
             return False
 
         if self.state.is_finished():
-            # always abdicate a finished task
+            # always spawn a finished task
             return True
 
         ready = False
 
         if self.state.is_running() or self.state.is_failed(): 
             # failed tasks are running before they fail, so will already
-            # have abdicated, or not, according to whether they fail
+            # have spawned, or not, according to whether they fail
             # before or after completing their restart outputs.
 
             # ready only if all restart outputs are completed

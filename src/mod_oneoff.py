@@ -1,10 +1,10 @@
 #!/usr/bin/python
 
-# always claim to have abdicated already
+# always claim to have spawned already
 
 class oneoff:
-    def ready_to_abdicate( self ):
-        self.state.set_abdicated()
+    def ready_to_spawn( self ):
+        self.state.set_spawned()
 
-    def has_abdicated( self ):
+    def has_spawned( self ):
         return True
