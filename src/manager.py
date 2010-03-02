@@ -529,25 +529,28 @@ class manager:
         else:
             self.log.warning( "task to reset not found: " + task_id )
 
-    def insertion( self, ins ):
+    def insertion( self, ins_id ):
         # for remote insertion of a new task, or task group
-
         try:
 
-            if re.match( '^GROUP:', ins ):
-                # task group
-                [ junk, group ] = ins.split(':')
-                [ groupname, c_time ] = group.split( '%' )
+            ( ins_name, ins_ctime ) = ins_id.split( '%' )
 
-                tasknames = self.config.get( 'task_groups')[groupname]
+            if ins_name in self.config.get( 'task_list' ):
+                print "INSERTING A TASK"
+                [ ids ] = ins_id
+
+            elif ins_name in ( self.config.get( 'task_groups' ) ).keys():
+                print "INSERTING A GROUP OF TASKS"
+
+                tasknames = self.config.get( 'task_groups')[ins_name]
 
                 ids = []
                 for name in tasknames:
-                    ids.append( name + '%' + c_time )
-
+                    ids.append( name + '%' + ins_ctime )
             else:
-                # single task id
-                ids = [ ins ]
+                # THIS WILL BE CAUGHT BY THE TRY BLOCK
+                raise SystemExit("no such task or group")
+
 
             for task_id in ids:
                 [ name, c_time ] = task_id.split( '%' )

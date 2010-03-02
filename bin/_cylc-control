@@ -97,7 +97,7 @@ parser.add_option( "--purge",
         action="store", dest="purge" )
 
 parser.add_option( "--insert", help="Insert a new task or task group into a running system.",
-        metavar="[GROUP:]GROUPNAME%TIME", action="store", dest="insert_task_id" )
+        metavar="NAME%TIME", action="store", dest="insert_task_id" )
 
 parser.add_option( "--task-state", 
         help="Show the current status of each named task's prerequisites and outputs"

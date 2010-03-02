@@ -40,6 +40,13 @@ class config:
         if not ok:
             raise SystemExit( "Required config items missing" )
 
+        # check tasks in any named group are in the task list
+        for group in ( self.configured['task_groups'] ).keys():
+            tasks = self.configured['task_groups'][group]
+            for task in tasks:
+                if task not in self.configured[ 'task_list' ]:
+                    raise SystemExit( "Task group member " + task + " not in task list" )
+
         # create dict of job submit methods by task name
         self.configured['submit'] = {}
         for task in self.configured['task_list']:
