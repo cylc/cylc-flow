@@ -5,13 +5,18 @@ set -e  # ABORT on error
 function print_usage() 
 {
 	echo "usage:"
-    echo "cylc register [options] -s NAME PATH"
-    echo "cylc register [options]"
+    echo "  cylc register [options] -s NAME PATH"
+    echo "  cylc register [options] -d NAME"
+    echo "  cylc register [options]"
     echo ""
     echo "Register a system of tasks, configured under the system"
     echo "definition directory PATH, for use under the name NAME."
-    echo "The locations of your registered systems are stored, by"
-    echo "name, under \$HOME/.cylc/registered."
+    echo "Registration simply associates a name with a cylc system"
+    echo "definition directory, so that cylc commands can access"
+    echo "that system by name. It is possible to register the same"
+    echo "system under several different names, and thereby run"
+    echo "multiple instances of the same system at once. System"
+    echo "registrations are stored under \$HOME/.cylc/registered."
     echo ""
     echo "arguments:"
     echo "  PATH         Path to the system definition directory."
@@ -23,6 +28,8 @@ function print_usage()
     echo "               print their names and locations, and"
     echo "               unregister any found not to be valid."
     echo "  -f           Force: overwrite an existing registration."
+    echo "  -d NAME      Delete the named registration."
+    echo "  -r           RESET: DELETE ALL CURRENT REGISTRATIONS."
 }
 
 function check_configured()
@@ -60,7 +67,9 @@ fi
 NAMED=false
 CHECK=false
 FORCE=false
-while getopts "fchs:" opt; do
+RESET=false
+DELETE=false
+while getopts "rfchs:d:" opt; do
     case $opt in
         h)
         print_usage
@@ -70,18 +79,25 @@ while getopts "fchs:" opt; do
         NAMED=true
         NAME=$OPTARG
         ;;
+        d)
+        DELETE=true
+        NAME=$OPTARG
+        ;;
         c)
         CHECK=true
         ;;
         f)
         FORCE=true
         ;;
+        r)
+        RESET=true
+        ;;
     esac
 done
 
 shift $(( OPTIND -1 ))
 
-if ! $NAMED && ! $CHECK; then
+if ! $NAMED && ! $DELETE && ! $CHECK && ! $RESET; then
     print_usage
     exit 1
 fi
@@ -89,6 +105,30 @@ fi
 # make the registration directory if necessary
 REG_DIR=$HOME/.cylc/registered
 [[ ! -d $REG_DIR ]] && mkdir -p $REG_DIR
+
+if $RESET; then
+    echo "WARNING: DELETING ALL CURRENT SYSTEM REGISTRATIONS"
+    COUNT=0
+    cd $REG_DIR
+    for REG in *; do
+        COUNT=$((COUNT+1))
+        echo "[$COUNT] $REG: $(cat $REG)"
+        rm $REG
+    done
+    exit 0
+fi
+
+if $DELETE; then
+    REG=$REG_DIR/$NAME
+    if [[ -f $REG ]]; then
+        echo "DELETING: $NAME -> $(cat $REG)"
+        rm $REG
+        exit 0
+    else
+        echo "ERROR: $NAME is not registered."
+        exit 1
+    fi
+fi
 
 if $NAMED; then
     [[ $# != 1 ]] && { print_usage; exit 1; }
@@ -107,30 +147,22 @@ if $NAMED; then
     if [[ -f $REG_DIR/$NAME ]]; then
         TO=$( cat $REG_DIR/$NAME )
         if [[ $TO = $SYS_DIR ]]; then
-            echo "$NAME is already registered to"
-            echo $SYS_DIR
+            # already registered as requested
+            echo "ALREADY REGISTERED: $NAME -> $SYS_DIR"
             exit 0
         else
+            # already registered for access to another system
             if ! $FORCE; then
-                echo "ERROR: $NAME is already registered to"
-                echo $TO
-                echo "Use the '-f' option to force registration"
+                echo "ALREADY REGISTERED: $NAME -> $TO"
+                echo "Use the '-f' option to re-register"
                 exit 1
-            else
-                echo "WARNING: $NAME WAS registered to"
-                echo $TO
-                # carry on to registration code below
-            fi
+            fi # else continue on to the reg code below
         fi
     fi
     
     # register the system
     echo $SYS_DIR > $REG_DIR/$NAME
-    echo
-
-    echo "Registering $NAME for access to:"
-    echo $SYS_DIR
-    echo
+    echo "NEW: $NAME -> $SYS_DIR"
 
     exit 0
 fi
@@ -139,26 +171,21 @@ if $CHECK; then
     # go to user registration directory
     cd $REG_DIR
     # how many systems registered?
-    COUNT=$( ls -1 | wc -l )
-    echo
-    echo "You currently have $COUNT cylc systems registered"
-    echo "in $REG_DIR."
+    N_REG=$( ls -1 | wc -l )
+    echo "You have $N_REG systems registered"
+    [[ $N_REG = 0 ]] && exit 0
 
     # check and print each registered system
     COUNT=0
     for NAME in *; do 
         COUNT=$((COUNT + 1 ))
-        echo
         SYS_DIR=$( cat $NAME )
         if check_configured $SYS_DIR; then
-            echo "[${COUNT}] $SYS_DIR"
-            echo " Registered as $NAME"
+            echo "[${COUNT}] ${NAME}: $SYS_DIR"
         else
             echo " UNREGISTERING $NAME"
             rm -f $NAME
         fi
     done
-
-    echo
     exit 0
 fi
