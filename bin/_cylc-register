@@ -22,6 +22,7 @@ function print_usage()
     echo "  -c           Check all currently registered systems,"
     echo "               print their names and locations, and"
     echo "               unregister any found not to be valid."
+    echo "  -f           Force: overwrite an existing registration."
 }
 
 function check_configured()
@@ -58,7 +59,8 @@ fi
 
 NAMED=false
 CHECK=false
-while getopts "chs:" opt; do
+FORCE=false
+while getopts "fchs:" opt; do
     case $opt in
         h)
         print_usage
@@ -70,6 +72,9 @@ while getopts "chs:" opt; do
         ;;
         c)
         CHECK=true
+        ;;
+        f)
+        FORCE=true
         ;;
     esac
 done
@@ -97,13 +102,34 @@ if $NAMED; then
 
     # check the new system has been configured
     ! check_configured $SYS_DIR && exit 1
+
+    # is the system already registered?
+    if [[ -f $REG_DIR/$NAME ]]; then
+        TO=$( cat $REG_DIR/$NAME )
+        if [[ $TO = $SYS_DIR ]]; then
+            echo "$NAME is already registered to"
+            echo $SYS_DIR
+            exit 0
+        else
+            if ! $FORCE; then
+                echo "ERROR: $NAME is already registered to"
+                echo $TO
+                echo "Use the '-f' option to force registration"
+                exit 1
+            else
+                echo "WARNING: $NAME WAS registered to"
+                echo $TO
+                # carry on to registration code below
+            fi
+        fi
+    fi
     
-    # register it
+    # register the system
     echo $SYS_DIR > $REG_DIR/$NAME
     echo
 
+    echo "Registering $NAME for access to:"
     echo $SYS_DIR
-    echo "Registered as $NAME"
     echo
 
     exit 0
