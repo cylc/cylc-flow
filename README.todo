@@ -1,5 +1,13 @@
 To Do
 
+* check that ALL input, including that from remote insertion etc., is 
+  validated for type (e.g. ID must be name%YYYYMMDDHH) before being
+  passed into the program.
+
+* treat task groups names just like task names.
+
+* change 'abdicated' to 'spawned'
+
 * some way of using registered system name in config module, e.g. for
   instance-specific tmpdir
 
@@ -16,8 +24,6 @@ To Do
 
 * when initial f/c failed in the file-move example (real mode)
   system required a 'bump' for monitor to show the task failed.
-
-* treat task groups names just like task names.
 
 * rewrite configure script in Python, for consistency.
 

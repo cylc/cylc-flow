@@ -360,7 +360,7 @@ if dummy_mode:
 # extra global vars set in the system config file
 env = system_config.get('environment')
 for VAR in env.keys():
-    print "!!!!!!!!", VAR, env[VAR]
+    #print "! setting", VAR, '=', env[VAR]
     os.environ[ VAR ] = env[ VAR ]
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------

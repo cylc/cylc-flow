@@ -9,6 +9,7 @@ import sys
 import os
 import re
 from dynamic_instantiation import get_object
+from Pyro.errors import NamingError
 from broker import broker
 
 def ns_obj_name( name, groupname ):
@@ -535,9 +536,10 @@ class manager:
 
             ( ins_name, ins_ctime ) = ins_id.split( '%' )
 
+            print
             if ins_name in self.config.get( 'task_list' ):
                 print "INSERTING A TASK"
-                [ ids ] = ins_id
+                ids = [ ins_id ]
 
             elif ins_name in ( self.config.get( 'task_groups' ) ).keys():
                 print "INSERTING A GROUP OF TASKS"
@@ -581,17 +583,15 @@ class manager:
                     self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.system_name) )
                     self.tasks.append( itask )
 
-        except:
-            # global exception catch: a failed remote insertion should
-            # not bring the system down for any reason. This catches
-            # requests to insert undefined tasks and task groups, and 
-            # malformed input, etc.
+        #except NamingError, e:
+        except Exception, e:
+            # A failed remote insertion should not bring the system
+            # down.  This catches requests to insert undefined tasks and
+            # task groups. Is there any reason to use the more specific
+            # Pyro.errors.NamingError here?
+            print 'INSERTION FAILED:', e
             print 
-            print 'WARNING: TASK INSERTION FAILED'
-            print 'continuing after traceback:'
-            traceback.print_exc()
-            print 
-
+            # now carry one operating!
 
     def find_cotemporal_dependees( self, parent ):
         # recursively find the group of all cotemporal tasks that depend
