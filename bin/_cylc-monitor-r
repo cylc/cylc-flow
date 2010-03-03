@@ -50,8 +50,9 @@ parser.add_option( "-n",
 # import cylc modules now (the reason for this is explained above)
 import pyrex
 
-header = 'CYLC! waiting running done failed'
-header = '                                   '
+header = 'key:   submitted   running'
+header = '                          '
+key = 'key:   \033[1;37;40msubmitted\033[0m   \033[1;37;42mrunning\033[0m'
 
 if options.pns_host:
     pns_host = options.pns_host
@@ -224,7 +225,7 @@ while True:
                     foo_start = "\033[1;37;42m"
                     bar_start = "\033[0;34m"
                 elif state == "submitted":
-                    foo_start = "\033[1;35;42m"
+                    foo_start = "\033[1;37;40m"
                     bar_start = "\033[0;34m"
 
                 line = bar_start + "  " + ctrl_end + foo_start + name + ctrl_end + " " + bar_start + " " + frac + " " + prog + " " + latest + ctrl_end
@@ -251,6 +252,7 @@ while True:
         foo = re.sub( '.{' + str(len(system_name)) + '}$', system_name, foo )
 
         blit.append( '\033[1;37;43m' + foo + ctrl_end )
+        blit.append( key )
 
         if dummy_mode:
             foo = 'DUMMY MODE:'

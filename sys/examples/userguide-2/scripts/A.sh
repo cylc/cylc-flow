@@ -5,6 +5,8 @@
 
 # run length 90 minutes, one restart file
 
+# simulate a task that is queued but not running yet.
+echo "Task A: pretending to be submitted but not yet running, for 10 seconds."
 sleep 10
 
 cylc message --started
