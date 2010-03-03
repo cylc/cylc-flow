@@ -17,7 +17,7 @@ To Do
 
 * 'raise SystemExit(message)' everywhere instead of sys.exit(1)?
 
-* remote background tasks will fail if PNSHOST is 'localhost'
+* remote background tasks will fail if CYLC_NS_HOST is 'localhost'
   (which is only correct on the local machine)
 
 * when initial f/c failed in the file-move example (real mode)
@@ -49,18 +49,13 @@ To Do
   system was in hibernation for 10 days and reawoke when I hooked up a
   new monitor process.
 
-* parse all command-line input to check for valid cycle times 
-
 * check that task output times do not exceed the registered run time
-
-* exception handling for a graceful exit if cylc can't find a Pyro
-  nameserver.
 
 * allow cylc task proxies to kill their real external tasks at shutdown
   (and otherwise)?
 
-* connection failure retry for dummy tasks, as is currently done in
-  'cylc message'
+* improved exception handling and retry and/or alert in case in message 
+  script and dummy tasks?
 
 * use exception handling as in task_manager.insert() to prevent remote
   control operations that throw an exception (e.g. due to mis-formatted 
@@ -74,9 +69,6 @@ To Do
   prerequisite satisfied. However, we could get tasks to record the ID
   of the satisfier task as well, for each prerequisite, and also to
   choose the latest task as satisfier if more than one can do it.
-
-* exception handling in message script: retry and/or alert in case
-  of failure to contact the control system
 
 * python script for easy viewing of configured log files without having
   to know their location?
