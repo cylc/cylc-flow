@@ -22,10 +22,10 @@ class dummy_task:
         # get a pyro proxy for the task object that I'm masquerading as
         self.name = task_name
         self.c_time = c_time
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + system_name + '.' + self.name + '%' + self.c_time )
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + self.name + '%' + self.c_time )
         
         # get a pyro proxy for the dummy clock
-        self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + system_name + '.clock' )
+        self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.clock' )
 
 
     def run( self ):
@@ -75,7 +75,7 @@ class dummy_task:
 if __name__ == '__main__':
     task_name = os.environ['TASK_NAME']
     c_time = os.environ['CYCLE_TIME']
-    system_name = os.environ['SYSTEM_NAME'] 
+    groupname = os.environ['PNS_GROUP'] 
     pns_host = os.environ['PNS_HOST'] 
 
     clock_rate = 3600  # seconds per hour

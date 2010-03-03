@@ -32,6 +32,12 @@ parser.add_option( "-s", "--system",
 	help="Name of the system to monitor",
     metavar="NAME", action="store", dest="system_name" )
 
+parser.add_option( "-u", 
+        help="Username, defaults to $USER. Use this option if the target "
+        "system is running under another username. (Cylc's Pyro nameserver "
+        "groupnames are constructed from username and system name).",
+        metavar="USER", action="store", dest="username" )
+
 parser.add_option( "-n", 
         help="Hostname of the machine running the Pyro nameserver, "
         "defaults to localhost",
@@ -57,13 +63,21 @@ if options.system_name:
 else:
     parser.error( "Required: system name" )
 
+# Pyro nameserver groupname of the target system
+if options.username:
+    username = options.username
+else:
+    username = os.environ[ 'USER' ] 
+
+groupname = username + '_' + system_name
+
 # get systems currently registered in the Pyro nameserver
 ns_groups = pyrex.discover( pns_host )
 
-if ns_groups.registered( system_name ):
+if ns_groups.registered( groupname ):
     print "System: " + system_name
 else:
-    print "No " + system_name + " registered yet, waiting ..." 
+    print "No " + groupname + " group registered with Pyro yet, waiting ..." 
 
 ctrl_end = "\033[0m"
 

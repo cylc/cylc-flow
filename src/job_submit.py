@@ -57,7 +57,7 @@ class job_submit:
         env = 'export CYCLE_TIME=' + self.cycle_time
         env += ' TASK_NAME=' + self.task_name
         # and system name and PNSHOST for this system
-        env += ' SYSTEM_NAME=' + os.environ[ 'SYSTEM_NAME' ]
+        env += ' PNS_GROUP=' + os.environ[ 'PNS_GROUP' ]
         # TO DO: THIS WILL FAIL FOR localhost!!!!!!!!!!!!!!!!!
         env += ' PNS_HOST=' + os.environ[ 'PNS_HOST' ]
 

@@ -7,8 +7,8 @@ message is sent by calling [proxy].incoming( PRIORITY, MESSAGE )
 through the Pyro RPC mechanism. 
 The task proxy is identified by its unique ID, NAME%YYYYMMDDHH
 
-Cylc exports $SYSTEM_NAME, $CYCLE_TIME, and $TASK_NAME into 
-the environment of each external task.
+Cylc exports $PNS_HOST, $$PNS_GROUP, $CYCLE_TIME, and $TASK_NAME
+into the environment of each external task.
 """
 
 import os
@@ -44,8 +44,8 @@ parser.add_option( "-t",
 
 parser.add_option( "-s",
         metavar="NAME",
-        help="Name of the running cylc instance, defaults to $SYSTEM_NAME",
-        action="store", dest="system_name" )
+        help="Name of the running cylc instance, defaults to $PNS_GROUP",
+        action="store", dest="groupname" )
 
 parser.add_option( "-n", 
         help="Hostname of the machine running the Pyro nameserver, "
@@ -103,13 +103,13 @@ else:
         sys.exit(1)
 
 # GET SYSTEM NAME------------------------------------------------------
-if options.system_name:
+if options.groupname:
     # command line
-    system_name = options.system_name
+    groupname = options.groupname
 else:
-    # Default to $SYSTEM_NAME
-    if 'SYSTEM_NAME' in os.environ.keys():
-        system_name = os.environ[ 'SYSTEM_NAME' ]
+    # Default to $PNS_GROUP
+    if 'PNS_GROUP' in os.environ.keys():
+        groupname = os.environ[ 'PNS_GROUP' ]
     else:
         print 'ERROR, cylc message: no system name provided'
         sys.exit(1)
@@ -168,7 +168,7 @@ count = 0
 while True:
     count += 1
     try:
-        task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + system_name + '.' + taskname + '%' + ctime )
+        task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + taskname + '%' + ctime )
        
     except ProtocolError:
         # retry if temporary network problems prevented connection
@@ -232,7 +232,7 @@ else:
 #    print "ERROR: failed to connect to " + task_name + "_" + ctime
 #    print "Trying dead letter box"
 #    try:
-#        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.' + 'dead_letter_box' )
+#        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + groupname + '.' + 'dead_letter_box' )
 #        dead_box.incoming( message )
 #    except:
 #        # nameserver not found, or object not registered with it?

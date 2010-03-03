@@ -8,7 +8,7 @@ import re
 
 class config:
 
-    def __init__( self, system_name ):
+    def __init__( self, reg_name ):
 
         self.configured = {}
 
@@ -59,12 +59,12 @@ class config:
         # add registered system name to the logging and state dump dirs
         # to allow multiple instances of the same system (with different
         # names) to coexist
-        statedir = self.configured['state_dump_dir'] + '/' + system_name
+        statedir = self.configured['state_dump_dir'] + '/' + reg_name
 
         self.configured['state_dump_dir'] = statedir
         self.configured['state_dump_file'] = statedir + '/state'
 
-        logdir = self.configured[ 'logging_dir' ] + '/' + system_name 
+        logdir = self.configured[ 'logging_dir' ] + '/' + reg_name 
         self.configured['logging_dir'] = logdir 
 
         if not os.path.exists( statedir ):

@@ -46,6 +46,14 @@ parser.add_option( "-s",
 	help="The name of the system you want to interact with.",
         metavar="NAME", action="store", dest="system_name" )
 
+parser.add_option( "-u", 
+        help="Username, defaults to $USER. Use this option if the target "
+        "system is running under another username. (Cylc's Pyro nameserver "
+        "groupnames are constructed from username and system name). WARNING: "
+        "THIS ALLOWS YOU TO CONTROL OTHER USER'S SYSTEMS, AND VICE VERSA. "
+        "SYSADMINS MAY WANT TO DISABLE THIS OPTION.",
+        metavar="USER", action="store", dest="username" )
+
 parser.add_option( "-n", 
         help="Hostname of the machine running the Pyro nameserver, "
         "defaults to localhost",
@@ -139,6 +147,14 @@ if not options.pns_host:
 else:
     pns_host = options.pns_host
 
+# Pyro nameserver groupname of the target system
+if options.username:
+    username = options.username
+else:
+    username = os.environ[ 'USER' ] 
+
+groupname = username + '_' + system_name
+
 # import cylc modules now (the reason for this is explained above)
 import pyrex
 
@@ -148,11 +164,11 @@ import pyrex
 # get systems currently registered in the Pyro nameserver
 ns_groups = pyrex.discover( pns_host )
 
-if ns_groups.registered( system_name ):
+if ns_groups.registered( groupname ):
     #print "system: " + system_name
     pass
 else:
-    print "WARNING: no " + system_name + " registered yet ..." 
+    print "WARNING: no " + groupname + " registered yet ..." 
     ns_groups.print_info()
 
     # print available systems and exit
@@ -166,7 +182,7 @@ else:
 
 try:
     # connect to the remote switch object in cylc
-    control = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + system_name + '.' + 'remote' )
+    control = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + 'remote' )
 except NamingError:
     print "\n\033[1;37;41mfailed to connect" + ctrl_end 
     raise SystemExit

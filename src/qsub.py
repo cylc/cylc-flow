@@ -14,7 +14,8 @@ class qsub( job_submit ):
         command = ' qsub -q ' + self.queue + ' -z'
         command += ' -v CYCLE_TIME=' + c_time
         command += ',TASK_NAME='    + task_name
-        command += ',SYSTEM_NAME='  + os.environ['SYSTEM_NAME']
+        command += ',PNS_HOST='  + os.environ['PNS_HOST']
+        command += ',PNS_GROUP='  + os.environ['PNS_GROUP']
         # clock rate required for dummy mode operation
         command += ',CLOCK_RATE='   + os.environ['CLOCK_RATE']
         command += ',PYTHONPATH=' + os.environ['PYTHONPATH']

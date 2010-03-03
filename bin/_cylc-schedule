@@ -66,20 +66,27 @@ def create_ns_groupname( nameserver, groupname ):
         # with the same groupname; must be unique for each instance
         # else the different systems will interfere with each other) 
         print "\nERROR: group '" + groupname + "' is already registered"
+        print "in the Pyro nameserver."
         objs = nameserver.list( groupname )
         if len( objs ) == 0:
-            print "(although it currently contains no registered objects)."
+            print "It currently contains no objects."
         else:
-            print "And contains the following registered objects:"
+            print "It contains the following registered objects:"
             for obj in objs:
                 print '  + ' + obj[0]
 
-        print "\nOPTIONS:"
-        print "(i) if the group is yours from a previous aborted run you can"
-        print "    manually delete it with 'pyro-nsc deletegroup " + groupname +"'"
-        print "(ii) if the group is being used by another program, change"
-        print "    'system_name' in your config file to avoid interference.\n"
-
+        print "If the nameserver group is being used by another cylc"
+        print "instance, re-register your system under a different name."
+        print "using the 'cylc register' command."
+        print 
+        print "If the nameserver group is being used by a running cylc"
+        print "instance of yours that you no longer need, shut it down"
+        print "properly using the 'cylc control' command."
+        print 
+        print "If the nameserver group is a relic of an aborted cylc run"
+        print "you can delete it manually from the nameserver as follows:"
+        print "  $ pyro-nsc deletegroup " + groupname 
+        print
         raise SystemExit( "ABORTING NOW" )
 
 def service_remote_requests( remote, pool, log, failout = None ):
@@ -194,7 +201,7 @@ def commandline_parser():
 
     parser.add_option( "-s", 
             help="Name of a registered cylc system to run",
-            metavar="NAME", action="store", dest="system_name" )
+            metavar="NAME", action="store", dest="reg_name" )
 
     parser.add_option( "-n", 
             help="Hostname of the machine running the Pyro nameserver, "
@@ -250,11 +257,11 @@ parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
 # get system name------------------------------------------------------
-if not options.system_name:
-    parser.error( "Required: system name" )
+if not options.reg_name:
+    parser.error( "Required: registered system name" )
 else:
-    system_name = options.system_name
-    banner[ 'system name' ] = system_name
+    reg_name = options.reg_name
+    banner[ 'registered system name' ] = reg_name
 
 # get Pyro nameserver hostname-----------------------------------------
 if not options.pns_host:
@@ -317,14 +324,14 @@ if 'start time' not in startup.keys() \
             parser.error( 'Supply a start time or specify a restart' )
 
 # find location of the system task and config modules------------------
-registration_file = os.environ['HOME'] + '/.cylc/registered/' + system_name
+registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name
 if os.path.exists( registration_file ):
     FILE = open( registration_file, 'r' )
     line = FILE.read()
     system_dir = line.rstrip() 
     FILE.close()
 else:
-    raise SystemExit( "No such system name registered: " + system_name )
+    raise SystemExit( "No such system name registered: " + reg_name )
 
 banner[ 'system definition' ] = system_dir
 
@@ -345,29 +352,15 @@ import task_base     # loads system_tasks.py
 import remote_switch # ditto
 
 # load system configuration--------------------------------------------
-system_config = config.config( system_name )
-
-# set global (all tasks) environment variables-------------------------
-os.environ[ 'PNS_HOST' ] = str( pns_host )
-os.environ[ 'SYSTEM_NAME' ] = str( system_name )
-if dummy_mode:
-    os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
-    # communicate failout_task_id to the dummy task program
-    if options.failout_task_id:
-        print "FAILOUT: " + options.failout_task_id
-        os.environ[ 'FAILOUT_ID' ] = options.failout_task_id
-
-# extra global vars set in the system config file
-env = system_config.get('environment')
-for VAR in env.keys():
-    #print "! setting", VAR, '=', env[VAR]
-    os.environ[ VAR ] = env[ VAR ]
+system_config = config.config( reg_name )
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 nameserver = locate_pyro_nameserver()
 
 # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
-create_ns_groupname( nameserver, system_name )
+groupname = os.environ['USER'] + '_' + reg_name
+create_ns_groupname( nameserver, groupname )
+banner[ 'Pyro nameserver group' ] = groupname
  
 # REQUIRE SINGLE THREADED PYRO (see documentation)
 Pyro.config.PYRO_MULTITHREADED = 0
@@ -383,7 +376,7 @@ clock = accelerated_clock.clock(
         int(options.clock_offset),
         dummy_mode ) 
 
-daemon.connect( clock, ns_obj_name( 'clock', system_name ))
+daemon.connect( clock, ns_obj_name( 'clock', groupname ))
 
 # logging dir
 logging_dir = system_config.get('logging_dir')
@@ -415,11 +408,11 @@ if options.restart_from:
 
 # remotely accessible system state summary
 system_state = state_summary.state_summary( system_config, dummy_mode )
-daemon.connect( system_state, ns_obj_name( 'state_summary', system_name ))
+daemon.connect( system_state, ns_obj_name( 'state_summary', groupname ))
 
 # dead letter box for remote use
 dead_letter_box = dead_letter.letter_box()
-daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', system_name))
+daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', groupname))
 
 # load some command line options and dynamic stuff into config
 # module, for easy handling.
@@ -427,11 +420,28 @@ system_config.put( 'daemon', daemon )
 system_config.put( 'clock', clock )
 
 # initialize the task manager
-pool = manager.manager( system_config, system_name, dummy_mode, startup )
+pool = manager.manager( system_config, groupname, dummy_mode, startup )
 
 # remote control switch
 remote = remote_switch.remote_switch( system_config, pool.get_tasks() )
-daemon.connect( remote, ns_obj_name( 'remote', system_name) )
+daemon.connect( remote, ns_obj_name( 'remote', groupname) )
+
+# set global (all tasks) environment variables-------------------------
+os.environ[ 'PNS_HOST' ] = str( pns_host )  # may be an IP number
+os.environ[ 'PNS_GROUP' ] = groupname
+if dummy_mode:
+    os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
+    # communicate failout_task_id to the dummy task program
+    if options.failout_task_id:
+        print "FAILOUT: " + options.failout_task_id
+        os.environ[ 'FAILOUT_ID' ] = options.failout_task_id
+
+# extra global vars set in the system config file
+env = system_config.get('environment')
+for VAR in env.keys():
+    #print "! setting", VAR, '=', env[VAR]
+    os.environ[ VAR ] = env[ VAR ]
+
 
 # print system information at startup----------------------------------
 print_banner()
@@ -511,8 +521,8 @@ print "STOPPING"
 print ""
 print "Shutting down my Pyro daemon"
 daemon.shutdown( True )
-print "Deleting Pyro nameserver group " + system_name
-nameserver.deleteGroup( system_name )
+print "Deleting Pyro nameserver group " + groupname
+nameserver.deleteGroup( groupname )
 print "Bye!"
 
 # to simulate the effect on monitoring etc. of long task processing time

@@ -3,6 +3,8 @@
 import os
 import re
 
+# !!!!!!!!!!!!!!!!!!!!!OUT OF DATE!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 class qsub_ecoconnect( qsub, as_owner ):
 
     def __init__( self, task_name, task, cycle_time, queue, owner, extra_vars=[] ):
@@ -47,7 +49,8 @@ class qsub_ecoconnect( qsub, as_owner ):
             command += ' qsub -q ' + self.job_queue + ' -z'
             command += ' -v CYCLE_TIME=' + c_time
             command += ',TASK_NAME='    + task_name
-            command += ',SYSTEM_NAME='  + os.environ['SYSTEM_NAME']
+            command += ',PNS_HOST='  + os.environ['PNS_HOST']
+            command += ',PNS_GROUP='  + os.environ['PNS_GROUP']
             # clock rate required for dummy mode operation
             command += ',CLOCK_RATE='   + os.environ['CLOCK_RATE']
             command += ',PYTHONPATH=' + os.environ['PYTHONPATH']
