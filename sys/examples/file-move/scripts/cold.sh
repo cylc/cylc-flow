@@ -14,9 +14,9 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 
 sleep $SLEEP 
 
-RUNDIR=$TMPDIR/forecast/running/$CYCLE_TIME
+RUNDIR=$TMPDIR/forecast/running/$CYLC_TIME
 mkdir -p $RUNDIR
 touch $RUNDIR/restart
-cylc message "forecast restart files ready for $CYCLE_TIME"
+cylc message "forecast restart files ready for $CYLC_TIME"
 
 cylc message --succeeded

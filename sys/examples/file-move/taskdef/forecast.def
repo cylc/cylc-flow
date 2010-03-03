@@ -11,17 +11,17 @@
 %TYPE
     forecast_model
 
-%CYCLE_TIMES
+%HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
     forecast.sh
 
 %ENVIRONMENT
-    NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 6)
+    NEXT_CYCLE_TIME $(CYLC_TIME + 6)
 
 %PREREQUISITES
-    "external data ready for $(MY_CYCLE_TIME)"
+    "external data ready for $(CYLC_TIME)"
 
 %ESTIMATED_RUN_TIME
     90
@@ -30,5 +30,5 @@
     89
 
 %OUTPUTS
-    90: "forecast output ready for $(MY_CYCLE_TIME)"
+    90: "forecast output ready for $(CYLC_TIME)"
 

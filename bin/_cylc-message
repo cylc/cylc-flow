@@ -7,8 +7,8 @@ message is sent by calling [proxy].incoming( PRIORITY, MESSAGE )
 through the Pyro RPC mechanism. 
 The task proxy is identified by its unique ID, NAME%YYYYMMDDHH
 
-Cylc exports $PNS_HOST, $$PNS_GROUP, $CYCLE_TIME, and $TASK_NAME
-into the environment of each external task.
+Cylc exports $CYLC_NS_HOST, $CYLC_NS_GROUP, $CYLC_TIME, and 
+$CYLC_TASK into the environment of each external task.
 """
 
 import os
@@ -27,9 +27,15 @@ Automatic messages:
   cylc message [--set-all-restarts-completed OR --set-all-outputs-completed]
 
 Send a message to a task proxy object in a running cylc instance.
-EXTERNAL TASKS USE THIS SCRIPT TO COMMUNICATE WITH THEIR CYLC PROXY, 
-in which case most inputs are taken from environment variables, but
-it can also be used to fake task messages manually when debugging."""
+
+THIS COMMAND IS USED BY TASKS TO COMMUNICATE WITH THEIR CYLC TASK PROXY
+OBJECTS, in which case most inputs are taken from environment variables. 
+It can also be used by cylc system operators to fake messages from tasks,
+for debugging purposes, in which case the command line options can be used.
+
+Note that where other commands need to know a registered system name, this
+command needs the Pyro nameserver group name, {USERNAME}_{NAME}, where 
+USERNAME is the username of the owner of system NAME."""
 
 parser = OptionParser( usage )
 
@@ -39,17 +45,18 @@ parser.set_defaults( started=False, success=False, failure=False,
 
 parser.add_option( "-t", 
         metavar='NAME',
-        help="task name, defaults to $TASK_NAME",
+        help="task name, defaults to $CYLC_TASK",
         action="store", dest="taskname" )
 
-parser.add_option( "-s",
+parser.add_option( "-g",
         metavar="NAME",
-        help="Name of the running cylc instance, defaults to $PNS_GROUP",
+        help="Pyro nameserver group name used by objects in the target "
+        "system, defaults to $CYLC_NS_GROUP.",
         action="store", dest="groupname" )
 
 parser.add_option( "-n", 
         help="Hostname of the machine running the Pyro nameserver, "
-            "defaults to $PNSHOST, then localhost",
+            "defaults to $CYLC_NS_HOST, then localhost",
         metavar="HOSTNAME", action="store", dest="pns_host" )
 
 parser.add_option( "--started",
@@ -76,7 +83,7 @@ parser.add_option( "-p",
 
 parser.add_option( "-c",
         metavar="YYYYMMDDHH",
-        help="task cycle time, defaults to $CYCLE_TIME",
+        help="task cycle time, defaults to $CYLC_TIME",
         action="store", dest="ctime" )
 
 parser.add_option( "--all-restart-outputs-completed", 
@@ -95,9 +102,9 @@ if options.taskname:
     # command line
     taskname = options.taskname
 else:
-    # Default to $TASK_NAME
-    if 'TASK_NAME' in os.environ.keys():
-        taskname = os.environ[ 'TASK_NAME' ]
+    # Default to $CYLC_TASK
+    if 'CYLC_TASK' in os.environ.keys():
+        taskname = os.environ[ 'CYLC_TASK' ]
     else:
         print 'ERROR, cylc message: no task name provided'
         sys.exit(1)
@@ -107,9 +114,9 @@ if options.groupname:
     # command line
     groupname = options.groupname
 else:
-    # Default to $PNS_GROUP
-    if 'PNS_GROUP' in os.environ.keys():
-        groupname = os.environ[ 'PNS_GROUP' ]
+    # Default to $CYLC_NS_GROUP
+    if 'CYLC_NS_GROUP' in os.environ.keys():
+        groupname = os.environ[ 'CYLC_NS_GROUP' ]
     else:
         print 'ERROR, cylc message: no system name provided'
         sys.exit(1)
@@ -119,9 +126,9 @@ if options.pns_host:
     # command line
     pns_host = options.pns_host
 
-elif 'PNS_HOST' in os.environ.keys():
+elif 'CYLC_NS_HOST' in os.environ.keys():
     # environment
-   pns_host = os.environ[ 'PNS_HOST' ]
+   pns_host = os.environ[ 'CYLC_NS_HOST' ]
 
 else:
     # Default to localhost
@@ -134,9 +141,9 @@ if options.ctime:
     # command line
     ctime = options.ctime
 else:
-    # Default to $CYCLE_TIME
-    if 'CYCLE_TIME' in os.environ.keys():
-        ctime = os.environ[ 'CYCLE_TIME' ]
+    # Default to $CYLC_TIME
+    if 'CYLC_TIME' in os.environ.keys():
+        ctime = os.environ[ 'CYLC_TIME' ]
     else:
         print 'ERROR, cylc message: no cycle time provided!'
         sys.exit(1)

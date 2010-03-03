@@ -179,15 +179,20 @@ usage = """cylc schedule -s NAME [-n HOSTNAME] [options] [START] [STOP]
 
 Start scheduling a system registered under the name NAME, via the Pyro
 nameserver running on HOSTNAME (which defaults to localhost). You can
-run multiple systems (and even multiple instances of the same system)
+run multiple systems (and even multiple instances of a single system)
 at once, so long as each instance is registered under a different name. 
 
-To cold start system NAME, give the initial cycle time START. 
+To cold start system NAME, give the initial cycle time START. At least
+one task in the system (normally a one-off startup task) must have no
+prerequisites, or else nothing will happen! 
 
-To restart system NAME, use '--restart' or '--restart-from=FILE'. 
+To restart system NAME from a prior state (recorded in a cylc state 
+dump file) use the '--restart' or '--restart-from=FILE' options. Any
+task that was in the 'running' or 'failed' states will be restarted
+in the 'waiting' state.
 
 If a final cycle time STOP is supplied, each task will stop when it
-reaches that time, and then the system will shut down.
+has passed that cycle time, and then the system will shut down.
 
 arguments:
   START                 Initial cycle time (YYYYMMDDHH) for a cold start
@@ -219,8 +224,14 @@ def commandline_parser():
             metavar="FILE", action="store", dest="restart_from" )
 
     parser.add_option( "-d",
-            help="Run in accelerated time DUMMY MODE. System tasks will be "
-            "faked by an external dummy program.",
+            help="Run in DUMMY MODE. Instead of executing a system's "
+            "external tasks, cylc executes instances of an external "
+            "program that masquerades as the real thing by reporting "
+            "the right outputs completed at the right times, relative "
+            "to an accelerated clock. This allows very quick testing of "
+            "a system, from a pure scheduling perspective, (i.e. that "
+            "all task types, prerequisites and outputs, etc., are correct) "
+            "without having to run the real tasks.",
             action="store_true", dest="dummy_mode" )
 
     parser.add_option( "--clock-rate", 
@@ -427,8 +438,8 @@ remote = remote_switch.remote_switch( system_config, pool.get_tasks() )
 daemon.connect( remote, ns_obj_name( 'remote', groupname) )
 
 # set global (all tasks) environment variables-------------------------
-os.environ[ 'PNS_HOST' ] = str( pns_host )  # may be an IP number
-os.environ[ 'PNS_GROUP' ] = groupname
+os.environ[ 'CYLC_NS_HOST' ] = str( pns_host )  # may be an IP number
+os.environ[ 'CYLC_NS_GROUP' ] = groupname
 if dummy_mode:
     os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
     # communicate failout_task_id to the dummy task program

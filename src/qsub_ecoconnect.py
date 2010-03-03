@@ -29,8 +29,8 @@ class qsub_ecoconnect( qsub, as_owner ):
 
         if not self.use_qsub:
             # DIRECT EXECUTION 
-            os.environ['CYCLE_TIME'] = c_time
-            os.environ['TASK_NAME'] = task_name
+            os.environ['CYLC_TIME'] = c_time
+            os.environ['CYLC_TASK'] = task_name
 
             for entry in extra_vars:
                 [ var_name, value ] = entry
@@ -46,11 +46,11 @@ class qsub_ecoconnect( qsub, as_owner ):
                 # else owner needs sudo access to the task itself
                 command  = 'sudo -u ' + owner 
 
-            command += ' qsub -q ' + self.job_queue + ' -z'
-            command += ' -v CYCLE_TIME=' + c_time
-            command += ',TASK_NAME='    + task_name
-            command += ',PNS_HOST='  + os.environ['PNS_HOST']
-            command += ',PNS_GROUP='  + os.environ['PNS_GROUP']
+            command += ' qsub -q ' + self.job_queue + ' -z -v '
+            command += ' CYLC_TIME=' + c_time
+            command += ',CYLC_TASK='  + task_name
+            command += ',CYLC_NS_HOST='  + os.environ['CYLC_NS_HOST']
+            command += ',CYLC_NS_GROUP='  + os.environ['CYLC_NS_GROUP']
             # clock rate required for dummy mode operation
             command += ',CLOCK_RATE='   + os.environ['CLOCK_RATE']
             command += ',PYTHONPATH=' + os.environ['PYTHONPATH']

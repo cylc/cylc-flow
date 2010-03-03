@@ -1,5 +1,7 @@
 To Do
 
+* optionally allow a pyro request handling timeout.
+
 * check that ALL input, including that from remote insertion etc., is 
   validated for type (e.g. ID must be name%YYYYMMDDHH) before being
   passed into the program.
@@ -15,7 +17,7 @@ To Do
 
 * 'raise SystemExit(message)' everywhere instead of sys.exit(1)?
 
-* remote background tasks will fail if PNS_HOST is 'localhost'
+* remote background tasks will fail if PNSHOST is 'localhost'
   (which is only correct on the local machine)
 
 * when initial f/c failed in the file-move example (real mode)

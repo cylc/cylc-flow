@@ -9,17 +9,17 @@
 %TYPE
     free_task
 
-%CYCLE_TIMES
+%HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
     postproc.sh
 
 %PREREQUISITES
-    "forecast output at $(MY_CYCLE_TIME) ready for postprocessing"
+    "forecast output at $(CYLC_TIME) ready for postprocessing"
 
 %ESTIMATED_RUN_TIME
     10
 
 %OUTPUTS
-    10: "forecast products ready for $(MY_CYCLE_TIME)"
+    10: "forecast products ready for $(CYLC_TIME)"

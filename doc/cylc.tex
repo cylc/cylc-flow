@@ -1122,16 +1122,17 @@ recovery scenarios for arbitrarily complicated task sets.
 \pagebreak
 \section{Command Reference}
 
-Cylc commands are intended to be self documenting, so the attendant text
-in this section is minimal. Also, the listings below are 
-from actual command output generated during document processing, to
-ensure that they are completely up to date. 
+Cylc commands are intended to be largely self documenting so the
+attendant text in this section is minimal: for each command there is
+just reference to other relevant sections of this document.  
+
+The listings below are actual command output generated during document
+processing, to ensure that the information is completely up to date. 
 
 \subsection{cylc}
 
-\lstset{language=usage}
 
-This is the command line interface to all cylc commands.
+\lstset{language=usage}
 
 {
 \lstinputlisting{command-usage/cylc.txt}
@@ -1140,12 +1141,19 @@ This is the command line interface to all cylc commands.
 \pagebreak
 \subsection{cylc configure}
 
+See Section~\ref{sec:configuration} for complete documentation of system
+configuration.
+
 { 
 \lstinputlisting{command-usage/cylc-configure.txt} 
 }
 
 \pagebreak
 \subsection{cylc register}
+
+See Section~\ref{sec:registration} for complete documentation of system
+registration.
+
 
 { 
 \lstinputlisting{command-usage/cylc-register.txt} 
@@ -1154,11 +1162,9 @@ This is the command line interface to all cylc commands.
 \pagebreak
 \subsection{cylc schedule}
 
-This is the scheduler program. You can run multiple systems at once
-(e.g.\ a main operation and several parallel test systems) without
-interference, so long as they are each registered under a different
-name (you can even run multiple instances of the same system at once;
-see \lstinline=cylc register=; Section~\ref{sec:register}).
+See Section~\ref{sec:registration} for complete documentation of system
+scheduling.
+
 {
 \lstinputlisting{command-usage/cylc-scheduler.txt}
 }
@@ -1166,7 +1172,8 @@ see \lstinline=cylc register=; Section~\ref{sec:register}).
 \pagebreak
 \subsection{cylc control}
 
-Use this command to interact with (interrogate and control) running systems.
+See Section~\ref{sec:controlling} for complete documentation of how to
+interrogate and control running systems.
 
 {
 \lstinputlisting{command-usage/cylc-controller.txt}
@@ -1175,8 +1182,7 @@ Use this command to interact with (interrogate and control) running systems.
 \pagebreak
 \subsection{cylc message}
 
-The command used by external tasks to send messages to the task proxy 
-that represents them in a running cylc system.
+See Section~\ref{sec:messaging} for complete documentation of cylc messaging.
 
 {
 \lstinputlisting{command-usage/cylc-message.txt}

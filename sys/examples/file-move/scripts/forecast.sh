@@ -11,8 +11,8 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 10 * 60 / ACCEL ))
 
 # check prerequistes
-ONE=$TMPDIR/ext/output/$CYCLE_TIME/extdata
-TWO=$TMPDIR/$TASK_NAME/running/$CYCLE_TIME/restart
+ONE=$TMPDIR/ext/output/$CYLC_TIME/extdata
+TWO=$TMPDIR/$CYLC_TASK/running/$CYLC_TIME/restart
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         MSG="file not found: $PRE"
@@ -25,14 +25,14 @@ done
 
 sleep $SLEEP # 90 min
 
-RUNDIR=$TMPDIR/$TASK_NAME/running/$NEXT_CYCLE_TIME
+RUNDIR=$TMPDIR/$CYLC_TASK/running/$NEXT_CYLC_TIME
 mkdir -p $RUNDIR
 touch $RUNDIR/restart
-cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
+cylc message "$CYLC_TASK restart files ready for $NEXT_CYLC_TIME"
 
-OUTDIR=$TMPDIR/$TASK_NAME/output/$CYCLE_TIME
+OUTDIR=$TMPDIR/$CYLC_TASK/output/$CYLC_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/forecast.nc
-cylc message "forecast output ready for $CYCLE_TIME"
+cylc message "forecast output ready for $CYLC_TIME"
 
 cylc message --succeeded

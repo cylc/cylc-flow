@@ -11,11 +11,11 @@ class qsub( job_submit ):
 
     def construct_command( self ):
         
-        command = ' qsub -q ' + self.queue + ' -z'
-        command += ' -v CYCLE_TIME=' + c_time
-        command += ',TASK_NAME='    + task_name
-        command += ',PNS_HOST='  + os.environ['PNS_HOST']
-        command += ',PNS_GROUP='  + os.environ['PNS_GROUP']
+        command = ' qsub -q ' + self.queue + ' -z -v '
+        command += ' CYLC_TIME=' + c_time
+        command += ',CYLC_TASK='    + task_name
+        command += ',CYLC_NS_HOST='  + os.environ['CYLC_NS_HOST']
+        command += ',CYLC_NS_GROUP='  + os.environ['CYLC_NS_GROUP']
         # clock rate required for dummy mode operation
         command += ',CLOCK_RATE='   + os.environ['CLOCK_RATE']
         command += ',PYTHONPATH=' + os.environ['PYTHONPATH']

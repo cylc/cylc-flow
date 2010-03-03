@@ -9,7 +9,7 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 50 * 60 / ACCEL )) 
 
 # check prerequistes
-PRE=$TMPDIR/C_${CYCLE_TIME}.output
+PRE=$TMPDIR/C_${CYLC_TIME}.output
 [[ ! -f $PRE ]] && {
     echo "ERROR, file not found: $PRE"
     exit 1
@@ -17,5 +17,5 @@ PRE=$TMPDIR/C_${CYCLE_TIME}.output
 
 sleep $SLEEP 
 
-OUTPUT=$TMPDIR/F_${CYCLE_TIME}.output
+OUTPUT=$TMPDIR/F_${CYLC_TIME}.output
 touch $OUTPUT

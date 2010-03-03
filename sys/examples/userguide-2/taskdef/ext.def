@@ -13,7 +13,7 @@
 %CONTACT_DELAY
     1.0
 
-%CYCLE_TIMES
+%HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
@@ -23,13 +23,13 @@
     # None
 
 %STARTUP_PREREQUISITES
-    "startup%$(MY_CYCLE_TIME) finished"
+    "startup%$(CYLC_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     10
 
 %OUTPUTS
-    9: "external data ready for $(MY_CYCLE_TIME)"
+    9: "external data ready for $(CYLC_TIME)"
 
 #%SINGLE_CYCLE
 #    True

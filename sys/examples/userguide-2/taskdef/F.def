@@ -9,14 +9,14 @@
 %TYPE
     free_task
 
-%CYCLE_TIMES
+%HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
     F.sh
 
 %PREREQUISITES
-    "C%$(MY_CYCLE_TIME) finished"
+    "C%$(CYLC_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     50

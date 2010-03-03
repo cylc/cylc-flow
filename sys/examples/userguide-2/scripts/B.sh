@@ -11,8 +11,8 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 20 * 60 / ACCEL )) 
 
 # check prerequistes
-ONE=$TMPDIR/A_${CYCLE_TIME}.output
-TWO=$TMPDIR/${TASK_NAME}_${CYCLE_TIME}.restart
+ONE=$TMPDIR/A_${CYLC_TIME}.output
+TWO=$TMPDIR/${CYLC_TASK}_${CYLC_TIME}.restart
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         MSG="file not found: $PRE"
@@ -24,15 +24,15 @@ for PRE in $ONE $TWO; do
 done
 
 sleep $SLEEP   # 20 min
-touch $TMPDIR/${TASK_NAME}_${NEXT_CYCLE_TIME}.restart
-cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
+touch $TMPDIR/${CYLC_TASK}_${NEXT_CYLC_TIME}.restart
+cylc message "$CYLC_TASK restart files ready for $NEXT_CYLC_TIME"
 
 sleep $SLEEP   # 40 min
-touch $TMPDIR/${TASK_NAME}_${NEXT_NEXT_CYCLE_TIME}.restart
-cylc message "$TASK_NAME restart files ready for $NEXT_NEXT_CYCLE_TIME"
+touch $TMPDIR/${CYLC_TASK}_${NEXT_NEXT_CYLC_TIME}.restart
+cylc message "$CYLC_TASK restart files ready for $NEXT_NEXT_CYLC_TIME"
 
 sleep $SLEEP   # 60 min
-OUTPUT=$TMPDIR/${TASK_NAME}_${CYCLE_TIME}.output
+OUTPUT=$TMPDIR/${CYLC_TASK}_${CYLC_TIME}.output
 touch $OUTPUT
 cylc message "$OUTPUT ready"
 

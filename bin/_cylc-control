@@ -36,14 +36,17 @@ def prompt( reason ):
 # construct a command line parser
 usage = """cylc control -s NAME [-n HOSTNAME] [options]
 
-Remote control the cylc instance running system NAME,
-via the Pyro nameserver running on HOSTNAME. 
-Below, START, STOP, and TIME, are cycle times: YYYYMMDDHH
-and TASK-ID is a task's unique ID <task-name>%<cycle-time>"""
+Interrogate or control the cylc instance running system NAME via the
+Pyro nameserver on HOSTNAME. 
+
+Below, START, STOP, and TIME, are cycle times (YYYYMMDDHH).
+
+Note that tasks are uniquely identified by NAME%YYYYMMDDHH."""
+
 parser = OptionParser( usage )
 
 parser.add_option( "-s", 
-	help="The name of the system you want to interact with.",
+	help="Name of the target system.",
         metavar="NAME", action="store", dest="system_name" )
 
 parser.add_option( "-u", 
@@ -56,77 +59,84 @@ parser.add_option( "-u",
 
 parser.add_option( "-n", 
         help="Hostname of the machine running the Pyro nameserver, "
-        "defaults to localhost",
+        "defaults to 'localhost'.",
         metavar="HOSTNAME", action="store", default='localhost',
         dest="pns_host" )
 
 parser.add_option( "-f",
-	help="Do not ask for confirmation before acting.",
+        help="Force: do not ask for confirmation before acting.",
         action="store_true", default=False, dest="force" )
 
 parser.add_option( "--pause", 
-	help="Pause the system NOW: do not launch any new tasks.",
+        help="Pause the system, i.e. do not launch any new tasks.",
         action="store_true", default=False, dest="pause" )
 
 parser.add_option( "--pause-at", 
-	help="Pause when all tasks reach cycle time TIME",
+        help="Pause the system when all tasks have reached TIME",
         metavar="TIME", action="store", dest="hold_time" )
 
 parser.add_option( "-r", "--resume", 
-	help="Resume (unhold or unpause) the system NOW.",
+        help="Resume (unpause) the system.",
         action="store_true", default=False, dest="resume" )
 
 parser.add_option( "--stop", 
-	help="Halt the system when all running tasks have finished.",
+        help="Shutdown the system as soon as all tasks that are currently "
+        "running have finished.",
         action="store_true", default=False, dest="shutdown" )
 
 parser.add_option( "--stop-now", 
-	help="Halt the system NOW, even if tasks are still running"
-         " (this does not kill running external tasks)",
+        help="Shutdown the system NOW, even if some tasks are still running. "
+        "THIS DOES NOT KILL RUNNING EXTERNAL TASKS",
         action="store_true", default=False, dest="shutdownnow" )
 
 parser.add_option( "--stop-at", 
-	help="Tell the system to shut down when all tasks have reached TIME",
+        help="Do not launch any new tasks beyond TIME, and shutdown the system "
+        "as soon as all tasks prior to that time have finished running.",
         metavar="TIME", action="store", dest="stop_time" )
 
-parser.add_option( "--reset-task", 
-	help="Reset a (failed) task to the waiting state. TASK-ID = 'NAME%TIME'",
-        metavar="TASK_ID", action="store", dest="reset_id" )
+parser.add_option( "--reset", 
+        help="Reset a task to the 'waiting' state. Use this to get a failed "
+        "task to re-run after fixing the problem that caused it to fail.",
+        metavar="NAME%TIME", action="store", dest="reset_id" )
 
 parser.add_option( "--spawn-and-die", 
-	help="Kill the named task(s) or all waiting tasks at the given cycle time ",
+        help="Force one or more tasks at a particular cycle time to spawn and die.",
         metavar="[NAME1,NAME2,...%]TIME", 
         action="store", dest="kill_task_id" )
 
-parser.add_option( "--purge", 
-	help="Kill a task and, recursively, all of its dependents through to STOP",
-        metavar="TASK-ID,STOP", 
+parser.add_option( "--recursive-purge", 
+        help="Force a task to spawn and die, then force every task that depends "
+        "on its outputs to spawn and die, and then force every task that depends "
+        "on their outputs to spawn and die, and so on, through to time STOP.",
+        metavar="NAME%TIME,STOP", 
         action="store", dest="purge" )
 
-parser.add_option( "--insert", help="Insert a new task or task group into a running system.",
+parser.add_option( "--insert", 
+        help="Insert a new TASK or TASK GROUP into a running system.",
         metavar="NAME%TIME", action="store", dest="insert_task_id" )
 
-parser.add_option( "--task-state", 
-        help="Show the current status of each named task's prerequisites and outputs"
-	"completed yet.",
+parser.add_option( "--dump", 
+        help="Display the current status of one or more task's prerequisites "
+        "and outputs, and any other information deemed relevant to scheduling.",
         metavar="NAME1,NAME2,...%YYYYMMDDHH", 
         action="store", dest="dump_task_id" )
 
-parser.add_option( "--task-info", 
-        help="Get the description of the named task(s)",
+parser.add_option( "--describe", 
+        help="Display the description of one or more task types (no TIME required!).",
         metavar="NAME1,NAME2,...", 
         action="store", dest="describe_names" )
 
 verbosity_choices = ['debug','info', 'warning', 'error', 'critical'] 
 parser.add_option( "-v", "--verbosity",
-        help="set verbosity: " + ', '.join(verbosity_choices),
+        help="change the system's logging verbosity: " + ', '.join(verbosity_choices),
         action="store", 
         choices=verbosity_choices,
         dest="verbosity" )
 
-parser.add_option( "--bump", 
-	help= "Bump the system (i.e. invoke the task processing loop)"
-	"even if nothing is happening at the moment.",
+parser.add_option( "--nudge", 
+        help= "Nudge the system. When not running the task processing loop on "
+        "on a timeout it may be possible for cylc to get \"stuck\"; nudging "
+        "invokes the task processing loop and gets things moving again.",
         action="store_true", default=False, dest="bump" )
 
 #if len( sys.argv ) == 1:

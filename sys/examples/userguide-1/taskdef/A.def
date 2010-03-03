@@ -11,7 +11,7 @@
 %TYPE
     forecast_model
 
-%CYCLE_TIMES
+%HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
@@ -19,10 +19,10 @@
 
 %ENVIRONMENT
     WRAP A.sh
-    NEXT_CYCLE_TIME $(MY_CYCLE_TIME + 6)
+    NEXT_CYLC_TIME $(CYLC_TIME + 6)
 
 %PREREQUISITES
-    "ext%$(MY_CYCLE_TIME) finished"
+    "ext%$(CYLC_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     90

@@ -11,14 +11,14 @@
 %TYPE
     free_task, oneoff
 
-%CYCLE_TIMES
+%HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
     cold.sh
 
 %STARTUP_PREREQUISITES
-    "startup%$(MY_CYCLE_TIME) finished" 
+    "startup%$(CYLC_TIME) finished" 
 
 %PREREQUISITES
     # None
@@ -27,9 +27,9 @@
     10
 
 %OUTPUTS
-    7: "A restart files ready for $(MY_CYCLE_TIME)"
-    8: "B restart files ready for $(MY_CYCLE_TIME)"
-    9: "C restart files ready for $(MY_CYCLE_TIME)"
+    7: "A restart files ready for $(CYLC_TIME)"
+    8: "B restart files ready for $(CYLC_TIME)"
+    9: "C restart files ready for $(CYLC_TIME)"
 
 %SINGLE_CYCLE
     True

@@ -11,11 +11,11 @@
 %TYPE
     free_task, dummy
 
-%CYCLE_TIMES
+%HOURS
     0,6,12,18
 
 %PREREQUISITES
-    "C%$(MY_CYCLE_TIME) finished"
+    "C%$(CYLC_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     # 20 min reduced to 10s/hr clock rate

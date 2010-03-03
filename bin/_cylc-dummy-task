@@ -73,10 +73,10 @@ class dummy_task:
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
-    task_name = os.environ['TASK_NAME']
-    c_time = os.environ['CYCLE_TIME']
-    groupname = os.environ['PNS_GROUP'] 
-    pns_host = os.environ['PNS_HOST'] 
+    task_name = os.environ['CYLC_TASK']
+    c_time = os.environ['CYLC_TIME']
+    groupname = os.environ['CYLC_NS_GROUP'] 
+    pns_host = os.environ['CYLC_NS_HOST'] 
 
     clock_rate = 3600  # seconds per hour
     if 'CLOCK_RATE' in os.environ:

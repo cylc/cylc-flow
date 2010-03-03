@@ -12,6 +12,6 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 
 sleep $SLEEP 
 
-touch $TMPDIR/A_${CYCLE_TIME}.restart
-touch $TMPDIR/B_${CYCLE_TIME}.restart
-touch $TMPDIR/C_${CYCLE_TIME}.restart
+touch $TMPDIR/A_${CYLC_TIME}.restart
+touch $TMPDIR/B_${CYLC_TIME}.restart
+touch $TMPDIR/C_${CYLC_TIME}.restart

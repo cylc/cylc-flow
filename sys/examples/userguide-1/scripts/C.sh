@@ -9,8 +9,8 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 40 * 60 / ACCEL )) 
 
 # check prerequistes
-ONE=$TMPDIR/A_${CYCLE_TIME}.output
-TWO=$TMPDIR/${TASK_NAME}_${CYCLE_TIME}.restart
+ONE=$TMPDIR/A_${CYLC_TIME}.output
+TWO=$TMPDIR/${CYLC_TASK}_${CYLC_TIME}.restart
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         echo "ERROR, file not found: $PRE"
@@ -19,17 +19,17 @@ for PRE in $ONE $TWO; do
 done
 
 # ARTIFICIAL ERROR
-#[[ $CYCLE_TIME == 2009082512 ]] && {
+#[[ $CYLC_TIME == 2009082512 ]] && {
 #    echo "C: ERROR!!!!!!"
 #    exit 1
 #}
 
 sleep $SLEEP  # 40 min
-touch $TMPDIR/${TASK_NAME}_${NEXT_CYCLE_TIME}.restart
+touch $TMPDIR/${CYLC_TASK}_${NEXT_CYLC_TIME}.restart
 
 sleep $SLEEP  # 80 min
-touch $TMPDIR/${TASK_NAME}_${NEXT_NEXT_CYCLE_TIME}.restart
+touch $TMPDIR/${CYLC_TASK}_${NEXT_NEXT_CYLC_TIME}.restart
 
 sleep $SLEEP  # 120 min
-OUTPUT=$TMPDIR/C_${CYCLE_TIME}.output
+OUTPUT=$TMPDIR/C_${CYLC_TIME}.output
 touch $OUTPUT

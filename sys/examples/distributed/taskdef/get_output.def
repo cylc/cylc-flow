@@ -11,7 +11,7 @@
 %TYPE
     free_task
 
-%CYCLE_TIMES
+%HOURS
     0,6,12,18
 
 %EXTERNAL_TASK
@@ -19,15 +19,15 @@
 
 %ENVIRONMENT
     WRAP file_transfer.sh
-    TARG 192.168.56.78:/tmp/oliverh/forecast/output/$(MY_CYCLE_TIME)/forecast.nc
-    DEST $TMPDIR/postproc/input/$(MY_CYCLE_TIME)/forecast.nc
+    TARG 192.168.56.78:/tmp/oliverh/forecast/output/$(CYLC_TIME)/forecast.nc
+    DEST $TMPDIR/postproc/input/$(CYLC_TIME)/forecast.nc
 
 %PREREQUISITES
-    "forecast output ready for $(MY_CYCLE_TIME)"
+    "forecast output ready for $(CYLC_TIME)"
 
 %ESTIMATED_RUN_TIME
     10
 
 %OUTPUTS
-    10: "forecast output at $(MY_CYCLE_TIME) ready for postprocessing"
+    10: "forecast output at $(CYLC_TIME) ready for postprocessing"
 

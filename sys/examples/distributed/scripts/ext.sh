@@ -13,9 +13,9 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 
 sleep $SLEEP 
 
-OUTDIR=$TMPDIR/$TASK_NAME/output/$CYCLE_TIME
+OUTDIR=$TMPDIR/$TASK_NAME/output/$CYLC_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/extdata
 
-cylc message "external data ready for $CYCLE_TIME"
+cylc message "external data ready for $CYLC_TIME"
 cylc message --succeeded

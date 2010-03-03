@@ -44,8 +44,8 @@ class job_submit:
 
     def set_local_environment( self ):
         # export cycle time and task name
-        os.environ['CYCLE_TIME'] = self.cycle_time
-        os.environ['TASK_NAME'] = self.task_name
+        os.environ['CYLC_TIME'] = self.cycle_time
+        os.environ['CYLC_TASK'] = self.task_name
         # and any extra variables
         for entry in self.extra_vars:
             [ var_name, value ] = entry
@@ -54,12 +54,12 @@ class job_submit:
 
     def remote_environment_string( self ):
         # export cycle time and task name
-        env = 'export CYCLE_TIME=' + self.cycle_time
-        env += ' TASK_NAME=' + self.task_name
-        # and system name and PNSHOST for this system
-        env += ' PNS_GROUP=' + os.environ[ 'PNS_GROUP' ]
+        env = 'export CYLC_TIME=' + self.cycle_time
+        env += ' CYLC_TASK=' + self.task_name
+        # and system name and CYLC_NS_HOST for this system
+        env += ' CYLC_NS_GROUP=' + os.environ[ 'CYLC_NS_GROUP' ]
         # TO DO: THIS WILL FAIL FOR localhost!!!!!!!!!!!!!!!!!
-        env += ' PNS_HOST=' + os.environ[ 'PNS_HOST' ]
+        env += ' CYLC_NS_HOST=' + os.environ[ 'CYLC_NS_HOST' ]
 
         # and any extra variables
         for entry in self.extra_vars:
