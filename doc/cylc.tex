@@ -584,22 +584,26 @@ The following is a quick summary of the steps required to get a system
 running under cylc. It is meant as a reminder to those who have already
 read and understood the full documentation in the following sections.
 
+\subsection{Constructing A New Forecasting System}
+
+Do this incrementally (see Section~\ref{incremental}) using {\bf dummy
+mode} (see Section~\ref{dummymode}).  
+
+\pagebreak
 \subsection{System Definition} 
-\label{SystemDefinition}
 
 \begin{itemize}
-    \item divide your system into {\bf tasks} with clearly defined 
-        {\bf prerequisites} and {\bf outputs} (Section~\ref{tasks}).
+    \item divide a system into {\bf tasks} with defined {\bf
+        prerequisites} and {\bf outputs} (Section~\ref{tasks}).
 
     \item write a {\bf task definition file} for each task
         (Section~\ref{taskdefs}).
 
-    \item write {\bf task scripts} to run the external tasks (Section~\ref{taskscripts}).
-
+    \item write {\bf task scripts} to run the external tasks
+        (Section~\ref{taskscripts}).
 \end{itemize}
 
-\subsection{Configuring A Defined System}
-\label{ConfiguringADefinedSystem}
+\subsection{System Configuration}
 
 To generate task class and config modules for a system defined in
 location PATH (Section~\ref{configure}): 
@@ -611,13 +615,12 @@ location PATH (Section~\ref{configure}):
 Customise the config file if necessary, and reconfigure the system
 whenever task definition files are added, removed, or modified.
 
-\subsection{Registering a Configured System}
-\label{RegisteringaConfiguredSystem}
+\subsection{System Registration}
 
-This associates a name with a system definition directory. You can then
-run, monitor, and control the system by name. The \lstinline=register=
-command also has options for checking your current registrations are
-valid, and deleting registrations.
+Registration associates a name with a system definition directory. You
+can then run, monitor, and control the registered system by name. The
+\lstinline=register= command also has options for managing your system
+registrations (checking their validiy, deleting them, and so on).
 
 \begin{lstlisting}
     cylc register -s NAME PATH
@@ -625,20 +628,18 @@ valid, and deleting registrations.
 
 Where PATH is the location of the system definition directory. 
 
-\subsection{Starting a Pyro Nameserver}
-\label{StartingaPyroNameserver}
+\subsection{Starting A Pyro Nameserver}
 
 If you do not already have a Pyro nameserver running
-(Section~\ref{pyro}), start one with \lstinline{nohup} so that it
-will not die with your terminal session: 
+(Section~\ref{pyro}), start one with \lstinline{nohup} so that it will
+not die with your terminal session: 
 
 \begin{lstlisting}
     nohup pyro-ns &
 \end{lstlisting}
 
 
-\subsection{Running A Registered System} 
-\label{RunningARegisteredSystem}
+\subsection{Running A System} 
 
 To cold start or restart a registered system (Section~\ref{run}):
 
@@ -646,8 +647,7 @@ To cold start or restart a registered system (Section~\ref{run}):
     cylc schedule -s NAME [options]
 \end{lstlisting}
     
-\subsection{Monitoring A Running System}
-\label{MonitoringARunningSystem}
+\subsection{System Monitoring}
 
 Use one or more of the terminal based cylc system monitors
 (Section~\ref{monitor}). For the main monitor: 
@@ -656,8 +656,7 @@ Use one or more of the terminal based cylc system monitors
     cylc monitor -s NAME [options]
 \end{lstlisting}
 
-\subsection{Controlling A Running System}
-\label{ControllingARunningSystem}
+\subsection{Controlling Running Systems}
 
 To interrogate a system, insert or remove tasks, shut it down, etc.
 (Section~\ref{control}):
@@ -666,46 +665,8 @@ To interrogate a system, insert or remove tasks, shut it down, etc.
     cylc control -s NAME [options]
 \end{lstlisting}
 
-
-\subsection{Controlling A Running System}
-\label{ControllingARunningSystem}
-
-To interrogate a system, insert or remove tasks, shut it down, etc.
-(Section~\ref{control}):
-
-\begin{lstlisting}
-    cylc control -s NAME [options]
-\end{lstlisting}
-
-
-\subsection{General Guidelines}
-\label{GeneralGuidelines}
-
-\begin{itemize}
-
-    \item Build and test new systems incrementally (see
-        Section~\ref{incremental}) using {\bf dummy mode} (see
-        Section~\ref{dummymode}).  
-
-\end{itemize}
-
-
-\pagebreak
-\subsection{General Guidelines}
-\label{GeneralGuidelines}
-
-\begin{itemize}
-
-    \item Build and test new systems incrementally (see
-        Section~\ref{incremental}) using {\bf dummy mode} (see
-        Section~\ref{dummymode}).  
-
-\end{itemize}
-
-
-\pagebreak
-\section{Defining Forecasting Systems} 
-\label{DefiningForecastingSystems}
+\section{Defining Cylc Systems} 
+\label{DefiningCylcSystems}
 
 This section describes how to set up a forecasting system for scheduling
 with cylc. First your system must be divided into distinct {\bf tasks}
@@ -744,12 +705,12 @@ system. For instance,
 \subsection{System Definition Directory} 
 \label{SystemDefinitionDirectory}
 
-Every forecasting system to be run by cylc needs its own system
-definition directory that must contain: 
+Every forecasting system to be run by cylc needs a system definition
+directory containing: 
 
 \begin{itemize} 
-    \item a {\bf taskdef} sub-directory for your task definition files.
-    \item a {\bf scripts} sub-directory for your system scripts.
+    \item a \lstinline=taskdef= sub-directory for your task definition files.
+    \item a \lstinline=scripts= sub-directory for your system scripts.
 \end{itemize} 
 
 In addition, when you run \lstinline{cylc configure}, task class and
@@ -760,8 +721,8 @@ systems:
 \lstset{language=bash}
 \begin{lstlisting}
 $CYLC_DIR/sys/examples/userguide-1/
-   system_config.py # autogenerated by 'cylc configure' 
-   task_classes.py  # autogenerated by 'cylc configure' 
+   system_config.py # AUTOGENERATED by 'cylc configure' 
+   system_tasks.py  # AUTOGENERATED by 'cylc configure' 
    taskdef/         # task definition files
       A.def            # defines task A
       B.def            # defines task B
@@ -797,38 +758,43 @@ directory.
 This sections explains how prerequisites and outputs are expressed in
 cylc, and how to register them in task definition files.
 
-\subsubsection{Interpretation: Messages} 
+\subsubsection{Interpretation As Messages} 
 
 \begin{shaded}
-    Prerequisites and outputs are literal text strings. They
-    represent {\bf messages}, from running tasks, reporting that some
-    important (scheduling-relevant) event has occurred.
+    Prerequisites and outputs are literal text strings, representing
+    events that are important to scheduling, sent from running tasks
+    to the  task proxy objects that represent them inside cylc.
 \end{shaded}
 
-For example, the message ``file foo-2009101218.nc ready'' could be
-registered as an output by the task that generates said file, and as a
-prerequisite by any tasks that require it as input.  A task considers a
-registered output ``completed'' if it has received a matching message
-from the external task that it represents.  Similarly, a task considers
-a registered prerequisite ``satisfied'' if it has been told by any other
-task in the system that it has a completed output to match the
-prerequisite. 
+A task proxy considers a registered {\bf output} ``completed'' if it has
+received a matching message from its external task.
 
-Prerequisites and outputs typically pertain to the completion of a file,
-or a group of files, but tasks can trigger off any event that can
-conceiveably be reported: database interactions, downloaded from a
-network, copying, archiving, and so on.
+A task proxy considers a registered {\bf prerequisite} ``satisfied'' if
+any other task in the system has reported to it a matching completed
+output.
+
+For example, the message ``storm surge forecast products ready for
+2009102018'' could be registered as an output by the task that generates
+the referenced storm surge forecast products, and as a prerequisite by
+any tasks that require them as input. 
+
+Prerequisites and outputs typically refer to the completion of a file
+or a group of files, but any event can be used: database interactions,
+download from a network, copying, archiving, etc., can also be
+used to trigger other tasks.
 
 \subsubsection{The Truth Of Messages}
 
 For file outputs it may make sense to include filenames in the message
-strings, but there is no need to include actual file locations. The
-scheduler does not need to check that a reported output file actually
-exists, or more generally that any output message is true, because the
-external tasks must necessarily do their own error checking and
-immediately report any failure to cylc.
+strings, but there is no need to include actual file locations. 
 
-
+Cylc does not need to check that incoming messages (i.e.\ reports of
+completed outputs) are actually true before allowing them to be used to
+satisfy the prerequisites of other tasks. That's because external tasks
+must necessarily do their own checking and abort if any prerequisites
+are actually unsatisfied, OR fail as a result of attempting to run
+with unsatisfied prerequisites; in either case the failure will be
+reported back to the relevant cylc task proxy object. 
 
 \subsubsection{Cycle Time in Messages}
 
@@ -1493,5 +1459,14 @@ Cylc dynamically adapts to any external execution environment. It just
 decides when a task is *ready* to run - i.e.\ when its prerequisites 
 are satisfied.  If the external task is delayed because of resource
 contention, it will not report its outputs complete until it does run.
+
+\subsection{Known Limitations}
+
+\begin{itemize}
+    \item cycle time minimum granularity = 1 hour. Note this is
+        only loosely connected to when, or how frequently, a task
+        actually runs, and only in real time operation. Would be easy to
+        extend to minutes and seconds, if necessary.
+\end{itemize}
 
 \end{document}
