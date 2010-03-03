@@ -10,7 +10,7 @@
 # to this particular cylc installation.
 
 if [[ ! -f bin/cylc ]]; then
-    echo "ERROR: you do not seem to be in the top level of a cylc installation"
+    echo "ERROR: you are not in the top level of a cylc installation"
 
 else
 

@@ -131,7 +131,7 @@ Multi-cycle Catchup Capability}
     Pyro}\footnote{Pyro (Python Remote Objects) is an objected oriented
     Remote Procedure Call technology, copyright Irmen de Jong,
     distributed under the MIT open source license (see
-    Section~\ref{sec:Pyro}).} to control tasks across heterogenous
+    Section~\ref{Pyro}).} to control tasks across heterogenous
     distributed networks.  
 
     %\footnote{Cylc also
@@ -142,10 +142,11 @@ Multi-cycle Catchup Capability}
 \end{abstract}
 
 \pagebreak
-\section{How Cylc Works}
-\label{sec:FS}
+\section{How Cylc Works} 
+\label{HowCylcWorks}
 
-\subsection{Scheduling For Forecast Systems}
+\subsection{Scheduling For Forecast Systems} 
+\label{SchedulingForForecastSystems}
 
 Environmental forecasting systems generate forecast products at regular
 intervals using potentially large sets of scientific models and
@@ -168,7 +169,8 @@ satisfied; this is the best that can be done even if queued tasks are
 not able to execute immediately because of resource contention.
 
 
-\subsection{An Example: EcoConnect}
+\subsection{An Example: EcoConnect} 
+\label{AnExampleEcoConnect}
 
 This work was motivated by the EcoConnect Forecasting System at NIWA
 (National Institute of Water and Atmospheric Research, New Zealand). As
@@ -190,7 +192,8 @@ recent available regional weather forecast.  EcoConnect runs on
 heterogenous distributed hardware, including a massively parallel
 supercomputer and several Linux servers. 
 
-\subsection{Intracycle Dependencies}
+\subsection{Intracycle Dependencies} 
+\label{IntracycleDependencies}
 
 We normally think of dependencies as occuring between tasks within a
 forecast cycle. A sea state forecast, for example, might depend on
@@ -205,7 +208,7 @@ forecast cycle, multiple parallel streams of execution that branch when
 one task generates output for several downstream tasks, and merge when
 one task takes input from several upstream tasks. 
 
-\begin{figure} 
+\begin{figure} \label{fig-dep-one} 
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/dep-one-cycle} 
     \end{center}
@@ -214,10 +217,9 @@ one task takes input from several upstream tasks.
     forecast models, {\em d, e} and {\em f} are post processing or
     product generation tasks, and {\em x} represents {\em external
     driving data} that the upstream forecast model depends on.}
-    \label{fig-dep-one} 
 \end{figure} 
 
-\begin{figure}
+\begin{figure} \label{fig-time-one}
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/timeline-one}
     \end{center}
@@ -225,7 +227,6 @@ one task takes input from several upstream tasks.
 the example system during real time operation. The horizontal extent of
 each task bar represents its execution time, and the vertical blue lines
 show when the external driving data becomes available.}
-    \label{fig-time-one}
 \end{figure}
 
 Figure~\ref{fig-time-one} shows the job schedule for two consecutive
@@ -236,16 +237,16 @@ data.  Each task in the example system happens to trigger off upstream
 tasks {\em finishing}, rather than some intermediate output or event,
 but this is merely a simplification that makes for clearer diagrams.
 
-\begin{figure} 
+\begin{figure} \label{fig-dep-two-linked}
     \begin{center}
         \includegraphics[width=10cm]{inkscape-svg/dep-two-cycles-linked} 
     \end{center}
     \caption{\small If the external driving data is available in
     advance, can we start running the next cycle early?} 
-    \label{fig-dep-two-linked}
 \end{figure}
 
-\subsection{Intercycle Dependencies}
+\subsection{Intercycle Dependencies} 
+\label{IntercycleDependencies}
 
 There are also dependencies between tasks in different cycles: forecast
 models typically depend on their own most recent previous forecast for
@@ -280,7 +281,7 @@ single cycle job schedule may be possible for specific task sets in
 certain circumstances, but this is very much sub-optimal and it would be
 difficult to guarantee that dependencies will never be violated.
 
-\begin{figure}
+\begin{figure} \label{fig-overlap}
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/timeline-one-c} 
     \end{center}
@@ -288,19 +289,17 @@ difficult to guarantee that dependencies will never be violated.
     using the single-cycle dependency graph. The red shaded tasks will
     fail because of dependency violations (or will not be able to run
     because of upstream dependency violations).} 
-    \label{fig-overlap}
 \end{figure} 
 
-\begin{figure}
+\begin{figure} \label{fig-foo}
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/timeline-one-a} 
     \end{center}
     \caption{\small The best that can be done in general when intercycle dependencies 
     are ignored.} 
-    \label{fig-foo}
 \end{figure} 
 
-\begin{figure} 
+\begin{figure} \label{fig-dep-two}
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/dep-multi-cycle} 
     \end{center}
@@ -309,7 +308,6 @@ difficult to guarantee that dependencies will never be violated.
     forecast models ($a$, $b$, and $c$) depend on their own previous
     instances. The dashed arrows show connections to previous and
     subsequent forecast cycles.} 
-    \label{fig-dep-two}
 \end{figure}
 
 
@@ -342,28 +340,27 @@ Thus, even for this very simple example system, tasks from three or four
 different cycles can in principle run simultaneously at any given
 time. 
 
-\subsection{The Cylc Scheduling Algorithm}
+\subsection{The Cylc Scheduling Algorithm} 
+\label{TheCylcSchedulingAlgorithm}
 
-\begin{figure} 
+\begin{figure} \label{fig-time-two}
     \begin{center} 
         \includegraphics[width=8cm]{inkscape-svg/task-pool}
     \end{center} 
     \caption{\small How cylc sees the task pool, in contrast to the 
     full dependency diagram of Figure~\ref{fig-full}.} 
-    \label{fig-time-two}
 \end{figure} 
 
-\begin{figure}
+\begin{figure} \label{fig-optimal-two}
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/timeline-two-cycles-optimal} 
     \end{center}
     \caption{\small Optimal job schedule when the next cycle's driving
     data is available in advance, possible in principle when all
     intercycle dependencies are respected.} 
-    \label{fig-optimal-two}
 \end{figure} 
 
-\begin{figure}
+\begin{figure} \label{fig-time-three}
     \begin{center}
         \includegraphics[width=12cm]{inkscape-svg/timeline-three} 
     \end{center}
@@ -373,10 +370,9 @@ time.
     (below the time time axis). The colored lines indicate the time that
     each cycle is delayed, and normal ``caught up'' cycles
     are shaded gray.} 
-    \label{fig-time-three}
 \end{figure} 
 
-\begin{figure} 
+\begin{figure} \label{fig-time-two}
     \begin{center} 
         \includegraphics[width=8cm]{inkscape-svg/timeline-two}
     \end{center} 
@@ -387,7 +383,6 @@ time.
     dependencies, as in Figure \ref{fig-dep-two}, and underneath is
     the best that can be done, in general, when intercycle dependencies
     are ignored.} 
-    \label{fig-time-two}
 \end{figure} 
 
 Cylc manages a pool of proxy objects that represent real tasks in the
@@ -395,7 +390,7 @@ forecasting system. There is no global cycling mechanism to advance the
 system in time; instead each individual task proxy has a private cycle
 time and spawns its own successor at the right time (which depends only
 on the task proxy's own type and state, not on the state of other task
-proxies in the system; see Section~\ref{sec:tasktypes}). Task proxies
+proxies in the system; see Section~\ref{tasktypes}). Task proxies
 are self-contained and do not know what other tasks exist in the system,
 they just know their own prerequisites and outputs.  Prerequisites can
 include files (say) that happen to be generated by other tasks with
@@ -446,7 +441,8 @@ earlier, and it should die not too long after it is no longer needed.
 This requires some thought at the program design stage, but the
 complexities therein are entirely hidden from the user. 
 
-\subsection{Comparison with Existing Schedulers}
+\subsection{Comparison with Existing Schedulers} 
+\label{ComparisonwithExistingSchedulers}
 
 As explained earlier, as far as the author is aware current forecast
 schedulers ignore intercycle dependencies and therefore require
@@ -492,10 +488,11 @@ main operation and then keep pace with it.
 
 
 \pagebreak
-\section{Installing Cylc}
-\label{sec:usage}
+\section{Installing Cylc} 
+\label{InstallingCylc}
 
-\subsection{Requirements}
+\subsection{Requirements} 
+\label{Requirements}
 
 \begin{itemize}
     \item A Unix or Linux operating system
@@ -507,16 +504,18 @@ Cylc has been tested with Python 2.4.2 and 2.6.x, and Pyro 3.9 and 3.10,
 but it should work well with any recent versions or Python 2 and Pyro.
 As yet neither cylc nor Pyro are compatible with Python 3. 
 
-\subsection{Getting Cylc}
+\subsection{Getting Cylc} 
+\label{GettingCylc}
 
-See Section~\ref{sec:pyro} for how to get Pyro.
+See Section~\ref{pyro} for how to get Pyro.
 
 Cylc is currently maintained using {\em darcs}, a distributed revision
 control system. If you need to develop cylc you can request access to
 clone the central repository, otherwise you will receive a cylc
 distribution tarball. 
 
-\subsection{Installation}
+\subsection{Installation} 
+\label{Installation}
 
 Pyro comes with simple installation instructions (it installs into the
 standard Python modules path). 
@@ -526,7 +525,8 @@ unpack the tarball, or move the repository, to the location of your
 choice. There is no ``build'' required because cylc is written in Python
 (plus a few small bash scripts).
 
-\subsection{Environment}
+\subsection{Environment} 
+\label{Environment}
 
 The cylc bin directory must be in your executable search path, to
 provide access to cylc commands, and the cylc source directory must be
@@ -543,10 +543,11 @@ your \lstinline=$HOME/.profile=:
     export PYTHONPATH=$CYLC_DIR/src:$PYTHONPATH
 \end{lstlisting}
 
-\subsection{Testing}
+\subsection{Testing} 
+\label{Testing}
 
 Test the new installation by running the packaged example systems
-(Section~\ref{sec:examples}). These should work ``out of the box'', but
+(Section~\ref{examples}). These should work ``out of the box'', but
 refer to the rest of this document, and/or \lstinline=cylc help= for
 more information.  
 
@@ -576,29 +577,32 @@ Finally, rerun the system for real (omit the \lstinline{-d}
 option above).
 
 \pagebreak
-\section{Quick Start Guide}
+\section{Quick Start Guide} 
+\label{QuickStartGuide}
 
 The following is a quick summary of the steps required to get a system
 running under cylc. It is meant as a reminder to those who have already
 read and understood the full documentation in the following sections.
 
-\subsection{System Definition}
+\subsection{System Definition} 
+\label{SystemDefinition}
 
 \begin{itemize}
     \item divide your system into {\bf tasks} with clearly defined 
-        {\bf prerequisites} and {\bf outputs} (Section~\ref{sec:tasks}).
+        {\bf prerequisites} and {\bf outputs} (Section~\ref{tasks}).
 
     \item write a {\bf task definition file} for each task
-        (Section~\ref{sec:taskdefs}).
+        (Section~\ref{taskdefs}).
 
-    \item write {\bf task scripts} to run the external tasks (Section~\ref{sec:taskscripts}).
+    \item write {\bf task scripts} to run the external tasks (Section~\ref{taskscripts}).
 
 \end{itemize}
 
 \subsection{Configuring A Defined System}
+\label{ConfiguringADefinedSystem}
 
 To generate task class and config modules for a system defined in
-location PATH (Section~\ref{sec:configure}): 
+location PATH (Section~\ref{configure}): 
 
 \begin{lstlisting}
     cylc configure [options] PATH
@@ -607,7 +611,8 @@ location PATH (Section~\ref{sec:configure}):
 Customise the config file if necessary, and reconfigure the system
 whenever task definition files are added, removed, or modified.
 
-\subsection{Register a Configured System}
+\subsection{Registering a Configured System}
+\label{RegisteringaConfiguredSystem}
 
 This associates a name with a system definition directory. You can then
 run, monitor, and control the system by name. The \lstinline=register=
@@ -621,9 +626,10 @@ valid, and deleting registrations.
 Where PATH is the location of the system definition directory. 
 
 \subsection{Starting a Pyro Nameserver}
+\label{StartingaPyroNameserver}
 
 If you do not already have a Pyro nameserver running
-(Section~\ref{sec:pyro}), start one with \lstinline{nohup} so that it
+(Section~\ref{pyro}), start one with \lstinline{nohup} so that it
 will not die with your terminal session: 
 
 \begin{lstlisting}
@@ -631,27 +637,41 @@ will not die with your terminal session:
 \end{lstlisting}
 
 
-\subsection{Running A Registered System}
+\subsection{Running A Registered System} 
+\label{RunningARegisteredSystem}
 
-To cold start or restart a registered system (Section~\ref{sec:run}):
+To cold start or restart a registered system (Section~\ref{run}):
 
 \begin{lstlisting}
     cylc schedule -s NAME [options]
 \end{lstlisting}
     
 \subsection{Monitoring A Running System}
+\label{MonitoringARunningSystem}
 
 Use one or more of the terminal based cylc system monitors
-(Section~\ref{sec:monitor}). For the main monitor: 
+(Section~\ref{monitor}). For the main monitor: 
 
 \begin{lstlisting}
     cylc monitor -s NAME [options]
 \end{lstlisting}
 
 \subsection{Controlling A Running System}
+\label{ControllingARunningSystem}
 
 To interrogate a system, insert or remove tasks, shut it down, etc.
-(Section~\ref{sec:control}):
+(Section~\ref{control}):
+
+\begin{lstlisting}
+    cylc control -s NAME [options]
+\end{lstlisting}
+
+
+\subsection{Controlling A Running System}
+\label{ControllingARunningSystem}
+
+To interrogate a system, insert or remove tasks, shut it down, etc.
+(Section~\ref{control}):
 
 \begin{lstlisting}
     cylc control -s NAME [options]
@@ -659,31 +679,45 @@ To interrogate a system, insert or remove tasks, shut it down, etc.
 
 
 \subsection{General Guidelines}
+\label{GeneralGuidelines}
 
 \begin{itemize}
 
     \item Build and test new systems incrementally (see
-        Section~\ref{sec:incremental}) using {\bf dummy mode} (see
-        Section~\ref{sec:dummymode}).  
+        Section~\ref{incremental}) using {\bf dummy mode} (see
+        Section~\ref{dummymode}).  
 
 \end{itemize}
 
 
 \pagebreak
-\label{sec:tasks}
-\section{System Setup}
+\subsection{General Guidelines}
+\label{GeneralGuidelines}
+
+\begin{itemize}
+
+    \item Build and test new systems incrementally (see
+        Section~\ref{incremental}) using {\bf dummy mode} (see
+        Section~\ref{dummymode}).  
+
+\end{itemize}
+
+
+\pagebreak
+\section{System Setup} 
+\label{SystemSetup}
 
 This section describes how to set up a forecasting system for scheduling
 with cylc. First your system must be divided into distinct {\bf tasks}
-(Section~\ref{sec:taskwhatis}) with clearly defined {\bf prerequisites} and
-{\bf outputs} (Section~\ref{sec:requisites}). Then a simple {\bf task
+(Section~\ref{taskwhatis}) with clearly defined {\bf prerequisites} and
+{\bf outputs} (Section~\ref{requisites}). Then a simple {\bf task
 definition file} must be written for each task
-(Section~\ref{sec:taskdeffiles}), and some {\bf task scripts} may need
+(Section~\ref{taskdeffiles}), and some {\bf task scripts} may need
 to be written to allow cylc to execute the external tasks
-(Section~\ref{sec:taskscripts}).
+(Section~\ref{taskscripts}).
 
-\label{sec:divisionintotasks}
-\subsection{Division Into Tasks}
+\subsection{Division Into Tasks} 
+\label{DivisionIntoTasks}
 
 \begin{shaded}
 A task is a group of one or more processes treated as a single entity
@@ -707,8 +741,8 @@ system. For instance,
 \end{itemize}
 
 
-\label{sec:systemdefdir}
-\subsection{System Definition Directory}
+\subsection{System Definition Directory} 
+\label{SystemDefinitionDirectory}
 
 Every forecasting system to be run by cylc needs its own system
 definition directory that must contain: 
@@ -754,17 +788,16 @@ directory.
 
 
 
-\label{sec:requisites}
-\subsection{Prerequisites and Outputs}
+\subsection{Prerequisites and Outputs} 
+\label{PrerequisitesandOutputs}
 
 %Cylc's scheduling algorithm works by matching one task's unsatisfied
-%prerequisites with another's completed outputs (Section~\ref{sec:algorithm}). 
+%prerequisites with another's completed outputs (Section~\ref{algorithm}). 
 
 This sections explains how prerequisites and outputs are expressed in
 cylc, and how to register them in task definition files.
 
-\label{sec:requisiteasmessage}
-\subsubsection{Interpretation as Messages}
+\subsubsection{Interpretation: Messages} 
 
 \begin{shaded}
     Prerequisites and outputs are literal text strings. They
@@ -856,16 +889,15 @@ system less flexible.
 
 
 \pagebreak
-\label{sec:taskdef}
-\subsection{Task Definition Files}
+\subsection{Task Definition Files} 
+\label{TaskDefinitionFiles}
 
 A task definition file declares the properties of each task in a simple
 text format.  \lstinline=cylc configure= parses a system's task definition
 files uses the information declared therein to generate (i) a Python
 task class module, and (ii) a config file, for the system.
 
-\label{sec:tasktype}
-\subsubsection{Task Types}
+\subsubsection{Task Types} 
 
 In other scheduling systems, as explained earlier, groups of tasks with
 the same cycle time must complete before a new batch of tasks, at the
@@ -896,7 +928,7 @@ type of task.
 The following listing shows an example task defintion represents a
 typical non-forecast-model task. The vast majority of tasks in any
 typical system would not be any more complicated than this, but see the
-task definition reference (Section~\ref{sec:taskdefref}) for the full
+task definition reference (Section~\ref{taskdefref}) for the full
 range of options available.
 
 \lstset{language=cylctaskdef}
@@ -907,6 +939,7 @@ range of options available.
 
 \pagebreak
 \subsection{Task Scripts}
+\label{TaskScripts}
 
 (note that several tasks may use the same script with different
 arguments, e.g. for moving files around).
@@ -914,7 +947,7 @@ arguments, e.g. for moving files around).
 \subsubsection{Task Messages}
 
 The external tasks, or the scripts that execute them, need to report
-their outputs back to cylc as they run. Section~\ref{sec:message} shows
+their outputs back to cylc as they run. Section~\ref{message} shows
 how to add cylc messaging to tasks.  Ideally this reporting should be
 done as soon as each output is completed throughout the run. This is
 easy to achieve for scripted data processing tasks, for instance, but
@@ -923,7 +956,56 @@ forecast models don't normally complete their major outputs until the
 end of a run - except for restart outputs!). If that is the case a task
 can simply report all outputs completed at once before it finishes.
 Cylc in fact has a task-wrapping mechanism that does this automatically
-(Section~\ref{sec:wrapping}), allowing you schedule a set of existing
+(Section~\ref{wrapping}), allowing you schedule a set of existing
+tasks without modifying them at all.  
+
+Each external task must:
+
+\begin{itemize}
+\item report (to cylc) when the task has started
+\item report when the task has finished
+\item report when every other registered task output has
+completed
+\end{itemize}
+
+(Technically, the `started' and `finished' messages are just
+outputs too, but they are special in that every task
+must have them).
+
+In addition, tasks can optionally:
+
+\begin{itemize}
+\item report any arbitrary unregistered (i.e. non-output)
+messages, for debugging, logging, or progress monitoring purposes.
+\end{itemize}
+
+All incoming messages are logged by cylc, but only output messages can
+affect the state of other task objects.
+
+Task messages don't necessarily have to originate from top level task
+control scripts. It's a probably a good idea to do this if possible, but
+lower level scripts that are invoked as the task runs can communicate
+directly with cylc if necessary.
+
+\subsection{Task Scripts}
+\label{TaskScripts}
+
+(note that several tasks may use the same script with different
+arguments, e.g. for moving files around).
+
+\subsubsection{Task Messages}
+
+The external tasks, or the scripts that execute them, need to report
+their outputs back to cylc as they run. Section~\ref{message} shows
+how to add cylc messaging to tasks.  Ideally this reporting should be
+done as soon as each output is completed throughout the run. This is
+easy to achieve for scripted data processing tasks, for instance, but
+you may not want to do it for model executables (it should be noted that
+forecast models don't normally complete their major outputs until the
+end of a run - except for restart outputs!). If that is the case a task
+can simply report all outputs completed at once before it finishes.
+Cylc in fact has a task-wrapping mechanism that does this automatically
+(Section~\ref{wrapping}), allowing you schedule a set of existing
 tasks without modifying them at all.  
 
 Each external task must:
@@ -955,14 +1037,17 @@ lower level scripts that are invoked as the task runs can communicate
 directly with cylc if necessary.
 
 \subsection{Task Wrapping}
+\label{TaskWrapping}
 
 A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
 
 \pagebreak
 \section{Configuring A System}
+\label{ConfiguringASystem}
 
 \subsection{System Config Files}
+\label{SystemConfigFiles}
 
 Each task set to be scheduled by cylc requires a {\bf config file} that
 specifies system-dependent parameters such as name, list of tasks to
@@ -983,6 +1068,7 @@ config[ 'item' ] = value
 \end{lstlisting}
 
 \subsection{Configurable Items}
+\label{ConfigurableItems}
 
 \begin{itemize} \item {\bf system name}: the system is registered under
         this name in your cylc preferences directory. The system name is
@@ -1037,7 +1123,7 @@ config['job_queue'] = 'prime'
         \end{lstlisting}
 
     \item {\bf state dump directory}: the location of cylc's ``state
-        dump'' files (see Section~\ref{sec:state-dump}).  You may
+        dump'' files (see Section~\ref{state-dump}).  You may
         specify an absolute directory path, or one relative to the
         directory in which you run cylc.
         
@@ -1057,7 +1143,7 @@ config['logging_dir'] = '/foo/bar/baz/logging'
 
     \item {\bf logging verbosity}: Cylc's logging subsystem is based on
         the standard Python logging module (see
-        Section~\ref{sec:logging}). The 'info' level logs messages
+        Section~\ref{logging}). The 'info' level logs messages
         relevant to task execution and scheduling, while the more
         verbose 'debug' level adds messages that trace the execution of
         cylc itself.
@@ -1091,6 +1177,7 @@ config['max_runahead_hours'] = 24
 \pagebreak
 
 \subsection{An Example Config File}
+\label{AnExampleConfigFile}
 
 This is the config file for the ``userguide-1'' example system distributed
 with cylc: 
@@ -1106,9 +1193,10 @@ with cylc:
 
 \pagebreak
 \section{Running Cylc}
+\label{RunningCylc}
 
-\label{sec:dummymode}
-\subsection{Dummy Mode}
+\subsection{Dummy Mode} 
+\label{DummyMode}
 
 In {\em dummy mode}, \lstinline=cylc schedule -d=, in place of each real
 system task cylc executes an external program that masquerades as the
@@ -1118,8 +1206,8 @@ thing, and is therefore a complete test of scheduling for the configured
 task set. Dummy mode allows very quick testing of scheduling and failure
 recovery scenarios for arbitrarily complicated task sets.
 
-\label{sec:incremental}
-\subsection{Incrementally Constructing New Systems}
+\subsection{Incrementally Constructing New Systems} 
+\label{IncrementallyConstructingNewSystems}
 
 Start by defining tasks at the top of the single-cycle dependency graph,
 testing in dummy mode each time a new task is added.  This checks that
@@ -1129,13 +1217,18 @@ and test in real mode with undefined tasks turned off (comment them out
 of the task list in the system config module). 
 
 \section{System Monitors}
+\label{SystemMonitors}
+
 
 \section{Interacting With Running Systems}
+\label{InteractingWithRunningSystems}
 
 \section{Packaged Example Systems}
+\label{PackagedExampleSystems}
 
 \pagebreak
 \section{Command Reference}
+\label{CommandReference}
 
 Cylc commands are intended to be largely self documenting so the
 attendant text in this section is minimal: for each command there is
@@ -1145,6 +1238,7 @@ The listings below are actual command output generated during document
 processing, to ensure that the information is completely up to date. 
 
 \subsection{cylc}
+\label{cylc}
 
 
 \lstset{language=usage}
@@ -1155,8 +1249,9 @@ processing, to ensure that the information is completely up to date.
 
 \pagebreak
 \subsection{cylc configure}
+\label{cylcconfigure}
 
-See Section~\ref{sec:configuration} for complete documentation of system
+See Section~\ref{configuration} for complete documentation of system
 configuration.
 
 { 
@@ -1166,7 +1261,7 @@ configuration.
 \pagebreak
 \subsection{cylc register}
 
-See Section~\ref{sec:registration} for complete documentation of system
+See Section~\ref{registration} for complete documentation of system
 registration.
 
 
@@ -1176,8 +1271,9 @@ registration.
 
 \pagebreak
 \subsection{cylc schedule}
+\label{cylcschedule}
 
-See Section~\ref{sec:registration} for complete documentation of system
+See Section~\ref{registration} for complete documentation of system
 scheduling.
 
 {
@@ -1186,8 +1282,9 @@ scheduling.
 
 \pagebreak
 \subsection{cylc control}
+\label{cylccontrol}
 
-See Section~\ref{sec:controlling} for complete documentation of how to
+See Section~\ref{controlling} for complete documentation of how to
 interrogate and control running systems.
 
 {
@@ -1196,8 +1293,9 @@ interrogate and control running systems.
 
 \pagebreak
 \subsection{cylc message}
+\label{cylcmessage}
 
-See Section~\ref{sec:messaging} for complete documentation of cylc messaging.
+See Section~\ref{messaging} for complete documentation of cylc messaging.
 
 {
 \lstinputlisting{command-usage/cylc-message.txt}
@@ -1205,27 +1303,32 @@ See Section~\ref{sec:messaging} for complete documentation of cylc messaging.
 
 \pagebreak
 \subsection{cylc monitor}
+\label{cylcmonitor}
 {
 \lstinputlisting{command-usage/monitor.txt}
 }
 
 \subsection{cylc monitor-r}
+\label{cylcmonitor-r}
 {
 \lstinputlisting{command-usage/monitor-r.txt}
 }
 
 \subsection{cylc monitor-d}
+\label{cylcmonitor-d}
 {
 \lstinputlisting{command-usage/monitor-d.txt}
 }
 
 \subsection{cylc monitor-p}
+\label{cylcmonitor-p}
 {
 \lstinputlisting{command-usage/monitor-p.txt}
 }
 
 \pagebreak
 \section{Task Definition Reference}
+\label{TaskDefinitionReference}
 
 A {\em Task Definition File} defines the properties of a cylc task:
 name, valid cycle times, prerequisites and outputs, the task
@@ -1246,6 +1349,7 @@ Listed below is the full task definitition template with all items documented.
 
 %\pagebreak
 %\subsection{More Complex Task Behaviour}
+%labelsubsection{MoreComplexTaskBehaviour}
 
 %DETAIL WHEN IS IT NECESSARY TO DERIVE PYTHON TASK CLASSES DIRECTLY
 %I.E. WHEN ARE CYLC TASK DEFINITION FILES NOT SUFFICIENT.
@@ -1255,6 +1359,7 @@ Listed below is the full task definitition template with all items documented.
 \appendix
 
 \section{Object Oriented Programming}
+\label{ObjectOrientedProgramming}
 
 Cylc relies heavily on Object Oriented Programming (OOP) concepts,
 particularly the {\em polymorphic} nature of the task proxy objects.
@@ -1310,13 +1415,15 @@ without modification (other than deriving the new subclass itself).
 
 
 \pagebreak
-\section{Pyro} \label{pyro-appendix}
+\section{Pyro} 
+\label{Pyro}
 
 Pyro (Python Remote Objects) is a widely used open source objected
 oriented Remote Procedure Call technology, see {\em
 http://pyro.sourceforge.net}.
 
 \subsection{Pyro Software License (MIT license)}
+\label{PyroSoftwareLicense(MITlicense)}
 
 Pyro is Copyright (c) 2002  by Irmen de Jong.
 
@@ -1340,6 +1447,7 @@ TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
                                           
 \subsection{Single- or Multi-Threaded Pyro?}
+\label{Single-orMulti-ThreadedPyro?}
 
 In single threaded mode Pyro's \lstinline=handleRequests()= returns
 after either a timeout has occurred or at least one request
@@ -1364,6 +1472,7 @@ timeouts which results in a lot of unnecessary processing when nothing
 important is happening.
 
 \subsection{Running Pyro}
+\label{RunningPyro}
 
 To see if there is a Pyro nameserver running already on your network
 segment, use \lstinline=pyro-nsc [-h host] [-p port]=. Invoke the
@@ -1380,8 +1489,10 @@ For more detailed information, see the Pyro manual / userguide.
 
 \pagebreak
 \section{Miscellaneous Notes}
+\label{MiscellaneousNotes}
 
 \subsection{Orderly Product Generation}
+\label{OrderlyProductGeneration}
 
 Note that ``correct scheduling'' is not equivalent to ``orderly
 generation of products by cycle time'' - under cylc a product
@@ -1397,6 +1508,7 @@ your cylc system and reports completion of a cycle only when the last
 products associated with that cycle are complete. 
 
 %\subsection{Catching Up}
+%labelsubsection{CatchingUp}
 %
 %The state of being ``caught up'' or not is a property of individual
 %tasks, not the whole system, and additionally it should only matter to
@@ -1407,6 +1519,7 @@ products associated with that cycle are complete.
 %comparing its cycle time (and offset) to the wall clock time.
 
 \subsection{Running Multiple Instances Of The Same System}
+\label{RunningMultipleInstancesOfTheSameSystem}
 
 what this means - use of the exact same task and config modules, under 
 different registered names.
@@ -1419,12 +1532,11 @@ cylc example systems)
              of the external tasks (e.g. under /oper and /test)
 
 \subsection{How Cylc Interacts With Batch Queue Schedulers}
+\label{HowCylcInteractsWithBatchQueueSchedulers}
 
 Cylc dynamically adapts to any external execution environment. It just
 decides when a task is *ready* to run - i.e.\ when its prerequisites 
 are satisfied.  If the external task is delayed because of resource
 contention, it will not report its outputs complete until it does run.
-
-
 
 \end{document}
