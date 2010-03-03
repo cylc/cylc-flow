@@ -91,7 +91,7 @@ alerted3 = False
 while True:
     # connect to remote state summary object
     try: 
-        god = Pyro.core.getProxyForURI('PYRONAME://' + system_name + '.state_summary' )
+        god = Pyro.core.getProxyForURI('PYRONAME://' + groupname + '.state_summary' )
         # timeout (sec) determines max wait for an answer from god.
         god._setTimeout(60)
 
