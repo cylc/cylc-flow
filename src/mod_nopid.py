@@ -26,12 +26,8 @@ class nopid:
             # already spawned
             return False
 
-        if self.state.is_finished():
-            # always spawn a finished task
-            return True
-
-        if self.state.is_running():
+        if self.state.is_running() or self.state.is_finished():
             # see documentation above
             return True
-
-
+        else:
+            return False

@@ -19,7 +19,7 @@ state_changed = True
 # configured start time, rather than a previous dumped state) are:
 
 #  (1) cycle time
-#  (2) state ('waiting', 'running', 'finished', or 'failed')
+#  (2) state ('waiting', 'submitted', 'running', and 'finished' or 'failed')
 
 # The 'state' variable is initialised by the base class. The cycle
 # time is initialised by derived classes because it may be adjusted at
@@ -273,7 +273,7 @@ class task_base( Pyro.core.ObjBase ):
     def run_external_task( self ):
         self.log( 'DEBUG',  'launching external task' )
         self.launcher.submit()
-        self.state.set_status( 'running' )
+        self.state.set_status( 'submitted' )
 
     def set_all_internal_outputs_completed( self ):
         # used by the task wrapper 

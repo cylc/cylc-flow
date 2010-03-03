@@ -5,6 +5,8 @@
 
 # run length 90 minutes, one restart file
 
+sleep 10
+
 cylc message --started
 
 ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour

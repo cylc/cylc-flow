@@ -245,7 +245,9 @@ while True:
                 abd = ' '
 
             # color displayed info according to run status
-            if state == "running":
+            if state == "submitted":
+                ctrl_start = "\033[1;37;40m"
+            elif state == "running":
                 ctrl_start = "\033[1;37;42m"
             elif state == "waiting":
                 ctrl_start = "\033[0;35m"

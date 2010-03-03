@@ -219,9 +219,14 @@ while True:
 
             ctrl_end = "\033[0m"
 
-            if state == "running":
-                foo_start = "\033[1;37;42m"   # bold white on blue
-                bar_start = "\033[0;34m"  # bold blue
+            if state == "running" or state == "submitted":
+                if state == "running":
+                    foo_start = "\033[1;37;42m"
+                    bar_start = "\033[0;34m"
+                elif state == "submitted":
+                    foo_start = "\033[1;35;42m"
+                    bar_start = "\033[0;34m"
+
                 line = bar_start + "  " + ctrl_end + foo_start + name + ctrl_end + " " + bar_start + " " + frac + " " + prog + " " + latest + ctrl_end
 
                 if ctime in lines.keys(): 

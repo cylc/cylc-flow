@@ -203,10 +203,10 @@ class manager:
                 self.tasks.append( itask )
 
     def no_tasks_running( self ):
-        # return True if no tasks are running
+        # return True if no tasks are submitted or running
         #--
         for itask in self.tasks:
-            if itask.state.is_running():
+            if itask.state.is_running() or itask.state.is_submitted():
                 return False
         return True
 

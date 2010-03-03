@@ -15,8 +15,8 @@ dump file.
 
 class task_state:
 
-    allowed_status = [ 'waiting', 'running', 'finished', 'failed' ]
-    # INTERNALLY TO THIS CLASS, ABDICATION STATUS IS A STRING
+    allowed_status = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
+    # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 
     def __init__( self, initial_state = None ):
@@ -36,7 +36,7 @@ class task_state:
             self.state = self.parse( initial_state )
             self.check()
 
-            if self.is_running() or self.is_failed():
+            if self.is_running() or self.is_submitted() or self.is_failed():
                 # Running or failed tasks need to re-run at startup.
                 self.set_status( 'waiting' )
 
@@ -88,6 +88,12 @@ class task_state:
 
     def is_waiting( self ):
         if self.state[ 'status' ] == 'waiting':
+            return True
+        else:
+            return False
+
+    def is_submitted( self ):
+        if self.state[ 'status' ] == 'submitted':
             return True
         else:
             return False

@@ -43,6 +43,9 @@ class pid:
             # already spawned
             return False
 
+        if self.state.is_waiting() or self.state.is_submitted():
+            return False
+
         if self.state.is_finished():
             # always spawn a finished task
             return True
