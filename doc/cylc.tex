@@ -704,8 +704,8 @@ To interrogate a system, insert or remove tasks, shut it down, etc.
 
 
 \pagebreak
-\section{System Setup} 
-\label{SystemSetup}
+\section{Defining Forecasting Systems} 
+\label{DefiningForecastingSystems}
 
 This section describes how to set up a forecasting system for scheduling
 with cylc. First your system must be divided into distinct {\bf tasks}
@@ -987,55 +987,6 @@ control scripts. It's a probably a good idea to do this if possible, but
 lower level scripts that are invoked as the task runs can communicate
 directly with cylc if necessary.
 
-\subsection{Task Scripts}
-\label{TaskScripts}
-
-(note that several tasks may use the same script with different
-arguments, e.g. for moving files around).
-
-\subsubsection{Task Messages}
-
-The external tasks, or the scripts that execute them, need to report
-their outputs back to cylc as they run. Section~\ref{message} shows
-how to add cylc messaging to tasks.  Ideally this reporting should be
-done as soon as each output is completed throughout the run. This is
-easy to achieve for scripted data processing tasks, for instance, but
-you may not want to do it for model executables (it should be noted that
-forecast models don't normally complete their major outputs until the
-end of a run - except for restart outputs!). If that is the case a task
-can simply report all outputs completed at once before it finishes.
-Cylc in fact has a task-wrapping mechanism that does this automatically
-(Section~\ref{wrapping}), allowing you schedule a set of existing
-tasks without modifying them at all.  
-
-Each external task must:
-
-\begin{itemize}
-\item report (to cylc) when the task has started
-\item report when the task has finished
-\item report when every other registered task output has
-completed
-\end{itemize}
-
-(Technically, the `started' and `finished' messages are just
-outputs too, but they are special in that every task
-must have them).
-
-In addition, tasks can optionally:
-
-\begin{itemize}
-\item report any arbitrary unregistered (i.e. non-output)
-messages, for debugging, logging, or progress monitoring purposes.
-\end{itemize}
-
-All incoming messages are logged by cylc, but only output messages can
-affect the state of other task objects.
-
-Task messages don't necessarily have to originate from top level task
-control scripts. It's a probably a good idea to do this if possible, but
-lower level scripts that are invoked as the task runs can communicate
-directly with cylc if necessary.
-
 \subsection{Task Wrapping}
 \label{TaskWrapping}
 
@@ -1043,8 +994,8 @@ A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
 
 \pagebreak
-\section{Configuring A System}
-\label{ConfiguringASystem}
+\section{Configuring Defined Systems}
+\label{ConfiguringDefinedSystems}
 
 \subsection{System Config Files}
 \label{SystemConfigFiles}
@@ -1192,8 +1143,12 @@ with cylc:
 \lstset{language=}
 
 \pagebreak
-\section{Running Cylc}
-\label{RunningCylc}
+\section{Registering Configured Systems}
+\label{RegisteringConfigured}
+
+
+\section{Running Registered Systems}
+\label{RunningRegisteredSystems}
 
 \subsection{Dummy Mode} 
 \label{DummyMode}
@@ -1216,19 +1171,19 @@ is defined, begin adding writing the real task scripts in the same order,
 and test in real mode with undefined tasks turned off (comment them out 
 of the task list in the system config module). 
 
-\section{System Monitors}
-\label{SystemMonitors}
+\section{Monitoring Running Systems}
+\label{MonitoringRunningSystems}
 
 
-\section{Interacting With Running Systems}
-\label{InteractingWithRunningSystems}
+\section{Controlling Running Systems}
+\label{ControllingRunningSystems}
 
 \section{Packaged Example Systems}
 \label{PackagedExampleSystems}
 
 \pagebreak
-\section{Command Reference}
-\label{CommandReference}
+\section{Cylc Command Reference}
+\label{CylcCommandReference}
 
 Cylc commands are intended to be largely self documenting so the
 attendant text in this section is minimal: for each command there is
