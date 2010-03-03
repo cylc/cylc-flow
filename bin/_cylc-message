@@ -212,6 +212,8 @@ while True:
 # the "all completed" special options are implemented as short cut
 # functions in the task proxy objects
 
+task_id = taskname + '%' + ctime
+
 if options.all_restarts_completed:
     # set all forecast model restart outputs completed
     task.set_all_restarts_completed()
@@ -222,15 +224,15 @@ if options.all_outputs_completed:
     sys.exit(0)
 
 if options.started:
-    task.incoming( 'NORMAL', "started" )
+    task.incoming( 'NORMAL', task_id + " started" )
 
 elif options.succeeded:
-    task.incoming( 'NORMAL', "completed" )
-    task.incoming( 'NORMAL', "finished" )
+    task.incoming( 'NORMAL', task_id + " completed" )
+    task.incoming( 'NORMAL', task_id + " finished" )
 
 elif options.failed:
-    task.incoming( 'NORMAL', "completed" )
-    task.incoming( 'CRITICAL', "failed" )
+    task.incoming( 'NORMAL', task_id + " completed" )
+    task.incoming( 'CRITICAL', task_id + " failed" )
 
 else:
     task.incoming( 'NORMAL', message )

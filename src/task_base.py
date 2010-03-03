@@ -306,6 +306,9 @@ class task_base( Pyro.core.ObjBase ):
         # receive all incoming pyro messages for this task 
         self.latest_message = message
 
+        if message == self.get_identity() + ' started':
+            self.state.set_status( 'running' )
+
         # set state_changed if this message satisfies any registered
         # output (indicates that the task manager needs to instigate a
         # new round of dependency renegotiations)
@@ -317,9 +320,9 @@ class task_base( Pyro.core.ObjBase ):
             self.log( 'WARNING', '-> ' + message )
 
         # prefix task id to special messages.
-        raw_message = message
-        if message == 'started' or message == 'finished' or message == 'failed' or message == 'completed':
-            message = self.get_identity() + ' ' + message
+        #raw_message = message
+        #if message == 'started' or message == 'finished' or message == 'failed' or message == 'completed':
+        #    message = self.get_identity() + ' ' + message
  
         if self.outputs.exists( message ):
             # registered output messages
@@ -343,7 +346,7 @@ class task_base( Pyro.core.ObjBase ):
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )
                 self.log( 'WARNING', "-> " + message )
 
-        elif raw_message == 'failed':
+        elif message == self.get_identity() + ' failed':
             # process task failure messages
             if priority != 'CRITICAL':
                 self.log( 'WARNING', 'non-critical priority for task failure' )
