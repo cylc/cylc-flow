@@ -256,8 +256,12 @@ def commandline_parser():
             action="store_true", dest="task_proc_reason" )
 
     parser.add_option( "--exclude",
-            help="Exclude the named tasks from the startup task list",
+            help="Exclude all named tasks from the task list at startup",
             metavar="Task1,Task2,...", action="store", dest='exclude' )
+
+    parser.add_option( "--include",
+            help="Run only the named tasks from the task list at startup",
+            metavar="Task1,Task2,...", action="store", dest='include' )
 
     return parser
 
@@ -421,12 +425,21 @@ if options.restart_from:
 
     startup[ 'initial state dump' ] = filename
 
+if options.include and options.exclude:
+    parser.error( '--include and --exclude are mutually exclusive' )
+
 if options.exclude:
     exclude = options.exclude.split(',')
 else:
     exclude = []
-
 startup[ 'exclude' ] = exclude
+
+if options.include:
+    include = options.include.split(',')
+else:
+    include = []
+startup[ 'include' ] = include
+
 
 # remotely accessible system state summary
 system_state = state_summary.state_summary( config, dummy_mode )
