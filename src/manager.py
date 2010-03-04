@@ -43,7 +43,7 @@ class manager:
         self.tasks = []
         if startup[ 'restart' ]:
             if 'initial start dump' in startup:
-                self.load_from_state_dump( startup[ 'initial start dump' ] )
+                self.load_from_state_dump( startup[ 'initial state dump' ] )
             else:
                 self.load_from_state_dump( config.get( 'state_dump_file' ) )
         else:
