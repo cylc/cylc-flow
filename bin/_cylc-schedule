@@ -42,7 +42,7 @@ def print_banner():
 
     template = re.sub( '.', '.', longest_item )
 
-    print "STARTUP CONFIGURATION:"
+    print "GLOBAL CONFIG:"
     for item in banner.keys():
         print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( banner[ item ] )
     for item in startup.keys():
@@ -358,12 +358,12 @@ os.environ[ 'PYTHONPATH' ] += ':' + system_dir
 sys.path.append( system_dir )
 
 # import system-specific cylc modules now------------------------------ 
-import config        # loads system_config.py
+import system_config # loads config_defaults.py and config_override.py 
 import task_base     # loads system_tasks.py
 import remote_switch # ditto
 
 # load system configuration--------------------------------------------
-system_config = config.config( reg_name )
+config = system_config.system_config( reg_name )
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 nameserver = locate_pyro_nameserver()
@@ -390,17 +390,17 @@ clock = accelerated_clock.clock(
 daemon.connect( clock, ns_obj_name( 'clock', groupname ))
 
 # logging dir
-logging_dir = system_config.get('logging_dir')
+logging_dir = config.get('logging_dir')
 banner[ 'logging directory' ] = logging_dir
 
 # set up main log already, for use in this module
 log = logging.getLogger( 'main' )
 pimp_my_logger.pimp_it( \
-        log, 'main', system_config.get('logging_dir'), \
-        system_config.get('logging_level'), dummy_mode, clock )
+        log, 'main', config.get('logging_dir'), \
+        config.get('logging_level'), dummy_mode, clock )
 
 # state dump file
-state_dump_file = system_config.get( 'state_dump_file' )
+state_dump_file = config.get( 'state_dump_file' )
 banner[ 'state dump file' ] = state_dump_file
 if os.path.exists( state_dump_file ):
     backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
@@ -411,14 +411,14 @@ if options.restart_from:
     filename = options.restart_from
     if not os.path.exists( filename ):
         # assume located in state dump dir
-        filename = system_config.get('state_dump_dir') + '/' + filename
+        filename = config.get('state_dump_dir') + '/' + filename
         if not os.path.exists( filename ):
             raise SystemExit( "ERROR: initial state dump not found" )
 
     startup[ 'initial state dump' ] = filename
 
 # remotely accessible system state summary
-system_state = state_summary.state_summary( system_config, dummy_mode )
+system_state = state_summary.state_summary( config, dummy_mode )
 daemon.connect( system_state, ns_obj_name( 'state_summary', groupname ))
 
 # dead letter box for remote use
@@ -427,14 +427,14 @@ daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', groupname))
 
 # load some command line options and dynamic stuff into config
 # module, for easy handling.
-system_config.put( 'daemon', daemon )
-system_config.put( 'clock', clock )
+config.put( 'daemon', daemon )
+config.put( 'clock', clock )
 
 # initialize the task manager
-pool = manager.manager( system_config, groupname, dummy_mode, startup )
+pool = manager.manager( config, groupname, dummy_mode, startup )
 
 # remote control switch
-remote = remote_switch.remote_switch( system_config, pool.get_tasks() )
+remote = remote_switch.remote_switch( config, pool.get_tasks() )
 daemon.connect( remote, ns_obj_name( 'remote', groupname) )
 
 # set global (all tasks) environment variables-------------------------
@@ -448,7 +448,7 @@ if dummy_mode:
         os.environ[ 'FAILOUT_ID' ] = options.failout_task_id
 
 # extra global vars set in the system config file
-env = system_config.get('environment')
+env = config.get('environment')
 for VAR in env.keys():
     #print "! setting", VAR, '=', env[VAR]
     os.environ[ VAR ] = env[ VAR ]
@@ -456,6 +456,7 @@ for VAR in env.keys():
 
 # print system information at startup----------------------------------
 print_banner()
+config.dump()
 print "\nSTARTING\n"
 
 count = 0

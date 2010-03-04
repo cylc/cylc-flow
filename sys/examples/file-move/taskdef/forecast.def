@@ -18,7 +18,7 @@
     forecast.sh
 
 %ENVIRONMENT
-    NEXT_CYCLE_TIME $(CYLC_TIME + 6)
+    NEXT_CYLC_TIME $(CYLC_TIME + 6)
 
 %PREREQUISITES
     "external data ready for $(CYLC_TIME)"

@@ -110,7 +110,7 @@ def main( argv ):
             'REMOTE_HOST', 
             'ENVIRONMENT', 'SINGLE_CYCLE', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
-            'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', #'JOB_SUBMIT_METHOD',
+            'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 
             'ONEOFF_FOLLOW_ON', 'ESTIMATED_RESTART_DUMP_TIMES' ]
 
     allowed_types = ['forecast_model', 'free_task' ]
