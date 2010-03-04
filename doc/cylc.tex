@@ -581,21 +581,18 @@ option above).
 \label{QuickStartGuide}
 
 The following is a quick summary of the steps required to get a system
-running under cylc. It is meant as a reminder to those who have already
-read and understood the full documentation in the following sections.
+running under cylc. 
 
 \subsection{Constructing A New Forecasting System}
 
-Define your system incrementally (see Section~\ref{incremental}) in dummy mode.
-This enables you to get the {\em scheduling} right (prerequisites and
-outputs) for a complex system without ever having to deal with running
-the real tasks. See Section~\ref{dummymode}.  
-
-Then (or in parallel with the system definition process) start writing
-the scripts that cylc calls to run the real tasks. The system can also
-be tested incrementally in real mode: turn off tasks that are defined
-but not yet completed, by commenting them out of the configuration task
-list.
+You can get the {\em scheduling} right for a complex system without ever
+having to run real tasks, but testing incrementally in dummy mode as you
+define each task. Then (or in parallel with the task definition process)
+you can also test the real system incrementally as you write its task
+scripts (by which cylc runs the real tasks) by turning off all the
+tasks that you're not yet interested in (this can be done through the
+'--include' and '--exclude' scheduler options, or by commenting tasks
+out of the configured task list.
 
 \pagebreak
 \subsection{System Definition} 
@@ -1468,13 +1465,15 @@ decides when a task is *ready* to run - i.e.\ when its prerequisites
 are satisfied.  If the external task is delayed because of resource
 contention, it will not report its outputs complete until it does run.
 
-\subsection{Known Limitations}
+\subsection{Known Bugs and Limitations}
 
 \begin{itemize}
     \item cycle time minimum granularity = 1 hour. Note this is
         only loosely connected to when, or how frequently, a task
         actually runs, and only in real time operation. Would be easy to
         extend to minutes and seconds, if necessary.
+
+    \item why we need the nudge option - maybe should use a timeout too.
 \end{itemize}
 
 \end{document}
