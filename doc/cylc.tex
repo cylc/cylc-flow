@@ -586,8 +586,16 @@ read and understood the full documentation in the following sections.
 
 \subsection{Constructing A New Forecasting System}
 
-Do this incrementally (see Section~\ref{incremental}) using {\bf dummy
-mode} (see Section~\ref{dummymode}).  
+Define your system incrementally (see Section~\ref{incremental}) in dummy mode.
+This enables you to get the {\em scheduling} right (prerequisites and
+outputs) for a complex system without ever having to deal with running
+the real tasks. See Section~\ref{dummymode}.  
+
+Then (or in parallel with the system definition process) start writing
+the scripts that cylc calls to run the real tasks. The system can also
+be tested incrementally in real mode: turn off tasks that are defined
+but not yet completed, by commenting them out of the configuration task
+list.
 
 \pagebreak
 \subsection{System Definition} 
