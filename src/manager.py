@@ -47,7 +47,7 @@ class manager:
             else:
                 self.load_from_state_dump( config.get( 'state_dump_file' ) )
         else:
-            self.load_from_config( startup[ 'start time' ] )
+            self.load_from_config( startup['start time'], startup['exclude'] )
 
     def get_tasks( self ):
         return self.tasks
@@ -76,7 +76,7 @@ class manager:
                 oldest = itask.c_time
         return oldest
 
-    def load_from_config ( self, start_time ):
+    def load_from_config ( self, start_time, exclude ):
         # load initial system state from configured tasks and start time
         #--
         
@@ -88,6 +88,9 @@ class manager:
         # config.task_list = [ taskname1, taskname2, ...]
 
         for name in self.config.get('task_list'):
+            if name in exclude:
+                continue
+
             # instantiate the task
             itask = get_object( 'system_tasks', name )\
                     ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], True )

@@ -255,6 +255,10 @@ def commandline_parser():
             help="(Debug) explain why the task processing loop was invoked",
             action="store_true", dest="task_proc_reason" )
 
+    parser.add_option( "--exclude",
+            help="Exclude the named tasks from the startup task list",
+            metavar="Task1,Task2,...", action="store", dest='exclude' )
+
     return parser
 
 # =====================================================================
@@ -416,6 +420,13 @@ if options.restart_from:
             raise SystemExit( "ERROR: initial state dump not found" )
 
     startup[ 'initial state dump' ] = filename
+
+if options.exclude:
+    exclude = options.exclude.split(',')
+else:
+    exclude = []
+
+startup[ 'exclude' ] = exclude
 
 # remotely accessible system state summary
 system_state = state_summary.state_summary( config, dummy_mode )
