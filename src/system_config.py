@@ -116,13 +116,17 @@ class system_config:
         self.configured[ key ] = value
 
     def dump( self ):
-        print "SYSTEM CONFIG FOR " + self.system_name 
+        print "SYSTEM CONFIG for " + self.system_name 
         items = self.configured.keys()
 
         plain_items = {}
         sub_items = []
         for item in items:
-            if item in ['clock', 'daemon', 'job_submit_method', 'job_submit_overrides' ]:
+            if item in ['clock', \
+                    'daemon', \
+                    'job_submit_method', \
+                    'job_submit_overrides', \
+                    'state_dump_file' ]:
                 # TO DO: CLOCK AND DAEMON SHOULD NOT BE IN CONFIG!
                 # job_submit_method and _overrides are subsumed into
                 # the 'submit' item.

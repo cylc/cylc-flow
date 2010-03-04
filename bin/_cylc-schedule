@@ -289,10 +289,10 @@ else:
 # get mode of operation------------------------------------------------
 if options.dummy_mode:
     dummy_mode = True
-    banner[ 'mode of operation' ] = 'real'
+    banner[ 'mode of operation' ] = 'DUMMY'
 else:
     dummy_mode = False
-    banner[ 'mode of operation' ] = 'dummy'
+    banner[ 'mode of operation' ] = 'real'
 
 # get startup configuration--------------------------------------------
 
@@ -395,7 +395,6 @@ daemon.connect( clock, ns_obj_name( 'clock', groupname ))
 
 # logging dir
 logging_dir = config.get('logging_dir')
-banner[ 'logging directory' ] = logging_dir
 
 # set up main log already, for use in this module
 log = logging.getLogger( 'main' )
