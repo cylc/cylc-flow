@@ -35,6 +35,7 @@ usage = \
     '  control       Interact with a running system.',
     '',
     '  message       Send a message to a task proxy object.',
+    '  run-task      Run as single task just as cylc would run it',
     '',
     '  monitor       Monitor all task proxy objects.',
     '  monitor-r     Monitor running task proxies.',

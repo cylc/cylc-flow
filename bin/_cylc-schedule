@@ -401,7 +401,7 @@ banner[ 'logging directory' ] = logging_dir
 log = logging.getLogger( 'main' )
 pimp_my_logger.pimp_it( \
         log, 'main', config.get('logging_dir'), \
-        config.get('logging_level'), dummy_mode, clock )
+        config.get('logging_level'), dummy_mode, None )
 
 # state dump file
 state_dump_file = config.get( 'state_dump_file' )

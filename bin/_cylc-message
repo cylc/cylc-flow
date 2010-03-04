@@ -109,7 +109,45 @@ else:
         print 'ERROR, cylc message: no task name provided'
         sys.exit(1)
 
-# GET SYSTEM NAME------------------------------------------------------
+# GET TASK CYCLE TIME--------------------------------------------------
+if options.ctime:
+    # command line
+    ctime = options.ctime
+else:
+    # Default to $CYLC_TIME
+    if 'CYLC_TIME' in os.environ.keys():
+        ctime = os.environ[ 'CYLC_TIME' ]
+    else:
+        print 'ERROR, cylc message: no cycle time provided!'
+        sys.exit(1)
+
+if 'CYLC_STANDALONE' in os.environ.keys():
+    task_id = taskname + '%' + ctime
+
+    if options.all_restarts_completed:
+        # set all forecast model restart outputs completed
+        msg = "--all-restarts-complete"
+
+    if options.all_outputs_completed:
+        msg = "--all-outputs-complete"
+
+    if options.started:
+        msg = task_id + " started"
+
+    elif options.succeeded:
+        msg = task_id + " completed, finished"
+
+    elif options.failed:
+        msg = task_id + " completed, finished"
+
+    else:
+        msg = args
+
+    print "MESSAGE: ", msg
+    sys.exit(0)
+
+
+ # GET SYSTEM NAME------------------------------------------------------
 if options.groupname:
     # command line
     groupname = options.groupname
@@ -136,18 +174,7 @@ else:
     print 'WARNING, cylc message: no Pyro nameserver hostname provided!'
     print 'will attempt to connect to a namerserver on localhost'
      
-# GET TASK CYCLE TIME--------------------------------------------------
-if options.ctime:
-    # command line
-    ctime = options.ctime
-else:
-    # Default to $CYLC_TIME
-    if 'CYLC_TIME' in os.environ.keys():
-        ctime = os.environ[ 'CYLC_TIME' ]
-    else:
-        print 'ERROR, cylc message: no cycle time provided!'
-        sys.exit(1)
- 
+
 # CHECK ARGS AND OPTIONS-----------------------------------------------
 
 # the automatic messaging options must be used alone

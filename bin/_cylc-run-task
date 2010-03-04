@@ -1,0 +1,119 @@
+#!/usr/bin/python
+
+# standard Python modules
+import re, os, sys, shutil
+import datetime
+import logging
+from time import sleep
+from optparse import OptionParser
+from dynamic_instantiation import get_object
+
+# cycl source modules
+import cycle_time
+import pimp_my_logger
+
+usage = """cylc run-task -s NAME -c TIME -t NAME
+Run a single task exactly as it would be run by cylc."""
+
+def commandline_parser():
+    parser = OptionParser( usage )
+
+    parser.add_option( "-s", 
+            help="Name of a registered cylc system",
+            metavar="NAME", action="store", dest="reg_name" )
+
+    parser.add_option( "-t", 
+            help="Task Name",
+            metavar="NAME", action="store", dest="task_name" )
+
+    parser.add_option( "-c", 
+            help="Cycle time",
+            metavar="NAME", action="store", dest="ctime" )
+
+    return parser
+
+# parse commandline options and arguments------------------------------
+parser = commandline_parser()
+( options, args ) = parser.parse_args()
+
+# get system name------------------------------------------------------
+if not options.reg_name:
+    parser.error( "Required: registered system name" )
+else:
+    reg_name = options.reg_name
+
+# get task name--------------------------------------------------------
+if not options.task_name:
+    parser.error( "Required: task name" )
+else:
+    task_name = options.task_name
+
+# get cycle time-=-----------------------------------------------------
+if not options.ctime:
+    parser.error( "Required: cycle time" )
+else:
+    ctime = options.ctime
+
+if not cycle_time.is_valid( ctime ):
+    parser.error( "invalid START time: " + ctime )
+
+# find location of the system task and config modules------------------
+registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name
+if os.path.exists( registration_file ):
+    FILE = open( registration_file, 'r' )
+    line = FILE.read()
+    system_dir = line.rstrip() 
+    FILE.close()
+else:
+    raise SystemExit( "No such system name registered: " + reg_name )
+
+# provide access to the system scripts and source modules--------------
+# for external processes launched by this program.
+print system_dir
+# add system scripts to $PATH
+os.environ[ 'PATH' ] += ':' + system_dir + '/scripts'
+# add system Python modules to $PYTHONPATH
+os.environ[ 'PYTHONPATH' ] += ':' + system_dir
+
+# provide access to the system source modules for THIS program---------
+sys.path.append( system_dir )
+
+# import system-specific cylc modules now------------------------------ 
+import system_config # loads config_defaults.py and config_override.py 
+import task_base     # loads system_tasks.py
+import remote_switch # ditto
+
+# load system configuration--------------------------------------------
+config = system_config.system_config( reg_name )
+
+# logging dir
+logging_dir = config.get('logging_dir')
+
+# set up main log already, for use in this module
+log = logging.getLogger( 'main' )
+pimp_my_logger.pimp_it( \
+        log, 'main', config.get('logging_dir'), \
+        config.get('logging_level'), False, None )
+
+# intantiate the task
+task = get_object( 'system_tasks', task_name ) \
+        ( ctime, False, 'waiting', config.get('submit')[ task_name ], True )
+
+# create the task log
+log = logging.getLogger( 'main.' + task_name )
+pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
+        config.get('logging_level'), False, None )
+
+# set global (all tasks) environment variables-------------------------
+os.environ[ 'CYLC_STANDALONE' ] = 'true'
+os.environ[ 'CYLC_NS_HOST' ] = 'NULL'
+os.environ[ 'CYLC_NS_GROUP' ] = 'NULL'
+
+# extra global vars set in the system config file
+env = config.get('environment')
+for VAR in env.keys():
+    #print "! setting", VAR, '=', env[VAR]
+    os.environ[ VAR ] = env[ VAR ]
+
+task.run_external_task()
+
