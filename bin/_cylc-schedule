@@ -180,13 +180,13 @@ usage = """cylc schedule [options] SYSTEM
 
 Start scheduling a configured cylc system. 
 
-To cold start, give an initial cycle time using --start. At least one
-task in the system must have no prerequisites, or nothing will happen! 
-Each task in the system task list will start at the first cycle time
-valid for that task at or beyond the start time.
+To cold start a system give an initial cycle time. Each task in the task
+list will be instantiated with a cycle time equal to the initial cycle
+time, or to the first subsequent cycle time that is valid for that task.
+At least one task must have no prerequisites, or nothing will happen. 
 
-To restart, use --restart or --restart-from=FILE. Any task that was
-"submitted", "running" or "failed" will restart in the "waiting" state.
+In a restart, any task that was "submitted", "running" or "failed" will
+be restarted in the "waiting" state.
 
 arguments:
    SYSTEM               Registered name of the forecasting system.""" 
