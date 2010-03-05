@@ -23,15 +23,16 @@ usage = """cylc message [options] [MESSAGE]
 
 Send a message to a task proxy object in a running cylc system.
 
-THIS COMMAND IS USED BY TASKS TO UPDATE THEIR TASK PROXY OBJECTS.
-Task proxy objects are uniquely identified by their name and cycle time,
-which must be known by this script in order to target the right proxy
-object. Cylc exports these variables into the environment as $CYLC_TASK
-and $CYLC_TIME when it submits an external task, so the external task
-can simply call 'cylc message MESSAGE' and this script will read the
-right name and cycle time from the environment (i.e. the task itself
-does not need to know the name by which cylc refers to it, although it
-too can get the name from the environment if it wants to).
+THIS COMMAND IS USED BY EXTERNAL TASKS TO UPDATE THE PROXY OBJECTS THAT
+REPRESENT THEM IN A RUNNING CYLC SCHEDULER. Task proxy objects are
+uniquely identified by their name and cycle time, which must be known by
+this script in order to target the right object. Cylc exports these
+variables into the environment as $CYLC_TASK and $CYLC_TIME when it
+submits an external task, so the external task can simply call 'cylc
+message MESSAGE' and this script will read the right name and cycle time
+from the environment (i.e. the task itself does not need to know the
+name by which cylc refers to it, although it too can get the name from
+the environment if it wants to).
 
 Note that where other cylc commands need to be given a registered system
 name, this one needs the group name under which the system's task proxy
