@@ -178,7 +178,7 @@ def ns_obj_name( name, groupname ):
 
 usage = """cylc schedule [options] SYSTEM
 
-Start up a scheduler for a system registered under the name SYSTEM. 
+Start scheduling a forecasting system. 
 
 To COLD START a system, give an initial cycle time using --start. At
 least one task in the system (normally a one-off startup task) must have

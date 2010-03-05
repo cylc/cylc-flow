@@ -40,7 +40,7 @@ Interact with (interrogate or control) a running cylc system.
 
 If the target system is not running under your username you must use
 --user=USERNAME so that the right Pyro nameserver group name can be
-inferred (cylc uses USERNAME_SYSTEMNAME).
+inferred (cylc uses USERNAME_SYSTEM).
 
 arguments:
    SYSTEM               Registered name of the target system.""" 

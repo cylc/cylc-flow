@@ -19,16 +19,11 @@ from optparse import OptionParser
 from time import sleep
 
 # PARSE THE COMMAND LINE-----------------------------------------------
-usage = """
-General messages:
-   cylc message [options] MESSAGE 
-Automatic messages:
-  cylc message [--started OR --succeeded OR --failed]
-  cylc message [--set-all-restarts-completed OR --set-all-outputs-completed]
+usage = """cylc message [options] [MESSAGE] 
 
 Send a message to a task proxy object in a running cylc system.
 
-THIS COMMAND ALLOWS TASKS TO COMMUNICATE WITH THEIR TASK PROXY OBJECTS.
+THIS COMMAND IS USED BY TASKS TO UPDATE THEIR TASK PROXY OBJECTS.
 Task proxy objects are uniquely identified by their name and cycle time,
 which must be known by this script in order to target the right proxy
 object. Cylc exports these variables into the environment as $CYLC_TASK
@@ -38,21 +33,21 @@ right name and cycle time from the environment (i.e. the task itself
 does not need to know the name by which cylc refers to it, although it
 too can get the name from the environment if it wants to).
 
-This command can also be used to "fake" task messages, for debugging or
-system intervention purposes, in which case all required inputs can be
-supplied on the command line.
-
 Note that where other cylc commands need to be given a registered system
 name, this one needs the group name under which the system's task proxy
 objects are registered in the Pyro nameserver. Depending on network
 configuration, the Pyro nameserver hostname may also be required. Cylc
 puts these in the task execution environment as $CYLC_NS_GROUP and
-$CYLC_NS_HOST.  For command line use, the group name can be inferred as
-USERNAME_SYSTEMNAME, where USERNAME is the owner of the running cylc
-scheduler that you want to send a message to.
+$CYLC_NS_HOST. 
+
+This command can also be used to "fake" task messages, for debugging or
+system intervention purposes, in which case all input can be taken from 
+the command line. You need to use --system and, if the target system is
+not running under your username, --user, so that the right Pyro
+nameserver group name can be inferred (cylc uses USERNAME_SYSTEM).
 
 arguments:
-   MESSAGE              The message to send, as a quoted string."""
+   MESSAGE              A quoted string."""
 
 parser = OptionParser( usage )
 
@@ -62,55 +57,58 @@ parser.set_defaults( started=False, success=False, failure=False,
 
 parser.add_option( "-t", 
         metavar='TASK',
-        help="Task name, defaults to $CYLC_TASK",
+        help="Task name, defaults to $CYLC_TASK.",
         action="store", dest="taskname" )
 
-parser.add_option( "-g",
-        metavar="GROUP",
-        help="The group name used to register system objects in the Pyro "
-        "nameserver (cylc uses '{USERNAME}_{SYSTEM}'). Defaults to "
-        "$CYLC_NS_GROUP.",
-        action="store", dest="groupname" )
+parser.add_option( "-s", "--system",
+        metavar="SYSTEM",
+        help="The name of the system hosting the target task proxy object.",
+        action="store", dest="system_name" )
 
-parser.add_option( "-n", 
+parser.add_option( "-u", "--user",
+        help="Owner of the target system (i.e. the username under which "
+        "the scheduler is running). Defaults to your username, $USER.",
+        metavar="USERNAME", action="store", dest="username" )
+
+parser.add_option( "-n", "--hostname",
         help="Hostname of the machine running the Pyro nameserver, "
-            "defaults to $CYLC_NS_HOST, then localhost",
+            "defaults to $CYLC_NS_HOST, then localhost.",
         metavar="HOSTNAME", action="store", dest="pns_host" )
 
 parser.add_option( "--started",
-        help="Send a special message indicating a task has"
-        "started executing",
+        help="Send an automatic message indicating a task has "
+        "started executing.",
         action="store_true", dest="started" )
 
 parser.add_option( "--succeeded",
-        help="Send a special message indicating a task has"
-        "completed successfully",
+        help="Send an automatic message indicating a task has "
+        "completed successfully.",
         action="store_true", dest="succeeded" )
 
 parser.add_option( "--failed",
-        help="Send a special message indicating a task has"
-        "failed to complete successfully",
+        help="Send an automatic message indicating a task has "
+        "failed to complete successfully.",
         action="store_true", dest="failed" )
 
 parser.add_option( "-p",
         metavar="PRIORITY",
         type="choice",
         choices=[ 'NORMAL', 'WARNING', 'CRITICAL' ],
-        help="message logging priority, default NORMAL",
+        help="message logging priority: NORMAL, WARNING, or CRITICAL; default NORMAL.",
         action="store", dest="priority" )
 
 parser.add_option( "-c",
         metavar="CYCLE",
-        help="Task cycle time, YYYYMMDDHH, defaults to $CYLC_TIME",
+        help="Task cycle time (YYYYMMDDHH) defaults to $CYLC_TIME.",
         action="store", dest="ctime" )
 
 parser.add_option( "--all-restart-outputs-completed", 
-        help="Report all forecast model restart outputs completed at once",
+        help="Report all forecast model restart outputs completed at once.",
         action="store_true", dest="all_restarts_completed" )
 
 parser.add_option( "--all-outputs-completed", 
         help="Report all task outputs completed at once "
-             "EXCEPT for the special 'completed' and 'finished' outputs",
+             "EXCEPT for the special 'completed' and 'finished' outputs.",
         action="store_true", dest="all_outputs_completed" )
 
 ( options, args ) = parser.parse_args()
@@ -165,17 +163,21 @@ if 'CYLC_STANDALONE' in os.environ.keys():
     sys.exit(0)
 
 
- # GET SYSTEM NAME------------------------------------------------------
-if options.groupname:
-    # command line
-    groupname = options.groupname
+# GET SYSTEM NAME------------------------------------------------------
+
+if 'CYLC_NS_GROUP' in os.environ.keys():
+    groupname = os.environ[ 'CYLC_NS_GROUP' ]
+
 else:
-    # Default to $CYLC_NS_GROUP
-    if 'CYLC_NS_GROUP' in os.environ.keys():
-        groupname = os.environ[ 'CYLC_NS_GROUP' ]
+    if options.username:
+        username = options.username
     else:
-        print 'ERROR, cylc message: no system name provided'
-        sys.exit(1)
+        username = os.environ[ 'USER' ] 
+
+    if options.system_name:
+        groupname = username + '_' + options.system_name
+    else:
+        raise SystemExit( 'Cannot get Pyro groupname from input' )
 
 # GET PYRO NAMESERVER HOST---------------------------------------------
 if options.pns_host:

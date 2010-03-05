@@ -33,7 +33,7 @@ that necessarily depends on the job submission method used by the system
 
 If the target system is not running under your username you must use
 --user=USERNAME so that the right Pyro nameserver group name can be
-inferred (cylc uses USERNAME_SYSTEMNAME).
+inferred (cylc uses USERNAME_SYSTEM).
 
 arguments:
    SYSTEM         Registered name of the target system.""")
@@ -49,7 +49,8 @@ parser.add_option( "-n", "--nameserver",
         metavar="HOSTNAME", action="store", default="localhost",
         dest="pns_host" )
 
-parser.add_option( "-a", help="Align columns by task name. This option "
+parser.add_option( "-a", "--align", 
+        help="Align columns by task name. This option "
         "is only useful for relatively small systems (i.e. a few tasks).",
         action="store_true", default=False, dest="align_columns" )
 
