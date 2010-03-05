@@ -14,9 +14,10 @@ import pimp_my_logger
 
 usage = """cylc run-task [-t TASK] [-c CYCLE] SYSTEM
 
-Run a single task from a cylc system just as it would be run by the
-scheduler. This can be used, in particular, to test external task
-scripts during the system development phase (i.e. when you are defining
+Run a single task that belongs to a cylc system just as it would be run
+by the scheduler. This can be used as an easy way to invoke single
+system tasks for any reason, but it is particularly useful for testing
+external task scripts during the development phase when you are defining
 the interface between cylc and your forecasting system).
 
 arguments:
