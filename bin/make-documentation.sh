@@ -7,13 +7,18 @@ set -e
 usage() {
 	echo "USAGE: [-f] $0"
     echo ' -f, force re-conversion of eps figures to PDF'
-	echo "Run script in the cylc top level directory"
+    echo "Run this script in the top level of your cylc repository"
 }
 
 [[ $# > 1 ]] && {
     usage
 	exit 1
 }
+
+if [[ ! -f bin/cylc ]]; then
+    echo "Run this script in the top level of your cylc repository"
+    exit 1
+fi
 
 FORCE=false
 if [[ $# == 1 ]]; then 
