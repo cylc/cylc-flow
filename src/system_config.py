@@ -45,7 +45,7 @@ class system_config:
             print 'ERROR IN USER CONFIG MODULE'
             raise
         else:
-            print 'Setting user config override for ' + reg_name
+            print 'Loading config overrides for ' + reg_name
             self.load_config( config_override.config )
 
 
@@ -68,12 +68,12 @@ class system_config:
                     raise SystemExit( "Task group member " + task + " not in task list" )
 
         # create dict of job submit methods by task name
-        self.configured['submit'] = {}
+        self.configured['job submit class'] = {}
         for task in self.configured['task_list']:
-            self.configured['submit'][ task ] = self.configured[ 'job_submit_method' ]
+            self.configured['job submit class'][ task ] = self.configured[ 'job_submit_method' ]
             for method in self.configured[ 'job_submit_overrides' ]:
                 if task in self.configured[ 'job_submit_overrides' ][ method ]:
-                    self.configured['submit'][ task ] = method
+                    self.configured['job submit class'][ task ] = method
 
         # DYNAMIC CONFIG
         # add registered system name to the logging and state dump dirs
@@ -116,7 +116,6 @@ class system_config:
         self.configured[ key ] = value
 
     def dump( self ):
-        print "SYSTEM CONFIG for " + self.system_name 
         items = self.configured.keys()
 
         plain_items = {}
@@ -129,24 +128,31 @@ class system_config:
                     'state_dump_file' ]:
                 # TO DO: CLOCK AND DAEMON SHOULD NOT BE IN CONFIG!
                 # job_submit_method and _overrides are subsumed into
-                # the 'submit' item.
+                # the 'job submit class' item.
                 continue
 
             try:
-                subitems = item.keys()
+                subitems = (self.configured[item]).keys()
+                sub_items.append( item )
             except:
                 plain_items[ item ] = self.configured[ item ]
-            else:
-                sub_items.append( item )
 
         self.dump_dict( plain_items )
 
         for item in sub_items:
-            self.dump_dict( self.configured[ item ] )
+            self.dump_dict( self.configured[ item ], item )
 
-    def dump_dict( self, mydict ):
+    def dump_dict( self, mydict, name = None ):
+
+        indent = ' o '
+        if name:
+            print ' o  ' + name + ':'
+            indent = '   - '
 
         items = mydict.keys()
+        if len( items ) == 0:
+            return
+
         longest_item = items[0]
         for item in items:
             if len(item) > len(longest_item):
@@ -155,5 +161,5 @@ class system_config:
         template = re.sub( '.', '.', longest_item )
 
         for item in items:
-            print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( mydict[ item ] )
+            print indent, re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( mydict[ item ] )
 

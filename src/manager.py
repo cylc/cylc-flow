@@ -25,7 +25,7 @@ class manager:
         # TO DO: just use self.config.get('foo') throughout
         self.clock = config.get('clock')
         self.pyro = config.get('daemon')  
-        self.submit = config.get('submit' )
+        self.submit = config.get('job submit class' )
 
         self.log = logging.getLogger( "main" )
 

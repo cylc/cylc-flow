@@ -42,7 +42,6 @@ def print_banner():
 
     template = re.sub( '.', '.', longest_item )
 
-    print "GLOBAL CONFIG:"
     for item in banner.keys():
         print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( banner[ item ] )
     for item in startup.keys():
@@ -291,7 +290,7 @@ if not options.pns_host:
     parser.error( "Required: Pyro nameserver hostname" )
 else:
     pns_host = options.pns_host
-    banner[ 'Pyro nameserver hostname' ] = pns_host
+    banner[ 'Pyro nameserver' ] = pns_host
 
 # get mode of operation------------------------------------------------
 if options.dummy_mode:
@@ -460,6 +459,7 @@ for VAR in env.keys():
 
 # print system information at startup----------------------------------
 print_banner()
+print
 config.dump()
 print "\nSTARTING\n"
 
