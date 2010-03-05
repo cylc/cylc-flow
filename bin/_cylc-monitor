@@ -36,7 +36,7 @@ If the target system is not running under your username you must use
 inferred (cylc uses USERNAME_SYSTEM).
 
 arguments:
-   SYSTEM         Registered name of the target system.""")
+   SYSTEM               Registered name of the target system.""")
 
 parser.add_option( "-u", "--user",
         help="Owner of the target system (i.e. the username under which "

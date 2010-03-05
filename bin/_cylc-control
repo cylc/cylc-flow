@@ -36,7 +36,7 @@ def prompt( reason ):
 # construct a command line parser
 usage = """cylc control [options] SYSTEM 
 
-Interact with (interrogate or control) a running cylc system.
+Control a running cylc system.
 
 If the target system is not running under your username you must use
 --user=USERNAME so that the right Pyro nameserver group name can be
@@ -113,18 +113,6 @@ parser.add_option( "--purge",
 parser.add_option( "--insert", 
         help="Insert a new TASK or TASK GROUP into a running system.",
         metavar="NAME%CYCLE", action="store", dest="insert_task_id" )
-
-parser.add_option( "--dump", 
-        help="Display the current status of one or more task's prerequisites, "
-        "outputs, and any other information deemed relevant to scheduling.",
-        metavar="NAME1,NAME2,...%CYCLE", 
-        action="store", dest="dump_task_id" )
-
-parser.add_option( "--describe-task", 
-        help="Display the description of one or more task types"
-        "(no cycle time required).",
-        metavar="NAME1,NAME2,...", 
-        action="store", dest="describe_names" )
 
 verbosity_choices = ['debug','info', 'warning', 'error', 'critical'] 
 parser.add_option( "-v", "--verbosity",
@@ -228,88 +216,6 @@ if options.verbosity:
 if options.insert_task_id:
     if prompt( 'Insert ' + options.insert_task_id + ' in' ):
         control.insert( options.insert_task_id )
-
-if options.describe_names:
-
-    print
-    print 'system: ' + system_name
-
-    # retrieve and print task class descriptions
-    if re.search( ',', options.describe_names ):
-        # multiple names
-        names = options.describe_names.split( ',' )
-    else:
-        # one name
-        names = [ options.describe_names ]
-
-    # strip off cycle time, if given
-    names = [ re.sub( '%.*', '', name ) for name in names ]
-
-    info = control.get_task_info( names )
-    for name in info.keys():
-        print
-        print name + ':'
-        for line in info[name]:
-            print '  ' + line
-    print
-
-if options.dump_task_id:
-    [ tmp, ctime ] = options.dump_task_id.split( '%' )
-    if re.search( ',', tmp ):
-        names = tmp.split( ',' )
-    else:
-        names = [ tmp ]
-
-    ids = []
-    for name in names:
-        id = name + '%' + ctime
-        ids.append( id )
-
-    result = control.get_task_requisites( ids )
-
-    print
-    print 'System:  ' + system_name
-    print 'Task ID: ' + id
-    print
-    print ' + => prerequisite satisfied, or output completed' 
-    print ' - => prerequisite NOT satisfied, or output NOT completed' 
-
-    for id in ids:
-        if id not in result.keys():
-            print
-            print 'ERROR: task not found'
-
-    for id in result.keys():
-        [ pre, out, extra_info ] = result[ id ]
-
-        print_heading( 'Prerequisites:')
-        if len( pre ) == 0:
-            print '(None)'
-        for item in pre:
-            [ msg, state ] = item
-            if state:
-                descr = ' + '
-            else:
-                descr = ' - '
-            print descr + msg
-
-        print_heading( 'Outputs:' )
-        if len( out ) == 0:
-            print '(None)'
-        for item in out:
-            [ msg, state ] = item
-            if state:
-                descr = ' + '
-            else:
-                descr = ' - '
-            print descr + msg
-
-        if len( extra_info.keys() ) > 0:
-            print_heading( 'Other:' )
-            for item in extra_info:
-                print item, '...', extra_info[ item ]
-
-    print
 
 if options.purge:
     if prompt( 'Purge ' + options.purge + ' in' ):
