@@ -5,46 +5,25 @@ set -e  # ABORT on error
 function print_usage() 
 {
 	echo "usage:"
-    echo "  cylc register [-f] [-p PATH] NAME"
-    echo "  cylc register [-d] NAME"
-    echo "  cylc register [-c] [-r]"
+    echo "  cylc register [-f] NAME PATH"
+    echo "  cylc register [-d NAME]"
+    echo "  cylc register [-c] [-w] [-h,--help]"
     echo ""
-    echo "Register a configured cylc system for use under a given name,"
-    echo "or review, check, or unregister currently registered systems." 
-    echo ""
-    echo "Registration associates a name with a system definition directory."
-    echo "Other cylc commands then target systems via their registered name."
-    echo ""
-    echo "Registered names are also used along with your username to construct"
-    echo "a unique Pyro nameserver 'group name' for any system that you run."
-    echo "This allows multiple systems, from multiple users, to run at once"
-    echo "without interfering with each other (i.e. external tasks will not"
-    echo "be able to send messages to the wrong scheduler instance)."
-    echo ""
-    echo "You can register the same system under multiple names. This makes"
-    echo "it is possible, in principle, to run multiple instances of the"
-    echo "same system at once. Be aware, however, that the external system"
-    echo "must also be capable of doing this (perhaps by incorporating the"
-    echo "cylc system name into its input and output directory paths and"
-    echo "so on - it is safer and easier to run multiple *copies* of a"
-    echo "system, each with different configuration and/or task definition"
-    echo "settings so that the external systems are in effect separate)."
-    echo ""
-    echo "Registration information is stored under \$HOME/.cylc/registered."
+    echo "Associate a name with a configured system definition directory, and manage"
+    echo "your system registrations (which are stored under \$HOME/.cylc/registered)."
+    echo "Other cylc commands access particular systems via their registered names."
+    echo "A single system can be registered under multiple names (see the userguide)."
     echo ""
     echo "arguments:"
-    echo "   NAME        Name under which to register a configured system."
+    echo "   NAME        Name to associate with a configured system."
+    echo "   PATH        Location of a configured system definition directory."
     echo ""
     echo "options:"
     echo "  -h, --help   Print this usage message and exit"
-    echo "  -p PATH      Location of the configured system to be registered."        
-    echo "  -c           Check all currently registered systems, print"
-    echo "               their names and locations, and unregister any"
-    echo "               that no longer point to a configured system."
-    echo "  -f           Force: overwrite an existing registration."
-    echo "  -d           Delete (unregister) the supplied system name."
-    echo "  -r           Reset: delete (unregister) ALL your registered"
-    echo "               system names."
+    echo "  -f           Force registration even if the name has already been used."
+    echo "  -d NAME      Delete an existing registration."
+    echo "  -c           Check for, and delete, any invalid registrations."
+    echo "  -w           Wipe out all of your registered systems."
 }
 
 function check_configured()
@@ -84,18 +63,15 @@ FORCE=false
 RESET=false
 DELETE=false
 REGISTER=false
-while getopts "rdfchp:" opt; do
+while getopts "hd:cfw" opt; do
     case $opt in
         h)
         print_usage
         exit 0
         ;;
-        p)
-        REGISTER=true
-        SYS_DIR=$OPTARG
-        ;;
         d)
         DELETE=true
+        NAME=$OPTARG
         ;;
         c)
         CHECK=true
@@ -103,7 +79,7 @@ while getopts "rdfchp:" opt; do
         f)
         FORCE=true
         ;;
-        r)
+        w)
         RESET=true
         ;;
     esac
@@ -111,23 +87,16 @@ done
 
 shift $(( OPTIND -1 ))
 
-if $REGISTER || $DELETE; then
-    if [[ $# == 1 ]]; then
-        NAME=$1
-    else
-        echo "You have supplied a system path, but no name"
-        usage
-        exit 1
-    fi
-else
-    if [[ $# != 0 ]]; then
-        echo "Too many arguments for your chosen options"
-        usage
-        exit 1
-    fi
+if [[ $# == 2 ]]; then
+    REGISTER=true
+    NAME=$1
+    SYS_DIR=$2
+elif [[ $# != 0 ]]; then
+    print_usage
+    exit 1
 fi
 
-if ! $REGISTER && ! $DELETE && ! $CHECK && ! $RESET; then
+if $REGISTER && ( $DELETE || $CHECK || $RESET ); then
     print_usage
     exit 1
 fi

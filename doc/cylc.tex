@@ -1480,6 +1480,22 @@ cylc example systems)
              to copy the system def directory AND invoke different versions
              of the external tasks (e.g. under /oper and /test)
 
+    Registered names are also used along with your username to construct
+    a unique Pyro nameserver 'group name' for any system that you run.
+    This allows multiple systems, from multiple users, to run at once
+    without interfering with each other (i.e. external tasks will not
+    be able to send messages to the wrong scheduler instance).
+    
+    You can register the same system under multiple names. This makes
+    it is possible, in principle, to run multiple instances of the
+    same system at once. Be aware, however, that the external system
+    must also be capable of doing this (perhaps by incorporating the
+    cylc system name into its input and output directory paths and
+    so on - it is safer and easier to run multiple *copies* of a
+    system, each with different configuration and/or task definition
+    settings so that the external systems are in effect separate).
+
+
 \subsection{How Cylc Interacts With Batch Queue Schedulers}
 \label{HowCylcInteractsWithBatchQueueSchedulers}
 
@@ -1498,5 +1514,9 @@ contention, it will not report its outputs complete until it does run.
 
     \item why we need the nudge option - maybe should use a timeout too.
 \end{itemize}
+
+\subsubsection{forecasting system requirements}
+
+All task must be re-runnable!
 
 \end{document}

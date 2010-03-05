@@ -178,18 +178,18 @@ def ns_obj_name( name, groupname ):
 
 usage = """cylc schedule [options] SYSTEM
 
-Start scheduling a forecasting system. 
+Start scheduling a configured cylc system. 
 
-To COLD START a system, give an initial cycle time using --start. At
-least one task in the system (normally a one-off startup task) must have
-no prerequisites, or else nothing will happen! 
+To cold start, give an initial cycle time using --start. At least one
+task in the system must have no prerequisites, or nothing will happen! 
+Each task in the system task list will start at the first cycle time
+valid for that task at or beyond the start time.
 
-To RESTART a system, use --restart or --restart-from=FILE. Any task
-previously in the "submitted", "running" or "failed" states will be
-restarted in the "waiting" state.
+To restart, use --restart or --restart-from=FILE. Any task that was
+"submitted", "running" or "failed" will restart in the "waiting" state.
 
 arguments:
-   SYSTEM               Registered name of the system to start up.""" 
+   SYSTEM               Registered name of the forecasting system.""" 
 
 def commandline_parser():
     parser = OptionParser( usage )
@@ -198,15 +198,12 @@ def commandline_parser():
             clock_rate=10, clock_offset=24, task_proc_reason=False )
 
     parser.add_option( "-s", "--start", 
-            help="Initial cycle time (YYYYMMDDHH). Each task in the "
-            "system task list will be instantiated with the first cycle "
-            "time valid for that task *at or beyond* this cycle time.",
+            help="Initial cycle time (YYYYMMDDHH).",
             metavar="CYCLE", action="store", dest="start_time" )
 
     parser.add_option( "--stop", 
-            help="Final cycle time (YYYYMMDDHH). The scheduler will shut "
-            "itself down when all tasks have passed the final cycle time, "
-            "if one is specified.",
+            help="Optional final cycle time (YYYYMMDDHH). The scheduler "
+            "will shut down when each tasks has passed the stop time.",
             metavar="CYCLE", action="store", dest="stop_time" )
 
     parser.add_option( "-r", "--restart", 
@@ -214,9 +211,8 @@ def commandline_parser():
             action="store_true", dest="restart" )
 
     parser.add_option( "--restart-from", 
-            help="Restart from a named state dump file, assumed to be "
-            "located in the system's configured state dump directory "
-            "unless you give an absolute file path.",
+            help="Restart from a named state dump file in the configured "
+            "state dump directory, or give the file path.",
             metavar="FILE", action="store", dest="restart_from" )
 
     parser.add_option( "--exclude",
@@ -237,10 +233,9 @@ def commandline_parser():
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "-d", "--dummy-mode",
-            help="Run the system in DUMMY MODE. System tasks will be "
-            "faked by an external program that masquerades as the real "
-            "thing by reporting the right outputs completed at the right "
-            "times, relative to an accelerated clock.",
+            help="Run the system in DUMMY MODE. External dummy programs "
+            "will masquerade as the real system tasks by faking the right "
+            "output messages at the right time, on an accelerated clock.",
             action="store_true", dest="dummy_mode" )
 
     parser.add_option( "--dummy-clock-rate", 
