@@ -1,5 +1,10 @@
 To Do
 
+* combine file-move with userguide-2, add SCS suite to the examples
+  (with real mode).
+
+* better example system timing spec for real mode (taskdef env vars?)
+
 * DO NOT DEFAULT TO LOCAL HOST FOR PYRO NAMESERVER HOST NAME - this will
   preclude automatic discovery of remote nameservers.
 
