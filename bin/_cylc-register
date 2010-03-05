@@ -5,39 +5,44 @@ set -e  # ABORT on error
 function print_usage() 
 {
 	echo "usage:"
-    echo "  cylc register [options] -s NAME PATH"
-    echo "  cylc register [options] -d NAME"
-    echo "  cylc register [options]"
+    echo "  cylc register [-f] [-p PATH] NAME"
+    echo "  cylc register [-d] NAME"
+    echo "  cylc register [-c] [-r]"
     echo ""
     echo "Register a configured cylc system for use under a given name,"
     echo "or review, check, or unregister currently registered systems." 
-    echo "This information is stored under \$HOME/.cylc/registered."
     echo ""
-    echo "Registration simply associates a name with a system definition"
-    echo "directory, after which the name can be used to refer to the"
-    echo "system when invoking other cylc commands."
+    echo "Registration associates a name with a system definition directory."
+    echo "Other cylc commands then target systems via their registered name."
     echo ""
-    echo "The registered name is also used along with your username to"
-    echo "construct a unique Pyro nameserver 'group name' for a system,"
-    echo "allowing multiple systems to run at once without interfering."
+    echo "Registered names are also used along with your username to construct"
+    echo "a unique Pyro nameserver 'group name' for any system that you run."
+    echo "This allows multiple systems, from multiple users, to run at once"
+    echo "without interfering with each other (i.e. external tasks will not"
+    echo "be able to send messages to the wrong scheduler instance)."
     echo ""
-    echo "To run multiple instance of *the same system* at once, just"
-    echo "register the one system under several different names - but"
-    echo "if you do this, be aware that for real (non dummy-mode)"
-    echo "operation, multiple instances of the external system must be"
-    echo "also be able to run without interference!"
+    echo "You can register the same system under multiple names. This makes"
+    echo "it is possible, in principle, to run multiple instances of the"
+    echo "same system at once. Be aware, however, that the external system"
+    echo "must also be capable of doing this (perhaps by incorporating the"
+    echo "cylc system name into its input and output directory paths and"
+    echo "so on - it is safer and easier to run multiple *copies* of a"
+    echo "system, each with different configuration and/or task definition"
+    echo "settings so that the external systems are in effect separate)."
+    echo ""
+    echo "Registration information is stored under \$HOME/.cylc/registered."
     echo ""
     echo "arguments:"
-    echo "  PATH         Path to the system definition directory."
+    echo "   NAME        Name under which to register a configured system."
     echo ""
     echo "options:"
     echo "  -h, --help   Print this usage message and exit"
-    echo "  -s NAME      Name under which to register the system."
+    echo "  -p PATH      Location of the configured system to be registered."        
     echo "  -c           Check all currently registered systems, print"
     echo "               their names and locations, and unregister any"
     echo "               that no longer point to a configured system."
     echo "  -f           Force: overwrite an existing registration."
-    echo "  -d NAME      Delete (unregister) a registered system name."
+    echo "  -d           Delete (unregister) the supplied system name."
     echo "  -r           Reset: delete (unregister) ALL your registered"
     echo "               system names."
 }
@@ -56,7 +61,7 @@ function check_configured()
     fi
 
     # has this cylc system definition directory been configured yet?
-    if [[ ! -f $SYS_DIR/system_config.py || \
+    if [[ ! -f $SYS_DIR/config_defaults.py || \
         ! -f $SYS_DIR/system_tasks.py ]]; then
         echo "ERROR: $SYS_DIR"
         echo "has not been configured yet: it does not contain config"
@@ -74,24 +79,23 @@ if [[ $1 == '--help' ]]; then
     exit 0
 fi
 
-NAMED=false
 CHECK=false
 FORCE=false
 RESET=false
 DELETE=false
-while getopts "rfchs:d:" opt; do
+REGISTER=false
+while getopts "rdfchp:" opt; do
     case $opt in
         h)
         print_usage
         exit 0
         ;;
-        s)
-        NAMED=true
-        NAME=$OPTARG
+        p)
+        REGISTER=true
+        SYS_DIR=$OPTARG
         ;;
         d)
         DELETE=true
-        NAME=$OPTARG
         ;;
         c)
         CHECK=true
@@ -107,7 +111,23 @@ done
 
 shift $(( OPTIND -1 ))
 
-if ! $NAMED && ! $DELETE && ! $CHECK && ! $RESET; then
+if $REGISTER || $DELETE; then
+    if [[ $# == 1 ]]; then
+        NAME=$1
+    else
+        echo "You have supplied a system path, but no name"
+        usage
+        exit 1
+    fi
+else
+    if [[ $# != 0 ]]; then
+        echo "Too many arguments for your chosen options"
+        usage
+        exit 1
+    fi
+fi
+
+if ! $REGISTER && ! $DELETE && ! $CHECK && ! $RESET; then
     print_usage
     exit 1
 fi
@@ -140,9 +160,7 @@ if $DELETE; then
     fi
 fi
 
-if $NAMED; then
-    [[ $# != 1 ]] && { print_usage; exit 1; }
-    SYS_DIR=$1
+if $REGISTER; then
     if [[ $SYS_DIR != /* ]]; then
         # make absolute path
         SYS_DIR=$PWD/$SYS_DIR

@@ -1,5 +1,8 @@
 To Do
 
+* DO NOT DEFAULT TO LOCAL HOST FOR PYRO NAMESERVER HOST NAME - this will
+  preclude automatic discovery of remote nameservers.
+
 * optionally allow a pyro request handling timeout.
 
 * check that ALL input, including that from remote insertion etc., is 

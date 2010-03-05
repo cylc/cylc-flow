@@ -12,23 +12,27 @@ from dynamic_instantiation import get_object
 import cycle_time
 import pimp_my_logger
 
-usage = """cylc run-task -s NAME -c TIME -t NAME
-Run a single task exactly as it would be run by cylc."""
+usage = """cylc run-task [-t TASK] [-c CYCLE] SYSTEM
+
+Run a task belonging to the system registered under the name SYSTEM,
+just as it would be run by the scheduler. This can be used, in
+particular, to test external task scripts during the system development
+phase (i.e. when you are defining the interface between cylc and your
+forecasting system).
+
+arguments:
+   SYSTEM               Registered name of the target system.""" 
 
 def commandline_parser():
     parser = OptionParser( usage )
 
-    parser.add_option( "-s", 
-            help="Name of a registered cylc system",
-            metavar="NAME", action="store", dest="reg_name" )
-
     parser.add_option( "-t", 
-            help="Task Name",
-            metavar="NAME", action="store", dest="task_name" )
+            help="Name of the task to run.",
+            metavar="TASK", action="store", dest="task_name" )
 
     parser.add_option( "-c", 
-            help="Cycle time",
-            metavar="NAME", action="store", dest="ctime" )
+            help="Task cycle time (YYYYMMDDHH).",
+            metavar="CYCLE", action="store", dest="ctime" )
 
     return parser
 
@@ -36,26 +40,28 @@ def commandline_parser():
 parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
+if len( args ) == 0:
+    parser.error( "Please supply a target system name" )
+elif len( args ) > 1:
+    parser.error( "Too many arguments" )
+
 # get system name------------------------------------------------------
-if not options.reg_name:
-    parser.error( "Required: registered system name" )
-else:
-    reg_name = options.reg_name
+reg_name = args[0]
 
 # get task name--------------------------------------------------------
 if not options.task_name:
-    parser.error( "Required: task name" )
+    parser.error( "Please supply a task name" )
 else:
     task_name = options.task_name
 
 # get cycle time-=-----------------------------------------------------
 if not options.ctime:
-    parser.error( "Required: cycle time" )
+    parser.error( "Please supply a cycle time" )
 else:
     ctime = options.ctime
 
 if not cycle_time.is_valid( ctime ):
-    parser.error( "invalid START time: " + ctime )
+    parser.error( "invalid cycle time: " + ctime )
 
 # find location of the system task and config modules------------------
 registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name

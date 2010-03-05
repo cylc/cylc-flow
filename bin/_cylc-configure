@@ -11,9 +11,8 @@ function print_usage()
 {
 	echo "usage: cylc configure [options] PATH"
     echo ""
-    echo "Generate task class and default config modules for a cylc system"
-    echo "definition directory. This needs to be done once, initially, and"
-    echo "then only after changing the system's task definition files." 
+    echo "Generate the system-specific Python source modules required by cylc."
+    echo "This only needs to be done after changing the task definition files." 
     echo ""
     echo "YOU MUST HAVE WRITE PERMISSION IN THE SYSTEM DEFINITION DIRECTORY"
     echo "because the configure process writes some Python modules into it:"
@@ -25,14 +24,15 @@ function print_usage()
     echo "CUSTOMIZE system configuration settings in the config override"
     echo "module, NOT in the config defaults module - which gets overwritten"
     echo "when the system is reconfigured. An initial config override module"
-    echo "will be created for you; subsequently it will not be overwritten."
+    echo "will be created for you. The defaults module is written into the"
+    echo "system definition directory, rather than hidden, in order to"
+    echo "clearly expose all default settings that users can override."
     echo ""
     echo "arguments:"
-    echo "  PATH            A cylc system definition directory containing"
-    echo "                  'taskdef' and 'scripts' sub-directories." 
+    echo "  PATH            Location of a cylc system definition directory."
     echo ""
     echo "options:"
-    echo "  -h, --help      Print this usage message and exit"
+    echo "  -h, --help      Print this usage message and exit."
 }
 
 # cheap hack to get '--help', which isn't allowed by getopts

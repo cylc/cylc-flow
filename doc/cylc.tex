@@ -50,6 +50,7 @@ morestring=[b]\",
 \lstdefinelanguage{usage}
 {
 morekeywords={},
+string=[b]{"},
 sensitive=false,
 morecomment=[l]{Usage:},
 morecomment=[l]{Arguments:},
@@ -1098,18 +1099,27 @@ config['max_runahead_hours'] = 24
 
 \pagebreak
 
-\subsection{An Example Config File}
-\label{AnExampleConfigFile}
+\subsection{Example Config Files}
+\label{ExampleConfigFile}
 
-This is the config file for the ``userguide-1'' example system distributed
-with cylc: 
+This is the config defaults file for the ``userguide-1'' example system
+distributed with cylc: 
 
 \lstset{ language=Python }
 {
-\lstinputlisting{../sys/examples/userguide-1/system_config.py}
+\lstinputlisting{../sys/examples/userguide-1/config_defaults.py}
 }
 
 \pagebreak
+And this is the config overrides file for the ``userguide-1'' example
+system distributed with cylc: 
+
+\lstset{ language=Python }
+{
+\lstinputlisting{../sys/examples/userguide-1/config_override.py}
+}
+
+
 
 \lstset{language=}
 
@@ -1216,6 +1226,17 @@ interrogate and control running systems.
 {
 \lstinputlisting{command-usage/cylc-controller.txt}
 }
+
+\pagebreak
+\subsection{cylc run-task}
+\label{cylcmessage}
+
+See Section~\ref{run-task} for complete documentation of this command.
+
+{
+\lstinputlisting{command-usage/cylc-run-task.txt}
+}
+
 
 \pagebreak
 \subsection{cylc message}

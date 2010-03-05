@@ -26,16 +26,33 @@ Automatic messages:
   cylc message [--started OR --succeeded OR --failed]
   cylc message [--set-all-restarts-completed OR --set-all-outputs-completed]
 
-Send a message to a task proxy object in a running cylc instance.
+Send a message to a task proxy object in a running cylc system.
 
-THIS COMMAND IS USED BY TASKS TO COMMUNICATE WITH THEIR CYLC TASK PROXY
-OBJECTS, in which case most inputs are taken from environment variables. 
-It can also be used by cylc system operators to fake messages from tasks,
-for debugging purposes, in which case the command line options can be used.
+THIS COMMAND ALLOWS TASKS TO COMMUNICATE WITH THEIR TASK PROXY OBJECTS.
+Task proxy objects are uniquely identified by their name and cycle time,
+which must be known by this script in order to target the right proxy
+object. Cylc exports these variables into the environment as $CYLC_TASK
+and $CYLC_TIME when it submits an external task, so the external task
+can simply call 'cylc message MESSAGE' and this script will read the
+right name and cycle time from the environment (i.e. the task itself
+does not need to know the name by which cylc refers to it, although it
+too can get the name from the environment if it wants to).
 
-Note that where other commands need to know a registered system name, this
-command needs the Pyro nameserver group name, {USERNAME}_{NAME}, where 
-USERNAME is the username of the owner of system NAME."""
+This command can also be used to "fake" task messages, for debugging or
+system intervention purposes, in which case all required inputs can be
+supplied on the command line.
+
+Note that where other cylc commands need to be given a registered system
+name, this one needs the group name under which the system's task proxy
+objects are registered in the Pyro nameserver. Depending on network
+configuration, the Pyro nameserver hostname may also be required. Cylc
+puts these in the task execution environment as $CYLC_NS_GROUP and
+$CYLC_NS_HOST.  For command line use, the group name can be inferred as
+USERNAME_SYSTEMNAME, where USERNAME is the owner of the running cylc
+scheduler that you want to send a message to.
+
+arguments:
+   MESSAGE              The message to send, as a quoted string."""
 
 parser = OptionParser( usage )
 
@@ -44,14 +61,15 @@ parser.set_defaults( started=False, success=False, failure=False,
         priority='NORMAL')
 
 parser.add_option( "-t", 
-        metavar='NAME',
-        help="task name, defaults to $CYLC_TASK",
+        metavar='TASK',
+        help="Task name, defaults to $CYLC_TASK",
         action="store", dest="taskname" )
 
 parser.add_option( "-g",
-        metavar="NAME",
-        help="Pyro nameserver group name used by objects in the target "
-        "system, defaults to $CYLC_NS_GROUP.",
+        metavar="GROUP",
+        help="The group name used to register system objects in the Pyro "
+        "nameserver (cylc uses '{USERNAME}_{SYSTEM}'). Defaults to "
+        "$CYLC_NS_GROUP.",
         action="store", dest="groupname" )
 
 parser.add_option( "-n", 
@@ -82,16 +100,16 @@ parser.add_option( "-p",
         action="store", dest="priority" )
 
 parser.add_option( "-c",
-        metavar="YYYYMMDDHH",
-        help="task cycle time, defaults to $CYLC_TIME",
+        metavar="CYCLE",
+        help="Task cycle time, YYYYMMDDHH, defaults to $CYLC_TIME",
         action="store", dest="ctime" )
 
 parser.add_option( "--all-restart-outputs-completed", 
-        help="report all forecast model restart outputs completed at once",
+        help="Report all forecast model restart outputs completed at once",
         action="store_true", dest="all_restarts_completed" )
 
 parser.add_option( "--all-outputs-completed", 
-        help="report all task outputs completed at once "
+        help="Report all task outputs completed at once "
              "EXCEPT for the special 'completed' and 'finished' outputs",
         action="store_true", dest="all_outputs_completed" )
 

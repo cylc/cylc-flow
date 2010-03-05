@@ -34,52 +34,49 @@ def prompt( reason ):
         return False
 
 # construct a command line parser
-usage = """cylc control -s NAME [-n HOSTNAME] [options]
+usage = """cylc control [options] SYSTEM 
 
-Interrogate or control the cylc instance running system NAME via the
-Pyro nameserver on HOSTNAME. 
+Interact with (interrogate or control) a running cylc system.
 
-Below, START, STOP, and TIME, are cycle times (YYYYMMDDHH).
+If the target system is not running under your username you must use
+--user=USERNAME so that the right Pyro nameserver group name can be
+inferred (cylc uses USERNAME_SYSTEMNAME).
 
-Note that tasks are uniquely identified by NAME%YYYYMMDDHH."""
+arguments:
+   SYSTEM               Registered name of the target system.""" 
 
 parser = OptionParser( usage )
 
-parser.add_option( "-s", 
-	help="Name of the target system.",
-        metavar="NAME", action="store", dest="system_name" )
+parser.add_option( "-u", "--username",
+        help="Owner of the target system (i.e. the username under which "
+        "the scheduler is running), defaults to $USER. WARNING: this "
+        "allows others to control your systems, and you theirs; you "
+        "may want to disable this option.",
+        metavar="USERNAME", action="store", dest="username" )
 
-parser.add_option( "-u", 
-        help="Username, defaults to $USER. Use this option if the target "
-        "system is running under another username. (Cylc's Pyro nameserver "
-        "groupnames are constructed from username and system name). WARNING: "
-        "THIS ALLOWS YOU TO CONTROL OTHER USER'S SYSTEMS, AND VICE VERSA. "
-        "SYSADMINS MAY WANT TO DISABLE THIS OPTION.",
-        metavar="USER", action="store", dest="username" )
-
-parser.add_option( "-n", 
-        help="Hostname of the machine running the Pyro nameserver, "
-        "defaults to 'localhost'.",
-        metavar="HOSTNAME", action="store", default='localhost',
+parser.add_option( "-n", "--nameserver",
+        help="The Pyro nameserver host. Defaults to localhost. Depending "
+        "on network configuration you may not need to use this option.",
+        metavar="HOSTNAME", action="store", default="localhost",
         dest="pns_host" )
 
-parser.add_option( "-f",
+parser.add_option( "-f", "--force",
         help="Force: do not ask for confirmation before acting.",
         action="store_true", default=False, dest="force" )
 
-parser.add_option( "--pause", 
+parser.add_option( "-p", "--pause", 
         help="Pause the system, i.e. do not launch any new tasks.",
         action="store_true", default=False, dest="pause" )
 
 parser.add_option( "--pause-at", 
-        help="Pause the system when all tasks have reached TIME",
-        metavar="TIME", action="store", dest="hold_time" )
+        help="Pause the system when all tasks have reached cycle time CYCLE",
+        metavar="CYCLE", action="store", dest="hold_time" )
 
 parser.add_option( "-r", "--resume", 
         help="Resume (unpause) the system.",
         action="store_true", default=False, dest="resume" )
 
-parser.add_option( "--stop", 
+parser.add_option( "-s", "--stop", 
         help="Shutdown the system as soon as all tasks that are currently "
         "running have finished.",
         action="store_true", default=False, dest="shutdown" )
@@ -90,39 +87,42 @@ parser.add_option( "--stop-now",
         action="store_true", default=False, dest="shutdownnow" )
 
 parser.add_option( "--stop-at", 
-        help="Do not launch any new tasks beyond TIME, and shutdown the system "
-        "as soon as all tasks prior to that time have finished running.",
-        metavar="TIME", action="store", dest="stop_time" )
+        help="Do not launch any new tasks beyond cycle time CYCLE, and "
+        "shutdown the system as soon as all tasks prior to that time"
+        "have finished running.",
+        metavar="CYCLE", action="store", dest="stop_time" )
 
-parser.add_option( "--reset", 
+parser.add_option( "--reset-task", 
         help="Reset a task to the 'waiting' state. Use this to get a failed "
         "task to re-run after fixing the problem that caused it to fail.",
-        metavar="NAME%TIME", action="store", dest="reset_id" )
+        metavar="NAME%CYCLE", action="store", dest="reset_id" )
 
 parser.add_option( "--spawn-and-die", 
         help="Force one or more tasks at a particular cycle time to spawn and die.",
-        metavar="[NAME1,NAME2,...%]TIME", 
+        metavar="[NAME1,NAME2,...%]CYCLE", 
         action="store", dest="kill_task_id" )
 
-parser.add_option( "--recursive-purge", 
-        help="Force a task to spawn and die, then force every task that depends "
-        "on its outputs to spawn and die, and then force every task that depends "
-        "on their outputs to spawn and die, and so on, through to time STOP.",
-        metavar="NAME%TIME,STOP", 
+parser.add_option( "--purge", 
+        help="Force task NAME%CYCLE to spawn and die, then force every "
+        "task that depends on its outputs to spawn and die, and then "
+        "force every task that depends on their outputs to spawn and "
+        "die, and so on through to cycle time STOP.",
+        metavar="NAME%CYCLE,STOP", 
         action="store", dest="purge" )
 
 parser.add_option( "--insert", 
         help="Insert a new TASK or TASK GROUP into a running system.",
-        metavar="NAME%TIME", action="store", dest="insert_task_id" )
+        metavar="NAME%CYCLE", action="store", dest="insert_task_id" )
 
 parser.add_option( "--dump", 
-        help="Display the current status of one or more task's prerequisites "
-        "and outputs, and any other information deemed relevant to scheduling.",
-        metavar="NAME1,NAME2,...%YYYYMMDDHH", 
+        help="Display the current status of one or more task's prerequisites, "
+        "outputs, and any other information deemed relevant to scheduling.",
+        metavar="NAME1,NAME2,...%CYCLE", 
         action="store", dest="dump_task_id" )
 
-parser.add_option( "--describe", 
-        help="Display the description of one or more task types (no TIME required!).",
+parser.add_option( "--describe-task", 
+        help="Display the description of one or more task types"
+        "(no cycle time required).",
         metavar="NAME1,NAME2,...", 
         action="store", dest="describe_names" )
 
@@ -139,18 +139,15 @@ parser.add_option( "--nudge",
         "invokes the task processing loop and gets things moving again.",
         action="store_true", default=False, dest="bump" )
 
-#if len( sys.argv ) == 1:
-#    # no options or args supplied
-#    parser.print_help()
-#    sys.exit(1)
-
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
 
-if not options.system_name:
-    parser.error( "Required: system name" )
-else:
-    system_name = options.system_name
+if len( args ) == 0:
+    parser.error( "Please supply a target system name" )
+elif len( args ) > 1:
+    parser.error( "Too many arguments" )
+
+system_name = args[0]
 
 if not options.pns_host:
     parser.error( "Required: Pyro nameserver hostname" )

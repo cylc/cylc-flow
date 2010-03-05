@@ -175,24 +175,20 @@ def ns_obj_name( name, groupname ):
     # object name as registered with the Pyro nameserver
     return groupname + '.' + name
 
-usage = """cylc schedule -s NAME [-n HOSTNAME] [options] [START] [STOP]
+usage = """cylc schedule [options] SYSTEM
 
-Start scheduling the cylc system registered under the name NAME. 
+Start up a scheduler for a system registered under the name SYSTEM. 
 
-To cold start a system , give the initial cycle time START. At least one
-task in the system (normally a one-off startup task) must have no
-prerequisites, or else nothing will happen! 
+To COLD START a system, give an initial cycle time using --start. At
+least one task in the system (normally a one-off startup task) must have
+no prerequisites, or else nothing will happen! 
 
-To restart a system use the '--restart' or '--restart-from=FILE'
-options. Any task in the 'submitted', 'running' or 'failed' states will
-be restarted in the 'waiting' state.
-
-If a final cycle time STOP is supplied, each task will stop when it
-has passed that cycle time, and then the system will shut down.
+To RESTART a system, use --restart or --restart-from=FILE. Any task
+previously in the "submitted", "running" or "failed" states will be
+restarted in the "waiting" state.
 
 arguments:
-  START                 Initial cycle time (YYYYMMDDHH) for a cold start
-  STOP                  Optional final cycle time (YYYYMMDDHH)"""
+   SYSTEM               Registered name of the system to start up.""" 
 
 def commandline_parser():
     parser = OptionParser( usage )
@@ -200,16 +196,19 @@ def commandline_parser():
     parser.set_defaults( pns_host='localhost', restart=False, dummy_mode=False,
             clock_rate=10, clock_offset=24, task_proc_reason=False )
 
-    parser.add_option( "-s", 
-            help="Name of a registered cylc system to run",
-            metavar="NAME", action="store", dest="reg_name" )
+    parser.add_option( "-s", "--start", 
+            help="Initial cycle time (YYYYMMDDHH). Each task in the "
+            "system task list will be instantiated with the first cycle "
+            "time valid for that task *at or beyond* this cycle time.",
+            metavar="CYCLE", action="store", dest="start_time" )
 
-    parser.add_option( "-n", 
-            help="Hostname of the machine running the Pyro nameserver, "
-            "defaults to localhost",
-            metavar="HOSTNAME", action="store", dest="pns_host" )
+    parser.add_option( "--stop", 
+            help="Final cycle time (YYYYMMDDHH). The scheduler will shut "
+            "itself down when all tasks have passed the final cycle time, "
+            "if one is specified.",
+            metavar="CYCLE", action="store", dest="stop_time" )
 
-    parser.add_option( "-r", 
+    parser.add_option( "-r", "--restart", 
             help="Restart from the system's configured state dump file",
             action="store_true", dest="restart" )
 
@@ -219,45 +218,49 @@ def commandline_parser():
             "unless you give an absolute file path.",
             metavar="FILE", action="store", dest="restart_from" )
 
-    parser.add_option( "-d",
-            help="Run in DUMMY MODE. Instead of executing a system's "
-            "external tasks, cylc executes instances of an external "
-            "program that masquerades as the real thing by reporting "
-            "the right outputs completed at the right times, relative "
-            "to an accelerated clock. This allows very quick testing of "
-            "a system, from a pure scheduling perspective, (i.e. that "
-            "all task types, prerequisites and outputs, etc., are correct) "
-            "without having to run the real tasks.",
+    parser.add_option( "--exclude",
+            help="Exclude the named tasks from the task list at startup. "
+            "This is equivalent to commenting out these tasknames in the "
+            "configured system task list.",
+            metavar="Task1,Task2,...", action="store", dest='exclude' )
+
+    parser.add_option( "--include",
+            help="Include only the named tasks at startup. This is "
+            "equivalent to commenting out all OTHER tasknames in the "
+            "configured system task list.",
+            metavar="Task1,Task2,...", action="store", dest='include' )
+
+    parser.add_option( "-n", "--nameserver",
+            help="Hostname of the machine running the Pyro nameserver, "
+            "defaults to localhost",
+            metavar="HOSTNAME", action="store", dest="pns_host" )
+
+    parser.add_option( "-d", "--dummy-mode",
+            help="Run the system in DUMMY MODE. System tasks will be "
+            "faked by an external program that masquerades as the real "
+            "thing by reporting the right outputs completed at the right "
+            "times, relative to an accelerated clock.",
             action="store_true", dest="dummy_mode" )
 
-    parser.add_option( "--clock-rate", 
-            help="(Dummy mode) accelerated clock rate, INT seconds = 1 hour "
+    parser.add_option( "--dummy-clock-rate", 
+            help="(DUMMY MODE) accelerated clock rate, INT seconds = 1 hour "
             "(defaults to 10 sec = 1 hour).",
             metavar="INT", action="store", dest="clock_rate" )
 
-    parser.add_option( "--clock-offset", 
-            help="(Dummy mode) clock offset at start up. The dummy clock will "
+    parser.add_option( "--dummy-clock-offset", 
+            help="(DUMMY MODE) clock offset at start up. The dummy clock will "
             "start at INT hours prior to START cycle time (default 24 hours). "
             "Use to simulate catching up to real time operation.",
             metavar="HOURS", action="store", dest="clock_offset" )
 
-    parser.add_option( "--fail", help=\
-            "(Dummy mode) get a task to abort after reporting that "
-            "it has failed. Use this to test failure and recovery "
-            "scenarios. TASK_ID is 'NAME%YYYYMMDDHH'.",
-            metavar="TASK-ID", action="store", dest="failout_task_id" )
+    parser.add_option( "--fail-out", help=\
+            "(DUMMY MODE) get task NAME at cycle time CYCLE to report failure "
+            "and then abort. Use this to test failure and recovery scenarios.",
+            metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
 
-    parser.add_option( "--reason", 
-            help="(Debug) explain why the task processing loop was invoked",
+    parser.add_option( "--proc-reason", 
+            help="(debug) print the task processing loop reason.",
             action="store_true", dest="task_proc_reason" )
-
-    parser.add_option( "--exclude",
-            help="Exclude all named tasks from the task list at startup",
-            metavar="Task1,Task2,...", action="store", dest='exclude' )
-
-    parser.add_option( "--include",
-            help="Run only the named tasks from the task list at startup",
-            metavar="Task1,Task2,...", action="store", dest='include' )
 
     return parser
 
@@ -271,12 +274,14 @@ banner = {}
 parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
+if len( args ) == 0:
+    parser.error( "Please supply a target system name" )
+elif len( args ) > 1:
+    parser.error( "Too many arguments" )
+
 # get system name------------------------------------------------------
-if not options.reg_name:
-    parser.error( "Required: registered system name" )
-else:
-    reg_name = options.reg_name
-    banner[ 'registered system name' ] = reg_name
+reg_name = args[0]
+banner[ 'system name' ] = reg_name
 
 # get Pyro nameserver hostname-----------------------------------------
 if not options.pns_host:
@@ -294,49 +299,28 @@ else:
     dummy_mode = False
     banner[ 'mode of operation' ] = 'real'
 
-# get startup configuration--------------------------------------------
+# check startup configuration------------------------------------------
 
 startup = {}
 
-if options.restart or options.restart_from:
-    startup[ 'restart' ] = True
-    if len( args ) == 0:
-        start_time = None
-        stop_time = None
-        # default
-        pass
-    elif len( args ) == 1:
-        # stop at given time
-        stop_time = args[0]
-        startup[ 'stop time' ] = stop_time
-    else:
-        parser.error( "wrong number of arguments" )
+if options.start_time and ( options.restart or options.restart_from ):
+    parser.error( "A start time does not make sense for a restart" )
 
-else:
+if not options.start_time and not ( options.restart or options.restart_from ):
+    parser.error( 'You must supply a start time or specify a restart' )
+
+if options.start_time:
     startup[ 'restart' ] = False
-    if len( args ) == 1:
-        startup[ 'start time' ] = args[0]
-    elif len( args ) == 2:
-        startup[ 'start time' ] = args[0]
-        startup[ 'stop time' ] = args[1]
-    else:
-        parser.error( "too many arguments" )
+    startup[ 'start time' ] = options.start_time
+    if not cycle_time.is_valid( options.start_time ):
+        parser.error( "invalid cycle time: " + options.start_time )
+else:
+    startup[ 'restart' ] = True
 
-# check startup parameters---------------------------------------------
-if 'start time' in startup.keys():
-    start_time = startup['start time'] 
-    if not cycle_time.is_valid( start_time ):
-        parser.error( "invalid START time: " + start_time )
-
-if 'stop time' in startup.keys():
-    stop_time = startup['stop time'] 
-    if not cycle_time.is_valid( stop_time ):
-        parser.error( "invalid STOP time: " + stop_time )
-
-if 'start time' not in startup.keys() \
-        and not 'stop time' not in startup.keys() \
-        and not startup[ 'restart' ]:
-            parser.error( 'Supply a start time or specify a restart' )
+if options.stop_time:
+    startup[ 'stop time' ] = options.stop_time
+    if not cycle_time.is_valid( options.stop_time ):
+        parser.error( "invalid cycle time: " + options.stop_time )
 
 # find location of the system task and config modules------------------
 registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name

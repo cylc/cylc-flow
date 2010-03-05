@@ -2,22 +2,20 @@
 
 # Cylc task wrapper script
 
-# Cylc tasks must provide, at the least, their own 'started',
-# 'finished', and 'failure' messages.  This script is intended to allow
-# control over existing tasks without having to modify them in any way.
+# Cylc tasks must send, at the least, their own 'started', 'succeeded',
+# and 'failed' messages. This script allows cylc to control existing
+# tasks that have not been modified to do their own cylc messaging.
 
-# Accordingly, it does the following for the wrapped task:
+# It does the following:
 # (1) sends special 'started' message
-# (2) executes the task
-# (3) send the special 'succeed' message on completion,
-#       or the special 'failed' message if error occurs.
+# (2) executes the wrapped task
+# (3) sends the special 'succeed' message on completion,
+#     or the special 'failed' message if an error occurs.
 
-# Thus WRAPPED TASKS do not need to send any messages, but they must
-# provide the standard exit codes: '0' for success, '1' (or more) for
-# failure. If you want, however, a wrapped task *can* send cylc
-# messages as well, but in that case you might as well dispense with
-# wrapping and provide your own started, finished, and failed messages
-# as well.
+# It is assumed that wrapped tasks return the standard shell exit codes
+# for success or failure. Wrapped tasks can also send their own cylc
+# messages, but in that case you might as well dispense with wrapping
+# and provide the started, finished, and failed messages as well.
 
 set -e  # abort on error
 
@@ -29,9 +27,10 @@ if [[ -z $WRAP ]]; then
     exit 1
 fi
 
+# send the startup message
 cylc message --started
 
-# call the wrapped task
+# execute the wrapped task and check for success or failure
 if $WRAP; then 
     # succeeded
     cylc message --all-outputs-completed

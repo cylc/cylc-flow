@@ -22,39 +22,52 @@ from optparse import OptionParser
 compress = True
 
 # construct a command line parser
-parser = OptionParser( """cylc monitor -s NAME [-n HOSTNAME] [options]
+parser = OptionParser( """cylc monitor [options] SYSTEM 
 
-A terminal-based monitor that displays the state of all task
-proxy objects in the cylc instance running system NAME, via
-the Pyro nameserver running on HOSTNAME.""" )
+A terminal-based monitor that displays the state of all task proxy
+objects in the cylc system registered under the name SYSTEM. 
 
-parser.add_option( "-s", 
-        help="Name of the cylc system to monitor",
-        metavar="NAME", action="store", dest="system_name" )
+Note that this program does not monitor real running tasks. How to do
+that necessarily depends on the job submission method used by the system
+(and, potentially, by individual tasks in the system). 
 
-parser.add_option( "-u", 
-        help="Username, defaults to $USER. Use this option if the target "
-        "system is running under another username. (Cylc's Pyro nameserver "
-        "groupnames are constructed from username and system name).",
-        metavar="USER", action="store", dest="username" )
+If the target system is not running under your username you must use
+--user=USERNAME so that the right Pyro nameserver group name can be
+inferred (cylc uses USERNAME_SYSTEMNAME).
 
-parser.add_option( "-n", 
-        help="Hostname of the machine running the Pyro nameserver, "
-        "defaults to localhost",
+arguments:
+   SYSTEM         Registered name of the target system.""")
+
+parser.add_option( "-u", "--user",
+        help="Owner of the target system (i.e. the username under which "
+        "the scheduler is running). Defaults to your username, $USER.",
+        metavar="USERNAME", action="store", dest="username" )
+
+parser.add_option( "-n", "--nameserver",
+        help="The Pyro nameserver host. Defaults to localhost. Depending "
+        "on network configuration you may not need to use this option.",
         metavar="HOSTNAME", action="store", default="localhost",
         dest="pns_host" )
 
-parser.add_option( "-a", help="align task name columns",
+parser.add_option( "-a", help="Align columns by task name. This option "
+        "is only useful for relatively small systems (i.e. a few tasks).",
         action="store_true", default=False, dest="align_columns" )
 
 #parser.add_option( "-p", "--print", help="print registered systems and exit",
 #        action="store_true", default=False, dest="print_systems" )
 
-parser.add_option( "--shortnames", help="display short tasknames, if defined",
+parser.add_option( "--shortnames", help="Display short task names, if defined.",
         action="store_true", default=False, dest="shortnames" )
 
 # get command line options and positional args
 ( options, args ) = parser.parse_args()
+
+if len( args ) == 0:
+    parser.error( "Please supply a target system name" )
+elif len( args ) > 1:
+    parser.error( "Too many arguments" )
+
+system_name = args[0]
 
 # import cylc modules now (the reason for this is explained above)
 import pyrex
@@ -65,19 +78,12 @@ header = '                                     '
 ctrl_end = "\033[0m"
 key = "\033[0;35mwaiting\033[0m \033[1;37;40msubmitted\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end 
 
-#if len( args ) != 0:
-#    parser.print_help()
-#    sys.exit(1)
 
 if options.pns_host:
     pns_host = options.pns_host
 else:
+    # this won't happen as we now default to localhost
     parser.error( 'Required: Pyro nameserver hostname' )
-
-if options.system_name:
-    system_name = options.system_name
-else:
-    parser.error( "Required: system name" )
 
 # get systems currently registered in the Pyro nameserver
 ns_groups = pyrex.discover( pns_host )
