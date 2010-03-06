@@ -63,6 +63,6 @@ for F in *.eps; do
 done
 cd ..
 
-#pdflatex cylc.tex
-latex cylc.tex
-dvipdf cylc.dvi
+#pdflatex userguide.tex
+latex userguide.tex
+dvipdf userguide.dvi
