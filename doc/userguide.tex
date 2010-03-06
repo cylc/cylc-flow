@@ -994,17 +994,17 @@ been discussed previously.
 
 \subsection{Real Dependencies}
 
-The dependencies between task in a forecasting system, cylc's flexible
-but rather abstract messaging system notwithstanding, usually
-boil down to exchanges of real input and output files.
+To cylc, a task is just a black box with known prerequistes, which often
+correspond directly to input files, and outputs, which are often output
+files.
 
-Each task, considered in isolation, can most likely be configured to use
-any old input and output locations and filenames, so the question arises:
-in the context of the wider forecasting system, how do we ensure that
-each task can always find its input files, and should the scheduler have
-anything to do with this? 
+Each real task, when considered in isolation, can be configured to use
+any input and output locations and filenames. But in the context of the
+wider system, in which one task's outputs inputs are another's inputs,
+how do we ensure that tasks can always find their input files, and
+should the scheduler have anything to do with this? 
 
-There are several possible solutions to this problem:
+There are several ways to solve to this problem:
 
 \subsubsection{ZERO}
 
