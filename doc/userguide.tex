@@ -86,7 +86,7 @@ Multi-cycle Catchup Capability}
     however, because a metascheduler is also a type of scheduler. The
     term is also used to refer to a single aggregate view of multiple
     distributed resource managers, but that is not the topic of this
-    paper.} for cycling environmental forecast systems that may include
+    document.} for cycling environmental forecast systems that may include
     many linked scientific models and associated data processing
     tasks.\footnote{A {\em task} is any group of processes treated as a
     single entity for scheduling purposes.} Its novel scheduling
@@ -539,7 +539,7 @@ your \lstinline=$HOME/.profile=:
 
 \begin{lstlisting}
     # provide access to the cylc scheduler
-    export CYLC_DIR=#PATH-TO-TOP-LEVEL-CYLC-INSTALL-DIR#
+    CYLC_DIR=####PATH-TO-TOP-LEVEL-CYLC-INSTALL-DIR####
     export PATH=$CYLC_DIR/bin:$PATH
     export PYTHONPATH=$CYLC_DIR/src:$PYTHONPATH
 \end{lstlisting}
@@ -671,17 +671,19 @@ To interrogate a system, insert or remove tasks, shut it down, etc.
     cylc control -s NAME [options]
 \end{lstlisting}
 
-\section{Defining Your Forecasting System} 
-\label{DefiningYourForecastingSystem}
+\section{Constructing A Cylc System} 
+\label{ConstructingACylcSystem}
 
-Cylc sees a forecasting system as a set of distinct {\bf tasks}
+Cylc sees a forecasting system as a set of {\bf tasks}
 (Section~\ref{CylcTasks}), each with clearly defined {\bf prerequisites}
 and {\bf outputs} (Section~\ref{PrerequisitesAndOutputs}). 
 
 \begin{shaded}
-A task is a group of one or more processes treated as a single entity
-for scheduling purposes.
+A task is just a group of one or more processes treated as a single
+entity for scheduling purposes.
 \end{shaded}
+
+\subsection{System Granularity}
 
 You can have a small number of large, internally complex tasks; a large
 number of small, simple tasks; or anything in between. However, because
@@ -989,20 +991,36 @@ startup, invokes the task, and reports task completion or failure.
 \pagebreak
 \section{System Design Considerations}
 
-Dividing a system into tasks, and the advantages of fine graining have
-been discussed previously.
+%As explained in Section~\ref{sec:truth}, cylc does not check the truth
+%of task output messages - doing so would be next to impossible because
+%there are no restrictions on what an output can be, and redundant
+%because any external task that relies on another's output must
+%necessarily do its own error checking at startup. 
 
-\subsection{Real Dependencies}
+%Cylc task outputs are somewhat abstract messages reporting the occurence
+%of some scheduling-relevant event.  
 
-To cylc, a task is just a black box with known prerequistes, which often
-correspond directly to input files, and outputs, which are often output
-files.
+%In the world of the real external tasks these outputs and prerequisites
+%mostly boil down to real input and output files. 
 
-Each real task, when considered in isolation, can be configured to use
-any input and output locations and filenames. But in the context of the
-wider system, in which one task's outputs inputs are another's inputs,
-how do we ensure that tasks can always find their input files, and
-should the scheduler have anything to do with this? 
+%that connect a
+%group of tasks that all have
+%to work together within the system.
+
+Each task, when considered in isolation, could in principle be
+configured to use any number of input and output directory paths and
+filenaming conventions. But within the wider forecasting system they 
+must all work together: one task's output is another's input. 
+
+So when putting a system together the question arises, how do we 
+ensure that tasks can always find their input files, and should the
+scheduler have anything to do with this? 
+
+%Some of the tasks - the scientific models - are likely to have an
+%independent existence outside of the forecasting system, and have to be
+%configured for use within it.  Others - forecasting system specific data
+%processing tasks for example - exist only within the forecasting system.
+%Either way, 
 
 There are several ways to solve to this problem:
 
