@@ -671,24 +671,24 @@ To interrogate a system, insert or remove tasks, shut it down, etc.
     cylc control -s NAME [options]
 \end{lstlisting}
 
-\section{Constructing A Cylc System} 
-\label{ConstructingACylcSystem}
 
-Cylc sees a forecasting system as a set of {\bf tasks}
-(Section~\ref{CylcTasks}), each with clearly defined {\bf prerequisites}
-and {\bf outputs} (Section~\ref{PrerequisitesAndOutputs}). 
+\section{System Definition} 
+\label{SystemDefinition}
 
-\begin{shaded}
-A task is just a group of one or more processes treated as a single
-entity for scheduling purposes.
-\end{shaded}
+Cylc sees a forecasting system as an evolving pool of {\bf tasks}
+with clearly defined {\bf prerequisites} and {\bf outputs}
+(Section~\ref{PrerequisitesAndOutputs}), where {\bf a task
+is any group of one or more processes treated as a single entity for
+scheduling purposes}.
 
-\subsection{System Granularity}
 
-You can have a small number of large, internally complex tasks; a large
-number of small, simple tasks; or anything in between. However, because
-cylc can handle large systems and is entirely self organising there are
-advantages to fine-graining your system: 
+\subsection{Granularity} 
+\label{Granularity}
+
+A system can contain a small number of large, internally complex tasks;
+a large number of small, simple tasks; or anything in between. However,
+because cylc can handle large systems and is entirely self organising
+there are advantages to the fine-grained approach: 
 
 \begin{itemize}
     \item better ``functional parallelism'' (multiple tasks running
@@ -702,79 +702,6 @@ advantages to fine-graining your system:
 \end{itemize}
 
 
-\subsection{Task Definition Files} 
-\label{TaskDefinitionFiles}
-
-A simple {\bf Task Definition File} must be written for each task in the
-system.
-
-\begin{shaded} A Task Definition File defines just the properties
-    of a task that cylc needs for scheduling purpose: task name,
-    the external task to invoke, valid cycle times, prerequisites, and
-    outputs.
-\end{shaded}
-
-\lstinline=cylc configure= parses task definition files generates
-a Python module that defines the task proxy classes for the system.
-
-The potentially vast number of other task-specific configuration
-settings that are not relevant to scheduling (e.g.\ numerical method
-choices, MPP domain decomposition, input and output directory locations,
-and so on) do not belong in a Task Definition File.  
-
-There is one minor exception to this rule, however. If your system has
-several tasks that essentially do the same thing you can get them all
-to invoke the same external task, with task-specific input parameters
-supplied through environment variables specified in the Task Definition
-Files. Forecasting systems commonly have to move a lot of files around,
-perhaps, for example, between the input and output directories of
-different tasks, or for archiving purposes, etc. One way of doing this
-would be to have each ``file transfer'' task call the same external
-script that takes its task-specific target and destination from the
-environment as just described. See
-Section~\ref{SystemDesignConsiderations} for other ways of doing this.
-
-\subsubsection{Task Types} 
-
-In other scheduling systems, as explained earlier, groups of tasks with
-the same cycle time must complete before a new batch of tasks, at the
-next cycle time, is ready to run. In cylc, each task propagates itself
-forward in time by spawning its own successor, at the next cycle time 
-valid for that task, at the right time. When this occurs depends on the
-type of task. 
-
-\begin{itemize}
-    \item \lstinline=free_task= - this task type does not depend on
-        previous instances of itself at all, so it can spawn its
-        successor as soon as it enters the 'running'
-        state\footnote{A free task could potentially spawn before
-        entering the 'running' state, but this would have no further
-        advantage in terms of parallel execution at a cost of
-        unrestrained breeding EXPLAIN BETTER} earlier than
-        i.e.\ multiple instances of a free task can run simultaneously,
-        or at least overlap in time, if the opportunity arises (which
-        depends on its prerequisites). Most non-forecast model tasks
-        (pre and post processing tasks, etc.) should be of this type
-        (but see the 'sequential' modifier below).    
-
-    \item \lstinline=forecast_model= - 
-\end{itemize}
-
-
-
-The following listing shows an example task definition for a
-typical non-forecast-model task. The vast majority of tasks in any
-typical system would not be any more complicated than this, but see the
-task definition reference (Section~\ref{taskdefref}) for the full
-range of options available.
-
-\lstset{language=cylctaskdef}
-
-{
-\lstinputlisting{../sys/templates/example-task.def}
-}
-
-\pagebreak
 \subsection{The System Definition Directory} 
 \label{TheSystemDefinitionDirectory}
 
@@ -782,7 +709,8 @@ Every forecasting system to be run by cylc needs a system definition
 directory containing: 
 
 \begin{itemize} 
-    \item a \lstinline=taskdef= sub-directory for your task definition files.
+    \item a \lstinline=taskdef= sub-directory for your task definition
+        files.
     \item a \lstinline=scripts= sub-directory for your system scripts.
 \end{itemize} 
 
@@ -823,6 +751,155 @@ directory.
 
 
 
+\section{Task Definition Files} 
+\label{TaskDefinitionFiles}
+
+A simple {\bf Task Definition File} must be written for each task.
+\lstinline=cylc configure= parses these and generates a Python module
+that defines the task proxy classes for the system. {\bf Task
+Definition Files define just the properties of tasks that matter from a
+scheduling perspective: name, external task, valid cycle times,
+prerequisites, outputs.} 
+
+The potentially vast number of task-specific configuration settings that
+are not relevant to scheduling (e.g.\ numerical method choices, MPP
+domain decomposition, input and output directory locations, and so on)
+belong in the external location where the real task resides, or possibly
+in the cylc task scripts that run the external tasks (ideally these
+should contain configuration details specific to running an external
+task within the wider system, but there's nothing to stop you putting
+more than that in them). However, there is one minor exception to this
+rule. If your system has several tasks that essentially do the same
+thing you can get them all to invoke the same external program with
+task-specific input parameters supplied through environment variables
+that are specified in the Task Definition Files.  Forecasting systems
+commonly have to move a lot of files around (from the output
+directory(s) of one task to the input directory(s) of others, for
+instance). See Section~\ref{RealDependencies}, and cylc's file-transfer
+example in userguide-2. 
+
+\subsection{Examples}
+
+Listed immediately below are two example task definitions, one for a
+``forecast model'', and the other not (e.g. post processing). All tasks
+in a typical forecasting system can be defined as simply as these
+(advanced TopNet scheduling the only exception in EcoConnect). 
+But see (Section~\ref{TaskDefinitionReference}) for full Task Definition
+documentation. Please refer also to the task definitions in the packaged
+example systems, which show the effect of the task type modifiers as well
+(particularly oneoff and contact, which will be required to some extent
+in all systems).
+
+
+\subsubsection{Free Task Example}
+
+The following listing shows an example task definition for a
+typical non-forecast-model task.
+\lstset{language=cylctaskdef}
+
+{
+\lstinputlisting{../sys/templates/free_task-example.def}
+}
+
+
+\subsubsection{Forecast Model Example}
+
+The following listing shows an example task definition for a
+typical forecast-model task.
+
+\lstset{language=cylctaskdef}
+
+{
+\lstinputlisting{../sys/templates/forecast_model-example.def}
+}
+
+
+\subsection{Task Types} 
+
+Every task has to declare a {\bf Task Type}. Cylc has two basic types,
+and several modifiers that change the basic type behaviour to some
+extent.  
+
+A cylc system advances by means of each individual task spawning a 
+successor of the same type, at the next cycle time valid for that task,
+at the right time according to its type.
+
+\begin{itemize} \item A \lstinline=free_task= does not depend on any
+        output generated by a previous instance of itself, which means
+        successive instances can run in parallel, or at least overlap,
+        if the opportunity arises. To allow this to happen, a free task
+        spawns a successor as soon as it enters the 'running'
+        state\footnote{Spawning any earlier than this would bring no
+        advantage, in terms of parallel execution, at the cost of
+        unrestrained breeding.}. Most non-forecast model tasks (pre and
+        post processing tasks, etc.) will be of this type.
+
+    \item A \lstinline=forecast_model= task does depend on outputs
+        generated by a previous instance, namely the ``restart''
+        files typically required by warm-cycling forecast models:
+        each forecast is initialized in part with a ``model
+        background'' generated by a recent previous forecast.
+        In other words, even if all other inputs are available 
+        in advance, a forecast model cannot start up until its
+        restart inputs have been completed by a previous forecast
+        (usually, but not necessarily, the most recent previous
+        forecast). In catchup or casestudy scanarios cylc can run
+        successive forecast models as soon the next restart files
+        are complete, IF restart output are reported as soon as they are
+        generated. In reality, however, forecast models are likely
+        to run in sequence at best because (i) they tend to be large
+        resource intensive models and there may not be room to run
+        several at once, and (2) unless the external model itself 
+        is modified to report restart outputs immediately, all 
+        restart outputs will be reported complete at once when the
+        model run completes.
+\end{itemize}
+
+
+\subsection{Task Type Modifiers} 
+
+\begin{itemize}
+    \item A \lstinline=oneoff= task never spawns a successor. Use this for 
+        'cold start' tasks that supply initial inputs for starting a
+        system from scratch.  See also the
+        \lstinline=STARTUP_PREREQUISITES=
+        task definition key, below.
+
+    \item A \lstinline=sequential= task does not spawn a successor until it is
+        finished. You can use this to force successive instances of a
+        free task to run in sequence if instances of the external task
+        can not be allowed to run at the same time (perhaps because they
+        would interfere with each other through use of the same
+        temporary files, or similar).
+
+    \item A \lstinline=contact= task waits on an external event, such as
+        incoming external data, i.e. it "makes contact" with the
+        external world.  The event is expected at some defined time
+        interval after the task cycle time (e.g. observational data
+        might come 3.5 hours after its nominal validity time); see
+        %CONTACT_DELAY below. In real time operation a contact task will
+        not begin running until the clock time has reached this delayed
+        start time. In catchup operation a contact task will begin
+        running immediately (other prerequisites allowing) because the
+        delayed start time has already passed.  
+        
+    \item A \lstinline=cacthup_contact= task maintains awareness,
+        through a class variable (i.e. not per instance), of whether or
+        not it has 'caught up' yet.  This can be used for rare occasions
+        when some dependant task needs to behave differently according
+        to whether its upstream contact task has caught up or not.
+
+    \item A \lstinline=dummy= task always uses the cylc dummy task
+        program for its external task, even when operating in real mode.
+        The dummy task program masquerades as the task it represents by
+        reporting its outputs completed at the right time. This can be
+        used to provide 'fake' cold start prerequisites to get the
+        system running when the real inputs have been put in place by
+        some external means prior to starting up cylc.
+
+\end{itemize}
+
+\pagebreak
 \subsection{Prerequisites and Outputs} 
 \label{PrerequisitesandOutputs}
 
@@ -939,6 +1016,22 @@ system less flexible.
 (note that several tasks may use the same script with different
 arguments, e.g. for moving files around).
 
+The 'scripts' sub-directory of a cylc system definition is a handy
+central location in which to keep system-specific scripts for running
+external tasks which often have an independent existence outside of the
+forecasting system. Typically the ``external task'' specified in a task
+definition file will be one of these scripts which, once invoked by
+cylc, will itself launch the real external process(es) and handle all
+cylc messaging. In that case it may not be necessary to modify the
+external task for use within cylc.  That said, you can if you wish
+specify an external script in the task definition file, in which case 
+the external script will have to be modified to do the cylc messaging,
+OR uses cylc's task wrapping mechanism, which automatically handles the
+former case but sets all outputs, including internal ones, completed
+only after the external script finishes.  Scripts in the scripts
+sub-directory are automatically made accessible, via \$PATH, to tasks
+launched by cylc. 
+
 \subsubsection{Task Messages}
 
 The external tasks, or the scripts that execute them, need to report
@@ -989,91 +1082,95 @@ A simple a simple wrapper script invoked by cylc reports task
 startup, invokes the task, and reports task completion or failure. 
 
 \pagebreak
-\section{System Design Considerations}
 
-%As explained in Section~\ref{sec:truth}, cylc does not check the truth
-%of task output messages - doing so would be next to impossible because
-%there are no restrictions on what an output can be, and redundant
-%because any external task that relies on another's output must
-%necessarily do its own error checking at startup. 
+\subsection{Handling Real Dependencies}
+\label{HandlingRealDependencies}
 
-%Cylc task outputs are somewhat abstract messages reporting the occurence
-%of some scheduling-relevant event.  
-
-%In the world of the real external tasks these outputs and prerequisites
-%mostly boil down to real input and output files. 
-
-%that connect a
-%group of tasks that all have
-%to work together within the system.
+Cylc's prerequisite and output messages are somewhat abstract, but the
+fact remains that most of the time they correspond directly to real 
+files (or groups of files) that are generated by one task and used by
+other tasks.
 
 Each task, when considered in isolation, could in principle be
-configured to use any number of input and output directory paths and
-filenaming conventions. But within the wider forecasting system they 
-must all work together: one task's output is another's input. 
+configured to use almost any location and filenaming convention for its
+input and output files. But in the context of the wider forecasting
+system they must all work together, so the question arises, {\em how do
+we ensure that tasks always know where to find their input files, and
+should the scheduling system have anything to do with this?} 
 
-So when putting a system together the question arises, how do we 
-ensure that tasks can always find their input files, and should the
-scheduler have anything to do with this? 
+There are several ways of dealing with this in cylc (in fact they can
+be mixed and matched as you wish). 
 
-%Some of the tasks - the scientific models - are likely to have an
-%independent existence outside of the forecasting system, and have to be
-%configured for use within it.  Others - forecasting system specific data
-%processing tasks for example - exist only within the forecasting system.
-%Either way, 
+\subsubsection{Standard Method}
 
-There are several ways to solve to this problem:
+The standard way of doing this is to configure the external tasks with
+some knowledge of their role in the full system: each task knows where
+to look for its input files because it knows where they come from,
+and/or it knows where to put its output files because it knows who is
+going to use them. Doing this by means of a system-wide convention for 
+input and output directories  etc. for the major tasks (principally the
+scientific models) makes it easy to know where files should end up at
+all times (e.g. model X's output goes in /oper/X/output, for any model
+X).
 
-\subsubsection{ZERO}
+In this case, cylc task proxies (via their task definition files) do not
+need to know anything about input and output file locations. If a task's
+prerequisites are satisfied it automatically implies that the
+corresponding input files exist AND are in the right location for
+immediate use.
 
-Configure the external tasks with some knowledge of their role in
-the full system: each task knows where to look for its input files
-because it knows where they come from, and/or it knows where to put its
-output files because it knows who is going to use them. 
+\subsubsection{Alternative Method 1}
 
-In this case, cylc task proxies (via the task definition files) do not
-need to know anything about input and output file locations.
+Large scientific models typically have their own idiosyncratic
+configuration defaults. You could leave each model configured in its own
+``natural'' way, as if unaware of the wider forecasting system, and then
+add additional ``connector'' tasks to move files around as needed
+(e.g. to transfer files from X's output directory to Y's input directory).
 
-\subsubsection{ONE}
+To do this in cylc, you can either:
 
-Configure the external tasks with hardwired input and output
-directories/filesnames (as if unaware of the wider system) and add
-additional ``connector'' tasks to system to move files around as needed
-(when X finishes, X-Y transfers files from X's output directory to Y's
-input directory, and so on).
+\begin{itemize}
+    \item have a separate task script for every connector task, with the
+        relevant locations hardwired into them; in this case the task
+        definition files still do not need to know the locations.
+    \item OR have all connector tasks call the same generic ``file
+        transfer'' task script, in which the directory locations can be
+        specified as environment variables in the connector task
+        definition files (and the generic transfer script should be read
+        them from the environment).
+\end{itemize}
 
-To do this in cylc, you can EITHER have a separate task script for every
-connector task, with the hardwired locations in the task scripts, OR
-have all connector tasks call the same generic ``file transfer'' task
-script with the hardwired locations specified as environment variables
-in the connector task definition files.
-
-\subsubsection{TWO}
+\subsubsection{Alternative Method 2}
 
 Configure the external tasks to set their input and output
-directories/filenames dynamically, then define these variables 
-in the cylc task scripts OR task definition files. This method 
-requires no additional connector tasks AND you don't have to configure 
-the external tasks specially for the wider system. 
+directories/filenames {\em dynamically} according to input taken from
+environment variables, and then define these variables 
+in the cylc task scripts OR task definition files. You should
+(obviously) make sure, in the cylc system definition, that the various 
+input and output directories are used consistently throughout the system. 
+This method requires no additional connector tasks AND you don't have to
+configure the external tasks with knowledge of the wider system - all of 
+that comes through the cylc system definition. 
 
-\subsubsection{THREE}
+%\subsubsection{Alternative Method 3}
+%
+%Finally, in principle extra information could be attached to cylc output
+%messages so that actual file locations could be passed dynamically from
+%to whichever tasks use the output. Cylc currently cannot do this (you
+%can put actual file locations in the messages, but the receiver has to
+%have the exact matching message and therefore would have to know the
+%location in advance). This is a possible future development, but is 
+%probably not worth the effort because configuring the external tasks 
+%to report this information takes more effort than putting the same
+%information into the cycl task definition files. The cylc setup
+%would remain entirely context-independent, which is nice, and would
+%automatically pass on changes to the external input / output config of
+%the system.
 
-Finally, in principle extra information could be attached to cylc output
-messages so that actual file locations could be passed dynamically from
-to whichever tasks use the output. Cylc currently cannot do this (you
-can put actual file locations in the messages, but the receiver has to
-have the exact matching message and therefore would have to know the
-location in advance). This is a possible future development, but is 
-probably not worth the effort because configuring the external tasks 
-to report this information takes more effort than putting the same
-information into the cycl task definition files. The cylc setup
-would remain entirely context-independent, which is nice, and would
-automatically pass on changes to the external input / output config of
-the system.
 
 
-\section{Configuring Defined Systems}
-\label{ConfiguringDefinedSystems}
+\section{System Configuration}
+\label{SystemConfiguration}
 
 \subsection{System Config Files}
 \label{SystemConfigFiles}
@@ -1230,12 +1327,12 @@ system distributed with cylc:
 \lstset{language=}
 
 \pagebreak
-\section{Registering Configured Systems}
-\label{RegisteringConfigured}
+\section{System Registration}
+\label{SystemRegistration}
 
 
-\section{Running Registered Systems}
-\label{RunningRegisteredSystems}
+\section{Running Systems}
+\label{RunningdSystems}
 
 \subsection{Dummy Mode} 
 \label{DummyMode}
@@ -1247,6 +1344,12 @@ times. This is essentially indistinguishable, to cylc, from the real
 thing, and is therefore a complete test of scheduling for the configured
 task set. Dummy mode allows very quick testing of scheduling and failure
 recovery scenarios for arbitrarily complicated task sets.
+
+If a system (or a failure operation - see Section~\ref{FailureRecovery})
+works in dummy mode, it will work in real operation so long as the 
+real tasks report the right output messages, as registered in the task
+definition files, at any time after their real outputs have been
+generated, before the task finishes.
 
 \subsection{Incrementally Constructing New Systems} 
 \label{IncrementallyConstructingNewSystems}

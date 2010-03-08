@@ -1,9 +1,5 @@
-# AN EXAMPLE CYLC TASK DEFINITION FILE FOR A NON-FORECAST MODEL TASK
-# See the Cylc Userguide and/or the full task definition template
-# for the difference between the free_task and forecast_model types. 
-# The vast majority of tasks in a typical forecasting system are likely
-# to be no more complicated than this, but see full-template.def for
-# complete task definition documentation.
+# Example Cylc Task Definition File for a FREE_TASK
+# See the Cylc Userguide for full documentation.
 
 %NAME                  # task name
     storm_surge_post
@@ -27,6 +23,8 @@
 
 %ESTIMATED_RUN_TIME    # in minutes
     10 
+
+%RESTART_LIST
 
 %OUTPUTS               # prefix with estimated completion time
     8: "file storm-surge-sites-$(MY_CYCLE_TIME).xml ready"

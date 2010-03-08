@@ -1,0 +1,27 @@
+# Example Cylc Task Definition File for a FORECAST_MODEL
+# See the Cylc Userguide for full documentation.
+
+%NAME                  # task name
+    nzfoo
+
+%DESCRIPTION           # 'cylc control' can access this at run time
+    New Zealand local area configuration of the 'foo' forecast model
+
+%TYPE                  # free_task or forecast_model, with modifiers
+    forecast_model
+
+%CYCLES                # cycles valid for this task in a 24hr period
+    0,6,12,18
+
+%TASK                  # the real task this task proxy represents
+    run-nzfoo.sh
+
+%PREREQUISITES         # submit %TASK when these are satisfied
+    "file storm-surge-fc-1-$(MY_CYCLE_TIME).nc ready"
+    "file storm-surge-fc-2-$(MY_CYCLE_TIME).nc ready"
+
+%ESTIMATED_RUN_TIME    # in minutes, only used in dummy mode
+    10 
+
+%OUTPUTS               # prefix with estimated completion time
+    8: "file storm-surge-sites-$(MY_CYCLE_TIME).xml ready"
