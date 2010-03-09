@@ -1,5 +1,9 @@
 To Do
 
+* flexible and consistent taskdef times for outputs, contact delay etc.
+
+* is taskdef CYCLES sorted for order?
+
 * combine file-move with userguide-2, add SCS suite to the examples
   (with real mode).
 
@@ -21,7 +25,12 @@ To Do
 
 * catch deliberate exits in manager, in order cleanly shutdown pyro
 
-* consider 'set -e' and 'trap' in task scripts.
+* consider 'set -e' and 'trap' in task scripts:
+# ABORT IN CASE OF ANY ERROR, AND ALERT CYLC
+# (this means we do not need to explicitly check for success of simple
+# operations like directory creation, etc.
+trap 'cylc-message --failed' ERR  
+
 
 * 'raise SystemExit(message)' everywhere instead of sys.exit(1)?
 * print error messages to stderr: print >> sys.stderr, 'message'

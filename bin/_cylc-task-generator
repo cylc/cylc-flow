@@ -108,12 +108,12 @@ def main( argv ):
 
     allowed_keys = [ 'NAME', 'OWNER', 'HOURS', 'EXTERNAL_TASK',
             'REMOTE_HOST', 
-            'ENVIRONMENT', 'SINGLE_CYCLE', 'PREREQUISITES',
+            'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 
             'ONEOFF_FOLLOW_ON', 'ESTIMATED_RESTART_DUMP_TIMES' ]
 
-    allowed_types = ['forecast_model', 'free_task' ]
+    allowed_types = ['tied', 'free' ]
     allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
 
     # open the output file
@@ -238,9 +238,11 @@ from dynamic_instantiation import get_object
                 print 'ERROR, unknown task class:', task_type
                 sys.exit(1)
 
-            if task_type == 'forecast_model':
+            if task_type == 'tied':
+                task_type = 'forecast_model'
                 fcmodel = True
-            elif task_type == 'free_task':
+            elif task_type == 'free':
+                task_type = 'free_task'
                 freet = True
 
             modifiers = typelist[1:]

@@ -1,0 +1,150 @@
+# MASTER CYLC TASK DEFINITION FILE, All available options, annotated.
+# Refer also to the cylc userguide, Optional keys: [square brackets].
+
+#----------------------------------------------------------------------
+%NAME
+    # - Task name, and optional short name for display by the monitor.
+    a_task_called_foo[, foo]
+
+#----------------------------------------------------------------------
+%DESCRIPTION
+    # - freeform multiline text description of what this task does.
+    The quick brown fox jumped over the lazy dog.
+
+#----------------------------------------------------------------------
+%TYPE
+    # - Task type ('free' or 'tied') with optional type modifiers
+    free[, oneoff, sequential, dummy, contact, catchup_contact ]
+
+    # - FREE tasks have no previous-instance dependence: successive
+    #     instances can run in parallel if the opportunity arises.
+    #     Most non-forecast model tasks should be of this type.
+    # - TIED tasks have previous instance dependence through special
+    #     'restart' outputs and prerequisites. 
+    #     Most forecast model tasks should be of this type.
+    
+    # - The SEQUENTIAL modifier forces successive instances to run in
+    #     sequence even if the opportunity to run in parallel arises.
+    # - A task with the ONEOFF modifier does not spawn a successor.
+    # - A task with the CONTACT modifier "makes contact" with the
+    #     external world by waiting on some external event, usually
+    #     availability or arrival of data; see %CONTACT_DELAY below.
+    # - A task with the CATCHUP_CONTACT modifier is aware of whether
+    #     tasks of its class have caught up to real time operation yet. 
+    # - A task with the DUMMY modifier always invokes the external dummy
+    #     task program, even in real operation mode.
+
+    # SEE THE CYLC USERGUIDE FOR MORE ON TASK TYPES AND MODIFIERS.
+
+#----------------------------------------------------------------------
+%CYCLES
+    # - Comma separated list of cycle hours valid for this task
+    0,6,12,18
+
+#----------------------------------------------------------------------
+%TASK
+    # - The program or script to submit to run this task.
+    # - Located in the system definition scripts sub-directory,
+    #     or an external location (full path, or not if in $PATH)
+    # - Not required by tasks with the 'dummy' modifier.
+    run-foo.sh
+
+#----------------------------------------------------------------------
+[%CONTACT_DELAY]
+    # - In HOURS, only for tasks with the 'contact' modifier.
+    # - Task will not be submitted unless its prerequisites are
+    #     satisfied AND wall clock time > task cycle time + the delay.
+    # - Has no affect on case study or sufficiently delayed operation
+    #     (where wall clock time > cycle time + delay).
+    4.5
+
+#----------------------------------------------------------------------
+[%OWNER]
+    # - Username under which to run the external task, if the chosen
+    #     job submit method is able to arrange this.
+    bob
+
+#----------------------------------------------------------------------
+[%ENVIRONMENT]
+    # - Environment variables to export in the task execution environment
+    # - The task name and cycle time, etc., are automatically exported.
+    # - May contain $(CYLC_TIME) and $(NAME)
+    VARNAME1 value1
+    VARNAME2 value2
+
+#----------------------------------------------------------------------
+%ESTIMATED_RUN_TIME   
+    # - In MINUTES, dummy mode only, may be conditional on cycle hour.
+           20       # default 20 minutes
+    0,12 | 25       # 25 minutes if cycle hour is 00 or 12
+    6,18 | 35       # 35 minutes if cycle hour is 06 or 18
+
+#----------------------------------------------------------------------
+%PREREQUISITES      
+    # - Quoted string literals, one per lines.
+    # - Some variable substitution and simple cycle time arithmetic:
+    #     $(CYLC_TIME [+/- <hours>])
+    # - May be conditional on cycle hour.
+    # - Do not list the restart prerequisites of 'tied' tasks (forecast 
+    #     models), they are created and handled automatically.
+    # - Should contain $(CYLC_TIME) somewhere, to distinguish outputs
+    #     from different cycles.
+
+           "baz finished for $(CYLC_TIME)"
+           "file bar_$(CYLC_TIME).nc ready"
+    0,12 | "foo output files ready for $(CYLC_TIME)"
+
+#----------------------------------------------------------------------
+[%STARTUP_PREREQUISITES]
+    # - Prerequisites that are only used once, at system start up.
+    "cold start outputs ready for $(CYLC_TIME)"
+
+#----------------------------------------------------------------------
+%OUTPUTS
+    # - Quoted string literals, one per line, prefixed with estimated
+    #     time of completion in MINUTES (which is only for dummy mode).
+    # - Some variable substitution and simple cycle time arithmetic:
+    #     $(CYLC_TIME [+/- <hours>])
+    # - DO NOT REGISTER the special 'started' and 'finished' messages,
+    #     or the special restart outputs of 'tied' tasks (forecast
+    #     models); these are all handled automatically by cylc.
+    #     (other tasks may depend on these automatic outputs, however).
+    # - May be conditional on cycle hour, as for prerequisites.
+    # - Should contain $(CYLC_TIME) somewhere, to distinguish outputs
+    #     from different cycles.
+
+           10: "file foo_0_$(CYLC_TIME).nc ready"
+    0,12 | 15: "foo outputs ready for $(CYLC_TIME)"
+    6,18 | 15: "file foo_2_$(CYLC_TIME).nc ready"
+
+#----------------------------------------------------------------------
+[%ESTIMATED_RESTART_OUTPUT_TIMES]
+    # - In MINUTES, required for 'tied' tasks.
+    # - Comma separated list of completion times for the special restart
+    #     outputs (see above). The first represents restart outputs
+    #     required by this task in the NEXT cycle, the second the
+    #     following cycle, and so on.
+    # - The actual times are used only in dummy mode, but number of
+    #     times listed is more generally important: for N times ONE
+    #     special restart PREREQUISITE and N special restart OUTPUTS
+    #     will be created automatically.
+    5,10,15
+
+#----------------------------------------------------------------------
+[%NO_NONCOTEMPORAL_DEPENDANTS] 
+    # - Set True if you can guarantee that this task has only cotemporal
+    #     (same cycle) dependants. This allows cylc to delete the task
+    #     from the system as soon as it is finished AND there are no
+    #     other tasks yet to be finished at its cycle time or earlier.
+    # - DO NOT SET TRUE FOR 'tied' TASKS (FORECAST MODELS) AS THESE 
+    #     DEPEND ON RESTART OUTPUTS FROM A PREVIOUS CYCLE.
+    True
+
+#----------------------------------------------------------------------
+[%ONEOFF_FOLLOW_ON]
+    # - Nominate a task for a 'oneoff' task with non-cotemporal
+    #     dependants to "hand the baton on to" so that cylc knows when
+    #     it can delete the oneoff task from the  system (it will not be
+    #     deleted before the follow-on task exists).
+    # - ONLY FOR 'oneoff' TASKS WITH NON-COTEMPORAL DEPENDANTS.
+    task_foo

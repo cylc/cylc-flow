@@ -41,7 +41,7 @@ showstringspaces=false,
 
 \lstdefinelanguage{cylctaskdef}
 {
-morekeywords={NAME,DESCRIPTION,TYPE,CONTACT_DELAY,OWNER,CYCLE_TIMES,EXTERNAL_TASK,ENVIRONMENT,ESTIMATED_RUN_TIME,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,ESTIMATED_RESTART_DUMP_TIMES,SINGLE_CYCLE,ONEOFF_FOLLOW_ON},
+morekeywords={NAME,DESCRIPTION,TYPE,CONTACT_DELAY,OWNER,CYCLES,TASK,ENVIRONMENT,ESTIMATED_RUN_TIME,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,ESTIMATED_RESTART_OUTPUT_TIMES,NO_NONCOTEMPORAL_DEPENDANTS,ONEOFF_FOLLOW_ON},
 sensitive=false,
 morecomment=[l]{\#},
 morestring=[b]\",
@@ -761,8 +761,8 @@ Definition Files define just the properties of tasks that matter from a
 scheduling perspective: name, external task, valid cycle times,
 prerequisites, outputs.} 
 
-The potentially vast number of task-specific configuration settings that
-are not relevant to scheduling (e.g.\ numerical method choices, MPP
+Other task-specific configuration settings that are not relevant to
+scheduling (e.g.\ numerical method choices, MPP
 domain decomposition, input and output directory locations, and so on)
 belong in the external location where the real task resides, or possibly
 in the cylc task scripts that run the external tasks (ideally these
@@ -772,7 +772,7 @@ more than that in them). However, there is one minor exception to this
 rule. If your system has several tasks that essentially do the same
 thing you can get them all to invoke the same external program with
 task-specific input parameters supplied through environment variables
-that are specified in the Task Definition Files.  Forecasting systems
+that are specified in the Task Definition Files. Forecasting systems
 commonly have to move a lot of files around (from the output
 directory(s) of one task to the input directory(s) of others, for
 instance). See Section~\ref{RealDependencies}, and cylc's file-transfer
@@ -798,9 +798,8 @@ typical non-forecast-model task.
 \lstset{language=cylctaskdef}
 
 {
-\lstinputlisting{../sys/templates/free_task-example.def}
+\lstinputlisting{../sys/examples/userguide-2/taskdef/D.def}
 }
-
 
 \subsubsection{Forecast Model Example}
 
@@ -810,7 +809,7 @@ typical forecast-model task.
 \lstset{language=cylctaskdef}
 
 {
-\lstinputlisting{../sys/templates/forecast_model-example.def}
+\lstinputlisting{../sys/examples/userguide-2/taskdef/A.def}
 }
 
 
@@ -853,6 +852,28 @@ at the right time according to its type.
         is modified to report restart outputs immediately, all 
         restart outputs will be reported complete at once when the
         model run completes.
+%    # *(2) A FORECAST_MODEL depends on a previous instance of the same
+%    # task to provide special 'restart' prerequisites: during a
+%%    # forecast, a warm-cycling model will write out a state dump valid
+%    # at the start time of the next forecast, for use in initialising
+%    # it. Multiple restart outputs may be generated to allow one or more
+%    # subsequent forecasts to be omitted if necessary. A forecast_model
+%    # registers how many of these are generated, which cylc assumes are
+%    # intended for use by the next N valid start times for the task and
+%    # automatically adds special outputs and prerequisites to represent
+%    # them in the system. 
+%    # A forecast model cannot start running until
+%    # its restart prerequisite is satisfied, but the same prerequisite
+%    # can potentially be satisfied by a restart output from any of the
+%    # previous N forecasts. This allows cylc to continue running when
+%    # one or more cycles of a particular model have to be omitted
+%    # because of problems. But in normal operation we only want a model
+%    # to trigger off the most recent previous forecast, which means that
+%    # a forecast model cannot spawn a successor until its *last* restart
+%    # output is completed (otherwise there is a chance the next-plus-one
+%    # instance could come into existence and trigger before the the
+%    # current instance, and so on, in normal operation). 
+ 
 \end{itemize}
 
 
@@ -936,10 +957,22 @@ used to trigger other tasks.
 
 \subsubsection{The Truth Of Messages}
 
-For file outputs it may make sense to include filenames in the message
-strings, but there is no need to include actual file locations. 
+For an output that corresponds directly to a single file you can, if
+you want, put the filename itself in the output message:
+\begin{lstinline}
+    "file surface-pressure-\$(CYLC_TIME).nc ready"
+\end{lstinline}
 
-Cylc does not check that incoming messages (i.e.\ reports of completed
+However, there is no particular need to use the actual filename, 
+so you might as well use a more form in order to be consistent with
+messages refering to a whole group of files or other non-file-related
+events:
+\begin{lstinline}
+    "surface pressure fields ready for \$(CYLC_TIME)"
+\end{lstinline}
+
+In particular, there is no need to include actual file locations because
+cylc does not check that incoming messages (i.e.\ reports of completed
 outputs) are actually true before allowing them to be used to satisfy
 the prerequisites of other tasks. There are two reasons for this.
 Firstly, cylc does not restrict the kind of event that can be reported
@@ -953,14 +986,13 @@ failure back to cylc immediately.
 
 \subsubsection{Cycle Time in Messages}
 
-Prerequisites and outputs will almost always need to include a cycle
-time string whether inside a
-filename or not, to distinguish the outputs from instances of the same
-task in different forecast cycles. The time to use in messages would
-normally be the task's own cycle time, since intercycle dependencies
-(other than forecast model restart dependences) are rare, however cylc's
-task definition mechanism (below) provides some simple cycle time
-arithmetic operations for unusual cases. 
+Prerequisites and outputs should always contain a cycle time string to
+distinguish the outputs from instances of the same task in different
+forecast cycles. The time to use in messages would normally be the
+task's own cycle time, since intercycle dependencies (other than
+forecast model restart dependences) are rare, however cylc's task
+definition mechanism (below) provides some simple cycle time arithmetic
+operations for unusual cases. 
 
 \lstset{language=Python}
 \begin{lstlisting}
@@ -1502,19 +1534,13 @@ interrogate a running system.
 \section{Task Definition Reference}
 \label{TaskDefinitionReference}
 
-A {\em Task Definition File} defines the properties of a cylc task:
-name, valid cycle times, prerequisites and outputs, the task
-control script used to invoke the external task, etc.  
-\lstinline=cylc configure= parses a system's task definition files and
-generates the Python task class module required by cylc to run the
-system.
-
-Listed below is the full task definitition template with all items documented.
+Listed below is the full task definitition template with all items
+documented.
 
 \lstset{language=cylctaskdef}
 
 {
-\lstinputlisting{../sys/templates/full-template.def}
+\lstinputlisting{../sys/templates/master.def}
 }
 
 \lstset{language=}
