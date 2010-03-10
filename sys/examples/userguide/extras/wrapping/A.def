@@ -1,0 +1,37 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    atmos, A
+
+%DESCRIPTION
+    Atmospheric forecast model. 
+    Includes obs processing and data assimilation.
+    Generates restart files for the next cycle only.
+    WRAPPED VERSION for an unmodified external task.
+
+%TYPE
+    tied
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    cylc-wrapper
+
+%ENVIRONMENT
+    WRAP A.sh
+    NEXT_CYLC_TIME $(CYLC_TIME + 6)
+
+%PREREQUISITES
+    "atmospheric observations ready for $(CYLC_TIME)"
+
+%ESTIMATED_RUN_TIME
+    90
+
+%ESTIMATED_RESTART_OUTPUT_TIMES
+    10
+
+%OUTPUTS
+    85: "model level forecast fields ready for $(CYLC_TIME)"
+    89: "surface wind fields ready for $(CYLC_TIME)"
+    89: "surface pressure field ready for $(CYLC_TIME)"
