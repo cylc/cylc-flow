@@ -1,20 +1,19 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
-    B
+    sea_state, B
 
 %DESCRIPTION
-    Forecast model.
+    Sea state forecast model, driven by the atmospheric model.
     Generates restart files for the next two cycles.
-    Depends on task A finishing.
 
 %TYPE
-    forecast_model
+    tied
 
-%HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     B.sh
 
 %ENVIRONMENT
@@ -22,10 +21,13 @@
     NEXT_NEXT_CYLC_TIME $(CYLC_TIME + 12)
 
 %PREREQUISITES
-    "A%$(CYLC_TIME) finished"
+    "surface wind fields ready for $(CYLC_TIME)"
 
 %ESTIMATED_RUN_TIME
     60
 
-%ESTIMATED_RESTART_DUMP_TIMES
+%ESTIMATED_RESTART_OUTPUT_TIMES
     20,40
+
+%OUTPUTS
+    58: "sea state fields ready for $(CYLC_TIME)"

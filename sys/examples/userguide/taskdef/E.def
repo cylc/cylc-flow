@@ -1,0 +1,25 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    sea_state_products, E
+
+%DESCRIPTION
+    Post processing for the sea state forecast. 
+
+%TYPE
+    free
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    E.sh
+
+%PREREQUISITES
+    "sea state fields ready for $(CYLC_TIME)"
+
+%ESTIMATED_RUN_TIME
+    150
+
+%OUTPUTS
+    150: "sea state products ready for $(CYLC_TIME)"

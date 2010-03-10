@@ -106,12 +106,12 @@ def main( argv ):
 
     task_def_files = argv[1:]
 
-    allowed_keys = [ 'NAME', 'OWNER', 'HOURS', 'EXTERNAL_TASK',
+    allowed_keys = [ 'NAME', 'OWNER', 'CYCLES', 'TASK',
             'REMOTE_HOST', 
             'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 
-            'ONEOFF_FOLLOW_ON', 'ESTIMATED_RESTART_DUMP_TIMES' ]
+            'ONEOFF_FOLLOW_ON', 'ESTIMATED_RESTART_OUTPUT_TIMES' ]
 
     allowed_types = ['tied', 'free' ]
     allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
@@ -209,8 +209,8 @@ from dynamic_instantiation import get_object
 
         # quick death (DEFAULT False)
         quick_death = False
-        if 'SINGLE_CYCLE' in parsed_def.keys():
-            delayed_death = parsed_def[ 'SINGLE_CYCLE' ][0]
+        if 'NO_NONCOTEMPORAL_DEPENDANTS' in parsed_def.keys():
+            delayed_death = parsed_def[ 'NO_NONCOTEMPORAL_DEPENDANTS' ][0]
             if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
                 quick_death = True
 
@@ -233,7 +233,6 @@ from dynamic_instantiation import get_object
             typelist = tmp.split(',')
 
             task_type = typelist[0]
-            derived_from = task_type
             if task_type not in allowed_types:
                 print 'ERROR, unknown task class:', task_type
                 sys.exit(1)
@@ -244,6 +243,8 @@ from dynamic_instantiation import get_object
             elif task_type == 'free':
                 task_type = 'free_task'
                 freet = True
+
+            derived_from = task_type
 
             modifiers = typelist[1:]
             if len(modifiers) > 0:
@@ -280,8 +281,8 @@ from dynamic_instantiation import get_object
                 if len( modifiers ) >= 1:
                     derived_from = ','.join( modifiers ) + ', ' + derived_from
 
-        if 'EXTERNAL_TASK' in parsed_def.keys():
-            external_task = parsed_def[ 'EXTERNAL_TASK' ][0]
+        if 'TASK' in parsed_def.keys():
+            external_task = parsed_def[ 'TASK' ][0]
             if dummy:
                 print "WARNING: this task has the 'dummy' task type modifier, and therefore its"
                 print "external task, " + external_task + ", will be replaced by _cylc-dummy-task."
@@ -317,11 +318,11 @@ from dynamic_instantiation import get_object
                 sys.exit(1)
 
         if fcmodel:
-            if 'ESTIMATED_RESTART_DUMP_TIMES' not in parsed_def.keys():
-                print 'Error: forecast models must define %ESTIMATED_RESTART_DUMP_TIMES'
+            if 'ESTIMATED_RESTART_OUTPUT_TIMES' not in parsed_def.keys():
+                print 'Error: forecast models must define %ESTIMATED_RESTART_OUTPUT_TIMES'
                 sys.exit(1)
             else:
-                restart_list = parsed_def[ 'ESTIMATED_RESTART_DUMP_TIMES' ][0]
+                restart_list = parsed_def[ 'ESTIMATED_RESTART_OUTPUT_TIMES' ][0]
 
         task_name = parsed_def[ 'NAME' ][0]
 
@@ -379,7 +380,7 @@ from dynamic_instantiation import get_object
             FILE.write( indent + 'remote_host = \'' + remote_host + '\'\n\n' )
 
         # valid hours
-        FILE.write( indent + 'valid_hours = [' + parsed_def[ 'HOURS' ][0] + ']\n\n' )
+        FILE.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLES' ][0] + ']\n\n' )
 
         FILE.write( indent + 'quick_death = ' + str(quick_death) + '\n\n' )
 

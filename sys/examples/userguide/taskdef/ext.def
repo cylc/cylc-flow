@@ -1,29 +1,23 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
-    ext
+    get_data, X
 
 %DESCRIPTION
-    Example system task to provide the external input required by task A.
+    Provide the external atmospheric observations by the atmospheric model.
     Depends only on the system startup task at start time.
 
 %TYPE
-    free_task, contact
+    free, contact
 
 %CONTACT_DELAY
     1.0
 
-%HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
-    cylc-wrapper
-
-%ENVIRONMENT
-    WRAP ext.sh
-
-%PREREQUISITES
-    # None
+%TASK
+    ext.sh
 
 %STARTUP_PREREQUISITES
     "startup%$(CYLC_TIME) finished"
@@ -31,5 +25,5 @@
 %ESTIMATED_RUN_TIME
     10
 
-#%SINGLE_CYCLE
-#    True
+%OUTPUTS
+    9: "atmospheric observations ready for $(CYLC_TIME)"
