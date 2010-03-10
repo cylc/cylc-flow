@@ -12,8 +12,8 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 75 * 60 / ACCEL )) 
 
 # check prerequistes
-ONE=$TMPDIR/B_${CYLC_TIME}.output
-TWO=$TMPDIR/C_${CYLC_TIME}.output
+ONE=$TMPDIR/sea-state-${CYLC_TIME}.nc
+TWO=$TMPDIR/storm-surge-${CYLC_TIME}.nc
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE

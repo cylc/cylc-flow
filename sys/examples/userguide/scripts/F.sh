@@ -12,7 +12,7 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 50 * 60 / ACCEL )) 
 
 # check prerequistes
-PRE=$TMPDIR/C_${CYLC_TIME}.output
+PRE=$TMPDIR/storm-surge-${CYLC_TIME}.nc
 if [[ ! -f $PRE ]]; then
     # FAILURE MESSAGE
     cylc message -p CRITICAL "file note found: $PRE"

@@ -15,9 +15,10 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 40 * 60 / ACCEL )) 
 
 # check prerequistes
-ONE=$TMPDIR/A_${CYLC_TIME}.output
-TWO=$TMPDIR/${CYLC_TASK}_${CYLC_TIME}.restart
-for PRE in $ONE $TWO; do
+ONE=$TMPDIR/surface-winds-${CYLC_TIME}.nc
+TWO=$TMPDIR/surface-pressure-${CYLC_TIME}.nc
+THR=$TMPDIR/${CYLC_TASK}_${CYLC_TIME}.restart
+for PRE in $ONE $TWO $THR; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
         cylc message -p CRITICAL "file note found: $PRE"
