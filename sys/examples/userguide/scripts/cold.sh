@@ -17,9 +17,9 @@ sleep $SLEEP
 
 touch $TMPDIR/atmos-${CYLC_TIME}.restart
 cylc message "atmos restart files ready for $CYLC_TIME"
-touch $TMPDIR/sea-state-${CYLC_TIME}.restart
+touch $TMPDIR/sea_state-${CYLC_TIME}.restart
 cylc message "sea_state restart files ready for $CYLC_TIME"
-touch $TMPDIR/storm-surge-${CYLC_TIME}.restart
+touch $TMPDIR/storm_surge-${CYLC_TIME}.restart
 cylc message "storm_surge restart files ready for $CYLC_TIME"
 
 # SUCCESS MESSAGE

@@ -12,7 +12,7 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 150 * 60 / ACCEL )) 
 
 # check prerequistes
-PRE=$TMPDIR/B_${CYLC_TIME}.output
+PRE=$TMPDIR/sea-state-${CYLC_TIME}.nc
 if [[ ! -f $PRE ]]; then
     # FAILURE MESSAGE
     cylc message -p CRITICAL "file note found: $PRE"
