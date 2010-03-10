@@ -5,7 +5,6 @@
 # in one system.
 
 import os
-from time import sleep
 from job_submit import job_submit
 
 class background2( job_submit ):
@@ -13,8 +12,4 @@ class background2( job_submit ):
     def submit( self ):
         self.set_local_environment()
         print "Background2 job submit: " + self.task_name + "%" + self.cycle_time + " (" + self.task +")"
-        print "  ... queued"
-        # five second delay to simulate queued-but-not-submitted 
-        sleep(5)
-        print " ... submitted"
         self.execute_local( self.task )
