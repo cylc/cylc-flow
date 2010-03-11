@@ -450,7 +450,7 @@ if dummy_mode:
 env = config.get('environment')
 for VAR in env.keys():
     #print "! setting", VAR, '=', env[VAR]
-    os.environ[ VAR ] = env[ VAR ]
+    os.environ[ VAR ] = str( env[ VAR ] )
 
 # print system information at startup----------------------------------
 print_banner()
