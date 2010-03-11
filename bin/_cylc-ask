@@ -20,7 +20,7 @@ def print_heading( strng ):
         print underline
 
 # construct a command line parser
-usage = """cylc question [options] SYSTEM 
+usage = """cylc ask [options] SYSTEM 
 
 Interrogate a running cylc system.
 

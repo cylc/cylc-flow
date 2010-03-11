@@ -610,6 +610,7 @@ out of the configured task list.
 \end{itemize}
 
 \subsection{System Configuration}
+\label{QuickSystemConfiguration}
 
 To generate task class and config modules for a system defined in
 location PATH (Section~\ref{configure}): 
@@ -629,10 +630,11 @@ can then run, monitor, and control the registered system by name. The
 registrations (checking their validiy, deleting them, and so on).
 
 \begin{lstlisting}
-    cylc register -s NAME PATH
+    cylc register -s SYSTEM PATH
 \end{lstlisting}
 
-Where PATH is the location of the system definition directory. 
+Where PATH is the location of the system definition directory, and SYSTEM
+is the name by which you want to access the system. 
 
 \subsection{Starting A Pyro Nameserver}
 
@@ -650,7 +652,7 @@ not die with your terminal session:
 To cold start or restart a registered system (Section~\ref{run}):
 
 \begin{lstlisting}
-    cylc schedule -s NAME [options]
+    cylc schedule [options] SYSTEM
 \end{lstlisting}
     
 \subsection{System Monitoring}
@@ -659,16 +661,25 @@ Use one or more of the terminal based cylc system monitors
 (Section~\ref{monitor}). For the main monitor: 
 
 \begin{lstlisting}
-    cylc monitor -s NAME [options]
+    cylc monitor [options] SYSTEM
 \end{lstlisting}
 
 \subsection{Controlling Running Systems}
 
-To interrogate a system, insert or remove tasks, shut it down, etc.
+To insert or remove tasks, shut the system down, etc.
 (Section~\ref{control}):
 
 \begin{lstlisting}
-    cylc control -s NAME [options]
+    cylc control [options] SYSTEM
+\end{lstlisting}
+
+\subsection{Interrogating Running Systems}
+
+To extract information from a running system:
+(Section~\ref{control}):
+
+\begin{lstlisting}
+    cylc ask [options] SYSTEM
 \end{lstlisting}
 
 
@@ -1110,8 +1121,41 @@ directly with cylc if necessary.
 \subsection{Task Wrapping}
 \label{TaskWrapping}
 
-A simple a simple wrapper script invoked by cylc reports task
-startup, invokes the task, and reports task completion or failure. 
+If you have a task that for some reason you cannot, or do not want to,
+modify to send the startup, output, and failure or completion messages, 
+you can have cylc wrap the task in a special script that does the following:
+
+\begin{itemize}
+    \item reports task startup
+    \item invokes the wrapped task, and checks for success or failure
+    \item if the task failed, it reports the failure. 
+    \item if the task succeeded, it automatically reports all the task's
+        registered outputs complete, and then reports success.
+\end{itemize}
+
+Note the assumption that successful completion of an external task
+implies all registered outputs were completed by it.
+
+If you wrap all tasks like this you can run an entire system without
+modifying the tasks at all to accommodate cylc. There is a downside to
+task wrapping, however:
+
+\begin{itemize}
+    \item you can't add extra internal messages (i.e. additional to the
+        registered outputs) to a task, for progress monitoring or
+        debugging purposes.
+    \item all registered task outputs are reported complete only
+        when the wrapped task finishes, not at the time they are actually
+        completed. This means successive instances of a `tied' (forecast
+        model) task cannot run in parallel, or overlap, if the
+        opportunity arises (because the restart outputs, which are
+        normally created early in the forecast, won't be reported until
+        the end of the forecast).
+\end{itemize} 
+
+Of course forecast models are usually monolithic executables that are not
+well suited to spawing external messaging processes, so these problems
+may be of no consequence in practice.
 
 \pagebreak
 
@@ -1400,18 +1444,8 @@ of the task list in the system config module).
 \section{Controlling Running Systems}
 \label{ControllingRunningSystems}
 
-\section{A Complete Example System}
-\label{ACompleteExampleSystem}
-
-This system mirrors the diagrammatic example of
-Section~\ref{HowCylcWorks}, except that it has two additional
-tasks,``startup'' and ``coldstart'', used to get the system
-started.  The system definition directory is:
-\begin{lstlisting}
-[CYLC_TOP_DIR]/sys/examples/userguide/
-\end{lstlisting}
-
-NOTE THE TASKS WITH NO PREREQUISITES
+\section{A Complete Working Example}
+\label{ACompleteWorkingExample}
 
 \input{../sys/examples/userguide/README.tex}
 
@@ -1429,21 +1463,21 @@ NOTE THE TASKS WITH NO PREREQUISITES
 \subsection{Coldstart Task}
 \subsubsection{taskdef file}
 \lstset{language=cylctaskdef}
-\lstinputlisting{../sys/examples/userguide/taskdef/cold.def}
+\lstinputlisting{../sys/examples/userguide/taskdef/coldstart.def}
 \pagebreak
 \subsubsection{task script}
 \lstset{language=bash}
-\lstinputlisting{../sys/examples/userguide/scripts/cold.sh}
+\lstinputlisting{../sys/examples/userguide/scripts/coldstart.sh}
 
 \pagebreak
 \subsection{Task Ext}
 \subsubsection{taskdef file}
 \lstset{language=cylctaskdef}
-\lstinputlisting{../sys/examples/userguide/taskdef/ext.def}
+\lstinputlisting{../sys/examples/userguide/taskdef/X.def}
 \pagebreak
 \subsubsection{task script}
 \lstset{language=bash}
-\lstinputlisting{../sys/examples/userguide/scripts/ext.sh}
+\lstinputlisting{../sys/examples/userguide/scripts/X.sh}
 
 \pagebreak
 \subsection{Task A}
@@ -1594,14 +1628,14 @@ control a running system.
 }
 
 \pagebreak
-\subsection{cylc question}
-\label{cylcquestion}
+\subsection{cylc ask}
+\label{cylcask}
 
 See Section~\ref{controlling} for complete documentation of how to
 interrogate a running system.
 
 {
-\lstinputlisting{command-usage/cylc-question.txt}
+\lstinputlisting{command-usage/cylc-ask.txt}
 }
 
 \pagebreak
