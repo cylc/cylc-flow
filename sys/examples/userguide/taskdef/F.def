@@ -1,7 +1,7 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
-    storm_surge_products, F
+    F
 
 %DESCRIPTION
     Post processing for the storm surge model
@@ -16,10 +16,10 @@
     F.sh
 
 %PREREQUISITES
-    "storm surge fields ready for $(CYLC_TIME)"
+    "storm surge fields ready for $(CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
     50
 
 %OUTPUTS
-    50: "storm surge products ready for $(CYLC_TIME)"
+    50: "storm surge products ready for $(CYCLE_TIME)"

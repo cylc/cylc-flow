@@ -1,0 +1,35 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    coldstart
+
+%DESCRIPTION
+    Provides the initial restart prerequisites for the forecast models
+    (A, B, and C). In a real system there should be a separate cold start
+    task for each model, and any model that is "spun up" by external
+    means before starting the system would have a dummy cold start task
+    to satisfy the corresponding prerequisites.
+    Depends on the system startup task.
+
+%TYPE
+    free, oneoff
+
+%NO_NONCOTEMPORAL_DEPENDANTS
+    True
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    coldstart.sh
+
+%PREREQUISITES
+    "startup%$(CYCLE_TIME) finished"
+
+%ESTIMATED_RUN_TIME
+    10
+
+%OUTPUTS
+    7: "A restart files ready for $(CYCLE_TIME)"
+    8: "B restart files ready for $(CYCLE_TIME)"
+    9: "C restart files ready for $(CYCLE_TIME)"

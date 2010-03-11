@@ -50,27 +50,27 @@ def interpolate_variables( strng ):
     strng = re.sub( "\$\(NAME\)'$", "' + self.name"   ,  strng ) # end line
     strng = re.sub( "\$\(NAME\)" , "'  + self.name + '", strng ) # mid line
    
-    # replace "$(CYLC_TIME)"
-    strng = re.sub( "^'\$\(CYLC_TIME\)'$",   "self.c_time",     strng ) # alone
-    strng = re.sub( "^'\$\(CYLC_TIME\)",     "self.c_time + '", strng ) # start line
-    strng = re.sub( "\$\(CYLC_TIME\)'$", "' + self.c_time"   ,  strng ) # end line
-    strng = re.sub( "\$\(CYLC_TIME\)" , "'  + self.c_time + '", strng ) # mid line
+    # replace "$(CYCLE_TIME)"
+    strng = re.sub( "^'\$\(CYCLE_TIME\)'$",   "self.c_time",     strng ) # alone
+    strng = re.sub( "^'\$\(CYCLE_TIME\)",     "self.c_time + '", strng ) # start line
+    strng = re.sub( "\$\(CYCLE_TIME\)'$", "' + self.c_time"   ,  strng ) # end line
+    strng = re.sub( "\$\(CYCLE_TIME\)" , "'  + self.c_time + '", strng ) # mid line
 
-    # replace "$(CYLC_TIME - XX )"
-    m = re.search( '\$\(\s*CYLC_TIME\s*-\s*(\d+)\s*\)', strng )
+    # replace "$(CYCLE_TIME - XX )"
+    m = re.search( '\$\(\s*CYCLE_TIME\s*-\s*(\d+)\s*\)', strng )
     if m:
-        strng = re.sub( "^'\$\(\s*CYLC_TIME.*\)'$",   "cycle_time.decrement( self.c_time, " + m.group(1) + ")",     strng ) # alone
-        strng = re.sub( "^'\$\(\s*CYLC_TIME.*\)",     "cycle_time.decrement( self.c_time, " + m.group(1) + ") + '", strng ) # start line
-        strng = re.sub( "\$\(\s*CYLC_TIME.*\)'$", "' + cycle_time.decrement( self.c_time, " + m.group(1) + ")",     strng ) # mid line
-        strng = re.sub( "\$\(\s*CYLC_TIME.*\)",   "' + cycle_time.decrement( self.c_time, " + m.group(1) + ") + '", strng ) # end line
+        strng = re.sub( "^'\$\(\s*CYCLE_TIME.*\)'$",   "cycle_time.decrement( self.c_time, " + m.group(1) + ")",     strng ) # alone
+        strng = re.sub( "^'\$\(\s*CYCLE_TIME.*\)",     "cycle_time.decrement( self.c_time, " + m.group(1) + ") + '", strng ) # start line
+        strng = re.sub( "\$\(\s*CYCLE_TIME.*\)'$", "' + cycle_time.decrement( self.c_time, " + m.group(1) + ")",     strng ) # mid line
+        strng = re.sub( "\$\(\s*CYCLE_TIME.*\)",   "' + cycle_time.decrement( self.c_time, " + m.group(1) + ") + '", strng ) # end line
 
-    # replace "$(CYLC_TIME + XX )"
-    m = re.search( '\$\(\s*CYLC_TIME\s*\+\s*(\d+)\s*\)', strng )
+    # replace "$(CYCLE_TIME + XX )"
+    m = re.search( '\$\(\s*CYCLE_TIME\s*\+\s*(\d+)\s*\)', strng )
     if m:
-        strng = re.sub( "^'\$\(\s*CYLC_TIME.*\)'$",   "cycle_time.increment( self.c_time, " + m.group(1) + ")",     strng ) # alone
-        strng = re.sub( "^'\$\(\s*CYLC_TIME.*\)",     "cycle_time.increment( self.c_time, " + m.group(1) + ") + '", strng ) # start line
-        strng = re.sub( "\$\(\s*CYLC_TIME.*\)'$", "' + cycle_time.increment( self.c_time, " + m.group(1) + ")",     strng ) # mid line
-        strng = re.sub( "\$\(\s*CYLC_TIME.*\)",   "' + cycle_time.increment( self.c_time, " + m.group(1) + ") + '", strng ) # end line
+        strng = re.sub( "^'\$\(\s*CYCLE_TIME.*\)'$",   "cycle_time.increment( self.c_time, " + m.group(1) + ")",     strng ) # alone
+        strng = re.sub( "^'\$\(\s*CYCLE_TIME.*\)",     "cycle_time.increment( self.c_time, " + m.group(1) + ") + '", strng ) # start line
+        strng = re.sub( "\$\(\s*CYCLE_TIME.*\)'$", "' + cycle_time.increment( self.c_time, " + m.group(1) + ")",     strng ) # mid line
+        strng = re.sub( "\$\(\s*CYCLE_TIME.*\)",   "' + cycle_time.increment( self.c_time, " + m.group(1) + ") + '", strng ) # end line
 
     return strng
 
@@ -544,7 +544,7 @@ from dynamic_instantiation import get_object
             for pair in parsed_def[ 'ENVIRONMENT' ]:
                 [ var, val ] = pair.split( ' ', 1 )
                 var = "'" + var + "'"
-                # replace NAME and CYLC_TIME variables
+                # replace NAME and CYCLE_TIME variables
                 val = interpolate_variables( "'" + val + "'" )
                 strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
 

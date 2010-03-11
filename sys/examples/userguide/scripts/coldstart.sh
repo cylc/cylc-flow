@@ -15,12 +15,12 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 # EXECUTE THE TASK ...
 sleep $SLEEP 
 
-touch $TMPDIR/atmos-${CYLC_TIME}.restart
-cylc message "atmos restart files ready for $CYLC_TIME"
-touch $TMPDIR/sea_state-${CYLC_TIME}.restart
-cylc message "sea_state restart files ready for $CYLC_TIME"
-touch $TMPDIR/storm_surge-${CYLC_TIME}.restart
-cylc message "storm_surge restart files ready for $CYLC_TIME"
+touch $TMPDIR/A-${CYCLE_TIME}.restart
+cylc message "A restart files ready for $CYCLE_TIME"
+touch $TMPDIR/B-${CYCLE_TIME}.restart
+cylc message "B restart files ready for $CYCLE_TIME"
+touch $TMPDIR/C-${CYCLE_TIME}.restart
+cylc message "C restart files ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
 cylc message --succeeded

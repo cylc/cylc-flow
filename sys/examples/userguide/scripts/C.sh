@@ -15,9 +15,9 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 40 * 60 / ACCEL )) 
 
 # check prerequistes
-ONE=$TMPDIR/surface-winds-${CYLC_TIME}.nc
-TWO=$TMPDIR/surface-pressure-${CYLC_TIME}.nc
-THR=$TMPDIR/${CYLC_TASK}-${CYLC_TIME}.restart
+ONE=$TMPDIR/surface-winds-${CYCLE_TIME}.nc
+TWO=$TMPDIR/surface-pressure-${CYCLE_TIME}.nc
+THR=$TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart
 for PRE in $ONE $TWO $THR; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
@@ -31,18 +31,18 @@ done
 
 # create a restart file for the next cycle
 sleep $SLEEP  # 40 min
-touch $TMPDIR/${CYLC_TASK}-${NEXT_CYLC_TIME}.restart
-cylc message "$CYLC_TASK restart files ready for $NEXT_CYLC_TIME"
+touch $TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
+cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
 
 # create a restart file for the next next cycle
 sleep $SLEEP  # 80 min
-touch $TMPDIR/${CYLC_TASK}-${NEXT_NEXT_CYLC_TIME}.restart
-cylc message "$CYLC_TASK restart files ready for $NEXT_NEXT_CYLC_TIME"
+touch $TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE_TIME}.restart
+cylc message "$TASK_NAME restart files ready for $NEXT_NEXT_CYCLE_TIME"
 
 # create storm surge forecast output
 sleep $SLEEP  # 120 min
-touch $TMPDIR/storm-surge-${CYLC_TIME}.nc
-cylc message "storm surge fields ready for $CYLC_TIME"
+touch $TMPDIR/storm-surge-${CYCLE_TIME}.nc
+cylc message "storm surge fields ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
 cylc message --succeeded

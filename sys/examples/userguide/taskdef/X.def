@@ -1,10 +1,10 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
-    get_data, X
+    X
 
 %DESCRIPTION
-    Provide the external atmospheric observations by the atmospheric model.
+    Retrieve external observation data at cycle-time + 1 hour.
     Depends only on the system startup task at start time.
 
 %TYPE
@@ -17,13 +17,13 @@
     0,6,12,18
 
 %TASK
-    ext.sh
+    X.sh
 
 %STARTUP_PREREQUISITES
-    "startup%$(CYLC_TIME) finished"
+    "startup%$(CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
     10
 
 %OUTPUTS
-    9: "atmospheric observations ready for $(CYLC_TIME)"
+    9: "obs data ready for $(CYCLE_TIME)"

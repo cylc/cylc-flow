@@ -73,8 +73,8 @@ class dummy_task:
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
-    task_name = os.environ['CYLC_TASK']
-    c_time = os.environ['CYLC_TIME']
+    task_name = os.environ['TASK_NAME']
+    c_time = os.environ['CYCLE_TIME']
     groupname = os.environ['CYLC_NS_GROUP'] 
     pns_host = os.environ['CYLC_NS_HOST'] 
 

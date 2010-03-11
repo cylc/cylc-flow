@@ -1,10 +1,11 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 %NAME
-    storm_surge, C
+    C
 
 %DESCRIPTION
-    Storm surge forecast model.
+    Could be a storm surge model, driving by the atmospheric model.
+    Requires surface pressure and winds, and own restart file.
     Generates restart files for the next two cycles.
 
 %TYPE
@@ -17,12 +18,12 @@
     C.sh
 
 %ENVIRONMENT
-    NEXT_CYLC_TIME $(CYLC_TIME + 6)
-    NEXT_NEXT_CYLC_TIME $(CYLC_TIME + 12)
+    NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
+    NEXT_NEXT_CYCLE_TIME $(CYCLE_TIME + 12)
 
 %PREREQUISITES
-    "surface pressure field ready for $(CYLC_TIME)"
-    "surface wind fields ready for $(CYLC_TIME)"
+    "surface pressure field ready for $(CYCLE_TIME)"
+    "surface wind fields ready for $(CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
     120
@@ -31,4 +32,4 @@
     40, 80
 
 %OUTPUTS
-    110: "storm surge fields ready for $(CYLC_TIME)"
+    110: "storm surge fields ready for $(CYCLE_TIME)"

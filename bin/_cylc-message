@@ -7,8 +7,8 @@ message is sent by calling [proxy].incoming( PRIORITY, MESSAGE )
 through the Pyro RPC mechanism. 
 The task proxy is identified by its unique ID, NAME%YYYYMMDDHH
 
-Cylc exports $CYLC_NS_HOST, $CYLC_NS_GROUP, $CYLC_TIME, and 
-$CYLC_TASK into the environment of each external task.
+Cylc exports $CYLC_NS_HOST, $CYLC_NS_GROUP, $CYCLE_TIME, and 
+$TASK_NAME into the environment of each external task.
 """
 
 import os
@@ -27,8 +27,8 @@ THIS COMMAND IS USED BY EXTERNAL TASKS TO UPDATE THE STATE OF THE PROXY
 OBJECTS THAT REPRESENT THEM IN A RUNNING CYLC SCHEDULER. Task proxy
 objects are uniquely identified by their name and cycle time, which must
 be known by this script in order to target the right object. Cylc
-exports these variables into the environment as $CYLC_TASK and
-$CYLC_TIME when it submits an external task, so the external task can
+exports these variables into the environment as $TASK_NAME and
+$CYCLE_TIME when it submits an external task, so the external task can
 simply call 'cylc message MESSAGE' and this script will read the right
 name and cycle time from the environment (i.e. the task itself does not
 need to know the name by which cylc refers to it, although it too can
@@ -58,7 +58,7 @@ parser.set_defaults( started=False, success=False, failure=False,
 
 parser.add_option( "-t", 
         metavar='TASK',
-        help="Task name, defaults to $CYLC_TASK.",
+        help="Task name, defaults to $TASK_NAME.",
         action="store", dest="taskname" )
 
 parser.add_option( "-s", "--system",
@@ -100,7 +100,7 @@ parser.add_option( "-p",
 
 parser.add_option( "-c",
         metavar="CYCLE",
-        help="Task cycle time (YYYYMMDDHH) defaults to $CYLC_TIME.",
+        help="Task cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.",
         action="store", dest="ctime" )
 
 parser.add_option( "--all-restart-outputs-completed", 
@@ -118,9 +118,9 @@ if options.taskname:
     # command line
     taskname = options.taskname
 else:
-    # Default to $CYLC_TASK
-    if 'CYLC_TASK' in os.environ.keys():
-        taskname = os.environ[ 'CYLC_TASK' ]
+    # Default to $TASK_NAME
+    if 'TASK_NAME' in os.environ.keys():
+        taskname = os.environ[ 'TASK_NAME' ]
     else:
         print 'ERROR, cylc message: no task name provided'
         sys.exit(1)
@@ -130,9 +130,9 @@ if options.ctime:
     # command line
     ctime = options.ctime
 else:
-    # Default to $CYLC_TIME
-    if 'CYLC_TIME' in os.environ.keys():
-        ctime = os.environ[ 'CYLC_TIME' ]
+    # Default to $CYCLE_TIME
+    if 'CYCLE_TIME' in os.environ.keys():
+        ctime = os.environ[ 'CYCLE_TIME' ]
     else:
         print 'ERROR, cylc message: no cycle time provided!'
         sys.exit(1)

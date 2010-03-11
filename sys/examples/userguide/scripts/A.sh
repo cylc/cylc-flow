@@ -16,8 +16,8 @@ SLEEP1=$(( 10 * 60 / ACCEL ))
 SLEEP2=$(( 80 * 60 / ACCEL ))
 
 # CHECK PREREQUISITES
-ONE=$TMPDIR/atmos-obs-${CYLC_TIME}.nc
-TWO=$TMPDIR/atmos-${CYLC_TIME}.restart
+ONE=$TMPDIR/obs-${CYCLE_TIME}.nc
+TWO=$TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
@@ -31,20 +31,20 @@ done
 sleep $SLEEP1
 
 # create a restart file for the next cycle
-touch $TMPDIR/atmos-${NEXT_CYLC_TIME}.restart
-cylc message "$CYLC_TASK restart files ready for $NEXT_CYLC_TIME"
+touch $TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
+cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
 
 sleep $SLEEP2
 
 # create forecast outputs
-touch $TMPDIR/surface-winds-${CYLC_TIME}.nc
-cylc message "surface wind fields ready for $CYLC_TIME"
+touch $TMPDIR/surface-winds-${CYCLE_TIME}.nc
+cylc message "surface wind fields ready for $CYCLE_TIME"
 
-touch $TMPDIR/surface-pressure-${CYLC_TIME}.nc
-cylc message "surface pressure field ready for $CYLC_TIME"
+touch $TMPDIR/surface-pressure-${CYCLE_TIME}.nc
+cylc message "surface pressure field ready for $CYCLE_TIME"
 
-touch $TMPDIR/model-level-fields-${CYLC_TIME}.nc
-cylc message "model level forecast fields ready for $CYLC_TIME"
+touch $TMPDIR/level-fields-${CYCLE_TIME}.nc
+cylc message "level forecast fields ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
 cylc message --succeeded

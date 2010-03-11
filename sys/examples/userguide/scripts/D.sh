@@ -12,8 +12,8 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 75 * 60 / ACCEL )) 
 
 # check prerequistes
-ONE=$TMPDIR/sea-state-${CYLC_TIME}.nc
-TWO=$TMPDIR/storm-surge-${CYLC_TIME}.nc
+ONE=$TMPDIR/sea-state-${CYCLE_TIME}.nc
+TWO=$TMPDIR/storm-surge-${CYCLE_TIME}.nc
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
@@ -27,8 +27,8 @@ done
 sleep $SLEEP
 
 # create task outputs
-touch $TMPDIR/seagram-products-${CYLC_TIME}.nc
-cylc message "seagram products ready for $CYLC_TIME"
+touch $TMPDIR/seagram-products-${CYCLE_TIME}.nc
+cylc message "seagram products ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
 cylc message --succeeded

@@ -19,7 +19,7 @@
 
 set -e  # abort on error
 
-# 'cylc message' checks for $CYLC_TASK and $CYLC_TIME  
+# 'cylc message' checks for $TASK_NAME and $CYCLE_TIME  
 # so we only need to check for $WRAP here.
 
 if [[ -z $WRAP ]]; then

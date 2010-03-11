@@ -15,8 +15,8 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 sleep $SLEEP 
 
 # "find" the external data and report it available
-touch $TMPDIR/atmos-obs-${CYLC_TIME}.nc
-cylc message "atmospheric observations ready for $CYLC_TIME"
+touch $TMPDIR/obs-${CYCLE_TIME}.nc
+cylc message "obs data ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
 cylc message --succeeded
