@@ -19,7 +19,7 @@
     "sea state fields ready for $(CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
-    150
+    150 min
 
 %OUTPUTS
-    150: "sea state products ready for $(CYCLE_TIME)"
+    150 min: "sea state products ready for $(CYCLE_TIME)"

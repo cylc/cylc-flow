@@ -60,13 +60,13 @@ class manager:
     def set_system_hold( self, ctime = None ):
         if ctime:
             self.system_hold_ctime = ctime
-            self.log.critical( "SETTING SYSTEM HOLD: no new tasks will run from " + ctime )
+            self.log.critical( "HOLD: no new tasks will run from " + ctime )
         else:
             self.system_hold_now = True
-            self.log.critical( "SETTING SYSTEM HOLD: won't run any more tasks")
+            self.log.critical( "HOLD: no more tasks will run")
 
     def unset_system_hold( self ):
-        self.log.critical( "UNSETTING SYSTEM HOLD: new tasks will run when ready")
+        self.log.critical( "UNHOLD: new tasks will run when ready")
         self.system_hold_now = False
         self.system_hold_ctime = None
 

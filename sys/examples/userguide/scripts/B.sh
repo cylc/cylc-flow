@@ -6,13 +6,10 @@
 # Depends on surface wind forecast, and own restart file.
 # Generates two restart files, valid for the next two cycles.
 
-# run length 60 minutes, scaled
+# run length 60 minutes, scaled by $REAL_TIME_ACCEL 
 
 # START MESSAGE
 cylc message --started
-
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 20 * 60 / ACCEL )) 
 
 # CHECK PREREQUISITES
 ONE=$TMPDIR/surface-winds-${CYCLE_TIME}.nc       # surface winds
@@ -29,17 +26,17 @@ done
 # EXECUTE THE MODEL ...
 
 # create a restart file for the next cycle
-sleep $SLEEP   # 20 min
+sleep $(( 20 * 60 / $REAL_TIME_ACCEL ))
 touch $TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
 cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
 
 # create a restart file for the next next cycle
-sleep $SLEEP   # 40 min
+sleep $(( 20 * 60 / $REAL_TIME_ACCEL ))
 touch $TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE_TIME}.restart
 cylc message "$TASK_NAME restart files ready for $NEXT_NEXT_CYCLE_TIME"
 
 # create sea state forecast output
-sleep $SLEEP   # 60 min
+sleep $(( 20 * 60 / $REAL_TIME_ACCEL ))
 touch $TMPDIR/sea-state-${CYCLE_TIME}.nc
 cylc message "sea state fields ready for $CYCLE_TIME"
 

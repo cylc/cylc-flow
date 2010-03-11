@@ -89,6 +89,28 @@ def require_quotes( strng, item ):
 
     return stripped
 
+def time_trans( strng ):
+    # translate a time of the form:
+    #  x sec, y min, z hr
+    # into numerical minutes,
+    # and return a string thereof.
+
+    m = re.search( '^\s*(.*)\s*min\s*$', strng )
+    if m:
+        [ mins ] = m.groups()
+        return str( float(mins) )
+
+    m = re.search( '^\s*(.*)\s*sec\s*$', strng )
+    if m:
+        [ secs ] = m.groups()
+        return str( float(secs)/60.0 )
+
+    m = re.search( '^\s*(.*)\s*hr\s*$', strng )
+    if m:
+        [ hrs ] = m.groups()
+        return str( float(hrs)*60.0 )
+
+
 #================= MAIN PROGRAM ========================================
 def main( argv ):
 
@@ -502,11 +524,11 @@ from dynamic_instantiation import get_object
                 for hour in hours:
                     FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                     indent_more()
-                    FILE.write( indent + 'self.register_run_length( ' + rlen + ' )\n' )
+                    FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n' )
                     indent_less()
             else:
                 rlen = line
-                FILE.write( indent + 'self.register_run_length( ' + rlen + ' )\n\n' )
+                FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n\n' )
        
         if 'OUTPUTS' in parsed_def.keys():
             for line in parsed_def[ 'OUTPUTS' ]:
@@ -526,7 +548,7 @@ from dynamic_instantiation import get_object
                     for hour in hours:
                         FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
-                        FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
+                        FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
                         indent_less()
                 else:
                     timed_req = line
@@ -536,7 +558,7 @@ from dynamic_instantiation import get_object
 
                     req = "'" + req + "'"
                     req = interpolate_variables( req )
-                    FILE.write( indent + 'self.outputs.add( ' + time + ', ' + req + ' )\n' )
+                    FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
 
         # environment variables
         strng = indent + 'self.env_vars = [\n'
@@ -567,7 +589,12 @@ from dynamic_instantiation import get_object
 
         # forecast model restarts
         if fcmodel:
-            FILE.write( indent + 'restart_times = [' + restart_list + ']\n' )
+            restarts = restart_list.split( ',' )
+            transt = []
+            for t in restarts:
+                transt.append( time_trans( t ) )
+
+            FILE.write( indent + 'restart_times = [' + ','.join( transt ) + ']\n' )
             FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
 
         # call parent init methods

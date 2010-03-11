@@ -2,29 +2,20 @@
 
 # CYLC USERGUIDE EXAMPLE SYSTEM. 
 # Task F: postprocess the storm surge model.
+# THIS TASK DOES NO MESSAGING (AND IS IN FACT ENTIRELY UNAWARE OF CYLC),
+# TO ILLUSTRATE THE USE OF CYLC'S TASK WRAPPING MECHANISM.
 
-# run length 50 minutes, scaled.
-
-# START MESSAGE
-cylc message --started
-
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 50 * 60 / ACCEL )) 
+# run length 5 minutes, scaled by $REAL_TIME_ACCEL 
 
 # check prerequistes
-PRE=$TMPDIR/storm-surge-${CYCLE_TIME}.nc
+PRE=$TMPDIR/storm-surge-${ANALYSIS_TIME}.nc
 if [[ ! -f $PRE ]]; then
-    # FAILURE MESSAGE
-    cylc message -p CRITICAL "file note found: $PRE"
-    cylc message --failed
+    # FAILURE
+    echo "file note found: $PRE"
     exit 1
 fi
 
 # EXECUTE THE TASK ...
-sleep $SLEEP 
+sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
 
-touch $TMPDIR/storm-surge-products-${CYCLE_TIME}.nc
-cylc message "storm surge products ready for $CYCLE_TIME"
-
-# SUCCESS MESSAGE
-cylc message --succeeded
+touch $TMPDIR/storm-surge-products-${ANALYSIS_TIME}.nc

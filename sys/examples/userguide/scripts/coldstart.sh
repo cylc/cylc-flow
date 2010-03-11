@@ -4,16 +4,13 @@
 # system cold start task, provides initial restart prerequisites
 # for the forecast models.
 
-# run length 10 minutes, scaled.
+# run length 50 minutes, scaled by $REAL_TIME_ACCEL 
 
 # START MESSAGE
 cylc message --started
 
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 10 * 60 / ACCEL )) 
-
 # EXECUTE THE TASK ...
-sleep $SLEEP 
+sleep $(( 50 * 60 / $REAL_TIME_ACCEL )) 
 
 touch $TMPDIR/A-${CYCLE_TIME}.restart
 cylc message "A restart files ready for $CYCLE_TIME"

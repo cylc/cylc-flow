@@ -23,7 +23,7 @@
     "startup%$(CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
-    10
+    5 min
 
 %OUTPUTS
-    9: "obs data ready for $(CYCLE_TIME)"
+    5 min: "obs data ready for $(CYCLE_TIME)"

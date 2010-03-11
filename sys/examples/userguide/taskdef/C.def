@@ -26,10 +26,10 @@
     "surface wind fields ready for $(CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
-    120
+    120 min
 
 %ESTIMATED_RESTART_OUTPUT_TIMES
-    40, 80
+    40 min, 80 min
 
 %OUTPUTS
-    110: "storm surge fields ready for $(CYCLE_TIME)"
+    118 min: "storm surge fields ready for $(CYCLE_TIME)"

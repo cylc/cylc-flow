@@ -27,9 +27,9 @@
     "startup%$(CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
-    10
+    50 min
 
 %OUTPUTS
-    7: "A restart files ready for $(CYCLE_TIME)"
-    8: "B restart files ready for $(CYCLE_TIME)"
-    9: "C restart files ready for $(CYCLE_TIME)"
+    47 min: "A restart files ready for $(CYCLE_TIME)"
+    48 min: "B restart files ready for $(CYCLE_TIME)"
+    49 min: "C restart files ready for $(CYCLE_TIME)"

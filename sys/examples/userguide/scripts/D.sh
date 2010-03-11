@@ -3,13 +3,10 @@
 # CYLC USERGUIDE EXAMPLE SYSTEM. 
 # Task D: postprocess sea state AND storm surge models.
 
-# run length 75 minutes, scaled.
+# run length 75 minutes, scaled by $REAL_TIME_ACCEL 
 
 # START MESSAGE
 cylc message --started
-
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 75 * 60 / ACCEL )) 
 
 # check prerequistes
 ONE=$TMPDIR/sea-state-${CYCLE_TIME}.nc
@@ -24,7 +21,7 @@ for PRE in $ONE $TWO; do
 done
 
 # EXECUTE THE TASK ...
-sleep $SLEEP
+sleep $(( 75 * 60 / $REAL_TIME_ACCEL ))
 
 # create task outputs
 touch $TMPDIR/seagram-products-${CYCLE_TIME}.nc

@@ -3,13 +3,10 @@
 # CYLC USERGUIDE EXAMPLE SYSTEM. 
 # Task E: postprocess the sea state model.
 
-# run length 150 minutes, scaled.
+# run length 15 minutes, scaled by $REAL_TIME_ACCEL 
 
 # START MESSAGE
 cylc message --started
-
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 150 * 60 / ACCEL )) 
 
 # check prerequistes
 PRE=$TMPDIR/sea-state-${CYCLE_TIME}.nc
@@ -21,7 +18,7 @@ if [[ ! -f $PRE ]]; then
 fi
 
 # EXECUTE THE TASK ...
-sleep $SLEEP 
+sleep $(( 15 * 60 / $REAL_TIME_ACCEL ))
 
 # create task outputs
 touch $TMPDIR/sea-state-products-${CYCLE_TIME}.nc

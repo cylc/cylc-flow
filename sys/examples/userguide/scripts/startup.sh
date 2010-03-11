@@ -3,13 +3,10 @@
 # CYLC USERGUIDE EXAMPLE SYSTEM. 
 # oneoff startup task to clean out the system work space.
 
-# run length 10 minutes, scaled.
+# run length 5 minutes, scaled by $REAL_TIME_ACCEL 
 
 # START MESSAGE
 cylc message --started
-
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 10 * 60 / ACCEL )) 
 
 mkdir -p $TMPDIR || \
 {
@@ -19,7 +16,7 @@ mkdir -p $TMPDIR || \
 }
 
 # EXECUTE THE TASK ...
-sleep $SLEEP 
+sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
 
 echo "CLEANING $TMPDIR"
 rm -rf $TMPDIR/* || \

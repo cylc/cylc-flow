@@ -6,14 +6,10 @@
 # Depends on real time obs, and own restart file.
 # Generates one restart file, valid for the next cycle.
 
-# Run length 90 minutes, scaled.
+# Run length 90 minutes, scaled by $REAL_TIME_ACCEL 
 
 # START MESSAGE
 cylc message --started
-
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP1=$(( 10 * 60 / ACCEL ))
-SLEEP2=$(( 80 * 60 / ACCEL ))
 
 # CHECK PREREQUISITES
 ONE=$TMPDIR/obs-${CYCLE_TIME}.nc
@@ -28,13 +24,13 @@ for PRE in $ONE $TWO; do
 done
 
 # EXECUTE THE MODEL ...
-sleep $SLEEP1
+sleep $(( 10 * 60 / $REAL_TIME_ACCEL ))
 
 # create a restart file for the next cycle
 touch $TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
 cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
 
-sleep $SLEEP2
+sleep $(( 80 * 60 / $REAL_TIME_ACCEL ))
 
 # create forecast outputs
 touch $TMPDIR/surface-winds-${CYCLE_TIME}.nc

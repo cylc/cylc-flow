@@ -25,10 +25,10 @@
     "surface wind fields ready for $(CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
-    60
+    60 min
 
 %ESTIMATED_RESTART_OUTPUT_TIMES
-    20,40
+    10 min, 20 min
 
 %OUTPUTS
-    58: "sea state fields ready for $(CYCLE_TIME)"
+    60 min: "sea state fields ready for $(CYCLE_TIME)"

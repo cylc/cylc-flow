@@ -5,7 +5,7 @@ import os                                # DO NOT DELETE
 
 # THIS CUSTOMIZABLE MODULE CAN BE USED TO OVERRIDE THE CONFIGURATION
 # SETTINGS IN config_defaults.py FOR THE SYSTEM DEFINITION DIRECTORY:
-# /home/oliverh/cylc/sys/examples/userguide-1
+# /home/oliverh/cylc/sys/examples/userguide
 # IT CAN ALSO BE USED TO SET ADDITIONAL CONFIGURATION ITEMS THAT ARE
 # NOT SET IN THE DEFAULTS MODULE: 
 # 'task_groups', 'job_submit_overrides', and 'environment'.
@@ -38,11 +38,16 @@ config['environment'] = {}               # DO NOT DELETE
 # ENVIRONMENT VARIABLES FOR USE BY ALL TASKS IN THIS SYSTEM, e.g.:
 user_name = os.environ['USER'] 
 config['environment']['TMPDIR'] = '/tmp/' + user_name
+config['environment']['REAL_TIME_ACCEL'] = 360
 
 # OVERRIDE THE DEFAULT JOB SUBMIT METHOD FOR SPECIFIC TASKS, e.g.:
 # method names are strings that are the name of a class imported into
 # the job_submit_methods module in the system definition directory,
 # e.g.:
 #config['job_submit_overrides']['background2'] = [ 'task1', 'task2' ]
+
+# dummy time clock rate (the 'real' tasks in this system are quick!)
+#config['clock_rate'] = 3600   # i.e. 1 hour = 1 hour
+config['clock_rate'] = 1
 
 # END OF FILE 
