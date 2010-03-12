@@ -1539,21 +1539,28 @@ thing, and is therefore a complete test of scheduling for the configured
 task set. Dummy mode allows very quick testing of scheduling and failure
 recovery scenarios for arbitrarily complicated task sets.
 
-If a system (or a failure operation - see Section~\ref{FailureRecovery})
-works in dummy mode, it will work in real operation so long as the 
-real tasks report the right output messages, as registered in the task
-definition files, at any time after their real outputs have been
-generated, before the task finishes.
+If a system (or a failure recovery operation - see
+Section~\ref{FailureRecovery}) works in dummy mode, it will work in real
+operation {\em if}:
+\begin{itemize}
+    \item the real tasks report the correct output messages (as
+        registered in the task definition files).
+    \item no bug has been introduced into the messaging interface
+        \lstinline=cycl message=, which is not used by the dummy 
+        task program - it communicates directly with the right task
+        proxy object in the running scheduler.
+\end{itemize}
 
 \subsection{Incrementally Constructing New Systems} 
 \label{IncrementallyConstructingNewSystems}
 
 Start by defining tasks at the top of the single-cycle dependency graph,
-testing in dummy mode each time a new task is added.  This checks that
-prerequisites and outputs match correctly. When the whole system
-is defined, begin adding writing the real task scripts in the same order,
-and test in real mode with undefined tasks turned off (comment them out 
-of the task list in the system config module). 
+and testing in dummy mode each time a new task is added. This checks
+that prerequisites and outputs match correctly. When the whole system is
+defined, begin writing the real task scripts in the same order, and test
+in real mode with the as yet unimplemented tasks turned off (comment
+them out of the task list in the system config module, or use the
+scheduler command line options provided for this purpose). 
 
 \section{Monitoring Running Systems}
 \label{MonitoringRunningSystems}
@@ -1569,11 +1576,10 @@ of the task list in the system config module).
 
 \pagebreak
 \subsection{Startup Task}
-\subsubsection{taskdef file}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/startup.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/startup.sh}
 

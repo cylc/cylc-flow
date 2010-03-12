@@ -4,11 +4,10 @@
     coldstart
 
 %DESCRIPTION
-    Provides the initial restart prerequisites for the forecast models
-    (A, B, and C). In a real system there should be a separate cold start
-    task for each model, and any model that is "spun up" by external
-    means before starting the system would have a dummy cold start task
-    to satisfy the corresponding prerequisites.
+    Provides the initial restart prerequisites for the forecast models.
+    A real system would have separate cold start tasks for each model
+    (and a dummy one to "fake" the outputs for any model that has to be
+    "spun up" by external means before starting the scheduler).
     Depends on the system startup task.
 
 %TYPE
