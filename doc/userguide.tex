@@ -67,8 +67,7 @@ morecomment=[l]{options:},
 %\title{Cylc: A Self-Organising Forecast Systems Scheduler with Optimal
 %Multi-cycle Catchup Capability [DRAFT:cylc-0.9.0.1]}
 
-\title{Cylc: An Optimal Multicycling Self-Organising Forecast Systems
-Scheduler [DRAFT VERSION:cylc-0.9.0.1]}
+\title{Cylc: An Self-Organising Optimal Multicycle Scheduler for Forecast Systems [DRAFT VERSION:cylc-0.9.0.2]}
 
 \author{Hilary Oliver, NIWA}
 
@@ -1574,6 +1573,8 @@ scheduler command line options provided for this purpose).
 
 \input{../sys/examples/userguide/README.tex}
 
+\lstset{ basicstyle=\color{basic}\tiny\ttfamily }
+
 \pagebreak
 \subsection{Startup Task}
 \subsubsection{Definition}
@@ -1585,83 +1586,75 @@ scheduler command line options provided for this purpose).
 
 \pagebreak
 \subsection{Coldstart Task}
-\subsubsection{taskdef file}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/coldstart.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/coldstart.sh}
 
 \pagebreak
-\subsection{Task Ext}
-\subsubsection{taskdef file}
+\subsection{Task X}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/X.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/X.sh}
 
 \pagebreak
 \subsection{Task A}
-\subsubsection{taskdef file}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/A.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/A.sh}
 
 \pagebreak
 \subsection{Task B}
-\subsubsection{taskdef file}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/B.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/B.sh}
 
 \pagebreak
 \subsection{Task C}
-\subsubsection{taskdef file}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/C.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/C.sh}
 
 \pagebreak
 \subsection{Task D}
-\subsubsection{taskdef file}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/D.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/D.sh}
 
 
 \pagebreak
 \subsection{Task E}
-\subsubsection{taskdef file}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/E.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/E.sh}
 
 
 \pagebreak
 \subsection{Task F}
-\subsubsection{taskdef file}
+\subsubsection{Definition}
 \lstset{language=cylctaskdef}
 \lstinputlisting{../sys/examples/userguide/taskdef/F.def}
-\pagebreak
-\subsubsection{task script}
+\subsubsection{Script}
 \lstset{language=bash}
 \lstinputlisting{../sys/examples/userguide/scripts/F.sh}
 
@@ -1676,6 +1669,8 @@ just reference to other relevant sections of this document.
 
 The listings below are actual command output generated during document
 processing, to ensure that the information is completely up to date. 
+
+\lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 
 \subsection{cylc}
 \label{cylc}
@@ -1794,31 +1789,45 @@ interrogate a running system.
 }
 
 \pagebreak
-\section{Task Definition Reference}
-\label{TaskDefinitionReference}
+\section{Master Task Definition Template}
+\label{MasterTaskDefinitionTemplate}
 
 Listed below is the full task definitition template with all items
 documented.
 
 \lstset{language=cylctaskdef}
 
-{
-\lstinputlisting{../sys/templates/master.def}
-}
+\lstinputlisting{../sys/templates/taskdef/master.def}
 
 \lstset{language=}
 
-%\pagebreak
-%\subsection{More Complex Task Behaviour}
-%labelsubsection{MoreComplexTaskBehaviour}
+\pagebreak
+\subsection{More Complex Task Behaviour}
+labelsubsection{MoreComplexTaskBehaviour}
 
-%DETAIL WHEN IS IT NECESSARY TO DERIVE PYTHON TASK CLASSES DIRECTLY
-%I.E. WHEN ARE CYLC TASK DEFINITION FILES NOT SUFFICIENT.
-%(In EcoConnect: only streamflow and topnet)
+DETAIL WHEN IS IT NECESSARY TO DERIVE PYTHON TASK CLASSES DIRECTLY
+I.E. WHEN ARE CYLC TASK DEFINITION FILES NOT SUFFICIENT.
+(In EcoConnect: only streamflow and topnet)
 
 \pagebreak
+\section{Master Task Script Templates}
+\label{MasterTaskScriptTemplates}
+
+\input{../sys/templates/scripts/README.tex}
+
+\lstset{language=bash}
+
+\pagebreak
+\subsection{Free Tasks}
+\lstinputlisting{../sys/templates/scripts/free-task.sh}
+
+\pagebreak
+\subsection{Tied Tasks}
+\lstinputlisting{../sys/templates/scripts/tied-task.sh}
+
 \appendix
 
+\pagebreak
 \section{Object Oriented Programming}
 \label{ObjectOrientedProgramming}
 

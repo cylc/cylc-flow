@@ -11,14 +11,14 @@
 # START MESSAGE
 cylc message --started
 
-# check prerequistes
+# check prerequisites
 ONE=$TMPDIR/surface-winds-${CYCLE_TIME}.nc
 TWO=$TMPDIR/surface-pressure-${CYCLE_TIME}.nc
 THR=$TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart
 for PRE in $ONE $TWO $THR; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
-        cylc message -p CRITICAL "file note found: $PRE"
+        cylc message -p CRITICAL "file not found: $PRE"
         cylc message --failed
         exit 1
     fi

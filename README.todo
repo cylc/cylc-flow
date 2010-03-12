@@ -4,14 +4,13 @@ To Do
 
 * task generator should look for mispelled variables, e.g. $(CYLCE_TIME)
 
-* flexible and consistent taskdef times for outputs, contact delay etc.
+* consider task script locking to prevent multiple simultaneous
+  instances with the same cycle time.
 
 * is taskdef CYCLES sorted for order?
 
 * combine file-move with userguide-2, add SCS suite to the examples
   (with real mode).
-
-* better example system timing spec for real mode (taskdef env vars?)
 
 * DO NOT DEFAULT TO LOCAL HOST FOR PYRO NAMESERVER HOST NAME - this will
   preclude automatic discovery of remote nameservers.

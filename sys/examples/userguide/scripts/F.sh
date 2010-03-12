@@ -9,11 +9,11 @@
 
 # run length 5 minutes, scaled by $REAL_TIME_ACCEL 
 
-# check prerequistes
+# check prerequisites
 PRE=$TMPDIR/storm-surge-${ANALYSIS_TIME}.nc
 if [[ ! -f $PRE ]]; then
     # FAILURE
-    echo "file note found: $PRE"
+    echo "file not found: $PRE"
     exit 1
 fi
 

@@ -60,8 +60,9 @@
 
 #----------------------------------------------------------------------
 [%OWNER]
-    # - Username under which to run the external task, if the chosen
-    #     job submit method is able to arrange this.
+    # - Sudo-run the task under this username, if supported by the 
+    #     job submit method selected for the task.
+    # - Defaults to the owner of the scheduler process. 
     bob
 
 #----------------------------------------------------------------------

@@ -8,11 +8,11 @@
 # START MESSAGE
 cylc message --started
 
-# check prerequistes
+# check prerequisites
 PRE=$TMPDIR/sea-state-${CYCLE_TIME}.nc
 if [[ ! -f $PRE ]]; then
     # FAILURE MESSAGE
-    cylc message -p CRITICAL "file note found: $PRE"
+    cylc message -p CRITICAL "file not found: $PRE"
     cylc message --failed
     exit 1
 fi
