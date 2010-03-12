@@ -1089,28 +1089,86 @@ operations for unusual cases.
 
 \subsubsection{Timed Output Messages}
 
-Outputs have to be registered with an {\bf estimated time of completion}
-in minutes. The timing information is currently only used in dummy mode
-to simulate system scheduling, so accuracy isn't critical. In the future
-it may also be used to check on system progress relative to expected
-behaviour.
+Outputs have to be registered with an {\bf estimated time of completion}.
+The timing information is currently only used in dummy mode to simulate
+the correct task run time, so accuracy isn't critical. In the future
+it may also be used to check system progress against expected behaviour.
 
 
 \subsubsection{Forecast Model Restart Messages}
 
-\subsubsection{Start and Finish Message}
+\subsection{Automatic Outputs}
 
-Cylc automatically supplies special 'started' and 'finished' output
-messages for each task. These are mainly intended for system monitoring
-and tracing purposes. Other tasks can use these as prerequisites, but be
-aware that introducing explicit dependence on specific tasks makes your
-system less flexible.
+\subsubsection{started and finished outputs}
+
+\lstinline=cylc configure= automatically registers special {\bf started}
+and {\bf finished} outputs for every task: 
 
 \begin{lstlisting}
-    "Foo started for 2009101218"
-    "Bar finished for 2009101218"
+    "0 min:        foo started for $(CYCLE_TIME)"
+    "[run length]: foo finished for $(CYCLE_TIME)"
 \end{lstlisting}
 
+Other tasks (via their prerequisites) can trigger off these, but 
+be aware that this introduces explicit dependence on specific tasks,
+rather than on outputs that could be provided, in principle, by any
+task, so this makes the system somewhat less flexible.
+
+\lstinline=cycl message= has specially options so that external tasks
+can send these messages automatically, without worrying about the exact
+form of the restart message (this helps guard against typographic
+errors).
+
+
+\subsubsection{failed and completed messages}
+
+The {\bf failed} message should be reported by external tasks, using 
+\lstinline=cylc message --failed=, whenever the task fails. This is 
+not an ``output'' to be registered in the taskdef file because the
+completion time is unknown at best (at what point in a tasks execution
+does a failure occur?) and more usually undefined (hopefully the task
+will not fail). 
+
+Finally, \lstinline=cycl message= automatically sends a special {\bf
+completed} message whenever a tasks reports {\em success or failure}:
+\begin{lstlisting}
+    "foo completed for $(CYCLE_TIME)"
+\end{lstlisting}
+ 
+This can be useful if you want to trigger off an upstream task whether
+or not it succeeded (e.g.: a data assimilation program that triggers
+when a handful of separate obs processing programs have finished or
+failed, where failure occurs if no obs of a particular type happen to be
+available for the forecast cycle in question).
+
+\subsubsection{restart outputs}
+
+Task of the 'tied' type (i.e.\ forecast models) must declare, in their
+task definition files, the number (and expected output times) of
+'restart outputs' that they generate to satisfy the previous-instance
+dependence of their successors. Cylc configure then automatically
+registers special 'restart' outputs and prerequisites for the task.
+For example, consider a forecast model {\em foo} that runs on a
+6 hour cycle and generates restart dumps for the next 2 cycles at
+approximately 5 and 10 minutes into the forecast. This task would  
+(automatically, as explained) register the following prerequisite:
+
+\begin{lstlisting}
+    "foo restart files ready for $(CYCLE_TIME)"
+\end{lstlisting}
+
+and the following two outputs:
+
+\begin{lstlisting}
+    "5 min:  foo restart files ready for $(CYCLE_TIME + 6)"
+    "10 min: foo restart files ready for $(CYCLE_TIME + 12)"
+\end{lstlisting}
+
+\lstinline=cylc message= also has special options for dealing with 
+restart outputs, so that external tasks do not have to worry about the
+exact message format. The exception to this is oneoff cold start tasks
+that provide initial restart inputs for other tasks; these currently 
+have to report the right restart messages, as above, explicitly.
 
 \pagebreak
 \subsection{Task Scripts}
