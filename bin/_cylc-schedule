@@ -437,6 +437,7 @@ remote = remote_switch.remote_switch( config, pool.get_tasks() )
 daemon.connect( remote, ns_obj_name( 'remote', groupname) )
 
 # set global (all tasks) environment variables-------------------------
+os.environ[ 'CYLC_ON' ] = 'true' # tells 'cylc message' to use the nameserver
 os.environ[ 'CYLC_NS_HOST' ] = str( pns_host )  # may be an IP number
 os.environ[ 'CYLC_NS_GROUP' ] = groupname
 if dummy_mode:

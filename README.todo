@@ -2,6 +2,8 @@ To Do
 
 * Add NIWA Copyright to all files.
 
+* task generator should look for mispelled variables, e.g. $(CYLCE_TIME)
+
 * flexible and consistent taskdef times for outputs, contact delay etc.
 
 * is taskdef CYCLES sorted for order?

@@ -103,7 +103,7 @@ pimp_my_logger.pimp_it( \
 
 # intantiate the task
 task = get_object( 'system_tasks', task_name ) \
-        ( ctime, False, 'waiting', config.get('submit')[ task_name ], True )
+        ( ctime, False, 'waiting', config.get('job submit class')[ task_name ], True )
 
 # create the task log
 log = logging.getLogger( 'main.' + task_name )
@@ -111,7 +111,6 @@ pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
         config.get('logging_level'), False, None )
 
 # set global (all tasks) environment variables-------------------------
-os.environ[ 'CYLC_STANDALONE' ] = 'true'
 os.environ[ 'CYLC_NS_HOST' ] = 'NULL'
 os.environ[ 'CYLC_NS_GROUP' ] = 'NULL'
 
@@ -119,7 +118,7 @@ os.environ[ 'CYLC_NS_GROUP' ] = 'NULL'
 env = config.get('environment')
 for VAR in env.keys():
     #print "! setting", VAR, '=', env[VAR]
-    os.environ[ VAR ] = env[ VAR ]
+    os.environ[ VAR ] = str( env[ VAR ] )
 
 task.run_external_task()
 

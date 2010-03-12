@@ -137,11 +137,13 @@ else:
         print 'ERROR, cylc message: no cycle time provided!'
         sys.exit(1)
 
-if 'CYLC_STANDALONE' in os.environ.keys():
+if 'CYLC_ON' not in os.environ.keys():
+    # IF CYLC_ON IS NOT IN THE ENVIRONMENT THEN WHEN HAVEN'T BEEN CALLED
+    # BY A TASK SPAWNED BY THE SCHEDULER (PROBABLY A STANDALONE TASK RUN
+    # BY 'cylc run-task', SO DIVERT THE MESSAGE TO STDOUT.
     task_id = taskname + '%' + ctime
 
     if options.all_restarts_completed:
-        # set all forecast model restart outputs completed
         msg = "--all-restarts-complete"
 
     if options.all_outputs_completed:
