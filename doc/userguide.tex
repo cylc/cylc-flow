@@ -64,8 +64,11 @@ morecomment=[l]{options:},
 }
 
 
-\title{Cylc: A Self-Organising Forecast Systems Scheduler With Optimal
-Multi-cycle Catchup Capability}
+%\title{Cylc: A Self-Organising Forecast Systems Scheduler with Optimal
+%Multi-cycle Catchup Capability [DRAFT:cylc-0.9.0.1]}
+
+\title{Cylc: An Optimal Multicycling Self-Organising Forecast Systems
+Scheduler [DRAFT VERSION:cylc-0.9.0.1]}
 
 \author{Hilary Oliver, NIWA}
 
@@ -492,8 +495,8 @@ main operation and then keep pace with it.
 \section{Installing Cylc} 
 \label{InstallingCylc}
 
-\subsection{Requirements} 
-\label{Requirements}
+\subsection{System Requirements} 
+\label{SystemRequirements}
 
 \begin{itemize}
     \item A Unix or Linux operating system
@@ -501,8 +504,8 @@ main operation and then keep pace with it.
     \item Pyro (Python Remote Objects)
 \end{itemize}
 
-Cylc has been tested with Python 2.4.2 and 2.6.x, and Pyro 3.9 and 3.10,
-but it should work well with any recent versions or Python 2 and Pyro.
+Cylc has been tested with Python 2.6, and Pyro 3.9 and 3.10,
+but it should work with any recent versions of Python 2 and Pyro.
 As yet neither cylc nor Pyro are compatible with Python 3. 
 
 \subsection{Getting Cylc} 
@@ -578,6 +581,93 @@ Finally, rerun the system for real (omit the \lstinline{-d}
 option above).
 
 \pagebreak
+\section{System Definition} 
+\label{SystemDefinition}
+
+Cylc sees a forecasting system as an evolving pool of {\bf tasks}
+with clearly defined {\bf prerequisites} and {\bf outputs}
+(Section~\ref{PrerequisitesAndOutputs}), where {\bf a task
+is any group of one or more processes treated as a single entity for
+scheduling purposes}.
+
+
+\subsection{System Granularity} 
+\label{System Granularity}
+
+A system can contain a small number of large, internally complex tasks;
+a large number of small, simple tasks; or anything in between. However,
+because cylc can handle large systems and is entirely self organising
+there are advantages to the fine-grained approach: 
+
+\begin{itemize}
+    \item better ``functional parallelism'' (multiple tasks running
+        at the same time whereever possible).
+    \item a more modular and transparent system.
+    \item faster recovery from failures - rerun just the tasks(s) that
+        failed. 
+    \item the same external task script (e.g.\ for moving files around)
+        can often be invoked, with different arguments, for multiple
+        tasks.
+\end{itemize}
+
+\subsection{Task Behaviour} 
+\label{Task Behaviour}
+
+Make sure your system tasks behave as suggested below in order to get
+the most out of cylc, and to avoid certain dire situations that are by
+no means specific to cylc.
+
+\subsubsection{Tasks Should Be Restartable}
+
+If a particular task dies for any reason it will appear as 'failed' in
+the cylc monitor and will hold up any dependant tasks downstream of it.
+Once the problem is fixed the system operator can tell cylc to reset
+the task, which will result in it being resubmitted at the same cycle
+time. Alternatively, if the entire system is restarted after being shut
+down, any task listed as 'failed' at shutdown will be resubmitted
+with the same cycle time (although you can edit the system state dump
+file to change this behaviour - see Section~\ref{xxx}). 
+
+Therefore it should be possible to rerun any failed task by simply
+resubmitting it for the same cycle time. 
+
+
+\subsubsection{Successive Instances Of A Task Should Not Interfere}
+
+The next instance of any task (i.e.\ the same task in the next forecast
+cycle) should be able to start running as soon as its prerequisites
+are all satisfied {\em even if its predecessor is not finished yet}. This
+means that several instances of a post processing task, which would not
+normally have any previous instance dependence, should be able to run
+entirely in parallel, and a forecast model should be able to start as
+soon its previous-instance restart prerequisite is satisfied even if 
+the previous instance is still running (assuming, in both cases, that all 
+other prerequisites are satisfied and sufficient computational resource
+is available). 
+
+If this is not the case for any particular task (perhaps because of
+potential conflicts in the use of temporary files, for instance) then
+cylc can force the task to run sequentially, but the resulting system
+will clearly be less efficient than it could be.
+
+
+\subsubsection{Tasks Should be Multicycle Restartable}
+
+Any task that writes "intermediate files" or "restart files" that are
+used by the same task in the forecast next cycle should organise these
+file by cycle time (via file or directory naming conventions) so that
+the same files are not simply overwritten each time. Otherwise
+accidental invocation of the task for the wrong cycle time may corrupt
+the intermediate files and make it impossible to go back and run the
+correct cycle, thereby necessitating a cold start rather than continued
+warm cycling. You may need to be aware of this in the case of monolithic
+"forecast model" tasks that should really be split into multiple tasks
+(imagine a monolithic "weather forecast" task that encompasses obs
+processing, data assimilation, and the actual forecast model, each
+part of which writes output files that are used as input by the next
+part). 
+
+
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
 
@@ -681,36 +771,6 @@ To extract information from a running system:
 \begin{lstlisting}
     cylc ask [options] SYSTEM
 \end{lstlisting}
-
-
-\section{System Definition} 
-\label{SystemDefinition}
-
-Cylc sees a forecasting system as an evolving pool of {\bf tasks}
-with clearly defined {\bf prerequisites} and {\bf outputs}
-(Section~\ref{PrerequisitesAndOutputs}), where {\bf a task
-is any group of one or more processes treated as a single entity for
-scheduling purposes}.
-
-
-\subsection{Granularity} 
-\label{Granularity}
-
-A system can contain a small number of large, internally complex tasks;
-a large number of small, simple tasks; or anything in between. However,
-because cylc can handle large systems and is entirely self organising
-there are advantages to the fine-grained approach: 
-
-\begin{itemize}
-    \item better ``functional parallelism'' (multiple tasks running
-        at the same time whereever possible).
-    \item a more modular and transparent system.
-    \item faster recovery from failures - rerun just the tasks(s) that
-        failed. 
-    \item the same external task script (e.g.\ for moving files around)
-        can often be invoked, with different arguments, for multiple
-        tasks.
-\end{itemize}
 
 
 \subsection{The System Definition Directory} 
@@ -1900,11 +1960,12 @@ contention, it will not report its outputs complete until it does run.
         actually runs, and only in real time operation. Would be easy to
         extend to minutes and seconds, if necessary.
 
+    \item it is assumed that every task runs at least once in 24 hours
+        (see the taskdef CYCLES key). It would be easy to extend this to
+        less frequent tasks, if required.
+
     \item why we need the nudge option - maybe should use a timeout too.
+
 \end{itemize}
-
-\subsubsection{forecasting system requirements}
-
-All task must be re-runnable!
 
 \end{document}

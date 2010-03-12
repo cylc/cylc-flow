@@ -68,76 +68,88 @@
 [%ENVIRONMENT]
     # - Environment variables to export in the task execution environment
     # - The task name and cycle time, etc., are automatically exported.
-    # - May contain $(CYLC_TIME) and $(NAME)
+    # - May contain $(CYCLE_TIME) and $(NAME)
     VARNAME1 value1
     VARNAME2 value2
 
 #----------------------------------------------------------------------
 %ESTIMATED_RUN_TIME   
-    # - In MINUTES, dummy mode only, may be conditional on cycle hour.
-           20       # default 20 minutes
-    0,12 | 25       # 25 minutes if cycle hour is 00 or 12
-    6,18 | 35       # 35 minutes if cycle hour is 06 or 18
+    # - Units: min, sec, hr
+    # - Used only in dummy mode, to simulate correct task run time
+    # - May be conditional on cycle hour.
+           20 min      # default 20 minutes
+    0,12 | 25 min      # 25 minutes if cycle hour is 00 or 12
+    6,18 | 35 min      # 35 minutes if cycle hour is 06 or 18
 
 #----------------------------------------------------------------------
 %PREREQUISITES      
     # - Quoted string literals, one per lines.
     # - Some variable substitution and simple cycle time arithmetic:
-    #     $(CYLC_TIME [+/- <hours>])
+    #     $(CYCLE_TIME [+/- <hours>])
     # - May be conditional on cycle hour.
     # - Do not list the restart prerequisites of 'tied' tasks (forecast 
     #     models), they are created and handled automatically.
-    # - Should contain $(CYLC_TIME) somewhere, to distinguish outputs
+    # - You may use the automatic started, completed, finished, outputs.
+    # - Should contain $(CYCLE_TIME) somewhere, to distinguish outputs
     #     from different cycles.
 
-           "baz finished for $(CYLC_TIME)"
-           "file bar_$(CYLC_TIME).nc ready"
-    0,12 | "foo output files ready for $(CYLC_TIME)"
+           "baz finished for $(CYCLE_TIME)"
+           "file bar_$(CYCLE_TIME).nc ready"
+    0,12 | "foo output files ready for $(CYCLE_TIME)"
 
 #----------------------------------------------------------------------
 [%STARTUP_PREREQUISITES]
     # - Prerequisites that are only used once, at system start up.
-    "cold start outputs ready for $(CYLC_TIME)"
+    "cold start outputs ready for $(CYCLE_TIME)"
 
 #----------------------------------------------------------------------
 %OUTPUTS
-    # - Quoted string literals, one per line, prefixed with estimated
-    #     time of completion in MINUTES (which is only for dummy mode).
+    # - Quoted string literals, one output message per line.
+    # - Must be prefixed with estimated completion time in min, sec, or hr. 
+    #   - (used only in dummy mode, to simulate correct completion time).
     # - Some variable substitution and simple cycle time arithmetic:
-    #     $(CYLC_TIME [+/- <hours>])
+    #     $(CYCLE_TIME [+/- <hours>])
     # - DO NOT REGISTER the special 'started' and 'finished' messages,
-    #     or the special restart outputs of 'tied' tasks (forecast
+    #     or the special restart outputs of 'tied' tasks (i.e. forecast
     #     models); these are all handled automatically by cylc.
-    #     (other tasks may depend on these automatic outputs, however).
     # - May be conditional on cycle hour, as for prerequisites.
-    # - Should contain $(CYLC_TIME) somewhere, to distinguish outputs
+    # - Should contain $(CYCLE_TIME) somewhere, to distinguish outputs
     #     from different cycles.
 
-           10: "file foo_0_$(CYLC_TIME).nc ready"
-    0,12 | 15: "foo outputs ready for $(CYLC_TIME)"
-    6,18 | 15: "file foo_2_$(CYLC_TIME).nc ready"
+           10 min: "file foo_0_$(CYCLE_TIME).nc ready"
+    0,12 | 15 min: "foo outputs ready for $(CYCLE_TIME)"
+    6,18 | 15 min: "file foo_2_$(CYCLE_TIME).nc ready"
 
 #----------------------------------------------------------------------
 [%ESTIMATED_RESTART_OUTPUT_TIMES]
-    # - In MINUTES, required for 'tied' tasks.
-    # - Comma separated list of completion times for the special restart
-    #     outputs (see above). The first represents restart outputs
-    #     required by this task in the NEXT cycle, the second the
-    #     following cycle, and so on.
+    # - 'tied' tasks only (i.e. forecast models).
+    # - Comma separated list of estimated completion times, in min, sec,
+    #     or hr, for the restart outputs depended on by subsequent
+    #     instances of this task.
+    # - The number of times listed should equal the number of restart
+    #   outputs dumped by the task in real operation.
+    # - The time estimates are used only in dummy mode, to correctly 
+    #     simulate the time that restart outputs are completed.
+    # - For N entries, ONE restart PREREQUISITE and N restart OUTPUTS
+    #     are automatically registered.
+    # - The first restart output is assumed to valid at the cycle time 
+    #     of the NEXT task instance, the second for the NEXT NEXT
+    #     instance, and so on.
     # - The actual times are used only in dummy mode, but number of
     #     times listed is more generally important: for N times ONE
     #     special restart PREREQUISITE and N special restart OUTPUTS
     #     will be created automatically.
-    5,10,15
+    5 min, 10 min, 15 min
 
 #----------------------------------------------------------------------
 [%NO_NONCOTEMPORAL_DEPENDANTS] 
     # - Set True if you can guarantee that this task has only cotemporal
-    #     (same cycle) dependants. This allows cylc to delete the task
-    #     from the system as soon as it is finished AND there are no
-    #     other tasks yet to be finished at its cycle time or earlier.
-    # - DO NOT SET TRUE FOR 'tied' TASKS (FORECAST MODELS) AS THESE 
-    #     DEPEND ON RESTART OUTPUTS FROM A PREVIOUS CYCLE.
+    #     (same cycle) dependants. This allows cylc to delete this task
+    #     from the system as soon as this task is finished AND there are
+    #     no other tasks yet to be finished at its cycle time or
+    #     earlier.
+    # - DO NOT SET TRUE FOR 'tied' TASKS (FORECAST MODELS), which by 
+    #     definition depend on their predescessors restart outputs.
     True
 
 #----------------------------------------------------------------------
