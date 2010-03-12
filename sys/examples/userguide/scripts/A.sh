@@ -28,7 +28,7 @@ sleep $(( 10 * 60 / $REAL_TIME_ACCEL ))
 
 # create a restart file for the next cycle
 touch $TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
-cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
+cylc message --next-restart-completed
 
 sleep $(( 80 * 60 / $REAL_TIME_ACCEL ))
 

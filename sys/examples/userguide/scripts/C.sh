@@ -29,12 +29,12 @@ done
 # create a restart file for the next cycle
 sleep $(( 40 * 60 / $REAL_TIME_ACCEL )) 
 touch $TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
-cylc message "$TASK_NAME restart files ready for $NEXT_CYCLE_TIME"
+cylc message --next-restart-completed
 
 # create a restart file for the next next cycle
 sleep $(( 40 * 60 / $REAL_TIME_ACCEL )) 
 touch $TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE_TIME}.restart
-cylc message "$TASK_NAME restart files ready for $NEXT_NEXT_CYCLE_TIME"
+cylc message --next-restart-completed
 
 # create storm surge forecast output
 sleep $(( 40 * 60 / $REAL_TIME_ACCEL )) 

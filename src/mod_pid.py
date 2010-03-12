@@ -22,6 +22,19 @@ class pid:
             self.outputs.add( t, msg + next_rt )
             rt = next_rt
 
+    def set_next_restart_completed( self ):
+        restart_messages = []
+        for message in self.outputs.satisfied.keys():
+            if re.search( 'restart files ready for', message ):
+                restart_messages.append( message )
+
+        restart_messages.sort()
+        for message in restart_messages:
+            if not self.outputs.is_satisfied( message ):
+                self.log( 'WARNING', message )
+                self.outputs.set_satisfied( message )
+
+
     def set_all_restarts_completed( self ):
         # convenience for external tasks that don't report restart
         # outputs one at a time.
