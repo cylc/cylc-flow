@@ -9,6 +9,9 @@
 
 # run length 5 minutes, scaled by $REAL_TIME_ACCEL 
 
+# check environment
+check-env.sh || exit 1
+
 # check prerequisites
 PRE=$TMPDIR/storm-surge-${ANALYSIS_TIME}.nc
 if [[ ! -f $PRE ]]; then

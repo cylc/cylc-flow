@@ -11,6 +11,9 @@
 # START MESSAGE
 cylc message --started
 
+# check environment
+check-env.sh || exit 1
+
 # CHECK PREREQUISITES
 ONE=$TMPDIR/obs-${CYCLE_TIME}.nc
 TWO=$TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart

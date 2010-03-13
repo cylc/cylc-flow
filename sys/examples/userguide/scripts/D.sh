@@ -8,6 +8,9 @@
 # START MESSAGE
 cylc message --started
 
+# check environment
+check-env.sh || exit 1
+
 # check prerequisites
 ONE=$TMPDIR/sea-state-${CYCLE_TIME}.nc
 TWO=$TMPDIR/storm-surge-${CYCLE_TIME}.nc

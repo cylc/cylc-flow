@@ -178,7 +178,7 @@ def ns_obj_name( name, groupname ):
 
 usage = """cylc schedule [options] SYSTEM
 
-Start scheduling a configured cylc system. 
+Start scheduling a configured, registered, cylc system. 
 
 To cold start a system give an initial cycle time. Each task in the task
 list will be instantiated with a cycle time equal to the initial cycle
@@ -346,12 +346,13 @@ os.environ['PYTHONPATH'] = system_dir + ':' + os.environ['PYTHONPATH']
 sys.path.insert(0, system_dir )
 
 # import system-specific cylc modules now------------------------------ 
-import system_config # loads config_defaults.py and config_override.py 
-import task_base     # loads system_tasks.py
+from system_config import system_config 
+import task_base     # loads task_specif.py
 import remote_switch # ditto
 
 # load system configuration--------------------------------------------
-config = system_config.system_config( reg_name )
+config = system_config( reg_name )
+config.configure()
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 nameserver = locate_pyro_nameserver()

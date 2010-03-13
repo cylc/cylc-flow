@@ -121,7 +121,7 @@ def main( argv ):
     indent = ''
     indent_unit = '    '
 
-    task_class_file = 'system_tasks.py'
+    task_class_file = 'task_classes.py'
 
     if len( argv ) < 2:
         usage()

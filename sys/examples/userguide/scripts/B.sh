@@ -11,6 +11,9 @@
 # START MESSAGE
 cylc message --started
 
+# check environment
+check-env.sh || exit 1
+
 # CHECK PREREQUISITES
 ONE=$TMPDIR/surface-winds-${CYCLE_TIME}.nc       # surface winds
 TWO=$TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart   # restart file

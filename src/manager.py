@@ -98,7 +98,7 @@ class manager:
                     continue
 
             # instantiate the task
-            itask = get_object( 'system_tasks', name )\
+            itask = get_object( 'task_classes', name )\
                     ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], True )
 
             # create the task log
@@ -162,7 +162,7 @@ class manager:
 
         log_created = {}
 
-        mod = __import__( 'system_tasks' )
+        mod = __import__( 'task_classes' )
 
         # parse each line and create the task it represents
         for line in lines[1:]:
@@ -192,7 +192,7 @@ class manager:
                 log_created[ name ] = True
 
             # instantiate the task object
-            itask = get_object( 'system_tasks', name )\
+            itask = get_object( 'task_classes', name )\
                     ( c_time, self.dummy_mode, state, self.submit[ name ] )
 
             # the initial task cycle time can be altered during
@@ -288,7 +288,7 @@ class manager:
                 itask.log( 'DEBUG', 'abdicating')
 
                 # dynamic task object creation by task and module name
-                new_task = get_object( 'system_tasks', itask.name )\
+                new_task = get_object( 'task_classes', itask.name )\
                         ( itask.next_c_time(), self.dummy_mode, 'waiting', self.submit[ itask.name ] )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
@@ -316,7 +316,7 @@ class manager:
 
         # task class variables
         for name in self.config.get('task_list'):
-            mod = __import__( 'system_tasks' )
+            mod = __import__( 'task_classes' )
             cls = getattr( mod, name )
             cls.dump_class_vars( FILE )
             
@@ -567,7 +567,7 @@ class manager:
                 [ name, c_time ] = task_id.split( '%' )
 
                 # instantiate the task object
-                itask = get_object( 'system_tasks', name )\
+                itask = get_object( 'task_classes', name )\
                         ( c_time, self.dummy_mode, 'waiting', self.submit[ name ] )
 
                 if itask.instance_count == 1:
@@ -706,7 +706,7 @@ class manager:
                 itask.log( 'DEBUG', 'forced abdication' )
                 # TO DO: the following should reuse code in spawn()?
                 # dynamic task object creation by task and module name
-                new_task = get_object( 'system_tasks', itask.name )\
+                new_task = get_object( 'task_classes', itask.name )\
                         ( itask.next_c_time(), self.dummy_mode, 'waiting', self.submit[ itask.name ] )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
@@ -754,7 +754,7 @@ class manager:
             #    itask.log( 'DEBUG', 'forced abdication' )
             #    # TO DO: the following should reuse code in spawn()?
             #    # dynamic task object creation by task and module name
-            #    new_task = get_object( 'system_tasks', itask.name )( itask.next_c_time(), self.dummy_mode )
+            #    new_task = get_object( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode )
             #    if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
             #        # we've reached the stop time: delete the new task 
             #        new_task.log( 'WARNING', 'STOPPING at configured stop time' )

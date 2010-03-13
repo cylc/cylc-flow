@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import Pyro.core
-import system_tasks
+import task_classes
 import logging
 import sys
 
@@ -140,7 +140,7 @@ class remote_switch( Pyro.core.ObjBase ):
         info = {}
         for n in task_names:
             try:
-                descr = eval( 'system_tasks.' + n + '.describe()' )
+                descr = eval( 'task_classes.' + n + '.describe()' )
             except AttributeError:
                 info[ n ] = ['ERROR: No Such Task Class']
             else:

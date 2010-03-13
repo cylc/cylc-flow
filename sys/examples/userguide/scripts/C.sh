@@ -11,6 +11,9 @@
 # START MESSAGE
 cylc message --started
 
+# check environment
+check-env.sh || exit 1
+
 # check prerequisites
 ONE=$TMPDIR/surface-winds-${CYCLE_TIME}.nc
 TWO=$TMPDIR/surface-pressure-${CYCLE_TIME}.nc
