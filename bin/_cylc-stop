@@ -1,0 +1,67 @@
+#!/usr/bin/python
+
+# import standard Python modules
+# cylc modules are imported after parsing the command line, so that we
+# don't need access to a specific system to print the usage message.
+import os
+import re
+import sys
+from time import sleep
+
+from control import control
+
+ctrl_end = "\033[0m"
+
+def print_heading( strng ):
+        print
+        print strng
+        underline = re.sub( '.', '-', strng )
+        print underline
+
+def prompt( reason ):
+
+    msg =  reason + " '" + system_name + "'"
+    if options.force:
+        print msg + " NOW"
+        return True
+
+    response = raw_input( msg + ': ARE YOU SURE (y/n)? ' )
+    if response == 'y':
+        return True
+    else:
+        print "Aborted!"
+        return False
+
+usage = """cylc stop [options] SYSTEM 
+
+Shut down a cylc system after all currently running tasks have finished."""
+
+remote = control( usage )
+
+remote.parser.add_option( "--now", 
+        help="Shutdown the system NOW, even if tasks are still running. "
+        "NOTE THAT THIS DOES NOT KILL RUNNING EXTERNAL TASKS",
+        action="store_true", default=False, dest="shutdownnow" )
+
+remote.parser.add_option( "--at", 
+        help="Do not launch any new tasks beyond CYCLE, and "
+        "shut the system down when all tasks reach that cycle.",
+        metavar="CYCLE", action="store", dest="stop_time" )
+
+remote.parse_args()
+
+connect = remote.get_control()
+
+if remote.options.stop_time:
+    if remote.prompt( 'Set stop time ' + remote.options.stop_time + ' for'):
+        connect.set_stop_time( remote.options.stop_time )
+
+elif remote.options.shutdownnow:
+    if remote.prompt( 'Shutdown NOW' ):
+        connect.shutdown_now()
+
+else:
+    if remote.prompt( 'Shutdown' ):
+        connect.shutdown()
+
+

@@ -2,6 +2,9 @@ To Do
 
 * see if error exit in userguide example check-env invocation works
 
+* stop-at (only when some tasks past designated time?) requires a
+  nudge to complete!!!!!!!!!!!!1
+
 * Add NIWA Copyright to all files.
 
 * task generator should look for mispelled variables, e.g. $(CYLCE_TIME)

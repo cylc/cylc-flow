@@ -1,0 +1,125 @@
+#!/usr/bin/python
+
+# import standard Python modules
+# cylc modules are imported after parsing the command line, so that we
+# don't need access to a specific system to print the usage message.
+import os
+import re
+import sys
+import Pyro.core
+from optparse import OptionParser
+from time import sleep
+from Pyro.errors import PyroError,NamingError
+
+ctrl_end = "\033[0m"
+
+def print_heading( strng ):
+        print
+        print strng
+        underline = re.sub( '.', '-', strng )
+        print underline
+
+class control:
+
+    def __init__( self, usage ):
+
+        usage += """
+
+If the target system is not running under your username you must use
+--user=USERNAME so that the right Pyro nameserver group name can be
+inferred (cylc uses USERNAME_SYSTEM).
+
+arguments:
+   SYSTEM               Registered name of the target system.""" 
+
+        self.parser = OptionParser( usage )
+
+        self.parser.add_option( "-u", "--user",
+                help="Owner of the target system (i.e. the username under which "
+                "the scheduler is running), defaults to $USER. WARNING: this "
+                "allows others to control your systems, and you theirs; you "
+                "may want to disable this option.",
+                metavar="USER", action="store", dest="username" )
+
+        self.parser.add_option( "-n", "--nameserver",
+                help="The Pyro nameserver host. Defaults to localhost. Depending "
+                "on network configuration you may not need to use this option.",
+                metavar="HOSTNAME", action="store", default="localhost",
+                dest="pns_host" )
+
+        self.parser.add_option( "-f", "--force",
+                help="Force: do not ask for confirmation before acting.",
+                action="store_true", default=False, dest="force" )
+
+    def parse_args( self ):
+        ( options, args ) = self.parser.parse_args()
+        self.options = options
+        self.args = args
+
+        if len( self.args ) == 0:
+            self.parser.error( "Please supply a target system name" )
+        elif len( self.args ) > 1:
+            self.parser.error( "Too many arguments" )
+
+        self.system_name = self.args[0]
+
+        if not self.options.pns_host:
+            self.parser.error( "Required: Pyro nameserver hostname" )
+        #else:
+        #    self.pns_host = self.options.pns_host
+
+        # Pyro nameserver groupname of the target system
+        if self.options.username:
+            username = self.options.username
+        else:
+            username = os.environ[ 'USER' ] 
+
+        self.groupname = username + '_' + self.system_name
+
+    def get_control( self ):
+
+        # import cylc modules now (the reason for this is explained above)
+        import pyrex
+
+        # get systems currently registered in the Pyro nameserver
+        ns_groups = pyrex.discover( self.options.pns_host )
+
+        if ns_groups.registered( self.groupname ):
+            #print "system: " + system_name
+            pass
+        else:
+            print "WARNING: no " + self.groupname + " registered yet ..." 
+            ns_groups.print_info()
+
+            # print available systems and exit
+            print
+            self.parser.print_help()
+            print
+            ns_groups.print_info()
+            print
+            sys.exit(1)
+
+        try:
+            # connect to the remote switch object in cylc
+            control = Pyro.core.getProxyForURI('PYRONAME://' + self.options.pns_host + '/' + self.groupname + '.' + 'remote' )
+        except NamingError:
+            print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+            raise SystemExit
+        except:
+            print "ERROR:"
+            raise SystemExit
+
+        return control
+
+    def prompt( self, reason ):
+
+        msg =  reason + " '" + self.system_name + "'"
+
+        if self.options.force:
+            return True
+
+        response = raw_input( msg + ': ARE YOU SURE (y/n)? ' )
+        if response == 'y':
+            return True
+        else:
+            return False
