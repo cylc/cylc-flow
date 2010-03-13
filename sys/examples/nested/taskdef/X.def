@@ -1,0 +1,29 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    X
+
+%DESCRIPTION
+    Retrieve external observation data at cycle-time + 1 hour.
+    Depends only on the system startup task at start time.
+
+%TYPE
+    free, contact
+
+%CONTACT_DELAY
+    1.0
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    X.sh
+
+%STARTUP_PREREQUISITES
+    "startup%$(CYCLE_TIME) finished"
+
+%ESTIMATED_RUN_TIME
+    5 min
+
+%OUTPUTS
+    5 min: "obs data ready for $(CYCLE_TIME)"

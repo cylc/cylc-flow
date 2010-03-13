@@ -1,0 +1,26 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    userguide_subsystem
+
+%DESCRIPTION
+    nested single cycle subsystem
+
+%TYPE
+    free, sequential
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    userguide.sh
+
+%PREREQUISITES
+    "surface pressure field ready for $(CYCLE_TIME)"
+    "surface wind fields ready for $(CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    120 min
+
+%OUTPUTS
+    118 min: "storm surge fields ready for $(CYCLE_TIME)"

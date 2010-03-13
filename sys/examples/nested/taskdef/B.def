@@ -1,0 +1,34 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%NAME
+    B
+
+%DESCRIPTION
+    Could be a sea state model, driven by the atmospheric model.
+    Requires surface wind fields, and own restart file.
+    Generates restart files for the next two cycles.
+
+%TYPE
+    tied
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    B.sh
+
+%ENVIRONMENT
+    NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
+    NEXT_NEXT_CYCLE_TIME $(CYCLE_TIME + 12)
+
+%PREREQUISITES
+    "surface wind fields ready for $(CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    60 min
+
+%ESTIMATED_RESTART_OUTPUT_TIMES
+    10 min, 20 min
+
+%OUTPUTS
+    60 min: "sea state fields ready for $(CYCLE_TIME)"
