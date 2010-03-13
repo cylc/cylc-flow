@@ -1,5 +1,7 @@
 To Do
 
+* see if error exit in userguide example check-env invocation works
+
 * Add NIWA Copyright to all files.
 
 * task generator should look for mispelled variables, e.g. $(CYLCE_TIME)
