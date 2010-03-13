@@ -333,13 +333,17 @@ banner[ 'system definition' ] = system_dir
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
 print system_dir
-# add system scripts to $PATH
-os.environ[ 'PATH' ] += ':' + system_dir + '/scripts'
-# add system Python modules to $PYTHONPATH
-os.environ[ 'PYTHONPATH' ] += ':' + system_dir
+# prepend system scripts to $PATH (prepend in case this is a subsystem!)
+# (NOTE this is still somewhat dangerous: if a subsystem task script
+# that should be executable but isn't has the same filename as a task in
+# the parent system, the parent file will be found and executed).
+os.environ['PATH'] = system_dir + '/scripts:' + os.environ['PATH'] 
+# prepend add system Python modules to $PYTHONPATH (prepend, as above)
+os.environ['PYTHONPATH'] = system_dir + ':' + os.environ['PYTHONPATH']
 
 # provide access to the system source modules for THIS program---------
-sys.path.append( system_dir )
+# prepend to the module search path in case this is a subsystem
+sys.path.insert(0, system_dir )
 
 # import system-specific cylc modules now------------------------------ 
 import system_config # loads config_defaults.py and config_override.py 
