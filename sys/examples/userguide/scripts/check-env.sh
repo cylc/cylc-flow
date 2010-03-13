@@ -2,7 +2,7 @@
 
 # CHECK ENVIRONMENT
 
-if [[ -z $REAL_TIME_ACCEL_X ]]; then
+if [[ -z $REAL_TIME_ACCEL ]]; then
     # FAILURE MESSAGE
     cylc message -p CRITICAL "REAL_TIME_ACCEL not defined"
     cylc message --failed
