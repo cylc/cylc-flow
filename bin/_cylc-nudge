@@ -1,0 +1,18 @@
+#!/usr/bin/python
+
+import sys
+from connectors import connect_to_control
+
+
+usage = """cylc nudge [options] SYSTEM 
+
+Invoke the task processing loop in a running system."""
+
+connector = connect_to_control( usage )
+
+connector.parse_args()
+
+controller = connector.get_control()
+
+if connector.prompt( 'Resume' ):
+    controller.nudge()
