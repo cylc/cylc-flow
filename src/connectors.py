@@ -13,9 +13,8 @@ class connect_to_control:
 
         usage += """
 
-If the target system is not running under your username you must use
---user=USERNAME so that the right Pyro nameserver group name can be
-inferred (cylc uses USERNAME_SYSTEM).
+If you are not the owner of target system, use '--user=USER' so that
+the rightPyro nameserver group name can be inferred.
 
 arguments:
    SYSTEM               Registered name of the target system.""" 
@@ -23,17 +22,19 @@ arguments:
         self.parser = OptionParser( usage )
 
         self.parser.add_option( "--user",
-                help="Owner of the target system, default $USER.",
+                help="Owner of the target system, defaults to $USER. "
+                "Needed to infer the system's Pyro nameserver "
+                "group name.",
                 metavar="USERNAME", action="store", dest="username" )
 
         self.parser.add_option( "--pyro-ns",
-                help="Pyro nameserver host, default 'localhost'. Depending "
-                "on network configuration you may not need to use this option.",
+                help="Pyro nameserver host, defaults to 'localhost'. Use "
+                "if not auto-detected (which depends on network config).", 
                 metavar="HOSTNAME", action="store", default="localhost",
                 dest="pns_host" )
 
         self.parser.add_option( "-f", "--force",
-                help="Act immediately without asking for confirmation first.",
+                help="Do not ask for confirmation before acting.",
                 action="store_true", default=False, dest="force" )
 
     def parse_args( self ):
