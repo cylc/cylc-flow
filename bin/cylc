@@ -14,7 +14,7 @@ allowed_commands = \
     'register',
     'start', 
     'stop',
-    'hold',
+    'pause',
     'resume',
     'nudge',
     'set-level',
