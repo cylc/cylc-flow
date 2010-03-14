@@ -176,7 +176,7 @@ def ns_obj_name( name, groupname ):
     # object name as registered with the Pyro nameserver
     return groupname + '.' + name
 
-usage = """cylc schedule [options] SYSTEM
+usage = """cylc start [options] SYSTEM
 
 Start scheduling a configured, registered, cylc system. 
 
