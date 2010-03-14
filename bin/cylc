@@ -18,6 +18,9 @@ allowed_commands = \
     'resume',
     'nudge',
     'reset',
+    'kill',
+    'purge',
+    'insert',
     'control',
     'message',
     'ask',
@@ -68,16 +71,15 @@ usage = \
     ]
 
 def print_usage():
+    print "_______________C_Y_L_C___________________"
+    print ". Self Organising Dynamic Metascheduler ."
+    print ". (c) Hilary Oliver, NIWA, 2008-2010    ."
+    print "        Version: " + cylc_version
+    print "_______________C_Y_L_C___________________"
+    print
     for line in usage:
         print line
 
-print "_______________C_Y_L_C___________________"
-print ". Self Organising Dynamic Metascheduler ."
-print ". (c) Hilary Oliver, NIWA, 2008-2010    ."
-print "        Version: " + cylc_version
-print "_______________C_Y_L_C___________________"
-print
- 
 # check that the cylc core modules are accessible
 try:
     import requisites

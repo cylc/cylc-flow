@@ -3,11 +3,13 @@
 import sys
 from connectors import connect_to_control
 
-
 usage = """cylc kill [options] SYSTEM 
 
-Kill a single task, after getting it to spawn if it hasn't done so
-already."""
+Remove a single task proxy object from the system. 
+
+The target task will be forced to spawn first, if it hasn't already.
+
+WARNING: This does not kill running external tasks!"""
 
 connector = connect_to_control( usage )
 
@@ -15,13 +17,20 @@ connector.parser.add_option( "-t",
         help="ID of the task to kill.",
         metavar="TASK%CYCLE", action="store", dest="kill_id" )
 
+connector.parser.add_option( "--no-spawn", 
+        help="Do not spawn before dying.",
+        action="store_true", default=False, dest="no_spawn" )
+
 connector.parse_args()
 
 controller = connector.get_control()
 
-if connector.options.kill_id:
-    if connector.prompt( 'Kill task ' + connector.options.kill_id + ' in'):
-        controller.spawn_and_die( [ connector.options.kill_id ] )
-
-else:
+if not connector.options.kill_id:
     connector.parser.error( "Task ID required" )
+
+target = connector.options.kill_id  
+if connector.prompt( 'Kill task ' + target + ' in'):
+    if connector.options.no_spawn:
+        controller.die( target )
+    else:
+        controller.spawn_and_die( target )

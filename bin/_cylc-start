@@ -126,21 +126,20 @@ def service_remote_requests( remote, pool, log, failout = None ):
         remote.purge_stop = None
         process_tasks = True
 
-    if remote.kill_ids:
+    if remote.die_flag:
         log.warning( 'pre-kill state dump: ' + pool.dump_state( new_file = True ))
-        #pool.abdicate_and_kill( remote.kill_task_ids )
-        pool.kill( remote.kill_task_ids )
-        remote.kill_ids = False
-        remote.kill_task_ids = {}
+        pool.kill( [ remote.die_task ] )
+        remote.die_flag = False
+        remote.die_task = None
+        process_tasks = True
+ 
+    if remote.spawn_and_die_flag:
+        log.warning( 'pre-kill state dump: ' + pool.dump_state( new_file = True ))
+        pool.spawn_and_die( [ remote.spawn_and_die_task ] )
+        remote.spawn_and_die_flag = False
+        remote.spawn_and_die_task = None
         process_tasks = True
         
-    if remote.kill_rt:
-        log.warning( 'pre-kill state dump: ' + pool.dump_state( new_file = True ))
-        pool.abdicate_and_kill_rt( remote.kill_ctime )
-        remote.kill_rt = False
-        remote.kill_ctime = None
-        process_tasks = True
-
     if remote.reset_a_task:
         log.warning( 'pre-reset state dump: ' + pool.dump_state( new_file = True ))
         pool.reset_task( remote.reset_task_id )

@@ -34,11 +34,13 @@ class remote_switch( Pyro.core.ObjBase ):
         self.system_hold_requested = False
         self.system_resume_requested = False
 
+        # task to and die
+        self.die_flag = False
+        self.die_task = None
+
         # task to spawn and die
-        self.kill_ids = False
-        self.kill_task_ids = {}
-        self.kill_rt = False
-        self.kill_ctime = None
+        self.spawn_and_die_flag = False
+        self.spawn_and_die_task = None
 
         # task to reset from failed to waiting
         self.reset_a_task = False
@@ -184,22 +186,19 @@ class remote_switch( Pyro.core.ObjBase ):
     
     def purge( self, task_id, stop ):
         self.log.warning( "REMOTE: purge " + task_id + ' to ' + stop )
-
         self.do_purge = True
         self.purge_id = task_id
         self.purge_stop = stop
 
-    def spawn_and_die_rt( self, ctime ):
-        self.log.warning( "REMOTE: spawn and die all in " + ctime )
-        self.kill_rt = True
-        self.kill_ctime = ctime
+    def die( self, task_id ):
+        self.log.warning( "REMOTE: die: " + task_id )
+        self.die_flag = True
+        self.die_task = task_id
 
-    def spawn_and_die( self, task_ids ):
-        self.log.warning( "REMOTE: spawn and die:" )
-        for task_id in task_ids:
-            self.kill_task_ids[ task_id ] = True
-            self.log.warning( '-> ' + task_id )
-        self.kill_ids = True
+    def spawn_and_die( self, task_id ):
+        self.log.warning( "REMOTE: spawn and die: " + task_id )
+        self.spawn_and_die_flag = True
+        self.spawn_and_die_task = task_id
 
     def set_verbosity( self, level ):
         # change the verbosity of all the logs:

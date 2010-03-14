@@ -1,0 +1,35 @@
+#!/usr/bin/python
+
+import sys
+from connectors import connect_to_control
+
+usage = """cylc purge [options] SYSTEM 
+
+Force a task to spawn and die, and then force every task that depends on
+its outputs to spawn and die, and then force every task that depends on
+their outputs to spawn and die, and so on down to a given cycle time."""
+
+connector = connect_to_control( usage )
+
+connector.parser.add_option( "-t", "--task",
+        help="ID of the task whose decendants are to be wiped out.",
+        metavar="TASK%CYCLE", action="store", dest="target_id" )
+
+connector.parser.add_option( "-s", "--stop",
+        help="Cycle to at which to stop the slaughter.",
+        metavar="STOP", action="store", dest="stop" )
+
+connector.parse_args()
+
+controller = connector.get_control()
+
+if not connector.options.target_id:
+    connector.parser.error( "Task ID required" )
+
+if not connector.options.stop:
+    connector.parser.error( "Stop time required" )
+
+target = connector.options.target_id  
+stop = connector.options.stop
+if connector.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
+    controller.spawn_and_die( target, stop )

@@ -2,6 +2,9 @@ To Do
 
 * see if error exit in userguide example check-env invocation works
 
+* warn about consequences of deleting a task: system may move on so that
+  a reinserted task will not get its prerequisites satisfied.
+
 * stop-at (only when some tasks past designated time?) requires a
   nudge to complete!!!!!!!!!!!!1
 

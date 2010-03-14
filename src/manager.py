@@ -279,11 +279,11 @@ class manager:
             tdiff = cycle_time.decrement( itask.c_time, self.config.get('max_runahead_hours') )
             if int( tdiff ) > int( oldest_c_time ):
                 # too far ahead: don't spawn this task.
-                itask.log( 'DEBUG', "delaying abdication (too far ahead)" )
+                itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
                 continue
 
             if itask.spawn():
-                itask.log( 'DEBUG', 'abdicating')
+                itask.log( 'DEBUG', 'spawning')
 
                 # dynamic task object creation by task and module name
                 new_task = get_object( 'task_classes', itask.name )\
@@ -651,11 +651,11 @@ class manager:
 
         # find then spawn and kill all cotemporal dependees
         condemned = self.find_cotemporal_dependees( itask )
-        cond = {}
-        for itask in condemned:
-            cond[ itask.get_identity() ] = True
+        #cond = {}
+        #for itask in condemned:
+        #    cond[ itask.get_identity() ] = True
         
-        self.spawn_and_die( cond )
+        self.spawn_and_die( condemned )
 
         # now do the same for the next instance of the task
         if int( next ) <= int( stop ):
@@ -669,20 +669,21 @@ class manager:
                 break
         return result
 
-    def spawn_and_die_rt( self, ctime ):
-        # spawn and kill all WAITING tasks currently at ctime
-        # (use to kill lame tasks that will never run because some
-        # upstream dependency has failed).
-        task_ids = {}
-        for itask in self.tasks:
-            if itask.c_time == ctime and itask.get_status() == 'waiting':
-                task_ids[ itask.get_identity() ] = True
-
-        self.spawn_and_die( task_ids )
+# NOT NEEDED
+#    def spawn_and_die_rt( self, ctime ):
+#        # spawn and kill all WAITING tasks currently at ctime
+#        # (use to kill lame tasks that will never run because some
+#        # upstream dependency has failed).
+#        task_ids = {}
+#        for itask in self.tasks:
+#            if itask.c_time == ctime and itask.get_status() == 'waiting':
+#                task_ids[ itask.get_identity() ] = True
+#
+#        self.spawn_and_die( task_ids )
 
     def spawn_and_die( self, task_ids ):
         # spawn and kill all tasks in task_ids.keys()
-        for id in task_ids.keys():
+        for id in task_ids:
             # find the task
             found = False
             itask = None
@@ -701,7 +702,7 @@ class manager:
             if not itask.state.has_spawned():
                 # forcibly spawn the task and create its successor
                 itask.state.set_spawned()
-                itask.log( 'DEBUG', 'forced abdication' )
+                itask.log( 'DEBUG', 'forced spawning' )
                 # TO DO: the following should reuse code in spawn()?
                 # dynamic task object creation by task and module name
                 new_task = get_object( 'task_classes', itask.name )\
@@ -729,8 +730,8 @@ class manager:
             del itask
 
     def kill( self, task_ids ):
-        # kill without abdication all tasks in task_ids.keys()
-        for id in task_ids.keys():
+        # kill without spawning all tasks in task_ids
+        for id in task_ids:
             # find the task
             found = False
             itask = None
@@ -749,7 +750,7 @@ class manager:
             #if not itask.state.has_spawned():
             #    # forcibly spawn the task and create its successor
             #    itask.state.set_spawned()
-            #    itask.log( 'DEBUG', 'forced abdication' )
+            #    itask.log( 'DEBUG', 'forced spawning' )
             #    # TO DO: the following should reuse code in spawn()?
             #    # dynamic task object creation by task and module name
             #    new_task = get_object( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode )

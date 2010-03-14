@@ -1,0 +1,33 @@
+#!/usr/bin/python
+
+import sys
+from connectors import connect_to_control
+
+usage = """cylc insert [options] SYSTEM 
+
+Insert a single task or a task group into a running system. 
+
+Inserted tasks will spawn successors as normal (unless they are of the
+'oneoff' type). If you don't want this, consider using 'cylc run-task').
+"""
+
+connector = connect_to_control( usage )
+
+connector.parser.add_option( "-t", "--task",
+        help="ID of a task to insert.",
+        metavar="TASK%CYCLE", action="store", dest="task_id" )
+
+connector.parser.add_option( "-g", "--group",
+        help="ID of a task group to insert.",
+        metavar="TASK%CYCLE", action="store", dest="task_id" )
+
+connector.parse_args()
+
+controller = connector.get_control()
+
+if not connector.options.task_id:
+    connector.parser.error( "Task or Group ID required" )
+
+target = connector.options.task_id  
+if connector.prompt( 'insert ' + target + ' in'):
+    controller.insert( target )

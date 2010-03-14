@@ -34,5 +34,6 @@ class system_config( config ):
         self.items['environment']['TMPDIR'] = '/tmp/' + user + '/' + sysname
         self.items['environment']['REAL_TIME_ACCEL'] = 360
 
+        #self.items['logging_level'] = logging.DEBUG
 
 # END OF FILE
