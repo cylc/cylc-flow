@@ -1,0 +1,27 @@
+#!/usr/bin/python
+
+import sys
+from connectors import connect_to_control
+
+
+usage = """cylc kill [options] SYSTEM 
+
+Kill a single task, after getting it to spawn if it hasn't done so
+already."""
+
+connector = connect_to_control( usage )
+
+connector.parser.add_option( "-t", 
+        help="ID of the task to kill.",
+        metavar="TASK%CYCLE", action="store", dest="kill_id" )
+
+connector.parse_args()
+
+controller = connector.get_control()
+
+if connector.options.kill_id:
+    if connector.prompt( 'Kill task ' + connector.options.kill_id + ' in'):
+        controller.spawn_and_die( [ connector.options.kill_id ] )
+
+else:
+    connector.parser.error( "Task ID required" )
