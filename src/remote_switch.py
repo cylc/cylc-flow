@@ -114,7 +114,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.stop_time = ctime
 
     def set_hold_time( self, ctime ):
-        self.log.warning( "REMOTE: set stop time" )
+        self.log.warning( "REMOTE: set hold time" )
         self.set_hold = True
         self.hold_time = ctime
 
