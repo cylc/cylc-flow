@@ -1369,14 +1369,14 @@ that comes through the cylc system definition.
 \label{SystemConfigFiles}
 
 Each task set to be scheduled by cylc requires a {\bf config file} that
-specifies system-dependent parameters such as name, list of tasks to
-run, logging directory path, and so on. The config file is generated
-automatically by \lstinline=cylc configure= the first time the system's
-task definition files are parsed. Subsequent reconfiguration will not
-overwrite the config file unless you force it (in which case the
-original will be backed up), in case you have changed the default
-settings. The config file is a Python source module, but it is simply
-structured and should be easy for non-programmers to understand. 
+specifies parameters such as the logging directory path, task groups,
+and so on. The config file is generated automatically by 
+\lstinline=cylc configure= the first time the system's task definition
+files are parsed. Subsequent reconfiguration will not overwrite the
+config file unless you force it (in which case the original will be
+backed up), in case you have changed the default settings. The config
+file is a Python source module, but it is simply structured and should
+be easy for non-programmers to understand. 
 
 All configurable items are stored in a single {\em dict} (a Python
 associative array):
@@ -1389,13 +1389,8 @@ config[ 'item' ] = value
 \subsection{Configurable Items}
 \label{ConfigurableItems}
 
-\begin{itemize} \item {\bf system name}: the system is registered under
-        this name in your cylc preferences directory. The system name is
-        then used to refer to the system in cylc commands. It is also
-        used as a ``groupname'' under which to register system objects 
-        in the Pyro nameserver, to prevent conflicts with other systems
-        that may be running at the same time.
-
+\begin{itemize} 
+    
         \begin{lstlisting}
 config['system_name'] = 'foo'
         \end{lstlisting}
@@ -1495,7 +1490,7 @@ config['max_runahead_hours'] = 24
 
 \pagebreak
 
-\subsection{Example Config Files}
+\subsection{Example Config File}
 \label{ExampleConfigFile}
 
 This is the config defaults file for the ``userguide'' example system
@@ -1503,16 +1498,7 @@ distributed with cylc:
 
 \lstset{ language=Python }
 {
-\lstinputlisting{../sys/examples/userguide/config_defaults.py}
-}
-
-\pagebreak
-And this is the config overrides file for the ``userguide'' example
-system distributed with cylc: 
-
-\lstset{ language=Python }
-{
-\lstinputlisting{../sys/examples/userguide/config_override.py}
+\lstinputlisting{../sys/examples/userguide/system_config.py}
 }
 
 
@@ -1522,6 +1508,13 @@ system distributed with cylc:
 \pagebreak
 \section{System Registration}
 \label{SystemRegistration}
+
+{\bf system name}: the system is registered under
+        this name in your cylc preferences directory. The system name is
+        then used to refer to the system in cylc commands. It is also
+        used as a ``groupname'' under which to register system objects 
+        in the Pyro nameserver, to prevent conflicts with other systems
+        that may be running at the same time.
 
 
 \section{Running Systems}
@@ -1660,8 +1653,8 @@ scheduler command line options provided for this purpose).
 
 
 \pagebreak
-\section{Cylc Command Reference}
-\label{CylcCommandReference}
+\section{Command Reference}
+\label{CommandReference}
 
 Cylc commands are intended to be largely self documenting so the
 attendant text in this section is minimal: for each command there is
@@ -1679,7 +1672,7 @@ processing, to ensure that the information is completely up to date.
 \lstset{language=usage}
 
 {
-\lstinputlisting{command-usage/cylc.txt}
+\lstinputlisting{command-usage/help.txt}
 }
 
 \pagebreak
@@ -1705,60 +1698,113 @@ registration.
 }
 
 \pagebreak
-\subsection{cylc schedule}
-\label{cylcschedule}
+\subsection{cylc start}
+\label{cylcstart}
 
 See Section~\ref{registration} for complete documentation of system
 scheduling.
 
 {
-\lstinputlisting{command-usage/cylc-scheduler.txt}
+\lstinputlisting{command-usage/cylc-start.txt}
 }
 
 \pagebreak
-\subsection{cylc run-task}
-\label{cylcmessage}
-
-See Section~\ref{run-task} for complete documentation of this command.
+\subsection{cylc stop}
+\label{cylcstop}
 
 {
-\lstinputlisting{command-usage/cylc-run-task.txt}
+\lstinputlisting{command-usage/cylc-stop.txt}
 }
 
 \pagebreak
-\subsection{cylc message}
-\label{cylcmessage}
-
-See Section~\ref{messaging} for complete documentation of cylc messaging.
+\subsection{cylc pause}
+\label{cylcpause}
 
 {
-\lstinputlisting{command-usage/cylc-message.txt}
+\lstinputlisting{command-usage/cylc-pause.txt}
 }
 
 \pagebreak
-\subsection{cylc control}
-\label{cylccontrol}
-
-See Section~\ref{controlling} for complete documentation of how to
-control a running system.
+\subsection{cylc resume}
+\label{cylcresume}
 
 {
-\lstinputlisting{command-usage/cylc-control.txt}
+\lstinputlisting{command-usage/cylc-resume.txt}
+}
+
+\pagebreak
+\subsection{cylc set-level}
+\label{cylcsetlevel}
+
+{
+\lstinputlisting{command-usage/cylc-set-level.txt}
+}
+
+\pagebreak
+\subsection{cylc nudge}
+\label{cylcnudge}
+
+{
+\lstinputlisting{command-usage/cylc-nudge.txt}
 }
 
 \pagebreak
 \subsection{cylc ask}
 \label{cylcask}
 
-See Section~\ref{controlling} for complete documentation of how to
-interrogate a running system.
-
 {
 \lstinputlisting{command-usage/cylc-ask.txt}
 }
 
 \pagebreak
-\pagebreak 
+\subsection{cylc reset}
+\label{cylcreset}
+
+{
+\lstinputlisting{command-usage/cylc-reset.txt}
+}
+
+\pagebreak
+\subsection{cylc kill}
+\label{cylckill}
+
+{
+\lstinputlisting{command-usage/cylc-kill.txt}
+}
+
+\pagebreak
+\subsection{cylc purge}
+\label{cylcpurge}
+
+{
+\lstinputlisting{command-usage/cylc-purge.txt}
+}
+
+\pagebreak
+\subsection{cylc insert}
+\label{cylcinsert}
+
+{
+\lstinputlisting{command-usage/cylc-insert.txt}
+}
+
+\pagebreak
+\subsection{cylc message}
+\label{cylcmessage}
+
+{
+\lstinputlisting{command-usage/cylc-message.txt}
+}
+
+\pagebreak
+\subsection{cylc run-task}
+\label{cylcmessage}
+
+{
+\lstinputlisting{command-usage/cylc-run-task.txt}
+}
+
+\pagebreak
 \subsection{System Monitors}
 \label{Systemmonitors}
 
