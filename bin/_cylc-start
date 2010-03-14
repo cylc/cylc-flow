@@ -21,18 +21,7 @@ import accelerated_clock
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 
-# auto-replace with version tag at build/install:
-cylc_version = "REPLACE-ME"
-
 def print_banner():
-    print ""
-    print "_______________C_Y_L_C___________________"
-    print ". Self Organising Dynamic Metascheduler ."
-    print ".     Hilary Oliver, NIWA, 2008-2010    ."
-    print "_______________C_Y_L_C___________________"
-    print "version: " + cylc_version
-    print ""
-
     items = banner.keys() + startup.keys()
 
     longest_item = items[0]

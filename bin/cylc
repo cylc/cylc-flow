@@ -4,6 +4,9 @@ import os
 import sys
 import subprocess
 
+# auto-replace with version tag at build/install:
+cylc_version = "REPLACE-ME"
+
 allowed_commands = \
     [ 
     'help',
@@ -28,35 +31,35 @@ allowed_commands = \
 
 usage = \
     [ 
-    'usage: cylc COMMAND [command-options] ',
+    '  USAGE: cylc COMMAND [command-options] ',
     '',
-    'The cylc self organising scheduler command line interface.',
-    'Cylc is pronounced "silk", as in "smooth as silk".',
+    'Cylc is pronounced "silk".',
     '',
     'commands:',
     '  help          Print this usage message and exit.',
     '',
-    '  configure     Generate system-specific Python source modules.',
+    '  configure     Create task proxy and config modules for a system.',
     '  register      Register a configured system for use by name.',
     '',
     '  start         Start scheduling a registered system.',
     '  stop          Stop a running system.',
     '  hold          Pause a running system.',
     '  resume        Resume running a paused system.',
-    '  nudge         Cause the task processing loop to be invoked.',
-    '  reset         Reset a single task to the waiting state.',
-    '  kill          Remove a single task from the system.',
-    '  purge         Remove a tree of dependent tasks from the system.',
-    '  message       Send a message to a task proxy object.',
+    '  nudge         Invoke the cylc task processing loop.',
     '  ask           Interrogate a running system.',
     '',
-    '  control       Control a running system.',
-    '  run-task      Run a single task without the scheduler.',
+    '  reset         Reset a single task to the waiting state.',
+    '  kill          Remove a single task from a running system.',
+    '  purge         Recursively remove a tree of dependent tasks.',
+    '',
+    '  message       Send a message to a task proxy object.',
     '',
     '  monitor       Monitor task proxy objects in a running system.',
     '  monitor-r     Monitor "submitted" and "running" task proxies.',
     '  monitor-d     Monitor all running dummy task programs.',
     '  monitor-p     Monitor the Pyro namesever.',
+    '',
+    '  run-task      Run a single task without the scheduler.',
     '',
 #    '  show-pyro [TO DO]   List systems registered with Pyro.',
 #    '',
@@ -68,6 +71,13 @@ def print_usage():
     for line in usage:
         print line
 
+print "_______________C_Y_L_C___________________"
+print ". Self Organising Dynamic Metascheduler ."
+print ". (c) Hilary Oliver, NIWA, 2008-2010    ."
+print "        Version: " + cylc_version
+print "_______________C_Y_L_C___________________"
+print
+ 
 # check that the cylc core modules are accessible
 try:
     import requisites
