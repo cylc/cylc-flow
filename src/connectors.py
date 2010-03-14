@@ -1,25 +1,13 @@
 #!/usr/bin/python
 
 # import standard Python modules
-# cylc modules are imported after parsing the command line, so that we
-# don't need access to a specific system to print the usage message.
-import os
-import re
-import sys
+import os, sys
 import Pyro.core
+from Pyro.errors import PyroError,NamingError
 from optparse import OptionParser
 from time import sleep
-from Pyro.errors import PyroError,NamingError
 
-ctrl_end = "\033[0m"
-
-def print_heading( strng ):
-        print
-        print strng
-        underline = re.sub( '.', '-', strng )
-        print underline
-
-class control:
+class connect_to_control:
 
     def __init__( self, usage ):
 
@@ -34,21 +22,18 @@ arguments:
 
         self.parser = OptionParser( usage )
 
-        self.parser.add_option( "-u", "--user",
-                help="Owner of the target system (i.e. the username under which "
-                "the scheduler is running), defaults to $USER. WARNING: this "
-                "allows others to control your systems, and you theirs; you "
-                "may want to disable this option.",
-                metavar="USER", action="store", dest="username" )
+        self.parser.add_option( "--user",
+                help="Owner of the target system, default $USER.",
+                metavar="USERNAME", action="store", dest="username" )
 
-        self.parser.add_option( "-n", "--nameserver",
-                help="The Pyro nameserver host. Defaults to localhost. Depending "
+        self.parser.add_option( "--pyro-ns",
+                help="Pyro nameserver host, default 'localhost'. Depending "
                 "on network configuration you may not need to use this option.",
                 metavar="HOSTNAME", action="store", default="localhost",
                 dest="pns_host" )
 
         self.parser.add_option( "-f", "--force",
-                help="Force: do not ask for confirmation before acting.",
+                help="Act immediately without asking for confirmation first.",
                 action="store_true", default=False, dest="force" )
 
     def parse_args( self ):
@@ -78,7 +63,9 @@ arguments:
 
     def get_control( self ):
 
-        # import cylc modules now (the reason for this is explained above)
+        # import cylc modules now, after parsing the command line, so so
+        # we don't need access to a defined system just to print the
+        # usage message.
         import pyrex
 
         # get systems currently registered in the Pyro nameserver
@@ -103,7 +90,7 @@ arguments:
             # connect to the remote switch object in cylc
             control = Pyro.core.getProxyForURI('PYRONAME://' + self.options.pns_host + '/' + self.groupname + '.' + 'remote' )
         except NamingError:
-            print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+            print "\n\033[1;37;41mfailed to connect\033[0m"
             raise SystemExit
         except:
             print "ERROR:"
