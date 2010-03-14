@@ -22,7 +22,6 @@ allowed_commands = \
     'kill',
     'purge',
     'insert',
-    'control',
     'message',
     'ask',
     'run-task',
