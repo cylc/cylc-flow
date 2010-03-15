@@ -164,7 +164,7 @@ def ns_obj_name( name, groupname ):
     # object name as registered with the Pyro nameserver
     return groupname + '.' + name
 
-usage = """cylc start [options] SYSTEM
+usage = """cylc schedule [options] SYSTEM
 
 Start scheduling a configured, registered, cylc system. 
 
@@ -173,8 +173,8 @@ list will be instantiated with a cycle time equal to the initial cycle
 time, or to the first subsequent cycle time that is valid for that task.
 At least one task must have no prerequisites, or nothing will happen. 
 
-In a restart, any task that was "submitted", "running" or "failed" will
-be restarted in the "waiting" state.
+In a restart [-r], any task that was "submitted", "running" or "failed"
+will be restarted in the "waiting" state.
 
 arguments:
    SYSTEM               Registered name of the forecasting system.""" 
@@ -185,13 +185,13 @@ def commandline_parser():
     parser.set_defaults( pns_host='localhost', restart=False, dummy_mode=False,
             clock_rate=10, clock_offset=24, task_proc_reason=False )
 
-    parser.add_option( "-s", "--start", 
+    parser.add_option( "-s", "--start-at", 
             help="Initial cycle time (YYYYMMDDHH).",
             metavar="CYCLE", action="store", dest="start_time" )
 
-    parser.add_option( "--stop", 
+    parser.add_option( "--stop-at", 
             help="Optional final cycle time (YYYYMMDDHH). The scheduler "
-            "will shut down when each tasks has passed the stop time.",
+            "will shut down when each task has passed this cycle.",
             metavar="CYCLE", action="store", dest="stop_time" )
 
     parser.add_option( "-r", "--restart", 
@@ -204,15 +204,14 @@ def commandline_parser():
             metavar="FILE", action="store", dest="restart_from" )
 
     parser.add_option( "--exclude",
-            help="Exclude the named tasks from the task list at startup. "
-            "This is equivalent to commenting out these tasknames in the "
-            "configured system task list.",
+            help="Exclude these tasks at startup. Equivalent to "
+            "deleting them from the system task list.",
             metavar="Task1,Task2,...", action="store", dest='exclude' )
 
     parser.add_option( "--include",
-            help="Include only the named tasks at startup. This is "
-            "equivalent to commenting out all OTHER tasknames in the "
-            "configured system task list.",
+            help="Include only these tasks at startup. "
+            "Equivalent to deleting all other tasks from the "
+            "system task list.",
             metavar="Task1,Task2,...", action="store", dest='include' )
 
     parser.add_option( "-n", "--nameserver",
@@ -221,20 +220,20 @@ def commandline_parser():
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "-d", "--dummy-mode",
-            help="Run the system in DUMMY MODE. External dummy programs "
-            "will masquerade as the real system tasks by faking the right "
-            "output messages at the right time, on an accelerated clock.",
+            help="DUMMY MODE: replace each real system task with a program "
+            "that fakes its output messages on time, relative to an "
+            "accelerated clock.",
             action="store_true", dest="dummy_mode" )
 
     parser.add_option( "--dummy-clock-rate", 
-            help="(DUMMY MODE) accelerated clock rate, INT seconds = 1 hour "
-            "(defaults to 10 sec = 1 hour).",
-            metavar="INT", action="store", dest="clock_rate" )
+            help="(DUMMY MODE) accelerated clock rate: RATE seconds of "
+            "real time per simulated hour (defaults to 10).",
+            metavar="RATE", action="store", dest="clock_rate" )
 
     parser.add_option( "--dummy-clock-offset", 
-            help="(DUMMY MODE) clock offset at start up. The dummy clock will "
-            "start at INT hours prior to START cycle time (default 24 hours). "
-            "Use to simulate catching up to real time operation.",
+            help="(DUMMY MODE) start the accelerated clock at HOURS "
+            "prior to the initial cycle time (default 24 hours). "
+            "This simulates catch up to real time operation.",
             metavar="HOURS", action="store", dest="clock_offset" )
 
     parser.add_option( "--fail-out", help=\

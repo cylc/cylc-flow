@@ -59,7 +59,7 @@ morecomment=[l]{Commands:},
 morecomment=[l]{usage:},
 morecomment=[l]{arguments:},
 morecomment=[l]{command-options:},
-morecomment=[l]{commands:},
+morecomment=[l]{COMMANDS:},
 morecomment=[l]{options:},
 }
 
@@ -550,34 +550,33 @@ your \lstinline=$HOME/.profile=:
 \label{Testing}
 
 Test the new installation by running the packaged example systems
-(Section~\ref{examples}). These should work ``out of the box'', but
-refer to the rest of this document, and/or \lstinline=cylc help= for
-more information.  
+(Section~\ref{examples}). These should work ``out of the box'', in
+dummy mode or real mode, but refer to the rest of this document, and/or
+\lstinline=cylc help= for more information.  
 
 Configure the example system, register it for use, and run it:
 
 \begin{lstlisting}
     cylc configure $CYLC_DIR/sys/examples/userguide
 
-    cylc register  -s userguide $CYLC_DIR/sys/examples/userguide
+    cylc register userguide $CYLC_DIR/sys/examples/userguide
 
-    cylc schedule -s userguide -d 2010081012
+    cylc schedule --start-at=2010102318 userguide
 \end{lstlisting}
 
 In another terminal window open a monitor to view the running system:
 
 \begin{lstlisting}
-    cylc monitor -s userguide -a
+    cylc monitor -a userguide
 \end{lstlisting}
 
-In yet another terminal, shut the system down by remote control:
+In yet another terminal, shut the system down by remote control,
+the restart it:
 
 \begin{lstlisting}
-    cylc control -s userguide --stop
+    cylc stop userguide
+    cylc start -r userguide
 \end{lstlisting}
-
-Finally, rerun the system for real (omit the \lstinline{-d}
-option above).
 
 \pagebreak
 \section{System Definition} 
@@ -1676,14 +1675,14 @@ registration.
 }
 
 \pagebreak
-\subsection{cylc start}
-\label{cylcstart}
+\subsection{cylc schedule}
+\label{cylcschedule}
 
-See Section~\ref{registration} for complete documentation of system
+See Section~\ref{schedule} for complete documentation of system
 scheduling.
 
 {
-\lstinputlisting{command-usage/cylc-start.txt}
+\lstinputlisting{command-usage/cylc-schedule.txt}
 }
 
 \pagebreak
