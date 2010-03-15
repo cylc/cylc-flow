@@ -40,7 +40,7 @@ function check_configured()
     fi
 
     # has this cylc system definition directory been configured yet?
-    if [[ ! -f $SYS_DIR/config_defaults.py || \
+    if [[ ! -f $SYS_DIR/system_config.py || \
         ! -f $SYS_DIR/task_classes.py ]]; then
         echo "ERROR: $SYS_DIR"
         echo "has not been configured yet: it does not contain config"
