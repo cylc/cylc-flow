@@ -23,7 +23,7 @@ allowed_commands = \
     'purge',
     'insert',
     'message',
-    'ask',
+    'task-dump',
     'run-task',
     'monitor',
     'monitor-r',
@@ -36,8 +36,6 @@ usage = \
     [ 
     'USAGE: cylc [options] COMMAND [command-options] ',
     '',
-    'Cylc is pronounced "silk".',
-    '',
     'options:',
     ' -v, --version  Print the release version tag and exit.',
     ' -h, --help     Print this usage message and exit.',
@@ -48,36 +46,46 @@ usage = \
     'COMMANDS:',
     '  help          Print this usage message and exit.',
     '',
+    '>preparation',
     '  configure     Create task proxy and config modules for a system.',
     '  register      Register a configured system for use by name.',
     '',
-    '  schedule      Start up, or restart, a registered system.',
-    '  stop          Stop a running system.',
+    '>scheduling',
+    '  schedule      Start or restart a registered system.',
+    '  stop          Shut down a running system.',
     '  pause         Pause a running system.',
     '  resume        Resume running a paused system.',
-    '  set-level     Set the logging level in a running system.',
-    '  nudge         Invoke the cylc task processing loop.',
-    '  ask           Interrogate a running system.',
     '',
+    '>manipulation',
     '  reset         Reset a single task to the waiting state.',
     '  kill          Remove a single task from a running system.',
-    '  purge         Recursively remove a tree of dependent tasks.',
+    '  purge         Recursively kill a tree of dependent tasks.',
     '',
-    '  message       Send a message to a task proxy object.',
+    '',
+    '>interrogate',
+    '  task-dump     Display the state of a task\'s prerequisites and outputs',
+    '',
+    '>miscellaneous',
     '  run-task      Run a single task without the scheduler.',
+    '  message       Send a message to a task proxy object.',
+    '  set-level     Set the logging level in a running system.',
+    '  nudge         Invoke the cylc task processing loop.',
     '',
+    '>monitoring',
     '  monitor       Monitor task proxy objects in a running system.',
     '  monitor-r     Monitor "submitted" and "running" task proxies.',
     '  monitor-d     Monitor all running dummy task programs.',
     '  monitor-p     Monitor the Pyro namesever.',
+    ''
     ]
 
 def print_usage():
     print "_______________C_Y_L_C___________________"
     print ". Self Organising Dynamic Metascheduler ."
-    print ". (c) Hilary Oliver, NIWA, 2008-2010    ."
-    print "        Version: " + cylc_version
+    print ".  (c) Hilary Oliver, NIWA, 2008-2010   ."
+    print "        cylc is pronounced 'silk'       ."
     print "_______________C_Y_L_C___________________"
+    print "Version: " + cylc_version
     print
     for line in usage:
         print line
