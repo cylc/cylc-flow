@@ -33,9 +33,9 @@ fi
 # extract command help output
 echo hello
 mkdir -p doc/command-usage
-cylc help > doc/command-usage/$command.txt
+cylc help > doc/command-usage/cylc-help.txt
 for command in configure register start stop pause resume nudge \
-    set-level reset kill purge insert ask run-task monitor monitor-r \
+    set-level reset kill purge insert ask message run-task monitor monitor-r \
     monitor-d monitor-p; do
     echo "cylc $command --help"
     cylc $command --help > doc/command-usage/cylc-$command.txt
