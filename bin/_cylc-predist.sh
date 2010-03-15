@@ -1,6 +1,9 @@
-#!/bin/bash
+#!/bin/bashXXX
 
 set -e
+
+# DO NOT RUN THIS COMMAND MANUALLY, IT IS A DARCS PREDIST SCRIPT.
+
 trap "ABORTING PREDIST, DELETE THE NEW TARBALL IF DARCS CONTINUES!" ERR
 
 echo "PRE MARCH 2009 (?) VERSIONS OF DARCS IGNORE NON-ZERO EXIT CODE IN"
@@ -14,7 +17,7 @@ echo "PREDIST SCRIPTS: WATCH FOR THIS AND DELETE THE RESULTING TARBALL!"
 
 # TO CREATE A CLEAN CYLC DISTRIBUTION IN A NEW REPOSITORY:
 # 1/ record any changes to this script
-# 2/ darcs setpref predist bin/_cylc-predist.sh
+# 2/ darcs setpref predist 'sh bin/_cylc-predist.sh; rm bin/_cylc-predist.sh'
 # 3/ final 'darcs tag'
 # 4/ export CYLC_VERSION=[final version tag]
 # 5/ darcs dist
@@ -29,6 +32,7 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
 
+chmod +x doc/make-documentation.sh
 chmod +x sys/examples/userguide/scripts/*
 chmod +x sys/examples/nested/scripts/*
 chmod +x sys/examples/distributed/scripts/*
@@ -38,6 +42,12 @@ perl -pi -e "s/-CYLC-VERSION-/$CYLC_VERSION/" bin/cylc
 perl -pi -e "s/-CYLC-VERSION-/$CYLC_VERSION/" doc/userguide.tex
 
 echo "MAKING DOCUMENTATION (USERGUIDE)"
+# make sure documentation processing uses the release versions
+# (which have the correct version tag inserted).
+export PATH=bin:$PATH
+export PYTHONPATH=src:$PYTHONPATH
+doc/make-documentation.sh
+echo "AGAIN, TO GET REFERENCES / TOC RIGHT(?)"
 doc/make-documentation.sh
 
 echo "DELETING DOCUMENTATION SOURCE"
