@@ -34,11 +34,18 @@ allowed_commands = \
 
 usage = \
     [ 
-    '  USAGE: cylc COMMAND [command-options] ',
+    'USAGE: cylc [options] COMMAND [command-options] ',
     '',
     'Cylc is pronounced "silk".',
     '',
-    'commands:',
+    'options:',
+    ' -v, --version  Print the release version tag and exit.',
+    ' -h, --help     Print this usage message and exit.',
+    '',
+    'command-options:',
+    '  cylc COMMAND --help',
+    '',
+    'COMMANDS:',
     '  help          Print this usage message and exit.',
     '',
     '  configure     Create task proxy and config modules for a system.',
@@ -63,11 +70,6 @@ usage = \
     '  monitor-r     Monitor "submitted" and "running" task proxies.',
     '  monitor-d     Monitor all running dummy task programs.',
     '  monitor-p     Monitor the Pyro namesever.',
-    '',
-#    '  show-pyro [TO DO]   List systems registered with Pyro.',
-#    '',
-    'command-options:',
-    '  cylc COMMAND --help'
     ]
 
 def print_usage():
@@ -87,6 +89,14 @@ except:
     print >> sys.stderr, "ERROR: the cylc core modules are not accessible to Python"
     print >> sys.stderr, "Please add [cylc-top-dir]/src to your $PYTHONPATH." 
     sys.exit(1)
+
+if sys.argv[1] == '-h' or sys.argv[1] == '--help':
+    print_usage()
+    sys.exit(0)
+
+if sys.argv[1] == '-v' or sys.argv[1] == '--version':
+    print cylc_version
+    sys.exit(0)
 
 if len( sys.argv ) < 1:
     # COMMAND must be supplied
