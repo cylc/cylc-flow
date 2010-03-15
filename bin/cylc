@@ -5,7 +5,7 @@ import sys
 import subprocess
 
 # auto-replace with version tag at build/install:
-cylc_version = "REPLACE-ME"
+cylc_version = "-CYLC-VERSION-"
 
 allowed_commands = \
     [ 
