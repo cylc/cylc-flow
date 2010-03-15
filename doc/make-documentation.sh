@@ -31,11 +31,11 @@ if [[ $# == 1 ]]; then
 fi
 
 # extract command help output
-rm -r doc/command-usage; mkdir -p doc/command-usage
+rm -rf doc/command-usage; mkdir -p doc/command-usage
 cylc help > doc/command-usage/cylc-help.txt
 for command in configure register schedule stop pause resume nudge \
-    set-level reset kill purge insert ask message run-task monitor monitor-r \
-    monitor-d monitor-p; do
+    set-level reset kill purge insert task-dump what-is message run-task \
+    monitor monitor-r monitor-d monitor-p; do
     echo "cylc $command --help"
     cylc $command --help > doc/command-usage/cylc-$command.txt
 done

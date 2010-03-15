@@ -1,5 +1,8 @@
 To Do
 
+* document use of accelerated real mode examples: goes fast till
+  caught up to real time, then wait between cycles is true-time.
+
 * see if error exit in userguide example check-env invocation works
 
 * warn about consequences of deleting a task: system may move on so that

@@ -1,0 +1,48 @@
+#!/usr/bin/python
+
+import sys, re
+from connectors import connect_to_control
+
+usage = """cylc what-is [options] SYSTEM 
+
+Display the description of a task or system."""
+
+connector = connect_to_control( usage )
+
+connector.parser.add_option( "-t", "--task",
+        help="Retrieve the description of this task.",
+        metavar="TASK", action="store", dest="task" )
+
+connector.parser.add_option( "-s", "--system",
+        help="Retrieve the system description.", 
+        action="store_true", default=False, dest="describe_system" )
+
+connector.parse_args()
+
+controller = connector.get_control()
+
+if connector.options.task:
+    task = connector.options.task
+    print
+    print task + ' in ' + connector.system_name + ':'
+
+    # retrieve and print task class descriptions
+    names = [ task ]
+
+    # strip off cycles time, if given
+    names = [ re.sub( '%.*', '', name ) for name in names ]
+
+    info = controller.get_task_info( names )
+    for name in info.keys():
+        print
+        for line in info[name]:
+            print '  ' + line
+    print
+
+elif connector.options.describe_system:
+    print
+    print 'System: ' + connector.system_name
+    print 'SYSTEM DESCRIPTION NOT YET IMPLEMENTED'
+
+else:
+    connector.parser.error( "Taskname or --system required" )
