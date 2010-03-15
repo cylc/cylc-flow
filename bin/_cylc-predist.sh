@@ -45,3 +45,7 @@ cp doc/userguide.pdf .
 rm -r doc
 mkdir doc
 mv userguide.pdf doc
+
+echo "DELETING DEVELOPER DOCS"
+rm README.todo
+
