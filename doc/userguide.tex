@@ -735,43 +735,21 @@ not die with your terminal session:
     nohup pyro-ns &
 \end{lstlisting}
 
+\subsection{Running A Registered System}
 
-\subsection{Running A System} 
-
-To cold start or restart a registered system (Section~\ref{run}):
+For the quick guide to starting up, manipulating, monitoring,
+interrogating, pausing, resuming, or shutting down a running system,
+refer to cylc command self-documentation:
 
 \begin{lstlisting}
-    cylc schedule [options] SYSTEM
+    cylc --help
+    cylc COMMAND --help
 \end{lstlisting}
     
-\subsection{System Monitoring}
+Command usage output is also listed in the Command Reference,
+Section~\ref{CommandReference}.
 
-Use one or more of the terminal based cylc system monitors
-(Section~\ref{monitor}). For the main monitor: 
-
-\begin{lstlisting}
-    cylc monitor [options] SYSTEM
-\end{lstlisting}
-
-\subsection{Controlling Running Systems}
-
-To insert or remove tasks, shut the system down, etc.
-(Section~\ref{control}):
-
-\begin{lstlisting}
-    cylc control [options] SYSTEM
-\end{lstlisting}
-
-\subsection{Interrogating Running Systems}
-
-To extract information from a running system:
-(Section~\ref{control}):
-
-\begin{lstlisting}
-    cylc ask [options] SYSTEM
-\end{lstlisting}
-
-
+\pagebreak
 \subsection{The System Definition Directory} 
 \label{TheSystemDefinitionDirectory}
 
