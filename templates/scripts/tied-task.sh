@@ -32,16 +32,16 @@ fi
 # report completion of task outputs as it goes, as in (2) below.
 
 # IF it does NOT report completion of task outputs as it goes, do so now
-cycl message --set-all-outputs-completed
+cycl message --all-outputs-completed
 # OR send each output message explicitly as in (2) below.
 
 # (2) for outputs scripted in this file, report each completed as we go:
    # (i)  {CODE: COMPLETE A REGISTERED non-restart TASK OUTPUT}
 cylc message "foo files ready for $CYCLE_TIME"
    # (ii) {CODE: COMPLETE THE RESTART FILE FOR THE NEXT CYCLE}:
-cycl message --set-next-restart-completed
+cycl message --next-restart-completed
    #      {CODE: COMPLETE THE RESTART FILE FOR THE NEXT NEXT CYCLE}:
-cycl message --set-next-restart-completed
+cycl message --next-restart-completed
    # AND SO ON.
 
 # FINISHED MESSAGE

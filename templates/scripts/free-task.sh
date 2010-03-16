@@ -32,7 +32,7 @@ fi
 # report completion of task outputs as it goes, as in (2) below.
 
 # IF it does NOT report completion of task outputs as it goes, do so now
-cycl message --set-all-outputs-completed
+cycl message --all-outputs-completed
 # OR send each output message explicitly as in (2) below.
 
 # (2) for outputs scripted in this file, report each completed as we go:
