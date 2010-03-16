@@ -31,7 +31,7 @@ class pid:
         restart_messages.sort()
         for message in restart_messages:
             if not self.outputs.is_satisfied( message ):
-                self.log( 'WARNING', message )
+                self.log( 'NORMAL', message )
                 self.outputs.set_satisfied( message )
 
 
