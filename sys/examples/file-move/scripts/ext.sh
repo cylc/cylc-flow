@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# cylc example system, task ext
+# cylc file-move example system, task ext
 # gets external data
 # no prerequisites
 
@@ -8,14 +8,15 @@
 
 cylc message --started
 
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 10 * 60 / ACCEL )) 
+# check environment
+check-env.sh || exit 1
 
-sleep $SLEEP 
+sleep $(( 10 * 60 / REAL_TIME_ACCEL )) 
 
-OUTDIR=$TMPDIR/$CYLC_TASK/output/$CYLC_TIME
+OUTDIR=$TMPDIR/$TASK_NAME/output/$CYCLE_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/extdata
 
-cylc message "external data ready for $CYLC_TIME"
+cylc message "external data ready for $CYCLE_TIME"
+
 cylc message --succeeded

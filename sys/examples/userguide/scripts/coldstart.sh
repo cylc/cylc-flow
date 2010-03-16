@@ -9,8 +9,11 @@
 # START MESSAGE
 cylc message --started
 
+# check environment
+check-env.sh || exit 1
+
 # EXECUTE THE TASK ...
-sleep $(( 50 * 60 / $REAL_TIME_ACCEL )) 
+sleep $(( 50 * 60 / REAL_TIME_ACCEL )) 
 
 touch $TMPDIR/A-${CYCLE_TIME}.restart
 cylc message "A restart files ready for $CYCLE_TIME"

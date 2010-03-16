@@ -9,26 +9,25 @@
     Depends on external input data.
 
 %TYPE
-    forecast_model
+    tied
 
-%HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     forecast.sh
 
 %ENVIRONMENT
-    NEXT_CYLC_TIME $(CYLC_TIME + 6)
+    NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
 
 %PREREQUISITES
-    "external data ready for $(CYLC_TIME)"
+    "external data ready for $(CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
-    90
+    50 min
 
-%ESTIMATED_RESTART_DUMP_TIMES
-    89
+%ESTIMATED_RESTART_OUTPUT_TIMES
+    49 min
 
 %OUTPUTS
-    90: "forecast output ready for $(CYLC_TIME)"
-
+    50 min: "forecast output ready for $(CYCLE_TIME)"

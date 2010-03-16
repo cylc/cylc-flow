@@ -20,6 +20,12 @@ a more realistic forecasting system. While this is clearly not a real
 forecasting system, it has exactly the same properties as a real system
 as far as scheduling is concerned.  
 
+The Unix 'sleep' command is used to get the trivial example tasks to
+execute in the right amount of time (as defined in their taskdef files).
+Then, to get the real tasks to execute as quickly as their dummy mode
+counterparts, the sleep time is scaled by \lstinline=$REAL_TIME_ACCEL=,
+an environment variable defined in the system config module.
+
 The system contains the following tasks:
 
 \begin{itemize}

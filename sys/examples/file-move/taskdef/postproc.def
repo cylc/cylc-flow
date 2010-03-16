@@ -7,19 +7,19 @@
     Post processing for the forecast task
 
 %TYPE
-    free_task
+    free
 
-%HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     postproc.sh
 
 %PREREQUISITES
-    "forecast output at $(CYLC_TIME) ready for postprocessing"
+    "forecast output at $(CYCLE_TIME) ready for postprocessing"
 
 %ESTIMATED_RUN_TIME
-    10
+    10 min
 
 %OUTPUTS
-    10: "forecast products ready for $(CYLC_TIME)"
+    10 min: "forecast products ready for $(CYCLE_TIME)"

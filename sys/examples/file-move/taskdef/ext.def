@@ -8,28 +8,22 @@
     Depends only on the system startup task at start time.
 
 %TYPE
-    free_task, contact
+    free, contact
 
 %CONTACT_DELAY
     1.0
 
-%HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     ext.sh
 
-%PREREQUISITES
-    # None
-
 %STARTUP_PREREQUISITES
-    "startup%$(CYLC_TIME) finished"
+    "startup%$(CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
-    10
+    10 min
 
 %OUTPUTS
-    9: "external data ready for $(CYLC_TIME)"
-
-#%SINGLE_CYCLE
-#    True
+    10 min: "external data ready for $(CYCLE_TIME)"

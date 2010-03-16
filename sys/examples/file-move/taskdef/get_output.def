@@ -9,25 +9,25 @@
     to be.
 
 %TYPE
-    free_task
+    free
 
-%HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     cylc-wrapper
 
 %ENVIRONMENT
     WRAP file_transfer.sh
-    TARG $TMPDIR/forecast/output/$(CYLC_TIME)/forecast.nc
-    DEST $TMPDIR/postproc/input/$(CYLC_TIME)/forecast.nc
+    TARG $TMPDIR/forecast/output/$(CYCLE_TIME)/forecast.nc
+    DEST $TMPDIR/postproc/input/$(CYCLE_TIME)/forecast.nc
 
 %PREREQUISITES
-    "forecast output ready for $(CYLC_TIME)"
+    "forecast output ready for $(CYCLE_TIME)"
 
 %ESTIMATED_RUN_TIME
-    10
+    10 min
 
 %OUTPUTS
-    10: "forecast output at $(CYLC_TIME) ready for postprocessing"
+    10 min: "forecast output at $(CYCLE_TIME) ready for postprocessing"
 

@@ -1,17 +1,16 @@
 #!/bin/bash
 
-# cylc example system, task F
-# depends on task C
+# cylc file-move example system, postprocess task
 
-# run length 50 minutes
+# run length 10 minutes
 
 cylc message --started
 
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 50 * 60 / ACCEL )) 
+# check environment
+check-env.sh || exit 1
 
 # check prerequistes
-PRE=$TMPDIR/postproc/input/$CYLC_TIME/forecast.nc
+PRE=$TMPDIR/postproc/input/$CYCLE_TIME/forecast.nc
 [[ ! -f $PRE ]] && {
     MSG="file not found: $PRE"
     echo "ERROR, postproc: $MSG"
@@ -20,11 +19,11 @@ PRE=$TMPDIR/postproc/input/$CYLC_TIME/forecast.nc
     exit 1
 }
 
-sleep $SLEEP 
+sleep $(( 10 * 60 / REAL_TIME_ACCEL ))
 
-OUTDIR=$TMPDIR/postproc/output/$CYLC_TIME
+OUTDIR=$TMPDIR/postproc/output/$CYCLE_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/products.nc
-cylc message "forecast products ready for $CYLC_TIME"
+cylc message "forecast products ready for $CYCLE_TIME"
 
 cylc message --succeeded

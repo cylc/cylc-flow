@@ -8,8 +8,8 @@
 
 cylc message --started
 
-ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
-SLEEP=$(( 10 * 60 / ACCEL )) 
+# check environment
+check-env.sh || exit 1
 
 mkdir -p $TMPDIR || {
     MSG="failed to make $TMPDIR"
@@ -19,7 +19,7 @@ mkdir -p $TMPDIR || {
     exit 1
 }
 
-sleep $SLEEP 
+sleep $(( 10 * 60 / REAL_TIME_ACCEL ))
 
 echo "CLEANING $TMPDIR"
 rm -rf $TMPDIR/* || {

@@ -9,25 +9,22 @@
     system is cycling. Depends on the system startup task.
 
 %TYPE
-    free_task, oneoff
+    free, oneoff
 
-%HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     cold.sh
 
 %STARTUP_PREREQUISITES
-    "startup%$(CYLC_TIME) finished" 
-
-%PREREQUISITES
-    # None
+    "startup%$(CYCLE_TIME) finished" 
 
 %ESTIMATED_RUN_TIME
-    10
+    10 min
 
 %OUTPUTS
-    7: "forecast restart files ready for $(CYLC_TIME)"
+    10 min: "forecast restart files ready for $(CYCLE_TIME)"
 
-%SINGLE_CYCLE
+%NO_NONCOTEMPORAL_DEPENDANTS
     True
