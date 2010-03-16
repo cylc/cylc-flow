@@ -432,6 +432,7 @@ daemon.connect( remote, ns_obj_name( 'remote', groupname) )
 os.environ[ 'CYLC_ON' ] = 'true' # tells 'cylc message' to use the nameserver
 os.environ[ 'CYLC_NS_HOST' ] = str( pns_host )  # may be an IP number
 os.environ[ 'CYLC_NS_GROUP' ] = groupname
+os.environ[ 'SYSTEM_NAME' ] = reg_name
 if dummy_mode:
     os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
     # communicate failout_task_id to the dummy task program

@@ -1007,7 +1007,7 @@ used to trigger other tasks.
 For an output that corresponds directly to a single file you can, if
 you want, put the filename itself in the output message:
 \begin{lstinline}
-    "file surface-pressure-\$(CYLC_TIME).nc ready"
+    "file surface-pressure-$(CYCLE_TIME).nc ready"
 \end{lstinline}
 
 However, there is no particular need to use the actual filename, 
@@ -1015,7 +1015,7 @@ so you might as well use a more form in order to be consistent with
 messages refering to a whole group of files or other non-file-related
 events:
 \begin{lstinline}
-    "surface pressure fields ready for \$(CYLC_TIME)"
+    "surface pressure fields ready for $(CYCLE_TIME)"
 \end{lstinline}
 
 In particular, there is no need to include actual file locations because
@@ -1761,11 +1761,15 @@ products associated with that cycle are complete.
 \subsection{Running Multiple Instances Of The Same System}
 \label{RunningMultipleInstancesOfTheSameSystem}
 
-what this means - use of the exact same task and config modules, under 
-different registered names.
+What this means: the exact same task class and config modules, under
+different registered names, AND the same task scripts (under scripts/)
+- although the registered name could be used in all important
+directories at run time, potentially to access a different set of 
+executables\dots
 
-consequences - dummy mode fine (e.g. multiple users running the standard
+Consequences - dummy mode fine (e.g. multiple users running the standard
 cylc example systems)
+
              - real mode: the external tasks must not interfere! Could
              use system name in all important dir paths, but prob better 
              to copy the system def directory AND invoke different versions
@@ -1777,15 +1781,18 @@ cylc example systems)
     without interfering with each other (i.e. external tasks will not
     be able to send messages to the wrong scheduler instance).
     
-    You can register the same system under multiple names. This makes
-    it is possible, in principle, to run multiple instances of the
-    same system at once. Be aware, however, that the external system
-    must also be capable of doing this (perhaps by incorporating the
-    cylc system name into its input and output directory paths and
-    so on - it is safer and easier to run multiple *copies* of a
-    system, each with different configuration and/or task definition
-    settings so that the external systems are in effect separate).
+    You can register the same system under multiple names. This makes it
+    is possible, in principle, to run multiple instances of the same
+    system at once. Be aware, however, that the external system must
+    also be capable of doing this (perhaps by incorporating the cylc
+    system name into its input and output directory paths and so on - it
+    may be safer to run multiple *copies* of a system, each with
+    different configuration, task definitions, and scripts, so that the
+    external systems are in effect separate).
 
+    However: registered system name is available for use in global 
+    env vars via sytem config module, AND from task-specific 
+    environment in taskdef files, via $SYSTEM_NAME.
 
 \subsection{How Cylc Interacts With Batch Queue Schedulers}
 \label{HowCylcInteractsWithBatchQueueSchedulers}
