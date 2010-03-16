@@ -30,6 +30,32 @@ if [[ $# == 1 ]]; then
     fi
 fi
 
+# GENERATE USERGUIDE SYSTEM EXAMPLE CHAPTER CONTENTS -----------------
+OUT=doc/example-system.tex
+rm -f $OUT
+
+DIR=systems/userguide
+
+for PDEF in $DIR/taskdef/*.def; do 
+
+    DEF=$( basename $PDEF ) 
+    NAME=${DEF%.def}
+    SCR=${NAME}.sh
+
+    echo "\subsection{Task $NAME}" >> $OUT
+    echo "\label{task$NAME}" >> $OUT
+    echo "\subsubsection{Definition}" >> $OUT
+    echo "\lstset{language=cylctaskdef}" >> $OUT
+    echo "\lstinputlisting{../$DIR/taskdef/$DEF}" >> $OUT
+    echo "\subsubsection{Script}" >> $OUT
+    echo "\lstset{language=bash}" >> $OUT
+    echo "\lstinputlisting{../$DIR/scripts/$SCR}" >> $OUT
+    echo "\pagebreak" >> $OUT
+    echo "" >> $OUT
+done
+#-----------------------------------------------------------------------
+
+
 # GENERATE COMMAND REFERENCE CHAPTER CONTENTS -----------------------
 rm -rf doc/command-usage; mkdir -p doc/command-usage
 rm -f doc/commands.tex
