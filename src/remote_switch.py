@@ -164,7 +164,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
                 # extra info for contact tasks
                 try:
-                    clock = self.config['clock']
+                    clock = self.config.get('clock')
                     extra_info[ 'delayed start time reached' ] = task.start_time_reached( clock.get_datetime() ) 
                 except AttributeError:
                     # not a contact task
