@@ -49,6 +49,9 @@ while getopts "hf" opt; do
         f)
         FORCE=true
         ;;
+        *)
+        exit 1
+        ;;
     esac
 done
 

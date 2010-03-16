@@ -50,6 +50,9 @@ while getopts "hpfd:" opt; do
         REG=true
         SYSDIR=$OPTARG
         ;;
+        *)
+        exit 1
+        ;;
     esac
 done
 

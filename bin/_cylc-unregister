@@ -42,6 +42,9 @@ while getopts "hca" opt; do
         a)
         RESET=true
         ;;
+        *)
+        exit 1
+        ;;
     esac
 done
 
