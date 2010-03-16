@@ -4,52 +4,21 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "usage:"
-    echo "  cylc register [-f] NAME PATH"
-    echo "  cylc register [-d NAME]"
-    echo "  cylc register [-c] [-w] [-h,--help]"
+	echo "Usage: cylc register [options] [-d PATH] SYSTEM"
     echo ""
-    echo "Associate a name with a configured system definition directory, and manage"
-    echo "your system registrations (which are stored under \$HOME/.cylc/registered)."
-    echo "Other cylc commands access particular systems via their registered names."
-    echo "A single system can be registered under multiple names (see the userguide)."
+    echo "Register a configured system for use under a given name. This simply"
+    echo "stores an associatiation between the name and the system definition" 
+    echo "directory under \$HOME/.cylc/registered. A single system can be"
+    echo "registered for use under multiple names (see the userguide)."
     echo ""
     echo "arguments:"
-    echo "   NAME        Name to associate with a configured system."
-    echo "   PATH        Location of a configured system definition directory."
+    echo "   SYSTEM      Name under which to register the configured system."
     echo ""
     echo "options:"
     echo "  -h, --help   Print this usage message and exit"
-    echo "  -f           Force registration even if the name has already been used."
-    echo "  -d NAME      Delete an existing registration."
-    echo "  -c           Check for, and delete, any invalid registrations."
-    echo "  -w           Wipe out all of your registered systems."
-}
-
-function check_configured()
-{
-    SYS_DIR=$1
-
-    # is this a cylc system definition directory?
-    if [[ ! -d $SYS_DIR/taskdef/ || \
-        ! -d $SYS_DIR/scripts ]]; then
-        echo "ERROR: $SYS_DIR"
-        echo "is not a cylc system definition directory: it does"
-        echo "not contain taskdef and/or scripts sub-directories."
-        return 1
-    fi
-
-    # has this cylc system definition directory been configured yet?
-    if [[ ! -f $SYS_DIR/system_config.py || \
-        ! -f $SYS_DIR/task_classes.py ]]; then
-        echo "ERROR: $SYS_DIR"
-        echo "has not been configured yet: it does not contain config"
-        echo "and/or task class modules. Use 'cylc configure' first."
-        return 1
-    fi
-
-    # all good
-    return 0
+    echo "  -d PATH      Location of a configured system definition directory."
+    echo "  -p           Print current system name registrations."
+    echo "  -f           Force: overwrite an existing name registration."
 }
 
 # cheap hack to get '--help', which isn't allowed by getopts
@@ -58,131 +27,94 @@ if [[ $1 == '--help' ]]; then
     exit 0
 fi
 
-CHECK=false
+# create the registration directory
+REG_DIR=$HOME/.cylc/registered
+[[ ! -d $REG_DIR ]] && mkdir -p $REG_DIR
+
 FORCE=false
-RESET=false
-DELETE=false
-REGISTER=false
-while getopts "hd:cfw" opt; do
+REG=false
+PRINT=false
+while getopts "hpfd:" opt; do
     case $opt in
         h)
         print_usage
         exit 0
         ;;
-        d)
-        DELETE=true
-        NAME=$OPTARG
+        p)
+        PRINT=true
         ;;
-        c)
-        CHECK=true
-        ;;
-        f)
+         f)
         FORCE=true
         ;;
-        w)
-        RESET=true
+        d)
+        REG=true
+        SYSDIR=$OPTARG
         ;;
     esac
 done
 
 shift $(( OPTIND -1 ))
 
-if [[ $# == 2 ]]; then
-    REGISTER=true
-    NAME=$1
-    SYS_DIR=$2
-elif [[ $# != 0 ]]; then
-    print_usage
-    exit 1
-fi
-
-if $REGISTER && ( $DELETE || $CHECK || $RESET ); then
-    print_usage
-    exit 1
-fi
-
-# make the registration directory if necessary
-REG_DIR=$HOME/.cylc/registered
-[[ ! -d $REG_DIR ]] && mkdir -p $REG_DIR
-
-if $RESET; then
-    echo "WARNING: DELETING ALL CURRENT SYSTEM REGISTRATIONS"
-    COUNT=0
-    cd $REG_DIR
-    for REG in *; do
-        COUNT=$((COUNT+1))
-        echo "[$COUNT] $REG: $(cat $REG)"
-        rm $REG
-    done
-    exit 0
-fi
-
-if $DELETE; then
-    REG=$REG_DIR/$NAME
-    if [[ -f $REG ]]; then
-        echo "DELETING: $NAME -> $(cat $REG)"
-        rm $REG
-        exit 0
-    else
-        echo "ERROR: $NAME is not registered."
+if [[ $# == 0 ]]; then
+    if [[ ! $PRINT ]]; then
+        print_usage
         exit 1
     fi
-fi
 
-if $REGISTER; then
-    if [[ $SYS_DIR != /* ]]; then
-        # make absolute path
-        SYS_DIR=$PWD/$SYS_DIR
-        # remove trailing '/'
-        SYS_DIR=${SYS_DIR%/}
-    fi
+    # print current registrations and exit
 
-    # check the new system has been configured
-    ! check_configured $SYS_DIR && exit 1
-
-    # is the system already registered?
-    if [[ -f $REG_DIR/$NAME ]]; then
-        TO=$( cat $REG_DIR/$NAME )
-        if [[ $TO = $SYS_DIR ]]; then
-            # already registered as requested
-            echo "ALREADY REGISTERED: $NAME -> $SYS_DIR"
-            exit 0
-        else
-            # already registered for access to another system
-            if ! $FORCE; then
-                echo "ALREADY REGISTERED: $NAME -> $TO"
-                echo "Use the '-f' option to re-register"
-                exit 1
-            fi # else continue on to the reg code below
-        fi
-    fi
-    
-    # register the system
-    echo $SYS_DIR > $REG_DIR/$NAME
-    echo "NEW: $NAME -> $SYS_DIR"
-
-    exit 0
-fi
-
-if $CHECK; then
     # go to user registration directory
     cd $REG_DIR
     # how many systems registered?
     N_REG=$( ls -1 | wc -l )
     echo "You have $N_REG systems registered"
-    [[ $N_REG = 0 ]] && exit 0
+    [[ $N_REG == 0 ]] && exit 0
 
-    # check and print each registered system
+    # print each registered system
     COUNT=0
-    for NAME in *; do 
+    for SYSNAME in *; do 
         COUNT=$((COUNT + 1 ))
-        SYS_DIR=$( cat $NAME )
-        if check_configured $SYS_DIR; then
-            echo "[${COUNT}] ${NAME}: $SYS_DIR"
-        else
-            echo " UNREGISTERING $NAME"
-            rm -f $NAME
-        fi
+        SYS_DIR=$( cat $SYSNAME )
+        echo "[${COUNT}] ${SYSNAME}: $SYS_DIR"
     done
     exit 0
 fi
+
+# check args
+if [[ $# != 1 ]] || ! $REG; then
+    print_usage
+    exit 1
+fi
+
+SYSNAME=$1
+
+# absolute path to system definition dir
+if [[ $SYSDIR != /* ]]; then
+    SYSDIR=$PWD/$SYSDIR
+    # remove trailing '/'
+    SYSDIR=${SYSDIR%/}
+fi
+
+# check the new system has been configured
+! _cylc-check-configured $SYSDIR && exit 1
+
+# is the system already registered?
+if [[ -f $REG_DIR/$SYSNAME ]]; then
+    TO=$( cat $REG_DIR/$SYSNAME )
+    if [[ $TO = $SYSDIR ]]; then
+        # already registered as requested
+        echo "ALREADY REGISTERED: $SYSNAME -> $SYSDIR"
+        exit 0
+    else
+        # already registered for access to another system
+        if ! $FORCE; then
+            echo "ALREADY REGISTERED: $SYSNAME -> $TO"
+            echo "Use the '-f' option to re-register"
+            exit 1
+        fi # else continue on to the reg code below
+    fi
+fi
+    
+# register the system
+echo $SYSDIR > $REG_DIR/$SYSNAME
+echo "NEW: $SYSNAME -> $SYSDIR"

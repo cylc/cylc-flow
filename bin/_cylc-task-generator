@@ -36,10 +36,9 @@ def print_parsed_info():
         for val in parsed_def[ k ]:
             print ' - ' + val
 
-def interpolate_variables( strng ):
-    # interpolate taskdef variables in a string
-
-    # strng = "'a string'"  (SINGLE QUOTES REQUIRED)
+def interpolate_cycle_times( strng ):
+    # interpolate $(CYCLE_TIME [+/-N]) in a string
+    # strng = 'a string'  (SINGLE QUOTES REQUIRED)
 
     # strip leading spaces
     strng = re.sub( "^'\s+", "'", strng )

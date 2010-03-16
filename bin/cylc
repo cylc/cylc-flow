@@ -12,25 +12,25 @@ allowed_commands = \
     'help',
     'configure',
     'register',
+    'unregister',
     'schedule', 
-    'stop',
     'pause',
     'resume',
-    'nudge',
-    'set-level',
+    'stop',
+    'insert',
     'reset',
     'kill',
     'purge',
-    'insert',
-    'message',
     'task-dump',
     'what-is',
     'run-task',
+    'message',
+    'set-level',
+    'nudge',
     'monitor',
     'monitor-r',
     'monitor-d',
     'monitor-p',
-#    'show-pyro',
     ]
 
 usage = \
@@ -49,15 +49,17 @@ usage = \
     '',
     'prepare---------|',
     '  configure     Create task proxy and config modules for a system.',
-    '  register      Register a configured system for use by name.',
+    '  register      Register a name for access to a configured system.',
+    '  unregister    Unregister a system name.',
     '',
     'schedule--------|',
     '  schedule      Start or restart a registered system.',
-    '  stop          Shut down a running system.',
     '  pause         Pause a running system.',
     '  resume        Resume running a paused system.',
+    '  stop          Shut down a running system.',
     '',
     'manipulate------|',
+    '  insert        Insert a task or task group into a running system.'
     '  reset         Reset a single task to the waiting state.',
     '  kill          Remove a single task from a running system.',
     '  purge         Recursively kill a tree of dependent tasks.',
@@ -99,6 +101,11 @@ except:
     print >> sys.stderr, "Please add [cylc-top-dir]/src to your $PYTHONPATH." 
     sys.exit(1)
 
+if len( sys.argv ) < 2:
+    # COMMAND must be supplied
+    print_usage()
+    sys.exit(1)
+
 if sys.argv[1] == '-h' or sys.argv[1] == '--help':
     print_usage()
     sys.exit(0)
@@ -107,10 +114,11 @@ if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     print cylc_version
     sys.exit(0)
 
-if len( sys.argv ) < 1:
-    # COMMAND must be supplied
-    print_usage()
-    sys.exit(1)
+# SECRET COMMAND USED IN AUTO DOCUMENT PROCESSING
+if sys.argv[1] == 'commands':
+    for command in allowed_commands:
+        print command
+    sys.exit(0)
 
 # first argument must be COMMAND
 command = sys.argv[1]

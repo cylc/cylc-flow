@@ -1,0 +1,111 @@
+#!/bin/bash
+
+set -e  # ABORT on error
+
+function print_usage() 
+{
+	echo "Usage: cylc unregister [options] [SYSTEM]"
+    echo ""
+    echo "Disassociate system names from configured system definition directories."
+    echo ""
+    echo "arguments:"
+    echo "   SYSTEM      A registered system name."
+    echo ""
+    echo "options:"
+    echo "  -h, --help   Print this usage message and exit"
+    echo "  -c           Check all registrations and delete any found to be invalid."
+    echo "  -a           Delete ALL your registered system names."
+}
+
+# cheap hack to get '--help', which isn't allowed by getopts
+if [[ $1 == '--help' ]]; then
+    print_usage
+    exit 0
+fi
+
+# make the registration directory if necessary
+REG_DIR=$HOME/.cylc/registered
+[[ ! -d $REG_DIR ]] && mkdir -p $REG_DIR
+
+CHECK=false
+RESET=false
+DELETE=false
+while getopts "hca" opt; do
+    case $opt in
+        h)
+        print_usage
+        exit 0
+        ;;
+        c)
+        CHECK=true
+        ;;
+        a)
+        RESET=true
+        ;;
+    esac
+done
+
+shift $(( OPTIND -1 ))
+
+if [[ $# > 1 ]]; then
+    print_usage
+    exit 1
+fi
+
+if [[ $# == 1 ]]; then
+    SYSNAME=$1
+    DELETE=true
+fi
+
+if $RESET; then
+    echo "DELETING ALL CURRENT SYSTEM REGISTRATIONS"
+    COUNT=0
+    cd $REG_DIR
+    for REG in *; do
+        COUNT=$((COUNT+1))
+        echo "[$COUNT] $REG: $(cat $REG)"
+        rm $REG
+    done
+    exit 0
+fi
+
+if $DELETE; then
+    REG=$REG_DIR/$SYSNAME
+    if [[ -f $REG ]]; then
+        echo "DELETING: $SYSNAME -> $(cat $REG)"
+        rm $REG
+        exit 0
+    else
+        echo "ERROR: $SYSNAME is not registered."
+        exit 1
+    fi
+fi
+
+if $CHECK; then
+    # go to user registration directory
+    cd $REG_DIR
+    # how many systems registered?
+    N_REG=$( ls -1 | wc -l )
+    echo "You have $N_REG systems registered"
+    [[ $N_REG == 0 ]] && exit 0
+
+    # check and print each registered system
+    COUNT=0
+    FOUND=false
+    for SYSNAME in *; do 
+        COUNT=$((COUNT + 1 ))
+        SYS_DIR=$( cat $SYSNAME )
+        if _cylc-check-configured $SYS_DIR; then
+            echo "[${COUNT}] ${SYSNAME}: $SYS_DIR"
+        else
+            FOUND=true
+            echo " UNREGISTERING AN INVALID SYSTEM: $SYSNAME"
+            rm -f $SYSNAME
+        fi
+
+    done
+
+    ! $FOUND && echo "All current registrations valid"
+
+    exit 0
+fi
