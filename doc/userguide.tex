@@ -1823,4 +1823,20 @@ contention, it will not report its outputs complete until it does run.
 
 \end{itemize}
 
+\subsection{Upgrading Taskdefs}
+
+Suggested easy way to make textual changes to many taskdef files en
+masse (e.g.\ to make them compatible with a new version of cylc):
+
+\begin{itemize}
+    \item record all pending changes to the system repository
+    \item make bulk changes in-place using perl's powerful regex 
+       substitution mechanism, e.g.:
+       \begin{lstlisting}
+$ for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
+       \end{lstlisting}
+   \item check this had the desired effect with 
+       \lstinline=darcs whatsnew=. If not, revert and try again.
+\end{itemize}
+
 \end{document}
