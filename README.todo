@@ -1,5 +1,9 @@
 To Do
 
+* consider allowing multiple taskdef directories and writing combined
+  system modules to another location - easy! would require added both
+  scripts dirs to PATH...
+
 * consider task proc loop invocation - could we separate summary update
   vs task processing (e.g. when a task fails we have to run pointlessly
   (?) through the loop in order to update the summary immediately for
