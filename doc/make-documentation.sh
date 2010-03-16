@@ -30,15 +30,25 @@ if [[ $# == 1 ]]; then
     fi
 fi
 
-# extract command help output
+# GENERATE COMMAND REFERENCE CHAPTER CONTENTS -----------------------
 rm -rf doc/command-usage; mkdir -p doc/command-usage
-cylc help > doc/command-usage/cylc-help.txt
-for command in configure register schedule stop pause resume nudge \
-    set-level reset kill purge insert task-dump what-is message run-task \
-    monitor monitor-r monitor-d monitor-p; do
-    echo "cylc $command --help"
-    cylc $command --help > doc/command-usage/cylc-$command.txt
+rm -f doc/commands.tex
+
+for COMMAND in $(cylc commands); do 
+    # direct command help into a txt file
+    cylc $COMMAND --help > doc/command-usage/$COMMAND.txt
+    # append to a latex file for inclusion in the userguide
+    cat >> doc/commands.tex <<eof
+
+\subsection{$COMMAND}
+\label{$COMMAND}
+\lstinputlisting{command-usage/$COMMAND.txt}
+
+\pagebreak
+eof
+
 done
+#-----------------------------------------------------------------------
 
 #Comment-stripped taskdef files:
 #perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
