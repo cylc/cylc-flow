@@ -82,26 +82,41 @@ def require_quotes( strng, item ):
 
     return stripped
 
-def time_trans( strng ):
+def time_trans( strng, hours=False ):
     # translate a time of the form:
     #  x sec, y min, z hr
-    # into numerical minutes,
+    # into NUMERICAL MINUTES or HOURS,
     # and return a string thereof.
+
+    if not re.search( '^\s*(.*)\s*min\s*$', strng ) and \
+        not re.search( '^\s*(.*)\s*sec\s*$', strng ) and \
+        not re.search( '^\s*(.*)\s*hr\s*$', strng ):
+            print "ERROR: missing time unit on " + strng
+            sys.exit(1)
 
     m = re.search( '^\s*(.*)\s*min\s*$', strng )
     if m:
         [ mins ] = m.groups()
-        return str( float(mins) )
+        if hours:
+            return str( float( mins / 60.0 ) )
+        else:
+            return str( float(mins) )
 
     m = re.search( '^\s*(.*)\s*sec\s*$', strng )
     if m:
         [ secs ] = m.groups()
-        return str( float(secs)/60.0 )
+        if hours:
+            return str( float(secs)/3600.0 )
+        else:
+            return str( float(secs)/60.0 )
 
     m = re.search( '^\s*(.*)\s*hr\s*$', strng )
     if m:
         [ hrs ] = m.groups()
-        return str( float(hrs)*60.0 )
+        if hours:
+            return str( float(hrs) )
+        else:
+            return str( float(hrs)*60.0 )
 
 
 #================= MAIN PROGRAM ========================================
@@ -413,6 +428,7 @@ from dynamic_instantiation import get_object
 
         if contact:
             for line in parsed_def[ 'CONTACT_DELAY' ]:
+                line = re.sub( '\s+$', '', line )
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:
@@ -422,10 +438,11 @@ from dynamic_instantiation import get_object
                     for hour in hours:
                         FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
-                        FILE.write( indent + 'self.real_time_delay = ' + str( delay ) + '\n' )
+                        FILE.write( indent + 'self.real_time_delay = ' + time_trans( delay, hours=True ) + '\n' )
                         indent_less()
                 else:
-                    FILE.write( indent + 'self.real_time_delay = ' + str( line ) + '\n' )
+                    delay = line
+                    FILE.write( indent + 'self.real_time_delay = ' + time_trans( delay, hours=True ) + '\n' )
 
             FILE.write( '\n' )
 

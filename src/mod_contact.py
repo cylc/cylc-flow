@@ -7,9 +7,9 @@ from cycle_time import _rt_to_dt
 class contact:
     # A task that waits on an event in the external world, such as
     # incoming data, that occurs at some known (but approximate) time
-    # interval relative to the task cycle time.  There's no point in
-    # running the task earlier than this delayed start time as the task
-    # would just sit in the queue waiting on the external event.
+    # interval IN HOURS relative to the task cycle time. There's no
+    # point in running the task earlier than this delayed start time as
+    # the task would just sit in the queue waiting on the external event.
 
     def __init__( self ):
         # THE ASSOCIATED TASK CLASS MUST DEFINE 

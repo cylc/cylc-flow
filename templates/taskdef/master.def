@@ -51,12 +51,13 @@
 
 #----------------------------------------------------------------------
 [%CONTACT_DELAY]
-    # - In HOURS, only for tasks with the 'contact' modifier.
+    # - Only for tasks with the 'contact' modifier.
+    # - Units: min, sec, hr 
     # - Task will not be submitted unless its prerequisites are
     #     satisfied AND wall clock time > task cycle time + the delay.
     # - Has no affect on case study or sufficiently delayed operation
     #     (where wall clock time > cycle time + delay).
-    4.5
+    4.5 hr
 
 #----------------------------------------------------------------------
 [%OWNER]
@@ -152,12 +153,11 @@
 #----------------------------------------------------------------------
 [%NO_NONCOTEMPORAL_DEPENDANTS] 
     # - Set True if you can guarantee that this task has only cotemporal
-    #     (same cycle) dependants. This allows cylc to delete this task
-    #     from the system as soon as this task is finished AND there are
-    #     no other tasks yet to be finished at its cycle time or
-    #     earlier.
+    #     (same cycle) dependants. This allows cylc to delete the task
+    #     as soon as it is finished AND there are no other tasks still 
+    #     waiting at or prior to its cycle time.
     # - DO NOT SET TRUE FOR 'tied' TASKS (FORECAST MODELS), which by 
-    #     definition depend on their predescessors restart outputs.
+    #     definition depend on their predescessor's restart outputs.
     True
 
 #----------------------------------------------------------------------
