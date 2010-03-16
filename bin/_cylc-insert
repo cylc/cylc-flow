@@ -29,5 +29,5 @@ if not connector.options.task_id:
     connector.parser.error( "Task or Group ID required" )
 
 target = connector.options.task_id  
-if connector.prompt( 'insert ' + target + ' in'):
+if connector.prompt( 'Insert ' + target + ' in'):
     controller.insert( target )

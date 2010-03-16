@@ -14,5 +14,5 @@ connector.parse_args()
 
 controller = connector.get_control()
 
-if connector.prompt( 'Resume' ):
+if connector.prompt( 'Nudge' ):
     controller.nudge()
