@@ -18,7 +18,9 @@ Submit a single task just as the scheduler would, but without running
 the scheduler. This can be used as an easy way to invoke single system
 tasks for any reason, but it is particularly useful for testing external
 task scripts during the development phase when you are defining the
-interface between cylc and your forecasting system.
+interface between cylc and your forecasting system. When the cylc
+messaging interface is invoked by standalone tasks it simply directs all
+messages to stdout.
 
 arguments:
    SYSTEM     Registered name of the target system.""" 
