@@ -3,8 +3,8 @@
 
 #----------------------------------------------------------------------
 %NAME
-    # - Task name, and optional short name for display by the monitor.
-    a_task_called_foo[, foo]
+    # - Task name
+    a_task_called_foo
 
 #----------------------------------------------------------------------
 %DESCRIPTION
@@ -69,7 +69,14 @@
 [%ENVIRONMENT]
     # - Environment variables to export in the task execution environment
     # - The task name and cycle time, etc., are automatically exported.
-    # - May contain $(CYCLE_TIME) and $(NAME)
+    # - Values can contain the cycle time variable, $(CYCLE_TIME), which
+    #   will be interpolated by cylc and can make use of cylc's internal
+    #   cycle time arithmetic, e.g. $( CYCLE_TIME [+/-N] ), and shell 
+    #   environment variables which will be passed on to the shell.
+    #   Thus $(CYCLE_TIME) is equavilent to $CYCLE_TIME except that the
+    #   former version will be interpolated before reaching the shell.
+    #   and can use cylc's internal cycle time arithmetic - note the
+    #   parentheses to distinguish from shell environment variables.
     VARNAME1 value1
     VARNAME2 value2
 
