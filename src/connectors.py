@@ -111,3 +111,55 @@ arguments:
             return True
         else:
             return False
+
+
+class connect_to_task:
+
+    def __init__( self, name, ctime, pns_host, groupname ):
+        self.host = pns_host
+        self.group = groupname
+        self.name = name
+        self.ctime = ctime
+
+    def get_task( self ):
+
+        count = 0
+        while True:
+            count += 1
+            try:
+                uri =  'PYRONAME://' + self.host + '/' + self.group + '.' + self.name + '%' + self.ctime 
+                task = Pyro.core.getProxyForURI( uri )
+       
+            except ProtocolError:
+                # retry if temporary network problems prevented connection
+
+                # TO DO: do we need to single out just the 'connection failed error?'
+
+                # http://pyro.sourceforge.net/manual/10-errors.html
+                # Exception: ProtocolError,
+                #    Error string: connection failed
+                #    Raised by: bindToURI method of PYROAdapter
+                #    Description: Network problems caused the connection to fail.
+                #                 Also the Pyro server may have crashed.
+                #                 (presumably after connection established - hjo)
+
+                print 'cylc message [' + str( count ) + ']: Network Problems, RETRYING in 5 seconds'
+                sleep(5)
+
+            except NamingError:
+                # can't find nameserver, or no such object registered ...
+                print 'PYRO NAMESERVER ERROR'
+                raise
+
+            except Exception:
+                # all other exceptions
+                print 'ERROR'
+                raise
+
+            else:
+                # successful connection
+                break
+
+        return task
+
+

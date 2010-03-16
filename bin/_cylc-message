@@ -11,12 +11,12 @@ Cylc exports $CYLC_NS_HOST, $CYLC_NS_GROUP, $CYCLE_TIME, and
 $TASK_NAME into the environment of each external task.
 """
 
-import os
-import sys
+import os, sys
 import Pyro.core
 from Pyro.errors import NamingError, ProtocolError
 from optparse import OptionParser
 from time import sleep
+from connectors import connect_to_task
 
 # PARSE THE COMMAND LINE-----------------------------------------------
 usage = """cylc message [options] [MESSAGE] 
@@ -24,28 +24,28 @@ usage = """cylc message [options] [MESSAGE]
 Send a message to a task proxy object in a running cylc system.
 
 THIS COMMAND IS USED BY EXTERNAL TASKS TO UPDATE THE STATE OF THE PROXY
-OBJECTS THAT REPRESENT THEM IN A RUNNING CYLC SCHEDULER. Task proxy
-objects are uniquely identified by their name and cycle time, which must
-be known by this script in order to target the right object. Cylc
-exports these variables into the environment as $TASK_NAME and
-$CYCLE_TIME when it submits an external task, so the external task can
-simply call 'cylc message MESSAGE' and this script will read the right
-name and cycle time from the environment (i.e. the task itself does not
-need to know the name by which cylc refers to it, although it too can
-get the name from the environment if it wants to).
+OBJECTS THAT REPRESENT THEM IN A RUNNING CYLC SCHEDULER. Task proxies
+are uniquely identified by name and cycle time. Cylc exports $TASK_NAME
+and $CYCLE_TIME into the task execution environment, so this messaging
+script automatically knows which task is invoking it (i.e. the task
+itself does not need to know the name by which cylc refers to it,
+although it too can get the name from the environment if it wants to).
 
 Note that where other cylc commands need to be given a registered system
-name, this one needs the group name under which the system's task proxy
-objects are registered in the Pyro nameserver. Depending on network
-configuration, the Pyro nameserver hostname may also be required. Cylc
-puts these in the task execution environment as $CYLC_NS_GROUP and
-$CYLC_NS_HOST. 
+name, the messaging interface needs the Pyro nameserver group name
+because external tasks can potentially execute as another user (and the
+group name is constructed from username and system name). Cylc
+automatically puts these in the task execution environment as
+$CYLC_NS_GROUP and $CYLC_NS_HOST, but you need to be aware of this in 
+the unlikely event that you want to call this script manually).
+Depending on network configuration the Pyro nameserver hostname may
+also be required. 
 
-This command can also be used to "fake" task messages, for debugging or
-system intervention purposes, in which case all input can be taken from 
-the command line. You need to use --system and, if the target system is
-not running under your username, --user, so that the right Pyro
-nameserver group name can be inferred (cylc uses USERNAME_SYSTEM).
+The messaging interface can also be used to send fake task messages, for
+debugging or system intervention purposes, in which case all input can
+be taken from the command line. You need to use --system and, if the
+target system is not running under your username, --user, so that the
+right Pyro nameserver group name can be inferred (see above).
 
 arguments:
    MESSAGE              A quoted string."""
@@ -148,28 +148,29 @@ if options.priority:
 
 if 'CYLC_ON' not in os.environ.keys():
 
-    # IF CYLC_ON IS NOT IN THE ENVIRONMENT THEN WHEN HAVEN'T BEEN CALLED
-    # BY A TASK SPAWNED BY THE SCHEDULER (PROBABLY A STANDALONE TASK RUN
-    # BY 'cylc run-task', SO DIVERT THE MESSAGE TO STDOUT.
+    # IF CYLC_ON IS NOT IN THE ENVIRONMENT THEN THIS SCRIPT HAS NOT BEEN
+    # CALLED FROM A TASK SPAWNED BY THE SCHEDULER, SO DIVERT THE MESSAGE
+    # TO STDOUT INSTEAD OF ATTEMPTING TO CONTACT A CYLC TASK PROXY
+    # OBJECT.
     task_id = taskname + '%' + ctime
 
     if options.next_restart_completed:
-        print task_id, "--next-restart-completed"
+        print task_id, " next restart completed"
 
     elif options.all_restarts_completed:
-        print task_id, "--all-restarts-completed"
+        print task_id, " all restarts completed"
 
     elif options.all_outputs_completed:
-        print task_id, "--all-outputs-completed"
+        print task_id, " all outputs completed"
 
     elif options.started:
         print task_id, " started"
 
     elif options.succeeded:
-        print task_id, " completed, finished"
+        print task_id, " completed (success)"
 
     elif options.failed:
-        print task_id, " completed, failed"
+        print task_id, " completed (failure)"
 
     else:
         print task_id, args
@@ -232,41 +233,7 @@ else:
     message = ' '.join(args)
 
 # CONNECT TO THE CORRECT TASK PROXY OBJECT-----------------------------
-count = 0
-while True:
-    count += 1
-    try:
-        task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + taskname + '%' + ctime )
-       
-    except ProtocolError:
-        # retry if temporary network problems prevented connection
-
-        # TO DO: do we need to single out just the 'connection failed error?'
-
-        # http://pyro.sourceforge.net/manual/10-errors.html
-        # Exception: ProtocolError,
-        #    Error string: connection failed
-        #    Raised by: bindToURI method of PYROAdapter
-        #    Description: Network problems caused the connection to fail.
-        #                 Also the Pyro server may have crashed.
-        #                 (presumably after connection established - hjo)
-
-        print 'cylc message [' + str( count ) + ']: Network Problems, RETRYING in 5 seconds'
-        sleep(5)
-
-    except NamingError:
-        # can't find nameserver, or no such object registered ...
-        print 'PYRO NAMESERVER ERROR'
-        raise
-
-    except Exception:
-        # all other exceptions
-        print 'ERROR'
-        raise
-
-    else:
-        # successful connection
-        break
+task = connect_to_task( taskname, ctime, pns_host, groupname ).get_task()
 
 # DO THE MESSAGING----------------------------------------------------
 
