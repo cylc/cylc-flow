@@ -11,6 +11,14 @@
 
 my $name;
 search: while ( my $line = <> ) {
+
+    # raw python task definition
+    if ( $line =~ m/name = ['"]([\w]+)['"]/ ) {
+        $name = $1;
+        last search
+    }
+
+    # taskdef file
     if ( $line =~ m/%NAME/) {
         while ( my $next_line = <> ) {
             if ( $next_line !~ m/^\s*\#/ && $next_line !~ m/^\s*$/ ) {
