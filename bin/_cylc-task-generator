@@ -44,12 +44,6 @@ def interpolate_variables( strng ):
     # strip leading spaces
     strng = re.sub( "^'\s+", "'", strng )
 
-    # replace $(NAME) with self.name
-    strng = re.sub( "^'\$\(NAME\)'$",   "self.name",     strng ) # alone
-    strng = re.sub( "^'\$\(NAME\)",     "self.name + '", strng ) # start line
-    strng = re.sub( "\$\(NAME\)'$", "' + self.name"   ,  strng ) # end line
-    strng = re.sub( "\$\(NAME\)" , "'  + self.name + '", strng ) # mid line
-   
     # replace "$(CYCLE_TIME)"
     strng = re.sub( "^'\$\(CYCLE_TIME\)'$",   "self.c_time",     strng ) # alone
     strng = re.sub( "^'\$\(CYCLE_TIME\)",     "self.c_time + '", strng ) # start line
@@ -452,7 +446,7 @@ from dynamic_instantiation import get_object
                     req = require_quotes( req, 'prerequisites' )
 
                     req = "'" + req + "'"
-                    req = interpolate_variables( req )
+                    req = interpolate_cycle_times( req )
                     for hour in hours:
                         FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
@@ -462,7 +456,7 @@ from dynamic_instantiation import get_object
                     line = require_quotes( line, 'prerequisites' )
 
                     req = "'" + line + "'"
-                    req = interpolate_variables( req )
+                    req = interpolate_cycle_times( req )
                     FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
  
 
@@ -487,7 +481,7 @@ from dynamic_instantiation import get_object
                     req = require_quotes( req, 'prerequisites' )
 
                     req = "'" + req + "'"
-                    req = interpolate_variables( req )
+                    req = interpolate_cycle_times( req )
                     for hour in hours:
                         FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
@@ -498,7 +492,7 @@ from dynamic_instantiation import get_object
                     line = require_quotes( line, 'prerequisites' )
 
                     req = "'" + line + "'"
-                    req = interpolate_variables( req )
+                    req = interpolate_cycle_times( req )
                     FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
  
             indent_less()
@@ -544,7 +538,7 @@ from dynamic_instantiation import get_object
                     req = require_quotes( req, 'outputs' )
 
                     req = "'" + req + "'"
-                    req = interpolate_variables( req )
+                    req = interpolate_cycle_times( req )
                     for hour in hours:
                         FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
@@ -557,7 +551,7 @@ from dynamic_instantiation import get_object
                     req = require_quotes( req, 'outputs' )
 
                     req = "'" + req + "'"
-                    req = interpolate_variables( req )
+                    req = interpolate_cycle_times( req )
                     FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
 
         # environment variables
@@ -566,8 +560,8 @@ from dynamic_instantiation import get_object
             for pair in parsed_def[ 'ENVIRONMENT' ]:
                 [ var, val ] = pair.split( ' ', 1 )
                 var = "'" + var + "'"
-                # replace NAME and CYCLE_TIME variables
-                val = interpolate_variables( "'" + val + "'" )
+                # interpolate $(CYCLE_TIME [+/-n]) 
+                val = interpolate_cycle_times( "'" + val + "'" )
                 strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
 
             #strng = re.sub( ',\s*$', '', strng )
