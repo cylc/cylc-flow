@@ -13,8 +13,8 @@ class connect_to_control:
 
         usage += """
 
-If you are not the owner of target system, use '--user=USER' so that
-the rightPyro nameserver group name can be inferred.
+If you are not the owner of the target system, the username must be
+supplied so that the Pyro nameserver group name can be inferred.
 
 arguments:
    SYSTEM               Registered name of the target system.""" 

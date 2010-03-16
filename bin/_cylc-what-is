@@ -5,17 +5,14 @@ from connectors import connect_to_control
 
 usage = """cylc what-is [options] SYSTEM 
 
-Display the description of a task or system."""
+Retrieve the description of a running system, or a task proxy object
+that exists within a running system. """
 
 connector = connect_to_control( usage )
 
 connector.parser.add_option( "-t", "--task",
-        help="Retrieve the description of this task.",
+        help="Retrieve a task, rather than system, description.",
         metavar="TASK", action="store", dest="task" )
-
-connector.parser.add_option( "-s", "--system",
-        help="Retrieve the system description.", 
-        action="store_true", default=False, dest="describe_system" )
 
 connector.parse_args()
 
@@ -39,10 +36,7 @@ if connector.options.task:
             print '  ' + line
     print
 
-elif connector.options.describe_system:
+else: 
     print
     print 'System: ' + connector.system_name
     print 'SYSTEM DESCRIPTION NOT YET IMPLEMENTED'
-
-else:
-    connector.parser.error( "Taskname or --system required" )
