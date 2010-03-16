@@ -32,7 +32,7 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
 
-chmod +x doc/make-documentation.sh
+chmod +x doc/process
 chmod +x sys/examples/userguide/scripts/*
 chmod +x sys/examples/nested/scripts/*
 chmod +x sys/examples/distributed/scripts/*
@@ -46,9 +46,9 @@ echo "MAKING DOCUMENTATION (USERGUIDE)"
 # (which have the correct version tag inserted).
 export PATH=bin:$PATH
 export PYTHONPATH=src:$PYTHONPATH
-doc/make-documentation.sh
+doc/process
 echo "AGAIN, TO GET REFERENCES / TOC RIGHT(?)"
-doc/make-documentation.sh
+doc/process
 
 echo "DELETING DOCUMENTATION SOURCE"
 cp doc/userguide.pdf .

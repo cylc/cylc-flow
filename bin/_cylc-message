@@ -24,28 +24,9 @@ usage = """cylc message [options] [MESSAGE]
 Send a message to a task proxy object in a running cylc system.
 
 THIS COMMAND IS USED BY EXTERNAL TASKS TO UPDATE THE STATE OF THE PROXY
-OBJECTS THAT REPRESENT THEM IN A RUNNING CYLC SCHEDULER. Task proxies
-are uniquely identified by name and cycle time. Cylc exports $TASK_NAME
-and $CYCLE_TIME into the task execution environment, so this messaging
-script automatically knows which task is invoking it (i.e. the task
-itself does not need to know the name by which cylc refers to it,
-although it too can get the name from the environment if it wants to).
-
-Note that where other cylc commands need to be given a registered system
-name, the messaging interface needs the Pyro nameserver group name
-because external tasks can potentially execute as another user (and the
-group name is constructed from username and system name). Cylc
-automatically puts these in the task execution environment as
-$CYLC_NS_GROUP and $CYLC_NS_HOST, but you need to be aware of this in 
-the unlikely event that you want to call this script manually).
-Depending on network configuration the Pyro nameserver hostname may
-also be required. 
-
-The messaging interface can also be used to send fake task messages, for
-debugging or system intervention purposes, in which case all input can
-be taken from the command line. You need to use --system and, if the
-target system is not running under your username, --user, so that the
-right Pyro nameserver group name can be inferred (see above).
+OBJECTS THAT REPRESENT THEM IN A RUNNING CYLC SCHEDULER. It can also be
+used to send messages manually for debugging or system intervention
+purposes, in which case all inputs can be supplied on the command line.
 
 arguments:
    MESSAGE              A quoted string."""

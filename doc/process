@@ -38,15 +38,19 @@ for COMMAND in $(cylc commands); do
     # direct command help into a txt file
     cylc $COMMAND --help > doc/command-usage/$COMMAND.txt
     # append to a latex file for inclusion in the userguide
-    cat >> doc/commands.tex <<eof
 
-\subsection{$COMMAND}
-\label{$COMMAND}
-\lstinputlisting{command-usage/$COMMAND.txt}
+    echo "\subsection{$COMMAND}" >> doc/commands.tex
+    echo "\label{$COMMAND}" >> doc/commands.tex
 
-\pagebreak
-eof
+    [[ -f doc/pre-command/$COMMAND.tex ]] && \
+        echo "\input{pre-command/$COMMAND.tex}" >> doc/commands.tex
 
+    echo "\lstinputlisting{command-usage/$COMMAND.txt}" >> doc/commands.tex
+
+    [[ -f doc/post-command/$COMMAND.tex ]] && \
+        echo "\input{post-command/$COMMAND.tex}" >> doc/commands.tex
+
+    echo "\pagebreak" >> doc/commands.tex
 done
 #-----------------------------------------------------------------------
 
