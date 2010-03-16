@@ -8,7 +8,7 @@ usage = """cylc what-is [options] SYSTEM
 Retrieve the description of a running system, or a task proxy object
 that exists within a running system. """
 
-connector = connect_to_control( usage )
+connector = connect_to_control( usage, no_prompt=True )
 
 connector.parser.add_option( "-t", "--task",
         help="Retrieve a task, rather than system, description.",

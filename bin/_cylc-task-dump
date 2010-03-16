@@ -14,7 +14,7 @@ usage = """cylc task-dump [options] SYSTEM
 Display the current status of a task's prerequisites, outputs, 
 and other information deemed relevant to scheduling."""
 
-connector = connect_to_control( usage )
+connector = connect_to_control( usage, no_prompt=True )
 
 connector.parser.add_option( "-t", 
         help="ID of the task to dump.",

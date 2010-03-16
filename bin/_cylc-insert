@@ -8,8 +8,7 @@ usage = """cylc insert [options] SYSTEM
 Insert a single task or a task group into a running system. 
 
 Inserted tasks will spawn successors as normal (unless they are of the
-'oneoff' type). If you don't want this, consider using 'cylc run-task').
-"""
+'oneoff' type). If you don't want this, consider using 'cylc run-task')."""
 
 connector = connect_to_control( usage )
 

@@ -9,7 +9,7 @@ from time import sleep
 
 class connect_to_control:
 
-    def __init__( self, usage ):
+    def __init__( self, usage, no_prompt = False ):
 
         usage += """
 
@@ -33,9 +33,10 @@ arguments:
                 metavar="HOSTNAME", action="store", default="localhost",
                 dest="pns_host" )
 
-        self.parser.add_option( "-f", "--force",
-                help="Do not ask for confirmation before acting.",
-                action="store_true", default=False, dest="force" )
+        if not no_prompt:
+            self.parser.add_option( "-f", "--force",
+                    help="Do not ask for confirmation before acting.",
+                    action="store_true", default=False, dest="force" )
 
     def parse_args( self ):
         ( options, args ) = self.parser.parse_args()

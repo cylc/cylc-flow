@@ -12,15 +12,13 @@ from dynamic_instantiation import get_object
 import cycle_time
 import pimp_my_logger
 
-usage = """cylc run-task [-t TASK] [-c CYCLE] SYSTEM
+usage = """cylc run-task [options] SYSTEM
 
-Submit a single task just as the scheduler would, but without running
-the scheduler. This can be used as an easy way to invoke single system
-tasks for any reason, but it is particularly useful for testing external
-task scripts during the development phase when you are defining the
-interface between cylc and your forecasting system. When the cylc
-messaging interface is invoked by standalone tasks it simply directs all
-messages to stdout.
+Run a single task just as the scheduler would run it. This can be used
+as an easy way to invoke single system tasks for any reason, but it is
+particularly useful for testing external task scripts during the system
+development phase. When the cylc messaging interface is invoked by
+standalone tasks it simply directs all messages to stdout.
 
 arguments:
    SYSTEM     Registered name of the target system.""" 
@@ -29,12 +27,8 @@ def commandline_parser():
     parser = OptionParser( usage )
 
     parser.add_option( "-t", 
-            help="Name of the task to run.",
-            metavar="TASK", action="store", dest="task_name" )
-
-    parser.add_option( "-c", 
-            help="Task cycle time (YYYYMMDDHH).",
-            metavar="CYCLE", action="store", dest="ctime" )
+            help="ID of the task to run.",
+            metavar="TASK%CYCLE", action="store", dest="task_id" )
 
     return parser
 
@@ -50,18 +44,13 @@ elif len( args ) > 1:
 # get system name------------------------------------------------------
 reg_name = args[0]
 
-# get task name--------------------------------------------------------
-if not options.task_name:
-    parser.error( "Please supply a task name" )
+# get task ------------------------------------------------------------
+if not options.task_id:
+    parser.error( "Please specify which task to run" )
 else:
-    task_name = options.task_name
+    task_id = options.task_id
 
-# get cycle time-=-----------------------------------------------------
-if not options.ctime:
-    parser.error( "Please supply a cycle time" )
-else:
-    ctime = options.ctime
-
+( task_name, ctime ) = task_id.split( '%' )
 if not cycle_time.is_valid( ctime ):
     parser.error( "invalid cycle time: " + ctime )
 

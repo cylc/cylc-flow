@@ -7,7 +7,10 @@ usage = """cylc purge [options] SYSTEM
 
 Force a task to spawn and die, and then force every task that depends on
 its outputs to spawn and die, and then force every task that depends on
-their outputs to spawn and die, and so on down to a given cycle time."""
+their outputs to spawn and die, and so on down to a given cycle time.
+
+WARNING: This kills task proxy objects in the scheduler, NOT running
+external tasks!"""
 
 connector = connect_to_control( usage )
 

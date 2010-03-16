@@ -5,11 +5,11 @@ from connectors import connect_to_control
 
 usage = """cylc kill [options] SYSTEM 
 
-Remove a single task proxy object from the system. 
+Remove a single task proxy object from the system. The task will be
+forced to spawn before dying unless you specify '--no-spawn'.
 
-The target task will be forced to spawn first, if it hasn't already.
-
-WARNING: This does not kill running external tasks!"""
+WARNING: This kills task proxy objects in the scheduler, NOT running
+external tasks!"""
 
 connector = connect_to_control( usage )
 
