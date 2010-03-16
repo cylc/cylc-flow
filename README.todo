@@ -1,5 +1,10 @@
 To Do
 
+* consider task proc loop invocation - could we separate summary update
+  vs task processing (e.g. when a task fails we have to run pointlessly
+  (?) through the loop in order to update the summary immediately for
+  monitoring.
+
 * document use of accelerated real mode examples: goes fast till
   caught up to real time, then wait between cycles is true-time.
 

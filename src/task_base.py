@@ -348,6 +348,10 @@ class task_base( Pyro.core.ObjBase ):
 
         elif message == self.get_identity() + ' failed':
             # process task failure messages
+
+            # set state changed so that monitoring summary is updated
+            # after a failure occurs
+            state_changed = True
             if priority != 'CRITICAL':
                 self.log( 'WARNING', 'non-critical priority for task failure' )
             self.log( 'CRITICAL',  message )
