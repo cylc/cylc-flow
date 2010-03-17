@@ -49,10 +49,11 @@ morestring=[b]\",
 
 \lstdefinelanguage{usage}
 {
-morekeywords={},
+%morekeywords={help, h, version, v, configure, register, unregister, schedule, pause, resume, stop, insert, reset, kill, purge, task-dump, what-is, run-task, message, set-level, nudge, monitor, monitor-r},
 string=[b]{"},
 sensitive=false,
 morecomment=[l]{Usage:},
+morecomment=[l]{USAGE:},
 morecomment=[l]{Arguments:},
 morecomment=[l]{Options:},
 morecomment=[l]{Commands:},
@@ -61,6 +62,7 @@ morecomment=[l]{arguments:},
 morecomment=[l]{command-options:},
 morecomment=[l]{COMMANDS:},
 morecomment=[l]{options:},
+morecomment=[l]{|}
 }
 
 
@@ -184,11 +186,11 @@ preprocessing, postprocessing, product generation, and archiving
 tasks.\footnote{Future plans for EcoConnect include additional
 deterministic regional weather forecasts and a statistical ensemble.}
 The global sea state forecast runs once daily.  The regional weather
-forecast runs four times daily but it supplies surface pressures to
-several downstream models that run only twice daily, and precipitation
-accumulations to catchment river models that run on an hourly cycle
-assimilating real time stream flow observations and using the most
-recent available regional weather forecast.  EcoConnect runs on
+forecast runs four times daily but it supplies surface winds and
+pressure to several downstream models that run only twice daily, and
+precipitation accumulations to catchment river models that run on an
+hourly cycle assimilating real time stream flow observations and using
+the most recent available regional weather forecast.  EcoConnect runs on
 heterogenous distributed hardware, including a massively parallel
 supercomputer and several Linux servers. 
 
@@ -488,7 +490,13 @@ main operation and then keep pace with it.
 
 
 \pagebreak
-\section{Installing And Testing} 
+
+\section{The Cylc Command Set}
+\lstset{language=usage}
+\lstinputlisting{command-usage/help.txt}
+\pagebreak
+
+\section{Installation And Testing} 
 \label{InstallationAndTesting}
 
 \subsection{Requirements} 
@@ -500,25 +508,25 @@ main operation and then keep pace with it.
     \item Pyro (Python Remote Objects)
 \end{itemize}
 
-Cylc has been tested with Python 2.6, and Pyro 3.9 and 3.10,
-but it should work with any recent versions of Python 2 and Pyro.
-As yet neither cylc nor Pyro are compatible with Python 3. 
+Cylc has been tested with Python~2.6, and Pyro~3.9 and 3.10,
+but it should work with any recent versions of Python~2 and Pyro.
+As yet neither cylc nor Pyro are compatible with Python~3. 
 
 \subsection{Getting Cylc} 
 \label{GettingCylc}
 
-See Section~\ref{pyro} for how to get Pyro.
+See Appendix~\ref{Pyro} for Pyro download directions.
 
-Cylc is currently maintained using {\em darcs}, a distributed revision
-control system. If you need to develop cylc you can request access to
-clone the central repository, otherwise you will receive a cylc
-release tarball. 
+Cylc is currently maintained using {\em darcs} (http://darcs.net), a
+distributed revision control system. If you need to develop cylc you can
+request access to clone the central repository, otherwise you will
+receive a cylc release tarball. 
 
 \subsection{Installation} 
 \label{Installation}
 
-Pyro comes with simple installation instructions (it installs into the
-standard Python modules path). 
+Pyro installs easily into the standard Python modules path on your
+system; follow Pyro's own installation instructions.
 
 Cylc is designed to be installed into a normal user account: simply
 unpack the tarball, or move the repository, to the location of your
@@ -534,6 +542,8 @@ in your Python module search path, to provide access to the cylc core
 modules. To configure your current command shell for cylc, source 
 the provided environment script:
 
+\lstset{language=bash} 
+
 \begin{lstlisting}
 $ cd $CYLC_DIR
 $ . cylc-env.sh
@@ -542,8 +552,6 @@ $ . cylc-env.sh
 Where \lstinline=$CYCL_DIR= should be set to the top level of your cylc 
 installation.  For permanent access add the following to your login
 script (for sh-style shells):
-
-\lstset{language=bash} 
 
 \begin{lstlisting}
     export PATH=$CYLC_DIR/bin:$PATH
@@ -557,56 +565,61 @@ script (for sh-style shells):
 Test the new installation by running the packaged ``userguide'' example
 system, and compare the results with the scheduling diagrams in
 Section~\ref{TheCylcSchedulingAlgorithm}. The packaged examples should
-work ``out of the box'' {\em in dummy mode or real mode}: just use the
-simple sequence of commands presented in the Quick Start Guide, from
-\lstinline=cylc configure= onward - see Section~\ref{ConfigureRegisterRun}.  
-
-Refer to Section~\ref{ACompleteWorkingExample}, and \lstinline=cylc help= 
-for more information.  
+work ``out of the box'' in real and dummy mode, using the simple
+sequence of commands presented in the Quick Start Guide, from {\em
+Prepare For Scheduling} (section~\ref{QuickPrepareForScheduling})
+onward.  For detailed information on the packaged example systems, refer
+to {\em Complete Working Examples}
+(section~\ref{CompleteWorkingExamples}).  
 
 \pagebreak
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
 
 The following is a quick summary of the steps required to get a system
-running under cylc. See the Command Reference
-(Section~\ref{CommandReference}) or, equivalently, \lstinline=cylc help=
+running under cylc. See the {\em Command Reference}
+(section~\ref{CommandReference}) or, equivalently, \lstinline=cylc help=
 for available commands and options, and subsequent sections
-of this document for more detailed information.
+of this document for more detailed information about each operation.
 
 \subsection{Start A Pyro Nameserver}
 \label{QuickStartAPyroNameserver}
 
-Pyro is the object oriented Python RPC mechanism that allows cylc tasks
-to communicate with their proxy objects inside a cylc scheduler. If
-there is no Pyro nameserver (\lstinline=pyro-ns=) running already on
+Pyro is the object oriented Python RPC mechanism that allows external
+tasks to communicate with their proxy objects inside a cylc scheduler.
+If there is no Pyro nameserver (\lstinline=pyro-ns=) running already on
 your network segment (check with \lstinline=pyro-nsc ping=) then start
 one up as described in Section~\ref{RunningPyro} (Running Pyro).
 
-\subsection{Define Your System} 
-\label{QuickDefineYourSystem}
+\subsection{Defining A System} 
+\label{QuickDefineASystem}
 
 \begin{itemize}
-    \item divide a system into {\bf tasks} with defined {\bf
-        prerequisites} and {\bf outputs} (Section~\ref{tasks}).
+    \item divide the system into schedulable entities, called {\bf tasks}
+        (Section~\ref{CylcTasks})
+        
+    \begin{itemize}
+        \item each task must have well defined {\bf prerequisites} and {\bf
+            outputs} (Section~\ref{PrerequisitesAndOutputs}).
+    \end{itemize}
 
     \item write a {\bf task definition file} for each task
-        (Section~\ref{taskdefs}).
+        (Section~\ref{TaskDefinitionFiles}).
 
     \item write {\bf task scripts} to run the external tasks
-        (Section~\ref{taskscripts}).
+        (Section~\ref{TaskScripts}).
 \end{itemize}
 
 \subsection{Prepare For Scheduling}
 \label{QuickPrepareForScheduling}
 
 \begin{itemize}
-    \item {\bf configuration} (\lstinline=cylc configure --help=) parses
+    \item \lstinline=cylc configure= parses
         task definition files and thence generates task class and config
         modules for the system. This must be done whenever you change
         the system task definition files. 
 
-    \item {\bf registration} (\lstinline=cycl register --help)=
+    \item \lstinline=cycl register=
         associates a name with a configured system, after which other
         cylc commands can access the system by name. 
 \end{itemize}
@@ -615,13 +628,13 @@ one up as described in Section~\ref{RunningPyro} (Running Pyro).
 \label{QuickScheduling}
 
 \begin{itemize}
-    \item {\bf system startup}: \lstinline=cylc schedule --help=.
-    \item {\bf system shutdown}: \lstinline=cylc stop --help=.
-    \item {\bf monitoring}:\lstinline=cylc monitor --help=.
+    \item \lstinline=cylc schedule= starts up a system.
+    \item \lstinline=cylc stop= shuts down a running system.
+    \item \lstinline=cylc monitor= lets you view a running system.
 \end{itemize}
 
-The cylc commandset includes many other commands for manipulating a
-running system in between startup and shutdown; see 
+The cylc command set includes many other commands for manipulating a
+running system, in between startup and shutdown; see 
 \lstinline=cylc help=.
  
 \section{System Definition} 
@@ -766,7 +779,8 @@ directory(s) of one task to the input directory(s) of others, for
 instance). See Section~\ref{RealDependencies}, and cylc's file-transfer
 example in userguide !TO DO!. 
 
-\Section{Prerequisites And Outputs}
+\section{Prerequisites And Outputs}
+\label{PrerequistiesAndOutputs}
 
 %Cylc's scheduling algorithm works by matching one task's unsatisfied
 %prerequisites with another's completed outputs (Section~\ref{algorithm}). 
