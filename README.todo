@@ -48,13 +48,6 @@ To Do
 
 * catch deliberate exits in manager, in order cleanly shutdown pyro
 
-* consider 'set -e' and 'trap' in task scripts:
-# ABORT IN CASE OF ANY ERROR, AND ALERT CYLC
-# (this means we do not need to explicitly check for success of simple
-# operations like directory creation, etc.
-trap 'cylc-message --failed' ERR  
-( does this double count for deliberate 'exit 1' instances?)
-
 * allow task shortnames for control and question commands.
 
 * 'raise SystemExit(message)' everywhere instead of sys.exit(1)?

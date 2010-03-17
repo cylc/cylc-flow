@@ -6,6 +6,9 @@
 
 # run length 10 minutes, scaled by $REAL_TIME_ACCEL 
 
+# trap errors so that we need not check the success of basic operations.
+set -e; trap 'cylc message --failed' ERR
+
 cylc message --started
 
 # check environment

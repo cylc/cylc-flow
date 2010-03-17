@@ -3,6 +3,9 @@
 # THIS IS A CYLC TASK SCRIPT TEMPLATE FOR THE 'FREE' TASK TYPE, I.E.
 # NON-FORECAST MODEL TASKS THAT HAVE NO PREVIOUS-INSTANCE DEPENDENCE.
 
+# trap errors so that we need not check the success of basic operations.
+set -e; trap 'cylc message --failed' ERR
+
 # TASK STARTED
 cylc message --started
 

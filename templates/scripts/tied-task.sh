@@ -3,6 +3,9 @@
 # THIS IS A CYLC TASK SCRIPT TEMPLATE FOR THE 'TIED' TASK TYPE: I.E.
 # FORECAST MODELS WITH PREVIOUS-INSTANCE DEPENDENCE VIA RESTART FILES.
 
+# trap errors so that we need not check the success of basic operations.
+set -e; trap 'cylc message --failed' ERR
+
 # TASK STARTED
 cylc message --started
 

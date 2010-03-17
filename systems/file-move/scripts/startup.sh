@@ -6,6 +6,9 @@
 
 # run length 10 minutes
 
+# trap errors so that we need not check the success of basic operations.
+set -e; trap 'cylc message --failed' ERR
+
 cylc message --started
 
 # check environment
