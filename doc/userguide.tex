@@ -145,8 +145,8 @@ morecomment=[l]{options:},
 \section{How Cylc Works} 
 \label{HowCylcWorks}
 
-\subsection{Scheduling For Forecast Systems} 
-\label{SchedulingForForecastSystems}
+\subsection{Scheduling Forecast Systems} 
+\label{SchedulingForecastSystems}
 
 Environmental forecasting systems generate forecast products at regular
 intervals using potentially large sets of scientific models and
@@ -169,8 +169,8 @@ satisfied; this is the best that can be done even if queued tasks are
 not able to execute immediately because of resource contention.
 
 
-\subsection{An Example: EcoConnect} 
-\label{AnExampleEcoConnect}
+\subsection{EcoConnect} 
+\label{EcoConnect}
 
 This work was motivated by the EcoConnect Forecasting System at NIWA
 (National Institute of Water and Atmospheric Research, New Zealand). As
@@ -441,8 +441,8 @@ earlier, and it should die not too long after it is no longer needed.
 This requires some thought at the program design stage, but the
 complexities therein are entirely hidden from the user. 
 
-\subsection{Comparison with Existing Schedulers} 
-\label{ComparisonwithExistingSchedulers}
+\subsection{Comparison With Existing Schedulers} 
+\label{ComparisonWithExistingSchedulers}
 
 As explained earlier, as far as the author is aware current forecast
 schedulers ignore intercycle dependencies and therefore require
@@ -488,15 +488,15 @@ main operation and then keep pace with it.
 
 
 \pagebreak
-\section{Installing Cylc} 
-\label{InstallingCylc}
+\section{Installing And Testing} 
+\label{InstallationAndTesting}
 
-\subsection{System Requirements} 
-\label{SystemRequirements}
+\subsection{Requirements} 
+\label{Requirements}
 
 \begin{itemize}
-    \item A Unix or Linux operating system
-    \item The Python programming language
+    \item Unix or Linux
+    \item Python
     \item Pyro (Python Remote Objects)
 \end{itemize}
 
@@ -531,49 +531,60 @@ choice. There is no ``build'' required because cylc is written in Python
 The cylc bin directory must be in your executable search path, to
 provide access to cylc commands, and the cylc source directory must be
 in your Python module search path, to provide access to the cylc core
-modules. For sh-style login shells add the following to
-your \lstinline=$HOME/.profile=:
+modules. To configure your current command shell for cylc, source 
+the provided environment script:
+
+\begin{lstlisting}
+$ cd $CYLC_DIR
+$ . cylc-env.sh
+\end{lstlisting}
+
+Where \lstinline=$CYCL_DIR= should be set to the top level of your cylc 
+installation.  For permanent access add the following to your login
+script (for sh-style shells):
 
 \lstset{language=bash} 
 
 \begin{lstlisting}
-    # provide access to the cylc scheduler
-    CYLC_DIR=####PATH-TO-TOP-LEVEL-CYLC-INSTALL-DIR####
     export PATH=$CYLC_DIR/bin:$PATH
     export PYTHONPATH=$CYLC_DIR/src:$PYTHONPATH
 \end{lstlisting}
+
 
 \subsection{Testing} 
 \label{Testing}
 
 Test the new installation by running the packaged ``userguide'' example
-system, and comparing results with the scheduling diagrams from
-Section{XXX}. This should work ``out of the box'' {\em in dummy mode or
-real mode}, using the simple sequence of commands presented in the Quick
-Start Guide from 'configure' onward - see
-Section~\ref{ConfigureRegisterRun}.  
+system, and compare the results with the scheduling diagrams in
+Section~\ref{TheCylcSchedulingAlgorithm}. The packaged examples should
+work ``out of the box'' {\em in dummy mode or real mode}: just use the
+simple sequence of commands presented in the Quick Start Guide, from
+\lstinline=cylc configure= onward - see Section~\ref{ConfigureRegisterRun}.  
 
-Refer to Section~\ref{ACompleteWorkingExample}, 
-and \lstinline=cylc help= for more information.  
+Refer to Section~\ref{ACompleteWorkingExample}, and \lstinline=cylc help= 
+for more information.  
 
+\pagebreak
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
 
 The following is a quick summary of the steps required to get a system
-running under cylc. 
+running under cylc. See the Command Reference
+(Section~\ref{CommandReference}) or, equivalently, \lstinline=cylc help=
+for available commands and options, and subsequent sections
+of this document for more detailed information.
 
-\subsection{Constructing A New System}
+\subsection{Start A Pyro Nameserver}
+\label{QuickStartAPyroNameserver}
 
-You can get the {\em scheduling} right for a complex system without ever
-having to run real tasks, but testing incrementally in dummy mode as you
-define each task. Then (or in parallel with the task definition process)
-you can also test the real system incrementally as you write its task
-scripts (by which cylc runs the real tasks) by turning off all the
-tasks that you're not yet interested in (this can be done through the
-'--include' and '--exclude' scheduler options, or by commenting tasks
-out of the configured task list.
+Pyro is the object oriented Python RPC mechanism that allows cylc tasks
+to communicate with their proxy objects inside a cylc scheduler. If
+there is no Pyro nameserver (\lstinline=pyro-ns=) running already on
+your network segment (check with \lstinline=pyro-nsc ping=) then start
+one up as described in Section~\ref{RunningPyro} (Running Pyro).
 
-\subsection{System Definition} 
+\subsection{Define Your System} 
+\label{QuickDefineYourSystem}
 
 \begin{itemize}
     \item divide a system into {\bf tasks} with defined {\bf
@@ -586,64 +597,63 @@ out of the configured task list.
         (Section~\ref{taskscripts}).
 \end{itemize}
 
-\subsection{Configure, Register, Run}
-\label{QuickConfigureRegisterRun}
+\subsection{Prepare For Scheduling}
+\label{QuickPrepareForScheduling}
 
-Configuration generates task class and config modules based on your
-task defintion files. This only needs to be done if the task definitions
-have changed.  Registration associates a name with a particular system. 
+\begin{itemize}
+    \item {\bf configuration} (\lstinline=cylc configure --help=) parses
+        task definition files and thence generates task class and config
+        modules for the system. This must be done whenever you change
+        the system task definition files. 
 
-\begin{lstlisting}
-$ cylc configure SYSTEM-DEFINITION-DIR             # configure
-$ cylc register -d SYSTEM-DEFINITION-DIR name      # register
-$ cylc schedule -s YYYYMMDDHH NAME                 # run
-$ cylc monitor NAME                                # view       (in another terminal)
-$ cylc pause NAME                                  # hold       (in another terminal)
-$ cylc resume NAME                                 # release    (in another terminal)
-$ cylc stop NAME                                   # stop       (in another terminal)
-$ cylc start -r NAME                               # restart
-$ # \dots
-\end{lstlisting}
+    \item {\bf registration} (\lstinline=cycl register --help)=
+        associates a name with a configured system, after which other
+        cylc commands can access the system by name. 
+\end{itemize}
 
-See the Command Reference (Section~\ref{CommandReference}, and
-\lstinline=cylc help= for more commands and options).
+\subsection{Scheduling}
+\label{QuickScheduling}
 
-\subsection{Starting A Pyro Nameserver}
+\begin{itemize}
+    \item {\bf system startup}: \lstinline=cylc schedule --help=.
+    \item {\bf system shutdown}: \lstinline=cylc stop --help=.
+    \item {\bf monitoring}:\lstinline=cylc monitor --help=.
+\end{itemize}
 
-If you do not already have a Pyro nameserver running
-(Section~\ref{pyro}), start one with \lstinline{nohup} so that it will
-not die with your terminal session: 
+The cylc commandset includes many other commands for manipulating a
+running system in between startup and shutdown; see 
+\lstinline=cylc help=.
+ 
+\section{System Definition} 
+\label{SystemDefinition}
 
-\begin{lstlisting}
-    nohup pyro-ns &
-\end{lstlisting}
+Cylc sees a forecasting system as an evolving pool of {\bf tasks} with
+clearly defined {\bf prerequisites} and {\bf outputs}
+(Section~\ref{PrerequisitesAndOutputs}), where {\bf a task is any group
+of one or more processes treated as a single entity for scheduling
+purposes}.
 
-\pagebreak
-\subsection{The System Definition Directory} 
-\label{TheSystemDefinitionDirectory}
+\subsection{Directory Structure} 
+\label{DirectoryStructure}
 
-Every forecasting system to be run by cylc needs a system definition
-directory containing: 
-
-\begin{itemize} 
-    \item a \lstinline=taskdef= sub-directory for your task definition
-        files.
-    \item a \lstinline=scripts= sub-directory for your system scripts.
-\end{itemize} 
-
-In addition, when you run \lstinline{cylc configure}, task class and
-config modules will be generated and written into the system directory.
-Here's the system definition directory for one of cylc's example
-systems: 
+A cylc {\bf system definition directory} is by convention 
+(but not necessarily) located under \lstinline=$CYLC_DIR/systems=. It
+must contain a \lstinline=taskdef= sub-directory for task definition
+files (Section~\ref{TaskDefinitionFiles}), and a \lstinline=scripts=
+sub-directory for task scripts (Section~\ref{TaskScripts}). Task class
+and config modules are also written into the directory by
+\lstinline=cylc configure=: 
 
 \lstset{language=bash}
+
 \begin{lstlisting}
-$CYLC_DIR/systems/userguide/
+# system foo:
+$CYLC_DIR/systems/foo/
 
    task_classes.py     # AUTOGENERATED by 'cylc configure' 
    task_list.py        # AUTOGENERATED by 'cylc configure' 
-   system_config.py    # AUTOGENERATED once by 'cylc configure' 
-   job_submit.py       # AUTOGENERATED once by 'cylc configure
+   system_config.py    # AUTOGENERATED by 'cylc configure' 
+   job_submit.py       # AUTOGENERATED by 'cylc configure
 
    taskdef/            # task definition files, e.g.:
       A.def              # defines task A
@@ -656,29 +666,14 @@ $CYLC_DIR/systems/userguide/
       ...
 \end{lstlisting}
 
-\subsubsection{Code Management}
+\subsubsection{Maintaining External Systems}
 
-Several simple example systems are maintained in the cylc source
-repository.  Other systems should be maintained elsewhere in their
-own version control repository, with tags indicating compatibility with
-particular versions of cylc.
+Several example systems are maintained in the cylc source repository.
+External systems should be maintained elsewhere in their own version
+control repositories, with tags to indicate compatibility with
+particular versions of cylc. For ease of use external systems can be
+symlinked into the main cylc systems directory.
 
-\subsubsection{Location}
-
-Cylc's example systems are located under \lstinline=[CYLC_DIR]/systems=.
-Other systems, as explained above, should be maintained separately in
-their own revision control repositories, but for ease of use they can be
-symlinked into the cylc systems directory.
-
-
-\section{System Definition} 
-\label{SystemDefinition}
-
-Cylc sees a forecasting system as an evolving pool of {\bf tasks}
-with clearly defined {\bf prerequisites} and {\bf outputs}
-(Section~\ref{PrerequisitesAndOutputs}), where {\bf a task
-is any group of one or more processes treated as a single entity for
-scheduling purposes}.
 
 \subsection{System Granularity} 
 \label{System Granularity}
@@ -699,63 +694,50 @@ there are advantages to the fine-grained approach:
         tasks.
 \end{itemize}
 
-\subsection{Task Behaviour} 
-\label{Task Behaviour}
+\subsection{External Task Behaviour} 
+\label{ExternalTaskBehaviour}
 
-Make sure your system tasks behave as suggested below in order to get
-the most out of cylc, and to avoid certain dire situations that are by
-no means specific to cylc.
+\subsubsection{Requirements}
 
-\subsubsection{Tasks Should Be Restartable}
+\begin{itemize}
+    \item Cylc assumes that any failed task can be restarted (presumably
+        after fixing the problem) by simply resubmitting it at the same
+        cycle time.
+\end{itemize}
 
-If a particular task dies for any reason it will appear as 'failed' in
-the cylc monitor and will hold up any dependant tasks downstream of it.
-Once the problem is fixed the system operator can tell cylc to reset
-the task, which will result in it being resubmitted at the same cycle
-time. Alternatively, if the entire system is restarted after being shut
-down, any task listed as 'failed' at shutdown will be resubmitted
-with the same cycle time (although you can edit the system state dump
-file to change this behaviour - see Section~\ref{xxx}). 
+\subsubsection{Suggestions}
 
-Therefore it should be possible to rerun any failed task by simply
-resubmitting it for the same cycle time. 
+\begin{itemize}
 
+    \item {\bf A task that in principle has no dependence on previous
+        instances (i.e.\ the same task at earlier cycle times) should be
+        able to run as soon as its prerequisites are satisfied, even if
+        one or more of its predecessorshas not finished yet}. Similarly
+        a forecast model, which depends on previous instances only
+        through restart prerequisites that are normally completed early
+        in a run, should be able to run as soon as its prerequisites,
+        including restarts, are satisfied.
 
-\subsubsection{Successive Instances Of A Task Should Not Interfere}
+        If this is not the case in practice, perhaps because of
+        conflicts in the use of temporary files or similar, then cylc's
+        sequential task type modifier can easily force particular tasks
+        to run sequentially, but the resulting system will be somewhat
+        less efficient than it could be.
 
-The next instance of any task (i.e.\ the same task in the next forecast
-cycle) should be able to start running as soon as its prerequisites
-are all satisfied {\em even if its predecessor is not finished yet}. This
-means that several instances of a post processing task, which would not
-normally have any previous instance dependence, should be able to run
-entirely in parallel, and a forecast model should be able to start as
-soon its previous-instance restart prerequisite is satisfied even if 
-the previous instance is still running (assuming, in both cases, that all 
-other prerequisites are satisfied and sufficient computational resource
-is available). 
+    \item {\bf A warm-cycled forecast model's ``restart files'', which
+        are written in one cycle and required as input in the next,
+        should be organised by cycle time via file or directory naming
+        conventions so that they are not simply overwritten by each task
+        instance} perhaps in a simple rolling archive covering the
+        previous N cycles if not stored permanently. Then (a) given all
+        other cycle time dependent inputs, we can easily rerun the task
+        for any cycle still on the restart archive, and (b) there's no
+        danger of overwriting important restart files by accidental
+        invocation of a task at the wrong cycle time and thereby
+        rendering it impossible to go back and run the correct cycle
+        (thus requiring a cold start for the model).
 
-If this is not the case for any particular task (perhaps because of
-potential conflicts in the use of temporary files, for instance) then
-cylc can force the task to run sequentially, but the resulting system
-will clearly be less efficient than it could be.
-
-
-\subsubsection{Tasks Should be Multicycle Restartable}
-
-Any task that writes "intermediate files" or "restart files" that are
-used by the same task in the forecast next cycle should organise these
-file by cycle time (via file or directory naming conventions) so that
-the same files are not simply overwritten each time. Otherwise
-accidental invocation of the task for the wrong cycle time may corrupt
-the intermediate files and make it impossible to go back and run the
-correct cycle, thereby necessitating a cold start rather than continued
-warm cycling. You may need to be aware of this in the case of monolithic
-"forecast model" tasks that should really be split into multiple tasks
-(imagine a monolithic "weather forecast" task that encompasses obs
-processing, data assimilation, and the actual forecast model, each
-part of which writes output files that are used as input by the next
-part). 
-
+\end{itemize}
 
 \section{Task Definition Files} 
 \label{TaskDefinitionFiles}
@@ -1482,6 +1464,15 @@ operation {\em if}:
 \subsection{Incrementally Constructing New Systems} 
 \label{IncrementallyConstructingNewSystems}
 
+You can get the {\em scheduling} of a complex system right without ever
+having to run the real tasks, by testing incrementally in dummy mode as
+you define each task. Then (or in parallel with the task definition
+process) you can also test the real system incrementally as you write
+its task scripts (by which cylc runs the real tasks) by turning off all
+the tasks that you're not yet interested in (this can be done through
+the '--include' and '--exclude' scheduler options, or by commenting
+tasks out of the configured task list.
+
 Start by defining tasks at the top of the single-cycle dependency graph,
 and testing in dummy mode each time a new task is added. This checks
 that prerequisites and outputs match correctly. When the whole system is
@@ -1674,17 +1665,36 @@ important is happening.
 \label{RunningPyro}
 
 To see if there is a Pyro nameserver running already on your network
-segment, use \lstinline=pyro-nsc [-h host] [-p port]=. Invoke the
+segment, use \lstinline=pyro-nsc [-h host] [-p port] ping=. Invoke the
 command without arguments to see a list of options.
+
+\lstset{language=bash}
+
+\begin{lstlisting}
+$ pyro-nsc ping
+Locator: searching Pyro Name Server\dots
+Locator: retry 1
+Locator: searching Pyro Name Server\dots
+Locator: retry 1
+Trying host oliverh-33191VL
+Locator: contacting Pyro Name Server\dots
+NS is at 127.0.0.2 (oliverh-33191VL.greta.niwa.co.nz) port 9090
+NS is up and running!
+
+$ pyro-nsc -h localhost ping
+Locator: contacting Pyro Name Server\dots
+NS is at 127.0.0.1 (localhost) port 9090
+NS is up and running!
+\end{lstlisting}
 
 To start a Pyro nameserver, use \lstinline{nohup} so that it
 will not die with your terminal session: 
 
 \begin{lstlisting}
-    nohup pyro-ns &
+ nohup pyro-ns &
 \end{lstlisting}
 
-For more detailed information, see the Pyro manual / userguide.
+For more information, see the Pyro userguide.
 
 \pagebreak
 \section{Miscellaneous Notes}
