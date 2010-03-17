@@ -15,9 +15,9 @@ class config:
 
     def set_defaults( self ):
 
-        self.items[ 'logging_dir' ] = 'cylc-logs/' + self.system_name
-        self.items[ 'state_dump_dir' ] = 'cylc-state/' + self.system_name
-        self.items[ 'state_dump_file' ] = 'cylc-state/' + self.system_name + '/state'
+        self.items[ 'logging_dir' ] = os.environ['HOME'] + '/cylc-logs/' + self.system_name
+        self.items[ 'state_dump_dir' ] = os.environ['HOME'] + '/cylc-state/' + self.system_name
+        self.items[ 'state_dump_file' ] = os.environ['HOME'] + '/cylc-state/' + self.system_name + '/state'
         self.items[ 'task_list' ] = []
 
         self.items[ 'task_groups' ] = {}
