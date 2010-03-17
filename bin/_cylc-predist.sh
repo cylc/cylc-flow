@@ -33,9 +33,9 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 chmod +x bin/*
 
 chmod +x doc/process
-chmod +x sys/examples/userguide/scripts/*
-chmod +x sys/examples/nested/scripts/*
-chmod +x sys/examples/distributed/scripts/*
+chmod +x systems/userguide/scripts/*
+chmod +x systems/nested/scripts/*
+chmod +x systems/FIXME/distributed/scripts/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
 perl -pi -e "s/-CYLC-VERSION-/$CYLC_VERSION/" bin/cylc
