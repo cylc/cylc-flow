@@ -766,6 +766,101 @@ directory(s) of one task to the input directory(s) of others, for
 instance). See Section~\ref{RealDependencies}, and cylc's file-transfer
 example in userguide !TO DO!. 
 
+\Section{Prerequisites And Outputs}
+
+%Cylc's scheduling algorithm works by matching one task's unsatisfied
+%prerequisites with another's completed outputs (Section~\ref{algorithm}). 
+
+This sections explains how prerequisites and outputs are expressed in
+cylc, and how to register them in task definition files.
+
+\subsection{Interpretation As Messages} 
+
+\begin{shaded}
+    Prerequisites and outputs are literal text strings, representing
+    events that are important to scheduling, sent from running tasks
+    to the  task proxy objects that represent them inside cylc.
+\end{shaded}
+
+A task proxy considers a registered {\bf output} ``completed'' if it has
+received a matching message from its external task.
+
+A task proxy considers a registered {\bf prerequisite} ``satisfied'' if
+any other task in the system has reported to it a matching completed
+output.
+
+For example, the message ``storm surge forecast products ready for
+2009102018'' could be registered as an output by the task that generates
+the referenced storm surge forecast products, and as a prerequisite by
+any tasks that require them as input. 
+
+Prerequisites and outputs typically refer to the completion of a file
+or a group of files, but any event can be used: database interactions,
+download from a network, copying, archiving, etc., can also be
+used to trigger other tasks.
+
+\subsection{The Truth Of Messages}
+
+For an output that corresponds directly to a single file you can, if
+you want, put the filename itself in the output message:
+\begin{lstinline}
+    "file surface-pressure-$(CYCLE_TIME).nc ready"
+\end{lstinline}
+
+However, there is no particular need to use the actual filename, 
+so you might as well use a more form in order to be consistent with
+messages refering to a whole group of files or other non-file-related
+events:
+\begin{lstinline}
+    "surface pressure fields ready for $(CYCLE_TIME)"
+\end{lstinline}
+
+In particular, there is no need to include actual file locations because
+cylc does not check that incoming messages (i.e.\ reports of completed
+outputs) are actually true before allowing them to be used to satisfy
+the prerequisites of other tasks. There are two reasons for this.
+Firstly, cylc does not restrict the kind of event that can be reported
+as an output (i.e. that can be used to trigger other tasks) so it would
+be next to impossible for it to verify outputs in general. Secondly, 
+there is no need for cylc to do it because the external tasks must
+necessarily do the job themselves: if a task cannot run or cannot
+complete because of missing input files, for example, it must report the
+failure back to cylc immediately.
+
+
+\subsection{Cycle Time in Messages}
+
+Prerequisites and outputs should always contain a cycle time string to
+distinguish the outputs from instances of the same task in different
+forecast cycles. The time to use in messages would normally be the
+task's own cycle time, since intercycle dependencies (other than
+forecast model restart dependences) are rare, however cylc's task
+definition mechanism (below) provides some simple cycle time arithmetic
+operations for unusual cases. 
+
+\lstset{language=Python}
+\begin{lstlisting}
+# example: completion of a file with date-stamped filename
+"file foo_$(MY_CYCLE_TIME).bar ready"
+# example: other event
+"archiving completed for $(MY_CYCLE_TIME)"
+\end{lstlisting}
+
+
+\subsubsection{General Guidelines}
+
+\begin{itemize}
+
+    \item Prerequisites do not need to be unique across the system:
+        multiple tasks can trigger off the same event.
+
+    \item Outputs should be unique across the system, unless you want
+        all tasks that depend on a particular output to trigger off the
+        first task to provide it.
+
+\end{itemize}
+
+
 \subsection{Examples}
 
 Listed immediately below are two example task definitions, one for a
@@ -911,98 +1006,6 @@ at the right time according to its type.
 \pagebreak
 \subsection{Prerequisites and Outputs} 
 \label{PrerequisitesandOutputs}
-
-%Cylc's scheduling algorithm works by matching one task's unsatisfied
-%prerequisites with another's completed outputs (Section~\ref{algorithm}). 
-
-This sections explains how prerequisites and outputs are expressed in
-cylc, and how to register them in task definition files.
-
-\subsubsection{Interpretation As Messages} 
-
-\begin{shaded}
-    Prerequisites and outputs are literal text strings, representing
-    events that are important to scheduling, sent from running tasks
-    to the  task proxy objects that represent them inside cylc.
-\end{shaded}
-
-A task proxy considers a registered {\bf output} ``completed'' if it has
-received a matching message from its external task.
-
-A task proxy considers a registered {\bf prerequisite} ``satisfied'' if
-any other task in the system has reported to it a matching completed
-output.
-
-For example, the message ``storm surge forecast products ready for
-2009102018'' could be registered as an output by the task that generates
-the referenced storm surge forecast products, and as a prerequisite by
-any tasks that require them as input. 
-
-Prerequisites and outputs typically refer to the completion of a file
-or a group of files, but any event can be used: database interactions,
-download from a network, copying, archiving, etc., can also be
-used to trigger other tasks.
-
-\subsubsection{The Truth Of Messages}
-
-For an output that corresponds directly to a single file you can, if
-you want, put the filename itself in the output message:
-\begin{lstinline}
-    "file surface-pressure-$(CYCLE_TIME).nc ready"
-\end{lstinline}
-
-However, there is no particular need to use the actual filename, 
-so you might as well use a more form in order to be consistent with
-messages refering to a whole group of files or other non-file-related
-events:
-\begin{lstinline}
-    "surface pressure fields ready for $(CYCLE_TIME)"
-\end{lstinline}
-
-In particular, there is no need to include actual file locations because
-cylc does not check that incoming messages (i.e.\ reports of completed
-outputs) are actually true before allowing them to be used to satisfy
-the prerequisites of other tasks. There are two reasons for this.
-Firstly, cylc does not restrict the kind of event that can be reported
-as an output (i.e. that can be used to trigger other tasks) so it would
-be next to impossible for it to verify outputs in general. Secondly, 
-there is no need for cylc to do it because the external tasks must
-necessarily do the job themselves: if a task cannot run or cannot
-complete because of missing input files, for example, it must report the
-failure back to cylc immediately.
-
-
-\subsubsection{Cycle Time in Messages}
-
-Prerequisites and outputs should always contain a cycle time string to
-distinguish the outputs from instances of the same task in different
-forecast cycles. The time to use in messages would normally be the
-task's own cycle time, since intercycle dependencies (other than
-forecast model restart dependences) are rare, however cylc's task
-definition mechanism (below) provides some simple cycle time arithmetic
-operations for unusual cases. 
-
-\lstset{language=Python}
-\begin{lstlisting}
-# example: completion of a file with date-stamped filename
-"file foo_$(MY_CYCLE_TIME).bar ready"
-# example: other event
-"archiving completed for $(MY_CYCLE_TIME)"
-\end{lstlisting}
-
-
-\subsubsection{General Guidelines}
-
-\begin{itemize}
-
-    \item Prerequisites do not need to be unique across the system:
-        multiple tasks can trigger off the same event.
-
-    \item Outputs should be unique across the system, unless you want
-        all tasks that depend on a particular output to trigger off the
-        first task to provide it.
-
-\end{itemize}
 
 \subsubsection{Timed Output Messages}
 
