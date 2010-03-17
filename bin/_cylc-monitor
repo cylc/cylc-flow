@@ -288,7 +288,7 @@ while True:
 
         if dummy_mode:
             foo = 'DUMMY MODE:'
-            bar = str(rate) + ' seconds = 1 hour' 
+            bar = str(rate) + ' real seconds = 1 hour' 
             baz = header
             baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
             baz = re.sub( '.{' + str(len(bar)) + '}$', bar, baz )
