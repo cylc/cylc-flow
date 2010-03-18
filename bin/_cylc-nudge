@@ -6,7 +6,17 @@ from connectors import connect_to_control
 
 usage = """cylc nudge [options] SYSTEM 
 
-Invoke the task processing loop in a running system."""
+Invoke the task processing loop in a running system.
+
+By default cylc enters the main task processing loop only when a task
+proxy changes state due to an incoming message, and after certain other
+events. If this fails to happen when it should the system will appear to
+be "stuck". In the unlikely event that this happens, which implies a
+minor bug in cylc that should be fixed, a quick nudge will get the
+system going again."""
+
+# INVOKING THE LOOP ON A TIMEOUT WOULD BE A FAILSAFE OPTION:
+# 'cylc schedule --use-timeout'?
 
 connector = connect_to_control( usage )
 
