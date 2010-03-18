@@ -43,6 +43,12 @@ def diff_hours( rt2, rt1 ):
 
 def is_valid( rt ):
     if re.compile( "^\d{10}$" ).match( rt ):
+        try:
+            _rt_to_dt( rt )
+        except ValueError, x:
+            print x
+            return False
+
         return True
     else:
         return False
