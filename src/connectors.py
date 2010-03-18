@@ -3,7 +3,7 @@
 # import standard Python modules
 import os, sys
 import Pyro.core
-from Pyro.errors import PyroError,NamingError
+from Pyro.errors import PyroError,NamingError,ProtocolError
 from optparse import OptionParser
 from time import sleep
 
@@ -91,12 +91,14 @@ arguments:
         try:
             # connect to the remote switch object in cylc
             control = Pyro.core.getProxyForURI('PYRONAME://' + self.options.pns_host + '/' + self.groupname + '.' + 'remote' )
-        except NamingError:
-            print "\n\033[1;37;41mfailed to connect\033[0m"
-            raise SystemExit
-        except:
-            print "ERROR:"
-            raise SystemExit
+        except NamingError, x:
+            print "\n\033[1;37;41m" + x + "\033[0m"
+            raise SystemExit( "ERROR" )
+
+        except Exception, x:
+            #print x
+            #raise SystemExit( "ERROR" )
+            raise SystemExit( x )
 
         return control
 
@@ -131,7 +133,7 @@ class connect_to_task:
                 uri =  'PYRONAME://' + self.host + '/' + self.group + '.' + self.name + '%' + self.ctime 
                 task = Pyro.core.getProxyForURI( uri )
        
-            except ProtocolError:
+            except ProtocolError, x:
                 # retry if temporary network problems prevented connection
 
                 # TO DO: do we need to single out just the 'connection failed error?'
@@ -144,23 +146,24 @@ class connect_to_task:
                 #                 Also the Pyro server may have crashed.
                 #                 (presumably after connection established - hjo)
 
-                print 'cylc message [' + str( count ) + ']: Network Problems, RETRYING in 5 seconds'
+                print x
+                print 'cylc message [' + str( count ) + ']: Network Problem, RETRYING in 5 seconds'
                 sleep(5)
 
-            except NamingError:
+            except NamingError, x:
                 # can't find nameserver, or no such object registered ...
-                print 'PYRO NAMESERVER ERROR'
-                raise
+                #print x
+                #raise SystemExit( 'PYRO NAMESERVER ERROR' )
+                raise SystemExit( x )
 
-            except Exception:
+            except Exception, x:
                 # all other exceptions
-                print 'ERROR'
-                raise
+                #print x
+                #raise SystemExit( 'ERROR' )
+                raise SystemExit( x )
 
             else:
                 # successful connection
                 break
 
         return task
-
-
