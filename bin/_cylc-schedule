@@ -475,7 +475,9 @@ while True: # MAIN LOOP
     # PROCESS ALL TASKS whenever something has changed that might
     # require renegotiation of dependencies, etc.
     #--
-    if task_base.state_changed or process_tasks_remote or process_tasks_contact:
+    if task_base.state_changed or \
+            process_tasks_remote or \
+            process_tasks_contact:
 
         if options.task_proc_reason:
             # log reason for invoking task processing
@@ -491,13 +493,15 @@ while True: # MAIN LOOP
             # should really be log.debug() but warnings go to stdout...
             log.warning( 'task processing, ' + str( count ) + ': ' + msg )
 
-        pool.spawn()
-
         pool.negotiate()
 
         pool.run_tasks()
 
         pool.cleanup()
+
+        # spawn after cleanup in case the system had stalled, unspawned
+        # at max runahead.
+        pool.spawn()
 
         pool.dump_state()
 
@@ -511,17 +515,18 @@ while True: # MAIN LOOP
         log.critical( "ALL RUNNING TASKS FINISHED" )
         break
 
-    # REMOTE METHOD HANDLING; with no timeout and single-
-    # threaded pyro, handleRequests() returns after one or
-    # more remote method invocations are processed (these 
-    # are not just task messages, hence the use of the
-    # state_changed variable above).
+    # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
+    # handleRequests() returns after one or more remote method
+    # invocations are processed (these are not just task messages, hence
+    # the use of the state_changed variable above).
     #--
 
     # incoming task messages set this to True
     task_base.state_changed = False
     # handle all remote calls
+    #print "hello ..."
     daemon.handleRequests( timeout = None )
+    #print "      ... there"
 
 # END MAIN LOOP
 
