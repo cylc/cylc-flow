@@ -1,5 +1,7 @@
 To Do
 
+* put monitor pyro connection in the same "connector" framework.
+
 * setting a stop time after X gone past => required a nudge for
   shutdown!
 

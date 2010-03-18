@@ -875,6 +875,15 @@ inside the cylc scheduler, whenever they complete a registered output}.
 
 \end{itemize}
 
+A task with no prerequisites can start running immediately (i.e. as soon
+as the proxy object is created) {\em unless} it is a ``contact task''
+(below), which must also wait on a wall clock time relative to its cycle time.
+
+{\em Every system must contain at least one task with no prerequisites
+to get the system up and running}. These will normally be contact tasks that wait
+on external input.
+
+
 \lstset{language=cylctaskdef} 
 
 \subsubsection{Cycle Time}
@@ -1084,7 +1093,7 @@ at the right time according to its type.
         external world.  The event is expected at some defined time
         interval after the task cycle time (e.g. observational data
         might come 3.5 hours after its nominal validity time); see
-        %CONTACT_DELAY below. In real time operation a contact task will
+        \lstinline=CONTACT_DELAY= below. In real time operation a contact task will
         not begin running until the clock time has reached this delayed
         start time. In catchup operation a contact task will begin
         running immediately (other prerequisites allowing) because the
@@ -1105,6 +1114,9 @@ at the right time according to its type.
         some external means prior to starting up cylc.
 
 \end{itemize}
+
+REAL CONTACT TASKS: must have a wait loop - report back only WHEN their
+target files are found.
 
 \pagebreak
 \subsection{Prerequisites and Outputs} 

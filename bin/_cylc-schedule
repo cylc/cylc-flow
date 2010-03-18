@@ -164,17 +164,19 @@ def ns_obj_name( name, groupname ):
     # object name as registered with the Pyro nameserver
     return groupname + '.' + name
 
-usage = """cylc schedule [options] SYSTEM
+usage = """1/ cylc schedule [options] --start-at=CYCLE SYSTEM (cold start)
+Usage: 2/ cylc schedule [options] --restart SYSTEM        (restart)
 
 Start scheduling a configured, registered, cylc system. 
 
-To cold start a system give an initial cycle time. Each task in the task
-list will be instantiated with a cycle time equal to the initial cycle
-time, or to the first subsequent cycle time that is valid for that task.
-At least one task must have no prerequisites, or nothing will happen. 
+For a cold start, each task is instantiated at the initial cycle time,
+or at the first subsequent cycle allowed for that task. At least one
+task in the system must have no prerequisites, or nothing will happen. 
 
-In a restart [-r], any task that was "submitted", "running" or "failed"
-will be restarted in the "waiting" state.
+For a restart, the system starts from a prior state recorded in the 
+configured, or named, state dump file. Any task that was in the
+"submitted", "running", or "failed" states will be reset to the
+"waiting" state so that it will be resubmitted immediately.
 
 arguments:
    SYSTEM               Registered name of the forecasting system.""" 
