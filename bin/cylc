@@ -157,3 +157,6 @@ except OSError:
     print >> sys.stderr, " * Are all cylc scripts executable?"
     print >> sys.stderr, " * Have you run 'cylc configure' yet?"
     sys.exit(1)
+
+except Exception,x:
+    raise SystemExit( x )
