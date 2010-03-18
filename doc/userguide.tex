@@ -576,21 +576,57 @@ to {\em Complete Working Examples}
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
 
-This section is intended as a quick reminder for those who already know
-how to use cylc. 
+\lstset{language=bash}
 
-Refer to \lstinline=cylc help=, the {\em Command Reference}
-(Section~\ref{CommandReference}), and the rest of this userguide, for
+This section is intended as a quick reminder of basic cylc
+functionality. The command line listings below, from {\em Preparing For
+Scheduling} onward, use the packaged cylc ``userguide'' system as an
+example. Refer to \lstinline=cylc help=, the {\em Command Reference}
+(Section~\ref{CommandReference}), and the rest of this document, for
 detailed information on available commands, options, and operations.
 
 \subsection{Starting A Pyro Nameserver}
 \label{QuickStartingAPyroNameserver}
 
 Pyro is the object oriented Python RPC mechanism that allows external
-tasks to communicate with their proxy objects inside a cylc scheduler.
-If there is no Pyro nameserver (\lstinline=pyro-ns=) running already on
-your network segment (check with \lstinline=pyro-nsc ping=) then start
-one up as described in {\em Running Pyro} (Appendix~\ref{RunningPyro}).
+tasks to communicate with their proxy objects inside a cylc scheduler
+(Appendix~\ref{Pyro}). Check if there is already a Pyro nameserver
+(\lstinline=pyro-ns=) running on your network segment:
+
+\begin{lstlisting}
+# search for a Pyro nameserver on the network
+$ pyro-nsc ping
+Locator: searching Pyro Name Server\dots
+Locator: retry 1
+Locator: searching Pyro Name Server\dots
+Locator: retry 1
+Trying host oliverh-33191VL
+Locator: contacting Pyro Name Server\dots
+NS is at 127.0.0.2 (oliverh-33191VL.greta.niwa.co.nz) port 9090
+NS is up and running!
+
+# search for a Pyro nameserver on a specific host
+$ pyro-nsc -h localhost ping
+Locator: contacting Pyro Name Server\dots
+NS is at 127.0.0.1 (localhost) port 9090
+NS is up and running!
+\end{lstlisting}
+
+If not, start one up as follows:
+
+\begin{lstlisting}
+# start a Pyro nameserver
+$ pyro-ns
+*** Pyro Name Server ***
+Name server listening on: ('0.0.0.0', 9090)
+Broadcast server listening on: ('255.255.255.255', 9090)
+URI is: PYRO://192.168.56.146:9090/c0a838921e021d8a88b563c085c323e5f4
+URI written to: /home/oliverh/Pyro_NS_URI
+Name Server started.
+\end{lstlisting}
+
+Note that you can use \lstinline=nohup= (see \lstinline=man nohup=) to
+prevent the nameserver dying when you log out of your terminal session.
 
 \subsection{Defining A System} 
 \label{QuickDefineASystem}
@@ -614,26 +650,74 @@ one up as described in {\em Running Pyro} (Appendix~\ref{RunningPyro}).
 \subsection{Preparing For Scheduling}
 \label{QuickPreparingForScheduling}
 
-\begin{itemize}
-    \item \lstinline=cylc configure= parses
-        task definition files and thence generates task class and config
-        modules for the system. This must be done whenever you change
-        the system task definition files. 
+First {\bf configure your system}. Configuration generates
+system-specific task class and config Python modules in the system
+definition directory. It must be done initially, and thereafter whenever
+you change the system task definition files:
 
-    \item \lstinline=cycl register=
-        associates a name with a configured system, after which other
-        cylc commands can access the system by name. 
-\end{itemize}
+\begin{lstlisting}
+cylc configure $CYLC_DIR/systems/userguide
+\end{lstlisting}
+
+Then {\bf register the system for use}. Registration associates a name
+with a configured system, so that other cylc commands can access the
+system by name. 
+
+\begin{lstlisting}
+cylc register userguide $CYLC_DIR/systems/userguide
+\end{lstlisting}
 
 \subsection{Running The System}
 \label{QuickRunningTheSystem}
 
-\begin{itemize}
-    \item \lstinline=cylc schedule= starts up a system.
-    \item \lstinline=cylc stop= shuts down a running system.
-    \item \lstinline=cylc monitor= lets you view a running system.
-    \item \lstinline=cylc help= shows the commands available for working with running systems.
-\end{itemize}
+To start up the scheduler:
+\begin{lstlisting}
+cylc schedule --start=2009082312 userguide
+\end{lstlisting}
+
+Do not choose a start time in the future, or the 'X' task, which waits
+on real time obs (or pretends to, in the example system) will not start
+until its time comes up!
+
+To view the running system,
+\begin{lstlisting}
+# in another terminal!
+cylc monitor -a userguide
+\end{lstlisting}
+
+To display the state of a particular task (choose one that currently
+exists in the system):
+\begin{lstlisting}
+$ cylc task-dump -t A%2009082312 userguide
+
+Task A%2009082312 in userguide:
+-------------------------------
+ + => prerequisite satisfied, or output completed
+ - => prerequisite NOT satisfied, or output NOT completed
+
+> Prerequisites:
+----------------
+ + A restart files ready for 2009082312
+ + obs data ready for 2009082312
+
+> Outputs:
+----------
+ - A%2009082312 finished
+ - surface pressure field ready for 2009082312
+ - A%2009082312 completed
+ + A%2009082312 started
+ - surface wind fields ready for 2009082312
+ + A restart files ready for 2009082318
+ - level forecast fields ready for 2009082312
+\end{lstlisting}
+
+To shut down the scheduler:
+\begin{lstlisting}
+cylc stop userguide
+\end{lstlisting}
+
+Finally, see \lstinline=cylc help= for the various other commands
+available for working with running systems.
 
 
 
