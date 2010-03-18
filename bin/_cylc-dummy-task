@@ -22,7 +22,9 @@ class dummy_task:
         # get a pyro proxy for the task object that I'm masquerading as
         self.name = task_name
         self.c_time = c_time
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + self.name + '%' + self.c_time )
+        self.id = task_name + '%' + c_time
+
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + self.id )
         
         # get a pyro proxy for the dummy clock
         self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.clock' )
@@ -50,7 +52,7 @@ class dummy_task:
             sleep( dt_diff_sec_real )
 
             # make sure the finished message is last
-            fin = self.name + '%' + self.c_time + ' finished' 
+            fin = self.id + ' finished' 
             if fin in outputs[time]:
                 outputs[time].remove( fin )
                 outputs[time].append( fin )
@@ -64,8 +66,8 @@ class dummy_task:
 
                 # but first report 'completed' for dependent tasks that
                 # don't care if this one finishes successfully or fails
-                self.task.incoming( 'NORMAL', 'completed' )
-                self.task.incoming( 'CRITICAL', 'failed' )
+                self.task.incoming( 'NORMAL', self.id + ' completed' )
+                self.task.incoming( 'CRITICAL', self.id + ' failed' )
                 sys.exit(1)
 
             prev_time = time
@@ -78,14 +80,16 @@ if __name__ == '__main__':
     groupname = os.environ['CYLC_NS_GROUP'] 
     pns_host = os.environ['CYLC_NS_HOST'] 
 
+    task_id = task_name + '%' + c_time
+
     clock_rate = 3600  # seconds per hour
     if 'CLOCK_RATE' in os.environ:
         clock_rate = int( os.environ['CLOCK_RATE'] )
 
     failout = False
     if 'FAILOUT_ID' in os.environ:
-        if os.environ['FAILOUT_ID'] == task_name + '%' + c_time:
-            print 'dummy task ' + task_name + '%' + c_time + ' programmed to FAIL!'
+        if os.environ['FAILOUT_ID'] == task_id:
+            print 'dummy task ' + task_id + ' programmed to FAIL!'
             failout = True
 
     dummy = dummy_task( task_name, c_time )
