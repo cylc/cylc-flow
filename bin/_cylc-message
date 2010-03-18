@@ -12,8 +12,6 @@ $TASK_NAME into the environment of each external task.
 """
 
 import os, sys
-import Pyro.core
-from Pyro.errors import NamingError, ProtocolError
 from optparse import OptionParser
 from time import sleep
 from connectors import connect_to_task
@@ -102,6 +100,9 @@ parser.add_option( "--all-outputs-completed",
 if options.taskname:
     # command line
     taskname = options.taskname
+
+    commandline_invocation = True
+
 else:
     # Default to $TASK_NAME
     if 'TASK_NAME' in os.environ.keys():
@@ -109,6 +110,8 @@ else:
     else:
         print 'ERROR, cylc message: no task name provided'
         sys.exit(1)
+
+    commandline_invocation = False
 
 # GET TASK CYCLE TIME--------------------------------------------------
 if options.ctime:
@@ -127,12 +130,12 @@ PRIORITY='NORMAL'
 if options.priority:
     priority=options.priority
 
-if 'CYLC_ON' not in os.environ.keys():
+if 'CYLC_ON' not in os.environ.keys() and not commandline_invocation:
 
-    # IF CYLC_ON IS NOT IN THE ENVIRONMENT THEN THIS SCRIPT HAS NOT BEEN
-    # CALLED FROM A TASK SPAWNED BY THE SCHEDULER, SO DIVERT THE MESSAGE
-    # TO STDOUT INSTEAD OF ATTEMPTING TO CONTACT A CYLC TASK PROXY
-    # OBJECT.
+    # DIVERT MESSAGES TO STDOUT UNLESS THIS SCRIPT WAS INVOKED FROM:
+    # (a) A TASK SPAWNED BY 'cylc run-task', OR 
+    # (b) BY MANUAL INVOCATION ON THE COMMANDLINE. 
+
     task_id = taskname + '%' + ctime
 
     if options.next_restart_completed:
