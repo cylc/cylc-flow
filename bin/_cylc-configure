@@ -50,6 +50,7 @@ while getopts "hf" opt; do
         FORCE=true
         ;;
         *)
+        echo "ERROR, unknown option $opt"
         exit 1
         ;;
     esac

@@ -4,7 +4,7 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "Usage: cylc register [options] [-d PATH] SYSTEM"
+	echo "Usage: cylc register [options] PATH SYSTEM"
     echo ""
     echo "Register a configured system for use under a given name. This simply"
     echo "stores an associatiation between the name and the system definition" 
@@ -12,11 +12,11 @@ function print_usage()
     echo "registered for use under multiple names (see the userguide)."
     echo ""
     echo "arguments:"
+    echo "   PATH        Location of a configured system definition directory."
     echo "   SYSTEM      Name under which to register the configured system."
     echo ""
     echo "options:"
     echo "  -h, --help   Print this usage message and exit"
-    echo "  -d PATH      Location of a configured system definition directory."
     echo "  -p           Print current system name registrations."
     echo "  -f           Force: overwrite an existing name registration."
 }
@@ -32,7 +32,6 @@ REG_DIR=$HOME/.cylc/registered
 [[ ! -d $REG_DIR ]] && mkdir -p $REG_DIR
 
 FORCE=false
-REG=false
 PRINT=false
 while getopts "hpfd:" opt; do
     case $opt in
@@ -46,11 +45,8 @@ while getopts "hpfd:" opt; do
          f)
         FORCE=true
         ;;
-        d)
-        REG=true
-        SYSDIR=$OPTARG
-        ;;
         *)
+        echo "ERROR unknown option: $opt"
         exit 1
         ;;
     esac
@@ -58,12 +54,7 @@ done
 
 shift $(( OPTIND -1 ))
 
-if [[ $# == 0 ]]; then
-    if [[ ! $PRINT ]]; then
-        print_usage
-        exit 1
-    fi
-
+if [[ $# == 0 ]] && $PRINT; then
     # print current registrations and exit
 
     # go to user registration directory
@@ -83,13 +74,13 @@ if [[ $# == 0 ]]; then
     exit 0
 fi
 
-# check args
-if [[ $# != 1 ]] || ! $REG; then
-    print_usage
+if [[ $# != 2 ]]; then
+    echo "ERROR: two arguments required!"
     exit 1
 fi
 
-SYSNAME=$1
+SYSDIR=$1
+SYSNAME=$2
 
 # absolute path to system definition dir
 if [[ $SYSDIR != /* ]]; then

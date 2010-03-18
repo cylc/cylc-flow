@@ -6,15 +6,16 @@ function print_usage()
 {
 	echo "Usage: cylc unregister [options] [SYSTEM]"
     echo ""
-    echo "Disassociate system names from configured system definition directories."
+    echo "Disassociate a system name from a configured system."
     echo ""
     echo "arguments:"
-    echo "   SYSTEM      A registered system name."
+    echo "   SYSTEM      A registered system name to unregister"
+    echo "               (not required for [-c] or [-x] options)."
     echo ""
     echo "options:"
     echo "  -h, --help   Print this usage message and exit"
-    echo "  -c           Check all registrations and delete any found to be invalid."
-    echo "  -a           Delete ALL your registered system names."
+    echo "  -c           Check ALL registrations, delete any invalid ones."
+    echo "  -x           Delete ALL your registered system names."
 }
 
 # cheap hack to get '--help', which isn't allowed by getopts
@@ -25,12 +26,15 @@ fi
 
 # make the registration directory if necessary
 REG_DIR=$HOME/.cylc/registered
-[[ ! -d $REG_DIR ]] && mkdir -p $REG_DIR
+if [[ ! -d $REG_DIR ]]; then
+    echo "You have 0 system names registered"
+    exit 0
+fi
 
 CHECK=false
 RESET=false
 DELETE=false
-while getopts "hca" opt; do
+while getopts "hcx" opt; do
     case $opt in
         h)
         print_usage
@@ -39,10 +43,11 @@ while getopts "hca" opt; do
         c)
         CHECK=true
         ;;
-        a)
+        x)
         RESET=true
         ;;
         *)
+        echo "ERROR illegal option: $opt"
         exit 1
         ;;
     esac
@@ -50,20 +55,22 @@ done
 
 shift $(( OPTIND -1 ))
 
-if [[ $# > 1 ]]; then
-    print_usage
+if ( $RESET || $CHECK ) && [[ $# != 0 ]]; then
+    echo "ERROR no arguments allowed for [-c] and [-x]"
     exit 1
 fi
 
-if [[ $# == 1 ]]; then
-    SYSNAME=$1
-    DELETE=true
-fi
-
+#----------------------------------------------------------------------
 if $RESET; then
     echo "DELETING ALL CURRENT SYSTEM REGISTRATIONS"
-    COUNT=0
     cd $REG_DIR
+
+    # how many systems registered?
+    N_REG=$( ls -1 | wc -l )
+    echo "You have $N_REG system names registered"
+    [[ $N_REG == 0 ]] && exit 0
+
+    COUNT=0
     for REG in *; do
         COUNT=$((COUNT+1))
         echo "[$COUNT] $REG: $(cat $REG)"
@@ -72,27 +79,15 @@ if $RESET; then
     exit 0
 fi
 
-if $DELETE; then
-    REG=$REG_DIR/$SYSNAME
-    if [[ -f $REG ]]; then
-        echo "DELETING: $SYSNAME -> $(cat $REG)"
-        rm $REG
-        exit 0
-    else
-        echo "ERROR: $SYSNAME is not registered."
-        exit 1
-    fi
-fi
-
+#----------------------------------------------------------------------
 if $CHECK; then
     # go to user registration directory
     cd $REG_DIR
     # how many systems registered?
     N_REG=$( ls -1 | wc -l )
-    echo "You have $N_REG systems registered"
+    echo "You have $N_REG system names registered"
     [[ $N_REG == 0 ]] && exit 0
 
-    # check and print each registered system
     COUNT=0
     FOUND=false
     for SYSNAME in *; do 
@@ -111,4 +106,26 @@ if $CHECK; then
     ! $FOUND && echo "All current registrations valid"
 
     exit 0
+fi
+if [[ $# != 1 ]]; then
+    echo "ERROR: illegal number of arguments"
+    exit 1
+fi
+
+#----------------------------------------------------------------------
+if [[ $# != 1 ]]; then
+    echo "ERROR: system name required"
+    exit 1
+fi
+ 
+SYSNAME=$1
+
+REG=$REG_DIR/$SYSNAME
+if [[ -f $REG ]]; then
+    echo "DELETING: $SYSNAME -> $(cat $REG)"
+    rm $REG
+    exit 0
+else
+    echo "ERROR: $SYSNAME is not registered."
+    exit 1
 fi

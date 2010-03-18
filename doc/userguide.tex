@@ -369,7 +369,7 @@ time.
     \caption{\small Job schedules for the example system after a delay
     of almost one whole forecast cycle, when intercycle dependencies are
     taken into account (above the time axis), and when they are not
-    (below the time time axis). The colored lines indicate the time that
+    (below the time axis). The colored lines indicate the time that
     each cycle is delayed, and normal ``caught up'' cycles
     are shaded gray.} 
 \end{figure} 
@@ -567,29 +567,30 @@ system, and compare the results with the scheduling diagrams in
 Section~\ref{TheCylcSchedulingAlgorithm}. The packaged examples should
 work ``out of the box'' in real and dummy mode, using the simple
 sequence of commands presented in the Quick Start Guide, from {\em
-Prepare For Scheduling} (section~\ref{QuickPrepareForScheduling})
+Prepare For Scheduling} (Section~\ref{QuickPrepareForScheduling})
 onward.  For detailed information on the packaged example systems, refer
 to {\em Complete Working Examples}
-(section~\ref{CompleteWorkingExamples}).  
+(Section~\ref{CompleteWorkingExamples}).  
 
 \pagebreak
 \section{Quick Start Guide} 
 \label{QuickStartGuide}
 
-The following is a quick summary of the steps required to get a system
-running under cylc. See the {\em Command Reference}
-(section~\ref{CommandReference}) or, equivalently, \lstinline=cylc help=
-for available commands and options, and subsequent sections
-of this document for more detailed information about each operation.
+This section is intended as a quick reminder for those who already know
+how to use cylc. 
 
-\subsection{Start A Pyro Nameserver}
-\label{QuickStartAPyroNameserver}
+Refer to \lstinline=cylc help=, the {\em Command Reference}
+(Section~\ref{CommandReference}), and the rest of this userguide, for
+detailed information on available commands, options, and operations.
+
+\subsection{Starting A Pyro Nameserver}
+\label{QuickStartingAPyroNameserver}
 
 Pyro is the object oriented Python RPC mechanism that allows external
 tasks to communicate with their proxy objects inside a cylc scheduler.
 If there is no Pyro nameserver (\lstinline=pyro-ns=) running already on
 your network segment (check with \lstinline=pyro-nsc ping=) then start
-one up as described in Section~\ref{RunningPyro} (Running Pyro).
+one up as described in {\em Running Pyro} (Appendix~\ref{RunningPyro}).
 
 \subsection{Defining A System} 
 \label{QuickDefineASystem}
@@ -600,7 +601,7 @@ one up as described in Section~\ref{RunningPyro} (Running Pyro).
         
     \begin{itemize}
         \item each task must have well defined {\bf prerequisites} and {\bf
-            outputs} (Section~\ref{PrerequisitesAndOutputs}).
+            outputs} (Section~\ref{TaskPrerequisitesAndOutputs}).
     \end{itemize}
 
     \item write a {\bf task definition file} for each task
@@ -610,8 +611,8 @@ one up as described in Section~\ref{RunningPyro} (Running Pyro).
         (Section~\ref{TaskScripts}).
 \end{itemize}
 
-\subsection{Prepare For Scheduling}
-\label{QuickPrepareForScheduling}
+\subsection{Preparing For Scheduling}
+\label{QuickPreparingForScheduling}
 
 \begin{itemize}
     \item \lstinline=cylc configure= parses
@@ -624,38 +625,116 @@ one up as described in Section~\ref{RunningPyro} (Running Pyro).
         cylc commands can access the system by name. 
 \end{itemize}
 
-\subsection{Scheduling}
-\label{QuickScheduling}
+\subsection{Running The System}
+\label{QuickRunningTheSystem}
 
 \begin{itemize}
     \item \lstinline=cylc schedule= starts up a system.
     \item \lstinline=cylc stop= shuts down a running system.
     \item \lstinline=cylc monitor= lets you view a running system.
+    \item \lstinline=cylc help= shows the commands available for working with running systems.
 \end{itemize}
 
-The cylc command set includes many other commands for manipulating a
-running system, in between startup and shutdown; see 
-\lstinline=cylc help=.
- 
+
+
+
+\pagebreak
 \section{System Definition} 
 \label{SystemDefinition}
 
-Cylc sees a forecasting system as an evolving pool of {\bf tasks} with
-clearly defined {\bf prerequisites} and {\bf outputs}
-(Section~\ref{PrerequisitesAndOutputs}), where {\bf a task is any group
-of one or more processes treated as a single entity for scheduling
-purposes}.
+This section of the userguide explains how to define the interface
+between cycl and the real tasks that you want to join together in
+forecasting system.
 
-\subsection{Directory Structure} 
-\label{DirectoryStructure}
+\subsection{Cylc Tasks}
+\label{CylcTasks}
 
-A cylc {\bf system definition directory} is by convention 
-(but not necessarily) located under \lstinline=$CYLC_DIR/systems=. It
-must contain a \lstinline=taskdef= sub-directory for task definition
-files (Section~\ref{TaskDefinitionFiles}), and a \lstinline=scripts=
-sub-directory for task scripts (Section~\ref{TaskScripts}). Task class
-and config modules are also written into the directory by
-\lstinline=cylc configure=: 
+A {\bf task}, for our purposes, is any group of processes treated as a
+single entity by the scheduler. 
+
+Cylc sees a forecasting system as an evolving, self-organising pool of
+task proxy objects with clearly defined {\bf prerequisites} and {\bf
+outputs}, as explained in {\em The Cylc Scheduling Algorithm}
+(Section~\ref{TheCylcSchedulingAlgorithm}).
+
+Those properties of a task that are relevant to scheduling must be defined
+in a {\em cylc task definition file} (Section~\ref{TaskDefinitionFiles}). 
+
+When a cylc task proxy's prerequisites have been satisfied it invokes
+the real external task by calling the {\em cylc task script}
+(Section~\ref{TaskScripts} specified in its task definition file. 
+
+\subsection{System Granularity} 
+\label{System Granularity}
+
+A system can contain a small number of large, internally complex tasks;
+a large number of small, simple tasks; or anything in between. However,
+cylc can easily handle large task numbers, and is entirely self
+organising, so there are advantages fine-graining a system:
+
+\begin{itemize}
+    \item a more modular and transparent system.
+
+    \item better functional parallelism: multiple processes running
+        at the same time.
+
+    \item faster failure recovery: rerun just the tasks(s) that failed. 
+
+    \item the same external task script (e.g.\ for moving files around)
+        can often be invoked, with different arguments, for multiple
+        tasks.
+
+\end{itemize}
+
+
+
+\subsection{External Task Behaviour} 
+\label{ExternalTaskBehaviour}
+
+\begin{itemize}
+    \item  {\bf It should be possible to restart a failed task (after fixing
+        the problem) by simply resubmitting it at the same cycle time}, i.e.\
+        failure at any point during task execution should not render a
+        restart impossible (by corrupting the state of some internal-use
+        files, for instance). 
+
+    \item {\bf A task that in principle has no dependence on previous
+        instances (i.e.\ on the same task at prior cycle times) should
+        be able to run as soon as its prerequisites are satisfied, even
+        if one or more of its predecessors has not finished yet}.
+        Similarly a warm-cycled forecast model, which depends on
+        previous instances
+        through restart prerequisites that are normally completed
+        early on in a forecast, should be able to run as soon as its
+        prerequisites (including restarts) are satisfied.
+
+        If this is not the case in practice, perhaps because of
+        conflicts in the use of temporary files or similar, then cylc's
+        sequential task type modifier can easily force particular tasks
+        to run sequentially, but the resulting system will be somewhat
+        less efficient than it could be.
+
+    \item {\bf A warm-cycled forecast model's ``restart files'', which
+        are written in one cycle and required as input in the next,
+        should be organised by cycle time via file or directory naming
+        conventions so that the same files are not simply overwritten
+        each time}, perhaps in a simple rolling archive covering the
+        previous N cycles if not stored permanently. Then (a) given all
+        other cycle time dependent inputs, we can easily rerun the task
+        for any cycle still on the restart archive, and (b) there's no
+        danger of overwriting important restart files by accidental
+        invocation of a task at the wrong cycle time and thereby
+        making it impossible to go back and warm-start the correct cycle
+        (a cold start would be required).
+
+\end{itemize}
+
+\subsection{System Definition Directories} 
+\label{SystemDefinitionDirectories}
+
+All files pertaining to a particular forecasting system should be
+maintained under a system definition directory, which is by convention 
+(but not necessarily) located under \lstinline=$CYLC_DIR/systems=: 
 
 \lstset{language=bash}
 
@@ -688,146 +767,90 @@ particular versions of cylc. For ease of use external systems can be
 symlinked into the main cylc systems directory.
 
 
-\subsection{System Granularity} 
-\label{System Granularity}
 
-A system can contain a small number of large, internally complex tasks;
-a large number of small, simple tasks; or anything in between. However,
-because cylc can handle large systems and is entirely self organising
-there are advantages to the fine-grained approach: 
+\subsection{Task Prerequisites And Outputs}
+\label{TaskPrerequisitesAndOutputs}
 
-\begin{itemize}
-    \item better ``functional parallelism'' (multiple tasks running
-        at the same time whereever possible).
-    \item a more modular and transparent system.
-    \item faster recovery from failures - rerun just the tasks(s) that
-        failed. 
-    \item the same external task script (e.g.\ for moving files around)
-        can often be invoked, with different arguments, for multiple
-        tasks.
-\end{itemize}
+Cylc's scheduling algorithm matches one task's completed outputs with
+another's unsatisfied prerequisites
+(Section~\ref{TheCylcSchedulingAlgorithm}).  
 
-\subsection{External Task Behaviour} 
-\label{ExternalTaskBehaviour}
-
-\subsubsection{Requirements}
+Each task definition file must specify a list of prerequisites that have
+to be satisfied before the task can run, and a list of outputs that will
+be completed as the task runs. {\bf These are simply literal text
+strings - messages that running tasks must send to their proxy objects,
+inside the cylc scheduler, whenever they complete a registered output}.
 
 \begin{itemize}
-    \item Cylc assumes that any failed task can be restarted (presumably
-        after fixing the problem) by simply resubmitting it at the same
-        cycle time.
-\end{itemize}
+    \item A task proxy considers a registered output ``completed''
+        if it has received a matching message from its external task.
 
-\subsubsection{Suggestions}
-
-\begin{itemize}
-
-    \item {\bf A task that in principle has no dependence on previous
-        instances (i.e.\ the same task at earlier cycle times) should be
-        able to run as soon as its prerequisites are satisfied, even if
-        one or more of its predecessorshas not finished yet}. Similarly
-        a forecast model, which depends on previous instances only
-        through restart prerequisites that are normally completed early
-        in a run, should be able to run as soon as its prerequisites,
-        including restarts, are satisfied.
-
-        If this is not the case in practice, perhaps because of
-        conflicts in the use of temporary files or similar, then cylc's
-        sequential task type modifier can easily force particular tasks
-        to run sequentially, but the resulting system will be somewhat
-        less efficient than it could be.
-
-    \item {\bf A warm-cycled forecast model's ``restart files'', which
-        are written in one cycle and required as input in the next,
-        should be organised by cycle time via file or directory naming
-        conventions so that they are not simply overwritten by each task
-        instance} perhaps in a simple rolling archive covering the
-        previous N cycles if not stored permanently. Then (a) given all
-        other cycle time dependent inputs, we can easily rerun the task
-        for any cycle still on the restart archive, and (b) there's no
-        danger of overwriting important restart files by accidental
-        invocation of a task at the wrong cycle time and thereby
-        rendering it impossible to go back and run the correct cycle
-        (thus requiring a cold start for the model).
+    \item A task proxy considers a registered prerequisite ``satisfied''
+        if another task proxy reports that it has a matching completed
+        output.
 
 \end{itemize}
 
-\section{Task Definition Files} 
-\label{TaskDefinitionFiles}
+\lstset{language=cylctaskdef} 
 
-A simple {\bf Task Definition File} must be written for each task.
-\lstinline=cylc configure= parses these and generates a Python module
-that defines the task proxy classes for the system. {\bf Task
-Definition Files define just the properties of tasks that matter from a
-scheduling perspective: name, external task, valid cycle times,
-prerequisites, outputs.} 
+\subsubsection{Cycle Time}
 
-Other task-specific configuration settings that are not relevant to
-scheduling (e.g.\ numerical method choices, MPP
-domain decomposition, input and output directory locations, and so on)
-belong in the external location where the real task resides, or possibly
-in the cylc task scripts that run the external tasks (ideally these
-should contain configuration details specific to running an external
-task within the wider system, but there's nothing to stop you putting
-more than that in them). However, there is one minor exception to this
-rule. If your system has several tasks that essentially do the same
-thing you can get them all to invoke the same external program with
-task-specific input parameters supplied through environment variables
-that are specified in the Task Definition Files. Forecasting systems
-commonly have to move a lot of files around (from the output
-directory(s) of one task to the input directory(s) of others, for
-instance). See Section~\ref{RealDependencies}, and cylc's file-transfer
-example in userguide !TO DO!. 
+{\bf Prerequisites and outputs should always contain a cycle time} to
+distinguish between the outputs of different instances of a task that
+may coexist in the task pool at any time. 
 
-\section{Prerequisites And Outputs}
-\label{PrerequistiesAndOutputs}
+Prerequisites that reflect same-cycle dependencies, which is the usual
+case, should mention the host task's own cycle time, expressed as
+\lstinline=$(CYCLE_TIME)= in task definition files.
 
-%Cylc's scheduling algorithm works by matching one task's unsatisfied
-%prerequisites with another's completed outputs (Section~\ref{algorithm}). 
+For {\em intercycle dependencies} the cycle time in a prerequisite message 
+should be expressed as some offset from the task's own cycle time, e.g.\ 
+\lstinline=$(CYCLE_TIME - 6)= for dependence on output generated by a
+task with a cycle time 6 hours earlier. See {\em Task Definition Files}
+(Section~\ref{TaskDefinitionFiles}) for since intercycle dependencies (other
+than forecast
+model restart
+dependences) are rare, however cylc's task definition mechanism (below)
+provides some simple cycle time arithmetic operations for unusual cases. 
 
-This sections explains how prerequisites and outputs are expressed in
-cylc, and how to register them in task definition files.
+\lstset{language=Python}
+\begin{lstlisting}
+# example: completion of a file with date-stamped filename
+"file foo_.bar ready"
+# example: other event
+"archiving completed for $(MY_CYCLE_TIME)"
+\end{lstlisting}
 
-\subsection{Interpretation As Messages} 
 
-\begin{shaded}
-    Prerequisites and outputs are literal text strings, representing
-    events that are important to scheduling, sent from running tasks
-    to the  task proxy objects that represent them inside cylc.
-\end{shaded}
+\subsubsection{Message Form}
 
-A task proxy considers a registered {\bf output} ``completed'' if it has
-received a matching message from its external task.
+The exact form of these messages does not matter so long as the right 
+prerequisites and outputs match exactly. For example, if the message 
+\begin{lstlisting}
+"storm surge forecast fields ready for $(CYCLE_TIME)"
+\end{lstlisting} 
+is registered as an output by a task that generates said forecast
+fields, then the exact same message should be registered as a
+prerequisite by any task requiring the same fields as input (presumably
+any storm surge postprocessing tasks in this case). 
 
-A task proxy considers a registered {\bf prerequisite} ``satisfied'' if
-any other task in the system has reported to it a matching completed
-output.
-
-For example, the message ``storm surge forecast products ready for
-2009102018'' could be registered as an output by the task that generates
-the referenced storm surge forecast products, and as a prerequisite by
-any tasks that require them as input. 
+\subsubsection{Message Content}
 
 Prerequisites and outputs typically refer to the completion of a file
-or a group of files, but any event can be used: database interactions,
-download from a network, copying, archiving, etc., can also be
-used to trigger other tasks.
+or a group of files, but any event that tasks could trigger off can be
+used: database interactions, download of data from a network, copying
+or archiving of files, etc.
 
-\subsection{The Truth Of Messages}
+For single file outputs the cylc message could include the actual
+filename, 
+e.g.\ \lstinline="file surface-pressure-$(CYCLE_TIME).nc ready for use"=,
+but there is no need to do this (see {\em Message Truth} below); you
+might as well adopt a message format that applies equally well to
+more general events and multi-file outputs,
+e.g.\ \lstinline="surface pressure fields ready for $(CYCLE_TIME)"=
 
-For an output that corresponds directly to a single file you can, if
-you want, put the filename itself in the output message:
-\begin{lstinline}
-    "file surface-pressure-$(CYCLE_TIME).nc ready"
-\end{lstinline}
 
-However, there is no particular need to use the actual filename, 
-so you might as well use a more form in order to be consistent with
-messages refering to a whole group of files or other non-file-related
-events:
-\begin{lstinline}
-    "surface pressure fields ready for $(CYCLE_TIME)"
-\end{lstinline}
+\subsubsection{Message Truth}
 
 In particular, there is no need to include actual file locations because
 cylc does not check that incoming messages (i.e.\ reports of completed
@@ -841,24 +864,6 @@ necessarily do the job themselves: if a task cannot run or cannot
 complete because of missing input files, for example, it must report the
 failure back to cylc immediately.
 
-
-\subsection{Cycle Time in Messages}
-
-Prerequisites and outputs should always contain a cycle time string to
-distinguish the outputs from instances of the same task in different
-forecast cycles. The time to use in messages would normally be the
-task's own cycle time, since intercycle dependencies (other than
-forecast model restart dependences) are rare, however cylc's task
-definition mechanism (below) provides some simple cycle time arithmetic
-operations for unusual cases. 
-
-\lstset{language=Python}
-\begin{lstlisting}
-# example: completion of a file with date-stamped filename
-"file foo_$(MY_CYCLE_TIME).bar ready"
-# example: other event
-"archiving completed for $(MY_CYCLE_TIME)"
-\end{lstlisting}
 
 
 \subsubsection{General Guidelines}
@@ -1296,6 +1301,33 @@ that comes through the cylc system definition.
 %the system.
 
 
+
+\section{Task Definition Files} 
+\label{TaskDefinitionFiles}
+
+A simple {\bf Task Definition File} must be written for each task.
+\lstinline=cylc configure= parses these and generates a Python module
+that defines the task proxy classes for the system. {\bf Task
+Definition Files define just the properties of tasks that matter from a
+scheduling perspective: name, external task, valid cycle times,
+prerequisites, outputs.} 
+
+Other task-specific configuration settings that are not relevant to
+scheduling (e.g.\ numerical method choices, MPP
+domain decomposition, input and output directory locations, and so on)
+belong in the external location where the real task resides, or possibly
+in the cylc task scripts that run the external tasks (ideally these
+should contain configuration details specific to running an external
+task within the wider system, but there's nothing to stop you putting
+more than that in them). However, there is one minor exception to this
+rule. If your system has several tasks that essentially do the same
+thing you can get them all to invoke the same external program with
+task-specific input parameters supplied through environment variables
+that are specified in the Task Definition Files. Forecasting systems
+commonly have to move a lot of files around (from the output
+directory(s) of one task to the input directory(s) of others, for
+instance). See Section~\ref{RealDependencies}, and cylc's file-transfer
+example in userguide !TO DO!. 
 
 \section{System Configuration}
 \label{SystemConfiguration}

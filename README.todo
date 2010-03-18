@@ -1,5 +1,8 @@
 To Do
 
+* deathwish tasks (OPS!) - can die and be eliminated without holding up
+  the system.
+
 * consider allowing multiple taskdef directories and writing combined
   system modules to another location - easy! would require added both
   scripts dirs to PATH...
