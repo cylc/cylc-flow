@@ -940,8 +940,8 @@ on external input.
 \subsubsection{Cycle Time}
 
 {\bf Prerequisites and outputs should always contain a cycle time} to
-distinguish between the outputs of different instances of a task that
-may coexist in the task pool at any time. 
+distinguish between different instances of a task (at different 
+forecast cycles) that may coexist in the task pool at any time. 
 
 Prerequisites that reflect same-cycle dependencies, which is the usual
 case, should mention the host task's own cycle time, expressed as
@@ -963,10 +963,10 @@ the message,
 \begin{lstlisting}
 "storm surge forecast fields ready for $(CYCLE_TIME)"
 \end{lstlisting} 
-is registered as an output by a task that generates said forecast
+is registered as an output by the task that generates said forecast
 fields, then the exact same message should be registered as a
-prerequisite by any task requiring the same field data as input
-(presumably any storm surge postprocessing tasks in this case). 
+prerequisite by any task that requires the same field data as input
+(presumably storm surge postprocessing tasks in this case). 
 
 \subsubsection{Message Content}
 
