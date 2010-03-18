@@ -64,16 +64,14 @@ def create_ns_groupname( nameserver, groupname ):
                 print '  + ' + obj[0]
 
         print
-        print "If the nameserver group is being used by another cylc"
-        print "instance, re-register your system under a different name."
-        print "using the 'cylc register' command."
+        print "If the group is in use by another cylc instance then re-register your"
+        print "system under a different name using the 'cylc register' command."
         print 
-        print "If the nameserver group is being used by a running cylc"
-        print "instance of yours that you no longer need, shut it down"
-        print "properly using the 'cylc control' command."
+        print "If the group is being used by a running cylc of yours that you no"
+        print "longer need, shut it down using the 'cylc control' command."
         print 
-        print "If the nameserver group is a relic of an aborted cylc run"
-        print "you can delete it manually from the nameserver as follows:"
+        print "If the group is a relic of an aborted cylc run you can delete it"
+        print "manually from the nameserver:"
         print 
         print "pyro-nsc deletegroup " + groupname + "   #<--DO-THIS-!" 
         print
@@ -141,6 +139,10 @@ def service_remote_requests( remote, pool, log, failout = None ):
         process_tasks = True
         
     if remote.reset_a_task:
+        if failout:
+            if remote.reset_task_id == failout:
+                print "resetting failout on " + failout + " prior to insertion"
+                os.environ['FAILOUT_ID'] = ""
         log.warning( 'pre-reset state dump: ' + pool.dump_state( new_file = True ))
         pool.reset_task( remote.reset_task_id )
         remote.reset_a_task = False
