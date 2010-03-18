@@ -14,9 +14,9 @@ parser.add_option( "-t",
 (options, args) = parser.parse_args()
 
 if options.reset_id:
-    if parser.prompt( 'Reset task ' + connector.options.reset_id + ' in'):
+    if parser.prompt( 'Reset task ' + options.reset_id + ' in'):
         god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-        god.reset_to_waiting( connector.options.reset_id )
+        god.reset_to_waiting( options.reset_id )
 
 else:
     parser.error( "Task ID required" )
