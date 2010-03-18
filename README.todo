@@ -4,11 +4,17 @@ To Do
 
 * put monitor pyro connection in the same "connector" framework.
 
-* setting a stop time after X gone past => required a nudge for
-  shutdown!
+* DOCUMENT: OPS-style tasks -if others only depend on "completion", then
+  failure won't delay downstream tasks. However, cylc still does not
+  delete them automatically because the failed task should still be seen
+  by the system operator - and this will eventually stall the system at
+  max runahead.
 
-* deathwish tasks (OPS!) - can die and be eliminated without holding up
-  the system.
+* DOCUMENT: cotemporal mates of failed tasks are not deleted
+  automatically because they record the state of system tasks that may
+  be required to satisfy the failed task's prerequisites when it is
+  reset after fixing the problem. Otherwise the sysop can use 
+  'cylc reset --ready-to-run'
 
 * consider allowing multiple taskdef directories and writing combined
   system modules to another location - easy! would require added both
@@ -26,9 +32,6 @@ To Do
 
 * warn about consequences of deleting a task: system may move on so that
   a reinserted task will not get its prerequisites satisfied.
-
-* stop-at (only when some tasks past designated time?) requires a
-  nudge to complete!!!!!!!!!!!!1
 
 * Add NIWA Copyright to all files.
 
@@ -76,20 +79,6 @@ To Do
   shorter timestep; if the original forecast succeeds, the backup can
   self destruct. The forecast post-processing task(s) would trigger off
   either the original or the backup forecast.
-
-* can a system that's not being monitored stall (i.e. never run through
-  the task processing loop)?  This seemed to happen ONCE to the topnet
-  test system while I was in the UK recently. Jan 2009: possible cause
-  of this: if a task with no downstream dependencies fails
-  (topnet_cleanup), the rest will carry on until delayed at the max
-  maximum runahead time which results in a bunch of tasks at the front
-  end finished but not abdicated. When the failed task is killed no task
-  messages will come in to stimulate the event loop, because the
-  existing tasks are all finished, so the system needs a remote "bump"
-  to get going again.
-  22 Feb: this happened again without any failed tasks: topnet test
-  system was in hibernation for 10 days and reawoke when I hooked up a
-  new monitor process.
 
 * check that task output times do not exceed the registered run time
 
