@@ -1,37 +1,33 @@
 #!/usr/bin/python
 
-import sys
-from connectors import connect_to_control
+from connectors import connector
+from CylcOptionParsers import PromptOptionParser
 
+parser = PromptOptionParser( """cylc stop [options] SYSTEM 
 
-usage = """cylc stop [options] SYSTEM 
+Shut down a cylc system after all currently running tasks have finished.""" )
 
-Shut down a cylc system after all currently running tasks have finished."""
-
-connector = connect_to_control( usage )
-
-connector.parser.add_option( "--now", 
+parser.add_option( "--now", 
         help="Shutdown the system NOW, even if tasks are still running. "
         "NOTE THAT THIS DOES NOT KILL RUNNING EXTERNAL TASKS",
         action="store_true", default=False, dest="shutdownnow" )
 
-connector.parser.add_option( "--at", 
+parser.add_option( "--at", 
         help="Do not launch any new tasks beyond CYCLE, and "
         "shut the system down when all tasks reach that cycle.",
         metavar="CYCLE", action="store", dest="stop_time" )
 
-connector.parse_args()
+(options, args) = parser.parse_args()
+god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
-controller = connector.get_control()
+if options.stop_time:
+    if parser.prompt( 'Set stop time ' + options.stop_time + ' for'):
+        god.set_stop_time( options.stop_time )
 
-if connector.options.stop_time:
-    if connector.prompt( 'Set stop time ' + connector.options.stop_time + ' for'):
-        controller.set_stop_time( connector.options.stop_time )
-
-elif connector.options.shutdownnow:
-    if connector.prompt( 'Shutdown NOW' ):
-        controller.shutdown_now()
+elif options.shutdownnow:
+    if parser.prompt( 'Shutdown NOW' ):
+        god.shutdown_now()
 
 else:
-    if connector.prompt( 'Shutdown' ):
-        controller.shutdown()
+    if parser.prompt( 'Shutdown' ):
+        god.shutdown()

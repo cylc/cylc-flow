@@ -1,27 +1,28 @@
 #!/usr/bin/python
 
 import sys, re
-from connectors import connect_to_control
+from connectors import connector
+from CylcOptionParsers import NoPromptOptionParser
 
-usage = """cylc what-is [options] SYSTEM 
+parser = NoPromptOptionParser( usage = """cylc what-is [options] SYSTEM 
 
 Retrieve the description of a running system, or a task proxy object
-that exists within a running system. """
+that exists within a running system. """ )
 
-connector = connect_to_control( usage, no_prompt=True )
-
-connector.parser.add_option( "-t", "--task",
+parser.add_option( "-t", "--task",
         help="Retrieve a task, rather than system, description.",
         metavar="TASK", action="store", dest="task" )
 
-connector.parse_args()
+(options, args) = parser.parse_args()
+system_name = parser.get_system_name()
 
-controller = connector.get_control()
+if options.task:
 
-if connector.options.task:
-    task = connector.options.task
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+ 
+    task = options.task
     print
-    print task + ' in ' + connector.system_name + ':'
+    print task + ' in ' + system_name + ':'
 
     # retrieve and print task class descriptions
     names = [ task ]
@@ -29,7 +30,7 @@ if connector.options.task:
     # strip off cycles time, if given
     names = [ re.sub( '%.*', '', name ) for name in names ]
 
-    info = controller.get_task_info( names )
+    info = god.get_task_info( names )
     for name in info.keys():
         print
         for line in info[name]:
@@ -38,5 +39,5 @@ if connector.options.task:
 
 else: 
     print
-    print 'System: ' + connector.system_name
+    print 'System: ' + system_name
     print 'SYSTEM DESCRIPTION NOT YET IMPLEMENTED'

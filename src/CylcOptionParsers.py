@@ -53,6 +53,7 @@ arguments:
 
         return ( options, args )
 
+
     def get_system_name( self ):
         return self.system_name
 
@@ -68,35 +69,31 @@ class PromptOptionParser( NoPromptOptionParser ):
 
     def __init__( self, usage ):
 
-        NoPromptOptionParse.__init__( self, usage )
+        NoPromptOptionParser.__init__( self, usage )
 
         self.add_option( "-f", "--force",
                 help="Do not ask for confirmation before acting.",
                 action="store_true", default=False, dest="force" )
 
-#    def parse_args( self ):
-#        ( options, args ) = self.parse_args()
-#        self.options = options
-#        self.args = args
-#
-#        if len( self.args ) == 0:
-#            self.parser.error( "Please supply a target system name" )
-#        elif len( self.args ) > 1:
-#            self.parser.error( "Too many arguments" )
-#
-#        self.system_name = self.args[0]
-#
-#        if not self.options.pns_host:
-#            self.parser.error( "Required: Pyro nameserver hostname" )
-#        #else:
-#        #    self.pns_host = self.options.pns_host
-#
-#        # Pyro nameserver groupname of the target system
-#        if self.options.username:
-#            username = self.options.username
-#        else:
-##            username = os.environ[ 'USER' ] 
-#
-#        self.groupname = username + '_' + self.system_name
+    def parse_args( self ):
 
+        (options, args) = NoPromptOptionParser.parse_args( self )
 
+        if options.force:
+            self.force = True
+        else:
+            self.force = False
+
+        return (options, args)
+
+    def prompt( self, reason ):
+        msg =  reason + " '" + self.system_name + "'"
+
+        if self.force:
+            return True
+
+        response = raw_input( msg + ': ARE YOU SURE (y/n)? ' )
+        if response == 'y':
+            return True
+        else:
+            return False

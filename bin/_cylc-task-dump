@@ -1,7 +1,8 @@
 #!/usr/bin/python
 
-import sys, re
-from connectors import connect_to_control
+import re, sys
+from connectors import connector
+from CylcOptionParsers import NoPromptOptionParser
 
 def print_heading( strng ):
         print
@@ -9,28 +10,26 @@ def print_heading( strng ):
         underline = re.sub( '.', '-', strng )
         print underline
 
-usage = """cylc task-dump [options] SYSTEM 
+parser = NoPromptOptionParser( usage = """cylc task-dump [options] SYSTEM 
 
 Display the current status of a task's prerequisites, outputs, 
-and other information deemed relevant to scheduling."""
+and other information deemed relevant to scheduling.""" )
 
-connector = connect_to_control( usage, no_prompt=True )
-
-connector.parser.add_option( "-t", 
+parser.add_option( "-t", 
         help="ID of the task to dump.",
         metavar="TASK%CYCLE", action="store", dest="task_id" )
 
-connector.parse_args()
+(options, args) = parser.parse_args()
 
-controller = connector.get_control()
+if not options.task_id:
+    parser.error( "Task ID required" )
 
-if not connector.options.task_id:
-    connector.parser.error( "Task ID required" )
+god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
-id = connector.options.task_id
-sysname = connector.system_name
+id = options.task_id
+sysname = parser.get_system_name()
 
-result = controller.get_task_requisites( [ id ] )
+result = god.get_task_requisites( [ id ] )
 
 if id not in result.keys():
     print "Task " + id + " not found in " + sysname

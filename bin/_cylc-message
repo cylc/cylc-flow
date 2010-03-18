@@ -12,9 +12,9 @@ $TASK_NAME into the environment of each external task.
 """
 
 import os, sys
-from optparse import OptionParser
 from time import sleep
-from connectors import connect_to_task
+from optparse import OptionParser
+from connectors import connector
 
 # PARSE THE COMMAND LINE-----------------------------------------------
 usage = """cylc message [options] [MESSAGE] 
@@ -217,14 +217,15 @@ else:
     message = ' '.join(args)
 
 # CONNECT TO THE CORRECT TASK PROXY OBJECT-----------------------------
-task = connect_to_task( taskname, ctime, pns_host, groupname ).get_task()
+
+task_id = taskname + '%' + ctime
+task = connector( pns_host, groupname, task_id ).get()
 
 # DO THE MESSAGING----------------------------------------------------
 
 # the "all completed" special options are implemented as short cut
 # functions in the task proxy objects
 
-task_id = taskname + '%' + ctime
 
 if options.next_restart_completed:
     task.set_next_restart_completed()

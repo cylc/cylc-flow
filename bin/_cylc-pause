@@ -1,27 +1,26 @@
 #!/usr/bin/python
 
-import sys
-from connectors import connect_to_control
+from connectors import connector
+from CylcOptionParsers import PromptOptionParser
 
+parser = PromptOptionParser( """cylc pause [options] SYSTEM 
 
-usage = """cylc pause [options] SYSTEM 
+Pause a system, i.e. do not launch any new tasks.
 
-Pause a system: do not launch any new tasks."""
+With no options, pause NOW. """)
 
-connector = connect_to_control( usage )
-
-connector.parser.add_option( "--at", 
+parser.add_option( "--at", 
         help="Pause each task as it reaches cycle time CYCLE.",
         metavar="CYCLE", action="store", dest="pause_time" )
 
-connector.parse_args()
+(options, args) = parser.parse_args()
 
-controller = connector.get_control()
+god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
-if connector.options.pause_time:
-    if connector.prompt( 'Pause at ' + connector.options.pause_time + ' for'):
-        controller.set_hold_time( connector.options.pause_time )
+if options.pause_time:
+    if parser.prompt( 'Pause at ' + options.pause_time + ' for'):
+        god.set_hold_time( options.pause_time )
 
 else:
-    if connector.prompt( 'Pause' ):
-        controller.hold()
+    if parser.prompt( 'Pause' ):
+        god.hold()

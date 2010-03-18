@@ -1,10 +1,9 @@
 #!/usr/bin/python
 
-import sys
-from connectors import connect_to_control
+from connectors import connector
+from CylcOptionParsers import PromptOptionParser
 
-
-usage = """cylc nudge [options] SYSTEM 
+parser = PromptOptionParser( """cylc nudge [options] SYSTEM 
 
 Invoke the task processing loop in a running system.
 
@@ -13,16 +12,13 @@ proxy changes state due to an incoming message, and after certain other
 events. If this fails to happen when it should the system will appear to
 be "stuck". In the unlikely event that this happens, which implies a
 minor bug in cylc that should be fixed, a quick nudge will get the
-system going again."""
+system going again.""" )
 
 # INVOKING THE LOOP ON A TIMEOUT WOULD BE A FAILSAFE OPTION:
 # 'cylc schedule --use-timeout'?
 
-connector = connect_to_control( usage )
+(options, args) = parser.parse_args()
 
-connector.parse_args()
-
-controller = connector.get_control()
-
-if connector.prompt( 'Nudge' ):
-    controller.nudge()
+if parser.prompt( 'Nudge' ):
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    god.nudge()

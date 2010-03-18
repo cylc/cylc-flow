@@ -1,24 +1,22 @@
 #!/usr/bin/python
 
-import sys
-from connectors import connect_to_control
+from connectors import connector
+from CylcOptionParsers import PromptOptionParser
 
-usage = """cylc set-level [options] SYSTEM 
+parser = PromptOptionParser( """cylc set-level [options] SYSTEM 
 
-Change the logging verbosity level of a running system."""
-
-connector = connect_to_control( usage )
+Change the logging verbosity level of a running system.""" )
 
 vchoices = ['debug','info', 'warning', 'error', 'critical'] 
-connector.parser.add_option( "-l", "--level",
+parser.add_option( "-l", "--level",
         help="Logging level: " + ', '.join(vchoices),
         action="store", choices=vchoices, dest="verbosity" )
 
-connector.parse_args()
+(options, args) = parser.parse_args()
 
-if not connector.options.verbosity:
-    connector.parser.error( "Logging level required." )
+if not options.verbosity:
+    parser.error( "Logging level required." )
 
-controller = connector.get_control()
-
-controller.set_verbosity( connector.options.verbosity )
+if parser.prompt( "Set logging level to " + options.verbosity + " in " ):
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    god.set_verbosity( options.verbosity )

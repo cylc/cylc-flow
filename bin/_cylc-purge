@@ -1,38 +1,36 @@
 #!/usr/bin/python
 
-import sys
-from connectors import connect_to_control
+from connectors import connector
+from CylcOptionParsers import PromptOptionParser
 
-usage = """cylc purge [options] SYSTEM 
+parser = PromptOptionParser( """cylc purge [options] SYSTEM 
 
 Force a task to spawn and die, and then force every task that depends on
 its outputs to spawn and die, and then force every task that depends on
 their outputs to spawn and die, and so on down to a given cycle time.
 
 WARNING: This kills task proxy objects in the scheduler, NOT running
-external tasks!"""
+external tasks!""")
 
-connector = connect_to_control( usage )
-
-connector.parser.add_option( "-t", "--task",
+parser.add_option( "-t", "--task",
         help="ID of the task whose decendants are to be wiped out.",
         metavar="TASK%CYCLE", action="store", dest="target_id" )
 
-connector.parser.add_option( "-s", "--stop",
+parser.add_option( "-s", "--stop",
         help="Cycle to at which to stop the slaughter.",
         metavar="STOP", action="store", dest="stop" )
 
-connector.parse_args()
+(options, args) = parser.parse_args()
 
-controller = connector.get_control()
+if not options.target_id:
+    parser.error( "Task ID required" )
 
-if not connector.options.target_id:
-    connector.parser.error( "Task ID required" )
+if not options.stop:
+    parser.error( "Stop time required" )
 
-if not connector.options.stop:
-    connector.parser.error( "Stop time required" )
+target = options.target_id  
+stop = options.stop
 
-target = connector.options.target_id  
-stop = connector.options.stop
-if connector.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
-    controller.spawn_and_die( target, stop )
+if parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    god.spawn_and_die( target, stop )

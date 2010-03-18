@@ -1,18 +1,14 @@
 #!/usr/bin/python
 
-import sys
-from connectors import connect_to_control
+from connectors import connector
+from CylcOptionParsers import PromptOptionParser
 
+parser = PromptOptionParser( """cylc resume [options] SYSTEM 
 
-usage = """cylc resume [options] SYSTEM 
+Resume running a paused system.""" )
 
-Resume running a paused system."""
+(options, args) = parser.parse_args()
 
-connector = connect_to_control( usage )
-
-connector.parse_args()
-
-controller = connector.get_control()
-
-if connector.prompt( 'Resume' ):
-    controller.resume()
+if parser.prompt( 'Resume' ):
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    god.resume()

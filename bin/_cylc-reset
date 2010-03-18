@@ -1,26 +1,22 @@
 #!/usr/bin/python
 
-import sys
-from connectors import connect_to_control
+from connectors import connector
+from CylcOptionParsers import PromptOptionParser
 
+parser = PromptOptionParser( """cylc reset [options] SYSTEM 
 
-usage = """cylc reset [options] SYSTEM 
+Reset a single task to the "waiting" state.""" )
 
-Reset a single task to the "waiting" state."""
-
-connector = connect_to_control( usage )
-
-connector.parser.add_option( "-t", 
+parser.add_option( "-t", 
         help="ID of the task to reset.",
         metavar="TASK%CYCLE", action="store", dest="reset_id" )
 
-connector.parse_args()
+(options, args) = parser.parse_args()
 
-controller = connector.get_control()
-
-if connector.options.reset_id:
-    if connector.prompt( 'Reset task ' + connector.options.reset_id + ' in'):
-        controller.reset_to_waiting( connector.options.reset_id )
+if options.reset_id:
+    if parser.prompt( 'Reset task ' + connector.options.reset_id + ' in'):
+        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+        god.reset_to_waiting( connector.options.reset_id )
 
 else:
-    connector.parser.error( "Task ID required" )
+    parser.error( "Task ID required" )

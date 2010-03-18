@@ -1,5 +1,8 @@
 To Do
 
+* setting a stop time after X gone past => required a nudge for
+  shutdown!
+
 * deathwish tasks (OPS!) - can die and be eliminated without holding up
   the system.
 
