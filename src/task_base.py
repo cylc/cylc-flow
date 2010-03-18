@@ -336,8 +336,7 @@ class task_base( Pyro.core.ObjBase ):
                 if message == self.get_identity() + ' finished':
                     # TASK HAS FINISHED
                     if not self.outputs.all_satisfied():
-                        self.log( 'WARNING', 'finished before all outputs completed' )
-                        self.log( 'WARNING', 'implies mis-configuration; setting FAILED')
+                        self.log( 'CRITICAL', 'finished before all outputs were completed' )
                         self.state.set_status( 'failed' )
                     else:
                         self.state.set_status( 'finished' )
