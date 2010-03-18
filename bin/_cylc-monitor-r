@@ -8,76 +8,28 @@ For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
 
-# import standard Python modules
-# cylc modules are imported after parsing the command line, so that we
-# don't need access to a specific system to print the usage message.
-import os
-import re
-import sys
+import pyrex
+import os, re, sys
 import Pyro.core
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
-import datetime
 from time import sleep
 from string import ljust, rjust, split, upper, lower
-from optparse import OptionParser
+from CylcOptionParsers import NoPromptOptionParser
 
-# construct a command line parser
-parser = OptionParser( """cylc monitor-r [options] SYSTEM
+parser = NoPromptOptionParser( """cylc monitor-r [options] SYSTEM
 
 A terminal-based monitor that displays information about task proxy
 objects in the 'submitted' or 'running' states, in the target system. 
 
 Note that this program does not monitor real running tasks. How to do
 that necessarily depends on the job submission method used by the system
-(and, potentially, by individual tasks in the system). 
+(and, potentially, by individual tasks in the system).""" ) 
 
-If the target system is not running under your username you must use
---user=USERNAME so that the right Pyro nameserver group name can be
-inferred (cylc uses USERNAME_SYSTEM).
-
-arguments:
-   SYSTEM               Registered name of the target system.""" ) 
-
-parser.add_option( "-u", "--user",
-        help="Owner of the target system (i.e. the username under which "
-        "the scheduler is running). Defaults to your username, $USER.",
-        metavar="USERNAME", action="store", dest="username" )
-
-parser.add_option( "-n", "--nameserver",
-        help="The Pyro nameserver host. Defaults to localhost. Depending "
-        "on network configuration you may not need to use this option.",
-        metavar="HOSTNAME", action="store", default="localhost",
-        dest="pns_host" )
-
-# get command line options and positional args
 ( options, args ) = parser.parse_args()
 
-if len( args ) == 0:
-    parser.error( "Please supply a target system name" )
-elif len( args ) > 1:
-    parser.error( "Too many arguments" )
-
-system_name = args[0]
-
-# import cylc modules now (the reason for this is explained above)
-import pyrex
-
-header = 'key:   submitted   running'
-header = '                          '
-key = 'key:   \033[1;37;40msubmitted\033[0m   \033[1;37;42mrunning\033[0m'
-
-if options.pns_host:
-    pns_host = options.pns_host
-else:
-    parser.error( 'Required: Pyro nameserver hostname' )
-
-# Pyro nameserver groupname of the target system
-if options.username:
-    username = options.username
-else:
-    username = os.environ[ 'USER' ] 
-
-groupname = username + '_' + system_name
+system_name = parser.get_system_name()
+pns_host = parser.get_pns_host()
+groupname = parser.get_groupname()
 
 # get systems currently registered in the Pyro nameserver
 ns_groups = pyrex.discover( pns_host )
@@ -87,6 +39,9 @@ if ns_groups.registered( groupname ):
 else:
     print "No " + groupname + " group registered with Pyro yet, waiting ..." 
 
+header = 'key:   submitted   running'
+header = '                          '
+key = 'key:   \033[1;37;40msubmitted\033[0m   \033[1;37;42mrunning\033[0m'
 ctrl_end = "\033[0m"
 
 print
