@@ -71,8 +71,11 @@ class manager:
         self.system_hold_ctime = None
 
     def get_oldest_c_time( self ):
+        # return the cycle time of the oldest task
         oldest = 9999887766
         for itask in self.tasks:
+            #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
+            #    continue
             if int( itask.c_time ) < int( oldest ):
                 oldest = itask.c_time
         return oldest
@@ -357,6 +360,8 @@ class manager:
         all_finished = True
         earliest_unfinished = None
         for itask in self.tasks:
+            #if itask.state.is_failed():  # uncomment for earliest NON-FAILED
+            #    continue
             if not itask.state.is_finished():
                 all_finished = False
                 if not earliest_unfinished:
@@ -372,9 +377,10 @@ class manager:
         #       AND
         #   (2) are no longer needed to satisfy prerequisites.
 
-        # Also, do not delete any task with the same cycle time 
-        # as a failed task, because these could be needed to satisfy the
-        # failed task when it gets re-run after the problem is fixed.
+        # Also, do not delete any task with the same cycle time as a
+        # failed task, because these could be needed to satisfy the
+        # failed task's prerequisites when it is re-submitted after the
+        # problem is fixed.
         #--
 
         # A/ QUICK DEATH TASKS
@@ -388,13 +394,13 @@ class manager:
         # at the same cycle time or earlier.
         #--
 
-        # find the earliest unspawned task, 
-        # and ref times of any failed tasks. 
+        # times of any failed tasks. 
         failed_rt = {}
         for itask in self.tasks:
             if itask.state.is_failed():
                 failed_rt[ itask.c_time ] = True
 
+        # time of the earliest unspawned task
         [all_spawned, earliest_unspawned] = self.earliest_unspawned()
         if all_spawned:
             self.log.debug( "all tasks spawned")
@@ -444,14 +450,8 @@ class manager:
         # (members of which will remain in, or be reset to, the waiting
         # state on a restart. The only way to use 'earliest unsatisfied'
         # over a restart would be to record the state of all
-        # prerequisites for each task in the state dump - THIS MAY BE A
-        # GOOD THING TO DO, HOWEVER!
-
-        #[ all_satisfied, earliest_unsatisfied ] = self.earliest_unsatisfied()
-        #if all_satisfied:
-        #    self.log.debug( "all tasks satisfied" )
-        #else:
-        #    self.log.debug( "earliest unsatisfied: " + earliest_unsatisfied )
+        # prerequisites for each task in the state dump (which may be a
+        # good thing to do?)
 
         [ all_finished, earliest_unfinished ] = self.earliest_unfinished()
         if all_finished:
@@ -664,6 +664,7 @@ class manager:
     def waiting_contact_task_ready( self, current_time ):
         result = False
         for itask in self.tasks:
+            #print itask.get_identity(), current_time
             if itask.ready_to_run(current_time):
                 result = True
                 break

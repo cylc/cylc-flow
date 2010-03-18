@@ -16,6 +16,11 @@ To Do
   reset after fixing the problem. Otherwise the sysop can use 
   'cylc reset --ready-to-run'
 
+* Consider the effect of "# uncomment for earliest NON-FAILED" (x2) in
+  manager.py - and test with dummy mode failout tasks.  For failed F in
+  userguide example system, it allows some intermediate finished cycles
+  to be deleted, but this does not affect the delay due to max runahead.
+
 * consider allowing multiple taskdef directories and writing combined
   system modules to another location - easy! would require added both
   scripts dirs to PATH...
