@@ -21,9 +21,8 @@ parser = NoPromptOptionParser( """cylc monitor-r [options] SYSTEM
 A terminal-based monitor that displays information about task proxy
 objects in the 'submitted' or 'running' states, in the target system. 
 
-Note that this program does not monitor real running tasks. How to do
-that necessarily depends on the job submission method used by the system
-(and, potentially, by individual tasks in the system).""" ) 
+THIS PROGRAM DOES NOT MONITOR THE REAL RUNNING TASKS (how to do
+that depends on the job submission method used each task).""" ) 
 
 ( options, args ) = parser.parse_args()
 

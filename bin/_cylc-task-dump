@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import re, sys
-from connectors import connector
+from connector import connector
 from CylcOptionParsers import NoPromptOptionParser
 
 def print_heading( strng ):

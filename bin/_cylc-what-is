@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 import sys, re
-from connectors import connector
+from connector import connector
 from CylcOptionParsers import NoPromptOptionParser
 
 parser = NoPromptOptionParser( usage = """cylc what-is [options] SYSTEM 

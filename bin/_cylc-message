@@ -14,7 +14,7 @@ $TASK_NAME into the environment of each external task.
 import os, sys
 from time import sleep
 from optparse import OptionParser
-from connectors import connector
+from connector import connector
 
 # PARSE THE COMMAND LINE-----------------------------------------------
 usage = """cylc message [options] [MESSAGE] 

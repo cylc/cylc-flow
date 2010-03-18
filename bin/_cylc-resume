@@ -1,6 +1,6 @@
 #!/usr/bin/python
 
-from connectors import connector
+from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc resume [options] SYSTEM 
