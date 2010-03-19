@@ -141,6 +141,13 @@ def commandline_parser():
             "defaults to localhost",
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
+    parser.add_option( "-p", "--practice-mode",
+            help="PRACTICE MODE: a special version of dummy mode that"
+            "lets you practice making changes to a current running,"
+            "paused, or halted system without corrupting its state or "
+            "log files.",
+            action="store_true", dest="practice_mode" )
+
     parser.add_option( "-d", "--dummy-mode",
             help="DUMMY MODE: replace each real system task with a program "
             "that fakes its output messages on time, relative to an "
@@ -193,12 +200,23 @@ else:
     banner[ 'Pyro nameserver' ] = pns_host
 
 # get mode of operation------------------------------------------------
+
+if options.dummy_mode and options.practice_mode:
+    parser.error( "choose ONE of dummy or practice mode")
+
+mode = {}
+mode['dummy'] = False
+mode['practice' ] = False
+
 if options.dummy_mode:
-    dummy_mode = True
+    mode['dummy'] = True
     banner[ 'mode of operation' ] = 'DUMMY'
+elif options.practice_mode:
+    mode['dummy'] = True
+    mode['practice'] = True
+    banner[ 'mode of operation' ] = 'PRACTICE DUMMY'
 else:
-    dummy_mode = False
-    banner[ 'mode of operation' ] = 'real'
+    banner[ 'mode of operation' ] = 'REAL'
 
 # check startup configuration------------------------------------------
 
@@ -232,7 +250,8 @@ elif options.restart_from:
     startup[ 'restart_from' ] = options.restart_from
 
 else:
-    raise SystemExit( "Illegal startup options" )
+    #raise SystemExit( "Illegal startup options" )
+    parser.error( "Illegal startup options" )
 
 if options.include and options.exclude:
     parser.error( '--include and --exclude are mutually exclusive' )
@@ -283,13 +302,19 @@ import remote_switch # ditto
 
 # load system configuration--------------------------------------------
 config = system_config( reg_name )
-config.configure()
+config.configure( mode['practice'])
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 nameserver = locate_pyro_nameserver()
 
 # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
+#if mode['practice']:
+# THIS HAS IMPLICATIONS FOR MESSAGING, CONTROLLING, AND MONITORING
+#    groupname = os.environ['USER'] + '_' + reg_name + "_practice"
+#else:
+#    groupname = os.environ['USER'] + '_' + reg_name
 groupname = os.environ['USER'] + '_' + reg_name
+
 create_ns_groupname( nameserver, groupname )
 banner[ 'Pyro nameserver group' ] = groupname
  
@@ -305,13 +330,13 @@ daemon.useNameServer(nameserver)
 clock = accelerated_clock.clock( 
         int(options.clock_rate),
         int(options.clock_offset),
-        dummy_mode ) 
+        mode['dummy'] ) 
 
 daemon.connect( clock, ns_obj_name( 'clock', groupname ))
 
 
 # remotely accessible system state summary
-system_state = state_summary.state_summary( config, dummy_mode )
+system_state = state_summary.state_summary( config, mode['dummy'] )
 daemon.connect( system_state, ns_obj_name( 'state_summary', groupname ))
 
 # dead letter box for remote use
@@ -324,7 +349,7 @@ config.put( 'daemon', daemon )
 config.put( 'clock', clock )
 
 # initialize the task manager (and create main logger)
-pool = manager.manager( config, groupname, dummy_mode, startup )
+pool = manager.manager( config, groupname, mode['dummy'], startup )
 
 # logger is now created and pimped
 log = logging.getLogger( 'main' )
@@ -338,7 +363,7 @@ os.environ[ 'CYLC_ON' ] = 'true' # tells 'cylc message' to use the nameserver
 os.environ[ 'CYLC_NS_HOST' ] = str( pns_host )  # may be an IP number
 os.environ[ 'CYLC_NS_GROUP' ] = groupname
 os.environ[ 'SYSTEM_NAME' ] = reg_name
-if dummy_mode:
+if mode['dummy']:
     os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
     # communicate failout_task_id to the dummy task program
     if options.failout_task_id:

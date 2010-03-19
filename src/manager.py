@@ -51,10 +51,6 @@ class manager:
         else:
             raise SystemExit( "No startup method defined!" )
 
-        self.config.make_dirs( self.subdir )
-
-        #elf.backup_state_dump_file()
-
 
     #def backup_state_dump_file( self ):
     #   # back up the working state dump file if it already exists
@@ -195,14 +191,6 @@ class manager:
             
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
-
-        # change the working state dump file if this is a dummy mode
-        # restart off a real mode initial state dump
-        if time_type == 'system time':
-            if self.dummy_mode:
-                print "THIS IS A DUMMY MODE RESTART FROM A REAL MODE STATE DUMP"
-                print "changing the working state dump directory"
-                self.subdir = 'dummy-restart-' + datetime.datetime.now().isoformat()
 
         log_created = {}
 

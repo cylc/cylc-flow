@@ -1,5 +1,10 @@
 To Do
 
+* RESTORE INITIAL STATE DUMP BACKUP
+
+* DOCUMENT: system shutdown for practice, while real tasks complete:
+  restart with them FINISHED!
+
 * check tasks in task list are unique!
 
 * DUMMY MODE RESTART FROM REAL ON SAME SYSTEM - use different state file.

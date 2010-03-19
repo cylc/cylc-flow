@@ -48,31 +48,13 @@ class config:
         else:
             self.items['system_def_dir' ] = 'UNKNOWN!'
 
-    def configure( self ):
+    def configure( self, practice ):
         self.check_task_groups()
         self.job_submit_config()
-
-    def check_task_groups( self ):
-        # check tasks in any named group are in the task list
-        for group in ( self.items['task_groups'] ).keys():
-            tasks = self.items['task_groups'][group]
-            for task in tasks:
-                if task not in self.items[ 'task_list' ]:
-                    raise SystemExit( "Task group member " + task + " not in task list" )
-
-    def job_submit_config( self ):
-        # create dict of job submit methods by task name
-        self.items['job submit class'] = {}
-        for task in self.items['task_list']:
-            self.items['job submit class'][ task ] = self.items[ 'job_submit_method' ]
-            for method in self.items[ 'job_submit_overrides' ]:
-                if task in self.items[ 'job_submit_overrides' ][ method ]:
-                    self.items['job submit class'][ task ] = method
-
-    def make_dirs( self, subdir = None ):
-        if subdir:
-            self.items[ 'state_dump_dir' ] += '/subdir'
-            self.items[ 'logging_dir'    ] += '/subdir'
+        
+        if practice:
+            self.items[ 'state_dump_dir' ] += '-practice'
+            self.items[ 'logging_dir'    ] += '-practice'
 
         self.items[ 'state_dump_file' ] = self.items['state_dump_dir'] + '/state'
 
@@ -91,6 +73,24 @@ class config:
                 os.makedirs(  logdir )
             except Exception, e:
                 raise SystemExit( e )
+
+    def check_task_groups( self ):
+        # check tasks in any named group are in the task list
+        for group in ( self.items['task_groups'] ).keys():
+            tasks = self.items['task_groups'][group]
+            for task in tasks:
+                if task not in self.items[ 'task_list' ]:
+                    raise SystemExit( "Task group member " + task + " not in task list" )
+
+    def job_submit_config( self ):
+        # create dict of job submit methods by task name
+        self.items['job submit class'] = {}
+        for task in self.items['task_list']:
+            self.items['job submit class'][ task ] = self.items[ 'job_submit_method' ]
+            for method in self.items[ 'job_submit_overrides' ]:
+                if task in self.items[ 'job_submit_overrides' ][ method ]:
+                    self.items['job submit class'][ task ] = method
+
 
     def get( self, key ):
         return self.items[ key ]
