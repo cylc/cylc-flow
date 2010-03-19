@@ -3,11 +3,8 @@
 import cycle_time
 import pimp_my_logger
 import logging
-#import pdb
 import traceback
-import sys
-import os
-import re
+import sys, os, re
 from dynamic_instantiation import get_object
 from Pyro.errors import NamingError
 from broker import broker
@@ -27,8 +24,6 @@ class manager:
         self.pyro = config.get('daemon')  
         self.submit = config.get('job submit class' )
 
-        self.log = logging.getLogger( "main" )
-
         self.system_hold_now = False
         self.system_hold_ctime = None
 
@@ -39,7 +34,7 @@ class manager:
         if 'stop time' in startup.keys():
             self.stop_time = startup[ 'stop time' ]
 
-        # instantiate the initial task list and create task logs 
+        # instantiate the initial task list and create loggers 
         self.tasks = []
         if startup[ 'restart' ]:
             if 'initial start dump' in startup:
@@ -50,6 +45,20 @@ class manager:
             self.load_from_config( startup['start time'], \
                     startup['exclude'], startup['include'] )
 
+    def create_main_log( self ):
+        log = logging.getLogger( 'main' )
+        pimp_my_logger.pimp_it( \
+             log, 'main', self.config.get('logging_dir'), \
+                self.config.get('logging_level'), self.dummy_mode, self.clock )
+        # manager logs to the main log
+        self.log = log
+
+    def create_task_log( self, name ):
+        log = logging.getLogger( 'main.' + name )
+        pimp_my_logger.pimp_it( \
+             log, name, self.config.get('logging_dir'), \
+                self.config.get('logging_level'), self.dummy_mode, self.clock )
+
     def get_tasks( self ):
         return self.tasks
 
@@ -58,6 +67,7 @@ class manager:
         self.stop_time = stop_time
 
     def set_system_hold( self, ctime = None ):
+        self.log.warning( 'pre-hold state dump: ' + self.dump_state( new_file = True ))
         if ctime:
             self.system_hold_ctime = ctime
             self.log.critical( "HOLD: no new tasks will run from " + ctime )
@@ -87,6 +97,9 @@ class manager:
         # set clock before using log (affects dummy mode only)
         self.clock.set( start_time )
 
+        # create main logger
+        self.create_main_log()
+
         #print '\nSTARTING AT ' + start_time + ' FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname1, taskname2, ...]
@@ -99,15 +112,13 @@ class manager:
             if len( include ) > 0:
                 if name not in include:
                     continue
+            
+            # create the task-specific logger
+            self.create_task_log( name )
 
             # instantiate the task
             itask = get_object( 'task_classes', name )\
                     ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], True )
-
-            # create the task log
-            log = logging.getLogger( 'main.' + name )
-            pimp_my_logger.pimp_it( log, name, self.config.get('logging_dir'), \
-                    self.config.get('logging_level'), self.dummy_mode, self.clock )
 
             # the initial task cycle time can be altered during
             # creation, so we have to create the task before
@@ -130,8 +141,11 @@ class manager:
         # load initial system state from the configured state dump file
         #--
 
+        # create main logger
+        self.create_main_log()
+
         print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
-        self.log.info( 'Loading previous state from ' + filename )
+        self.log.info( 'Loading initial state from ' + filename )
 
         # The state dump file format is:
         # system time : <time>
@@ -158,10 +172,20 @@ class manager:
         [ time_type, time_string ] = line1.split(' : ')
         if time_type == 'dummy time':
             if not self.dummy_mode:
-                raise SystemExit( "For this state dump file you must restart in dummy mode" )
+                raise SystemExit("You can't restart in dummy mode from a real mode state dump")
             
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
+
+        #if time_type == 'system time':
+        #    if self.dummy_mode:
+        #        print "DUMMY RESTART FROM REAL MODE DUMP"
+        #
+        #        state_dir = self.config.get( 'state_dump_dir' ) + '/restart' 
+        #        self.config.put( 'state_dump_dir', state_dir )
+        #        self.config.put( 'state_dump_file', state_dir + '/state' )
+        #
+        #        os.makedirs( state_dir )
 
         log_created = {}
 
@@ -189,9 +213,7 @@ class manager:
 
             # create the task log
             if name not in log_created.keys():
-                log = logging.getLogger( 'main.' + name )
-                pimp_my_logger.pimp_it( log, name, self.config.get('logging_dir'), \
-                        self.config.get('logging_level'), self.dummy_mode, self.clock )
+                self.create_task_log( name )
                 log_created[ name ] = True
 
             # instantiate the task object
@@ -523,6 +545,7 @@ class manager:
 
 
     def reset_task( self, task_id ):
+        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
         found = False
         for itask in self.tasks:
             if itask.get_identity() == task_id:
@@ -539,6 +562,7 @@ class manager:
 
     def insertion( self, ins_id ):
         # for remote insertion of a new task, or task group
+        self.log.warning( 'pre-insertion state dump: ' + self.dump_state( new_file = True ))
         try:
 
             ( ins_name, ins_ctime ) = ins_id.split( '%' )
@@ -636,6 +660,8 @@ class manager:
         # get a task and, recursively, its dependants down to the given
         # stop time, to spawn and die.
 
+        self.log.warning( 'pre-purge state dump: ' + self.dump_state( new_file = True ))
+
         # find the task
         found = False
         for itask in self.tasks:
@@ -684,6 +710,9 @@ class manager:
 
     def spawn_and_die( self, task_ids ):
         # spawn and kill all tasks in task_ids.keys()
+
+        self.log.warning( 'pre-spawn-and-die state dump: ' + self.dump_state( new_file = True ))
+
         for id in task_ids:
             # find the task
             found = False
@@ -732,6 +761,7 @@ class manager:
 
     def kill( self, task_ids ):
         # kill without spawning all tasks in task_ids
+        self.log.warning( 'pre-kill state dump: ' + self.dump_state( new_file = True ))
         for id in task_ids:
             # find the task
             found = False

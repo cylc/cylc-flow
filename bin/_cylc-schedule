@@ -14,7 +14,6 @@ import manager
 import cycle_time
 import dead_letter
 import state_summary
-import pimp_my_logger
 import accelerated_clock 
 
 # pyro modules
@@ -77,7 +76,7 @@ def create_ns_groupname( nameserver, groupname ):
         print
         raise SystemExit( "ABORTING NOW" )
 
-def service_remote_requests( remote, pool, log, failout = None ):
+def service_remote_requests( remote, pool, failout = None ):
 
     halt = False
     halt_now = False
@@ -112,12 +111,10 @@ def service_remote_requests( remote, pool, log, failout = None ):
         remote.set_stop = False
 
     if remote.set_hold:
-        log.warning( 'pre-hold state dump: ' + pool.dump_state( new_file = True ))
         pool.set_system_hold( remote.hold_time )
         remote.set_hold = False
 
     if remote.do_purge:
-        log.warning( 'pre-purge state dump: ' + pool.dump_state( new_file = True ))
         pool.purge( remote.purge_id, remote.purge_stop )
         remote.do_purge = False
         remote.purge_id = None
@@ -125,14 +122,12 @@ def service_remote_requests( remote, pool, log, failout = None ):
         process_tasks = True
 
     if remote.die_flag:
-        log.warning( 'pre-kill state dump: ' + pool.dump_state( new_file = True ))
         pool.kill( [ remote.die_task ] )
         remote.die_flag = False
         remote.die_task = None
         process_tasks = True
  
     if remote.spawn_and_die_flag:
-        log.warning( 'pre-kill state dump: ' + pool.dump_state( new_file = True ))
         pool.spawn_and_die( [ remote.spawn_and_die_task ] )
         remote.spawn_and_die_flag = False
         remote.spawn_and_die_task = None
@@ -143,7 +138,6 @@ def service_remote_requests( remote, pool, log, failout = None ):
             if remote.reset_task_id == failout:
                 print "resetting failout on " + failout + " prior to insertion"
                 os.environ['FAILOUT_ID'] = ""
-        log.warning( 'pre-reset state dump: ' + pool.dump_state( new_file = True ))
         pool.reset_task( remote.reset_task_id )
         remote.reset_a_task = False
         remote.reset_task_id = None
@@ -154,7 +148,6 @@ def service_remote_requests( remote, pool, log, failout = None ):
             if remote.insert_this == failout:
                 print "resetting failout on " + failout + " prior to insertion"
                 os.environ['FAILOUT_ID'] = ""
-        log.warning( 'pre-insert state dump: ' + pool.dump_state( new_file = True ))
         pool.insertion( remote.insert_this )
         remote.insert_this = None
         process_tasks = True
@@ -372,15 +365,6 @@ clock = accelerated_clock.clock(
 
 daemon.connect( clock, ns_obj_name( 'clock', groupname ))
 
-# logging dir
-logging_dir = config.get('logging_dir')
-
-# set up main log already, for use in this module
-log = logging.getLogger( 'main' )
-pimp_my_logger.pimp_it( \
-        log, 'main', config.get('logging_dir'), \
-        config.get('logging_level'), dummy_mode, clock )
-
 # state dump file
 state_dump_file = config.get( 'state_dump_file' )
 banner[ 'state dump file' ] = state_dump_file
@@ -428,8 +412,11 @@ daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', groupname))
 config.put( 'daemon', daemon )
 config.put( 'clock', clock )
 
-# initialize the task manager
+# initialize the task manager (and create main logger)
 pool = manager.manager( config, groupname, dummy_mode, startup )
+
+# logger is now created and pimped
+log = logging.getLogger( 'main' )
 
 # remote control switch
 remote = remote_switch.remote_switch( config, pool.get_tasks() )
@@ -465,7 +452,7 @@ system_halt = False
 system_halt_now = False
 
 while True: # MAIN LOOP
-    [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, pool, log, options.failout_task_id )
+    [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, pool, options.failout_task_id )
     if halt:
         system_halt = True
     if halt_now:
@@ -493,8 +480,7 @@ while True: # MAIN LOOP
             if process_tasks_contact:
                 reasons.append( 'waiting contact task ready' )
             msg = ', '.join( reasons )
-            # should really be log.debug() but warnings go to stdout...
-            log.warning( 'task processing, ' + str( count ) + ': ' + msg )
+            print 'task processing, ' + str( count ) + ': ' + msg 
 
         pool.negotiate()
 

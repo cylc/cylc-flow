@@ -1,5 +1,7 @@
 To Do
 
+* check tasks in task list are unique!
+
 * DUMMY MODE RESTART FROM REAL ON SAME SYSTEM - use different state file.
 
 * a module for handling registrations, to replace the guts of the
