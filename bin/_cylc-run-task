@@ -57,10 +57,15 @@ if not cycle_time.is_valid( ctime ):
 # find location of the system task and config modules------------------
 registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name
 if os.path.exists( registration_file ):
-    FILE = open( registration_file, 'r' )
-    line = FILE.read()
-    system_dir = line.rstrip() 
+    try:
+        FILE = open( registration_file, 'r' )
+    except:
+        print 'UNABLE TO OPEN REGISTRATION FILE'
+    else:
+        line = FILE.read()
     FILE.close()
+    system_dir = line.rstrip() 
+    print "registration: " + reg_name + ' --> ' + system_dir
 else:
     raise SystemExit( "No such system name registered: " + reg_name )
 

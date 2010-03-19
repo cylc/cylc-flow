@@ -137,6 +137,12 @@ class system_config( config ):
     def __init__( self, sysname ):
         config.__init__( self, sysname )
 
+        # system title
+        # self.items[ 'system_title' ] = 'DEFAULT TITLE'
+
+        # system info: add descriptive information as you like, e.g.:
+        # self.items[ 'system_info' ]['foo'] = 'foo bar baz'
+
         # system task list
         self.items['task_list'] = task_list
 
@@ -146,9 +152,10 @@ class system_config( config ):
         # default job submit method, e.g.:
         # self.items['job_submit_method'] = 'background2'
 
-        # environment variables available to all tasks
-        user = os.environ['USER'] 
-        self.items['environment']['TMPDIR'] = '/tmp/' + user + '/' + sysname
+        # environment variables available to all tasks, can include
+        # the registered system name, e.g.:
+        # user = os.environ['USER'] 
+        # self.items['environment']['TMPDIR'] = '/tmp/' + user + '/' + sysname
 
 # END OF FILE
 eof

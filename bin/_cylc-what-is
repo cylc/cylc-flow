@@ -16,10 +16,10 @@ parser.add_option( "-t", "--task",
 (options, args) = parser.parse_args()
 system_name = parser.get_system_name()
 
+god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+
 if options.task:
 
-    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
- 
     task = options.task
     print
     print task + ' in ' + system_name + ':'
@@ -31,13 +31,19 @@ if options.task:
     names = [ re.sub( '%.*', '', name ) for name in names ]
 
     info = god.get_task_info( names )
+
     for name in info.keys():
         print
         for line in info[name]:
             print '  ' + line
-    print
 
 else: 
     print
-    print 'System: ' + system_name
-    print 'SYSTEM DESCRIPTION NOT YET IMPLEMENTED'
+    ( title, sysdef_dir, username, info ) = god.get_sys_info()
+
+    print title
+    print ' * ' + username + ': ' + system_name + ' --> ' + sysdef_dir
+    for item in info.keys():
+        print ' + ' + item + ': ' +  info[item]
+
+print

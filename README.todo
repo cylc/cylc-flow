@@ -2,6 +2,10 @@ To Do
 
 * DUMMY MODE RESTART FROM REAL ON SAME SYSTEM - use different state file.
 
+* a module for handling registrations, to replace the guts of the
+  register and unregister commands,  AND the short section of reg code
+  in run-task and config.py
+
 * put monitor pyro connection in the same "connector" framework.
 
 * DOCUMENT: OPS-style tasks -if others only depend on "completion", then

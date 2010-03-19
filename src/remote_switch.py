@@ -137,6 +137,13 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return result
 
+    def get_sys_info( self ):
+        self.log.warning( "REMOTE: system info requested" )
+        return [ self.config.get('system_title'), \
+                self.config.get('system_def_dir'), \
+                self.config.get('system_username'), \
+                self.config.get('system_info') ]
+
     def get_task_info( self, task_names ):
         self.log.warning( "REMOTE: task info: " + ','.join(task_names ))
         info = {}

@@ -1,16 +1,13 @@
 #!/usr/bin/python
 
-import logging
-import sys
-import os
-import re
+import logging, sys, os, re
 
 class config:
 
-    def __init__( self, registered_system_name ):
+    def __init__( self, reg_name ):
 
         self.items = {}
-        self.system_name = registered_system_name
+        self.system_name = reg_name
         self.set_defaults()
 
     def set_defaults( self ):
@@ -20,6 +17,11 @@ class config:
         self.items[ 'state_dump_file' ] = os.environ['HOME'] + '/cylc-state/' + self.system_name + '/state'
         self.items[ 'task_list' ] = []
 
+        self.items[ 'system_title' ] = 'SYSTEM TITLE (override me in system config)'
+        self.items[ 'system_registered_name' ] = self.system_name
+        self.items[ 'system_username' ] = os.environ['USER']
+
+        self.items[ 'system_info' ] = {}
         self.items[ 'task_groups' ] = {}
         self.items[ 'environment' ] = {}
         self.items['job_submit_overrides'] = {}
@@ -27,6 +29,23 @@ class config:
         self.items['max_runahead_hours'] = 24
         self.items['job_submit_method'] = 'background'
         self.items['logging_level'] = logging.INFO
+
+        # get system definition dir, for system_info
+        reg_file = os.environ['HOME'] + '/.cylc/registered/' + self.system_name
+        if os.path.exists( reg_file ):
+            try:
+                FILE = open( reg_file, 'r' )
+            except:
+                # this should never have because the reg file has to 
+                # be accessed in order to run the system in the first
+                # place
+                print 'UNABLE TO OPEN REGISTRATION FILE'
+            else:
+                line = FILE.read()
+            FILE.close()
+            self.items['system_def_dir' ] = line.rstrip() 
+        else:
+            self.items['system_def_dir' ] = 'UNKNOWN!'
 
     def configure( self ):
         self.check_task_groups()

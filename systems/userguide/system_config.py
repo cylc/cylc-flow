@@ -20,7 +20,13 @@ class system_config( config ):
     def __init__( self, sysname ):
         config.__init__( self, sysname )
 
-        # system task list
+        # system title
+        self.items[ 'system_title' ] = 'USERGUIDE EXAMPLE SYSTEM'
+        
+        # system info
+        self.items[ 'system_info' ]['description'] = 'Implements the Cylc Userguide example system'
+
+        # task list
         self.items['task_list'] = task_list
 
         # task insertion groups, e.g:
