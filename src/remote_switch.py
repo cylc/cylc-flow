@@ -3,130 +3,80 @@
 import Pyro.core
 import task_classes
 import logging
-import sys
+import sys, os
 
 class remote_switch( Pyro.core.ObjBase ):
     "class to take remote system control requests" 
     # the task manager can take action on these when convenient.
 
-    def __init__( self, config, tasks ):
+    def __init__( self, config, pool, failout_id = None ):
+
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
+
         self.config = config
         self.insert_this = None
+        self.failout_id = failout_id
 
-        self.set_stop = False
-        self.stop_time = None
+        self.tasks = pool.get_tasks()
 
-        self.set_hold = False
-        self.hold_time = None
+        self.pool = pool
 
-        self.set_nudge = False
-
-        # reference to the system task list!
-        self.tasks = tasks
-
-        # record remote system halt requests
-        self.system_halt_requested = False
-        self.system_halt_now_requested = False
-
-        # record remote system hold requests
-        self.system_hold_requested = False
-        self.system_resume_requested = False
-
-        # task to and die
-        self.die_flag = False
-        self.die_task = None
-
-        # task to spawn and die
-        self.spawn_and_die_flag = False
-        self.spawn_and_die_task = None
-
-        # task to reset from failed to waiting
-        self.reset_a_task = False
-        self.reset_task_id = None
-
-        # task to purge
-        self.do_purge = False
-        self.purge_id = None
-        self.purge_stop = None
-
-    def get_nudge( self ):
-        return self.set_nudge
+        self.process_tasks = False
+        self.halt = False
+        self.halt_now = False
 
     def nudge( self ):
-        # pretend a task has changed state in order to invoke the event
-        # handling loop
+        # cause the task processing loop to be invoked
         self.log.warning( "REMOTE: nudge" )
-        self.set_nudge = True
+        self.process_tasks = True
 
     def reset_to_waiting( self, task_id ):
         # reset a failed task to the waiting state
         # (after it has been fixed, presumably!)
         self.log.warning( "REMOTE: reset to waiting: " + task_id )
-        self.reset_a_task = True
-        self.reset_task_id = task_id
+        if task_id == self.failout_id:
+            print "resetting failout on " + self.failout_id + " prior to insertion"
+            os.environ['FAILOUT_ID'] = ""
+        self.pool.reset_task( task_id )
+        self.process_tasks = True
 
     def insert( self, ins ):
         # insert a new task or task group into the system
-        self.insert_this = ins
         self.log.warning( "REMOTE: task insertion: " + ins )
+        if ins == self.failout_id:
+            # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
+            print "resetting failout on " + self.failout_id + " prior to insertion"
+            os.environ['FAILOUT_ID'] = ""
+        self.pool.insertion( ins )
+        self.process_tasks = True
 
     def hold( self ):
         self.log.warning( "REMOTE: system hold" )
-        self.system_hold_requested = True
-
-    def get_hold( self ):
-        if self.system_hold_requested:
-            self.system_hold_requested = False
-            return True
-        else:
-            return False
-
-    def get_halt_now( self ):
-        if self.system_halt_now_requested:
-            self.system_halt_now_requested = False
-            return True
-        else:
-            return False
-
-    def get_halt( self ):
-        if self.system_halt_requested:
-            self.system_halt_requested = False
-            return True
-        else:
-            return False
-
+        self.pool.set_system_hold()
 
     def resume( self ):
         self.log.warning( "REMOTE: system resume" )
-        self.system_resume_requested = True 
-        self.system_hold_requested = False 
-
-    def get_resume( self ):
-        if self.system_resume_requested:
-            self.system_resume_requested = False
-            return True
-        else:
-            return False
+        self.pool.unset_system_hold()
+        self.process_tasks = True
 
     def set_stop_time( self, ctime ):
         self.log.warning( "REMOTE: set stop time" )
-        self.set_stop = True
-        self.stop_time = ctime
-
+        self.pool.set_stop_time( ctime )
+ 
     def set_hold_time( self, ctime ):
         self.log.warning( "REMOTE: set hold time" )
-        self.set_hold = True
-        self.hold_time = ctime
-
+        pool.set_system_hold( ctime )
+ 
     def shutdown( self ):
-        self.log.warning( "REMOTE: halt after running tasks finish" )
-        self.system_halt_requested = True
+        self.log.warning( "REMOTE: halt when running tasks finish" )
+        self.hold()
+        self.halt = True
 
     def shutdown_now( self ):
         self.log.warning( "REMOTE: halt NOW" )
-        self.system_halt_now_requested = True
+        self.hold()
+        self.halt_now = True
 
     def get_config( self, item ):
         self.log.warning( "REMOTE: config item " + item )
@@ -193,20 +143,19 @@ class remote_switch( Pyro.core.ObjBase ):
     
     def purge( self, task_id, stop ):
         self.log.warning( "REMOTE: purge " + task_id + ' to ' + stop )
-        self.do_purge = True
-        self.purge_id = task_id
-        self.purge_stop = stop
+        self.pool.purge( task_id, stop )
+        self.process_tasks = True
 
     def die( self, task_id ):
         self.log.warning( "REMOTE: die: " + task_id )
-        self.die_flag = True
-        self.die_task = task_id
-
+        self.pool.kill( [ task_id ] )
+        self.process_tasks = True
+ 
     def spawn_and_die( self, task_id ):
         self.log.warning( "REMOTE: spawn and die: " + task_id )
-        self.spawn_and_die_flag = True
-        self.spawn_and_die_task = task_id
-
+        self.pool.spawn_and_die( [ remote.spawn_and_die_task ] )
+        self.process_tasks = True
+ 
     def set_verbosity( self, level ):
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical

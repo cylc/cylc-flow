@@ -76,85 +76,6 @@ def create_ns_groupname( nameserver, groupname ):
         print
         raise SystemExit( "ABORTING NOW" )
 
-def service_remote_requests( remote, pool, failout = None ):
-
-    halt = False
-    halt_now = False
-    process_tasks = False
-
-    if remote.get_halt():
-        # stop launching new tasks, but wait on running ones before
-        # shutting down (otherwise they will generate screeds of
-        # pyro-related error messages when they try to phone home).
-        pool.set_system_hold()
-        halt = True
-
-    if remote.get_halt_now():
-        # stop launching new tasks, NOW.
-        # This must be used to shutdown the system if an external task
-        # dies without notifying cylc.
-        halt_now = True
-
-    if remote.get_nudge():
-        process_tasks = True
-        remote.set_nudge = False
-
-    if remote.get_hold():
-        pool.set_system_hold()
-
-    if remote.get_resume():
-        pool.unset_system_hold()
-        process_tasks = True
-
-    if remote.set_stop:
-        pool.set_stop_time( remote.stop_time )
-        remote.set_stop = False
-
-    if remote.set_hold:
-        pool.set_system_hold( remote.hold_time )
-        remote.set_hold = False
-
-    if remote.do_purge:
-        pool.purge( remote.purge_id, remote.purge_stop )
-        remote.do_purge = False
-        remote.purge_id = None
-        remote.purge_stop = None
-        process_tasks = True
-
-    if remote.die_flag:
-        pool.kill( [ remote.die_task ] )
-        remote.die_flag = False
-        remote.die_task = None
-        process_tasks = True
- 
-    if remote.spawn_and_die_flag:
-        pool.spawn_and_die( [ remote.spawn_and_die_task ] )
-        remote.spawn_and_die_flag = False
-        remote.spawn_and_die_task = None
-        process_tasks = True
-        
-    if remote.reset_a_task:
-        if failout:
-            if remote.reset_task_id == failout:
-                print "resetting failout on " + failout + " prior to insertion"
-                os.environ['FAILOUT_ID'] = ""
-        pool.reset_task( remote.reset_task_id )
-        remote.reset_a_task = False
-        remote.reset_task_id = None
-        process_tasks = True
-
-    if remote.insert_this:
-        if failout:
-            if remote.insert_this == failout:
-                print "resetting failout on " + failout + " prior to insertion"
-                os.environ['FAILOUT_ID'] = ""
-        pool.insertion( remote.insert_this )
-        remote.insert_this = None
-        process_tasks = True
-
-
-    return [ halt, halt_now, process_tasks ]
-
 def ns_obj_name( name, groupname ):
     # object name as registered with the Pyro nameserver
     return groupname + '.' + name
@@ -182,8 +103,9 @@ arguments:
 def commandline_parser():
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host='localhost', restart=False, dummy_mode=False,
-            clock_rate=10, clock_offset=24, task_proc_reason=False )
+    parser.set_defaults( pns_host='localhost', 
+            restart=False, dummy_mode=False,
+            clock_rate=10, clock_offset=24 )
 
     parser.add_option( "-s", "--start-at", 
             help="Initial cycle time (YYYYMMDDHH).",
@@ -240,10 +162,6 @@ def commandline_parser():
             "(DUMMY MODE) get task NAME at cycle time CYCLE to report failure "
             "and then abort. Use this to test failure and recovery scenarios.",
             metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
-
-    parser.add_option( "--proc-reason", 
-            help="(debug) print the task processing loop reason.",
-            action="store_true", dest="task_proc_reason" )
 
     return parser
 
@@ -398,7 +316,6 @@ else:
     include = []
 startup[ 'include' ] = include
 
-
 # remotely accessible system state summary
 system_state = state_summary.state_summary( config, dummy_mode )
 daemon.connect( system_state, ns_obj_name( 'state_summary', groupname ))
@@ -419,7 +336,7 @@ pool = manager.manager( config, groupname, dummy_mode, startup )
 log = logging.getLogger( 'main' )
 
 # remote control switch
-remote = remote_switch.remote_switch( config, pool.get_tasks() )
+remote = remote_switch.remote_switch( config, pool, options.failout_task_id )
 daemon.connect( remote, ns_obj_name( 'remote', groupname) )
 
 # set global (all tasks) environment variables-------------------------
@@ -448,39 +365,15 @@ print "\nSTARTING\n"
 
 count = 0
 task_base.state_changed = True
-system_halt = False
-system_halt_now = False
 
 while True: # MAIN LOOP
-    [ halt, halt_now, process_tasks_remote ] = service_remote_requests( remote, pool, options.failout_task_id )
-    if halt:
-        system_halt = True
-    if halt_now:
-        system_halt_now = True
-
-    process_tasks_contact = False
-    if pool.waiting_contact_task_ready( clock.get_datetime() ):
-        process_tasks_contact = True
 
     # PROCESS ALL TASKS whenever something has changed that might
     # require renegotiation of dependencies, etc.
     #--
     if task_base.state_changed or \
-            process_tasks_remote or \
-            process_tasks_contact:
-
-        if options.task_proc_reason:
-            # log reason for invoking task processing
-            count = count + 1
-            reasons = []
-            if task_base.state_changed:
-                reasons.append( 'task message received' )
-            if process_tasks_remote:
-                reasons.append( 'remote request serviced' )
-            if process_tasks_contact:
-                reasons.append( 'waiting contact task ready' )
-            msg = ', '.join( reasons )
-            print 'task processing, ' + str( count ) + ': ' + msg 
+            remote.process_tasks or \
+            pool.waiting_contact_task_ready( clock.get_datetime() ):
 
         pool.negotiate()
 
@@ -500,7 +393,7 @@ while True: # MAIN LOOP
         log.critical( "ALL TASKS FINISHED" )
         break
 
-    if system_halt_now or system_halt and pool.no_tasks_running():
+    if remote.halt_now or remote.halt and pool.no_tasks_running():
         log.critical( "ALL RUNNING TASKS FINISHED" )
         break
 
@@ -512,6 +405,7 @@ while True: # MAIN LOOP
 
     # incoming task messages set this to True
     task_base.state_changed = False
+    remote.process_tasks = False
     # handle all remote calls
     #print "hello ..."
     daemon.handleRequests( timeout = None )
