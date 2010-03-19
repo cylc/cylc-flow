@@ -23,7 +23,7 @@ A terminal-based monitor that displays the state of all task proxy
 objects in the target system. 
 
 THIS PROGRAM DOES NOT MONITOR THE REAL RUNNING TASKS (how to do
-that depends on the job submission method used each task).""")
+that depends on the job submission method used by each task).""")
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "
