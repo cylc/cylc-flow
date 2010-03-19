@@ -536,26 +536,26 @@ choice. There is no ``build'' required because cylc is written in Python
 \subsection{Environment} 
 \label{Environment}
 
+\lstset{language=bash} 
+
 The cylc bin directory must be in your executable search path, to
 provide access to cylc commands, and the cylc source directory must be
 in your Python module search path, to provide access to the cylc core
 modules. To configure your current command shell for cylc, source 
-the provided environment script:
-
-\lstset{language=bash} 
+the environment script \lstinline=cylc-env.sh= from the directory it
+resides in (i.e. the top level of your cylc installation):
 
 \begin{lstlisting}
-$ cd $CYLC_DIR
 $ . cylc-env.sh
 \end{lstlisting}
 
-Where \lstinline=$CYCL_DIR= should be set to the top level of your cylc 
-installation.  For permanent access add the following to your login
-script (for sh-style shells):
+Or for automatic access, put the following in your (sh-style) login
+script:
 
 \begin{lstlisting}
-    export PATH=$CYLC_DIR/bin:$PATH
-    export PYTHONPATH=$CYLC_DIR/src:$PYTHONPATH
+# CYLC
+export CYLC_DIR=$HOME/cylc  # (the install location)
+. $CYLC_DIR/cylc-env.sh
 \end{lstlisting}
 
 
@@ -698,8 +698,9 @@ cylc monitor -a userguide
 
 You can also follow system progress in the {\bf cylc log files}. By
 default these are located under \lstinline=$HOME/cylc-logs/{SYSTEM}=.
-Each task has its own log file for task-specific events, and the
-\lstinline=main= log file records all incoming messages in sequence.
+Each task has its own log file for task-specific events, including 
+incoming task messages, and the \lstinline=main= log file records all
+events in sequence.
 
 \lstset{language=}
 \begin{lstlisting}
@@ -778,7 +779,7 @@ working with running systems.
 \label{SystemDefinition}
 
 This section of the userguide explains how to define the interface
-between cycl and the real tasks that you want to join together in
+between cylc and the real tasks that you want to join together in
 forecasting system.
 
 \subsection{Cylc Tasks}
@@ -1190,7 +1191,7 @@ be aware that this introduces explicit dependence on specific tasks,
 rather than on outputs that could be provided, in principle, by any
 task, so this makes the system somewhat less flexible.
 
-\lstinline=cycl message= has specially options so that external tasks
+\lstinline=cylc message= has specially options so that external tasks
 can send these messages automatically, without worrying about the exact
 form of the restart message (this helps guard against typographic
 errors).
@@ -1205,7 +1206,7 @@ completion time is unknown at best (at what point in a tasks execution
 does a failure occur?) and more usually undefined (hopefully the task
 will not fail). 
 
-Finally, \lstinline=cycl message= automatically sends a special {\bf
+Finally, \lstinline=cylc message= automatically sends a special {\bf
 completed} message whenever a tasks reports {\em success or failure}:
 \begin{lstlisting}
     "foo completed for $(CYCLE_TIME)"
@@ -1432,7 +1433,7 @@ that comes through the cylc system definition.
 %location in advance). This is a possible future development, but is 
 %probably not worth the effort because configuring the external tasks 
 %to report this information takes more effort than putting the same
-%information into the cycl task definition files. The cylc setup
+%information into the cylc task definition files. The cylc setup
 %would remain entirely context-independent, which is nice, and would
 %automatically pass on changes to the external input / output config of
 %the system.
@@ -1642,7 +1643,7 @@ operation {\em if}:
     \item the real tasks report the correct output messages (as
         registered in the task definition files).
     \item no bug has been introduced into the messaging interface
-        \lstinline=cycl message=, which is not used by the dummy 
+        \lstinline=cylc message=, which is not used by the dummy 
         task program - it communicates directly with the right task
         proxy object in the running scheduler.
 \end{itemize}
