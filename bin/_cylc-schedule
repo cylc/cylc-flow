@@ -169,7 +169,7 @@ def ns_obj_name( name, groupname ):
 usage = """1/ cylc schedule [options] --start-at=CYCLE SYSTEM (cold start)
 Usage: 2/ cylc schedule [options] --restart SYSTEM        (restart)
 
-Start scheduling a configured, registered, cylc system. 
+Start or restart a configured, registered, system. 
 
 For a cold start, each task is instantiated at the initial cycle time,
 or at the first subsequent cycle allowed for that task. At least one
@@ -179,6 +179,9 @@ For a restart, the system starts from a prior state recorded in the
 configured, or named, state dump file. Any task that was in the
 "submitted", "running", or "failed" states will be reset to the
 "waiting" state so that it will be resubmitted immediately.
+
+Use nohup (see 'man nohup') to start a scheduler that will not die with
+your terminal session.
 
 arguments:
    SYSTEM               Registered name of the forecasting system.""" 
