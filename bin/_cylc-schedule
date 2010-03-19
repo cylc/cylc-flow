@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # standard Python modules
-import re, os, sys, shutil
+import re, os, sys
 #import profile
 import logging
 import datetime
@@ -204,24 +204,50 @@ else:
 
 startup = {}
 
+startup[ 'start_time'] = None
+startup[ 'stop_time' ] = None
+startup[ 'restart'   ] = False
+startup[ 'restart_from' ] = None
+
 if options.start_time and ( options.restart or options.restart_from ):
     parser.error( "A start time does not make sense for a restart" )
 
 if not options.start_time and not ( options.restart or options.restart_from ):
     parser.error( 'You must supply a start time or specify a restart' )
 
-if options.start_time:
-    startup[ 'restart' ] = False
-    startup[ 'start time' ] = options.start_time
-    if not cycle_time.is_valid( options.start_time ):
-        parser.error( "invalid cycle time: " + options.start_time )
-else:
-    startup[ 'restart' ] = True
-
 if options.stop_time:
-    startup[ 'stop time' ] = options.stop_time
+    startup[ 'stop_time' ] = options.stop_time
     if not cycle_time.is_valid( options.stop_time ):
         parser.error( "invalid cycle time: " + options.stop_time )
+
+if options.start_time:
+    startup[ 'start_time' ] = options.start_time
+    if not cycle_time.is_valid( options.start_time ):
+        parser.error( "invalid cycle time: " + options.start_time )
+
+elif options.restart:
+    startup[ 'restart' ] = True
+
+elif options.restart_from:
+    startup[ 'restart_from' ] = options.restart_from
+
+else:
+    raise SystemExit( "Illegal startup options" )
+
+if options.include and options.exclude:
+    parser.error( '--include and --exclude are mutually exclusive' )
+
+if options.exclude:
+    exclude = options.exclude.split(',')
+else:
+    exclude = []
+startup[ 'exclude' ] = exclude
+
+if options.include:
+    include = options.include.split(',')
+else:
+    include = []
+startup[ 'include' ] = include
 
 # find location of the system task and config modules------------------
 registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name
@@ -283,38 +309,6 @@ clock = accelerated_clock.clock(
 
 daemon.connect( clock, ns_obj_name( 'clock', groupname ))
 
-# state dump file
-state_dump_file = config.get( 'state_dump_file' )
-banner[ 'state dump file' ] = state_dump_file
-if os.path.exists( state_dump_file ):
-    backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
-    shutil.copyfile( state_dump_file, backup )
-    banner[ 'state dump backup' ] = backup
-
-if options.restart_from:
-    filename = options.restart_from
-    if not os.path.exists( filename ):
-        # assume located in state dump dir
-        filename = config.get('state_dump_dir') + '/' + filename
-        if not os.path.exists( filename ):
-            raise SystemExit( "ERROR: initial state dump not found" )
-
-    startup[ 'initial state dump' ] = filename
-
-if options.include and options.exclude:
-    parser.error( '--include and --exclude are mutually exclusive' )
-
-if options.exclude:
-    exclude = options.exclude.split(',')
-else:
-    exclude = []
-startup[ 'exclude' ] = exclude
-
-if options.include:
-    include = options.include.split(',')
-else:
-    include = []
-startup[ 'include' ] = include
 
 # remotely accessible system state summary
 system_state = state_summary.state_summary( config, dummy_mode )

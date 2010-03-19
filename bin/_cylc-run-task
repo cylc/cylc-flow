@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # standard Python modules
-import re, os, sys, shutil
+import re, os, sys
 import datetime
 import logging
 from time import sleep

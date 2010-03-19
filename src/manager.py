@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import datetime
 import cycle_time
 import pimp_my_logger
 import logging
@@ -19,7 +20,7 @@ class manager:
         self.dummy_mode = dummy_mode
         self.groupname = groupname
 
-        # TO DO: just use self.config.get('foo') throughout
+        # TO DO: use self.config.get('foo') throughout
         self.clock = config.get('clock')
         self.pyro = config.get('daemon')  
         self.submit = config.get('job submit class' )
@@ -27,23 +28,41 @@ class manager:
         self.system_hold_now = False
         self.system_hold_ctime = None
 
+        self.subdir = None
+
         # initialise the dependency broker
         self.broker = broker()
         
         self.stop_time = None
-        if 'stop time' in startup.keys():
-            self.stop_time = startup[ 'stop time' ]
+        if startup[ 'stop_time']:
+            self.stop_time = startup[ 'stop_time' ]
 
         # instantiate the initial task list and create loggers 
         self.tasks = []
-        if startup[ 'restart' ]:
-            if 'initial start dump' in startup:
-                self.load_from_state_dump( startup[ 'initial state dump' ] )
-            else:
-                self.load_from_state_dump( config.get( 'state_dump_file' ) )
+
+        if startup[ 'start_time' ]:
+            self.load_from_config( startup['start_time'], startup['exclude'], startup['include'] )
+
+        elif startup[ 'restart' ]:
+            self.load_from_state_dump( config.get( 'state_dump_file' ) )
+
+        elif startup[ 'restart_from' ]:
+            self.load_from_state_dump( startup[ 'initial state dump' ] )
         else:
-            self.load_from_config( startup['start time'], \
-                    startup['exclude'], startup['include'] )
+            raise SystemExit( "No startup method defined!" )
+
+        self.config.make_dirs( self.subdir )
+
+        #elf.backup_state_dump_file()
+
+
+    #def backup_state_dump_file( self ):
+    #   # back up the working state dump file if it already exists
+    #   file = self.config.get( 'state_dump_file' )
+    #   if os.path.exists( state_dump_file ):
+    #       backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
+    #       shutil.copyfile( state_dump_file, backup )
+
 
     def create_main_log( self ):
         log = logging.getLogger( 'main' )
@@ -177,15 +196,13 @@ class manager:
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
 
-        #if time_type == 'system time':
-        #    if self.dummy_mode:
-        #        print "DUMMY RESTART FROM REAL MODE DUMP"
-        #
-        #        state_dir = self.config.get( 'state_dump_dir' ) + '/restart' 
-        #        self.config.put( 'state_dump_dir', state_dir )
-        #        self.config.put( 'state_dump_file', state_dir + '/state' )
-        #
-        #        os.makedirs( state_dir )
+        # change the working state dump file if this is a dummy mode
+        # restart off a real mode initial state dump
+        if time_type == 'system time':
+            if self.dummy_mode:
+                print "THIS IS A DUMMY MODE RESTART FROM A REAL MODE STATE DUMP"
+                print "changing the working state dump directory"
+                self.subdir = 'dummy-restart-' + datetime.datetime.now().isoformat()
 
         log_created = {}
 

@@ -14,7 +14,8 @@ class config:
 
         self.items[ 'logging_dir' ] = os.environ['HOME'] + '/cylc-logs/' + self.system_name
         self.items[ 'state_dump_dir' ] = os.environ['HOME'] + '/cylc-state/' + self.system_name
-        self.items[ 'state_dump_file' ] = os.environ['HOME'] + '/cylc-state/' + self.system_name + '/state'
+        self.items[ 'state_dump_file' ] = self.items['state_dump_dir'] + '/state'
+
         self.items[ 'task_list' ] = []
 
         self.items[ 'system_title' ] = 'SYSTEM TITLE (override me in system config)'
@@ -50,7 +51,6 @@ class config:
     def configure( self ):
         self.check_task_groups()
         self.job_submit_config()
-        self.make_dirs()
 
     def check_task_groups( self ):
         # check tasks in any named group are in the task list
@@ -69,11 +69,17 @@ class config:
                 if task in self.items[ 'job_submit_overrides' ][ method ]:
                     self.items['job submit class'][ task ] = method
 
-    def make_dirs( self ):
+    def make_dirs( self, subdir = None ):
+        if subdir:
+            self.items[ 'state_dump_dir' ] += '/subdir'
+            self.items[ 'logging_dir'    ] += '/subdir'
+
+        self.items[ 'state_dump_file' ] = self.items['state_dump_dir'] + '/state'
+
         statedir = self.items[ 'state_dump_dir' ]
         if not os.path.exists( statedir ):
             try:
-                print "Creating configured state dump directory"
+                print "Creating state dump directory"
                 os.makedirs(  statedir )
             except Exception, e:
                 raise SystemExit( e )
@@ -81,7 +87,7 @@ class config:
         logdir = self.items[ 'logging_dir' ]
         if not os.path.exists( logdir ):
             try:
-                print "Creating configured logging directory"
+                print "Creating logging directory"
                 os.makedirs(  logdir )
             except Exception, e:
                 raise SystemExit( e )
