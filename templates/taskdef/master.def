@@ -1,10 +1,10 @@
 # MASTER CYLC TASK DEFINITION FILE, All available options, annotated.
-# Refer also to the cylc userguide, Optional keys: [square brackets].
+# Refer also to the cylc userguide. Optional keys: [square brackets].
 
 #----------------------------------------------------------------------
 %NAME
     # - Task name
-    a_task_called_foo
+    foo
 
 #----------------------------------------------------------------------
 %DESCRIPTION
@@ -93,8 +93,7 @@
 #----------------------------------------------------------------------
 %PREREQUISITES      
     # - Quoted string literals, one per lines.
-    # - Some variable substitution and simple cycle time arithmetic:
-    #     $(CYCLE_TIME [+/- <hours>])
+    # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
     # - May be conditional on cycle hour.
     # - Do not list the restart prerequisites of 'tied' tasks (forecast 
     #     models), they are created and handled automatically.
@@ -114,10 +113,9 @@
 #----------------------------------------------------------------------
 %OUTPUTS
     # - Quoted string literals, one output message per line.
-    # - Must be prefixed with estimated completion time in min, sec, or hr. 
+    # - Prefix with estimated completion time in min, sec, or hr. 
     #   - (used only in dummy mode, to simulate correct completion time).
-    # - Some variable substitution and simple cycle time arithmetic:
-    #     $(CYCLE_TIME [+/- <hours>])
+    # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
     # - DO NOT REGISTER the special 'started' and 'finished' messages,
     #     or the special restart outputs of 'tied' tasks (i.e. forecast
     #     models); these are all handled automatically by cylc.
@@ -139,15 +137,13 @@
     #   outputs dumped by the task in real operation.
     # - The time estimates are used only in dummy mode, to correctly 
     #     simulate the time that restart outputs are completed.
-    # - For N entries, ONE restart PREREQUISITE and N restart OUTPUTS
-    #     are automatically registered.
+    # - The time values are used only in dummy mode, but number of
+    #   times listed is more generally important: for N entries, ONE
+    #     special restart PREREQUISITE and N special restart OUTPUTS
+    #     are registered automatically.
     # - The first restart output is assumed to valid at the cycle time 
     #     of the NEXT task instance, the second for the NEXT NEXT
     #     instance, and so on.
-    # - The actual times are used only in dummy mode, but number of
-    #     times listed is more generally important: for N times ONE
-    #     special restart PREREQUISITE and N special restart OUTPUTS
-    #     will be created automatically.
     5 min, 10 min, 15 min
 
 #----------------------------------------------------------------------
