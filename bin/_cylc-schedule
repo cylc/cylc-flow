@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 # standard Python modules
-import re, os, sys
+import re, os, sys, shutil
 #import profile
 import logging
 import datetime
@@ -204,17 +204,18 @@ else:
 if options.dummy_mode and options.practice_mode:
     parser.error( "choose ONE of dummy or practice mode")
 
-mode = {}
-mode['dummy'] = False
-mode['practice' ] = False
+dummy_mode = False
+practice = False
 
 if options.dummy_mode:
-    mode['dummy'] = True
+    dummy_mode = True
     banner[ 'mode of operation' ] = 'DUMMY'
+
 elif options.practice_mode:
-    mode['dummy'] = True
-    mode['practice'] = True
+    dummy_mode = True
+    practice = True
     banner[ 'mode of operation' ] = 'PRACTICE DUMMY'
+
 else:
     banner[ 'mode of operation' ] = 'REAL'
 
@@ -225,7 +226,6 @@ startup = {}
 startup[ 'start_time'] = None
 startup[ 'stop_time' ] = None
 startup[ 'restart'   ] = False
-startup[ 'restart_from' ] = None
 
 if options.start_time and ( options.restart or options.restart_from ):
     parser.error( "A start time does not make sense for a restart" )
@@ -242,16 +242,6 @@ if options.start_time:
     startup[ 'start_time' ] = options.start_time
     if not cycle_time.is_valid( options.start_time ):
         parser.error( "invalid cycle time: " + options.start_time )
-
-elif options.restart:
-    startup[ 'restart' ] = True
-
-elif options.restart_from:
-    startup[ 'restart_from' ] = options.restart_from
-
-else:
-    #raise SystemExit( "Illegal startup options" )
-    parser.error( "Illegal startup options" )
 
 if options.include and options.exclude:
     parser.error( '--include and --exclude are mutually exclusive' )
@@ -302,18 +292,65 @@ import remote_switch # ditto
 
 # load system configuration--------------------------------------------
 config = system_config( reg_name )
-config.configure( mode['practice'])
+
+# find initial state dump file
+
+configured_state_dump = config.get('state_dump_file')
+
+if options.restart:
+    startup[ 'restart' ] = True
+
+    initial_state_dump = configured_state_dump
+    if not os.path.exists( initial_state_dump ):
+        raise SystemExit( "File not found: " + initial_state_dump )
+
+if options.restart_from:
+    startup['restart'] = True
+
+    if os.path.exists( options.restart_from ):
+        file = os.path.abspath( options.restart_from )
+        print "Restart from state dump: " + file
+        initial_state_dump = file
+
+    elif os.path.exists( config.get( 'state_dump_dir' ) + '/' + options.restart_from ):
+        file = os.path.abspath( config.get( 'state_dump_dir' ) + '/' + options.restart_from )
+        print "Restart from state dump: " + file
+        initial_state_dump = file
+
+    else:
+        raise SystemExit( "File not found: " + options.restart_from )
+
+if startup[ 'restart' ]:
+    startup[ 'initial_state_dump' ] = initial_state_dump
+
+if not practice:
+    # back up the configured state dump (i.e. the one that will be used
+    # by the system unless in practice mode) but not necessarily the
+    # initial one. 
+
+    if os.path.exists( configured_state_dump ):
+        backup = configured_state_dump + '.' + datetime.datetime.now().isoformat()
+        print "Backing up configured state dump:"
+        print "  " + configured_state_dump + " --> " + backup
+        try:
+            shutil.copyfile( configured_state_dump, backup )
+        except:
+            raise SystemExit( "ERROR: State dump file copy failed" )
+
+# now create state dump and logging dirs if they don't already exist
+# after modifying the configured paths if we're in practice mode.
+config.configure( practice )
+
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 nameserver = locate_pyro_nameserver()
 
 # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
-#if mode['practice']:
-# THIS HAS IMPLICATIONS FOR MESSAGING, CONTROLLING, AND MONITORING
-#    groupname = os.environ['USER'] + '_' + reg_name + "_practice"
-#else:
-#    groupname = os.environ['USER'] + '_' + reg_name
-groupname = os.environ['USER'] + '_' + reg_name
+if practice:
+    # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
+    groupname = os.environ['USER'] + '_' + reg_name + "_practice"
+else:
+    groupname = os.environ['USER'] + '_' + reg_name
 
 create_ns_groupname( nameserver, groupname )
 banner[ 'Pyro nameserver group' ] = groupname
@@ -330,13 +367,12 @@ daemon.useNameServer(nameserver)
 clock = accelerated_clock.clock( 
         int(options.clock_rate),
         int(options.clock_offset),
-        mode['dummy'] ) 
+        dummy_mode ) 
 
 daemon.connect( clock, ns_obj_name( 'clock', groupname ))
 
-
 # remotely accessible system state summary
-system_state = state_summary.state_summary( config, mode['dummy'] )
+system_state = state_summary.state_summary( config, dummy_mode )
 daemon.connect( system_state, ns_obj_name( 'state_summary', groupname ))
 
 # dead letter box for remote use
@@ -349,7 +385,7 @@ config.put( 'daemon', daemon )
 config.put( 'clock', clock )
 
 # initialize the task manager (and create main logger)
-pool = manager.manager( config, groupname, mode['dummy'], startup )
+pool = manager.manager( config, groupname, dummy_mode, startup )
 
 # logger is now created and pimped
 log = logging.getLogger( 'main' )
@@ -363,7 +399,7 @@ os.environ[ 'CYLC_ON' ] = 'true' # tells 'cylc message' to use the nameserver
 os.environ[ 'CYLC_NS_HOST' ] = str( pns_host )  # may be an IP number
 os.environ[ 'CYLC_NS_GROUP' ] = groupname
 os.environ[ 'SYSTEM_NAME' ] = reg_name
-if mode['dummy']:
+if dummy_mode:
     os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
     # communicate failout_task_id to the dummy task program
     if options.failout_task_id:

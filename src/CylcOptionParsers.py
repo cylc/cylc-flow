@@ -33,6 +33,10 @@ arguments:
                 metavar="HOSTNAME", action="store", default="localhost",
                 dest="pns_host" )
 
+        self.add_option( "-p", "--practice",
+                help="Target a system running in practice mode.", 
+                action="store_true", default=False, dest="practice" )
+
     def parse_args( self ):
 
         (options, args) = OptionParser.parse_args( self )
@@ -51,6 +55,8 @@ arguments:
         # nameserver host
         self.pns_host = options.pns_host   # see default above!
 
+        self.practice = options.practice  # practice mode or not
+
         return ( options, args )
 
 
@@ -61,9 +67,10 @@ arguments:
         return self.pns_host
 
     def get_groupname( self ):
-        return self.username + '_' + self.system_name
-
-
+        groupname = self.username + '_' + self.system_name
+        if self.practice:
+            groupname += '_practice'
+        return groupname
 
 class PromptOptionParser( NoPromptOptionParser ):
 

@@ -28,8 +28,6 @@ class manager:
         self.system_hold_now = False
         self.system_hold_ctime = None
 
-        self.subdir = None
-
         # initialise the dependency broker
         self.broker = broker()
         
@@ -44,20 +42,9 @@ class manager:
             self.load_from_config( startup['start_time'], startup['exclude'], startup['include'] )
 
         elif startup[ 'restart' ]:
-            self.load_from_state_dump( config.get( 'state_dump_file' ) )
-
-        elif startup[ 'restart_from' ]:
-            self.load_from_state_dump( startup[ 'initial state dump' ] )
+            self.load_from_state_dump( startup[ 'initial_state_dump' ] )
         else:
             raise SystemExit( "No startup method defined!" )
-
-
-    #def backup_state_dump_file( self ):
-    #   # back up the working state dump file if it already exists
-    #   file = self.config.get( 'state_dump_file' )
-    #   if os.path.exists( state_dump_file ):
-    #       backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
-    #       shutil.copyfile( state_dump_file, backup )
 
 
     def create_main_log( self ):
