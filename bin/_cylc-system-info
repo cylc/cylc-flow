@@ -1,0 +1,41 @@
+#!/usr/bin/python
+
+import os, sys
+
+from optparse import OptionParser
+
+parser = OptionParser( usage = """cylc system-help [options] SYSTEM 
+
+Retrieve the system-specific information about a registered system. This
+command does not interact with a running system, it simply accesses the
+'system_info' module in a system definition directory. The same
+information can also be retrieved from a running system by 'cylc what-is'""")
+
+(options, args) = parser.parse_args()
+
+if len( args ) != 1:
+    parser.error( "Wrong number of arguments!" )
+
+reg_name = args[0]
+
+# find location of the system task and config modules------------------
+registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name
+if os.path.exists( registration_file ):
+    FILE = open( registration_file, 'r' )
+    line = FILE.read()
+    system_dir = line.rstrip() 
+    FILE.close()
+else:
+    raise SystemExit( "No such system name registered: " + reg_name )
+
+
+# provide access to the system source modules
+print reg_name + ' --> ' + system_dir
+# prepend system Python modules to the python search path
+sys.path.insert(0, system_dir )
+
+# import system-specific help module
+import system_info
+
+# print system_specific information
+print system_info.info

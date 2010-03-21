@@ -129,6 +129,7 @@ cat > system_config.py <<eof
 
 from config import config
 from task_list import task_list
+from system_info import info
 import logging  # for logging level
 import os       # os.environ['HOME']
 
@@ -145,6 +146,9 @@ class system_config( config ):
 
         # system task list
         self.items['task_list'] = task_list
+
+        # system info
+        self.items['system_info']['info'] = info
 
         # task insertion groups, e.g:
         # self.items['task_groups']['foo'] = ['bar', 'baz']
@@ -230,3 +234,31 @@ fi
 echo "$SYS_DIR/job_submit_methods.py"
 echo
 
+echo
+WRITE_INFO=true
+if [[ -f system_info.py ]]; then
+    echo "system_info module already exists, "
+    if ! $FORCE; then
+        echo "NOT OVERWRITING in case of customization"
+        WRITE_INFO=false
+    else
+        BACKUP=system_info.py.OLD.$$
+        echo "OVERWRITING (backup: $BACKUP)"
+        cp system_info.py $BACKUP
+    fi
+else
+    echo "Writing the system info module"
+fi
+
+if $WRITE_INFO; then
+cat > system_info.py <<eof
+#!/usr/bin/python
+
+info="""
+REPLACE THIS WITH A DESCRIPTION OF YOUR SYSTEM, AND ANY ASPECTS OF IT
+THAT ARE CONFIGURABLE VIA CYLC.
+"""
+eof
+fi
+echo "$SYS_DIR/system_info.py"
+echo
