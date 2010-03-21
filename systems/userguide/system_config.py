@@ -12,6 +12,7 @@
 
 from config import config
 from task_list import task_list
+from system_info import info
 import logging  # for logging level
 import os       # os.environ['HOME']
 
@@ -24,7 +25,7 @@ class system_config( config ):
         self.items[ 'system_title' ] = 'USERGUIDE EXAMPLE SYSTEM'
         
         # system info
-        self.items[ 'system_info' ]['description'] = 'Implements the Cylc Userguide example system'
+        self.items[ 'system_info' ]['info'] = info
 
         # task list
         self.items['task_list'] = task_list
@@ -36,8 +37,12 @@ class system_config( config ):
         # self.items['job_submit_method'] = 'background2'
 
         # environment variables available to all tasks
+
+        # 1/ $TMPDIR, used for all input and output files
         user = os.environ['USER'] 
         self.items['environment']['TMPDIR'] = '/tmp/' + user + '/' + sysname
+
+        # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 
         self.items['environment']['REAL_TIME_ACCEL'] = 360
 
         #self.items['logging_level'] = logging.DEBUG
