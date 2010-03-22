@@ -15,8 +15,8 @@
 %\usepackage{titletoc}
 \usepackage{tocloft}
 
-\addtolength\cftsubsecnumwidth{3em}  % see tocloft manual
-
+% prevent double digit sub-sections crowding the toc line
+\addtolength\cftsubsecnumwidth{0.5em}  % see tocloft manual
 
 \definecolor{codeblock}{rgb}{0.95,0.98,1.0}
 %\definecolor{keywords}{rgb}{1.0,0.3,0.0}
@@ -70,7 +70,6 @@ morecomment=[l]{options:},
 morecomment=[l]{|}
 }
 
-
 \title{Cylc \linebreak A Self-Organising Optimal Multicycle Scheduler \linebreak For Complex Forecasting Systems \linebreak Version -CYLC-VERSION-}
 
 \author{Hilary Oliver, NIWA}
@@ -80,10 +79,6 @@ morecomment=[l]{|}
 
 \maketitle
 
-\pagebreak
-\tableofcontents
-%\listoffigures
-%\listoftables
 \pagebreak
 
 \begin{abstract}
@@ -150,6 +145,11 @@ morecomment=[l]{|}
     %observations and using the {\em most recent} 6-hourly precipitation
     %forecast - see EcoConnect, below).} 
 \end{abstract}
+
+\pagebreak
+\tableofcontents
+\listoffigures
+%\listoftables
 
 \pagebreak
 \section{How Cylc Works} 
@@ -222,21 +222,23 @@ one task takes input from several upstream tasks.
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/dep-one-cycle} 
     \end{center}
-    \caption{\small Dependency graph for a single forecast cycle of a
-    simple example system. Tasks {\em a, b,} and {\em c} represent
-    forecast models, {\em d, e} and {\em f} are post processing or
-    product generation tasks, and {\em x} represents {\em external
-    driving data} that the upstream forecast model depends on.}
+    \caption[Single cycle dependency graph]{\small Dependency graph for
+    a single forecast cycle of a simple example system. Tasks {\em a,
+    b,} and {\em c} represent forecast models, {\em d, e} and {\em f}
+    are post processing or product generation tasks, and {\em x}
+    represents {\em external driving data} that the upstream forecast
+    model depends on.}
 \end{figure} 
 
 \begin{figure} \label{fig-time-one}
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/timeline-one}
     \end{center}
-    \caption{\small Job schedule for two consecutive cycles of
-the example system during real time operation. The horizontal extent of
-each task bar represents its execution time, and the vertical blue lines
-show when the external driving data becomes available.}
+    \caption[Job schedule for real time operation]{\small Job schedule
+    for two consecutive cycles of the example system during real time
+    operation. The horizontal extent of each task bar represents its
+    execution time, and the vertical blue lines show when the external
+    driving data becomes available.}
 \end{figure}
 
 Figure~\ref{fig-time-one} shows the job schedule for two consecutive
@@ -251,8 +253,9 @@ but this is merely a simplification that makes for clearer diagrams.
     \begin{center}
         \includegraphics[width=10cm]{inkscape-svg/dep-two-cycles-linked} 
     \end{center}
-    \caption{\small If the external driving data is available in
-    advance, can we start running the next cycle early?} 
+    \caption[What if the external data is available early?]{\small If
+    the external driving data is available in advance, can we start
+    running the next cycle early?} 
 \end{figure}
 
 \subsection{Intercycle Dependencies} 
@@ -295,7 +298,8 @@ difficult to guarantee that dependencies will never be violated.
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/timeline-one-c} 
     \end{center}
-    \caption{\small A naive attempt to overlap two consecutive cycles
+    \caption[Attempted overlap of consective single-cycle job
+    schedules]{\small A naive attempt to overlap two consecutive cycles
     using the single-cycle dependency graph. The red shaded tasks will
     fail because of dependency violations (or will not be able to run
     because of upstream dependency violations).} 
@@ -305,19 +309,20 @@ difficult to guarantee that dependencies will never be violated.
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/timeline-one-a} 
     \end{center}
-    \caption{\small The best that can be done in general when intercycle dependencies 
-    are ignored.} 
+    \caption[Best case scenario without handling intercycle
+    dependencies]{\small The best that can be done in general when
+    intercycle dependencies are ignored.} 
 \end{figure} 
 
 \begin{figure} \label{fig-dep-two}
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/dep-multi-cycle} 
     \end{center}
-    \caption{\small Complete dependency graph for the example
-    system, assuming the least possible intercycle dependence: the
-    forecast models ($a$, $b$, and $c$) depend on their own previous
-    instances. The dashed arrows show connections to previous and
-    subsequent forecast cycles.} 
+    \caption[Complete multicycle dependency graph]{\small Complete
+    dependency graph for the example system, assuming the least possible
+    intercycle dependence: the forecast models ($a$, $b$, and $c$)
+    depend on their own previous instances. The dashed arrows show
+    connections to previous and subsequent forecast cycles.} 
 \end{figure}
 
 
@@ -353,29 +358,31 @@ time.
 \subsection{The Cylc Scheduling Algorithm} 
 \label{TheCylcSchedulingAlgorithm}
 
-\begin{figure} \label{fig-time-two}
+\begin{figure} \label{fig-task-pool}
     \begin{center} 
         \includegraphics[width=8cm]{inkscape-svg/task-pool}
     \end{center} 
-    \caption{\small How cylc sees the task pool, in contrast to the 
-    full dependency diagram of Figure~\ref{fig-full}.} 
+    \caption[The cylc task pool]{\small How cylc sees the task pool, in
+    contrast to the full dependency diagram of Figure~\ref{fig-full}.} 
 \end{figure} 
 
 \begin{figure} \label{fig-optimal-two}
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/timeline-two-cycles-optimal} 
     \end{center}
-    \caption{\small Optimal job schedule when the next cycle's driving
-    data is available in advance, possible in principle when all
-    intercycle dependencies are respected.} 
+    \caption[Optimal multicycle job schedule]{\small Optimal job
+    schedule when the next cycle's driving data is available in advance,
+    possible in principle when all intercycle dependencies are
+    respected.} 
 \end{figure} 
 
 \begin{figure} \label{fig-time-three}
     \begin{center}
         \includegraphics[width=12cm]{inkscape-svg/timeline-three} 
     \end{center}
-    \caption{\small Job schedules for the example system after a delay
-    of almost one whole forecast cycle, when intercycle dependencies are
+    \caption[Post delay comparison of job schedules]{\small Job
+    schedules for the example system after a delay of almost one whole
+    forecast cycle, when intercycle dependencies are
     taken into account (above the time axis), and when they are not
     (below the time axis). The colored lines indicate the time that
     each cycle is delayed, and normal ``caught up'' cycles
@@ -386,7 +393,8 @@ time.
     \begin{center} 
         \includegraphics[width=8cm]{inkscape-svg/timeline-two}
     \end{center} 
-    \caption{\small Job schedules for the example system in case study
+    \caption[Optimal job schedule when all external data is
+    available]{\small Job schedules for the example system in case study
     mode, or after a long delay, when the external driving data are
     available many cycles in advance. Above the time axis is the optimal
     schedule obtained when the system is constrained only by its true
