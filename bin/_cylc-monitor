@@ -80,8 +80,8 @@ try:
 
         except NamingError, x:
             if not alerted:
-                print x
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 
+                print x
                 alerted = True
             #raise
             # if no connection, try again to connect

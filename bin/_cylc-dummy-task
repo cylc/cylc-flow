@@ -14,23 +14,22 @@ import datetime
 import sys, os, re
 from time import sleep
 import subprocess
+from connector import connector
 
 
 class dummy_task:
 
     def __init__( self, task_id, groupname, pns_host ):
 
-        # get a pyro proxy for the task object that I'm masquerading as
         self.id = task_id
+        # get a Pyro proxy for the task that I'm masquerading as
+        self.task  = connector( pns_host, groupname, task_id ).get()
+        # get a Pyro proxy for the dummy mode accelerated clock
+        self.clock = connector( pns_host, groupname, 'clock' ).get()
 
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + task_id )
-        
-        # get a pyro proxy for the dummy clock
-        self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.clock' )
 
-
-    def send( self, message, priority='NORMAL' ):
-
+    def send( self, message ):
+        # send an output message to the task proxy object that I'm masquerading as
         command_list = [ 'cylc', 'message', message  ]
         try:
             retcode = subprocess.call( command_list )

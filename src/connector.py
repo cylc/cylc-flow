@@ -18,7 +18,7 @@ class connector:
         foo = pyrex.discover( hostname )
 
         if not foo.registered( groupname ):
-            print "WARNING: no " + groupname + " registered yet ..." 
+            print "WARNING: no " + groupname + " registered ..." 
             # print available systems and exit
             print
             foo.print_info()
