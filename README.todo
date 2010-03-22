@@ -3,8 +3,6 @@ To Do
 * DOCUMENT: system shutdown for practice, while real tasks complete:
   restart with them FINISHED!
 
-* check tasks in task list are unique!
-
 * a module for handling registrations, to replace the guts of the
   register and unregister commands,  AND the short section of reg code
   in run-task and config.py

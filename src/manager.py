@@ -106,7 +106,11 @@ class manager:
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname1, taskname2, ...]
 
-        for name in self.config.get('task_list'):
+        task_list = self.config.get('task_list')
+        # uniquify in case of accidental duplicates
+        task_list = list( set( task_list ) )
+
+        for name in task_list:
 
             if name in exclude:
                 continue
