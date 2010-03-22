@@ -42,7 +42,7 @@ class manager:
             self.load_from_config( startup['start_time'], startup['exclude'], startup['include'] )
 
         elif startup[ 'restart' ]:
-            self.load_from_state_dump( startup[ 'initial_state_dump' ] )
+            self.load_from_state_dump( startup[ 'initial_state_dump' ], startup[ 'no_reset' ] )
         else:
             raise SystemExit( "No startup method defined!" )
 
@@ -120,7 +120,7 @@ class manager:
 
             # instantiate the task
             itask = get_object( 'task_classes', name )\
-                    ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], True )
+                    ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], startup=True )
 
             # the initial task cycle time can be altered during
             # creation, so we have to create the task before
@@ -139,7 +139,7 @@ class manager:
                 self.tasks.append( itask )
 
 
-    def load_from_state_dump( self, filename ):
+    def load_from_state_dump( self, filename, no_reset_val ):
         # load initial system state from the configured state dump file
         #--
 
@@ -210,7 +210,7 @@ class manager:
 
             # instantiate the task object
             itask = get_object( 'task_classes', name )\
-                    ( c_time, self.dummy_mode, state, self.submit[ name ] )
+                    ( c_time, self.dummy_mode, state, self.submit[ name ], no_reset=no_reset_val )
 
             # the initial task cycle time can be altered during
             # creation, so we have to create the task before

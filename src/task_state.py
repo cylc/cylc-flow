@@ -19,7 +19,8 @@ class task_state:
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 
-    def __init__( self, initial_state = None ):
+    def __init__( self, initial_state, no_reset ):
+
 
         self.state = {}
 
@@ -37,8 +38,11 @@ class task_state:
             self.check()
 
             if self.is_running() or self.is_submitted() or self.is_failed():
-                # Running or failed tasks need to re-run at startup.
-                self.set_status( 'waiting' )
+                # we can't be sure that these tasks completed after the
+                # system was shut down, so reset to waiting to ensure
+                # they run again after restarting the system. 
+                if not no_reset:
+                    self.set_status( 'waiting' )
 
     def has_key( self, key ):
         if key in self.state.keys():

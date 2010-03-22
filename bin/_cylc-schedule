@@ -80,24 +80,21 @@ def ns_obj_name( name, groupname ):
     # object name as registered with the Pyro nameserver
     return groupname + '.' + name
 
-usage = """1/ cylc schedule [options] --start-at=CYCLE SYSTEM (cold start)
-Usage: 2/ cylc schedule [options] --restart SYSTEM        (restart)
+usage = """1/ cylc schedule [options] --start-at=CYCLE SYSTEM
+Usage: 2/ cylc schedule [options] --restart SYSTEM
 
 Start or restart a configured, registered, system. 
 
-For a cold start, each task is instantiated at the initial cycle time,
-or at the first subsequent cycle allowed for that task. At least one
-task in the system must have no prerequisites, or nothing will happen. 
+1/ Cold Start: Each task will be instantiated at the initial cycle time,
+or at the first subsequent cycle time that is valid for the task.  
 
-For a restart, the system starts from a prior state recorded in the 
-configured, or named, state dump file. Any task that was in the
-"submitted", "running", or "failed" states will be reset to the
-"waiting" state so that it will be resubmitted immediately.
+2/ Restart: Start from the configured or named state dump file. Any task
+recorded in the "submitted", "running", or "failed" state will be reset
+to "waiting" at startup (but see the '--no-reset' option below).
 
-Use nohup (see 'man nohup') to start a scheduler that will not die with
-your terminal session.
+Use nohup to make the scheduler independent of your terminal log in.
 
-arguments:
+Arguments:
    SYSTEM               Registered name of the forecasting system.""" 
 
 def commandline_parser():
@@ -125,6 +122,11 @@ def commandline_parser():
             "state dump directory, or give the file path.",
             metavar="FILE", action="store", dest="restart_from" )
 
+    parser.add_option( "--no-reset", 
+            help="(RESTART) Do no reset unfinished tasks to the waiting "
+            "state at startup. True by default in practice mode.",
+            action="store_true", default=False, dest="no_reset" )
+
     parser.add_option( "--exclude",
             help="Exclude these tasks at startup. Equivalent to "
             "deleting them from the system task list.",
@@ -141,17 +143,16 @@ def commandline_parser():
             "defaults to localhost",
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
-    parser.add_option( "-p", "--practice-mode",
-            help="PRACTICE MODE: a special version of dummy mode that"
-            "lets you practice making changes to a current running,"
-            "paused, or halted system without corrupting its state or "
-            "log files.",
+    parser.add_option( "-p", "--practice",
+            help="RESTART, in DUMMY MODE, from the current state of an "
+            "existing system, using new state dump and logging directories "
+            "to avoid  corrupting the original system (which can still be "
+            "running).",
             action="store_true", dest="practice_mode" )
 
     parser.add_option( "-d", "--dummy-mode",
-            help="DUMMY MODE: replace each real system task with a program "
-            "that fakes its output messages on time, relative to an "
-            "accelerated clock.",
+            help="DUMMY MODE: replace system tasks with a program that "
+            "masquerades as them and runs on an accelerated clock.",
             action="store_true", dest="dummy_mode" )
 
     parser.add_option( "--dummy-clock-rate", 
@@ -226,6 +227,10 @@ startup = {}
 startup[ 'start_time'] = None
 startup[ 'stop_time' ] = None
 startup[ 'restart'   ] = False
+startup[ 'no_reset'  ] = False
+
+if options.no_reset or options.practice_mode:
+    startup[ 'no_reset' ] = True
 
 if options.start_time and ( options.restart or options.restart_from ):
     parser.error( "A start time does not make sense for a restart" )
