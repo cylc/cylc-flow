@@ -12,6 +12,11 @@
 \usepackage{graphicx}
 \usepackage[dvips,usenames,dvipsnames]{color}
 \usepackage[dvipdf]{hyperref}
+%\usepackage{titletoc}
+\usepackage{tocloft}
+
+\addtolength\cftsubsecnumwidth{3em}  % see tocloft manual
+
 
 \definecolor{codeblock}{rgb}{0.95,0.98,1.0}
 %\definecolor{keywords}{rgb}{1.0,0.3,0.0}
@@ -72,10 +77,13 @@ morecomment=[l]{|}
 
 \begin{document}
 
+
 \maketitle
 
 \pagebreak
 \tableofcontents
+%\listoffigures
+%\listoftables
 \pagebreak
 
 \begin{abstract}
