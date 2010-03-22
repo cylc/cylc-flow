@@ -8,9 +8,14 @@ parser = PromptOptionParser( """cylc reset [options] SYSTEM
 Reset a single task to the "waiting" or "finished" states.""" )
 
 parser.add_option( "--waiting", 
+        help="reset the task to the waiting state (i.e. waiting "
+        "for its prerequisites to be satisfied prior to running)",
         action="store_true", default=False, dest="waiting" )
 
 parser.add_option( "--finished", 
+        help="reset the task to the finished state (i.e. finished "
+        "with all outputs reported complete). Do this only if you "
+        "know that the real task has completed successfully.", 
         action="store_true", default=False, dest="finished" )
 
 parser.add_option( "-t", "--task",
