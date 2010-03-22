@@ -6,9 +6,7 @@
 # the job_submit sub-directory of the main cylc installation or of the
 # task definition directories for specific cylc systems.
 
-import re
-import os
-import sys
+import re, os, sys
 import subprocess
 
 class job_submit:

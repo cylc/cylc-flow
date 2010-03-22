@@ -3,31 +3,46 @@
 # A program that masquerade's as a given task by reporting its outputs
 # completed on time according to the controller's dummy clock.
 
-# NOTE that the dummy program calls the task proxy incoming() method
-# directly, rather than invoking the external 'cylc message' program.
+# This program could (and  in fact used to) make direct calls the task proxy
+# incoming() method, but now it invokes 'cylc message' as a subprocess
+# in order to more exactly model real system tasks. 
 
 import Pyro.naming, Pyro.core
 from Pyro.errors import NamingError
 import cycle_time
 import datetime
-import sys
-import os
-import re
+import sys, os, re
 from time import sleep
+import subprocess
+
 
 class dummy_task:
 
-    def __init__( self, task_name, c_time ):
+    def __init__( self, task_id, groupname, pns_host ):
 
         # get a pyro proxy for the task object that I'm masquerading as
-        self.name = task_name
-        self.c_time = c_time
-        self.id = task_name + '%' + c_time
+        self.id = task_id
 
-        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + self.id )
+        self.task = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + task_id )
         
         # get a pyro proxy for the dummy clock
         self.clock = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.clock' )
+
+
+    def send( self, message, priority='NORMAL' ):
+
+        command_list = [ 'cylc', 'message', message  ]
+        try:
+            retcode = subprocess.call( command_list )
+            if retcode != 0:
+                # the command returned non-zero exist status
+                print >> sys.stderr, ' '.join( command_list ) + ' failed: ', retcode
+                sys.exit(1)
+        except OSError:
+                # the command was not invoked
+                print >> sys.stderr, 'ERROR: unable to execute ' + command_list
+                print >> sys.stderr, ' * Is [cylc]/bin in your $PATH?'
+                sys.exit(1)
 
 
     def run( self ):
@@ -58,7 +73,7 @@ class dummy_task:
                 outputs[time].append( fin )
 
             for output in outputs[ time ]:
-                self.task.incoming( 'NORMAL', output )
+                self.send( output )
 
             if failout:
                 # fail after the first message (and a small delay)
@@ -66,8 +81,10 @@ class dummy_task:
 
                 # but first report 'completed' for dependent tasks that
                 # don't care if this one finishes successfully or fails
-                self.task.incoming( 'NORMAL', self.id + ' completed' )
-                self.task.incoming( 'CRITICAL', self.id + ' failed' )
+            
+                self.send( '--completed' )
+                self.send( '--failed' )
+                
                 sys.exit(1)
 
             prev_time = time
@@ -92,5 +109,5 @@ if __name__ == '__main__':
             print 'dummy task ' + task_id + ' programmed to FAIL!'
             failout = True
 
-    dummy = dummy_task( task_name, c_time )
+    dummy = dummy_task( task_id, groupname, pns_host )
     dummy.run()
