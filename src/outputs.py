@@ -53,5 +53,5 @@ class outputs( requisites ):
     def set_all_incomplete( self ):
         requisites.set_all_unsatisfied( self )
 
-    def set_all_completed( self ):
+    def set_all_complete( self ):
         requisites.set_all_satisfied( self )

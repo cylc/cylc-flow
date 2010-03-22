@@ -552,6 +552,22 @@ class manager:
         else:
             self.log.warning( "task to reset not found: " + task_id )
 
+    def reset_task_to_finished( self, task_id ):
+        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
+        found = False
+        for itask in self.tasks:
+            if itask.get_identity() == task_id:
+                found = True
+                break
+
+        if found:
+            itask.log( 'WARNING', "resetting to finished state" )
+            itask.state.set_status( 'finished' )
+            itask.prerequisites.set_all_satisfied()
+            itask.outputs.set_all_complete()
+        else:
+            self.log.warning( "task to reset not found: " + task_id )
+
     def insertion( self, ins_id ):
         # for remote insertion of a new task, or task group
         self.log.warning( 'pre-insertion state dump: ' + self.dump_state( new_file = True ))

@@ -5,18 +5,32 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc reset [options] SYSTEM 
 
-Reset a single task to the "waiting" state.""" )
+Reset a single task to the "waiting" or "finished" states.""" )
 
-parser.add_option( "-t", 
+parser.add_option( "--waiting", 
+        action="store_true", default=False, dest="waiting" )
+
+parser.add_option( "--finished", 
+        action="store_true", default=False, dest="finished" )
+
+parser.add_option( "-t", "--task",
         help="ID of the task to reset.",
-        metavar="TASK%CYCLE", action="store", dest="reset_id" )
+        metavar="TASK%CYCLE", action="store", dest="task_id" )
 
 (options, args) = parser.parse_args()
 
-if options.reset_id:
-    if parser.prompt( 'Reset task ' + options.reset_id + ' in'):
-        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-        god.reset_to_waiting( options.reset_id )
+if not options.task_id:
+    parser.error( "Specify a task to reset" )
 
-else:
-    parser.error( "Task ID required" )
+if ( not options.waiting and not options.finished ) or \
+        ( options.waiting and options.finished ):
+    parser.error( "Specify either waiting or finished" )
+
+if parser.prompt( 'Reset task ' + options.task_id + ' in'):
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+
+    if options.waiting:
+        god.reset_to_waiting( options.task_id )
+
+    elif options.finished:
+        god.reset_to_finished( options.task_id )

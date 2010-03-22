@@ -41,6 +41,13 @@ class remote_switch( Pyro.core.ObjBase ):
         self.pool.reset_task( task_id )
         self.process_tasks = True
 
+    def reset_to_finished( self, task_id ):
+        # reset a failed task to the waiting state
+        # (after it has been fixed, presumably!)
+        self.log.warning( "REMOTE: reset to finished: " + task_id )
+        self.pool.reset_task_to_finished( task_id )
+        self.process_tasks = True
+
     def insert( self, ins ):
         # insert a new task or task group into the system
         self.log.warning( "REMOTE: task insertion: " + ins )
