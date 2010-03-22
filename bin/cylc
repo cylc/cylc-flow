@@ -59,7 +59,7 @@ usage = \
     '',
     '|---------------Manipulate',
     '  insert        Insert a task or task group into a running system.',
-    '  reset         Reset a single task to the waiting state.',
+    '  reset         Reset a single task to waiting, ready, or finished.',
     '  kill          Remove a single task from a running system.',
     '  purge         Recursively kill a tree of dependent tasks.',
     '',

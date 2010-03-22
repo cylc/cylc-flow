@@ -5,26 +5,34 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc reset [options] SYSTEM 
 
-Reset the state of a single task to 'waiting', 'ready' or 'finished'.""" )
+Reset the state of a single task to 'waiting', 'ready' or 'finished'.
+
+The principal use for this command is to reset a failed task to the
+'waiting' state (i.e. waiting for its prerequisites to be satisfied),
+after fixing whatever problem resulted in the failure, thereby causing
+the failed task to be resubmitted.
+
+However, you can also reset a task to 'ready' (satisfied prerequisites)
+or 'finished' (completed outputs).  Reset to 'finished ONLY if you 
+know that the external task has completed successfully prior to
+starting or restarting the scheduler; and reset to 'ready' ONLY if you
+know that the external task's real prerequisites are satisfied AND (this
+should not occur!) the tasks responsible for satisfying them are no
+longer present in the task pool.""" )
 
 parser.add_option( "--waiting", 
-        help="Reset a task to the waiting state (i.e. waiting "
-        "for its prerequisites to be satisfied prior to running)",
+        help="Reset a task to the 'waiting' state (prerequisites yet "
+        "to be satisfied).",
         action="store_true", default=False, dest="waiting" )
 
 parser.add_option( "--ready", 
-        help="Reset a task to the ready-to-run state (i.e. "
-        "waiting with all prerequisites satisfied). Use this "
-        "instead of '--waiting' ONLY if you know that the task's real "
-        "prerequisites are satisfied AND for some reason the tasks "
-        "responsible for satisfying them are no longer present in "
-        "the task pool (this should not happen!).", 
+        help="Reset a task to the 'ready' state "
+        "(all prerequisites satisfied).", 
         action="store_true", default=False, dest="ready" )
 
 parser.add_option( "--finished", 
-        help="Reset a task to the finished state (i.e. finished "
-        "with all outputs reported complete). Do this only if you "
-        "know that the real task has completed successfully.", 
+        help="Reset a task to the 'finished' state (all outputs "
+        "completed).", 
         action="store_true", default=False, dest="finished" )
 
 parser.add_option( "-t", "--task",
