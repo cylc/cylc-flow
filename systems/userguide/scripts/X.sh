@@ -11,6 +11,9 @@ set -e; trap 'cylc message --failed' ERR
 # START MESSAGE
 cylc message --started
 
+# check environment
+check-env.sh || exit 1
+
 # EXECUTE THE TASK ...
 sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
 
