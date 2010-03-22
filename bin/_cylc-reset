@@ -5,15 +5,24 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc reset [options] SYSTEM 
 
-Reset a single task to the "waiting" or "finished" states.""" )
+Reset the state of a single task to 'waiting', 'ready' or 'finished'.""" )
 
 parser.add_option( "--waiting", 
-        help="reset the task to the waiting state (i.e. waiting "
+        help="Reset a task to the waiting state (i.e. waiting "
         "for its prerequisites to be satisfied prior to running)",
         action="store_true", default=False, dest="waiting" )
 
+parser.add_option( "--ready", 
+        help="Reset a task to the ready-to-run state (i.e. "
+        "waiting with all prerequisites satisfied). Use this "
+        "instead of '--waiting' ONLY if you know that the task's real "
+        "prerequisites are satisfied AND for some reason the tasks "
+        "responsible for satisfying them are no longer present in "
+        "the task pool (this should not happen!).", 
+        action="store_true", default=False, dest="ready" )
+
 parser.add_option( "--finished", 
-        help="reset the task to the finished state (i.e. finished "
+        help="Reset a task to the finished state (i.e. finished "
         "with all outputs reported complete). Do this only if you "
         "know that the real task has completed successfully.", 
         action="store_true", default=False, dest="finished" )
@@ -27,15 +36,17 @@ parser.add_option( "-t", "--task",
 if not options.task_id:
     parser.error( "Specify a task to reset" )
 
-if ( not options.waiting and not options.finished ) or \
-        ( options.waiting and options.finished ):
-    parser.error( "Specify either waiting or finished" )
+if not options.waiting and not options.finished and not options.ready:
+    parser.error( "Specify either waiting, ready, or finished" )
 
 if parser.prompt( 'Reset task ' + options.task_id + ' in'):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
     if options.waiting:
         god.reset_to_waiting( options.task_id )
+
+    if options.ready:
+        god.reset_to_ready( options.task_id )
 
     elif options.finished:
         god.reset_to_finished( options.task_id )

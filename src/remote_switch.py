@@ -32,18 +32,25 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
 
     def reset_to_waiting( self, task_id ):
-        # reset a failed task to the waiting state
-        # (after it has been fixed, presumably!)
+        # reset a task to the waiting state
         self.log.warning( "REMOTE: reset to waiting: " + task_id )
         if task_id == self.failout_id:
-            print "resetting failout on " + self.failout_id + " prior to insertion"
+            print "resetting failout on " + self.failout_id + " prior to reset"
             os.environ['FAILOUT_ID'] = ""
         self.pool.reset_task( task_id )
         self.process_tasks = True
 
+    def reset_to_ready( self, task_id ):
+        # reset a task to the ready state
+        self.log.warning( "REMOTE: reset to ready: " + task_id )
+        if task_id == self.failout_id:
+            print "resetting failout on " + self.failout_id + " prior to reset"
+            os.environ['FAILOUT_ID'] = ""
+        self.pool.reset_task_to_ready( task_id )
+        self.process_tasks = True
+
     def reset_to_finished( self, task_id ):
-        # reset a failed task to the waiting state
-        # (after it has been fixed, presumably!)
+        # reset a task to the waiting finished
         self.log.warning( "REMOTE: reset to finished: " + task_id )
         self.pool.reset_task_to_finished( task_id )
         self.process_tasks = True

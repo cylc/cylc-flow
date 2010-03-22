@@ -1,13 +1,9 @@
 To Do
 
-* RESTORE INITIAL STATE DUMP BACKUP
-
 * DOCUMENT: system shutdown for practice, while real tasks complete:
   restart with them FINISHED!
 
 * check tasks in task list are unique!
-
-* DUMMY MODE RESTART FROM REAL ON SAME SYSTEM - use different state file.
 
 * a module for handling registrations, to replace the guts of the
   register and unregister commands,  AND the short section of reg code
@@ -25,7 +21,7 @@ To Do
   automatically because they record the state of system tasks that may
   be required to satisfy the failed task's prerequisites when it is
   reset after fixing the problem. Otherwise the sysop can use 
-  'cylc reset --ready-to-run'
+  'cylc reset --ready'
 
 * Consider the effect of "# uncomment for earliest NON-FAILED" (x2) in
   manager.py - and test with dummy mode failout tasks.  For failed F in

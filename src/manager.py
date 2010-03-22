@@ -552,6 +552,22 @@ class manager:
         else:
             self.log.warning( "task to reset not found: " + task_id )
 
+    def reset_task_to_ready( self, task_id ):
+        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
+        found = False
+        for itask in self.tasks:
+            if itask.get_identity() == task_id:
+                found = True
+                break
+
+        if found:
+            itask.log( 'WARNING', "resetting to ready state" )
+            itask.state.set_status( 'waiting' )
+            itask.prerequisites.set_all_satisfied()
+            itask.outputs.set_all_incomplete()
+        else:
+            self.log.warning( "task to reset not found: " + task_id )
+
     def reset_task_to_finished( self, task_id ):
         self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
         found = False

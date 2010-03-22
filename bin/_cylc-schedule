@@ -330,8 +330,8 @@ if startup[ 'restart' ]:
 
 if not practice:
     # back up the configured state dump (i.e. the one that will be used
-    # by the system unless in practice mode) but not necessarily the
-    # initial one. 
+    # by the system unless in practice mode, but not necessarily the
+    # initial one). 
 
     if os.path.exists( configured_state_dump ):
         backup = configured_state_dump + '.' + datetime.datetime.now().isoformat()
