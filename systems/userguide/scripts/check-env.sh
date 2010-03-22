@@ -24,7 +24,7 @@ if [[ ! -z FAIL_TASK ]]; then
         else
             # FAILURE MESSAGE
             touch $TMPDIR/${TASK_NAME}%${CYCLE_TIME}.failed_already 
-            cylc message -p CRITICAL "ABORTING, deliberate via \$FAIL_TASK"
+            cylc message -p CRITICAL "ABORT ordered via \$FAIL_TASK"
             cylc message --failed
             exit 1
         fi
