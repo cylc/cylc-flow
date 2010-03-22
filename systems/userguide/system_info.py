@@ -33,9 +33,12 @@ successfully (as would be the case in a real system after fixing the
 problem). In dummy mode, the '--fail-out' option has a similar effect.
 
 > ACCELERATED REAL TIME OPERATION:
-Estimated task run times specified in the task definition files are
-used only in dummy mode, and are scaled according to the dummy mode
-clock rate.  However, this is an illustrative example system for which 
-we also want fast real time operation. To achieve this, each task script
-scales its real run time by $REAL_TIME_ACCEL, set in the system config module.
-"""
+Estimated task run times specified in the task definition files are used
+only in dummy mode, and are scaled according to the dummy mode clock
+rate.  However, this is an illustrative example system for which we also
+want fast real time operation. To achieve this, each task script scales
+its real run time by $REAL_TIME_ACCEL, set in the system config module.
+BE AWARE that real mode acceleration does not speed up cycling once the
+system catches up to the real wall clock time - each task is still
+accelerated, but the contact task X, on which everything else depends,
+will only trigger once per 6 hours!"""

@@ -35,9 +35,6 @@ To Do
   (?) through the loop in order to update the summary immediately for
   monitoring.
 
-* document use of accelerated real mode examples: goes fast till
-  caught up to real time, then wait between cycles is true-time.
-
 * see if error exit in userguide example check-env invocation works
 
 * warn about consequences of deleting a task: system may move on so that
@@ -48,7 +45,7 @@ To Do
 * task generator should look for mispelled variables, e.g. $(CYLCE_TIME)
 
 * consider task script locking to prevent multiple simultaneous
-  instances with the same cycle time.
+  instances with the same cycle time?
 
 * is taskdef CYCLES sorted for order?
 
