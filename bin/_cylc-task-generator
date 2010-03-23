@@ -396,11 +396,7 @@ from dynamic_instantiation import get_object
         # owner
         if 'OWNER' in parsed_def.keys():
             owner = parsed_def[ 'OWNER' ][0]
-        else:
-            # run as cylc user
-            owner = os.environ[ 'USER' ]
- 
-        FILE.write( indent + 'owner = \'' + owner + '\'\n' )
+            FILE.write( indent + 'owner = \'' + owner + '\'\n' )
 
         # external task
         FILE.write( indent + 'external_task = \'' + external_task + '\'\n\n' )
