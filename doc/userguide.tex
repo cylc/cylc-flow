@@ -688,7 +688,7 @@ cylc register -d $CYLC_DIR/systems/userguide userguide
 
 To start scheduling a registered system:
 \begin{lstlisting}
-cylc schedule --start=2009082312 userguide
+cylc start --at=2009082312 userguide
 \end{lstlisting}
 
 {\em Do not choose a future start time}, or the 'X' task, which waits on
@@ -783,7 +783,7 @@ To restart a system from its previous state (which is recorded by default
 under \lstinline=$HOME/cylc-state/{SYSTEM}/state=):
 
 \begin{lstlisting}
-cylc schedule --restart userguide
+cylc start --restart userguide
 \end{lstlisting}
 
 \subsection{More...}
@@ -1647,7 +1647,7 @@ distributed with cylc:
 \subsection{Dummy Mode} 
 \label{DummyMode}
 
-In {\em dummy mode}, \lstinline=cylc schedule -d=, in place of each real
+In {\em dummy mode}, \lstinline=cylc start -d=, in place of each real
 system task cylc executes an external program that masquerades as the
 real task by reporting its registered outputs complete at the appropriate
 times. This is essentially indistinguishable, to cylc, from the real
