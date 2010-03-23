@@ -87,7 +87,7 @@ import remote_switch # ditto
 
 # load system configuration--------------------------------------------
 config = system_config( reg_name )
-config.configure()
+config.configure( practice=False )
 
 # logging dir
 logging_dir = config.get('logging_dir')
