@@ -30,7 +30,7 @@ function print_usage()
     echo ""
     echo "options:"
     echo "  -h, --help      Print this usage message and exit."
-    echo "  -f, --force     Overwrite existing config and job submit modules."
+    echo "  -f              Overwrite existing config and job submit modules."
 }
 
 # cheap hack to get '--help', which isn't allowed by getopts
