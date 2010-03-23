@@ -21,6 +21,14 @@ import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 
 def print_banner():
+    print "_______________C_Y_L_C___________________"
+    print ". Self Organising Dynamic Metascheduler ."
+    print ".  (c) Hilary Oliver, NIWA, 2008-2010   ."
+    print ".       cylc is pronounced 'silk'       ."
+    print "_______________C_Y_L_C___________________"
+    print "Version: " + cylc_version
+    print
+
     items = banner.keys() + startup.keys()
 
     longest_item = items[0]
@@ -80,8 +88,8 @@ def ns_obj_name( name, groupname ):
     # object name as registered with the Pyro nameserver
     return groupname + '.' + name
 
-usage = """1/ cylc schedule [options] --start-at=CYCLE SYSTEM
-Usage: 2/ cylc schedule [options] --restart SYSTEM
+usage = """1/ cylc start [options] --at=CYCLE SYSTEM
+Usage: 2/ cylc start [options] --restart SYSTEM
 
 Start or restart a configured, registered, system. 
 
@@ -104,11 +112,11 @@ def commandline_parser():
             restart=False, dummy_mode=False,
             clock_rate=10, clock_offset=24 )
 
-    parser.add_option( "-s", "--start-at", 
+    parser.add_option( "--at", 
             help="Initial cycle time (YYYYMMDDHH).",
             metavar="CYCLE", action="store", dest="start_time" )
 
-    parser.add_option( "--stop-at", 
+    parser.add_option( "--until", 
             help="Optional final cycle time (YYYYMMDDHH). The scheduler "
             "will shut down when each task has passed this cycle.",
             metavar="CYCLE", action="store", dest="stop_time" )
@@ -144,10 +152,9 @@ def commandline_parser():
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "-p", "--practice",
-            help="RESTART, in DUMMY MODE, from the current state of an "
-            "existing system, using new state dump and logging directories "
-            "to avoid  corrupting the original system (which can still be "
-            "running).",
+            help="Restart an existing system, which may still be running, "
+            "in dummy mode such that the original's state and logging "
+            "directories will not be not corrupted.",
             action="store_true", dest="practice_mode" )
 
     parser.add_option( "-d", "--dummy-mode",
@@ -155,12 +162,12 @@ def commandline_parser():
             "masquerades as them and runs on an accelerated clock.",
             action="store_true", dest="dummy_mode" )
 
-    parser.add_option( "--dummy-clock-rate", 
+    parser.add_option( "--clock-rate", 
             help="(DUMMY MODE) accelerated clock rate: RATE seconds of "
             "real time per simulated hour (defaults to 10).",
             metavar="RATE", action="store", dest="clock_rate" )
 
-    parser.add_option( "--dummy-clock-offset", 
+    parser.add_option( "--clock-offset", 
             help="(DUMMY MODE) start the accelerated clock at HOURS "
             "prior to the initial cycle time (default 24 hours). "
             "This simulates catch up to real time operation.",
