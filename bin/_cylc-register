@@ -4,7 +4,7 @@ set -e  # ABORT on error
 
 function print_usage() 
 {
-	echo "Usage: cylc register [options] PATH SYSTEM"
+	echo "Usage: cylc register [options] SYSTEM"
     echo ""
     echo "Register a configured system for use under a given name. This simply"
     echo "stores an associatiation between the name and the system definition" 
@@ -12,11 +12,11 @@ function print_usage()
     echo "registered for use under multiple names (see the userguide)."
     echo ""
     echo "arguments:"
-    echo "   PATH        Location of a configured system definition directory."
     echo "   SYSTEM      Name under which to register the configured system."
     echo ""
     echo "options:"
     echo "  -h, --help   Print this usage message and exit"
+    echo "  -d PATH      (REQUIRED) Location of the system definition directory."
     echo "  -p           Print current system name registrations."
     echo "  -f           Force: overwrite an existing name registration."
 }
@@ -33,6 +33,7 @@ REG_DIR=$HOME/.cylc/registered
 
 FORCE=false
 PRINT=false
+SYSDIR_GIVEN=false
 while getopts "hpfd:" opt; do
     case $opt in
         h)
@@ -42,7 +43,11 @@ while getopts "hpfd:" opt; do
         p)
         PRINT=true
         ;;
-         f)
+        d)
+        SYSDIR_GIVEN=true
+        SYSDIR=$OPTARG
+        ;;
+        f)
         FORCE=true
         ;;
         *)
@@ -66,21 +71,25 @@ if [[ $# == 0 ]] && $PRINT; then
 
     # print each registered system
     COUNT=0
-    for SYSNAME in *; do 
+    for xSYSNAME in *; do 
         COUNT=$((COUNT + 1 ))
-        SYS_DIR=$( cat $SYSNAME )
-        echo "[${COUNT}] ${SYSNAME}: $SYS_DIR"
+        xSYSDIR=$( cat $xSYSNAME )
+        echo "[${COUNT}] ${xSYSNAME}: $xSYSDIR"
     done
     exit 0
 fi
 
-if [[ $# != 2 ]]; then
-    echo "ERROR: two arguments required!"
+if [[ $# != 1 ]]; then
+    echo "ERROR: system registration name required!"
     exit 1
 fi
 
-SYSDIR=$1
-SYSNAME=$2
+SYSNAME=$1
+
+if ! $SYSDIR_GIVEN; then
+    echo "ERROR: location of system definition is required (-d PATH)"
+    exit 1
+fi
 
 # absolute path to system definition dir
 if [[ $SYSDIR != /* ]]; then
