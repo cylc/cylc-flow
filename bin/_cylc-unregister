@@ -92,7 +92,7 @@ if $CHECK; then
     for SYSNAME in *; do 
         COUNT=$((COUNT + 1 ))
         SYS_DIR=$( cat $SYSNAME )
-        if _cylc-check-configured $SYS_DIR; then
+        if _cylc-is-configured $SYS_DIR; then
             echo "[${COUNT}] ${SYSNAME}: $SYS_DIR"
         else
             FOUND=true

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+# check that a directory is a cylc system definition directory.
+
+if [[ $# != 1 ]]; then
+    echo "Usage: _cylc-is-systemdir PATH"
+    echo "Arguments:"
+    echo "  PATH  cylc system definition directory location"
+    exit 1
+fi
+
+DIR=$1
+
+if [[ ! -d $DIR/taskdef ]]; then
+    echo "ERROR: $DIR has no taskdef sub-directory"
+    exit 1
+fi
+
+if [[ ! -d $DIR/scripts ]]; then
+    echo "WARNING: $DIR has no scripts sub-directory"
+fi

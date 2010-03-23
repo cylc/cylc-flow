@@ -98,7 +98,7 @@ if [[ $SYSDIR != /* ]]; then
 fi
 
 # check the new system has been configured
-! _cylc-check-configured $SYSDIR && exit 1
+! _cylc-is-configured $SYSDIR && exit 1
 
 # is the system already registered?
 if [[ -f $REG_DIR/$SYSNAME ]]; then
