@@ -11,35 +11,45 @@ function print_usage()
 {
 	echo "usage: cylc configure [options] PATH"
     echo ""
-    echo "Generate the system-specific Python source modules required by cylc."
-    echo "This only needs to be done after changing the task definition files." 
+    echo "Prepare a cylc system definition directory for scheduling. A system"
+    echo "should be reconfigured whenever its taskdef files have been changed."
     echo ""
-    echo "YOU MUST HAVE WRITE PERMISSION IN THE SYSTEM DEFINITION DIRECTORY"
-    echo "because the configure process writes some Python modules into it:"
-    echo " * task_classes.py: task classes based on task definition files"
-    echo " * task_list.py: list of task names to run"
-    echo " * system_config.py: system configuration settings"
-    echo " * job_submit.py: TO DO - EXPLAIN"
+    echo "Task definition files found under PATH/taskdef/ are parsed, and"
+    echo "the Python modules cylc needs to run the task set are generated:"
+    echo " - task_classes.py ........ system task class module"
+    echo " - task_list.py ........... tasks to instantiate at startup"
+    echo " - system_config.py ....... CUSTOMIZABLE configuration settings"
+    echo " - system_info.py ......... CUSTOMIZABLE system info module"
+    echo " - job_submit_methods.py .. CUSTOMIZABLE job submit methods"
     echo ""
-    echo "If you reconfigure the system, the config module will not be "
-    echo "overwritten in case it has been customized, but the task list"
-    echo "will be overwritten."
+    echo "By default, these modules are written to the system definition PATH."
+    echo "If you do not have write permission in PATH you must configure your"
+    echo "own copy of the system definition directory. But you can register"
+    echo "and run another user's already-configured system if you can read"
+    echo "its source modules and execute its scripts."
+    echo ""
+    echo "If you reconfigure the system's customizable modules (above) will"
+    echo "not be overwritten unless you force that with the '-f' option."
     echo ""
     echo "arguments:"
-    echo "  PATH            Location of a cylc system definition directory."
+    echo "  PATH         Location of a cylc system definition directory."
     echo ""
     echo "options:"
-    echo "  -h, --help      Print this usage message and exit."
-    echo "  -f              Overwrite existing config and job submit modules."
+    echo "  -h, --help   Print this usage message and exit."
+    echo "  -f           (force) overwrite any existing customizable modules."
 }
 
-# cheap hack to get '--help', which isn't allowed by getopts
-if [[ $1 == '--help' ]]; then
-    print_usage
-    exit 0
-fi
+# long options '--foo=bar' aren't supported by bash getopts
+# but we need '--help' option to comply with 'cylc help'.
+for OPT in $@; do
+    if [[ $OPT == '--help' ]]; then
+        print_usage
+        exit 0
+    fi
+done
 
 FORCE=false
+
 while getopts "hf" opt; do
     case $opt in
         h)
@@ -73,11 +83,15 @@ else
 	exit 1
 fi
 
+# is SYS_DIR a cylc system definition directory?
+_cylc-is-systemdir $SYS_DIR || exit 1
+
+# move to the output location
+cd $SYS_DIR
+
 # bin/cylc checks that the cylc bin directory is accessible
 CYLC=$(which cylc)
 CYLC_DIR=${CYLC%/bin/cylc}
-
-cd $SYS_DIR
 
 echo
 echo "CONFIGURING CYLC SYSTEM $SYS_DIR"
@@ -90,11 +104,34 @@ echo "Processing task definition files"
 # and modify task-generator.py so that it appends to the output
 # task_classes.py file rather than overwriting it each time.
 
-TASKDEFS=$( find taskdef -name '*.def' -o -name '*.py' ) 
+TASKDEFS=$( find $SYS_DIR/taskdef -name '*.def' -o -name '*.py' ) 
 
-# generate task class code
+# generate task class module
 _cylc-task-generator $TASKDEFS
 echo "$SYS_DIR/task_classes.py"
+
+# generate task list module
+echo
+echo "Generating the task list module"
+
+cat > task_list.py <<eof
+# LIST OF TASK NAMES (order irrelevant)
+task_list = \\
+    [
+eof
+
+for FILE in $TASKDEFS; do
+    TASKNAME=$( _cylc-taskname < $FILE )
+    echo "       '${TASKNAME}'," >> task_list.py
+done
+
+cat >> task_list.py <<eof
+    ]
+# END OF FILE
+eof
+
+echo "task_list.py"
+
 
 echo
 WRITE_CONFIG=true
@@ -165,27 +202,6 @@ eof
 fi
 echo "system_config.py"
 
-echo
-echo "Generating the task list module"
-
-cat > task_list.py <<eof
-# LIST OF TASK NAMES (order irrelevant)
-task_list = \\
-    [
-eof
-
-for FILE in $TASKDEFS; do
-    TASKNAME=$( _cylc-taskname < $FILE )
-    echo "       '${TASKNAME}'," >> task_list.py
-done
-
-cat >> task_list.py <<eof
-    ]
-# END OF FILE
-eof
-
-echo "task_list.py"
-
 # TASK GROUPS
 # Use to insert multiple tasks at once, via 'cylc control', into the
 # running system. One use for this item is to group together all tasks
@@ -231,7 +247,6 @@ from background_remote import background_remote
 eof
 fi
 echo "$SYS_DIR/job_submit_methods.py"
-echo
 
 echo
 WRITE_INFO=true
