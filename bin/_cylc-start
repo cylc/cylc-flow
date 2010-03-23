@@ -26,7 +26,6 @@ def print_banner():
     print ".  (c) Hilary Oliver, NIWA, 2008-2010   ."
     print ".       cylc is pronounced 'silk'       ."
     print "_______________C_Y_L_C___________________"
-    print "Version: " + cylc_version
     print
 
     items = banner.keys() + startup.keys()
