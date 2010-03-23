@@ -47,7 +47,6 @@ while getopts "hcx" opt; do
         RESET=true
         ;;
         *)
-        echo "ERROR illegal option: $opt"
         exit 1
         ;;
     esac

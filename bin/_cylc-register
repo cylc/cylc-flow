@@ -51,7 +51,6 @@ while getopts "hpfd:" opt; do
         FORCE=true
         ;;
         *)
-        echo "ERROR unknown option: $opt"
         exit 1
         ;;
     esac
