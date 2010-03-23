@@ -34,6 +34,7 @@ allowed_commands = \
 
 usage = \
     [ 
+    '_________________________________________________________________________',
     'USAGE: cylc [options] COMMAND [command-options] ',
     '',
     'This is the commandline interface to the cylc self-organising optimal',
@@ -47,11 +48,10 @@ usage = \
     '  cylc COMMAND --help',
     '',
     'COMMANDS:',
-    '  help          Print this usage message and exit.',
     '_________________________________________________________________________',
     '% P R E P A R A T I O N',
-    '  configure ... Create system-specific source modules from taskdef files',
-    '  register .... Declare a name used to access to a configured system',
+    '  configure ... Create required source modules from system taskdef files',
+    '  register .... Associate a name with a configured system',
     '  unregister... Delete system name registrations',
     '_________________________________________________________________________',
     '% S Y S T E M C O N T R O L',
@@ -76,8 +76,9 @@ usage = \
     '% O T H E R',
     '  message   ... Send a message to a task proxy object (for use by tasks)',
     '  set-level ... Change the logging verbosity level in a running system',
-    '  nudge     ... Invoke the cylc task processing loop',
-    '  run-task  ... Run one task, alone, just as the scheduler would run it',
+    '  run-task .... Run one task, alone, just as the scheduler would run it',
+    '  nudge ....... Invoke the cylc task processing loop',
+    '  help ........ Print this usage message and exit; also [-h], [--help]',
     ]
 
 def print_usage():
