@@ -95,8 +95,10 @@ class registrations:
 
     def print_all( self ):
         print 'Number of registrations:', self.count()
+        count = 0
         for name in self.registrations.keys():
-            self.print_reg( name, pre=' + ' )
+            count +=1
+            self.print_reg( name, pre=' [' + str(count) + '] ' )
 
     def get_invalid( self ):
         print 'Number of registrations:', self.count()

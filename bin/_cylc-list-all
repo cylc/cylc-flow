@@ -1,0 +1,39 @@
+#!/usr/bin/python
+
+import os, sys, re
+from optparse import OptionParser
+from registration import registrations
+import pyrex
+
+parser = OptionParser( usage = """cylc list-all [options]
+    
+List all systems currently registered with the Pyro nameserver.""" )
+
+parser.add_option( "--host",
+        help="Pyro nameserver host, defaults to 'localhost'. Use "
+        "if not auto-detected (which depends on network config).", 
+        metavar="HOSTNAME", action="store", default="localhost",
+        dest="pns_host" )
+
+( options, args ) = parser.parse_args()
+
+# get system names currently in use in the Pyro nameserver
+groups = pyrex.discover( options.pns_host ).get_groups()
+myusername = os.environ[ 'USER' ]
+ 
+if len(args) != 0:
+    parser.usage() 
+
+print len( groups ), "cylc systems currently have objects registered in the Pyro nameserver"
+count = 0
+for group in groups:
+    count += 1
+    ( username, system ) = group.split('_', 1)
+
+    practice_mode = ""
+    m = re.match( '(.*)_practice', system )
+    if m:
+        system = m.groups()[0]
+        practice_mode = " (practice mode)"
+
+    print ' [' + str( count ) + '] USER: ' + username + ', SYSTEM: ' + system + practice_mode

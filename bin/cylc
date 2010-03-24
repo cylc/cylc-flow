@@ -30,6 +30,7 @@ allowed_commands = \
     'nudge',
     'monitor',
     'monitor-r',
+    'list-all',
     ]
 
 usage = \
@@ -69,6 +70,7 @@ usage = \
     '% I N F O R M A T I O N',
     '  monitor ..... View the state of task proxy objects in a running system',
     '  monitor-r ... View extra information about running task proxies only',
+    '  list-all .... List all cylc systems that are currently running',
     '  what-is ..... Retrieve task or system information from a running system',
     '  task-dump ... Display current status of task prerequisites and outputs',
     '  system-info . Print system-specific information for a registered system',
