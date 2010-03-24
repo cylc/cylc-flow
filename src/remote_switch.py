@@ -167,7 +167,7 @@ class remote_switch( Pyro.core.ObjBase ):
  
     def spawn_and_die( self, task_id ):
         self.log.warning( "REMOTE: spawn and die: " + task_id )
-        self.pool.spawn_and_die( [ remote.spawn_and_die_task ] )
+        self.pool.spawn_and_die( [ task_id ] )
         self.process_tasks = True
  
     def set_verbosity( self, level ):
