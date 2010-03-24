@@ -5,7 +5,7 @@ import os, sys
 from optparse import OptionParser
 from registration import registrations
 
-parser = OptionParser( usage = """cylc system-help [options] SYSTEM 
+parser = OptionParser( usage = """cylc system-info [options] SYSTEM 
 
 Retrieve the system-specific information about a registered system. This
 command does not interact with a running system, it simply accesses the

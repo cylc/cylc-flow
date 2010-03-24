@@ -7,7 +7,19 @@ import pyrex
 
 parser = OptionParser( usage = """cylc list-all [options]
     
-List all systems currently registered with the Pyro nameserver.""" )
+List all cylc systems that are currently using the Pyro nameserver.
+
+The nameserver distinguishes different cylc systems by means of a
+"groupname" constructed from username and registered name
+(see 'cylc
+register --help').
+This command gets all current groupnames from the nameserver and
+reports their corresonding usernames and system names.  
+
+In addition to currently running systems this may include relics of
+dead systems that aborted without first disconnecting from Pyro.
+These can be removed from the nameserver using:
+  % pyro-nsc deletegroup {USER}_{SYSTEM}""" )
 
 parser.add_option( "--host",
         help="Pyro nameserver host, defaults to 'localhost'. Use "
@@ -24,7 +36,7 @@ myusername = os.environ[ 'USER' ]
 if len(args) != 0:
     parser.usage() 
 
-print len( groups ), "cylc systems currently have objects registered in the Pyro nameserver"
+print len( groups ), "systems currently have objects registered in the Pyro nameserver"
 count = 0
 for group in groups:
     count += 1
