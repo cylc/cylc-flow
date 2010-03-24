@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import logging, sys, os, re
+from registration import registrations
 
 class config:
 
@@ -31,22 +32,8 @@ class config:
         self.items['job_submit_method'] = 'background'
         self.items['logging_level'] = logging.INFO
 
-        # get system definition dir, for system_info
-        reg_file = os.environ['HOME'] + '/.cylc/registered/' + self.system_name
-        if os.path.exists( reg_file ):
-            try:
-                FILE = open( reg_file, 'r' )
-            except:
-                # this should never have because the reg file has to 
-                # be accessed in order to run the system in the first
-                # place
-                print 'UNABLE TO OPEN REGISTRATION FILE'
-            else:
-                line = FILE.read()
-            FILE.close()
-            self.items['system_def_dir' ] = line.rstrip() 
-        else:
-            self.items['system_def_dir' ] = 'UNKNOWN!'
+        reg = registrations()
+        self.items['system_def_dir' ] = reg.get( self.system_name )
 
     def configure( self, practice ):
         self.check_task_groups()
