@@ -1,6 +1,7 @@
 #!/usr/bin/python
 
 import sys, re
+#import cycle_time
 from connector import connector
 from CylcOptionParsers import NoPromptOptionParser
 

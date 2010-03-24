@@ -7,10 +7,29 @@ from registration import registrations
 parser = OptionParser( usage = """cylc register --sysdef=PATH SYSTEM
 Usage: cylc register [-p,--print] [-g,--get]
     
-Register a system for use by name.
+Registration associates a name with a configured system definition
+directory. This has two purposes: (1) cylc commands that need to
+access system-specific modules can do so without you having to type the
+full system path on the command line; and (2) the registered name is
+used by the Pyro nameserver, along with your username, to distinguish
+between different running systems running at the same time. 
 
-A running cylc system can only be accessed, with cylc commands, using
-the registered name under which it was started up. 
+You can register the same system under multiple names, and the
+registered name is made available to tasks in a running system through
+their execution environment, as $SYSTEM_NAME. Thus, if a system is
+configured to use the registered name in all important important and
+output directories, you can run multiple instances of the same system at
+the same time without interference between them.
+
+The cylc commands that require a registered system name as input are:
+  cylc start
+  cylc run-task
+  cylc system-info
+
+You can interact with running systems using
+
+Registrations are user-specific and are stored in a special config file,
+$HOME/.cylc/registrations. 
 
 Arguments:
   SYSTEM   Name to associate with the configured system directory.""" )

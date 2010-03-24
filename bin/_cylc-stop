@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import cycle_time
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -21,8 +22,11 @@ parser.add_option( "--at",
 god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
 if options.stop_time:
-    if parser.prompt( 'Set stop time ' + options.stop_time + ' for'):
-        god.set_stop_time( options.stop_time )
+    stop_at = options.stop_time
+    if not cycle_time.is_valid( stop_at ):
+        parser.error( "invalid cycle time: " + stop_at )
+    if parser.prompt( 'Set stop time ' + stop_at + ' for'):
+        god.set_stop_time( stop_at )
 
 elif options.shutdownnow:
     if parser.prompt( 'Shutdown NOW' ):

@@ -1,5 +1,6 @@
 #!/usr/bin/python
 
+import cycle_time
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -47,14 +48,19 @@ if not options.task_id:
 if not options.waiting and not options.finished and not options.ready:
     parser.error( "Specify either waiting, ready, or finished" )
 
-if parser.prompt( 'Reset task ' + options.task_id + ' in'):
+task_id = options.task_id
+(name, cycle ) = task_id.split('%')
+if not cycle_time.is_valid( cycle ):
+    parser.error( "invalid cycle time: " + cycle )
+
+if parser.prompt( 'Reset task ' + task_id + ' in'):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
     if options.waiting:
-        god.reset_to_waiting( options.task_id )
+        god.reset_to_waiting( task_id )
 
     if options.ready:
-        god.reset_to_ready( options.task_id )
+        god.reset_to_ready( task_id )
 
     elif options.finished:
-        god.reset_to_finished( options.task_id )
+        god.reset_to_finished( task_id )
