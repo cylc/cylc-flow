@@ -3,6 +3,7 @@
 import os, sys
 
 from optparse import OptionParser
+from registration import registrations
 
 parser = OptionParser( usage = """cylc system-help [options] SYSTEM 
 
@@ -16,21 +17,18 @@ information can also be retrieved from a running system by 'cylc what-is'""")
 if len( args ) != 1:
     parser.error( "Wrong number of arguments!" )
 
-reg_name = args[0]
+name = args[0]
 
-# find location of the system task and config modules------------------
-registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name
-if os.path.exists( registration_file ):
-    FILE = open( registration_file, 'r' )
-    line = FILE.read()
-    system_dir = line.rstrip() 
-    FILE.close()
+# find location of the system task and config modules
+reg = registrations()
+reg.load_from_file()
+if reg.is_registered( name ):
+    system_dir = reg.get( name )
+    reg.print_reg( name )
 else:
-    raise SystemExit( "No such system name registered: " + reg_name )
+    reg.print_all()
+    raise SystemExit( "System " + name + " not registered!" )
 
-
-# provide access to the system source modules
-print reg_name + ' --> ' + system_dir
 # prepend system Python modules to the python search path
 sys.path.insert(0, system_dir )
 
