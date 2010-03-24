@@ -62,7 +62,7 @@ else:
 
 for twat in twatted:
     if username + '_' + twat in groups or \
-            username + '_' + twat + '_practice':
+            username + '_' + twat + '_practice' in groups:
         print "WARNING, " + twat + " is in use. If you delete this registration"
         response = raw_input( \
               " you will lose access to " + twat + ". Proceeed (y/n)? " )
