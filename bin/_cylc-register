@@ -1,122 +1,81 @@
-#!/bin/bash
+#!/usr/bin/python
 
-set -e  # ABORT on error
+import os, sys
+from optparse import OptionParser
+from registration import registrations
 
-function print_usage() 
-{
-	echo "Usage: cylc register [options] SYSTEM"
-    echo ""
-    echo "Register a configured system for use under a given name. This simply"
-    echo "stores an associatiation between the name and the system definition" 
-    echo "directory under \$HOME/.cylc/registered. A single system can be"
-    echo "registered for use under multiple names (see the userguide)."
-    echo ""
-    echo "arguments:"
-    echo "   SYSTEM      Name under which to register the configured system."
-    echo ""
-    echo "options:"
-    echo "  -h, --help   Print this usage message and exit"
-    echo "  -d PATH      (REQUIRED) Location of the system definition directory."
-    echo "  -p           Print current system name registrations."
-    echo "  -f           Force: overwrite an existing name registration."
-}
-
-# cheap hack to get '--help', which isn't allowed by getopts
-if [[ $1 == '--help' ]]; then
-    print_usage
-    exit 0
-fi
-
-# create the registration directory
-REG_DIR=$HOME/.cylc/registered
-[[ ! -d $REG_DIR ]] && mkdir -p $REG_DIR
-
-FORCE=false
-PRINT=false
-SYSDIR_GIVEN=false
-while getopts "hpfd:" opt; do
-    case $opt in
-        h)
-        print_usage
-        exit 0
-        ;;
-        p)
-        PRINT=true
-        ;;
-        d)
-        SYSDIR_GIVEN=true
-        SYSDIR=$OPTARG
-        ;;
-        f)
-        FORCE=true
-        ;;
-        *)
-        exit 1
-        ;;
-    esac
-done
-
-shift $(( OPTIND -1 ))
-
-if [[ $# == 0 ]] && $PRINT; then
-    # print current registrations and exit
-
-    # go to user registration directory
-    cd $REG_DIR
-    # how many systems registered?
-    N_REG=$( ls -1 | wc -l )
-    echo "You have $N_REG systems registered"
-    [[ $N_REG == 0 ]] && exit 0
-
-    # print each registered system
-    COUNT=0
-    for xSYSNAME in *; do 
-        COUNT=$((COUNT + 1 ))
-        xSYSDIR=$( cat $xSYSNAME )
-        echo "[${COUNT}] ${xSYSNAME}: $xSYSDIR"
-    done
-    exit 0
-fi
-
-if [[ $# != 1 ]]; then
-    echo "ERROR: system registration name required!"
-    exit 1
-fi
-
-SYSNAME=$1
-
-if ! $SYSDIR_GIVEN; then
-    echo "ERROR: location of system definition is required (-d PATH)"
-    exit 1
-fi
-
-# absolute path to system definition dir
-if [[ $SYSDIR != /* ]]; then
-    SYSDIR=$PWD/$SYSDIR
-    # remove trailing '/'
-    SYSDIR=${SYSDIR%/}
-fi
-
-# check the new system has been configured
-! _cylc-is-configured $SYSDIR && exit 1
-
-# is the system already registered?
-if [[ -f $REG_DIR/$SYSNAME ]]; then
-    TO=$( cat $REG_DIR/$SYSNAME )
-    if [[ $TO = $SYSDIR ]]; then
-        # already registered as requested
-        echo "ALREADY REGISTERED: $SYSNAME -> $SYSDIR"
-        exit 0
-    else
-        # already registered for access to another system
-        if ! $FORCE; then
-            echo "ALREADY REGISTERED: $SYSNAME -> $TO"
-            echo "Use the '-f' option to re-register"
-            exit 1
-        fi # else continue on to the reg code below
-    fi
-fi
+parser = OptionParser( usage = """cylc register --dir=PATH SYSTEM
+Usage: cylc register [options]
     
-# register the system
-echo $SYSDIR > $REG_DIR/$SYSNAME
-echo "NEW: $SYSNAME -> $SYSDIR"
+Register a configured system for use under a given name, or manage
+existing registrations. Registration simply associates a name with a
+system definition directory and stores the information in
+$HOME/.cylc/registrations. 
+
+Names must be unique (per user) but a single system can be registered
+under multiple names.
+
+Arguments:
+  SYSTEM   Name to associate with the configured system directory.""" )
+
+parser.add_option( "-d", "--dir",
+    help="Location of a cylc system definition directory.",
+    metavar="PATH", action="store", dest="dir" )
+
+parser.add_option( "-f", "--force",
+    help="Overwrite an existing name registration.",
+    action="store_true", default=False, dest="force" )
+
+parser.add_option( "-p", "--print",
+    help="Print all your current system registrations.",
+    action="store_true", default=False, dest="printreg" )
+
+parser.add_option( "-g", "--get",
+    help="Print the system directory registered under NAME.",
+    metavar="NAME", action="store", dest="get" )
+
+parser.add_option( "-c", "--check",
+    help="Check all your current system registrations, and "
+    "delete any found to be invalid.",
+    action="store_true", default=False, dest="check" )
+
+parser.add_option( "--wipe",
+    help="Delete all of your current system registrations.",
+    action="store_true", default=False, dest="wipe" )
+
+( options, args ) = parser.parse_args()
+
+# load registration file
+reg = registrations()
+reg.load_from_file()
+
+if options.dir:
+    # record a new registration for dir
+    if len( args ) != 1:
+        parser.error( 'system name required' )
+    else:
+        name = args[0]
+        reg.register( name, options.dir, options.force )
+
+elif options.printreg:
+    # print current registrations and exit
+    reg.print_all()
+    sys.exit(0)
+
+elif options.get:
+    # print one registration and exit
+    reg.print_reg( options.get )
+    sys.exit(0)
+
+elif options.check:
+    reg.check_all()
+
+elif options.wipe:
+    reg.unregister_all()
+
+else:
+    parser.error( "no inputs!" )
+
+# if we reach here, record any registration changes
+reg.dump_to_file()
+
