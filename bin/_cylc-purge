@@ -17,8 +17,8 @@ parser.add_option( "-t", "--task",
         metavar="TASK%CYCLE", action="store", dest="target_id" )
 
 parser.add_option( "-s", "--stop",
-        help="Cycle to at which to stop the slaughter.",
-        metavar="STOP", action="store", dest="stop" )
+        help="Cycle time at which to stop the slaughter.",
+        metavar="CYCLE", action="store", dest="stop" )
 
 (options, args) = parser.parse_args()
 
@@ -33,4 +33,4 @@ stop = options.stop
 
 if parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    god.spawn_and_die( target, stop )
+    god.purge( target, stop )
