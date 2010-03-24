@@ -69,10 +69,15 @@ elif options.dir:
     # record a new registration for dir
     if len( args ) != 1:
         parser.error( 'system name required' )
-    else:
-        name = args[0]
-        reg.register( name, options.dir )
 
+    name = args[0]
+
+    dir = os.path.abspath( options.dir )
+    if not os.path.exists( dir ):
+        print "ERROR, directory not found: " + dir
+        sys.exit(1)
+
+    reg.register( name, dir )
     reg.dump_to_file()
 
 else:
