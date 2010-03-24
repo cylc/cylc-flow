@@ -115,11 +115,15 @@ def commandline_parser():
     parser.add_option( "--at", 
             help="Initial cycle time (YYYYMMDDHH).",
             metavar="CYCLE", action="store", dest="start_time" )
-
+    
     parser.add_option( "--until", 
             help="Optional final cycle time (YYYYMMDDHH). The scheduler "
             "will shut down when each task has passed this cycle.",
             metavar="CYCLE", action="store", dest="stop_time" )
+
+    parser.add_option( "--pause-at",
+            help="Pause the system when it reaches CYCLE.",
+            metavar="CYCLE", action="store", dest="pause_time" )
 
     parser.add_option( "-r", "--restart", 
             help="Restart from the system's configured state dump file",
@@ -232,7 +236,6 @@ else:
 startup = {}
 
 startup[ 'start_time'] = None
-startup[ 'stop_time' ] = None
 startup[ 'restart'   ] = False
 startup[ 'no_reset'  ] = False
 
@@ -244,11 +247,6 @@ if options.start_time and ( options.restart or options.restart_from ):
 
 if not options.start_time and not ( options.restart or options.restart_from ):
     parser.error( 'You must supply a start time or specify a restart' )
-
-if options.stop_time:
-    startup[ 'stop_time' ] = options.stop_time
-    if not cycle_time.is_valid( options.stop_time ):
-        parser.error( "invalid cycle time: " + options.stop_time )
 
 if options.start_time:
     startup[ 'start_time' ] = options.start_time
@@ -397,6 +395,16 @@ config.put( 'clock', clock )
 
 # initialize the task manager (and create main logger)
 pool = manager.manager( config, groupname, dummy_mode, startup )
+
+if options.stop_time:
+    if not cycle_time.is_valid( options.stop_time ):
+        parser.error( "invalid cycle time: " + options.stop_time )
+    pool.set_stop_time( options.stop_time )
+
+if options.pause_time:
+    if not cycle_time.is_valid( options.pause_time ):
+        parser.error( "invalid cycle time: " + options.pause_time )
+    pool.set_system_hold( options.pause_time )
 
 # logger is now created and pimped
 log = logging.getLogger( 'main' )

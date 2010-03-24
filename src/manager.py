@@ -32,10 +32,6 @@ class manager:
         # initialise the dependency broker
         self.broker = broker()
         
-        self.stop_time = None
-        if startup[ 'stop_time']:
-            self.stop_time = startup[ 'stop_time' ]
-
         # instantiate the initial task list and create loggers 
         self.tasks = []
 
