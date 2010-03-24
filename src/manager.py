@@ -27,6 +27,7 @@ class manager:
 
         self.system_hold_now = False
         self.system_hold_ctime = None
+        self.stop_time = None
 
         # initialise the dependency broker
         self.broker = broker()
@@ -126,21 +127,9 @@ class manager:
             itask = get_object( 'task_classes', name )\
                     ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], startup=True )
 
-            # the initial task cycle time can be altered during
-            # creation, so we have to create the task before
-            # checking if stop time has been reached.
-            skip = False
-            if self.stop_time:
-                if int( itask.c_time ) > int( self.stop_time ):
-                    itask.log( 'WARNING', "STOPPING at " + self.stop_time )
-                    itask.prepare_for_death()
-                    del itask
-                    skip = True
-
-            if not skip:
-                itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
-                self.tasks.append( itask )
+            itask.log( 'DEBUG', "connected" )
+            self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
+            self.tasks.append( itask )
 
 
     def load_from_state_dump( self, filename, no_reset_val ):
@@ -216,21 +205,9 @@ class manager:
             itask = get_object( 'task_classes', name )\
                     ( c_time, self.dummy_mode, state, self.submit[ name ], no_reset=no_reset_val )
 
-            # the initial task cycle time can be altered during
-            # creation, so we have to create the task before
-            # checking if stop time has been reached.
-            skip = False
-            if self.stop_time:
-                if int( itask.c_time ) > int( self.stop_time ):
-                    itask.log( 'WARNING', " STOPPING at " + self.stop_time )
-                    itask.prepare_for_death()
-                    del itask
-                    skip = True
-
-            if not skip:
-                itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
-                self.tasks.append( itask )
+            itask.log( 'DEBUG', "connected" )
+            self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
+            self.tasks.append( itask )
 
     def no_tasks_running( self ):
         # return True if no tasks are submitted or running
