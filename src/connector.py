@@ -46,7 +46,8 @@ class connector:
             raise SystemExit( x )
 
         except NamingError, x:
-            print "\n\033[1;37;41m" + x + "\033[0m"
+            #print "\n\033[1;37;41m" + x + "\033[0m"
+            print x
             raise SystemExit( "ERROR" )
 
         except Exception, x:
