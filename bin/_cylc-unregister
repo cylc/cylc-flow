@@ -1,0 +1,74 @@
+#!/usr/bin/python
+
+import os, sys
+from optparse import OptionParser
+from registration import registrations
+import pyrex
+
+parser = OptionParser( usage = """cylc unregister SYSTEM
+Usage: cylc unregister [-c,--check] [--wipe]
+    
+Delete your unwanted or invalid system registrations.
+
+A running cylc system can only be accessed, with cylc commands, using
+the registered name under which it was started up.
+
+This command checks the Pyro nameserver to make sure you aren't
+attempting to unregister a system that is currently in use.""" )
+
+parser.add_option( "-c", "--check",
+    help="Check all your current system registrations, and "
+    "delete any found to be invalid.",
+    action="store_true", default=False, dest="check" )
+
+parser.add_option( "--wipe",
+    help="Delete all of your current system registrations.",
+    action="store_true", default=False, dest="wipe" )
+
+parser.add_option( "--host",
+        help="Pyro nameserver host, defaults to 'localhost'. Use "
+        "if not auto-detected (which depends on network config).", 
+        metavar="HOSTNAME", action="store", default="localhost",
+        dest="pns_host" )
+
+#self.add_option( "-p", "--practice",
+#        help="Target a system running in practice mode.", 
+#        action="store_true", default=False, dest="practice" )
+
+( options, args ) = parser.parse_args()
+
+# get system names currently in use in the Pyro nameserver
+groups = pyrex.discover( options.pns_host ).get_groups()
+username = os.environ[ 'USER' ]
+ 
+# load registration file
+reg = registrations()
+reg.load_from_file()
+
+twatted = []
+
+if options.check:
+    twatted = reg.get_invalid() 
+
+elif options.wipe:
+    twatted = reg.get_all() 
+
+elif len( args ) == 1:
+    twatted = [ args[0] ] 
+
+else:
+    print "Input ERROR"
+    sys.exit(1)
+
+for twat in twatted:
+    if username + '_' + twat in groups or \
+            username + '_' + twat + '_practice':
+        print "WARNING, " + twat + " is in use. If you delete this registration"
+        response = raw_input( \
+              " you will lose access to " + twat + ". Proceeed (y/n)? " )
+        if response != 'y':
+            continue
+    reg.unregister( twat )
+
+# if we reach here, record any registration changes
+reg.dump_to_file()

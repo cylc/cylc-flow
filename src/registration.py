@@ -40,30 +40,28 @@ class registrations:
         else:
             return False
 
-    def unregister_all( self ):
-        for name in self.registrations.keys():
-            self.unregister( name )
+    def get_all( self ):
+        return self.registrations.keys()
 
     def unregister( self, name ):
-        print 'Unregistering ', 
-        self.print_reg( name )
-        del self.registrations[ name ]
+        if self.is_registered( name ):
+            print 'Unregistering ',
+            self.print_reg( name )
+            del self.registrations[ name ]
+        else:
+            print 'Name ' + name + ' is not registered'
  
-    def register( self, name, dir, force=False ):
+    def register( self, name, dir ):
         if self.is_registered( name ):
             if dir == self.registrations[ name ]:
                 print name + " is already registered:"
                 self.print_reg( name )
                 return True
 
-            if not force:
+            else:
                 print "ERROR, " + name + " is already registered:"
                 self.print_reg( name )
                 return False
-
-            print "WARNING, registration override:"
-            print "Old:",
-            self.print_reg( name )
 
         if not self.check_dir( dir ):
             return False
@@ -87,31 +85,33 @@ class registrations:
         pickle.dump( self.registrations, output )
         output.close()
 
-    def print_reg( self, name, extra='' ):
+    def print_reg( self, name, pre='', post='' ):
         if name not in self.registrations.keys():
             print "ERROR, name not registered: " + name
             return False
         else:
-            print ' + ' + name + ' --> ' + self.registrations[ name ] + extra
+            print pre + name + ' --> ' + self.registrations[ name ] + post
             return True
 
     def print_all( self ):
-        print self.count(), 'registrations'
+        print 'Number of registrations:', self.count()
         for name in self.registrations.keys():
-            self.print_reg( name )
+            self.print_reg( name, pre=' + ' )
 
-    def check_all( self ):
-        print self.count(), 'registrations'
+    def get_invalid( self ):
+        print 'Number of registrations:', self.count()
+        invalid = []
         for name in self.registrations.keys():
             if not self.check_reg( name ):
-                self.unregister( name )
+                invalid.append( name )
+        return invalid
 
     def check_reg( self, name ):
         if self.check_dir( self.registrations[ name ] ):
-            self.print_reg( name, ' ... OK' )
+            self.print_reg( name, pre=' + ', post=' ... OK' )
             return True
         else:
-            self.print_reg( name, ' ... INVALID' )
+            self.print_reg( name, pre=' + ', post=' ... INVALID' )
             return False
 
     def check_dir( self, dir ):

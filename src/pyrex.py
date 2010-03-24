@@ -48,11 +48,14 @@ class discover:
             else:
                 self.ns_groups[ group ] += + 1
 
-    def registered( self, name ):
-        if name in self.ns_groups.keys():
+    def registered( self, groupname ):
+        if groupname in self.ns_groups.keys():
             return True
         else:
             return False
+
+    def get_groups( self ):
+        return self.ns_groups.keys()
 
     def print_info( self ):
         n_groups = len( self.ns_groups.keys() )

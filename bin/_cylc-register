@@ -4,44 +4,28 @@ import os, sys
 from optparse import OptionParser
 from registration import registrations
 
-parser = OptionParser( usage = """cylc register --dir=PATH SYSTEM
-Usage: cylc register [options]
+parser = OptionParser( usage = """cylc register --sysdef=PATH SYSTEM
+Usage: cylc register [-p,--print] [-g,--get]
     
-Register a configured system for use under a given name, or manage
-existing registrations. Registration simply associates a name with a
-system definition directory and stores the information in
-$HOME/.cylc/registrations. 
+Register a system for use by name.
 
-Names must be unique (per user) but a single system can be registered
-under multiple names.
+A running cylc system can only be accessed, with cylc commands, using
+the registered name under which it was started up. 
 
 Arguments:
   SYSTEM   Name to associate with the configured system directory.""" )
 
-parser.add_option( "-d", "--dir",
+parser.add_option( "-s", "--sysdef",
     help="Location of a cylc system definition directory.",
     metavar="PATH", action="store", dest="dir" )
 
-parser.add_option( "-f", "--force",
-    help="Overwrite an existing name registration.",
-    action="store_true", default=False, dest="force" )
-
 parser.add_option( "-p", "--print",
-    help="Print all your current system registrations.",
-    action="store_true", default=False, dest="printreg" )
+    help="Print all current system registrations.",
+    action="store_true", default=False, dest="printall" )
 
 parser.add_option( "-g", "--get",
     help="Print the system directory registered under NAME.",
     metavar="NAME", action="store", dest="get" )
-
-parser.add_option( "-c", "--check",
-    help="Check all your current system registrations, and "
-    "delete any found to be invalid.",
-    action="store_true", default=False, dest="check" )
-
-parser.add_option( "--wipe",
-    help="Delete all of your current system registrations.",
-    action="store_true", default=False, dest="wipe" )
 
 ( options, args ) = parser.parse_args()
 
@@ -49,33 +33,25 @@ parser.add_option( "--wipe",
 reg = registrations()
 reg.load_from_file()
 
-if options.dir:
+if options.get:
+    # print one registration and exit
+    print reg.get( options.get )
+    sys.exit(0)
+
+elif options.printall:
+    # print current registrations and exit
+    reg.print_all()
+    sys.exit(0)
+
+elif options.dir:
     # record a new registration for dir
     if len( args ) != 1:
         parser.error( 'system name required' )
     else:
         name = args[0]
-        reg.register( name, options.dir, options.force )
+        reg.register( name, options.dir )
 
-elif options.printreg:
-    # print current registrations and exit
-    reg.print_all()
-    sys.exit(0)
-
-elif options.get:
-    # print one registration and exit
-    reg.print_reg( options.get )
-    sys.exit(0)
-
-elif options.check:
-    reg.check_all()
-
-elif options.wipe:
-    reg.unregister_all()
+    reg.dump_to_file()
 
 else:
-    parser.error( "no inputs!" )
-
-# if we reach here, record any registration changes
-reg.dump_to_file()
-
+    parser.error( 'input required' )

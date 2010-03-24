@@ -9,7 +9,6 @@ from time import sleep
 from optparse import OptionParser
 
 # cycl source modules
-import pyrex
 import manager
 import cycle_time
 import dead_letter
