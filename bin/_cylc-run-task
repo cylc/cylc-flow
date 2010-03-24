@@ -42,7 +42,7 @@ elif len( args ) > 1:
     parser.error( "Too many arguments" )
 
 # get system name------------------------------------------------------
-reg_name = args[0]
+name = args[0]
 
 # get task ------------------------------------------------------------
 if not options.task_id:
@@ -55,19 +55,13 @@ if not cycle_time.is_valid( ctime ):
     parser.error( "invalid cycle time: " + ctime )
 
 # find location of the system task and config modules------------------
-registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name
-if os.path.exists( registration_file ):
-    try:
-        FILE = open( registration_file, 'r' )
-    except:
-        print 'UNABLE TO OPEN REGISTRATION FILE'
-    else:
-        line = FILE.read()
-    FILE.close()
-    system_dir = line.rstrip() 
-    print "registration: " + reg_name + ' --> ' + system_dir
+reg = registrations()
+reg.load_from_file()
+if reg.is_registered( name ):
+    system_dir = reg.get( name )
 else:
-    raise SystemExit( "No such system name registered: " + reg_name )
+    reg.print_all()
+    raise SystemExit( "System " + name + " not registered!" )
 
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
@@ -86,7 +80,7 @@ import task_base     # loads task_classes.py
 import remote_switch # ditto
 
 # load system configuration--------------------------------------------
-config = system_config( reg_name )
+config = system_config( name )
 config.configure( practice=False )
 
 # logging dir

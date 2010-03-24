@@ -15,6 +15,7 @@ import cycle_time
 import dead_letter
 import state_summary
 import accelerated_clock 
+from registration import registrations
 
 # pyro modules
 import Pyro.core, Pyro.naming
@@ -195,8 +196,8 @@ elif len( args ) > 1:
     parser.error( "Too many arguments" )
 
 # get system name------------------------------------------------------
-reg_name = args[0]
-banner[ 'system name' ] = reg_name
+name = args[0]
+banner[ 'system name' ] = name
 
 # get Pyro nameserver hostname-----------------------------------------
 if not options.pns_host:
@@ -270,14 +271,13 @@ else:
 startup[ 'include' ] = include
 
 # find location of the system task and config modules------------------
-registration_file = os.environ['HOME'] + '/.cylc/registered/' + reg_name
-if os.path.exists( registration_file ):
-    FILE = open( registration_file, 'r' )
-    line = FILE.read()
-    system_dir = line.rstrip() 
-    FILE.close()
+reg = registrations()
+reg.load_from_file()
+if reg.is_registered( name ):
+    system_dir = reg.get( name )
 else:
-    raise SystemExit( "No such system name registered: " + reg_name )
+    reg.print_all()
+    raise SystemExit( "System " + name + " not registered!" )
 
 banner[ 'system definition' ] = system_dir
 
@@ -302,7 +302,7 @@ import task_base     # loads task_specif.py
 import remote_switch # ditto
 
 # load system configuration--------------------------------------------
-config = system_config( reg_name )
+config = system_config( name )
 
 # find initial state dump file
 
@@ -359,9 +359,9 @@ nameserver = locate_pyro_nameserver()
 # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
 if practice:
     # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
-    groupname = os.environ['USER'] + '_' + reg_name + "_practice"
+    groupname = os.environ['USER'] + '_' + name + "_practice"
 else:
-    groupname = os.environ['USER'] + '_' + reg_name
+    groupname = os.environ['USER'] + '_' + name
 
 create_ns_groupname( nameserver, groupname )
 banner[ 'Pyro nameserver group' ] = groupname
@@ -409,7 +409,7 @@ daemon.connect( remote, ns_obj_name( 'remote', groupname) )
 os.environ[ 'CYLC_ON' ] = 'true' # tells 'cylc message' to use the nameserver
 os.environ[ 'CYLC_NS_HOST' ] = str( pns_host )  # may be an IP number
 os.environ[ 'CYLC_NS_GROUP' ] = groupname
-os.environ[ 'SYSTEM_NAME' ] = reg_name
+os.environ[ 'SYSTEM_NAME' ] = name
 if dummy_mode:
     os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
     # communicate failout_task_id to the dummy task program
