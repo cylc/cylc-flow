@@ -80,7 +80,7 @@ class remote_switch( Pyro.core.ObjBase ):
  
     def set_hold_time( self, ctime ):
         self.log.warning( "REMOTE: set hold time" )
-        pool.set_system_hold( ctime )
+        self.pool.set_system_hold( ctime )
  
     def shutdown( self ):
         self.log.warning( "REMOTE: halt when running tasks finish" )
