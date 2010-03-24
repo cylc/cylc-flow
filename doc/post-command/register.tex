@@ -1,0 +1,18 @@
+
+Registration creates a mapping between a name and a system definition
+directory, and stores this in \lstinline=$HOME/.cylc/registrations=.
+This allows users to access particular systems without having to
+constantly type in the system definition directory path. 
+
+The registered name under which a system is running is made available to
+system tasks via their execution environment. If all system tasks are
+configured to use the registered name in all important input and output
+directories, then it is possible to run multiple instances of a system
+at the same time without interference between them.
+
+The reason that a running system can only be accessed, by cylc commands,
+via the registered name under which it was started up, is that the name
+is used, along with username, to register (with Pyro now!) system
+objects in the Pyro nameserver.
+
+
