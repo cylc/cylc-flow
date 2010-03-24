@@ -678,11 +678,13 @@ class manager:
 
         # find then spawn and kill all cotemporal dependees
         condemned = self.find_cotemporal_dependees( itask )
-        #cond = {}
-        #for itask in condemned:
-        #    cond[ itask.get_identity() ] = True
+        # this returns tasks, we want task names
+        # TO DO: GET RID OF THE MIDDLE MAN HERE
+        cond = {}
+        for itask in condemned:
+            cond[ itask.get_identity() ] = True
         
-        self.spawn_and_die( condemned )
+        self.spawn_and_die( cond )
 
         # now do the same for the next instance of the task
         if int( next ) <= int( stop ):
