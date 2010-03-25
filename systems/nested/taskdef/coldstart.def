@@ -32,7 +32,7 @@
 %TASK
     coldstart.sh
 
-%PREREQUISITES
+%STARTUP_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"
 
 %ESTIMATED_RUN_TIME
