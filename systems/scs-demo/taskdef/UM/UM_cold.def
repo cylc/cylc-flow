@@ -1,5 +1,5 @@
-# THIS IS A cylon TASK CLASS DEFINITION FILE
-# See full_template.def for documented entries
+# THIS IS A CYLC TASK DEFINITION FILE
+
 
 %NAME
     UM_cold
@@ -9,24 +9,24 @@
     files (IAU start dump, Cx background). 
 
 %TYPE
-    free_task, oneoff
+    free, oneoff
 
-%COTEMPORAL_DEPENDANTS_ONLY
+%NO_NONCOTEMPORAL_DEPENDANTS
     True
 
-%VALID_HOURS
+%CYCLES
     6
 
-%EXTERNAL_TASK
+%TASK
     UM_nz_coldstart.sh
 
-%RUN_LENGTH_MINUTES
-    15
+%ESTIMATED_RUN_TIME
+    15 min
 
 %PREREQUISITES
-    global model dump ready for $(MY_REFERENCE_TIME)
+    "global model dump ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    10: IAU start dump ready for $(MY_REFERENCE_TIME)
-    10: Cx background file ready for $(MY_REFERENCE_TIME)
-    8: UM_nz restart files ready for $(MY_REFERENCE_TIME)
+    10 min: "IAU start dump ready for $(CYCLE_TIME)"
+    10 min: "Cx background file ready for $(CYCLE_TIME)"
+     8 min: "UM_nz restart files ready for $(CYCLE_TIME)"

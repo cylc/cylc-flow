@@ -1,5 +1,5 @@
-# THIS IS A cylon TASK CLASS DEFINITION FILE
-# See full_template.def for documented entries
+# THIS IS A CYLC TASK DEFINITION FILE
+
 
 %NAME
     g_obs
@@ -8,26 +8,26 @@
     Get the downloaded NZLAM obstore files for this cycle
 
 %TYPE
-    free_task, contact
+    free, contact
 
-%CONTACT_DELAY_HOURS
-    3.0 
+%CONTACT_DELAY
+    3.0 hr
 
-%VALID_HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     file_transfer.sh
 
-%EXPORT
-    TARG download:/oper/ecoconnect_oper/output/obstores.$(MY_REFERENCE_TIME)
+%ENVIRONMENT
+    TARG download:/oper/ecoconnect_oper/output/obstores.$(CYCLE_TIME)
     DEST hpc:/oper/input/
 
 %PREREQUISITES
     # NONE
 
-%RUN_LENGTH_MINUTES
-    2
+%ESTIMATED_RUN_TIME
+    2 min
 
 %OUTPUTS
-    2: obstore files ready for $(MY_REFERENCE_TIME)
+    2 min: "obstore files ready for $(CYCLE_TIME)"

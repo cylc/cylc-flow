@@ -1,4 +1,4 @@
-# THIS IS A cylon TASK CLASS DEFINITION FILE
+# THIS IS A CYLC TASK DEFINITION FILE
 # See full_template.def for documented entries
 
 %NAME
@@ -8,22 +8,22 @@
     archiving of forecast diagnostic fieldsfiles
 
 %TYPE
-    free_task
+    free
 
-%VALID_HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     nz_archiving.sh
 
-%EXPORT
+%ENVIRONMENT
     NZLAM_OUTPUT_DIR /oper/output
 
-%RUN_LENGTH_MINUTES
-    10
+%ESTIMATED_RUN_TIME
+    10 min
 
 %PREREQUISITES
-    forecast diagnostics files ready for $(MY_REFERENCE_TIME)
+    "forecast diagnostics files ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    10: forecast diagnostics archiving done for $(MY_REFERENCE_TIME)
+    10 min: "forecast diagnostics archiving done for $(CYCLE_TIME)"

@@ -1,5 +1,5 @@
-# THIS IS A cylon TASK CLASS DEFINITION FILE
-# See full_template.def for documented entries
+# THIS IS A CYLC TASK DEFINITION FILE
+
 
 %NAME
     OPS1
@@ -8,21 +8,21 @@
     Obs processing for group 1 obs
 
 %TYPE
-    free_task
+    free
 
-%VALID_HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     ops_obsgroup1.sh
 
-%RUN_LENGTH_MINUTES
-    5
+%ESTIMATED_RUN_TIME
+    5 min
 
 %PREREQUISITES
-    obstore files ready for $(MY_REFERENCE_TIME)
-    Cx background file ready for $(MY_REFERENCE_TIME)
+    "obstore files ready for $(CYCLE_TIME)"
+    "Cx background file ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    5: obsgroup 1 varobs ready for $(MY_REFERENCE_TIME)
-    5: obsgroup 1 Cx columns ready for $(MY_REFERENCE_TIME)
+    5 min: "obsgroup 1 varobs ready for $(CYCLE_TIME)"
+    5 min: "obsgroup 1 Cx columns ready for $(CYCLE_TIME)"

@@ -1,4 +1,4 @@
-# THIS IS A cylon TASK CLASS DEFINITION FILE
+# THIS IS A CYLC TASK DEFINITION FILE
 # See full_template.def for documented entries
 
 %NAME
@@ -8,19 +8,19 @@
     forecast diagnostics postprocessing
 
 %TYPE
-    free_task
+    free
 
-%VALID_HOURS
+%CYCLES
     0,6,12,18
 
-%EXTERNAL_TASK
+%TASK
     nz_postproc.sh
 
-%RUN_LENGTH_MINUTES
-    15
+%ESTIMATED_RUN_TIME
+    15 min
 
 %PREREQUISITES
-    forecast diagnostics files ready for $(MY_REFERENCE_TIME)
+    "forecast diagnostics files ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    15: forecast products ready for $(MY_REFERENCE_TIME)
+    15 min: "forecast products ready for $(CYCLE_TIME)"
