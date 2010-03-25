@@ -3,6 +3,10 @@ To Do
 * DOCUMENT: system shutdown for practice, while real tasks complete:
   restart with them FINISHED!
 
+* forecast tasks can no longer be 'quick death' because they depend on
+  previous instance. Cylc should check for this. However, they could
+  die as soon as their successor is satisfied. 
+
 * put monitor pyro connection in the same "connector" framework.
 
 * DOCUMENT: OPS-style tasks -if others only depend on "completion", then
@@ -22,16 +26,10 @@ To Do
   userguide example system, it allows some intermediate finished cycles
   to be deleted, but this does not affect the delay due to max runahead.
 
-* consider allowing multiple taskdef directories and writing combined
-  system modules to another location - easy! would require added both
-  scripts dirs to PATH...
-
 * consider task proc loop invocation - could we separate summary update
   vs task processing (e.g. when a task fails we have to run pointlessly
   (?) through the loop in order to update the summary immediately for
   monitoring.
-
-* see if error exit in userguide example check-env invocation works
 
 * warn about consequences of deleting a task: system may move on so that
   a reinserted task will not get its prerequisites satisfied.
@@ -39,9 +37,6 @@ To Do
 * Add NIWA Copyright to all files.
 
 * task generator should look for mispelled variables, e.g. $(CYLCE_TIME)
-
-* consider task script locking to prevent multiple simultaneous
-  instances with the same cycle time?
 
 * is taskdef CYCLES sorted for order?
 
@@ -52,28 +47,21 @@ To Do
   preclude automatic discovery of remote nameservers.
 
 * optionally allow a pyro request handling (or main loop?) timeout.
+  (this is not needed now that the stalling problem is solved?)
 
 * check that ALL input, including that from remote insertion etc., is 
   validated for type (e.g. ID must be name%YYYYMMDDHH) before being
   passed into the program.
-
-* some way of using registered system name in config module, e.g. for
-  instance-specific tmpdir
-
-* create a log class so we can store the main logging dir ...
 
 * catch deliberate exits in manager, in order cleanly shutdown pyro
 
 * allow task shortnames for control and question commands.
 
 * 'raise SystemExit(message)' everywhere instead of sys.exit(1)?
-* print error messages to stderr: print >> sys.stderr, 'message'
+  print error messages to stderr: print >> sys.stderr, 'message'
 
 * remote background tasks will fail if CYLC_NS_HOST is 'localhost'
   (which is only correct on the local machine)
-
-* when initial f/c failed in the file-move example (real mode)
-  system required a 'bump' for monitor to show the task failed.
 
 * consider implementing "either or" and "self destruct"
   prerequisites (Phil's idea) - this would allow automated
@@ -91,7 +79,7 @@ To Do
 * improved exception handling and retry and/or alert in case in message 
   script and dummy tasks?
 
-* use exception handling as in task_manager.insert() to prevent remote
+* use exception handling as in manager.insert() to prevent remote
   control operations that throw an exception (e.g. due to mis-formatted 
   user input) from bringing the system down.
 
@@ -110,12 +98,7 @@ To Do
 * the task-generator script should check that the user-defined task
   names do not clash with parent class or attribute names.
 
-* user config for restricted start time (e.g. 06 UTC only) and other
-  system-specific restrictions?
-
-* remote setting of 'ready' state for artificially tied tasks (nztide)
-  whose artificial tie has failed but whose real prerequisites are known
-  to be satisfied
+* user config for restricted start time (e.g. 06 UTC only)
 
 * when remote killing all waiting tasks at a ref time, check that (a)
   the system has moved on passed that time, and (b) none of the waiting
@@ -137,10 +120,6 @@ To Do
 
 * task.quick_death should default to False? (as for the task 
   def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
-
-* forecast tasks can no longer be 'quick death' because they depend on
-  previous instance. Cylc should check for this. However, they could
-  die as soon as their successor is satisfied. 
 
 ====================================
 FUZZY PREREQUISITES (only for infrequent 'advanced' usage - e.g. hourly
