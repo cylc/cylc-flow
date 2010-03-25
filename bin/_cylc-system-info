@@ -21,7 +21,6 @@ name = args[0]
 
 # find location of the system task and config modules
 reg = registrations()
-reg.load_from_file()
 if reg.is_registered( name ):
     system_dir = reg.get( name )
     reg.print_reg( name )

@@ -1,18 +1,45 @@
 #!/usr/bin/python
 
 import os, sys
+import pyrex
 from optparse import OptionParser
 from registration import registrations
 
-parser = OptionParser( usage = """cylc register --sysdef=PATH SYSTEM
-Usage: cylc register [-p,--print] [-g,--get]
-    
+#----------------------------------------
+def check_dir( dir ):
+    if not os.path.exists( dir ):
+        print "ERROR, dir not found: " + dir
+        return False
+
+    files = [\
+            dir + '/system_config.py',
+            dir + '/task_classes.py',
+            dir + '/task_list.py',
+            dir + '/job_submit_methods.py',
+            ]
+
+    good = True
+    for file in files:
+        if not os.path.exists( file ):
+            print "ERROR, file not found: " + file
+            good = False
+
+    return good
+ 
+#----------------------------------------
+
+parser = OptionParser( usage = """Usage: cylc register [-d,--delete] [-g,--get] [--sysdef=PATH] NAME
+Usage: cylc register [-p,--print]
+Usage: cylc register [--host=HOST] [-c, --check] [-w,--wipe]
+
+Manage user-specific system registrations in $HOME/.cylc/registrations. 
+
 Registration associates a name with a configured system definition
 directory. This has two purposes: (1) cylc commands that need to
 access system-specific modules can do so without you having to type the
 full system path on the command line; and (2) the registered name is
 used by the Pyro nameserver, along with your username, to distinguish
-between different running systems running at the same time. 
+between different systems running at the same time. 
 
 You can register the same system under multiple names, and the
 registered name is made available to tasks in a running system through
@@ -31,11 +58,14 @@ of the system in order to target the right nameserver group, but you do
 not have to have registered the system yourself because they do not need
 to load system-specific source modules.
 
+This command warns if you attempt to unregister a system that is
+currently in use, but note that a system registration is required only
+for the 'start', 'run-task', and 'system-info' commands.
+
 Registrations are user-specific and are stored in a special config file,
-$HOME/.cylc/registrations. 
 
 Arguments:
-  SYSTEM   Name to associate with the configured system directory.""" )
+  NAME   Name to associate with the configured system directory.""" )
 
 parser.add_option( "-s", "--sysdef",
     help="Location of a cylc system definition directory.",
@@ -47,26 +77,52 @@ parser.add_option( "-p", "--print",
 
 parser.add_option( "-g", "--get",
     help="Print the system directory registered under NAME.",
-    metavar="NAME", action="store", dest="get" )
+    action="store_true", default=False, dest="get" )
+
+parser.add_option( "-d", "--delete",
+    help="Print the system directory registered under NAME.",
+    action="store_true", default=False, dest="delete" )
+
+parser.add_option( "-c", "--check",
+    help="Check all your current system registrations, and "
+    "delete any found to be invalid.",
+    action="store_true", default=False, dest="check" )
+
+parser.add_option( "--wipe",
+    help="Delete all of your current system registrations.",
+    action="store_true", default=False, dest="wipe" )
+
+parser.add_option( "--host",
+        help="Pyro nameserver host, defaults to 'localhost'. Use "
+        "if not auto-detected (which depends on network config).", 
+        metavar="HOSTNAME", action="store", default="localhost",
+        dest="pns_host" )
 
 ( options, args ) = parser.parse_args()
 
 # load registration file
 reg = registrations()
-reg.load_from_file()
 
 if options.get:
+    if len( args ) != 1:
+        print "ERROR, system name required"
+        sys.exit(1)
+
     # print one registration and exit
     print reg.get( options.get )
     sys.exit(0)
 
 elif options.printall:
-    # print current registrations and exit
+    if len( args ) != 0:
+        print "ERROR, no arguments allowed for --print"
+        sys.exit(1)
+
+    # print all registrations and exit
     reg.print_all()
     sys.exit(0)
 
 elif options.dir:
-    # record a new registration for dir
+    # record a new registration
     if len( args ) != 1:
         parser.error( 'system name required' )
 
@@ -78,6 +134,64 @@ elif options.dir:
         sys.exit(1)
 
     reg.register( name, dir )
+    reg.dump_to_file()
+
+elif options.delete or options.wipe or options.check:
+    # get system names currently in use in the Pyro nameserver
+    groups = pyrex.discover( options.pns_host ).get_groups()
+    username = os.environ[ 'USER' ]
+ 
+    twatted = []
+
+    if options.check:
+        if len( args ) != 0:
+            print "ERROR, no arguments allowed for --check"
+            sys.exit(1)
+
+        count = 0
+        for name in reg.get_all():
+            count += 1
+            dir = reg.get(name)
+            if not check_dir( dir ):
+                post = ' ... INVALID'
+                twatted.append( name )
+
+            else:
+                post = ' ... OK'
+            reg.print_reg( name, pre=' [' + str(count) + '] ', post=post )
+
+    elif options.wipe:
+        if len( args ) != 0:
+            print "ERROR, no arguments allowed for --wipe"
+            sys.exit(1)
+
+        twatted = reg.get_all() 
+
+    elif options.delete:
+        if len( args ) != 1:
+            parser.error( 'system name to delete?' )
+
+        twatted = [ args[0] ] 
+
+    if len(twatted) == 0:
+        print "No systems to unregister"
+        sys.exit(0)
+
+    count = 0
+    print "Unregistering " + str( len(twatted) ) + " systems:"
+    for twat in twatted:
+        count += 1
+        print ' [' + str( count ) + '] ' + twat
+        if username + '_' + twat in groups or \
+                username + '_' + twat + '_practice' in groups:
+            print "  WARNING, a system called " + twat + " owned by you is currently using"
+            print "the Pyro nameserver. See 'cylc register --help' for information about"
+            response = raw_input( "exactly what this means. Proceed with deregistration (y/n)? " )
+            if response != 'y':
+                continue
+        reg.unregister( twat )
+
+    # record registration changes
     reg.dump_to_file()
 
 else:
