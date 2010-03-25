@@ -1,5 +1,15 @@
 #!/bin/bash
 
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
 # Generate task class and config module for a particular cylc system
 
 # TO DO: rewrite this in Python to allow long options '--help' etc., for
@@ -117,6 +127,17 @@ echo
 echo "Generating the task list module"
 
 cat > task_list.py <<eof
+#/usr/bin/python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
 # LIST OF TASK NAMES (order irrelevant)
 task_list = \\
     [
@@ -154,6 +175,15 @@ fi
 if $WRITE_CONFIG; then
 cat > system_config.py <<eof
 #!/usr/bin/python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
 
 # o SYSTEM CONFIG MODULE FOR THE CYLC SYSTEM DEFINITION DIRECTORY:
 #  $PWD
@@ -243,6 +273,16 @@ if $WRITE_JOBSUB; then
 cat > job_submit_methods.py <<eof
 #!/usr/bin/python
 
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
 from background import background
 from background2 import background2
 from background_remote import background_remote
@@ -269,6 +309,15 @@ fi
 if $WRITE_INFO; then
 cat > system_info.py <<eof
 #!/usr/bin/python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
 
 info="""
 REPLACE THIS WITH A DESCRIPTION OF YOUR SYSTEM, AND ANY ASPECTS OF IT

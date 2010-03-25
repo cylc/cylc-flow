@@ -1,5 +1,15 @@
 #!/usr/bin/pyro
 
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
 # Here's how to run a Pyro nameserver in its own thread in the main program:
 #import threading
 #ns_starter = Pyro.naming.NameServerStarter()
