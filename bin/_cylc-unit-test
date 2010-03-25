@@ -12,6 +12,9 @@ if [[ $# != 0 ]]; then
         echo "userguide example system. This should be used to check that any new"
         echo "developments in the cylc codebase have not broken then system."
         echo
+        echo "The test runs a system registered as 'unit'; to watch its progress"
+        echo "use 'cylc monitor -a unit'"
+        echo
         echo "Results should be the same in real or dummy mode, apart from small"
         echo "timing differences."
         echo
