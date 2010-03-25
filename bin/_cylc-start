@@ -117,7 +117,7 @@ def commandline_parser():
     
     parser.add_option( "--until", 
             help="Optional final cycle time (YYYYMMDDHH). The scheduler "
-            "will shut down when each task has passed this cycle.",
+            "will shut down after each task has passed this cycle.",
             metavar="CYCLE", action="store", dest="stop_time" )
 
     parser.add_option( "--pause-at",

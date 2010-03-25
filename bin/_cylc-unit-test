@@ -1,0 +1,154 @@
+#!/bin/bash
+
+dummy_mode=false
+if [[ $# != 0 ]]; then
+    if [[ $1 == '-d' || $1 == '--dummy' ]]; then
+        dummy_mode=true
+
+    elif [[ $1 == '-h' || $1 == '--help' ]]; then
+        echo "Usage: cylc unit-test [options]"
+        echo 
+        echo "Run an automated test of core cylc functionality using a copy of the"
+        echo "userguide example system. This should be used to check that any new"
+        echo "developments in the cylc codebase have not broken then system."
+        echo
+        echo "Results should be the same in real or dummy mode, apart from small"
+        echo "timing differences."
+        echo
+        echo "Currently the unit test does the following:"
+        echo "1/ Copy the userguide example system definition directory"
+        echo "   to create a new system for use in the unit test."
+        echo "2/ Configure the new system"
+        echo "3/ Register the new system as \"unit\""
+        echo "4/ Start the new system at T0=06Z, with task X set to fail at 12Z"
+        echo "5/ Set a system stop time at the following 12Z (i.e. T0+30 hours)"
+        echo "5/ Wait for the system to stall at 12Z as a result of X failing"
+        echo "6/ Insert a new coldstart task at the following 06Z (T0+24 hours)"
+        echo "7/ Recursively purge the failed X and its dependants, through to"
+        echo "   next 00Z (T0+18 hours) which should get the system going again."
+        echo "8/ Wait for the system to shut down at 12Z (T0+30 hours) stop time."
+        echo
+        echo "Options:"
+        echo "  -h, --help   Print this help message and exit."
+        echo "  -d, --dummy  Run the unit test in dummy mode."
+        exit 0
+    else
+        echo "ERROR, no arguments required."
+        exit 1
+    fi
+fi
+
+set -e  # abort on error
+
+if [[ ! -x bin/cylc ]]; then
+    echo  "ERROR: run this unit test from the top level of a cylc installation."
+    exit 1
+fi
+
+# UNIT TEST SYSTEM DIRECTORY
+SYS_DIR=systems/UNIT
+# log file for stdout and stderr
+OUT=unit-test.out; OUT_SCHED=unit-test-sched.out
+# cylc system log
+LOG=$HOME/cylc-logs/unit/main
+
+# START FROM A CLEAN SLATE
+echo -n ">> CLEANING OUT any remnants of previous tests ... "
+  # remove any existing unit test system
+[[ -d $SYS_DIR ]] && rm -rf $SYS_DIR
+  # unregister any existing registration for unit
+cylc register -g unit > /dev/null 2>&1 && cylc register -d unit > /dev/null 2>&1
+  # remove output files
+rm -f $OUT $OUT_SCHED
+echo done
+
+# COPY THE USERGUIDE EXAMPLE SYSTEM
+echo
+echo -n ">> COPYING userguide example system to $SYS_DIR ... "
+cp -r systems/userguide $SYS_DIR > $OUT 2>&1 
+echo done
+
+# CONFIGURE THE TEST SYSTEM
+echo
+echo -n ">> CONFIGURING the test system ... "
+cylc configure $SYS_DIR >> $OUT 2>&1
+echo done
+
+# REGISTER THE TEST SYSTEM
+echo
+echo -n ">> REGISTERING the test system as 'unit' ... "
+cylc register --sysdef $SYS_DIR unit >> $OUT 2>&1
+echo done
+
+# START UP THE TEST SYSTEM
+echo
+echo ">> STARTING at 2010010106, in the BACKGROUND, X will fail at 2010010112"
+if ! $dummy_mode; then
+    export FAIL_TASK=X%2010010112
+fi
+echo "   Try 'cylc monitor -a unit'"
+echo -n "   Will wait 5 seconds for startup ... "
+if $dummy_mode; then
+    cylc start -d --fail-out=X%2010010112 --at=2010010106 unit >> $OUT_SCHED 2>&1 &
+else
+    cylc start --at=2010010106 unit >> $OUT_SCHED 2>&1 &
+fi
+sleep 5
+echo done
+
+# WAIT FOR ALL TASKS AT 2010010112 TO FINISH 
+# at which point the system is stalled because X failed.
+echo
+echo ">> WAITING for system to stall at 2010010112 due to failed X"
+echo -n "   ."
+READY=false
+while ! $READY; do
+    READY=true
+    for TASK in A B C D E F; do
+        ! grep "${TASK}%2010010106 finished" $LOG > /dev/null 2>&1 && READY=false
+    done
+    ! grep "X%2010010112 failed" $LOG > /dev/null 2>&1 && READY=false
+    echo -n .
+    sleep 1
+done
+echo done
+
+# SET A STOP TIME OF
+echo
+echo -n ">> SETTING STOP TIME 2010010212 ..."
+cylc stop -f --at=2010010212 unit >> $OUT 2>&1
+echo done
+
+# INSERT A COLDSTART TASK AT 2010010206
+echo
+echo -n ">> INSERTING a coldstart task at 2010010206 ..."
+cylc insert -f -t coldstart%2010010206 unit >> $OUT 2>&1
+echo done
+
+# PURGE THE FAILED TASK AND ITS DEPENDANTS THROUGH TO 2010010200
+echo
+echo ">> PURGING X%2010010112 and dependants through to 2010010200"
+echo "   This should get the system going again, through to stop time."
+echo -n "   ... "
+cylc purge -f -t X%2010010112 -s 2010010200 unit >> $OUT 2>&1
+echo done
+
+# WAIT FOR THE SYSTEM TO FINISH AT 2010010212
+echo
+echo ">> WAITING for the system to shutdown at 2010010112"
+echo -n "   ."
+READY=false
+while ! $READY; do
+    READY=true
+    ! grep "ALL TASKS FINISHED" $LOG > /dev/null 2>&1 && READY=false
+    echo -n .
+    sleep 1
+done
+echo done
+
+# FINISHED
+echo 
+echo ">> OUTPUT LOGS:"
+ls -l $OUT $OUT_SCHED
+echo
+echo ">> DONE"

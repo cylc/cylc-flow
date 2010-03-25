@@ -30,6 +30,7 @@ allowed_commands = \
     'set-level',
     'nudge',
     'message',
+    'unit-test'
     ]
 
 usage = \
@@ -79,6 +80,7 @@ usage = \
     '  nudge ....... Cause the cylc main task processing loop to be invoked',
     '  message   ... Send a message to a task proxy object (for use by tasks)',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
+    '  unit-test ... An automated test of core cylc functionality',
     '_________________________________________________________________________',
     ]
 
