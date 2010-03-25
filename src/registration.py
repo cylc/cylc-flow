@@ -28,7 +28,7 @@ class registrations:
             self.load_from_file()
 
     def load_from_file( self ):
-        print "Loading your cylc system registrations"
+        #print "Loading your cylc system registrations"
         if not os.path.exists( self.filename ):
             # no systems registered yet, so the file does not exist
             return

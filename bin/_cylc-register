@@ -109,8 +109,14 @@ if options.get:
         sys.exit(1)
 
     # print one registration and exit
-    print reg.get( options.get )
-    sys.exit(0)
+    name = args[0]
+
+    if reg.is_registered( name ):
+        print reg.get( name )
+        sys.exit(0)
+    else:
+        print name + " is not registered"
+        sys.exit(1)
 
 elif options.printall:
     if len( args ) != 0:
