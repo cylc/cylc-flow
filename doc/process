@@ -54,6 +54,14 @@ for PDEF in $DIR/taskdef/*.def; do
     echo "" >> $OUT
 done
 
+echo "\subsection{Utility}" >> $OUT
+echo "\label{utility}" >> $OUT
+echo "\subsubsection{check-env.sh}" >> $OUT
+echo "\lstset{language=bash}" >> $OUT
+echo "\lstinputlisting{../$DIR/scripts/check-env.sh}" >> $OUT
+echo "\pagebreak" >> $OUT
+echo "" >> $OUT
+
 #-----------------------------------------------------------------------
 
 
