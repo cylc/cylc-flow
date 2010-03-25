@@ -81,8 +81,8 @@ class dummy_task:
                 # but first report 'completed' for dependent tasks that
                 # don't care if this one finishes successfully or fails
             
-                self.send( '--completed' )
-                self.send( '--failed' )
+                self.send( self.id + ' completed' )
+                self.send( self.id + ' failed' )
                 
                 sys.exit(1)
 
