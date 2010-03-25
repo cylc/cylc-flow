@@ -24,7 +24,7 @@ parser.add_option( "-g", "--group",
 if not options.task_id:
     parser.error( "Task or Group ID required" )
 
-target = connector.options.task_id  
+target = options.task_id
 
 if parser.prompt( 'Insert ' + target + ' in'):
     # check input
