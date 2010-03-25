@@ -30,7 +30,6 @@ allowed_commands = \
     'set-level',
     'nudge',
     'message',
-    'commands',
     ]
 
 usage = \
@@ -79,7 +78,6 @@ usage = \
     '  set-level ... Change the logging verbosity level in a running system',
     '  nudge ....... Invoke the cylc task processing loop',
     '  message   ... Send a message to a task proxy object (for use by tasks)',
-    '  commands .... List the current cylc command set (for doc processing)',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     '_________________________________________________________________________',
     ]
