@@ -18,7 +18,7 @@ parser.add_option( "-t", "--task",
         metavar="TASK%CYCLE", action="store", dest="target_id" )
 
 parser.add_option( "-s", "--stop",
-        help="Cycle time at which to stop the slaughter.",
+        help="Purge tasks down to this cycle time (inclusive!).",
         metavar="CYCLE", action="store", dest="stop" )
 
 (options, args) = parser.parse_args()
