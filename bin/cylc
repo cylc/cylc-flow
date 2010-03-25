@@ -76,7 +76,7 @@ usage = \
     '# O T H E R',
     '  run-task .... Run one task, alone, just as the scheduler would run it',
     '  set-level ... Change the logging verbosity level in a running system',
-    '  nudge ....... Invoke the cylc task processing loop',
+    '  nudge ....... Cause the cylc main task processing loop to be invoked',
     '  message   ... Send a message to a task proxy object (for use by tasks)',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     '_________________________________________________________________________',
