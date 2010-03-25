@@ -268,6 +268,11 @@ from dynamic_instantiation import get_object
                 sys.exit(1)
 
             if task_type == 'tied':
+                if quick_death:
+                    print 'ERROR, tied tasks cannot set NO_NONCOTEMPORAL_DEPENDANTS'
+                    print 'because they necessarily have next-cycle dependants'
+                    sys.exit(1)
+
                 task_type = 'forecast_model'
                 fcmodel = True
             elif task_type == 'free':
