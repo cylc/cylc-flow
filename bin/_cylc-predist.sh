@@ -66,6 +66,9 @@ rm -r doc
 mkdir doc
 mv userguide.pdf doc
 
+echo "DELETING EXTRANEOUS BIN SCRIPTS"
+rm bin/addcopyright.pl
+
 echo "DELETING DEVELOPER DOCS"
 rm README.todo
 
