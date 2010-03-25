@@ -1,0 +1,34 @@
+# THIS IS A cylon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    UM_nz
+
+%DESCRIPTION
+    NZ warm start forecast
+
+%TYPE
+    forecast_model
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    UM_nz.sh
+
+%RUN_LENGTH_MINUTES
+    60
+
+%PREREQUISITES
+    VAR increments ready for $(MY_REFERENCE_TIME)
+    IAU start dump ready for $(MY_REFERENCE_TIME)
+    0,12 | file lbc_$(MY_REFERENCE_TIME - 12).um ready
+    6,18 | file lbc_$(MY_REFERENCE_TIME - 6).um ready
+
+%RESTART_LIST_MINUTES
+    15,30,45,59
+
+%OUTPUTS
+    10: IAU start dump ready for $(MY_REFERENCE_TIME + 6)
+    12: Cx background file ready for $(MY_REFERENCE_TIME + 6)
+    55: forecast diagnostics files ready for $(MY_REFERENCE_TIME)

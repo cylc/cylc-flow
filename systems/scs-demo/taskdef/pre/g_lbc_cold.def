@@ -1,0 +1,37 @@
+# THIS IS A cylon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    g_lbc_cold
+
+%DESCRIPTION
+    Get the downloaded NZ LBC file for the current cycle
+    Only required at cold start startup.
+
+%TYPE
+    free_task, contact, oneoff
+
+%CONTACT_DELAY_HOURS
+    4.0 
+
+%ONEOFF_FOLLOW_ON
+    g_lbc
+
+%VALID_HOURS
+    6
+
+%EXTERNAL_TASK
+    file_transfer.sh
+
+%EXPORT
+    TARG ftpserver:/download/lbc_$(MY_REFERENCE_TIME - 6).um
+    DEST hpc:/oper/input/
+
+%PREREQUISITES
+    # NONE
+
+%RUN_LENGTH_MINUTES
+    2
+
+%OUTPUTS
+    2: file lbc_$(MY_REFERENCE_TIME - 6).um ready

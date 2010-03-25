@@ -1,0 +1,33 @@
+# THIS IS A cylon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    g_bge
+
+%DESCRIPTION
+    Get the downloaded NZLAM bgerr file for this cycle
+
+%TYPE
+    free_task, contact
+
+%CONTACT_DELAY_HOURS
+    4.0 
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    file_transfer.sh
+
+%EXPORT
+    TARG ftpserver:/download/bgerr.$(MY_REFERENCE_TIME).um
+    DEST hpc:/oper/input/
+
+%PREREQUISITES
+    # NONE
+
+%RUN_LENGTH_MINUTES
+    2
+
+%OUTPUTS
+    2: bgerr file ready for $(MY_REFERENCE_TIME)

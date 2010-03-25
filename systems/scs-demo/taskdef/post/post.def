@@ -1,0 +1,26 @@
+# THIS IS A cylon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    post
+
+%DESCRIPTION
+    forecast diagnostics postprocessing
+
+%TYPE
+    free_task
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    nz_postproc.sh
+
+%RUN_LENGTH_MINUTES
+    15
+
+%PREREQUISITES
+    forecast diagnostics files ready for $(MY_REFERENCE_TIME)
+
+%OUTPUTS
+    15: forecast products ready for $(MY_REFERENCE_TIME)

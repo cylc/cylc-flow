@@ -1,0 +1,33 @@
+# THIS IS A cylon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    g_lbc
+
+%DESCRIPTION
+    Get the downloaded NZ LBC file for the next two cycles
+
+%TYPE
+    free_task, contact
+
+%CONTACT_DELAY_HOURS
+    4.0 
+
+%VALID_HOURS
+    0,12
+
+%EXTERNAL_TASK
+    file_transfer.sh
+
+%EXPORT
+    TARG ftpserver:/download/lbc_$(MY_REFERENCE_TIME - 6).um
+    DEST hpc:/oper/input/
+
+%PREREQUISITES
+    # NONE
+
+%RUN_LENGTH_MINUTES
+    2
+
+%OUTPUTS
+    2: file lbc_$(MY_REFERENCE_TIME).um ready

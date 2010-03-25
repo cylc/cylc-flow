@@ -3,7 +3,7 @@ To Do
 * DOCUMENT: system shutdown for practice, while real tasks complete:
   restart with them FINISHED!
 
-* forecast tasks can not be 'quick death' because they depend on a
+* forecast tasks cannot be 'quick death' because they depend on a
   previous instance. However, they could die as soon as their successor
   is satisfied. 
 

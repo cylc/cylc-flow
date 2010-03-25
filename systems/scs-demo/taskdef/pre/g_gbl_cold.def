@@ -1,0 +1,36 @@
+# THIS IS A cylon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    g_gbl_cold
+
+%DESCRIPTION
+    Get the downloaded UM global dump for a cold start this cycle
+
+%TYPE
+    free_task, contact, oneoff
+
+%COTEMPORAL_DEPENDANTS_ONLY
+    True
+
+%CONTACT_DELAY_HOURS
+    4.0 
+
+%VALID_HOURS
+    6
+
+%EXTERNAL_TASK
+    file_transfer.sh
+
+%EXPORT
+    TARG ftpserver:/download/globaldump.$(MY_REFERENCE_TIME).um
+    DEST hpc:/oper/input/
+
+%PREREQUISITES
+    # NONE
+
+%RUN_LENGTH_MINUTES
+    2
+
+%OUTPUTS
+    2: global model dump ready for $(MY_REFERENCE_TIME)

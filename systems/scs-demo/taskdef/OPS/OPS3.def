@@ -1,0 +1,28 @@
+# THIS IS A cylon TASK CLASS DEFINITION FILE
+# See full_template.def for documented entries
+
+%NAME
+    OPS3
+
+%DESCRIPTION
+    Obs processing for group 3 obs
+
+%TYPE
+    free_task
+
+%VALID_HOURS
+    0,6,12,18
+
+%EXTERNAL_TASK
+    ops_obsgroup3.sh
+
+%RUN_LENGTH_MINUTES
+    8
+
+%PREREQUISITES
+    obstore files ready for $(MY_REFERENCE_TIME)
+    Cx background file ready for $(MY_REFERENCE_TIME)
+
+%OUTPUTS
+    7: obsgroup 3 varobs ready for $(MY_REFERENCE_TIME)
+    8: obsgroup 3 Cx columns ready for $(MY_REFERENCE_TIME)

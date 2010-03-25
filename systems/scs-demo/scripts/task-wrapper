@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# Cyclon task wrapper script
+
+# Cyclon tasks must provide, at the least, their own 'started',
+# 'finished', and 'failure' messages.  This script is intended to allow
+# control over existing tasks without having to modify them in any way.
+
+# Accordingly, it does the following for the wrapped task:
+# (1) sends special 'started' message
+# (2) executes the task
+# (3) send the special 'finished' message on success,
+#       or the special 'failed' message if error occurs.
+
+# Thus WRAPPED TASKS do not need to send any messages, but they must
+# provide the standard exit codes: '0' for success, '1' (or more) for
+# failure. If you want, however, a wrapped task *can* send cylon
+# messages as well, but in that case you might as well dispense with
+# wrapping and provide your own started, finished, and failure messages
+# as well.
+
+set -e  # abort on error
+
+# cylon exports the following environment variables for each task:
+#   1. $REFERENCE_TIME  
+#   2. $TASK_NAME      
+#   3. $WRAP          
+
+if [[ -z $REFERENCE_TIME ]]; then
+	echo "ERROR, task-wrapper: \$REFERENCE_TIME not found"
+	exit 1
+fi
+
+if [[ -z $TASK_NAME ]]; then
+	echo "ERROR, task-wrapper: \$TASK_NAME not found"
+	exit 1
+fi
+
+if [[ -z $WRAP ]]; then
+	echo "ERROR, task-wrapper: \$WRAP not found"
+	exit 1
+fi
+
+#echo "task-wrapper: calling $TASK_NAME for $REFERENCE_TIME"
+task-message "started"
+
+# call the wrapped task
+if $WRAP; then 
+    # succeeded
+    task-message --all-outputs-completed
+    task-message "completed"
+    task-message "finished"
+else
+    # failed
+    task-message "completed"
+	task-message -p CRITICAL "failed" 
+fi
