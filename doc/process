@@ -47,14 +47,15 @@ for PDEF in $DIR/taskdef/*.def; do
     echo "\subsubsection{Definition}" >> $OUT
     echo "\lstset{language=cylctaskdef}" >> $OUT
     echo "\lstinputlisting{../$DIR/taskdef/$DEF}" >> $OUT
-    echo "\subsubsection{Script}" >> $OUT
+    echo "\pagebreak" >> $OUT
+    echo "\subsubsection{Implementation}" >> $OUT
     echo "\lstset{language=bash}" >> $OUT
     echo "\lstinputlisting{../$DIR/scripts/$SCR}" >> $OUT
     echo "\pagebreak" >> $OUT
     echo "" >> $OUT
 done
 
-echo "\subsection{Utility}" >> $OUT
+echo "\subsection{Utility Scripts}" >> $OUT
 echo "\label{utility}" >> $OUT
 echo "\subsubsection{check-env.sh}" >> $OUT
 echo "\lstset{language=bash}" >> $OUT

@@ -44,12 +44,18 @@ showstringspaces=false,
 %numberstyle=\color{Gray}
 }
 
+\lstset{
+language=bash,
+numbers=left,
+}
+
 \lstdefinelanguage{cylctaskdef}
 {
 morekeywords={NAME,DESCRIPTION,TYPE,CONTACT_DELAY,OWNER,CYCLES,TASK,ENVIRONMENT,ESTIMATED_RUN_TIME,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,ESTIMATED_RESTART_OUTPUT_TIMES,NO_NONCOTEMPORAL_DEPENDANTS,ONEOFF_FOLLOW_ON},
 sensitive=false,
 morecomment=[l]{\#},
 morestring=[b]\",
+numbers=left,
 }
 
 \lstdefinelanguage{usage}
@@ -1695,15 +1701,27 @@ scheduler command line options provided for this purpose).
 \section{Controlling Running Systems}
 \label{ControllingRunningSystems}
 
-\section{Complete Working Examples}
-\label{CompleteWorkingExamples}
+\pagebreak
+\section{A Complete Working Example}
+\label{ACompleteWorkingExample}
 
 \input{../systems/userguide/README.tex}
 
-\lstset{ basicstyle=\color{basic}\tiny\ttfamily }
+\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 
 \pagebreak
 \input{example-system.tex}
+
+\section{Other Packaged Examples}
+\label{OtherPackagedExamples}
+
+\subsection{Nested}
+
+\subsection{File-Move}
+
+\subsection{Distributed}
+
+\subsection{SCS-Demo}
 
 \section{Command Reference}
 \label{CommandReference}
