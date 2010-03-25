@@ -21,7 +21,7 @@ def check_dir( dir ):
     good = True
     for file in files:
         if not os.path.exists( file ):
-            print "ERROR, file not found: " + file
+            print "file not found: " + file
             good = False
 
     return good
@@ -131,6 +131,10 @@ elif options.dir:
     dir = os.path.abspath( options.dir )
     if not os.path.exists( dir ):
         print "ERROR, directory not found: " + dir
+        sys.exit(1)
+
+    if not check_dir( dir ):
+        print "ERROR, " + dir + " has not been configured"
         sys.exit(1)
 
     reg.register( name, dir )
