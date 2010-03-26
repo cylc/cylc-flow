@@ -89,6 +89,15 @@ class manager:
         self.system_hold_now = False
         self.system_hold_ctime = None
 
+    def will_stop_at( self ):
+        return self.stop_time
+
+    def paused( self ):
+        return self.system_hold_now
+
+    def will_pause_at( self ):
+        return self.system_hold_ctime
+
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
         oldest = 9999887766

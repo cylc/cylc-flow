@@ -469,7 +469,9 @@ while True: # MAIN LOOP
 
         pool.dump_state()
 
-        system_state.update( pool.tasks, clock )
+        system_state.update( pool.tasks, clock, \
+                pool.paused(), pool.will_pause_at(), \
+                remote.halt, pool.will_stop_at() )
 
     if pool.all_tasks_finished():
         log.critical( "ALL TASKS FINISHED" )

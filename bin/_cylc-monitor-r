@@ -130,6 +130,10 @@ while True:
         dt = glbl[ 'last_updated' ]
         rate = glbl[ 'dummy_clock_rate' ]
         dummy_mode = glbl[ 'dummy_mode' ]
+        paused = glbl['paused']
+        stopping = glbl['stopping']
+        will_pause_at = glbl['will_pause_at']
+        will_stop_at = glbl['will_stop_at']
 
         max_name_len = 0
         max_total_len = 0
@@ -232,8 +236,27 @@ while True:
             baz = re.sub( '^.{' + str(len(foo)) + '}', foo, baz )
             baz = re.sub( '.{' + str(len(bar)) + '}$', bar, baz )
             blit.append( baz )
-
+        
         blit.append( dt )
+
+        if stopping:
+            #            'waiting submitted running done failed'
+            blit.append( '___________S_T_O_P_P_I_N_G' )
+        elif paused:
+            #            'waiting submitted running done failed'
+            blit.append( '_______________P_A_U_S_E_D' )
+        elif will_pause_at:
+            #            'waiting submitted running done failed'
+            #                                    YYYYMMDDHH                                
+            blit.append( 'P_A_U_S_E__A_T__' + will_pause_at )
+        elif will_stop_at:
+            #            'waiting submitted running done failed'
+            #                                    YYYYMMDDHH                                
+            blit.append( '__S_T_O_P__A_T__' + will_stop_at )
+        else:
+            #            'waiting submitted running done failed'
+            blit.append( '_____________R_U_N_N_I_N_G' )
+ 
         for rt in ctimes:
             if len( lines[rt] ) != 0:
                 blit.append( "\033[1;31m" + "__________" + "\033[0m" ) # red

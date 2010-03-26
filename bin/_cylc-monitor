@@ -139,6 +139,10 @@ try:
             dt = glbl[ 'last_updated' ]
             rate = glbl[ 'dummy_clock_rate' ]
             dummy_mode = glbl[ 'dummy_mode' ]
+            paused = glbl['paused']
+            stopping = glbl['stopping']
+            will_pause_at = glbl['will_pause_at']
+            will_stop_at = glbl['will_stop_at']
 
             task_ids = states.keys()
             n_tasks_all = len( task_ids )
@@ -241,8 +245,24 @@ try:
                 baz = re.sub( '.{' + str(len(bar)) + '}$', bar, baz )
                 blit.append( baz )
 
-            blit.append( '' )
-          
+            if stopping:
+                #            'waiting submitted running done failed'
+                blit.append( '______________________S_T_O_P_P_I_N_G' )
+            elif paused:
+                #            'waiting submitted running done failed'
+                blit.append( '__________________________P_A_U_S_E_D' )
+            elif will_pause_at:
+                #            'waiting submitted running done failed'
+                #                                    YYYYMMDDHH                                
+                blit.append( '___________P_A_U_S_E__A_T__' + will_pause_at )
+            elif will_stop_at:
+                #            'waiting submitted running done failed'
+                #                                    YYYYMMDDHH                                
+                blit.append( '_____________S_T_O_P__A_T__' + will_stop_at )
+            else:
+                #            'waiting submitted running done failed'
+                blit.append( '________________________R_U_N_N_I_N_G' )
+         
             # construct a line of text to display for each cycle time
             for rt in c_time_list:
                 line = ''
