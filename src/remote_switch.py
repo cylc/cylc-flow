@@ -78,29 +78,43 @@ class remote_switch( Pyro.core.ObjBase ):
     def hold( self ):
         self.log.warning( "REMOTE: system hold" )
         self.pool.set_system_hold()
+        # process, to update state summary
+        self.process_tasks = True
 
     def resume( self ):
         self.log.warning( "REMOTE: system resume" )
         self.pool.unset_system_hold()
+        # process, to update state summary
         self.process_tasks = True
 
     def set_stop_time( self, ctime ):
         self.log.warning( "REMOTE: set stop time" )
         self.pool.set_stop_time( ctime )
- 
+        # process, to update state summary
+        self.process_tasks = True
+
+
     def set_hold_time( self, ctime ):
         self.log.warning( "REMOTE: set hold time" )
         self.pool.set_system_hold( ctime )
- 
+        # process, to update state summary
+        self.process_tasks = True
+
     def shutdown( self ):
         self.log.warning( "REMOTE: halt when running tasks finish" )
         self.hold()
         self.halt = True
+        # process, to update state summary
+        self.process_tasks = True
+
 
     def shutdown_now( self ):
         self.log.warning( "REMOTE: halt NOW" )
         self.hold()
         self.halt_now = True
+        # process, to update state summary
+        self.process_tasks = True
+
 
     def get_config( self, item ):
         self.log.warning( "REMOTE: config item " + item )
