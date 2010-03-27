@@ -60,7 +60,7 @@ else:
 header = 'waiting submitted running done failed'
 header = '                                     '
 ctrl_end = "\033[0m"
-key = "\033[0;35mwaiting\033[0m \033[1;37;40msubmitted\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end 
+key = "\033[1;35mwaiting\033[0m \033[1;37;40msubmitted\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end 
 
 print
 print "here we go ..."
@@ -209,7 +209,7 @@ try:
                 elif state == "running":
                     ctrl_start = "\033[1;37;42m"
                 elif state == "waiting":
-                    ctrl_start = "\033[0;35m"
+                    ctrl_start = "\033[1;35m"
                 elif state == "failed":
                     ctrl_start = "\033[1;37;41m"
                 else:
@@ -263,7 +263,8 @@ try:
                 #            'waiting submitted running done failed'
                 foo = '________________________R_U_N_N_I_N_G'
          
-            blit.append( '\033[1;32;44m' + foo + ctrl_end )
+            #blit.append( '\033[1;33;44m' + foo + ctrl_end )
+            blit.append( '\033[1;31m' + foo + ctrl_end )
  
             # construct a line of text to display for each cycle time
             for rt in c_time_list:

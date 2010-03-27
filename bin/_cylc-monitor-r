@@ -241,23 +241,23 @@ while True:
 
         if stopping:
             #            'waiting submitted running done failed'
-            foo = '___________S_T_O_P_P_I_N_G'
+            foo = '-----------S-T-O-P-P-I-N-G'
         elif paused:
             #            'waiting submitted running done failed'
-            foo = '_______________P_A_U_S_E_D'
+            foo = '---------------P-A-U-S-E-D'
         elif will_pause_at:
             #            'waiting submitted running done failed'
             #                                    YYYYMMDDHH                                
-            foo = 'P_A_U_S_E__A_T__' + will_pause_at
+            foo = 'P-A-U-S-E--A-T--' + will_pause_at
         elif will_stop_at:
             #            'waiting submitted running done failed'
             #                                    YYYYMMDDHH                                
-            foo = '__S_T_O_P__A_T__' + will_stop_at
+            foo = '--S-T-O-P--A-T--' + will_stop_at
         else:
             #            'waiting submitted running done failed'
-            foo = '_____________R_U_N_N_I_N_G'
+            foo = '-------------R-U-N-N-I-N-G'
         
-        blit.append( '\033[1;32;44m' + foo + ctrl_end )
+        blit.append( '\033[1;31m' + foo + ctrl_end )
                 
         for rt in ctimes:
             if len( lines[rt] ) != 0:
