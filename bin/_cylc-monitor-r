@@ -241,26 +241,28 @@ while True:
 
         if stopping:
             #            'waiting submitted running done failed'
-            blit.append( '___________S_T_O_P_P_I_N_G' )
+            foo = '___________S_T_O_P_P_I_N_G'
         elif paused:
             #            'waiting submitted running done failed'
-            blit.append( '_______________P_A_U_S_E_D' )
+            foo = '_______________P_A_U_S_E_D'
         elif will_pause_at:
             #            'waiting submitted running done failed'
             #                                    YYYYMMDDHH                                
-            blit.append( 'P_A_U_S_E__A_T__' + will_pause_at )
+            foo = 'P_A_U_S_E__A_T__' + will_pause_at
         elif will_stop_at:
             #            'waiting submitted running done failed'
             #                                    YYYYMMDDHH                                
-            blit.append( '__S_T_O_P__A_T__' + will_stop_at )
+            foo = '__S_T_O_P__A_T__' + will_stop_at
         else:
             #            'waiting submitted running done failed'
-            blit.append( '_____________R_U_N_N_I_N_G' )
- 
+            foo = '_____________R_U_N_N_I_N_G'
+        
+        blit.append( '\033[1;32;44m' + foo + ctrl_end )
+                
         for rt in ctimes:
             if len( lines[rt] ) != 0:
-                blit.append( "\033[1;31m" + "__________" + "\033[0m" ) # red
-                blit.append( "\033[1;31m" + rt + "\033[0m" )  # red
+                blit.append( "\033[1;31m" + "__________" + ctrl_end ) # red
+                blit.append( "\033[1;31m" + rt + ctrl_end )  # red
 
                 for line in lines[rt]:
                     blit.append( line )

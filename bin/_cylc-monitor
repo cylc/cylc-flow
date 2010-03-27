@@ -247,22 +247,24 @@ try:
 
             if stopping:
                 #            'waiting submitted running done failed'
-                blit.append( '______________________S_T_O_P_P_I_N_G' )
+                foo = '______________________S_T_O_P_P_I_N_G'
             elif paused:
                 #            'waiting submitted running done failed'
-                blit.append( '__________________________P_A_U_S_E_D' )
+                foo = '__________________________P_A_U_S_E_D'
             elif will_pause_at:
                 #            'waiting submitted running done failed'
                 #                                    YYYYMMDDHH                                
-                blit.append( '___________P_A_U_S_E__A_T__' + will_pause_at )
+                foo = '___________P_A_U_S_E__A_T__' + will_pause_at
             elif will_stop_at:
                 #            'waiting submitted running done failed'
                 #                                    YYYYMMDDHH                                
-                blit.append( '_____________S_T_O_P__A_T__' + will_stop_at )
+                foo = '_____________S_T_O_P__A_T__' + will_stop_at
             else:
                 #            'waiting submitted running done failed'
-                blit.append( '________________________R_U_N_N_I_N_G' )
+                foo = '________________________R_U_N_N_I_N_G'
          
+            blit.append( '\033[1;32;44m' + foo + ctrl_end )
+ 
             # construct a line of text to display for each cycle time
             for rt in c_time_list:
                 line = ''
