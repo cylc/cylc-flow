@@ -77,7 +77,7 @@ Registrations are user-specific and are stored in a special config file,
 Arguments:
   NAME   Name to associate with the configured system directory.""" )
 
-parser.add_option( "-s", "--sysdef",
+parser.add_option( "-s", "--system",
     help="Location of a cylc system definition directory.",
     metavar="PATH", action="store", dest="dir" )
 
