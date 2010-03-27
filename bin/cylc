@@ -62,7 +62,7 @@ usage = \
     '_________________________________________________________________________',
     '# P R E P A R A T I O N',
     '  configure ... Create system-specific source modules from taskdef files',
-    '  register .... Manage system name registrations.',
+    '  register .... Manage system name registrations',
     '_________________________________________________________________________',
     '# S Y S T E M C O N T R O L',
     '  start ....... Begin scheduling, or restart, a registered cylc system',

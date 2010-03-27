@@ -1,0 +1,37 @@
+\subsection{Comparison With Existing Schedulers} 
+\label{ComparisonWithExistingSchedulers}
+
+As explained earlier, as far as the author is aware current forecast
+schedulers ignore intercycle dependencies and therefore require
+strict sequential cycling, which is very much sub-optimal outside of
+normal real time operation. The simplest of these schedulers places the
+burden of scheduling almost entirely on the user, who must supply a list
+of tasks that the system will run through in order, perhaps with some
+way of manually specifying crude functional parallelism.  This is
+clearly sub-optimal even for quite simple systems and strict sequential
+cycling, and task ordering has to be re-evaluated manually whenever the
+system is changed. 
+
+Another approach is hardwired system-specific finite state scheduling
+logic that enforces a predetermined order of events: {\em if tasks A and
+B have finished, then start task C} and so on. Optimal scheduling within
+a forecast cycle is possible in this case, assuming correct coding, but
+the hard coded logic inevitably becomes convoluted and inflexible as
+system complexity increases, and handling to intercycle dependencies is
+almost certainly not feasible.  
+
+Finally, the well established SMS system from ECMWF is an industrial
+strength general scheduling tool for dependent jobs. Users define ``SMS
+suites'' that group tasks into ``families'' and define explicit
+dependency relationships between tasks and/or/? families. SMS does not
+appear to be able to do optimal cycle-independent scheduling, however,
+or at least is not able to do so when configured for normal usage (THIS
+IS STILL NOT ENTIRELY RESOLVED!) because (a) whole families trigger 
+at once(?), rather than individual tasks, and global cycling mechanisms
+are used to advance the system forward in time (either looping
+over successive analysis times for ``catch up'' OR triggering off the
+wall clock for real time operation. Thus, in contrast to cylc, it would
+not be possible to have a delayed parallel test system catch up to the
+main operation and then keep pace with it.
+
+

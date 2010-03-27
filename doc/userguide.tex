@@ -9,8 +9,9 @@
   \usepackage{courier}
 \usepackage{amsmath}
 \usepackage{verbatim}
-\usepackage{graphicx}
-\usepackage[dvips,usenames,dvipsnames]{color}
+\usepackage{graphicx}             % latex, eps
+%\usepackage[pdftex]{graphicx}    % pdflatex, png, jpg, pdf
+\usepackage[dvips,usenames,dvipsnames]{color}   % dvips here screws up graphicx png version, above
 \usepackage[dvipdf]{hyperref}
 %\usepackage{titletoc}
 \usepackage{tocloft}
@@ -676,6 +677,21 @@ To view the system as it evolves,
 cylc monitor -a userguide
 \end{lstlisting}
 
+\begin{figure} \label{fig-monitor} 
+    \begin{center}
+        \includegraphics[width=8cm]{monitor-1} 
+    \end{center}
+    \caption[Monitor]{\small Monitor }
+\end{figure} 
+
+\begin{figure} \label{fig-monitor-r} 
+    \begin{center}
+        \includegraphics[width=10cm]{monitor-2} 
+    \end{center}
+    \caption[Monitor]{\small Monitor }
+\end{figure} 
+
+
 \subsection{Viewing System Log Files}
 \label{QuickViewingSystemLogFiles}
 
@@ -827,8 +843,8 @@ organising, so there are advantages fine-graining a system:
 
 
 
-\subsection{Task Restartability} 
-\label{TaskRestartability}
+\subsection{External Task Requirements} 
+\label{ExternalTaskRequirements}
 
 \begin{itemize}
     \item  {\bf It should be possible to restart a failed task (after fixing
@@ -868,6 +884,12 @@ organising, so there are advantages fine-graining a system:
 
 \end{itemize}
 
+All failures must be reported back to cylc, otherwise cylc will think
+the failed task stuck in the ``running'' state.  Ideally, all important
+errors should be checked for explicitly, and lesser fatal errors (e.g.\
+mkdir fails attempting to create an output directory) should be trapped 
+by the shell and handled with an automatic cylc message. See the
+userguide example task scripts for how to do this.
 
 
 
@@ -1974,8 +1996,56 @@ $ for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
     \item dummy mode: get scheduling right before running real tasks
     \item automatic state dump prior to system interventions - restart
         from prior state if necessary.
-    \item practice mode: duplicate a running system in dummy mode and
-        try system interventions multiple times if necessary.
+    \item practice mode: instantly clone an accelerated dummy mode copy
+        of you operational system in its current running state (or its
+        most recent state prior to shutdown) current state) and use it
+        to try out system interventions as many times as you like
+        necessary without affecting the state of the operational system.
 \end{itemize}
+
+\section{Failure Recovery Scenarios}
+\label{Failure Recovery Scenarios}
+
+\begin{itemize}
+    \item {\em One forecast cycle runs into the next, after a delay in
+        operations}. This is no problem for cylc; every task runs as
+        soon as it can run, regardless of forecast cycle.
+
+    \item {\em A delayed parallel trial or case study catches up to real
+        time operation}. This is no problem for cylc; as explained in
+        Section~\ref{foo} any cycl system will seamlessly transition in
+        and out of ``normal real time operation'' (distinct cycles
+        triggered by the wall clock) as needed.
+
+    \item {\em An external task fails, but can be fixed}. For example, a
+        forecast model aborts trying to read a corrupted data file that
+        can be regenerated correctly. The failed task will be noted by
+        cylc, and its downstream dependants will not be able to run,
+        but other tasks will carry on as normal while you address the
+        problem. When fixed, use 'cylc reset' to get the failed task to
+        run again, after which it and its downstream dependants will
+        catch up to the rest of the system as quickly as possible.
+
+    \item {\em An important external task fails, but cannot be fixed.}
+        In this case, if the task has a lot of downstream dependants,
+        you will presumably need omit one or more cycles of the affected
+        tasks, and cold start their part of the system at a the earliest
+        possible subsequent cycle.  To do this, insert the relevant cold
+        start task, or task group, at the later cycle, then purge the
+        failed task and everything that depends on it (and on them, and
+        so on) down to the cold start time.  Other parts of the system 
+        not directly affected should be able to carry on over the hole
+        so long as the forecast models involved write out sufficient 
+        restart outputs to do so.
+
+    \item {\em HELP, I screwed up a system intervention} such as the
+        above!  Before any operation that alters the sytem state, cycl
+        automatically dumps state and reports the state dump filename in
+        the main log.  Shut the system down and restart it from the
+        pre-screwup state. Then retry your intervention in practice mode
+        before doing it for real!
+
+\end{itemize}
+
 
 \end{document}
