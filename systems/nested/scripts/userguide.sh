@@ -37,7 +37,7 @@ for PRE in $ONE $TWO; do
 done
 
 # EXECUTE THE MODEL ...
-if ! cylc schedule -s $CYCLE_TIME --stop $CYCLE_TIME userguide; then
+if ! cylc start --at=$CYCLE_TIME --until $CYCLE_TIME userguide; then
     # FAILURE MESSAGE
     cylc message -p CRITICAL "subsystem scheduler failed"
     cylc message --failed
