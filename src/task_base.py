@@ -322,13 +322,19 @@ class task_base( Pyro.core.ObjBase ):
         # receive all incoming pyro messages for this task 
         self.latest_message = message
 
-        if message == self.get_identity() + ' started':
-            self.state.set_status( 'running' )
-
-        # set state_changed if this message satisfies any registered
-        # output (indicates that the task manager needs to instigate a
+        # setting state_change results in task processing loop
+        # invocation. We should really only do this when the
+        # incoming message results in a state change that matters to
+        # scheduling ... but system monitor may need latest message, and
+        # we don't yet have a separate state-summary-update invocation
+        # flag. 
+        
         # new round of dependency renegotiations)
         global state_changed
+        state_changed = True
+
+        if message == self.get_identity() + ' started':
+            self.state.set_status( 'running' )
 
         if not self.state.is_running():
             # my external task should not be running!
@@ -345,7 +351,6 @@ class task_base( Pyro.core.ObjBase ):
 
             if not self.outputs.is_satisfied( message ):
                 # message indicates completion of a registered output.
-                state_changed = True
                 self.log( priority,  message )
                 self.outputs.set_satisfied( message )
 
@@ -364,8 +369,6 @@ class task_base( Pyro.core.ObjBase ):
         elif message == self.get_identity() + ' failed':
             # process task failure messages
 
-            # set state changed so that monitoring summary is updated
-            # after a failure occurs
             state_changed = True
             if priority != 'CRITICAL':
                 self.log( 'WARNING', 'non-critical priority for task failure' )
