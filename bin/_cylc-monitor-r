@@ -148,10 +148,7 @@ while True:
         for task_id in task_ids:
             [name, ctime] = split( task_id, "%" )
             
-            state = states[ task_id ]['state']
-            complete = states[ task_id ]['n_completed_outputs']
             total = states[ task_id ][ 'n_total_outputs' ]
-            latest = states[ task_id ][ 'latest_message' ]
 
             if len( name ) > max_name_len:
                 max_name_len = len( name )
@@ -196,6 +193,8 @@ while True:
             ctrl_end = "\033[0m"
 
             if state == "running" or state == "submitted":
+                foo_start = ''
+                bar_start = ''
                 if state == "running":
                     foo_start = "\033[1;37;42m"
                     bar_start = "\033[0;34m"

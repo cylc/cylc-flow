@@ -59,6 +59,6 @@ class state_summary( Pyro.core.ObjBase ):
                          self.task_summary[ task_id ][ 'state' ], \
                     str( self.task_summary[ task_id ][ 'n_completed_outputs' ] ), \
                     str( self.task_summary[ task_id ][ 'n_total_outputs' ] ), \
-                         self.task_summary[ task_id ]['latest_message' ] ]
+                         self.task_summary[ task_id ][ 'latest_message' ] ]
 
         return old_style_summary

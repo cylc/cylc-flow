@@ -42,6 +42,7 @@ class pid:
         for message in restart_messages:
             if not self.outputs.is_satisfied( message ):
                 self.log( 'NORMAL', message )
+                self.latest_message = message
                 self.outputs.set_satisfied( message )
 
 
@@ -52,7 +53,8 @@ class pid:
         for message in self.outputs.satisfied.keys():
             if re.search( 'restart files ready for', message ):
                 self.outputs.set_satisfied( message )
-
+                self.latest_message = message
+ 
 
     def ready_to_spawn( self ):
         # Never spawn a waiting task of this type because the

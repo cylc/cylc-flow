@@ -299,6 +299,7 @@ class task_base( Pyro.core.ObjBase ):
                     message != self.get_identity() + ' finished' and \
                     message != self.get_identity() + ' completed':
                 self.outputs.set_satisfied( message )
+                self.latest_message = message
 
     def is_complete( self ):  # not needed?
         if self.outputs.all_satisfied():
@@ -311,9 +312,6 @@ class task_base( Pyro.core.ObjBase ):
 
     def get_timed_outputs( self ):
         return self.outputs.get_timed_requisites()
-
-    def get_latest_message( self ):
-        return self.latest_message
 
     def get_valid_hours( self ):
         return self.valid_hours
