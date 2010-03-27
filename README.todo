@@ -1,6 +1,8 @@
 To Do
 
-* monitor should show paused state, etc.
+* System lock state, to prevent inadvertant interventions in an
+  operational system (perhaps integrate this with Pyro security
+  features?).
 
 * DOCUMENT: system shutdown for practice, while real tasks complete:
   restart with them FINISHED!
