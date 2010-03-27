@@ -61,7 +61,7 @@ usage = \
     'COMMANDS:',
     '_________________________________________________________________________',
     '# P R E P A R A T I O N',
-    '  configure ... Create required source modules from system taskdef files',
+    '  configure ... Create system-specific source modules from taskdef files',
     '  register .... Manage system name registrations.',
     '_________________________________________________________________________',
     '# S Y S T E M C O N T R O L',
