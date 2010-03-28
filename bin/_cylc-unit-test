@@ -34,8 +34,8 @@ if [[ $# != 0 ]]; then
         echo " 6 - Sets a stop time at 12Z (i.e. T0+30 hours);"
         echo " 7 - Waits for the system to stall as result of X failing;"
         echo " 8 - Inserts a new coldstart task at 06Z (T0+24 hours);"
-        echo " 9 - Purges the failed X and its dependants through to 00Z (T0+18 hours);"
-        echo "     inclusive, which gets the system going again at 06Z;"
+        echo " 9 - Purges the failed X and dependants through to 00Z (T0+18 hours)"
+        echo "     inclusive, which allows the system to get going again at 06Z;"
         echo "10 - Waits for the system to shut itself down at the 12Z stop time."
         echo
         echo "Options:"
