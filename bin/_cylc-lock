@@ -15,7 +15,7 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc lock [options] SYSTEM 
 
-The owner of a system alone can intervene in its operation with cylc
+Only the owner of a system can intervene in its operation with cylc
 commands such as stop, kill, purge, reset, etc. With this command you
 can also guard against inadvertent intervention your own systems (when
 using practice mode, for instance, lock the original system in case 
