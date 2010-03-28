@@ -31,4 +31,4 @@ system going again.""" )
 
 if parser.prompt( 'Nudge' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    god.nudge()
+    print god.nudge()

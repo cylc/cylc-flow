@@ -67,10 +67,10 @@ if parser.prompt( 'Reset task ' + task_id + ' in'):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
     if options.waiting:
-        god.reset_to_waiting( task_id )
+        print god.reset_to_waiting( task_id )
 
     if options.ready:
-        god.reset_to_ready( task_id )
+        print god.reset_to_ready( task_id )
 
     elif options.finished:
-        god.reset_to_finished( task_id )
+        print god.reset_to_finished( task_id )

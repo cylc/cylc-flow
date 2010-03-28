@@ -40,6 +40,7 @@ class remote_switch( Pyro.core.ObjBase ):
         # cause the task processing loop to be invoked
         self.log.warning( "REMOTE: nudge" )
         self.process_tasks = True
+        return "Done"
 
     def reset_to_waiting( self, task_id ):
         # reset a task to the waiting state
@@ -49,6 +50,7 @@ class remote_switch( Pyro.core.ObjBase ):
             os.environ['FAILOUT_ID'] = ""
         self.pool.reset_task( task_id )
         self.process_tasks = True
+        return "Done"
 
     def reset_to_ready( self, task_id ):
         # reset a task to the ready state
@@ -58,12 +60,16 @@ class remote_switch( Pyro.core.ObjBase ):
             os.environ['FAILOUT_ID'] = ""
         self.pool.reset_task_to_ready( task_id )
         self.process_tasks = True
+        return "Done"
+
 
     def reset_to_finished( self, task_id ):
         # reset a task to the waiting finished
         self.log.warning( "REMOTE: reset to finished: " + task_id )
         self.pool.reset_task_to_finished( task_id )
         self.process_tasks = True
+        return "Done"
+
 
     def insert( self, ins ):
         # insert a new task or task group into the system
@@ -74,24 +80,32 @@ class remote_switch( Pyro.core.ObjBase ):
             os.environ['FAILOUT_ID'] = ""
         self.pool.insertion( ins )
         self.process_tasks = True
+        return "Done"
+
 
     def hold( self ):
         self.log.warning( "REMOTE: system hold" )
         self.pool.set_system_hold()
         # process, to update state summary
         self.process_tasks = True
+        return "Done"
+
 
     def resume( self ):
         self.log.warning( "REMOTE: system resume" )
         self.pool.unset_system_hold()
         # process, to update state summary
         self.process_tasks = True
+        return "Done"
+
 
     def set_stop_time( self, ctime ):
         self.log.warning( "REMOTE: set stop time" )
         self.pool.set_stop_time( ctime )
         # process, to update state summary
         self.process_tasks = True
+        return "Done"
+
 
 
     def set_hold_time( self, ctime ):
@@ -99,6 +113,8 @@ class remote_switch( Pyro.core.ObjBase ):
         self.pool.set_system_hold( ctime )
         # process, to update state summary
         self.process_tasks = True
+        return "Done"
+
 
     def shutdown( self ):
         self.log.warning( "REMOTE: halt when running tasks finish" )
@@ -106,6 +122,8 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt = True
         # process, to update state summary
         self.process_tasks = True
+        return "Done"
+
 
 
     def shutdown_now( self ):
@@ -114,6 +132,8 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt_now = True
         # process, to update state summary
         self.process_tasks = True
+        return "Done"
+
 
 
     def get_config( self, item ):
@@ -183,17 +203,23 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.warning( "REMOTE: purge " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
         self.process_tasks = True
+        return "Done"
+
 
     def die( self, task_id ):
         self.log.warning( "REMOTE: die: " + task_id )
         self.pool.kill( [ task_id ] )
         self.process_tasks = True
- 
+        return "Done"
+
+
     def spawn_and_die( self, task_id ):
         self.log.warning( "REMOTE: spawn and die: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
         self.process_tasks = True
- 
+        return "Done"
+
+
     def set_verbosity( self, level ):
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical

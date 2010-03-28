@@ -36,12 +36,12 @@ if options.stop_time:
     if not cycle_time.is_valid( stop_at ):
         parser.error( "invalid cycle time: " + stop_at )
     if parser.prompt( 'Set stop time ' + stop_at + ' for'):
-        god.set_stop_time( stop_at )
+        print god.set_stop_time( stop_at )
 
 elif options.shutdownnow:
     if parser.prompt( 'Shutdown NOW' ):
-        god.shutdown_now()
+        print god.shutdown_now()
 
 else:
     if parser.prompt( 'Shutdown' ):
-        god.shutdown()
+        print god.shutdown()

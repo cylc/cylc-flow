@@ -50,4 +50,4 @@ for cycle in [ start, stop ]:
 
 if parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    god.purge( target, stop )
+    print god.purge( target, stop )

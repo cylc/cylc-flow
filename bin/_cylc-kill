@@ -44,6 +44,6 @@ if not cycle_time.is_valid( cycle ):
 if parser.prompt( 'Kill task ' + target + ' in'):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
     if options.no_spawn:
-        god.die( target )
+        print god.die( target )
     else:
-        god.spawn_and_die( target )
+        print god.spawn_and_die( target )

@@ -34,8 +34,8 @@ if options.pause_time:
     if not cycle_time.is_valid( pause_at ):
         parser.error( "invalid cycle time: " + pause_at )
     if parser.prompt( 'Pause at ' + pause_at + ' for'):
-        god.set_hold_time( pause_at )
+        print god.set_hold_time( pause_at )
 
 else:
     if parser.prompt( 'Pause' ):
-        god.hold()
+        print god.hold()
