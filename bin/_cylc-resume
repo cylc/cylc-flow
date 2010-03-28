@@ -10,6 +10,7 @@
 #         |________________________|
 
 
+import os
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -21,4 +22,4 @@ Resume running a paused system.""" )
 
 if parser.prompt( 'Resume' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.resume()
+    print god.resume( os.environ['USER'] )

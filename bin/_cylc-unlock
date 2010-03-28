@@ -9,7 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
+import os
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -22,4 +22,4 @@ See 'cylc lock --help' for more information.""" )
 
 if parser.prompt( 'Unlock' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.unlock()
+    print god.unlock( os.environ['USER'] )

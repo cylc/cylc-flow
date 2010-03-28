@@ -9,18 +9,17 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
 import re, sys
 import cycle_time
 from connector import connector
-from CylcOptionParsers import NoPromptOptionParser
+from CylcOptionParsers import NoPromptOptionParser_u
 
 def print_heading( strng ):
         underline = re.sub( '.', '_', strng )
         print underline
         print strng
 
-parser = NoPromptOptionParser( usage = """cylc task-dump [options] SYSTEM 
+parser = NoPromptOptionParser_u( usage = """cylc task-dump [options] SYSTEM 
 
 Display the current status of a task's prerequisites, outputs, 
 and other information deemed relevant to scheduling.""" )

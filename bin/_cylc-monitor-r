@@ -24,9 +24,9 @@ import Pyro.core
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 from time import sleep
 from string import ljust, rjust, split, upper, lower
-from CylcOptionParsers import NoPromptOptionParser
+from CylcOptionParsers import NoPromptOptionParser_u
 
-parser = NoPromptOptionParser( """cylc monitor-r [options] SYSTEM
+parser = NoPromptOptionParser_u( """cylc monitor-r [options] SYSTEM
 
 A terminal-based monitor that displays information about task proxy
 objects in the 'submitted' or 'running' states, in the target system. 

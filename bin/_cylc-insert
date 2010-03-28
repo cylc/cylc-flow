@@ -9,7 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
+import os
 import cycle_time
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
@@ -43,4 +43,4 @@ if parser.prompt( 'Insert ' + target + ' in'):
         parser.error( "invalid cycle time: " + cycle )
 
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.insert( target )
+    print god.insert( target,  os.environ['USER'] )

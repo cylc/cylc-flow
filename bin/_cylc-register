@@ -38,44 +38,21 @@ def check_dir( dir ):
  
 #----------------------------------------
 
-parser = OptionParser( usage = """Usage: cylc register [-d,--delete] [-g,--get] [--sysdef=PATH] NAME
+parser = OptionParser( usage = """Usage: cylc register [-d,--delete] [-g,--get] [--system=PATH] NAME
 Usage: cylc register [-p,--print]
 Usage: cylc register [--host=HOST] [-c, --check] [-w,--wipe]
 
-Manage user-specific system registrations in $HOME/.cylc/registrations. 
+Manage user-specific mappings between names and configured systems. A
+single system can be registered for use under multiple names.
 
-Registration associates a name with a configured system definition
-directory. This has two purposes: (1) cylc commands that need to
-access system-specific modules can do so without you having to type the
-full system path on the command line; and (2) the registered name is
-used by the Pyro nameserver, along with your username, to distinguish
-between different systems running at the same time. 
-
-You can register the same system under multiple names, and the
-registered name is made available to tasks in a running system through
-their execution environment, as $SYSTEM_NAME. Thus, if a system is
-configured to use the registered name in all important and output
-directories, you can run multiple instances of the same system at the
-same time without interference between them.
-
-The cylc commands that require a registered system name as input are:
-  cylc start
-  cylc run-task
-  cylc system-info
-
-Other cylc commands such as 'cycl stop' need to know the registered name
-of the system in order to target the right nameserver group, but you do
-not have to have registered the system yourself because they do not need
-to load system-specific source modules.
-
-This command warns if you attempt to unregister a system that is
-currently in use, but note that a system registration is required only
-for the 'start', 'run-task', and 'system-info' commands.
-
-Registrations are user-specific and are stored in a special config file,
+Registration is required by cylc start, run-task, and system-info, which
+need access to system-specific modules. Other commands interact with the 
+target system via the Pyro nameserver; for these you need to know the
+registered name of the system, and the username under which it is running
+(see 'cylc list-all'), but you don't need to have registered it yourself. 
 
 Arguments:
-  NAME   Name to associate with the configured system directory.""" )
+  NAME            Name to associate with the configured system directory.""" )
 
 parser.add_option( "-s", "--system",
     help="Location of a cylc system definition directory.",

@@ -101,20 +101,21 @@ usage = """1/ cylc start [options] --at=CYCLE SYSTEM
 Usage: 2/ cylc start [options] --restart SYSTEM
 Usage: 3/ cylc start [options] --restart-from=FILE SYSTEM
 
-Start or restart a configured, registered, system. 
-
-1/ Cold Start: Each task will be instantiated at the initial cycle time,
-or at the first subsequent cycle time that is valid for the task.  
-
-2,3/ Restart: Start from the configured or named state dump file. Any
-task recorded in the "submitted", "running", or "failed" state will be
-reset to "waiting" at startup (but see the '--no-reset' option below).
-
-The system will require unlocking ('cylc unlock') prior to intervention.
+Start or restart a cylc system registered under the name SYSTEM. The
+system will initially be locked; use 'cylc unlock' gain control of it.
 Use nohup to make the scheduler independent of your terminal log in.
+Cycle time format: YYYYMMDDHH. 
+
+1/ COLD START: each task in the configured task list is instantiated
+at the initial cycle time, or at the next cycle valid for the task.  
+
+2,3/ RESTART: each task in the configured or named state dump file will
+be resurrected at startup. Any task recorded as submitted, running, or
+failed will be reset and therefore resubmitted, unless '--practice' or
+'--no-reset' is specified.
 
 Arguments:
-   SYSTEM               Registered name of the forecasting system.""" 
+   SYSTEM               Registered name of the system to run.""" 
 
 def commandline_parser():
     parser = OptionParser( usage )
@@ -124,12 +125,12 @@ def commandline_parser():
             clock_rate=10, clock_offset=24 )
 
     parser.add_option( "--at", 
-            help="Initial cycle time (YYYYMMDDHH).",
+            help="Initial cycle time.",
             metavar="CYCLE", action="store", dest="start_time" )
     
     parser.add_option( "--until", 
-            help="Optional final cycle time (YYYYMMDDHH). The scheduler "
-            "will shut down after each task has passed this cycle.",
+            help="Optional final cycle time. The scheduler will shut itself"
+            "down after all tasks have completed or passed this cycle.",
             metavar="CYCLE", action="store", dest="stop_time" )
 
     parser.add_option( "--pause-at",

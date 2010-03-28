@@ -10,19 +10,18 @@
 #         |________________________|
 
 
+import os
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc nudge [options] SYSTEM 
 
-Invoke the task processing loop in a running system.
-
-By default cylc enters the main task processing loop only when a task
-proxy changes state due to an incoming message, and after certain other
-events. If this fails to happen when it should the system will appear to
-be "stuck". In the unlikely event that this happens, which implies a
-minor bug in cylc that should be fixed, a quick nudge will get the
-system going again.""" )
+Cause the task processing loop to be invoked in a running system. To
+avoid unnecessary processing cylc is designed to do this only when a
+task proxy changes state, and in certain other situations. If this fails
+to happen at some point the system may appear to be "stuck"; this would
+imply a minor bug in cylc that should be fixed, but a quick nudge will
+get the system going again in the meantime.""" )
 
 # INVOKING THE LOOP ON A TIMEOUT WOULD BE A FAILSAFE OPTION:
 # 'cylc schedule --use-timeout'?
@@ -31,4 +30,4 @@ system going again.""" )
 
 if parser.prompt( 'Nudge' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.nudge()
+    print god.nudge( os.environ['USER'] )

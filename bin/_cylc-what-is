@@ -13,9 +13,9 @@
 import sys, re
 #import cycle_time
 from connector import connector
-from CylcOptionParsers import NoPromptOptionParser
+from CylcOptionParsers import NoPromptOptionParser_u
 
-parser = NoPromptOptionParser( usage = """cylc what-is [options] SYSTEM 
+parser = NoPromptOptionParser_u( usage = """cylc what-is [options] SYSTEM 
 
 Retrieve the description of a running system, or a task proxy object
 that exists within a running system. """ )

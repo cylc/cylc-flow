@@ -38,7 +38,12 @@ class remote_switch( Pyro.core.ObjBase ):
 
         self.locked = True
 
-    def lock( self ):
+        self.owner = os.environ['USER']
+
+    def lock( self, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: system lock requested (already locked)" )
             return "System already locked"
@@ -48,7 +53,10 @@ class remote_switch( Pyro.core.ObjBase ):
             self.locked = True
             return "System locked"
 
-    def unlock( self ):
+    def unlock( self, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if not self.locked:
             self.log.warning( "REMOTE: system unlock requested (already unlocked)" )
             return "System already unlocked"
@@ -59,7 +67,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "System unlocked"
 
 
-    def nudge( self ):
+    def nudge( self, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         # cause the task processing loop to be invoked
         if self.locked:
             self.log.warning( "REMOTE: refusing nudge request (locked)" )
@@ -69,7 +80,10 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return "Done"
 
-    def reset_to_waiting( self, task_id ):
+    def reset_to_waiting( self, task_id, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing task reset request (locked)" )
             return "Sorry, the system has been locked!"
@@ -83,7 +97,10 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return "Done"
 
-    def reset_to_ready( self, task_id ):
+    def reset_to_ready( self, task_id, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing task reset request (locked)" )
             return "Sorry, the system has been locked!"
@@ -98,7 +115,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def reset_to_finished( self, task_id ):
+    def reset_to_finished( self, task_id, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing task reset request (locked)" )
             return "Sorry, the system has been locked!"
@@ -110,7 +130,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def insert( self, ins ):
+    def insert( self, ins, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing task insert request (locked)" )
             return "Sorry, the system has been locked!"
@@ -126,7 +149,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def hold( self ):
+    def hold( self, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing pause request (locked)" )
             return "Sorry, the system has been locked!"
@@ -138,7 +164,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def resume( self ):
+    def resume( self, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing resume request (locked)" )
             return "Sorry, the system has been locked!"
@@ -150,7 +179,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def set_stop_time( self, ctime ):
+    def set_stop_time( self, ctime, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing stop time set request (locked)" )
             return "Sorry, the system has been locked!"
@@ -163,7 +195,10 @@ class remote_switch( Pyro.core.ObjBase ):
 
 
 
-    def set_hold_time( self, ctime ):
+    def set_hold_time( self, ctime, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing hold time set request (locked)" )
             return "Sorry, the system has been locked!"
@@ -175,26 +210,32 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def shutdown( self ):
+    def shutdown( self, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing shutdown request (locked)" )
             return "Sorry, the system has been locked!"
 
         self.log.warning( "REMOTE: halt when running tasks finish" )
-        self.hold()
+        self.hold( user )
         self.halt = True
         # process, to update state summary
         self.process_tasks = True
         return "Done"
 
 
-    def shutdown_now( self ):
+    def shutdown_now( self, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing shutdown request (locked)" )
             return "Sorry, the system has been locked!"
 
         self.log.warning( "REMOTE: halt NOW" )
-        self.hold()
+        self.hold( user )
         self.halt_now = True
         # process, to update state summary
         self.process_tasks = True
@@ -265,7 +306,10 @@ class remote_switch( Pyro.core.ObjBase ):
  
         return dump
     
-    def purge( self, task_id, stop ):
+    def purge( self, task_id, stop, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing purge request (locked)" )
             return "Sorry, the system has been locked!"
@@ -276,7 +320,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def die( self, task_id ):
+    def die( self, task_id, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing kill request (locked)" )
             return "Sorry, the system has been locked!"
@@ -287,7 +334,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def spawn_and_die( self, task_id ):
+    def spawn_and_die( self, task_id, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing kill request (locked)" )
             return "Sorry, the system has been locked!"
@@ -298,7 +348,10 @@ class remote_switch( Pyro.core.ObjBase ):
         return "Done"
 
 
-    def set_verbosity( self, level ):
+    def set_verbosity( self, level, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
         if self.locked:
             self.log.warning( "REMOTE: refusing verbosity request (locked)" )
             return "Sorry, the system has been locked!"

@@ -12,10 +12,13 @@
 
 # Custom derived option parsers, with standard options, for cylc commands.
 
+# TO DO: CLEAN UP OR REDESIGN THESE CLASSES.
+
 import os, sys
 from optparse import OptionParser
 
-class NoPromptOptionParser( OptionParser ):
+#class NoPromptOptionParser( OptionParser ):
+class NoPromptOptionParser_u( OptionParser ):
 
     def __init__( self, usage ):
 
@@ -31,8 +34,7 @@ arguments:
 
         self.add_option( "--user",
                 help="Owner of the target system, defaults to $USER. "
-                "Needed to infer the system's Pyro nameserver "
-                "group name.",
+                "Needed to infer the Pyro nameserver group name.",
                 metavar="USERNAME",
                 default=os.environ["USER"],
                 action="store", dest="username" )
@@ -81,6 +83,67 @@ arguments:
         if self.practice:
             groupname += '_practice'
         return groupname
+
+
+class NoPromptOptionParser( OptionParser ):
+    # same, but own username
+
+    def __init__( self, usage ):
+
+        usage += """
+
+You must be the owner of the target system in order to use this command.
+
+arguments:
+   SYSTEM               Registered name of the target system.""" 
+
+        OptionParser.__init__( self, usage )
+
+        self.add_option( "--host",
+                help="Pyro nameserver host, defaults to 'localhost'. Use "
+                "if not auto-detected (which depends on network config).", 
+                metavar="HOSTNAME", action="store", default="localhost",
+                dest="pns_host" )
+
+        self.add_option( "-p", "--practice",
+                help="Target a system running in practice mode.", 
+                action="store_true", default=False, dest="practice" )
+
+        self.username = os.environ['USER']
+
+    def parse_args( self ):
+
+        (options, args) = OptionParser.parse_args( self )
+
+        if len( args ) == 0:
+            self.error( "Please supply a target system name" )
+        elif len( args ) > 1:
+            self.error( "Too many arguments" )
+
+        # system name
+        self.system_name = args[0]
+
+        # nameserver host
+        self.pns_host = options.pns_host   # see default above!
+
+        self.practice = options.practice  # practice mode or not
+
+        return ( options, args )
+
+
+    def get_system_name( self ):
+        return self.system_name
+
+    def get_pns_host( self ):
+        return self.pns_host
+
+    def get_groupname( self ):
+        groupname = self.username + '_' + self.system_name
+        if self.practice:
+            groupname += '_practice'
+        return groupname
+
+
 
 class PromptOptionParser( NoPromptOptionParser ):
 
