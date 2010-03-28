@@ -15,12 +15,11 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc lock [options] SYSTEM 
 
-Only system's owner can intervene in its operation with cylc commands
-such as stop, kill, purge, reset, etc., but there is still a risk of
-making inadvertent changes to your own systems. You can use this command
-to 'lock' important systems, preventing remote intervention via other
-cylc commands. Locks have to be released by explicit invocation of 'cylc
-unlock'.""" )
+Only the owner of a system can intervene in its operation with cylc
+commands such as stop, kill, purge, reset, etc. For additional security,
+however, you can prevent yourself from making inadvertent changes to
+your own systems, with this command. Deliberate invocation of 'cylc
+unlock' is required to regain control of a locked system.""" )
 
 (options, args) = parser.parse_args()
 
