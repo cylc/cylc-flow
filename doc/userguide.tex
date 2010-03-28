@@ -550,8 +550,8 @@ work ``out of the box'' in real and dummy mode, using the simple
 sequence of commands presented in the Quick Start Guide, from {\em
 Prepare For Scheduling} (Section~\ref{QuickPrepareForScheduling})
 onward.  For detailed information on the packaged example systems, refer
-to {\em Complete Working Examples}
-(Section~\ref{CompleteWorkingExamples}).  
+to {\em A Complete Working Example}
+(Section~\ref{ACompleteWorkingExample}).  
 
 \pagebreak
 \section{Quick Start Guide} 
@@ -559,36 +559,39 @@ to {\em Complete Working Examples}
 
 \lstset{language=bash}
 
-This section is intended as a quick reminder of basic cylc
-functionality. The command line listings below, from {\em Preparing For
-Scheduling} onward, use the packaged cylc ``userguide'' system as an
-example. Refer to \lstinline=cylc help=, the {\em Command Reference}
-(Section~\ref{CommandReference}), and the rest of this document, for
-detailed information on available commands, options, and operations.
+This section is intended as a quick introduction to, or reminder of,
+basic cylc functionality. The specific commandline listings below use
+the packaged cylc ``userguide'' example system. Refer to 
+\lstinline=cylc help=, the {\em Command Reference}
+(Section~\ref{CommandReference}), and
+upcoming sections of this document for more detailed information on
+available commands, options, and operations.  {\em A Complete Working
+Example} (Section~\ref{ref:ACompleteWorkingExample} describes the
+userguide example system in detail.
 
 \subsection{Starting A Pyro Nameserver}
 \label{QuickStartingAPyroNameserver}
 
-Pyro is the object oriented Python RPC mechanism that allows external
-tasks to communicate with their proxy objects inside a cylc scheduler
-(Appendix~\ref{Pyro}). Check if there is already a Pyro nameserver
-(\lstinline=pyro-ns=) running on your network segment:
+Pyro (Appendix~\ref{Pyro}) is the object oriented Python RPC framework
+that allows system tasks to communicate with their proxy objects inside
+a cylc scheduler. First check to see if there is already a Pyro
+nameserver (\lstinline=pyro-ns=) running on your network segment:
 
 \begin{lstlisting}
 # search for a Pyro nameserver on the network
 $ pyro-nsc ping
-Locator: searching Pyro Name Server\dots
+Locator: searching Pyro Name Server...
 Locator: retry 1
-Locator: searching Pyro Name Server\dots
+Locator: searching Pyro Name Server...
 Locator: retry 1
 Trying host oliverh-33191VL
-Locator: contacting Pyro Name Server\dots
+Locator: contacting Pyro Name Server...
 NS is at 127.0.0.2 (oliverh-33191VL.greta.niwa.co.nz) port 9090
 NS is up and running!
 
 # search for a Pyro nameserver on a specific host
 $ pyro-nsc -h localhost ping
-Locator: contacting Pyro Name Server\dots
+Locator: contacting Pyro Name Server...
 NS is at 127.0.0.1 (localhost) port 9090
 NS is up and running!
 \end{lstlisting}
@@ -606,96 +609,131 @@ URI written to: /home/oliverh/Pyro_NS_URI
 Name Server started.
 \end{lstlisting}
 
-Note that you can use \lstinline=nohup= (see \lstinline=man nohup=) to
-prevent the nameserver dying when you log out of your terminal session.
+Note that you can start the nameserver with the \lstinline=nohup=
+command (\lstinline=man nohup=) to it from dying when your terminal
+session logs out.
 
 \subsection{Defining A Task Set} 
 \label{QuickDefiningATaskSet}
 
+Before you can run a forecast system with cylc, you need to define the
+interface between the scheduler and your real system tasks.  This
+is covered in detail in {\em System Definition}
+(Section~\ref{SystemDefinition}), but in summary it requires:
+
 \begin{itemize}
-    \item divide the system into schedulable entities, called {\bf tasks}
-        (Section~\ref{CylcTasks})
-        
-    \begin{itemize}
-        \item each task must have well defined {\bf prerequisites} and {\bf
-            outputs} (Section~\ref{TaskPrerequisitesAndOutputs}).
-    \end{itemize}
+    \item defining {\em prerequisites} and {\em outputs} for each task.
 
-    \item write a {\bf task definition file} for each task
-        (Section~\ref{TaskDefinitionFiles}).
+    \item writing a simple {\em task definition file} for each task.
 
-    \item write {\bf task scripts} to run the external tasks
-        (Section~\ref{TaskScripts}).
+    \item ensuring that each task reports its outputs using cylc's
+        messaging mechanism.  This may involve writing new {\em task
+        scripts}, or slightly modifying existing task execution scripts,
+        or using cylc's automatic {\em task wrapping} mechanism
+        (Section~\ref{TaskWrapping}) to run unmodified existing tasks.
 \end{itemize}
+
 
 \subsection{Preparing For Scheduling}
 \label{QuickPreparingForScheduling}
 
-First {\bf configure your system}. Configuration generates
-system-specific task class and config Python modules in the system
-definition directory. It must be done initially, and thereafter whenever
-you change the system task definition files:
+\subsubsection{System Configuration}
+\label{QuickConfiguration}
+
+The configuration process (Section~\ref{SystemConfiguration}) generates
+system-specific Python modules in the system definition directory. This
+must be done initially, and thereafter whenever the system's task
+definition files have been changed:
 
 \begin{lstlisting}
 cylc configure $CYLC_DIR/systems/userguide
 \end{lstlisting}
 
-Then {\bf register the system for use}. Registration associates a name
-with a configured system, so that other cylc commands can access the
-system by name. 
+\subsubsection{System Registration}
+\label{QuickRegistration}
+
+System registration (Section~\ref{SystemRegistration}) associates a name
+with a configured system, for a particular user. This is required in
+order to {\em run} a system but you can monitor or otherwise interact
+with running systems that have been registered and started up by other
+users.
 
 \begin{lstlisting}
-cylc register -d $CYLC_DIR/systems/userguide userguide 
+cylc register --system=$CYLC_DIR/systems/userguide userguide 
 \end{lstlisting}
+
+To see your current system registrations, use 
+\lstinline=cylc register --print=.
 
 \subsection{Starting The Scheduler}
 \label{QuickStartingTheScheduler}
 
-To start scheduling a registered system:
+To begin scheduling a registered system:
 \begin{lstlisting}
 cylc start --at=2009082312 userguide
 \end{lstlisting}
 
-{\em Do not choose a future start time}, or the 'X' task, which waits on
-real time obs (or pretends to, in the example system) and which
-everything else depends on, will not start until its time comes up!
+In real mode (as opposed to {\em dummy mode}, Section~\ref{DummyMode})
+{\em do not choose a start time in the future}, or nothing will happen
+until the start time comes up!
 
-{\em You can run multiple systems at once}. You can even run multiple
-instances of the same system at once provided the external tasks are
-configured to use the registered cylc system name in all input and
-output file paths and running directories. It could be useful, for
-instance, to be able to run several historical case study experiments,  
-over different time periods, at the same time; or for multiple users 
-to be able to run their own instances of the same installed system.
+You can run multiple systems at once, even multiple instances of the
+same system (so long as it is registered under multiple names, and the
+external tasks are configured to use the registered name in all input
+and output file paths, etc.; the userguide example system is capable of
+this). 
 
-\subsection{Monitoring A Running System}
-\label{QuickMonitoringARunningSystem}
+\subsection{Following System Progress}
+\label{QuickFollowingSystemProgress}
 
-To view the system as it evolves,
-\begin{lstlisting}
-# in another terminal!
-cylc monitor -a userguide
-\end{lstlisting}
+\subsubsection{System Monitors}
+\label{QuickSystemMonitors}
 
 \begin{figure} \label{fig-monitor} 
     \begin{center}
         \includegraphics[width=8cm]{monitor-1} 
     \end{center}
-    \caption[Monitor]{\small Monitor }
+    \caption{\small The main terminal-based cylc system monitor}
 \end{figure} 
+
+Cylc registers a ``system state summary'' object with the Pyro
+nameserver; monitor programs can connect to this and extract whatever
+information they want from it.  We currently have just two
+terminal-based monitors, which are effective but somewhat primitive.
+The standard monitor (Figure~\ref{fig-monitor}) shows the current state
+of all task proxy objects in the task pool:
+
+\begin{lstlisting}
+# in a new terminal!
+cylc monitor --align userguide
+\end{lstlisting}
+
+The \lstinline=--align= option causes tasks to be displayed in columns,
+which is only useful for small systems.   
 
 \begin{figure} \label{fig-monitor-r} 
     \begin{center}
         \includegraphics[width=10cm]{monitor-2} 
     \end{center}
-    \caption[Monitor]{\small Monitor }
+    \caption{\small Another terminal-based cylc system monitor}
 \end{figure} 
 
+The other monitor (Figure~\ref{fig-monitor-r}) shows the progress of
+just the running tasks in the pool:
 
-\subsection{Viewing System Log Files}
-\label{QuickViewingSystemLogFiles}
+\begin{lstlisting}
+# in a new terminal!
+cylc monitor-r userguide
+\end{lstlisting}
 
-You can also follow system progress in the {\bf cylc log files}. By
+Section~\ref{MonitoringCylcSystems} discusses the limitations of the
+current system monitors, and plans for future development.
+
+\subsubsection{System Log Files}
+\label{QuickSystemLogFiles}
+
+You can also follow system progress in the system log files, which are
+discussed in {\em Logging}, Section~\ref{Logging}. By
 default these are located under \lstinline=$HOME/cylc-logs/{SYSTEM}=.
 Each task has its own log file for task-specific events, including 
 incoming task messages, and the \lstinline=main= log file records all
@@ -703,73 +741,72 @@ events in sequence.
 
 \lstset{language=}
 \begin{lstlisting}
-$ head $HOME/cylc-logs/userguide/main
-2010/03/18 14:56:19 INFO main - Loading state from configured task list
-2010/03/18 14:56:19 INFO main.startup - [2009082312] startup%2009082312 started
-2010/03/18 14:56:19 INFO main.startup - [2009082312] startup%2009082312 completed
-2010/03/18 14:56:19 INFO main.startup - [2009082312] startup%2009082312 finished
-2010/03/18 14:56:19 INFO main.X - [2009082312] X%2009082312 started
-2010/03/18 14:56:19 INFO main.coldstart - [2009082312] coldstart%2009082312 started
-2010/03/18 14:56:19 INFO main.X - [2009082318] X%2009082318 started
-# [snip]
+$ tail $HOME/cylc-logs/userguide/main
+2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
+2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
+2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
+2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 completed
+2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 finished
+2010/03/28 00:33:52 INFO main.A - [2010010412] surface pressure field ready for 2010010412
+2010/03/28 00:33:52 INFO main.A - [2010010412] level forecast fields ready for 2010010412
+2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 completed
+2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 finished
+2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS FINISHED
 \end{lstlisting}
 
 Each entry shows the time of logging, the name and cycle time of the
 reporting task (in square brackets), and the logged message.
 
-\subsection{Getting Task State Information}
+\subsubsection{Getting Task State Information}
 \label{QuickGettingTaskStateInformation}
 
 To display the current state of a particular task (choose one that
 currently exists in the system, according to the monitor):
 
 \begin{lstlisting}
-$ cylc task-dump -t A%2009082312 userguide
-
-Task A%2009082312 in userguide:
--------------------------------
+% cylc task-dump -t X%2010010112 userguide
+_______________________________
+Task X%2010010112 in userguide:
  + => prerequisite satisfied, or output completed
  - => prerequisite NOT satisfied, or output NOT completed
-
-> Prerequisites:
-----------------
- + A restart files ready for 2009082312
- + obs data ready for 2009082312
-
-> Outputs:
-----------
- - A%2009082312 finished
- - surface pressure field ready for 2009082312
- - A%2009082312 completed
- + A%2009082312 started
- - surface wind fields ready for 2009082312
- + A restart files ready for 2009082318
- - level forecast fields ready for 2009082312
+______________
+Prerequisites:
+(None)
+________
+Outputs:
+ + X%2010010112 completed
+ + X%2010010112 finished
+ + X%2010010112 started
+ + obs data ready for 2010010112
+______
+Other:
+delayed start time reached ... True
 \end{lstlisting}
 
 \subsection{Shutting A System Down}
 \label{QuickShuttingASystemDown}
 
-To shut a system down:
+\lstset{language=bash}
 
 \begin{lstlisting}
 cylc stop userguide
 \end{lstlisting}
 
+You can also tell a system to stop at some specified future cycle time.
+
 \subsection{Restarting A System}
 \label{QuickRestartingASystem}
 
-To restart a system from its previous state (which is recorded by default 
-under \lstinline=$HOME/cylc-state/{SYSTEM}/state=):
+You can restart a system from a previous state:
 
 \begin{lstlisting}
 cylc start --restart userguide
 \end{lstlisting}
 
-\subsection{More}
-
-See \lstinline=cylc help= for the various other commands available for
-working with running systems.
+Cylc automatically dumps extra time-stamped state files prior to any
+system intervention, so that if necessary you can easily restart the
+system in its pre-intervention state.  See {\em Restarts}
+(Section~\ref{Restarts}) for more information.
 
 
 \pagebreak
@@ -781,7 +818,7 @@ between cylc and the real tasks that you want to join together in
 forecasting system.
 
 Cylc sees a forecasting system as an evolving, self-organising pool of
-tasks with clearly defined {\bf prerequisites} and {\bf outputs}, as
+tasks with clearly defined {\em prerequisites} and {\em outputs}, as
 explained in {\em The Cylc Scheduling Algorithm}
 (Section~\ref{TheCylcSchedulingAlgorithm}). The properties of a task
 that are relevant to scheduling must be defined in a {\em cylc task
@@ -847,13 +884,13 @@ organising, so there are advantages fine-graining a system:
 \label{ExternalTaskRequirements}
 
 \begin{itemize}
-    \item  {\bf It should be possible to restart a failed task (after fixing
+    \item  {\em It should be possible to restart a failed task (after fixing
         the problem) by simply resubmitting it at the same cycle time}, i.e.\
         failure at any point during task execution should not render a
         restart impossible (by corrupting the state of some internal-use
         files, for instance). 
 
-    \item {\bf A task that in principle has no dependence on previous
+    \item {\em A task that in principle has no dependence on previous
         instances (i.e.\ on the same task at prior cycle times) should
         be able to run as soon as its prerequisites are satisfied, even
         if one or more of its predecessors has not finished yet}.
@@ -869,7 +906,7 @@ organising, so there are advantages fine-graining a system:
         to run sequentially, but the resulting system will be somewhat
         less efficient than it could be.
 
-    \item {\bf A warm-cycled forecast model's ``restart files'', which
+    \item {\em A warm-cycled forecast model's ``restart files'', which
         are written in one cycle and required as input in the next,
         should be organised by cycle time via file or directory naming
         conventions so that the same files are not simply overwritten
@@ -884,13 +921,12 @@ organising, so there are advantages fine-graining a system:
 
 \end{itemize}
 
-All failures must be reported back to cylc, otherwise cylc will think
-the failed task stuck in the ``running'' state.  Ideally, all important
-errors should be checked for explicitly, and lesser fatal errors (e.g.\
-mkdir fails attempting to create an output directory) should be trapped 
-by the shell and handled with an automatic cylc message. See the
-userguide example task scripts for how to do this.
-
+All failures must be reported back to cylc, otherwise cylc will see a
+failed task as being perpetually stuck in the ``running'' state.
+Ideally, all important errors should be explicitly checked for, and
+lesser fatal errors (e.g.\ failure to create an output directory) should
+be trapped by the shell and handled with an automatic cylc message. See
+the userguide example task scripts for how to do this.
 
 
 \subsection{Task Prerequisites And Outputs}
@@ -902,7 +938,7 @@ another's unsatisfied prerequisites
 
 Each task definition file must specify a list of prerequisites that have
 to be satisfied before the task can run, and a list of outputs that will
-be completed as the task runs. {\bf These are just literal text
+be completed as the task runs. {\em These are just literal text
 strings - messages that running tasks must send to their proxy objects,
 inside the cylc scheduler, whenever they complete a registered output}.
 
@@ -929,7 +965,7 @@ on external input.
 
 \subsubsection{Cycle Time}
 
-{\bf Prerequisites and outputs should always contain a cycle time} to
+{\em Prerequisites and outputs should always contain a cycle time} to
 distinguish between different instances of a task (at different 
 forecast cycles) that may coexist in the task pool at any time. 
 
@@ -980,7 +1016,7 @@ more general events and multi-file outputs:
 
 \subsubsection{Message Truth}
 
-{\bf Cylc does not check that incoming messages are true.}  For example,
+{\em Cylc does not check that incoming messages are true.}  For example,
 if the message refers to completion of a particular output file, cylc
 does not check that the file actually exists as the reporting task
 claims it does. There are two reasons for this: (1) cylc does not place
@@ -1004,7 +1040,7 @@ particular output will trigger off the first task to provide it.
 
 \subsection{Task Types} 
 
-Every task has to declare a {\bf Task Type}. Cylc has two basic types,
+Every task has to declare a {\em Task Type}. Cylc has two basic types,
 and several modifiers that change the basic type behaviour to some
 extent.  
 
@@ -1116,15 +1152,15 @@ target files are found.
 
 \subsubsection{Timed Outputs}
 
-Outputs have to be registered with an {\bf estimated time of completion}.
+Outputs have to be registered with an {\em estimated time of completion}.
 The timing information is currently only used in dummy mode to simulate
 the correct task run time, so accuracy isn't critical. In the future
 it may also be used to check system progress against expected behaviour.
 
 \subsubsection{Automatic Outputs}
 
-\lstinline=cylc configure= automatically registers special {\bf started}
-and {\bf finished} outputs for every task: 
+\lstinline=cylc configure= automatically registers special {\em started}
+and {\em finished} outputs for every task: 
 
 \begin{lstlisting}
 "0 min:                  foo%$(CYCLE_TIME) started"
@@ -1142,14 +1178,14 @@ provided, in principle, by any task, so this makes the system somewhat
 less flexible.
 
 
-The {\bf failed} message should be reported by external tasks, using 
+The {\em failed} message should be reported by external tasks, using 
 \lstinline=cylc message --failed=, whenever the task fails. This is 
 not an ``output'' to be registered in the taskdef file because the
 completion time is unknown at best (at what point in a tasks execution
 does a failure occur?) and more usually undefined (hopefully the task
 will not fail). 
 
-Finally, \lstinline=cylc message= automatically sends a special {\bf
+Finally, \lstinline=cylc message= automatically sends a special {\em
 completed} message whenever a tasks reports {\em success or failure}:
 \begin{lstlisting}
     "foo completed for $(CYCLE_TIME)"
@@ -1388,9 +1424,9 @@ that comes through the cylc system definition.
 \subsection{Task Definition Files} 
 \label{TaskDefinitionFiles}
 
-A simple {\bf Task Definition File} must be written for each task.
+A simple {\em Task Definition File} must be written for each task.
 \lstinline=cylc configure= parses these and generates a Python module
-that defines the task proxy classes for the system. {\bf Task
+that defines the task proxy classes for the system. {\em Task
 Definition Files define just the properties of tasks that matter from a
 scheduling perspective: name, external task, valid cycle times,
 prerequisites, outputs.} 
@@ -1453,7 +1489,7 @@ typical forecast-model task.
 \subsection{System Config Files}
 \label{SystemConfigFiles}
 
-Each task set to be scheduled by cylc requires a {\bf config file} that
+Each task set to be scheduled by cylc requires a {\em config file} that
 specifies parameters such as the logging directory path, task groups,
 and so on. The config file is generated automatically by 
 \lstinline=cylc configure= the first time the system's task definition
@@ -1602,33 +1638,43 @@ distributed with cylc:
         that may be running at the same time.
 
 
-\section{Running Systems}
-\label{RunningdSystems}
 
-\subsection{Dummy Mode} 
+\section{Dummy Mode} 
 \label{DummyMode}
 
-In {\em dummy mode}, \lstinline=cylc start -d=, in place of each real
-system task cylc executes an external program that masquerades as the
-real task by reporting its registered outputs complete at the appropriate
-times. This is essentially indistinguishable, to cylc, from the real
-thing, and is therefore a complete test of scheduling for the configured
-task set. Dummy mode allows very quick testing of scheduling and failure
-recovery scenarios for arbitrarily complicated task sets.
+Cylc's dummy mode, \lstinline=cylc start --dummy-mode=, is a powerful
+aid in constructing new systems, and a specific variant of dummy mode
+called {\em practice mode} can be used to quickly and safely test the
+effect of system interventions without affecting the real operation. 
 
-If a system (or a failure recovery operation - see
-Section~\ref{FailureRecovery}) works in dummy mode, it will work in real
-operation {\em if}:
-\begin{itemize}
-    \item the real tasks report the correct output messages (as
-        registered in the task definition files).
-    \item no bug has been introduced into the messaging interface
-        \lstinline=cylc message=, which is not used by the dummy 
-        task program - it communicates directly with the right task
-        proxy object in the running scheduler.
-\end{itemize}
+In dummy mode, in place of each real system task cylc executes an
+external program that masquerades as the real thing by reporting its
+registered outputs complete at the appropriate times. This is
+essentially indistinguishable, to cylc, from real operation, and is
+a complete test of scheduling for the configured task set (so long as
+the real tasks report their registered outputs completed as they are
+supposed to). 
 
-\subsection{Incrementally Constructing New Systems} 
+\section{Practice Mode}
+
+Practice mode allows quick and easy testing of potentially complex
+system interventions, with complete safety.
+
+\begin{lstlisting}
+% cylc start --restart --practice userguide
+\end{lstlisting}
+
+This will start a dummy mode clone of an existing system from the
+current state of that system (which may be paused, still running, or
+halted), but using different state and log files so that the original
+system will not be corrupted by the clone.
+
+Note that other cylc commands for monitoring or interacting with the
+system must also use the \lstinline=--practice= option in order to
+target the practice system and not the real one.
+
+
+\section{Incrementally Constructing New Systems} 
 \label{IncrementallyConstructingNewSystems}
 
 You can get the {\em scheduling} of a complex system right without ever
@@ -1648,17 +1694,35 @@ in real mode with the as yet unimplemented tasks turned off (comment
 them out of the task list in the system config module, or use the
 scheduler command line options provided for this purpose). 
 
-\subsection{LOGGING}
-\section{Monitoring Running Systems}
-\label{MonitoringRunningSystems}
+\section{System Monitors}
+\label{System Monitors}
 
+They both connect to a general ``state
+summary'' object that cylc registers with the Pyro nameserver. It is
+anticipated that monitors utilizing more sophisticated gui front ends
+will be developed in the future.
 
-\section{Controlling Running Systems}
-\label{ControllingRunningSystems}
+Both of these monitors, being based on self-refreshing text displayed in a
+command terminal, will not be terribly useful if the number of tasks to 
+display is so great that they can't all fit on the screen at once.
+
+In the case of the first monitor, terminal line-wrapping without
+alignment does allow a fairly large number of tasks to be displayed
+(it's not pretty but it works!).  Even with a large number of tasks the
+second monitor is fine so long as not too many tasks are actually
+{\em running} at the same time. 
+
 
 \pagebreak
-\section{Complete Working Examples}
-\label{CompleteWorkingExamples}
+\section{A Complete Working Example}
+\label{ACompleteWorkingExample}
+
+This section contains complete taskdef file and task script listings,
+from \lstinline= [CYLC_DIR]/system/userguide/= , that implement the
+example used to illustrate the forecast systems scheduling discussion in
+{\em How Cylc Works} (Section~\ref{HowCylcWorks}).  While this is
+clearly not a real forecasting system, it does have the properties of a
+real system as far as scheduling is concerned.  
 
 \input{../systems/userguide/README.tex}
 
@@ -1672,11 +1736,64 @@ scheduler command line options provided for this purpose).
 
 \subsection{Nested}
 
+In this working example system, {\em task C} from the userguide system
+has been replaced by a {\em userguide task} which is itself an entire
+sub-system running under its own scheduler.
+
+If you run this, configure and register both the userguide and nested
+systems. Then start two system monitors, one to follow each system,
+before starting the scheduler on the nested system. You should see that 
+whenever a new `userguide' task runs in the nested system, a separate
+instance of the entire userguide example system will start up and run
+for a single cycle. When the subsystem finishes and exits, the
+corresponding task in the main system will drop into the finished state.
+
+This example is included because it rather nicely illustrates the power
+and flexibility of cylc. That said, the author cannot think of any good
+reason why you would actually want to do this in a real forecasting
+system! It would almost certainly be better to include the sub-system
+tasks in the main system.
+
 \subsection{File-Move}
+
+This working example system illustrates to things:
+
+\begin{itemize}
+    \item How you can move real input/output files around to connect
+        tasks at the control system level, rather than expecting the
+        external tasks themselves to know about the wider system (i.e.\
+        where to get input files that are generated by another task).
+        See {\em Handling Real Dependencies}
+        (Section~\ref{HandlingRealDependencies} for more on this.
+
+    \item How to invoke a generic task script, that can potentially
+        implement many system tasks, with task-specific inputs supplied
+        via the execution environment specified in taskdef files.
+
+\end{itemize}
 
 \subsection{Distributed}
 
-\subsection{SCS-Demo}
+This working example is a variant of the file-move example system in
+which one of the tasks executes on another machine on the network. The
+{\em file-transfer} task script is invoked twice, once the 'put' task,
+which puts input files on the remote machine, and once for the 'get'
+task, which retrieves outputs from the remote machine once the remote
+task has finished.
+
+This example system serves to illustrate two things:
+
+\begin{itemize}
+    \item that cylc can control tasks distributed across the network.
+    \item that cylc can use different job submission methods for
+        different tasks.
+\end{itemize}
+
+Unlike the other example systems, this one will not work ``out of the
+box''. You will to have passwordless ssh configured to the remote
+machine, install the remote task script on it, and specify the right
+hostname in the taskdef file.
+
 
 \section{Command Reference}
 \label{CommandReference}
@@ -1852,17 +1969,17 @@ command without arguments to see a list of options.
 
 \begin{lstlisting}
 $ pyro-nsc ping
-Locator: searching Pyro Name Server\dots
+Locator: searching Pyro Name Server...
 Locator: retry 1
-Locator: searching Pyro Name Server\dots
+Locator: searching Pyro Name Server...
 Locator: retry 1
 Trying host oliverh-33191VL
-Locator: contacting Pyro Name Server\dots
+Locator: contacting Pyro Name Server...
 NS is at 127.0.0.2 (oliverh-33191VL.greta.niwa.co.nz) port 9090
 NS is up and running!
 
 $ pyro-nsc -h localhost ping
-Locator: contacting Pyro Name Server\dots
+Locator: contacting Pyro Name Server...
 NS is at 127.0.0.1 (localhost) port 9090
 NS is up and running!
 \end{lstlisting}
