@@ -1,5 +1,8 @@
 To Do
 
+* check that practice mode systems initialise with the same clock time
+  as the original system!
+
 * intervention commands should return error status if the request is
   refused (for unit test).
 

@@ -696,9 +696,15 @@ this).
     \caption{\small The main terminal-based cylc system monitor}
 \end{figure} 
 
-Cylc registers a ``system state summary'' object with the Pyro
-nameserver; monitor programs can connect to this and extract whatever
-information they want from it.  We currently have just two
+\begin{figure} \label{fig-monitor-r} 
+    \begin{center}
+        \includegraphics[width=10cm]{monitor-2} 
+    \end{center}
+    \caption{\small Another terminal-based cylc system monitor}
+\end{figure} 
+
+
+ We currently have just two
 terminal-based monitors, which are effective but somewhat primitive.
 The standard monitor (Figure~\ref{fig-monitor}) shows the current state
 of all task proxy objects in the task pool:
@@ -708,25 +714,17 @@ of all task proxy objects in the task pool:
 cylc monitor --align userguide
 \end{lstlisting}
 
-The \lstinline=--align= option causes tasks to be displayed in columns,
-which is only useful for small systems.   
-
-\begin{figure} \label{fig-monitor-r} 
-    \begin{center}
-        \includegraphics[width=10cm]{monitor-2} 
-    \end{center}
-    \caption{\small Another terminal-based cylc system monitor}
-\end{figure} 
-
-The other monitor (Figure~\ref{fig-monitor-r}) shows the progress of
-just the running tasks in the pool:
+The \lstinline=--align= option causes tasks to be displayed in columns
+(which is only useful for small systems in which all task names can fit
+on a single line).  Another system monitor (Figure~\ref{fig-monitor-r})
+shows the progress of just the running tasks in the pool:
 
 \begin{lstlisting}
 # in a new terminal!
 cylc monitor-r userguide
 \end{lstlisting}
 
-Section~\ref{MonitoringCylcSystems} discusses the limitations of the
+Section~\ref{SystemMonitors} discusses the limitations of the
 current system monitors, and plans for future development.
 
 \subsubsection{System Log Files}
@@ -788,11 +786,17 @@ delayed start time reached ... True
 
 \lstset{language=bash}
 
+Before shutting a system down - or indeed using any of the other cylc
+commands that can change the state of a running system but are not 
+covered in this Quick Start Guide (reset, kill, purge, pause, etc.) -
+you need to unlock the system:
+
 \begin{lstlisting}
+# unlock:
+cylc unlock userguide
+# shutdown:
 cylc stop userguide
 \end{lstlisting}
-
-You can also tell a system to stop at some specified future cycle time.
 
 \subsection{Restarting A System}
 \label{QuickRestartingASystem}
@@ -1642,20 +1646,36 @@ distributed with cylc:
 \section{Dummy Mode} 
 \label{DummyMode}
 
-Cylc's dummy mode, \lstinline=cylc start --dummy-mode=, is a powerful
-aid in constructing new systems, and a specific variant of dummy mode
-called {\em practice mode} can be used to quickly and safely test the
-effect of system interventions without affecting the real operation. 
+If you start a system in dummy mode, e.g.\:
 
-In dummy mode, in place of each real system task cylc executes an
-external program that masquerades as the real thing by reporting its
-registered outputs complete at the appropriate times. This is
-essentially indistinguishable, to cylc, from real operation, and is
-a complete test of scheduling for the configured task set (so long as
-the real tasks report their registered outputs completed as they are
-supposed to). 
+\begin{lstlisting}
+cylc start --dummy-mode --at=2009081118 userguide
+\end{lstlisting}
 
-\section{Practice Mode}
+then in place of each real task cylc will launch an external program
+that masquerades as the real thing by reporting that task's registered
+outputs complete at the appropriate times. This is essentially
+indistinguishable, to cylc, from real operation, and is a complete test
+of scheduling for the configured task set (so long as the real tasks
+report their registered outputs completed as they are supposed to). 
+
+This is a powerful aid in constructing new systems, because it allows
+you to get the scheduling right without having to deal with all the
+complications of running the real tasks.
+
+\subsection{Clock Rate and Offset}
+
+Dummy mode systems run on an accelerated clock so that you can test full
+systems very quickly. You can set the clock rate and offset with respect
+to the initial cycle time with options to the \lstinline=cylc start=
+command. An offset of 10 hours, say, means that the dummy mode clock
+starts at 10 hours prior to the system's initial cycle time.  You can
+thus simulate the behaviour of the system as it catches up from a delay
+and transitions to real time operation.  By default, the clock runs at a
+rate of 10 seconds real time to 1 hour system time, and with an initial
+offset of 10 hours. 
+
+\subsection{Practice Mode}
 
 Practice mode allows quick and easy testing of potentially complex
 system interventions, with complete safety.
@@ -1671,7 +1691,10 @@ system will not be corrupted by the clone.
 
 Note that other cylc commands for monitoring or interacting with the
 system must also use the \lstinline=--practice= option in order to
-target the practice system and not the real one.
+target the practice system and not the real one. Be sure to set
+\lstinline=cylc lock= on the original system first, to avoid
+accidentally messing with it (even if you do screw up, however, cylc's
+automatic pre-intervention state dumps will save you!).
 
 
 \section{Incrementally Constructing New Systems} 
@@ -1683,7 +1706,8 @@ you define each task. Then (or in parallel with the task definition
 process) you can also test the real system incrementally as you write
 its task scripts (by which cylc runs the real tasks) by turning off all
 the tasks that you're not yet interested in (this can be done through
-the '--include' and '--exclude' scheduler options, or by commenting
+the \lstinline=--include= and \lstinline=--exclude= scheduler options,
+or by commenting
 tasks out of the configured task list.
 
 Start by defining tasks at the top of the single-cycle dependency graph,
@@ -1697,21 +1721,22 @@ scheduler command line options provided for this purpose).
 \section{System Monitors}
 \label{System Monitors}
 
-They both connect to a general ``state
-summary'' object that cylc registers with the Pyro nameserver. It is
-anticipated that monitors utilizing more sophisticated gui front ends
-will be developed in the future.
+Cylc registers a ``system state summary'' object with the Pyro
+nameserver, which provides a general mechanism for remote system
+monitoring. Specific monitor programs can connect to this object, 
+extract whatever information they want from it, and ignore the rest. 
 
-Both of these monitors, being based on self-refreshing text displayed in a
-command terminal, will not be terribly useful if the number of tasks to 
-display is so great that they can't all fit on the screen at once.
+It is anticipated that monitors utilizing more sophisticated gui front
+ends will be developed in the future. For the moment, the existing
+system monitors run in a terminal window and would not be terribly
+useful if the number of tasks to be displayed is so great that they
+can't all fit on a maximized (full-screen) monitor window at once.
 
-In the case of the first monitor, terminal line-wrapping without
+In the case of the standard monitor, terminal line-wrapping without
 alignment does allow a fairly large number of tasks to be displayed
-(it's not pretty but it works!).  Even with a large number of tasks the
-second monitor is fine so long as not too many tasks are actually
+(it's not pretty but it works!). And even with a large number of tasks
+the second monitor is fine so long as not too many tasks are actually
 {\em running} at the same time. 
-
 
 \pagebreak
 \section{A Complete Working Example}
@@ -1795,10 +1820,11 @@ machine, install the remote task script on it, and specify the right
 hostname in the taskdef file.
 
 
+\pagebreak
 \section{Command Reference}
 \label{CommandReference}
 
-Cylc commands are self documenting, so this section is auto-generated
+All cylc commands are self documenting so this section is auto-generated
 from the current command set during document processing.
 
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
