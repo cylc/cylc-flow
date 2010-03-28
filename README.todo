@@ -1,8 +1,7 @@
 To Do
 
-* System lock state, to prevent inadvertant interventions in an
-  operational system (perhaps integrate this with Pyro security
-  features?).
+* intervention commands should return error status if the request is
+  refused (for unit test).
 
 * DOCUMENT: system shutdown for practice, while real tasks complete:
   restart with them FINISHED!
