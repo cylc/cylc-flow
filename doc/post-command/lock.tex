@@ -1,0 +1,13 @@
+
+Prevention of non-owners from interfering in a running system (unlocking
+it to allow further intervention, for instance) is achieved via a simple
+comparison of usernames determined at startup, in the scheduler and in
+the intervening commands. It would not be difficult for a malicious user
+to subvert this mechanism by modifying the source code a little. 
+
+Note also that by default anyone with access to the 'pyro-nsc' command
+can shut down the Pyro nameserver or delete object groups from it. 
+
+If it is deemed necessary, in the future, we may replace this simple
+security mechanism with some kind of hard authentication, perhaps using
+Pyro's security features.
