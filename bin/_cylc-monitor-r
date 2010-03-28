@@ -28,11 +28,12 @@ from CylcOptionParsers import NoPromptOptionParser_u
 
 parser = NoPromptOptionParser_u( """cylc monitor-r [options] SYSTEM
 
-A terminal-based monitor that displays information about task proxy
-objects in the 'submitted' or 'running' states, in the target system. 
+A terminal-based monitor that displays the current progress of running
+tasks against their list of registered outputs.
 
-THIS PROGRAM DOES NOT MONITOR THE REAL RUNNING TASKS (how to do
-that depends on the job submission method used by each task).""" ) 
+THIS PROGRAM MONITORS TASK PROXY OBJECTS INSIDE THE SCHEDULER, NOT
+EXTERNAL SYSTEM TASKS (how to do that obviously depends on the job
+submission method used by each task).""" ) 
 
 ( options, args ) = parser.parse_args()
 
