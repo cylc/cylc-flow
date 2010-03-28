@@ -125,6 +125,12 @@ while ! $READY; do
 done
 echo done
 
+# UNLOCK THE SYSTEM
+echo
+echo -n ">> UNLOCKING the system to allow intervention ..."
+cylc unlock -f unit >> $OUT 2>&1
+echo done
+
 # SET A STOP TIME OF
 echo
 echo -n ">> SETTING STOP TIME 2010010212 ..."

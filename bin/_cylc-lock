@@ -1,0 +1,29 @@
+#!/usr/bin/python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+from connector import connector
+from CylcOptionParsers import PromptOptionParser
+
+parser = PromptOptionParser( """cylc lock [options] SYSTEM 
+
+Lock a running system to prevent intervention via other cylc commands.
+This is intended to prevent INADVERTANT, not malicious, intervention in
+a running system. Anyone with access to the system can unlock it with
+deliberate use of 'cylc unlock'. In the future we may implement some
+kind of hard authentication based locking mechanism, perhaps using
+Pyro's security features.""" )
+
+(options, args) = parser.parse_args()
+
+if parser.prompt( 'Lock' ):
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    print god.lock()

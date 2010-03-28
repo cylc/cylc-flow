@@ -16,10 +16,9 @@ from connector import connector
 from CylcOptionParsers import NoPromptOptionParser
 
 def print_heading( strng ):
-        print
-        print strng
-        underline = re.sub( '.', '-', strng )
+        underline = re.sub( '.', '_', strng )
         print underline
+        print strng
 
 parser = NoPromptOptionParser( usage = """cylc task-dump [options] SYSTEM 
 
@@ -50,7 +49,6 @@ if id not in result.keys():
     print "Task " + id + " not found in " + sysname
     sys.exit(1)
 
-print
 print_heading( 'Task ' + id + ' in ' + sysname + ':' )
 print ' + => prerequisite satisfied, or output completed' 
 print ' - => prerequisite NOT satisfied, or output NOT completed' 
@@ -58,7 +56,7 @@ print ' - => prerequisite NOT satisfied, or output NOT completed'
 for id in result.keys():
     [ pre, out, extra_info ] = result[ id ]
 
-    print_heading( '> Prerequisites:')
+    print_heading( 'Prerequisites:')
     if len( pre ) == 0:
         print '(None)'
     for item in pre:
@@ -69,7 +67,7 @@ for id in result.keys():
             descr = ' - '
         print descr + msg
 
-    print_heading( '> Outputs:' )
+    print_heading( 'Outputs:' )
     if len( out ) == 0:
         print '(None)'
     for item in out:
@@ -81,7 +79,7 @@ for id in result.keys():
         print descr + msg
 
     if len( extra_info.keys() ) > 0:
-        print_heading( '> Other:' )
+        print_heading( 'Other:' )
         for item in extra_info:
             print item, '...', extra_info[ item ]
 

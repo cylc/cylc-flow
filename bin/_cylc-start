@@ -111,6 +111,9 @@ to "waiting" at startup (but see the '--no-reset' option below).
 
 Use nohup to make the scheduler independent of your terminal log in.
 
+The system will start up in a locked state; use 'cylc unlock' prior to'
+intervening in the running system.
+
 Arguments:
    SYSTEM               Registered name of the forecasting system.""" 
 
