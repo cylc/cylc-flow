@@ -17,7 +17,9 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc stop [options] SYSTEM 
 
-Shut down a cylc system after all currently running tasks have finished.""" )
+Tell a cylc system to shut itself down immediately, or after all
+currently running tasks have finished (this is the default), or once all
+tasks have passed some designated future cycle time.""" )
 
 parser.add_option( "--now", 
         help="Shutdown the system NOW, even if tasks are still running. "

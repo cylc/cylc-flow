@@ -17,12 +17,11 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc pause [options] SYSTEM 
 
-Pause a system, i.e. do not launch any new tasks.
-
-With no options, pause NOW. """)
+Pause a system (refrain from launching any new tasks) now, or once all
+tasks have passed some future cycle time.""")
 
 parser.add_option( "--at", 
-        help="Pause each task as it reaches cycle time CYCLE.",
+        help="Pause task once they have passed CYCLE.",
         metavar="CYCLE", action="store", dest="pause_time" )
 
 (options, args) = parser.parse_args()
