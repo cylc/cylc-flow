@@ -15,11 +15,12 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc lock [options] SYSTEM 
 
-Lock a system to prevent inadvertant intervention via cylc commands.
-This is not intended to prevent malicious intervention - anyone with
-system access can unlock it with deliberate use of 'cylc unlock'. In
-the future we may implement hard authentication of some kind, perhaps
-using Pyro's built in security features.""" )
+Only system's owner can intervene in its operation with cylc commands
+such as stop, kill, purge, reset, etc., but there is still a risk of
+making inadvertent changes to your own systems. You can use this command
+to 'lock' important systems, preventing remote intervention via other
+cylc commands. Locks have to be released by explicit invocation of 'cylc
+unlock'.""" )
 
 (options, args) = parser.parse_args()
 
