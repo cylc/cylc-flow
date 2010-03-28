@@ -90,7 +90,7 @@ echo done
 # REGISTER THE TEST SYSTEM
 echo
 echo -n ">> REGISTERING the test system as 'unit' ... "
-cylc register --sysdef $SYS_DIR unit >> $OUT 2>&1
+cylc register --system $SYS_DIR unit >> $OUT 2>&1
 echo done
 
 # START UP THE TEST SYSTEM
