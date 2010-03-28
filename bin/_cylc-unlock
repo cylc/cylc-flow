@@ -13,14 +13,10 @@
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc lock [options] SYSTEM 
+parser = PromptOptionParser( """cylc unlock [options] SYSTEM 
 
 Unlock a running system to allow intervention via other cylc commands.
-Locking is intended to prevent INADVERTANT, not malicious, intervention
-in a running system. Anyone with access to the system can unlock it with
-deliberate use of 'cylc unlock'. In the future we may implement some
-kind of hard authentication based locking mechanism, perhaps using
-Pyro's security features.  """ )
+See 'cylc lock --help' for more information.""" )
 
 (options, args) = parser.parse_args()
 

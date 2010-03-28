@@ -99,20 +99,19 @@ def ns_obj_name( name, groupname ):
 
 usage = """1/ cylc start [options] --at=CYCLE SYSTEM
 Usage: 2/ cylc start [options] --restart SYSTEM
+Usage: 3/ cylc start [options] --restart-from=FILE SYSTEM
 
 Start or restart a configured, registered, system. 
 
 1/ Cold Start: Each task will be instantiated at the initial cycle time,
 or at the first subsequent cycle time that is valid for the task.  
 
-2/ Restart: Start from the configured or named state dump file. Any task
-recorded in the "submitted", "running", or "failed" state will be reset
-to "waiting" at startup (but see the '--no-reset' option below).
+2,3/ Restart: Start from the configured or named state dump file. Any
+task recorded in the "submitted", "running", or "failed" state will be
+reset to "waiting" at startup (but see the '--no-reset' option below).
 
+The system will require unlocking ('cylc unlock') prior to intervention.
 Use nohup to make the scheduler independent of your terminal log in.
-
-The system will start up in a locked state; use 'cylc unlock' prior to'
-intervening in the running system.
 
 Arguments:
    SYSTEM               Registered name of the forecasting system.""" 
