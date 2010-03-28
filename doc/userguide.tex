@@ -524,7 +524,7 @@ provide access to cylc commands, and the cylc source directory must be
 in your Python module search path, to provide access to the cylc core
 modules. To configure your current command shell for cylc, source 
 the environment script \lstinline=cylc-env.sh= from the directory it
-resides in (i.e. the top level of your cylc installation):
+resides in (i.e.\ the top level of your cylc installation):
 
 \begin{lstlisting}
 $ . cylc-env.sh
@@ -956,7 +956,7 @@ inside the cylc scheduler, whenever they complete a registered output}.
 
 \end{itemize}
 
-A task with no prerequisites can start running immediately (i.e. as soon
+A task with no prerequisites can start running immediately (i.e.\ as soon
 as the proxy object is created) {\em unless} it is a ``contact task''
 (below), which must also wait on a wall clock time relative to its cycle time.
 
@@ -1123,9 +1123,9 @@ at the right time according to its type.
         temporary files, or similar).
 
     \item A \lstinline=contact= task waits on an external event, such as
-        incoming external data, i.e. it ``makes contact'' with the
+        incoming external data, i.e.\ it ``makes contact'' with the
         external world.  The event is expected at some defined time
-        interval after the task cycle time (e.g. observational data
+        interval after the task cycle time (e.g.\ observational data
         might come 3.5 hours after its nominal validity time); see
         \lstinline=CONTACT_DELAY= below. In real time operation a contact task will
         not begin running until the clock time has reached this delayed
@@ -1134,7 +1134,7 @@ at the right time according to its type.
         delayed start time has already passed.  
         
     \item A \lstinline=catchup_contact= task maintains awareness,
-        through a class variable (i.e. not per instance), of whether or
+        through a class variable (i.e.\ not per instance), of whether or
         not it has `caught up' yet.  This can be used for rare occasions
         when some dependant task needs to behave differently according
         to whether its upstream contact task has caught up or not.
@@ -1237,7 +1237,7 @@ have to report the right restart messages, as above, explicitly.
 \label{TaskScripts}
 
 (note that several tasks may use the same script with different
-arguments, e.g. for moving files around).
+arguments, e.g.\ for moving files around).
 
 The `scripts' sub-directory of a cylc system definition is a handy
 central location in which to keep system-specific scripts for running
@@ -1286,7 +1286,7 @@ must have them).
 In addition, tasks can optionally:
 
 \begin{itemize}
-\item report any arbitrary unregistered (i.e. non-output)
+\item report any arbitrary unregistered (i.e.\ non-output)
 messages, for debugging, logging, or progress monitoring purposes.
 \end{itemize}
 
@@ -1321,7 +1321,7 @@ modifying the tasks at all to accommodate cylc. There is a downside to
 task wrapping, however:
 
 \begin{itemize}
-    \item you can't add extra internal messages (i.e. additional to the
+    \item you can't add extra internal messages (i.e.\ additional to the
         registered outputs) to a task, for progress monitoring or
         debugging purposes.
     \item all registered task outputs are reported complete only
@@ -1366,7 +1366,7 @@ and/or it knows where to put its output files because it knows who is
 going to use them. Doing this by means of a system-wide convention for 
 input and output directories  etc. for the major tasks (principally the
 scientific models) makes it easy to know where files should end up at
-all times (e.g. model X's output goes in /oper/X/output, for any model
+all times (e.g.\ model X's output goes in /oper/X/output, for any model
 X).
 
 In this case, cylc task proxies (via their task definition files) do not
@@ -1381,7 +1381,7 @@ Large scientific models typically have their own idiosyncratic
 configuration defaults. You could leave each model configured in its own
 ``natural'' way, as if unaware of the wider forecasting system, and then
 add additional ``connector'' tasks to move files around as needed
-(e.g. to transfer files from X's output directory to Y's input directory).
+(e.g.\ to transfer files from X's output directory to Y's input directory).
 
 To do this in cylc, you can either:
 
@@ -1455,7 +1455,7 @@ example in userguide !TO DO!.
 \subsection{Examples}
 
 Listed immediately below are two example task definitions, one for a
-``forecast model'', and the other not (e.g. post processing). All tasks
+``forecast model'', and the other not (e.g.\ post processing). All tasks
 in a typical forecasting system can be defined as simply as these
 (advanced TopNet scheduling the only exception in EcoConnect). 
 But see (Section~\ref{TaskDefinitionReference}) for full Task Definition
@@ -1864,7 +1864,7 @@ documented.
 labelsubsection{MoreComplexTaskBehaviour}
 
 DETAIL WHEN IS IT NECESSARY TO DERIVE PYTHON TASK CLASSES DIRECTLY
-I.E. WHEN ARE CYLC TASK DEFINITION FILES NOT SUFFICIENT.
+I.E.\ WHEN ARE CYLC TASK DEFINITION FILES NOT SUFFICIENT.
 (In EcoConnect: only streamflow and topnet)
 
 \pagebreak
@@ -2064,7 +2064,7 @@ products associated with that cycle are complete.
 %
 %The state of being ``caught up'' or not is a property of individual
 %tasks, not the whole system, and additionally it should only matter to
-%external contact tasks, i.e. those that wait on external data that is
+%external contact tasks, i.e.\ those that wait on external data that is
 %available at a wall clock time of T (task cycle time) + o (some offset
 %insterval). Where this matters an external task can detect whether or
 %not it has caught up (and signal this to its proxy object in cylc) by
@@ -2079,18 +2079,18 @@ different registered names, AND the same task scripts (under scripts/)
 directories at run time, potentially to access a different set of 
 executables\dots
 
-Consequences - dummy mode fine (e.g. multiple users running the standard
+Consequences - dummy mode fine (e.g.\ multiple users running the standard
 cylc example systems)
 
              - real mode: the external tasks must not interfere! Could
              use system name in all important dir paths, but prob better 
              to copy the system def directory AND invoke different versions
-             of the external tasks (e.g. under /oper and /test)
+             of the external tasks (e.g.\ under /oper and /test)
 
     Registered names are also used along with your username to construct
     a unique Pyro nameserver `group name' for any system that you run.
     This allows multiple systems, from multiple users, to run at once
-    without interfering with each other (i.e. external tasks will not
+    without interfering with each other (i.e.\ external tasks will not
     be able to send messages to the wrong scheduler instance).
     
     You can register the same system under multiple names. This makes it
