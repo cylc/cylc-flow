@@ -16,6 +16,8 @@ from registration import registrations
 class config:
 
     def __init__( self, reg_name ):
+        # derived class for system configuration must call this base
+        # class init FIRST then override settings where required.
 
         self.items = {}
         self.system_name = reg_name
@@ -45,7 +47,19 @@ class config:
         reg = registrations()
         self.items['system_def_dir' ] = reg.get( self.system_name )
 
-    def configure( self, practice ):
+    def check_start_time( self, startup_cycle ):
+        if 'legal_startup_hours' in self.items.keys():
+            # convert to integer to deal with leading zeroes (06 == 6)
+            startup_hour = int( startup_cycle[8:10] )
+            legal_hours = [ int(i) for i in self.items[ 'legal_startup_hours' ] ]
+            print "Legal startup hours for " + self.system_name + ":",
+            for item in legal_hours:
+                print item,
+            print
+            if startup_hour not in legal_hours:
+                raise SystemExit( "Illegal Start Time" )
+
+    def create_state_log_dirs( self, practice ):
         self.check_task_groups()
         self.job_submit_config()
         

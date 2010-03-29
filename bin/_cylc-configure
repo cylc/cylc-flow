@@ -204,6 +204,10 @@ class system_config( config ):
         # system task list
         self.items['task_list'] = task_list
 
+        # list of legal startup hours, if this system is so restricted
+        # e.g.: self.items['legal_startup_hours'] = [ 6 ]
+        # or:   self.items['legal_startup_hours'] = [ 6, 18 ]
+
         # system info
         self.items['system_info']['info'] = info
 

@@ -312,6 +312,8 @@ import remote_switch # ditto
 
 # load system configuration--------------------------------------------
 config = system_config( name )
+if options.start_time:
+    config.check_start_time( options.start_time )
 
 # find initial state dump file
 
@@ -359,7 +361,7 @@ if not practice:
 
 # now create state dump and logging dirs if they don't already exist
 # after modifying the configured paths if we're in practice mode.
-config.configure( practice )
+config.create_state_log_dirs( practice )
 
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
