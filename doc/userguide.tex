@@ -1680,33 +1680,18 @@ config['max_runahead_hours'] = 24
 
 \pagebreak
 
-\subsection{Example Config File}
-\label{ExampleConfigFile}
-
-This is the config defaults file for the ``userguide'' example system
-distributed with cylc: 
-
-\lstset{ language=Python }
-{
-\lstinputlisting{../systems/userguide/system_config.py}
-}
-
-
+%\subsection{Example Config File}
+%\label{ExampleConfigFile}
+%
+%This is the config defaults file for the ``userguide'' example system
+%distributed with cylc: 
+%
+%\lstset{ language=Python }
+%{
+%\lstinputlisting{../systems/userguide/system_config.py}
+%}
 
 \lstset{language=}
-
-\pagebreak
-\section{System Registration}
-\label{SystemRegistration}
-
-{\bf system name}: the system is registered under
-        this name in your cylc preferences directory. The system name is
-        then used to refer to the system in cylc commands. It is also
-        used as a ``groupname'' under which to register system objects 
-        in the Pyro nameserver, to prevent conflicts with other systems
-        that may be running at the same time.
-
-
 
 \section{Dummy Mode} 
 \label{DummyMode}
@@ -1945,7 +1930,7 @@ Features that distinguish this system are:
     \item not all tasks run in all cycles - see arch, g\_lbc, post2
 
     \item intercycle dependence other than forecast model restart 
-        dependencies - g_lbc outputs are used by two subsequent UM_nz
+        dependencies - g\_lbc outputs are used by two subsequent UM\_nz
         tasks.
 
     \item UM\_nz behaves differently in different cycles - 00,12Z short

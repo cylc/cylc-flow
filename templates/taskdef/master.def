@@ -143,6 +143,7 @@
     # - Comma separated list of estimated completion times, in min, sec,
     #     or hr, for the restart outputs depended on by subsequent
     #     instances of this task.
+    # - May be conditional on cycle hour, as for prerequisites.
     # - The number of times listed should equal the number of restart
     #   outputs dumped by the task in real operation.
     # - The time estimates are used only in dummy mode, to correctly 
@@ -154,7 +155,8 @@
     # - The first restart output is assumed to valid at the cycle time 
     #     of the NEXT task instance, the second for the NEXT NEXT
     #     instance, and so on.
-    5 min, 10 min, 15 min
+    0,12 | 5 min
+    6,18 | 5 min, 10 min, 15 min
 
 #----------------------------------------------------------------------
 [%NO_NONCOTEMPORAL_DEPENDANTS] 
