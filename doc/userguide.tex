@@ -1572,16 +1572,20 @@ typical forecast-model task.
 \section{System Config Files}
 \label{SystemConfigFiles}
 
-An initial config file is generated automatically by 
-\lstinline=cylc configure= the first time you configure
-a system. Subsequent reconfiguration will not overwrite the
-config file unless you force it (in which case the original will be
-backed up) in case you have changed the default settings. The config
-file is a Python source module, but it is simply structured and should
-be easy for non-programmers to understand. 
+An initial customizable config file, \lstinline=system_config.py=, is
+written into the system definition directory by 
+\lstinline=cylc configure= the first time you configure a system.
+Subsequent reconfiguration will not overwrite the file unless you force
+it, in which case the original will be backed up. The config file is a
+Python source module, but it is simply structured and should be easy for
+non-programmers to adapt (it is just a matter of the changing the
+existing default values, for the most part). 
 
 Configurable items are stored in a single {\em dict} (a Python
-associative array):
+associative array). Technically, the system config file is a class
+derived from the main cylc config class; you can see the default
+values of all configurables items at the top of
+\lstinline=$CYLC_DIR/src/config.py=.
 
 \lstset{language=Python}
 \begin{lstlisting}
@@ -1598,8 +1602,8 @@ self.items['item'] = value
         \lstinline=task_list.py=. Each task in the list will be
         instantiated at system startup.  For testing and debugging you
         can turn off specific tasks by simply commenting them out of the
-        task list (or preferably use the start command's inclusion and
-        exclusion options).
+        task list (or, preferably, use the start command's include and
+        exclude options).
         
         \begin{lstlisting}
 self.items['task_list'] = task_list
@@ -1627,8 +1631,8 @@ self.items['job_submit_method'] = 'background'
 self.items['job_submit_overrides']['foo'] = 'background2'
         \end{lstlisting}
 
-        See {\em Job Submission} (Section~\ref{JobSubmission}) for more
-        information.
+        See {\em Job Submission} (Section~\ref{JobSubmission}) for
+        available methods, and information on how to add new methods.
 
 
     \item {\bf state dump directory}: the location of cylc's state
@@ -1674,6 +1678,33 @@ self.items['environment'][ 'VARNAME1' ] = 'value1'
         \begin{lstlisting}
 config['max_runahead_hours'] = 24
         \end{lstlisting}
+
+
+    \item {\bf system title} and {\bf information}: 
+
+        \begin{lstlisting}
+self.items['system_title'] = 'System X'
+self.items['system_info'] = info
+        \end{lstlisting}
+        where `info' is now imported from a separate file, 
+        \lstinline=system_info.py= in the system definition directory.
+        This is intended to be descriptive information about the system,
+        perhaps details the user needs to know in order to run it (see
+        for example the information given for the {\em userguide}
+        example system).
+
+    \item {\bf restricted startup hours:} setting this will cause 
+        the system to abort with an error message if you attempt to
+        start it for any cycle time with an hour value that is not in a given
+        list of hours (e.g. 6 or 18Z). This is useful if your system 
+        can only start at certain cycles because of external constraints
+        such as availability of model start dumps. The {\em SCS Demo}
+        example system is in this category.
+
+    \begin{lstlisting}
+self.items['legal_startup_hours'] = [ 6, 18 ]
+# for a single value you must still enclose in list brackets: [ 6 ] 
+    \end{lstlisting}
 
 \end{itemize}
 

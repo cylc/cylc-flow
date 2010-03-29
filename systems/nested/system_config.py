@@ -22,6 +22,7 @@
 
 from config import config
 from task_list import task_list
+from system_info import info
 import logging  # for logging level
 import os       # os.environ['HOME']
 
@@ -31,7 +32,16 @@ class system_config( config ):
         config.__init__( self, sysname )
 
         # system task list
-        self.items['task_list'] = task_list
+        self.items['task_list'] = task_list    # SEE task_list.py
+
+        # system info
+        self.items['system_info']['info'] = info   # SEE system_info.py
+        # add more descriptive information as you like, e.g.:
+        # self.items[ 'system_info' ]['colours'] = 'red, blue, green'
+
+        # list of legal startup hours, if this system is so restricted
+        # e.g.: self.items['legal_startup_hours'] = [ 6 ]
+        # or:   self.items['legal_startup_hours'] = [ 6, 18 ]
 
         # task insertion groups, e.g:
         # self.items['task_groups']['foo'] = ['bar', 'baz']
