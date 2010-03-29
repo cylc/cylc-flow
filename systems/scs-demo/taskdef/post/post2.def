@@ -5,7 +5,7 @@
     post2
 
 %DESCRIPTION
-    special forecast diagnostics postprocessing
+    forecast diagnostics postprocessing
 
 %TYPE
     free

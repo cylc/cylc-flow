@@ -40,7 +40,8 @@ class system_config( config ):
         self.items['task_list'] = task_list
 
         # list of legal startup hours, if this system is so restricted
-        self.items['legal_startup_hours'] = [ 6 ]
+        # e.g.: self.items['legal_startup_hours'] = [ 6 ]
+        # or:   self.items['legal_startup_hours'] = [ 6, 18 ]
 
         # system info
         self.items['system_info']['info'] = info

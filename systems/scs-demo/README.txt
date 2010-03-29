@@ -24,7 +24,7 @@ _______________________________________________________+_T_A_S_K__L_I_S_T
 
 * VAR             - 3D-Var analysis
 
-* UM_nz           - NZLAM forecast
+* UM_nz           - NZLAM forecast (short run at 00,12; long at 06,18Z)
 
 * post            - post process NZLAM diagnostic output, all cycles
 * post2           - extra post processing, only at 06 and 18 UTC
