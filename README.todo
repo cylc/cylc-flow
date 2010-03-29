@@ -1,5 +1,11 @@
 To Do
 
+* consider restart messages for split tasks that actually use the same 
+  restart files: e.g. nzlam_long (06,18Z) and nzlam_short (00,12Z). 
+  Currently must combine this into one task with conditionals, OR 
+  register (and report) restart messages explicitly because the
+  automatic restart messages will not have the right task name.
+
 * check that practice mode systems initialise with the same clock time
   as the original system!
 
@@ -103,8 +109,6 @@ To Do
 
 * the task-generator script should check that the user-defined task
   names do not clash with parent class or attribute names.
-
-* user config for restricted start time (e.g. 06 UTC only)
 
 * when remote killing all waiting tasks at a ref time, check that (a)
   the system has moved on passed that time, and (b) none of the waiting
