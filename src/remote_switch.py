@@ -74,7 +74,7 @@ class remote_switch( Pyro.core.ObjBase ):
         # cause the task processing loop to be invoked
         if self.locked:
             self.log.warning( "REMOTE: refusing nudge request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: nudge" )
         self.process_tasks = True
@@ -86,7 +86,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing task reset request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         # reset a task to the waiting state
         self.log.warning( "REMOTE: reset to waiting: " + task_id )
@@ -103,7 +103,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing task reset request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
        # reset a task to the ready state
         self.log.warning( "REMOTE: reset to ready: " + task_id )
@@ -121,7 +121,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing task reset request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
       # reset a task to the waiting finished
         self.log.warning( "REMOTE: reset to finished: " + task_id )
@@ -136,7 +136,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing task insert request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         # insert a new task or task group into the system
         self.log.warning( "REMOTE: task insertion: " + ins )
@@ -155,7 +155,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing pause request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: system hold" )
         self.pool.set_system_hold()
@@ -170,7 +170,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing resume request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: system resume" )
         self.pool.unset_system_hold()
@@ -185,7 +185,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing stop time set request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: set stop time" )
         self.pool.set_stop_time( ctime )
@@ -201,7 +201,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing hold time set request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: set hold time" )
         self.pool.set_system_hold( ctime )
@@ -216,7 +216,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing shutdown request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: halt when running tasks finish" )
         self.hold( user )
@@ -232,7 +232,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing shutdown request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: halt NOW" )
         self.hold( user )
@@ -312,7 +312,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing purge request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: purge " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
@@ -326,7 +326,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing kill request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: die: " + task_id )
         self.pool.kill( [ task_id ] )
@@ -340,7 +340,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing kill request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         self.log.warning( "REMOTE: spawn and die: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
@@ -354,7 +354,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             self.log.warning( "REMOTE: refusing verbosity request (locked)" )
-            return "Sorry, the system has been locked!"
+            return "SORRY, THIS SYSTEM IS LOCKED"
 
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
