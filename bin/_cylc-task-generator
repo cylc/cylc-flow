@@ -10,9 +10,7 @@
 #         |________________________|
 
 
-# TO DO: error check running dir etc.
-# os.getcwd()
-# (assumes top level system def dir).
+# TO DO: THIS SCRIPT NEEDS TO BE CLEANED UP WITH MORE CODE REUSE
 
 import string
 import glob
@@ -20,7 +18,6 @@ import sys
 import re
 
 import os
-#print os.getcwd()
 
 def usage():
     print 'USAGE: ' + sys.argv[0] + ' <list of task definition files>'
@@ -377,8 +374,8 @@ from dynamic_instantiation import get_object
             if 'ESTIMATED_RESTART_OUTPUT_TIMES' not in parsed_def.keys():
                 print 'Error: forecast models must define %ESTIMATED_RESTART_OUTPUT_TIMES'
                 sys.exit(1)
-            else:
-                restart_list = parsed_def[ 'ESTIMATED_RESTART_OUTPUT_TIMES' ][0]
+            #else:
+            #    restart_list = parsed_def[ 'ESTIMATED_RESTART_OUTPUT_TIMES' ][0]
 
         task_name = parsed_def[ 'NAME' ][0]
 
@@ -621,13 +618,35 @@ from dynamic_instantiation import get_object
 
         # forecast model restarts
         if fcmodel:
-            restarts = restart_list.split( ',' )
-            transt = []
-            for t in restarts:
-                transt.append( time_trans( t ) )
+            for line in parsed_def['ESTIMATED_RESTART_OUTPUT_TIMES']:
 
-            FILE.write( indent + 'restart_times = [' + ','.join( transt ) + ']\n' )
-            FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
+                line = re.sub( '\s+$', '', line )
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, right ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    for hour in hours:
+                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        restarts = right.split( ',' )
+                        transt = []
+                        for t in restarts:
+                            transt.append( time_trans( t ) )
+
+                        FILE.write( indent + 'restart_times = [' + ','.join( transt ) + ']\n' )
+                        FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
+
+                        indent_less()
+                else:
+                    restarts = line.split( ',' )
+                    transt = []
+                    for t in restarts:
+                        transt.append( time_trans( t ) )
+
+                    FILE.write( indent + 'restart_times = [' + ','.join( transt ) + ']\n' )
+                    FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
 
         # call parent init methods
         # FOR PARENT CLASS TYPES THAT HAVE INIT METHODS!
