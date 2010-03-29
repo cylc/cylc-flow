@@ -1919,6 +1919,39 @@ hostname in the taskdef file.
 \pagebreak
 \subsection{SCS Demo}
 
+This example system, which resides in 
+\lstinline=$CYLC_DIR/systems/scs-demo=,
+demonstrates how to set up a single Met Office
+UM-based forecast analysis suite that would normally be run by SCS.
+Features that distinguish this system are:
+
+\begin{itemize}
+
+    \item dummy mode only - no tasks scripts have been implemented.
+
+    \item restricted start time - 06Z only - see the system config file
+
+    \item not all task run in all cycles - see arch, g\_lbc, post2
+
+    \item UM\_nz behaves differently in different cycles - 00,12Z short
+        forecast, 06,18Z long forecast.
+
+    \item the VAR task depends on the OPS tasks {\em completing} - i.e.\
+        succeeding OR failing, because obs processing is expected to
+        fail sometimes.  Try this with:
+
+        \begin{lstlisting}
+cylc start -d --fail-out=OPS1%YYYYMMDDHH ...
+        \end{lstlisting}
+
+        VAR will not be delayed, but the failed OPS task does have to be
+        killed or it will eventually stall the system at the maximum
+        runahead time.
+        
+\end{itemize}
+
+Here's some more information from the system README file:
+
 \lstset{language=}
 \lstinputlisting{../systems/scs-demo/README.txt}
 
