@@ -42,6 +42,7 @@ class system_config( config ):
         # list of legal startup hours, if this system is so restricted
         # e.g.: self.items['legal_startup_hours'] = [ 6 ]
         # or:   self.items['legal_startup_hours'] = [ 6, 18 ]
+        self.items['legal_startup_hours'] = [ 6 ]
 
         # system info
         self.items['system_info']['info'] = info
