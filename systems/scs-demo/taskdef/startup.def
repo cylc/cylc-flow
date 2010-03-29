@@ -14,7 +14,12 @@
     6
 
 %NO_NONCOTEMPORAL_DEPENDANTS
-    True
+    # g_lbc in a subsequent cycle depends on me!
+    False
+
+%ONEOFF_FOLLOW_ON
+    # see comment above
+    g_lbc
 
 %TASK
     startup.sh
