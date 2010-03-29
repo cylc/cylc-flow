@@ -308,9 +308,17 @@ class manager:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro.connect( new_task, ns_obj_name( new_task.get_identity(), self.groupname) )
-                    new_task.log('DEBUG', "connected" )
-                    self.tasks.append( new_task )
+                    try:
+                        self.pyro.connect( new_task, ns_obj_name( new_task.get_identity(), self.groupname) )
+                    except Exception, x:
+                        # THIS WILL BE A Pyro NamingError IF THE NEW TASK
+                        # ALREADY EXISTS IN THE SYSTEM.
+                        print x
+                        self.log.critical( new_task.get_identity() + ' cannot be added!' )
+
+                    else:
+                        new_task.log('DEBUG', "connected" )
+                        self.tasks.append( new_task )
 
 
     def dump_state( self, new_file = False ):
