@@ -4,6 +4,8 @@ To Do
   task to finished, which made it spawn ... is this the desired
   behaviour?)
 
+* insert may need a no-spawn option!
+
 * consider restart messages for split tasks that actually use the same 
   restart files: e.g. nzlam_long (06,18Z) and nzlam_short (00,12Z). 
   Currently must combine this into one task with conditionals, OR 

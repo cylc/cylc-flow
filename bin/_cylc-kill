@@ -19,6 +19,9 @@ parser = PromptOptionParser( """cylc kill [options] SYSTEM
 Remove a single task proxy object from the system. The task will be
 forced to spawn before dying unless you specify '--no-spawn'.
 
+WARNING: THIS COMMAND IS DANGEROUS (but if you screw up you can restart
+the system from its pre-purge state using the automatic state dump).
+
 WARNING: This kills task proxy objects in the scheduler, NOT running
 external tasks!""" )
 

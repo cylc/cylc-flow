@@ -21,6 +21,15 @@ Force a task to spawn and die, and then force every task that depends on
 its outputs to spawn and die, and then force every task that depends on
 their outputs to spawn and die, and so on down to a given cycle time.
 
+Purging can only detect downstream dependencies of the targetted task in
+task proxies that actually exist at the time the command is used. So
+unless you really know what you're doing DO NOT purge a task whose
+dependants have not all appeared yet (because *their* predecessors in
+earlier cycles have not spawned yet). 
+
+WARNING: THIS COMMAND IS DANGEROUS (but if you screw up you can restart
+the system from its pre-purge state using the automatic state dump).
+
 WARNING: This kills task proxy objects in the scheduler, NOT running
 external tasks!""")
 
