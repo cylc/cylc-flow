@@ -63,11 +63,12 @@ OUT=unit-test.out; OUT_SCHED=unit-test-sched.out
 LOG=$HOME/cylc-logs/unit/main
 
 # START FROM A CLEAN SLATE
-echo -n ">> CLEANING OUT any remnants of previous tests ... "
+echo ">> CLEANING OUT any remnants of previous tests ... "
   # remove any existing unit test system
 [[ -d $SYS_DIR ]] && rm -rf $SYS_DIR
   # unregister any existing registration for unit
-cylc register -g unit > /dev/null 2>&1 && cylc register -d unit > /dev/null 2>&1
+  # 'register -d' fails if no Pyro nameserver!
+cylc register -g unit && cylc register -d unit
   # remove output files
 rm -f $OUT $OUT_SCHED
 echo done
@@ -158,6 +159,12 @@ while ! $READY; do
     echo -n .
     sleep 1
 done
+echo done
+
+# DELETE THE SYSTEM DEFINITION DIRECTORY
+echo
+echo -n ">> DELETING system definition directory ..."
+rm -rf $SYS_DIR
 echo done
 
 # FINISHED
