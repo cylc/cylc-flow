@@ -1800,8 +1800,32 @@ target the practice system and not the real one. Be sure to set
 accidentally messing with it (even if you do screw up, however, cylc's
 automatic pre-intervention state dumps will save you!).
 
+\subsection{Roll Your Own Practice Mode}
 
+A less automated way to ``practice'' on a copy of an existing system
+that starts up from the current (or previous) state of that system, 
+\lstinline=cylc start --practice= is this:
 
+\begin{itemize}
+    \item register your system again under a different name. This allows
+        you to run a dummy mode copy of the same system without
+        interfering with the original system (it also allows you to run
+        a copy of the real mode system without interference, but only if
+        the real system tasks are configured to use the registered
+        system name in all important input and output filenames and/or
+        directory paths - see {\em Command Reference} Section~\ref{register}).
+
+    \item start up the newly registered system in dummy mode using:
+        \begin{lstlisting}
+cylc start --dummy-mode --restart-from=FILE SYSTEM
+        \end{lstlisting}
+        where FILE is a state dump file from the original system. The
+        absolute filepath is required here because the default state
+        dump location depends on the registered system name (so that
+        different systems don't interfere with each other's state
+        dumps).
+
+\end{itemize}
 
 \section{Job Submission}
 \label{JobSubmission}
