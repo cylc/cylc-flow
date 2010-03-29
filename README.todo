@@ -1,5 +1,9 @@
 To Do
 
+* consider reset --no-spawn (Bernard tried to reset a waiting unspawned
+  task to finished, which made it spawn ... is this the desired
+  behaviour?)
+
 * consider restart messages for split tasks that actually use the same 
   restart files: e.g. nzlam_long (06,18Z) and nzlam_short (00,12Z). 
   Currently must combine this into one task with conditionals, OR 
