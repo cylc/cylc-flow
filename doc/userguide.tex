@@ -1164,7 +1164,7 @@ failed, where failure occurs if no obs of a particular type happen to be
 available for the forecast cycle in question).
 
 
-\subsubsection{Forecast Model Restart Outputs}
+\subsection{Forecast Model Restart Prerequisites And Outputs}
 
 Task of the `tied' type (i.e.\ forecast models) must declare, in their
 task definition files, the number (and expected output times) of
@@ -1193,6 +1193,39 @@ exact message format. The exception to this is oneoff cold start tasks
 that provide initial restart inputs for other tasks; these currently 
 have to report the right restart messages, as above, explicitly.
 
+However, {\bf note that oneoff coldstart tasks, which supply initial
+restart prerequisites at system startup, must currently register these
+restart outputs explicitly}. You can see this in the userguide example
+system.
+
+\subsubsection{Why Use Restart Outputs?}
+
+If they seem overly complicated, you don't have to use them! You could
+instead declare all your forecast models to be of the  
+\lstinline=free, sequential= type. Such tasks cannot start until their
+previous instances have finished, so any restart prerequisites are
+implicitly satisfied.
+
+However, if you do use restart outputs, you gain the following advantages:
+
+\begin{itemize}
+
+    \item a more efficient system: forecast model tasks that can start
+        up before their previous instances have finished (other
+        prerequisites allowing).  
+    
+    \item automatic post-intervention recovery from nasty system
+        failures, because the scheduler knows about the actual restart
+        dependencies of your real tasks: in the userguide example
+        system, if the weather model (task A) fails requiring a cold
+        start 12 hours later, insert the cold start task into the
+        system, purge downstream dependencies through to the cold start
+        cycle, and then: tasks B and C will carry on as normal because 
+        their resetart dependencies will be satisfied by their
+        pre-failure predecessors from several cycles ago, just as is the
+        case for the real tasks.
+
+\end{itemize}
 
 \pagebreak
 \subsection{Task Scripts}
