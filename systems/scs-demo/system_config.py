@@ -31,7 +31,7 @@ class system_config( config ):
         config.__init__( self, sysname )
 
         # system title
-        # self.items[ 'system_title' ] = 'DEFAULT TITLE'
+        self.items[ 'system_title' ] = 'SCS DEMO EXAMPLE'
 
         # system info: add descriptive information as you like, e.g.:
         # self.items[ 'system_info' ]['foo'] = 'foo bar baz'
