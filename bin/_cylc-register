@@ -67,7 +67,7 @@ parser.add_option( "-g", "--get",
     action="store_true", default=False, dest="get" )
 
 parser.add_option( "-d", "--delete",
-    help="Print the system directory registered under NAME.",
+    help="Delete the registered NAME.",
     action="store_true", default=False, dest="delete" )
 
 parser.add_option( "-c", "--check",
