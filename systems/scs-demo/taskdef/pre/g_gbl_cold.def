@@ -26,6 +26,9 @@
     TARG ftpserver:/download/globaldump.$(CYCLE_TIME).um
     DEST hpc:/oper/input/
 
+%STARTUP_PREREQUISITES
+    "startup%$(CYCLE_TIME) finished"
+
 %PREREQUISITES
     # NONE
 

@@ -1,0 +1,26 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+
+%NAME
+    startup
+
+%DESCRIPTION
+    Prepare working environment for a new forecast analysis suite
+
+%TYPE
+    free, oneoff
+
+%CYCLES
+    6
+
+%NO_NONCOTEMPORAL_DEPENDANTS
+    True
+
+%TASK
+    startup.sh
+
+%PREREQUISITES
+    # NONE
+
+%ESTIMATED_RUN_TIME
+    2 min

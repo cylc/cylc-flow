@@ -23,8 +23,11 @@
     TARG ftpserver:/download/bgerr.$(CYCLE_TIME).um
     DEST hpc:/oper/input/
 
+%STARTUP_PREREQUISITES
+    "startup%$(CYCLE_TIME) finished"
+
 %PREREQUISITES
-    # NONE
+    # None
 
 %ESTIMATED_RUN_TIME
     2 min
