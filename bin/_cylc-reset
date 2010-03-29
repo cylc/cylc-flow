@@ -19,18 +19,18 @@ parser = PromptOptionParser( """cylc reset [options] SYSTEM
 
 Reset the state of a single task to 'waiting', 'ready' or 'finished'.
 
-The default behaviour, and principal intended use, of this command is to
-reset a failed task to the 'waiting' state (waiting for its
-prerequisites to be satisfied) after fixing the problem that resulted in
-the failure, thereby causing the failed task to be resubmitted.
+The principal intended use of this command is to reset a failed task to
+the WAITING state (i.e. waiting for its prerequisites to be satisfied)
+after fixing the problem that resulted in the failure, thereby causing
+the failed task to be resubmitted.
 
-But you can also reset a task to 'ready' (satisfied prerequisites)
-or 'finished' (completed outputs).  Reset a task to 'finished' ONLY if
-you know that the external task has completed successfully prior to
-starting the scheduler; and reset a task to 'ready' ONLY if you know
-that the external task's real prerequisites are satisfied AND (this
-should not happen!) the tasks responsible for satisfying them are no
-longer present in the task pool.""" )
+But you can also reset a task to:
+ * FINISHED (i.e. completed outputs) - Do this ONLY if you know that the
+external task has completed successfully prior to starting the scheduler 
+ * READY (i.e. satisfied prerequisites) - Do this ONLY if you know that
+the external task's real prerequisites are satisfied AND the tasks
+responsible for satisfying them are no longer present in the task pool
+(which should not happen!).""" )
 
 parser.add_option( "--waiting", 
         help="Reset a task to the 'waiting' state (prerequisites yet "
