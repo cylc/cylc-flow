@@ -101,18 +101,17 @@ usage = """1/ cylc start [options] --at=CYCLE SYSTEM
 Usage: 2/ cylc start [options] --restart SYSTEM
 Usage: 3/ cylc start [options] --restart-from=FILE SYSTEM
 
-Start or restart a cylc system registered under the name SYSTEM. The
-system will initially be locked; use 'cylc unlock' gain control of it.
-Use nohup to make the scheduler independent of your terminal log in.
-Cycle time format: YYYYMMDDHH. 
+Start up a cylc system registered under the name SYSTEM.
+ * The system will start locked; use 'cylc unlock' gain control. 
+ * Use nohup to make the scheduler independent of your terminal log in.
+ * See the userguide for documentation of dummy mode and practice mode.
 
 1/ COLD START: each task in the configured task list is instantiated
 at the initial cycle time, or at the next cycle valid for the task.  
 
-2,3/ RESTART: each task in the configured or named state dump file will
-be resurrected at startup. Any task recorded as submitted, running, or
-failed will be reset and therefore resubmitted, unless '--practice' or
-'--no-reset' is specified.
+2,3/ RESTART: tasks in the configured or named state dump file will be
+resurrected at startup. Any task recorded as submitted, running, or
+failed will be reset to waiting (unless '--practice' or '--no-reset')
 
 Arguments:
    SYSTEM               Registered name of the system to run.""" 
@@ -125,7 +124,7 @@ def commandline_parser():
             clock_rate=10, clock_offset=24 )
 
     parser.add_option( "--at", 
-            help="Initial cycle time.",
+            help="Initial cycle time (YYYYMMDDHH).",
             metavar="CYCLE", action="store", dest="start_time" )
     
     parser.add_option( "--until", 
@@ -147,7 +146,7 @@ def commandline_parser():
             metavar="FILE", action="store", dest="restart_from" )
 
     parser.add_option( "--no-reset", 
-            help="(RESTART) Do no reset unfinished tasks to the waiting "
+            help="(RESTART) Do no reset failed tasks to the waiting "
             "state at startup. True by default in practice mode.",
             action="store_true", default=False, dest="no_reset" )
 
@@ -168,9 +167,9 @@ def commandline_parser():
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "-p", "--practice",
-            help="Restart an existing system, which may still be running, "
-            "in dummy mode such that the original's state and logging "
-            "directories will not be not corrupted.",
+            help="Clone an existing system in dummy mode using new state "
+            "and logging directories to avoid corrupting the original. "
+            "Failed tasks will not be reset to waiting in the clone.",
             action="store_true", dest="practice_mode" )
 
     parser.add_option( "-d", "--dummy-mode",
@@ -226,7 +225,7 @@ else:
 # get mode of operation------------------------------------------------
 
 if options.dummy_mode and options.practice_mode:
-    parser.error( "choose ONE of dummy or practice mode")
+    parser.error( "Choose ONE of dummy or practice mode")
 
 dummy_mode = False
 practice = False

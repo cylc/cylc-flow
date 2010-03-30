@@ -47,10 +47,14 @@ class task_state:
             self.state = self.parse( initial_state )
             self.check()
 
-            if self.is_running() or self.is_submitted() or self.is_failed():
+            if self.is_running() or self.is_submitted():
                 # we can't be sure that these tasks completed after the
                 # system was shut down, so reset to waiting to ensure
                 # they run again after restarting the system. 
+                self.set_status( 'waiting' )
+                
+            if self.is_failed() and not no_reset:
+                # reset failed tasks to waiting unless told not to do so.
                 if not no_reset:
                     self.set_status( 'waiting' )
 
