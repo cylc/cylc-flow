@@ -1747,7 +1747,92 @@ configure the external tasks with knowledge of the wider system.
 
 
 
-\section{Dummy Mode} 
+\section{Running Cylc Systems}
+\label{RunningCylcSystems}
+
+\subsection{Cold Starts}
+
+To cold start a system you need to specify an initial cycle time, e.g.:
+
+\begin{lstlisting}
+cylc start --at=2009101218 SYSTEM
+\end{lstlisting}
+
+\subsubsection{Oneoff Coldstart Tasks}
+
+A cylc system is supposed to model, in terms of scheduling behaviour,
+the real system that it represents.  Thus if your system contains any
+warm-cycling forecast models (i.e.\ tasks that depend on their own
+previous instance for restart prerequisites) then you will need some
+special oneoff coldstart tasks to supply their initial restart
+prerequisites. These tasks can launch actual coldstart forecasts, or
+they can represent some external spinup process that has to be completed
+before the system is started. In the latter case they should be declared
+as TYPE \lstinline=oneoff, dummy= in the taskdef file so that they will
+simply report their outputs complete (the system operator must guarantee
+that the actual spinup process has taken place prior to startup).
+
+Oneoff coldstart tasks also need to be inserted into a running system
+if circumstances demand that a forecast model actually requires a cold
+start rather than continued warm cycling. See {\em Failure Recovery
+Scenarios} (Section~\ref{FailureRecoveryScenarios}) for an example of
+this. 
+
+See {\em Task Definition Files} (Section~\ref{Task Definition Files}), 
+and the userguide example system implementation, for more on oneoff cold
+start tasks.
+
+\subsection{Restarts}
+
+Cylc's automatic {\em state dump files} (described below in
+Section~\ref{AutomaticStateDumps}) allow you to restart a system
+that has previously been shut down, either from 
+its most recent previous state:
+
+\begin{lstlisting}
+cylc start --restart SYSTEM
+\end{lstlisting}
+
+OR from a particular previous state:
+
+\begin{lstlisting}
+cylc start --restart-from=FILE SYSTEM
+\end{lstlisting}
+
+where FILE is a named state dump file. If the state dump file resides in the
+configured state dump directory for SYSTEM (e.g.\  
+\lstinline=$HOME/cylc-state/SYSTEM/=) then just the filename is needed, 
+otherwise give the full directory path.
+
+Default restart behaviour is to automatically reset unfinished (i.e.\
+submitted, running, or failed) tasks to waiting. This is the only
+sensible thing to do because cylc cannot know that unfinished external
+tasks completed after the system was shut down ({\em practice mode} restarts 
+are an exception to this - see below).
+
+\subsection{Automatic State Dumps}
+
+Cylc updates its configured state dump file (e.g.\
+\lstinline=$HOME/cylc-state/state=) after every pass through the task 
+processing loop.
+
+In addition, immediately prior to any dangerous system invention a 
+special state dump file with a unique name is created, and an alert is
+logged, e.g.:
+
+\begin{lstlisting}
+2010/03/30 14:54:29 WARNING main - pre-purge state dump: state.2010:3:30:14:54:29
+\end{lstlisting}
+
+If the system intervention does not have the desired effect, shut the system 
+down immediately and restart it from the pre-intervention state dump:
+
+\begin{lstlisting}
+cylc start --restart-from=state.2010:3:30:14:54:29 SYSTEM
+\end{lstlisting}
+
+
+\subsection{Dummy Mode} 
 \label{DummyMode}
 
 If you start a system in dummy mode, e.g.\:
@@ -1767,7 +1852,7 @@ This is a powerful aid in constructing new systems, because it allows
 you to get the scheduling right without having to deal with all the
 complications of running the real tasks.
 
-\subsection{Clock Rate and Offset}
+\subsubsection{Clock Rate and Offset}
 
 Dummy mode systems run on an accelerated clock so that you can test
 things very quickly. You can set the clock rate and offset with respect
@@ -1779,7 +1864,7 @@ and transitions to real time operation.  By default, the clock runs at a
 rate of 10 seconds real time to 1 hour system time, and with an initial
 offset of 10 hours. 
 
-\subsection{Practice Mode}
+\subsubsection{Practice Mode}
 
 Practice mode allows quick and easy testing of potentially complex
 system interventions, with complete safety.
@@ -1793,6 +1878,10 @@ current state of that system (which may be paused, still running, or
 halted), but using different state and log files so that the original
 system will not be corrupted by the clone.
 
+{\em in a practice mode restart failed tasks are not reset to waiting}
+because the whole point of practice mode is to ``practice'' how to
+recover from failures.
+
 Note that other cylc commands for monitoring or interacting with the
 system must also use the \lstinline=--practice= option in order to
 target the practice system and not the real one. Be sure to set
@@ -1800,7 +1889,8 @@ target the practice system and not the real one. Be sure to set
 accidentally messing with it (even if you do screw up, however, cylc's
 automatic pre-intervention state dumps will save you!).
 
-\subsection{Roll Your Own Practice Mode}
+
+\subsubsection{Roll Your Own Practice Mode}
 
 A less automated way to ``practice'' on a copy of an existing system
 that starts up from the current (or previous) state of that system, 
@@ -1827,7 +1917,7 @@ cylc start --dummy-mode --restart-from=FILE SYSTEM
 
 \end{itemize}
 
-\section{Job Submission}
+\subsection{Job Submission}
 \label{JobSubmission}
 
 Cylc comes with two job submit methods, ``background'' and
@@ -2271,16 +2361,15 @@ contention, it will not report its outputs complete until it does run.
 \subsection{Known Bugs and Limitations}
 
 \begin{itemize}
-    \item cycle time minimum granularity = 1 hour. Note this is
-        only loosely connected to when, or how frequently, a task
-        actually runs, and only in real time operation. Would be easy to
-        extend to minutes and seconds, if necessary.
+    \item {\bf minimum cycle time granularity is currently 1 hour}. Note
+        this is only loosely connected to when, or how frequently, a
+        task actually runs, and only in real time operation. It would be
+        easy to extend to minutes and seconds, if necessary.
 
-    \item it is assumed that every task runs at least once in 24 hours
-        (see the taskdef CYCLES key). It would be easy to extend this to
-        less frequent tasks, if required.
-
-    \item why we need the nudge option - maybe should use a timeout too.
+    \item {\bf it is currently assumed that every task has at least one
+        cycle in a 24 hour period} (via the taskdef CYCLES key). 
+        It would be easy to extend this to less frequent tasks, if
+        required. 
 
 \end{itemize}
 
@@ -2301,27 +2390,15 @@ $ for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
 \end{itemize}
 
 
-\section{Safety Netting}
-\label{SafetyNetting}
-
-\begin{itemize}
-    \item dummy mode: get scheduling right before running real tasks
-    \item automatic state dump prior to system interventions - restart
-        from prior state if necessary.
-    \item practice mode: instantly clone an accelerated dummy mode copy
-        of you operational system in its current running state (or its
-        most recent state prior to shutdown) current state) and use it
-        to try out system interventions as many times as you like
-        necessary without affecting the state of the operational system.
-\end{itemize}
-
 \section{Failure Recovery Scenarios}
 \label{Failure Recovery Scenarios}
 
 \begin{itemize}
     \item {\em One forecast cycle runs into the next, after a delay in
-        operations}. This is no problem for cylc; every task runs as
-        soon as it can run, regardless of forecast cycle.
+        operations}. This is never a problem for cylc; every task runs
+        as soon as it can run, regardless of forecast cycle, and any
+        task that can't run before it's predecessor has finished will
+        wait.
 
     \item {\em A delayed parallel trial or case study catches up to real
         time operation}. This is no problem for cylc; as explained in
