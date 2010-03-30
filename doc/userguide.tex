@@ -1872,13 +1872,14 @@ system interventions, with complete safety.
 \begin{lstlisting}
 % cylc start --restart --practice userguide
 \end{lstlisting}
+(You can also use \lstinline=--restart-from=)
 
 This will start a dummy mode clone of an existing system from the
 current state of that system (which may be paused, still running, or
 halted), but using different state and log files so that the original
 system will not be corrupted by the clone.
 
-{\em in a practice mode restart failed tasks are not reset to waiting}
+{\em At startup in practice mode, failed tasks are not reset to waiting}
 because the whole point of practice mode is to ``practice'' how to
 recover from failures.
 

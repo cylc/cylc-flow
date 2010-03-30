@@ -227,6 +227,9 @@ else:
 if options.dummy_mode and options.practice_mode:
     parser.error( "Choose ONE of dummy or practice mode")
 
+if options.start_time and options.practice_mode:
+    parser.error( "You can't do a cold start in practice mode")
+
 dummy_mode = False
 practice = False
 
