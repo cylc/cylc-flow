@@ -38,9 +38,9 @@ def check_dir( dir ):
  
 #----------------------------------------
 
-parser = OptionParser( usage = """Usage: cylc register [-d,--delete] [-g,--get] [--system=PATH] NAME
-Usage: cylc register [-p,--print]
-Usage: cylc register [--host=HOST] [-c, --check] [-w,--wipe]
+parser = OptionParser( usage = """1/ cylc register [-d,--delete] [-g,--get] [--system=PATH] NAME
+Usage: 2/ cylc register [-p,--print]
+Usage: 3/ cylc register [--host=HOST] [-c, --check] [-w,--wipe]
 
 Manage user-specific mappings between names and configured systems. A
 single system can be registered for use under multiple names.

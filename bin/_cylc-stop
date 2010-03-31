@@ -17,13 +17,15 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc stop [options] SYSTEM 
 
-Tell a cylc system to shut itself down immediately, or after all
-currently running tasks have finished (this is the default), or once all
-tasks have passed some designated future cycle time.""" )
+Get a running scheduler to shut down after all currently running tasks
+have finished (this is the default), or after all tasks have passed some
+future cycle time and finished, or immediately (see WARNING below).""" )
 
 parser.add_option( "--now", 
-        help="Shutdown the system NOW, even if tasks are still running. "
-        "NOTE THAT THIS DOES NOT KILL RUNNING EXTERNAL TASKS",
+        help="Stop the system immediately. WARNING: any tasks that are "
+        "still running will be unable to phone home, AND the final cylc "
+        "state dump file will not correctly reflect the state of tasks "
+        "that finish successfully after the scheduler has shut down.",
         action="store_true", default=False, dest="shutdownnow" )
 
 parser.add_option( "--at", 

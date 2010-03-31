@@ -22,7 +22,7 @@ function print_usage()
 	echo "usage: cylc configure [options] PATH"
     echo ""
     echo "Parse task definition files and generate system-specific Python modules"
-    echo "in the task definition directory, where you must have write permission:"
+    echo "in a cylc system definition directory (write permissions are required):"
     echo " - task_classes.py .................................. task class module"
     echo " - task_list.py ............... list of tasks to instantiate at startup"
     echo " - system_config.py ............... CUSTOMIZABLE configuration settings"

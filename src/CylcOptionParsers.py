@@ -27,7 +27,7 @@ class NoPromptOptionParser_u( OptionParser ):
 If you are not the owner of the target system, the username must be
 supplied so that the Pyro nameserver group name can be inferred.
 
-arguments:
+Arguments:
    SYSTEM               Registered name of the target system.""" 
 
         OptionParser.__init__( self, usage )
