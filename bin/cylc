@@ -15,7 +15,7 @@ import sys
 import subprocess
 
 # auto-replace with version tag at build/install:
-cylc_version = "-CYLC-VERSION-"
+cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 allowed_commands = \
     [ 

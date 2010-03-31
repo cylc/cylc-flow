@@ -48,8 +48,8 @@ chmod +x systems/nested/scripts/*
 chmod +x systems/FIXME/distributed/scripts/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
-perl -pi -e "s/-CYLC-VERSION-/$CYLC_VERSION/" bin/cylc
-perl -pi -e "s/-CYLC-VERSION-/$CYLC_VERSION/" doc/userguide.tex
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" bin/cylc
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" doc/userguide.tex
 
 echo "MAKING DOCUMENTATION (USERGUIDE)"
 # make sure documentation processing uses the release versions
