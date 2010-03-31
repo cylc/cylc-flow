@@ -1903,7 +1903,7 @@ tasks in the main system.
 
 \subsection{File-Move}
 
-This working example system illustrates to things:
+This working example system illustrates two things:
 
 \begin{itemize}
     \item How you can move real input/output files around to connect
@@ -1923,7 +1923,7 @@ This working example system illustrates to things:
 
 This working example is a variant of the file-move example system in
 which one of the tasks executes on another machine on the network. The
-{\em file-transfer} task script is invoked twice, once the `put' task,
+{\em file-transfer} task script is invoked twice, once for the `put' task,
 which puts input files on the remote machine, and once for the `get'
 task, which retrieves outputs from the remote machine once the remote
 task has finished.
@@ -1937,9 +1937,9 @@ This example system serves to illustrate two things:
 \end{itemize}
 
 Unlike the other example systems, this one will not work ``out of the
-box''. You will to have passwordless ssh configured to the remote
+box''. You will need to have passwordless ssh configured to the remote
 machine, install the remote task script on it, and specify the right
-hostname in the taskdef file.
+hostname in the taskdef files.
 
 
 \pagebreak
