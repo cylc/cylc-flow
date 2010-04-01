@@ -17,11 +17,10 @@ parser = PromptOptionParser( """cylc lock [options] SYSTEM
 
 Only the owner of a system can intervene in its operation with cylc
 commands such as stop, kill, purge, reset, etc. With this command you
-can also guard against inadvertent intervention your own systems (when
-using practice mode, for instance, lock the original system in case 
-you accidentally target it instead of the practice one). Deliberate
-use of 'cylc unlock' is required to regain control of a locked
-system.""" )
+can also guard against inadvertent intervention in your own systems
+(when using practice mode, for instance, lock the original system in
+case you accidentally target it instead of the practice one). Deliberate
+use of 'cylc unlock' is required to get control of a locked system.""" )
 
 (options, args) = parser.parse_args()
 

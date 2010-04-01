@@ -30,7 +30,7 @@ function print_usage()
     echo " - job_submit_methods.py ....... CUSTOMIZABLE system job submit methods"
     echo ""
     echo "Customizable modules are not overwritten on reconfiguration, by default."
-    echo "Reconfigure a system whenever its taskdef files have been changed."
+    echo "You need to reconfigure a system if its taskdef files have been changed."
     echo ""
     echo "arguments:"
     echo "  PATH         Location of a cylc system definition directory."

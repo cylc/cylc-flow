@@ -102,7 +102,7 @@ Usage: 2/ cylc start [options] --restart SYSTEM
 Usage: 3/ cylc start [options] --restart-from=FILE SYSTEM
 
 Start up a cylc system registered under the name SYSTEM.
- * The system will start locked; use 'cylc unlock' gain control. 
+ * The system will start up in a locked state (see 'cylc unlock'). 
  * Use nohup to make the scheduler independent of your terminal log in.
  * See the userguide for documentation of dummy mode and practice mode.
 

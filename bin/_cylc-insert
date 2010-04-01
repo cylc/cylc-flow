@@ -22,12 +22,12 @@ Inserted tasks will spawn successors as normal (unless they are of the
 'oneoff' type). If you don't want this, consider using 'cylc run-task').""" )
 
 parser.add_option( "-t", "--task",
-        help="ID of a task to insert.",
-        metavar="TASK%CYCLE", action="store", dest="task_id" )
+        help="Identity of a task to insert.",
+        metavar="NAME%CYCLE", action="store", dest="task_id" )
 
 parser.add_option( "-g", "--group",
-        help="ID of a task group to insert.",
-        metavar="TASK%CYCLE", action="store", dest="task_id" )
+        help="Identity of a task group to insert.",
+        metavar="NAME%CYCLE", action="store", dest="task_id" )
 
 (options, args) = parser.parse_args()
 

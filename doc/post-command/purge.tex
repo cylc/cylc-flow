@@ -1,0 +1,7 @@
+Purge can only detect downstream dependencies of the targetted task in
+task proxies that actually exist at the time the command is used. So
+unless you really know what you're doing {\em do not purge a task whose
+downstream dependants do not all exist yet} (presumably because *their*
+predecessors in earlier cycles have not spawned yet).  If you do do
+this, you may need to clean up later with some manual use of 
+\lstinline=cylc kill=.

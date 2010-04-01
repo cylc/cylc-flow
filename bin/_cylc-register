@@ -42,20 +42,12 @@ parser = OptionParser( usage = """1/ cylc register [-d,--delete] [-g,--get] [--s
 Usage: 2/ cylc register [-p,--print]
 Usage: 3/ cylc register [--host=HOST] [-c, --check] [-w,--wipe]
 
-Manage user-specific system name registrations, which are mappings
-between system names and configured cylc system definition directories.
+Create, print, or delete user-specific cylc system name registrations, 
+which associate a name with a configured system definition directory.
 
-A single system can be registered for use under multiple names, which
-allows you to run dummy and real mode instances of a system at the same
-time (see also 'cylc start --practice' for this functionality). You can
-even run multiple real mode instances of a system at the same time
-depending on system configuration (see the cylc userguide for details).
-
-Registration is required by cylc start, run-task, and system-info, which
-need access to system-specific modules. Other commands interact with the 
-target system via the Pyro nameserver; for these you need to know the
-registered name of the system, and the username under which it is running
-(see 'cylc list-all'), but you don't need to have registered it yourself. 
+A system can be registered for use under multiple names. This allows,
+for example, real and dummy mode instances of a system to run at the
+same time (see also 'cylc start --practice' for this functionality).
 
 Arguments:
   NAME            Name to associate with the configured system directory.""" )

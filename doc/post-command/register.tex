@@ -4,9 +4,35 @@ full system definition directory path on the command line; and (2) the
 registered name is used, along with your username, to distinguish
 between different systems using the Pyro nameserver at the same time. 
 
-A system's registered name is made available to to tasks via their
-execution environment, as \lstinline=$SYSTEM_NAME=. If all tasks are
-configured to use the name in all important input and output filepaths,
-then it is possible to run multiple instances of the system at the same
-time without any interference between them. The userguide example system
-is capable of this.
+Registration is only required if you want to start scheduling a system
+(\lstinline=cylc start=), run a single task from a system 
+(\lstinline=cylc run-task=), or print system-specific descriptive
+information (\lstinline=system-info=), because these commands need to
+access system-specific code modules.
+
+Other cylc commands interact with a running target system via the Pyro
+nameserver; for these you need to know the registered name of the
+system, and the username under which it is running (see 
+\lstinline=cylc list-all=), but you don't need to have registered it
+yourself. 
+
+The registered name under which a system is running is made available in
+the task execution environment as \lstinline=$SYSTEM_NAME=.  If system
+tasks are configured to use the registered name in all important input
+and output directory paths, then multiple-registration allows you to run
+multiple real or dummy mode instances of that system at the same time
+without any interference between them. The userguide example system can
+do this. It also means that multiple users can run the same installed
+version of the example system at the same time (in fact different users
+can register a system under the same name because username is also used
+in constructing the Pyro nameserver groupname that distinguishes
+different running systems). It may also be useful, at least in
+relatively small systems that are not using all available computational
+resource, to run several historical case studies at once, over different
+time periods, using the same system; or perhaps to run a case study at
+the same time as the real time operation using the actual operational
+system - an easy way to guarantee that two systems really are identical.
+Of course the alternative to this is to copy the system definition
+directory and thereby create an entirely new system based on the
+original.
+

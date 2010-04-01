@@ -77,7 +77,7 @@ usage = \
     '# T A S K C O N T R O L',
     '  insert ...... Insert a task, or group of tasks, into a running system',
     '  reset ....... Force a task\'s state to waiting, ready, or finished',
-    '  kill ........ Delete a task from a running system, once or permanently',
+    '  kill ........ Delete tasks from a running system, once or permanently',
     '  purge ....... Recursively kill dependent tasks, down to a given cycle',
     '_________________________________________________________________________',
     '# I N F O R M A T I O N',
