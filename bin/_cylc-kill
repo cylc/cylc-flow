@@ -16,37 +16,52 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc kill [options] SYSTEM 
 
-Remove a single task proxy object from the system. The task will be
-forced to spawn before dying unless you specify '--no-spawn'.
+Delete task proxy objects from a running scheduler. 
 
-WARNING: THIS COMMAND IS DANGEROUS (but if you screw up you can restart
-the system from its pre-purge state using the automatic state dump).
+The target tasks will be forced to spawn successors first, if they
+haven't done so already, unless you specify the '--no-spawn' option. 
 
-WARNING: This kills task proxy objects in the scheduler, NOT running
-external tasks!""" )
+WARNING: THIS COMMAND IS DANGEROUS, but if necessary you can restart
+the system from the automatic pre-kill state dump (see the main log).""" )
 
-parser.add_option( "-t", 
-        help="ID of the task to kill.",
-        metavar="TASK%CYCLE", action="store", dest="kill_id" )
+parser.add_option( "-t", "--task",
+        help="Identity of the task to kill.",
+        metavar="NAME%CYCLE", action="store", dest="kill_id" )
+
+parser.add_option( "-c", "--cycle",
+        help="Kill all tasks currently at this cycle time.",
+        metavar="CYCLE", action="store", dest="kill_cycle" )
 
 parser.add_option( "--no-spawn", 
-        help="Do not spawn before dying.",
+        help="Do not spawn successors before dying.",
         action="store_true", default=False, dest="no_spawn" )
 
 (options, args) = parser.parse_args()
 
-if not options.kill_id:
-    parser.error( "Task ID required" )
+if not options.kill_id and not options.kill_cycle:
+    parser.error( "Task identity or cycle time required" )
 
-target = options.kill_id  
-# check inputs
-( name, cycle ) = target.split('%')
-if not cycle_time.is_valid( cycle ):
-    parser.error( "invalid cycle time: " + cycle )
+god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+ 
+if options.kill_cycle:
+    cycle = options.kill_cycle
+    if not cycle_time.is_valid( cycle ):
+        parser.error( "invalid cycle time: " + cycle )
 
-if parser.prompt( 'Kill task ' + target + ' in'):
-    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    if options.no_spawn:
-        print god.die( target, os.environ['USER'] )
-    else:
-        print god.spawn_and_die( target, os.environ['USER'] )
+    if parser.prompt( 'Kill ALL tasks in ' + cycle ):
+        if options.no_spawn:
+            print god.die_cycle( cycle, os.environ['USER'] )
+        else:
+            print god.spawn_and_die_cycle( cycle, os.environ['USER'] )
+
+if options.kill_id:
+    target = options.kill_id  
+    ( name, cycle ) = target.split('%')
+    if not cycle_time.is_valid( cycle ):
+        parser.error( "invalid cycle time: " + cycle )
+
+    if parser.prompt( 'Kill task ' + target + ' in'):
+        if options.no_spawn:
+            print god.die( target, os.environ['USER'] )
+        else:
+            print god.spawn_and_die( target, os.environ['USER'] )

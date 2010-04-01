@@ -193,8 +193,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return "Done"
 
-
-
     def set_hold_time( self, ctime, user ):
         if user != self.owner:
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
@@ -333,6 +331,18 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return "Done"
 
+    def die_cycle( self, cycle, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
+        if self.locked:
+            self.log.warning( "REMOTE: refusing kill request (locked)" )
+            return "SORRY, THIS SYSTEM IS LOCKED"
+
+        self.log.warning( "REMOTE: kill cycle: " + cycle )
+        self.pool.kill_cycle( cycle )
+        self.process_tasks = True
+        return "Done"
 
     def spawn_and_die( self, task_id, user ):
         if user != self.owner:
@@ -347,6 +357,18 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return "Done"
 
+    def spawn_and_die_cycle( self, cycle, user ):
+        if user != self.owner:
+            return "ILLEGAL OPERATION: This system is owned by " + self.owner
+
+        if self.locked:
+            self.log.warning( "REMOTE: refusing kill request (locked)" )
+            return "SORRY, THIS SYSTEM IS LOCKED"
+
+        self.log.warning( "REMOTE: spawn and die cycle: " + cycle )
+        self.pool.spawn_and_die_cycle( cycle )
+        self.process_tasks = True
+        return "Done"
 
     def set_verbosity( self, level, user ):
         if user != self.owner:

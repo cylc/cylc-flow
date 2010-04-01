@@ -42,8 +42,14 @@ parser = OptionParser( usage = """1/ cylc register [-d,--delete] [-g,--get] [--s
 Usage: 2/ cylc register [-p,--print]
 Usage: 3/ cylc register [--host=HOST] [-c, --check] [-w,--wipe]
 
-Manage user-specific mappings between names and configured systems. A
-single system can be registered for use under multiple names.
+Manage user-specific system name registrations, which are mappings
+between system names and configured cylc system definition directories.
+
+A single system can be registered for use under multiple names, which
+allows you to run dummy and real mode instances of a system at the same
+time (see also 'cylc start --practice' for this functionality). You can
+even run multiple real mode instances of a system at the same time
+depending on system configuration (see the cylc userguide for details).
 
 Registration is required by cylc start, run-task, and system-info, which
 need access to system-specific modules. Other commands interact with the 

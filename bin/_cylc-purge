@@ -27,8 +27,8 @@ unless you really know what you're doing DO NOT purge a task whose
 dependants have not all appeared yet (because *their* predecessors in
 earlier cycles have not spawned yet). 
 
-WARNING: THIS COMMAND IS DANGEROUS (but if you screw up you can restart
-the system from its pre-purge state using the automatic state dump).
+WARNING: THIS COMMAND IS DANGEROUS, but if necessary you can restart
+the system from the automatic pre-purge state dump (see the main log)
 
 WARNING: This kills task proxy objects in the scheduler, NOT running
 external tasks!""")

@@ -726,17 +726,23 @@ class manager:
                 break
         return result
 
-# NOT NEEDED
-#    def spawn_and_die_rt( self, ctime ):
-#        # spawn and kill all WAITING tasks currently at ctime
-#        # (use to kill lame tasks that will never run because some
-#        # upstream dependency has failed).
-#        task_ids = {}
-#        for itask in self.tasks:
-#            if itask.c_time == ctime and itask.get_status() == 'waiting':
-#                task_ids[ itask.get_identity() ] = True
-#
-#        self.spawn_and_die( task_ids )
+    def kill_cycle( self, ctime ):
+        # kill all tasks currently at ctime
+        task_ids = []
+        for itask in self.tasks:
+            if itask.c_time == ctime: # and itask.get_status() == 'waiting':
+                task_ids.append( itask.get_identity() )
+
+        self.kill( task_ids )
+
+    def spawn_and_die_cycle( self, ctime ):
+        # spawn and kill all tasks currently at ctime
+        task_ids = {}
+        for itask in self.tasks:
+            if itask.c_time == ctime: # and itask.get_status() == 'waiting':
+                task_ids[ itask.get_identity() ] = True
+
+        self.spawn_and_die( task_ids )
 
     def spawn_and_die( self, task_ids ):
         # spawn and kill all tasks in task_ids.keys()
@@ -807,28 +813,6 @@ class manager:
                 return
 
             itask.log( 'DEBUG', "killing myself by remote request" )
-
-            #if not itask.state.has_spawned():
-            #    # forcibly spawn the task and create its successor
-            #    itask.state.set_spawned()
-            #    itask.log( 'DEBUG', 'forced spawning' )
-            #    # TO DO: the following should reuse code in spawn()?
-            #    # dynamic task object creation by task and module name
-            #    new_task = get_object( 'task_classes', itask.name )( itask.next_c_time(), self.dummy_mode )
-            #    if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
-            #        # we've reached the stop time: delete the new task 
-            #        new_task.log( 'WARNING', 'STOPPING at configured stop time' )
-            #        new_task.prepare_for_death()
-            #        del new_task
-            #    else:
-            #        # no stop time, or we haven't reached it yet.
-            #        self.pyro.connect( new_task, new_task.get_identity() )
-            #        new_task.log( 'DEBUG', 'connected' )
-            #        self.tasks.append( new_task )
-
-            #else:
-            #    # already spawned: the successor already exists
-            #    pass
 
             # now kill the task
             self.tasks.remove( itask )
