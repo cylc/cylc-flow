@@ -23,7 +23,7 @@
 check-env.sh || exit 1
 
 # check prerequisites
-PRE=$TMPDIR/storm-surge-${ANALYSIS_TIME}.nc
+PRE=$CYLC_TMPDIR/storm-surge-${ANALYSIS_TIME}.nc
 if [[ ! -f $PRE ]]; then
     # FAILURE
     echo "file not found: $PRE"
@@ -33,4 +33,4 @@ fi
 # EXECUTE THE TASK ...
 sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
 
-touch $TMPDIR/storm-surge-products-${ANALYSIS_TIME}.nc
+touch $CYLC_TMPDIR/storm-surge-products-${ANALYSIS_TIME}.nc

@@ -21,9 +21,15 @@ set -e; trap 'cylc message --failed' ERR
 # START MESSAGE
 cylc message --started
 
-mkdir -p $TMPDIR || \
+if [[ -z $CYLC_TMPDIR ]]; then
+    cylc message -p CRITICAL "\$CYLC_TMPDIR must be defined in system_config.py for this system"
+    cylc message --failed
+    exit 1
+fi
+
+mkdir -p $CYLC_TMPDIR || \
 {
-    cylc message -p CRITICAL "failed to create $TMPDIR"
+    cylc message -p CRITICAL "failed to create $CYLC_TMPDIR"
     cylc message --failed
     exit 1
 }
@@ -31,10 +37,10 @@ mkdir -p $TMPDIR || \
 # EXECUTE THE TASK ...
 sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
 
-echo "CLEANING $TMPDIR"
-rm -rf $TMPDIR/* || \
+echo "CLEANING $CYLC_TMPDIR"
+rm -rf $CYLC_TMPDIR/* || \
 {
-    cylc message -p CRITICAL "failed to clean out $TMPDIR"
+    cylc message -p CRITICAL "failed to clean out $CYLC_TMPDIR"
     cylc message --failed
     exit 1
 }

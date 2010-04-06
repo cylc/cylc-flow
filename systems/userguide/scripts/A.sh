@@ -28,8 +28,8 @@ cylc message --started
 check-env.sh || exit 1
 
 # CHECK PREREQUISITES
-ONE=$TMPDIR/obs-${CYCLE_TIME}.nc
-TWO=$TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart
+ONE=$CYLC_TMPDIR/obs-${CYCLE_TIME}.nc
+TWO=$CYLC_TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
@@ -43,19 +43,19 @@ done
 sleep $(( 10 * 60 / $REAL_TIME_ACCEL ))
 
 # create a restart file for the next cycle
-touch $TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
 cylc message --next-restart-completed
 
 sleep $(( 80 * 60 / $REAL_TIME_ACCEL ))
 
 # create forecast outputs
-touch $TMPDIR/surface-winds-${CYCLE_TIME}.nc
+touch $CYLC_TMPDIR/surface-winds-${CYCLE_TIME}.nc
 cylc message "surface wind fields ready for $CYCLE_TIME"
 
-touch $TMPDIR/surface-pressure-${CYCLE_TIME}.nc
+touch $CYLC_TMPDIR/surface-pressure-${CYCLE_TIME}.nc
 cylc message "surface pressure field ready for $CYCLE_TIME"
 
-touch $TMPDIR/level-fields-${CYCLE_TIME}.nc
+touch $CYLC_TMPDIR/level-fields-${CYCLE_TIME}.nc
 cylc message "level forecast fields ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE

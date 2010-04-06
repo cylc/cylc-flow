@@ -25,8 +25,8 @@ cylc message --started
 check-env.sh || exit 1
 
 # check prerequisites
-ONE=$TMPDIR/sea-state-${CYCLE_TIME}.nc
-TWO=$TMPDIR/storm-surge-${CYCLE_TIME}.nc
+ONE=$CYLC_TMPDIR/sea-state-${CYCLE_TIME}.nc
+TWO=$CYLC_TMPDIR/storm-surge-${CYCLE_TIME}.nc
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
@@ -40,7 +40,7 @@ done
 sleep $(( 75 * 60 / $REAL_TIME_ACCEL ))
 
 # create task outputs
-touch $TMPDIR/seagram-products-${CYCLE_TIME}.nc
+touch $CYLC_TMPDIR/seagram-products-${CYCLE_TIME}.nc
 cylc message "seagram products ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE

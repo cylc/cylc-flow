@@ -24,7 +24,7 @@ Each task "writes output files" using the touch command, and "reads
 input files" by detecting the existence of the resulting empty files.
 
 > RUNNING MULTIPLE SYSTEM INSTANCES AT ONCE:
-All tasks in this system read from and write to $TMPDIR, which is
+All tasks in this system read from and write to $CYLC_TMPDIR, which is
 defined in the system config module to be /tmp/$USER/{system-name}
 (task-specific input and output directories could be configured
 similarly via environment variables set in the task definitino files).
