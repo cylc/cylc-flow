@@ -37,7 +37,7 @@ arguments:
 def commandline_parser():
     parser = OptionParser( usage )
 
-    parser.add_option( "-t", 
+    parser.add_option( "-t", "--task",
             help="ID of the task to run.",
             metavar="TASK%CYCLE", action="store", dest="task_id" )
 

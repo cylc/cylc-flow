@@ -24,7 +24,7 @@ parser = NoPromptOptionParser_u( usage = """cylc task-dump [options] SYSTEM
 Display the current status of a task's prerequisites, outputs, 
 and other information deemed relevant to scheduling.""" )
 
-parser.add_option( "-t", 
+parser.add_option( "-t", "--task",
         help="ID of the task to dump.",
         metavar="TASK%CYCLE", action="store", dest="task_id" )
 

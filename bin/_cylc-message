@@ -45,7 +45,7 @@ parser.set_defaults( started=False, success=False, failure=False,
         all_restarts_completed=False, all_outputs_completed=False,
         priority='NORMAL')
 
-parser.add_option( "-t", 
+parser.add_option( "-t", "--task",
         metavar='TASK',
         help="Task name, defaults to $TASK_NAME.",
         action="store", dest="taskname" )
@@ -56,11 +56,11 @@ parser.add_option( "-s", "--system",
         action="store", dest="system_name" )
 
 parser.add_option( "-u", "--user",
-        help="Owner of the target system (i.e. the username under which "
-        "the scheduler is running). Defaults to your username, $USER.",
+        help="Owner of the target system, defaults to $USER. Needed "
+        "to infer the Pyro nameserver groupname",
         metavar="USERNAME", action="store", dest="username" )
 
-parser.add_option( "-n", "--hostname",
+parser.add_option( "--host",
         help="Hostname of the machine running the Pyro nameserver, "
             "defaults to $CYLC_NS_HOST, then localhost.",
         metavar="HOSTNAME", action="store", dest="pns_host" )

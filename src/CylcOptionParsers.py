@@ -32,7 +32,7 @@ Arguments:
 
         OptionParser.__init__( self, usage )
 
-        self.add_option( "--user",
+        self.add_option( "-u", "--user",
                 help="Owner of the target system, defaults to $USER. "
                 "Needed to infer the Pyro nameserver group name.",
                 metavar="USERNAME",
