@@ -1,5 +1,14 @@
-Default versions of the customizable files are generated the first
-time a system is configured. Currently they are raw Python source
-modules, but they are very simple and how to modify them should be
-reasonably obvious by inspection (if you are not a Python programmer,
-be aware that indentation is important in Python). 
+Default versions of the customizable files are generated the first time
+a system is configured. Currently they are raw Python source modules,
+but they are very simple and how to modify them should be reasonably
+obvious by inspection (if you are not a Python programmer, be aware that
+indentation is important in Python).  If you wish to revert to default
+customizable config files, delete or rename your customized files before
+reconfiguring.
+
+It is recommended that customized configuration modules are added the
+system's revision control repository if any of the customizations are
+critically important to the system (the \lstinline=$CYLC_TMPDIR=
+environment variable in the cylc example systems are in this category.
+
+

@@ -29,15 +29,15 @@ function print_usage()
     echo " - system_info.py ......... CUSTOMIZABLE descriptive system information"
     echo " - job_submit_methods.py ....... CUSTOMIZABLE system job submit methods"
     echo ""
-    echo "Customizable modules are not overwritten on reconfiguration, by default."
-    echo "You need to reconfigure a system if its taskdef files have been changed."
+    echo "A system should be reconfigured if its taskdef files have been changed."
+    echo "The customizable modules will NOT be overwritten on reconfiguration."
     echo ""
     echo "arguments:"
     echo "  PATH         Location of a cylc system definition directory."
     echo ""
     echo "options:"
     echo "  -h, --help   Print this usage message and exit."
-    echo "  -f           (force) overwrite any existing customizable modules."
+    #echo "  -f           (force) overwrite any existing customizable modules."
 }
 
 # long options '--foo=bar' aren't supported by bash getopts
@@ -49,17 +49,20 @@ for OPT in $@; do
     fi
 done
 
+# DISABLED FORCE OPTION
+# this default value will be retained
 FORCE=false
 
-while getopts "hf" opt; do
+#while getopts "hf" opt; do
+while getopts "h" opt; do
     case $opt in
         h)
         print_usage
         exit 0
         ;;
-        f)
-        FORCE=true
-        ;;
+        #f)
+        #FORCE=true
+        #;;
         *)
         exit 1
         ;;
@@ -217,34 +220,18 @@ class system_config( config ):
         # default job submit method, e.g.:
         # self.items['job_submit_method'] = 'background2'
 
+        # to override the default job submit method for specific tasks, e.g.:
+        # self.items['job_submit_overrides']['background2'] = [ 'task1', 'task2' ]
+
         # environment variables available to all tasks, can include
         # the registered system name, e.g.:
         # user = os.environ['USER'] 
-        # self.items['environment']['TMPDIR'] = '/tmp/' + user + '/' + sysname
+        # self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
 
 # END OF FILE
 eof
 fi
 echo "system_config.py"
-
-# TASK GROUPS
-# Use to insert multiple tasks at once, via 'cylc control', into the
-# running system. One use for this item is to group together all tasks
-# needed to cold start the system's driving models after a failure that
-# prevents continued warm cycling. E.g.:
-#config['task_groups']['coldstart'] = [ 'task1', 'task2', 'task3' ]
-
-# ENVIRONMENT VARIABLES FOR USE BY ALL TASKS IN THIS SYSTEM, e.g.:
-#user_name = os.environ['USER'] 
-#config['environment']['TMPDIR'] = '/tmp/' + user_name
-
-# OVERRIDE THE DEFAULT JOB SUBMIT METHOD FOR SPECIFIC TASKS, e.g.:
-# method names are strings that are the name of a class imported into
-# the job_submit_methods module in the system definition directory,
-# e.g.:
-#config['job_submit_overrides']['background2'] = [ 'task1', 'task2' ]
-
-# END OF FILE 
 
 echo
 WRITE_JOBSUB=true
