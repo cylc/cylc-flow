@@ -24,8 +24,8 @@ cylc message --started
 check-env.sh || exit 1
 
 # check prerequistes
-ONE=$TMPDIR/ext/output/$CYCLE_TIME/extdata
-TWO=$TMPDIR/$TASK_NAME/running/$CYCLE_TIME/restart
+ONE=$CYLC_TMPDIR/ext/output/$CYCLE_TIME/extdata
+TWO=$CYLC_TMPDIR/$TASK_NAME/running/$CYCLE_TIME/restart
 for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         MSG="file not found: $PRE"
@@ -38,12 +38,12 @@ done
 
 sleep $(( 10 * 60 / REAL_TIME_ACCEL ))
 
-RUNDIR=$TMPDIR/$TASK_NAME/running/$NEXT_CYCLE_TIME
+RUNDIR=$CYLC_TMPDIR/$TASK_NAME/running/$NEXT_CYCLE_TIME
 mkdir -p $RUNDIR
 touch $RUNDIR/restart
 cylc message --next-restart-completed
 
-OUTDIR=$TMPDIR/$TASK_NAME/output/$CYCLE_TIME
+OUTDIR=$CYLC_TMPDIR/$TASK_NAME/output/$CYCLE_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/forecast.nc
 cylc message "forecast output ready for $CYCLE_TIME"

@@ -26,7 +26,7 @@ check-env.sh || exit 1
 
 sleep $(( 10 * 60 / REAL_TIME_ACCEL )) 
 
-OUTDIR=$TMPDIR/$TASK_NAME/output/$CYCLE_TIME
+OUTDIR=$CYLC_TMPDIR/$TASK_NAME/output/$CYCLE_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/extdata
 

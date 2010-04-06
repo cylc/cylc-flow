@@ -54,9 +54,9 @@ class system_config( config ):
 
         # environment variables available to all tasks
 
-        # 1/ $TMPDIR, used for all input and output files
+        # 1/ $CYLC_TMPDIR, used for all input and output files
         user = os.environ['USER'] 
-        self.items['environment']['TMPDIR'] = '/tmp/' + user + '/' + sysname
+        self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
 
         # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 
         self.items['environment']['REAL_TIME_ACCEL'] = 360

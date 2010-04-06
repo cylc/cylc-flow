@@ -26,7 +26,7 @@ check-env.sh || exit 1
 
 sleep $(( 10 * 60 / REAL_TIME_ACCEL )) 
 
-RUNDIR=$TMPDIR/forecast/running/$CYCLE_TIME
+RUNDIR=$CYLC_TMPDIR/forecast/running/$CYCLE_TIME
 mkdir -p $RUNDIR
 touch $RUNDIR/restart
 cylc message "forecast restart files ready for $CYCLE_TIME"

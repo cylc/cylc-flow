@@ -23,7 +23,7 @@ cylc message --started
 check-env.sh || exit 1
 
 # check prerequistes
-PRE=$TMPDIR/postproc/input/$CYCLE_TIME/forecast.nc
+PRE=$CYLC_TMPDIR/postproc/input/$CYCLE_TIME/forecast.nc
 [[ ! -f $PRE ]] && {
     MSG="file not found: $PRE"
     echo "ERROR, postproc: $MSG"
@@ -34,7 +34,7 @@ PRE=$TMPDIR/postproc/input/$CYCLE_TIME/forecast.nc
 
 sleep $(( 10 * 60 / REAL_TIME_ACCEL ))
 
-OUTDIR=$TMPDIR/postproc/output/$CYCLE_TIME
+OUTDIR=$CYLC_TMPDIR/postproc/output/$CYCLE_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/products.nc
 cylc message "forecast products ready for $CYCLE_TIME"

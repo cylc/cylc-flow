@@ -29,8 +29,8 @@
 
 %ENVIRONMENT
     WRAP file_transfer.sh
-    TARG $TMPDIR/forecast/output/$(CYCLE_TIME)/forecast.nc
-    DEST $TMPDIR/postproc/input/$(CYCLE_TIME)/forecast.nc
+    TARG $CYLC_TMPDIR/forecast/output/$(CYCLE_TIME)/forecast.nc
+    DEST $CYLC_TMPDIR/postproc/input/$(CYCLE_TIME)/forecast.nc
 
 %PREREQUISITES
     "forecast output ready for $(CYCLE_TIME)"
