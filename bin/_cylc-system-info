@@ -36,7 +36,7 @@ if reg.is_registered( name ):
     reg.print_reg( name )
 else:
     reg.print_all()
-    raise SystemExit( "System " + name + " not registered!" )
+    raise SystemExit( "System " + name + " is not registered!" )
 
 # prepend system Python modules to the python search path
 sys.path.insert(0, system_dir )

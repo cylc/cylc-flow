@@ -288,7 +288,7 @@ if reg.is_registered( name ):
     system_dir = reg.get( name )
 else:
     reg.print_all()
-    raise SystemExit( "System " + name + " not registered!" )
+    raise SystemExit( "System " + name + " is not registered!" )
 
 banner[ 'system definition' ] = system_dir
 

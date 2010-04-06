@@ -71,7 +71,7 @@ if reg.is_registered( name ):
     system_dir = reg.get( name )
 else:
     reg.print_all()
-    raise SystemExit( "System " + name + " not registered!" )
+    raise SystemExit( "System " + name + " is not registered!" )
 
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
