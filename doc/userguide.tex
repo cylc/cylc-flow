@@ -1943,6 +1943,66 @@ fleshed out, for now please refer to an existing job submit class to see
 the exact list.
 
 
+
+\subsection{Diagnosing A Stalled System}
+\label{DiagnosingAStalledSystem}
+
+In certain situations a system may appear to be ``stuck'', i.e.\ no
+tasks are running and nothing appears to be happening. There are several 
+possible reasons for this; it is not necessarily a problem:
+
+
+\begin{itemize}
+
+    \item In {\em normal real time operation}, when all running tasks
+        have finished for the most recent cycle, nothing will happen
+        until the one or more contact tasks in the system trigger at the
+        start of the next cycle. \lstinline=cylc task-dump= shows if a
+        contact task has yet to reach its trigger time.
+
+    \item if every task in the system has one or more unsatisfied
+    prerequisites, the system will be stalled. This could happen, for
+    example, if you start a system that contains 'tied' forecast models
+    without inserting any oneoff coldstart tasks to satisfy their initial 
+    restart prerequisites.
+
+    \item if the system operator, perhaps in a post-task-failure
+    intervention, kills some tasks that are required to satisfy the
+    prerequisites of other tasks that still exist in the system, then 
+    the system will eventually stall at the maximum runahead limit as a
+    result of these tasks being unable to run (solution: insert
+    appropriate oneoff cold start tasks).
+
+    \item if the maximum runahead limit is shorter than the cycling
+    interval for some task in the system the system will stall (e.g. if
+    you have a task that runs 24-hourly at 00Z, but set the runahead
+    limit to 12 hours). This could also happen if you purge enough
+    cycles that the difference between the pre- and post-purge tasks
+    is greater than the runahead limit.
+
+    \item if a failed task has not yet been removed or reset by the
+    system operator, it will obviously delay its direct downstream
+    dependants, but it will also cause the entire system to stall,
+    eventually, at the {\em maximum runahead limit}.  
+
+    \item if a system design (task definition) error results in creation
+    of a task that cannot get its prerequisites satisfied by any other
+    task in the system, then this task will never run and will
+    eventually cause the system to stall at the maximum runahead limit.
+
+    \item if a misconfigured external task does not report an output
+    that it is supposed to (i.e.\ as registered in its task proxy
+    definition file), then any other task depending on that output will
+    not run, and will eventually cause the system to stall at the
+    maximum runahead limit.
+
+\end{itemize}
+
+To confirm that the runahead limit is causing a stall, you can use 
+\lstinline=cylc set-level= to set the verbose logging level, then
+\lstinline=cycl nudge= to invoke the task processing loop - any task
+that is not spawning a task only because it has exceeded the runahead
+limit will report that condition to the log.
 \section{System Monitors}
 \label{System Monitors}
 
@@ -2119,12 +2179,12 @@ startup, finish, failure, and completed outputs.
 \section{Command Reference}
 \label{CommandReference}
 
-The command usage information in this section is auto-generated using
-the current command set during document processing, 
+The information in this section is auto-generated from
+the current command set during document processing, using  
 \lstinline=cylc COMMAND --help=. 
-Command self-documentation, however, is only intended as a minimalist
-on-the-fly usage reminder, so additional information is appended below
-in some cases.
+Command self-documentation, however, is intended as a minimalist
+on-the-fly usage reminder so additional information is appended in
+some cases.
   
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 \lstset{language=usage}

@@ -16,12 +16,9 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc nudge [options] SYSTEM 
 
-Cause the task processing loop to be invoked in a running system. To
-avoid unnecessary processing cylc is designed to do this only when a
-task proxy changes state, and in certain other situations. If this fails
-to happen at some point the system may appear to be "stuck"; this would
-imply a minor bug in cylc that should be fixed, but a quick nudge will
-get the system going again in the meantime.""" )
+Cause the cylc task processing loop to be invoked in a running system.
+The cylc userguide explains when you might want to use this command.
+""" )
 
 # INVOKING THE LOOP ON A TIMEOUT WOULD BE A FAILSAFE OPTION:
 # 'cylc schedule --use-timeout'?
