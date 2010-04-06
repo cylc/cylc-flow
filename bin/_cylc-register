@@ -38,9 +38,9 @@ def check_dir( dir ):
  
 #----------------------------------------
 
-parser = OptionParser( usage = """1/ cylc register [-d,--delete] [-g,--get] [--system=PATH] NAME
+parser = OptionParser( usage = """1/ cylc register [-d,--delete] [-g,--get] [-s,--system=PATH] NAME
 Usage: 2/ cylc register [-p,--print]
-Usage: 3/ cylc register [--host=HOST] [-c, --check] [-w,--wipe]
+Usage: 3/ cylc register [--host=HOST] [-c,--check] [-w,--wipe]
 
 Create, print, or delete user-specific cylc system name registrations, 
 which associate a name with a configured system definition directory.
