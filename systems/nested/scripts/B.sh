@@ -25,8 +25,8 @@ set -e; trap 'cylc message --failed' ERR
 cylc message --started
 
 # CHECK PREREQUISITES
-ONE=$TMPDIR/surface-winds-${CYCLE_TIME}.nc       # surface winds
-TWO=$TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart   # restart file
+ONE=$CYLC_TMPDIR/surface-winds-${CYCLE_TIME}.nc       # surface winds
+TWO=$CYLC_TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart   # restart file
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
@@ -40,18 +40,18 @@ done
 
 # create a restart file for the next cycle
 sleep $(( 20 * 60 / $REAL_TIME_ACCEL ))
-touch $TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
 cylc message --next-restart-completed
 
 # create a restart file for the next next cycle
 sleep $(( 20 * 60 / $REAL_TIME_ACCEL ))
-touch $TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE_TIME}.restart
 cylc message --next-restart-completed
 
 # create sea state forecast output
 sleep $(( 20 * 60 / $REAL_TIME_ACCEL ))
-echo $TMPDIR/sea-state-${CYCLE_TIME}.nc
-touch $TMPDIR/sea-state-${CYCLE_TIME}.nc
+echo $CYLC_TMPDIR/sea-state-${CYCLE_TIME}.nc
+touch $CYLC_TMPDIR/sea-state-${CYCLE_TIME}.nc
 cylc message "sea state fields ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE

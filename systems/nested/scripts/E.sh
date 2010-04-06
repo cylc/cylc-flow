@@ -22,7 +22,7 @@ set -e; trap 'cylc message --failed' ERR
 cylc message --started
 
 # check prerequisites
-PRE=$TMPDIR/sea-state-${CYCLE_TIME}.nc
+PRE=$CYLC_TMPDIR/sea-state-${CYCLE_TIME}.nc
 if [[ ! -f $PRE ]]; then
     # FAILURE MESSAGE
     cylc message -p CRITICAL "file not found: $PRE"
@@ -34,7 +34,7 @@ fi
 sleep $(( 15 * 60 / $REAL_TIME_ACCEL ))
 
 # create task outputs
-touch $TMPDIR/sea-state-products-${CYCLE_TIME}.nc
+touch $CYLC_TMPDIR/sea-state-products-${CYCLE_TIME}.nc
 cylc message "sea state products ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE

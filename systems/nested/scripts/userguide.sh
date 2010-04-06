@@ -25,8 +25,8 @@ set -e; trap 'cylc message --failed' ERR
 cylc message --started
 
 # check prerequisites
-ONE=$TMPDIR/surface-winds-${CYCLE_TIME}.nc
-TWO=$TMPDIR/surface-pressure-${CYCLE_TIME}.nc
+ONE=$CYLC_TMPDIR/surface-winds-${CYCLE_TIME}.nc
+TWO=$CYLC_TMPDIR/surface-pressure-${CYCLE_TIME}.nc
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE

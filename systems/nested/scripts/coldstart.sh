@@ -25,11 +25,11 @@ cylc message --started
 # EXECUTE THE TASK ...
 sleep $(( 50 * 60 / $REAL_TIME_ACCEL )) 
 
-touch $TMPDIR/A-${CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/A-${CYCLE_TIME}.restart
 cylc message "A restart files ready for $CYCLE_TIME"
-touch $TMPDIR/B-${CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/B-${CYCLE_TIME}.restart
 cylc message "B restart files ready for $CYCLE_TIME"
-touch $TMPDIR/C-${CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/C-${CYCLE_TIME}.restart
 cylc message "C restart files ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE

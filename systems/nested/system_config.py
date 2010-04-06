@@ -51,7 +51,7 @@ class system_config( config ):
 
         # environment variables available to all tasks
         user = os.environ['USER'] 
-        self.items['environment']['TMPDIR'] = '/tmp/' + user + '/' + sysname
+        self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
         self.items['environment']['REAL_TIME_ACCEL'] = 360
 
 # END OF FILE

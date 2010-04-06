@@ -19,9 +19,9 @@ if [[ -z $REAL_TIME_ACCEL ]]; then
     exit 1
 fi
 
-if [[ -z $TMPDIR ]]; then
+if [[ -z $CYLC_TMPDIR ]]; then
     # FAILURE MESSAGE
-    cylc message -p CRITICAL "\$TMPDIR is not defined"
+    cylc message -p CRITICAL "\$CYLC_TMPDIR is not defined"
     cylc message --failed
     exit 1
 fi
