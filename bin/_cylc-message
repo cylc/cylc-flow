@@ -211,9 +211,8 @@ if options.started or options.succeeded or options.failed \
         or options.next_restart_completed \
         or options.all_restarts_completed \
         or options.all_outputs_completed:
-   if len( sys.argv ) != 2:
-       print "cylc message ERROR: automatic message options are mutually exclusive"
-       sys.exit(1)
+            # automatic message
+            pass
 
 elif len( args ) == 0:
     parser.error( "no message supplied" )
