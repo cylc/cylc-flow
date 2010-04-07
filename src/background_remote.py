@@ -35,4 +35,5 @@ class background_remote( job_submit ):
         exe = command + " </dev/null >" + task + ".$$.log 2>&1 &" 
 
         #self.execute_local( [ 'ssh', host, "'" + exe + "'" ] )
+        print "submitting " + task + " to run in the background on " + host
         self.execute_local( 'ssh ' + host + " '" + exe + "'" )
