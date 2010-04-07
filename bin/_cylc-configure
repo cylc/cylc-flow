@@ -225,8 +225,8 @@ class system_config( config ):
 
         # environment variables available to all tasks, can include
         # the registered system name, e.g.:
-        # user = os.environ['USER'] 
-        # self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
+        user = os.environ['USER']
+        self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
 
 # END OF FILE
 eof
