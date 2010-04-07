@@ -29,8 +29,7 @@
 %ENVIRONMENT
     WRAP file_transfer.sh
     TARG $CYLC_TMPDIR/ext/output/$(CYCLE_TIME)/extdata
-    #DEST 192.168.56.78:/tmp/oliverh/forecast/input/$(CYCLE_TIME)/extdata
-    DEST 192.168.126.129:/tmp/oliverh/forecast/input/$(CYCLE_TIME)/extdata
+    DEST $SUPERCOMPUTER:/tmp/oliverh/forecast/input/$(CYCLE_TIME)/extdata
 
 %PREREQUISITES
     "external data ready for $(CYCLE_TIME)"

@@ -1,5 +1,9 @@
 To Do
 
+* check interpolation of environment vars in task-generator. It works
+  for REMOTE host without any explicit interpolation? (so same with
+  other keys?)
+
 * FINISH OFF THE CONNECTION EXCEPTION HANDLING IN MANAGER CLASS.
 
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned

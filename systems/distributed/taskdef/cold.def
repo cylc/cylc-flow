@@ -30,8 +30,7 @@
     cold.sh
 
 %REMOTE_HOST
-    #192.168.56.78
-    192.168.126.129
+    $SUPERCOMPUTER
 
 %ENVIRONMENT
     PATH $PATH:$HOME/cylc/bin:$HOME/cylc/systems/distributed/scripts
