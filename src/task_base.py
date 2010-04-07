@@ -298,8 +298,9 @@ class task_base( Pyro.core.ObjBase ):
             if message != self.get_identity() + ' started' and \
                     message != self.get_identity() + ' finished' and \
                     message != self.get_identity() + ' completed':
-                self.outputs.set_satisfied( message )
-                self.latest_message = message
+                #self.outputs.set_satisfied( message )
+                #self.latest_message = message
+                self.incoming( 'NORMAL', message )
 
     def is_complete( self ):  # not needed?
         if self.outputs.all_satisfied():

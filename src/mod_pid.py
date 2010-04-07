@@ -52,8 +52,8 @@ class pid:
         self.log( 'WARNING', 'setting ALL restart outputs completed' )
         for message in self.outputs.satisfied.keys():
             if re.search( 'restart files ready for', message ):
-                self.outputs.set_satisfied( message )
-                self.latest_message = message
+                if not self.outputs.is_satisfied( message ):
+                    self.incoming( 'NORMAL', message )
  
 
     def ready_to_spawn( self ):
