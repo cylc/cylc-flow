@@ -255,11 +255,11 @@ try:
             elif will_pause_at:
                 #            'waiting submitted running done failed'
                 #                                    YYYYMMDDHH                                
-                foo = '___________P_A_U_S_E__A_T__' + will_pause_at
+                foo = '_______P_A_U_S_I_N_G__A_T__' + will_pause_at
             elif will_stop_at:
                 #            'waiting submitted running done failed'
                 #                                    YYYYMMDDHH                                
-                foo = '_____________S_T_O_P__A_T__' + will_stop_at
+                foo = '_____S_T_O_P_P_I_N_G__A_T__' + will_stop_at
             else:
                 #            'waiting submitted running done failed'
                 foo = '________________________R_U_N_N_I_N_G'
