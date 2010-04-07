@@ -41,9 +41,9 @@ class pid:
         restart_messages.sort()
         for message in restart_messages:
             if not self.outputs.is_satisfied( message ):
-                self.log( 'NORMAL', message )
-                self.latest_message = message
-                self.outputs.set_satisfied( message )
+                self.incoming( 'NORMAL', message )
+                # that's the next one, quit now.
+                break
 
 
     def set_all_restarts_completed( self ):
