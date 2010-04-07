@@ -2097,25 +2097,60 @@ This working example system illustrates two things:
 \subsection{Distributed}
 
 This working example is a variant of the file-move example system in
-which one of the tasks executes on another machine on the network. The
-{\em file-transfer} task script is invoked twice, once for the `put' task,
-which puts input files on the remote machine, and once for the `get'
-task, which retrieves outputs from the remote machine once the remote
-task has finished.
+which the ``forecast model'' tasks execute on another machine on the
+network. The {\em file-transfer} task script is invoked twice, once for
+a ``put'' task that puts input files on the remote machine, and once for
+a ``get'' task that retrieves output files from the remote machine when
+the remote tasks have finished. The forecast model restart outputs reside
+on the remote machine.
 
-This example system serves to illustrate two things:
+This example system serves to illustrate that cylc can:
 
 \begin{itemize}
-    \item that cylc can control tasks distributed across the network.
-    \item that cylc can use different job submission methods for
-        different tasks.
+    \item control a system that has tasks distributed across a network.
+    \item use different job submission methods for different tasks.
 \end{itemize}
 
-Unlike the other example systems, this one will not work ``out of the
-box''. You will need to have passwordless ssh configured to the remote
-machine, install the remote task script on it, and specify the right
-hostname in the taskdef files.
+Unlike the other example systems, this one will not quite work ``out of
+the box''. You will need to:
 
+\begin{itemize}
+    \item set the URL of your remote machine in the
+        \lstinline=$SUPERCOMPUTER= variable that is defined in 
+        \lstinline=systems/distributed/system_config.py=
+    \item configure passwordless ssh access to the remote machine.
+    \item ensure your Pyro nameserver is accessible from the local and
+        remote machines.
+    \item install the remote task scripts on the remote machine.
+    \item install cylc on the remote machine (the remote task must be
+        able to call \lstinline=cylc message=.
+\end{itemize}
+
+The distributed example system is part of cylc, so the last two items above
+can be achieved by simply installing cylc on the remote machine.  Note that
+the remote task scripts, if their absolute paths are not supplied in the
+taskdef TASK key, must be in the PATH environment set in the taskdef
+file (and likewise for the remote cylc bin directory).
+
+The background_remote job submission class assumes the local and remote 
+user names are the same.  If not, the taskdef OWNER key can be used, and 
+a slightly modified version of background_remote derived to use the
+correct remote username.
+
+The distributed example can also be tested using the local machine as
+the remote machine, in which case the forecast model tasks will be
+submitted locally by the background_remote job class, and you will 
+require passwordless ssh self-access on the machine.
+
+\subsubsection{Task Standard Output}
+
+For example system tasks that are submitted using the standard ``local
+background'' method (i.e.\ configure the task execution environment then 
+simply run \lstinline=task.sh &=) task stdout will appear in the cylc
+stdout stream.  The background_remote method, however, redirects remote
+task stdout to a log file on the remote host (in the remote users home
+directory).  Something similar is likely to be the case for any real
+system that submits tasks to a batch queue scheduler.
 
 \pagebreak
 \subsection{SCS Demo}
