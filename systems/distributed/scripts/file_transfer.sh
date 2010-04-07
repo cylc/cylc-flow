@@ -1,10 +1,19 @@
 #!/bin/bash
 
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
 # THIS IS A CYLC TASK SCRIPT
 
-#set -e  # abort on error
-
-#trap 'cylc message --failed' ERR
+# trap errors so that we need not check the success of basic operations.
+set -e; trap 'cylc message --failed' ERR
 
 # this is a cylc task utility script, meant to be WRAPPED by specific
 # cylc tasks

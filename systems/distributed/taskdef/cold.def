@@ -1,0 +1,47 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+%NAME
+    cold
+
+%DESCRIPTION
+    Provides the initial restart prerequisites for the forecast model.
+    Depends on the system startup task.
+
+%TYPE
+    free, oneoff
+
+%CYCLES
+    0,6,12,18
+
+%NO_NONCOTEMPORAL_DEPENDANTS
+    True
+
+%TASK
+    cold.sh
+
+%REMOTE_HOST
+    #192.168.56.78
+    192.168.126.129
+
+%ENVIRONMENT
+    PATH $PATH:$HOME/cylc/bin:$HOME/cylc/systems/distributed/scripts
+    PYTHONPATH $PYTHONPATH:$HOME/cylc/src
+
+%STARTUP_PREREQUISITES
+    "startup%$(CYCLE_TIME) finished" 
+
+%ESTIMATED_RUN_TIME
+    10 min
+
+%OUTPUTS
+    7 min: "forecast restart files ready for $(CYCLE_TIME)"

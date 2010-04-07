@@ -1,0 +1,44 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+%NAME
+    get_output
+
+%DESCRIPTION
+    retrieve the forecast model output file from the model output
+    directory and move it to where the post processing system expects it
+    to be.
+
+%TYPE
+    free
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    cylc-wrapper
+
+%ENVIRONMENT
+    WRAP file_transfer.sh
+    #TARG 192.168.56.78:/tmp/oliverh/forecast/output/$(CYCLE_TIME)/forecast.nc
+    TARG 192.168.126.129:/tmp/oliverh/forecast/output/$(CYCLE_TIME)/forecast.nc
+    DEST $CYLC_TMPDIR/postproc/input/$(CYCLE_TIME)/forecast.nc
+
+%PREREQUISITES
+    "forecast output ready for $(CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    10 min
+
+%OUTPUTS
+    10 min: "forecast output at $(CYCLE_TIME) ready for postprocessing"
+
