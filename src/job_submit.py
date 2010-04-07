@@ -69,6 +69,10 @@ class job_submit:
         # TO DO: THIS WILL FAIL FOR localhost!!!!!!!!!!!!!!!!!
         env += ' CYLC_NS_HOST=' + os.environ[ 'CYLC_NS_HOST' ]
 
+        if 'CYLC_ON' in os.environ.keys():
+            # distinguish between cylc and and run-task invocations
+            env += ' CYLC_ON=true'
+
         # and any extra variables
         for entry in self.extra_vars:
             [ var_name, value ] = entry
