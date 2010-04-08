@@ -27,7 +27,7 @@ SLEEP=$(( 10 * 60 / ACCEL ))
 
 sleep $SLEEP 
 
-RUNDIR=/tmp/oliverh/forecast/running/$CYCLE_TIME
+RUNDIR=$CYLC_REMOTE_TMPDIR/$CYCLE_TIME
 mkdir -p $RUNDIR
 touch $RUNDIR/restart
 cylc message "forecast restart files ready for $CYCLE_TIME"

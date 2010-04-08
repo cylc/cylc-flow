@@ -33,6 +33,7 @@
     $SUPERCOMPUTER
 
 %ENVIRONMENT
+    CYLC_REMOTE_TMPDIR /tmp/$USER/forecast
     PATH $PATH:$HOME/cylc/bin:$HOME/cylc/systems/distributed/scripts
     PYTHONPATH $PYTHONPATH:$HOME/cylc/src
 

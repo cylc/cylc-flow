@@ -61,6 +61,10 @@ class system_config( config ):
         user = os.environ['USER'] 
         self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
 
+        user = os.environ['USER'] 
+        #self.items['environment']['CYLC_REMOTE_TMPDIR'] = '/tmp/' + user + '/' + sysname
+        self.items['environment']['CYLC_REMOTE_TMPDIR'] = '/tmp/' + user + '/forecast/running'
+
         # remote host on which to run the coldstart and forecast tasks
         self.items['environment']['SUPERCOMPUTER'] = '192.168.126.129'
 

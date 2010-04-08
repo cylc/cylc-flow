@@ -11,8 +11,8 @@ ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 10 * 60 / ACCEL ))
 
 # check prerequistes
-ONE=/tmp/oliverh/forecast/input/$CYCLE_TIME/extdata
-TWO=/tmp/oliverh/forecast/running/$CYCLE_TIME/restart
+ONE=$CYLC_REMOTE_TMPDIR/input/$CYCLE_TIME/extdata
+TWO=$CYLC_REMOTE_TMPDIR/running/$CYCLE_TIME/restart
 echo $ONE
 ls $ONE
 echo $TWO
@@ -30,12 +30,12 @@ done
 
 sleep $SLEEP # 90 min
 
-RUNDIR=/tmp/oliverh/forecast/running/$NEXT_CYCLE_TIME
+RUNDIR=$CYLC_REMOTE_TMPDIR/running/$NEXT_CYCLE_TIME
 mkdir -p $RUNDIR
 touch $RUNDIR/restart
 cylc message --next-restart-completed
 
-OUTDIR=/tmp/oliverh/forecast/output/$CYCLE_TIME
+OUTDIR=$CYLC_REMOTE_TMPDIR/output/$CYCLE_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/forecast.nc
 cylc message "forecast output ready for $CYCLE_TIME"

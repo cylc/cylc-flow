@@ -32,6 +32,7 @@
 
 %ENVIRONMENT
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
+    CYLC_REMOTE_TMPDIR /tmp/$USER/forecast
     PATH $PATH:$HOME/cylc/bin:$HOME/cylc/systems/distributed/scripts
     PYTHONPATH $PYTHONPATH:$HOME/cylc/src
 
