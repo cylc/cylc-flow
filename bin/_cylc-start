@@ -161,7 +161,7 @@ def commandline_parser():
             "system task list.",
             metavar="Task1,Task2,...", action="store", dest='include' )
 
-    parser.add_option( "-n", "--nameserver",
+    parser.add_option( "--host",
             help="Hostname of the machine running the Pyro nameserver, "
             "defaults to localhost",
             metavar="HOSTNAME", action="store", dest="pns_host" )
