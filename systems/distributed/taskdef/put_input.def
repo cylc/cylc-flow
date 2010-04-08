@@ -29,7 +29,7 @@
 %ENVIRONMENT
     WRAP file_transfer.sh
     TARG $CYLC_TMPDIR/ext/output/$(CYCLE_TIME)/extdata
-    DEST $SUPERCOMPUTER:/tmp/oliverh/forecast/input/$(CYCLE_TIME)/extdata
+    DEST $SUPERCOMPUTER:$CYLC_REMOTE_TMPDIR/input/$(CYCLE_TIME)/extdata
 
 %PREREQUISITES
     "external data ready for $(CYCLE_TIME)"
