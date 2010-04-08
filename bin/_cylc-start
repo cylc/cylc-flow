@@ -162,8 +162,8 @@ def commandline_parser():
             metavar="Task1,Task2,...", action="store", dest='include' )
 
     parser.add_option( "--host",
-            help="Hostname of the machine running the Pyro nameserver, "
-            "defaults to localhost",
+            help="Pyro nameserver host, defaults to 'localhost'. Use "
+            "if not auto-detected (which depends on network config).", 
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "-p", "--practice",
