@@ -2,6 +2,8 @@ To Do
 
 * FINISH DISTRIB SYSTEM: REMOTE_TMPDIR CAN USE A LOCAL VAR!
 
+* document manual use of restart messages for split tasks * (below)
+
 * message command (command line usage only!!!) needs lock and practice mode?
 
 * check interpolation of environment vars in task-generator. It works
