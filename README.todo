@@ -1,6 +1,7 @@
 To Do
 
-* FINISH DISTRIB SYSTEM: REMOTE_TMPDIR CAN USE A LOCAL VAR!
+* in job_submit.py, allow remote enviroment vars that aren't
+  interpolated locally ... e.g. $USER?
 
 * document manual use of restart messages for split tasks * (below)
 

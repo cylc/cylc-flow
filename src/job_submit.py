@@ -75,9 +75,11 @@ class job_submit:
 
         # and any extra variables
         for entry in self.extra_vars:
-            [ var_name, value ] = entry
-            # don't interpolate remote vars!
+            ( var_name, value ) = entry
+            # interpolate remote vars locally!
+            value = self.interpolate( value )
             env += ' ' + var_name + '=' + value
+
         return env
 
     def submit( self ):

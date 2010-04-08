@@ -26,7 +26,7 @@ class background_remote( job_submit ):
 
     def submit( self ):
 
-        host = self.remote_host
+        host = self.interpolate( self.remote_host )
         task = self.task
 
         remote_env = self.remote_environment_string()
