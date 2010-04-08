@@ -59,13 +59,10 @@ class config:
             if startup_hour not in legal_hours:
                 raise SystemExit( "Illegal Start Time" )
 
-    def create_state_log_dirs( self, practice ):
-        self.check_task_groups()
-        self.job_submit_config()
+    def create_state_dump_dir( self, practice ):
         
         if practice:
             self.items[ 'state_dump_dir' ] += '-practice'
-            self.items[ 'logging_dir'    ] += '-practice'
 
         self.items[ 'state_dump_file' ] = self.items['state_dump_dir'] + '/state'
 
@@ -76,6 +73,11 @@ class config:
                 os.makedirs(  statedir )
             except Exception, e:
                 raise SystemExit( e )
+
+    def create_logging_dir( self, practice ):
+        
+        if practice:
+            self.items[ 'logging_dir'    ] += '-practice'
 
         logdir = self.items[ 'logging_dir' ]
         if not os.path.exists( logdir ):

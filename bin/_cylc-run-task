@@ -91,25 +91,18 @@ import remote_switch # ditto
 
 # load system configuration--------------------------------------------
 config = system_config( name )
-config.configure( practice=False )
-
-# logging dir
-logging_dir = config.get('logging_dir')
-
-# set up main log already, for use in this module
-log = logging.getLogger( 'main' )
-pimp_my_logger.pimp_it( \
-        log, 'main', config.get('logging_dir'), \
-        config.get('logging_level'), False, None )
-
-# intantiate the task
-task = get_object( 'task_classes', task_name ) \
-        ( ctime, False, 'waiting', config.get('job submit class')[ task_name ], True )
+config.put( 'logging_dir', config.get('logging_dir') + '-run-task' ) 
+config.create_logging_dir( False )
+config.job_submit_config()
 
 # create the task log
 log = logging.getLogger( 'main.' + task_name )
 pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
-        config.get('logging_level'), False, None )
+        logging.DEBUG, False, None )
+
+# intantiate the task
+task = get_object( 'task_classes', task_name ) \
+        ( ctime, False, 'waiting', config.get('job submit class')[ task_name ] )
 
 # set global (all tasks) environment variables-------------------------
 os.environ[ 'CYLC_NS_HOST' ] = 'NULL'
@@ -122,4 +115,3 @@ for VAR in env.keys():
     os.environ[ VAR ] = str( env[ VAR ] )
 
 task.run_external_task()
-
