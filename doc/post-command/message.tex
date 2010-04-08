@@ -12,3 +12,9 @@ from the registered system name. This is because the calling task might
 be not be executing under the same username as the scheduler. For
 non-manual use cylc exports \lstinline=$CYLC_NS_GROUP= into the task
 execution environment for this purpose. 
+
+Message command usage is not consistent with other commands, which
+take a system name as the final argument, because in normal usage 
+the message is important thing, and the running tasks using this
+command know (via the environment in which they execute) what system
+they belong to.
