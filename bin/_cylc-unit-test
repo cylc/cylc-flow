@@ -37,6 +37,7 @@ if [[ $# != 0 ]]; then
         echo " 9 - Purges the failed X and dependants through to 00Z (T0+18 hours)"
         echo "     inclusive, which allows the system to get going again at 06Z;"
         echo "10 - Waits for the system to shut itself down at the 12Z stop time."
+        echo "11 - Run a single task (startup) from the system with run-task." 
         echo
         echo "Options:"
         echo "  -h, --help   Print this help message and exit."
@@ -159,6 +160,15 @@ while ! $READY; do
     echo -n .
     sleep 1
 done
+echo done
+
+# RUN A SINGLE TASK
+# can be one that completes successfully or fails, it doesn't matter.
+echo
+echo ">> RUN A SINGLE TASK (startup%2010010106) from the system"
+echo "   (note that messages from standalone tasks go to stdout)"
+echo -n "   ... "
+cylc run-task -t startup%2010010106 unit >> $OUT 2>&1
 echo done
 
 # DELETE THE SYSTEM DEFINITION DIRECTORY
