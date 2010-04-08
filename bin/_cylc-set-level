@@ -16,7 +16,7 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc set-level [options] SYSTEM 
 
-Change the logging verbosity level of a running system.""" )
+Change the logging verbosity level of a running system (default is INFO).""" )
 
 vchoices = ['debug','info', 'warning', 'error', 'critical'] 
 parser.add_option( "-l", "--level",
@@ -30,4 +30,4 @@ if not options.verbosity:
 
 if parser.prompt( "Set logging level to " + options.verbosity + " in " ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    god.set_verbosity( options.verbosity, os.environ['USER'] )
+    print god.set_verbosity( options.verbosity, os.environ['USER'] )
