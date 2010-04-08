@@ -1,5 +1,9 @@
 To Do
 
+* FINISH DISTRIB SYSTEM: REMOTE_TMPDIR CAN USE A LOCAL VAR!
+
+* message command (command line usage only!!!) needs lock and practice mode?
+
 * check interpolation of environment vars in task-generator. It works
   for REMOTE host without any explicit interpolation? (so same with
   other keys?)

@@ -31,12 +31,19 @@ usage = """cylc message [options] [MESSAGE]
 
 Send a message to a task proxy object in a running cylc system.
 
-THIS COMMAND IS USED BY EXTERNAL TASKS TO UPDATE THE STATE OF THE PROXY
-OBJECTS THAT REPRESENT THEM IN A RUNNING CYLC SCHEDULER. It can also be
-used to send messages manually for debugging or system intervention
-purposes, in which case all inputs can be supplied on the command line.
-If invoked by a task that does not belong to a cylc scheduler instance,
-messages are simply directed to stdout.
+THIS COMMAND IS FOR USE BY EXTERNAL TASKS TO UPDATE THE STATE OF THE
+PROXY OBJECTS THAT REPRESENT THEM IN A RUNNING CYLC SCHEDULER, in which 
+case it gets most of its inputs from the task execution environment.
+
+If invoked by a task that does not belong to a cylc scheduler (e.g. by
+'cylc run-task') messages are directed to stdout instead of via the Pyro
+nameserver to task proxy objects in a running scheduler.
+
+It can also be used to send messages manually to tasks in a running
+system, in which case most of its inputs can be supplied on the
+command line. This command currently does not respect the system
+lock and is not aware of practice mode, but there should be no need to
+for manual invocation of cylc message if you are not a cylc developer. 
 
 arguments:
    MESSAGE              A quoted string."""
