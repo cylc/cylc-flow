@@ -69,6 +69,8 @@ mv userguide.pdf doc
 echo "DELETING EXTRANEOUS BIN SCRIPTS"
 rm bin/addcopyright.pl
 
+echo "DELETING TEMP DIR"
+rm -rf temp
+
 echo "DELETING DEVELOPER DOCS"
 rm README.todo
-
