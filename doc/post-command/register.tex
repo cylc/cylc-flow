@@ -1,8 +1,9 @@
 Registration serves two purposes: (1) cylc commands that need to access
-system-specific modules can do so without the user having to type the
-full system definition directory path on the command line; and (2) the
-registered name is used, along with your username, to distinguish
-between different systems using the Pyro nameserver at the same time. 
+system-specific modules can do so without the user constantly having to
+type the full system definition directory path on the command line; and
+(2) the registered name is used, along with your username, to
+distinguish between different systems using the Pyro nameserver at the
+same time. 
 
 Registration is only required if you want to start scheduling a system
 (\lstinline=cylc start=), run a single task from a system 
@@ -20,19 +21,19 @@ The registered name under which a system is running is made available in
 the task execution environment as \lstinline=$SYSTEM_NAME=.  If system
 tasks are configured to use the registered name in all important input
 and output directory paths, then multiple-registration allows you to run
-multiple real or dummy mode instances of that system at the same time
-without any interference between them. The userguide example system can
-do this. It also means that multiple users can run the same installed
-version of the example system at the same time (in fact different users
-can register a system under the same name because username is also used
-in constructing the Pyro nameserver groupname that distinguishes
-different running systems). It may also be useful, at least in
-relatively small systems that are not using all available computational
-resource, to run several historical case studies at once, over different
-time periods, using the same system; or perhaps to run a case study at
-the same time as the real time operation using the actual operational
-system - an easy way to guarantee that two systems really are identical.
-Of course the alternative to this is to copy the system definition
-directory and thereby create an entirely new system based on the
-original.
+multiple real mode instances of that system at the same time without any
+interference between them (you can run one real and any number of dummy
+mode systems regardless). The userguide example system can do this. It
+also means that multiple users can run the same installed version of the
+example systems at the same time (in fact different users can even
+register a system under the same name because username is also used in
+constructing the Pyro nameserver groupname that distinguishes different
+running systems). It may also be useful, at least in relatively small
+systems that are not using all available computational resource, to run
+several historical case studies at once, over different time periods,
+using the same system; or perhaps to run a case study at the same time
+as the real time operation using the actual operational system - an easy
+way to guarantee that two systems really are identical.  Of course the
+alternative to this is to copy the system definition directory and
+thereby create an entirely new system based on the original.
 

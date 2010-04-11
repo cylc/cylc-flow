@@ -1258,21 +1258,24 @@ However, if you do use restart outputs, you gain the following advantages:
 (note that several tasks may use the same script with different
 arguments, e.g.\ for moving files around).
 
-The `scripts' sub-directory of a cylc system definition is a handy
-central location in which to keep system-specific scripts for running
-external tasks which often have an independent existence outside of the
-forecasting system. Typically the ``external task'' specified in a task
-definition file will be one of these scripts which, once invoked by
-cylc, will itself launch the real external process(es) and handle all
-cylc messaging. In that case it may not be necessary to modify the
-external task for use within cylc.  That said, you can if you wish
-specify an external script in the task definition file, in which case 
-the external script will have to be modified to do the cylc messaging,
-OR uses cylc's task wrapping mechanism, which automatically handles the
-former case but sets all outputs, including internal ones, completed
-only after the external script finishes.  Scripts in the scripts
-sub-directory are automatically made accessible, via \$PATH, to tasks
-launched by cylc. 
+Cylc automatically has access (via \lstinline=$PATH=) to executable
+files in the \lstinline=scripts= sub-directory of the system definition
+directory. It is a central location in which to keep scripts that
+execute external tasks (models etc.), which often have an independent
+existence outside of the forecasting system, within the context of the
+forecasting system.
+Typically the task specified in the \lstinline=TASK=
+key of a task definition file will be a script in this directory which,
+once invoked by cylc, will itself launch the external process(es) and
+handle all cylc messaging. In that case it may not be necessary to
+modify the external task at all for use within cylc. That said, you can
+if you wish specify an external script in the task definition file, in
+which case the external script will have to be modified to do the cylc
+messaging, OR uses cylc's task wrapping mechanism, which automatically
+handles the former case but sets all outputs, including internal ones,
+completed only after the external script finishes.  Scripts in the
+scripts sub-directory are automatically made accessible, via \$PATH, to
+tasks launched by cylc. 
 
 \subsubsection{Task Messages}
 
@@ -1760,27 +1763,29 @@ cylc start --at=2009101218 SYSTEM
 
 \subsubsection{Oneoff Coldstart Tasks}
 
-A cylc system is supposed to model, in terms of scheduling behaviour,
-the real system that it represents.  Thus if your system contains any
-warm-cycling forecast models (i.e.\ tasks that depend on their own
-previous instance for restart prerequisites) then you will need some
-special oneoff coldstart tasks to supply their initial restart
-prerequisites. These tasks can launch actual coldstart forecasts, or
-they can represent some external spinup process that has to be completed
-before the system is started. In the latter case they should be declared
-as TYPE \lstinline=oneoff, dummy= in the taskdef file so that they will
-simply report their outputs complete (the system operator must guarantee
-that the actual spinup process has taken place prior to startup).
+A special {\em oneoff coldstart task} should be defined for any task
+that has different input requirements in the initial cycle than it does
+subsequently. This generally applies to warm-cycling forecast models
+that need to have their initial restart prerequisites satisfied somehow. 
 
-Oneoff coldstart tasks also need to be inserted into a running system
-if circumstances demand that a forecast model actually requires a cold
-start rather than continued warm cycling. See {\em Failure Recovery
-Scenarios} (Section~\ref{FailureRecoveryScenarios}) for an example of
-this. 
+Oneoff coldstart tasks can launch actual coldstart forecasts (e.g.\ an
+initial regional weather forecast initialised from a lower resolution
+global model), or they can represent some external spinup process that
+has to be completed before the system is started. In the latter case
+they should be declared as TYPE \lstinline=oneoff, dummy= in the taskdef
+file so that they will simply report their outputs complete immediately
+and allow the first warm-start forecast to run (and the system operator
+guarantees that the actual spinup process has taken place prior to
+startup).
 
-See {\em Task Definition Files} (Section~\ref{Task Definition Files}), 
-and the userguide example system implementation, for more on oneoff cold
-start tasks.
+A oneoff coldstart task can also be inserted into a running system to
+get its associated forecast model restarted after a failure that results
+in one of more omitted cycles. See {\em Failure Recovery Scenarios}
+(Section~\ref{FailureRecoveryScenarios}) for an example of this. 
+
+See also {\em Task Definition Files} (Section~\ref{Task Definition
+Files}), and the userguide example system implementation, for more on
+oneoff cold start tasks.
 
 \subsection{Restarts}
 
@@ -1800,15 +1805,25 @@ cylc start --restart-from=FILE SYSTEM
 \end{lstlisting}
 
 where FILE is a named state dump file. If the state dump file resides in the
-configured state dump directory for SYSTEM (e.g.\  
-\lstinline=$HOME/cylc-state/SYSTEM/=) then just the filename is needed, 
-otherwise give the full directory path.
+configured state dump directory for the system (e.g.\  
+\lstinline=$HOME/cylc-state/SYSTEM/=) then just the file name is required 
+(not the full path).
 
 Default restart behaviour is to automatically reset unfinished (i.e.\
-submitted, running, or failed) tasks to waiting. This is the only
-sensible thing to do because cylc cannot know that unfinished external
-tasks completed after the system was shut down ({\em practice mode} restarts 
-are an exception to this - see below).
+submitted, running, or failed) tasks to waiting ({\em practice mode}
+restarts are an exception to this - see below).  This is the only
+sensible thing to do because cylc cannot know if any unfinished tasks
+completed successfully after the scheduler was shut down.  
+
+The \lstinline=--no-reset= option stops failed task being reset to 
+waiting (and is the default for a {\em practice mode} restart, below), 
+which would allow a system to be restarted before a failed task has been
+fixed. To prevent a previously unfinished task that had not failed from
+being rerun, {\em if you know that it completed successfully after the
+system was shutdown}, you currently have to edit the state dump file
+prior to the restart.  This is easy to do, but it unlikely to be
+required because a cylc system does not shut down, unless forced to, until
+all currently running tasks have finished.
 
 \subsection{Automatic State Dumps}
 
@@ -1921,35 +1936,101 @@ cylc start --dummy-mode --restart-from=FILE SYSTEM
 \subsection{Job Submission}
 \label{JobSubmission}
 
-Cylc comes with two job submit methods, ``background'' and
-``background2'', which simply run task scripts on the local machine in
-the background, the latter printing a message to stdout first just to
-distinguish itself from the former.  {\em System Config}
-(Section~\ref{SystemConfig} shows how to specify which method each
-system task should use to submit itself when it is ready to run.
+In the system config file, Section~\ref{SystemConfig}, you can define a
+default job submission method that will be used to run all tasks in the
+system except for those, if any, that are singled out to use a different
+method (also via the system config file).
 
-Real systems, of course, will need to submit jobs to batch queue schedulers 
-such as {\em qsub} or {\em loadleveller}. To do this you will need to
-derive a job submit class from the cylc ``job\_submit'' module. This should
-be easy to do, because you can model your new class on an existing
-derivation, such as the ``background'' class.
+Cylc currently ships with three simple job submit methods:
 
-What matters here is that the right {\bf environment variables must be
-exported into the execution environment of the task} (not the
-environment in which 'qsub' itself is invoked mind you!). These 
-include \lstinline=$CYCLE_TIME=, \lstinline=$TASK_NAME=, and
-\lstinline=$SYSTEM_NAME=.  Until this section of the documentation is
-fleshed out, for now please refer to an existing job submit class to see
-the exact list.
+\begin{itemize}
+    \item \lstinline=background= - submit a job to run on the background
+        on the local machine. 
+     \item \lstinline=background2= - same, but print a message to stdout
+         (use as a simple test of the use of multiple job submission
+         methods in the same system). 
+     \item \lstinline=background_remote= - this method uses ssh to 
+         run a job in the background on a remote host specified in 
+         the taskdef file \lstinline=REMOTE_HOST= key.
+ \end{itemize}
+
+These methods should work anywhere and are used by the working example
+systems which are intended to help users learn how cylc works. 
+
+\subsubsection{Defining New Methods}
+ 
+Real systems will need to submit jobs to run via batch queue schedulers
+such as {\em qsub} or {\em loadleveller}. Until cylc acquires general
+\lstinline=qsub= and \lstinline=loadleveler= job submit methods you will
+need to derive a new job submit class from the base class defined in
+\lstinline=[CYLC]/src/job_submit.py=. This is easy to do because most of
+the required functionality exists already in the base class, and you can
+model your new class on one of the existing derivations.
+
+In particular, you need to make sure that {\bf task-specific
+environment variables must be exported into the execution environment of
+the task} (e.g.\ passed {\em into} the qsub environment, not the
+environment in which the qsub command itself is executed!). These 
+include \lstinline=$CYCLE_TIME= and \lstinline=$TASK_NAME=, and
+any extra variables defined in the task defintion files.
+
+Your new job submit class can be maintained in the system definition
+directory, and in order to use it it must be listed along with other 
+existing methods in the system \lstinline=job_submit_methods.py= module.
 
 
+\subsubsection{Task Standard Output}
+\label{TaskStandardOutput}
+
+For example system tasks that are submitted using the local background
+methods (i.e.\ \lstinline=task &=) their stdout will appear in the cylc
+stdout stream. The \lstinline=background_remote= method, however,
+redirects remote task stdout to a log file on the remote host (in the
+remote user's home directory).  Something similar to this is also likely
+to be the case for any real system that submits tasks to a batch queue
+scheduler.
+
+
+\subsection{Environment Variables}
+\label{EnvironmentVariables}
+
+The behaviour desribed in this section must be adherred to by any new
+job submission methods.
+
+\subsubsection{Global}
+
+You can define variables in the system config file that will be exported
+into the execution environment of all tasks in a system; see 
+System Config (Section~\ref{SystemConfig}).
+
+\subsubsection{Task-Specific}
+
+You can define variables in a task definition file, via the 
+\lstinline=ENVIRONMENT= key, that will be exported into the execution
+environment of a particular task; see Task Definition Files
+(Section~\ref{TaskDefinitionFiles}).
+
+\subsubsection{Global in Task-Specific}
+
+Global environment variables can be interpolated into task-specific
+variables.  The distributed example system (Section~\ref{Distributed})
+exploits this to defined task-specific I/O sub-directories underneath a
+top level working directory that is defined by a global environment
+variable.
+
+\subsubsection{Remote Evaluation}
+
+As yet there has been no need to use environment variables whose
+evaluation is delayed until the task is executing on a remote platform.
+It would not be difficult to arrange for this to happen should it be
+required, however.
 
 \subsection{Diagnosing A Stalled System}
 \label{DiagnosingAStalledSystem}
 
 In certain situations a system may appear to be ``stuck'', i.e.\ no
 tasks are running and nothing appears to be happening. There are several 
-possible reasons for this; it is not necessarily a problem:
+possible reasons for this (it does not necessarily indicate a problem!):
 
 \begin{itemize}
     \item In {\em normal real time operation}, when all running tasks
@@ -1961,7 +2042,7 @@ possible reasons for this; it is not necessarily a problem:
     \item if every task in the system has one or more unsatisfied
     prerequisites, the system will be stalled. This could happen, for
     example, if you start a system that contains 'tied' forecast models
-    without inserting any oneoff coldstart tasks to satisfy their initial 
+    with any corresponding oneoff coldstart tasks to satisfy their initial 
     restart prerequisites.
 
     \item if the system operator, perhaps in a post-task-failure
@@ -2036,6 +2117,31 @@ Figure~\ref{fig-monitor-eco} shows the standard monitor view of the
 entire ecoconnect operation.
 
 \pagebreak
+
+\subsection{Understanding System Evolution}
+\label{UnderstandingSystemEvolution}
+
+At startup (in a coldstart) any oneoff tasks in the sytem will be
+created at the initial cycle time, or at the next subsequent valid cycle
+for the task. Any tasks that have no prerequisites (and, if they are
+contact tasks, have reached their trigger time) will submit to run
+immediately. Any cycling (i.e.\ non oneoff) tasks that have no
+prerequisites (and, if they are contact tasks, have reached their
+trigger time) will rapidly proliferate ahead until stopped by the
+systems maximum runahead limit (task X in the userguide example system
+is of this type).  Thereafter, each task will, of its own accord, submit
+to run as soon as its prerequisites have been satisfied by other tasks
+already running or finished in the system (and trigger time etc.). 
+Each task spawns a successor at a point in its lifecycle that depends on
+its type: tied tasks spawn has soon as their restart prerequisties have
+been completed, and free tasks spawn at the instant they start running. 
+Once a task exists it is free to run as soon as its prerequisites are
+satisfied, thus successive instances of a free task can run entirely in
+parallel if the opportunity arises (i.e.\ prerequisites allowing), and 
+successive intances of a tied task can overlap if the opportunity
+arises.
+
+
 \section{A Complete Working Example}
 \label{ACompleteWorkingExample}
 
@@ -2058,11 +2164,12 @@ real system as far as scheduling is concerned.
 
 \subsection{Nested}
 
-In this working example system, {\em task C} from the userguide system
-has been replaced by a {\em userguide task} which is itself an entire
-sub-system running under its own scheduler.
+In this example system, {\em task C} from the userguide system has been
+replaced by a task called {\em userguide}, behind which is an entire
+sub-system (the userguide example system) running a single cycle under
+its own scheduler.
 
-If you run this, configure and register both the userguide and nested
+To run this, configure and register both the userguide and nested
 systems. Then start two system monitors, one to follow each system,
 before starting the scheduler on the nested system. You should see that 
 whenever a new `userguide' task runs in the nested system, a separate
@@ -2078,49 +2185,47 @@ tasks in the main system.
 
 \subsection{File-Move}
 
-This working example system illustrates two things:
-
-\begin{itemize}
-    \item How you can move real input/output files around to connect
-        tasks at the control system level, rather than expecting the
-        external tasks themselves to know about the wider system (i.e.\
-        where to get input files that are generated by another task).
-        See {\em Handling Real Dependencies}
-        (Section~\ref{HandlingRealIntertaskDependencies} for more on this.
-
-    \item How to invoke a generic task script, that can potentially
-        implement many system tasks, with task-specific inputs supplied
-        via the execution environment specified in taskdef files.
-
-\end{itemize}
+This example system illustrates use of a generic task script, which in
+this case transfers files between locations, to implement a particular
+system task, with task-specific inputs provided through environment
+variables defined in the task definition file.  More generally, it shows
+how to move real input/output files around to connect tasks at the
+control system level, rather than expecting the external tasks
+themselves to know about the wider system (i.e.\ where to get input
+files that are generated by another task, or where to put output files
+that will be used by another task).  See {\em Handling Real
+Dependencies} (Section~\ref{HandlingRealIntertaskDependencies} for more
+on this.
 
 \subsection{Distributed}
 
-This working example is a variant of the file-move example system in
-which the ``forecast model'' tasks execute on another machine on the
-network. The {\em file-transfer} task script is invoked twice, once for
-a ``put'' task that puts input files on the remote machine, and once for
-a ``get'' task that retrieves output files from the remote machine when
-the remote tasks have finished. The forecast model restart outputs reside
-on the remote machine.
+This example system is a variant of the file-move system in which the
+two forecast model tasks execute on another machine on the network.  The
+{\em file-transfer} script is invoked twice, once to put input files on
+the remote machine, and once retrieve output files from the remote
+machine (these connector tasks would be unnecessary if the forecast
+tasks themselves knew where to get and put their input and output files,
+respectively). The forecast model restart outputs reside on the remote
+machine.
 
-This example system serves to illustrate that cylc can:
+The distributed example system serves to illustrate:
 
 \begin{itemize}
-    \item control a system that has tasks distributed across a network.
-    \item use different job submission methods for different tasks.
+    \item control of a system having tasks distributed across a network.
+    \item use of different job submission methods for different tasks.
 \end{itemize}
 
 Unlike the other example systems, this one will not quite work ``out of
 the box''. You will need to:
 
 \begin{itemize}
-    \item set the URL of your remote machine in the
+    \item set the hostname of your remote machine in the
         \lstinline=$SUPERCOMPUTER= variable that is defined in 
         \lstinline=systems/distributed/system_config.py=
     \item configure passwordless ssh access to the remote machine.
-    \item ensure your Pyro nameserver is accessible from the local and
-        remote machines.
+    \item ensure the Pyro nameserver is accessible from the local and
+        remote machines (it can run on either machine, or somewhere else
+        entirely).
     \item install the remote task scripts on the remote machine.
     \item install cylc on the remote machine (the remote task must be
         able to call \lstinline=cylc message=.
@@ -2132,27 +2237,18 @@ the remote task scripts, if their absolute paths are not supplied in the
 taskdef TASK key, must be in the PATH environment set in the taskdef
 file (and likewise for the remote cylc bin directory).
 
-The background_remote job submission class assumes the local and remote 
-user names are the same.  If not, the taskdef OWNER key can be used, and 
-a slightly modified version of background_remote derived to use the
-correct remote username.
+The \lstinline=background_remote= job submission class assumes the local
+and remote user names are the same.  If not, the taskdef OWNER key can
+be used, and a slightly modified version of
+\lstinline=background_remote= derived to use the correct remote
+username.
 
 The distributed example can also be tested using the local machine as
 the remote machine, in which case the forecast model tasks will be
-submitted locally by the background_remote job class, and you will 
-require passwordless ssh self-access on the machine.
+submitted locally by the \lstinline=background_remote= job class, and
+you will require passwordless ssh self-access on the machine.
 
-\subsubsection{Task Standard Output}
 
-For example system tasks that are submitted using the standard ``local
-background'' method (i.e.\ configure the task execution environment then 
-simply run \lstinline=task.sh &=) task stdout will appear in the cylc
-stdout stream.  The background_remote method, however, redirects remote
-task stdout to a log file on the remote host (in the remote users home
-directory).  Something similar is likely to be the case for any real
-system that submits tasks to a batch queue scheduler.
-
-\pagebreak
 \subsection{SCS Demo}
 
 This example system, which resides in 
@@ -2238,11 +2334,18 @@ documented.
 
 \pagebreak
 \subsection{More Complex Task Behaviour}
-labelsubsection{MoreComplexTaskBehaviour}
+\label{MoreComplexTaskBehaviour}
 
-DETAIL WHEN IS IT NECESSARY TO DERIVE PYTHON TASK CLASSES DIRECTLY
-I.E.\ WHEN ARE CYLC TASK DEFINITION FILES NOT SUFFICIENT.
-(In EcoConnect: only streamflow and topnet)
+If you require task behaviour that is not represented in the current 
+task definition files you may need to manually derive a new task class.
+Use the auto-generated task classes as a starting point. Raw python 
+task class definitions stored in Python source files can be 
+kept in the system taskdef sub-directory alongside the taskdef files,
+and will be transferred verbatim to the new task definition file on 
+configuring the system.  Out of the entire EcoConnect operation, only 
+the highly unusual scheduling behaviour of teh TopNet river model 
+requires a custom task class,
+
 
 \pagebreak
 \section{Master Task Script Templates}
@@ -2519,17 +2622,22 @@ $ for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
         possible subsequent cycle.  To do this, insert the relevant cold
         start task, or task group, at the later cycle, then purge the
         failed task and everything that depends on it (and on them, and
-        so on) down to the cold start time.  Other parts of the system 
-        not directly affected should be able to carry on over the hole
-        so long as the forecast models involved write out sufficient 
-        restart outputs to do so.
+        so on) down to the cold start time.  Other downstream forecast
+        models will be able to pick up immediately so long their most
+        recent previous instance (i.e.\ just before the gap) wrote out
+        sufficient restart outputs to bridge the gap (otherwise they,
+        or perhaps the entire system, will need to be cold started). 
 
-    \item {\em HELP, I screwed up a system intervention} such as the
-        above!  Before any operation that alters the sytem state, cycl
-        automatically dumps state and reports the state dump filename in
-        the main log.  Shut the system down and restart it from the
-        pre-screwup state. Then retry your intervention in practice mode
-        before doing it for real!
+    \item {\em HELP, I attempted a drastic intervention in a complex
+        system, using the horrifying purge command, and this time I
+        really screwed the pooch!} Before any operation that alters the
+        sytem state, cycl automatically writes out a special state dump
+        file and reports the filename in the main log. Shut the system
+        down and restart it from its pre-intervention state (just
+        cut-and-paste the state dump filename from the main log file -
+        the file path is not required because the file will be in the
+        configured system state dump directory).  Then {\em retry your
+        intervention in practice mode} before doing it for real!
 
 \end{itemize}
 
