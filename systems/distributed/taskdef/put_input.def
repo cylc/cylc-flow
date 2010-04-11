@@ -28,7 +28,7 @@
 
 %ENVIRONMENT
     WRAP file_transfer.sh
-    TARG $CYLC_TMPDIR/ext/output/$(CYCLE_TIME)/extdata
+    SRCE $CYLC_TMPDIR/ext/output/$(CYCLE_TIME)/extdata
     DEST $SUPERCOMPUTER:$CYLC_REMOTE_TMPDIR/input/$(CYCLE_TIME)/extdata
 
 %PREREQUISITES

@@ -21,14 +21,14 @@ set -e; trap 'cylc message --failed' ERR
 # Purpose: file copy or transfer.
 
 # Task-specific inputs:
-#   1. $TARG  -  list of space separated file URLs
+#   1. $SRCE  -  list of space separated file URLs
 #   2. $DEST  -  parallel list of space separated FILE URLs
 #                (NOT DIRECTORY URLS - ALWAYS GIVE A FILENAME)
 
 # This script is a multiple-call wrapper for 'scp' that takes
 # its arguments from environment variables exported by cylon.
 
-# As scp-style URLs TARG and DEST can be prefixed with 'hostname:'.
+# As scp-style URLs SRCE and DEST can be prefixed with 'hostname:'.
 
 # passwordless ssh must be configured for all transfers. 
 # (but scp defaults to 'cp' for local copies?)
@@ -42,8 +42,8 @@ set -e; trap 'cylc message --failed' ERR
 # TO DO: allow for unpacking at destination? (this is more difficult in
 # some cases; imagine a tar archive of many compressed files).
 
-if [[ -z $TARG ]]; then
-    cylc message -p CRITICAL "TARG not defined"
+if [[ -z $SRCE ]]; then
+    cylc message -p CRITICAL "SRCE not defined"
     cylc message --failed
     exit 1
 fi
@@ -54,7 +54,7 @@ if [[ -z $DEST ]]; then
     exit 1
 fi
 
-for T in $TARG; do
+for T in $SRCE; do
     # get destination corresponding to this target
     D=${DEST%% *}
     # remove this destination from the list of remaining destinations
