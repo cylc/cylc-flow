@@ -231,7 +231,7 @@ study?  The forecast model {\em a} depends only on the external data
 and, implicitly at this stage of the discussion, on its own previous
 instance for a model ``background state''. Thus, as alluded to in
 Figure~\ref{fig-dep-two-linked}, task {\em a} could in principle start
-immediately its predecessor has finished.  Figure~\ref{fig-job-two}
+immediately its predecessor has finished.  Figure~\ref{fig-overlap}
 shows, however, that starting a whole new cycle at this point is
 dangerous - it results in dependency violations in half the tasks of the
 simple example system. In fact the situation is even worse than this -
@@ -337,9 +337,9 @@ with dependency violations.
     mode, or after a long delay, when the external driving data are
     available many cycles in advance. Above the time axis is the optimal
     schedule obtained when the system is constrained only by its true
-    dependencies, as in Figure \ref{fig-dep-two}, and underneath is
-    the best that can be done, in general, when intercycle dependencies
-    are ignored.} 
+    dependencies, as in Figure \ref{fig-dep-two-linked}, and underneath
+    is the best that can be done, in general, when intercycle
+    dependencies are ignored.} 
 \end{figure} 
 
 To further illustrate the potential benefits of proper intercycle
@@ -394,7 +394,7 @@ finish entirely.
         \includegraphics[width=8cm]{inkscape-svg/task-pool}
     \end{center} 
     \caption[The cylc task pool]{\small How cylc sees the task pool, in
-    contrast to the full dependency diagram of Figure~\ref{fig-full}.} 
+    contrast to the full dependency diagram of Figure~\ref{fig-dep-two-linked}.} 
 \end{figure} 
 
 This section explains how cylc achieves the optimal multicycle
@@ -548,7 +548,7 @@ system, and compare the results with the scheduling diagrams in
 Section~\ref{TheCylcSchedulingAlgorithm}. The packaged examples should
 work ``out of the box'' in real and dummy mode, using the simple
 sequence of commands presented in the Quick Start Guide, from {\em
-Prepare For Scheduling} (Section~\ref{QuickPrepareForScheduling})
+Prepare For Scheduling} (Section~\ref{QuickPreparingForScheduling})
 onward.  For detailed information on the packaged example systems, refer
 to {\em A Complete Working Example}
 (Section~\ref{ACompleteWorkingExample}).  
@@ -566,7 +566,7 @@ the packaged cylc ``userguide'' example system. Refer to
 (Section~\ref{CommandReference}), and
 upcoming sections of this document for more detailed information on
 available commands, options, and operations.  {\em A Complete Working
-Example} (Section~\ref{ref:ACompleteWorkingExample} describes the
+Example} (Section~\ref{ACompleteWorkingExample} describes the
 userguide example system in detail.
 
 \subsection{Starting A Pyro Nameserver}
@@ -640,7 +640,7 @@ is covered in detail in {\em System Definition}
 \subsubsection{System Configuration}
 \label{QuickConfiguration}
 
-The configuration process (Section~\ref{SystemConfiguration}) generates
+System configuration generates
 system-specific Python modules in the system definition directory. This
 must be done initially, and thereafter whenever the system's task
 definition files have been changed:
@@ -650,9 +650,9 @@ cylc configure $CYLC_DIR/systems/userguide
 \end{lstlisting}
 
 \subsubsection{System Registration}
-\label{QuickRegistration}
+\label{QuickSystemRegistration}
 
-System registration (Section~\ref{SystemRegistration}) associates a name
+System registration associates a name
 with a configured system, for a particular user. This is required in
 order to {\em run} a system but you can monitor or otherwise interact
 with running systems that have been registered and started up by other
@@ -730,36 +730,13 @@ current system monitors, and plans for future development.
 \subsubsection{System Log Files}
 \label{QuickSystemLogFiles}
 
-You can also follow system progress in the system log files, which are
-discussed in {\em Logging}, Section~\ref{Logging}. By
+You can also follow progress in the system log files, which are
+discussed in {\em System Log Files}, Section~\ref{SystemLogFiles}. By
 default these are located under \lstinline=$HOME/cylc-logs/{SYSTEM}=.
 Each task has its own log file for task-specific events, including 
 incoming task messages, and the \lstinline=main= log file records all
 events in sequence.
 
-\lstset{language=,
-basicstyle=\color{basic}\scriptsize\ttfamily,
-}
-\begin{lstlisting}
-$ tail $HOME/cylc-logs/userguide/main
-2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
-2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
-2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
-2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 completed
-2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 finished
-2010/03/28 00:33:52 INFO main.A - [2010010412] surface pressure field ready for 2010010412
-2010/03/28 00:33:52 INFO main.A - [2010010412] level forecast fields ready for 2010010412
-2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 completed
-2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 finished
-2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS FINISHED
-\end{lstlisting}
-
-\lstset{language=,
-basicstyle=\color{basic}\footnotesize\ttfamily,
-}
-
-Each entry shows the time of logging, the name and cycle time of the
-reporting task (in square brackets), and the logged message.
 
 \subsubsection{Getting Task State Information}
 \label{QuickGettingTaskStateInformation}
@@ -919,8 +896,8 @@ them out of the task list in the system config module, or use the
 scheduler command line options provided for this purpose). 
 
 
-\subsection{Task Prerequisites And Outputs}
-\label{TaskPrerequisitesAndOutputs}
+\subsection{Prerequisites And Outputs}
+\label{PrerequisitesAndOutputs}
 
 Cylc's scheduling algorithm matches one task's completed outputs with
 another's unsatisfied prerequisites
@@ -1029,6 +1006,7 @@ particular output will trigger off the first task to provide it.
 
 
 \subsection{Task Types} 
+\label{TaskTypes}
 
 In cylc, every task (sans cycle time, which is a parameter) is a member
 of its own class, which is defined in the \lstinline=task_classes.py=
@@ -1178,7 +1156,7 @@ will not fail).
 Finally, \lstinline=cylc message= automatically sends a special {\em
 completed} message whenever a tasks reports {\em success or failure}:
 \begin{lstlisting}
-    "foo completed for $(CYCLE_TIME)"
+"foo completed for $(CYCLE_TIME)"
 \end{lstlisting}
  
 This can be useful if you want to trigger off an upstream task whether
@@ -1289,7 +1267,7 @@ forecast models don't normally complete their major outputs until the
 end of a run - except for restart outputs!). If that is the case a task
 can simply report all outputs completed at once before it finishes.
 Cylc in fact has a task-wrapping mechanism that does this automatically
-(Section~\ref{wrapping}), allowing you schedule a set of existing
+(Section~\ref{TaskWrapping}), allowing you schedule a set of existing
 tasks without modifying them at all.  
 
 Each external task must:
@@ -1408,11 +1386,10 @@ inputs) the task can easily be rerun for any cycle still in the archive.
 \subsubsection{Reporting Outputs and Failures}
 
 All outputs that other tasks may depend on must be reported via cylc's
-simple messaging interface. How to do this is explained in the following
-sections; in particular see {\em Restarts and Outputs}
-(Section~\ref{RestartsAndOutputs}). Similarly, fatal errors must be
-reported by the same mechanism, otherwise cylc will think the failed
-task is still running. 
+simple messaging interface, which is explained in {\em Prerequisites and
+Outputs} (Section~\ref{PrerequisitesAndOutputs}). Similarly, fatal
+errors must be reported by the same mechanism, otherwise cylc will think
+the failed task is still running. 
 
 Ideally, important errors should be checked for explicitly, and lesser
 fatal errors (e.g.\ failure to create an output directory) can be
@@ -1471,7 +1448,7 @@ task-specific input parameters supplied through environment variables
 that are specified in the Task Definition Files. Forecasting systems
 commonly have to move a lot of files around (from the output
 directory(s) of one task to the input directory(s) of others, for
-instance). See Section~\ref{RealDependencies}, and cylc's file-transfer
+instance). See Section~\ref{HandlingRealDependencies}, and cylc's file-transfer
 example in userguide !TO DO!. 
 
 \subsection{Examples}
@@ -1480,7 +1457,8 @@ Listed immediately below are two example task definitions, one for a
 ``forecast model'', and the other not (e.g.\ post processing). All tasks
 in a typical forecasting system can be defined as simply as these
 (advanced TopNet scheduling the only exception in EcoConnect). 
-But see (Section~\ref{TaskDefinitionReference}) for full Task Definition
+But see {\em Master Task Definition Template},
+Section~\ref{MasterTaskDefinitionTemplate} for full Task Definition
 documentation. Please refer also to the task definitions in the packaged
 example systems, which show the effect of the task type modifiers as well
 (particularly oneoff and contact, which will be required to some extent
@@ -1593,7 +1571,7 @@ self.items['logging_dir'] = '/foo/bar/baz/logging'
 
     \item {\bf logging verbosity}: Cylc's logging subsystem is based on
         the standard Python logging module (see
-        Section~\ref{logging}). The 'info' level logs messages
+        Section~\ref{SystemLogFiles}). The 'info' level logs messages
         relevant to task execution and scheduling, while the more
         verbose 'debug' level adds messages that trace the execution of
         cylc itself.
@@ -1666,7 +1644,7 @@ self.items['legal_startup_hours'] = [ 6, 18 ]
 
 
 \section{Handling Real Intertask Dependencies}
-\label{HandlingRealIntertaskDependencies}
+\label{HandlingRealDependencies}
 
 Cylc's prerequisite and output messages are somewhat abstract, but the
 fact remains that most of the time they correspond directly to real 
@@ -1783,11 +1761,12 @@ get its associated forecast model restarted after a failure that results
 in one of more omitted cycles. See {\em Failure Recovery Scenarios}
 (Section~\ref{FailureRecoveryScenarios}) for an example of this. 
 
-See also {\em Task Definition Files} (Section~\ref{Task Definition
-Files}), and the userguide example system implementation, for more on
-oneoff cold start tasks.
+See also {\em Task Definition Files}
+(Section~\ref{TaskDefinitionFiles}), and the userguide example system
+implementation, for more on oneoff cold start tasks.
 
 \subsection{Restarts}
+\label{Restarts}
 
 Cylc's automatic {\em state dump files} (described below in
 Section~\ref{AutomaticStateDumps}) allow you to restart a system
@@ -1826,6 +1805,7 @@ required because a cylc system does not shut down, unless forced to, until
 all currently running tasks have finished.
 
 \subsection{Automatic State Dumps}
+\label{AutomaticStateDumps}
 
 Cylc updates its configured state dump file (e.g.\
 \lstinline=$HOME/cylc-state/state=) after every pass through the task 
@@ -1845,6 +1825,40 @@ down immediately and restart it from the pre-intervention state dump:
 \begin{lstlisting}
 cylc start --restart-from=state.2010:3:30:14:54:29 SYSTEM
 \end{lstlisting}
+
+\subsection{System Log Files}
+\label{SystemLogFiles}
+
+Each task has its own log file for task-specific events, including 
+incoming task messages, and the \lstinline=main= log file records all
+events in sequence.
+
+\lstset{language=,
+basicstyle=\color{basic}\scriptsize\ttfamily,
+}
+\begin{lstlisting}
+$ tail $HOME/cylc-logs/userguide/main
+2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
+2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
+2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
+2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 completed
+2010/03/28 00:33:52 INFO main.C - [2010010400] C%2010010400 finished
+2010/03/28 00:33:52 INFO main.A - [2010010412] surface pressure field ready for 2010010412
+2010/03/28 00:33:52 INFO main.A - [2010010412] level forecast fields ready for 2010010412
+2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 completed
+2010/03/28 00:33:53 INFO main.A - [2010010412] A%2010010412 finished
+2010/03/28 00:33:53 CRITICAL main - ALL RUNNING TASKS FINISHED
+\end{lstlisting}
+
+\lstset{language=,
+basicstyle=\color{basic}\footnotesize\ttfamily,
+}
+
+Each entry shows the time of logging, the name and cycle time of the
+reporting task (in square brackets), and the logged message.
+
+In dummy mode, the logged time is the dummy mode accelerated clock time, not 
+real time.
 
 
 \subsection{Dummy Mode} 
@@ -1936,7 +1950,7 @@ cylc start --dummy-mode --restart-from=FILE SYSTEM
 \subsection{Job Submission}
 \label{JobSubmission}
 
-In the system config file, Section~\ref{SystemConfig}, you can define a
+In the system config file, Section~\ref{SystemConfigFiles}, you can define a
 default job submission method that will be used to run all tasks in the
 system except for those, if any, that are singled out to use a different
 method (also via the system config file).
@@ -2001,7 +2015,7 @@ job submission methods.
 
 You can define variables in the system config file that will be exported
 into the execution environment of all tasks in a system; see 
-System Config (Section~\ref{SystemConfig}).
+System Config (Section~\ref{SystemConfigFiles}).
 
 \subsubsection{Task-Specific}
 
@@ -2097,7 +2111,7 @@ To confirm that the runahead limit is causing a stall, you can use
 that is not spawning a task only because it has exceeded the runahead
 limit will report that condition to the log.
 \section{System Monitors}
-\label{System Monitors}
+\label{SystemMonitors}
 
 Cylc registers a ``system state summary'' object with the Pyro
 nameserver, which provides a general mechanism for remote system
@@ -2208,10 +2222,11 @@ control system level, rather than expecting the external tasks
 themselves to know about the wider system (i.e.\ where to get input
 files that are generated by another task, or where to put output files
 that will be used by another task).  See {\em Handling Real
-Dependencies} (Section~\ref{HandlingRealIntertaskDependencies} for more
+Dependencies} (Section~\ref{HandlingRealDependencies} for more
 on this.
 
 \subsection{Distributed}
+\label{Distributed}
 
 This example system is a variant of the file-move system in which the
 two forecast model tasks execute on another machine on the network.  The
@@ -2612,7 +2627,7 @@ $ for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
 
 
 \section{Failure Recovery Scenarios}
-\label{Failure Recovery Scenarios}
+\label{FailureRecoveryScenarios}
 
 \begin{itemize}
     \item {\em One forecast cycle runs into the next, after a delay in
@@ -2622,10 +2637,9 @@ $ for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
         wait.
 
     \item {\em A delayed parallel trial or case study catches up to real
-        time operation}. This is no problem for cylc; as explained in
-        Section~\ref{foo} any cycl system will seamlessly transition in
-        and out of ``normal real time operation'' (distinct cycles
-        triggered by the wall clock) as needed.
+        time operation}. This is no problem for cylc; any cylc system
+        will seamlessly transition in and out of ``normal real time
+        operation'' (distinct cycles triggered by the wall clock) as needed.
 
     \item {\em An external task fails, but can be fixed}. For example, a
         forecast model aborts trying to read a corrupted data file that
