@@ -55,8 +55,7 @@ class task_state:
                 
             if self.is_failed() and not no_reset:
                 # reset failed tasks to waiting unless told not to do so.
-                if not no_reset:
-                    self.set_status( 'waiting' )
+                self.set_status( 'waiting' )
 
     def has_key( self, key ):
         if key in self.state.keys():
