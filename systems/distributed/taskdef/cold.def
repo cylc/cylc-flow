@@ -33,7 +33,9 @@
     $SUPERCOMPUTER
 
 %ENVIRONMENT
+    # pass a local global variable to the remote task:
     CYLC_REMOTE_TMPDIR $CYLC_REMOTE_TMPDIR
+    # note this assumes the same $HOME local and remote: 
     PATH $PATH:$HOME/cylc/bin:$HOME/cylc/systems/distributed/scripts
     PYTHONPATH $PYTHONPATH:$HOME/cylc/src
 
