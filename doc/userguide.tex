@@ -52,7 +52,7 @@ numbers=left,
 
 \lstdefinelanguage{cylctaskdef}
 {
-morekeywords={NAME,DESCRIPTION,TYPE,CONTACT_DELAY,OWNER,CYCLES,TASK,ENVIRONMENT,ESTIMATED_RUN_TIME,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,ESTIMATED_RESTART_OUTPUT_TIMES,NO_NONCOTEMPORAL_DEPENDANTS,ONEOFF_FOLLOW_ON},
+morekeywords={NAME,DESCRIPTION,TYPE,CONTACT_DELAY,OWNER,REMOTE_HOST,CYCLES,TASK,ENVIRONMENT,ESTIMATED_RUN_TIME,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,ESTIMATED_RESTART_OUTPUT_TIMES,NO_NONCOTEMPORAL_DEPENDANTS,ONEOFF_FOLLOW_ON},
 sensitive=false,
 morecomment=[l]{\#},
 morestring=[b]\",
@@ -2040,11 +2040,25 @@ possible reasons for this (it does not necessarily indicate a problem!):
         contact task has yet to reach its trigger time.
 
     \item if every task in the system has one or more unsatisfied
-    prerequisites, the system will be stalled. This could happen, for
-    example, if you start a system that contains 'tied' forecast models
-    with any corresponding oneoff coldstart tasks to satisfy their initial 
-    restart prerequisites.
+        prerequisites, the system will be stalled. This could happen,
+        for example, if you start a system that contains tied (forecast
+        model) tasks without the corresponding oneoff coldstart tasks to
+        satisfy their initial restart prerequisites.
 
+\end{itemize}
+
+The following problems all cause a system to {\em eventually} get stuck 
+at the {\em maximum runahead limit} (which is 24 hours between the
+fastest and slowest tasks, by default), because cylc does not
+automatically remove failed tasks from the system.  Real operational
+systems should have automated means of alerting the system operator to
+any failure that occurs, but in the unlikely event that the failure 
+is not noticed until the system stalls at the runahead limit, then to
+get things moving again the operator must either remove teh failed task
+or reset (and thereby rerun) it after fixing the problem that cause the
+failure.
+
+\begin{itemize}
     \item if the system operator, perhaps in a post-task-failure
     intervention, kills some tasks that are required to satisfy the
     prerequisites of other tasks that still exist in the system, then 
@@ -2371,7 +2385,7 @@ requires a custom task class,
 
 Cylc relies heavily on Object Oriented Programming (OOP) concepts,
 particularly the {\em polymorphic} nature of the task proxy objects.
-This section gives a very minimal explanation of what this means;
+An absolutely minimal explanation of this follows; 
 please refer to an OOP reference for more detail.
 
 A {\bf class} is a generalisation of data type to include behaviour
@@ -2408,9 +2422,9 @@ objects can all be treated as members of a common base class.
 %For example, a group of %$circles$, $triangles$, and $squares$ could 
 %be manipulated by code designed entirely to handel $shapes$; calling
 %$[shape].draw()$ will invoke the right derived class $draw()$ method. 
-This is a powerful mechanism because it allows an existing program,
+This is a powerful mechanism because it allows existing old code,
 without modification, to manipulate new objects so long as they 
-derive from the same base class as the original objects.
+derive from the original base class.
 %If we later derive an entirely new kind of shape ($hexagon$, say) with
 %it's own unique behaviour, the existing program, without modification,
 %will process the new objects in the proper hexagon-specific way.  
@@ -2483,8 +2497,11 @@ important is happening.
 \label{RunningPyro}
 
 To see if there is a Pyro nameserver running already on your network
-segment, use \lstinline=pyro-nsc [-h host] [-p port] ping=. Invoke the
-command without arguments to see a list of options.
+segment, use 
+\begin{lstlisting}
+pyro-nsc [-h host] [-p port] ping
+\end{lstlisting}
+Invoke the command without arguments to see a list of options.
 
 \lstset{language=bash}
 
@@ -2553,23 +2570,27 @@ products associated with that cycle are complete.
 \subsection{How Cylc Interacts With Batch Queue Schedulers}
 \label{HowCylcInteractsWithBatchQueueSchedulers}
 
-Cylc dynamically adapts to any external execution environment. It just
-decides when a task is *ready* to run - i.e.\ when its prerequisites 
-are satisfied.  If the external task is delayed because of resource
-contention, it will not report its outputs complete until it does run.
+Cylc dynamically adapts to any external situation that affects when tasks 
+can run, including post-submission delays due to computational resource
+contention. Cylc just decides when a task is {\em ready} to run - i.e.\ when
+its prerequisites are satisfied.  If the external task is delayed
+because of resource contention, it will not report its outputs complete
+until it does run and complete those outputs, and no dependent
+downstream events will be able to trigger until that occurs.
 
 \subsection{Known Bugs and Limitations}
 
 \begin{itemize}
-    \item {\bf minimum cycle time granularity is currently 1 hour}. Note
-        this is only loosely connected to when, or how frequently, a
-        task actually runs, and only in real time operation. It would be
-        easy to extend to minutes and seconds, if necessary.
+    \item {\bf minimum cycle time granularity for a task is currently 1
+        hour}. Note this is only loosely connected to when, or how
+        frequently, a task actually runs, and only in real time
+        operation. It would be easy to extend to minutes and seconds, if
+        necessary.
 
-    \item {\bf it is currently assumed that every task has at least one
-        cycle in a 24 hour period} (via the taskdef CYCLES key). 
-        It would be easy to extend this to less frequent tasks, if
-        required. 
+    \item {\bf every task must have at least one valid cycle time in a
+        24 hour period} (through the taskdef CYCLES key). 
+        It would be very easy to extend cylc to handle less frequent
+        tasks, if required. 
 
 \end{itemize}
 
