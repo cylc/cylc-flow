@@ -73,7 +73,7 @@ parser.add_option( "-c", "--check",
     "delete any found to be invalid.",
     action="store_true", default=False, dest="check" )
 
-parser.add_option( "--wipe",
+parser.add_option( "-w", "--wipe",
     help="Delete all of your current system registrations.",
     action="store_true", default=False, dest="wipe" )
 
