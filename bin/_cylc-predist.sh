@@ -45,7 +45,8 @@ chmod +x bin/*
 chmod +x doc/process
 chmod +x systems/userguide/scripts/*
 chmod +x systems/nested/scripts/*
-chmod +x systems/FIXME/distributed/scripts/*
+chmod +x systems/distributed/scripts/*
+chmod +x systems/scs-demo/scripts/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" bin/cylc
