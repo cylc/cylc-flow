@@ -41,18 +41,35 @@ class manager:
 
         # initialise the dependency broker
         self.broker = broker()
-        
-        # instantiate the initial task list and create loggers 
+
+        if 'start_time' in startup:
+            self.start_time = startup[ 'start_time' ]
+        if 'restart' in startup:
+            self.restart = startup[ 'restart' ]
+        if 'exclude' in startup:
+            self.exclude = startup[ 'exclude' ]
+        if 'include' in startup:
+            self.include = startup[ 'include' ]
+        if 'no_reset' in startup:
+            self.no_reset = startup[ 'no_reset' ]
+        if 'initial_state_dump' in startup:
+            self.initial_state_dump = startup[ 'initial_state_dump' ]
+         
         self.tasks = []
 
-        if startup[ 'start_time' ]:
-            self.load_from_config( startup['start_time'], startup['exclude'], startup['include'] )
+        # create main logger
+        self.create_main_log()
 
-        elif startup[ 'restart' ]:
-            self.load_from_state_dump( startup[ 'initial_state_dump' ], startup[ 'no_reset' ] )
+
+    def load( self ):
+        # instantiate the initial task list and create loggers 
+        if self.start_time:
+            self.load_from_config( self.start_time, self.exclude, self.include )
+
+        elif self.restart:
+            self.load_from_state_dump( self.initial_state_dump, self.no_reset )
         else:
             raise SystemExit( "No startup method defined!" )
-
 
     def create_main_log( self ):
         log = logging.getLogger( 'main' )
@@ -72,7 +89,7 @@ class manager:
         return self.tasks
 
     def set_stop_time( self, stop_time ):
-        self.log.debug( "Setting new stop time: " + stop_time )
+        self.log.debug( "Setting stop time: " + stop_time )
         self.stop_time = stop_time
 
     def set_system_hold( self, ctime = None ):
@@ -115,9 +132,6 @@ class manager:
         # set clock before using log (affects dummy mode only)
         self.clock.set( start_time )
 
-        # create main logger
-        self.create_main_log()
-
         #print '\nSTARTING AT ' + start_time + ' FROM CONFIGURED TASK LIST\n'
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname1, taskname2, ...]
@@ -142,17 +156,22 @@ class manager:
             itask = get_object( 'task_classes', name )\
                     ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], startup=True )
 
-            itask.log( 'DEBUG', "connected" )
-            self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
-            self.tasks.append( itask )
+            # check stop time in case the user has set a very quick stop
+            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                # we've reached the stop time already: delete the new task 
+                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                itask.prepare_for_death()
+                del itask
+ 
+            else:
+                itask.log( 'DEBUG', "connected" )
+                self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
+                self.tasks.append( itask )
 
 
     def load_from_state_dump( self, filename, no_reset_val ):
         # load initial system state from the configured state dump file
         #--
-
-        # create main logger
-        self.create_main_log()
 
         print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
         self.log.info( 'Loading initial state from ' + filename )
@@ -220,9 +239,17 @@ class manager:
             itask = get_object( 'task_classes', name )\
                     ( c_time, self.dummy_mode, state, self.submit[ name ], no_reset=no_reset_val )
 
-            itask.log( 'DEBUG', "connected" )
-            self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
-            self.tasks.append( itask )
+            # check stop time in case the user has set a very quick stop
+            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                # we've reached the stop time already: delete the new task 
+                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                itask.prepare_for_death()
+                del itask
+ 
+            else:
+                itask.log( 'DEBUG', "connected" )
+                self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
+                self.tasks.append( itask )
 
     def no_tasks_running( self ):
         # return True if no tasks are submitted or running

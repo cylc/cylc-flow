@@ -319,6 +319,7 @@ if options.start_time:
 
 # find initial state dump file
 
+initial_state_dump = None
 configured_state_dump = config.get('state_dump_file')
 
 if options.restart:
@@ -422,6 +423,9 @@ if options.pause_time:
     if not cycle_time.is_valid( options.pause_time ):
         parser.error( "invalid cycle time: " + options.pause_time )
     pool.set_system_hold( options.pause_time )
+
+# load initial task pool after setting stop time, if any
+pool.load()
 
 # logger is now created and pimped
 log = logging.getLogger( 'main' )
