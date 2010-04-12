@@ -299,7 +299,7 @@ class manager:
 
         for itask in self.tasks:
                 if self.system_hold_ctime:
-                    if int( itask.c_time ) >= int( self.system_hold_ctime ):
+                    if int( itask.c_time ) > int( self.system_hold_ctime ):
                         self.log.debug( 'not asking ' + itask.get_identity() + ' to run (' + self.system_hold_ctime + ' hold in place)' )
                         continue
 

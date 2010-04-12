@@ -132,8 +132,8 @@ def commandline_parser():
             "down after all tasks have completed or passed this cycle.",
             metavar="CYCLE", action="store", dest="stop_time" )
 
-    parser.add_option( "--pause-at",
-            help="Pause the system when it reaches CYCLE.",
+    parser.add_option( "--pause-after",
+            help="Refrain from running tasks after cycle time CYCLE.",
             metavar="CYCLE", action="store", dest="pause_time" )
 
     parser.add_option( "-r", "--restart", 
