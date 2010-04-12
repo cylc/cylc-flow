@@ -883,6 +883,92 @@ organising, so there are advantages fine-graining a system:
 
 
 
+
+\subsection{External Task Requirements} 
+\label{ExternalTaskRequirements}
+
+\subsubsection{Restartability}
+
+It should be possible to restart a failed task (after fixing the
+problem) by simply resubmitting it for the same cycle time. In other
+words, failure at any point during task execution should not render a
+restart impossible by corrupting the state of some internal-use files,
+or similar. 
+
+\subsubsection{Previous Instance Dependence} 
+
+A task that in principle does not depend on a previous instance of
+itself (i.e.\ on the same task at a previous cycle time) should be able
+to run as soon as its prerequisites are satisfied, even if one or more
+of its predecessors has not finished (or even started) yet.  Post
+processing tasks are typically of this type - they should be able to run
+as soon as the files they process exist, regardless of whether or not
+the processing of files from any previous cycles has occurred yet.
+
+Similarly, a warm-cycled forecast model, which depends on a previous
+instance via its restart prerequisites, should be able to run as soon as
+its prerequisites (including the restart ones) are satisfied.
+
+If this is not the case in practice, perhaps because of the task in
+question makes use of a temporary workspace that is not labelled by
+cycle time, then cylc's sequential task type modifier see {\em Task
+Types} (Section~\ref{TaskTypes}) can easily force sequential execution
+of particular tasks, but the resulting system will be somewhat less
+efficient than it could be.
+
+\subsubsection{Multicycle Restartability} 
+
+A warm-cycled forecast model's restart files, which are written in
+one cycle and read in the next, should not simply be overwritten with
+each new run. Otherwise these files could be corrupted if the task is
+accidentally invoked at the wrong cycle time, thereby breaking the task
+for the correct cycle (and a cold start will subsequently be required).
+Instead, consider organising restart files by cycle time, through a file
+or directory naming convention, and keep them in a simple cycle-time
+based rolling archive. Then (given all other cycle time dependent
+inputs) the task can easily be rerun for any cycle still in the archive.
+
+\subsubsection{Reporting Outputs and Failures}
+
+All outputs that other tasks may depend on must be reported via cylc's
+simple messaging interface, which is explained in {\em Prerequisites and
+Outputs} (Section~\ref{PrerequisitesAndOutputs}). Similarly, fatal
+errors must be reported by the same mechanism, otherwise cylc will think
+the failed task is still running. 
+
+Ideally, important errors should be checked for explicitly, and lesser
+fatal errors (e.g.\ failure to create an output directory) can be
+trapped by the shell and handled with an automatic message. The
+userguide example task script listings of
+Section~\ref{ACompleteWorkingExample} show how to do this.
+
+\subsubsection{Contact Tasks Must Wait On Data}
+
+Most tasks in a cylc system know their own cycle time, but they don't
+know or care what the wall clock time is.  They just run when their
+prerequisites are satisfied, i.e.\  when other tasks say their input
+files (usually) are ready for use. The only connection between cylc
+systems and the real world are the {\em contact tasks} (see {\em Task
+Types}, Section~\ref{TaskTypes} for more on this) which in addition to
+their other prerequisites, if any, wait on a particular wall clock time
+relative to their cycle time before running.  For example, a weather
+model that assimilates real time observations should have an associated
+contact task whose job is to report when those observations are ready
+for use.  If in real time operation at nominal analysis time T, the obs
+are expected at, say, T+3 hours, then the contact task should be
+configured to launch at 3 hours past its cycle time (again, at the
+earliest because its other prerequisites must also be satisfied).
+If the system is delayed by more than three hours, so that T+3 hours 
+has already passed, then the contact task will launch immediately.
+If there's any chance that the obs could in fact be ready at T+2 hours,
+then the contact delay interval should be changed to 2 hours.  To allow
+for possible late arrival of obs, which likely will happen on occasion,
+the real contact task should have a wait loop in it: once running it
+should check for the existence of the expected data immediately. If the
+data isn't there the task must keep checking until it shows up, and only then
+report its output completed to cylc. 
+
+
 \subsection{Incremental Construction Of A New System} 
 \label{IncrementalConstructionOfANewSystem}
 
@@ -1374,91 +1460,6 @@ may be of no consequence in practice.
 
 \pagebreak
 
-\subsection{External Task Requirements} 
-\label{ExternalTaskRequirements}
-
-\subsubsection{Restartability}
-
-It should be possible to restart a failed task (after fixing the
-problem) by simply resubmitting it for the same cycle time. In other
-words, failure at any point during task execution should not render a
-restart impossible by corrupting the state of some internal-use files,
-or similar. 
-
-\subsubsection{Previous Instance Dependence} 
-
-A task that in principle does not depend on a previous instance of
-itself (i.e.\ on the same task at a previous cycle time) should be able
-to run as soon as its prerequisites are satisfied, even if one or more
-of its predecessors has not finished (or even started) yet.  Post
-processing tasks are typically of this type - they should be able to run
-as soon as the files they process exist, regardless of whether or not
-the processing of files from any previous cycles has occurred yet.
-
-Similarly, a warm-cycled forecast model, which depends on a previous
-instance via its restart prerequisites, should be able to run as soon as
-its prerequisites (including the restart ones) are satisfied.
-
-If this is not the case in practice, perhaps because of the task in
-question makes use of a temporary workspace that is not labelled by
-cycle time, then cylc's sequential task type modifier see {\em Task
-Types} (Section~\ref{TaskTypes}) can easily force sequential execution
-of particular tasks, but the resulting system will be somewhat less
-efficient than it could be.
-
-\subsubsection{Multicycle Restartability} 
-
-A warm-cycled forecast model's restart files, which are written in
-one cycle and read in the next, should not simply be overwritten with
-each new run. Otherwise these files could be corrupted if the task is
-accidentally invoked at the wrong cycle time, thereby breaking the task
-for the correct cycle (and a cold start will subsequently be required).
-Instead, consider organising restart files by cycle time, through a file
-or directory naming convention, and keep them in a simple cycle-time
-based rolling archive. Then (given all other cycle time dependent
-inputs) the task can easily be rerun for any cycle still in the archive.
-
-\subsubsection{Reporting Outputs and Failures}
-
-All outputs that other tasks may depend on must be reported via cylc's
-simple messaging interface, which is explained in {\em Prerequisites and
-Outputs} (Section~\ref{PrerequisitesAndOutputs}). Similarly, fatal
-errors must be reported by the same mechanism, otherwise cylc will think
-the failed task is still running. 
-
-Ideally, important errors should be checked for explicitly, and lesser
-fatal errors (e.g.\ failure to create an output directory) can be
-trapped by the shell and handled with an automatic message. The
-userguide example task script listings of
-Section~\ref{ACompleteWorkingExample} show how to do this.
-
-\subsubsection{Contact Tasks Must Wait On Data}
-
-Most tasks in a cylc system know their own cycle time, but they don't
-know or care what the wall clock time is.  They just run when their
-prerequisites are satisfied, i.e.\  when other tasks say their input
-files (usually) are ready for use. The only connection between cylc
-systems and the real world are the {\em contact tasks} (see {\em Task
-Types}, Section~\ref{TaskTypes} for more on this) which in addition to
-their other prerequisites, if any, wait on a particular wall clock time
-relative to their cycle time before running.  For example, a weather
-model that assimilates real time observations should have an associated
-contact task whose job is to report when those observations are ready
-for use.  If in real time operation at nominal analysis time T, the obs
-are expected at, say, T+3 hours, then the contact task should be
-configured to launch at 3 hours past its cycle time (again, at the
-earliest because its other prerequisites must also be satisfied).
-If the system is delayed by more than three hours, so that T+3 hours 
-has already passed, then the contact task will launch immediately.
-If there's any chance that the obs could in fact be ready at T+2 hours,
-then the contact delay interval should be changed to 2 hours.  To allow
-for possible late arrival of obs, which likely will happen on occasion,
-the real contact task should have a wait loop in it: once running it
-should check for the existence of the expected data immediately. If the
-data isn't there the task must keep checking until it shows up, and only then
-report its output completed to cylc. 
-
-
 \subsection{Task Definition Files} 
 \label{TaskDefinitionFiles}
 
@@ -1500,6 +1501,7 @@ example systems, which show the effect of the task type modifiers as well
 in all systems).
 
 
+\pagebreak
 \subsubsection{Free Task Example}
 
 The following listing shows an example task definition for a
@@ -1510,10 +1512,11 @@ typical non-forecast-model task.
 \lstinputlisting{../systems/userguide/taskdef/D.def}
 }
 
+\pagebreak
 \subsubsection{Forecast Model Example}
 
 The following listing shows an example task definition for a
-typical forecast-model task.
+typical {\em tied} (forecast-model) task.
 
 \lstset{language=cylctaskdef}
 
@@ -1522,7 +1525,7 @@ typical forecast-model task.
 }
 
 
-
+\pagebreak
 \subsection{More Complex Task Behaviour}
 \label{MoreComplexTaskBehaviour}
 
@@ -1546,6 +1549,100 @@ is not currently aware of.
 
 
 \pagebreak
+
+\subsection{Job Submission}
+\label{JobSubmission}
+
+In the system config file, Section~\ref{SystemConfigFiles}, you can define a
+default job submission method that will be used to run all tasks in the
+system except for those, if any, that are singled out to use a different
+method (also via the system config file).
+
+Cylc currently ships with three simple job submit methods:
+
+\begin{itemize}
+    \item \lstinline=background= - submit a job to run on the background
+        on the local machine. 
+     \item \lstinline=background2= - same, but print a message to stdout
+         (use as a simple test of the use of multiple job submission
+         methods in the same system). 
+     \item \lstinline=background_remote= - this method uses ssh to 
+         run a job in the background on a remote host specified in 
+         the taskdef file \lstinline=REMOTE_HOST= key.
+ \end{itemize}
+
+These methods should work anywhere and are used by the working example
+systems which are intended to help users learn how cylc works. 
+
+\subsubsection{Defining New Methods}
+ 
+Real systems will need to submit jobs to run via batch queue schedulers
+such as {\em qsub} or {\em loadleveller}. Until cylc acquires general
+\lstinline=qsub= and \lstinline=loadleveler= job submit methods you will
+need to derive a new job submit class from the base class defined in
+\lstinline=[CYLC]/src/job_submit.py=. This is easy to do because most of
+the required functionality exists already in the base class, and you can
+model your new class on one of the existing derivations.
+
+In particular, you need to make sure that {\bf task-specific
+environment variables must be exported into the execution environment of
+the task} (e.g.\ passed {\em into} the qsub environment, not the
+environment in which the qsub command itself is executed!). These 
+include \lstinline=$CYCLE_TIME= and \lstinline=$TASK_NAME=, and
+any extra variables defined in the task definition files.
+
+Your new job submit class can be maintained in the system definition
+directory, and in order to use it it must be listed along with other 
+existing methods in the system \lstinline=job_submit_methods.py= module.
+
+
+\subsubsection{Task Standard Output}
+\label{TaskStandardOutput}
+
+For example system tasks that are submitted using the local background
+methods (i.e.\ \lstinline=task &=) their stdout will appear in the cylc
+stdout stream. The \lstinline=background_remote= method, however,
+redirects remote task stdout to a log file on the remote host (in the
+remote user's home directory).  Something similar to this is also likely
+to be the case for any real system that submits tasks to a batch queue
+scheduler.
+
+
+\subsection{Environment Variables}
+\label{EnvironmentVariables}
+
+The behaviour desribed in this section must be adherred to by any new
+job submission methods.
+
+\subsubsection{Global}
+
+You can define variables in the system config file that will be exported
+into the execution environment of all tasks in a system; see 
+System Config (Section~\ref{SystemConfigFiles}).
+
+\subsubsection{Task-Specific}
+
+You can define variables in a task definition file, via the 
+\lstinline=ENVIRONMENT= key, that will be exported into the execution
+environment of a particular task; see Task Definition Files
+(Section~\ref{TaskDefinitionFiles}).
+
+\subsubsection{Global in Task-Specific}
+
+Global environment variables can be interpolated into task-specific
+variables.  The distributed example system (Section~\ref{Distributed})
+exploits this to defined task-specific I/O sub-directories underneath a
+top level working directory that is defined by a global environment
+variable.
+
+\subsubsection{Remote Evaluation}
+
+As yet there has been no need to use environment variables whose
+evaluation is delayed until the task is executing on a remote platform.
+It would not be difficult to arrange for this to happen should it be
+required, however.
+
+
 \section{Handling Real Dependencies}
 \label{HandlingRealDependencies}
 
@@ -1637,100 +1734,6 @@ do not need to know their place in the wider system.
 
 
 \pagebreak
-\section{Job Submission}
-\label{JobSubmission}
-
-In the system config file, Section~\ref{SystemConfigFiles}, you can define a
-default job submission method that will be used to run all tasks in the
-system except for those, if any, that are singled out to use a different
-method (also via the system config file).
-
-Cylc currently ships with three simple job submit methods:
-
-\begin{itemize}
-    \item \lstinline=background= - submit a job to run on the background
-        on the local machine. 
-     \item \lstinline=background2= - same, but print a message to stdout
-         (use as a simple test of the use of multiple job submission
-         methods in the same system). 
-     \item \lstinline=background_remote= - this method uses ssh to 
-         run a job in the background on a remote host specified in 
-         the taskdef file \lstinline=REMOTE_HOST= key.
- \end{itemize}
-
-These methods should work anywhere and are used by the working example
-systems which are intended to help users learn how cylc works. 
-
-\subsubsection{Defining New Methods}
- 
-Real systems will need to submit jobs to run via batch queue schedulers
-such as {\em qsub} or {\em loadleveller}. Until cylc acquires general
-\lstinline=qsub= and \lstinline=loadleveler= job submit methods you will
-need to derive a new job submit class from the base class defined in
-\lstinline=[CYLC]/src/job_submit.py=. This is easy to do because most of
-the required functionality exists already in the base class, and you can
-model your new class on one of the existing derivations.
-
-In particular, you need to make sure that {\bf task-specific
-environment variables must be exported into the execution environment of
-the task} (e.g.\ passed {\em into} the qsub environment, not the
-environment in which the qsub command itself is executed!). These 
-include \lstinline=$CYCLE_TIME= and \lstinline=$TASK_NAME=, and
-any extra variables defined in the task definition files.
-
-Your new job submit class can be maintained in the system definition
-directory, and in order to use it it must be listed along with other 
-existing methods in the system \lstinline=job_submit_methods.py= module.
-
-
-\subsubsection{Task Standard Output}
-\label{TaskStandardOutput}
-
-For example system tasks that are submitted using the local background
-methods (i.e.\ \lstinline=task &=) their stdout will appear in the cylc
-stdout stream. The \lstinline=background_remote= method, however,
-redirects remote task stdout to a log file on the remote host (in the
-remote user's home directory).  Something similar to this is also likely
-to be the case for any real system that submits tasks to a batch queue
-scheduler.
-
-
-
-\pagebreak
-\section{Environment Variables}
-\label{EnvironmentVariables}
-
-The behaviour desribed in this section must be adherred to by any new
-job submission methods.
-
-\subsection{Global}
-
-You can define variables in the system config file that will be exported
-into the execution environment of all tasks in a system; see 
-System Config (Section~\ref{SystemConfigFiles}).
-
-\subsection{Task-Specific}
-
-You can define variables in a task definition file, via the 
-\lstinline=ENVIRONMENT= key, that will be exported into the execution
-environment of a particular task; see Task Definition Files
-(Section~\ref{TaskDefinitionFiles}).
-
-\subsection{Global in Task-Specific}
-
-Global environment variables can be interpolated into task-specific
-variables.  The distributed example system (Section~\ref{Distributed})
-exploits this to defined task-specific I/O sub-directories underneath a
-top level working directory that is defined by a global environment
-variable.
-
-\subsection{Remote Evaluation}
-
-As yet there has been no need to use environment variables whose
-evaluation is delayed until the task is executing on a remote platform.
-It would not be difficult to arrange for this to happen should it be
-required, however.
-
 \pagebreak
 \section{System Config Files}
 \label{SystemConfigFiles}
@@ -1976,18 +1979,17 @@ contact tasks, have reached their trigger time) will submit to run
 immediately. Any cycling (i.e.\ non oneoff) tasks that have no
 prerequisites (and, if they are contact tasks, have reached their
 trigger time) will rapidly proliferate ahead until stopped by the
-systems maximum runahead limit (task X in the userguide example system
+system's runahead limit (task X in the userguide example system
 is of this type).  Thereafter, each task will, of its own accord, submit
 to run as soon as its prerequisites have been satisfied by other tasks
 already running or finished in the system (and trigger time etc.). 
 Each task spawns a successor at a point in its lifecycle that depends on
-its type: tied tasks spawn has soon as their restart prerequisties have
+its type: tied tasks spawn has soon as their restart prerequisites have
 been completed, and free tasks spawn at the instant they start running. 
 Once a task exists it is free to run as soon as its prerequisites are
 satisfied, thus successive instances of a free task can run entirely in
-parallel if the opportunity arises (i.e.\ prerequisites allowing), and 
-successive intances of a tied task can overlap if the opportunity
-arises.
+parallel, and successive instances of a tied task can overlap, 
+if the opportunity arises (i.e.\ other prerequisites allowing).
 
 \subsection{Automatic State Dumps}
 \label{AutomaticStateDumps}
@@ -2088,7 +2090,7 @@ Practice mode allows quick and easy testing of potentially complex
 system interventions, with complete safety.
 
 \begin{lstlisting}
-% cylc start --restart --practice userguide
+cylc start --restart --practice userguide
 \end{lstlisting}
 (You can also use \lstinline=--restart-from=)
 
@@ -2159,7 +2161,7 @@ possible reasons for this (it does not necessarily indicate a problem!):
 \end{itemize}
 
 The following problems all cause a system to {\em eventually} get stuck 
-at the {\em maximum runahead limit} (which is 24 hours between the
+at the {\em runahead limit} (which is 24 hours between the
 fastest and slowest tasks, by default), because cylc does not
 automatically remove failed tasks from the system.  Real operational
 systems should have automated means of alerting the system operator to
@@ -2173,11 +2175,11 @@ failure.
     \item if the system operator, perhaps in a post-task-failure
     intervention, kills some tasks that are required to satisfy the
     prerequisites of other tasks that still exist in the system, then 
-    the system will eventually stall at the maximum runahead limit as a
+    the system will eventually stall at the runahead limit as a
     result of these tasks being unable to run (solution: insert
     appropriate oneoff cold start tasks).
 
-    \item if the maximum runahead limit is shorter than the cycling
+    \item if the runahead limit is shorter than the cycling
     interval for some task in the system the system will stall (e.g. if
     you have a task that runs 24-hourly at 00Z, but set the runahead
     limit to 12 hours). This could also happen if you purge enough
@@ -2187,18 +2189,18 @@ failure.
     \item if a failed task has not yet been removed or reset by the
     system operator, it will obviously delay its direct downstream
     dependants, but it will also cause the entire system to stall,
-    eventually, at the {\em maximum runahead limit}.  
+    eventually, at the {\em runahead limit}.  
 
     \item if a system design (task definition) error results in creation
     of a task that cannot get its prerequisites satisfied by any other
     task in the system, then this task will never run and will
-    eventually cause the system to stall at the maximum runahead limit.
+    eventually cause the system to stall at the runahead limit.
 
     \item if a misconfigured external task does not report an output
     that it is supposed to (i.e.\ as registered in its task proxy
     definition file), then any other task depending on that output will
     not run, and will eventually cause the system to stall at the
-    maximum runahead limit.
+    runahead limit.
 
 \end{itemize}
 
@@ -2209,8 +2211,7 @@ that is not spawning a successor only because it has exceeded the runahead
 limit will report that to the log.
 
 
-\pagebreak
-\section{Failure Recovery Scenarios}
+\subsection{Failure Recovery Scenarios}
 \label{FailureRecoveryScenarios}
 
 \begin{itemize}
@@ -2260,17 +2261,16 @@ limit will report that to the log.
 
 \end{itemize}
 
-\pagebreak
-\section{Dead System Cleanup}
+\subsection{Dead System Cleanup}
 \label{DeadSystemCleanup}
 
-\subsection{Normal Shutdown}
+\subsubsection{Normal Shutdown}
 
 Normally cylc waits for any currently running tasks to finish, then
 unregisters its own objects from the Pyro nameserver before shutting
 down. There will be nothing to clean up. 
 
-\subsection{Shutdown NOW or Controlled Abort}
+\subsubsection{Shutdown NOW or Controlled Abort}
 
 If the system operator uses \lstinline=cylc stop --now SYSTEM=, or the
 system shuts down after detecting some know error condition, cylc will
@@ -2281,7 +2281,7 @@ fail, because the system being targetted by the messages no longer
 exists.  Consequently the system operator may need to manually kill some
 left over tasks or zombie \lstinline=_cylc-message= processes. 
 
-\subsection{Uncontrolled System Abort}
+\subsubsection{Uncontrolled System Abort}
 
 In this case, in addition to the possible existence of spawned tasks
 that are still running (above), the system may have left zombie objects
@@ -2293,7 +2293,7 @@ the system until you delete the left over objects from the nameserver:
 pyro-nsc delete-group {USER}_{SYSTEM}
 \end{lstlisting}
 
-\subsection{A Stalled System}
+\subsubsection{A Stalled System}
 
 If, for instance, you try to run a system whose task scripts do not have 
 executable permissions, cylc may stall indefinitely with one or more
@@ -2304,24 +2304,21 @@ jobs to complete before shutting down).
 
 
 \pagebreak
-\section{System Monitors}
+\section{Monitoring And Alerting}
 \label{SystemMonitors}
 
 Cylc registers a {\em system state summary} object, which is constantly
 updated as the system evolves, with the Pyro nameserver. This provides a
 general mechanism for remote system monitoring. Monitor programs can
 connect to this object, extract whatever information they want from it,
-and ignore the rest. 
-
-It is anticipated that monitors utilizing more sophisticated gui front
-ends will be developed in the future (we already have one web-based
-monitor, but it isn't quite ready for inclusion in the cylc repository).
-For the moment, the existing terminal based system monitors are adequate, 
-although they would not be terribly useful if the number of tasks to be
-displayed was too great to fit on a maximized terminal window at once.
-In the case of the standard monitor, terminal line-wrapping does allow a
-fairly large number of tasks to be displayed (it's not pretty but it
-works!). 
+and ignore the rest. It is anticipated that monitors utilizing more
+sophisticated gui front ends will be developed in the future (we already
+have one web-based monitor, but it isn't quite ready for inclusion in
+the cylc repository). For the moment, the existing terminal based
+monitors are adequate, although they would need modification if there
+were too many tasks to display in a maximized terminal window at once.
+Terminal line-wrapping does allow a large number of tasks to be
+displayed, however (it's not pretty but it works!). 
 
 \begin{figure} \label{fig-monitor-eco} 
     \begin{center}
@@ -2331,13 +2328,11 @@ works!).
     cylc system monitor viewing the entire EcoConnect system.}
 \end{figure} 
 
-Screenshots of the two current system monitors viewing the userguide
-example system can be seen in Figures~\ref{fig-monitor}
-and~\ref{fig-monitor-r}, and Figure~\ref{fig-monitor-eco} shows a view
-of the entire ecoconnect operation.
+Screenshots of the two current system monitors can be seen in
+Figures~\ref{fig-monitor} and~\ref{fig-monitor-r}, and
+Figure~\ref{fig-monitor-eco} shows a view of the entire ecoconnect operation.
 
-\pagebreak
-\section{Automated Alerting}
+\subsection{Automated Alerting}
 
 A real forecasting system probably needs an automated alerting system  
 to let the system operators know of task failures or time outputs, e.g.\ 
@@ -2458,6 +2453,7 @@ submitted locally by the \lstinline=background_remote= job class, and
 you will require passwordless ssh self-access on the machine.
 
 
+\pagebreak
 \subsection{SCS Demo}
 
 This example system, which resides in 
@@ -2504,14 +2500,11 @@ Here's some more information from the system README file:
 
 \subsubsection{Finishing It Off}
 
-Cylc needs to be able to invoke each system task by calling a named
-script (which can in turn invoke other scripts, of course) that takes
-its cycle time from the environment as  \lstinline=$CYCLE_TIME=.
-
 Configure the OPS, VAR, and UM tasks as standalone jobs via their
-respective UIs. Some minor surgery might be required on the resulting
-job scripts to get the desired result.  Add cylc messaging to report
-startup, finish, failure, and completed outputs.
+respective UIs, then perform some minor surgery the resulting
+job scripts so that they take \lstinline=$CYCLE_TIME= from the
+environment, and add cylc messaging to report startup, finish, failure,
+and completed outputs.
 
 \pagebreak
 \section{Command Reference}
