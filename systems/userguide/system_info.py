@@ -15,40 +15,31 @@
 
 info = """
 This is an implementation of the example system used to illustrate the
-Cylc Userguide. It consists of a set of shell scripts in the system
-'scripts' sub-directory. It behaves just like a real forecasting system
-as far as scheduling is concerned.
+first section of the Cylc Userguide.
 
 > HOW THE SYSTEM WORKS:
 Each task "writes output files" using the touch command, and "reads
-input files" by detecting the existence of the resulting empty files.
+input files" by detecting the existence of these (empty) files.
 
 > RUNNING MULTIPLE SYSTEM INSTANCES AT ONCE:
 All tasks in this system read from and write to $CYLC_TMPDIR, which is
 defined in the system config module to be /tmp/$USER/{system-name}
-(task-specific input and output directories could be configured
-similarly via environment variables set in the task definitino files).
 Thus if you register the system under several different names you can
-run several instances of it at once. 
+run multiple instances of it at once. 
 
 > GETTING TASKS TO FAIL ON DEMAND:
-In real mode you can deliberately cause any task in this system to fail,
-in order to see the effect this has on the system, by exporting
-FAIL_TASK={NAME}%{CYCLE} before starting the scheduler.  This is
-implemented in scripts/check-env.sh, which is called by all the other
-task scripts: it checks for $FAIL_TASK and aborts if the value matches
-the host task's identity. If the system is shutdown and restarted, or if
-the failed task is reset in the running system, it will run
-successfully (as would be the case in a real system after fixing the
-problem). In dummy mode, the '--fail-out' option has a similar effect.
+In real mode you can deliberately cause any task in THIS SYSTEM to fail
+by exporting FAIL_TASK={NAME}%{CYCLE} before starting the scheduler 
+(the identified task will self-abort, via scripts/check-env.sh).
+If the system is then shutdown and restarted, or if the failed task is
+reset in the running system, it will run successfully (as would be the
+case in a real system after fixing the problem). In dummy mode, the
+'--fail-out' option has a similar effect (for any system).
 
 > ACCELERATED REAL TIME OPERATION:
-Estimated task run times specified in the task definition files are used
-only in dummy mode, and are scaled according to the dummy mode clock
-rate.  However, this is an illustrative example system for which we also
-want fast real time operation. To achieve this, each task script scales
-its real run time by $REAL_TIME_ACCEL, set in the system config module.
-BE AWARE that real mode acceleration does not speed up cycling once the
-system catches up to the real wall clock time - each task is still
-accelerated, but the contact task X, on which everything else depends,
-will only trigger once per 6 hours!"""
+As this is an illustrative example system, we want fast real mode
+operation, similarly as in dummy mode. Accordingly each task script
+scales its designated run time by $REAL_TIME_ACCEL, defined in the
+system config module.  BE AWARE that this will not speed up CYCLING
+if the system catches up to real time operation (the contact task X, on
+which everything else depends, will only trigger once every 6 hours)"""
