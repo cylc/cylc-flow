@@ -92,7 +92,7 @@ usage = \
     '  run-task .... Run a single task just as the scheduler would run it',
     '  set-level ... Change the logging verbosity level in a running system',
     '  nudge ....... Cause the cylc main task processing loop to be invoked',
-    '  message   ... Send a message to a task proxy object (for use by tasks)',
+    '  message ..... Send a message to a task proxy object (for use by tasks)',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     '  unit-test ... An automated test of core cylc functionality',
     '_________________________________________________________________________',

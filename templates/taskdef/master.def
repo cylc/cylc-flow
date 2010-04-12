@@ -177,9 +177,9 @@
 
 #----------------------------------------------------------------------
 [%ONEOFF_FOLLOW_ON]
-    # - Nominate a task for a 'oneoff' task with non-cotemporal
-    #     dependants to "hand the baton on to" so that cylc knows when
-    #     it can delete the oneoff task from the  system (it will not be
-    #     deleted before the follow-on task exists).
-    # - ONLY FOR 'oneoff' TASKS WITH NON-COTEMPORAL DEPENDANTS.
+    # - Name of another task to "hand the baton on to". 
+    # - This is only required for oneoff tasks with non-cotemporal 
+    #   dependants (which your system will probably not have!) so
+    #   that cylc knows when it can delete this task (it cannot be
+    #   deleted before its depandants exist).
     task_foo
