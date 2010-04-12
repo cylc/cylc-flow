@@ -167,8 +167,14 @@ echo done
 echo
 echo ">> RUN A SINGLE TASK (startup%2010010106) from the system"
 echo "   (note that messages from standalone tasks go to stdout)"
-echo -n "   ... "
+echo -n "   ."
 cylc run-task -t startup%2010010106 unit >> $OUT 2>&1
+READY=false
+while ! $READY; do
+    ( ps | grep startup.sh > /dev/null 2>&1 ) && READY=true
+    echo -n .
+    sleep 1
+done
 echo done
 
 # DELETE THE SYSTEM DEFINITION DIRECTORY
