@@ -77,9 +77,13 @@ morecomment=[l]{options:},
 morecomment=[l]{\#}
 }
 
-\title{Cylc \linebreak A Self-Organising Optimal Multicycle Scheduler \linebreak For Complex Forecasting Systems \linebreak THIS IS NOT A VERSIONED RELEASE}
+\title{Cylc \linebreak 
+A Self-Organising Optimal Multicycle Scheduler \linebreak 
+For Complex Forecasting Systems \linebreak 
+{\em \small Version THIS IS NOT A VERSIONED RELEASE} \linebreak
+{\small Copyright (c) NIWA, 2008-2010} }
 
-\author{Hilary Oliver, NIWA}
+\author{Hilary Oliver}
 
 \begin{document}
 
@@ -581,7 +585,7 @@ the packaged cylc ``userguide'' example system. Refer to
 (Section~\ref{CommandReference}), and
 upcoming sections of this document for more detailed information on
 available commands, options, and operations.  {\em A Complete Working
-Example} (Section~\ref{ACompleteWorkingExample} describes the
+Example} (Section~\ref{ACompleteWorkingExample}) describes the
 userguide example system in detail.
 
 \subsection{Starting A Pyro Nameserver}
@@ -625,8 +629,8 @@ Name Server started.
 \end{lstlisting}
 
 Note that you can start the nameserver with the \lstinline=nohup=
-command (\lstinline=man nohup=) to it from dying when your terminal
-session logs out.
+command (\lstinline=man nohup=) to prevent it dying when you log out of
+your terminal session.
 
 \subsection{Defining A Task Set} 
 \label{QuickDefiningATaskSet}
@@ -637,9 +641,9 @@ is covered in detail in {\em System Definition}
 (Section~\ref{SystemDefinition}), but in summary it requires:
 
 \begin{itemize}
-    \item defining {\em prerequisites} and {\em outputs} for each task.
-
-    \item writing a simple {\em task definition file} for each task.
+    \item defining {\em prerequisites} and {\em outputs} for each task,
+        and encoding these in a simple {\em task definition file} for
+        each task.
 
     \item ensuring that each task reports its outputs using cylc's
         messaging mechanism.  This may involve writing new {\em task
@@ -821,24 +825,22 @@ system in its pre-intervention state.  See {\em Restarts}
 \section{System Definition} 
 \label{SystemDefinition}
 
-This section of the userguide explains how to get a system running under
-cylc.
-
 %Cylc sees a forecasting system as an evolving, self-organising pool of
 %tasks with clearly defined {\em prerequisites} and {\em outputs}, as
 %explained in {\em The Cylc Scheduling Algorithm} (Section~\ref{TheCylcSchedulingAlgorithm}). 
 
-First the system must be divided into tasks with clearly defined
+Your system must be divided into tasks with clearly defined
 prerequisites and outputs (Section~\ref{PrerequisitesAndOutputs}). Then
 the properties of each task that are relevant to scheduling must be
-declared in {\em cylc task definition files}
-(Section~\ref{TaskDefinitionFiles}). Once such property is the script or
-executable that should be called to actually execute the real task when
-it is ready to run. These {\em task scripts} can be located anywhere,
-but if you are creating a new system you may wish to keep them in a
-central location along with the system task definition files.  By
-convention, but not necessarily, {\em cylc system definition
-directories} reside under \lstinline=$CYLC_DIR/systems=, for example:
+declared in {\em Task Definition Files}
+(Section~\ref{TaskDefinitionFiles}). One such property is the script or
+executable that should be called to run the real task when
+it is ready to run. These {\em Task Scripts} (Section~\ref{TaskScripts})
+can be located anywhere, but if you are creating a new system you may
+wish to keep them in a central location along with the system task
+definition files.  By convention, but not necessarily, {\em cylc system
+definition directories} reside under \lstinline=$CYLC_DIR/systems=, for
+example:
 
 \lstset{language=bash}
 
@@ -857,8 +859,7 @@ $CYLC_DIR/systems/userguide/
       B.def              # defines task B
       #...
 
-   scripts/            # TASK SCRIPTS (but note that tasks may also call
-                       # external scripts directly):
+   scripts/            # TASK SCRIPTS (if external tasks not called directly):
       A.sh               # called by cylc to execute task A
       B.sh               # called by cylc to execute task B
       #...
@@ -1097,11 +1098,10 @@ does not check that the file actually exists as the reporting task
 claims it does. There are two reasons for this: (1) cylc does not place
 any restriction on the kind of event that can be used as a task trigger,
 so it would be next to impossible for it to verify outputs in general,
-and (2) there is actually no need for cylc to do this because the tasks
-themselves must necessarily check their own inputs at startup, and
-immediately report problems back to cylc before aborting (or in the
-worst case, neglect to check and then fail for lack of required inputs,
-with the same result).
+and (2) there is actually no need for cylc to check because the tasks
+themselves must necessarily do it, and they must immediately report
+problems back to cylc before aborting (or in the worst case, neglect to
+check and then fail for lack of required inputs, with the same result).
 
 
 \subsubsection{Uniqueness}
@@ -1365,9 +1365,6 @@ However, if you do use restart outputs, you gain the following advantages:
 \subsection{Task Scripts}
 \label{TaskScripts}
 
-(note that several tasks may use the same script with different
-arguments, e.g.\ for moving files around).
-
 Cylc automatically has access (via \lstinline=$PATH=) to executable
 files in the \lstinline=scripts= sub-directory of the system definition
 directory. It is a central location in which to keep scripts that
@@ -1384,8 +1381,8 @@ which case the external script will have to be modified to do the cylc
 messaging, OR uses cylc's task wrapping mechanism, which automatically
 handles the former case but sets all outputs, including internal ones,
 completed only after the external script finishes.  Scripts in the
-scripts sub-directory are automatically made accessible, via \$PATH, to
-tasks launched by cylc. 
+scripts sub-directory are automatically made accessible, via 
+\lstinline=$PATH=, to tasks launched by cylc. 
 
 \subsubsection{Task Messages}
 
@@ -1413,9 +1410,7 @@ completed
 
 (Technically, the `started' and `finished' messages are just
 outputs too, but they are special in that every task
-must have them).
-
-In addition, tasks can optionally:
+must have them). In addition, tasks can optionally:
 
 \begin{itemize}
 \item report any arbitrary unregistered (i.e.\ non-output)
@@ -1494,9 +1489,9 @@ thing you can get them all to invoke the same external program with
 task-specific input parameters supplied through environment variables
 that are specified in the Task Definition Files. Forecasting systems
 commonly have to move a lot of files around (from the output
-directory(s) of one task to the input directory(s) of others, for
-instance). See Section~\ref{HandlingRealDependencies}, and cylc's file-transfer
-example in userguide !TO DO!. 
+directory of one task to the input directory of another, for
+instance). See Section~\ref{HandlingRealDependencies}, and cylc's
+{\em file-move} example system. 
 
 \subsection{Examples}
 
@@ -1540,23 +1535,26 @@ typical {\em tied} (forecast-model) task.
 \subsection{More Complex Task Behaviour}
 \label{MoreComplexTaskBehaviour}
 
-If you require task behaviour that is not represented in the current 
-task definition files you may need to manually derive a new task class.
+If you require task behaviour that cannot be represented in the current 
+task definition files you will need to derive a new task class manually.
 Use the auto-generated task classes as a starting point. Raw python 
 task class definitions stored in Python source files can be 
 kept in the system taskdef sub-directory alongside the taskdef files,
 and will be transferred verbatim to the new task definition file on 
 configuring the system. 
 
+Out of the entire EcoConnect operation, only the highly unusual
+scheduling behaviour of the TopNet river model requires a custom task
+class (it keeps up with real time streamflow observations and uses
+the {\em most recent} regional weather forecast output). 
 
 \subsubsection{Fuzzy Prerequisites}
 
-For example, out of the entire EcoConnect operation, only the highly
-unusual scheduling behaviour of the TopNet river model requires a custom
-task class: it keeps up with real time streamflow observations and uses
-the {\em most recent} regional weather forecast output. This makes use
-of cylc's ``fuzzy prerequisites'' which the task definition parser 
-is not currently aware of.
+EcoConnect's Topnet model (just mentioned above) runs hourly and
+triggers off the most recent regional weather forecast available.
+The cycle time interval between the two tasks can vary. This makes 
+use of cylc's {\em fuzzy prerequisites}, which the task definition
+parser is not currently aware of.
 
 
 \pagebreak
@@ -1591,7 +1589,7 @@ Real systems will need to submit jobs to run via batch queue schedulers
 such as {\em qsub} or {\em loadleveller}. Until cylc acquires general
 \lstinline=qsub= and \lstinline=loadleveler= job submit methods you will
 need to derive a new job submit class from the base class defined in
-\lstinline=[CYLC]/src/job_submit.py=. This is easy to do because most of
+\lstinline=$CYLC_DIR/src/job_submit.py=. This is easy to do because most of
 the required functionality exists already in the base class, and you can
 model your new class on one of the existing derivations.
 
@@ -2061,7 +2059,7 @@ real time.
 Existing log files are automatically rotated at start up and,
 individually, when they reach a size of 1 MB.  This maximum file 
 should be configurable, but it is currently hardwired in
-\lstinline=[CYLC]src/pimp_my_logger.py=.
+\lstinline=$CYLC_DIRsrc/pimp_my_logger.py=.
 
 \subsection{Dummy Mode} 
 \label{DummyMode}
@@ -2352,7 +2350,7 @@ by email, SMS, or pager.  EcoConnect currently uses {\em Nagios}
 (http://www.nagios.org) for this purpose.  Each part of the forecasting
 system can raise its own alerts {\em or} alerting could be handled
 centrally through cylc via a minor change to the messaging interface,
-\lstinline=[CYLC]/bin/_cylc-message= (e.g.\ to automatically notify 
+\lstinline=$CYLC_DIR/bin/_cylc-message= (e.g.\ to automatically notify 
 nagios as well as cylc whenever a CRITICAL message comes in).
 
 
@@ -2360,12 +2358,17 @@ nagios as well as cylc whenever a CRITICAL message comes in).
 \section{A Complete Working Example}
 \label{ACompleteWorkingExample}
 
-This section contains complete taskdef file and task script listings,
-from \lstinline= [CYLC_DIR]/system/userguide/= , that implement the
-example used to illustrate the forecast systems scheduling discussion in
-{\em How Cylc Works} (Section~\ref{HowCylcWorks}).  While this is
-clearly not a real forecasting system, it does have the properties of a
-real system as far as scheduling is concerned.  
+This section contains complete taskdef and task implementation listings
+for the example system used to illustrate the scheduling discussion in
+{\em How Cylc Works} (Section~\ref{HowCylcWorks}). The example system
+is located in:
+
+\begin{lstlisting}
+$CYLC_DIR/system/userguide/
+\end{lstlisting}
+
+ While this is clearly not a real forecasting system, it does have the
+ properties of a real system as far as scheduling is concerned.  
 
 \input{../systems/userguide/README.tex}
 
@@ -2570,7 +2573,7 @@ documented.
 Note that ``correct scheduling'' is not equivalent to ``orderly
 generation of products by cycle time''.  Under cylc, a product
 generation task will trigger as soon as its prerequisites are satisfied 
-(i.e.\ as soon as its upstream input files are available) regardless of
+(i.e.\ as soon as its input files are available) regardless of
 whether other tasks with the same cycle time have finished or have yet
 to run. 
 
@@ -2594,14 +2597,14 @@ cycle, then:
 \section{How Cylc Interacts With Batch Queue Schedulers}
 \label{HowCylcInteractsWithBatchQueueSchedulers}
 
-Cylc dynamically adapts, at the level on individual tasks, to any
+Cylc dynamically adapts, at the level of individual tasks, to any
 external situation that affects when a task can run. This includes
 post-submission delays due to computational resource contention. Cylc
 just decides when a task is {\em ready} to run - i.e.\ when its
 prerequisites are satisfied.  If the external task is delayed because of
 resource contention, it will not be able to report its outputs complete
-until it does run and complete those outputs, and no dependent
-downstream events will trigger until that comes about.
+until it does run, and no dependent downstream tasks will trigger until
+that comes about.
 
 
 \pagebreak
@@ -2784,7 +2787,7 @@ for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
 
 \subsection{Cycle Time Granularity}
 
-{\bf The minimum cycle time granularity for a task is currently one hour}.
+{\em The minimum cycle time granularity for a task is currently one hour}.
 
 Note that this is only loosely connected to when, or how frequently, a
 task actually runs, and only in real time operation: under cylc tasks
@@ -2794,9 +2797,11 @@ and seconds if necessary.
 
 \subsection{Task Frequency}
 
-{\bf Every task must have at least one instance per 24 hours of cycle
-time}, through the taskdef \lstinline=CYCLES= key.  However, it would be
-easy to extend cylc to allow less frequent tasks if required. 
+{\em Every task must run at least once per day.}
+
+(Of cycle time, not real time). Valid cycles times for a task are 
+specified in the taskdef \lstinline=CYCLES= key.  It would be
+easy to allow less frequent tasks if required. 
 
 
 %\section{Miscellaneous Notes}
