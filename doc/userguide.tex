@@ -163,7 +163,7 @@ forecast cycle, multiple parallel streams of execution that branch when
 one task generates output for several downstream tasks, and merge when
 one task takes input from several upstream tasks. 
 
-\begin{figure} \label{fig-dep-one} 
+\begin{figure}
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/dep-one-cycle} 
     \end{center}
@@ -173,9 +173,10 @@ one task takes input from several upstream tasks.
     {\em d, e} and {\em f} are post processing or product generation
     tasks, and {\em x} represents external data that the upstream
     forecast model depends on.}
+    \label{fig-dep-one} 
 \end{figure} 
 
-\begin{figure} \label{fig-time-one}
+\begin{figure}
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/timeline-one}
     \end{center}
@@ -185,6 +186,7 @@ one task takes input from several upstream tasks.
     off upstream tasks finishing completely. The horizontal extent of
     a task bar represents its execution time, and the vertical blue
     lines show when the external driving data becomes available.}
+    \label{fig-time-one}
 \end{figure}
 
 Figure~\ref{fig-time-one} shows the optimal job schedule for two
@@ -195,16 +197,17 @@ driving data.  Each task in the example system happens to trigger off
 upstream tasks {\em finishing}, rather than off any intermediate output
 or event; this is merely a simplification to make for clearer diagrams.
 
-\begin{figure} \label{fig-dep-two-linked}
+\begin{figure}
     \begin{center}
         \includegraphics[width=10cm]{inkscape-svg/dep-two-cycles-linked} 
     \end{center}
     \caption[What if the external data is available early?]{\small If
     the external driving data is available in advance, can we start
     running the next cycle early?} 
+    \label{fig-dep-two-linked}
 \end{figure}
 
-\begin{figure} \label{fig-overlap}
+\begin{figure}
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/timeline-one-c} 
     \end{center}
@@ -213,15 +216,17 @@ or event; this is merely a simplification to make for clearer diagrams.
     using the single-cycle dependency graph. The red shaded tasks will
     fail because of dependency violations (or will not be able to run
     because of upstream dependency violations).} 
+    \label{fig-overlap}
 \end{figure} 
 
-\begin{figure} \label{fig-job-no-overlap}
+\begin{figure}
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/timeline-one-a} 
     \end{center}
     \caption[The only safe multicycle job schedule?]{\small The best that
     can be done {\em in general} when intercycle dependencies are
     ignored.} 
+    \label{fig-job-no-overlap}
 \end{figure} 
 
 Now the question arises, what happens if the external driving data for
@@ -283,7 +288,7 @@ dependant system as if they were not dependant; as such it cannot be
 guaranteed that unforeseen delays in one cycle won't result in
 dependency violations in the next.
 
-\begin{figure} \label{fig-dep-multi}
+\begin{figure}
     \begin{center}
         \includegraphics[width=8cm]{inkscape-svg/dep-multi-cycle} 
     \end{center}
@@ -292,9 +297,10 @@ dependency violations in the next.
     intercycle dependence: the forecast models ($a$, $b$, and $c$)
     depend on their own previous instances. The dashed arrows show
     connections to previous and subsequent forecast cycles.} 
+    \label{fig-dep-multi}
 \end{figure}
 
-\begin{figure} \label{fig-optimal-two}
+\begin{figure}
     \begin{center}
         \includegraphics[width=6cm]{inkscape-svg/timeline-two-cycles-optimal} 
     \end{center}
@@ -302,6 +308,7 @@ dependency violations in the next.
     job schedule when the next cycle's driving data is available in
     advance, possible in principle when intercycle dependencies are
     handled explicitly.} 
+    \label{fig-optimal-two}
 \end{figure} 
 
 Figure~\ref{fig-optimal-two} shows, in contrast to
@@ -315,7 +322,7 @@ that impact on multicycle scheduling in the presence of
 intercycle dependencies or else, again, risk bringing the system down
 with dependency violations.
 
-\begin{figure} \label{fig-time-three}
+\begin{figure}
     \begin{center}
         \includegraphics[width=12cm]{inkscape-svg/timeline-three} 
     \end{center}
@@ -326,9 +333,10 @@ with dependency violations.
     (below the time axis). The colored lines indicate the time that
     each cycle is delayed, and normal ``caught up'' cycles
     are shaded gray.} 
+    \label{fig-time-three}
 \end{figure} 
 
-\begin{figure} \label{fig-time-two}
+\begin{figure}
     \begin{center} 
         \includegraphics[width=8cm]{inkscape-svg/timeline-two}
     \end{center} 
@@ -340,6 +348,7 @@ with dependency violations.
     dependencies, as in Figure \ref{fig-dep-two-linked}, and underneath
     is the best that can be done, in general, when intercycle
     dependencies are ignored.} 
+    \label{fig-time-two}
 \end{figure} 
 
 To further illustrate the potential benefits of proper intercycle
@@ -389,12 +398,13 @@ finish entirely.
 \subsection{The Cylc Scheduling Algorithm} 
 \label{TheCylcSchedulingAlgorithm}
 
-\begin{figure} \label{fig-task-pool}
+\begin{figure}
     \begin{center} 
         \includegraphics[width=8cm]{inkscape-svg/task-pool}
     \end{center} 
     \caption[The cylc task pool]{\small How cylc sees the task pool, in
     contrast to the full dependency diagram of Figure~\ref{fig-dep-two-linked}.} 
+    \label{fig-task-pool}
 \end{figure} 
 
 This section explains how cylc achieves the optimal multicycle
@@ -697,18 +707,20 @@ this).
 \subsubsection{System Monitors}
 \label{QuickSystemMonitors}
 
-\begin{figure} \label{fig-monitor} 
+\begin{figure}
     \begin{center}
         \includegraphics[width=8cm]{monitor-1} 
     \end{center}
     \caption{\small The main terminal-based cylc system monitor}
+    \label{fig-monitor} 
 \end{figure} 
 
-\begin{figure} \label{fig-monitor-r} 
+\begin{figure}
     \begin{center}
         \includegraphics[width=10cm]{monitor-2} 
     \end{center}
     \caption{\small Another terminal-based cylc system monitor}
+    \label{fig-monitor-r} 
 \end{figure} 
 
 
@@ -2320,12 +2332,13 @@ were too many tasks to display in a maximized terminal window at once.
 Terminal line-wrapping does allow a large number of tasks to be
 displayed, however (it's not pretty but it works!). 
 
-\begin{figure} \label{fig-monitor-eco} 
+\begin{figure}
     \begin{center}
         \includegraphics[width=14cm]{eco-monitor} 
     \end{center}
     \caption[monitor view of EcoConnect]{\small The main terminal-based
     cylc system monitor viewing the entire EcoConnect system.}
+    \label{fig-monitor-eco} 
 \end{figure} 
 
 Screenshots of the two current system monitors can be seen in
