@@ -109,7 +109,8 @@ of external driving data, typically real time observations and/or model
 data from an external forecasting system, which one or more tasks depend
 on, and these drive other ``downstream'' tasks, and so on. The
 dependency diagram for a single forecast cycle in such a system 
-is a {\em Directed Acyclic Graph} (a {\em forecast cycle} is comprised
+is a {\em Directed Acyclic Graph} as shown in Figure~\ref{fig-dep-one}
+(a {\em forecast cycle} is comprised
 of tasks with a common {\em cycle time}, namely the nominal analysis
 time or start time of the forecast models in the group). Normal real
 time operation necessarily consists of a series of distinct forecast
@@ -195,7 +196,7 @@ execution times represented by the horizontal extent of the task bars.
 There is a time gap between cycles as the system waits on new external
 driving data.  Each task in the example system happens to trigger off
 upstream tasks {\em finishing}, rather than off any intermediate output
-or event; this is merely a simplification to make for clearer diagrams.
+or event; this is merely a simplification that makes for clearer diagrams.
 
 \begin{figure}
     \begin{center}
@@ -238,12 +239,12 @@ instance for a model ``background state''. Thus, as alluded to in
 Figure~\ref{fig-dep-two-linked}, task {\em a} could in principle start
 immediately its predecessor has finished.  Figure~\ref{fig-overlap}
 shows, however, that starting a whole new cycle at this point is
-dangerous - it results in dependency violations in half the tasks of the
-simple example system. In fact the situation is even worse than this -
-what if task {\em b} in the first cycle is delayed for any reason {\em
+dangerous - it results in dependency violations in half of the tasks in
+the simple example system. In fact the situation is even worse than this
+- what if task {\em b} in the first cycle is delayed for any reason {\em
 after} the second cycle has been launched? Clearly we must consider
 handling intercycle dependencies explicitly in order to solve this
-problem, or else agree never to start the next cycle early as
+problem, or else agree never to start the next cycle early, as
 is illustrated in Figure~\ref{fig-job-no-overlap}.
 
 
@@ -255,9 +256,9 @@ exist. Forecast models typically depend on their own most recent
 previous forecast for an initial ``background state'', and different
 types of tasks in different forecast cycles can also be linked (e.g.\
 the complicated relationship between the weather and river models in
-EcoConnect). {\em In real time operation these intercycle dependencies
+EcoConnect). In real time operation these intercycle dependencies
 can be ignored because they are automatically satisfied when each cycle
-necessarily finishes before the next one begins.} This is just as well
+necessarily finishes before the next one begins. This is just as well
 because they dramatically increase the complexity of the dependency
 graph of even the simplest systems, by destroying the clean boundary
 between forecast cycles. Figure~\ref{fig-dep-multi} illustrates the
@@ -282,11 +283,12 @@ after a delay. Without taking account of intercycle dependencies, the
 best that can be done, in general, is to reduce the gap between cycles
 to zero as shown in Figure~\ref{fig-job-no-overlap}. A limited crude
 overlap of the single cycle job schedule may be possible for specific
-task sets, but it must be borne in mind that this may change if new
-tasks are added, and it amounts to running different parts of a
-dependant system as if they were not dependant; as such it cannot be
-guaranteed that unforeseen delays in one cycle won't result in
-dependency violations in the next.
+task sets but the allowable overlap may change if new tasks are added,
+and it is still dangerous: it amounts to running different parts of a
+dependant system as if they were not dependant and as such it cannot be
+guaranteed that any unforeseen delay occuring in one cycle after the 
+next has begun (e.g.\ due to resource contention or task failures) won't
+result in dependency violations in the next.
 
 \begin{figure}
     \begin{center}
@@ -359,41 +361,38 @@ principle, when intercycle dependencies are taken into account, and
 below is the only safe schedule possible {\em in general} when they are
 ignored.  In the former case, even the cycle immediately after the delay
 is hardly affected, and subsequent cycles are all on time, whilst in the
-latter case it takes five cycles to catch up again to normal real time
-operation. Note that simply overlapping the single cycle schedules of
-Figure~\ref{fig-time-one} from the same start point would have resulted
-in dependency violation by task {\em c}.
+latter case it takes five full cycles to catch up to normal real time
+operation.
+%Note that simply overlapping the single cycle schedules of
+%Figure~\ref{fig-time-one} from the same start point would have resulted
+%in dependency violation by task {\em c}.
 
 Similarly, Figure~\ref{fig-time-two} shows example system job schedules
 for an historical case study, or when catching up after a very long
 delay; i.e.\ when the external driving data are available many cycles in
 advance.  Task {\em a}, which as the most upstream forecast model is
 likely to be a resource intensive atmosphere or ocean model, has no
-dependence on cotemporal tasks and can therefore run continuously,
-regardless of how much downstream processing is yet to be completed in
-its own, or any previous, forecast cycle. In practice task {\em a} would
-depend on cotemporal upstream tasks that wait on the external driving
-data, but they would return immediately when the external data is
-available in advance, so the result stands. The other forecast models
-can also cycle continuously or with short gap between, and some post
-processing tasks, which have no previous-instance dependence, can also
-run continuously or even overlap (e.g.\ {\em e} in this case).  Thus,
+upstream dependence on cotemporal tasks and can therefore run
+continuously, regardless of how much downstream processing is yet to be
+completed in its own, or any previous, forecast cycle (actually, task
+{\em a} does depend on cotemporal task {\em x} which waits on the
+external driving data, but that returns immediately when the external
+data is available in advance, so the result stands). The other forecast
+models can also cycle continuously or with short gap between, and some
+post processing tasks, which have no previous-instance dependence, can
+run continuously or even overlap (e.g.\ {\em e} in this case). Thus,
 even for this very simple example system, tasks from three or four
 different cycles can in principle run simultaneously at any given time. 
+In fact, if our tasks are able to trigger off internal outputs of 
+upstream tasks, rather than waiting on full completion, successive
+instances of the forecast models could overlap as well (because model
+restart outputs are generally be completed early in the forecast) for an
+even more efficient job schedule. 
 
-Finally we note again the additional obstacles in the way of achieving
-this optimal multicycle job scheduling. Firstly, the scheduler must be
-able to dynamically adapt to delays due to resource contention, varying
-run times, or whatever, which will result in non-trivial changes to
-these already non-trivial job schedules. Secondly, given advance
-availablility of the external input data and any other inputs supplied
-by other models, forecast models can in principle start well {\em
-before} their previous instance has finished (because restart outputs
-for the next cycle are generated early in a forecast run). And
-similarly, but more generally, we may well want some tasks to trigger
-off intermediate upstream outputs rather than waiting for upstream tasks
-finish entirely. 
-
+Finally, we note again that a good job scheduler should be able to
+dynamically adapt to delays in any part of the system due to resource
+contention, varying run times, or anything else that will inevitably
+modify the depicted job schedules. 
 
 \subsection{The Cylc Scheduling Algorithm} 
 \label{TheCylcSchedulingAlgorithm}
