@@ -57,8 +57,18 @@ echo "MAKING DOCUMENTATION (USERGUIDE)"
 # (which have the correct version tag inserted).
 export PATH=bin:$PATH
 export PYTHONPATH=src:$PYTHONPATH
+echo
+echo "LATEX PROCESSING 1/3"
+echo
 doc/process
-echo "AGAIN, TO GET REFERENCES / TOC RIGHT(?)"
+echo
+echo "LATEX PROCESSING 2/3"
+echo
+doc/process
+# Third time required to get Table of Contents page number right?!
+echo
+echo "LATEX PROCESSING 3/3"
+echo
 doc/process
 
 echo "DELETING DOCUMENTATION SOURCE"
