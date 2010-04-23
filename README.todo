@@ -3,7 +3,8 @@ To Do
 * in job_submit.py, allow remote enviroment vars that aren't
   interpolated locally ... e.g. $USER?
 
-* document manual use of restart messages for split tasks * (below)
+* allow de-registration without a nameserver (pyrex.discover currently
+  aborts without raising if no nameserver is found).
 
 * message command (command line usage only!!!) needs lock and practice mode?
 
