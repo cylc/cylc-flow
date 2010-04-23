@@ -149,11 +149,14 @@ PRIORITY='NORMAL'
 if options.priority:
     priority=options.priority
 
-if 'CYLC_ON' not in os.environ.keys() and not commandline_invocation:
+# SEND MESSAGES TO A CYLC SCHEDULER VIA PYRO IF THIS SCRIPT WAS:
+#  (a) called by a task that was invoked by a cylc scheduler
+#  (b) invoked manually on the command line
+# OTHERWISE DIVERT MESSAGES TO STDOUT, i.e. IF THIS SCRIPT WAS:
+#  (a) called by a task that was invoked by 'cylc run-task'
+#  (b) called by a task that was run manually on the command line
 
-    # DIVERT MESSAGES TO STDOUT UNLESS THIS SCRIPT WAS INVOKED FROM:
-    # (a) A TASK SPAWNED BY 'cylc run-task', OR 
-    # (b) BY MANUAL INVOCATION ON THE COMMANDLINE. 
+if 'CYLC_ON' not in os.environ.keys() and not commandline_invocation:
 
     task_id = taskname + '%' + ctime
 
