@@ -74,9 +74,3 @@ class asynchronous_task( nopid, task ):
     def check_requisites( self ):
         for message in self.prerequisites.get_satisfied_list():
             self.__class__.used_outputs[ message ] = True
-
-        print
-        print "USED outputs:"
-        for used in self.__class__.used_outputs.keys():
-            print used
-

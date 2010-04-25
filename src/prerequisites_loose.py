@@ -34,7 +34,7 @@ class loose_prerequisites( prerequisites ):
         del self.satisfied[ loose ]
         self.satisfied[ sharp ] = True
 
-    def satisfy_me( self, outputs, owner_id ):
+    def satisfy_me( self, outputs, owner_id, exclusions ):
         log = logging.getLogger( "main." + self.task_name )            
         # can any completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
@@ -43,6 +43,8 @@ class loose_prerequisites( prerequisites ):
                 # if it is not yet satisfied
                 matched = False
                 for output in outputs.satisfied.keys():
+                    if output in exclusions:
+                        continue
                     if outputs.satisfied[output]:
                         if re.match( prereq, output ):
                             matched = True

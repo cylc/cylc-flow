@@ -58,7 +58,7 @@ class watcher(daemon):
         #    self.prerequisites = prerequisites( self.name, self.c_time )
         #    self.prerequisites.add( 'startup%'  + self.c_time + ' finished' )
 
-        self.prerequisites = prerequisites( self.name, self.c_time )
+        self.prerequisites = loose_prerequisites( self.name, self.c_time )
 
         self.outputs = outputs( self.name, self.c_time )
         self.output_pattern = 'pass (\w+) ready'
