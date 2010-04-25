@@ -27,10 +27,13 @@ class broker:
     def __init__( self ):
         self.all_outputs = {}   # all_outputs[ taskid ] = [ taskid's requisites ]
 
-    def register( self, owner_id, outputs ):
+    def register( self, task ):
         # because task ids are unique, and all tasks register their
         # outputs anew in each dependency negotiation round, register 
         # should only be called once by each task
+
+        owner_id = task.get_identity()
+        outputs = task.outputs
 
         if owner_id in self.all_outputs.keys():
             print "ERROR:", owner_id, "has already registered its outputs"
@@ -57,6 +60,7 @@ class broker:
             for output in self.all_outputs[ id ].get_list():
                 print " + " + output
 
-    def negotiate( self, prerequisites ):
+    def negotiate( self, task ):
+        prerequisites = task.prerequisites
         for id in self.all_outputs.keys():
             prerequisites.satisfy_me( self.all_outputs[ id ], id )

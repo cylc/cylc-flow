@@ -36,7 +36,6 @@ class asynchronous_task( nopid, task ):
     def __init__( self, state, no_reset ):
         # Call this AFTER derived class initialisation
 
-
         # Derived class init MUST define:
         #  * prerequisites and outputs
         #  * self.env_vars 
@@ -49,13 +48,13 @@ class asynchronous_task( nopid, task ):
         task.__init__( self, state, no_reset )
 
     # DO WE NEED THE FOLLOWING?
-    def nearest_c_time( self, rt ):
-        return rt
+    #def nearest_c_time( self, rt ):
+    #    return rt
+    #def prev_c_time( self, rt ):
+    #    return rt
 
     def next_c_time( self, rt = None ):
-        return rt
-
-    def prev_c_time( self, rt ):
+        # still needed for now, for spawning by manager
         return rt
 
     def dump_state( self, FILE ):

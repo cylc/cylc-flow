@@ -279,14 +279,14 @@ class manager:
 
         for itask in self.tasks:
             # register task outputs
-            self.broker.register( itask.get_identity(), itask.outputs )
+            self.broker.register( itask )
 
         # for debugging;            
         # self.broker.dump()
 
         for itask in self.tasks:
             # get the broker to satisfy tasks prerequisites
-            self.broker.negotiate( itask.prerequisites )
+            self.broker.negotiate( itask )
 
     def run_tasks( self ):
         # tell each task to run if it is ready
