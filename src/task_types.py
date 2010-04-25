@@ -15,10 +15,7 @@ from asynchronous_task import asynchronous_task
 from mod_pid import pid
 from mod_oneoff import oneoff
 from mod_nopid import nopid
-
-class daemon( oneoff, asynchronous_task ):
-    # task that runs forever
-    pass
+import re
 
 class forecast_model( pid, cycling_task ):
     # task class with previous instance dependence
@@ -27,3 +24,12 @@ class forecast_model( pid, cycling_task ):
 class free_task( nopid, cycling_task ):
     # task class with no previous instance dependence
     pass
+
+class daemon( oneoff, asynchronous_task ):
+    # task that runs forever
+
+    def incoming( self, priority, message ):
+        if re.match( self.output_pattern, message ):
+            self.outputs.add( 10, message )
+
+        asynchronous_task.incoming( self, priority, message )

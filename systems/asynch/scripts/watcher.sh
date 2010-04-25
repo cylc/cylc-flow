@@ -22,10 +22,12 @@ cylc message --started
 check-env.sh || exit 1
 
 # EXECUTE THE TASK ...
+COUNT=10
 while true; do
     sleep 10
-    touch $CYLC_TMPDIR/pass-xxxx.nc
-    cylc message "pass xxxx ready"
+    touch $CYLC_TMPDIR/pass-${COUNT}.nc
+    cylc message "pass $COUNT ready"
+    COUNT=$(( COUNT + 10 ))
 done
 
 # SUCCESS MESSAGE
