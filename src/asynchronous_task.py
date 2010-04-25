@@ -61,7 +61,9 @@ class asynchronous_task( nopid, task ):
         return self.name + '%' + str( self.__class__.upward_instance_count )
 
     def log_prepend( self ):
-        return '[async: ' + self.get_identity() + ']'
+        id = self.get_identity()
+        ( name, tag ) = id.split('%')
+        return '[' + tag + ']'
 
     def dump_state( self, FILE ):
         # Write state information to the state dump file, cycle time

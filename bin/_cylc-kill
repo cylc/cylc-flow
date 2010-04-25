@@ -24,7 +24,7 @@ haven't done so already, unless you use the '--no-spawn' option.
 WARNING: THIS COMMAND IS DANGEROUS, but if necessary you can restart
 the system from the automatic pre-kill state dump (see the main log).""" )
 
-parser.add_option( "-t", "--task",
+parser.add_option( "-t", "--task-id",
         help="Identity of the task to kill.",
         metavar="NAME%CYCLE", action="store", dest="kill_id" )
 

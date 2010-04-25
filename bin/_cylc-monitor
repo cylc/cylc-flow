@@ -18,7 +18,7 @@ http://ascii-table.com/ansi-escape-sequences.php
 """
 
 import pyrex
-from cycle_time import _rt_to_dt
+from cycle_time import _rt_to_dt, is_valid
 import os, re, sys
 import Pyro.core
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
@@ -189,12 +189,13 @@ try:
             # display info to the correct place in the task_info structure
             for task_id in task_ids:
 
+                #ctime  =      states[ task_id ][ 'cycle_time' ]
+                ( name, ctime ) = task_id.split( '%' )
                 if options.shortnames:
                     name     =      states[ task_id ][ 'short_name' ]
                 else:
                     name     =      states[ task_id ][ 'name' ]
 
-                ctime  =      states[ task_id ][ 'cycle_time' ]
                 state    =      states[ task_id ][ 'state' ]
 
                 if not states[ task_id ][ 'spawned' ]:
@@ -270,15 +271,21 @@ try:
             # construct a line of text to display for each cycle time
             for rt in c_time_list:
                 line = ''
-                # colour cycle time according to whether it has
-                # caught up to the current clock time or not.
-                rtdt = _rt_to_dt( rt )
-                if dt > rtdt:
-                    # behind
-                    line = '\033[1;34m' + rt + ctrl_end
+
+                if not is_valid( rt ):
+                    line = line + rt
+                    
+
                 else:
-                    # caught up
-                    line = '\033[1;31m' + rt + ctrl_end
+                    # colour cycle time according to whether it has
+                    # caught up to the current clock time or not.
+                    rtdt = _rt_to_dt( rt )
+                    if dt > rtdt:
+                        # behind
+                        line = '\033[1;34m' + rt + ctrl_end
+                    else:
+                        # caught up
+                        line = '\033[1;31m' + rt + ctrl_end
 
                 # add info for each task to the line
                 for name in name_list:

@@ -15,7 +15,9 @@ This is a messaging interface between external tasks and the proxy
 objects that represent them inside a cylc scheduler instance: the
 message is sent by calling [proxy].incoming( PRIORITY, MESSAGE )
 through the Pyro RPC mechanism. 
-The task proxy is identified by its unique ID, NAME%YYYYMMDDHH
+The task proxy is identified by its unique ID:
+  NAME%YYYYMMDDHH (cycling tasks)
+  NAME%TAG        (asynchronous tasks)
 
 Cylc exports $CYLC_NS_HOST, $CYLC_NS_GROUP, $CYCLE_TIME, and 
 $TASK_ID into the environment of each external task.

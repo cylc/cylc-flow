@@ -21,5 +21,5 @@ class background2( job_submit ):
 
     def submit( self ):
         self.set_local_environment()
-        print "Background2 job submit: " + self.task_name + "%" + self.cycle_time + " (" + self.task +")"
+        print "Background2 job submit: " + self.task_id + " (" + self.task +")"
         self.execute_local( self.task )

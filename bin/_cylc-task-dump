@@ -24,7 +24,7 @@ parser = NoPromptOptionParser_u( usage = """cylc task-dump [options] SYSTEM
 Display the current status of a task's prerequisites, outputs, 
 and other information deemed relevant to scheduling.""" )
 
-parser.add_option( "-t", "--task",
+parser.add_option( "-t", "--task-id",
         help="ID of the task to dump.",
         metavar="TASK%CYCLE", action="store", dest="task_id" )
 
@@ -35,8 +35,9 @@ if not options.task_id:
 
 id = options.task_id
 (name, cycle) = id.split('%')
-if not cycle_time.is_valid( cycle ):
-    parser.error( "invalid cycle time: " + cycle )
+# TO DO
+#if not cycle_time.is_valid( cycle ):
+#    parser.error( "invalid cycle time: " + cycle )
 
 god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 

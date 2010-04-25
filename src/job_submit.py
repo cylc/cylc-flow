@@ -36,7 +36,9 @@ class job_submit:
         ( self.task_name, tag ) = task_id.split( '%' )
         if cycle_time.is_valid( tag ):
             self.cycle_time = tag
+            self.tag = None 
         else:
+            self.cycle_time = None
             self.tag = tag
 
     def interpolate( self, string ):
