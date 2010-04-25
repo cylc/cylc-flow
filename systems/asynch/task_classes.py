@@ -16,6 +16,7 @@ from mod_sequential import sequential
 from mod_contact import contact
 from mod_catchup_contact import catchup_contact
 from prerequisites_fuzzy import fuzzy_prerequisites
+from prerequisites_loose import loose_prerequisites
 from prerequisites import prerequisites
 from outputs import outputs
 from time import sleep
@@ -95,8 +96,8 @@ class products(asynchronous_task):
         self.tag = str( self.__class__.upward_instance_count )
         self.id = self.name + '%' + self.tag
 
-        self.prerequisites = prerequisites( self.name, self.c_time )
-        self.prerequisites.add( 'pass xxxx ready' )
+        self.prerequisites = loose_prerequisites( self.name, self.c_time )
+        self.prerequisites.add( 'pass (\w+) ready' )
         self.outputs = outputs( self.name, self.c_time )
         self.register_run_length( 60.0 )
         self.outputs.add( 60, 'products xxxx ready' )
