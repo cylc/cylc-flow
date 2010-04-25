@@ -86,7 +86,7 @@ sys.path.append( system_dir )
 
 # import system-specific cylc modules now------------------------------ 
 from system_config import system_config 
-import task_base     # loads task_classes.py
+import task     # loads task_classes.py
 import remote_switch # ditto
 
 # load system configuration--------------------------------------------

@@ -18,7 +18,7 @@ through the Pyro RPC mechanism.
 The task proxy is identified by its unique ID, NAME%YYYYMMDDHH
 
 Cylc exports $CYLC_NS_HOST, $CYLC_NS_GROUP, $CYCLE_TIME, and 
-$TASK_NAME into the environment of each external task.
+$TASK_ID into the environment of each external task.
 """
 
 # SEND MESSAGES TO A CYLC SCHEDULER VIA PYRO IF THIS SCRIPT WAS:
@@ -62,10 +62,10 @@ parser.set_defaults( started=False, success=False, failure=False,
         all_restarts_completed=False, all_outputs_completed=False,
         priority='NORMAL')
 
-parser.add_option( "-t", "--task",
-        metavar='TASK',
-        help="Task name, defaults to $TASK_NAME.",
-        action="store", dest="taskname" )
+parser.add_option( "-t", "--task-identity",
+        metavar='TASK-ID',
+        help="Task identity, defaults to $TASK_ID.",
+        action="store", dest="task_id" )
 
 parser.add_option( "-s", "--system",
         metavar="SYSTEM",
@@ -104,11 +104,6 @@ parser.add_option( "-p",
         help="message logging priority: NORMAL, WARNING, or CRITICAL; default NORMAL.",
         action="store", dest="priority" )
 
-parser.add_option( "-c",
-        metavar="CYCLE",
-        help="Task cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.",
-        action="store", dest="ctime" )
-
 parser.add_option( "--next-restart-completed",
         help="Report next restart file(s) completed",
         action="store_true", dest="next_restart_completed" )
@@ -123,31 +118,82 @@ parser.add_option( "--all-outputs-completed",
 
 ( options, args ) = parser.parse_args()
 
-# TASK NAME--------------------------------------------------------
+# GET TASK NAME--------------------------------------------------------
 if options.taskname:
+    # command line
     taskname = options.taskname
-elif 'TASK_NAME' in os.environ.keys():
-    taskname = os.environ[ 'TASK_NAME' ]
-else:
-    taskname = 'TASK'
 
-# TASK CYCLE TIME--------------------------------------------------
+    commandline_invocation = True
+
+else:
+    # Default to $TASK_NAME
+    if 'TASK_NAME' in os.environ.keys():
+        taskname = os.environ[ 'TASK_NAME' ]
+    else:
+        print 'ERROR, cylc message: no task name provided'
+        sys.exit(1)
+
+    commandline_invocation = False
+
+# GET TASK CYCLE TIME--------------------------------------------------
 if options.ctime:
+    # command line
     ctime = options.ctime
-elif 'CYCLE_TIME' in os.environ.keys():
-    ctime = os.environ[ 'CYCLE_TIME' ]
 else:
-    ctime = 'CYCLE'
+    # Default to $CYCLE_TIME
+    if 'CYCLE_TIME' in os.environ.keys():
+        ctime = os.environ[ 'CYCLE_TIME' ]
+    else:
+        print 'ERROR, cylc message: no cycle time provided!'
+        sys.exit(1)
 
-# PRIORITY----------------------------
+# get priority----------------------------
+PRIORITY='NORMAL'
 if options.priority:
     priority=options.priority
 else:
     priority = 'NORMAL'
 
-# USER NAME------------------------------------------------------
-if options.username:
-    username = options.username
+# SEND MESSAGES TO A CYLC SCHEDULER VIA PYRO IF THIS SCRIPT WAS:
+#  (a) called by a task that was invoked by a cylc scheduler
+#  (b) invoked manually on the command line
+# OTHERWISE DIVERT MESSAGES TO STDOUT, i.e. IF THIS SCRIPT WAS:
+#  (a) called by a task that was invoked by 'cylc run-task'
+#  (b) called by a task that was run manually on the command line
+
+if 'CYLC_ON' not in os.environ.keys() and not commandline_invocation:
+
+    task_id = taskname + '%' + ctime
+
+    if options.next_restart_completed:
+        print task_id, " next restart completed"
+
+    elif options.all_restarts_completed:
+        print task_id, " all restarts completed"
+
+    elif options.all_outputs_completed:
+        print task_id, " all outputs completed"
+
+    elif options.started:
+        print task_id, " started"
+
+    elif options.succeeded:
+        print task_id, " completed (success)"
+
+    elif options.failed:
+        print task_id, " completed (failure)"
+
+    else:
+        print task_id, args
+
+    sys.exit(0)
+
+
+# GET SYSTEM NAME------------------------------------------------------
+
+if 'CYLC_NS_GROUP' in os.environ.keys():
+    groupname = os.environ[ 'CYLC_NS_GROUP' ]
+
 else:
     username = os.environ[ 'USER' ] 
 
@@ -189,45 +235,6 @@ else:
     message = ' '.join(args)
 
 
-# CHECK ARGS AND OPTIONS-----------------------------------------------
-if 'CYLC_ON' not in os.environ.keys():
-    # there is no running scheduler assocated with this call
-
-    task_id = taskname + '%' + ctime
-
-    if options.next_restart_completed:
-        message = "next restart completed"
-
-    elif options.all_restarts_completed:
-        message = "all restarts completed"
-
-    elif options.all_outputs_completed:
-        message = "all outputs completed"
-
-    elif options.started:
-        message = "started"
-
-    elif options.succeeded:
-        message = "completed (success)"
-
-    elif options.failed:
-        message = "completed (failure)"
-
-    else:
-        # message = message
-        pass
-
-    print task_id + ' ' + message
-    sys.exit(0)
-
-
-# MESSAGE TO CYLC SCHEDULER VIA THE NAMESERVER
-
-if taskname == 'TASK' or ctime == 'CYCLE':
-    print '_cylc-message ERROR: task name and cycle time input required'
-    sys.exit(1)
-
-# CONNECT TO THE CORRECT TASK PROXY OBJECT-----------------------------
 task_id = taskname + '%' + ctime
 task = connector( pns_host, groupname, task_id ).get()
 
@@ -263,7 +270,7 @@ else:
     task.incoming( priority, message )
 
 #    # nameserver not found, or object not registered with it?
-#    print "ERROR: failed to connect to " + task_name + "_" + ctime
+#    print "ERROR: failed to connect to " + task_id
 #    print "Trying dead letter box"
 #    try:
 #        dead_box = Pyro.core.getProxyForURI('PYRONAME://' + groupname + '.' + 'dead_letter_box' )

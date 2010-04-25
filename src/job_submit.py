@@ -18,19 +18,26 @@
 
 import re, os, sys
 import subprocess
+import cycle_time
 
 class job_submit:
 
-    def __init__( self, task_name, task, cycle_time, config, extra_vars, owner, host ):
+    def __init__( self, task_name, task, cycle_time, extra_vars, host = None ):
 
-        self.task = task
+        self.task = ext_task
         self.remote_host = host
         self.owner = owner
         self.config = config
 
-        self.task_name = task_name
-        self.cycle_time = cycle_time
+        self.task_id = task_id
         self.extra_vars = extra_vars
+
+        # extract cycle time
+        ( self.task_name, tag ) = task_id.split( '%' )
+        if cycle_time.is_valid( tag ):
+            self.cycle_time = tag
+        else:
+            self.tag = tag
 
     def interpolate( self, string ):
 
@@ -54,8 +61,13 @@ class job_submit:
 
     def set_local_environment( self ):
         # export cycle time and task name
-        os.environ['CYCLE_TIME'] = self.cycle_time
         os.environ['TASK_NAME'] = self.task_name
+        if self.cycle_time:
+            os.environ['CYCLE_TIME'] = self.cycle_time
+        else:
+            os.environ['TAG'] = self.tag
+
+        os.environ['TASK_ID'] = self.task_id
         # and any extra variables
         for entry in self.extra_vars:
             [ var_name, value ] = entry
@@ -87,9 +99,13 @@ class job_submit:
             file.write("export " + var_name + "=" + value + "\n" )
 
     def remote_environment_string( self ):
-        # export cycle time and task name
-        env = 'export CYCLE_TIME=' + self.cycle_time
-        env += ' TASK_NAME=' + self.task_name
+        # export cycle time and task id
+        if self.cycle_time:
+            env = 'export CYCLE_TIME=' + self.cycle_time
+        else:
+            env = 'export TAG=' + self.tag
+
+        env += ' TASK_ID=' + self.task_id
         # and system name and CYLC_NS_HOST for this system
         env += ' CYLC_NS_GROUP=' + os.environ[ 'CYLC_NS_GROUP' ]
         # TO DO: THIS WILL FAIL FOR localhost!!!!!!!!!!!!!!!!!

@@ -10,14 +10,20 @@
 #         |________________________|
 
 
-from task_base import task_base
+from cycling_task import cycling_task
+from asynchronous_task import asynchronous_task
 from mod_pid import pid
+from mod_oneoff import oneoff
 from mod_nopid import nopid
 
-class forecast_model( pid, task_base ):
+class daemon( oneoff, asynchronous_task ):
+    # task that runs forever
+    pass
+
+class forecast_model( pid, cycling_task ):
     # task class with previous instance dependence
     pass
 
-class free_task( nopid, task_base ):
+class free_task( nopid, cycling_task ):
     # task class with no previous instance dependence
     pass

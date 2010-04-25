@@ -16,7 +16,6 @@ import sys
 import task_state
 import logging
 import Pyro.core
-import cycle_time
 from copy import deepcopy
 
 global state_changed
@@ -25,29 +24,14 @@ state_changed = True
 
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
-# The only task attributes required for a CLEAN system start (i.e. from
-# configured start time, rather than a previous dumped state) are:
+# task attributes required for a system cold start are:
+#  state ('waiting', 'submitted', 'running', and 'finished' or 'failed')
 
-#  (1) cycle time
-#  (2) state ('waiting', 'submitted', 'running', and 'finished' or 'failed')
+# The 'state' variable is initialised by the base class, and written to
+# the state dump file by the base class dump_state() method.
 
-# The 'state' variable is initialised by the base class. The cycle
-# time is initialised by derived classes because it may be adjusted at
-# start time according to the allowed values for each task type.  Both
-# of these variables are written to the state dump file by the base
-# class dump_state() method.
-
-# For a restart from previous state, however, some tasks may require
-# additional state information to be stored in the state dump file.
-# Take, for instance, a task foo that runs hourly and depends on the
-# most recent available 12-hourly task bar, but is allowed to run ahead
-# of bar to some extent, and changes its behavior according whether or
-# not it was triggered by a "old" bar (i.e. one already used by the
-# previous foo instance) or a "new" one. In this case, currently, we
-# use a class variable in task type foo to record the cycle time of
-# the most recent bar used by any foo instance. This is written to the
-# the state dump file so that task foo does not have to automatically
-# assume it was triggered by a "new" bar after a restart.
+# For a restart from previous state some tasks may require additional
+# state information to be stored in the state dump file.
 
 # To handle this difference in initial state information (between normal
 # start and restart) task initialisation must use a default value of
@@ -55,25 +39,12 @@ state_changed = True
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
-# The abdication mechanism ASSUMES that the task manager creates the
-# successor task as soon as the current task spawns.
+# The task abdication mechanism ASSUMES that the task manager creates
+# the successor task as soon as the current task spawns.
 
-class task_base( Pyro.core.ObjBase ):
+class task( Pyro.core.ObjBase ):
     
-    # Default task deletion: quick_death = True
-    # This amounts to a statement that the task has only cotemporal
-    # downstream dependents (i.e. the only other tasks that depend on it
-    # to satisfy their prerequisites have the same cycle time as it
-    # does) and as such can be deleted at the earliest possible
-    # opportunity - which is as soon as there are no non-finished
-    # tasks with cycle times the same or older than its cycle
-    # time (prior to that we can't be sure that an older non-finished 
-    # task won't give rise (on abdicating) to a new task that does
-    # depend on the task we're interested in). 
-
-    # Tasks that are needed to satisfy the prerequisites of other tasks
-    # in subsequent cycles, however, must set quick_death = False, in
-    # which case they will be removed according to system cutoff time.
+    # this only needed in cycling tasks?
     quick_death = True
 
     @classmethod
@@ -121,7 +92,6 @@ class task_base( Pyro.core.ObjBase ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
-        #  * self.c_time, using self.nearest_c_time()
         #  * prerequisites and outputs
         #  * self.env_vars 
 
@@ -131,8 +101,9 @@ class task_base( Pyro.core.ObjBase ):
         # count instances of each top level object derived from task
         # top level derived classes must define:
         #   <class>.instance_count = 0
-
+        #   <class>.upward_instance_count = 0
         self.__class__.instance_count += 1
+        self.__class__.upward_instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
 
@@ -164,8 +135,9 @@ class task_base( Pyro.core.ObjBase ):
         #    self.prerequisites.set_all_satisfied()
 
     def get_identity( self ):
-        # unique task id
-        return self.name + '%' + self.c_time
+        # return unique task id
+        self.log( 'CRITICAL', 'illegal base class call to get_identity()')
+        sys.exit(1)
 
     def register_run_length( self, run_len_minutes ):
         # automatically define special 'started' and 'finished' outputs
@@ -175,16 +147,19 @@ class task_base( Pyro.core.ObjBase ):
         self.outputs.add( run_len_minutes - 0.01, self.get_identity() + ' completed' )
         self.outputs.add( run_len_minutes, self.get_identity() + ' finished' )
 
+    def log_prepend( self ):
+        # override if necessary
+        return ''
+
     def log( self, priority, message ):
         # task-specific log file
 
-        # is it better to "get" this each time as here, or to get a
+        # is it better to "get" this each call as here, or to get a
         # 'self.logger' once in __init__?
         logger = logging.getLogger( "main." + self.name ) 
 
-        # task logs are already specific to type so we only need to
-        # preface each entry with cycle time, not whole task id.
-        message = '[' + self.c_time + '] ' + message
+        # task logs are specific to task type
+        message = self.log_prepend() + message
 
         if priority == "WARNING":
             logger.warning( message )
@@ -202,78 +177,12 @@ class task_base( Pyro.core.ObjBase ):
     def prepare_for_death( self ):
         # The task manager MUST call this immediately before deleting a
         # task object. It decrements the instance count of top level
-        # objects derived from task_base. It would be nice to use Python's
+        # objects derived from task base. It would be nice to use Python's
         # __del__() function for this, but that is only called when a
         # deleted object is about to be garbage collected (which is not
-        # guaranteed to be right away).
-
-        # NOTE: this was once used for constraining the number of
-        # instances of each task type. However, it has not been used
-        # since converting to a global contraint on the maximum number
-        # of hours that any task can get ahead of the slowest one.
-
+        # guaranteed to be right away). This was once used for
+        # constraining the number of instances of each task type. 
         self.__class__.instance_count -= 1
-
-    def nearest_c_time( self, rt ):
-        # return the next time >= rt for which this task is valid
-        rh = int( rt[8:10])
-        incr = None
-        first_vh = self.valid_hours[ 0 ]
-        extra_vh = 24 + first_vh 
-        foo = deepcopy( self.valid_hours )
-        foo.append( extra_vh )
-
-        for vh in foo:
-            if rh <= vh:
-                incr = vh - rh
-                break
-    
-        nearest_rt = cycle_time.increment( rt, incr )
-        return nearest_rt
-
-
-    def next_c_time( self, rt = None):
-        # return the next cycle time, or the next cycle time
-        # after rt, that is valid for this task.
-        #--
-
-        if not rt:
-            # set proper default argument here (python does not allow
-            # self.foo as a default argument)
-            rt = self.c_time
-
-        n_times = len( self.valid_hours )
-        if n_times == 1:
-            increment = 24
-        else:
-            i_now = self.valid_hours.index( int( rt[8:10]) )
-            # list indices start at zero
-            if i_now < n_times - 1 :
-                increment = self.valid_hours[ i_now + 1 ] - self.valid_hours[ i_now ]
-            else:
-                increment = self.valid_hours[ 0 ] + 24 - self.valid_hours[ i_now ]
-
-        return cycle_time.increment( rt, increment )
-
-
-    def prev_c_time( self ):
-        # return the previous cycle time valid for this task.
-        #--
-
-        rt = self.c_time
-
-        n_times = len( self.valid_hours )
-        if n_times == 1:
-            increment = 24
-        else:
-            i_now = self.valid_hours.index( int( rt[8:10]) )
-            # list indices start at zero
-            if i_now > 0 :
-                decrement = self.valid_hours[ i_now ] - self.valid_hours[ i_now - 1 ] 
-            else:
-                decrement = self.valid_hours[ i_now ] - self.valid_hours[ n_times - 1 ] + 24
-
-        return cycle_time.decrement( rt, decrement )
 
     def ready_to_run( self, current_time ):
         # ready if 'waiting' AND all prequisites satisfied
@@ -290,6 +199,10 @@ class task_base( Pyro.core.ObjBase ):
         self.log( 'DEBUG',  'launching external task' )
         self.launcher.submit()
         self.state.set_status( 'submitted' )
+
+    def get_timed_outputs( self ):
+        # NOT USED?
+        return self.outputs.get_timed_requisites()
 
     def set_all_internal_outputs_completed( self ):
         # used by the task wrapper 
@@ -310,12 +223,6 @@ class task_base( Pyro.core.ObjBase ):
 
     def get_postrequisite_list( self ):
         return self.outputs.get_list()
-
-    def get_timed_outputs( self ):
-        return self.outputs.get_timed_requisites()
-
-    def get_valid_hours( self ):
-        return self.valid_hours
 
     def incoming( self, priority, message ):
         # receive all incoming pyro messages for this task 
@@ -387,17 +294,12 @@ class task_base( Pyro.core.ObjBase ):
                     self.prerequisites.set_satisfied( req )
 
     def dump_state( self, FILE ):
-        # Write state information to the state dump file, cycle time
-        # first to allow users to sort the file easily in case they need
-        # to edit it:
-        #   ctime name state
-
+        # Write state information to the state dump file
         # This must be compatible with __init__() on reload
 
-        FILE.write( self.c_time     + ' : ' + 
+        FILE.write( 'BASE'     + ' : ' + 
                     self.name         + ' : ' + 
                     self.state.dump() + '\n' )
-
 
     def spawn( self ):
         if self.state.has_spawned():
@@ -435,7 +337,6 @@ class task_base( Pyro.core.ObjBase ):
         summary[ 'name' ] = self.name
         summary[ 'short_name' ] = self.short_name
         summary[ 'state' ] = self.state.get_status()
-        summary[ 'cycle_time' ] = self.c_time
         summary[ 'n_total_outputs' ] = n_total
         summary[ 'n_completed_outputs' ] = n_satisfied
         summary[ 'spawned' ] = self.state.has_spawned()

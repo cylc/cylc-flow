@@ -308,7 +308,7 @@ sys.path.insert(0, system_dir )
 
 # import system-specific cylc modules now------------------------------ 
 from system_config import system_config 
-import task_base     # loads task_specif.py
+import task     # loads task_classes
 import remote_switch # ditto
 
 # load system configuration--------------------------------------------
@@ -458,14 +458,14 @@ config.dump()
 print "\nSTARTING\n"
 
 count = 0
-task_base.state_changed = True
+task.state_changed = True
 
 while True: # MAIN LOOP
 
     # PROCESS ALL TASKS whenever something has changed that might
     # require renegotiation of dependencies, etc.
     #--
-    if task_base.state_changed or \
+    if task.state_changed or \
             remote.process_tasks or \
             pool.waiting_contact_task_ready( clock.get_datetime() ):
 
@@ -500,7 +500,7 @@ while True: # MAIN LOOP
     #--
 
     # incoming task messages set this to True
-    task_base.state_changed = False
+    task.state_changed = False
     remote.process_tasks = False
     # handle all remote calls
     #print "hello ..."
