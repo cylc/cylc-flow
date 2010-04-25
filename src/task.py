@@ -322,6 +322,10 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
+    def check_requisites( self ):
+        # overridden by asynchronous tasks
+        pass
+
     def get_state_summary( self ):
         # derived classes can call this method and then 
         # add more information to the summary if necessary.

@@ -30,6 +30,8 @@ state_changed = True
 # successor task as soon as the current task spawns.
 
 class asynchronous_task( nopid, task ):
+
+    used_outputs = {}
     
     quick_death = True
 
@@ -68,3 +70,13 @@ class asynchronous_task( nopid, task ):
         FILE.write( 'ASYNC'     + ' : ' + 
                     self.name         + ' : ' + 
                     self.state.dump() + '\n' )
+
+    def check_requisites( self ):
+        for message in self.prerequisites.get_satisfied_list():
+            self.__class__.used_outputs[ message ] = True
+
+        print
+        print "USED outputs:"
+        for used in self.__class__.used_outputs.keys():
+            print used
+

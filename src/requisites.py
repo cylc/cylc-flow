@@ -73,5 +73,12 @@ class requisites:
         for message in self.satisfied.keys():
             self.satisfied[ message ] = True
 
+    def get_satisfied_list( self ):
+        satisfied = []
+        for message in self.satisfied.keys():
+            if self.satisfied[ message ]:
+                satisfied.append( message )
+        return satisfied
+
     def get_list( self ):
         return self.satisfied.keys()

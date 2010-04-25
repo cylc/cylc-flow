@@ -288,6 +288,9 @@ class manager:
             # get the broker to satisfy tasks prerequisites
             self.broker.negotiate( itask )
 
+        for itask in self.tasks:
+            itask.check_requisites()
+
     def run_tasks( self ):
         # tell each task to run if it is ready
         # unless the system is on hold
