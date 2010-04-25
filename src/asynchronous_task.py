@@ -42,11 +42,13 @@ class asynchronous_task( nopid, task ):
         #  * self.env_vars 
 
         # Top level derived classes must define:
+        #   self.id 
         #   <class>.instance_count = 0
         #   <class>.upward_instance_count = 0
 
         task.__init__( self, state, no_reset )
 
+    # DO WE NEED THE FOLLOWING?
     def nearest_c_time( self, rt ):
         return rt
 
@@ -55,15 +57,6 @@ class asynchronous_task( nopid, task ):
 
     def prev_c_time( self, rt ):
         return rt
-
-    def get_identity( self ):
-        # unique task id
-        return self.name + '%' + str( self.__class__.upward_instance_count )
-
-    def log_prepend( self ):
-        id = self.get_identity()
-        ( name, tag ) = id.split('%')
-        return '[' + tag + ']'
 
     def dump_state( self, FILE ):
         # Write state information to the state dump file, cycle time

@@ -92,6 +92,7 @@ class task( Pyro.core.ObjBase ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
+        #  * unique identity
         #  * prerequisites and outputs
         #  * self.env_vars 
 
@@ -136,8 +137,7 @@ class task( Pyro.core.ObjBase ):
 
     def get_identity( self ):
         # return unique task id
-        self.log( 'CRITICAL', 'illegal base class call to get_identity()')
-        sys.exit(1)
+        return self.id
 
     def register_run_length( self, run_len_minutes ):
         # automatically define special 'started' and 'finished' outputs
@@ -147,10 +147,6 @@ class task( Pyro.core.ObjBase ):
         self.outputs.add( run_len_minutes - 0.01, self.get_identity() + ' completed' )
         self.outputs.add( run_len_minutes, self.get_identity() + ' finished' )
 
-    def log_prepend( self ):
-        # override if necessary
-        return ''
-
     def log( self, priority, message ):
         # task-specific log file
 
@@ -159,7 +155,7 @@ class task( Pyro.core.ObjBase ):
         logger = logging.getLogger( "main." + self.name ) 
 
         # task logs are specific to task type
-        message = self.log_prepend() + message
+        message = '[' + self.tag + ']' + message
 
         if priority == "WARNING":
             logger.warning( message )

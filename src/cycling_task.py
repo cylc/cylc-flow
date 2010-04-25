@@ -71,7 +71,7 @@ class cycling_task( task ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
-        #  * self.c_time, using self.nearest_c_time()
+        #  * self.id after calling self.nearest_c_time()
         #  * prerequisites and outputs
         #  * self.env_vars 
 
@@ -79,13 +79,6 @@ class cycling_task( task ):
         #   <class>.instance_count = 0
 
         task.__init__( self, state, no_reset )
-
-    def get_identity( self ):
-        # unique task id
-        return self.name + '%' + self.c_time
-
-    def log_prepend( self ):
-        return '[' + self.c_time + ']'
 
     def nearest_c_time( self, rt ):
         # return the next time >= rt for which this task is valid

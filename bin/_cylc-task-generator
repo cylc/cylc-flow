@@ -448,6 +448,8 @@ from dynamic_instantiation import get_object
 
         FILE.write( indent + '# adjust cycle time to next valid for this task\n' )
         FILE.write( indent + 'self.c_time = self.nearest_c_time( c_time )\n' )
+        FILE.write( indent + 'self.tag = self.c_time\n' )
+        FILE.write( indent + 'self.id = self.name + \'%\' + self.c_time\n' )
         FILE.write( indent + 'hour = self.c_time[8:10]\n\n' )
 
         if contact:

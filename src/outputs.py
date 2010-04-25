@@ -9,7 +9,6 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
 import re
 import sys
 import logging
@@ -31,6 +30,7 @@ class outputs( requisites ):
 
     def __init__( self, task_name, c_time ):
         self.task_name = task_name
+        
         self.c_time = c_time
 
         self.message = {}    # self.message[ t ] = [ "message1", "message2", ...] 
