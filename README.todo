@@ -1,10 +1,5 @@
 To Do
 
-* task groups defined in system_config cause abort if any of the tasks
-  therein are not defined (e.g. if commented out of the task list!)
-
-* parse "HH:mm" for contact delay times etc.
-
 * in job_submit.py, allow remote enviroment vars that aren't
   interpolated locally ... e.g. $USER?
 

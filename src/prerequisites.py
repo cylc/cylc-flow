@@ -10,6 +10,7 @@
 #         |________________________|
 
 
+import re
 import logging
 from requisites import requisites
 

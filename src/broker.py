@@ -64,8 +64,7 @@ class broker:
         prerequisites = task.prerequisites
         try:
             task.__class__.used_outputs
-        except NameError, x:
-            print x
+        except AttributeError:
             for id in self.all_outputs.keys():
                 prerequisites.satisfy_me( self.all_outputs[ id ], id )
         else:

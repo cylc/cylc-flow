@@ -35,7 +35,7 @@ mkdir -p $CYLC_TMPDIR || \
 }
 
 # EXECUTE THE TASK ...
-sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
+#sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
 
 echo "CLEANING $CYLC_TMPDIR"
 rm -rf $CYLC_TMPDIR/* || \

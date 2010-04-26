@@ -12,6 +12,7 @@
 # LIST OF TASK NAMES (order irrelevant)
 task_list = \
     [
+       'startup',
        'watcher',
        'products',
     ]
