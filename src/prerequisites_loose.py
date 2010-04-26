@@ -34,7 +34,7 @@ class loose_prerequisites( prerequisites ):
         del self.satisfied[ loose ]
         self.satisfied[ sharp ] = True
 
-    def satisfy_me( self, outputs, owner_id, exclusions ):
+    def satisfy_me( self, outputs, exclusions ):
         log = logging.getLogger( "main." + self.task_name )            
         # can any completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
@@ -54,4 +54,5 @@ class loose_prerequisites( prerequisites ):
                 if matched:
                     # replace fuzzy prereq with the actual output that satisfied it
                     self.sharpen_up( prereq, output )
-                    log.debug( '[' + self.c_time + '] Got "' + output + '" from ' + owner_id )
+                    log.debug( '[' + self.c_time + '] Got "' + output + '" from ' + outputs.owner_id )
+                    self.satisfied_by[ prereq ] = outputs.owner_id

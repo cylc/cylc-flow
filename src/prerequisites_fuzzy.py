@@ -55,7 +55,7 @@ class fuzzy_prerequisites( prerequisites ):
         del self.satisfied[ fuzzy ]
         self.satisfied[ sharp ] = True
 
-    def satisfy_me( self, outputs, owner_id ):
+    def satisfy_me( self, outputs ):
         log = logging.getLogger( "main." + self.task_name )            
         # can any completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
@@ -102,9 +102,12 @@ class fuzzy_prerequisites( prerequisites ):
 
                     # replace fuzzy prereq with the actual output that satisfied it
                     self.sharpen_up( prereq, chosen_output )
-                    log.debug( '[' + self.c_time + '] Got "' + chosen_output + '" from ' + owner_id )
+                    log.debug( '[' + self.c_time + '] Got "' + chosen_output + '" from ' + outputs.owner_id )
+                    self.satisfied_by[ prereq ] = outputs.owner_id
 
-#    def will_satisfy_me( self, outputs, owner_id ):
+
+
+#    def will_satisfy_me( self, outputs ):
 # TO DO: THINK ABOUT HOW FUZZY PREREQS AFFECT THIS FUNCTION ...
 #        # will another's outputs, if/when completed, satisfy any of my
 #        # prequisites?

@@ -66,10 +66,10 @@ class broker:
             task.__class__.used_outputs
         except AttributeError:
             for id in self.all_outputs.keys():
-                prerequisites.satisfy_me( self.all_outputs[ id ], id )
+                prerequisites.satisfy_me( self.all_outputs[ id ] )
         else:
             exclusions = []
             for message in task.__class__.used_outputs.keys():
                 exclusions.append( message )
             for id in self.all_outputs.keys():
-                prerequisites.satisfy_me( self.all_outputs[ id ], id, exclusions )
+                prerequisites.satisfy_me( self.all_outputs[ id ], exclusions )

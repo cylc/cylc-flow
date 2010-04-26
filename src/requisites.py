@@ -22,8 +22,9 @@
 class requisites:
     # A collection of messages, each "satisfied" or not.
 
-    def __init__( self ):
-        self.satisfied = {}  # self.satisfied[ "message" ] = True/False
+    def __init__( self, owner_id ):
+        self.owner_id = owner_id
+        self.satisfied = {}     # self.satisfied[ "message" ] = True/False
 
     def count( self ):
         # how many messages are stored

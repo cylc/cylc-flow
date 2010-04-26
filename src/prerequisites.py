@@ -28,11 +28,10 @@ class prerequisites( requisites ):
     # satisfied if another object has a matching output message that is
     # satisfied (i.e. a completed output). 
 
-    def __init__( self, task_name, c_time ):
-        self.task_name = task_name
-        self.c_time = c_time
-
-        requisites.__init__( self )
+    def __init__( self, owner_id ):
+        ( self.task_name, self.c_time ) = owner_id.split( '%' )
+        self.satisfied_by = {}  # self.satisfied_by[ "message" ] = task_id
+        requisites.__init__( self, owner_id )
 
     def add( self, message ):
         # Add a new prerequisite message in an UNSATISFIED state.
@@ -41,7 +40,7 @@ class prerequisites( requisites ):
         # information.
         self.satisfied[message] = False
 
-    def satisfy_me( self, outputs, owner_id ):
+    def satisfy_me( self, outputs ):
         log = logging.getLogger( "main." + self.task_name )            
         # can any completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
@@ -55,9 +54,10 @@ class prerequisites( requisites ):
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
                         # TO LOG WHAT GOT SATISFIED BY WHOM:
-                        log.debug( '[' + self.c_time + '] Got "' + output + '" from ' + owner_id )
+                        log.debug( '[' + self.c_time + '] Got "' + output + '" from ' + outputs.owner_id )
+                        self.satisfied_by[ prereq ] = outputs.owner_id
 
-    def will_satisfy_me( self, outputs, owner_id ):
+    def will_satisfy_me( self, outputs ):
         # return True if the outputs, when completed, would satisfy any of my prequisites
         for prereq in self.satisfied.keys():
             #print "PRE: " + prereq
