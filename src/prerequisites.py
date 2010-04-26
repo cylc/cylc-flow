@@ -50,7 +50,8 @@ class prerequisites( requisites ):
                 # if my prerequisite is not already satisfied
                 for output in outputs.satisfied.keys():
                     # compare it with each of the outputs
-                    if output == prereq and outputs.satisfied[output]:
+                    #if output == prereq and outputs.satisfied[output]:
+                    if re.match( prereq, output ) and outputs.satisfied[output]:
                         # if they match, my prereq has been satisfied
                         self.set_satisfied( prereq )
                         # TO LOG WHAT GOT SATISFIED BY WHOM:
@@ -66,7 +67,8 @@ class prerequisites( requisites ):
                 for output in outputs.satisfied.keys():
                     #print "POST: " + output
                     # compare it with each of the outputs
-                    if output == prereq:   # (DIFFERENT FROM ABOVE HERE)
+                    #if output == prereq:   # (DIFFERENT FROM ABOVE HERE)
+                    if re.match( prereq, output ):   # (DIFFERENT FROM ABOVE HERE)
                         # if they match, my prereq has been satisfied
                         # self.set_satisfied( prereq )
                         return True
