@@ -33,13 +33,18 @@ class job_submit:
         self.extra_vars = extra_vars
 
         # extract cycle time
-        ( self.task_name, tag ) = task_id.split( '%' )
-        if cycle_time.is_valid( tag ):
-            self.cycle_time = tag
-            self.tag = None 
+        self.cycle_time = None
+        try:
+            ( self.task_name, tag ) = task_id.split( '%' )
+        except ValueError:
+            self.task_name = task_id
         else:
-            self.cycle_time = None
-            self.tag = tag
+            if cycle_time.is_valid( tag ):
+                self.cycle_time = tag
+                self.tag = None 
+            else:
+                self.cycle_time = None
+                self.tag = tag
 
     def interpolate( self, string ):
 
@@ -66,8 +71,8 @@ class job_submit:
         os.environ['TASK_NAME'] = self.task_name
         if self.cycle_time:
             os.environ['CYCLE_TIME'] = self.cycle_time
-        else:
-            os.environ['TAG'] = self.tag
+        #else:
+        #    os.environ['TAG'] = self.tag
 
         os.environ['TASK_ID'] = self.task_id
         # and any extra variables
@@ -104,8 +109,8 @@ class job_submit:
         # export cycle time and task id
         if self.cycle_time:
             env = 'export CYCLE_TIME=' + self.cycle_time
-        else:
-            env = 'export TAG=' + self.tag
+        #else:
+        #    env = 'export TAG=' + self.tag
 
         env += ' TASK_ID=' + self.task_id
         # and system name and CYLC_NS_HOST for this system

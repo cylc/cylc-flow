@@ -25,8 +25,8 @@ check-env.sh || exit 1
 COUNT=10
 while true; do
     sleep 10
-    touch $CYLC_TMPDIR/pass-${COUNT}.nc
-    cylc message "pass $COUNT ready"
+    touch $CYLC_TMPDIR/pass-ID${COUNT}.nc
+    cylc message "pass ID$COUNT ready"
     COUNT=$(( COUNT + 10 ))
 done
 

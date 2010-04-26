@@ -258,6 +258,7 @@ if options.all_outputs_completed:
     sys.exit(0)
 
 if options.started:
+    print 'SENDING: ', task_id + " started"
     task.incoming( 'NORMAL', task_id + " started" )
 
 elif options.succeeded:

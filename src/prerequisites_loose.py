@@ -12,7 +12,6 @@
 
 import re
 import sys
-import logging
 from prerequisites import prerequisites
 
 # PREREQUISITES:
@@ -21,6 +20,10 @@ from prerequisites import prerequisites
 # Prerequisites can interact with a broker (above) to get satisfied.
 
 class loose_prerequisites( prerequisites ):
+
+    def __init__( self, owner_id ):
+        self.match_group = {}
+        prerequisites.__init__( self, owner_id )
 
     def add( self, message ):
         # TO DO: CHECK FOR LOOSE PATTERN HERE
@@ -35,7 +38,6 @@ class loose_prerequisites( prerequisites ):
         self.satisfied[ sharp ] = True
 
     def satisfy_me( self, outputs, exclusions ):
-        log = logging.getLogger( "main." + self.task_name )            
         # can any completed outputs satisfy any of my prequisites?
         for prereq in self.satisfied.keys():
             # for each of my prerequisites
@@ -46,13 +48,15 @@ class loose_prerequisites( prerequisites ):
                     if output in exclusions:
                         continue
                     if outputs.satisfied[output]:
-                        if re.match( prereq, output ):
+                        m = re.match( prereq, output )
+                        if m:
                             matched = True
-                            # breaks out ONE LEVEL right?
+                            match_group = m.groups()[0]
                             break
 
                 if matched:
                     # replace fuzzy prereq with the actual output that satisfied it
                     self.sharpen_up( prereq, output )
-                    log.debug( '[' + self.c_time + '] Got "' + output + '" from ' + outputs.owner_id )
+                    prereq = output
+                    self.match_group[ prereq ] = match_group 
                     self.satisfied_by[ prereq ] = outputs.owner_id

@@ -155,7 +155,12 @@ class task( Pyro.core.ObjBase ):
         logger = logging.getLogger( "main." + self.name ) 
 
         # task logs are specific to task type
-        message = '[' + self.tag + ']' + message
+        try:
+            ( name, tag ) = (self.id).split('%')
+        except ValueError:
+            pass
+        else:
+            message = '[' + tag + ']' + message
 
         if priority == "WARNING":
             logger.warning( message )
@@ -246,11 +251,6 @@ class task( Pyro.core.ObjBase ):
             self.log( 'WARNING', "UNEXPECTED MESSAGE (task should not be running)" )
             self.log( 'WARNING', '-> ' + message )
 
-        # prefix task id to special messages.
-        #raw_message = message
-        #if message == 'started' or message == 'finished' or message == 'failed' or message == 'completed':
-        #    message = self.get_identity() + ' ' + message
- 
         if self.outputs.exists( message ):
             # registered output messages
 
@@ -262,8 +262,10 @@ class task( Pyro.core.ObjBase ):
                 if message == self.get_identity() + ' finished':
                     # TASK HAS FINISHED
                     if not self.outputs.all_satisfied():
+
                         self.log( 'CRITICAL', 'finished before all outputs were completed' )
                         self.state.set_status( 'failed' )
+
                     else:
                         self.state.set_status( 'finished' )
             else:
@@ -296,8 +298,7 @@ class task( Pyro.core.ObjBase ):
         # Write state information to the state dump file
         # This must be compatible with __init__() on reload
 
-        FILE.write( 'BASE'     + ' : ' + 
-                    self.name         + ' : ' + 
+        FILE.write( self.name         + ' : ' + 
                     self.state.dump() + '\n' )
 
     def spawn( self ):
@@ -315,8 +316,9 @@ class task( Pyro.core.ObjBase ):
         return self.state.has_spawned()
 
     def ready_to_spawn( self ):
-        self.log( 'CRITICAL', 'derived classes must override ready_to_spawn()')
-        sys.exit(1)
+        return False
+        #self.log( 'CRITICAL', 'derived classes must override ready_to_spawn()')
+        #sys.exit(1)
 
     def done( self ):
         # return True if task has finished and spawned

@@ -14,11 +14,6 @@
 # (postrequisites?). A collection of messages, each of which is
 # "satisfied" or not.
 
-# NOTE ON LOGGING: Requisite classes have to 'get' the log each time
-# logging is required, rather than hold a self.log, because thread
-# locking in the logging module is incompatible with 'deep copying' of
-# requisites elsewhere in the code (THIS MIGHT NOT APPLY ANYMORE?).
-
 class requisites:
     # A collection of messages, each "satisfied" or not.
 
@@ -39,7 +34,7 @@ class requisites:
         return n
 
     def dump( self ):
-        # return a string representing each message and its state
+        # return an array of strings representing each message and its state
         res = []
         for key in self.satisfied.keys():
             res.append( [ key, self.satisfied[ key ] ]  )

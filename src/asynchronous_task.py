@@ -13,7 +13,7 @@
 # asynchronous tasks: cycle time required for some operations, at least for now, so give all 
 # the time of 2999010101 but never change it.
 
-import sys
+import sys, re
 from task import task
 import cycle_time
 from mod_nopid import nopid
@@ -49,12 +49,6 @@ class asynchronous_task( nopid, task ):
 
         task.__init__( self, state, no_reset )
 
-    # DO WE NEED THE FOLLOWING?
-    #def nearest_c_time( self, rt ):
-    #    return rt
-    #def prev_c_time( self, rt ):
-    #    return rt
-
     def next_c_time( self, rt = None ):
         # still needed for now, for spawning by manager
         return rt
@@ -72,5 +66,20 @@ class asynchronous_task( nopid, task ):
                     self.state.dump() + '\n' )
 
     def check_requisites( self ):
+        # CHECK THIS FUNCTION VERY CAREFULLY!
         for message in self.prerequisites.get_satisfied_list():
+            # record which outputs already been used by this task type
             self.__class__.used_outputs[ message ] = True
+
+            if message in self.prerequisites.match_group.keys():
+                # IS THIS TOP LEVEL 'IF' NECESSARY?
+                mg = self.prerequisites.match_group[ message ]
+                for output in self.outputs.get_list():
+                    m = re.match( '^(.*)\((.*)\)(.*)', output )
+                    if m:
+                        (left, outre, right) = m.groups()
+                        newout = left + mg + right
+                        
+                        del self.outputs.satisfied[ output ]
+                        self.outputs.satisfied[ newout ] = False
+                        self.env_vars.append( [ 'ASYNCID', mg ] )

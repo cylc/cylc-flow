@@ -10,6 +10,7 @@
 #         |________________________|
 
 
+from task import task
 from cycling_task import cycling_task
 from asynchronous_task import asynchronous_task
 from mod_pid import pid
@@ -25,11 +26,11 @@ class free_task( nopid, cycling_task ):
     # task class with no previous instance dependence
     pass
 
-class daemon( oneoff, asynchronous_task ):
-    # task that runs forever
+class daemon( oneoff, task ):
+    # runs forever and adds outputs as messages matching a pattern come in
 
     def incoming( self, priority, message ):
         if re.match( self.output_pattern, message ):
             self.outputs.add( 10, message )
 
-        asynchronous_task.incoming( self, priority, message )
+        task.incoming( self, priority, message )

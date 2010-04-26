@@ -26,6 +26,7 @@ from prerequisites import prerequisites
 # in the message string. Requires a more complex satisfy_me() method.
 
 class fuzzy_prerequisites( prerequisites ):
+
     def add( self, message ):
 
         # check for fuzziness before pass on to the base class method

@@ -22,7 +22,7 @@ cylc message --started
 check-env.sh || exit 1
 
 # check prerequisites
-ONE=$CYLC_TMPDIR/pass-xxxx.nc
+ONE=$CYLC_TMPDIR/pass-${ASYNCID}.nc
 for PRE in $ONE; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
@@ -36,8 +36,8 @@ done
 sleep 30
 
 # create task outputs
-touch $CYLC_TMPDIR/products-xxx.nc
-cylc message "products xxxx ready"
+touch $CYLC_TMPDIR/products-{ASYNCID}.nc
+cylc message "products $ASYNCID ready"
 
 # SUCCESS MESSAGE
 cylc message --succeeded

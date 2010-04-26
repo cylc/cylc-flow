@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-from task_types import daemon, asynchronous_task, forecast_model, free_task
+from task_types import task, daemon, asynchronous_task, forecast_model, free_task
 from mod_oneoff import oneoff
 from mod_sequential import sequential
 from mod_contact import contact
@@ -48,21 +48,19 @@ class watcher(daemon):
 
     def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
 
-        # ignore c_time !!
         self.c_time = '2999010101'
-        self.tag = str( self.__class__.upward_instance_count )
-        self.id = self.name + '%' + self.tag
+        self.id = self.name
 
         #if startup:
         #    # overwrite prerequisites for startup case
-        #    self.prerequisites = prerequisites( self.name, self.c_time )
+        #    self.prerequisites = prerequisites( self.get_identity() )
         #    self.prerequisites.add( 'startup%'  + self.c_time + ' finished' )
 
-        self.prerequisites = loose_prerequisites( self.name, self.c_time )
-        self.prerequisites.add( 'startup%(\w+) finished')
+        self.prerequisites = prerequisites( self.get_identity() )
+        self.prerequisites.add( 'startup finished')
 
-        self.outputs = outputs( self.name, self.c_time )
-        self.output_pattern = 'pass (\w+) ready'
+        self.outputs = outputs( self.get_identity() )
+        self.output_pattern = 'pass ID\w+ ready'
  
         self.env_vars = []
 
@@ -92,16 +90,15 @@ class products(asynchronous_task):
 
     def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
 
-        # ignore c_time !!
         self.c_time = '2999010101'
         self.tag = str( self.__class__.upward_instance_count )
         self.id = self.name + '%' + self.tag
 
-        self.prerequisites = loose_prerequisites( self.name, self.c_time )
-        self.prerequisites.add( 'pass (\w+) ready' )
-        self.outputs = outputs( self.name, self.c_time )
+        self.prerequisites = loose_prerequisites( self.get_identity() )
+        self.prerequisites.add( 'pass (ID\w+) ready' )
+        self.outputs = outputs( self.get_identity() )
         self.register_run_length( 60.0 )
-        self.outputs.add( 60, 'products xxxx ready' )
+        self.outputs.add( 60, 'products (ID\w+) ready' )
  
         self.env_vars = []
 
@@ -116,13 +113,11 @@ class products(asynchronous_task):
         asynchronous_task.__init__( self, initial_state, no_reset )
 
 
-class startup(oneoff, free_task):
-    # AUTO-GENERATED FROM /home/oliverh/cylc-timeless/systems/userguide/taskdef/startup.def
+class startup(task):
 
     name = 'startup'
     short_name = 'startup'
     instance_count = 0
-
     upward_instance_count = 0
 
     description = [
@@ -131,26 +126,20 @@ class startup(oneoff, free_task):
 
     external_task = 'startup.sh'
 
-    valid_hours = [0,6,12,18]
-
     quick_death = True
 
     def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
 
-        # adjust cycle time to next valid for this task
-        self.c_time = self.nearest_c_time( c_time )
-        self.tag = self.c_time
-        self.id = self.name + '%' + self.c_time
-        hour = self.c_time[8:10]
+        self.c_time = '2999010101'
+        self.id = self.name
 
-        self.prerequisites = prerequisites( self.name, self.c_time )
+        self.prerequisites = prerequisites( self.get_identity() )
 
-        self.outputs = outputs( self.name, self.c_time )
+        self.outputs = outputs( self.get_identity() )
 
         self.register_run_length( 5.0 )
 
-        self.env_vars = [
-        ]
+        self.env_vars = [ ]
 
         # in dummy mode, replace the external task with _cylc-dummy-task
         if dummy_mode:
@@ -160,6 +149,4 @@ class startup(oneoff, free_task):
         clsname = submit
         self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
 
-        free_task.__init__( self, initial_state, no_reset )
-
-
+        task.__init__( self, initial_state, no_reset )

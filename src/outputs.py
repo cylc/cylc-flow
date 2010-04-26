@@ -11,7 +11,6 @@
 
 import re
 import sys
-import logging
 from requisites import requisites
 
 # OUTPUTS:
@@ -29,7 +28,6 @@ class outputs( requisites ):
     # completion time, used to simulate task execution in dummy mode.
 
     def __init__( self, owner_id ):
-        (self.task_name, self.c_time ) = owner_id.split( '%' )
         self.message = {}    # self.message[ t ] = [ "message1", "message2", ...] 
         self.time = {}       # self.time[ "message1" ] = t, etc.
         requisites.__init__( self, owner_id )
@@ -37,11 +35,9 @@ class outputs( requisites ):
     def add( self, t, message ):
         # Add a new unsatisfied output message for time t
 
-        log = logging.getLogger( "main." + self.task_name )            
-
         if message in self.satisfied.keys():
             # duplicate output messages are an error.
-            log.critical( 'already registered: ' + message ) 
+            print 'ERROR: already registered: ' + message
             sys.exit(1)
 
         self.satisfied[message] = False

@@ -155,7 +155,11 @@ try:
             name_list = []
 
             for task_id in task_ids:
-                [ name, c_time ] = task_id.split( '%' )
+                try:
+                    [ name, c_time ] = task_id.split( '%' )
+                except ValueError:
+                    name = task_id
+                    c_time = ''
 
                 if c_time not in seen_time.keys():
                     seen_time[ c_time ] = True
@@ -190,7 +194,12 @@ try:
             for task_id in task_ids:
 
                 #ctime  =      states[ task_id ][ 'cycle_time' ]
-                ( name, ctime ) = task_id.split( '%' )
+                try:
+                    ( name, ctime ) = task_id.split( '%' )
+                except ValueError:
+                    name = task_id
+                    ctime = ''
+
                 if options.shortnames:
                     name     =      states[ task_id ][ 'short_name' ]
                 else:
