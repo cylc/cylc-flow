@@ -15,5 +15,7 @@ task_list = \
        'startup',
        'watcher',
        'products',
+       'upload',
+       'archive'
     ]
 # END OF FILE

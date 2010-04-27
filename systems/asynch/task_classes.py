@@ -112,6 +112,80 @@ class products(asynchronous_task):
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
+class upload(asynchronous_task):
+
+    name = 'upload'
+    short_name = 'upload'
+    instance_count = 0
+    upward_instance_count = 0
+
+    description = [
+        'upload processed satellite data',
+    ]
+
+    external_task = 'upload.sh'
+
+    def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
+
+        self.c_time = '2999010101'
+        self.tag = str( self.__class__.upward_instance_count )
+        self.id = self.name + '%' + self.tag
+
+        self.prerequisites = loose_prerequisites( self.get_identity() )
+        self.prerequisites.add( 'products (ID\w+) ready' )
+        self.outputs = outputs( self.get_identity() )
+        self.register_run_length( 60.0 )
+        self.outputs.add( 60, 'products (ID\w+) uploaded' )
+ 
+        self.env_vars = []
+
+        # in dummy mode, replace the external task with _cylc-dummy-task
+        #if dummy_mode:
+        #        self.external_task = '_cylc-dummy-task'
+
+        modname = 'job_submit_methods'
+        clsname = submit
+        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
+
+        asynchronous_task.__init__( self, initial_state, no_reset )
+
+class archive(asynchronous_task):
+
+    name = 'archive'
+    short_name = 'archive'
+    instance_count = 0
+    upward_instance_count = 0
+
+    description = [
+        'archive processed satellite data',
+    ]
+
+    external_task = 'archive.sh'
+
+    def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
+
+        self.c_time = '2999010101'
+        self.tag = str( self.__class__.upward_instance_count )
+        self.id = self.name + '%' + self.tag
+
+        self.prerequisites = loose_prerequisites( self.get_identity() )
+        self.prerequisites.add( 'products (ID\w+) ready' )
+        self.outputs = outputs( self.get_identity() )
+        self.register_run_length( 60.0 )
+        self.outputs.add( 60, 'products (ID\w+) archived' )
+ 
+        self.env_vars = []
+
+        # in dummy mode, replace the external task with _cylc-dummy-task
+        #if dummy_mode:
+        #        self.external_task = '_cylc-dummy-task'
+
+        modname = 'job_submit_methods'
+        clsname = submit
+        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
+
+        asynchronous_task.__init__( self, initial_state, no_reset )
+
 
 class startup(task):
 

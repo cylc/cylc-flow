@@ -10,8 +10,6 @@
 #         |________________________|
 
 
-# run length 10 minutes
-
 # trap errors so that we need not check the success of basic operations.
 set -e; trap 'cylc message --failed' ERR
 
@@ -22,7 +20,7 @@ cylc message --started
 check-env.sh || exit 1
 
 # check prerequisites
-ONE=$CYLC_TMPDIR/pass-${ASYNCID}.nc
+ONE=$CYLC_TMPDIR/products-${ASYNCID}.nc
 for PRE in $ONE; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
@@ -36,8 +34,8 @@ done
 sleep 10
 
 # create task outputs
-touch $CYLC_TMPDIR/products-${ASYNCID}.nc
-cylc message "products $ASYNCID ready"
+cp $CYLC_TMPDIR/products-${ASYNCID}.nc $CYLC_TMPDIR/upload-${ASYNCID}.nc
+cylc message "products $ASYNCID uploaded"
 
 # SUCCESS MESSAGE
 cylc message --succeeded
