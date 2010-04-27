@@ -66,8 +66,6 @@ To Do
 * warn about consequences of deleting a task: system may move on so that
   a reinserted task will not get its prerequisites satisfied.
 
-* Add NIWA Copyright to all files.
-
 * task generator should look for mispelled variables, e.g. $(CYLCE_TIME)
 
 * is taskdef CYCLES sorted for order?

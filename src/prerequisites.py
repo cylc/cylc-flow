@@ -40,32 +40,28 @@ class prerequisites( requisites ):
 
     def satisfy_me( self, outputs ):
         # can any completed outputs satisfy any of my prequisites?
-        for prereq in self.satisfied.keys():
-            # for each of my prerequisites
-            if not self.satisfied[ prereq ]:
-                # if my prerequisite is not already satisfied
-                for output in outputs.satisfied.keys():
-                    # compare it with each of the outputs
-                    #if output == prereq and outputs.satisfied[output]:
-                    if re.match( prereq, output ) and outputs.satisfied[output]:
-                        # if they match, my prereq has been satisfied
-                        self.set_satisfied( prereq )
-                        self.satisfied_by[ prereq ] = outputs.owner_id
+        for prereq in self.get_not_satisfied_list():
+            # for each of my unsatisfied prerequisites
+            for output in outputs.get_satisfied_list():
+                # compare it with each of the completed outputs
+                #if output == prereq and outputs.satisfied[output]:
+                if re.match( prereq, output ):
+                    # if they match, my prereq has been satisfied
+                    self.set_satisfied( prereq )
+                    self.satisfied_by[ prereq ] = outputs.owner_id
 
     def will_satisfy_me( self, outputs ):
         # return True if the outputs, when completed, would satisfy any of my prequisites
-        for prereq in self.satisfied.keys():
+        for prereq in self.get_not_satisfied_list():
             #print "PRE: " + prereq
             # for each of my prerequisites
-            if not self.satisfied[ prereq ]:
-                # if my prerequisite is not already satisfied
-                for output in outputs.satisfied.keys():
-                    #print "POST: " + output
-                    # compare it with each of the outputs
-                    #if output == prereq:   # (DIFFERENT FROM ABOVE HERE)
-                    if re.match( prereq, output ):   # (DIFFERENT FROM ABOVE HERE)
-                        # if they match, my prereq has been satisfied
-                        # self.set_satisfied( prereq )
-                        return True
+            for output in outputs.satisfied.keys():
+                #print "POST: " + output
+                # compare it with each of the outputs
+                #if output == prereq:   # (DIFFERENT FROM ABOVE HERE)
+                if re.match( prereq, output ):   # (DIFFERENT FROM ABOVE HERE)
+                    # if they match, my prereq has been satisfied
+                    # self.set_satisfied( prereq )
+                    return True
 
         return False

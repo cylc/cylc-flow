@@ -58,55 +58,44 @@ class fuzzy_prerequisites( prerequisites ):
 
     def satisfy_me( self, outputs ):
         log = logging.getLogger( "main." + self.task_name )            
-        # can any completed outputs satisfy any of my prequisites?
-        for prereq in self.satisfied.keys():
-            # for each of my prerequisites
-            if not self.satisfied[ prereq ]:
-                # if it is not yet satisfied
+        # can any completed outputs satisfy any of my unsatisfied prequisites?
+        for prereq in self.get_not_satisfied_list():
+            # for each of my unsatisfied prerequisites
+            # extract fuzzy cycle time bounds from my prerequisite
+            m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
+            [ my_start, my_minmax, my_end ] = m.groups()
+            [ my_min, my_max ] = my_minmax.split(':')
 
-                # extract fuzzy cycle time bounds from my prerequisite
-                m = re.compile( "^(.*)(\d{10}:\d{10})(.*)$").match( prereq )
-                [ my_start, my_minmax, my_end ] = m.groups()
-                [ my_min, my_max ] = my_minmax.split(':')
-
-                possible_satisfiers = {}
-                found_at_least_one = False
-                for output in outputs.satisfied.keys():
-
-                    if outputs.satisfied[output]:
-                        # extract cycle time from other's output
-                        # message
-
-                        m = re.compile( "^(.*)(\d{10})(.*)$").match( output )
-                        if not m:
-                            # this output can't possibly satisfy a
-                            # fuzzy; move on to the next one.
-                            continue
+            possible_satisfiers = {}
+            found_at_least_one = False
+            for output in outputs.get_satisfied_list():
+                m = re.compile( "^(.*)(\d{10})(.*)$").match( output )
+                if not m:
+                    # this output can't possibly satisfy a fuzzy so move on
+                    continue
                 
-                        [ other_start, other_ctime, other_end ] = m.groups()
+                    [ other_start, other_ctime, other_end ] = m.groups()
 
-                        if other_start == my_start and other_end == my_end and other_ctime >= my_min and other_ctime <= my_max:
-                            possible_satisfiers[ other_ctime ] = output
-                            found_at_least_one = True
-                        else:
-                            continue
+                    if other_start == my_start and other_end == my_end and other_ctime >= my_min and other_ctime <= my_max:
+                        possible_satisfiers[ other_ctime ] = output
+                        found_at_least_one = True
+                    else:
+                        continue
 
-                if found_at_least_one: 
-                    # choose the most recent possible satisfier
-                    possible_ctimes = possible_satisfiers.keys()
-                    possible_ctimes.sort( key = int, reverse = True )
-                    chosen_ctime = possible_ctimes[0]
-                    chosen_output = possible_satisfiers[ chosen_ctime ]
+            if found_at_least_one: 
+                # choose the most recent possible satisfier
+                possible_ctimes = possible_satisfiers.keys()
+                possible_ctimes.sort( key = int, reverse = True )
+                chosen_ctime = possible_ctimes[0]
+                chosen_output = possible_satisfiers[ chosen_ctime ]
 
-                    #print "FUZZY PREREQ: " + prereq
-                    #print "SATISFIED BY: " + chosen_output
+                #print "FUZZY PREREQ: " + prereq
+                #print "SATISFIED BY: " + chosen_output
 
-                    # replace fuzzy prereq with the actual output that satisfied it
-                    self.sharpen_up( prereq, chosen_output )
-                    log.debug( '[' + self.c_time + '] Got "' + chosen_output + '" from ' + outputs.owner_id )
-                    self.satisfied_by[ prereq ] = outputs.owner_id
-
-
+                # replace fuzzy prereq with the actual output that satisfied it
+                self.sharpen_up( prereq, chosen_output )
+                log.debug( '[' + self.c_time + '] Got "' + chosen_output + '" from ' + outputs.owner_id )
+                self.satisfied_by[ prereq ] = outputs.owner_id
 
 #    def will_satisfy_me( self, outputs ):
 # TO DO: THINK ABOUT HOW FUZZY PREREQS AFFECT THIS FUNCTION ...

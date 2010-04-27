@@ -40,7 +40,6 @@ class loose_prerequisites( prerequisites ):
         # can any completed outputs satisfy any of my prequisites?
         for prereq in self.get_not_satisfied_list():
             # for each of my unsatisfied prerequisites
-            matched = False
             for output in outputs.get_satisfied_list():
                 # for each completed output
                 if output in exclusions:
