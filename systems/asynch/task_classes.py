@@ -91,7 +91,7 @@ class products(asynchronous_task):
     def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-        self.tag = str( self.__class__.upward_instance_count )
+        self.tag = str( self.__class__.upward_instance_count + 1 )
         self.id = self.name + '%' + self.tag
 
         self.prerequisites = loose_prerequisites( self.get_identity() )
@@ -128,7 +128,7 @@ class upload(asynchronous_task):
     def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-        self.tag = str( self.__class__.upward_instance_count )
+        self.tag = str( self.__class__.upward_instance_count + 1 )
         self.id = self.name + '%' + self.tag
 
         self.prerequisites = loose_prerequisites( self.get_identity() )
@@ -165,7 +165,7 @@ class archive(asynchronous_task):
     def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-        self.tag = str( self.__class__.upward_instance_count )
+        self.tag = str( self.__class__.upward_instance_count + 1 )
         self.id = self.name + '%' + self.tag
 
         self.prerequisites = loose_prerequisites( self.get_identity() )
