@@ -74,7 +74,6 @@ class watcher(daemon):
 
         daemon.__init__( self, initial_state, no_reset )
 
-
 class products(asynchronous_task):
 
     name = 'products'
@@ -102,6 +101,10 @@ class products(asynchronous_task):
  
         self.env_vars = []
 
+        self.death_prerequisites = prerequisites( self.get_identity() )
+        self.death_prerequisites.add( 'products (ID\w+) uploaded' )
+        self.death_prerequisites.add( 'products (ID\w+) archived' )
+ 
         # in dummy mode, replace the external task with _cylc-dummy-task
         #if dummy_mode:
         #        self.external_task = '_cylc-dummy-task'
@@ -136,6 +139,9 @@ class upload(asynchronous_task):
         self.outputs = outputs( self.get_identity() )
         self.register_run_length( 60.0 )
         self.outputs.add( 60, 'products (ID\w+) uploaded' )
+ 
+        self.death_prerequisites = prerequisites( self.get_identity() )
+        self.death_prerequisites.add( 'products (ID\w+) archived' )
  
         self.env_vars = []
 
@@ -174,6 +180,9 @@ class archive(asynchronous_task):
         self.register_run_length( 60.0 )
         self.outputs.add( 60, 'products (ID\w+) archived' )
  
+        self.death_prerequisites = prerequisites( self.get_identity() )
+        self.death_prerequisites.add( 'products (ID\w+) uploaded' )
+
         self.env_vars = []
 
         # in dummy mode, replace the external task with _cylc-dummy-task
@@ -185,7 +194,6 @@ class archive(asynchronous_task):
         self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
-
 
 class startup(task):
 

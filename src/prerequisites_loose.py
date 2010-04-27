@@ -32,31 +32,26 @@ class loose_prerequisites( prerequisites ):
 
     def sharpen_up( self, loose, sharp ):
         # replace a loose prerequisite with the actual output message
-        # that satisfied it, and set it satisfied. This allows the task
-        # run() method to know the actual output message.
+        # that satisfied it, and set it satisfied.
         del self.satisfied[ loose ]
         self.satisfied[ sharp ] = True
 
     def satisfy_me( self, outputs, exclusions ):
         # can any completed outputs satisfy any of my prequisites?
-        for prereq in self.satisfied.keys():
-            # for each of my prerequisites
-            if not self.satisfied[ prereq ]:
-                # if it is not yet satisfied
-                matched = False
-                for output in outputs.satisfied.keys():
-                    if output in exclusions:
-                        continue
-                    if outputs.satisfied[output]:
-                        m = re.match( prereq, output )
-                        if m:
-                            matched = True
-                            match_group = m.groups()[0]
-                            break
-
-                if matched:
+        for prereq in self.get_not_satisfied_list():
+            # for each of my unsatisfied prerequisites
+            matched = False
+            for output in outputs.get_satisfied_list():
+                # for each completed output
+                if output in exclusions:
+                    continue
+                if prereq == output:
+                    continue
+                m = re.match( prereq, output )
+                if m:
+                    match_group = m.groups()[0]
                     # replace fuzzy prereq with the actual output that satisfied it
+                    self.match_group[ output ] = match_group 
+                    self.satisfied_by[ output ] = outputs.owner_id
                     self.sharpen_up( prereq, output )
-                    prereq = output
-                    self.match_group[ prereq ] = match_group 
-                    self.satisfied_by[ prereq ] = outputs.owner_id
+                    break

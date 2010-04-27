@@ -442,6 +442,19 @@ class manager:
         # at the same cycle time or earlier.
         #--
 
+        async_spent = []
+        for itask in self.tasks:
+            if not itask.done():
+                continue
+            try:
+                itask.death_prerequisites
+            except AttributeError:
+                pass
+            else:
+                if itask.death_prerequisites.all_satisfied():
+                    print "ASYNC SPENT", itask.id
+                    async_spent.append( itask )
+
         # times of any failed tasks. 
         failed_rt = {}
         for itask in self.tasks:
@@ -468,7 +481,7 @@ class manager:
                     spent.append( itask )
  
         # delete the spent quick death tasks
-        for itask in spent:
+        for itask in spent + async_spent:
             self.tasks.remove( itask )
             self.pyro.disconnect( itask )
             itask.log( 'NORMAL', "disconnected (spent; quickdeath)" )

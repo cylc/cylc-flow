@@ -76,5 +76,12 @@ class requisites:
                 satisfied.append( message )
         return satisfied
 
+    def get_not_satisfied_list( self ):
+        not_satisfied = []
+        for message in self.satisfied.keys():
+            if not self.satisfied[ message ]:
+                not_satisfied.append( message )
+        return not_satisfied
+
     def get_list( self ):
         return self.satisfied.keys()

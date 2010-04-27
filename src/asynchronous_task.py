@@ -66,7 +66,6 @@ class asynchronous_task( nopid, task ):
                     self.state.dump() + '\n' )
 
     def check_requisites( self ):
-        # CHECK THIS FUNCTION VERY CAREFULLY!
         for message in self.prerequisites.get_satisfied_list():
             # record which outputs already been used by this task type
             self.__class__.used_outputs[ message ] = True
@@ -74,12 +73,23 @@ class asynchronous_task( nopid, task ):
             if message in self.prerequisites.match_group.keys():
                 # IS THIS TOP LEVEL 'IF' NECESSARY?
                 mg = self.prerequisites.match_group[ message ]
+
                 for output in self.outputs.get_list():
                     m = re.match( '^(.*)\((.*)\)(.*)', output )
                     if m:
-                        (left, outre, right) = m.groups()
+                        (left, mid, right) = m.groups()
                         newout = left + mg + right
-                        
+
                         del self.outputs.satisfied[ output ]
                         self.outputs.satisfied[ newout ] = False
+
                         self.env_vars.append( [ 'ASYNCID', mg ] )
+
+                for deathpre in self.death_prerequisites.get_list():
+                    m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
+                    if m:
+                        (left, mid, right) = m.groups()
+                        newpre = left + mg + right
+
+                        del self.death_prerequisites.satisfied[ deathpre ]
+                        self.death_prerequisites.satisfied[ newpre ] = False
