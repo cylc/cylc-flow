@@ -348,3 +348,6 @@ class task( Pyro.core.ObjBase ):
         summary[ 'latest_message' ] = self.latest_message
  
         return summary
+
+    def satisfy_me( self, task ):
+        self.prerequisites.satisfy_me( task )

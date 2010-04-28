@@ -81,9 +81,7 @@ class products(asynchronous_task):
     instance_count = 0
     upward_instance_count = 0
 
-    description = [
-        'process incoming satellite data',
-    ]
+    description = [ 'process incoming satellite data' ]
 
     external_task = 'products.sh'
 

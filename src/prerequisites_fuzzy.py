@@ -97,8 +97,8 @@ class fuzzy_prerequisites( prerequisites ):
                 log.debug( '[' + self.c_time + '] Got "' + chosen_output + '" from ' + outputs.owner_id )
                 self.satisfied_by[ prereq ] = outputs.owner_id
 
+# TO DO: THINK ABOUT HOW FUZZY PREREQS AFFECT THIS FUNCTION:
 #    def will_satisfy_me( self, outputs ):
-# TO DO: THINK ABOUT HOW FUZZY PREREQS AFFECT THIS FUNCTION ...
 #        # will another's outputs, if/when completed, satisfy any of my
 #        # prequisites?
 #

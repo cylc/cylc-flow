@@ -93,3 +93,12 @@ class asynchronous_task( nopid, task ):
 
                         del self.death_prerequisites.satisfied[ deathpre ]
                         self.death_prerequisites.satisfied[ newpre ] = False
+
+        # if task is asynchronous it has
+        #  - used_outputs
+        #  - loose prerequisites
+        #  - death prerequisites
+
+    def satisfy_me( self, outputs ):
+        self.prerequisites.satisfy_me( outputs, self.__class__.used_outputs.keys() )
+        self.death_prerequisites.satisfy_me( outputs )

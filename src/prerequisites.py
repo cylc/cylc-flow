@@ -50,7 +50,8 @@ class prerequisites( requisites ):
                     self.set_satisfied( prereq )
                     self.satisfied_by[ prereq ] = outputs.owner_id
 
-    def will_satisfy_me( self, outputs ):
+    def will_satisfy_me( self, task ):
+        outputs = task.outputs
         # return True if the outputs, when completed, would satisfy any of my prequisites
         for prereq in self.get_not_satisfied_list():
             #print "PRE: " + prereq

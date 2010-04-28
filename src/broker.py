@@ -48,8 +48,6 @@ class broker:
 
     def reset( self ):
         # throw away all messages
-        # NOTE IF RESET IS NOT USED BEFORE EACH DEPENDENCY ROUND, AN
-        # UNREGISTER METHOD WILL BE REQUIRED
         self.all_outputs = {}
 
     def dump( self ):
@@ -59,19 +57,8 @@ class broker:
             print " " + id
             for output in self.all_outputs[ id ].get_list():
                 print " + " + output
-
+               
     def negotiate( self, task ):
-        prerequisites = task.prerequisites
-        try:
-            task.__class__.used_outputs
-        except AttributeError:
-            for id in self.all_outputs.keys():
-                prerequisites.satisfy_me( self.all_outputs[ id ] )
-        else:
-            exclusions = []
-            death_prereqs  = task.death_prerequisites
-            for message in task.__class__.used_outputs.keys():
-                exclusions.append( message )
-            for id in self.all_outputs.keys():
-                prerequisites.satisfy_me( self.all_outputs[ id ], exclusions )
-                death_prereqs.satisfy_me( self.all_outputs[ id ] )
+        # can my outputs satisfy any of task's prerequisites
+        for id in self.all_outputs.keys():
+            task.satisfy_me( self.all_outputs[ id ] )

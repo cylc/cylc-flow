@@ -37,6 +37,13 @@ class loose_prerequisites( prerequisites ):
         self.satisfied[ sharp ] = True
 
     def satisfy_me( self, outputs, exclusions ):
+        #try:
+        #    outputs.exclusions
+        #except AttributeError:
+        #    exclusions = []
+        #else:
+        #    exclusions = outputs.exclusions
+
         # can any completed outputs satisfy any of my prequisites?
         for prereq in self.get_not_satisfied_list():
             # for each of my unsatisfied prerequisites
