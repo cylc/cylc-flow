@@ -482,12 +482,7 @@ class manager:
  
         # delete the spent quick death tasks
         for itask in spent + async_spent:
-            self.tasks.remove( itask )
-            self.pyro.disconnect( itask )
-            itask.log( 'NORMAL', "disconnected (spent; quickdeath)" )
-            itask.prepare_for_death()
-
-        del spent
+            self.trash( itask, 'quick death' )
 
         # B/ THE GENERAL CASE
         # No finished-and-spawned task that is later than the earliest
@@ -575,12 +570,7 @@ class manager:
             
         # now delete the spent tasks
         for itask in spent:
-            self.tasks.remove( itask )
-            self.pyro.disconnect( itask )
-            itask.log( 'NORMAL', "disconnected (spent; general)" )
-            itask.prepare_for_death()
-
-        del spent
+            self.trash( itask, 'spent' )
 
 
     def reset_task( self, task_id ):
@@ -832,11 +822,7 @@ class manager:
                 pass
 
             # now kill the task
-            self.tasks.remove( itask )
-            self.pyro.disconnect( itask )
-            itask.log( 'WARNING', "disconnected (remote request)" )
-            itask.prepare_for_death()
-            del itask
+            self.trash( itask, 'request' )
 
     def kill( self, task_ids ):
         # kill without spawning all tasks in task_ids
@@ -855,11 +841,14 @@ class manager:
                 self.log.warning( "task to kill not found: " + id )
                 return
 
-            itask.log( 'DEBUG', "killing myself by remote request" )
+            self.trash( itask, 'remote request' )
 
-            # now kill the task
-            self.tasks.remove( itask )
-            self.pyro.disconnect( itask )
-            itask.log( 'WARNING', "disconnected (remote request)" )
-            itask.prepare_for_death()
-            del itask
+    def trash( self, task, reason ):
+        self.tasks.remove( task )
+        self.pyro.disconnect( task )
+        task.log( 'WARNING', "disconnected; " + reason )
+        task.prepare_for_death()
+        del task
+
+
+
