@@ -1,5 +1,7 @@
 To Do
 
+* parse "HH:mm" for contact delay times etc.
+
 * in job_submit.py, allow remote enviroment vars that aren't
   interpolated locally ... e.g. $USER?
 
