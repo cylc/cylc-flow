@@ -264,6 +264,7 @@ cat > job_submit_methods.py <<eof
 #         |________________________|
 
 
+from at_now import at_now
 from background import background
 from background2 import background2
 from background_remote import background_remote

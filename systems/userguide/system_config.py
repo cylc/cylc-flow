@@ -50,7 +50,7 @@ class system_config( config ):
         # or:   self.items['legal_startup_hours'] = [ 6, 18 ]
 
         # default job submit method, e.g.:
-        # self.items['job_submit_method'] = 'background2'
+        self.items['job_submit_method'] = 'at_now'
 
         # environment variables available to all tasks
 
