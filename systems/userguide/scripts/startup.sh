@@ -33,6 +33,8 @@ mkdir -p $CYLC_TMPDIR || \
     cylc message --failed
     exit 1
 }
+# make world-writeable so we can test a multi-owner system.
+chmod go+rxw $CYLC_TMPDIR
 
 # EXECUTE THE TASK ...
 sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))

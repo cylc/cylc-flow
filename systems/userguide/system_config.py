@@ -50,12 +50,16 @@ class system_config( config ):
         # or:   self.items['legal_startup_hours'] = [ 6, 18 ]
 
         # default job submit method, e.g.:
-        self.items['job_submit_method'] = 'at_now'
+        self.items['job_submit_method'] = 'background'
+        #self.items['job_submit_method'] = 'background2'
+        #self.items['job_submit_method'] = 'at_now'
 
-        # environment variables available to all tasks
+        # to override the default job submit method for specific tasks, e.g.:
+        # self.items['job_submit_overrides']['background2'] = [ 'task1', 'task2' ]
 
-        # 1/ $CYLC_TMPDIR, used for all input and output files
-        user = os.environ['USER'] 
+        # environment variables available to all tasks, can include
+        # the registered system name, e.g.:
+        user = os.environ['USER']
         self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
 
         # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 

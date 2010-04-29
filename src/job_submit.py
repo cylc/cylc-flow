@@ -61,6 +61,18 @@ class job_submit:
             value = self.interpolate( value )
             os.environ[var_name] = value
 
+    def write_local_environment( self, file ):
+        file.write("export CYCLE_TIME=" + self.cycle_time + "\n" )
+        file.write("export TASK_NAME=" + self.task_name + "\n" )
+        file.write("export CYLC_DIR=" + os.environ[ 'CYLC_DIR' ] + "\n" )
+        file.write(". $CYLC_DIR/cylc-env.sh\n")
+        file.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
+        # extra variables
+        for entry in self.extra_vars:
+            [ var_name, value ] = entry
+            value = self.interpolate( value )
+            file.write("export " + var_name + "=" + value + "\n" )
+
     def remote_environment_string( self ):
         # export cycle time and task name
         env = 'export CYCLE_TIME=' + self.cycle_time
