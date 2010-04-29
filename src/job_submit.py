@@ -21,11 +21,12 @@ import subprocess
 
 class job_submit:
 
-    def __init__( self, task_name, task, cycle_time, extra_vars, host = None ):
+    def __init__( self, task_name, task, cycle_time, extra_vars, owner, host ):
 
         self.task = task
-        if host:
-            self.remote_host = host
+        self.remote_host = host
+        self.owner = owner
+
         self.task_name = task_name
         self.cycle_time = cycle_time
         self.extra_vars = extra_vars
