@@ -26,6 +26,7 @@ else
 fi
 
 echo "CONFIGURING THIS SHELL FOR $CYLC_DIR/bin/cylc"
+export CYLC_DIR  # in case it wasn't exported already
 
 PATH=$($CYLC_DIR/bin/_cylc-clean-path $PATH)
 PYTHONPATH=$($CYLC_DIR/bin/_cylc-clean-path $PYTHONPATH)
