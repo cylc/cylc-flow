@@ -56,30 +56,24 @@ class loadleveler_ecoconnect( job_submit ):
         owner += '_' + system
 
         # create a temp file
-        temp_filename = tempfile.mktemp( prefix='cylc-') 
+        jobfilename = tempfile.mktemp( prefix='cylc-') 
         # open the temp file
-        temp = open( temp_filename, 'w' )
+        jobfile = open( jobfilename, 'w' )
 
         # write loadleveler directives
-        temp.write( "#@ job_name     = " + self.task_name + "_" + self.cycle_time + "\n" )
-        #temp.write( "#@ class        = " + system + "\n" )     # WHEN PROPER CLASSES CONFIGURED!
-        temp.write( "#@ class        = test_linux \n" )  # TEMPORARY fc-test ONLY CLASS
-        temp.write( "#@ job_type     = serial\n" )
-        temp.write( "#@ initialdir  = /" + system + "/ecoconnect/" + owner + "\n" )
-        temp.write( "#@ output       = " + self.task_name + "_" + self.cycle_time + ".out\n" )
-        temp.write( "#@ error        = " + self.task_name + "_" + self.cycle_time + ".err\n" )
-        temp.write( "#@ shell        = /bin/bash\n" )
-        temp.write( "#@ queue\n\n" )
+        jobfile.write( "#@ job_name     = " + self.task_name + "_" + self.cycle_time + "\n" )
+        #jobfile.write( "#@ class        = " + system + "\n" )     # WHEN PROPER CLASSES CONFIGURED!
+        jobfile.write( "#@ class        = test_linux \n" )  # TEMPORARY fc-test ONLY CLASS
+        jobfile.write( "#@ job_type     = serial\n" )
+        jobfile.write( "#@ initialdir  = /" + system + "/ecoconnect/" + owner + "\n" )
+        jobfile.write( "#@ output       = " + self.task_name + "_" + self.cycle_time + ".out\n" )
+        jobfile.write( "#@ error        = " + self.task_name + "_" + self.cycle_time + ".err\n" )
+        jobfile.write( "#@ shell        = /bin/bash\n" )
+        jobfile.write( "#@ queue\n\n" )
 
-        # write the execution environment to the temp file
-        self.write_local_environment( temp )
-        temp.write( ". " + cylc_home + "/bin/ecfunctions.sh\n" )
+        self.write_job_env( jobfile )
+        jobfile.write( ". " + cylc_home + "/bin/ecfunctions.sh\n\n" )
+        jobfile.write( self.task )
+        jobfile.close() 
 
-        # write the task script execution line to the temp file
-        temp.write( self.task )
-
-        # close the file
-        temp.close() # (NOTE see NamedTemporaryFile comment above)
-
-        # submit the temp file to 'at' for execution
-        self.execute_local( 'sudo -u ' + owner + ' llsubmit ' + temp_filename )
+        self.execute( 'llsubmit ' + jobfilename )

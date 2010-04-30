@@ -10,8 +10,8 @@
 #         |________________________|
 
 
-import os
-import sys
+import os, sys
+import tempfile
 from job_submit import job_submit
 
 # invoke task on remote machine and exit immediately
@@ -36,4 +36,4 @@ class background_remote( job_submit ):
 
         #self.execute_local( [ 'ssh', host, "'" + exe + "'" ] )
         print "submitting " + task + " to run in the background on " + host
-        self.execute_local( 'ssh ' + host + " '" + exe + "'" )
+        self.execute( 'ssh ' + host + " '" + exe + "'" )

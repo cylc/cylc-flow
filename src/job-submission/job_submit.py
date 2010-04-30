@@ -66,23 +66,8 @@ class job_submit:
 
         return string
 
-    def set_local_environment( self ):
-        # export task cycle time, id, and name
-        os.environ['TASK_ID'] = self.task_id
-        os.environ['TASK_NAME'] = self.task_name
-        if self.cycle_time:
-            os.environ['CYCLE_TIME'] = self.cycle_time
-        #else:
-        #    os.environ['TAG'] = self.tag
+    def write_job_env( self, file ):
 
-        os.environ['TASK_ID'] = self.task_id
-        # and any extra variables
-        for entry in self.extra_vars:
-            [ var_name, value ] = entry
-            value = self.interpolate( value )
-            os.environ[var_name] = value
-
-    def write_local_environment( self, file ):
         file.write("export TASK_ID=" + self.task_id + "\n" )
         file.write("export CYCLE_TIME=" + self.cycle_time + "\n" )
         file.write("export TASK_NAME=" + self.task_name + "\n" )
@@ -107,76 +92,11 @@ class job_submit:
             value = self.interpolate( value )
             file.write("export " + var_name + "=" + value + "\n" )
 
-    def remote_environment_string( self ):
-        # export cycle time and task id
-        if self.cycle_time:
-            env = 'export CYCLE_TIME=' + self.cycle_time
-        #else:
-        #    env = 'export TAG=' + self.tag
-
-        env += ' TASK_ID=' + self.task_id
-        # and system name and CYLC_NS_HOST for this system
-        env += ' CYLC_NS_GROUP=' + os.environ[ 'CYLC_NS_GROUP' ]
-        # TO DO: THIS WILL FAIL FOR localhost!!!!!!!!!!!!!!!!!
-        env += ' CYLC_NS_HOST=' + os.environ[ 'CYLC_NS_HOST' ]
-
-        if 'CYLC_ON' in os.environ.keys():
-            # distinguish between cylc and and run-task invocations
-            env += ' CYLC_ON=true'
-
-        # and any extra variables
-        for entry in self.extra_vars:
-            ( var_name, value ) = entry
-            # interpolate remote vars locally!
-            value = self.interpolate( value )
-            env += ' ' + var_name + '=' + value
-
-        return env
-
     def submit( self ):
-        # OVERRIDE ME TO CONSTRUCT THE COMMAND TO EXECUTE
-        # AND EITHER SET THE LOCAL ENVIRONMENT OR ADD
-        # REMOTE ENVIRONMENT STRING TO THE COMMAND.
-        print "ERROR jobs_submit: base class"
-        sys.exit(1)
+        raise SystemExit( "job_submit base class submit must be overridden")
 
-    def execute_local( self, command ):
-
-        try:
-            os.system( command + ' &' )
-            #if retcode != 0:
-            #    # the command returned non-zero exist status
-            #    print >> sys.stderr, ' '.join( command_list ) + ' failed: ', retcode
-            #    sys.exit(1)
-
-        except:
-            raise
-            # the command was not invoked
-            #print >> sys.stderr, 'ERROR: unable to execute ' + command_list
-            #print >> sys.stderr, ' * Is [cylc]/bin in your $PATH?'
-            #print >> sys.stderr, " * Are all cylc scripts executable?"
-            #print >> sys.stderr, " * Have you run 'cylc configure' yet?"
-
-            #raise Exception( 'job launch failed: ' + task_name + ' ' + c_time )
-
-    def execute_local_BROKEN( self, command_list ):
-
-        #for entry in command_list:
-        #    print '---' + entry + '---'
-
-        # command_list must be: [ command, arg1, arg2, ...]
-        try:
-            retcode = subprocess.call( command_list, shell=True )
-            if retcode != 0:
-                # the command returned non-zero exist status
-                print >> sys.stderr, ' '.join( command_list ) + ' failed: ', retcode
-                sys.exit(1)
-
-        except OSError:
-            # the command was not invoked
-            print >> sys.stderr, 'ERROR: unable to execute ' + command_list
-            print >> sys.stderr, ' * Is [cylc]/bin in your $PATH?'
-            print >> sys.stderr, " * Are all cylc scripts executable?"
-            print >> sys.stderr, " * Have you run 'cylc configure' yet?"
-
-            #raise Exception( 'job launch failed: ' + task_name + ' ' + c_time )
+    def execute( self, command ):
+        if self.owner:
+            if self.owner != os.environ['USER']:
+                command = 'sudo -u ' + self.owner + ' ' + command
+        os.system( command + ' &' )
