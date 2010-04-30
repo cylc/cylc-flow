@@ -21,11 +21,12 @@ import subprocess
 
 class job_submit:
 
-    def __init__( self, task_name, task, cycle_time, extra_vars, owner, host ):
+    def __init__( self, task_name, task, cycle_time, config, extra_vars, owner, host ):
 
         self.task = task
         self.remote_host = host
         self.owner = owner
+        self.config = config
 
         self.task_name = task_name
         self.cycle_time = cycle_time
@@ -67,7 +68,19 @@ class job_submit:
         file.write("export CYLC_DIR=" + os.environ[ 'CYLC_DIR' ] + "\n" )
         file.write(". $CYLC_DIR/cylc-env.sh\n")
         file.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
-        # extra variables
+
+        # global variables
+        if 'CYLC_ON' in os.environ.keys():
+            file.write("export CYLC_ON=true\n" )
+        file.write("export CYLC_NS_GROUP=" + os.environ[ 'CYLC_NS_GROUP' ] + "\n" )
+        file.write("export CYLC_NS_HOST=" + os.environ[ 'CYLC_NS_HOST' ] + "\n" )
+
+        # system-specific global variables
+        env = self.config.get('environment')
+        for VAR in env.keys():
+            file.write("export " + VAR + "=" + str( env[VAR] ) + "\n" )
+
+        # extra task-specific variables
         for entry in self.extra_vars:
             [ var_name, value ] = entry
             value = self.interpolate( value )

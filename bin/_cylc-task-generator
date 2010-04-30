@@ -358,7 +358,7 @@ from dynamic_instantiation import get_object
             else:
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
-        task_init_def_args = 'c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False'
+        task_init_def_args = 'c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False'
         task_init_args = 'initial_state, no_reset'
 
         if contact:
@@ -614,8 +614,11 @@ from dynamic_instantiation import get_object
 
         # job submission method (must be after env_vars)
         FILE.write( indent + 'modname = \'job_submit_methods\'\n' )
-        FILE.write( indent + 'clsname = submit\n' )
-        FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.name, self.external_task, self.c_time, self.env_vars, self.owner, self.remote_host )\n\n' )
+        FILE.write( indent + 'if dummy_mode:\n' )
+        FILE.write( indent + indent + 'clsname = \'background\'\n' )
+        FILE.write( indent + 'else:\n' )
+        FILE.write( indent + indent + 'clsname = submit\n' )
+        FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.name, self.external_task, self.c_time, config, self.env_vars, self.owner, self.remote_host )\n\n' )
 
         # forecast model restarts
         if fcmodel:

@@ -154,7 +154,7 @@ class manager:
 
             # instantiate the task
             itask = get_object( 'task_classes', name )\
-                    ( start_time, self.dummy_mode, 'waiting', self.submit[ name ], startup=True )
+                    ( start_time, self.dummy_mode, self.config, 'waiting', self.submit[ name ], startup=True )
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
@@ -237,7 +237,7 @@ class manager:
 
             # instantiate the task object
             itask = get_object( 'task_classes', name )\
-                    ( c_time, self.dummy_mode, state, self.submit[ name ], no_reset=no_reset_val )
+                    ( c_time, self.dummy_mode, self.config, state, self.submit[ name ], no_reset=no_reset_val )
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
@@ -327,7 +327,7 @@ class manager:
 
                 # dynamic task object creation by task and module name
                 new_task = get_object( 'task_classes', itask.name )\
-                        ( itask.next_c_time(), self.dummy_mode, 'waiting', self.submit[ itask.name ] )
+                        ( itask.next_c_time(), self.dummy_mode, self.config, 'waiting', self.submit[ itask.name ] )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
@@ -645,7 +645,7 @@ class manager:
 
                 # instantiate the task object
                 itask = get_object( 'task_classes', name )\
-                        ( c_time, self.dummy_mode, 'waiting', self.submit[ name ] )
+                        ( c_time, self.dummy_mode, self.config, 'waiting', self.submit[ name ] )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
@@ -799,7 +799,7 @@ class manager:
                 # TO DO: the following should reuse code in spawn()?
                 # dynamic task object creation by task and module name
                 new_task = get_object( 'task_classes', itask.name )\
-                        ( itask.next_c_time(), self.dummy_mode, 'waiting', self.submit[ itask.name ] )
+                        ( itask.next_c_time(), self.dummy_mode, self.config, 'waiting', self.submit[ itask.name ] )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', 'STOPPING at configured stop time' )
