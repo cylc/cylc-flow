@@ -31,4 +31,4 @@ export CYLC_DIR  # in case it wasn't exported already
 PATH=$($CYLC_DIR/bin/_cylc-clean-path $PATH)
 PYTHONPATH=$($CYLC_DIR/bin/_cylc-clean-path $PYTHONPATH)
 export PATH=$CYLC_DIR/bin:$PATH
-export PYTHONPATH=$CYLC_DIR/src:$PYTHONPATH
+export PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$PYTHONPATH
