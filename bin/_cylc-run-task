@@ -102,7 +102,7 @@ pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
 
 # intantiate the task
 task = get_object( 'task_classes', task_name ) \
-        ( ctime, False, 'waiting', config.get('job submit class')[ task_name ] )
+        ( ctime, False, config, 'waiting', config.get('job submit class')[ task_name ] )
 
 # set global (all tasks) environment variables-------------------------
 os.environ[ 'CYLC_NS_HOST' ] = 'NULL'
