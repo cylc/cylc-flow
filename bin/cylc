@@ -166,7 +166,7 @@ try:
 except OSError:
     # the command was not invoked
     print >> sys.stderr, 'ERROR: unable to execute ' + command
-    print >> sys.stderr, ' * Is [cylc]/bin in your $PATH?'
+    print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
     print >> sys.stderr, " * Are all cylc scripts executable?"
     print >> sys.stderr, " * Have you run 'cylc configure' yet?"
     sys.exit(1)
