@@ -22,7 +22,7 @@ import cycle_time
 
 class job_submit:
 
-    def __init__( self, task_name, task, cycle_time, extra_vars, host = None ):
+    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
 
         self.task = ext_task
         self.remote_host = host
@@ -67,7 +67,8 @@ class job_submit:
         return string
 
     def set_local_environment( self ):
-        # export cycle time and task name
+        # export task cycle time, id, and name
+        os.environ['TASK_ID'] = self.task_id
         os.environ['TASK_NAME'] = self.task_name
         if self.cycle_time:
             os.environ['CYCLE_TIME'] = self.cycle_time
@@ -82,6 +83,7 @@ class job_submit:
             os.environ[var_name] = value
 
     def write_local_environment( self, file ):
+        file.write("export TASK_ID=" + self.task_id + "\n" )
         file.write("export CYCLE_TIME=" + self.cycle_time + "\n" )
         file.write("export TASK_NAME=" + self.task_name + "\n" )
         file.write("export CYLC_DIR=" + os.environ[ 'CYLC_DIR' ] + "\n" )

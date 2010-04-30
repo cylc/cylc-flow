@@ -44,9 +44,11 @@ class watcher(daemon):
         'watch continuously for incoming satellite data',
     ]
 
+    owner = None
+    remote_host = None
     external_task = 'watcher.sh'
 
-    def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
         self.id = self.name
@@ -70,7 +72,7 @@ class watcher(daemon):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
+        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         daemon.__init__( self, initial_state, no_reset )
 
@@ -84,8 +86,10 @@ class products(asynchronous_task):
     description = [ 'process incoming satellite data' ]
 
     external_task = 'products.sh'
+    owner = None
+    remote_host = None
 
-    def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
         self.tag = str( self.__class__.upward_instance_count + 1 )
@@ -109,7 +113,7 @@ class products(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
+        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -125,8 +129,10 @@ class upload(asynchronous_task):
     ]
 
     external_task = 'upload.sh'
+    owner = None
+    remote_host = None
 
-    def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
         self.tag = str( self.__class__.upward_instance_count + 1 )
@@ -149,7 +155,7 @@ class upload(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
+        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -165,8 +171,10 @@ class archive(asynchronous_task):
     ]
 
     external_task = 'archive.sh'
+    owner = None
+    remote_host = None
 
-    def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
         self.tag = str( self.__class__.upward_instance_count + 1 )
@@ -189,7 +197,7 @@ class archive(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
+        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -205,10 +213,12 @@ class startup(task):
     ]
 
     external_task = 'startup.sh'
+    owner = None
+    remote_host = None
 
     quick_death = True
 
-    def __init__( self, c_time, dummy_mode, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
         self.id = self.name
@@ -227,6 +237,6 @@ class startup(task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, self.env_vars )
+        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         task.__init__( self, initial_state, no_reset )
