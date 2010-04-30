@@ -21,12 +21,12 @@ class at_now( job_submit ):
     # or if a task owner is defined:
     #   sudo -u OWNER at -f FILE now
 
-    # In the latter case /etc/sudoers must be configured to to allow the
+    # In the latter case /etc/sudoers must be configured to allow the
     # cylc operator to run 'at' as the task owner. FILE is the job
     # submitted to 'at'; it is a temporary file created that sets the
-    # task execution environment and then calls the task script (getting
-    # the right past 'sudo' and 'at' is problematic if we don't do
-    # this!).
+    # execution environment before calling the task script (getting
+    # environment variables past 'sudo' and 'at' is otherwise
+    # problematic).
 
     def submit( self ):
 
@@ -49,10 +49,10 @@ class at_now( job_submit ):
         # write the task script execution line to the temp file
         temp.write( self.task )
 
+        temp.close() # (NOTE see NamedTemporaryFile comment above)
+
         # submit the temp file to 'at' for execution
         if self.owner:
             self.execute_local( 'sudo -u ' + self.owner + ' at -f ' + temp_filename + ' now' )
         else:
             self.execute_local( 'at -f ' + temp_filename + ' now' )
-
-        temp.close() # (NOTE see NamedTemporaryFile comment above)

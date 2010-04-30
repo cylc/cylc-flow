@@ -221,7 +221,9 @@ class system_config( config ):
         # default job submit method, e.g.:
         self.items['job_submit_method'] = 'background'
         #self.items['job_submit_method'] = 'background2'
+        #self.items['job_submit_method'] = 'background_remote'
         #self.items['job_submit_method'] = 'at_now'
+        #self.items['job_submit_method'] = 'loadleveler_ecoconnect'
 
         # to override the default job submit method for specific tasks, e.g.:
         # self.items['job_submit_overrides']['background2'] = [ 'task1', 'task2' ]
@@ -270,6 +272,7 @@ from at_now import at_now
 from background import background
 from background2 import background2
 from background_remote import background_remote
+from loadleveler_ecoconnect import loadleveler_ecoconnect
 eof
 fi
 echo "$SYS_DIR/job_submit_methods.py"
