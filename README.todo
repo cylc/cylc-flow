@@ -1,5 +1,7 @@
 To Do
 
+* cylc list-all has a problem with ecoconnect usernames - underscore!
+
 * WILL_SATSIFY_ME() REQUIRED FOR FUZZY and LOOSE PREREQUISITES?
   (else purge will fail if involving these tasks).
 
