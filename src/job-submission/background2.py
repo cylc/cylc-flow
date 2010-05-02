@@ -11,8 +11,9 @@
 
 
 import os
-from job_submit import job_submit
+from background import background
 
-class background( job_submit ):
-    def construct_command( self ):
-        self.command = self.jobfilename + ' > ' + self.task_id + '-$$.log 2>&1 &'
+class background2( background ):
+    def execute( self ):
+        print 'Background2 Job Submit: ', self.task_id
+        background.execute( self )

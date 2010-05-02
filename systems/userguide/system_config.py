@@ -51,12 +51,11 @@ class system_config( config ):
 
         # default job submit method, e.g.:
         self.items['job_submit_method'] = 'background'
-        #self.items['job_submit_method'] = 'background2'
         #self.items['job_submit_method'] = 'at_now'
 
         # to override the default job submit method for specific tasks, e.g.:
         # self.items['job_submit_overrides']['background2'] = [ 'task1', 'task2' ]
-        #self.items['job_submit_overrides'][ 'at_now' ] = 'A'
+        self.items['job_submit_overrides'][ 'background2' ] = [ 'A', 'B', 'C' ]
 
         # environment variables available to all tasks, can include
         # the registered system name, e.g.:

@@ -262,12 +262,11 @@ class task( Pyro.core.ObjBase ):
                 if message == self.get_identity() + ' finished':
                     # TASK HAS FINISHED
                     if not self.outputs.all_satisfied():
-
                         self.log( 'CRITICAL', 'finished before all outputs were completed' )
                         self.state.set_status( 'failed' )
-
                     else:
                         self.state.set_status( 'finished' )
+                        self.launcher.delete_jobfile()
             else:
                 # this output has already been satisfied
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )

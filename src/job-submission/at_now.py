@@ -16,12 +16,5 @@ from job_submit import job_submit
 
 class at_now( job_submit ):
     # submit a task using 'at -f FILE now'
-
-    def submit( self ):
-        jobfilename = tempfile.mktemp( prefix='cylc-') 
-        jobfile = open( jobfilename, 'w' )
-        self.write_job_env( jobfile )
-        jobfile.write( self.task )
-        jobfile.close() 
-
-        self.execute( 'at -f ' + jobfilename + ' now' )
+    def construct_command( self ):
+        self.command = 'at -f ' + self.jobfilename + ' now'

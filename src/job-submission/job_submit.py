@@ -18,6 +18,7 @@
 
 import re, os, sys
 import subprocess
+import tempfile, stat
 import cycle_time
 
 class job_submit:
@@ -25,9 +26,12 @@ class job_submit:
     def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
 
         self.task = ext_task
-        self.remote_host = host
         self.owner = owner
         self.config = config
+
+        if host:
+            # DOCUMENT THIS: CAN USE ENVIRONMENT VARS IN HOST NAME!
+            self.remote_host = self.interpolate( host )
 
         self.task_id = task_id
         self.extra_vars = extra_vars
@@ -66,37 +70,59 @@ class job_submit:
 
         return string
 
-    def write_job_env( self, file ):
+    def write_job_directives( self ):
+        return
 
-        file.write("export TASK_ID=" + self.task_id + "\n" )
-        file.write("export CYCLE_TIME=" + self.cycle_time + "\n" )
-        file.write("export TASK_NAME=" + self.task_name + "\n" )
-        file.write("export CYLC_DIR=" + os.environ[ 'CYLC_DIR' ] + "\n" )
-        file.write(". $CYLC_DIR/cylc-env.sh\n")
-        file.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
+    def write_job_env( self ):
+        self.jobfile.write("export TASK_ID=" + self.task_id + "\n" )
+        self.jobfile.write("export CYCLE_TIME=" + self.cycle_time + "\n" )
+        self.jobfile.write("export TASK_NAME=" + self.task_name + "\n" )
+        self.jobfile.write("export CYLC_DIR=" + os.environ[ 'CYLC_DIR' ] + "\n" )
+        self.jobfile.write(". $CYLC_DIR/cylc-env.sh\n")
+        self.jobfile.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
 
         # global variables
         if 'CYLC_ON' in os.environ.keys():
-            file.write("export CYLC_ON=true\n" )
-        file.write("export CYLC_NS_GROUP=" + os.environ[ 'CYLC_NS_GROUP' ] + "\n" )
-        file.write("export CYLC_NS_HOST=" + os.environ[ 'CYLC_NS_HOST' ] + "\n" )
+            self.jobfile.write("export CYLC_ON=true\n" )
+        self.jobfile.write("export CYLC_NS_GROUP=" + os.environ[ 'CYLC_NS_GROUP' ] + "\n" )
+        self.jobfile.write("export CYLC_NS_HOST=" + os.environ[ 'CYLC_NS_HOST' ] + "\n" )
 
         # system-specific global variables
         env = self.config.get('environment')
         for VAR in env.keys():
-            file.write("export " + VAR + "=" + str( env[VAR] ) + "\n" )
+            self.jobfile.write("export " + VAR + "=" + str( env[VAR] ) + "\n" )
 
         # extra task-specific variables
         for entry in self.extra_vars:
             [ var_name, value ] = entry
             value = self.interpolate( value )
-            file.write("export " + var_name + "=" + value + "\n" )
+            self.jobfile.write("export " + var_name + "=" + value + "\n" )
+
+    def get_jobfile( self ):
+        # get a new temp filename
+        self.jobfilename = tempfile.mktemp( prefix='cylc-') 
+        # open the file
+        self.jobfile = open( self.jobfilename, 'w' )
+
+    def construct_command( self ):
+        self.command = self.jobfilename
 
     def submit( self ):
-        raise SystemExit( "job_submit base class submit must be overridden")
+        jobfile = self.get_jobfile()
+        self.write_job_directives()
+        self.write_job_env()
+        self.jobfile.write( self.task )
+        self.jobfile.close() 
+        os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
+        self.construct_command()
+        self.execute()
 
-    def execute( self, command ):
+    def delete_jobfile( self ):
+        # called by task class when the job finishes
+        os.unlink( self.jobfilename )
+
+    def execute( self ):
         if self.owner:
             if self.owner != os.environ['USER']:
-                command = 'sudo -u ' + self.owner + ' ' + command
-        os.system( command + ' &' )
+                self.command = 'sudo -u ' + self.owner + ' ' + self.command
+        os.system( self.command )

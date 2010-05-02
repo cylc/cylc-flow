@@ -14,26 +14,26 @@ import os, sys
 import tempfile
 from job_submit import job_submit
 
-# invoke task on remote machine and exit immediately
-# ssh normally waits for remote process to end, but we can avoid this by
-# redirecting stdin to /dev/null, stdout to /dev/null or a JOB LOG FILE, 
-# stderr to stdout, and backgrounding.
+# Invoke the task on a remote machine and exit immediately:
+# ssh host task < /dev/null > ID.$$.log &
 
-# NOTE: for multiple commands separated by ';'s, enclose in parentheses:
+# Ssh normally waits for the remote process to end, but we can avoid
+# this by redirecting stdin to /dev/null, stdout to /dev/null or a JOB
+# LOG FILE, stderr to stdout, and backgrounding.
+
+# To invoke multiple commands separated by ';'s, enclose in parentheses:
 # ssh host '(echo one; echo two) </dev/null >/dev/null 2>&1 &'
 
 class background_remote( job_submit ):
 
-    def submit( self ):
+    def copy_jobfile( self ):
+        self.command = 'scp ' + self.jobfilename + ' ' + self.remote_host + ':'
+        self.remote_jobfilename = '$HOME/' + os.path.basename( self.jobfilename )
+        self.execute()   # execute the copy
 
-        host = self.interpolate( self.remote_host )
-        task = self.task
-
-        remote_env = self.remote_environment_string()
-
-        command = "( " + remote_env + "; " + task + " )"
-        exe = command + " </dev/null >" + task + ".$$.log 2>&1 &" 
-
-        #self.execute_local( [ 'ssh', host, "'" + exe + "'" ] )
-        print "submitting " + task + " to run in the background on " + host
-        self.execute( 'ssh ' + host + " '" + exe + "'" )
+    def construct_command( self ):
+        if not self.remote_host:
+            raise SystemExit( 'Remote host not defined for ' + self.task_id )
+        self.copy_jobfile()
+        exe = self.remote_jobfilename + " </dev/null >" + self.task_id + "-$$.log 2>&1 &" 
+        self.command =  'ssh ' + self.remote_host + " '" + exe + "'" 
