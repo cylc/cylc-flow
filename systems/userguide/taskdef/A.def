@@ -13,9 +13,6 @@
 %NAME
     A
 
-%OWNER
-    nwp_oper
-
 %DESCRIPTION
     Could be an atmospheric model. 
     Requires real time obs data, and own restart file.
