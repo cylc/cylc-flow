@@ -13,67 +13,39 @@
 import os, re
 import tempfile
 from job_submit import job_submit
+from loadleveler import loadleveler
 
-class loadleveler_ecoconnect( job_submit ):
+class loadleveler_ecoconnect( loadleveler ):
 
-    # llsubmit an EcoConnect task to run as its owner
-    #   sudo -u OWNER llsubmit FILE 
-
-    # /etc/sudoers must be configured to allow the cylc operator 
-    # (ecoconnect_devel, ecoconnect_test, ecoconnect_oper) to run
-    # llsubmit as task owner ({foo}_devel, {foo}_test, {foo}_oper).
-    # FILE is a temporary file created to contain loadleveler
-    # directives and set the execution environment before running
-    # the task (getting environment variables past 'sudo' and 
-    # llsubmit is otherwise problematic).
-
-    def submit( self ):
-
-        # tempfile.NamedTemporaryFile( delete=False )
-        # creates a file and opens it, but delete=False is post python
-        # 2.6 and we still currently run 2.4 on some platforms!
-        # (auto-delete on close() will remove file before the 'at'
-        # command runs it!)
-
-        # tempfile.mktemp() is deprecated in favour of mkstemp()
-        # but the latter was also introduced at python 2.6.
-
-        # which system are we running on (devel, test, oper)?
+    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
+        # adjust task owner's username for devel, test, or oper.
         cylc_user = os.environ['USER']
-        cylc_home = os.environ['HOME']
-        system = re.sub( '^.*_', '', cylc_user )  
+        self.system = re.sub( '^.*_', '', cylc_user )  
 
-        # adjust task owner for the system
-        if not self.owner:
-            raise SystemExit( "No owner for EcoConnect task " + self.task_name )
+        self.cylc_home = os.environ['HOME']
 
-        owner = self.owner
+        if not owner:
+            raise SystemExit( "No owner for EcoConnect task " + task_id )
+
         if re.match( '^.*_oper', owner ):
             # strip off the system suffix
             owner = re.sub( '_oper$', '', owner )
-
         # append the correct system suffix
-        owner += '_' + system
+        owner += '_' + self.system
 
-        # create a temp file
-        jobfilename = tempfile.mktemp( prefix='cylc-') 
-        # open the temp file
-        jobfile = open( jobfilename, 'w' )
+        loadleveler.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
 
-        # write loadleveler directives
-        jobfile.write( "#@ job_name     = " + self.task_name + "_" + self.cycle_time + "\n" )
-        #jobfile.write( "#@ class        = " + system + "\n" )     # WHEN PROPER CLASSES CONFIGURED!
-        jobfile.write( "#@ class        = test_linux \n" )  # TEMPORARY fc-test ONLY CLASS
-        jobfile.write( "#@ job_type     = serial\n" )
-        jobfile.write( "#@ initialdir  = /" + system + "/ecoconnect/" + owner + "\n" )
-        jobfile.write( "#@ output       = " + self.task_name + "_" + self.cycle_time + ".out\n" )
-        jobfile.write( "#@ error        = " + self.task_name + "_" + self.cycle_time + ".err\n" )
-        jobfile.write( "#@ shell        = /bin/bash\n" )
-        jobfile.write( "#@ queue\n\n" )
+    def write_job_directives( self ):
+        # ecoconnect loadleveler directives
+        self.jobfile.write( "#@ job_name     = " + self.task_id + "\n" )
+        #self.jobfile.write( "#@ class        = " + self.system + "\n" )     # WHEN PROPER CLASSES CONFIGURED!
+        self.jobfile.write( "#@ class        = test_linux \n" )  # TEMPORARY fc-test ONLY CLASS
+        self.jobfile.write( "#@ job_type     = serial\n" )
+        self.jobfile.write( "#@ initialdir  = /" + self.system + "/ecoconnect/" + self.owner + "\n" )
+        self.jobfile.write( "#@ output       = $(job_name)-$(jobid).out\n" )
+        self.jobfile.write( "#@ error        = $(job_name)-$(jobid).err\n" )
+        self.jobfile.write( "#@ shell        = /bin/bash\n" )
+        self.jobfile.write( "#@ queue\n\n" )
 
-        self.write_job_env( jobfile )
-        jobfile.write( ". " + cylc_home + "/bin/ecfunctions.sh\n\n" )
-        jobfile.write( self.task )
-        jobfile.close() 
-
-        self.execute( 'llsubmit ' + jobfilename )
+    def write_extra_env( self ):
+        self.jobfile.write( ". " + self.cylc_home + "/bin/ecfunctions.sh\n\n" )

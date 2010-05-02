@@ -15,44 +15,17 @@ import tempfile
 from job_submit import job_submit
 
 class loadleveler( job_submit ):
+    # Submit a job to run via loadleveler (llsubmit)
 
-    # submit a job to run via loadleveler (llsubmit)
-    #   [sudo -u OWNER] llsubmit FILE 
-
-    # If OWNER is supplied in the taskdef, /etc/sudoers must be # configured to allow the cylc operator to run llsubmit as the task
-    # owner. FILE is a temporary file created to contain loadleveler
-    # directives and set the execution environment before running the
-    # task (getting environment variables past 'sudo' and llsubmit is
-    # otherwise problematic).
-
-    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
-
-        # adjust the task owner's username according to which system are
-        # we running on (devel, test, oper).
-
-        cylc_user = os.environ['USER']
-        cylc_home = os.environ['HOME']
-        system = re.sub( '^.*_', '', cylc_user )  
-
-        # adjust task owner for the system
-        if not owner:
-            raise SystemExit( "No owner for EcoConnect task " + self.task_name )
-
-        if re.match( '^.*_oper', owner ):
-            # strip off the system suffix
-            owner = re.sub( '_oper$', '', owner )
-
-        # append the correct system suffix
-        owner += '_' + system
-
-        loadleveler.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
-
-
-    def write_directives( self, jobfile ):
+    def write_job_directives( self, jobfile ):
         # write loadleveler directives
+        # $(jobid) is the numerical suffix of the job name shown by llq
         jobfile.write( "#@ job_name     = " + self.task_name + "_" + self.cycle_time + "\n" )
         jobfile.write( "#@ class        = default \n" )
         jobfile.write( "#@ job_type     = serial\n" )
-        jobfile.write( "#@ output       = " + self.task_name + "_" + self.cycle_time + ".out\n" )
-        jobfile.write( "#@ error        = " + self.task_name + "_" + self.cycle_time + ".err\n" )
+        jobfile.write( "#@ output       = $(job_name)-$(jobid).out\n" )
+        jobfile.write( "#@ error        = $(job_name)-$(jobid).err\n" )
         jobfile.write( "#@ queue\n\n" )
+
+    def construct_command( self ):
+        self.command = 'llsubmit ' + self.jobfilename

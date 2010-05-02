@@ -10,11 +10,23 @@
 #         |________________________|
 
 
-# job submission (external task execution) base class
+# Job submission (external task execution) base class
 
-# specific submission methods should be formulated as derived classes in
-# the job_submit sub-directory of the main cylc installation or of the
-# task definition directories for specific cylc systems.
+# Classes derived from this will submit jobs as (or similar):
+#  [sudo -u OWNER] {command} FILE 
+ 
+# Derived submission methods must be added to the job_submit.py
+# module in system definition directories to be available for use
+# (and add to the default list in _cylc-configure too).
+
+# If OWNER is supplied (via the taskdef file) /etc/sudoers must be
+# configured to allow the cylc operator to run {command} as owner FILE
+# is a temporary file that created and submitted to run the task. It
+# should contain all cylc, system-wide, and task-specific environment
+# variables, batch queue scheduler directives (e.g. for qsub or
+# loadleveler directives), etc. (Setting up the correct execution 
+# environment, through 'sudo' and {command} is very difficult if we try
+# to submit the actual task script directory).
 
 import re, os, sys
 import subprocess
@@ -73,6 +85,9 @@ class job_submit:
     def write_job_directives( self ):
         return
 
+    def write_extra_env( self ):
+        return
+ 
     def write_job_env( self ):
         self.jobfile.write("export TASK_ID=" + self.task_id + "\n" )
         self.jobfile.write("export CYCLE_TIME=" + self.cycle_time + "\n" )
@@ -108,13 +123,25 @@ class job_submit:
         self.command = self.jobfilename
 
     def submit( self ):
+        # THIS IS CALLED TO SUBMIT A TASK
+        # create a new jobfile
         jobfile = self.get_jobfile()
+        # write any directives (e.g. for qsub or loadleveler)
         self.write_job_directives()
+        # write cylc, system-wide, and task-specific environment vars 
         self.write_job_env()
+        # any extra stuff (e.g. write a line to the job file to source a
+        # script that defines shell functions for use by all tasks)
+        self.write_extra_env()
+        # write the task execution line
         self.jobfile.write( self.task )
+        # close the jobfile
         self.jobfile.close() 
+        # set the jobfile executable
         os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
+        # construct a command to submit the job by this method 
         self.construct_command()
+        # execute the constructed command
         self.execute()
 
     def delete_jobfile( self ):
