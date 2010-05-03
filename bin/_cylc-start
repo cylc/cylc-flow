@@ -434,22 +434,18 @@ remote = remote_switch.remote_switch( config, pool, options.failout_task_id )
 daemon.connect( remote, ns_obj_name( 'remote', groupname) )
 
 # set global (all tasks) environment variables-------------------------
-os.environ[ 'CYLC_ON' ] = 'true' # tells 'cylc message' to use the nameserver
-os.environ[ 'CYLC_NS_HOST' ] = str( pns_host )  # may be an IP number
-os.environ[ 'CYLC_NS_GROUP' ] = groupname
-os.environ[ 'SYSTEM_NAME' ] = name
+config.put_env( 'CYLC_ON', 'true' ) # tells 'cylc message' to use the nameserver
+config.put_env( 'CYLC_NS_HOST',  str( pns_host ) )  # may be an IP number
+config.put_env( 'CYLC_NS_GROUP',  groupname )
+config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
+config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
+config.put_env( 'CYLC_SYSTEM_NAME', name )
 if dummy_mode:
-    os.environ[ 'CLOCK_RATE' ] = str( options.clock_rate )
+    config.put_env( 'CYLC_CLOCK_RATE', str( options.clock_rate ) )
     # communicate failout_task_id to the dummy task program
     if options.failout_task_id:
         print "FAILOUT: " + options.failout_task_id
-        os.environ[ 'FAILOUT_ID' ] = options.failout_task_id
-
-# extra global vars set in the system config file
-env = config.get('environment')
-for VAR in env.keys():
-    #print "! setting", VAR, '=', env[VAR]
-    os.environ[ VAR ] = str( env[ VAR ] )
+        config.put_env( 'CYLC_FAILOUT_ID', options.failout_task_id )
 
 # print system information at startup----------------------------------
 print_banner()

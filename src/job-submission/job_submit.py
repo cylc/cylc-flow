@@ -62,6 +62,18 @@ class job_submit:
                 self.cycle_time = None
                 self.tag = tag
 
+        # task-specific environment variables
+        self.task_env = {}
+        self.task_env[ 'TASK_ID'    ] = self.task_id
+        self.task_env[ 'CYCLE_TIME' ] = self.cycle_time
+        self.task_env[ 'TASK_NAME'  ] = self.task_name
+
+        #!!!! cylc bin and system scripts dir, and cylc python path
+        #!!!!self.task_env[ 'CYLC_DIR'   ] = os.environ[ 'CYLC_DIR' ]
+        #!!!!
+        #!!!! self.jobfile.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
+
+
     def interpolate( self, string ):
 
         # $VARNAME
@@ -83,28 +95,45 @@ class job_submit:
         return string
 
     def write_job_env( self ):
-        self.jobfile.write("export TASK_ID=" + self.task_id + "\n" )
-        self.jobfile.write("export CYCLE_TIME=" + self.cycle_time + "\n" )
-        self.jobfile.write("export TASK_NAME=" + self.task_name + "\n" )
-        self.jobfile.write("export CYLC_DIR=" + os.environ[ 'CYLC_DIR' ] + "\n" )
+        # combine environment dicts:
+        big_env = {}
+        
+        # global variables from config
+        env = self.config.get( 'environment' )
+        for var in env.keys():
+            big_env[ var ] = str( env[ var] )
+
+        # general task specific variables
+        env = self.task_env
+        for var in env.keys():
+            big_env[ var ] = str( env[ var] )
+
+        # special task specific variables, from taskdef
+        env = self.extra_vars
+        for var in env.keys():
+            value = self.interpolate( env[var] )
+            big_env[ var ] = str( value )
+
+        # now write the lot to the jobfile
+        for var in big_env.keys():
+            self.jobfile.write( "export " + var + "=" + big_env[var] + "\n" )
+
+        # ACCESS TO CYLC (for 'cylc message'), AND TO SUB-SCRIPTS
+        # RESIDING IN THE SYSTEM DIRECTORY, BY SPAWNED TASKS IS BY
+        # SOURCING:
+        # . $CYLC_DIR/cylc-env.sh
+        # IN THE JOBFILE (see src/job_submission/job_submit.py)
+
+        # REMOTE TASKS MUST DEFINE (the remote) CYLC_DIR and
+        # CYLC_SYSTEM_DIR in the taskdef file %ENVIRONMENT key
+        # (full path with no interpolation).  The new (remote) values
+        # will will replace the original (local) values in big_env
+        # above (then full path to remote task script not required - if
+        # in the remote $CYLC_SYSTEM_DIR/scripts).
+
         self.jobfile.write(". $CYLC_DIR/cylc-env.sh\n")
-        self.jobfile.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
 
-        # global variables
-        if 'CYLC_ON' in os.environ.keys():
-            self.jobfile.write("export CYLC_ON=true\n" )
-        self.jobfile.write("export CYLC_NS_GROUP=" + os.environ[ 'CYLC_NS_GROUP' ] + "\n" )
-        self.jobfile.write("export CYLC_NS_HOST=" + os.environ[ 'CYLC_NS_HOST' ] + "\n" )
-
-        # system-specific global variables
-        env = self.config.get('environment')
-        for VAR in env.keys():
-            self.jobfile.write("export " + VAR + "=" + str( env[VAR] ) + "\n" )
-
-        # extra task-specific variables
-        for VAR in self.extra_vars.keys():
-            value = self.interpolate( self.extra_vars[ VAR ] )
-            self.jobfile.write("export " + VAR + "=" + str( value )+ "\n" )
+        # self.jobfile.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
 
     def get_jobfile( self ):
         # get a new temp filename

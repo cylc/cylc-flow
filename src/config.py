@@ -114,6 +114,9 @@ class config:
     def set( self, key, value ):
         self.items[ key ] = value
 
+    def put_env( self, key, value ):
+        self.items[ 'environment' ][ key ] = value
+
     def dump( self ):
         items = self.items.keys()
 

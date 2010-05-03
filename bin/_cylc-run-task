@@ -105,13 +105,11 @@ task = get_object( 'task_classes', task_name ) \
         ( ctime, False, config, 'waiting', config.get('job submit class')[ task_name ] )
 
 # set global (all tasks) environment variables-------------------------
-os.environ[ 'CYLC_NS_HOST' ] = 'NULL'
-os.environ[ 'CYLC_NS_GROUP' ] = 'NULL'
+config.put_env( 'CYLC_NS_HOST',  'NULL' )  # may be an IP number
+config.put_env( 'CYLC_NS_GROUP',  'NULL' )
+config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
+config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
+config.put_env( 'CYLC_SYSTEM_NAME', name )
 
-# extra global vars set in the system config file
-env = config.get('environment')
-for VAR in env.keys():
-    #print "! setting", VAR, '=', env[VAR]
-    os.environ[ VAR ] = str( env[ VAR ] )
-
+# SUBMIT THE TASK TO RUN
 task.run_external_task()

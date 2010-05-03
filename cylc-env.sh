@@ -19,16 +19,33 @@ elif [[ ! -z $CYLC_DIR ]]; then
     if [[ ! -f $CYLC_DIR/bin/cylc ]]; then
         echo "ERROR: $CYLC_DIR is not a cylc installation"
         return 1
+    elif [[ ! -x $CYLC_DIR/bin/cylc ]]; then
+        echo "ERROR: $CYLC_DIR/bin is not executable"
+        return 1
     fi
 else
     echo "ERROR: source from top level cylc, or set CYLC_DIR"
-    return 0
+    return 1
 fi
 
 echo "CONFIGURING THIS SHELL FOR $CYLC_DIR/bin/cylc"
-export CYLC_DIR  # in case it wasn't exported already
+export CYLC_DIR  # in case not exported already
 
+# remove any previous cylc path settings 
 PATH=$($CYLC_DIR/bin/_cylc-clean-path $PATH)
 PYTHONPATH=$($CYLC_DIR/bin/_cylc-clean-path $PYTHONPATH)
-export PATH=$CYLC_DIR/bin:$PATH
-export PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$PYTHONPATH
+
+# export PATH to cylc bin
+PATH=$CYLC_DIR/bin:$PATH
+
+# export PYTHONPATH to cylc core source modules
+PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$PYTHONPATH
+
+if [[ -n $CYLC_SYSTEM_DIR ]]; then
+    # caller must be a cylc jobfile; set system-specific paths
+    PATH=$CYLC_SYSTEM_DIR/scripts:$PATH
+    PYTHON_PATH=$CYLC_SYSTEM_DIR:$PYTHONPATH
+fi
+
+export PATH
+export PYTHONPATH
