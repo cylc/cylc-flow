@@ -55,13 +55,13 @@ class watcher(daemon):
 
         #if startup:
         #    # overwrite prerequisites for startup case
-        #    self.prerequisites = prerequisites( self.get_identity() )
+        #    self.prerequisites = prerequisites( self.id )
         #    self.prerequisites.add( 'startup%'  + self.c_time + ' finished' )
 
-        self.prerequisites = prerequisites( self.get_identity() )
+        self.prerequisites = prerequisites( self.id )
         self.prerequisites.add( 'startup finished')
 
-        self.outputs = outputs( self.get_identity() )
+        self.outputs = outputs( self.id )
         self.output_pattern = 'pass ID\w+ ready'
  
         self.env_vars = []
@@ -72,7 +72,7 @@ class watcher(daemon):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         daemon.__init__( self, initial_state, no_reset )
 
@@ -95,15 +95,15 @@ class products(asynchronous_task):
         self.tag = str( self.__class__.upward_instance_count + 1 )
         self.id = self.name + '%' + self.tag
 
-        self.prerequisites = loose_prerequisites( self.get_identity() )
+        self.prerequisites = loose_prerequisites( self.id )
         self.prerequisites.add( 'pass (ID\w+) ready' )
-        self.outputs = outputs( self.get_identity() )
+        self.outputs = outputs( self.id )
         self.register_run_length( 60.0 )
         self.outputs.add( 60, 'products (ID\w+) ready' )
  
         self.env_vars = []
 
-        self.death_prerequisites = prerequisites( self.get_identity() )
+        self.death_prerequisites = prerequisites( self.id )
         self.death_prerequisites.add( 'products (ID\w+) uploaded' )
         self.death_prerequisites.add( 'products (ID\w+) archived' )
  
@@ -113,7 +113,7 @@ class products(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -138,13 +138,13 @@ class upload(asynchronous_task):
         self.tag = str( self.__class__.upward_instance_count + 1 )
         self.id = self.name + '%' + self.tag
 
-        self.prerequisites = loose_prerequisites( self.get_identity() )
+        self.prerequisites = loose_prerequisites( self.id )
         self.prerequisites.add( 'products (ID\w+) ready' )
-        self.outputs = outputs( self.get_identity() )
+        self.outputs = outputs( self.id )
         self.register_run_length( 60.0 )
         self.outputs.add( 60, 'products (ID\w+) uploaded' )
  
-        self.death_prerequisites = prerequisites( self.get_identity() )
+        self.death_prerequisites = prerequisites( self.id )
         self.death_prerequisites.add( 'products (ID\w+) archived' )
  
         self.env_vars = []
@@ -155,7 +155,7 @@ class upload(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -180,13 +180,13 @@ class archive(asynchronous_task):
         self.tag = str( self.__class__.upward_instance_count + 1 )
         self.id = self.name + '%' + self.tag
 
-        self.prerequisites = loose_prerequisites( self.get_identity() )
+        self.prerequisites = loose_prerequisites( self.id )
         self.prerequisites.add( 'products (ID\w+) ready' )
-        self.outputs = outputs( self.get_identity() )
+        self.outputs = outputs( self.id )
         self.register_run_length( 60.0 )
         self.outputs.add( 60, 'products (ID\w+) archived' )
  
-        self.death_prerequisites = prerequisites( self.get_identity() )
+        self.death_prerequisites = prerequisites( self.id )
         self.death_prerequisites.add( 'products (ID\w+) uploaded' )
 
         self.env_vars = []
@@ -197,7 +197,7 @@ class archive(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -223,9 +223,9 @@ class startup(task):
         self.c_time = '2999010101'
         self.id = self.name
 
-        self.prerequisites = prerequisites( self.get_identity() )
+        self.prerequisites = prerequisites( self.id )
 
-        self.outputs = outputs( self.get_identity() )
+        self.outputs = outputs( self.id )
 
         self.register_run_length( 5.0 )
 
@@ -237,6 +237,6 @@ class startup(task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
 
         task.__init__( self, initial_state, no_reset )

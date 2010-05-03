@@ -276,7 +276,7 @@ class remote_switch( Pyro.core.ObjBase ):
         dump = {}
         found = False
         for task in self.tasks:
-            id = task.get_identity()
+            id = task.id
             if id in task_ids:
                 found = True
 

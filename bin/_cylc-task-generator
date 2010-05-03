@@ -473,7 +473,7 @@ from dynamic_instantiation import get_object
             FILE.write( '\n' )
 
         # ... prerequisites
-        FILE.write( indent + 'self.prerequisites = prerequisites( self.get_identity() )\n' )
+        FILE.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
         if 'PREREQUISITES' in parsed_def.keys():
             for line in parsed_def[ 'PREREQUISITES' ]:
 
@@ -509,7 +509,7 @@ from dynamic_instantiation import get_object
             indent_more()
             FILE.write( indent + '# overwrite prerequisites for startup case\n' )
                 
-            FILE.write( indent + 'self.prerequisites = prerequisites( self.get_identity() )\n' )
+            FILE.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
             for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
 
                 # look for conditionals
@@ -541,7 +541,7 @@ from dynamic_instantiation import get_object
 
         # ... outputs
         FILE.write( '\n' )
-        FILE.write( indent + 'self.outputs = outputs( self.get_identity() )\n' )
+        FILE.write( indent + 'self.outputs = outputs( self.id )\n' )
 
         # automatic 'started' and 'finished' outputs
         if 'ESTIMATED_RUN_TIME' not in parsed_def:
@@ -621,7 +621,7 @@ from dynamic_instantiation import get_object
         FILE.write( indent + indent + 'clsname = \'background\'\n' )
         FILE.write( indent + 'else:\n' )
         FILE.write( indent + indent + 'clsname = submit\n' )
-        FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.get_identity(), self.external_task, config, self.env_vars, self.owner, self.remote_host )\n\n' )
+        FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )\n\n' )
 
         # forecast model restarts
         if fcmodel:

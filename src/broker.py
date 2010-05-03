@@ -32,7 +32,7 @@ class broker:
         # outputs anew in each dependency negotiation round, register 
         # should only be called once by each task
 
-        owner_id = task.get_identity()
+        owner_id = task.id
         outputs = task.outputs
 
         if owner_id in self.all_outputs.keys():

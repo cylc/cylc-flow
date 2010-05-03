@@ -92,7 +92,7 @@ class task( Pyro.core.ObjBase ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
-        #  * unique identity
+        #  * unique identity (NAME%CYCLE for cycling tasks)
         #  * prerequisites and outputs
         #  * self.env_vars 
 
@@ -135,17 +135,13 @@ class task( Pyro.core.ObjBase ):
         #    self.log( 'WARNING', " starting in SATISFIED state" )
         #    self.prerequisites.set_all_satisfied()
 
-    def get_identity( self ):
-        # return unique task id
-        return self.id
-
     def register_run_length( self, run_len_minutes ):
         # automatically define special 'started' and 'finished' outputs
-        self.outputs.add( 0, self.get_identity() + ' started' )
+        self.outputs.add( 0, self.id + ' started' )
         # and 'completed' for dependant tasks that don't care about
         # success or failure of this task, only completion
-        self.outputs.add( run_len_minutes - 0.01, self.get_identity() + ' completed' )
-        self.outputs.add( run_len_minutes, self.get_identity() + ' finished' )
+        self.outputs.add( run_len_minutes - 0.01, self.id + ' completed' )
+        self.outputs.add( run_len_minutes, self.id + ' finished' )
 
     def log( self, priority, message ):
         # task-specific log file
@@ -194,7 +190,7 @@ class task( Pyro.core.ObjBase ):
 
     def run_if_ready( self, current_time ):
         if self.ready_to_run( current_time ):
-            print self.get_identity(), ' READY:'
+            print self.id, ' READY:'
             for message in self.prerequisites.satisfied_by.keys():
                 print ' + ', message, '(by', self.prerequisites.satisfied_by[ message ], ')'
             self.run_external_task()
@@ -212,9 +208,9 @@ class task( Pyro.core.ObjBase ):
         # used by the task wrapper 
         self.log( 'DEBUG', 'setting all internal outputs completed' )
         for message in self.outputs.satisfied.keys():
-            if message != self.get_identity() + ' started' and \
-                    message != self.get_identity() + ' finished' and \
-                    message != self.get_identity() + ' completed':
+            if message != self.id + ' started' and \
+                    message != self.id + ' finished' and \
+                    message != self.id + ' completed':
                 #self.outputs.set_satisfied( message )
                 #self.latest_message = message
                 self.incoming( 'NORMAL', message )
@@ -243,7 +239,7 @@ class task( Pyro.core.ObjBase ):
         global state_changed
         state_changed = True
 
-        if message == self.get_identity() + ' started':
+        if message == self.id + ' started':
             self.state.set_status( 'running' )
 
         if not self.state.is_running():
@@ -259,7 +255,7 @@ class task( Pyro.core.ObjBase ):
                 self.log( priority,  message )
                 self.outputs.set_satisfied( message )
 
-                if message == self.get_identity() + ' finished':
+                if message == self.id + ' finished':
                     # TASK HAS FINISHED
                     if not self.outputs.all_satisfied():
                         self.log( 'CRITICAL', 'finished before all outputs were completed' )
@@ -272,7 +268,7 @@ class task( Pyro.core.ObjBase ):
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )
                 self.log( 'WARNING', "-> " + message )
 
-        elif message == self.get_identity() + ' failed':
+        elif message == self.id + ' failed':
             # process task failure messages
 
             state_changed = True

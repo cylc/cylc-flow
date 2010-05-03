@@ -165,7 +165,7 @@ class manager:
  
             else:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
+                self.pyro.connect( itask, ns_obj_name( itask.id, self.groupname) )
                 self.tasks.append( itask )
 
 
@@ -248,7 +248,7 @@ class manager:
  
             else:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
+                self.pyro.connect( itask, ns_obj_name( itask.id, self.groupname) )
                 self.tasks.append( itask )
 
     def no_tasks_running( self ):
@@ -303,7 +303,7 @@ class manager:
         for itask in self.tasks:
                 if self.system_hold_ctime:
                     if int( itask.c_time ) > int( self.system_hold_ctime ):
-                        self.log.debug( 'not asking ' + itask.get_identity() + ' to run (' + self.system_hold_ctime + ' hold in place)' )
+                        self.log.debug( 'not asking ' + itask.id + ' to run (' + self.system_hold_ctime + ' hold in place)' )
                         continue
 
                 current_time = self.clock.get_datetime()
@@ -339,12 +339,12 @@ class manager:
                 else:
                     # no stop time, or we haven't reached it yet.
                     try:
-                        self.pyro.connect( new_task, ns_obj_name( new_task.get_identity(), self.groupname) )
+                        self.pyro.connect( new_task, ns_obj_name( new_task.id, self.groupname) )
                     except Exception, x:
                         # THIS WILL BE A Pyro NamingError IF THE NEW TASK
                         # ALREADY EXISTS IN THE SYSTEM.
                         print x
-                        self.log.critical( new_task.get_identity() + ' cannot be added!' )
+                        self.log.critical( new_task.id + ' cannot be added!' )
 
                     else:
                         new_task.log('DEBUG', "connected" )
@@ -577,7 +577,7 @@ class manager:
         self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
         found = False
         for itask in self.tasks:
-            if itask.get_identity() == task_id:
+            if itask.id == task_id:
                 found = True
                 break
 
@@ -593,7 +593,7 @@ class manager:
         self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
         found = False
         for itask in self.tasks:
-            if itask.get_identity() == task_id:
+            if itask.id == task_id:
                 found = True
                 break
 
@@ -609,7 +609,7 @@ class manager:
         self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
         found = False
         for itask in self.tasks:
-            if itask.get_identity() == task_id:
+            if itask.id == task_id:
                 found = True
                 break
 
@@ -672,7 +672,7 @@ class manager:
 
                 if not skip:
                     itask.log( 'DEBUG', "connected" )
-                    self.pyro.connect( itask, ns_obj_name( itask.get_identity(), self.groupname) )
+                    self.pyro.connect( itask, ns_obj_name( itask.id, self.groupname) )
                     self.tasks.append( itask )
 
         #except NamingError, e:
@@ -695,8 +695,8 @@ class manager:
                 # not cotemporal
                 continue
 
-            if itask.prerequisites.will_satisfy_me( parent.outputs, parent.get_identity() ):
-                #print 'dependee: ' + itask.get_identity()
+            if itask.prerequisites.will_satisfy_me( parent.outputs, parent.id ):
+                #print 'dependee: ' + itask.id
                 deps[ itask ] = True
 
         for itask in deps:
@@ -726,7 +726,7 @@ class manager:
         # find the task
         found = False
         for itask in self.tasks:
-            if itask.get_identity() == id:
+            if itask.id == id:
                 found = True
                 next = itask.next_c_time()
                 name = itask.name
@@ -742,7 +742,7 @@ class manager:
         # TO DO: GET RID OF THE MIDDLE MAN HERE
         cond = {}
         for itask in condemned:
-            cond[ itask.get_identity() ] = True
+            cond[ itask.id ] = True
         
         self.spawn_and_die( cond )
 
@@ -753,7 +753,7 @@ class manager:
     def waiting_contact_task_ready( self, current_time ):
         result = False
         for itask in self.tasks:
-            #print itask.get_identity(), current_time
+            #print itask.id, current_time
             if itask.ready_to_run(current_time):
                 result = True
                 break
@@ -764,7 +764,7 @@ class manager:
         task_ids = []
         for itask in self.tasks:
             if itask.c_time == ctime: # and itask.get_status() == 'waiting':
-                task_ids.append( itask.get_identity() )
+                task_ids.append( itask.id )
 
         self.kill( task_ids )
 
@@ -773,7 +773,7 @@ class manager:
         task_ids = {}
         for itask in self.tasks:
             if itask.c_time == ctime: # and itask.get_status() == 'waiting':
-                task_ids[ itask.get_identity() ] = True
+                task_ids[ itask.id ] = True
 
         self.spawn_and_die( task_ids )
 
@@ -787,7 +787,7 @@ class manager:
             found = False
             itask = None
             for t in self.tasks:
-                if t.get_identity() == id:
+                if t.id == id:
                     found = True
                     itask = t
                     break
@@ -813,7 +813,7 @@ class manager:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro.connect( new_task, ns_obj_name( new_task.get_identity(), self.groupname) )
+                    self.pyro.connect( new_task, ns_obj_name( new_task.id, self.groupname) )
                     new_task.log( 'DEBUG', 'connected' )
                     self.tasks.append( new_task )
 
@@ -832,7 +832,7 @@ class manager:
             found = False
             itask = None
             for t in self.tasks:
-                if t.get_identity() == id:
+                if t.id == id:
                     found = True
                     itask = t
                     break
