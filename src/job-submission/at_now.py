@@ -18,8 +18,8 @@ class at_now( job_submit ):
     # submit a task using 'at -f FILE now'
     # 'at' emails job stdout and stderr to the user
 
-    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
-        job_submit.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
+    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
+        job_submit.__init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host )
         self.method_description = 'by [at now] (job output by mail!)'
 
     def construct_command( self ):

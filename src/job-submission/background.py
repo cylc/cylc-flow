@@ -14,8 +14,8 @@ import os
 from job_submit import job_submit
 
 class background( job_submit ):
-    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
-        job_submit.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
+    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
+        job_submit.__init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host )
         self.method_description = 'in the background [&]'
 
     def construct_command( self ):

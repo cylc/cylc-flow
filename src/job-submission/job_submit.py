@@ -35,7 +35,7 @@ import cycle_time
 
 class job_submit:
 
-    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
+    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
 
         self.task = ext_task
         self.owner = owner
@@ -47,6 +47,7 @@ class job_submit:
 
         self.task_id = task_id
         self.extra_vars = extra_vars
+        self.directives = extra_directives
 
         # extract cycle time
         self.cycle_time = None

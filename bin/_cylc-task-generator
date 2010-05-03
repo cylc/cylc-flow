@@ -144,7 +144,7 @@ def main( argv ):
     task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'CYCLES', 'TASK',
-            'REMOTE_HOST', 
+            'REMOTE_HOST', 'DIRECTIVES',
             'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 
@@ -606,6 +606,16 @@ from dynamic_instantiation import get_object
                 val = interpolate_cycle_times( "'" + val + "'" )
                 FILE.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
 
+         # batch queue scheduler directives (qsub or loadleveler)
+        FILE.write( indent + 'self.directives = {}\n' )
+        if 'DIRECTIVES' in parsed_def.keys():
+            for pair in parsed_def[ 'DIRECTIVES' ]:
+                ( var, val ) = pair.split( ' ', 1 )
+                var = "'" + var + "'"
+                # interpolate $(CYCLE_TIME [+/-n]) 
+                val = interpolate_cycle_times( "'" + val + "'" )
+                FILE.write( indent + 'self.directives[' + var + '] = ' + val + '\n' )
+
         FILE.write( indent + '# in dummy mode, replace the external task with _cylc-dummy-task\n' )
         FILE.write( indent + 'if dummy_mode:\n' )
         FILE.write( indent + indent + 'self.external_task = \'_cylc-dummy-task\'\n\n')
@@ -616,7 +626,7 @@ from dynamic_instantiation import get_object
         FILE.write( indent + indent + 'clsname = \'background\'\n' )
         FILE.write( indent + 'else:\n' )
         FILE.write( indent + indent + 'clsname = submit\n' )
-        FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )\n\n' )
+        FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )\n\n' )
 
         # forecast model restarts
         if fcmodel:

@@ -17,7 +17,7 @@ from loadleveler import loadleveler
 
 class loadleveler_ecoconnect( loadleveler ):
 
-    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
+    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
         # adjust task owner's username for devel, test, or oper.
         cylc_user = os.environ['USER']
         self.system = re.sub( '^.*_', '', cylc_user )  
@@ -33,13 +33,16 @@ class loadleveler_ecoconnect( loadleveler ):
         # append the correct system suffix
         owner += '_' + self.system
 
-        loadleveler.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
-        self.method_description = 'by [llsubmit] (ecoconnect method)'
+        #!!!! directives[ 'class'    ] = self.system # !!!!
+        directives[ 'class'       ] = 'test_linux'
+        #!!!! directives[ 'initial_dir' ] = "/" + self.system + "/ecoconnect/" + self.owner  + "/running"
 
-        ##self.jobfile.write( "#@ class        = " + self.system + "\n" )     # WHEN PROPER CLASSES CONFIGURED!
-        #self.jobfile.write( "#@ class        = test_linux \n" )  # TEMPORARY fc-test ONLY CLASS
-        #self.jobfile.write( "#@ job_type     = serial\n" )
-        #self.jobfile.write( "#@ initialdir  = /" + self.system + "/ecoconnect/" + self.owner + "\n" )
+        # add (or override with) taskdef directives
+        for d in extra_directives.keys():
+            directives[ d ] = extra_directives[ d ]
+
+        loadleveler.__init__( self, task_id, ext_task, config, extra_vars, directives, owner, host )
+        self.method_description = 'by [llsubmit] (ecoconnect method)'
 
     def write_job_env( self ):
         loadleveler.write_job_env( self )

@@ -17,31 +17,36 @@ from job_submit import job_submit
 class loadleveler( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
-        job_submit.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
+    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
+
+        # default directives
+        directives = {}
+        directives[ 'shell'    ] = '/bin/bash'
+        directives[ 'job_name' ] = task_id
+        directives[ 'class'    ] = 'default'
+        directives[ 'job_type' ] = 'serial'
+        directives[ 'output'   ] = '$(job_name)-$(jobid).out'
+        directives[ 'error'    ] = '$(job_name)-$(jobid).err'
+
+        # add (or override with) taskdef directives
+        for d in extra_directives.keys():
+            directives[ d ] = extra_directives[ d ]
+
+        job_submit.__init__( self, task_id, ext_task, config, extra_vars, directives, owner, host )
         self.method_description = 'by [llsubmit] (basic method)'
+
 
     def construct_jobfile( self ):
         # create a new jobfile
         self.get_jobfile()
 
         # write loadleveler directives
-        # $(jobid) is the numerical suffix of the job name shown by llq
-        
-        self.jobfile.write( "#@ shell        = /bin/bash\n" )
-        self.jobfile.write( "#@ job_name     = " + self.task_id + "\n" )
-        self.jobfile.write( "#@ class        = default \n" )
-        self.jobfile.write( "#@ job_type     = serial\n" )
-        self.jobfile.write( "#@ output       = $(job_name)-$(jobid).out\n" )
-        self.jobfile.write( "#@ error        = $(job_name)-$(jobid).err\n" )
-
-        # OVERRIDE WITH TASKDEF DIRECTIVES HERE
+        for d in self.directives.keys():
+            self.jobfile.write( "#@ " + d + " = " + self.directives[ d ] + "\n" )
 
         # FINAL QUEUEING DIRECTIVE
         self.jobfile.write( "#@ queue\n\n" )
 
-        # FOR EXTRA SCRIPTING BEFORE TASK SCRIPT OVERRIDE
-        # WRITE_JOB_ENV() AND THEN CALL PARENT METHOD.
         # write cylc, system-wide, and task-specific environment vars 
         self.write_job_env()
 

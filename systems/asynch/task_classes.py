@@ -64,7 +64,8 @@ class watcher(daemon):
         self.outputs = outputs( self.id )
         self.output_pattern = 'pass ID\w+ ready'
  
-        self.env_vars = []
+        self.env_vars = {}
+        self.directives = {}
 
         # in dummy mode, replace the external task with _cylc-dummy-task
         #if dummy_mode:
@@ -72,7 +73,7 @@ class watcher(daemon):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
 
         daemon.__init__( self, initial_state, no_reset )
 
@@ -101,7 +102,8 @@ class products(asynchronous_task):
         self.register_run_length( 60.0 )
         self.outputs.add( 60, 'products (ID\w+) ready' )
  
-        self.env_vars = []
+        self.env_vars = {}
+        self.directives = {}
 
         self.death_prerequisites = prerequisites( self.id )
         self.death_prerequisites.add( 'products (ID\w+) uploaded' )
@@ -113,7 +115,7 @@ class products(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -147,7 +149,8 @@ class upload(asynchronous_task):
         self.death_prerequisites = prerequisites( self.id )
         self.death_prerequisites.add( 'products (ID\w+) archived' )
  
-        self.env_vars = []
+        self.env_vars = {}
+        self.directives = {}
 
         # in dummy mode, replace the external task with _cylc-dummy-task
         #if dummy_mode:
@@ -155,7 +158,7 @@ class upload(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -189,7 +192,8 @@ class archive(asynchronous_task):
         self.death_prerequisites = prerequisites( self.id )
         self.death_prerequisites.add( 'products (ID\w+) uploaded' )
 
-        self.env_vars = []
+        self.env_vars = {}
+        self.directives = {}
 
         # in dummy mode, replace the external task with _cylc-dummy-task
         #if dummy_mode:
@@ -197,7 +201,7 @@ class archive(asynchronous_task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -230,6 +234,7 @@ class startup(task):
         self.register_run_length( 5.0 )
 
         self.env_vars = [ ]
+        self.directives = {}
 
         # in dummy mode, replace the external task with _cylc-dummy-task
         if dummy_mode:
@@ -237,6 +242,6 @@ class startup(task):
 
         modname = 'job_submit_methods'
         clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.owner, self.remote_host )
+        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
 
         task.__init__( self, initial_state, no_reset )

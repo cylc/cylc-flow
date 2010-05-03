@@ -99,6 +99,23 @@
     VARNAME2 value2
 
 #----------------------------------------------------------------------
+[%DIRECTIVES]
+    # - Scheduler directives for qsub, loadleveler, or similar.
+    # - Choose a job submit class that makes use of these.
+    # - The job class will likely define some default directives, which
+    #   you can add to or override here.
+    # - Values can contain the cycle time variable, $(CYCLE_TIME), which
+    #   will be interpolated by cylc and can make use of cylc's internal
+    #   cycle time arithmetic, e.g. $( CYCLE_TIME [+/-N] ), and shell 
+    #   environment variables which will be passed on to the shell.
+    #   Thus $(CYCLE_TIME) is equavilent to $CYCLE_TIME except that the
+    #   former version will be interpolated before reaching the shell.
+    #   and can use cylc's internal cycle time arithmetic - note the
+    #   parentheses to distinguish from shell environment variables.
+    directive_name1 value1
+    directive_name2 value2
+
+#----------------------------------------------------------------------
 %ESTIMATED_RUN_TIME   
     # - Units: min, sec, hr
     # - Used only in dummy mode, to simulate correct task run time

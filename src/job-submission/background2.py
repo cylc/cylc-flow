@@ -18,8 +18,8 @@ class background2( background ):
     # stdout before submitting the job in the background; allows a very
     # simple test of systems with multiple job submission methods. 
 
-    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
-        background.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
+    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
+        background.__init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host )
         self.method_description = 'in the background [&], VERSION 2'
 
 
