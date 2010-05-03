@@ -165,10 +165,12 @@ class job_submit:
 
     def delete_jobfile( self ):
         # called by task class when the job finishes
+        print ' < deleting jobfile ' + self.jobfilename
         os.unlink( self.jobfilename )
 
     def execute_command( self ):
         # set the jobfile executable
+        print ' > submitting jobfile ' + self.jobfilename
         os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
         # ran as owner, if necessary
         if self.owner:

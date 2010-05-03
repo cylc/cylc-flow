@@ -40,16 +40,20 @@ class remote_switch( Pyro.core.ObjBase ):
 
         self.owner = os.environ['USER']
 
+    def warning( self, msg ):
+        print
+        self.log.warning( msg )
+
     def lock( self, user ):
         if user != self.owner:
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: system lock requested (already locked)" )
+            self.warning( "REMOTE: system lock requested (already locked)" )
             return "System already locked"
 
         else:
-            self.log.warning( "REMOTE: system lock requested (done)" )
+            self.warning( "REMOTE: system lock requested (done)" )
             self.locked = True
             return "System locked"
 
@@ -58,11 +62,11 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if not self.locked:
-            self.log.warning( "REMOTE: system unlock requested (already unlocked)" )
+            self.warning( "REMOTE: system unlock requested (already unlocked)" )
             return "System already unlocked"
 
         else:
-            self.log.warning( "REMOTE: system unlock requested (done)" )
+            self.warning( "REMOTE: system unlock requested (done)" )
             self.locked = False
             return "System unlocked"
 
@@ -73,10 +77,10 @@ class remote_switch( Pyro.core.ObjBase ):
 
         # cause the task processing loop to be invoked
         if self.locked:
-            self.log.warning( "REMOTE: refusing nudge request (locked)" )
+            self.warning( "REMOTE: refusing nudge request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: nudge" )
+        self.warning( "REMOTE: nudge" )
         self.process_tasks = True
         return "Done"
 
@@ -85,11 +89,11 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing task reset request (locked)" )
+            self.warning( "REMOTE: refusing task reset request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
         # reset a task to the waiting state
-        self.log.warning( "REMOTE: reset to waiting: " + task_id )
+        self.warning( "REMOTE: reset to waiting: " + task_id )
         if task_id == self.failout_id:
             print "resetting failout on " + self.failout_id + " prior to reset"
             os.environ['FAILOUT_ID'] = ""
@@ -102,11 +106,11 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing task reset request (locked)" )
+            self.warning( "REMOTE: refusing task reset request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
        # reset a task to the ready state
-        self.log.warning( "REMOTE: reset to ready: " + task_id )
+        self.warning( "REMOTE: reset to ready: " + task_id )
         if task_id == self.failout_id:
             print "resetting failout on " + self.failout_id + " prior to reset"
             os.environ['FAILOUT_ID'] = ""
@@ -120,11 +124,11 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing task reset request (locked)" )
+            self.warning( "REMOTE: refusing task reset request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
       # reset a task to the waiting finished
-        self.log.warning( "REMOTE: reset to finished: " + task_id )
+        self.warning( "REMOTE: reset to finished: " + task_id )
         self.pool.reset_task_to_finished( task_id )
         self.process_tasks = True
         return "Done"
@@ -135,11 +139,11 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing task insert request (locked)" )
+            self.warning( "REMOTE: refusing task insert request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
         # insert a new task or task group into the system
-        self.log.warning( "REMOTE: task insertion: " + ins )
+        self.warning( "REMOTE: task insertion: " + ins )
         if ins == self.failout_id:
             # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
             print "resetting failout on " + self.failout_id + " prior to insertion"
@@ -154,10 +158,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing pause request (locked)" )
+            self.warning( "REMOTE: refusing pause request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: system hold" )
+        self.warning( "REMOTE: system hold" )
         self.pool.set_system_hold()
         # process, to update state summary
         self.process_tasks = True
@@ -169,10 +173,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing resume request (locked)" )
+            self.warning( "REMOTE: refusing resume request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: system resume" )
+        self.warning( "REMOTE: system resume" )
         self.pool.unset_system_hold()
         # process, to update state summary
         self.process_tasks = True
@@ -184,10 +188,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing stop time set request (locked)" )
+            self.warning( "REMOTE: refusing stop time set request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: set stop time" )
+        self.warning( "REMOTE: set stop time" )
         self.pool.set_stop_time( ctime )
         # process, to update state summary
         self.process_tasks = True
@@ -198,10 +202,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing hold time set request (locked)" )
+            self.warning( "REMOTE: refusing hold time set request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: set hold time" )
+        self.warning( "REMOTE: set hold time" )
         self.pool.set_system_hold( ctime )
         # process, to update state summary
         self.process_tasks = True
@@ -213,10 +217,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing shutdown request (locked)" )
+            self.warning( "REMOTE: refusing shutdown request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: halt when running tasks finish" )
+        self.warning( "REMOTE: halt when running tasks finish" )
         self.hold( user )
         self.halt = True
         # process, to update state summary
@@ -229,10 +233,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing shutdown request (locked)" )
+            self.warning( "REMOTE: refusing shutdown request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: halt NOW" )
+        self.warning( "REMOTE: halt NOW" )
         self.hold( user )
         self.halt_now = True
         # process, to update state summary
@@ -242,23 +246,23 @@ class remote_switch( Pyro.core.ObjBase ):
 
 
     def get_config( self, item ):
-        self.log.warning( "REMOTE: config item " + item )
+        self.warning( "REMOTE: config item " + item )
         try:
             result = self.config.get( item )
         except:
-            self.log.warning( "no such config item: " + item )
+            self.warning( "no such config item: " + item )
         else:
             return result
 
     def get_sys_info( self ):
-        self.log.warning( "REMOTE: system info requested" )
+        self.warning( "REMOTE: system info requested" )
         return [ self.config.get('system_title'), \
                 self.config.get('system_def_dir'), \
                 self.config.get('system_username'), \
                 self.config.get('system_info') ]
 
     def get_task_info( self, task_names ):
-        self.log.warning( "REMOTE: task info: " + ','.join(task_names ))
+        self.warning( "REMOTE: task info: " + ','.join(task_names ))
         info = {}
         for n in task_names:
             try:
@@ -271,7 +275,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return info
 
     def get_task_requisites( self, task_ids ):
-        self.log.warning( "REMOTE: requisite request")
+        self.warning( "REMOTE: requisite request")
 
         dump = {}
         found = False
@@ -300,7 +304,7 @@ class remote_switch( Pyro.core.ObjBase ):
                 dump[ id ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
 
         if not found:
-            self.log.warning( 'No tasks found for the requisite dump request' )
+            self.warning( 'No tasks found for the requisite dump request' )
  
         return dump
     
@@ -309,10 +313,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing purge request (locked)" )
+            self.warning( "REMOTE: refusing purge request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: purge " + task_id + ' to ' + stop )
+        self.warning( "REMOTE: purge " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
         self.process_tasks = True
         return "Done"
@@ -323,10 +327,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing kill request (locked)" )
+            self.warning( "REMOTE: refusing kill request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: die: " + task_id )
+        self.warning( "REMOTE: die: " + task_id )
         self.pool.kill( [ task_id ] )
         self.process_tasks = True
         return "Done"
@@ -336,10 +340,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing kill request (locked)" )
+            self.warning( "REMOTE: refusing kill request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: kill cycle: " + cycle )
+        self.warning( "REMOTE: kill cycle: " + cycle )
         self.pool.kill_cycle( cycle )
         self.process_tasks = True
         return "Done"
@@ -349,10 +353,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing kill request (locked)" )
+            self.warning( "REMOTE: refusing kill request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: spawn and die: " + task_id )
+        self.warning( "REMOTE: spawn and die: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
         self.process_tasks = True
         return "Done"
@@ -362,10 +366,10 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing kill request (locked)" )
+            self.warning( "REMOTE: refusing kill request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
-        self.log.warning( "REMOTE: spawn and die cycle: " + cycle )
+        self.warning( "REMOTE: spawn and die cycle: " + cycle )
         self.pool.spawn_and_die_cycle( cycle )
         self.process_tasks = True
         return "Done"
@@ -375,12 +379,12 @@ class remote_switch( Pyro.core.ObjBase ):
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
         if self.locked:
-            self.log.warning( "REMOTE: refusing verbosity request (locked)" )
+            self.warning( "REMOTE: refusing verbosity request (locked)" )
             return "SORRY, THIS SYSTEM IS LOCKED"
 
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
-        self.log.warning( "REMOTE: set verbosity " + level )
+        self.warning( "REMOTE: set verbosity " + level )
         
         if level == 'debug':
             new_level = logging.DEBUG
@@ -393,7 +397,7 @@ class remote_switch( Pyro.core.ObjBase ):
         elif level == 'critical':
             new_level = logging.CRITICAL
         else:
-            self.log.warning( "no such logging level: " + level )
+            self.warning( "no such logging level: " + level )
             return
 
         self.config.set( 'logging_level', new_level )

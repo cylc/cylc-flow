@@ -190,9 +190,10 @@ class task( Pyro.core.ObjBase ):
 
     def run_if_ready( self, current_time ):
         if self.ready_to_run( current_time ):
-            print self.id, ' READY:'
+            print
+            print self.id, ' READY'
             for message in self.prerequisites.satisfied_by.keys():
-                print ' + ', message, '(by', self.prerequisites.satisfied_by[ message ], ')'
+                print ' "' + message + '" <--- ' + self.prerequisites.satisfied_by[ message ]
             self.run_external_task()
 
     def run_external_task( self ):
@@ -261,6 +262,8 @@ class task( Pyro.core.ObjBase ):
                         self.log( 'CRITICAL', 'finished before all outputs were completed' )
                         self.state.set_status( 'failed' )
                     else:
+                        print
+                        print self.id + " FINISHED"
                         self.state.set_status( 'finished' )
                         self.launcher.delete_jobfile()
             else:

@@ -846,9 +846,6 @@ class manager:
     def trash( self, task, reason ):
         self.tasks.remove( task )
         self.pyro.disconnect( task )
-        task.log( 'WARNING', "disconnected; " + reason )
+        task.log( 'NORMAL', "disconnected; " + reason )
         task.prepare_for_death()
         del task
-
-
-
