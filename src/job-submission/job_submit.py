@@ -68,11 +68,7 @@ class job_submit:
         self.task_env[ 'CYCLE_TIME' ] = self.cycle_time
         self.task_env[ 'TASK_NAME'  ] = self.task_name
 
-        #!!!! cylc bin and system scripts dir, and cylc python path
-        #!!!!self.task_env[ 'CYLC_DIR'   ] = os.environ[ 'CYLC_DIR' ]
-        #!!!!
-        #!!!! self.jobfile.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
-
+        self.method_description = 'Job Submit base class: OVERRIDE ME'
 
     def interpolate( self, string ):
 
@@ -165,12 +161,12 @@ class job_submit:
 
     def delete_jobfile( self ):
         # called by task class when the job finishes
-        print ' < deleting jobfile ' + self.jobfilename
+        print ' - deleting jobfile ' + self.jobfilename
         os.unlink( self.jobfilename )
 
     def execute_command( self ):
         # set the jobfile executable
-        print ' > submitting jobfile ' + self.jobfilename
+        print " > submitting task (via " + self.jobfilename + ") " + self.method_description
         os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
         # ran as owner, if necessary
         if self.owner:

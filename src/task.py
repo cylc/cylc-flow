@@ -193,7 +193,7 @@ class task( Pyro.core.ObjBase ):
             print
             print self.id, ' READY'
             for message in self.prerequisites.satisfied_by.keys():
-                print ' "' + message + '" <--- ' + self.prerequisites.satisfied_by[ message ]
+                print ' o "' + message + '" <--- ' + self.prerequisites.satisfied_by[ message ]
             self.run_external_task()
 
     def run_external_task( self ):

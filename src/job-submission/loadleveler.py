@@ -17,6 +17,10 @@ from job_submit import job_submit
 class loadleveler( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
+    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
+        job_submit.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
+        self.method_description = 'by [llsubmit] (basic method)'
+
     def construct_jobfile( self ):
         # create a new jobfile
         self.get_jobfile()

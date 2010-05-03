@@ -34,6 +34,7 @@ class loadleveler_ecoconnect( loadleveler ):
         owner += '_' + self.system
 
         loadleveler.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
+        self.method_description = 'by [llsubmit] (ecoconnect method)'
 
         ##self.jobfile.write( "#@ class        = " + self.system + "\n" )     # WHEN PROPER CLASSES CONFIGURED!
         #self.jobfile.write( "#@ class        = test_linux \n" )  # TEMPORARY fc-test ONLY CLASS

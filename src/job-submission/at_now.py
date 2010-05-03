@@ -16,5 +16,11 @@ from job_submit import job_submit
 
 class at_now( job_submit ):
     # submit a task using 'at -f FILE now'
+    # 'at' emails job stdout and stderr to the user
+
+    def __init__( self, task_id, ext_task, config, extra_vars, owner, host ):
+        job_submit.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
+        self.method_description = 'by [at now] (job output by mail!)'
+
     def construct_command( self ):
         self.command = 'at -f ' + self.jobfilename + ' now'
