@@ -33,6 +33,7 @@ class loadleveler_ecoconnect( loadleveler ):
         # append the correct system suffix
         owner += '_' + self.system
 
+        directives = {}
         #!!!! directives[ 'class'    ] = self.system # !!!!
         directives[ 'class'       ] = 'test_linux'
         #!!!! directives[ 'initial_dir' ] = "/" + self.system + "/ecoconnect/" + self.owner  + "/running"
