@@ -82,12 +82,6 @@ class job_submit:
 
         return string
 
-    def write_job_directives( self ):
-        return
-
-    def write_extra_env( self ):
-        return
- 
     def write_job_env( self ):
         self.jobfile.write("export TASK_ID=" + self.task_id + "\n" )
         self.jobfile.write("export CYCLE_TIME=" + self.cycle_time + "\n" )
@@ -120,36 +114,37 @@ class job_submit:
         self.jobfile = open( self.jobfilename, 'w' )
 
     def construct_command( self ):
-        self.command = self.jobfilename
+        raise SystemExit( "Job Submit base class: OVERRIDE ME" )
 
-    def submit( self ):
-        # THIS IS CALLED TO SUBMIT A TASK
+    def construct_jobfile( self ):
         # create a new jobfile
-        jobfile = self.get_jobfile()
-        # write any directives (e.g. for qsub or loadleveler)
-        self.write_job_directives()
+        self.get_jobfile()
         # write cylc, system-wide, and task-specific environment vars 
         self.write_job_env()
-        # any extra stuff (e.g. write a line to the job file to source a
-        # script that defines shell functions for use by all tasks)
-        self.write_extra_env()
         # write the task execution line
         self.jobfile.write( self.task )
         # close the jobfile
         self.jobfile.close() 
-        # set the jobfile executable
-        os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-        # construct a command to submit the job by this method 
+
+    def submit( self ):
+        # THIS IS CALLED TO SUBMIT A TASK
+        # construct a jobfile to run the task
+        self.construct_jobfile()
+        # construct a command to submit the jobfile
         self.construct_command()
         # execute the constructed command
-        self.execute()
+        self.execute_command()
 
     def delete_jobfile( self ):
         # called by task class when the job finishes
         os.unlink( self.jobfilename )
 
-    def execute( self ):
+    def execute_command( self ):
+        # set the jobfile executable
+        os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
+        # ran as owner, if necessary
         if self.owner:
             if self.owner != os.environ['USER']:
                 self.command = 'sudo -u ' + self.owner + ' ' + self.command
+        # execute local command to submit the job
         os.system( self.command )

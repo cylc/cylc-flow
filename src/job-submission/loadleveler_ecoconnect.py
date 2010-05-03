@@ -35,17 +35,11 @@ class loadleveler_ecoconnect( loadleveler ):
 
         loadleveler.__init__( self, task_id, ext_task, config, extra_vars, owner, host )
 
-    def write_job_directives( self ):
-        # ecoconnect loadleveler directives
-        self.jobfile.write( "#@ job_name     = " + self.task_id + "\n" )
-        #self.jobfile.write( "#@ class        = " + self.system + "\n" )     # WHEN PROPER CLASSES CONFIGURED!
-        self.jobfile.write( "#@ class        = test_linux \n" )  # TEMPORARY fc-test ONLY CLASS
-        self.jobfile.write( "#@ job_type     = serial\n" )
-        self.jobfile.write( "#@ initialdir  = /" + self.system + "/ecoconnect/" + self.owner + "\n" )
-        self.jobfile.write( "#@ output       = $(job_name)-$(jobid).out\n" )
-        self.jobfile.write( "#@ error        = $(job_name)-$(jobid).err\n" )
-        self.jobfile.write( "#@ shell        = /bin/bash\n" )
-        self.jobfile.write( "#@ queue\n\n" )
+        ##self.jobfile.write( "#@ class        = " + self.system + "\n" )     # WHEN PROPER CLASSES CONFIGURED!
+        #self.jobfile.write( "#@ class        = test_linux \n" )  # TEMPORARY fc-test ONLY CLASS
+        #self.jobfile.write( "#@ job_type     = serial\n" )
+        #self.jobfile.write( "#@ initialdir  = /" + self.system + "/ecoconnect/" + self.owner + "\n" )
 
-    def write_extra_env( self ):
+    def write_job_env( self ):
+        loadleveler.write_job_env( self )
         self.jobfile.write( ". " + self.cylc_home + "/bin/ecfunctions.sh\n\n" )

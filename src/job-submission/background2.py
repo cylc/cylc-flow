@@ -18,6 +18,6 @@ class background2( background ):
     # stdout before submitting the job in the background; allows a very
     # simple test of systems with multiple job submission methods. 
 
-    def execute( self ):
+    def execute_command( self ):
         print 'Background2 Job Submit: ', self.task_id
         background.execute( self )
