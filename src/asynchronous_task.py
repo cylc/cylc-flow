@@ -83,7 +83,7 @@ class asynchronous_task( nopid, task ):
                         del self.outputs.satisfied[ output ]
                         self.outputs.satisfied[ newout ] = False
 
-                        self.env_vars.append( [ 'ASYNCID', mg ] )
+                        self.env_vars[ 'ASYNCID' ] = mg 
 
                 for deathpre in self.death_prerequisites.get_list():
                     m = re.match( '^(.*)\((.*)\)(.*)', deathpre )

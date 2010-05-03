@@ -102,10 +102,9 @@ class job_submit:
             self.jobfile.write("export " + VAR + "=" + str( env[VAR] ) + "\n" )
 
         # extra task-specific variables
-        for entry in self.extra_vars:
-            [ var_name, value ] = entry
-            value = self.interpolate( value )
-            self.jobfile.write("export " + var_name + "=" + value + "\n" )
+        for VAR in self.extra_vars.keys():
+            value = self.interpolate( self.extra_vars[ VAR ] )
+            self.jobfile.write("export " + VAR + "=" + str( value )+ "\n" )
 
     def get_jobfile( self ):
         # get a new temp filename

@@ -597,19 +597,14 @@ from dynamic_instantiation import get_object
                     FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
 
         # environment variables
-        strng = indent + 'self.env_vars = [\n'
+        FILE.write( indent + 'self.env_vars = {}\n' )
         if 'ENVIRONMENT' in parsed_def.keys():
             for pair in parsed_def[ 'ENVIRONMENT' ]:
-                [ var, val ] = pair.split( ' ', 1 )
+                ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
                 # interpolate $(CYCLE_TIME [+/-n]) 
                 val = interpolate_cycle_times( "'" + val + "'" )
-                strng = strng + indent + indent_unit + '[' + var + ', ' + val + '],\n' 
-
-            #strng = re.sub( ',\s*$', '', strng )
-        #strng = strng + '\n' + indent + ']\n\n' 
-        strng += indent + ']\n\n' 
-        FILE.write( strng )
+                FILE.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
 
         FILE.write( indent + '# in dummy mode, replace the external task with _cylc-dummy-task\n' )
         FILE.write( indent + 'if dummy_mode:\n' )
