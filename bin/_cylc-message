@@ -120,6 +120,14 @@ parser.add_option( "--all-outputs-completed",
 
 ( options, args ) = parser.parse_args()
 
+# MODE OF OPERATION ---------------------------------------------------
+# have we been invoked from a script that was launched by 'cylc start',
+# 'cylc run-task', or a raw task script?
+mode = 'raw'
+if 'CYLC_MODE' in os.environ:
+    mode = os.environ[ 'CYLC_MODE' ]
+    # 'scheduler' or 'run-task'
+
 # TASK IDENTITY ---------------------------------------------------
 if options.task_id:
     # command line
@@ -129,8 +137,12 @@ else:
     if 'TASK_ID' in os.environ.keys():
         task_id = os.environ[ 'TASK_ID' ]
     else:
-        print 'ERROR, cylc message: no task id provided!'
-        sys.exit(1)
+        if mode == 'raw':
+            #print 'cylc message: you appear to have invoked a raw task script'
+            task_id = 'NAME%TAG'
+        else:
+            print 'cylc message ERROR: no task id provided!'
+            sys.exit(1)
 
 # PRIORITY----------------------------
 if options.priority:
@@ -183,7 +195,7 @@ else:
 
 
 # CHECK ARGS AND OPTIONS-----------------------------------------------
-if 'CYLC_ON' not in os.environ.keys():
+if mode != 'scheduler':
     # there is no running scheduler assocated with this call
 
     if options.next_restart_completed:

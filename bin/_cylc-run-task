@@ -105,6 +105,7 @@ task = get_object( 'task_classes', task_name ) \
         ( ctime, False, config, 'waiting', config.get('job submit class')[ task_name ] )
 
 # set global (all tasks) environment variables-------------------------
+config.put_env( 'CYLC_MODE', 'run-task' )
 config.put_env( 'CYLC_NS_HOST',  'NULL' )  # may be an IP number
 config.put_env( 'CYLC_NS_GROUP',  'NULL' )
 config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
