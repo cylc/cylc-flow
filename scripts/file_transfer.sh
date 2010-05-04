@@ -15,7 +15,6 @@
 # messages. On failure it can send a descriptive message, if necessary,
 # before aborting with 'exit 1'
 
-# trap errors so that we need not check the success of basic operations.
 set -e
 
 # Purpose: file copy or transfer.
@@ -24,6 +23,8 @@ set -e
 #   1. $SRCE  -  list of space separated file URLs
 #   2. $DEST  -  parallel list of space separated FILE URLs
 #                (NOT DIRECTORY URLS - ALWAYS GIVE A FILENAME)
+#   3. RECOPY -  optional, default 'false'. If 'true', copy a
+#                file even if the destination file already exists
 
 # This script is a multiple-call wrapper for 'scp' that takes
 # its arguments from environment variables exported by cylon.
@@ -52,6 +53,8 @@ if [[ -z $DEST ]]; then
     exit 1
 fi
 
+RECOPY=${RECOPY:-false}
+
 for T in $SRCE; do
     # get destination corresponding to this target
     D=${DEST%% *}
@@ -69,14 +72,31 @@ for T in $SRCE; do
         #RFILE=$( basename $RPATH )
         RDIR=$( dirname $RPATH )
 
+        if ( ssh $RMACH "[[ -f $RPATH ]]" ); then
+            if $RECOPY; then
+                cylc message -p WARNING "REcopying: $D"
+            else
+                cylc message -p WARNING "NOT recopying: $D"
+                continue
+            fi
+        fi
         #cylc message "making remote destination directory, $RDIR"
         ssh $RMACH mkdir -p $RDIR
     else
+        if [[ -f $D ]]; then
+            if $RECOPY; then
+                cylc message -p WARNING "REcopying: $D"
+            else
+                cylc message -p WARNING "NOT recopying: $D"
+                continue
+            fi
+        fi
         DIR=$( dirname $D )
         #cylc message "making destination directory, $DIR"
         mkdir -p $DIR
     fi
 
+    echo "file_transfer: scp -B $T $D > /dev/null"
     scp -B $T $D > /dev/null
 
 done
