@@ -29,7 +29,9 @@ run multiple instances of it at once.
 
 > GETTING TASKS TO FAIL ON DEMAND:
 In real mode you can deliberately cause any task in THIS SYSTEM to fail
-by exporting FAIL_TASK={NAME}%{CYCLE} before starting the scheduler 
+by defining an environment variable called FAIL_TASK in the system 
+config file: 
+        self.items['environment']['FAIL_TASK'] = 'A%2010010106'
 (the identified task will self-abort, via scripts/check-env.sh).
 If the system is then shutdown and restarted, or if the failed task is
 reset in the running system, it will run successfully (as would be the
