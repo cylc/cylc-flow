@@ -36,7 +36,7 @@ class loadleveler_ecoconnect( loadleveler ):
         directives = {}
         #!!!! directives[ 'class'    ] = self.system # !!!!
         directives[ 'class'       ] = 'test_linux'
-        #!!!! directives[ 'initial_dir' ] = "/" + self.system + "/ecoconnect/" + self.owner  + "/running"
+        directives[ 'initialdir' ] = '~' + owner    # owner's home directory
 
         # add (or override with) taskdef directives
         for d in extra_directives.keys():
