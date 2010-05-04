@@ -20,7 +20,7 @@ class background2( background ):
 
     def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
         background.__init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host )
-        self.method_description = 'in the background [&], VERSION 2'
+        self.method_description = 'in the background, VERSION 2 [&]'
 
 
     def construct_command( self ):

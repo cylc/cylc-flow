@@ -39,7 +39,7 @@ class loadleveler( job_submit ):
             directives[ d ] = extra_directives[ d ]
 
         job_submit.__init__( self, task_id, ext_task, config, extra_vars, directives, owner, host )
-        self.method_description = 'by [llsubmit] (basic method)'
+        self.method_description = 'by loadleveler, basic [llsubmit]'
 
 
     def construct_jobfile( self ):

@@ -43,7 +43,7 @@ class loadleveler_ecoconnect( loadleveler ):
             directives[ d ] = extra_directives[ d ]
 
         loadleveler.__init__( self, task_id, ext_task, config, extra_vars, directives, owner, host )
-        self.method_description = 'by [llsubmit] (ecoconnect method)'
+        self.method_description = 'by loadleveler, EcoConnect [llsubmit]'
 
     def write_job_env( self ):
         loadleveler.write_job_env( self )
