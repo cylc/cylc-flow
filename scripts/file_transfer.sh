@@ -10,13 +10,13 @@
 #         |________________________|
 
 
-# THIS IS A CYLC TASK SCRIPT
+# THIS CYLC TASK SCRIPT IS INTENDED TO BE RUN VIA cylc-wrapper
+# As such it should not send its own start, finished, or failed
+# messages. On failure it can send a descriptive message, if necessary,
+# before aborting with 'exit 1'
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
-
-# this is a cylc task utility script, meant to be WRAPPED by specific
-# cylc tasks
+set -e
 
 # Purpose: file copy or transfer.
 
@@ -44,13 +44,11 @@ set -e; trap 'cylc message --failed' ERR
 
 if [[ -z $SRCE ]]; then
     cylc message -p CRITICAL "SRCE not defined"
-    cylc message --failed
     exit 1
 fi
 
 if [[ -z $DEST ]]; then
     cylc message -p CRITICAL "DEST not defined"
-    cylc message --failed
     exit 1
 fi
 
