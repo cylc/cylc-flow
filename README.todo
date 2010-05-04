@@ -1,5 +1,9 @@
 To Do
 
+* DOCUMENT: daemon and asynchronous task
+
+* DOCUMENT: job submit mechanism can use env vars throughout.
+
 * cylc list-all has a problem with ecoconnect usernames - underscore!
 
 * WILL_SATSIFY_ME() REQUIRED FOR FUZZY and LOOSE PREREQUISITES?
