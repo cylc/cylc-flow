@@ -48,10 +48,14 @@ class watcher(daemon):
     remote_host = None
     external_task = 'watcher.sh'
 
-    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-        self.id = self.name
+
+        self.tag = str( self.__class__.upward_instance_count + 1 )
+        # RESTART: self.tag = tag
+
+        self.id = self.name + '%' + tag
 
         #if startup:
         #    # overwrite prerequisites for startup case
@@ -59,7 +63,7 @@ class watcher(daemon):
         #    self.prerequisites.add( 'startup%'  + self.c_time + ' finished' )
 
         self.prerequisites = prerequisites( self.id )
-        self.prerequisites.add( 'startup finished')
+        self.prerequisites.add( 'startup%0 finished')
 
         self.outputs = outputs( self.id )
         self.output_pattern = 'pass ID\w+ ready'
@@ -90,10 +94,12 @@ class products(asynchronous_task):
     owner = None
     remote_host = None
 
-    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
+
         self.tag = str( self.__class__.upward_instance_count + 1 )
+
         self.id = self.name + '%' + self.tag
 
         self.prerequisites = loose_prerequisites( self.id )
@@ -134,10 +140,12 @@ class upload(asynchronous_task):
     owner = None
     remote_host = None
 
-    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
+
         self.tag = str( self.__class__.upward_instance_count + 1 )
+
         self.id = self.name + '%' + self.tag
 
         self.prerequisites = loose_prerequisites( self.id )
@@ -177,10 +185,12 @@ class archive(asynchronous_task):
     owner = None
     remote_host = None
 
-    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
+
         self.tag = str( self.__class__.upward_instance_count + 1 )
+
         self.id = self.name + '%' + self.tag
 
         self.prerequisites = loose_prerequisites( self.id )
@@ -222,10 +232,13 @@ class startup(task):
 
     quick_death = True
 
-    def __init__( self, c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-        self.id = self.name
+
+        self.tag = str( self.__class__.upward_instance_count + 1 )
+
+        self.id = self.name + '%0'
 
         self.prerequisites = prerequisites( self.id )
 

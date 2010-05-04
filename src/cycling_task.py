@@ -144,19 +144,6 @@ class cycling_task( task ):
     def get_valid_hours( self ):
         return self.valid_hours
 
-    def dump_state( self, FILE ):
-        # Write state information to the state dump file, cycle time
-        # first to allow users to sort the file easily in case they need
-        # to edit it:
-        #   ctime name state
-
-        # This must be compatible with __init__() on reload
-
-        FILE.write( self.c_time     + ' : ' + 
-                    self.name         + ' : ' + 
-                    self.state.dump() + '\n' )
-
-
     def get_state_summary( self ):
         summary = task.get_state_summary( self )
         # derived classes can call this method and then 

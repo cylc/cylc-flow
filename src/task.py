@@ -295,9 +295,7 @@ class task( Pyro.core.ObjBase ):
     def dump_state( self, FILE ):
         # Write state information to the state dump file
         # This must be compatible with __init__() on reload
-
-        FILE.write( self.name         + ' : ' + 
-                    self.state.dump() + '\n' )
+        FILE.write( self.id + ' : ' + self.state.dump() + '\n' )
 
     def spawn( self ):
         if self.state.has_spawned():

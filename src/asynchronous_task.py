@@ -51,19 +51,7 @@ class asynchronous_task( nopid, task ):
 
     def next_c_time( self, rt = None ):
         # still needed for now, for spawning by manager
-        return rt
-
-    def dump_state( self, FILE ):
-        # Write state information to the state dump file, cycle time
-        # first to allow users to sort the file easily in case they need
-        # to edit it:
-        #   ctime name state
-
-        # This must be compatible with __init__() on reload
-
-        FILE.write( 'ASYNC'     + ' : ' + 
-                    self.name         + ' : ' + 
-                    self.state.dump() + '\n' )
+        return self.tag
 
     def check_requisites( self ):
         for message in self.prerequisites.get_satisfied_list():

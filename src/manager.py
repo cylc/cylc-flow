@@ -228,7 +228,8 @@ class manager:
                 continue
 
             # instance variables
-            [ c_time, name, state ] = line.split(' : ')
+            ( id, state ) = line.split(' : ')
+            ( name, c_time ) = id.split('%')
 
             # create the task log
             if name not in log_created.keys():
