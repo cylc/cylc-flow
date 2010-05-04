@@ -695,7 +695,7 @@ class manager:
                 # not cotemporal
                 continue
 
-            if itask.prerequisites.will_satisfy_me( parent.outputs, parent.id ):
+            if itask.prerequisites.will_satisfy_me( parent.outputs ):
                 #print 'dependee: ' + itask.id
                 deps[ itask ] = True
 
