@@ -1,5 +1,8 @@
 To Do
 
+* DOCUMENT: suicide prerequisites: necessary for asynchronous tasks, but 
+  could also be useful in cycling systems.
+
 * DOCUMENT: daemon and asynchronous task
 
 * DOCUMENT: job submit mechanism can use env vars throughout.
