@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e; trap "UNIT TEST FAILED; see output log" ERR
+
 #          ________________________  
 #         |____C_O_P_Y_R_I_G_H_T___|
 #         |                        |
@@ -49,8 +51,6 @@ if [[ $# != 0 ]]; then
     fi
 fi
 
-set -e  # abort on error
-
 if [[ ! -x bin/cylc ]]; then
     echo  "ERROR: run this unit test from the top level of a cylc installation."
     exit 1
@@ -96,7 +96,7 @@ echo done
 echo
 echo ">> STARTING at 2010010106, with FAIL_TASK=X%2010010112"
 if ! $dummy_mode; then
-    export FAIL_TASK=X%2010010112
+    echo "        self.items['environment']['FAIL_TASK'] = 'X%2010010112'" >> $SYS_DIR/system_config.py
 fi
 echo -n "   Will wait 5 seconds for startup ... "
 if $dummy_mode; then
