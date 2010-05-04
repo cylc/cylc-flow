@@ -126,7 +126,7 @@ class job_submit:
 
         # now write the lot to the jobfile
         for var in final_env:
-            self.jobfile.write( "export " + var + "=" + final_env[var] + "\n" )
+            self.jobfile.write( "export " + var + "=\"" + final_env[var] + "\"\n" )
 
         # ACCESS TO CYLC (for 'cylc message'), AND TO SUB-SCRIPTS
         # RESIDING IN THE SYSTEM DIRECTORY, BY SPAWNED TASKS IS BY
