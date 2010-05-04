@@ -71,25 +71,34 @@ class job_submit:
 
         self.method_description = 'Job Submit base class: OVERRIDE ME'
 
-    def interpolate( self, string ):
+    def interpolate( self, env ):
+        # Interpolate any variables in env values: $VARNAME or ${VARNAME}.
+        # First self-interpolate (if one variable refers to another).
+        # Second interpolate any remaining variables from the local
+        # environment (this also gets self-referals that contain
+        # environment variables).
 
-        # $VARNAME
-        m = re.findall( "\$([a-zA-Z0-9_]+)", string )
-        for var in m:
-            if var in os.environ:
-                # replace value with the env value
-                val = os.environ[ var ]
-                string = re.sub( '\$' + var, val, string )
+        interpolated_env = {}
 
-        # ${VARNAME}
-        m = re.findall( "\$\{([a-zA-Z0-9_]+)\}", string )
-        for var in m:
-            if var in os.environ:
-                # replace value with the env value
-                val = os.environ[ var ]
-                string = re.sub( '\$\{' + var + '\}', val, string )
+        for variable in env:
+            value = env[ variable ]
 
-        return string
+            # 1. self-interpolation
+            for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", value ):
+                if var in env:
+                    val = env[ var ]
+                    value = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, value )
+
+            # 2. local environment interpolation
+            for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", value ):
+                if var in os.environ:
+                    # replace value with the env value
+                    val = os.environ[ var ]
+                    value = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, value )
+
+            interpolated_env[ variable ] = value
+
+        return interpolated_env
 
     def write_job_env( self ):
         # combine environment dicts:
@@ -97,23 +106,27 @@ class job_submit:
         
         # global variables from config
         env = self.config.get( 'environment' )
-        for var in env.keys():
+        for var in env:
             big_env[ var ] = str( env[ var] )
 
         # general task specific variables
         env = self.task_env
-        for var in env.keys():
+        for var in env:
             big_env[ var ] = str( env[ var] )
 
         # special task specific variables, from taskdef
         env = self.extra_vars
-        for var in env.keys():
-            value = self.interpolate( env[var] )
-            big_env[ var ] = str( value )
+        for var in env:
+            big_env[ var ] = str( env[ var ] )
+
+        # interpolate (self and environment)
+        # e.g. task-specific (taskdef) vars that use global
+        # (system_config) vars or pre-existing environment vars:
+        final_env = self.interpolate( big_env )
 
         # now write the lot to the jobfile
-        for var in big_env.keys():
-            self.jobfile.write( "export " + var + "=" + big_env[var] + "\n" )
+        for var in final_env:
+            self.jobfile.write( "export " + var + "=" + final_env[var] + "\n" )
 
         # ACCESS TO CYLC (for 'cylc message'), AND TO SUB-SCRIPTS
         # RESIDING IN THE SYSTEM DIRECTORY, BY SPAWNED TASKS IS BY
