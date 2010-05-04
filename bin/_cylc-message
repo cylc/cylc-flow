@@ -220,7 +220,7 @@ if mode != 'scheduler':
         # message = message
         pass
 
-    print task_id + ' ' + message
+    print 'cylc message (' + mode + '): ' + task_id + ' ' + message
     sys.exit(0)
 
 # CONNECT TO THE CORRECT TASK PROXY OBJECT-----------------------------
