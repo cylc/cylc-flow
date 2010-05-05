@@ -38,10 +38,7 @@
 # wait for the delayed start time to arrive, then it has caught up.
 
 import re
-import datetime
 from mod_contact import contact
-from task_types import free_task
-from cycle_time import _rt_to_dt
 
 class catchup_contact( contact ):
 

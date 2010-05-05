@@ -15,16 +15,7 @@
 
 import sys, re
 from task import task
-import cycle_time
 from mod_nopid import nopid
-import task_state
-import logging
-import Pyro.core
-from copy import deepcopy
-
-global state_changed
-#state_changed = False
-state_changed = True
 
 class asynchronous_task( nopid, task ):
 

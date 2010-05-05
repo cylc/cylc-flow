@@ -12,9 +12,6 @@
 
 import sys
 from task import task
-import task_state
-import logging
-import Pyro.core
 import cycle_time
 from copy import deepcopy
 
