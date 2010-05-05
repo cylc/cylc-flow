@@ -44,9 +44,6 @@ state_changed = True
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
-# The abdication mechanism ASSUMES that the task manager creates the
-# successor task as soon as the current task spawns.
-
 class cycling_task( task ):
     
     # Default task deletion: quick_death = True

@@ -26,9 +26,6 @@ global state_changed
 #state_changed = False
 state_changed = True
 
-# The abdication mechanism ASSUMES that the task manager creates the
-# successor task as soon as the current task spawns.
-
 class asynchronous_task( nopid, task ):
 
     used_outputs = {}
@@ -45,7 +42,6 @@ class asynchronous_task( nopid, task ):
         # Top level derived classes must define:
         #   self.id 
         #   <class>.instance_count = 0
-        #   <class>.upward_instance_count = 0
 
         task.__init__( self, state, no_reset )
 

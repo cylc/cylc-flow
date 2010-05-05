@@ -39,9 +39,6 @@ state_changed = True
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
-# The task abdication mechanism ASSUMES that the task manager creates
-# the successor task as soon as the current task spawns.
-
 class task( Pyro.core.ObjBase ):
     
     # this only needed in cycling tasks?
