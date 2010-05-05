@@ -49,9 +49,8 @@ class asynchronous_task( nopid, task ):
 
         task.__init__( self, state, no_reset )
 
-    def next_c_time( self, rt = None ):
-        # still needed for now, for spawning by manager
-        return self.tag
+    def next_tag( self ):
+        return str( int( self.tag ) + 1 )
 
     def check_requisites( self ):
         for message in self.prerequisites.get_satisfied_list():

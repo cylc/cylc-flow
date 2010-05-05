@@ -102,9 +102,7 @@ class task( Pyro.core.ObjBase ):
         # count instances of each top level object derived from task
         # top level derived classes must define:
         #   <class>.instance_count = 0
-        #   <class>.upward_instance_count = 0
         self.__class__.instance_count += 1
-        self.__class__.upward_instance_count += 1
 
         Pyro.core.ObjBase.__init__(self)
 

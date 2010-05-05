@@ -38,7 +38,6 @@ class watcher(daemon):
     name = 'watcher'
     short_name = 'watcher'
     instance_count = 0
-    upward_instance_count = 0
 
     description = [
         'watch continuously for incoming satellite data',
@@ -48,12 +47,13 @@ class watcher(daemon):
     remote_host = None
     external_task = 'watcher.sh'
 
-    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, initial_state, launcher, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-
-        self.tag = str( self.__class__.upward_instance_count + 1 )
-        # RESTART: self.tag = tag
+        if startup:
+            self.tag = '1'
+        else:
+            self.tag = tag
 
         self.id = self.name + '%' + tag
 
@@ -71,13 +71,8 @@ class watcher(daemon):
         self.env_vars = {}
         self.directives = {}
 
-        # in dummy mode, replace the external task with _cylc-dummy-task
-        #if dummy_mode:
-        #        self.external_task = '_cylc-dummy-task'
-
-        modname = 'job_submit_methods'
-        clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
+        self.launcher = launcher
+        launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )
 
         daemon.__init__( self, initial_state, no_reset )
 
@@ -86,7 +81,6 @@ class products(asynchronous_task):
     name = 'products'
     short_name = 'products'
     instance_count = 0
-    upward_instance_count = 0
 
     description = [ 'process incoming satellite data' ]
 
@@ -94,11 +88,13 @@ class products(asynchronous_task):
     owner = None
     remote_host = None
 
-    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, initial_state, launcher, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-
-        self.tag = str( self.__class__.upward_instance_count + 1 )
+        if startup:
+            self.tag = '1'
+        else:
+            self.tag = tag
 
         self.id = self.name + '%' + self.tag
 
@@ -115,13 +111,8 @@ class products(asynchronous_task):
         self.death_prerequisites.add( 'products (ID\w+) uploaded' )
         self.death_prerequisites.add( 'products (ID\w+) archived' )
  
-        # in dummy mode, replace the external task with _cylc-dummy-task
-        #if dummy_mode:
-        #        self.external_task = '_cylc-dummy-task'
-
-        modname = 'job_submit_methods'
-        clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
+        self.launcher = launcher
+        launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -130,7 +121,6 @@ class upload(asynchronous_task):
     name = 'upload'
     short_name = 'upload'
     instance_count = 0
-    upward_instance_count = 0
 
     description = [
         'upload processed satellite data',
@@ -140,11 +130,13 @@ class upload(asynchronous_task):
     owner = None
     remote_host = None
 
-    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, initial_state, launcher, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-
-        self.tag = str( self.__class__.upward_instance_count + 1 )
+        if startup:
+            self.tag = '1'
+        else:
+            self.tag = tag
 
         self.id = self.name + '%' + self.tag
 
@@ -160,13 +152,8 @@ class upload(asynchronous_task):
         self.env_vars = {}
         self.directives = {}
 
-        # in dummy mode, replace the external task with _cylc-dummy-task
-        #if dummy_mode:
-        #        self.external_task = '_cylc-dummy-task'
-
-        modname = 'job_submit_methods'
-        clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
+        self.launcher = launcher
+        launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -175,7 +162,6 @@ class archive(asynchronous_task):
     name = 'archive'
     short_name = 'archive'
     instance_count = 0
-    upward_instance_count = 0
 
     description = [
         'archive processed satellite data',
@@ -185,11 +171,13 @@ class archive(asynchronous_task):
     owner = None
     remote_host = None
 
-    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, initial_state, launcher, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-
-        self.tag = str( self.__class__.upward_instance_count + 1 )
+        if startup:
+            self.tag = '1'
+        else:
+            self.tag = tag
 
         self.id = self.name + '%' + self.tag
 
@@ -205,13 +193,8 @@ class archive(asynchronous_task):
         self.env_vars = {}
         self.directives = {}
 
-        # in dummy mode, replace the external task with _cylc-dummy-task
-        #if dummy_mode:
-        #        self.external_task = '_cylc-dummy-task'
-
-        modname = 'job_submit_methods'
-        clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
+        self.launcher = launcher
+        launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )
 
         asynchronous_task.__init__( self, initial_state, no_reset )
 
@@ -220,7 +203,6 @@ class startup(task):
     name = 'startup'
     short_name = 'startup'
     instance_count = 0
-    upward_instance_count = 0
 
     description = [
         'Cleans out the system working directory at startup.',
@@ -232,11 +214,13 @@ class startup(task):
 
     quick_death = True
 
-    def __init__( self, tag, dummy_mode, config, initial_state, submit, startup = False, no_reset = False ):
+    def __init__( self, tag, initial_state, launcher, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
-
-        self.tag = str( self.__class__.upward_instance_count + 1 )
+        if startup:
+            self.tag = '1'
+        else:
+            self.tag = tag
 
         self.id = self.name + '%0'
 
@@ -249,12 +233,7 @@ class startup(task):
         self.env_vars = [ ]
         self.directives = {}
 
-        # in dummy mode, replace the external task with _cylc-dummy-task
-        if dummy_mode:
-                self.external_task = '_cylc-dummy-task'
-
-        modname = 'job_submit_methods'
-        clsname = submit
-        self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )
+        self.launcher = launcher
+        launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )
 
         task.__init__( self, initial_state, no_reset )

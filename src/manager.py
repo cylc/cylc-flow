@@ -177,12 +177,13 @@ class manager:
 
         # The state dump file format is:
         # system time : <time>
-        # OR
+        #   OR
         # dummy time : <time>,rate
+        #   THEN
         # class <classname>: item1=value1, item2=value2, ... 
-        # <c_time> : <taskname> : <state>
-        # <c_time> : <taskname> : <state>
-        #    (and so on)
+        # <task_id> : <state>
+        # <task_id> : <state>
+        #   ...
         # The time format is defined by the clock.reset()
         # task <state> format is defined by task_state.dump()
 
@@ -731,7 +732,7 @@ class manager:
         for itask in self.tasks:
             if itask.id == id:
                 found = True
-                next = itask.next_c_time()
+                next = itask.next_tag()
                 name = itask.name
                 break
 
@@ -807,8 +808,6 @@ class manager:
                 itask.log( 'DEBUG', 'forced spawning' )
 
                 # TO DO: the following should reuse code in spawn()?
-                #new_task = get_object( 'task_classes', itask.name )\
-                        #        ( itask.next_c_time(), self.dummy_mode, self.config, 'waiting', self.submit[ itask.name ] )
                 launcher = get_object( 'job_submit_methods', self.submit[itask.name] )( self.dummy_mode, self.config.get('environment') )
                 new_task = itask.spawn( 'waiting', launcher )
  
