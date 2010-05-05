@@ -237,7 +237,7 @@ class manager:
                 log_created[ name ] = True
 
             launcher = get_object( 'job_submit_methods', self.submit[name] )( self.dummy_mode, self.config.get('environment') )
-            itask = get_object( 'task_classes', name )( c_time, 'waiting', launcher, startup=False, no_reset=no_reset_val )
+            itask = get_object( 'task_classes', name )( c_time, state, launcher, startup=False, no_reset=no_reset_val )
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
