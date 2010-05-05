@@ -121,6 +121,8 @@ class cycling_task( task ):
 
         return cycle_time.increment( rt, increment )
 
+    def next_tag( self ):
+        return self.next_c_time()
 
     def prev_c_time( self ):
         # return the previous cycle time valid for this task.

@@ -326,12 +326,11 @@ class manager:
                 itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
                 continue
 
-            if itask.spawn():
+            if itask.ready_to_spawn():
                 itask.log( 'DEBUG', 'spawning')
 
                 # dynamic task object creation by task and module name
-                new_task = get_object( 'task_classes', itask.name )\
-                        ( itask.next_c_time(), self.dummy_mode, self.config, 'waiting', self.submit[ itask.name ] )
+                new_task = itask.spawn( self.dummy_mode, self.config, 'waiting', self.submit[ itask.name ] )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
                     new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )

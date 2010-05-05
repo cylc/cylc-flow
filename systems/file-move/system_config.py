@@ -50,7 +50,7 @@ class system_config( config ):
         # self.items['task_groups']['foo'] = ['bar', 'baz']
 
         # default job submit method, e.g.:
-        # self.items['job_submit_method'] = 'background2'
+        self.items['job_submit_method'] = 'background'
 
         # environment variables available to all tasks
 

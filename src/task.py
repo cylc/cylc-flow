@@ -297,15 +297,9 @@ class task( Pyro.core.ObjBase ):
         # This must be compatible with __init__() on reload
         FILE.write( self.id + ' : ' + self.state.dump() + '\n' )
 
-    def spawn( self ):
-        if self.state.has_spawned():
-            return False
-
-        if self.ready_to_spawn():
-            self.state.set_spawned()
-            return True
-        else:
-            return False
+    def spawn( self, dummy_mode, config, state, submit ):
+        self.state.set_spawned()
+        return self.__class__( self.next_tag(), dummy_mode, config, state, submit )
 
     def has_spawned( self ):
         # this exists because the oneoff modifier needs to override it.
@@ -347,3 +341,6 @@ class task( Pyro.core.ObjBase ):
 
     def satisfy_me( self, task ):
         self.prerequisites.satisfy_me( task )
+
+    def next_tag( self ):
+        raise SystemExit( "OVERRIDE ME" )
