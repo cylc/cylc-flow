@@ -152,8 +152,9 @@ class manager:
             # create the task-specific logger
             self.create_task_log( name )
 
-            launcher = get_object( 'job_submit_methods', self.submit[name] )( self.dummy_mode, self.config.get('environment') )
-            itask = get_object( 'task_classes', name )( start_time, 'waiting', launcher, startup=True )
+            launcher = self.get_task_launcher( name )
+            itask = get_object( 'task_classes', name )\
+                    ( start_time, 'waiting', launcher, startup=True )
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
@@ -236,8 +237,9 @@ class manager:
                 self.create_task_log( name )
                 log_created[ name ] = True
 
-            launcher = get_object( 'job_submit_methods', self.submit[name] )( self.dummy_mode, self.config.get('environment') )
-            itask = get_object( 'task_classes', name )( c_time, state, launcher, startup=False, no_reset=no_reset_val )
+            launcher = self.get_task_launcher( name )
+            itask = get_object( 'task_classes', name )\
+                    ( c_time, state, launcher, startup=False, no_reset=no_reset_val )
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
@@ -329,7 +331,7 @@ class manager:
                 itask.log( 'DEBUG', 'spawning')
 
                 # dynamic task object creation by task and module name
-                launcher = get_object( 'job_submit_methods', self.submit[itask.name] )( self.dummy_mode, self.config.get('environment') )
+                launcher = self.get_task_launcher( itask.name )
                 new_task = itask.spawn( 'waiting', launcher )
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
                     # we've reached the stop time: delete the new task 
@@ -652,8 +654,9 @@ class manager:
                 # instantiate the task object
                 #itask = get_object( 'task_classes', name )\
                         #        ( c_time, self.dummy_mode, self.config, 'waiting', self.submit[ name ] )
-                launcher = get_object( 'job_submit_methods', self.submit[name] )( self.dummy_mode, self.config.get('environment') )
-                itask = get_object( 'task_classes', name )( c_time, 'waiting', launcher, startup=False )
+                launcher = self.get_task_launcher( name )
+                itask = get_object( 'task_classes', name )\
+                        ( c_time, 'waiting', launcher, startup=False )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
@@ -779,6 +782,12 @@ class manager:
 
         self.spawn_and_die( task_ids )
 
+
+    def get_task_launcher( self, task_name ):
+        return get_object( 'job_submit_methods', self.submit[task_name] )\
+                ( self.dummy_mode, self.config.get('environment') )
+ 
+
     def spawn_and_die( self, task_ids ):
         # spawn and kill all tasks in task_ids.keys()
 
@@ -805,8 +814,7 @@ class manager:
                 itask.state.set_spawned()
                 itask.log( 'DEBUG', 'forced spawning' )
 
-                # TO DO: the following should reuse code in spawn()?
-                launcher = get_object( 'job_submit_methods', self.submit[itask.name] )( self.dummy_mode, self.config.get('environment') )
+                launcher = self.get_task_launcher( itask.name )
                 new_task = itask.spawn( 'waiting', launcher )
  
                 if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
