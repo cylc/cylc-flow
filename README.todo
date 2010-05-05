@@ -1,5 +1,7 @@
 To Do
 
+* allow task scripts to take command line arguments?
+
 * DOCUMENT: suicide prerequisites: necessary for asynchronous tasks, but 
   could also be useful in cycling systems.
 
