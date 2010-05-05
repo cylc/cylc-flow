@@ -15,6 +15,7 @@
 class oneoff:
     def ready_to_spawn( self ):
         self.state.set_spawned()
+        return False
 
     def has_spawned( self ):
         return True
