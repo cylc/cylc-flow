@@ -15,10 +15,15 @@ from mod_oneoff import oneoff
 import re
 
 class daemon( oneoff, task ):
-    # runs forever and adds outputs as messages matching a pattern come in
+    # A oneoff task that dynamically and adds outputs as messages
+    # matching registered patterns come in. The corresponding real task
+    # may keep running indefinitely, e.g. to watch for incoming
+    # asynchronous data.
 
     def incoming( self, priority, message ):
-        if re.match( self.output_pattern, message ):
-            self.outputs.add( 10, message )
+        # intercept incoming messages and check for a pattern match 
+        for pattern in self.output_patterns:
+            if re.match( pattern, message ):
+                self.outputs.add( 10, message )
 
         task.incoming( self, priority, message )

@@ -10,9 +10,9 @@
 #         |________________________|
 
 
-from cycling_task import cycling_task
+from cycling import cycling
 from mod_pid import pid
 
-class forecast_model( pid, cycling_task ):
+class forecast_model( pid, cycling ):
     # task class with previous instance dependence
     pass

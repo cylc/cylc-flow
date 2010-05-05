@@ -173,7 +173,7 @@ def main( argv ):
 
 
 from daemon import daemon
-from asynchronous_task import asynchronous_task
+from asynchronous import asynchronous
 from forecast_model import forecast_model
 from free_task import free_task
 from mod_oneoff import oneoff

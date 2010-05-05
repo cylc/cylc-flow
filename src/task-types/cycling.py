@@ -41,7 +41,7 @@ state_changed = True
 # manager must instantiate each task with a flattened list of all the
 # state values found in the state dump file.
 
-class cycling_task( task ):
+class cycling( task ):
     
     # Default task deletion: quick_death = True
     # This amounts to a statement that the task has only cotemporal

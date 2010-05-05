@@ -17,7 +17,7 @@ import sys, re
 from task import task
 from mod_nopid import nopid
 
-class asynchronous_task( nopid, task ):
+class asynchronous( nopid, task ):
 
     used_outputs = {}
     

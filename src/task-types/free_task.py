@@ -10,9 +10,9 @@
 #         |________________________|
 
 
-from cycling_task import cycling_task
+from cycling import cycling
 from mod_nopid import nopid
 
-class free_task( nopid, cycling_task ):
+class free_task( nopid, cycling ):
     # task class with no previous instance dependence
     pass

@@ -10,12 +10,10 @@
 #         |________________________|
 
 
-from task_types import task, daemon, asynchronous_task, forecast_model, free_task
+from task import task
+from daemon import daemon
 from mod_oneoff import oneoff
-from mod_sequential import sequential
-from mod_contact import contact
-from mod_catchup_contact import catchup_contact
-from prerequisites_fuzzy import fuzzy_prerequisites
+from asynchronous import asynchronous
 from prerequisites_loose import loose_prerequisites
 from prerequisites import prerequisites
 from outputs import outputs
@@ -66,7 +64,8 @@ class watcher(daemon):
         self.prerequisites.add( 'startup%0 finished')
 
         self.outputs = outputs( self.id )
-        self.output_pattern = 'pass ID\w+ ready'
+        self.output_patterns = []
+        self.output_patterns.append( 'pass ID\w+ ready' )
  
         self.env_vars = {}
         self.directives = {}
@@ -76,7 +75,7 @@ class watcher(daemon):
 
         daemon.__init__( self, initial_state, no_reset )
 
-class products(asynchronous_task):
+class products(asynchronous):
 
     name = 'products'
     short_name = 'products'
@@ -114,9 +113,9 @@ class products(asynchronous_task):
         self.launcher = launcher
         launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )
 
-        asynchronous_task.__init__( self, initial_state, no_reset )
+        asynchronous.__init__( self, initial_state, no_reset )
 
-class upload(asynchronous_task):
+class upload(asynchronous):
 
     name = 'upload'
     short_name = 'upload'
@@ -155,9 +154,9 @@ class upload(asynchronous_task):
         self.launcher = launcher
         launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )
 
-        asynchronous_task.__init__( self, initial_state, no_reset )
+        asynchronous.__init__( self, initial_state, no_reset )
 
-class archive(asynchronous_task):
+class archive(asynchronous):
 
     name = 'archive'
     short_name = 'archive'
@@ -196,9 +195,9 @@ class archive(asynchronous_task):
         self.launcher = launcher
         launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )
 
-        asynchronous_task.__init__( self, initial_state, no_reset )
+        asynchronous.__init__( self, initial_state, no_reset )
 
-class startup(task):
+class startup(oneoff, task):
 
     name = 'startup'
     short_name = 'startup'
