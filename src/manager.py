@@ -653,7 +653,7 @@ class manager:
                 #itask = get_object( 'task_classes', name )\
                         #        ( c_time, self.dummy_mode, self.config, 'waiting', self.submit[ name ] )
                 launcher = get_object( 'job_submit_methods', self.submit[name] )( self.dummy_mode, self.config.get('environment') )
-                itask = get_object( 'task_classes', name )( start_time, 'waiting', launcher, startup=False )
+                itask = get_object( 'task_classes', name )( c_time, 'waiting', launcher, startup=False )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
