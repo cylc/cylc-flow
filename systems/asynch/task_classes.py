@@ -53,7 +53,7 @@ class watcher(daemon):
         else:
             self.tag = tag
 
-        self.id = self.name + '%' + tag
+        self.id = self.name + '%' + self.tag
 
         #if startup:
         #    # overwrite prerequisites for startup case
@@ -61,7 +61,7 @@ class watcher(daemon):
         #    self.prerequisites.add( 'startup%'  + self.c_time + ' finished' )
 
         self.prerequisites = prerequisites( self.id )
-        self.prerequisites.add( 'startup%0 finished')
+        self.prerequisites.add( 'startup%1 finished')
 
         self.outputs = outputs( self.id )
         self.output_patterns = []
@@ -211,8 +211,6 @@ class startup(oneoff, task):
     owner = None
     remote_host = None
 
-    quick_death = True
-
     def __init__( self, tag, initial_state, launcher, startup = False, no_reset = False ):
 
         self.c_time = '2999010101'
@@ -221,7 +219,7 @@ class startup(oneoff, task):
         else:
             self.tag = tag
 
-        self.id = self.name + '%0'
+        self.id = self.name + '%' + self.tag
 
         self.prerequisites = prerequisites( self.id )
 
