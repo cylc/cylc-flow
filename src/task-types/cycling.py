@@ -148,5 +148,5 @@ class cycling( task ):
         summary = task.get_state_summary( self )
         # derived classes can call this method and then 
         # add more information to the summary if necessary.
-        summary[ 'cycle_time' ] = self.c_time
+        summary[ 'cycle_time' ] = self.c_time   # (equiv to self.tag)
         return summary

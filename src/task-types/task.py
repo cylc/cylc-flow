@@ -325,6 +325,7 @@ class task( Pyro.core.ObjBase ):
 
         summary = {}
         summary[ 'name' ] = self.name
+        summary[ 'label' ] = self.tag
         summary[ 'short_name' ] = self.short_name
         summary[ 'state' ] = self.state.get_status()
         summary[ 'n_total_outputs' ] = n_total

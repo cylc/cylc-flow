@@ -125,3 +125,8 @@ class asynchronous( nopid, task ):
     def satisfy_me( self, outputs ):
         self.prerequisites.satisfy_me( outputs, self.__class__.used_outputs.keys() )
         self.death_prerequisites.satisfy_me( outputs )
+
+    def get_state_summary( self ):
+        summary = task.get_state_summary( self )
+        summary[ 'label' ] = self.asyncid
+        return summary
