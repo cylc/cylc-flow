@@ -9,20 +9,17 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
-# asynchronous tasks: cycle time required for some operations, at least for now, so give all 
-# the time of 2999010101 but never change it.
-
+#import pdb
 import sys, re
 from task import task
 from mod_nopid import nopid
 
 class asynchronous( nopid, task ):
+    # a non-cycling task with no previous instance dependence (so it
+    # spawns when it first enters the running state).
 
     used_outputs = {}
     
-    quick_death = True
-
     def __init__( self, state, no_reset ):
         # Call this AFTER derived class initialisation
 
@@ -33,6 +30,15 @@ class asynchronous( nopid, task ):
         # Top level derived classes must define:
         #   self.id 
         #   <class>.instance_count = 0
+
+        m = re.match( '(.*) \| (.*)', state )
+        if m:
+            # loading from state dump
+            ( self.asyncid, state ) = m.groups()
+            self.set_requisites()
+            self.env_vars[ 'ASYNCID' ] = self.asyncid 
+        else:
+            self.asyncid = 'UNSET'
 
         task.__init__( self, state, no_reset )
 
@@ -58,6 +64,7 @@ class asynchronous( nopid, task ):
                         self.outputs.satisfied[ newout ] = False
 
                         self.env_vars[ 'ASYNCID' ] = mg 
+                        self.asyncid = mg
 
                 for deathpre in self.death_prerequisites.get_list():
                     m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
@@ -68,10 +75,49 @@ class asynchronous( nopid, task ):
                         del self.death_prerequisites.satisfied[ deathpre ]
                         self.death_prerequisites.satisfied[ newpre ] = False
 
+    def set_requisites( self ):
+        #pdb.set_trace()
+        mg = self.asyncid
+        for pre in self.prerequisites.get_list():
+            m = re.match( '^(.*)\((.*)\)(.*)', pre )
+            if m:
+                (left, mid, right) = m.groups()
+                if re.match( mid, self.asyncid ):
+                    newpre = left + mg + right
+
+                    del self.prerequisites.satisfied[ pre ]
+                    self.prerequisites.satisfied[ newpre ] = False
+                    self.__class__.used_outputs[ newpre ] = True
+
+        for output in self.outputs.get_list():
+            m = re.match( '^(.*)\((.*)\)(.*)', output )
+            if m:
+                (left, mid, right) = m.groups()
+                if re.match( mid, self.asyncid ):
+                    newout = left + mg + right
+
+                    del self.outputs.satisfied[ output ]
+                    self.outputs.satisfied[ newout ] = False
+
+        for deathpre in self.death_prerequisites.get_list():
+            m = re.match( '^(.*)\((.*)\)(.*)', deathpre )
+            if m:
+                (left, mid, right) = m.groups()
+                if re.match( mid, self.asyncid ):
+                    newpre = left + mg + right
+
+                    del self.death_prerequisites.satisfied[ deathpre ]
+                    self.death_prerequisites.satisfied[ newpre ] = False
+
         # if task is asynchronous it has
         #  - used_outputs
         #  - loose prerequisites
         #  - death prerequisites
+
+    def dump_state( self, FILE ):
+        # Write state information to the state dump file
+        # This must be compatible with __init__() on reload
+        FILE.write( self.id + ' : ' + self.asyncid + ' | ' + self.state.dump() + '\n' )
 
     def satisfy_me( self, outputs ):
         self.prerequisites.satisfy_me( outputs, self.__class__.used_outputs.keys() )

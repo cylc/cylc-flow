@@ -31,7 +31,6 @@ class task_state:
 
     def __init__( self, initial_state, no_reset ):
 
-
         self.state = {}
 
         if not initial_state:
