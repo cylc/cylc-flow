@@ -339,3 +339,4 @@ class task( Pyro.core.ObjBase ):
 
     def next_tag( self ):
         raise SystemExit( "OVERRIDE ME" )
+

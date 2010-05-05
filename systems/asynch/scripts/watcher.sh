@@ -23,19 +23,21 @@ check-env.sh || exit 1
 
 # EXECUTE THE TASK ...
 if [[ -f $CYLC_TMPDIR/processed.txt ]]; then
+    # restart: CONTINUE
     LAST_DONE=$( tail -n 1 $CYLC_TMPDIR/processed.txt )
     COUNT=${LAST_DONE#ID}
+    #COUNT=$(( COUNT + 10 ))
     echo COUNT RESET TO $COUNT
 else
-    COUNT=0
+    COUNT=10
 fi
 
 while true; do
     sleep 10
-    COUNT=$(( COUNT + 10 ))
     touch $CYLC_TMPDIR/pass-ID${COUNT}.nc
     echo ID$COUNT >> $CYLC_TMPDIR/processed.txt
     cylc message "pass ID$COUNT ready"
+    COUNT=$(( COUNT + 10 ))
 done
 
 # SUCCESS MESSAGE
