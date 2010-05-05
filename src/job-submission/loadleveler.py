@@ -17,7 +17,7 @@ from job_submit import job_submit
 class loadleveler( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
+    def __init__( self, dummy_mode, global_env ):
 
         # default directives
         directives = {}
@@ -38,7 +38,7 @@ class loadleveler( job_submit ):
         for d in extra_directives.keys():
             directives[ d ] = extra_directives[ d ]
 
-        job_submit.__init__( self, task_id, ext_task, config, extra_vars, directives, owner, host )
+        job_submit.__init__( self, dummy_mode, global_env )
         self.method_description = 'by loadleveler, basic [llsubmit]'
 
 

@@ -17,7 +17,7 @@ from loadleveler import loadleveler
 
 class loadleveler_ecoconnect( loadleveler ):
 
-    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
+    def __init__( self, dummy_mode, global_env ):
         # adjust task owner's username for devel, test, or oper.
         cylc_user = os.environ['USER']
         self.system = re.sub( '^.*_', '', cylc_user )  
@@ -42,7 +42,7 @@ class loadleveler_ecoconnect( loadleveler ):
         for d in extra_directives.keys():
             directives[ d ] = extra_directives[ d ]
 
-        loadleveler.__init__( self, task_id, ext_task, config, extra_vars, directives, owner, host )
+        loadleveler.__init__( self, dummy_mode, global_env )
         self.method_description = 'by loadleveler, EcoConnect [llsubmit]'
 
     def write_job_env( self ):

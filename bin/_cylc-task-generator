@@ -358,7 +358,7 @@ from dynamic_instantiation import get_object
             else:
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
-        task_init_def_args = 'c_time, dummy_mode, config, initial_state, submit, startup = False, no_reset = False'
+        task_init_def_args = 'c_time, initial_state, launcher, startup = False, no_reset = False'
         task_init_args = 'initial_state, no_reset'
 
         if contact:
@@ -450,6 +450,7 @@ from dynamic_instantiation import get_object
         FILE.write( indent + 'self.c_time = self.nearest_c_time( c_time )\n' )
         FILE.write( indent + 'self.tag = self.c_time\n' )
         FILE.write( indent + 'self.id = self.name + \'%\' + self.c_time\n' )
+        # FIXME ASYNC
         FILE.write( indent + 'hour = self.c_time[8:10]\n\n' )
 
         if contact:
@@ -616,17 +617,8 @@ from dynamic_instantiation import get_object
                 val = interpolate_cycle_times( "'" + val + "'" )
                 FILE.write( indent + 'self.directives[' + var + '] = ' + val + '\n' )
 
-        FILE.write( indent + '# in dummy mode, replace the external task with _cylc-dummy-task\n' )
-        FILE.write( indent + 'if dummy_mode:\n' )
-        FILE.write( indent + indent + 'self.external_task = \'_cylc-dummy-task\'\n\n')
-
-        # job submission method (must be after env_vars)
-        FILE.write( indent + 'modname = \'job_submit_methods\'\n' )
-        FILE.write( indent + 'if dummy_mode:\n' )
-        FILE.write( indent + indent + 'clsname = \'background\'\n' )
-        FILE.write( indent + 'else:\n' )
-        FILE.write( indent + indent + 'clsname = submit\n' )
-        FILE.write( indent + 'self.launcher = get_object( modname, clsname )( self.id, self.external_task, config, self.env_vars, self.directives, self.owner, self.remote_host )\n\n' )
+        FILE.write( '\n' + indent + 'self.launcher = launcher\n' )
+        FILE.write( indent + 'launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )\n\n' )
 
         # forecast model restarts
         if fcmodel:

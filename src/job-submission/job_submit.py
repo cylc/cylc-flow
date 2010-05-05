@@ -35,11 +35,14 @@ import cycle_time
 
 class job_submit:
 
-    def __init__( self, task_id, ext_task, config, extra_vars, extra_directives, owner, host ):
+    def configure( self, task_id, ext_task, extra_vars, extra_directives, owner, host ): 
 
-        self.task = ext_task
+        if self.dummy_mode:
+            self.task = "_cylc-dummy-task"
+        else:
+            self.task = ext_task
+
         self.owner = owner
-        self.config = config
 
         if host:
             # DOCUMENT THIS: CAN USE ENVIRONMENT VARS IN HOST NAME!
@@ -49,7 +52,6 @@ class job_submit:
         self.extra_vars = extra_vars
         self.directives = extra_directives
 
-        # extract cycle time
         self.cycle_time = None
         try:
             ( self.task_name, tag ) = task_id.split( '%' )
@@ -69,6 +71,11 @@ class job_submit:
         self.task_env[ 'CYCLE_TIME' ] = self.cycle_time
         self.task_env[ 'TASK_NAME'  ] = self.task_name
 
+
+    def __init__( self, dummy_mode, global_env ):
+
+        self.dummy_mode = dummy_mode
+        self.global_env = global_env
         self.method_description = 'Job Submit base class: OVERRIDE ME'
 
     def interpolate( self, env ):
@@ -104,10 +111,9 @@ class job_submit:
         # combine environment dicts:
         big_env = {}
         
-        # global variables from config
-        env = self.config.get( 'environment' )
-        for var in env:
-            big_env[ var ] = str( env[ var] )
+        # global environment variables
+        for var in self.global_env:
+            big_env[ var ] = str( self.global_env[ var] )
 
         # general task specific variables
         env = self.task_env
