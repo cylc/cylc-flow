@@ -236,10 +236,8 @@ class manager:
                 self.create_task_log( name )
                 log_created[ name ] = True
 
-            #itask = get_object( 'task_classes', name )\
-                    #        ( c_time, self.dummy_mode, self.config, state, self.submit[ name ], no_reset=no_reset_val )
             launcher = get_object( 'job_submit_methods', self.submit[name] )( self.dummy_mode, self.config.get('environment') )
-            itask = get_object( 'task_classes', name )( c_time, 'waiting', launcher, startup=True, no_reset=no_reset_val )
+            itask = get_object( 'task_classes', name )( c_time, 'waiting', launcher, startup=False, no_reset=no_reset_val )
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
@@ -655,7 +653,7 @@ class manager:
                 #itask = get_object( 'task_classes', name )\
                         #        ( c_time, self.dummy_mode, self.config, 'waiting', self.submit[ name ] )
                 launcher = get_object( 'job_submit_methods', self.submit[name] )( self.dummy_mode, self.config.get('environment') )
-                itask = get_object( 'task_classes', name )( start_time, 'waiting', launcher, startup=True )
+                itask = get_object( 'task_classes', name )( start_time, 'waiting', launcher, startup=False )
 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
