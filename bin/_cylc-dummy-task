@@ -105,6 +105,8 @@ if __name__ == '__main__':
     groupname = os.environ['CYLC_NS_GROUP'] 
     pns_host = os.environ['CYLC_NS_HOST'] 
 
+    print "This is _cylc-dummy-task, masquerading as " + task_id
+
     clock_rate = 3600  # seconds per hour
     if 'CYLC_CLOCK_RATE' in os.environ:
         clock_rate = int( os.environ['CYLC_CLOCK_RATE'] )
