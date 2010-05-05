@@ -100,10 +100,6 @@ log = logging.getLogger( 'main.' + task_name )
 pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
         logging.DEBUG, False, None )
 
-# intantiate the task
-task = get_object( 'task_classes', task_name ) \
-        ( ctime, False, config, 'waiting', config.get('job submit class')[ task_name ] )
-
 # set global (all tasks) environment variables-------------------------
 config.put_env( 'CYLC_MODE', 'run-task' )
 config.put_env( 'CYLC_NS_HOST',  'NULL' )  # may be an IP number
@@ -112,5 +108,11 @@ config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
 config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
 config.put_env( 'CYLC_SYSTEM_NAME', name )
 
-# SUBMIT THE TASK TO RUN
+# intantiate the task--------------------------------------------------
+glbl_env = config.get('environment')
+job_sub_method = config.get('job submit class')[ task_name ]
+launcher = get_object( 'job_submit_methods', job_sub_method )( False, glbl_env )
+task = get_object( 'task_classes', task_name )( ctime, 'waiting', launcher, startup=True )
+
+# SUBMIT THE TASK TO RUN-----------------------------------------------
 task.run_external_task()
