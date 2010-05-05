@@ -172,7 +172,10 @@ def main( argv ):
 #         |________________________|
 
 
-from task_types import daemon, asynchronous_task, forecast_model, free_task
+from daemon import daemon
+from asynchronous_task import asynchronous_task
+from forecast_model import forecast_model
+from free_task import free_task
 from mod_oneoff import oneoff
 from mod_sequential import sequential
 from mod_contact import contact

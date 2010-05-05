@@ -91,6 +91,10 @@ class cycling_task( task ):
         nearest_rt = cycle_time.increment( rt, incr )
         return nearest_rt
 
+    def ready_to_spawn( self ):
+        # return True or False
+        self.log( 'CRITICAL', 'ready_to_spawn(): OVERRIDE ME')
+        sys.exit(1)
 
     def next_c_time( self, rt = None):
         # return the next cycle time, or the next cycle time

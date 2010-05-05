@@ -301,9 +301,9 @@ class task( Pyro.core.ObjBase ):
         return self.state.has_spawned()
 
     def ready_to_spawn( self ):
-        return False
-        #self.log( 'CRITICAL', 'derived classes must override ready_to_spawn()')
-        #sys.exit(1)
+        # return True or False
+        self.log( 'CRITICAL', 'ready_to_spawn(): OVERRIDE ME')
+        sys.exit(1)
 
     def done( self ):
         # return True if task has finished and spawned
