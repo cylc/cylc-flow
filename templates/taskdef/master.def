@@ -98,6 +98,17 @@
     VARNAME1 value1
     VARNAME2 value2
 
+[%COMMANDLINE]
+    # - Strings defined here are concatenated to construct a commandline
+    #   to pass on to the task when it is executed.
+    # - Works for wrapped tasks.
+    # - May contain local environment variables, %ENVIRONMENT variables 
+    #   (above), and $(CYCLE_TIME) with arithmetic (see above).
+
+    --analysis-time=$(CYCLE_TIME) -v
+    -t $TMPDIR
+
+
 #----------------------------------------------------------------------
 [%DIRECTIVES]
     # - Scheduler directives for qsub, loadleveler, or similar.

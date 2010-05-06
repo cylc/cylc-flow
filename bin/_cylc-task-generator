@@ -144,7 +144,7 @@ def main( argv ):
     task_def_files = argv[1:]
 
     allowed_keys = [ 'NAME', 'OWNER', 'CYCLES', 'TASK',
-            'REMOTE_HOST', 'DIRECTIVES',
+            'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
             'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 
@@ -601,27 +601,41 @@ from dynamic_instantiation import get_object
                     FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
 
         # environment variables
-        FILE.write( indent + 'self.env_vars = {}\n' )
+        FILE.write( '\n' + indent + 'env_vars = {}\n' )
         if 'ENVIRONMENT' in parsed_def.keys():
             for pair in parsed_def[ 'ENVIRONMENT' ]:
                 ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
                 # interpolate $(CYCLE_TIME [+/-n]) 
                 val = interpolate_cycle_times( "'" + val + "'" )
-                FILE.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
+                FILE.write( indent + 'env_vars[' + var + '] = ' + val + '\n' )
 
-         # batch queue scheduler directives (qsub or loadleveler)
-        FILE.write( indent + 'self.directives = {}\n' )
+        # command line
+        FILE.write( '\n' + indent + 'commandline = []\n' )
+        if 'COMMANDLINE' in parsed_def.keys():
+            for line in parsed_def[ 'COMMANDLINE' ]:
+                line = "'" + line + "'"
+                # interpolate $(CYCLE_TIME [+/-n]) 
+                line = interpolate_cycle_times( line )
+                FILE.write( indent + 'commandline.append(' + line + ')\n' )
+
+        # batch queue scheduler directives (qsub or loadleveler)
+        FILE.write( '\n' + indent + 'directives = {}\n' )
         if 'DIRECTIVES' in parsed_def.keys():
             for pair in parsed_def[ 'DIRECTIVES' ]:
                 ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
                 # interpolate $(CYCLE_TIME [+/-n]) 
                 val = interpolate_cycle_times( "'" + val + "'" )
-                FILE.write( indent + 'self.directives[' + var + '] = ' + val + '\n' )
+                FILE.write( indent + 'directives[' + var + '] = ' + val + '\n' )
+
+        FILE.write( '\n' + indent + 'params = {}\n' )
+        FILE.write( indent + 'params[ "env" ] = env_vars\n' )
+        FILE.write( indent + 'params[ "dir" ] = directives\n' )
+        FILE.write( indent + 'params[ "com" ] = commandline\n' )
 
         FILE.write( '\n' + indent + 'self.launcher = launcher\n' )
-        FILE.write( indent + 'launcher.configure( self.id, self.__class__.external_task, self.env_vars, self.directives, self.__class__.owner, self.__class__.remote_host )\n\n' )
+        FILE.write( indent + 'launcher.configure( self.id, self.__class__.external_task, params, self.__class__.owner, self.__class__.remote_host )\n\n' )
 
         # forecast model restarts
         if fcmodel:

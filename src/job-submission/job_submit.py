@@ -35,7 +35,13 @@ import cycle_time
 
 class job_submit:
 
-    def configure( self, task_id, ext_task, extra_vars, extra_directives, owner, host ): 
+    def __init__( self, dummy_mode, global_env ):
+        self.dummy_mode = dummy_mode
+        self.global_env = global_env
+        self.method_description = 'Job Submit base class: OVERRIDE ME'
+
+
+    def configure( self, task_id, ext_task, params, owner, host ): 
 
         if self.dummy_mode:
             self.task = "_cylc-dummy-task"
@@ -49,8 +55,9 @@ class job_submit:
             self.remote_host = self.interpolate( host )
 
         self.task_id = task_id
-        self.extra_vars = extra_vars
-        self.directives = extra_directives
+        self.extra_vars  = params[ 'env' ]
+        self.directives  = params[ 'dir' ]
+        self.commandline = params[ 'com' ]
 
         self.cycle_time = None
         try:
@@ -71,12 +78,17 @@ class job_submit:
         self.task_env[ 'CYCLE_TIME' ] = self.cycle_time
         self.task_env[ 'TASK_NAME'  ] = self.task_name
 
+    def interpolate_local_env( self, string ):
 
-    def __init__( self, dummy_mode, global_env ):
+        interp_string = string
+        for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", interp_string ):
+            if var in os.environ:
+                # replace value with the env value
+                val = os.environ[ var ]
+                interp_string = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, interp_string )
 
-        self.dummy_mode = dummy_mode
-        self.global_env = global_env
-        self.method_description = 'Job Submit base class: OVERRIDE ME'
+        return interp_string
+
 
     def interpolate( self, env ):
         # Interpolate any variables in env values: $VARNAME or ${VARNAME}.
@@ -165,8 +177,15 @@ class job_submit:
         self.get_jobfile()
         # write cylc, system-wide, and task-specific environment vars 
         self.write_job_env()
+
+        # interpolate env vars in the commandline
+        # don't need to interpolate local task-specific vars as these
+        # will be defined explicitly above the commandline itself.
+        commandline = ' '.join( self.commandline ) 
+        commandline = self.interpolate_local_env( commandline )
+
         # write the task execution line
-        self.jobfile.write( self.task )
+        self.jobfile.write( self.task + ' ' + commandline )
         # close the jobfile
         self.jobfile.close() 
 

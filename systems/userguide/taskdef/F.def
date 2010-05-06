@@ -30,7 +30,11 @@
 
 %ENVIRONMENT
     WRAP F.sh
+    FOO foo
     ANALYSIS_TIME $(CYCLE_TIME)
+
+%COMMANDLINE
+    --foo=$FOO
 
 %PREREQUISITES
     "storm surge fields ready for $(CYCLE_TIME)"

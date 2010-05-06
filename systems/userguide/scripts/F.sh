@@ -22,6 +22,12 @@
 # check environment
 check-env.sh || exit 1
 
+echo
+for ARG in $@; do
+    echo commandline: $ARG
+done
+echo
+
 # check prerequisites
 PRE=$CYLC_TMPDIR/storm-surge-${ANALYSIS_TIME}.nc
 if [[ ! -f $PRE ]]; then

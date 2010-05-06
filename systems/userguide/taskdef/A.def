@@ -28,7 +28,13 @@
     A.sh
 
 %ENVIRONMENT
+    FOO $HOME
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
+
+%COMMANDLINE
+    --reference_time=$(CYCLE_TIME + 6)
+    foo-$FOO
+    baz-$USER
 
 %PREREQUISITES
     "obs data ready for $(CYCLE_TIME)"

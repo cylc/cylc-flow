@@ -27,6 +27,12 @@ cylc message --started
 # check environment
 check-env.sh || exit 1
 
+echo
+for ARG in $@; do
+    echo commandline: $ARG
+done
+echo
+
 # CHECK PREREQUISITES
 ONE=$CYLC_TMPDIR/obs-${CYCLE_TIME}.nc
 TWO=$CYLC_TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart

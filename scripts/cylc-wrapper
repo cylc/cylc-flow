@@ -18,7 +18,7 @@
 
 # It does the following:
 # (1) sends special 'started' message
-# (2) executes the wrapped task
+# (2) executes the wrapped task (passes any commandline on)
 # (3) sends the special 'succeed' message on completion,
 #     or the special 'failed' message if an error occurs.
 
@@ -41,7 +41,7 @@ fi
 cylc message --started
 
 # execute the wrapped task and check for success or failure
-if $WRAP; then 
+if $WRAP $@; then 
     # succeeded
     cylc message --all-outputs-completed
     cylc message --succeeded
