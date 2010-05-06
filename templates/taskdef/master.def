@@ -88,6 +88,7 @@
     # - Environment variables to export in the task execution environment
     # - The task name and cycle time, etc., are automatically exported.
     # - Values can contain the cycle time variable, $(CYCLE_TIME), which
+    # - Strings containing spaces should NOT be quoted
     #   will be interpolated by cylc and can make use of cylc's internal
     #   cycle time arithmetic, e.g. $( CYCLE_TIME [+/-N] ), and shell 
     #   environment variables which will be passed on to the shell.
@@ -97,16 +98,24 @@
     #   parentheses to distinguish from shell environment variables.
     VARNAME1 value1
     VARNAME2 value2
+    ANIMAL foxy fox  # NOT QUOTED!
 
 [%COMMANDLINE]
-    # - Strings defined here are concatenated to construct a commandline
-    #   to pass on to the task when it is executed.
-    # - Works for wrapped tasks.
-    # - May contain local environment variables, %ENVIRONMENT variables 
-    #   (above), and $(CYCLE_TIME) with arithmetic (see above).
+    # - Anything listed here is concatenated to construct a commandline
+    #   that will be passed to the task when it is executed.
+    # - You can list all arguments on one line, or use multiple lines.
+    # - cylc-wrapper passes the command line through to wrapped tasks.
+    # - The command line may contain:
+    #     (i) local environment variables such as $HOME
+    #    (ii) task-specific %ENVIRONMENT variables (above)
+    #   (iii) cylc $(CYCLE_TIME) with +/- arithmetic (see above).
+    # - Strings containing spaces must be enclosed in DOUBLE QUOTES.
+    #   (and if the external task is a shell script, it must be able
+    #   to extracting quoted strings from the command line.)
 
-    --analysis-time=$(CYCLE_TIME) -v
-    -t $TMPDIR
+    --next-analysis-time $(CYCLE_TIME + 6)
+    -v -h $HOME
+    --quoted-arg="The quick brown $ANIMAL jumped" 
 
 
 #----------------------------------------------------------------------

@@ -28,13 +28,13 @@
     A.sh
 
 %ENVIRONMENT
-    FOO $HOME
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
+    ANIMAL foxy fox
 
 %COMMANDLINE
-    --reference_time=$(CYCLE_TIME + 6)
-    foo-$FOO
-    baz-$USER
+    # A.sh task 2 commandline args: --file=FILE SENTENCE
+    --file=${HOME}/data-$(CYCLE_TIME + 6).nc
+    "the quick brown $ANIMAL"
 
 %PREREQUISITES
     "obs data ready for $(CYCLE_TIME)"

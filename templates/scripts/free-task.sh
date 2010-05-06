@@ -19,6 +19,24 @@ set -e; trap 'cylc message --failed' ERR
 # TASK STARTED
 cylc message --started
 
+# PARSE THE COMMAND LINE (SEE taskdef %COMMANDLINE)
+# (only if this script takes input from the command line) 
+NUM_EXPECTED_ARGS=3
+if (( $# != NUM_EXPECTED_ARGS )); then
+    cylc message -p CRITICAL "bad command line (see task stdout)"
+    cylc message --failed
+    echo "ERROR, bad command line:"
+    COUNT=1
+    for ARG in "$@"; do
+        echo " ${COUNT}: $ARG"
+        COUNT=$((COUNT + 1 ))
+    done
+    exit 1
+fi
+ARG1=$1
+ARG2=$2
+ARG3=$3
+
 # CHECK TASK PREREQUISITES
 # {CODE: define $CYCLE_TIME dependent input files in $PREREQUISITES}
 for PRE in $PREREQUISITES; do

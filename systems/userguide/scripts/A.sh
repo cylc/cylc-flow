@@ -27,10 +27,38 @@ cylc message --started
 # check environment
 check-env.sh || exit 1
 
+# PARSE THE COMMAND LINE (SEE taskdef %COMMANDLINE)
+# This script expects: --file=FILE SENTENCE
+NUM_EXPECTED_ARGS=2
+BAD_COMMAND_LINE=false
+if (( $# != NUM_EXPECTED_ARGS )); then
+    BAD_COMMAND_LINE=true
+else
+    FILEARG=$1
+    SENTENCE=$2
+    if [[ $FILEARG != --file=* ]]; then
+        BAD_COMMAND_LINE=true
+    else
+        FILE=${FILEARG#--file=}
+    fi
+fi
+
+if $BAD_COMMAND_LINE; then
+    cylc message -p CRITICAL "bad command line (see task stdout)"
+    cylc message --failed
+    echo "ERROR, bad command line:"
+    COUNT=1
+    for ARG in "$@"; do
+        echo " ${COUNT}: $ARG"
+        COUNT=$((COUNT + 1 ))
+    done
+    exit 1
+fi
+
 echo
-for ARG in $@; do
-    echo commandline: $ARG
-done
+echo "Command line:"
+echo " FILE:     $FILE"
+echo " SENTENCE: $SENTENCE"
 echo
 
 # CHECK PREREQUISITES
