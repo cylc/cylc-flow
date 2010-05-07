@@ -17,7 +17,8 @@ from job_submit import job_submit
 class loadleveler( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def __init__( self, dummy_mode, global_env ):
+    def configure( self, task_id, ext_task, params, owner, host ): 
+        job_submit.configure( self, task_id, ext_task, params, owner, host ) 
 
         # default directives
         directives = {}
@@ -27,6 +28,7 @@ class loadleveler( job_submit ):
         directives[ 'job_type' ] = 'serial'
         directives[ 'output'   ] = '$(job_name)-$(jobid).out'
         directives[ 'error'    ] = '$(job_name)-$(jobid).err'
+
         if owner:
             # for 'sudo llsubmit' the working dir must be owned by (or
             # writeable by?) the job owner
@@ -35,10 +37,12 @@ class loadleveler( job_submit ):
             directives[ 'initialdir' ] = os.environ[ 'HOME' ]
 
         # add (or override with) taskdef directives
-        for d in extra_directives.keys():
-            directives[ d ] = extra_directives[ d ]
+        for d in self.directives:
+            directives[ d ] = self.directives[ d ]
 
-        job_submit.__init__( self, dummy_mode, global_env )
+        # now replace
+        self.directives = directives
+
         self.method_description = 'by loadleveler, basic [llsubmit]'
 
 
@@ -57,7 +61,8 @@ class loadleveler( job_submit ):
         self.write_job_env()
 
         # write the task execution line
-        self.jobfile.write( self.task )
+        self.jobfile.write( self.task + " " + self.commandline + "\n")
+ 
         # close the jobfile
         self.jobfile.close() 
 

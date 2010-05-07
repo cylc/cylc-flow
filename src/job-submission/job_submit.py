@@ -78,6 +78,12 @@ class job_submit:
         self.task_env[ 'CYCLE_TIME' ] = self.cycle_time
         self.task_env[ 'TASK_NAME'  ] = self.task_name
 
+        # interpolate env vars in the commandline
+        # don't need to interpolate local task-specific vars as these
+        # will be defined explicitly above the commandline itself.
+        commandline = ' '.join( self.commandline ) 
+        self.commandline = self.interpolate_local_env( commandline )
+
     def interpolate_local_env( self, string ):
         interp_string = string
         for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", interp_string ):
@@ -88,7 +94,8 @@ class job_submit:
 
         # replace '@' with '$' (env vars to evaluate at execution time)
         # CURRENT LIMITATION: NO '@'S ALLOWED EXCEPT FOR THIS PURPOSE
-        interp_string = re.sub( '@', '$', interp_string )
+        # THIS SCREWS UP FILE_TRANSFER URLS!!!!!!!!!!
+        #interp_string = re.sub( '@', '$', interp_string )
 
         return interp_string
 
@@ -120,7 +127,8 @@ class job_submit:
 
             # 3. replace '@' with '$' (env vars to evaluate at execution time)
             # CURRENT LIMITATION: NO '@'S ALLOWED EXCEPT FOR THIS PURPOSE
-            value = re.sub( '@', '$', value )
+            # THIS SCREWS UP FILE_TRANSFER URLS!!!!!!!!!!
+            # value = re.sub( '@', '$', value )
 
             interpolated_env[ variable ] = value
 
@@ -185,14 +193,8 @@ class job_submit:
         # write cylc, system-wide, and task-specific environment vars 
         self.write_job_env()
 
-        # interpolate env vars in the commandline
-        # don't need to interpolate local task-specific vars as these
-        # will be defined explicitly above the commandline itself.
-        commandline = ' '.join( self.commandline ) 
-        commandline = self.interpolate_local_env( commandline )
-
         # write the task execution line
-        self.jobfile.write( self.task + " " + commandline + "\n")
+        self.jobfile.write( self.task + " " + self.commandline + "\n")
         # close the jobfile
         self.jobfile.close() 
 

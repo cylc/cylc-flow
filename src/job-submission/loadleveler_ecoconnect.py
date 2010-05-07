@@ -17,32 +17,30 @@ from loadleveler import loadleveler
 
 class loadleveler_ecoconnect( loadleveler ):
 
-    def __init__( self, dummy_mode, global_env ):
+    def configure( self, task_id, ext_task, params, owner, host ): 
+        loadleveler.configure( self, task_id, ext_task, params, owner, host ) 
+
         # adjust task owner's username for devel, test, or oper.
         cylc_user = os.environ['USER']
-        self.system = re.sub( '^.*_', '', cylc_user )  
-
+        system = re.sub( '^.*_', '', cylc_user )  
         self.cylc_home = os.environ['HOME']
 
-        if not owner:
+        if not self.owner:
             raise SystemExit( "No owner for EcoConnect task " + task_id )
 
-        if re.match( '^.*_oper', owner ):
+        if re.match( '^.*_oper', self.owner ):
             # strip off the system suffix
-            owner = re.sub( '_oper$', '', owner )
+            self.owner = re.sub( '_oper$', '', self.owner )
         # append the correct system suffix
-        owner += '_' + self.system
+        self.owner += '_' + system
 
-        directives = {}
-        #!!!! directives[ 'class'    ] = self.system # !!!!
-        directives[ 'class'       ] = 'test_linux'
-        directives[ 'initialdir' ] = '~' + owner    # owner's home directory
+        # ecoconnect-specific loadleveler directives
+        # CHANGE ONCE PROPER LOADLEVELER QUEUES ARE CONFIGURED
+        #!!!! self.directives[ 'class'    ] = self.system
+        self.directives[ 'class'       ] = 'test_linux'
+        # and initialdir, as owner has changed above
+        self.directives[ 'initialdir' ] = '~' + self.owner
 
-        # add (or override with) taskdef directives
-        for d in extra_directives.keys():
-            directives[ d ] = extra_directives[ d ]
-
-        loadleveler.__init__( self, dummy_mode, global_env )
         self.method_description = 'by loadleveler, EcoConnect [llsubmit]'
 
     def write_job_env( self ):
