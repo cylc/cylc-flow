@@ -86,30 +86,55 @@
 #----------------------------------------------------------------------
 [%ENVIRONMENT]
     # - Environment variables to export in the task execution environment
-    # - The task name and cycle time, etc., are automatically exported.
-    # - Values can contain the cycle time variable, $(CYCLE_TIME), which
-    # - Strings containing spaces should NOT be quoted
-    #   will be interpolated by cylc and can make use of cylc's internal
-    #   cycle time arithmetic, e.g. $( CYCLE_TIME [+/-N] ), and shell 
-    #   environment variables which will be passed on to the shell.
-    #   Thus $(CYCLE_TIME) is equavilent to $CYCLE_TIME except that the
-    #   former version will be interpolated before reaching the shell.
-    #   and can use cylc's internal cycle time arithmetic - note the
-    #   parentheses to distinguish from shell environment variables.
-    VARNAME1 value1
-    VARNAME2 value2
-    ANIMAL foxy fox  # NOT QUOTED!
+    # - The following variables are automatically set:
+    #     $TASK_ID, $TASK_NAME, $CYCLE_TIME, 
+    #     $CYLC_SYSTEM_NAME, $CYLC_MODE, 
+    #     $CYLC_NS_HOST, $CYLC_NS_GROUP, 
+    #     $CYLC_DIR, $CYLC_SYSTEM_DIR (*)
+    #   The latter two are used to give the executing task access to
+    #   cylc itself and to your system-specific scripts. They
+    #   necessarily refer to the local cylc installation. For tasks 
+    #   that will be submitted on a remote machine, you can override
+    #   these variables in this section with the correct remote paths.
+    # - STRINGS CONTAINING SPACES SHOULD NOT BE QUOTED.
+    # - Values may contain:
+    #     (i) local environment variables, e.g. $HOME or ${HOME}
+    #       These are interpolated before submitting the task.
+    #    (ii) $(CYCLE_TIME [+/-N])   # NOTE ROUND PARENTHESES
+    #       These are interpolated by cylc before submitting the task.
+    #       $(CYCLE_TIME) without +/-N is equivalent to $CYCLE_TIME.
+    #   (iii) Delayed environment variables, e.g. @HOME or @{HOME}
+    #  WARNING: YOU CAN NOT CURRENTLY USE '@' FOR OTHER PURPOSES!
+    #       These will be replaced with literal '$HOME' etc in the job
+    #       script that is submitted to execute the task and thus will
+    #       not be evaluated until the task executes (may be required
+    #       for jobs that run on remote hosts).
+    #    (iv) Other variables defined in this section.
+
+    VARNAME     value
+    REMOTE_HOME @HOME
+    ANIMAL      foxy fox  # NOT QUOTED!
 
 [%COMMANDLINE]
-    # - Anything listed here is concatenated to construct a commandline
-    #   that will be passed to the task when it is executed.
+    # - Any strings listed here are concatenated to construct a
+    #   commandline that will be passed to the task when it is executed.
     # - You can list all arguments on one line, or use multiple lines.
     # - cylc-wrapper passes the command line through to wrapped tasks.
     # - The command line may contain:
     #     (i) local environment variables such as $HOME
-    #    (ii) task-specific %ENVIRONMENT variables (above)
-    #   (iii) cylc $(CYCLE_TIME) with +/- arithmetic (see above).
-    # - Strings containing spaces must be enclosed in DOUBLE QUOTES.
+    #       These are interpolated prior to submitting the task.
+    #    (ii) cylc $(CYCLE_TIME) with +/- arithmetic (see above).
+    #   (iii) task-specific %ENVIRONMENT variables defined above.
+    #       These are not explicitly interpolated before constructing
+    #       the command line, but the effect is the same because they
+    #       are defined beforehand in the environment section.
+    #    (iv) Delayed environment variables, e.g. @HOME or @{HOME}.
+    #  WARNING: YOU CAN NOT CURRENTLY USE '@' FOR OTHER PURPOSES!
+    #       These will be replaced with literal '$HOME' etc in the job
+    #       script that is submitted to execute the task and thus will
+    #       not be evaluated until the task executes (may be required
+    #       for jobs that run on remote hosts).
+    # - STRINGS CONTAINING SPACES MUST BE ENCLOSED IN DOUBLE QUOTES.
     #   (and if the external task is a shell script, it must be able
     #   to extracting quoted strings from the command line.)
 

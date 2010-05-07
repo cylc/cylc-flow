@@ -79,13 +79,16 @@ class job_submit:
         self.task_env[ 'TASK_NAME'  ] = self.task_name
 
     def interpolate_local_env( self, string ):
-
         interp_string = string
         for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", interp_string ):
             if var in os.environ:
                 # replace value with the env value
                 val = os.environ[ var ]
                 interp_string = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, interp_string )
+
+        # replace '@' with '$' (env vars to evaluate at execution time)
+        # CURRENT LIMITATION: NO '@'S ALLOWED EXCEPT FOR THIS PURPOSE
+        interp_string = re.sub( '@', '$', interp_string )
 
         return interp_string
 
@@ -114,6 +117,10 @@ class job_submit:
                     # replace value with the env value
                     val = os.environ[ var ]
                     value = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, value )
+
+            # 3. replace '@' with '$' (env vars to evaluate at execution time)
+            # CURRENT LIMITATION: NO '@'S ALLOWED EXCEPT FOR THIS PURPOSE
+            value = re.sub( '@', '$', value )
 
             interpolated_env[ variable ] = value
 
@@ -185,7 +192,7 @@ class job_submit:
         commandline = self.interpolate_local_env( commandline )
 
         # write the task execution line
-        self.jobfile.write( self.task + ' ' + commandline )
+        self.jobfile.write( self.task + " " + commandline + "\n")
         # close the jobfile
         self.jobfile.close() 
 

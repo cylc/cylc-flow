@@ -52,7 +52,7 @@ numbers=left,
 
 \lstdefinelanguage{cylctaskdef}
 {
-morekeywords={NAME,DESCRIPTION,TYPE,CONTACT_DELAY,OWNER,REMOTE_HOST,CYCLES,TASK,ENVIRONMENT,DIRECTIVES,ESTIMATED_RUN_TIME,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,ESTIMATED_RESTART_OUTPUT_TIMES,NO_NONCOTEMPORAL_DEPENDANTS,ONEOFF_FOLLOW_ON},
+morekeywords={NAME,DESCRIPTION,TYPE,CONTACT_DELAY,OWNER,REMOTE_HOST,CYCLES,TASK,ENVIRONMENT,COMMANDLINE,DIRECTIVES,ESTIMATED_RUN_TIME,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,ESTIMATED_RESTART_OUTPUT_TIMES,NO_NONCOTEMPORAL_DEPENDANTS,ONEOFF_FOLLOW_ON},
 sensitive=false,
 morecomment=[l]{\#},
 morestring=[b]\",
@@ -1567,7 +1567,7 @@ default job submission method that will be used to run all tasks in the
 system except for those, if any, that are singled out to use a different
 method (also via the system config file).
 
-Cylc currently ships with three simple job submit methods:
+Cylc currently ships with the following job submit methods:
 
 \begin{itemize}
     \item \lstinline=background= - submit a job to run on the background
@@ -1578,44 +1578,65 @@ Cylc currently ships with three simple job submit methods:
      \item \lstinline=background_remote= - this method uses ssh to 
          run a job in the background on a remote host specified in 
          the taskdef file \lstinline=REMOTE_HOST= key.
+     \item \lstinline=at_now= - submit a task using the 'at' command, a
+         rudimentary scheduler that reports job output by email.
+    \item \lstinline=loadleveler= - submit jobs using IBM's loadleveler
+        scheduler. Task-specific loadleveler directives can be set in
+        the taskdef file.
+    \item \lstinline=loadleveler_ecoconnect= - specific to NIWA's
+        EcoConnect operational environment, in which the same system
+        can be run in devel, test, or oper filesystems, under
+        model-specific usernames that vary accordingly.
  \end{itemize}
 
-These methods should work anywhere and are used by the working example
-systems which are intended to help users learn how cylc works. 
+\subsubsection{How Job Submission Works}
+
+Cylc writes a temporary file that contains scripting to:
+
+\begin{itemize}
+    \item define all required cylc-specific, global, and task-specific
+        environment variables
+    \item execute the defined task script, along with any command line
+        arguments defined for it in the taskdef file.
+\end{itemize}
+
+Cylc then submits this script to run via the defined job submission
+method, using \lstinline sudo -u OWNER= if the task owner is not the
+same as the cylc user.  This is a flexible and powerful way to submit
+jobs because: 
+
+\begin{itemize}
+
+    \item the same job script can be constructed and used for any job
+        submission method.
+
+    \item the task execution environment can be explicitly defined in
+        the job script. Submitting the task directly, as opposed to 
+        submitting a job script that executes the task, is problematic
+        because batch schedulers, ssh, and sudo, all try to  prevent 
+        you getting environment variables through from the original
+        environment in which the job-submission command itself is
+        executed.
+\end{itemize}
 
 \subsubsection{Defining New Methods}
  
-Real systems will need to submit jobs to run via batch queue schedulers
-such as {\em qsub} or {\em loadleveller}. Until cylc acquires general
-\lstinline=qsub= and \lstinline=loadleveler= job submit methods you will
-need to derive a new job submit class from the base class defined in
-\lstinline=$CYLC_DIR/src/job_submit.py=. This is easy to do because most of
-the required functionality exists already in the base class, and you can
-model your new class on one of the existing derivations.
+This is easy to do: see \lstinline=$CYLC_DIR/src/job-submission/=.
+Most of the required functionality already exists already in the job
+submission base class, and you can model your new subclass on one of the
+existing methods (above).
 
-In particular, you need to make sure that {\bf task-specific
-environment variables must be exported into the execution environment of
-the task} (e.g.\ passed {\em into} the qsub environment, not the
-environment in which the qsub command itself is executed!). These 
-include \lstinline=$CYCLE_TIME= and \lstinline=$TASK_NAME=, and
-any extra variables defined in the task definition files.
-
-Your new job submit class can be maintained in the system definition
-directory, and in order to use it it must be listed along with other 
-existing methods in the system \lstinline=job_submit_methods.py= module.
+Your new job submit class can be maintained in your system definition
+directory, or in the cylc job-submission source directory. In order to
+use the new class it must be listed in your system
+\lstinline=job_submit_methods.py= file.
 
 
 \subsubsection{Task Standard Output}
 \label{TaskStandardOutput}
 
-For example system tasks that are submitted using the local background
-methods (i.e.\ \lstinline=task &=) their stdout will appear in the cylc
-stdout stream. The \lstinline=background_remote= method, however,
-redirects remote task stdout to a log file on the remote host (in the
-remote user's home directory).  Something similar to this is also likely
-to be the case for any real system that submits tasks to a batch queue
-scheduler.
-
+Where job stdout and stderr ends up depends on the job submission
+method.
 
 \subsection{Environment Variables}
 \label{EnvironmentVariables}
@@ -1644,12 +1665,11 @@ exploits this to defined task-specific I/O sub-directories underneath a
 top level working directory that is defined by a global environment
 variable.
 
-\subsubsection{Remote Evaluation}
+\subsubsection{Delayed Evaluation}
 
-As yet there has been no need to use environment variables whose
-evaluation is delayed until the task is executing on a remote platform.
-It would not be difficult to arrange for this to happen should it be
-required, however.
+Documentation To Be Completed.  For now, see documentation in the master
+task definition template, Section~\ref{MasterTaskDefinitionTemplate}.
+
 
 
 \section{Handling Real Dependencies}

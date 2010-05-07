@@ -30,11 +30,13 @@
 %ENVIRONMENT
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
     ANIMAL foxy fox
+    REMOTE_HOME @HOME
 
 %COMMANDLINE
     # A.sh task 2 commandline args: --file=FILE SENTENCE
     --file=${HOME}/data-$(CYCLE_TIME + 6).nc
-    "the quick brown $ANIMAL"
+    # '@HOME' evaluates as '$HOME' at execution, e.g. on a remote machine
+    "the quick brown $ANIMAL went @HOME"
 
 %PREREQUISITES
     "obs data ready for $(CYCLE_TIME)"
