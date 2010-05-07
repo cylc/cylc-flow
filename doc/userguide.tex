@@ -579,7 +579,7 @@ to {\em A Complete Working Example}
 \lstset{language=bash}
 
 This section is intended as a quick introduction to, or reminder of,
-basic cylc functionality. The specific commandline listings below use
+basic cylc functionality. The specific command line listings below use
 the packaged cylc ``userguide'' example system. Refer to 
 \lstinline=cylc help=, the {\em Command Reference}
 (Section~\ref{CommandReference}), and
@@ -1667,9 +1667,16 @@ variable.
 
 \subsubsection{Delayed Evaluation}
 
-Documentation To Be Completed.  For now, see documentation in the master
-task definition template, Section~\ref{MasterTaskDefinitionTemplate}.
-
+If strings of the form \lstinline=$[HOME]= (i.e. square brackets) appear in
+taskdef environment or command line values, they will be rewritten as proper
+shell variables \lstinline=${HOME}=, uninterpolated, in the job script. They
+will thus be evaluated as the task executes. In this way you can use
+environment variables that are not known (or would be wrong) in the initial
+environment in which the job is submitted.  For instance, for a task that
+executes as another user (taskdef %OWNER), \lstinline=$[HOME]= will evaluate,
+at run time, to the owner's home directory, not to the hoem directory of the 
+user running cylc in whose environment the job is initial submitted (via 
+\lstinline=sudo -u owner=).
 
 
 \section{Handling Real Dependencies}

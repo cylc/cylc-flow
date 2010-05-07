@@ -92,10 +92,8 @@ class job_submit:
                 val = os.environ[ var ]
                 interp_string = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, interp_string )
 
-        # replace '@' with '$' (env vars to evaluate at execution time)
-        # CURRENT LIMITATION: NO '@'S ALLOWED EXCEPT FOR THIS PURPOSE
-        # THIS SCREWS UP FILE_TRANSFER URLS!!!!!!!!!!
-        #interp_string = re.sub( '@', '$', interp_string )
+        # replace '$[foo]' with '${foo}' (env vars to evaluate at execution time)
+        interp_string = re.sub( "\$\[(?P<z>\w+)\]", "${\g<z>}", interp_string )
 
         return interp_string
 
@@ -125,10 +123,9 @@ class job_submit:
                     val = os.environ[ var ]
                     value = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, value )
 
-            # 3. replace '@' with '$' (env vars to evaluate at execution time)
-            # CURRENT LIMITATION: NO '@'S ALLOWED EXCEPT FOR THIS PURPOSE
-            # THIS SCREWS UP FILE_TRANSFER URLS!!!!!!!!!!
+            # 3. replace '$[foo]' with '${foo}' (env vars to evaluate at execution time)
             # value = re.sub( '@', '$', value )
+            value = re.sub( "\$\[(?P<z>\w+)\]", "${\g<z>}", value )
 
             interpolated_env[ variable ] = value
 

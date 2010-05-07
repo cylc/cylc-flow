@@ -103,8 +103,7 @@
     #    (ii) $(CYCLE_TIME [+/-N])   # NOTE ROUND PARENTHESES
     #       These are interpolated by cylc before submitting the task.
     #       $(CYCLE_TIME) without +/-N is equivalent to $CYCLE_TIME.
-    #   (iii) Delayed environment variables, e.g. @HOME or @{HOME}
-    #  WARNING: YOU CAN NOT CURRENTLY USE '@' FOR OTHER PURPOSES!
+    #   (iii) Delayed environment variables: e.g. $[HOME]
     #       These will be replaced with literal '$HOME' etc in the job
     #       script that is submitted to execute the task and thus will
     #       not be evaluated until the task executes (may be required
@@ -112,7 +111,7 @@
     #    (iv) Other variables defined in this section.
 
     VARNAME     value
-    REMOTE_HOME @HOME
+    REMOTE_HOME $[HOME]
     ANIMAL      foxy fox  # NOT QUOTED!
 
 [%COMMANDLINE]
@@ -128,8 +127,7 @@
     #       These are not explicitly interpolated before constructing
     #       the command line, but the effect is the same because they
     #       are defined beforehand in the environment section.
-    #    (iv) Delayed environment variables, e.g. @HOME or @{HOME}.
-    #  WARNING: YOU CAN NOT CURRENTLY USE '@' FOR OTHER PURPOSES!
+    #    (iv) Delayed environment variables, e.g. $[HOME]
     #       These will be replaced with literal '$HOME' etc in the job
     #       script that is submitted to execute the task and thus will
     #       not be evaluated until the task executes (may be required
