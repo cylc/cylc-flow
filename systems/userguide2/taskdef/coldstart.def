@@ -1,0 +1,44 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+%NAME
+    coldstart
+
+%DESCRIPTION
+    Provides the initial restart prerequisites for the forecast models.
+    A real system would have separate cold start tasks for each model
+    (and a dummy one to "fake" the outputs for any model that has to be
+    "spun up" by external means before starting the scheduler).
+    Depends on the system startup task.
+
+%TYPE
+    free, oneoff
+
+%NO_NONCOTEMPORAL_DEPENDANTS
+    True
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    coldstart.sh
+
+%STARTUP_PREREQUISITES
+    "startup%$(CYCLE_TIME) finished"
+
+%ESTIMATED_RUN_TIME
+    50 min
+
+%OUTPUTS
+    47 min: "A restart files ready for $(CYCLE_TIME)"
+    48 min: "B restart files ready for $(CYCLE_TIME)"
+    49 min: "C restart files ready for $(CYCLE_TIME)"

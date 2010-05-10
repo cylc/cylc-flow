@@ -1,0 +1,35 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+%NAME
+    E
+
+%DESCRIPTION
+    Post processing for the sea state model. 
+
+%TYPE
+    free
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    E.sh
+
+%PREREQUISITES
+    "sea state fields ready for $(CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    150 min
+
+%OUTPUTS
+    150 min: "sea state products ready for $(CYCLE_TIME)"

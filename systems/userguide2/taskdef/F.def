@@ -1,0 +1,46 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+# UNLIKE THE OTHER TASKS, F.sh IS NOT CYLC-AWARE, SO WE HAVE TO RUN IT
+# VIA THE CYLC TASK WRAPPING MECHANISM.
+
+%NAME
+    F
+
+%DESCRIPTION
+    Post processing for the storm surge model
+
+%TYPE
+    free
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    cylc-wrapper
+
+%ENVIRONMENT
+    WRAP F.sh
+    FOO foo
+    ANALYSIS_TIME $(CYCLE_TIME)
+
+%COMMANDLINE
+    --foo=$FOO
+
+%PREREQUISITES
+    "storm surge fields ready for $(CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    50 min
+
+%OUTPUTS
+    50 min: "storm surge products ready for $(CYCLE_TIME)"

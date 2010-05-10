@@ -1,0 +1,53 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+%NAME
+    A
+
+%DESCRIPTION
+    Could be an atmospheric model. 
+    Requires real time obs data, and own restart file.
+    Generates restart files for the next cycle only.
+
+%TYPE
+    tied
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    A.sh
+
+%ENVIRONMENT
+    NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
+    ANIMAL foxy fox
+    REMOTE_HOME $[HOME]
+
+%COMMANDLINE
+    # A.sh task 2 commandline args: --file=FILE SENTENCE
+    --file=${HOME}/data-$(CYCLE_TIME + 6).nc
+    # '$[HOME] evaluates as '$HOME' at execution time, e.g. on a remote machine
+    "the quick brown $ANIMAL went $[HOME]"
+
+%PREREQUISITES
+    "obs data ready for $(CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    90 min
+
+%ESTIMATED_RESTART_OUTPUT_TIMES
+    20 min
+
+%OUTPUTS
+    80 min: "level forecast fields ready for $(CYCLE_TIME)"
+    80 min: "surface wind fields ready for $(CYCLE_TIME)"
+    80 min: "surface pressure field ready for $(CYCLE_TIME)"

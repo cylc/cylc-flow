@@ -1,0 +1,35 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+%NAME
+    X
+
+%DESCRIPTION
+    Retrieve external observation data when it is ready.
+
+%TYPE
+    free
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    X.sh
+
+%PREREQUISITES
+    "external data ready for $(CYCLE_TIME)"
+
+%ESTIMATED_RUN_TIME
+    5 min
+
+%OUTPUTS
+    5 min: "obs data ready for $(CYCLE_TIME)"
