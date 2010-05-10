@@ -121,6 +121,11 @@ class manager:
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED 
             #    continue
+
+            # avoid daemon tasks
+            if hasattr( itask, 'daemon_task' ):
+                continue
+
             if int( itask.c_time ) < int( oldest ):
                 oldest = itask.c_time
         return oldest
@@ -412,6 +417,11 @@ class manager:
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED
             #    continue
+
+            # avoid daemon tasks
+            if hasattr( itask, 'daemon_task' ):
+                continue
+
             if not itask.state.is_finished():
                 all_finished = False
                 if not earliest_unfinished:
