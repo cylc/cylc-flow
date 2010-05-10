@@ -41,7 +41,7 @@ class job_submit:
         self.method_description = 'Job Submit base class: OVERRIDE ME'
 
 
-    def configure( self, task_id, ext_task, params, owner, host ): 
+    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
 
         if self.dummy_mode:
             self.task = "_cylc-dummy-task"
@@ -55,9 +55,9 @@ class job_submit:
             self.remote_host = self.interpolate( host )
 
         self.task_id = task_id
-        self.extra_vars  = params[ 'env' ]
-        self.directives  = params[ 'dir' ]
-        self.commandline = params[ 'com' ]
+        self.extra_vars  = env_vars
+        self.directives  = dirs
+        self.commandline = com_line
 
         self.cycle_time = None
         try:

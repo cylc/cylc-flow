@@ -17,8 +17,8 @@ from job_submit import job_submit
 class loadleveler( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def configure( self, task_id, ext_task, params, owner, host ): 
-        job_submit.configure( self, task_id, ext_task, params, owner, host ) 
+    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
+        job_submit.configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
 
         # default directives
         directives = {}

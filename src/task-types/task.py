@@ -130,6 +130,10 @@ class task( Pyro.core.ObjBase ):
         #    self.log( 'WARNING', " starting in SATISFIED state" )
         #    self.prerequisites.set_all_satisfied()
 
+        self.launcher.configure( self.id, self.__class__.external_task,
+                self.env_vars, self.commandline, self.directives, 
+                self.__class__.owner, self.__class__.remote_host )
+
     def register_run_length( self, run_len_minutes ):
         # automatically define special 'started' and 'finished' outputs
         self.outputs.add( 0, self.id + ' started' )

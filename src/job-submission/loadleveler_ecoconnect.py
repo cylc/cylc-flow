@@ -17,8 +17,8 @@ from loadleveler import loadleveler
 
 class loadleveler_ecoconnect( loadleveler ):
 
-    def configure( self, task_id, ext_task, params, owner, host ): 
-        loadleveler.configure( self, task_id, ext_task, params, owner, host ) 
+    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
+        loadleveler.configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
 
         # adjust task owner's username for devel, test, or oper.
         cylc_user = os.environ['USER']
