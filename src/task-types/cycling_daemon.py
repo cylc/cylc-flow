@@ -10,15 +10,14 @@
 #         |________________________|
 
 
-from task import task
+from cycling import cycling
 from mod_oneoff import oneoff
 import re
 
-class daemon( oneoff, task ):
-    # A oneoff task that dynamically and adds outputs as messages
-    # matching registered patterns come in. The corresponding real task
-    # may keep running indefinitely, e.g. to watch for incoming
-    # asynchronous data.
+class cycling_daemon( oneoff, cycling ):
+    # A oneoff task that adds outputs dynamically as messages matching
+    # registered patterns come in. The corresponding real task may keep
+    # running indefinitely, e.g. to watch for incoming external data.
 
     # not 'daemon' - hasattr(task, 'daemon') returns True for all tasks 
     # due to the pyro daemon (I think).
@@ -27,7 +26,13 @@ class daemon( oneoff, task ):
     def incoming( self, priority, message ):
         # intercept incoming messages and check for a pattern match 
         for pattern in self.output_patterns:
-            if re.match( pattern, message ):
+            m = re.match( pattern, message )
+            if m:
                 self.outputs.add( 10, message )
+                # RESET MY REFERENCE TIME
+                #foo = m.groups()[0]
+                #self.c_time = foo
+                #self.tag = foo
+                #self.id = self.name + '%' + self.tag
 
-        task.incoming( self, priority, message )
+        cycling.incoming( self, priority, message )
