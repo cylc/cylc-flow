@@ -224,7 +224,11 @@ if mode != 'scheduler':
     sys.exit(0)
 
 # CONNECT TO THE CORRECT TASK PROXY OBJECT-----------------------------
-task = connector( pns_host, groupname, task_id ).get()
+try:
+    task = connector( pns_host, groupname, task_id ).get()
+except:
+    print "ERROR: failed to connect to " + task_id
+    sys.exit(1)
 
 # DO THE MESSAGING----------------------------------------------------
 
