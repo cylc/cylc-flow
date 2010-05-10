@@ -25,6 +25,13 @@ check-env.sh || exit 1
 
 # no prerequisites to check
 
+#if [[ -z $START_CYCLE_TIME ]]; then
+#    cylc message -p CRITICAL "No start cycle time specified"
+#    cylc --failed
+#    exit 1
+#fi
+
+#CYCLE=$START_CYCLE_TIME
 CYCLE=$CYCLE_TIME
 
 while true; do

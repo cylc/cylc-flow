@@ -37,7 +37,7 @@ def print_parsed_info():
 
     global parsed_def
 
-    for k in parsed_def.keys():
+    for k in parsed_def:
         print
         print k + ':' 
         for val in parsed_def[ k ]:
@@ -147,10 +147,10 @@ def main( argv ):
             'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
             'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
-            'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 
+            'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
             'ONEOFF_FOLLOW_ON', 'ESTIMATED_RESTART_OUTPUT_TIMES' ]
 
-    allowed_types = ['tied', 'free' ]
+    allowed_types = ['tied', 'free', 'cycling_daemon' ]
     allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
 
     # open the output file
@@ -183,6 +183,7 @@ from mod_catchup_contact import catchup_contact
 from prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites import prerequisites
 from outputs import outputs
+from cycling_daemon import cycling_daemon
 from time import sleep
 
 import cycle_time
@@ -260,12 +261,12 @@ from dynamic_instantiation import get_object
 
         # quick death (DEFAULT False)
         quick_death = False
-        if 'NO_NONCOTEMPORAL_DEPENDANTS' in parsed_def.keys():
+        if 'NO_NONCOTEMPORAL_DEPENDANTS' in parsed_def:
             delayed_death = parsed_def[ 'NO_NONCOTEMPORAL_DEPENDANTS' ][0]
             if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
                 quick_death = True
 
-        if 'TYPE' not in parsed_def.keys():
+        if 'TYPE' not in parsed_def:
             print "ERROR: no %TYPE specified"
             sys.exit(1)
 
@@ -292,6 +293,10 @@ from dynamic_instantiation import get_object
                     print 'because they necessarily have next-cycle dependants'
                     sys.exit(1)
 
+            if task_type == 'cycling_daemon':
+                if 'OUTPUT_PATTERNS' not in parsed_def:
+                    print 'ERROR, cycling daemon tasks must define OUTPUT_PATTERNS'
+                    sys.exit(1)
 
             derived_from = task_type
 
@@ -330,7 +335,7 @@ from dynamic_instantiation import get_object
                 if len( modifiers ) >= 1:
                     derived_from = ','.join( modifiers ) + ', ' + derived_from
 
-        if 'TASK' in parsed_def.keys():
+        if 'TASK' in parsed_def:
             external_task = parsed_def[ 'TASK' ][0]
             if dummy:
                 print "WARNING: this task has the 'dummy' task type modifier, and therefore its"
@@ -347,7 +352,7 @@ from dynamic_instantiation import get_object
 
         oneoff_follow_on = False
         if oneoff and not quick_death:
-            if 'ONEOFF_FOLLOW_ON' not in parsed_def.keys():
+            if 'ONEOFF_FOLLOW_ON' not in parsed_def:
                 print "Error: oneoff tasks that have non-cotemporal dependants"
                 print "must define %ONEOFF_FOLLOW_ON"
                 sys.exit(1)
@@ -358,12 +363,12 @@ from dynamic_instantiation import get_object
         task_init_args = 'initial_state, no_reset'
 
         if contact:
-            if 'CONTACT_DELAY' not in parsed_def.keys():
+            if 'CONTACT_DELAY' not in parsed_def:
                 print "Error: contact classes must define %CONTACT_DELAY"
                 sys.exit(1)
 
         if task_type == 'tied':
-            if 'ESTIMATED_RESTART_OUTPUT_TIMES' not in parsed_def.keys():
+            if 'ESTIMATED_RESTART_OUTPUT_TIMES' not in parsed_def:
                 print 'Error: forecast models must define %ESTIMATED_RESTART_OUTPUT_TIMES'
                 sys.exit(1)
             #else:
@@ -371,7 +376,7 @@ from dynamic_instantiation import get_object
 
         task_name = parsed_def[ 'NAME' ][0]
 
-        if task_name in seen.keys():
+        if task_name in seen:
             print "ERROR: task name '" + task_name + "' has been defined already!"
             sys.exit(1)
         else:
@@ -398,7 +403,7 @@ from dynamic_instantiation import get_object
         FILE.write( indent + 'upward_instance_count = 0\n\n' )
 
         # task description
-        if 'DESCRIPTION' in parsed_def.keys():
+        if 'DESCRIPTION' in parsed_def:
             FILE.write( indent + 'description = [\n' )
             indent_more()
             for line in  parsed_def[ 'DESCRIPTION' ]:
@@ -411,7 +416,7 @@ from dynamic_instantiation import get_object
 
         # owner
         owner = None
-        if 'OWNER' in parsed_def.keys():
+        if 'OWNER' in parsed_def:
             owner = parsed_def[ 'OWNER' ][0]
             FILE.write( indent + 'owner = \'' + owner + '\'\n' )
         else:
@@ -422,7 +427,7 @@ from dynamic_instantiation import get_object
 
         # remote host
         remote_host = None
-        if 'REMOTE_HOST' in parsed_def.keys():
+        if 'REMOTE_HOST' in parsed_def:
             remote_host = parsed_def[ 'REMOTE_HOST' ][0]
             FILE.write( indent + 'remote_host = \'' + remote_host + '\'\n\n' )
         else:
@@ -471,7 +476,7 @@ from dynamic_instantiation import get_object
 
         # ... prerequisites
         FILE.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
-        if 'PREREQUISITES' in parsed_def.keys():
+        if 'PREREQUISITES' in parsed_def:
             for line in parsed_def[ 'PREREQUISITES' ]:
 
                 # look for conditionals
@@ -500,13 +505,12 @@ from dynamic_instantiation import get_object
  
 
         # are the prerequisites different for the first instance?
-        if 'STARTUP_PREREQUISITES' in parsed_def.keys():
+        if 'STARTUP_PREREQUISITES' in parsed_def:
             # TO DO: use a function to re-use the normal prerequisite code (as above) here.
             FILE.write( '\n' + indent + "if startup:\n" )
             indent_more()
             FILE.write( indent + '# overwrite prerequisites for startup case\n' )
-                
-            FILE.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
+            #FILE.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
             for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
 
                 # look for conditionals
@@ -563,7 +567,7 @@ from dynamic_instantiation import get_object
                 rlen = line
                 FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n\n' )
        
-        if 'OUTPUTS' in parsed_def.keys():
+        if 'OUTPUTS' in parsed_def:
             for line in parsed_def[ 'OUTPUTS' ]:
 
                 # look for conditionals
@@ -593,9 +597,17 @@ from dynamic_instantiation import get_object
                     req = interpolate_cycle_times( req )
                     FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
 
+        # ... output patterns
+        FILE.write( '\n' )
+        FILE.write( indent + 'self.output_patterns = []\n' )
+
+        if 'OUTPUT_PATTERNS' in parsed_def:
+            for line in parsed_def[ 'OUTPUT_PATTERNS' ]:
+                 FILE.write( indent + 'self.output_patterns.append( ' + line + ')\n' )
+
         # environment variables
         FILE.write( '\n' + indent + 'self.env_vars = {}\n' )
-        if 'ENVIRONMENT' in parsed_def.keys():
+        if 'ENVIRONMENT' in parsed_def:
             for pair in parsed_def[ 'ENVIRONMENT' ]:
                 ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
@@ -605,7 +617,7 @@ from dynamic_instantiation import get_object
 
         # command line
         FILE.write( '\n' + indent + 'self.commandline = []\n' )
-        if 'COMMANDLINE' in parsed_def.keys():
+        if 'COMMANDLINE' in parsed_def:
             for line in parsed_def[ 'COMMANDLINE' ]:
                 line = "'" + line + "'"
                 # interpolate $(CYCLE_TIME [+/-n]) 
@@ -614,7 +626,7 @@ from dynamic_instantiation import get_object
 
         # batch queue scheduler directives (qsub or loadleveler)
         FILE.write( '\n' + indent + 'self.directives = {}\n' )
-        if 'DIRECTIVES' in parsed_def.keys():
+        if 'DIRECTIVES' in parsed_def:
             for pair in parsed_def[ 'DIRECTIVES' ]:
                 ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
@@ -664,7 +676,7 @@ from dynamic_instantiation import get_object
         FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
 
 
-        #if 'ENVIRONMENT' in parsed_def.keys():
+        #if 'ENVIRONMENT' in parsed_def:
         #    # override run_external_task() for the export case
         #    indent_less()
         #    FILE.write( indent + 'def run_external_task( self, launcher ):\n' )
