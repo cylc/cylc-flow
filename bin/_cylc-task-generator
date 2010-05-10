@@ -174,8 +174,8 @@ def main( argv ):
 
 from daemon import daemon
 from asynchronous import asynchronous
-from forecast_model import forecast_model
-from free_task import free_task
+from tied import tied
+from free import free
 from mod_oneoff import oneoff
 from mod_sequential import sequential
 from mod_contact import contact
@@ -274,11 +274,9 @@ from dynamic_instantiation import get_object
             delay = 0
             catchup_contact = False
             sequential = False
-            fcmodel = False
             contact = False
             oneoff = False
             dummy = False
-            freet = False
 
             tmp = parsed_def[ 'TYPE' ][0]
             typelist = tmp.split(',')
@@ -294,11 +292,6 @@ from dynamic_instantiation import get_object
                     print 'because they necessarily have next-cycle dependants'
                     sys.exit(1)
 
-                task_type = 'forecast_model'
-                fcmodel = True
-            elif task_type == 'free':
-                task_type = 'free_task'
-                freet = True
 
             derived_from = task_type
 
@@ -369,7 +362,7 @@ from dynamic_instantiation import get_object
                 print "Error: contact classes must define %CONTACT_DELAY"
                 sys.exit(1)
 
-        if fcmodel:
+        if task_type == 'tied':
             if 'ESTIMATED_RESTART_OUTPUT_TIMES' not in parsed_def.keys():
                 print 'Error: forecast models must define %ESTIMATED_RESTART_OUTPUT_TIMES'
                 sys.exit(1)
@@ -632,7 +625,7 @@ from dynamic_instantiation import get_object
         FILE.write( '\n' + indent + 'self.launcher = launcher\n' )
 
         # forecast model restarts
-        if fcmodel:
+        if task_type == 'tied':
             for line in parsed_def['ESTIMATED_RESTART_OUTPUT_TIMES']:
 
                 line = re.sub( '\s+$', '', line )

@@ -18,7 +18,7 @@ class pid:
     # Forecast models depend on a previous instance via their restart
     # files. This class provides a method to register special restart
     # prerequisites and outputs, and overrides
-    # free_task.ready_to_spawn() appropriately.
+    # free.ready_to_spawn() appropriately.
     
     def register_restarts( self, output_times ):
         # call after parent init, so that self.c_time is defined!

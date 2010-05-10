@@ -11,8 +11,8 @@
 
 
 from cycling import cycling
-from mod_pid import pid
+from mod_nopid import nopid
 
-class forecast_model( pid, cycling ):
-    # task class with previous instance dependence
+class free( nopid, cycling ):
+    # task class with no previous instance dependence
     pass

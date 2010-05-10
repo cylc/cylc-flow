@@ -11,8 +11,8 @@
 
 
 from cycling import cycling
-from mod_nopid import nopid
+from mod_pid import pid
 
-class free_task( nopid, cycling ):
-    # task class with no previous instance dependence
+class tied( pid, cycling ):
+    # task class with previous instance dependence
     pass
