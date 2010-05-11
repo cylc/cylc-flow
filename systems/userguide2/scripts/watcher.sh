@@ -36,6 +36,11 @@ CYCLE=$CYCLE_TIME
 
 while true; do
     sleep 10
+    if ! cylc suicide; then
+        cylc message -p CRITICAL 'STOPPING NOW; cylc request'
+        cylc message --succeeded
+        exit 0
+    fi
     cylc message "external data ready for $CYCLE"
     cylc message "crap ready for ${CYCLE}, ass hole"
     CYCLE=$( cylc-time -a 6 $CYCLE )

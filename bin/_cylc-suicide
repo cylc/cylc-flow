@@ -1,0 +1,118 @@
+#!/usr/bin/python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+import os, sys
+from time import sleep
+from optparse import OptionParser
+from connector import connector
+
+# PARSE THE COMMAND LINE-----------------------------------------------
+usage = """cylc suicide [options]
+
+THIS COMMAND IS FOR USE BY EXTERNAL TASKS.
+
+If invoked by a task that does not belong to a cylc scheduler (e.g. by
+'cylc run-task') it has no effect."""
+
+parser = OptionParser( usage )
+
+parser.set_defaults( started=False, success=False, failure=False, 
+        all_restarts_completed=False, all_outputs_completed=False,
+        priority='NORMAL')
+
+parser.add_option( "-t", "--task-identity",
+        metavar='TASK-ID',
+        help="Task identity, defaults to $TASK_ID.",
+        action="store", dest="task_id" )
+
+parser.add_option( "-s", "--system",
+        metavar="SYSTEM",
+        help="The name of the system hosting the target task proxy object.",
+        action="store", dest="system_name" )
+
+parser.add_option( "-u", "--user",
+        help="Owner of the target system, defaults to $USER. Needed "
+        "to infer the Pyro nameserver groupname",
+        metavar="USERNAME", action="store", dest="username" )
+
+parser.add_option( "--host",
+        help="Hostname of the machine running the Pyro nameserver, "
+            "defaults to $CYLC_NS_HOST, then localhost.",
+        metavar="HOSTNAME", action="store", dest="pns_host" )
+
+( options, args ) = parser.parse_args()
+
+# MODE OF OPERATION ---------------------------------------------------
+# have we been invoked from a script that was launched by 'cylc start',
+# 'cylc run-task', or a raw task script?
+mode = 'raw'
+if 'CYLC_MODE' in os.environ:
+    mode = os.environ[ 'CYLC_MODE' ]
+    # 'scheduler' or 'run-task'
+
+# TASK IDENTITY ---------------------------------------------------
+if options.task_id:
+    # command line
+    task_id = options.task_id
+else:
+    # Default to $TASK_ID
+    if 'TASK_ID' in os.environ.keys():
+        task_id = os.environ[ 'TASK_ID' ]
+    else:
+        if mode == 'raw':
+            #print 'cylc message: you appear to have invoked a raw task script'
+            task_id = 'NAME%TAG'
+        else:
+            print 'cylc message ERROR: no task id provided!'
+            sys.exit(1)
+
+# USER NAME------------------------------------------------------
+if options.username:
+    username = options.username
+else:
+    username = os.environ[ 'USER' ] 
+
+# NAMESERVER GROUP NAME-------------------------------------------------
+if options.system_name:
+    groupname = username + '_' + options.system_name
+elif 'CYLC_NS_GROUP' in os.environ.keys():
+    groupname = os.environ[ 'CYLC_NS_GROUP' ]
+
+# PYRO NAMESERVER HOSTNAME---------------------------------------------
+if options.pns_host:
+    pns_host = options.pns_host
+
+elif 'CYLC_NS_HOST' in os.environ.keys():
+    pns_host = os.environ[ 'CYLC_NS_HOST' ]
+
+else:
+    pns_host = 'localhost'
+    #print 'WARNING, cylc message: no Pyro nameserver hostname provided!'
+    #print 'will attempt to connect to a namerserver on localhost'
+ 
+if len( args ) != 0:
+    parser.error( "no args allowed" )
+
+if mode != 'scheduler':
+    # there is no running scheduler assocated with this call
+    sys.exit(0)
+
+# CONNECT TO THE SUICIDE SUGGESTOR OBJECT-----------------------------
+try:
+    suggestor = connector( pns_host, groupname, 'remote' ).get()
+except:
+    print "ERROR: failed to connect to the suicide suggestor"
+    sys.exit(1)
+
+if suggestor.should_i_die( task_id ):
+    print "SUGGESTOR SAYS DIE!"
+    sys.exit(1)

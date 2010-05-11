@@ -42,6 +42,7 @@ allowed_commands = \
     'set-level',
     'nudge',
     'message',
+    'suicide',
     'unit-test'
     ]
 
