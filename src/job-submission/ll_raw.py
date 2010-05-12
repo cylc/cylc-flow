@@ -11,6 +11,7 @@
 
 
 import shutil
+import which
 import fileinput
 import os, re
 import tempfile
@@ -24,25 +25,19 @@ class ll_raw( job_submit ):
         # create a new jobfile name
         self.jobfilename = self.get_jobfile_name()
 
-        shutil.copy( self.ext_task, self.jobfilename )
+        orig_file = which.which( self.task )  # full path needed if task file is in scripts dir
+        shutil.copy( orig_file, self.jobfilename )
+
+        self.compute_job_env()
 
         done = False
         for line in fileinput.input( self.jobfilename, inplace=True ):
             print line.strip()
-            if not done and re.match( '^\s*@\s*queue\s*$' ):
+            if not done and re.match( '^\s*#\s*@\s*queue\s*$', line ):
                 print
-                self.write_job_env()
+                self.print_job_env()
                 print
                 done = True
-
-        # write cylc, system-wide, and task-specific environment vars 
-        self.write_job_env()
-
-        # write the task execution line
-        self.jobfile.write( self.task + " " + self.commandline + "\n")
- 
-        # close the jobfile
-        self.jobfile.close() 
 
     def construct_command( self ):
         self.command = 'llsubmit ' + self.jobfilename

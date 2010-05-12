@@ -51,6 +51,7 @@ class loadleveler( job_submit ):
         self.jobfile.write( "#@ queue\n\n" )
 
         # write cylc, system-wide, and task-specific environment vars 
+        self.compute_job_env()
         self.write_job_env()
 
         # write the task execution line

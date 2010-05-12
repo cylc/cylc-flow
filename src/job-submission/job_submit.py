@@ -138,7 +138,7 @@ class job_submit:
 
         return interpolated_env
 
-    def write_job_env( self ):
+    def compute_job_env( self ):
         # combine environment dicts:
         big_env = {}
         
@@ -159,11 +159,20 @@ class job_submit:
         # interpolate (self and environment)
         # e.g. task-specific (taskdef) vars that use global
         # (system_config) vars or pre-existing environment vars:
-        final_env = self.interpolate( big_env )
+        self.final_env = self.interpolate( big_env )
 
-        # now write the lot to the jobfile
-        for var in final_env:
-            self.jobfile.write( "export " + var + "=\"" + final_env[var] + "\"\n" )
+    def write_job_env( self ):
+        # write the environment scripting to the jobfile
+        for var in self.final_env:
+            self.jobfile.write( "export " + var + "=\"" + self.final_env[var] + "\"\n" )
+        self.jobfile.write(". $CYLC_DIR/cylc-env.sh\n")
+
+
+    def print_job_env( self ):
+        # print the environment scripting
+        for var in self.final_env:
+            print "export " + var + "=\"" + self.final_env[var] + "\"" 
+        print ". $CYLC_DIR/cylc-env.sh"
 
         # ACCESS TO CYLC (for 'cylc message'), AND TO SUB-SCRIPTS
         # RESIDING IN THE SYSTEM DIRECTORY, BY SPAWNED TASKS IS BY
@@ -177,8 +186,6 @@ class job_submit:
         # will will replace the original (local) values in big_env
         # above (then full path to remote task script not required - if
         # in the remote $CYLC_SYSTEM_DIR/scripts).
-
-        self.jobfile.write(". $CYLC_DIR/cylc-env.sh\n")
 
         # self.jobfile.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
 
@@ -197,6 +204,9 @@ class job_submit:
     def construct_jobfile( self ):
         # create a new jobfile
         self.get_jobfile()
+
+        self.compute_job_env()
+
         # write cylc, system-wide, and task-specific environment vars 
         self.write_job_env()
 
@@ -219,7 +229,7 @@ class job_submit:
             # run as owner, in owner's home directory (in case write
             # permissions are required for the job log file)
             if self.owner != os.environ['USER']:
-                self.command = 'cd ~owner; sudo -u ' + self.owner + ' ' + self.command
+                self.command = 'cd ~' + self.owner + '; sudo -u ' + self.owner + ' ' + self.command
 
         # execute local command to submit the job
         os.system( self.command )

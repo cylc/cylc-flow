@@ -10,12 +10,13 @@
 #         |________________________|
 
 
+import shutil
+import fileinput
 import os, re
 import tempfile
-from job_submit import job_submit
-from loadleveler import loadleveler
+from ll_raw import ll_raw
 
-class loadleveler_ecoconnect( loadleveler ):
+class ll_raw_eco( ll_raw ):
 
     def __init__( self, dummy_mode, global_env ):
         # check we are running in an ecoconnect system
@@ -32,7 +33,7 @@ class loadleveler_ecoconnect( loadleveler ):
         self.ecoc_system = ecoc_system
         self.ecoc_system_bin = os.environ[ 'HOME' ] + '/bin'
 
-        loadleveler.__init__( self, dummy_mode, global_env ) 
+        ll_raw.__init__( self, dummy_mode, global_env ) 
 
 
     def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
@@ -51,18 +52,10 @@ class loadleveler_ecoconnect( loadleveler ):
         # append the correct system suffix
         owner = owner_name + '_' + self.ecoc_system
 
-        loadleveler.configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
+        ll_raw.configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
 
-        # ecoconnect-specific loadleveler directives
-        # CHANGE ONCE PROPER LOADLEVELER QUEUES ARE CONFIGURED
-        #!!!! self.directives[ 'class'    ] = self.system !!!!
-        self.directives[ 'class'       ] = 'test_linux'
+        self.method_description = 'by loadleveler, EcoConnect raw [llsubmit]'
 
-        self.method_description = 'by loadleveler, EcoConnect [llsubmit]'
-
-    def write_job_env( self ):
-        loadleveler.write_job_env( self )
-        self.jobfile.write( ". " + self.ecoc_system_bin + "/ecfunctions.sh\n\n" )
 
     def execute_command( self ):
         print " > submitting task (via " + self.jobfilename + ") " + self.method_description
