@@ -41,8 +41,16 @@ class job_submit:
         self.method_description = 'Job Submit base class: OVERRIDE ME'
 
 
-    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
+    def submit( self ):
+        # THIS IS CALLED TO SUBMIT A TASK
+        # construct a jobfile to run the task
+        self.construct_jobfile()
+        # construct a command to submit the jobfile
+        self.construct_command()
+        # execute the constructed command
+        self.execute_command()
 
+    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
         if self.dummy_mode:
             self.task = "_cylc-dummy-task"
         else:
@@ -96,7 +104,6 @@ class job_submit:
         interp_string = re.sub( "\$\[(?P<z>\w+)\]", "${\g<z>}", interp_string )
 
         return interp_string
-
 
     def interpolate( self, env ):
         # Interpolate any variables in env values: $VARNAME or ${VARNAME}.
@@ -175,10 +182,13 @@ class job_submit:
 
         # self.jobfile.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
 
-    def get_jobfile( self ):
+    def get_jobfile_name( self ):
         # get a new temp filename
-        self.jobfilename = tempfile.mktemp( prefix='cylc-') 
+        return tempfile.mktemp( prefix='cylc-') 
+
+    def get_jobfile( self ):
         # open the file
+        self.jobfilename = self.get_jobfile_name()
         self.jobfile = open( self.jobfilename, 'w' )
 
     def construct_command( self ):
@@ -195,14 +205,8 @@ class job_submit:
         # close the jobfile
         self.jobfile.close() 
 
-    def submit( self ):
-        # THIS IS CALLED TO SUBMIT A TASK
-        # construct a jobfile to run the task
-        self.construct_jobfile()
-        # construct a command to submit the jobfile
-        self.construct_command()
-        # execute the constructed command
-        self.execute_command()
+        # set it executable
+        os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
     def delete_jobfile( self ):
         # called by task class when the job finishes
@@ -210,12 +214,12 @@ class job_submit:
         os.unlink( self.jobfilename )
 
     def execute_command( self ):
-        # set the jobfile executable
         print " > submitting task (via " + self.jobfilename + ") " + self.method_description
-        os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
-        # ran as owner, if necessary
         if self.owner:
+            # run as owner, in owner's home directory (in case write
+            # permissions are required for the job log file)
             if self.owner != os.environ['USER']:
-                self.command = 'sudo -u ' + self.owner + ' ' + self.command
+                self.command = 'cd ~owner; sudo -u ' + self.owner + ' ' + self.command
+
         # execute local command to submit the job
         os.system( self.command )

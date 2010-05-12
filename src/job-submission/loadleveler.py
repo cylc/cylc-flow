@@ -29,13 +29,6 @@ class loadleveler( job_submit ):
         directives[ 'output'   ] = '$(job_name)-$(jobid).out'
         directives[ 'error'    ] = '$(job_name)-$(jobid).err'
 
-        if owner:
-            # for 'sudo llsubmit' the working dir must be owned by (or
-            # writeable by?) the job owner
-            directives[ 'initialdir' ] = '~' + owner
-        else:
-            directives[ 'initialdir' ] = os.environ[ 'HOME' ]
-
         # add (or override with) taskdef directives
         for d in self.directives:
             directives[ d ] = self.directives[ d ]
