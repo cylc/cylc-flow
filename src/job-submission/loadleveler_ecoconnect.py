@@ -12,7 +12,6 @@
 
 import os, re
 import tempfile
-import ecoconnect
 from job_submit import job_submit
 from loadleveler import loadleveler
 
