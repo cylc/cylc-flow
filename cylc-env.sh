@@ -28,6 +28,17 @@ else
     return 1
 fi
 
+if [[ ! -x $CYLC_DIR/bin/cylc ]]; then
+    echo "ERROR: the cylc program here is not set executable:"
+    echo " > $CYLC_DIR/bin/cylc"
+    echo
+    echo "If this is a cylc darcs repository, rather than an"
+    echo "installed cylc release, you may need to do this:"
+    echo " % cd $CYLC_DIR"
+    echo " % chmod +x bin/* scripts/* systems/*/scripts/*"
+    return 1
+fi
+
 echo "CONFIGURING THIS SHELL FOR $CYLC_DIR/bin/cylc"
 export CYLC_DIR  # in case not exported already
 
