@@ -13,6 +13,7 @@
 # standard Python modules
 import re, os, sys, shutil
 #import profile
+import socket
 import logging
 import datetime
 from time import sleep
@@ -119,7 +120,7 @@ Arguments:
 def commandline_parser():
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host='localhost', 
+    parser.set_defaults( pns_host= socket.getfqdn(), 
             restart=False, dummy_mode=False,
             clock_rate=10, clock_offset=24 )
 
@@ -161,7 +162,7 @@ def commandline_parser():
             metavar="Task1,Task2,...", action="store", dest='include' )
 
     parser.add_option( "--host",
-            help="Pyro nameserver host, defaults to 'localhost'. Use "
+            help="Pyro nameserver host, defaults to the local hostname. Use "
             "if not auto-detected (which depends on network config).", 
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
@@ -215,7 +216,7 @@ banner[ 'system name' ] = name
 
 # get Pyro nameserver hostname-----------------------------------------
 if not options.pns_host:
-    # (this won't happen; defaults to localhost)
+    # (this won't happen; defaults to local hostname)
     parser.error( "Required: Pyro nameserver hostname" )
 else:
     pns_host = options.pns_host

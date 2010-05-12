@@ -11,6 +11,7 @@
 
 
 import os, sys
+import socket
 import pyrex
 from optparse import OptionParser
 from registration import registrations
@@ -78,9 +79,9 @@ parser.add_option( "-w", "--wipe",
     action="store_true", default=False, dest="wipe" )
 
 parser.add_option( "--host",
-        help="Pyro nameserver host, defaults to 'localhost'. Use "
+        help="Pyro nameserver host, defaults to local hostname. Use "
         "if not auto-detected (which depends on network config).", 
-        metavar="HOSTNAME", action="store", default="localhost",
+        metavar="HOSTNAME", action="store", default=socket.getfqdn(),
         dest="pns_host" )
 
 ( options, args ) = parser.parse_args()

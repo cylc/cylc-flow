@@ -32,6 +32,7 @@ $CYCLE_TIME into the environment of each external task.
 
 
 import os, sys
+import socket
 from time import sleep
 from optparse import OptionParser
 from connector import connector
@@ -81,7 +82,7 @@ parser.add_option( "-u", "--user",
 
 parser.add_option( "--host",
         help="Hostname of the machine running the Pyro nameserver, "
-            "defaults to $CYLC_NS_HOST, then localhost.",
+            "defaults to $CYLC_NS_HOST, then the local hostname.",
         metavar="HOSTNAME", action="store", dest="pns_host" )
 
 parser.add_option( "--started",
@@ -170,9 +171,9 @@ elif 'CYLC_NS_HOST' in os.environ.keys():
     pns_host = os.environ[ 'CYLC_NS_HOST' ]
 
 else:
-    pns_host = 'localhost'
+    pns_host = socket.getfqdn()
     #print 'WARNING, cylc message: no Pyro nameserver hostname provided!'
-    #print 'will attempt to connect to a namerserver on localhost'
+    #print 'will attempt to connect to a namerserver on local host'
  
 # MESSAGE--------------------------------------------------------------
 if options.started or options.succeeded or options.failed \

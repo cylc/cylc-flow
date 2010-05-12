@@ -15,6 +15,7 @@
 # TO DO: CLEAN UP OR REDESIGN THESE CLASSES.
 
 import os, sys
+import socket
 from optparse import OptionParser
 
 #class NoPromptOptionParser( OptionParser ):
@@ -40,9 +41,9 @@ Arguments:
                 action="store", dest="username" )
 
         self.add_option( "--host",
-                help="Pyro nameserver host, defaults to 'localhost'. Use "
+                help="Pyro nameserver host, defaults to local hostname. Use "
                 "if not auto-detected (which depends on network config).", 
-                metavar="HOSTNAME", action="store", default="localhost",
+                metavar="HOSTNAME", action="store", default=socket.getfqdn(),
                 dest="pns_host" )
 
         self.add_option( "-p", "--practice",
@@ -100,9 +101,9 @@ arguments:
         OptionParser.__init__( self, usage )
 
         self.add_option( "--host",
-                help="Pyro nameserver host, defaults to 'localhost'. Use "
+                help="Pyro nameserver host, defaults to local hostname. Use "
                 "if not auto-detected (which depends on network config).", 
-                metavar="HOSTNAME", action="store", default="localhost",
+                metavar="HOSTNAME", action="store", default=socket.getfqdn(),
                 dest="pns_host" )
 
         self.add_option( "-p", "--practice",

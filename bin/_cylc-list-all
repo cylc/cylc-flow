@@ -11,6 +11,7 @@
 
 
 import os, sys, re
+import socket
 from optparse import OptionParser
 from registration import registrations
 import pyrex
@@ -28,9 +29,9 @@ These can be removed from the nameserver using:
   % pyro-nsc deletegroup {USER}_{SYSTEM}""" )
 
 parser.add_option( "--host",
-        help="Pyro nameserver host, defaults to 'localhost'. Use "
+        help="Pyro nameserver host, defaults to local hostname. Use "
         "if not auto-detected (which depends on network config).", 
-        metavar="HOSTNAME", action="store", default="localhost",
+        metavar="HOSTNAME", action="store", default=socket.getfqdn(),
         dest="pns_host" )
 
 ( options, args ) = parser.parse_args()
