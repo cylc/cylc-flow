@@ -1562,12 +1562,18 @@ parser is not currently aware of.
 \subsection{Job Submission}
 \label{JobSubmission}
 
-In the system config file, Section~\ref{SystemConfigFiles}, you can define a
-default job submission method that will be used to run all tasks in the
-system except for those, if any, that are singled out to use a different
-method (also via the system config file).
 
-Cylc currently ships with the following job submit methods:
+In the system config file, Section~\ref{SystemConfigFiles}, you can
+define a default job submission method for your system, and single out
+particular tasks to use different job submission methods.
+
+\subsubsection{Basic Methods}
+\label{BasicMethods}
+
+Cylc currently ships with several basic job submission methods that
+should work anywhere. These can be used for running the example systems,
+and they may even be sufficient for simple real systems if no batch
+queue scheduler is available.
 
 \begin{itemize}
     \item \lstinline=background= - submit a job to run on the background
@@ -1580,14 +1586,15 @@ Cylc currently ships with the following job submit methods:
          the taskdef file \lstinline=REMOTE_HOST= key.
      \item \lstinline=at_now= - submit a task using the 'at' command, a
          rudimentary scheduler that reports job output by email.
+\end{itemize}
+
     \item \lstinline=loadleveler= - submit jobs using IBM's loadleveler
         scheduler. Task-specific loadleveler directives can be set in
         the taskdef file.
-    \item \lstinline=loadleveler_ecoconnect= - specific to NIWA's
+    \item \lstinline=ll_basic= - specific to NIWA's
         EcoConnect operational environment, in which the same system
         can be run in devel, test, or oper filesystems, under
         model-specific usernames that vary accordingly.
- \end{itemize}
 
 \subsubsection{How Job Submission Works}
 
