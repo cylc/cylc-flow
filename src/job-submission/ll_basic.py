@@ -14,7 +14,7 @@ import os, re
 import tempfile
 from job_submit import job_submit
 
-class loadleveler( job_submit ):
+class ll_basic( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
     def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
@@ -24,8 +24,6 @@ class loadleveler( job_submit ):
         directives = {}
         directives[ 'shell'    ] = '/bin/bash'
         directives[ 'job_name' ] = task_id
-        directives[ 'class'    ] = 'default'
-        directives[ 'job_type' ] = 'serial'
         directives[ 'output'   ] = '$(job_name)-$(jobid).out'
         directives[ 'error'    ] = '$(job_name)-$(jobid).err'
 
