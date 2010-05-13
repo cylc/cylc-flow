@@ -1,11 +1,13 @@
 To Do
 
+* allow task scripts to take command line arguments?
+
 * DOCUMENT: suicide prerequisites: necessary for asynchronous tasks, but 
   could also be useful in cycling systems.
 
 * DOCUMENT: daemon and asynchronous task
 
-* DOCUMENT: job submit mechanism can use env vars throughout.
+* DOCUMENT: job submit mechanisms
 
 * cylc list-all has a problem with ecoconnect usernames - underscore!
 
@@ -16,9 +18,6 @@ To Do
   therein are not defined (e.g. if commented out of the task list!)
 
 * parse "HH:mm" for contact delay times etc.
-
-* in job_submit.py, allow remote enviroment vars that aren't
-  interpolated locally ... e.g. $USER?
 
 * allow de-registration without a nameserver (pyrex.discover currently
   aborts without raising if no nameserver is found).
@@ -83,15 +82,9 @@ To Do
 * warn about consequences of deleting a task: system may move on so that
   a reinserted task will not get its prerequisites satisfied.
 
-* task generator should look for mispelled variables, e.g. $(CYLCE_TIME)
+* task generator should look for mispelled $(CYLCE_TIME)
 
 * is taskdef CYCLES sorted for order?
-
-* combine file-move with userguide-2, add SCS suite to the examples
-  (with real mode).
-
-* DO NOT DEFAULT TO LOCAL HOST FOR PYRO NAMESERVER HOST NAME - this will
-  preclude automatic discovery of remote nameservers.
 
 * optionally allow a pyro request handling (or main loop?) timeout.
   (this is not needed now that the stalling problem is solved?)
@@ -107,9 +100,6 @@ To Do
 * 'raise SystemExit(message)' everywhere instead of sys.exit(1)?
   print error messages to stderr: print >> sys.stderr, 'message'
 
-* remote background tasks will fail if CYLC_NS_HOST is 'localhost'
-  (which is only correct on the local machine)
-
 * consider implementing "either or" and "self destruct"
   prerequisites (Phil's idea) - this would allow automated
   control-system initiated response to failed tasks.  EXAMPLE: if a
@@ -118,7 +108,7 @@ To Do
   self destruct. The forecast post-processing task(s) would trigger off
   either the original or the backup forecast.
 
-* check that task output times do not exceed the registered run time
+* check that task output times do not exceed the registered run time?
 
 * allow cylc task proxies to kill their real external tasks at shutdown
   (and otherwise)?
