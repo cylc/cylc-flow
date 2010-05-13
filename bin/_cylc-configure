@@ -269,16 +269,19 @@ cat > job_submit_methods.py <<eof
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
-from at_now import at_now
-from background import background
-from background2 import background2
-from background_remote import background_remote
-from ll_basic import ll_basic
-from ll_raw import ll_raw
-from ll_basic_eco import ll_basic_eco
-from ll_raw_eco import ll_raw_eco
 eof
+
+for FILE in $CYLC_DIR/src/job-submission/*.py; do
+    MOD=${FILE%.py}
+    MOD=${MOD##*/}
+    [[ $MOD == job_submit ]] && continue  # exclude base class
+    CLASS=$( grep '^ *class.*: *$' $FILE )
+    CLASS=${CLASS#*class }
+    CLASS=${CLASS%:}
+    CLASS=${CLASS%(*}
+    echo from $MOD import $CLASS >> job_submit_methods.py
+done
+
 fi
 echo "$SYS_DIR/job_submit_methods.py"
 
