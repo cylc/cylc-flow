@@ -15,8 +15,8 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc unlock [options] SYSTEM 
 
-Unlock a running system to allow intervention, by the owner, via other
-cylc commands.  See 'cylc lock --help' for more information.""" )
+Unlock a running system to allow intervention via other cylc commands.
+See 'cylc lock --help' for more information.""" )
 
 (options, args) = parser.parse_args()
 
