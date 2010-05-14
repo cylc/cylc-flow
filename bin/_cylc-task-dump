@@ -34,10 +34,12 @@ if not options.task_id:
     parser.error( "Task ID required" )
 
 id = options.task_id
+if '%' not in id:
+    parser.error( 'invalid task id (NAME%YYYYMMDDHH): ' + id )
+
 (name, cycle) = id.split('%')
-# TO DO
-#if not cycle_time.is_valid( cycle ):
-#    parser.error( "invalid cycle time: " + cycle )
+if not cycle_time.is_valid( cycle ):
+    parser.error( "invalid cycle time: " + cycle )
 
 god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
@@ -45,7 +47,7 @@ sysname = parser.get_system_name()
 
 result = god.get_task_requisites( [ id ] )
 
-if id not in result.keys():
+if id not in result:
     print "Task " + id + " not found in " + sysname
     sys.exit(1)
 
