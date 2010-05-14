@@ -1,5 +1,11 @@
 To Do
 
+* src/which.py, like the shell command, searches only for executable
+  files. The ll_raw job submit classes use which to find task scripts
+  that don't have a full path supplied in the taskdef; these need
+  to check that which returns a result before continuing (e.g. if 
+  the task script has not been set executable). 
+
 * DOCUMENT: suicide prerequisites: necessary for asynchronous tasks, but 
   could also be useful in cycling systems.
 
