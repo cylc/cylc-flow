@@ -30,14 +30,24 @@ class ll_raw( job_submit ):
 
         self.compute_job_env()
 
+        # check for multiple step loadleveler files
+        queue_re = re.compile( '^\s*#\s*@\s*queue\s*$') 
+        FILE = open( self.jobfilename, 'r' )
+        lines = FILE.readlines()
+        FILE.close()
+        n_queue_directives = len( filter( queue_re.search, lines ) )
+
         done = False
+        count = 0
         for line in fileinput.input( self.jobfilename, inplace=True ):
             print line.strip()
-            if not done and re.match( '^\s*#\s*@\s*queue\s*$', line ):
-                print
-                self.print_job_env()
-                print
-                done = True
+            if re.match( '^\s*#\s*@\s*queue\s*$', line ):
+                count += 1
+                if not done and count == n_queue_directives:
+                    print
+                    self.print_job_env()
+                    print
+                    done = True
 
     def construct_command( self ):
         self.command = 'llsubmit ' + self.jobfilename
