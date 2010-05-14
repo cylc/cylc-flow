@@ -13,8 +13,11 @@
 
 #----------------------------------------------------------------------
 %NAME
-    # - Task name
-    foo
+    # - name[, shortname]
+    # - the optional short name can be displayed by the monitor to help
+    #   clarify views of large systems. Cylc commands can refer to
+    #   tasks by their full or short names.
+    nz_forecast, nzf
 
 #----------------------------------------------------------------------
 %DESCRIPTION
