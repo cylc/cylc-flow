@@ -14,9 +14,7 @@ import os
 from job_submit import job_submit
 
 class background( job_submit ):
-    def __init__( self, dummy_mode, global_env ):
-        job_submit.__init__( self, dummy_mode, global_env )
-        self.method_description = 'in the background [&]'
 
     def construct_command( self ):
+        self.method_description = 'in the background [&]'
         self.command = self.jobfilename + ' > ' + self.task_id + '-$$.log 2>&1 &'

@@ -32,6 +32,7 @@ class background_remote( job_submit ):
         self.execute()   # execute the copy
 
     def construct_command( self ):
+        self.method_description = 'remote background [&]'
         if not self.remote_host:
             raise SystemExit( 'Remote host not defined for ' + self.task_id )
         self.copy_jobfile()

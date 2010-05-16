@@ -17,7 +17,7 @@ from ll_basic import ll_basic
 
 class ll_basic_eco( ll_basic ):
 
-    def __init__( self, dummy_mode, global_env ):
+    def __init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
         # check we are running in an ecoconnect system
         # cylc should be running as ecoconnect_(devel|test|oper)
 
@@ -32,10 +32,6 @@ class ll_basic_eco( ll_basic ):
         self.ecoc_system = ecoc_system
         self.ecoc_system_bin = os.environ[ 'HOME' ] + '/bin'
 
-        ll_basic.__init__( self, dummy_mode, global_env ) 
-
-
-    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
         if not owner:
             raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
 
@@ -51,7 +47,7 @@ class ll_basic_eco( ll_basic ):
         # append the correct system suffix
         owner = owner_name + '_' + self.ecoc_system
 
-        ll_basic.configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
+        ll_basic.__init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
 
         # ecoconnect-specific loadleveler directives
         # CHANGE ONCE PROPER LOADLEVELER QUEUES ARE CONFIGURED
@@ -63,6 +59,10 @@ class ll_basic_eco( ll_basic ):
     def write_job_env( self ):
         ll_basic.write_job_env( self )
         self.jobfile.write( ". " + self.ecoc_system_bin + "/ecfunctions.sh\n\n" )
+
+    def construct_command( self ):
+        self.method_description = 'by loadleveler, ecoconnect [llsubmit]'
+        self.command = 'llsubmit ' + self.jobfilename
 
     def execute_command( self ):
         print " > submitting task (via " + self.jobfilename + ") " + self.method_description

@@ -35,22 +35,7 @@ import cycle_time
 
 class job_submit:
 
-    def __init__( self, dummy_mode, global_env ):
-        self.dummy_mode = dummy_mode
-        self.global_env = global_env
-        self.method_description = 'Job Submit base class: OVERRIDE ME'
-
-
-    def submit( self ):
-        # THIS IS CALLED TO SUBMIT A TASK
-        # construct a jobfile to run the task
-        self.construct_jobfile()
-        # construct a command to submit the jobfile
-        self.construct_command()
-        # execute the constructed command
-        self.execute_command()
-
-    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
+    def __init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
         if self.dummy_mode:
             self.task = "_cylc-dummy-task"
         else:
@@ -91,6 +76,17 @@ class job_submit:
         # will be defined explicitly above the commandline itself.
         commandline = ' '.join( self.commandline ) 
         self.commandline = self.interpolate_local_env( commandline )
+
+
+    def submit( self ):
+        # THIS IS CALLED TO SUBMIT A TASK
+        # construct a jobfile to run the task
+        self.construct_jobfile()
+        # construct a command to submit the jobfile
+        self.construct_command()
+        # execute the constructed command
+        self.execute_command()
+
 
     def interpolate_local_env( self, string ):
         interp_string = string

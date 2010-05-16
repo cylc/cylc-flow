@@ -18,7 +18,7 @@ from ll_raw import ll_raw
 
 class ll_raw_eco( ll_raw ):
 
-    def __init__( self, dummy_mode, global_env ):
+    def __init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
         # check we are running in an ecoconnect system
         # cylc should be running as ecoconnect_(devel|test|oper)
 
@@ -33,10 +33,6 @@ class ll_raw_eco( ll_raw ):
         self.ecoc_system = ecoc_system
         self.ecoc_system_bin = os.environ[ 'HOME' ] + '/bin'
 
-        ll_raw.__init__( self, dummy_mode, global_env ) 
-
-
-    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
         if not owner:
             raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
 
@@ -52,10 +48,13 @@ class ll_raw_eco( ll_raw ):
         # append the correct system suffix
         owner = owner_name + '_' + self.ecoc_system
 
-        ll_raw.configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
+        ll_raw.__init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
 
         self.method_description = 'by loadleveler, EcoConnect raw [llsubmit]'
 
+    def construct_command( self ):
+        self.method_description = 'by loadleveler, raw, ecoconnect [llsubmit]'
+        self.command = 'llsubmit ' + self.jobfilename
 
     def execute_command( self ):
         print " > submitting task (via " + self.jobfilename + ") " + self.method_description

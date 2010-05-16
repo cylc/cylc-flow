@@ -17,8 +17,8 @@ from job_submit import job_submit
 class ll_basic( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
-        job_submit.configure( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
+    def __init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
+        job_submit.__init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
 
         # default directives
         directives = {}
@@ -33,9 +33,6 @@ class ll_basic( job_submit ):
 
         # now replace
         self.directives = directives
-
-        self.method_description = 'by loadleveler, basic [llsubmit]'
-
 
     def construct_jobfile( self ):
         # create a new jobfile
@@ -59,4 +56,5 @@ class ll_basic( job_submit ):
         self.jobfile.close() 
 
     def construct_command( self ):
+        self.method_description = 'by loadleveler, basic [llsubmit]'
         self.command = 'llsubmit ' + self.jobfilename

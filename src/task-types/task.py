@@ -17,6 +17,7 @@ import task_state
 import logging
 import Pyro.core
 from copy import deepcopy
+from dynamic_instantiation import get_object
 
 global state_changed
 #state_changed = False
@@ -130,9 +131,9 @@ class task( Pyro.core.ObjBase ):
         #    self.log( 'WARNING', " starting in SATISFIED state" )
         #    self.prerequisites.set_all_satisfied()
 
-        self.launcher.configure( self.id, self.__class__.external_task,
-                self.env_vars, self.commandline, self.directives, 
-                self.__class__.owner, self.__class__.remote_host )
+        self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
+                ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 
+                        self.__class__.owner, self.__class__.remote_host )
 
     def register_run_length( self, run_len_minutes ):
         # automatically define special 'started' and 'finished' outputs
@@ -296,9 +297,9 @@ class task( Pyro.core.ObjBase ):
         # This must be compatible with __init__() on reload
         FILE.write( self.id + ' : ' + self.state.dump() + '\n' )
 
-    def spawn( self, state, launcher ):
+    def spawn( self, state ):
         self.state.set_spawned()
-        return self.__class__( self.next_tag(), state, launcher )
+        return self.__class__( self.next_tag(), state )
 
     def has_spawned( self ):
         # this exists because the oneoff modifier needs to override it.

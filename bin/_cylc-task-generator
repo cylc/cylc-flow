@@ -359,7 +359,7 @@ from dynamic_instantiation import get_object
             else:
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
-        task_init_def_args = 'c_time, initial_state, launcher, startup = False, no_reset = False'
+        task_init_def_args = 'c_time, initial_state, startup = False, no_reset = False'
         task_init_args = 'initial_state, no_reset'
 
         if contact:
@@ -434,6 +434,7 @@ from dynamic_instantiation import get_object
         else:
             FILE.write( indent + 'remote_host = None\n' )
 
+        FILE.write( indent + 'job_submit_method = None\n' )
 
         # valid hours
         FILE.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLES' ][0] + ']\n\n' )
@@ -635,8 +636,6 @@ from dynamic_instantiation import get_object
                 val = interpolate_cycle_times( "'" + val + "'" )
                 FILE.write( indent + 'self.directives[' + var + '] = ' + val + '\n' )
 
-        FILE.write( '\n' + indent + 'self.launcher = launcher\n' )
-
         # forecast model restarts
         if task_type == 'tied':
             for line in parsed_def['ESTIMATED_RESTART_OUTPUT_TIMES']:
@@ -675,13 +674,6 @@ from dynamic_instantiation import get_object
             FILE.write( indent + 'catchup_contact.__init__( self )\n\n' )
  
         FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
-
-
-        #if 'ENVIRONMENT' in parsed_def:
-        #    # override run_external_task() for the export case
-        #    indent_less()
-        #    FILE.write( indent + 'def run_external_task( self, launcher ):\n' )
-        #    FILE.write( indent + indent_unit + parent_class + '.run_external_task( self, launcher, self.env_vars )\n\n' )
 
         indent_less()
         indent_less()

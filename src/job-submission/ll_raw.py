@@ -20,8 +20,6 @@ from job_submit import job_submit
 class ll_raw( job_submit ):
 
     def construct_jobfile( self ):
-        self.method_description = 'by loadleveler, raw [llsubmit]'
-
         # create a new jobfile name
         self.jobfilename = self.get_jobfile_name()
 
@@ -50,4 +48,5 @@ class ll_raw( job_submit ):
                     done = True
 
     def construct_command( self ):
+        self.method_description = 'by loadleveler, raw [llsubmit]'
         self.command = 'llsubmit ' + self.jobfilename
