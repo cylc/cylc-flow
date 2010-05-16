@@ -401,7 +401,6 @@ from dynamic_instantiation import get_object
             FILE.write( indent + 'short_name = \'' + short_name + '\'\n' )
 
         FILE.write( indent + 'instance_count = 0\n\n' )
-        FILE.write( indent + 'upward_instance_count = 0\n\n' )
 
         # task description
         if 'DESCRIPTION' in parsed_def:
