@@ -36,7 +36,7 @@ class ll_raw( job_submit ):
         done = False
         count = 0
         for line in lines:
-            JOBFILE line.strip()
+            line.strip()
             if re.match( '^\s*#\s*@\s*queue\s*$', line ):
                 count += 1
                 if not done and count == n_queue_directives:
