@@ -17,6 +17,8 @@ import logging
 from time import sleep
 from optparse import OptionParser
 from dynamic_instantiation import get_object
+from interp_env import interp_self, interp_local, replace_delayed
+from job_submit import job_submit
 
 # cycl source modules
 from registration import registrations
@@ -86,8 +88,8 @@ sys.path.append( system_dir )
 
 # import system-specific cylc modules now------------------------------ 
 from system_config import system_config 
-import task     # loads task_classes.py
-import remote_switch # ditto
+import task
+import remote_switch
 
 # load system configuration--------------------------------------------
 config = system_config( name )
@@ -109,10 +111,18 @@ config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
 config.put_env( 'CYLC_SYSTEM_NAME', name )
 
 # intantiate the task--------------------------------------------------
-glbl_env = config.get('environment')
-job_sub_method = config.get('job submit class')[ task_name ]
-launcher = get_object( 'job_submit_methods', job_sub_method )( False, glbl_env )
-task = get_object( 'task_classes', task_name )( ctime, 'waiting', launcher, startup=True )
+global_env = config.get('environment')
+global_env = interp_self( global_env )
+global_env = interp_local( global_env )
+global_env = replace_delayed( global_env )
+job_submit.global_env = global_env
+ 
+jsc = config.get('job submit class')
+clsmod = __import__( 'task_classes' )
+cls = getattr( clsmod, task_name )
+setattr( cls, 'job_submit_method', jsc[ task_name ] )
+
+task = get_object( 'task_classes', task_name )( ctime, 'waiting', startup=True )
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 task.run_external_task()

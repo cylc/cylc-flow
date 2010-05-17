@@ -10,43 +10,37 @@
 #         |________________________|
 
 
-import shutil
 import which
-import fileinput
 import os, re
-import tempfile
 from job_submit import job_submit
 
 class ll_raw( job_submit ):
 
-    def construct_jobfile( self ):
-        # create a new jobfile name
-        self.jobfilename = self.get_jobfile_name()
+    def write_jobfile( self, JOBFILE ):
 
-        orig_file = which.which( self.task )  # full path needed if task file is in scripts dir
-        shutil.copy( orig_file, self.jobfilename )
+        # get full path of task script (it could be defined relative
+        # to system scripts dir in the taskdef file).
+        orig_file = which.which( self.task )
 
-        self.compute_job_env()
-
-        # check for multiple step loadleveler files
+        # read original and count '#@ queue' directives, in case is
+        # a multiple step loadleveler job
         queue_re = re.compile( '^\s*#\s*@\s*queue\s*$') 
-        FILE = open( self.jobfilename, 'r' )
+        FILE = open( orig_file, 'r' )
         lines = FILE.readlines()
         FILE.close()
         n_queue_directives = len( filter( queue_re.search, lines ) )
 
+        # write original out to the jobfile line by line
+        # inserting cylc environment etc. when we reach the final
+        # queue directive.
         done = False
         count = 0
-        for line in fileinput.input( self.jobfilename, inplace=True ):
-            print line.strip()
+        for line in lines:
+            JOBFILE line.strip()
             if re.match( '^\s*#\s*@\s*queue\s*$', line ):
                 count += 1
                 if not done and count == n_queue_directives:
-                    print
-                    self.print_job_env()
-                    print
+                    self.write_environment( JOBFILE ) 
+                    self.write_cylc_scripting( JOBFILE )
+                    self.write_extra_scripting( JOBFILE )
                     done = True
-
-    def construct_command( self ):
-        self.method_description = 'by loadleveler, raw [llsubmit]'
-        self.command = 'llsubmit ' + self.jobfilename

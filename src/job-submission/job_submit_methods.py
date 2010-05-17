@@ -12,10 +12,12 @@
 # THIS IS THE MODULE THROUGH WHICH CYLC ACCESSES JOB SUBMIT CLASSES. 
 # IT SHOULD IMPORT ALL CURRENTLY DEFINED JOB SUBMIT CLASSES.
 
-from at_now import at_now
+# generic job submission methods
 from background import background
-from background_remote import background_remote
+from at_now import at_now
 from ll_basic import ll_basic
-from ll_basic_eco import ll_basic_eco
 from ll_raw import ll_raw
+
+# EcoConnect (NIWA) operational environment:
 from ll_raw_eco import ll_raw_eco
+from ll_basic_eco import ll_basic_eco

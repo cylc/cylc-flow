@@ -15,9 +15,7 @@ import tempfile
 from job_submit import job_submit
 
 class at_now( job_submit ):
-    # submit a task using 'at -f FILE now'
-    # 'at' emails job stdout and stderr to the user
+    # at -f JOBFILE now
 
     def construct_command( self ):
-        self.method_description = 'by [at now] (job output by mail!)'
-        self.command = 'at -f ' + self.jobfilename + ' now'
+        self.command = 'at -f ' + self.jobfile_path + ' now'

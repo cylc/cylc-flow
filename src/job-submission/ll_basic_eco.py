@@ -11,13 +11,11 @@
 
 
 import os, re
-import tempfile
-from job_submit import job_submit
 from ll_basic import ll_basic
 
 class ll_basic_eco( ll_basic ):
 
-    def __init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ): 
         # check we are running in an ecoconnect system
         # cylc should be running as ecoconnect_(devel|test|oper)
 
@@ -47,28 +45,12 @@ class ll_basic_eco( ll_basic ):
         # append the correct system suffix
         owner = owner_name + '_' + self.ecoc_system
 
-        ll_basic.__init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
+        # run in ~owner/running
+        self.running_dir = '~' + self.owner + '/running
+
+        ll_basic.__init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ) 
 
         # ecoconnect-specific loadleveler directives
         # CHANGE ONCE PROPER LOADLEVELER QUEUES ARE CONFIGURED
         #!!!! self.directives[ 'class'    ] = self.system !!!!
-        self.directives[ 'class'       ] = 'test_linux'
-
-        self.method_description = 'by loadleveler, EcoConnect [llsubmit]'
-
-    def write_job_env( self ):
-        ll_basic.write_job_env( self )
-        self.jobfile.write( ". " + self.ecoc_system_bin + "/ecfunctions.sh\n\n" )
-
-    def construct_command( self ):
-        self.method_description = 'by loadleveler, ecoconnect [llsubmit]'
-        self.command = 'llsubmit ' + self.jobfilename
-
-    def execute_command( self ):
-        print " > submitting task (via " + self.jobfilename + ") " + self.method_description
-        # run as owner, in owner's $HOME/running directory
-        if self.owner != os.environ['USER']:
-            self.command = 'cd ~' + self.owner + '/running; sudo -u ' + self.owner + ' ' + self.command
-
-        # execute local command to submit the job
-        os.system( self.command )
+        self.directives[ 'class' ] = 'test_linux'

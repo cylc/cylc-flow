@@ -9,49 +9,65 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
+# TO DO: UPDATE, MOVE, OR DELETE THIS DOCUMENTATION:
+        # REMOTE TASKS MUST DEFINE (the remote) CYLC_DIR and
+        # CYLC_SYSTEM_DIR in the taskdef file %ENVIRONMENT key
+        # (full path with no interpolation).  The new (remote) values
+        # will will replace the original (local) values in big_env
+        # above (then full path to remote task script not required - if
+        # in the remote $CYLC_SYSTEM_DIR/scripts).
 
-# Job submission (external task execution) base class
 
-# Classes derived from this will submit jobs as (or similar):
-#  [sudo -u OWNER] {command} FILE 
+# Job submission (external task execution) base class. Derived classes
+# must be added to job_submit_methods.py
+
+# Writes a temporary "job file" that sets the execution environment for 
+# access to cylc as well as task-specific environment variables defined
+# in the taskdef file before executing the task task script proper.
+
+# Derived job submission classes specify the means by which the job
+# file itself is executed. E.g. simplest case, local background
+# execution with no IO redirection or log file: 'FILE &'
+
+# If OWNER is defined and REMOTE_HOST is not, submit locally by:
+#  sudo -u OWNER submit(FILE) 
  
-# Derived submission methods must be added to the job_submit.py
-# module in system definition directories to be available for use
-# (and add to the default list in _cylc-configure too).
+# If REMOTE_HOST is defined and OWNER is not, the job file is submitted
+# by copying it to the remote host with scp, and executing the defined
+# submit(FILE) on the remote host by ssh. Passwordless ssh to the remote
+# host must be configured. 
 
-# If OWNER is supplied (via the taskdef file) /etc/sudoers must be
-# configured to allow the cylc operator to run {command} as owner FILE
-# is a temporary file that created and submitted to run the task. It
-# should contain all cylc, system-wide, and task-specific environment
-# variables, batch queue scheduler directives (e.g. for qsub or
-# loadleveler directives), etc. (Setting up the correct execution 
-# environment, through 'sudo' and {command} is very difficult if we try
-# to submit the actual task script directory).
+# If REMOTE_HOST and OWNER are defined, we scp and ssh to
+# 'OWNER@REMOTE_HOST', thus passwordless ssh to remote host as OWNER
+# must be configured.
 
 import re, os, sys
 import subprocess
 import tempfile, stat
 import cycle_time
+from interp_env import interp_self, interp_other, interp_local, interp_local_str, replace_delayed, interp_other_str, replace_delayed_str
 
 class job_submit:
 
-    def __init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
-        if self.dummy_mode:
-            self.task = "_cylc-dummy-task"
-        else:
-            self.task = ext_task
+    # class variables to be set by the task manager
+    dummy_mode = False
+    global_env = {}
 
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ): 
+
+        # unique task identity
+        self.task_id = task_id
+
+        # task owner
         self.owner = owner
 
-        if host:
-            # DOCUMENT THIS: CAN USE ENVIRONMENT VARS IN HOST NAME!
-            self.remote_host = self.interpolate( host )
+        # in dummy mode, replace the real external task with the dummy task
+        self.task = ext_task
+        if job_submit.dummy_mode:
+            self.task = "_cylc-dummy-task"
 
-        self.task_id = task_id
-        self.extra_vars  = env_vars
-        self.directives  = dirs
-        self.commandline = com_line
-
+        # extract cycle time (cylcing tasks) or tag (asynchronous tasks)
+        # from the task id: NAME%CYCLE_TIME or NAME%TAG.
         self.cycle_time = None
         try:
             ( self.task_name, tag ) = task_id.split( '%' )
@@ -65,167 +81,177 @@ class job_submit:
                 self.cycle_time = None
                 self.tag = tag
 
-        # task-specific environment variables
-        self.task_env = {}
-        self.task_env[ 'TASK_ID'    ] = self.task_id
-        self.task_env[ 'CYCLE_TIME' ] = self.cycle_time
-        self.task_env[ 'TASK_NAME'  ] = self.task_name
+        # The values of task-specific environment variables defined in
+        # the taskdef file may reference other environment variables:
+        # (i) other task-specific environment variables $FOO, ${FOO}
+        # (ii) global cylc environment variables $FOO, ${FOO}
+        # (iii) local environment variables $FOO, ${FOO}
+        # (iv) "delayed local" environment varables $[BAR] that should
+        #      not be evaluated until the task executes (potentially on
+        #      a remote platform under another username).
 
-        # interpolate env vars in the commandline
-        # don't need to interpolate local task-specific vars as these
-        # will be defined explicitly above the commandline itself.
-        commandline = ' '.join( self.commandline ) 
-        self.commandline = self.interpolate_local_env( commandline )
+        # So, for each task-specific environment variable VALUE:
+        #  * interpolate any references to other task-specific variables
+        #    (otherwise we have to arrange for the variables to be
+        #    exported in the right order so that all variables are
+        #    defined before they are used).
+        #  * then interpolate any references to cylc global variables
+        #    (this is usually not necessary if we export globals before
+        #    task-specifics, but doing so allows users to override local
+        #    environment variables in the system_config file ... which
+        #    may be useful).
+        #  * then interpolate any remaining variables from the local env
+        #    (leaving them as literal '$FOO' could be a mistake for 
+        #    tasks that are submitted on remote machines; that's what
+        #    cylc's $[FOO] is for).
+        #  * then replace delayed variables $[FOO] with literal '$FOO'
 
+        # Note that global env already has self-, environment-, and
+        # delayed- variable references worked out, in task manager init.
+
+        task_env = interp_self( task_env )
+        task_env = interp_other( task_env, self.global_env )
+        task_env = interp_local( task_env )
+        task_env = replace_delayed( task_env )
+    
+        # Add the variables that all tasks must have
+        task_env[ 'TASK_ID'    ] = self.task_id
+        task_env[ 'CYCLE_TIME' ] = self.cycle_time
+        task_env[ 'TASK_NAME'  ] = self.task_name
+
+        self.task_env = task_env
+
+        # same for the task script command line
+        commandline = ' '.join( com_line ) 
+        commandline = interp_other_str( commandline, self.task_env )
+        commandline = interp_other_str( commandline, self.global_env )
+        commandline = interp_local_str( commandline )
+        commandline = replace_delayed_str( commandline )
+
+        self.commandline = commandline
+
+        # queueing system directives
+        self.directives  = dirs
+        
+        # directive prefix, e.g. '#QSUB ' (qsub), or '#@ ' (loadleveler)
+        # OVERRIDE IN DERIVED CLASSES
+        self.directive_prefix = "# DIRECTIVE-PREFIX "
+
+        # final directive, WITH PREFIX, e.g. '#@ queue' for loadleveler
+        self.final_directive = ""
+        
+        # a remote host can be defined by environment variables
+        if host:
+            host = interp_other_str( host, self.global_env )
+            host = interp_other_str( host, self.task_env )
+            host = interp_local_str( host )
+            self.remote_host = host
+        else:
+            self.remote_host = None
+
+        self.running_dir = '$HOME'
+        if self.owner:
+            self.running_dir = '~' + self.owner
 
     def submit( self ):
-        # THIS IS CALLED TO SUBMIT A TASK
-        # construct a jobfile to run the task
-        self.construct_jobfile()
-        # construct a command to submit the jobfile
-        self.construct_command()
-        # execute the constructed command
-        self.execute_command()
+        # CALL THIS TO SUBMIT THE TASK
 
-
-    def interpolate_local_env( self, string ):
-        interp_string = string
-        for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", interp_string ):
-            if var in os.environ:
-                # replace value with the env value
-                val = os.environ[ var ]
-                interp_string = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, interp_string )
-
-        # replace '$[foo]' with '${foo}' (env vars to evaluate at execution time)
-        interp_string = re.sub( "\$\[(?P<z>\w+)\]", "${\g<z>}", interp_string )
-
-        return interp_string
-
-    def interpolate( self, env ):
-        # Interpolate any variables in env values: $VARNAME or ${VARNAME}.
-        # First self-interpolate (if one variable refers to another).
-        # Second interpolate any remaining variables from the local
-        # environment (this also gets self-referals that contain
-        # environment variables).
-
-        interpolated_env = {}
-
-        for variable in env:
-            value = env[ variable ]
-
-            # 1. self-interpolation
-            for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", value ):
-                if var in env:
-                    val = env[ var ]
-                    value = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, value )
-
-            # 2. local environment interpolation
-            for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", value ):
-                if var in os.environ:
-                    # replace value with the env value
-                    val = os.environ[ var ]
-                    value = re.sub( '\$\{{0,1}' + var + '\}{0,1}', val, value )
-
-            # 3. replace '$[foo]' with '${foo}' (env vars to evaluate at execution time)
-            # value = re.sub( '@', '$', value )
-            value = re.sub( "\$\[(?P<z>\w+)\]", "${\g<z>}", value )
-
-            interpolated_env[ variable ] = value
-
-        return interpolated_env
-
-    def compute_job_env( self ):
-        # combine environment dicts:
-        big_env = {}
-        
-        # global environment variables
-        for var in self.global_env:
-            big_env[ var ] = str( self.global_env[ var] )
-
-        # general task specific variables
-        env = self.task_env
-        for var in env:
-            big_env[ var ] = str( env[ var] )
-
-        # special task specific variables, from taskdef
-        env = self.extra_vars
-        for var in env:
-            big_env[ var ] = str( env[ var ] )
-
-        # interpolate (self and environment)
-        # e.g. task-specific (taskdef) vars that use global
-        # (system_config) vars or pre-existing environment vars:
-        self.final_env = self.interpolate( big_env )
-
-    def write_job_env( self ):
-        # write the environment scripting to the jobfile
-        for var in self.final_env:
-            self.jobfile.write( "export " + var + "=\"" + self.final_env[var] + "\"\n" )
-        self.jobfile.write(". $CYLC_DIR/cylc-env.sh\n")
-
-
-    def print_job_env( self ):
-        # print the environment scripting
-        for var in self.final_env:
-            print "export " + var + "=\"" + self.final_env[var] + "\"" 
-        print ". $CYLC_DIR/cylc-env.sh"
-
-        # ACCESS TO CYLC (for 'cylc message'), AND TO SUB-SCRIPTS
-        # RESIDING IN THE SYSTEM DIRECTORY, BY SPAWNED TASKS IS BY
-        # SOURCING:
-        # . $CYLC_DIR/cylc-env.sh
-        # IN THE JOBFILE (see src/job_submission/job_submit.py)
-
-        # REMOTE TASKS MUST DEFINE (the remote) CYLC_DIR and
-        # CYLC_SYSTEM_DIR in the taskdef file %ENVIRONMENT key
-        # (full path with no interpolation).  The new (remote) values
-        # will will replace the original (local) values in big_env
-        # above (then full path to remote task script not required - if
-        # in the remote $CYLC_SYSTEM_DIR/scripts).
-
-        # self.jobfile.write("export PATH=" + os.environ['PATH'] + "\n" )  # for system scripts dir
-
-    def get_jobfile_name( self ):
         # get a new temp filename
-        return tempfile.mktemp( prefix='cylc-') 
+        self.jobfile_path = tempfile.mktemp( prefix='cylc-') 
+        
+        # open the job file to write
+        JOBFILE = open( self.jobfile_path, 'w' )
 
-    def get_jobfile( self ):
-        # open the file
-        self.jobfilename = self.get_jobfile_name()
-        self.jobfile = open( self.jobfilename, 'w' )
+        # write the job file
+        self.write_jobfile( JOBFILE )
 
-    def construct_command( self ):
-        raise SystemExit( "Job Submit base class: OVERRIDE ME" )
-
-    def construct_jobfile( self ):
-        # create a new jobfile
-        self.get_jobfile()
-
-        self.compute_job_env()
-
-        # write cylc, system-wide, and task-specific environment vars 
-        self.write_job_env()
-
-        # write the task execution line
-        self.jobfile.write( self.task + " " + self.commandline + "\n")
         # close the jobfile
-        self.jobfile.close() 
+        JOBFILE.close() 
 
-        # set it executable
-        os.chmod( self.jobfilename, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
+        # submit the file
+        if self.remote_host and not self.dummy_mode:
+            self.submit_jobfile_remote()
+        else:
+            self.submit_jobfile_local()
 
-    def delete_jobfile( self ):
-        # called by task class when the job finishes
-        print ' - deleting jobfile ' + self.jobfilename
-        os.unlink( self.jobfilename )
+    def write_jobfile( self, FILE ):
+        FILE.write( '#!/bin/bash' )
+        self.write_directives( FILE )
+        self.write_environment( FILE )
+        self.write_cylc_scripting( FILE )
+        self.write_extra_scripting( FILE )
+        self.write_task_execute( FILE ) 
+        FILE.write( '#EOF' )
 
-    def execute_command( self ):
-        print " > submitting task (via " + self.jobfilename + ") " + self.method_description
-        if self.owner:
-            # run as owner, in owner's home directory (in case write
-            # permissions are required for the job log file)
+    def write_directives( self, FILE ):
+        for d in self.directives:
+            FILE.write( self.directive_prefix + d + " = " + self.directives[ d ] + "\n" )
+        FILE.write( self.final_directive + "\n" )
+
+    def write_environment( self, FILE ):
+        # write the environment scripting to the jobfile
+        for env in [ self.global_env, self.task_env ]:
+            FILE.write( "\n" )
+            for var in env:
+                FILE.write( "export " + var + "=\"" + env[var] + "\"\n" )
+        FILE.write( "\n" )
+
+    def write_extra_scripting( self, FILE ):
+        # override if required
+        pass
+
+    def write_cylc_scripting( self, FILE ):
+        FILE.write( ". $CYLC_DIR/cylc-env.sh\n\n" )
+
+    def write_task_execute( self, FILE ):
+        FILE.write( self.task + " " + self.commandline + "\n\n" )
+
+    def submit_jobfile_local( self ):
+        # CONSTRUCT self.command, A LOCAL COMMAND THAT WILL SUBMIT THE
+        # JOB THAT RUNS THE TASK. DERIVED CLASSES MUST PROVIDE THIS.
+        self.construct_command()
+
+        # make sure the jobfile is executable
+        os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
+
+        # run as owner, in owner's home directory, if owner is defined.
+        # (write-permissions may be required in the running directory).
+        if self.owner and not job_submit.dummy_mode:
             if self.owner != os.environ['USER']:
-                self.command = 'cd ~' + self.owner + '; sudo -u ' + self.owner + ' ' + self.command
+                self.command = 'cd ' + self.running_dir + '; sudo -u ' + self.owner + ' ' + self.command
 
-        # execute local command to submit the job
+        # execute the local command to submit the job
+        print " > " + self.command
         os.system( self.command )
+
+    def submit_jobfile_remote( self ):
+        # make sure the local jobfile is executable (file mode is preserved by scp?)
+        os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
+
+        self.destination = self.remote_host
+        if self.owner:
+            self.destination = self.owner + '@' + self.remote_host
+
+        # copy file to $HOME for owner on remote machine
+        command_1 = 'scp ' + self.jobfile_path + ' ' + self.destination + ':'
+
+        # now replace local jobfile path with remote jobfile path
+        self.jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
+
+        self.construct_command()
+
+        command_2 = "ssh " + self.destination + " '" + self.command + "'"
+        command = command_1 +  " ; " + command_2
+
+        # execute the local command to submit the job
+        print " > " + command
+        os.system( command )
+
+    def cleanup( self ):
+        # called by task class when the job finishes
+        print ' - deleting jobfile ' + self.jobfile_path
+        os.unlink( self.jobfile_path )
+
+        if self.remote_jobfile_path:
+            print ' - deleting remote jobfile ' + self.remote_jobfile_path
+            os.system( 'ssh ' + self.destination + ' rm ' + self.remote_jobfile_path )

@@ -66,7 +66,7 @@
 %REMOTE_HOST
     # - URL of a remote machine on which this task must run.
     # - This becomes 'self.remote_host' in the job submission class.
-    # - It can be an environment variable set in system_config.py.
+    # - It can be an environment variable set in system_config.py, e.g.:
     $SUPERCOMPUTER
  
 #----------------------------------------------------------------------

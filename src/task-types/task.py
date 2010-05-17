@@ -265,7 +265,7 @@ class task( Pyro.core.ObjBase ):
                         print
                         print self.id + " FINISHED"
                         self.state.set_status( 'finished' )
-                        self.launcher.delete_jobfile()
+                        self.launcher.cleanup()
             else:
                 # this output has already been satisfied
                 self.log( 'WARNING', "UNEXPECTED OUTPUT (already satisfied):" )

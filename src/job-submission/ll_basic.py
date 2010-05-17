@@ -17,8 +17,8 @@ from job_submit import job_submit
 class ll_basic( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def __init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ): 
-        job_submit.__init__( self, task_id, ext_task, env_vars, com_line, dirs, owner, host ) 
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ): 
+        job_submit.__init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ) 
 
         # default directives
         directives = {}
@@ -34,27 +34,8 @@ class ll_basic( job_submit ):
         # now replace
         self.directives = directives
 
-    def construct_jobfile( self ):
-        # create a new jobfile
-        self.get_jobfile()
-
-        # write loadleveler directives
-        for d in self.directives.keys():
-            self.jobfile.write( "#@ " + d + " = " + self.directives[ d ] + "\n" )
-
-        # FINAL QUEUEING DIRECTIVE
-        self.jobfile.write( "#@ queue\n\n" )
-
-        # write cylc, system-wide, and task-specific environment vars 
-        self.compute_job_env()
-        self.write_job_env()
-
-        # write the task execution line
-        self.jobfile.write( self.task + " " + self.commandline + "\n")
- 
-        # close the jobfile
-        self.jobfile.close() 
+        self.directive_prefix = "# @ "
+        self.final_directive  = "# @ queue"
 
     def construct_command( self ):
-        self.method_description = 'by loadleveler, basic [llsubmit]'
-        self.command = 'llsubmit ' + self.jobfilename
+        self.command = 'llsubmit ' + self.jobfile_path
