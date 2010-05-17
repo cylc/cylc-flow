@@ -9,7 +9,13 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
+# THIS IS THE MODULE THROUGH WHICH CYLC ACCESSES JOB SUBMIT CLASSES. 
+# IT SHOULD IMPORT ALL CURRENTLY DEFINED JOB SUBMIT CLASSES.
 
+from at_now import at_now
 from background import background
-from background2 import background2
 from background_remote import background_remote
+from ll_basic import ll_basic
+from ll_basic_eco import ll_basic_eco
+from ll_raw import ll_raw
+from ll_raw_eco import ll_raw_eco

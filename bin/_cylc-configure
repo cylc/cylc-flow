@@ -27,7 +27,6 @@ function print_usage()
     echo " - task_list.py ............... list of tasks to instantiate at startup"
     echo " - system_config.py ............... CUSTOMIZABLE configuration settings"
     echo " - system_info.py ......... CUSTOMIZABLE descriptive system information"
-    echo " - job_submit_methods.py ....... CUSTOMIZABLE system job submit methods"
     echo ""
     echo "A system should be reconfigured if its taskdef files have been changed."
     echo "The customizable modules will NOT be overwritten on reconfiguration."
@@ -239,51 +238,6 @@ class system_config( config ):
 eof
 fi
 echo "system_config.py"
-
-echo
-WRITE_JOBSUB=true
-if [[ -f job_submit_methods.py ]]; then
-    echo "job_submit_methods module already exists, "
-    if ! $FORCE; then
-        echo "NOT OVERWRITING in case of customization"
-        WRITE_JOBSUB=false
-    else
-        BACKUP=job_submit_methods.py.OLD.$$
-        echo "OVERWRITING (backup: $BACKUP)"
-        cp job_submit_methods.py $BACKUP
-    fi
-else
-    echo "Writing the job submit methods module"
-fi
-
-if $WRITE_JOBSUB; then
-cat > job_submit_methods.py <<eof
-#!/usr/bin/python
-
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
-
-eof
-
-for FILE in $CYLC_DIR/src/job-submission/*.py; do
-    MOD=${FILE%.py}
-    MOD=${MOD##*/}
-    [[ $MOD == job_submit ]] && continue  # exclude base class
-    CLASS=$( grep '^ *class.*: *$' $FILE )
-    CLASS=${CLASS#*class }
-    CLASS=${CLASS%:}
-    CLASS=${CLASS%(*}
-    echo from $MOD import $CLASS >> job_submit_methods.py
-done
-
-fi
-echo "$SYS_DIR/job_submit_methods.py"
 
 echo
 WRITE_INFO=true

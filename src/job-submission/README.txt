@@ -8,9 +8,3 @@ Python temporary files:
 
 # tempfile.mktemp() is deprecated in favour of mkstemp() but the latter
 # was also introduced at python 2.6.
-
-Sudo: run task as owner
-
-# /etc/sudoers must be configured to allow the cylc operator to submit 
-# jobs as the task owner, e.g. by allowing sudo access to 'at', qsub, or
-# loadleveler. 

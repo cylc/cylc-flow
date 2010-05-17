@@ -199,8 +199,6 @@ from dynamic_instantiation import get_object
 
 ''')
 
-    FILE.write( "import job_submit_methods\n" )
-
     n_files = len(task_def_files)
     i = 0
 
