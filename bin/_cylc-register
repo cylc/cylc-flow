@@ -26,7 +26,6 @@ def check_dir( dir ):
             dir + '/system_config.py',
             dir + '/task_classes.py',
             dir + '/task_list.py',
-            dir + '/job_submit_methods.py',
             ]
 
     good = True
