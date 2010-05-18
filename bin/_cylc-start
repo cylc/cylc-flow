@@ -18,14 +18,14 @@ import logging
 import datetime
 from time import sleep
 from optparse import OptionParser
-from job_submit import job_submit
 
-# cycl source modules
+# cylc source modules
 import manager
 import cycle_time
 import dead_letter
 import state_summary
 import accelerated_clock 
+from job_submit import job_submit
 from registration import registrations
 
 # pyro modules
