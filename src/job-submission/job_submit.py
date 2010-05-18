@@ -153,6 +153,8 @@ class job_submit:
         if self.owner:
             self.running_dir = '~' + self.owner
 
+        self.remote_jobfile_path = None # default required in cleanup()
+
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
 
