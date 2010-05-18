@@ -46,6 +46,6 @@ class ll_raw_eco( ll_raw ):
         owner = owner_name + '_' + self.ecoc_system
 
         # run in ~owner/running
-        self.running_dir = '~' + self.owner + '/running'
+        self.running_dir = '~' + owner + '/running'
 
         ll_raw.__init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ) 
