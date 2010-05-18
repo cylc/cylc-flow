@@ -54,8 +54,8 @@ class system_config( config ):
         #self.items['job_submit_method'] = 'at_now'
 
         # to override the default job submit method for specific tasks, e.g.:
-        #self.items['job_submit_overrides']['loadleveler_ecoconnect'] = [ 'A' ]
-        self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
+        #self.items['job_submit_overrides']['ll_basic'] = [ 'A' ]
+        #self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
 
         # environment variables available to all tasks, can include
         # the registered system name, e.g.:
@@ -65,6 +65,12 @@ class system_config( config ):
         # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 
         self.items['environment']['REAL_TIME_ACCEL'] = 360
 
+        self.items['environment']['FOO'] = 'foo'
+        self.items['environment']['BAR'] = '$FOO'
+        self.items['environment']['BAZ'] = '$BAR'
+        self.items['environment']['CYLC_USER'] = '$USER'
+        self.items['environment']['REMOTE_HOME'] = '$[HOME]'
+       
         #self.items['logging_level'] = logging.DEBUG
 
 # END OF FILE

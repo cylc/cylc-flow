@@ -31,6 +31,7 @@
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
     ANIMAL foxy fox
     REMOTE_HOME $[HOME]
+    TASK_FOO global-${BAZ}
 
 %COMMANDLINE
     # A.sh task 2 commandline args: --file=FILE SENTENCE
