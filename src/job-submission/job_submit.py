@@ -110,7 +110,7 @@ class job_submit:
         # delayed- variable references worked out, in task manager init.
 
         task_env = interp_self( task_env )
-        task_env = interp_other( task_env, self.global_env )
+        task_env = interp_other( task_env, job_submit.global_env )
         task_env = interp_local( task_env )
         task_env = replace_delayed( task_env )
     
@@ -124,7 +124,7 @@ class job_submit:
         # same for the task script command line
         commandline = ' '.join( com_line ) 
         commandline = interp_other_str( commandline, self.task_env )
-        commandline = interp_other_str( commandline, self.global_env )
+        commandline = interp_other_str( commandline, job_submit.global_env )
         commandline = interp_local_str( commandline )
         commandline = replace_delayed_str( commandline )
 
@@ -142,7 +142,7 @@ class job_submit:
         
         # a remote host can be defined by environment variables
         if host:
-            host = interp_other_str( host, self.global_env )
+            host = interp_other_str( host, job_submit.global_env )
             host = interp_other_str( host, self.task_env )
             host = interp_local_str( host )
             self.remote_host = host
@@ -192,7 +192,7 @@ class job_submit:
 
     def write_environment( self, FILE ):
         # write the environment scripting to the jobfile
-        for env in [ self.global_env, self.task_env ]:
+        for env in [ job_submit.global_env, self.task_env ]:
             FILE.write( "\n" )
             for var in env:
                 FILE.write( "export " + var + "=\"" + env[var] + "\"\n" )
