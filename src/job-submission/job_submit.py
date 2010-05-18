@@ -184,6 +184,8 @@ class job_submit:
         FILE.write( '#EOF' )
 
     def write_directives( self, FILE ):
+        if len( self.directives.keys() ) == 0:
+            return
         for d in self.directives:
             FILE.write( self.directive_prefix + d + " = " + self.directives[ d ] + "\n" )
         FILE.write( self.final_directive + "\n" )
@@ -194,16 +196,17 @@ class job_submit:
             FILE.write( "\n" )
             for var in env:
                 FILE.write( "export " + var + "=\"" + env[var] + "\"\n" )
-        FILE.write( "\n" )
 
     def write_extra_scripting( self, FILE ):
         # override if required
         pass
 
     def write_cylc_scripting( self, FILE ):
-        FILE.write( ". $CYLC_DIR/cylc-env.sh\n\n" )
+        FILE.write( "\n" )
+        FILE.write( ". $CYLC_DIR/cylc-env.sh\n" )
 
     def write_task_execute( self, FILE ):
+        FILE.write( "\n" )
         FILE.write( self.task + " " + self.commandline + "\n\n" )
 
     def submit_jobfile_local( self, dry_run  ):
@@ -225,7 +228,7 @@ class job_submit:
             print " > JOB FILE: " + self.jobfile_path
             print " > WOULD DO: " + self.command
         else:
-            print " > EXECUTING:" + self.command
+            print " > EXECUTING: " + self.command
             os.system( self.command )
 
     def submit_jobfile_remote( self, dry_run ):
@@ -252,7 +255,7 @@ class job_submit:
             print " > JOB FILE: " + self.jobfile_path
             print " > WOULD DO: " + command
         else:
-            print " > EXECUTING:" + command
+            print " > EXECUTING: " + command
             os.system( command )
 
     def cleanup( self ):
