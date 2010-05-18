@@ -411,6 +411,20 @@ daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', groupname))
 config.put( 'daemon', daemon )
 config.put( 'clock', clock )
 
+# set global (all tasks) environment variables-------------------------
+config.put_env( 'CYLC_MODE', 'scheduler' )
+config.put_env( 'CYLC_NS_HOST',  str( pns_host ) )  # may be an IP number
+config.put_env( 'CYLC_NS_GROUP',  groupname )
+config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
+config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
+config.put_env( 'CYLC_SYSTEM_NAME', name )
+if dummy_mode:
+    config.put_env( 'CYLC_CLOCK_RATE', str( options.clock_rate ) )
+    # communicate failout_task_id to the dummy task program
+    if options.failout_task_id:
+        print "FAILOUT: " + options.failout_task_id
+        config.put_env( 'CYLC_FAILOUT_ID', options.failout_task_id )
+
 # initialize the task manager (and create main logger)
 pool = manager.manager( config, groupname, dummy_mode, startup )
 
@@ -433,20 +447,6 @@ log = logging.getLogger( 'main' )
 # remote control switch
 remote = remote_switch.remote_switch( config, pool, options.failout_task_id )
 daemon.connect( remote, ns_obj_name( 'remote', groupname) )
-
-# set global (all tasks) environment variables-------------------------
-config.put_env( 'CYLC_MODE', 'scheduler' )
-config.put_env( 'CYLC_NS_HOST',  str( pns_host ) )  # may be an IP number
-config.put_env( 'CYLC_NS_GROUP',  groupname )
-config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
-config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
-config.put_env( 'CYLC_SYSTEM_NAME', name )
-if dummy_mode:
-    config.put_env( 'CYLC_CLOCK_RATE', str( options.clock_rate ) )
-    # communicate failout_task_id to the dummy task program
-    if options.failout_task_id:
-        print "FAILOUT: " + options.failout_task_id
-        config.put_env( 'CYLC_FAILOUT_ID', options.failout_task_id )
 
 # print system information at startup----------------------------------
 print_banner()
