@@ -153,7 +153,7 @@ class job_submit:
         if self.owner:
             self.running_dir = '~' + self.owner
 
-    def submit( self ):
+    def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
 
         # get a new temp filename
@@ -170,9 +170,9 @@ class job_submit:
 
         # submit the file
         if self.remote_host and not self.dummy_mode:
-            self.submit_jobfile_remote()
+            self.submit_jobfile_remote( dry_run )
         else:
-            self.submit_jobfile_local()
+            self.submit_jobfile_local( dry_run )
 
     def write_jobfile( self, FILE ):
         FILE.write( '#!/bin/bash' )
@@ -206,7 +206,7 @@ class job_submit:
     def write_task_execute( self, FILE ):
         FILE.write( self.task + " " + self.commandline + "\n\n" )
 
-    def submit_jobfile_local( self ):
+    def submit_jobfile_local( self, dry_run  ):
         # CONSTRUCT self.command, A LOCAL COMMAND THAT WILL SUBMIT THE
         # JOB THAT RUNS THE TASK. DERIVED CLASSES MUST PROVIDE THIS.
         self.construct_command()
@@ -221,10 +221,14 @@ class job_submit:
                 self.command = 'cd ' + self.running_dir + '; sudo -u ' + self.owner + ' ' + self.command
 
         # execute the local command to submit the job
-        print " > " + self.command
+        if dry_run:
+            print " > JOB FILE: " + self.jobfile_path
+            print " > WOULD DO: " + self.command
+        else:
+            print " > EXECUTING:" + self.command
         os.system( self.command )
 
-    def submit_jobfile_remote( self ):
+    def submit_jobfile_remote( self, dry_run ):
         # make sure the local jobfile is executable (file mode is preserved by scp?)
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
@@ -244,7 +248,11 @@ class job_submit:
         command = command_1 +  " ; " + command_2
 
         # execute the local command to submit the job
-        print " > " + command
+        if dry_run:
+            print " > JOB FILE: " + self.jobfile_path
+            print " > WOULD DO: " + command
+        else:
+            print " > EXECUTING:" + command
         os.system( command )
 
     def cleanup( self ):

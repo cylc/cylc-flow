@@ -196,9 +196,9 @@ class task( Pyro.core.ObjBase ):
                 print ' o "' + message + '" <--- ' + self.prerequisites.satisfied_by[ message ]
             self.run_external_task()
 
-    def run_external_task( self ):
+    def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'launching external task' )
-        self.launcher.submit()
+        self.launcher.submit( dry_run )
         self.state.set_status( 'submitted' )
 
     def get_timed_outputs( self ):

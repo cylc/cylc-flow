@@ -43,6 +43,11 @@ def commandline_parser():
             help="ID of the task to run.",
             metavar="TASK%CYCLE", action="store", dest="task_id" )
 
+    parser.add_option( "-d", "--dry-run",
+            help="Generate the cylc job submission file for the "
+            "task and report how it would be submitted to run.",
+            action="store_true", default=False, dest="dry_run" )
+
     return parser
 
 # parse commandline options and arguments------------------------------
@@ -77,7 +82,7 @@ else:
 
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
-print system_dir
+
 # add system scripts to $PATH
 os.environ[ 'PATH' ] += ':' + system_dir + '/scripts'
 # add system Python modules to $PYTHONPATH
@@ -104,8 +109,8 @@ pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
 
 # set global (all tasks) environment variables-------------------------
 config.put_env( 'CYLC_MODE', 'run-task' )
-config.put_env( 'CYLC_NS_HOST',  'NULL' )  # may be an IP number
-config.put_env( 'CYLC_NS_GROUP',  'NULL' )
+config.put_env( 'CYLC_NS_HOST', 'NOT USED BY RUN-TASK' ) 
+config.put_env( 'CYLC_NS_GROUP', 'NOT USED BY RUN-TASK' )
 config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
 config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
 config.put_env( 'CYLC_SYSTEM_NAME', name )
@@ -125,4 +130,4 @@ setattr( cls, 'job_submit_method', jsc[ task_name ] )
 task = get_object( 'task_classes', task_name )( ctime, 'waiting', startup=True )
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
-task.run_external_task()
+task.run_external_task( options.dry_run )

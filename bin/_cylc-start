@@ -294,7 +294,7 @@ banner[ 'system definition' ] = system_dir
 
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
-print system_dir
+
 # prepend system scripts to $PATH (prepend in case this is a subsystem!)
 # (NOTE this is still somewhat dangerous: if a subsystem task script
 # that should be executable but isn't has the same filename as a task in
