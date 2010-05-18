@@ -194,10 +194,16 @@ class job_submit:
 
     def write_environment( self, FILE ):
         # write the environment scripting to the jobfile
-        for env in [ job_submit.global_env, self.task_env ]:
-            FILE.write( "\n" )
-            for var in env:
-                FILE.write( "export " + var + "=\"" + env[var] + "\"\n" )
+
+        #for env in [ job_submit.global_env, self.task_env ]:
+
+        FILE.write( "\n# TASK EXECUTION ENVIRONMENT: system-wide variables\n" )
+        for var in job_submit.global_env:
+            FILE.write( "export " + var + "=\"" + job_submit.global_env[var] + "\"\n" )
+
+        FILE.write( "\n# TASK EXECUTION ENVIRONMENT: task-specific variables:\n" )
+        for var in self.task_env:
+            FILE.write( "export " + var + "=\"" + self.task_env[var] + "\"\n" )
 
     def write_extra_scripting( self, FILE ):
         # override if required
