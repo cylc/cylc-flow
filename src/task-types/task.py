@@ -198,8 +198,12 @@ class task( Pyro.core.ObjBase ):
 
     def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'launching external task' )
-        self.launcher.submit( dry_run )
-        self.state.set_status( 'submitted' )
+        if self.launcher.submit( dry_run ):
+            self.state.set_status( 'submitted' )
+            self.log( 'NORMAL', "job submitted" )
+        else:
+            self.state.set_status( 'failed' )
+            self.log( 'CRITICAL', "job submission failed" )
 
     def get_timed_outputs( self ):
         # NOT USED?

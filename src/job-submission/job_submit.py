@@ -172,9 +172,9 @@ class job_submit:
 
         # submit the file
         if self.remote_host and not self.dummy_mode:
-            self.submit_jobfile_remote( dry_run )
+            return self.submit_jobfile_remote( dry_run )
         else:
-            self.submit_jobfile_local( dry_run )
+            return self.submit_jobfile_local( dry_run )
 
     def write_jobfile( self, FILE ):
         FILE.write( '#!/bin/bash\n' )
@@ -227,17 +227,55 @@ class job_submit:
 
         # run as owner, in owner's home directory, if owner is defined.
         # (write-permissions may be required in the running directory).
+        changed_dir = False
         if self.owner and not job_submit.dummy_mode:
             if self.owner != os.environ['USER']:
-                self.command = 'cd ' + self.running_dir + '; sudo -u ' + self.owner + ' ' + self.command
+                # change to the task owner's running directory before
+                # submitting the job
+                cwd = os.getcwd()
+                try:
+                    os.chdir( self.running_dir )
+                except OSError, e:
+                    print "Failed to change to task owner's running directory"
+                    print e
+                    return False
+                else:
+                    changed_dir = True
+                    new_dir = self.running_dir
+
+                self.command = 'sudo -u ' + self.owner + ' ' + self.command
 
         # execute the local command to submit the job
         if dry_run:
             print " > JOB FILE: " + self.jobfile_path
             print " > WOULD DO: " + self.command
+            success = True
         else:
             print " > EXECUTING: " + self.command
-            os.system( self.command )
+            try:
+                res = subprocess.call( self.command, shell=True )
+                if res < 0:
+                    print "command terminated by signal", res
+                    success = False
+                elif res > 0:
+                    print "command failed", res
+                    success = False
+                else:
+                    # res == 0
+                    success = True
+            except OSError, e:
+                # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
+                # because subprocess.call( 'foo &' ) returns immediately
+                # and the failure occurs in the detached sub-shell.
+                print "Job submission failed", e
+                success = False
+           
+        if changed_dir:
+            # change back
+            os.chdir( cwd )
+
+        return success
+
 
     def submit_jobfile_remote( self, dry_run ):
         # make sure the local jobfile is executable (file mode is preserved by scp?)
@@ -249,22 +287,66 @@ class job_submit:
 
         # copy file to $HOME for owner on remote machine
         command_1 = 'scp ' + self.jobfile_path + ' ' + self.destination + ':'
-
+        if dry_run:
+            print " > LOCAL JOB FILE " + self.jobfile_path
+            print " > WOULD DO: " + command_1
+            success = True
+        else:
+            print " > EXECUTING: " + command_1
+            try:
+                res = subprocess.call( command_1, shell=True )
+                if res < 0:
+                    print "scp terminated by signal", res
+                    success = False
+                elif res > 0:
+                    print "scp failed", res
+                    success = False
+                else:
+                    # res == 0
+                    success = True
+            except OSError, e:
+                # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
+                # (i.e. cylc's simplest "background" job submit method)
+                # because subprocess.call( 'foo &' ) returns immediately
+                # and the failure occurs in the detached sub-shell.
+                print "Failed to execute scp command", e
+                success = False
+ 
         # now replace local jobfile path with remote jobfile path
         self.jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
 
         self.construct_command()
 
         command_2 = "ssh " + self.destination + " '" + self.command + "'"
-        command = command_1 +  " ; " + command_2
 
         # execute the local command to submit the job
         if dry_run:
-            print " > JOB FILE: " + self.jobfile_path
-            print " > WOULD DO: " + command
+            print " > REMOTE JOB FILE: " + self.jobfile_path
+            print " > WOULD DO: " + command_2
         else:
-            print " > EXECUTING: " + command
-            os.system( command )
+            print " > EXECUTING: " + command_2
+            try:
+                res = subprocess.call( command_2, shell=True )
+                if res < 0:
+                    print "command terminated by signal", res
+                    success = False
+                elif res > 0:
+                    print "command failed", res
+                    success = False
+                else:
+                    # res == 0
+                    success = True
+            except OSError, e:
+                # THIS DOES NOT CATCH REMOTE BACKGROUND EXECUTION FAILURE
+                # (i.e. cylc's simplest "background" job submit method)
+                # as subprocess.call( 'ssh dest "foo </dev/null &"' )
+                # returns immediately and the failure occurs in the
+                # remote background sub-shell.
+                print "Job submission failed", e
+                success = False
+ 
+        return success
+
 
     def cleanup( self ):
         # called by task class when the job finishes
