@@ -97,14 +97,15 @@ import remote_switch
 
 # load system configuration--------------------------------------------
 config = system_config( name )
-config.put( 'logging_dir', config.get('logging_dir') + '-run-task' ) 
+logging_dir = config.get('logging_dir') + '-run-task'
+config.put( 'logging_dir', logging_dir ) 
 config.create_logging_dir( False )
 config.job_submit_config()
 
 # create the task log
 log = logging.getLogger( 'main.' + task_name )
 pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
-        logging.DEBUG, False, None )
+        logging.DEBUG, False, None, True )
 
 # set global (all tasks) environment variables-------------------------
 config.put_env( 'CYLC_MODE', 'run-task' )
@@ -126,6 +127,10 @@ setattr( cls, 'job_submit_method', jsc[ task_name ] )
 task = get_object( 'task_classes', task_name )( ctime, 'waiting', startup=True )
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
+print
 if not options.dry_run:
     print "Cylc messages will be directed to stdout (=> the task log file)."
+    print "Logging directory is " + logging_dir
+    print
 task.run_external_task( options.dry_run )
+print

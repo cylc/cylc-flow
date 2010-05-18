@@ -32,7 +32,7 @@ class LogFilter(logging.Filter):
         record.created = self.clock.get_epoch()
         return True
     
-def pimp_it( log, name, dir, level, dummy_mode, clock = None ):
+def pimp_it( log, name, dir, level, dummy_mode, clock = None, run_task = False ):
     log.setLevel( level )
     max_bytes = 1000000
     backups = 5
@@ -49,7 +49,7 @@ def pimp_it( log, name, dir, level, dummy_mode, clock = None ):
 
     f = logging.Formatter( '%(asctime)s %(levelname)-2s ' + originator + ' - %(message)s', '%Y/%m/%d %H:%M:%S' )
 
-    if name == "main":
+    if name == "main" or run_task:
         # write warnings and worse to stderr as well as to the log
         h2 = logging.StreamHandler(sys.stderr)
         h2.setLevel( logging.WARNING )
