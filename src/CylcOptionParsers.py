@@ -80,7 +80,7 @@ Arguments:
         return self.pns_host
 
     def get_groupname( self ):
-        groupname = self.username + '|' + self.system_name
+        groupname = self.username + '^' + self.system_name
         if self.practice:
             groupname += '_practice'
         return groupname
@@ -139,7 +139,7 @@ arguments:
         return self.pns_host
 
     def get_groupname( self ):
-        groupname = self.username + '|' + self.system_name
+        groupname = self.username + '^' + self.system_name
         if self.practice:
             groupname += '_practice'
         return groupname

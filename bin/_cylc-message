@@ -159,7 +159,7 @@ else:
 
 # NAMESERVER GROUP NAME-------------------------------------------------
 if options.system_name:
-    groupname = username + '_' + options.system_name
+    groupname = username + '^' + options.system_name
 elif 'CYLC_NS_GROUP' in os.environ.keys():
     groupname = os.environ[ 'CYLC_NS_GROUP' ]
 
@@ -228,7 +228,7 @@ if mode != 'scheduler':
 try:
     task = connector( pns_host, groupname, task_id ).get()
 except:
-    print "ERROR: failed to connect to " + task_id
+    print "ERROR: failed to connect to " + task_id + " in " + groupname
     sys.exit(1)
 
 # DO THE MESSAGING----------------------------------------------------
