@@ -37,6 +37,7 @@ class ll_raw( job_submit ):
         count = 0
         for line in lines:
             line.strip()
+            JOBFILE.write( line )
             if re.match( '^\s*#\s*@\s*queue\s*$', line ):
                 count += 1
                 if not done and count == n_queue_directives:
@@ -44,3 +45,6 @@ class ll_raw( job_submit ):
                     self.write_cylc_scripting( JOBFILE )
                     self.write_extra_scripting( JOBFILE )
                     done = True
+
+    def construct_command( self ):
+        self.command = 'llsubmit ' + self.jobfile_path
