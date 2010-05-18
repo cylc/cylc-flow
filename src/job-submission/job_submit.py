@@ -175,7 +175,7 @@ class job_submit:
             self.submit_jobfile_local( dry_run )
 
     def write_jobfile( self, FILE ):
-        FILE.write( '#!/bin/bash' )
+        FILE.write( '#!/bin/bash\n' )
         self.write_directives( FILE )
         self.write_environment( FILE )
         self.write_cylc_scripting( FILE )
@@ -226,7 +226,7 @@ class job_submit:
             print " > WOULD DO: " + self.command
         else:
             print " > EXECUTING:" + self.command
-        os.system( self.command )
+            os.system( self.command )
 
     def submit_jobfile_remote( self, dry_run ):
         # make sure the local jobfile is executable (file mode is preserved by scp?)
@@ -253,7 +253,7 @@ class job_submit:
             print " > WOULD DO: " + command
         else:
             print " > EXECUTING:" + command
-        os.system( command )
+            os.system( command )
 
     def cleanup( self ):
         # called by task class when the job finishes
