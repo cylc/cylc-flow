@@ -18,6 +18,7 @@ import logging
 import datetime
 from time import sleep
 from optparse import OptionParser
+from job_submit import job_submit
 
 # cycl source modules
 import manager
@@ -424,6 +425,10 @@ if dummy_mode:
     if options.failout_task_id:
         print "FAILOUT: " + options.failout_task_id
         config.put_env( 'CYLC_FAILOUT_ID', options.failout_task_id )
+
+config.check_environment()
+job_submit.dummy_mode = dummy_mode
+job_submit.global_env = config.get( 'environment' )
 
 # initialize the task manager (and create main logger)
 pool = manager.manager( config, groupname, dummy_mode, startup )

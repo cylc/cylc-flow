@@ -12,6 +12,7 @@
 
 import logging, sys, os, re
 from registration import registrations
+from interp_env import interp_self, interp_local, replace_delayed
 
 class config:
 
@@ -46,6 +47,21 @@ class config:
 
         reg = registrations()
         self.items['system_def_dir' ] = reg.get( self.system_name )
+
+    def check_environment( self ):
+        env = self.items[ 'environment' ]
+        # Convert all values to strings in case the user set integer
+        # values, say, in the system config file.
+        for var in env:
+            env[ var ] = str( env[ var ] )
+
+        # work out any references to other variables, local environment
+        # variables, or cylc delayed variables $[FOO]
+        env = interp_self( env )
+        env = interp_local( env )
+        env = replace_delayed( env )
+
+        self.items[ 'environment' ] = env
 
     def check_start_time( self, startup_cycle ):
         if 'legal_startup_hours' in self.items.keys():

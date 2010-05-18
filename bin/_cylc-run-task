@@ -17,7 +17,6 @@ import logging
 from time import sleep
 from optparse import OptionParser
 from dynamic_instantiation import get_object
-from interp_env import interp_self, interp_local, replace_delayed
 from job_submit import job_submit
 
 # cycl source modules
@@ -115,18 +114,15 @@ config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
 config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
 config.put_env( 'CYLC_SYSTEM_NAME', name )
 
-# intantiate the task--------------------------------------------------
-global_env = config.get('environment')
-global_env = interp_self( global_env )
-global_env = interp_local( global_env )
-global_env = replace_delayed( global_env )
-job_submit.global_env = global_env
- 
+config.check_environment()
+job_submit.global_env = config.get( 'environment' )
+
 jsc = config.get('job submit class')
 clsmod = __import__( 'task_classes' )
 cls = getattr( clsmod, task_name )
 setattr( cls, 'job_submit_method', jsc[ task_name ] )
 
+# intantiate the task--------------------------------------------------
 task = get_object( 'task_classes', task_name )( ctime, 'waiting', startup=True )
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------

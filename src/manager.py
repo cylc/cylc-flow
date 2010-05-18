@@ -19,8 +19,6 @@ import sys, os, re
 from dynamic_instantiation import get_object
 from Pyro.errors import NamingError
 from broker import broker
-from job_submit import job_submit
-from interp_env import interp_self, interp_local, replace_delayed
 
 def ns_obj_name( name, groupname ):
     return groupname + '.' + name
@@ -61,13 +59,6 @@ class manager:
         # create main logger
         self.create_main_log()
 
-        # set job submit dummy mode and global environment
-        global_env = config.get('environment') 
-        global_env = interp_self( global_env )
-        global_env = interp_local( global_env )
-        global_env = replace_delayed( global_env )
-        job_submit.global_env = global_env
-        job_submit.dummy_mode = dummy_mode
         # set job submit method for each task class
         jsc = config.get( 'job submit class' )
         clsmod = __import__( 'task_classes' )
