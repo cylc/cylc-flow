@@ -130,4 +130,6 @@ setattr( cls, 'job_submit_method', jsc[ task_name ] )
 task = get_object( 'task_classes', task_name )( ctime, 'waiting', startup=True )
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
+if not options.dry_run:
+    print "Cylc messages will be directed to stdout (=> the task log file)."
 task.run_external_task( options.dry_run )
