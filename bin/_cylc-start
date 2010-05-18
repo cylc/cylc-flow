@@ -375,9 +375,9 @@ nameserver = locate_pyro_nameserver()
 # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
 if practice:
     # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
-    groupname = os.environ['USER'] + '_' + name + "_practice"
+    groupname = os.environ['USER'] + '|' + name + "_practice"
 else:
-    groupname = os.environ['USER'] + '_' + name
+    groupname = os.environ['USER'] + '|' + name
 
 create_ns_groupname( nameserver, groupname )
 banner[ 'Pyro nameserver group' ] = groupname

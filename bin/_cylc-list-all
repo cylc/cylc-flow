@@ -47,7 +47,7 @@ print len( groups ), "systems currently have objects registered in the Pyro name
 count = 0
 for group in groups:
     count += 1
-    ( username, system ) = group.split('_', 1)
+    ( username, system ) = group.split('|', 1)
 
     practice_mode = ""
     m = re.match( '(.*)_practice', system )
