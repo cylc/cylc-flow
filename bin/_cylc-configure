@@ -191,7 +191,6 @@ from config import config
 from task_list import task_list
 from system_info import info
 import logging  # for logging level
-import os       # os.environ['HOME']
 
 class system_config( config ):
 
@@ -219,21 +218,19 @@ class system_config( config ):
 
         # default job submit method, e.g.:
         self.items['job_submit_method'] = 'background'
-        #self.items['job_submit_method'] = 'background_remote'
         #self.items['job_submit_method'] = 'at_now'
-        #self.items['job_submit_method'] = 'll_basic'
-        #self.items['job_submit_method'] = 'll_raw'
-        #self.items['job_submit_method'] = 'll_basic_eco'
-        #self.items['job_submit_method'] = 'll_raw_eco'
 
         # to override the default job submit method for specific tasks, e.g.:
         # self.items['job_submit_overrides']['at_now'] = [ 'task1', 'task2' ]
 
-        # environment variables available to all tasks
-        # values must be strings, e.g. '360' not 360.
-        # can include the registered system name, e.g.:
-        user = os.environ['USER']
-        self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
+        # Environment variables available to all tasks. Values should be
+        # strings and can include local environment variables, other
+        # environment variables defined here, 'delayed evaluation'
+        # environment variables (e.g. $[HOME] => '${HOME}' in the job
+        # script, to be evaluated when the task executes) and the
+        # registered system name via the Python variable 'sysname':
+
+        self.items['environment']['CYLC_TMPDIR'] = '/tmp/$USER/' + sysname
 
 # END OF FILE
 eof

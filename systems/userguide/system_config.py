@@ -24,7 +24,6 @@ from config import config
 from task_list import task_list
 from system_info import info
 import logging  # for logging level
-import os       # os.environ['HOME']
 
 class system_config( config ):
 
@@ -54,16 +53,18 @@ class system_config( config ):
         #self.items['job_submit_method'] = 'at_now'
 
         # to override the default job submit method for specific tasks, e.g.:
-        #self.items['job_submit_overrides']['ll_basic'] = [ 'A' ]
         #self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
 
-        # environment variables available to all tasks, can include
-        # the registered system name, e.g.:
-        user = os.environ['USER']
-        self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
+        # Environment variables available to all tasks. Values can include
+        # local environment variables, other environment variables
+        # defined here, 'delayed evaluation' environment variables 
+        # (e.g. $[HOME] => '${HOME}' in the job script, to be evaluated
+        # when the task executes) and the registered system name via
+        # the Python variable 'sysname':
+        self.items['environment']['CYLC_TMPDIR'] = '/tmp/$USER/' + sysname
 
         # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 
-        self.items['environment']['REAL_TIME_ACCEL'] = 360
+        self.items['environment']['REAL_TIME_ACCEL'] = '360'
 
         self.items['environment']['FOO'] = 'foo'
         self.items['environment']['BAR'] = '$FOO'
