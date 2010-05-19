@@ -21,6 +21,10 @@ usage = """cylc suicide [options]
 
 THIS COMMAND IS FOR USE BY EXTERNAL TASKS.
 
+An external task program can call this to see if the cylc operator has
+told the corresponding task proxy to shut down, in which case the 
+external task can shut itself down cleanly before being orphaned.
+
 If invoked by a task that does not belong to a cylc scheduler (e.g. by
 'cylc run-task') it has no effect."""
 
