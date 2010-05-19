@@ -27,9 +27,6 @@ class ll_raw_eco( ll_raw ):
         else:
             raise SystemExit( "Cylc is not running in an EcoConnect environment" )
 
-        self.ecoc_system = ecoc_system
-        self.ecoc_system_bin = os.environ[ 'HOME' ] + '/bin'
-
         if not owner:
             raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
 
@@ -43,9 +40,11 @@ class ll_raw_eco( ll_raw ):
             owner_name = owner
 
         # append the correct system suffix
-        owner = owner_name + '_' + self.ecoc_system
-
-        # run in ~owner/running
-        self.running_dir = '~' + owner + '/running'
+        owner = owner_name + '_' + ecoc_system
 
         ll_raw.__init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ) 
+
+        # override running dir to ~owner/running
+        self.running_dir = '/' + ecoc_system + '/ecoconnect/' + owner + '/running'
+
+

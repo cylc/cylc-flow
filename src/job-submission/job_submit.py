@@ -149,9 +149,11 @@ class job_submit:
         else:
             self.remote_host = None
 
+        # by default, run in cylc user's home directory ...
         self.running_dir = '$HOME'
-        if self.owner:
-            self.running_dir = '~' + self.owner
+        # ... because '~' not recognized by os.chdir().
+        #if self.owner:
+        #    self.running_dir = '~' + self.owner
 
         self.remote_jobfile_path = None # default required in cleanup()
 
