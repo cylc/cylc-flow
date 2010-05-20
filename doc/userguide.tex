@@ -1562,13 +1562,23 @@ parser is not currently aware of.
 \subsection{Job Submission}
 \label{JobSubmission}
 
+Cylc can submit different tasks to run by different methods. 
 
-THIS SECTION NEEDS TO BE REWRITTEN; THE JOB SUBMISSION CODE HAS BEEN
-SIGNIFICANTLY UPGRADED. 
+A default job submission method must be specified in your system config
+file, Section~\ref{SystemConfigFiles}: 
 
-In the system config file, Section~\ref{SystemConfigFiles}, you can
-define a default job submission method for your system, and single out
-particular tasks to use different job submission methods.
+\begin{lstlisting}
+# by default, submit tasks to run in a background shell
+self.items['job_submit_method'] = 'background'
+\end{lstlisting}
+ 
+Then, optionally, you can override the default job submission method
+for specific tasks:
+
+\begin{lstlisting}
+# but submit tasks A, B, and C to run using 'at now'
+self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
+\end{lstlisting}
 
 \subsubsection{Basic Methods}
 \label{BasicMethods}
