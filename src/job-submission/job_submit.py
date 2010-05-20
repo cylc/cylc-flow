@@ -109,16 +109,21 @@ class job_submit:
         # Note that global env already has self-, environment-, and
         # delayed- variable references worked out, in task manager init.
 
+        # Add the variables that all tasks must have
+        # (doing this *before* interpolating, below, means that any
+        # reference to '$CYCLE_TIME' in the taskdef file will be 
+        # interpolated to the value of self.cycle time and NOT to
+        # any $CYCLE_TIME that happens to be in the user's environment
+        # prior to running the scheduler or run-task!
+        task_env[ 'TASK_ID'    ] = self.task_id
+        task_env[ 'CYCLE_TIME' ] = self.cycle_time
+        task_env[ 'TASK_NAME'  ] = self.task_name
+
         task_env = interp_self( task_env )
         task_env = interp_other( task_env, job_submit.global_env )
         task_env = interp_local( task_env )
         task_env = replace_delayed( task_env )
     
-        # Add the variables that all tasks must have
-        task_env[ 'TASK_ID'    ] = self.task_id
-        task_env[ 'CYCLE_TIME' ] = self.cycle_time
-        task_env[ 'TASK_NAME'  ] = self.task_name
-
         self.task_env = task_env
 
         # same for the task script command line
