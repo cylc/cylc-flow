@@ -216,7 +216,8 @@ class system_config( config ):
         # task insertion groups, e.g:
         # self.items['task_groups']['foo'] = ['bar', 'baz']
 
-        # default job submit method, e.g.:
+        # Default job submit method for the system. Available methods
+        # are imported in src/job-submission/job_submit_methods.py.
         self.items['job_submit_method'] = 'background'
         #self.items['job_submit_method'] = 'at_now'
 
