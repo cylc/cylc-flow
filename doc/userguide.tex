@@ -1888,9 +1888,10 @@ job submission method for the task) to execute the task. This script
 explicitly defines the execution environment before executing the task
 itself, regardless of the job submission method used. 
 
-\subsection{Automatic System Wide Variables}
+\subsection{System Wide Variables}
 \lstset{language=bash}
 
+\subsubsection{Automatic}
 The following environment variables are automatically defined by cylc
 for all tasks:
 
@@ -1909,8 +1910,25 @@ except in the case of tasks that must run on a remote platform; see
 {\em Submitting Jobs To A Remote Host}, 
 Section~\ref{SubmittingJobsToARemoteHost}.
 
-\subsection{Automatic Task-specific Variables}
+\subsubsection{User Defined}
+\label{SystemWideVariables}
+
+Environment variables defined in the system config file will be made
+available to every task in the system; see 
+{\em System Config Files}, Section~\ref{SystemConfigFiles}, e.g:
+
+\lstset{language=Python}
+
+\begin{lstlisting}
+self.items['environment']['FOO'] = 'foo'
+self.items['environment']['MY_TMPDIR'] = '/tmp/${CYLC_SYSTEM_NAME}'
+\end{lstlisting}
+
+
+\subsection{Task-specific Variables}
 \lstset{language=bash}
+
+\subsubsection{Automatic}
 
 The following task-specific environment variables are automatically
 defined by cylc:
@@ -1928,22 +1946,8 @@ them. \lstinline=$TASK_ID= is used by \lstinline=cylc message= to
 identify which task is sending a message and therefore which task proxy
 object to communicate the message to.
 
-\subsection{System Wide Variables}
-\label{SystemWideVariables}
 
-Environment variables defined in the system config file will be made
-available to every task in the system; see 
-{\em System Config Files}, Section~\ref{SystemConfigFiles}, e.g:
-
-\lstset{language=Python}
-
-\begin{lstlisting}
-self.items['environment']['FOO'] = 'foo'
-self.items['environment']['MY_TMPDIR'] = '/tmp/${CYLC_SYSTEM_NAME}'
-\end{lstlisting}
-
-
-\subsection{Task-Specific Variables}
+\subsubsection{User Defined}
 \label{TaskSpecificVariables}
 
 \lstset{language=cylctaskdef}
@@ -1972,8 +1976,8 @@ the normal shell variables \lstinline=$CYCLE_TIME= and
 below in {\em Delayed Evaluation Variables},
 Section~\ref{DelayedEvaluationVariables}.
 
-\subsection{Referring To Other Environment Variables}
-\label{ReferringToOtherEnvironmentVariables}
+\subsection{Referring To Other Variables}
+\label{ReferringToOtherVariables}
 
 \lstset{language=bash}
 
