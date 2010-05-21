@@ -254,11 +254,11 @@ class job_submit:
 
         # execute the local command to submit the job
         if dry_run:
-            print " > JOB FILE: " + self.jobfile_path
-            print " > WOULD DO: " + self.command
+            print " > TASK EXECUTION SCRIPT: " + self.jobfile_path
+            print " > JOB SUBMISSION METHOD: " + self.command
             success = True
         else:
-            print " > EXECUTING: " + self.command
+            print " > SUBMITTING TASK: " + self.command
             try:
                 res = subprocess.call( self.command, shell=True )
                 if res < 0:
@@ -295,11 +295,11 @@ class job_submit:
         # copy file to $HOME for owner on remote machine
         command_1 = 'scp ' + self.jobfile_path + ' ' + self.destination + ':'
         if dry_run:
-            print " > LOCAL JOB FILE " + self.jobfile_path
-            print " > WOULD DO: " + command_1
+            print " > LOCAL TASK EXECUTION SCRIPT:  " + self.jobfile_path
+            print " > WOULD COPY TO REMOTE HOST AS: " + command_1
             success = True
         else:
-            print " > EXECUTING: " + command_1
+            print " > COPYING TO REMOTE HOST: " + command_1
             try:
                 res = subprocess.call( command_1, shell=True )
                 if res < 0:
@@ -328,10 +328,10 @@ class job_submit:
 
         # execute the local command to submit the job
         if dry_run:
-            print " > REMOTE JOB FILE: " + self.jobfile_path
-            print " > WOULD DO: " + command_2
+            print " > REMOTE TASK EXECUTION SCRIPT: " + self.jobfile_path
+            print " > REMOTE JOB SUBMISSION METHOD: " + command_2
         else:
-            print " > EXECUTING: " + command_2
+            print " > SUBMITTING TASK: " + command_2
             try:
                 res = subprocess.call( command_2, shell=True )
                 if res < 0:

@@ -830,7 +830,7 @@ system in its pre-intervention state.  See {\em Restarts}
 %explained in {\em The Cylc Scheduling Algorithm} (Section~\ref{TheCylcSchedulingAlgorithm}). 
 
 Your system must be divided into tasks with clearly defined
-prerequisites and outputs (Section~\ref{PrerequisitesAndOutputs}). Then
+prerequisites and outputs (Section~\ref{TaskPrerequisitesAndOutputs}). Then
 the properties of each task that are relevant to scheduling must be
 declared in {\em Task Definition Files}
 (Section~\ref{TaskDefinitionFiles}). One such property is the script or
@@ -944,7 +944,7 @@ inputs) the task can easily be rerun for any cycle still in the archive.
 
 All outputs that other tasks may depend on must be reported via cylc's
 simple messaging interface, which is explained in {\em Prerequisites and
-Outputs} (Section~\ref{PrerequisitesAndOutputs}). Similarly, fatal
+Outputs} (Section~\ref{TaskPrerequisitesAndOutputs}). Similarly, fatal
 errors must be reported by the same mechanism, otherwise cylc will think
 the failed task is still running. 
 
@@ -981,8 +981,8 @@ data isn't there the task must keep checking until it shows up, and only then
 report its output completed to cylc. 
 
 
-\subsection{Incremental Construction Of A New System} 
-\label{IncrementalConstructionOfANewSystem}
+\subsection{Incremental System Construction} 
+\label{IncrementalSystemConstruction}
 
 You can get the {\em scheduling} of a complex system right without ever
 having to run the real tasks, by testing incrementally in cylc's {\em
@@ -1004,8 +1004,8 @@ them out of the task list in the system config module, or use the
 scheduler command line options provided for this purpose). 
 
 
-\subsection{Prerequisites And Outputs}
-\label{PrerequisitesAndOutputs}
+\subsection{Task Prerequisites And Outputs}
+\label{TaskPrerequisitesAndOutputs}
 
 Cylc's scheduling algorithm matches one task's completed outputs with
 another's unsatisfied prerequisites
@@ -1559,139 +1559,483 @@ parser is not currently aware of.
 
 \pagebreak
 
-\subsection{Job Submission}
+
+\pagebreak
+\section{Job Submission}
 \label{JobSubmission}
 
-Cylc can submit different tasks to run by different methods. 
-
-A default job submission method must be specified in your system config
-file, Section~\ref{SystemConfigFiles}: 
+Cylc can use different job submission methods to launch different tasks. 
+A default job submission method must be set in the system config file
+(see {\em System Config Files}, Section~\ref{SystemConfigFiles}):
+ 
+\lstset{language=Python}
 
 \begin{lstlisting}
-# by default, submit tasks to run in a background shell
+# By default, submit tasks to run in a background shell
+# (note the method name must be enclosed in quotes)
 self.items['job_submit_method'] = 'background'
 \end{lstlisting}
  
-Then, optionally, you can override the default job submission method
-for specific tasks:
+You can then override the default method for specific tasks:
 
 \begin{lstlisting}
-# but submit tasks A, B, and C to run using 'at now'
+# But submit tasks A, B, and C to run using 'at now'
 self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
 \end{lstlisting}
 
-\subsubsection{Basic Methods}
-\label{BasicMethods}
+\subsection{How It Works}
+\label{HowItWorks}
 
-Cylc currently ships with several basic job submission methods that
-should work anywhere. These can be used for running the example systems,
-and they may even be sufficient for simple real systems if no batch
-queue scheduler is available.
+When cylc determines that a task is ready to run it writes a temporary
+file, the {\em task execution script}, that it submits to run by the job
+submission method specified for the task. The task execution script
+contains scripting to explicitly define the environment before directly
+executing the task itself. Other scripting (e.g.\ loadleveler
+directives) may be inserted too, depending on the job submission method.
+
+The task execution environment provides access to the task script and to
+cylc itself, environment variables that cylc needs, environment
+variables (defined in the system config file) that are made available to
+all tasks in the system, and environment variables (defined in the
+taskdef files) that are made available to individual tasks. See {\em
+Task Execution Environment} (Section~\ref{TaskExecutionEnvironment}) for
+more on setting environment variables in cylc.
+
+\lstset{language=bash}
+
+You can use \lstinline=cylc run-task= to generate task execution scripts
+for inspection. For example:
+
+%, if you have configured the userguide example system, registered it
+%under the name ``userguide'', and left the default job submission
+%method unchanged
+
+\begin{lstlisting}
+oliverh:~/cylc % cylc run-task --dry-run --task=E%2009112318 userguide
+  > TASK EXECUTION SCRIPT: /tmp/cylc-IU0DDH
+  > JOB SUBMISSION METHOD: /tmp/cylc-IU0DDH </dev/null > E%2009112318-$$.log 2>&1 &
+  
+oliverh~/cylc % cat /tmp/cylc-IU0DDH
+  #!/bin/bash
+  
+  # TASK EXECUTION ENVIRONMENT: system-wide variables
+  export CYLC_MODE="run-task"
+  export CYLC_DIR="/home/oliverh/cylc"
+  export CYLC_SYSTEM_DIR="/home/oliverh/cylc/systems/userguide"
+  export CYLC_SYSTEM_NAME="userguide"
+  export CYLC_NS_HOST="NOT USED BY RUN-TASK"
+  export CYLC_NS_GROUP="NOT USED BY RUN-TASK"
+  export CYLC_TMPDIR="/tmp/oliverh/userguide"
+  export REAL_TIME_ACCEL="360"
+  
+  # TASK EXECUTION ENVIRONMENT: task-specific variables:
+  export CYCLE_TIME="2009112318"
+  export TASK_NAME="E"
+  export TASK_ID="E%2009112318"
+  
+  # CONFIGURE CYLC ENVIRONMENT
+  . $CYLC_DIR/cylc-env.sh
+  
+  # EXECUTE THE TASK
+  E.sh 
+  
+  #EOF
+\end{lstlisting}
+
+\subsection{Available Job Submission Methods}
+\label{AvailableJobSubmissionMethods}
+
+Two basic and widely portable methods, sufficient for running cylc's
+example systems, are provided (they could also be used for small tasks
+within a real forecasting system): 
 
 \begin{itemize}
-    \item \lstinline=background= - submit a job to run on the background
-        on the local machine. 
-     \item \lstinline=at_now= - submit a task using the 'at' command, a
-         rudimentary scheduler that reports job output by email.
+
+    \item \lstinline=background= - submit a task to run in the
+        background (\lstinline=foo &=). 
+
+     \item \lstinline=at_now= - submit a task to run immediately via the
+         unix 'at' command (a rudimentary batch queue scheduler that
+         reports job output to the user by email).
+
 \end{itemize}
+
+Most tasks in a real forecasting system will need to be submitted to a
+proper batch queue scheduler or cross-platform resource
+manager such as {\em loadleveler} (IBM). The job submission methods 
+currently available in this category are:
+
+\begin{itemize} 
+    
+    \item \lstinline=ll_basic= - submit non-loadleveler-specific tasks
+        to loadleveler.  Some default directives are provided, which 
+        can be used, overridden, or added to, via the taskdef files.
+
+    \item \lstinline=ll_raw= - submit loadleveler-ready task scripts
+        (i.e. scripts that already contain directives) to loadleveler.
+        Useful for complex (e.g. multi-step) tasks already configured 
+        to use loadleveler.
+
+    \item \lstinline=ll_basic_eco= and \lstinline=ll_raw_eco= - these
+        adapt the generic loadleveler methods above to NIWA's EcoConnect
+        operational environment in which task owner usernames and home
+        directories vary according to the whether the system is running
+        in the {\em oper, test,} or {\em devel} area.
+
+\end{itemize}
+
+
+\subsection{Defining New Methods}
+
+To define a new job submission method you need to derive a new class
+from the \lstinline=job_submit= base class, in:
+
+\begin{lstlisting}
+$CYLC_DIR/src/job-submission/job_submit.py
+\end{lstlisting}
+
+and import your new class into the \lstinline=job_submit_methods= module:
+
+\begin{lstlisting}
+$CYLC_DIR/src/job-submission/job_submit_methods.py
+\end{lstlisting}
+
+This is easy to do; most of the required functionality already exists in
+the base class, and you can model new sub-classes on the existing ones.
+To illustrate, here is the entire derived class code for the two
+simplest job submission methods, \lstinline=background= and
+\lstinline=at_now=:
+
+\lstset{language=Python}
+
+\begin{lstlisting}
+#!/usr/bin/python
+from job_submit import job_submit
+
+class background( job_submit ):
+    # This class overrides job submission command construction so that
+    # the cylc task execution file will run in a background shell.
+    
+    def construct_command( self ):
+        # Redirection of stdin here allows "background execution" of the
+        # task even on a remote host (if one is specified in the taskdef
+        # file) - ssh can exit immediately after invoking the job
+        # script, without waiting for the remote process to finish.
+
+        log = self.task_id + '-$$.log'
+        self.command = self.jobfile_path + " </dev/null > " + log + " 2>&1 &" 
+\end{lstlisting}
+
+\begin{lstlisting}
+#!/usr/bin/python
+from job_submit import job_submit
+
+class at_now( job_submit ):
+    # This class overrides job submission command construction so that
+    # the cylc task execution file will be submitted to the Unix 'at'
+    # scheduler ('at -f FILE now').
+
+    def construct_command( self ):
+        self.command = 'at -f ' + self.jobfile_path + ' now'
+\end{lstlisting}
+
+To interface with more sophisticated schedulers you may need to
+override other base class methods in addition to
+\lstinline=construct_command()=. Take a look at the source code for the 
+existing loadleveler job submit classes, and ensure you understand 
+{\em How Job Submission Works}, Section~\ref{HowItWorks}.
+
+\subsection{Running Jobs Under Other Usernames}
+\label{RunningJobsUnderOtherUsernames}
+
+\subsubsection{On The Local Host}
+
+\lstset{language=cylctaskdef}
+
+If a task is owned by a user other than the cylc user (via
+\lstinline=%OWNER= in the taskdef file) cylc will submit the task
+execution script via the chosen job submission method using the Unix
+\lstinline=sudo= command:  
+
+\lstset{language=bash}
+
+
+\begin{lstlisting}
+sudo -u OWNER [SUBMIT]
+\end{lstlisting}
+
+For this to work your sysadmin must configure \lstinline=/etc/sudoers=
+to allow the cylc user to invoke the relevant job submission command as
+the task owner.  This might be difficult to arrange for the background
+execution method (because in that case the task execution script is
+invoked directly) but is otherwise easy enough. For the 'at' or
+loadleveler methods, for instance, the cylc user needs \lstinline=sudo=
+access, as the task owner, to \lstinline=at= or \lstinline=llsubmit= 
+respectively.
+
+\subsubsection{On A Remote Host}
+
+If you want a task to run as another user on a remote host, instead of
+using \lstinline=sudo= cylc will copy the task execution script to the
+remote platform and invoke it by means of \lstinline=ssh= to the remote
+host as the owner. This is described in more detail in the next section.
+
+\subsection{Submitting Jobs To A Remote Host}
+\label{SubmittingJobsToARemoteHost}
+
+If a task must run on a particular remote host (declared via
+\lstinline=%REMOTE_HOST= in the taskdef file), cylc will use 
+\lstinline=scp= to copy the task execution script to the remote host, 
+and then \lstinline=ssh= to submit the remote file via the specified job
+submit method on the remote host. 
+
+For this to work, {\em you must have passwordless ssh configured, as 
+the cylc user, between the local and remote hosts}. Once so configured
+you should be able to do the following, on the command line, without
+supplying a password:
+
+\begin{lstlisting}
+cylc-user% ssh REMOTE_HOST hostname
+\end{lstlisting}
+
+
+Additionally, if the task declares an owner (see above), cylc will attempt
+to invoke the task on the remote host as the owner; thus {\em you must
+have passwordless ssh configured, as the cylc user, to the remote host,
+as the task owner}:
+
+\begin{lstlisting}
+cylc-user% ssh OWNER@REMOTE_HOST hostname
+\end{lstlisting}
+
+Note that you may not need to use this functionality if you have a
+cross-platform resource manager like loadleveler that spans both the
+local host and the target machine: you should be able to submit the job locally to run on the remote platform.
+
+\subsubsection{Remote Host Requirements}
 
 \begin{itemize}
-    \item \lstinline=ll_basic= - submit task scripts using IBM's
-        loadleveler scheduler. Task-specific loadleveler directives can
-        be set in the taskdef file.
-    \item \lstinline=ll_raw= - submit jobs that have already been
-        configured for loadleveler, with existing in-file directives.
+
+    \item Cylc (and Pyro) must be installed on the remote host, so that 
+        the remote task can communicate with the local cylc scheduler.
+        
+    \item The task itself must be installed on the remote host (the {\em
+        task execution script} that is copied to the remote host is what
+        invokes the actual task, but is not the task itself). 
+
+    \item The task execution environment, as specified in the task
+        execution script, must provide access to the remote cylc
+        installation and to the remote task.
+
 \end{itemize}
 
-\subsubsection{How Job Submission Works}
+\lstset{language=cylctaskdef}
 
-Cylc writes a temporary file that contains scripting to:
+To provide access to the remote cylc installation, override the 
+\lstinline=CYLC_DIR= environment variable in the taskdef
+\lstinline=%ENVIRONMENT= section:
 
-\begin{itemize}
-    \item define all required cylc-specific, global, and task-specific
-        environment variables
-    \item execute the defined task script, along with any command line
-        arguments defined for it in the taskdef file.
-\end{itemize}
+\begin{lstlisting}
+CYLC_DIR         /path/to/cylc/installation
+\end{lstlisting}
 
-Cylc then submits this script to run via the defined job submission
-method, using \lstinline sudo -u OWNER= if the task owner is not the
-same as the cylc user.  This is a flexible and powerful way to submit
-jobs because: 
+If you have installed your entire system definition directory on the
+remote platform and the task script is located in the 
+system definition scripts sub-directory,
+(\lstinline=$CYLC_SYSTEM_DIR/scripts=)
+the task execution script will get access to it if you also override
+the \lstinline=CYLC_SYSTEM_DIR= environment variable in the taskdef
+\lstinline=%ENVIRONMENT= section:
+\begin{lstlisting}
+CYLC_SYSTEM_DIR  /path/to/your/system/definition/directory
+\end{lstlisting}
 
-\begin{itemize}
-    \item the same job script can be constructed and used for any job
-        submission method.
+(\lstinline=CYLC_DIR=  and \lstinline=CYLC_SYSTEM_DIR= are inserted
+into your \lstinline=PATH= by \lstinline=cylc-env.sh=, which is sourced
+in the task execution script before executing the task).
 
-    \item the task execution environment can be explicitly defined in
-        the job script. Submitting the task directly, as opposed to 
-        submitting a job script that executes the task, is problematic
-        because batch schedulers, ssh, and sudo, all try to  prevent 
-        you getting environment variables through from the original
-        environment in which the job-submission command itself is
-        executed.
-\end{itemize}
+Alternatively, you could specify the full path to the task script:
 
-\subsubsection{Defining New Methods}
- 
-This is easy to do: see \lstinline=$CYLC_DIR/src/job-submission/=.
-Most of the required functionality already exists already in the job
-submission base class, and you can model your new subclass on one of the
-existing methods (above).
+\begin{lstlisting}
+%TASK
+    /remote/path/foo.sh
+\end{lstlisting}
 
-Your new job submit class can be maintained in your system definition
-directory, or in the cylc job-submission source directory. In order to
-use the new class it must be listed in your system
-\lstinline=job_submit_methods.py= file.
+{\em Or}, explicitly configure your \lstinline=PATH= in the taskdef
+\lstinline=%ENVIRONMENT= section by making use of cylc's ``delayed
+evaluation'' environment variables (see {\em Task Execution
+Environment}, Section~\ref{TaskExecutionEnvironment}):
 
+\begin{lstlisting}
+%TASK
+    foo.sh
 
-\subsubsection{Task Standard Output}
-\label{TaskStandardOutput}
+%ENVIRONMENT
+    PATH     /remote/path:$[PATH]
+\end{lstlisting}
 
-Where job stdout and stderr ends up depends on the job submission
-method.
+\subsubsection{Remote Host Example}
 
-\subsection{Environment Variables}
-\label{EnvironmentVariables}
-
-The behaviour desribed in this section must be adherred to by any new
-job submission methods.
-
-\subsubsection{Global}
-
-You can define variables in the system config file that will be exported
-into the execution environment of all tasks in a system; see 
-System Config (Section~\ref{SystemConfigFiles}).
-
-\subsubsection{Task-Specific}
-
-You can define variables in a task definition file, via the 
-\lstinline=ENVIRONMENT= key, that will be exported into the execution
-environment of a particular task; see Task Definition Files
-(Section~\ref{TaskDefinitionFiles}).
-
-\subsubsection{Global in Task-Specific}
-
-Global environment variables can be interpolated into task-specific
-variables.  The distributed example system (Section~\ref{Distributed})
-exploits this to defined task-specific I/O sub-directories underneath a
-top level working directory that is defined by a global environment
-variable.
-
-\subsubsection{Delayed Evaluation}
-
-If strings of the form \lstinline=$[HOME]= (i.e. square brackets) appear in
-taskdef environment or command line values, they will be rewritten as proper
-shell variables \lstinline=${HOME}=, uninterpolated, in the job script. They
-will thus be evaluated as the task executes. In this way you can use
-environment variables that are not known (or would be wrong) in the initial
-environment in which the job is submitted.  For instance, for a task that
-executes as another user (taskdef %OWNER), \lstinline=$[HOME]= will evaluate,
-at run time, to the owner's home directory, not to the hoem directory of the 
-user running cylc in whose environment the job is initial submitted (via 
-\lstinline=sudo -u owner=).
+See cylc's ``Distributed'' example system, Section~\ref{Distributed}.
 
 
+\subsection{Task stdout And stderr}
+\label{TaskstdoutAndstderr}
+
+Where job stdout and stderr ends up depends entirely on the job
+submission method. These will normally end up as log files in the user's
+home directory (or perhaps elsewhere if the job submission method allows
+this to be configured). Submitting jobs via 'at' results in stdout and
+stderr being emailed to the user when the completes.
+
+\pagebreak
+\section{Task Execution Environment}
+\label{TaskExecutionEnvironment}
+
+As described in Section~\ref{JobSubmission}, {\em Job Submission}, cylc
+writes a special {\em task execution script} that that it submits to 
+execute the task.  This script explicitly defines the execution
+environment before executing the task itself, regardless of the job 
+submission method used. 
+
+\subsection{Automatic System Wide Variables}
+\lstset{language=bash}
+
+The following environment variables are automatically defined by cylc
+for all tasks:
+
+
+\begin{lstlisting}
+  CYLC_MODE         # tells 'cylc message' what invoked a calling task
+  CYLC_DIR          # path to the local cylc installation
+  CYLC_SYSTEM_DIR   # path to the system defintion directory
+  CYLC_SYSTEM_NAME  # registered name of the running system 
+  CYLC_NS_HOST      # host running the Pyro nameserver
+  CYLC_NS_GROUP     # group name used by this system in the Pyro nameserver
+\end{lstlisting}
+
+Most of these are used by implicitly by cylc and need not concern the user,
+except in the case of tasks that must run on a remote platform; see 
+{\em Submitting Jobs To A Remote Host}, 
+Section~\ref{SubmittingJobsToARemoteHost}.
+
+\subsection{Automatic Task-specific Variables}
+\lstset{language=bash}
+
+The following task-specific environment variables are automatically
+defined by cylc:
+
+\begin{lstlisting}
+  export CYCLE_TIME="2009112318"
+  export TASK_ID="E%2009112318"
+  export TASK_NAME="E"
+\end{lstlisting}
+
+Executing tasks will almost certainly need to use
+\lstinline=$CYCLE_TIME= to determine what forecast cycle to run,
+but they don't need to know the name or ID used by cylc to identify
+them. \lstinline=$TASK_ID= is used by \lstinline=cylc message= to 
+identify which task is sending a message and therefore which task proxy
+object to communicate the message to.
+
+\subsection{System Wide Variables}
+\label{SystemWideVariables}
+
+Environment variables defined in the system config file will be made
+available to every task in the system; see 
+{\em System Config Files}, Section~\ref{SystemConfigFiles}, e.g:
+
+\lstset{language=Python}
+
+\begin{lstlisting}
+self.items['environment']['FOO'] = 'foo'
+self.items['environment']['MY_TMPDIR'] = '/tmp/${CYLC_SYSTEM_NAME}'
+\end{lstlisting}
+
+
+\subsection{Task-Specific Variables}
+\label{TaskSpecificVariables}
+
+\lstset{language=cylctaskdef}
+
+Environment variables defined in a task definition file
+\lstinline=ENVIRONMENT= section will be made available
+to just the one task; see {\em Task Definition Files}, 
+Section~\ref{TaskDefinitionFiles}, e.g.:
+
+\begin{lstlisting}
+%ENVIRONMENT
+    FOOBAR           foo bar
+    ANALYSIS_TIME    $CYCLE_TIME
+    OUTPUT_FILE      foo-${TASK_NAME}-${CYCLE_TIME}.nc
+    NEXT_CYCLE_TIME  $(CYCLE_TIME + 6)   # NOTE round parentheses!
+    REMOTE_HOME      $[HOME]             # NOTE square brackets!
+\end{lstlisting}
+
+\lstset{language=bash}
+
+Note the two unusual cases above. \lstinline=$(CYCLE_TIME + 6)= is 
+special notation that gives access to cylc's internal datetime arithmetic.
+With no arithmetic, \lstinline=$(CYCLE_TIME)= is equivalent to 
+the normal shell variables \lstinline=$CYCLE_TIME= and
+\lstinline=${CYCLE_TIME}=. The square brackets are explained 
+below in {\em Delayed Evaluation Variables},
+Section~\ref{DelayedEvaluationVariables}.
+
+\subsection{Referring To Other Environment Variables}
+\label{ReferringToOtherEnvironmentVariables}
+
+\lstset{language=bash}
+
+You can refer to other environment variables in the values of
+system-wide or task-specific environment variables, and in task command
+line arguments, as shown in the examples above. These will be explicitly
+interpolated by cylc prior to writting the task execution script (i.e.
+the variables will be replaced by their values). The distributed example
+system (Section~\ref{Distributed}) exploits this to define task-specific
+I/O sub-directories underneath a top level working directory that is
+defined by a global environment variable that includes the registered
+system name.
+
+\subsubsection{Precedence}
+
+In {\em system-wide variable} definitions, cylc looks for a match
+amongst other defined system-wide variables, then in the local
+environment (in which cylc is running).
+
+In {\em task-specific variable} definitions, cylc looks for a match
+amongst other task-specific variables, then amongst the system-wide
+variables, and finally in the local environment (in which cylc is
+running).
+
+Environment variables found in {\em task commandline argument}
+definitions are interpolated as for those in task-specific variable
+definitions.
+
+\subsubsection{Nested Definitions}
+
+In the values of variables you define, you can refer to other variables,
+which refer to other variables, and so on; these will be interpolated
+out to the final value by cylc.  Circular definitions, however, will
+raise a warning.
+
+\subsection{Delayed Evaluation Variables}
+\label{DelayedEvaluationVariables}
+
+Environment variables that appear in the definition of other system-wide
+or task-specific environment variables, or in task command line arguments,
+enclosed in square brackets, e.g.\ \lstinline=$[FOO]=, will be rewritten as 
+proper environment variables, literally \lstinline=${FOO}=, in the task
+execution script, and will thus only be evaluated at execution time.
+
+This allows user or host specific environment information to be used in 
+constructing file paths (for example) even for tasks that will run under
+other usernames and/or on remote hosts. \lstinline=$[HOME]=, for instance,
+will evaluate at run time as the home directory of the task owner on the
+host that runs the task, not as the home directory of the cylc user on 
+the host that is running cylc.
+
+\pagebreak
 \section{Handling Real Dependencies}
 \label{HandlingRealDependencies}
 

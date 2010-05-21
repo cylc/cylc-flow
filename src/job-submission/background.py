@@ -10,17 +10,17 @@
 #         |________________________|
 
 
-import os
 from job_submit import job_submit
 
 class background( job_submit ):
-    # local background execution
+    # This class overrides job submission command construction so that
+    # the cylc task execution file will run in a background shell.
 
     def construct_command( self ):
+        # Redirection of stdin here allows "background execution" of the
+        # task even on a remote host (if one is specified in the taskdef
+        # file) - ssh can exit immediately after invoking the job
+        # script, without waiting for the remote process to finish.
+
         log = self.task_id + '-$$.log'
-
-        # Redirection of stdin is for remote background execution
-        # (it allows ssh to exit immediately rather than wait for the
-        # remote process to finish).
-
         self.command = self.jobfile_path + " </dev/null > " + log + " 2>&1 &" 

@@ -43,7 +43,7 @@ def commandline_parser():
             metavar="TASK%CYCLE", action="store", dest="task_id" )
 
     parser.add_option( "-d", "--dry-run",
-            help="Generate the cylc job submission file for the "
+            help="Generate the cylc task execution file for the "
             "task and report how it would be submitted to run.",
             action="store_true", default=False, dest="dry_run" )
 
