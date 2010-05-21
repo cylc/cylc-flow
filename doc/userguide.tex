@@ -1883,10 +1883,11 @@ stderr being emailed to the user when the completes.
 \label{TaskExecutionEnvironment}
 
 As described in Section~\ref{JobSubmission}, {\em Job Submission}, cylc
-writes a special {\em task execution script} that it submits (by the correct
-job submission method for the task) to execute the task. This script
-explicitly defines the execution environment before executing the task
-itself, regardless of the job submission method used. 
+tasks are executed by means of submitting a temporary {\em task
+execution script}, by the correct job submission method for the task.
+The task execution script explicitly defines the execution environment
+before executing the task itself, regardless of the job submission
+method used. 
 
 \subsection{System Wide Variables}
 \lstset{language=bash}
@@ -1894,7 +1895,6 @@ itself, regardless of the job submission method used.
 \subsubsection{Automatic}
 The following environment variables are automatically defined by cylc
 for all tasks:
-
 
 \begin{lstlisting}
   CYLC_MODE         # tells 'cylc message' what invoked a calling task
@@ -1905,17 +1905,17 @@ for all tasks:
   CYLC_NS_GROUP     # group name used by this system in the Pyro nameserver
 \end{lstlisting}
 
-Most of these are used by implicitly by cylc and need not concern the user,
-except in the case of tasks that must run on a remote platform; see 
-{\em Submitting Jobs To A Remote Host}, 
-Section~\ref{SubmittingJobsToARemoteHost}.
+Most of these are for internal use by cylc, except in the case of remote
+tasks wherein the cylc directory and system directory variables must be
+overridden to point at the remote cylc installation; see
+Section~\ref{RunningJobsOnARemoteHost}, {\em Running
+Jobs On A Remote Host}. 
 
 \subsubsection{User Defined}
 \label{SystemWideVariables}
 
-Environment variables defined in the system config file will be made
-available to every task in the system; see 
-{\em System Config Files}, Section~\ref{SystemConfigFiles}, e.g:
+Environment variables defined in the system config file are made
+available to all tasks, e.g.: 
 
 \lstset{language=Python}
 
@@ -1953,9 +1953,8 @@ object to communicate the message to.
 \lstset{language=cylctaskdef}
 
 Environment variables defined in a task definition file
-\lstinline=ENVIRONMENT= section will be made available
-to just the one task; see {\em Task Definition Files}, 
-Section~\ref{TaskDefinitionFiles}, e.g.:
+\lstinline=ENVIRONMENT= section are made available
+to just the one task, e.g.:
 
 \begin{lstlisting}
 %ENVIRONMENT
@@ -2008,10 +2007,10 @@ definitions.
 
 \subsubsection{Nested Definitions}
 
-In the values of variables you define, you can refer to other variables,
-which refer to other variables, and so on; these will be interpolated
-out to the final value by cylc.  Circular definitions, however, will
-raise a warning.
+An environment variable definition can refer to other variables, which
+can in turn refer to other variables, and so on; these will be
+interpolated out to final explicit values.  Circular definitions,
+however, will raise a warning.
 
 \subsection{Delayed Evaluation Variables}
 \label{DelayedEvaluationVariables}
@@ -2020,7 +2019,7 @@ Environment variables that appear in the definition of other system-wide
 or task-specific environment variables, or in task command line arguments,
 enclosed in square brackets, e.g.\ \lstinline=$[FOO]=, will be rewritten as 
 proper environment variables, literally \lstinline=${FOO}=, in the task
-execution script, and will thus only be evaluated at execution time.
+execution script to be evaluated at execution time.
 
 This allows user or host specific environment information to be used in 
 constructing file paths (for example) even for tasks that will run under
