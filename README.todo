@@ -14,8 +14,6 @@ To Do
 
 * DOCUMENT: daemon and asynchronous task
 
-* DOCUMENT: job submit mechanisms
-
 * WILL_SATSIFY_ME() REQUIRED FOR FUZZY and LOOSE PREREQUISITES?
   (else purge will fail if involving these tasks).
 
