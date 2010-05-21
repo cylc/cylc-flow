@@ -74,7 +74,7 @@ class remote_switch( Pyro.core.ObjBase ):
         for name in self.task_list:
             cls = getattr( clsmod, name )
             try:
-                short_name, = cls.short_name
+                short_name = cls.short_name
             except AttributeError:
                 # this task class has no short name defined
                 self.real_name[ name ] = name
