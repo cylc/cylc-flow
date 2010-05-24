@@ -2550,47 +2550,53 @@ possible reasons for this (it does not necessarily indicate a problem!):
 
 \end{itemize}
 
-The following problems all cause a system to {\em eventually} get stuck 
-at the {\em runahead limit} (which is 24 hours between the
-fastest and slowest tasks, by default), because cylc does not
-automatically remove failed tasks from the system.  Real operational
-systems should have automated means of alerting the system operator to
-any failure that occurs, but in the unlikely event that the failure 
-is not noticed until the system stalls at the runahead limit, then to
-get things moving again the operator must either remove the failed task
-or reset (and thereby rerun) it after fixing the problem that cause the
-failure.
+The following problems will eventually cause a system to get stuck at
+the {\em runahead limit} (which by default is 24 hours: i.e.\ the
+fastest task in the system is only allowed to get 24 hours ahead of the
+slowest) because cylc does not automatically remove failed tasks from
+the system.  Operational systems should have automated means of
+alerting the operators to any failure that occurs, but in the
+unlikely event that the failure is not noticed until the system stalls
+at the runahead limit, then to get things moving again the operator must
+either remove the failed task or reset (and thereby rerun) it after
+fixing the problem that cause the failure.
 
 \begin{itemize}
-    \item if the system operator, perhaps in a post-task-failure
+    \item If the system operator, perhaps in a post-task-failure
     intervention, kills some tasks that are required to satisfy the
     prerequisites of other tasks that still exist in the system, then 
-    the system will eventually stall at the runahead limit as a
-    result of these tasks being unable to run (solution: insert
-    appropriate oneoff cold start tasks).
+    the system will eventually stall as a result of these tasks being
+    unable to run. Solution: insert tasks (possibly oneoff cold start
+    tasks) to get the system running again.
 
-    \item if the runahead limit is shorter than the cycling
-    interval for some task in the system the system will stall (e.g. if
+    \item If some task in the system has a cycling interval long than
+        the runahead limit, the system the system will stall (e.g.\ if
     you have a task that runs 24-hourly at 00Z, but set the runahead
-    limit to 12 hours). This could also happen if you purge enough
+    limit to just 12 hours). This could also happen if you purge enough
     cycles that the difference between the pre- and post-purge tasks
-    is greater than the runahead limit.
+    is greater than the runahead limit. Solution: ensure your runahead
+    limit is large enough to span these gaps.
 
-    \item if a failed task has not yet been removed or reset by the
-    system operator, it will obviously delay its direct downstream
-    dependants, but it will also cause the entire system to stall,
-    eventually, at the {\em runahead limit}.  
+    \item If a failed task has not yet been removed or reset by the
+    system operator it will eventually stall the system. Solution:
+    Fix, or otherwise deal with, failed tasks as quickly as possible.
 
-    \item if a system design (task definition) error results in creation
-    of a task that cannot get its prerequisites satisfied by any other
-    task in the system, then this task will never run and will
-    eventually cause the system to stall at the runahead limit.
+    \item If through a system design error error, a task exists that
+        cannot get its prerequisites satisfied by any other task in the
+        system, that task will never run and will eventually cause the
+        system to stall.  Solution: test the system in dummy mode to 
+        check that all prerequisites and outputs, system-wide, are 
+        compatible.
 
-    \item if a misconfigured external task does not report an output
-    that it is supposed to (i.e.\ as registered in its task proxy
-    definition file), then any other task depending on that output will
-    not run, and will eventually cause the system to stall at the
-    runahead limit.
+    \item If a misconfigured external task does not report an output
+        that it is supposed to (i.e.\ as registered in its task proxy
+        definition file), then its task proxy will not record that 
+        output as complete and cylc will set it to the 'failed' state
+        when it finishes without completing a registered output. A
+        failed task will eventually stall the system, as explained above, 
+        if it is not fixed and re-run, or removed from the system.
+        Solution: ensure all external tasks report their outputs
+        correctly.
 
 \end{itemize}
 
@@ -2656,7 +2662,7 @@ limit will report that to the log.
 
 \subsubsection{Normal Shutdown}
 
-Normally cylc waits for any currently running tasks to finish, then
+Cylc waits for any currently running tasks to finish, then
 unregisters its own objects from the Pyro nameserver before shutting
 down. There will be nothing to clean up. 
 
@@ -2680,17 +2686,8 @@ report that the system is still in use, and cylc will refuse to restart
 the system until you delete the left over objects from the nameserver:
 
 \begin{lstlisting}
-pyro-nsc delete-group {USER}_{SYSTEM}
+pyro-nsc delete-group {USER}^{SYSTEM}
 \end{lstlisting}
-
-\subsubsection{A Stalled System}
-
-If, for instance, you try to run a system whose task scripts do not have 
-executable permissions, cylc may stall indefinitely with one or more
-tasks in the ``submitted'' state. \lstinline=cylc stop --now= can be
-used to shut the system down cleanly (the \lstinline=--now= option is
-required because by default cylc will wait for any submitted or running
-jobs to complete before shutting down).
 
 
 \pagebreak
