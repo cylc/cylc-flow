@@ -11,7 +11,7 @@
 
 
 %NAME
-    A
+    A, a
 
 %DESCRIPTION
     Could be an atmospheric model. 
@@ -32,10 +32,12 @@
     ANIMAL foxy fox
     REMOTE_HOME $[HOME]
     TASK_FOO global-${BAZ}
+    FOO_TIME ${CYCLE_TIME} 
 
 %COMMANDLINE
     # A.sh task 2 commandline args: --file=FILE SENTENCE
     --file=${HOME}/data-$(CYCLE_TIME + 6).nc
+    #--foo=$CYCLE_TIME
     # '$[HOME] evaluates as '$HOME' at execution time, e.g. on a remote machine
     "the quick brown $ANIMAL went $[HOME]"
 

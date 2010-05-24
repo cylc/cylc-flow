@@ -54,6 +54,7 @@ class system_config( config ):
 
         # to override the default job submit method for specific tasks, e.g.:
         #self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
+        self.items['job_submit_overrides']['at_now'] = [ 'A' ]
 
         # Environment variables available to all tasks. Values can include
         # local environment variables, other environment variables
@@ -66,11 +67,11 @@ class system_config( config ):
         # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 
         self.items['environment']['REAL_TIME_ACCEL'] = '360'
 
-        self.items['environment']['FOO'] = 'foo'
-        self.items['environment']['BAR'] = '$FOO'
-        self.items['environment']['BAZ'] = '$BAR'
-        self.items['environment']['CYLC_USER'] = '$USER'
-        self.items['environment']['REMOTE_HOME'] = '$[HOME]'
+        #self.items['environment']['FOO'] = 'foo'
+        #self.items['environment']['BAR'] = '$FOO'
+        #self.items['environment']['BAZ'] = '$BAR'
+        #self.items['environment']['CYLC_USER'] = '$USER'
+        #self.items['environment']['REMOTE_HOME'] = '$[HOME]'
        
         #self.items['logging_level'] = logging.DEBUG
 
