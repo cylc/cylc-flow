@@ -1564,8 +1564,8 @@ parser is not currently aware of.
 \section{Job Submission}
 \label{JobSubmission}
 
-Cylc can use different job submission methods to launch different tasks. 
-Set a default method in the system config file (see
+Cylc can submit different tasks to run by different methods.  A default
+job submission method must be set in the system config file (see
 Section~\ref{SystemConfigFiles}):
  
 \lstset{language=Python}
@@ -1575,80 +1575,37 @@ Section~\ref{SystemConfigFiles}):
 self.items['job_submit_method'] = 'background'
 \end{lstlisting}
  
-And override the default method for specific tasks as needed:
+which can be overridden for specific tasks as required:
 
 \begin{lstlisting}
 # But submit tasks A, B, and C to run using 'at now'
 self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
 \end{lstlisting}
 
-\subsection{Available Methods}
-\label{AvailableMethods}
-
-\lstset{language=bash}
-
-There are two basic methods, available on any platform, that are
-sufficient for running cylc's example systems (they could also be used
-for small tasks within a real forecasting system): 
-
-\begin{itemize}
-
-    \item \lstinline=background= - run a task in a background shell
-        (\lstinline=foo &=). 
-
-     \item \lstinline=at_now= - submit a task to run immediately via the
-         unix 'at' command (a rudimentary batch queue scheduler that
-         reports job output to the user by email).
-
-\end{itemize}
-
-Most tasks in a real forecasting system will need to be submitted to a
-proper batch queue scheduler or cross-platform resource manager such as
-{\em loadleveler} (IBM). Methods currently available are:
-
-\lstset{language=cylctaskdef}
-
-\begin{itemize} 
-    
-    \item \lstinline=ll_basic= - submit a task to loadleveler. Some
-        default loadleveler directives are provided; these can be used
-        as is, overridden, or added to, via the taskdef file
-        \lstinline=%DIRECTIVES= section.
-
-    \item \lstinline=ll_raw= - submit a task that already contains all
-        the loadleveler directives it needs. Useful for complex (e.g.
-        multi-step) tasks already configured to use loadleveler.
-
-    \item \lstinline=ll_basic_eco= and \lstinline=ll_raw_eco= - these
-        adapt the generic loadleveler methods above to NIWA's EcoConnect
-        operational environment so that the exact same system definition
-        can be used in distinct {\em oper}, {\em test,} or {\em devel}
-        areas (where the task owner usernames and home directories vary
-        accordingly).
-
-\end{itemize}
-
-
 \subsection{How It Works}
 \label{HowItWorks}
 
-When a task is ready to run cylc writes a temporary {\em task execution
-script} which it submits by the method specified for the task. The task
-execution script explicitly defines the execution environment before
-invoking the task itself. Other information (e.g.\ loadleveler
-directives) may be written to the task execution script too, depending
-on the job submission method.
+\lstset{language=cylctaskdef}
 
-The task execution environment must provide access to the task itself,
-to cylc and any environment variables it needs to run, and to any
-environment variables required by the task as it runs. See {\em Task
-Execution Environment} (Section~\ref{TaskExecutionEnvironment}) for how
-to set environment variables in cylc.
+When a task is ready to run cylc writes a temporary {\em task execution
+script} that explicitly configures the environment and then invokes the
+{\em task script} specified in the \lstinline=%TASK= section of the
+taskdef file. This temporary script is then submitted to run by the
+method specified for the task in the system config file (see above).
+Other scripting, e.g.\ loadleveler directives, may also be written to
+the task execution script, depending on the job submission method.
 
 \lstset{language=bash}
 
-You can use \lstinline=cylc run-task= to generate a task execution script
-for inspection. For example:
+Section~\ref{TaskExecutionEnvironment}, {\em Task Execution
+Environment}, describes how the environment is defined, and how to set
+your own system- and task-specific environment variables in cylc.
+
+The filename of the temporary task execution script is reported to
+stdout. It is deleted automatically if the task completes successfully,
+but otherwise remains available for inspection.  You can also use
+\lstinline=cylc run-task --dry-run= to generate task
+execution scripts for inspection:
 
 %, if you have configured the userguide example system, registered it
 %under the name ``userguide'', and left the default job submission
@@ -1686,16 +1643,65 @@ oliverh~/cylc % cat /tmp/cylc-IU0DDH
   #EOF
 \end{lstlisting}
 
+\subsection{Available Methods}
+\label{AvailableMethods}
+
+\lstset{language=bash}
+
+There are two basic methods, available on any platform, that are
+sufficient for running cylc's example systems (and they could also be
+used for small tasks in a real forecasting system): 
+
+\begin{itemize}
+
+    \item \lstinline=background= - run a task in a background shell
+        (\lstinline=foo &=). 
+
+     \item \lstinline=at_now= - submit a task to run immediately via the
+         unix \lstinline=at= command (a rudimentary batch queue
+         scheduler that reports job output to the user by email).
+
+\end{itemize}
+
+Tasks in a real forecasting system should be submitted to a batch queue
+scheduler or cross-platform resource manager such as {\em loadleveler}
+(IBM). Methods currently available are:
+
+\lstset{language=cylctaskdef}
+
+\begin{itemize} 
+    
+    \item \lstinline=ll_basic= - submit a non-loadleveler-specific task
+        to loadleveler. Some default loadleveler directives are
+        provided, which can be used as-is, or overridden or added to
+        via the taskdef file \lstinline=%DIRECTIVES= section.
+
+    \item \lstinline=ll_raw= - submit a loadleveler-ready task to loadleveler (the task 
+        script must contain all required directives already). This may be necessary for
+        complex (e.g.\ multi-step) jobs. The original task script is copied to
+        make the temporary task execution script, and cylc environment
+        scripting is inserted into it immediately after the loadleveler directives.
+
+    \item \lstinline=ll_basic_eco= and \lstinline=ll_raw_eco= - these
+        adapt the generic loadleveler methods above to NIWA's EcoConnect
+        operational environment so that the same cylc system definition
+        can be used in distinct {\em oper}, {\em test,} and {\em devel}
+        areas in which task owner username and home directory vary
+        accordingly.
+
+\end{itemize}
+
+
 \subsection{Defining New Methods}
 
-New job submission methods can be derived from the \lstinline=job_submit=
-base class in:
+New job submission methods should be derived from cylc's
+\lstinline=job_submit= base class in:
 
 \begin{lstlisting}
 $CYLC_DIR/src/job-submission/job_submit.py
 \end{lstlisting}
 
-and then imported into the \lstinline=job_submit_methods= module:
+and imported into the \lstinline=job_submit_methods= module:
 
 \begin{lstlisting}
 $CYLC_DIR/src/job-submission/job_submit_methods.py
@@ -1703,8 +1709,8 @@ $CYLC_DIR/src/job-submission/job_submit_methods.py
 
 This is easy to do; most of the required functionality already exists in
 the base class and you can model new sub-classes on existing ones. To
-illustrate, here is the entire derived class code for the two simplest
-job submission methods, \lstinline=background= and \lstinline=at_now=:
+illustrate, here is the entire derived class code for the simple 
+\lstinline=at_now= class:
 
 \lstset{language=Python}
 
@@ -1721,28 +1727,10 @@ class at_now( job_submit ):
         self.command = 'at -f ' + self.jobfile_path + ' now'
 \end{lstlisting}
 
-\begin{lstlisting}
-#!/usr/bin/python
-from job_submit import job_submit
-
-class background( job_submit ):
-    # This class overrides job submission command construction so that
-    # the cylc task execution file will run in a background shell.
-    
-    def construct_command( self ):
-        # Redirection of stdin here allows "background execution" of the
-        # task even on a remote host (if one is specified in the taskdef
-        # file) - ssh can exit immediately after invoking the job
-        # script, without waiting for the remote process to finish.
-
-        log = self.task_id + '-$$.log'
-        self.command = self.jobfile_path + " </dev/null > " + log + " 2>&1 &" 
-\end{lstlisting}
-
 To interface with more sophisticated schedulers other base class methods
 in addition to \lstinline=construct_command()= may need to be overridden.
 Take a look at the source code for the loadleveler job submit classes,
-and ensure you understand {\em How Job Submission Works},
+and make sure you understand {\em How Job Submission Works},
 Section~\ref{HowItWorks}.
 
 \subsection{Running Local Tasks Under Other Usernames}
@@ -1764,9 +1752,9 @@ For this to work \lstinline=/etc/sudoers= must be configured to allow
 the cylc user to invoke the relevant job submission commands as the task
 owner.  This might be difficult to arrange for the background execution
 method (wherein task execution scripts are invoked directly) but is
-otherwise easy to do: for the 'at' or loadleveler methods, for instance,
-the cylc user only needs \lstinline=sudo= access, as the task owner, to
-\lstinline=at= or \lstinline=llsubmit= respectively.
+otherwise easy to do: for the \lstinline=at_now= or loadleveler methods,
+for instance, the cylc user only needs \lstinline=sudo= access, as the
+task owner, to \lstinline=at= or \lstinline=llsubmit= respectively.
 
 \subsection{Running Jobs On A Remote Host}
 \label{RunningJobsOnARemoteHost}
@@ -1804,7 +1792,7 @@ you to submit a job on the local host to run on the remote host.
 \begin{itemize}
 
     \item Cylc (and Pyro) must be installed on the remote host, so that 
-        the task can use \lstinline cylc message= to communicate with
+        the task can use \lstinline=cylc message= to communicate with
         its controlling scheduler.
         
     \item The task itself must be installed on the remote host (the task
@@ -1861,7 +1849,7 @@ Environment}, Section~\ref{TaskExecutionEnvironment}):
     foo.sh
 
 %ENVIRONMENT
-    PATH     /remote/path:$[PATH]
+    PATH     /remote/path:$[PATH]   # note square brackets!
 \end{lstlisting}
 
 \subsubsection{Remote Host Example}
@@ -1872,11 +1860,11 @@ See cylc's ``Distributed'' example system, Section~\ref{Distributed}.
 \subsection{Task stdout And stderr}
 \label{TaskstdoutAndstderr}
 
-Where job stdout and stderr ends up depends entirely on the job
-submission method. These will normally end up as log files in the user's
-home directory (or perhaps elsewhere if the job submission method allows
-this to be configured). Submitting jobs via 'at' results in stdout and
-stderr being emailed to the user when the completes.
+Where job stdout and stderr ends up depends on the job submission
+method: normally log files in the user's home directory (or perhaps
+elsewhere if the job submission method allows this to be configured).
+Choosing the \lstinline=at_now= method will results in stdout and
+stderr being emailed to the task owner when the task completes.
 
 \pagebreak
 \section{Task Execution Environment}
@@ -1884,10 +1872,15 @@ stderr being emailed to the user when the completes.
 
 As described in Section~\ref{JobSubmission}, {\em Job Submission}, cylc
 tasks are executed by means of submitting a temporary {\em task
-execution script}, by the correct job submission method for the task.
-The task execution script explicitly defines the execution environment
-before executing the task itself, regardless of the job submission
-method used. 
+execution script} that configures the execution environment before
+executing the task itself.  The task execution environment must provide
+access to the task script (so that the full path is not required in the
+taskdef file if the script resides in the system definition
+\lstinline=scripts= sub-directory), and to cylc itself (so that the task
+can call \lstinline=cylc message= as it executes). And it must also
+contain environment variables required by cylc, any system-wide
+environment variables defined in the system config file, and any
+task-specific environment variables defined in the taskdef file.
 
 \subsection{System Wide Variables}
 \lstset{language=bash}
@@ -1994,38 +1987,49 @@ system name.
 
 In {\em system-wide variable} definitions, cylc looks for a match
 amongst other defined system-wide variables, then in the local
-environment (in which cylc is running).
+environment (i.e.\ the environment in which cylc is running).
 
 In {\em task-specific variable} definitions, cylc looks for a match
 amongst other task-specific variables, then amongst the system-wide
-variables, and finally in the local environment (in which cylc is
-running).
+variables, and finally in the local environment (i.e.\ the environment
+in which cylc is running).
 
 Environment variables found in {\em task commandline argument}
 definitions are interpolated as for those in task-specific variable
 definitions.
 
-\subsubsection{Nested Definitions}
+\subsubsection{Nested Environment Variables}
 
-An environment variable definition can refer to other variables, which
-can in turn refer to other variables, and so on; these will be
-interpolated out to final explicit values.  Circular definitions,
-however, will raise a warning.
+An environment variable's value can refer to other environment
+variables, which can in turn refer to others, and so on. Such nested
+definitions will be fully interpolated out by cylc before writing the 
+task execution script.  Circular definitions, however, will raise a
+warning.
 
-\subsection{Delayed Evaluation Variables}
+\subsubsection{Delayed Evaluation Variables}
 \label{DelayedEvaluationVariables}
 
-Environment variables that appear in the definition of other system-wide
-or task-specific environment variables, or in task command line arguments,
-enclosed in square brackets, e.g.\ \lstinline=$[FOO]=, will be rewritten as 
-proper environment variables, literally \lstinline=${FOO}=, in the task
-execution script to be evaluated at execution time.
+Any reference to an environment variable (in system-wide, task-specific,
+or command line argument definitions) {\em enclosed in square brackets}:
 
-This allows user or host specific environment information to be used in 
-constructing file paths (for example) even for tasks that will run under
-other usernames and/or on remote hosts. \lstinline=$[HOME]=, for instance,
+\begin{lstlisting}
+$[FOO]  # square brackets
+\end{lstlisting}
+
+will not be ``interpolated out'' by cylc; instead it will be written to
+the task execution script as a literal proper environment variable
+reference:
+
+\begin{lstlisting}
+${FOO}  # curly parentheses
+\end{lstlisting}
+
+which will not be evaluated until the the task executes. This allows
+user- or host-specific environment information (for example) to
+be used in constructing file paths (for example) for tasks that will run
+under other usernames and/or on remote hosts: e.g.\ \lstinline=$[HOME]=
 will evaluate at run time as the home directory of the task owner on the
-host that runs the task, not as the home directory of the cylc user on 
+host that runs the task, not as the home directory of the cylc user on
 the host that is running cylc.
 
 \pagebreak
