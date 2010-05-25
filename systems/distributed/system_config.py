@@ -59,7 +59,7 @@ class system_config( config ):
         # the registered system name, e.g.:
         self.items['environment']['CYLC_TMPDIR'] = '/tmp/$USER/' + sysname
 
-        self.items['environment']['CYLC_REMOTE_TMPDIR'] = '/tmp/$[USER]/' + sysname + '-remote'
+        self.items['environment']['CYLC_REMOTE_TMPDIR'] = '/tmp/ecoconnect_devel/' + sysname + '-remote'
 
         # remote host on which to run the coldstart and forecast tasks
         self.items['environment']['SUPERCOMPUTER'] = 'fc-test'
