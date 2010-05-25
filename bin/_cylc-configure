@@ -227,11 +227,11 @@ class system_config( config ):
         # Environment variables available to all tasks. Values should be
         # strings and can include local environment variables, other
         # environment variables defined here, 'delayed evaluation'
-        # environment variables (e.g. $[HOME] => '${HOME}' in the job
+        # environment variables (e.g. \$[HOME] => \${HOME} in the job
         # script, to be evaluated when the task executes) and the
         # registered system name via the Python variable 'sysname':
 
-        self.items['environment']['CYLC_TMPDIR'] = '/tmp/$USER/' + sysname
+        self.items['environment']['CYLC_TMPDIR'] = '/tmp/\$USER/' + sysname
 
 # END OF FILE
 eof
