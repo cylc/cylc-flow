@@ -323,7 +323,7 @@ class job_submit:
                 success = False
  
         # now replace local jobfile path with remote jobfile path
-        self.jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
+        self.jobfile_path = os.path.basename( self.jobfile_path )
 
         self.construct_command()
 
