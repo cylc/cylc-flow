@@ -29,7 +29,7 @@
 %ENVIRONMENT
     WRAP file_transfer.sh
     SRCE $CYLC_TMPDIR/ext/output/$(CYCLE_TIME)/extdata
-    DEST ecoconnect_devel@$SUPERCOMPUTER:$CYLC_REMOTE_TMPDIR/input/$(CYCLE_TIME)/extdata
+    DEST $REMOTE_FC_USER@$SUPERCOMPUTER:$CYLC_REMOTE_TMPDIR/input/$(CYCLE_TIME)/extdata
 
 %PREREQUISITES
     "external data ready for $(CYCLE_TIME)"
