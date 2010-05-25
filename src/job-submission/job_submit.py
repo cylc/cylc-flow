@@ -323,11 +323,12 @@ class job_submit:
                 success = False
  
         # now replace local jobfile path with remote jobfile path
+        # (relative to $HOME)
         self.jobfile_path = os.path.basename( self.jobfile_path )
 
         self.construct_command()
 
-        command_2 = "ssh " + self.destination + " '" + self.command + "'"
+        command_2 = "ssh " + self.destination + " '$HOME/" + self.command + "'"
 
         # execute the local command to submit the job
         if dry_run:
