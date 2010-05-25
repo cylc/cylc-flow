@@ -1756,8 +1756,8 @@ otherwise easy to do: for the \lstinline=at_now= or loadleveler methods,
 for instance, the cylc user only needs \lstinline=sudo= access, as the
 task owner, to \lstinline=at= or \lstinline=llsubmit= respectively.
 
-\subsection{Running Jobs On A Remote Host}
-\label{RunningJobsOnARemoteHost}
+\subsection{Running Tasks On A Remote Host}
+\label{RunningTasksOnARemoteHost}
 
 If a task declares a \lstinline=%REMOTE_HOST= section in the taskdef
 file, its execution script will be copied to the specified host by 
@@ -2798,12 +2798,12 @@ on this).
 
 This example system is a variant of the file-move system in which the
 two forecast model tasks execute on another machine on the network.  The
-{\em file-transfer} script is invoked twice, once to put input files on
-the remote machine, and once retrieve output files from the remote
-machine (these connector tasks would be unnecessary if the forecast
-tasks themselves knew where to get and put their input and output files,
-respectively). The forecast model restart outputs reside on the remote
-machine.
+\lstinline=file-transfer.sh= script is invoked twice, once to put input
+files on the remote machine, and once retrieve output files from the
+remote machine (these connector tasks would be unnecessary if the
+forecast tasks themselves knew where to get and put their input and
+output files, respectively). The forecast model restart outputs reside
+on the remote machine.
 
 The distributed example system serves to illustrate:
 
@@ -2834,17 +2834,9 @@ the remote task scripts, if their absolute paths are not supplied in the
 taskdef TASK key, must be in the PATH environment set in the taskdef
 file (and likewise for the remote cylc bin directory).
 
-The \lstinline=background_remote= job submission class assumes the local
-and remote user names are the same.  If not, the taskdef OWNER key can
-be used, and a slightly modified version of
-\lstinline=background_remote= derived to use the correct remote
-username.
-
-The distributed example can also be tested using the local machine as
-the remote machine, in which case the forecast model tasks will be
-submitted locally by the \lstinline=background_remote= job class, and
-you will require passwordless ssh self-access on the machine.
-
+Section~\ref{RunningTasksOnARemoteHost} ({\em Running Tasks On A Remote
+Platform}) explains how to configure ssh so that the cylc user can
+invoke the remote tasks.
 
 \pagebreak
 \subsection{SCS Demo}

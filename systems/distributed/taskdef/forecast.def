@@ -30,13 +30,13 @@
 %REMOTE_HOST
     $SUPERCOMPUTER
 
+%OWNER
+    ecoconnect_devel
+
 %ENVIRONMENT
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
-    # pass a local global variable to the remote task:
-    CYLC_REMOTE_TMPDIR $CYLC_REMOTE_TMPDIR
-    # note this assumes the same $HOME local and remote: 
-    PATH $PATH:$HOME/cylc/bin:$HOME/cylc/systems/distributed/scripts
-    PYTHONPATH $PYTHONPATH:$HOME/cylc/src
+    CYLC_DIR=$REMOTE_CYLC_DIR
+    CYLC_SYSTEM_DIR=$REMOTE_CYLC_SYSTEM_DIR
 
 %PREREQUISITES
     "forecast input ready for $(CYCLE_TIME)"

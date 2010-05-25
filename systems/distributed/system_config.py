@@ -23,7 +23,6 @@ from config import config
 from task_list import task_list
 from system_info import info
 import logging  # for logging level
-import os       # os.environ['HOME']
 
 class system_config( config ):
 
@@ -53,18 +52,18 @@ class system_config( config ):
         self.items['job_submit_method'] = 'background'
 
         # to override the default job submit method for specific tasks, e.g.:
-        self.items['job_submit_overrides']['background_remote'] = \
-                [ 'cold', 'forecast' ]
+        #self.items['job_submit_overrides']['at_now'] = \
+                #        [ 'cold', 'forecast' ]
 
         # environment variables available to all tasks, can include
         # the registered system name, e.g.:
-        user = os.environ['USER'] 
-        self.items['environment']['CYLC_TMPDIR'] = '/tmp/' + user + '/' + sysname
+        self.items['environment']['CYLC_TMPDIR'] = '/tmp/$USER/' + sysname
 
-        user = os.environ['USER'] 
-        self.items['environment']['CYLC_REMOTE_TMPDIR'] = '/tmp/' + user + '/' + sysname + '-remote'
+        self.items['environment']['CYLC_REMOTE_TMPDIR'] = '/tmp/$[USER]/' + sysname + '-remote'
 
         # remote host on which to run the coldstart and forecast tasks
-        self.items['environment']['SUPERCOMPUTER'] = '192.168.126.129'
+        self.items['environment']['SUPERCOMPUTER'] = 'fc-test'
+        self.items['environment']['REMOTE_CYLC_DIR'] = '$[HOME]/cylc'
+        self.items['environment']['REMOTE_CYLC_SYSTEM_DIR'] = '$[HOME]/cylc/systems/distributed'
 
 # END OF FILE
