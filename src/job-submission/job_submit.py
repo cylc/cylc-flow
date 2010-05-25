@@ -163,7 +163,7 @@ class job_submit:
         #if self.owner:
         #    self.running_dir = '~' + self.owner
 
-        self.remote_jobfile_path = None # default required in cleanup()
+        self.jobfile_is_remote = False
 
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
@@ -324,7 +324,12 @@ class job_submit:
  
         # now replace local jobfile path with remote jobfile path
         # (relative to $HOME)
+
+        print ' - deleting local jobfile ' + self.jobfile_path
+        os.unlink( self.jobfile_path )
+
         self.jobfile_path = os.path.basename( self.jobfile_path )
+        self.jobfile_is_remote = True
 
         self.construct_command()
 
@@ -361,9 +366,10 @@ class job_submit:
 
     def cleanup( self ):
         # called by task class when the job finishes
-        print ' - deleting jobfile ' + self.jobfile_path
-        os.unlink( self.jobfile_path )
-
-        if self.remote_jobfile_path:
-            print ' - deleting remote jobfile ' + self.remote_jobfile_path
-            os.system( 'ssh ' + self.destination + ' rm ' + self.remote_jobfile_path )
+        
+        if self.jobfile_is_remote:
+            print ' - deleting remote jobfile ' + self.jobfile_path
+            os.system( 'ssh ' + self.destination + ' rm ' + self.jobfile_path )
+        else:
+            print ' - deleting local jobfile ' + self.jobfile_path
+            os.unlink( self.jobfile_path )
