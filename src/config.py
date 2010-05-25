@@ -55,11 +55,13 @@ class config:
         for var in env:
             env[ var ] = str( env[ var ] )
 
-        # work out any references to other variables, local environment
-        # variables, or cylc delayed variables $[FOO]
+        # work out any references to other global variables or local
+        # environment variables
         env = interp_self( env )
         env = interp_local( env )
-        env = replace_delayed( env )
+        # don't interpolate delayed variables here though; this must
+        # be done at the last, before job submission.
+        #env = replace_delayed( env )
 
         self.items[ 'environment' ] = env
 

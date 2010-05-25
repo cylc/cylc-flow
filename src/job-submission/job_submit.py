@@ -106,8 +106,10 @@ class job_submit:
         #    cylc's $[FOO] is for).
         #  * then replace delayed variables $[FOO] with literal '$FOO'
 
-        # Note that global env already has self-, environment-, and
-        # delayed- variable references worked out, in task manager init.
+        # Note that global env already has self-, environment- variable
+        # references worked out in config init (but not delayed
+        # variables, as user may define global delayed vars that are
+        # then referred to in task-specific vars!) .
 
         # Add the variables that all tasks must have
         # (doing this *before* interpolating, below, means that any
@@ -123,7 +125,8 @@ class job_submit:
         task_env = interp_other( task_env, job_submit.global_env )
         task_env = interp_local( task_env )
         task_env = replace_delayed( task_env )
-    
+        self.global_env = replace_delayed( job_submit.global_env )
+
         self.task_env = task_env
 
         # same for the task script command line
@@ -205,8 +208,8 @@ class job_submit:
         #for env in [ job_submit.global_env, self.task_env ]:
 
         FILE.write( "\n# TASK EXECUTION ENVIRONMENT: system-wide variables\n" )
-        for var in job_submit.global_env:
-            FILE.write( "export " + var + "=\"" + job_submit.global_env[var] + "\"\n" )
+        for var in self.global_env:
+            FILE.write( "export " + var + "=\"" + self.global_env[var] + "\"\n" )
 
         FILE.write( "\n# TASK EXECUTION ENVIRONMENT: task-specific variables:\n" )
         for var in self.task_env:
