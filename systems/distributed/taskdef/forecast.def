@@ -31,7 +31,7 @@
     $SUPERCOMPUTER
 
 %OWNER
-    ecoconnect_devel
+    $REMOTE_FC_USER
 
 %ENVIRONMENT
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)

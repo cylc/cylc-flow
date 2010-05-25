@@ -33,7 +33,7 @@
     $SUPERCOMPUTER
 
 %OWNER
-    ecoconnect_devel
+    $REMOTE_FC_USER
 
 %ENVIRONMENT
     CYLC_DIR $REMOTE_CYLC_DIR

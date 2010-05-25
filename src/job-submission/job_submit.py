@@ -58,9 +58,6 @@ class job_submit:
         # unique task identity
         self.task_id = task_id
 
-        # task owner
-        self.owner = owner
-
         # in dummy mode, replace the real external task with the dummy task
         self.task = ext_task
         if job_submit.dummy_mode:
@@ -148,7 +145,7 @@ class job_submit:
         # final directive, WITH PREFIX, e.g. '#@ queue' for loadleveler
         self.final_directive = ""
         
-        # a remote host can be defined by environment variables
+        # a remote host can be defined using environment variables
         if host:
             host = interp_other_str( host, job_submit.global_env )
             host = interp_other_str( host, self.task_env )
@@ -156,6 +153,15 @@ class job_submit:
             self.remote_host = host
         else:
             self.remote_host = None
+
+        # a task owner can be defined using environment variables
+        if owner:
+            owner = interp_other_str( owner, job_submit.global_env )
+            owner = interp_other_str( owner, self.task_env )
+            owner = interp_local_str( owner )
+            self.owner = owner
+        else:
+            self.owner = None
 
         # by default, run in cylc user's home directory ...
         self.running_dir = '$HOME'

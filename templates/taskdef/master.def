@@ -63,10 +63,10 @@
     run-foo.sh
 
 #----------------------------------------------------------------------
-%REMOTE_HOST
+[%REMOTE_HOST]
     # - URL of a remote machine on which this task must run.
-    # - This becomes 'self.remote_host' in the job submission class.
-    # - It can be an environment variable set in system_config.py, e.g.:
+    # - Can be defined by an environment variable from system_config
+    # e.g.:
     $SUPERCOMPUTER
  
 #----------------------------------------------------------------------
@@ -81,10 +81,13 @@
 
 #----------------------------------------------------------------------
 [%OWNER]
-    # - Sudo-run the task under this username, if supported by the 
-    #     job submit method selected for the task.
-    # - Defaults to the owner of the scheduler process. 
+    # - Submit the task to run under this username.
+    # - Defaults to the cylc user.
+    # - Can be defined by an environment variable from system_config
+    # e.g:
     bob
+    # or:
+    $REMOTE_MODEL_OWNER
 
 #----------------------------------------------------------------------
 [%ENVIRONMENT]
