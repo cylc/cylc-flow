@@ -1,4 +1,4 @@
-# THIS IS A CYLC TASK DEFINITION FILE
+#!/usr/bin/python
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
@@ -9,27 +9,6 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
-%NAME
-    foo
-
-%DESCRIPTION
-    Does "sweet F.A."
-
-%TYPE
-    free, sequential
-
-%NO_NONCOTEMPORAL_DEPENDANTS
-    True
-
-%CYCLES
-    0,6,12,18
-
-%TASK
-    cylc-wrapper
-
-%ENVIRONMENT
-    WRAP foo.sh
-
-%ESTIMATED_RUN_TIME
-    5 min
+info="""
+A trivial system containing one free task that is constrained to run sequentially
+"""
