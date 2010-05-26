@@ -58,12 +58,24 @@ class system_config( config ):
         # environment variables available to all tasks, can include
         # the registered system name, e.g.:
         self.items['environment']['CYLC_TMPDIR'] = '/tmp/$USER/' + sysname
-        self.items['environment']['REMOTE_FC_USER'] = 'ecoconnect_devel'
-        self.items['environment']['CYLC_REMOTE_TMPDIR'] = '/tmp/$REMOTE_FC_USER/' + sysname + '-remote'
 
-        # remote host on which to run the coldstart and forecast tasks
+        #----------------------------___--------------_-----------------
+        # THE FOLLOWING VARIABLES MUST BE CUSTOMIZED FOR YOUR SYSTEM:
+        # These variables are used in the taskdef files for the forecast
+        # model tasks and the two tasks that transfer files to and from
+        # the remote host.  Note that these values could be hardwired
+        # into the taskdef files, but doing it this way means that a
+        # new remote host can be configured entirely from here. 
+        #
+        # REMOTE HOST FOR THE FORECAST MODEL TASKS
         self.items['environment']['SUPERCOMPUTER'] = 'fc-test'
+        # REMOTE FORECAST MODEL TASK OWNER
+        self.items['environment']['REMOTE_FC_USER'] = 'ecoconnect_devel'
+        # PATH TO A CYLC INSTALLATION ON THE REMOTE HOST
         self.items['environment']['REMOTE_CYLC_DIR'] = '$[HOME]/cylc'
+        # PATH TO THE CYLC SYSTEM DEFINITION DIRECTORY ON THE REMOTE HOST
         self.items['environment']['REMOTE_CYLC_SYSTEM_DIR'] = '$[HOME]/cylc/systems/distributed'
+        # TEMPORARY DIRECTORY TO USE ON THE REMOTE HOST
+        self.items['environment']['CYLC_REMOTE_TMPDIR'] = '/tmp/$REMOTE_FC_USER/' + sysname + '-remote'
 
 # END OF FILE
