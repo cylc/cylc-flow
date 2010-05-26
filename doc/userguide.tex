@@ -2829,18 +2829,16 @@ Finally, see {\em Running Tasks On A Remote Host}
 \pagebreak
 \subsection{SCS Demo}
 
-This example system, which resides in 
-\lstinline=$CYLC_DIR/systems/scs-demo=,
-demonstrates how to set up a single Met Office
-UM-based forecast analysis suite that would normally be run by SCS.
-Features that distinguish this system are:
+This example system runs {\bf only in dummy-mode} (no task scripts
+have been implemented) and resides in
+\lstinline=$CYLC_DIR/systems/scs-demo=.
+It demonstrates how to set up a single Met Office
+UM-based forecast analysis suite that would normally be controlled by
+SCS.  Other distinguishing features of this system are:
 
 \begin{itemize}
 
-    \item dummy mode only - no tasks scripts have been implemented.
-
-    \item restricted start time (see the system config file) - the
-        system can cold start at 06Z only
+    \item restricted start time (see the system config file) - cold start at 06Z only
 
     \item not all tasks run in all cycles - see arch, g\_lbc, post2
 
@@ -2860,9 +2858,8 @@ cylc start -d --fail-out=OPS1%YYYYMMDDHH ...
         \end{lstlisting}
 
         VAR will not be delayed, but the failed OPS task does have to be
-        killed or it will eventually stall the system at the maximum
-        runahead time (see {\em System Config Files},
-        Section~\ref{SystemConfigFiles}).
+        killed or it will eventually stall the system at the runahead
+        limit.
         
 \end{itemize}
 
