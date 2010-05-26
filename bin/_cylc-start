@@ -71,8 +71,7 @@ def create_ns_groupname( nameserver, groupname ):
         # (this may indicate another instance of cylc is running
         # with the same groupname; must be unique for each instance
         # else the different systems will interfere with each other) 
-        print "\nERROR: group '" + groupname + "' is already registered"
-        print "in the Pyro nameserver."
+        print "\nERROR: the Pyro Nameserver group '" + groupname + "' is already in use."
         objs = nameserver.list( groupname )
         if len( objs ) == 0:
             print "It currently contains no objects."
@@ -82,16 +81,15 @@ def create_ns_groupname( nameserver, groupname ):
                 print '  + ' + obj[0]
 
         print
-        print "If the group is in use by another cylc instance then re-register your"
-        print "system under a different name using the 'cylc register' command."
+        print "YOUR OPTIONS ARE:"
         print 
-        print "If the group is being used by a running cylc of yours that you no"
-        print "longer need, shut it down using the 'cylc control' command."
+        print "(1) If the nameserver group is being used by another cylc instance,"
+        print "re-register your system under a different name before running it."
         print 
-        print "If the group is a relic of an aborted cylc run you can delete it"
-        print "manually from the nameserver:"
+        print "(2) If the nameserver group is a relic of a cylc instance that did"
+        print "not shut down cleanly, you can delete it from the nameserver by:"
         print 
-        print "pyro-nsc deletegroup " + groupname + "   #<--DO-THIS-!" 
+        print "pyro-nsc deletegroup " + groupname + "   #<-------(manual cleanup)" 
         print
         raise SystemExit( "ABORTING NOW" )
 
