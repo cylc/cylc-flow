@@ -14,34 +14,30 @@
 # 'cylc system-info SYSTEM'.
 
 info = """
-This is an implementation of the example system used to illustrate the
-first section of the Cylc Userguide.
-
-> HOW THE SYSTEM WORKS:
+An implementation of the task set that illustrates the cylc userguide.
+______________________
+HOW THE SYSTEM WORKS
 Each task "writes output files" using the touch command, and "reads
 input files" by detecting the existence of these (empty) files.
-
-> RUNNING MULTIPLE SYSTEM INSTANCES AT ONCE:
+___________________________________________
+RUNNING MULTIPLE SYSTEM INSTANCES AT ONCE 
 All tasks in this system read from and write to $CYLC_TMPDIR, which is
 defined in the system config module to be /tmp/$USER/{system-name}
 Thus if you register the system under several different names you can
 run multiple instances of it at once. 
-
-> GETTING TASKS TO FAIL ON DEMAND:
-In real mode you can deliberately cause any task in THIS SYSTEM to fail
-by defining an environment variable called FAIL_TASK in the system 
-config file: 
-        self.items['environment']['FAIL_TASK'] = 'A%2010010106'
-(the identified task will self-abort, via scripts/check-env.sh).
-If the system is then shutdown and restarted, or if the failed task is
-reset in the running system, it will run successfully (as would be the
-case in a real system after fixing the problem). In dummy mode, the
-'--fail-out' option has a similar effect (for any system).
-
-> ACCELERATED REAL TIME OPERATION:
-As this is an illustrative example system, we want fast real mode
-operation, similarly as in dummy mode. Accordingly each task script
-scales its designated run time by $REAL_TIME_ACCEL, defined in the
-system config module.  BE AWARE that this will not speed up CYCLING
-if the system catches up to real time operation (the contact task X, on
-which everything else depends, will only trigger once every 6 hours)"""
+_________________________________
+GETTING TASKS TO FAIL ON DEMAND 
+You can cause any task in THIS SYSTEM to fail via the system config file: 
+    self.items['environment']['FAIL_TASK'] = 'A%2010010106'
+(the identified task will self-abort via scripts/check-env.sh).
+If failed task is reset or the system restarted, the task will not fail
+again (as would be the case after fixing a problem in a real system). 
+The 'cylc start --dummy-mode --fail-out=A%2010010106' has the same
+effect on ANY SYSTEM but ONLY IN DUMMY MODE.
+_________________________________
+ACCELERATED REAL TIME OPERATION 
+Each task script scales its registered run time by $REAL_TIME_ACCEL as
+defined in the system config file, so that the system can run as quickly
+in real mode as it does in dummy mode.  HOWEVER, this will not speed up
+CYCLING when the system catches up to real time operation (because the 
+contact task X will trigger off the real wall clock time.)"""

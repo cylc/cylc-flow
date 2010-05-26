@@ -1,0 +1,4 @@
+This directory contains example systems (task sets) released with cylc. 
+
+Other systems should be maintained in their own repositories with tags
+to indicate version compatibility with cylc.
