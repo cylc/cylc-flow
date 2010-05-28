@@ -1,0 +1,229 @@
+#!/usr/bin/env python
+
+# example basictreeview.py
+
+import threading
+import gobject
+import pygtk
+pygtk.require('2.0')
+import gtk
+import time
+
+from connector import connector
+
+from cycle_time import _rt_to_dt, is_valid
+import os, re, sys
+
+# TO DO:
+# 1/ see http://eccentric.cx/misc/pygtk/pygtkfaq.html#13.4
+#    How do I get changes in my TreeModel to show up in my TreeView?
+
+def compare_dicts( one, two ):
+    for key,value in two.iteritems():
+        try:
+            if one[ key ] == value:
+                return True
+            else:
+                return False
+        except KeyError:
+            return False
+
+class MyThread(threading.Thread):
+    def __init__(self, treestore ):
+        super(MyThread, self).__init__()
+
+        self.treestore = treestore
+        self.state_summary = {}
+
+        pns_host  = 'oliverh-33191VL'
+        groupname = 'oliverh^userguide'
+        self.god = connector( pns_host, groupname, 'state_summary' ).get()
+
+        self.quit = False
+
+    def update_summary(self):
+        #print "Updating Summary"
+        try:
+            [glbl, states] = self.god.get_state_summary()
+        except Exception,x:
+            print x
+            return False
+
+        # TO DO: FOR NOW UPDATE GUI EVERY TIME
+
+        #if not compare_dicts( states, self.state_summary ):
+        self.state_summary = states
+        return True
+        #    return True
+        #else:
+        #    return False
+
+    def update_gui( self ):
+        #print "Updating View"
+        self.treestore.clear()
+
+        # flat (a liststore would do)
+        for id in self.state_summary:
+            name, ctime = id.split( '%' )
+            name = '<b>' + name + '</b>'
+            state = self.state_summary[ id ][ 'state' ]
+            if state == 'running':
+                state = '<span foreground="#0a0"><b>RUNNING</b></span>'
+            elif state == 'waiting':
+                state = '<span foreground="#00a"><b>waiting</b></span>'
+            elif state == 'submitted':
+                state = '<span foreground="#000"><b>SUBMITTED</b></span>'
+            elif state == 'failed':
+                state = '<span foreground="#f00"><b>FAILED</b></span>'
+
+            message = self.state_summary[ id ][ 'latest_message' ]
+            self.treestore.append( None, [ ctime, name, state, message ])
+        
+        return False
+
+        # expanding treeview
+        #members = {}
+        #for id in self.state_summary:
+        #   name, ctime = id.split( '%' )
+        #   if ctime not in members:
+        #       members[ ctime ] = [ id ]
+        #   else:
+        #        members[ ctime ].append( id )
+        #
+        #for ctime in members:
+        #    piter = self.treestore.append(None, [ctime, 'foo','running','bar'])
+        #    for id in members[ ctime ]:
+        #        name, junk = id.split( '%' )
+        #        state = self.state_summary[ id ][ 'state' ]
+        #        message = self.state_summary[ id ][ 'latest_message' ]
+        #        self.treestore.append( piter, [ ctime, name, state, message ])
+        #
+        #return False
+
+    def run(self):
+        glbl = None
+        states = {}
+        while not self.quit:
+            if self.update_summary():
+                gobject.idle_add(self.update_gui )
+            time.sleep(1)
+        else:
+            print "BYE"
+
+class BasicTreeViewExample:
+
+    # visibility determined by state matching active toggle buttons
+    def visible_cb(self, model, iter, data):
+        # set visible if model value NOT in filter_states
+
+        # TO DO: WHY IS STATE SOMETIMES NONE?
+        state = model.get_value(iter, 2) 
+        if state:
+            p = re.compile( r'<.*?>')
+            state = re.sub( r'<.*?>', '', state )
+
+        return state not in data
+
+    def check_buttons(self, tb):
+        del self.filter_states[:]
+        for b in self.bbox.get_children():
+            if not b.get_active():
+                self.filter_states.append(b.get_label())
+        self.modelfilter.refilter()
+        return
+
+
+    # close the window and quit
+    def delete_event(self, widget, event, data=None):
+        gtk.main_quit()
+        self.t.quit = True
+        return False
+
+    def __init__(self):
+        # Create a new window
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+
+        self.window.set_title("cylcui")
+
+        self.window.set_size_request(200, 200)
+
+        self.window.connect("delete_event", self.delete_event)
+
+        # allow filtering out of 'finished' and 'waiting'
+        self.all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
+        # initially filter out only 'finished' tasks
+        self.filter_states = [ 'finished' ]
+
+
+        # create a liststore with one string column to use as the model
+        self.treestore = gtk.TreeStore(str, str, str, str)
+        self.modelfilter = self.treestore.filter_new()
+
+        self.treeview = gtk.TreeView()
+
+        self.modelfilter.set_visible_func(self.visible_cb, self.filter_states)
+
+        self.modelsort = gtk.TreeModelSort( self.modelfilter )
+        self.modelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
+        self.treeview.set_model(self.modelsort)
+
+        headings = ['cycle', 'name', 'state', 'latest message' ]
+        bkgcols = ['#def', '#fff', '#fff', '#fff' ]
+
+        # create the TreeViewColumn to display the data
+        for n in range(4):
+            # add columns to treeview
+            cell = gtk.CellRendererText()
+            cell.set_property( 'cell-background', bkgcols[ n] )
+            tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+            self.treeview.append_column(tvc)
+            tvc.set_sort_column_id(n)
+            # add the cells to the columns
+            #tvc.pack_start(cell, True)
+
+            # set the cell attributes to the appropriate liststore column
+            #self.treeview.columns[n].set_attributes( cell, text=n)
+
+        # make it searchable
+        self.treeview.set_search_column(2)
+
+        # Allow sorting on the column
+
+        # Allow drag and drop reordering of rows
+        #self.treeview.set_reorderable(True)
+        
+        #self.treeview.expand_all()
+
+        self.vbox = gtk.VBox()
+        self.scrolledwindow = gtk.ScrolledWindow()
+        self.scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+        self.bbox = gtk.HButtonBox()
+        self.vbox.pack_start(self.scrolledwindow)
+        self.vbox.pack_start(self.bbox, False)
+        # create toggle buttons to select filtering based on
+        # bug state and set buttons active
+
+        b1 = gtk.ToggleButton('waiting')
+        self.bbox.pack_start(b1)
+        b1.set_active(True)
+        b1.connect('toggled', self.check_buttons)
+
+        b2 = gtk.ToggleButton('finished')
+        self.bbox.pack_start(b2)
+        b2.set_active(False)
+        b2.connect('toggled', self.check_buttons)
+
+
+        self.scrolledwindow.add( self.treeview )
+        self.window.add(self.vbox)
+
+        self.window.show_all()
+
+        self.t = MyThread( self.treestore )
+        self.t.start()
+
+if __name__ == "__main__":
+    gobject.threads_init()
+    tvexample = BasicTreeViewExample()
+    gtk.main()
+
