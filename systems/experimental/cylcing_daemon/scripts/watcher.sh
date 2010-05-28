@@ -31,7 +31,6 @@ check-env.sh || exit 1
 #    exit 1
 #fi
 
-#CYCLE=$START_CYCLE_TIME
 CYCLE=$CYCLE_TIME
 
 while true; do
