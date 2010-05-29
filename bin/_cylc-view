@@ -18,6 +18,9 @@ import os, re, sys
 # 1/ see http://eccentric.cx/misc/pygtk/pygtkfaq.html#13.4
 #    How do I get changes in my TreeModel to show up in my TreeView?
 
+pns_host  = 'oliverh-33191VL'
+groupname = 'oliverh^userguide'
+
 def compare_dicts( one, two ):
     for key,value in two.iteritems():
         try:
@@ -35,8 +38,6 @@ class MyThread(threading.Thread):
         self.treestore = treestore
         self.state_summary = {}
 
-        pns_host  = 'oliverh-33191VL'
-        groupname = 'oliverh^userguide'
         self.god = connector( pns_host, groupname, 'state_summary' ).get()
 
         self.quit = False
@@ -68,13 +69,13 @@ class MyThread(threading.Thread):
             name = '<b>' + name + '</b>'
             state = self.state_summary[ id ][ 'state' ]
             if state == 'running':
-                state = '<span foreground="#0a0"><b>RUNNING</b></span>'
+                state = '<span foreground="#0a0"><b>running</b></span>'
             elif state == 'waiting':
                 state = '<span foreground="#00a"><b>waiting</b></span>'
             elif state == 'submitted':
-                state = '<span foreground="#000"><b>SUBMITTED</b></span>'
+                state = '<span foreground="#000"><b>submitted</b></span>'
             elif state == 'failed':
-                state = '<span foreground="#f00"><b>FAILED</b></span>'
+                state = '<span foreground="#f00"><b>failed</b></span>'
 
             message = self.state_summary[ id ][ 'latest_message' ]
             self.treestore.append( None, [ ctime, name, state, message ])
@@ -143,9 +144,9 @@ class BasicTreeViewExample:
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
 
-        self.window.set_title("cylcui")
+        self.window.set_title("cylc view <" + groupname + ">" )
 
-        self.window.set_size_request(200, 200)
+        self.window.set_size_request(600, 300)
 
         self.window.connect("delete_event", self.delete_event)
 
@@ -195,24 +196,32 @@ class BasicTreeViewExample:
         #self.treeview.expand_all()
 
         self.vbox = gtk.VBox()
+        self.hbox = gtk.HBox()
+
         self.scrolledwindow = gtk.ScrolledWindow()
         self.scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+
         self.bbox = gtk.HButtonBox()
+
+        self.label = gtk.Label('Task State Filters')
+
+        self.hbox.pack_start( self.label, True )
+        self.hbox.pack_start( self.bbox, False )
+
         self.vbox.pack_start(self.scrolledwindow)
-        self.vbox.pack_start(self.bbox, False)
+
+        self.vbox.pack_start(self.hbox, False)
         # create toggle buttons to select filtering based on
         # bug state and set buttons active
 
-        b1 = gtk.ToggleButton('waiting')
-        self.bbox.pack_start(b1)
-        b1.set_active(True)
-        b1.connect('toggled', self.check_buttons)
-
-        b2 = gtk.ToggleButton('finished')
-        self.bbox.pack_start(b2)
-        b2.set_active(False)
-        b2.connect('toggled', self.check_buttons)
-
+        for st in self.all_states:
+            b = gtk.ToggleButton( st )
+            self.bbox.pack_start(b)
+            if st == 'finished':
+                b.set_active(False)
+            else:
+                b.set_active(True)
+            b.connect('toggled', self.check_buttons)
 
         self.scrolledwindow.add( self.treeview )
         self.window.add(self.vbox)
