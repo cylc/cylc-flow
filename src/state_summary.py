@@ -44,6 +44,8 @@ class state_summary( Pyro.core.ObjBase ):
         # update deprecated old-style summary (DELETE WHEN NO LONGER NEEDED)
         #self.get_summary()
 
+    def get_config( self, item ):
+        return self.config.get( item )
 
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary ]
