@@ -19,7 +19,7 @@ import os, re, sys
 # 1/ see http://eccentric.cx/misc/pygtk/pygtkfaq.html#13.4
 #    How do I get changes in my TreeModel to show up in my TreeView?
 
-pns_host  = 'oliverh-33191VL'
+pns_host  = 'oliverh-33586DL'
 groupname = 'oliverh^userguide'
 
 def compare_dicts( one, two ):
@@ -155,15 +155,6 @@ class BasicTreeViewExample:
 
         return state not in data
 
-    #def check_buttons(self, tb):
-        #del self.filter_states[:]
-        #for b in self.bbox.get_children():
-        #    if not b.get_active():
-        #        self.filter_states.append(b.get_label())
-        #self.modelfilter.refilter()
-        #return
-
-
     # close the window and quit
     def delete_event(self, widget, event, data=None):
         gtk.main_quit()
@@ -190,22 +181,13 @@ class BasicTreeViewExample:
         self.task_list.sort()
         headings = [ 'cycle' ] + self.task_list
 
-        foo = [ str ] * len( headings ) 
-        
+        foo = tuple( [gtk.gdk.Pixbuf]*len( self.task_list )  )
+        print foo
+       
         # create a liststore with one string column to use as the model
-        self.liststore = gtk.ListStore( str, 
-                gtk.gdk.Pixbuf, 
-                gtk.gdk.Pixbuf, 
-                gtk.gdk.Pixbuf, 
-                gtk.gdk.Pixbuf, 
-                gtk.gdk.Pixbuf, 
-                gtk.gdk.Pixbuf, 
-                gtk.gdk.Pixbuf, 
-                gtk.gdk.Pixbuf, 
-                gtk.gdk.Pixbuf) 
+        self.liststore = gtk.ListStore( str, *foo )
 
         self.treeview = gtk.TreeView( self.liststore )
-        self.treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse('#000000'))
 
         # create the TreeViewColumn to display the data
         foo = []
@@ -214,56 +196,31 @@ class BasicTreeViewExample:
             # add columns to treeview
             if headings[ n ] == 'cycle':
                 cell = gtk.CellRendererText()
-                tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+                tvc = gtk.TreeViewColumn( headings[n] )
+                tvc.pack_start( cell, True )
+                tvc.set_attributes( cell, markup=n  )
             else:
                 cell = gtk.CellRendererPixbuf()
-                tvc = gtk.TreeViewColumn( headings[n], cell, pixbuf = n )
+                cell.set_property( 'cell-background', 'black' )
+                tvc = gtk.TreeViewColumn( headings[n] )
+                tvc.pack_end( cell, True )
+
+                tvc.set_attributes( cell, pixbuf=n  )
 
             self.treeview.append_column(tvc)
-            #tvc.set_sort_column_id(n)
-            # add the cells to the columns
-            #tvc.pack_start(cell, True)
 
-            # set the cell attributes to the appropriate liststore column
-
-        # make it searchable
-        #self.treeview.set_search_column(2)
-        # Allow sorting on the column
-        # Allow drag and drop reordering of rows
-        #self.treeview.set_reorderable(True)
-        
-        #self.treeview.expand_all()
-
-        self.vbox = gtk.VBox()
+       
         self.hbox = gtk.HBox()
+        self.label = gtk.Label( "foo" )
 
         self.scrolledwindow = gtk.ScrolledWindow()
         self.scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
-        self.bbox = gtk.HButtonBox()
-
-        #self.label = gtk.Label('Task State Filters')
-
-        #self.hbox.pack_start( self.label, True )
-        self.hbox.pack_start( self.bbox, False )
-
-        self.vbox.pack_start(self.scrolledwindow)
-
-        self.vbox.pack_start(self.hbox, False)
-        # create toggle buttons to select filtering based on
-        # bug state and set buttons active
-
-        #for st in self.all_states:
-        #    b = gtk.ToggleButton( st )
-        #    self.bbox.pack_start(b)
-        #    if st == 'finished':
-        #        b.set_active(False)
-        #    else:
-        #        b.set_active(True)
-        #    b.connect('toggled', self.check_buttons)
+        self.hbox.pack_start( self.scrolledwindow, True )
+        self.hbox.pack_end( self.label, True )
 
         self.scrolledwindow.add( self.treeview )
-        self.window.add(self.vbox)
+        self.window.add(self.hbox)
 
         self.window.show_all()
 
