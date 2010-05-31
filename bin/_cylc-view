@@ -43,7 +43,9 @@ def compare_dicts( one, two ):
             return False
 
 class MyThread(threading.Thread):
-    def __init__(self, ctime_liststore, led_liststore, treestore, task_list, status ):
+    def __init__(self, ctime_liststore, led_liststore, treestore, task_list, 
+            label_mode, label_status, label_time ):
+
         super(MyThread, self).__init__()
 
         self.state_summary = {}
@@ -52,7 +54,10 @@ class MyThread(threading.Thread):
         self.led_liststore = led_liststore
         self.ctime_liststore = ctime_liststore
         self.task_list = task_list
-        self.status = status
+        self.label_mode = label_mode
+        self.label_status = label_status
+        self.label_time = label_time
+
 
         self.god = connector( pns_host, groupname, 'state_summary' ).get()
 
@@ -81,17 +86,33 @@ class MyThread(threading.Thread):
 
         self.state_summary = states
 
-        self.paused = glbl['paused']
-        self.stopping = glbl['stopping']
-        self.rate = glbl[ 'dummy_clock_rate' ]
-        self.dummy_mode = glbl[ 'dummy_mode' ]
-        self.will_pause_at = glbl['will_pause_at']
-        self.will_stop_at = glbl['will_stop_at']
+        if glbl['stopping']:
+            self.status = 'STOPPING'
 
+        elif glbl['paused']:
+            self.status = 'PAUSED'
+       
+        elif glbl['will_pause_at']:
+            self.status = 'PAUSE ' + glbl[ 'will_pause_at' ]
+
+        elif glbl['will_stop_at']:
+            self.status = 'STOP ' + glbl[ 'will_stop_at' ]
+
+        else:
+            self.status = 'running'
+
+
+        if glbl[ 'dummy_mode' ]:
+            #rate = glbl[ 'dummy_clock_rate' ]
+            #self.mode = 'DUMMY (' + str( rate ) + 's/hr)'
+            self.mode = 'DUMMY'
+        else:
+            self.mode = 'REAL'
+
+        dt = glbl[ 'last_updated' ]
+        self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
+        
         return True
-        #    return True
-        #else:
-        #    return False
 
     def update_gui( self ):
         #print "Updating View"
@@ -112,7 +133,8 @@ class MyThread(threading.Thread):
                 state = '<span foreground="#f00"><b>failed</b></span>'
 
             message = self.state_summary[ id ][ 'latest_message' ]
-            message = '<span foreground="' + self.cc.get_color() + '">' + message + '</span>'
+            #message = '<span foreground="' + self.cc.get_color() + '">' + message + '</span>'
+            message = '<span foreground="#000">' + message + '</span>'
             self.treestore.append( None, [ ctime, name, state, message ])
         
         self.led_liststore.clear()
@@ -151,9 +173,8 @@ class MyThread(threading.Thread):
                     state_list.append( self.empty_led )
 
             self.led_liststore.append( state_list )
-            self.ctime_liststore.append( [ self.finished_led, '<span color="#5af"><b>' + ctime + '</b></span>'] )
- 
-
+            self.ctime_liststore.append( [ self.empty_led, 
+                '<span color="#5af"><b>' + ctime + '</b></span>'] )
 
         return False
 
@@ -181,7 +202,10 @@ class MyThread(threading.Thread):
         states = {}
         while not self.quit:
             if self.update_summary():
-                gobject.idle_add(self.update_gui )
+                gobject.idle_add( self.update_gui )
+                gobject.idle_add( self.label_mode.set_text, self.mode )
+                gobject.idle_add( self.label_status.set_text, self.status )
+                gobject.idle_add( self.label_time.set_text, self.dt )
             time.sleep(1)
         else:
             print "BYE"
@@ -313,15 +337,39 @@ class CylcView:
         # Allow drag and drop reordering of rows
         #self.treeview.expand_all()
 
+        user, name = groupname.split('^')
+
         self.top_hbox = gtk.HBox()
-        self.label_sysname = gtk.Label( groupname )
-        self.status = "status..."
-        self.label_status = gtk.Label( self.status )
+        self.label_sysname = gtk.Label( name )
+        self.label_status = gtk.Label( "status..." )
+        self.label_mode = gtk.Label( "mode..." )
+        self.label_time = gtk.Label( "time..." )
         self.quit_button = gtk.Button( "Quit" )
         self.quit_button.connect("clicked", self.click_exit )
 
-        self.top_hbox.pack_start( self.label_sysname, True )
-        self.top_hbox.pack_start( self.label_status, True )
+        self.sysname_eb = gtk.EventBox()
+        self.sysname_eb.add( self.label_sysname )
+        self.sysname_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ) ) # f41 orange
+        self.top_hbox.pack_start( self.sysname_eb, True )
+
+        self.mode_eb = gtk.EventBox()
+        self.mode_eb.add( self.label_mode )
+        #self.label_mode.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f00' ))  
+        self.mode_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#aaa' ) )
+        self.top_hbox.pack_start( self.mode_eb, True )
+
+        self.status_eb = gtk.EventBox()
+        self.status_eb.add( self.label_status )
+        #elf.label_status.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))  
+        self.status_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbb' ) )
+        self.top_hbox.pack_start( self.status_eb, True )
+
+        self.time_eb = gtk.EventBox()
+        self.time_eb.add( self.label_time )
+        #elf.label_time.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f0f' ))  
+        self.time_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ccc' ) )
+        self.top_hbox.pack_start( self.time_eb, True )
+
         self.top_hbox.pack_start( self.quit_button, True )
  
         self.vpaned = gtk.VPaned()
@@ -382,7 +430,10 @@ class CylcView:
 
         self.window.show_all()
 
-        self.t = MyThread( self.ctime_liststore, self.led_liststore, self.treestore, self.task_list, self.status )
+        self.t = MyThread( self.ctime_liststore, 
+                self.led_liststore, self.treestore, 
+                self.task_list, self.label_mode, 
+                self.label_status, self.label_time )
         self.t.start()
 
 if __name__ == "__main__":
