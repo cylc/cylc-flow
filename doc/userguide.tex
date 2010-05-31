@@ -2919,63 +2919,36 @@ that comes about.
 \pagebreak
 \appendix
 
-\section{Object Oriented Programming}
-\label{ObjectOrientedProgramming}
+\section{Network Issues}
 
-Cylc relies heavily on Object Oriented Programming (OOP) concepts,
-particularly the {\em polymorphic} nature of the task proxy objects.
-An absolutely minimal explanation of this follows; 
-please refer to an OOP reference for more detail.
+Cylc, the Pyro nameserver, and each system task, can all run on
+different hosts if necessary.  and be
+aware of the following issues: 
 
-A {\bf class} is a generalisation of data type to include behaviour
-(i.e.\ functions or methods) as well as state. 
+\begin{itemize}
 
-%For example, a $shape$ class could define a $position$ data member to
-%hold the location of a shape object, a $move()$ method that by which
-%a shape object can alter its position, and a $draw()$ method that
-%causes it to display itself on screen.
+    \item In addition to the cylc host, cylc must be installed on all
+        task hosts (so that running tasks have access to 
+        \lstinline=cylc message=); and the remote task scripts must
+        themselves be installed on their host machines.  Refer to {\em
+        Running Tasks On A Remote Host}
+        (Section~\ref{RunningTasksOnARemoteHost}) for more on this.
 
-An {\bf object} is a more or less self contained specific instance
-of a class. This is analagous to specific integer variables being 
-instances of the integer data type.
+     \item Pyro must be installed on every host used by the system.
+         Ideally all relevant machines should have the same version of
+         Pyro, but you can easily check for Pyro cross-version
+         compatibility by attempting to run one of the cylc example
+         system.
+       
+    \item The Pyro Nameserver must not bind on a hostname that resolves
+        to the loopback address (127.0.x.x) or it will not be accessible
+        to Pyro clients on other hosts.  \lstinline=pyro-ns= emits a
+        warning at startup if this occurs.  See the Pyro manual for how
+        to resolve this issue by changing the network configuration
+        settings on the nameserver host machine. 
 
-A {\bf derived class} or {\bf subclass} {\em inherits} the properties
-(methods and data members) of its parent class. It can also override
-specific properties, or add new properties that aren't present in the
-parent. Calling a particular method on an object invokes the object's
-own method if one is defined, otherwise the parent class is searched,
-and so on down to the root of the inheritance graph. 
-
-%For example, we could derive a $circle$ class from $shape$, adding a
-%`radius' data member and overriding the $draw()$ to get circle objects
-%to display themselves as actual circles.  Because we didn't override the
-%$move()$ method, calling $circle.move()$ would invoke the base class
-%method, $shape.move()$. 
-
-
-{\bf Polymorphism} is the ability of one type to appear as and be used
-like another type.  In OOP languages with inheritance, this usually
-refers to the ability to treat derived/sub-class objects as if they were
-members of a common base class. In particular, a group of mixed-type
-objects can all be treated as members of a common base class. 
-%For example, a group of %$circles$, $triangles$, and $squares$ could 
-%be manipulated by code designed entirely to handel $shapes$; calling
-%$[shape].draw()$ will invoke the right derived class $draw()$ method. 
-This is a powerful mechanism because it allows existing old code,
-without modification, to manipulate new objects so long as they 
-derive from the original base class.
-%If we later derive an entirely new kind of shape ($hexagon$, say) with
-%it's own unique behaviour, the existing program, without modification,
-%will process the new objects in the proper hexagon-specific way.  
-
-In cylc, all task proxy objects are derived from a base class that 
-embodies the properties and behaviour common to all task proxies. 
-The scheduling algorithm works with instances of the base class so that
-any current or future derived task object can be handled by the program
-without modification (other than deriving the new subclass itself).
-
-
-\pagebreak
+\end{itemize}
+        
 \section{Pyro} 
 \label{Pyro}
 
@@ -3069,6 +3042,63 @@ will not die with your terminal session:
 \end{lstlisting}
 
 For more information, see the Pyro userguide.
+
+
+\pagebreak
+\section{Object Oriented Programming}
+\label{ObjectOrientedProgramming}
+
+Cylc relies heavily on Object Oriented Programming (OOP) concepts,
+particularly the {\em polymorphic} nature of the task proxy objects.
+An absolutely minimal explanation of this follows; 
+please refer to an OOP reference for more detail.
+
+A {\bf class} is a generalisation of data type to include behaviour
+(i.e.\ functions or methods) as well as state. 
+
+%For example, a $shape$ class could define a $position$ data member to
+%hold the location of a shape object, a $move()$ method that by which
+%a shape object can alter its position, and a $draw()$ method that
+%causes it to display itself on screen.
+
+An {\bf object} is a more or less self contained specific instance
+of a class. This is analagous to specific integer variables being 
+instances of the integer data type.
+
+A {\bf derived class} or {\bf subclass} {\em inherits} the properties
+(methods and data members) of its parent class. It can also override
+specific properties, or add new properties that aren't present in the
+parent. Calling a particular method on an object invokes the object's
+own method if one is defined, otherwise the parent class is searched,
+and so on down to the root of the inheritance graph. 
+
+%For example, we could derive a $circle$ class from $shape$, adding a
+%`radius' data member and overriding the $draw()$ to get circle objects
+%to display themselves as actual circles.  Because we didn't override the
+%$move()$ method, calling $circle.move()$ would invoke the base class
+%method, $shape.move()$. 
+
+
+{\bf Polymorphism} is the ability of one type to appear as and be used
+like another type.  In OOP languages with inheritance, this usually
+refers to the ability to treat derived/sub-class objects as if they were
+members of a common base class. In particular, a group of mixed-type
+objects can all be treated as members of a common base class. 
+%For example, a group of %$circles$, $triangles$, and $squares$ could 
+%be manipulated by code designed entirely to handel $shapes$; calling
+%$[shape].draw()$ will invoke the right derived class $draw()$ method. 
+This is a powerful mechanism because it allows existing old code,
+without modification, to manipulate new objects so long as they 
+derive from the original base class.
+%If we later derive an entirely new kind of shape ($hexagon$, say) with
+%it's own unique behaviour, the existing program, without modification,
+%will process the new objects in the proper hexagon-specific way.  
+
+In cylc, all task proxy objects are derived from a base class that 
+embodies the properties and behaviour common to all task proxies. 
+The scheduling algorithm works with instances of the base class so that
+any current or future derived task object can be handled by the program
+without modification (other than deriving the new subclass itself).
 
 
 \pagebreak
