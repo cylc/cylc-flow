@@ -61,7 +61,6 @@ numbers=left,
 
 \lstdefinelanguage{usage}
 {
-%morekeywords={configure, register, unregister, start, pause, resume, stop, insert, reset, kill, purge, task-dump, what-is, run-task, message, set-level, nudge, monitor },
 string=[b]{"},
 sensitive=false,
 morecomment=[l]{Usage:},
@@ -707,47 +706,20 @@ this).
 \subsection{Following System Progress}
 \label{QuickFollowingSystemProgress}
 
-\subsubsection{System Monitors}
-\label{QuickSystemMonitors}
+\subsubsection{System Monitor}
+\label{QuickSystemMonitor}
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{monitor-1} 
+        \includegraphics[width=8cm]{monitor} 
     \end{center}
-    \caption{\small The main terminal-based cylc system monitor}
+    \caption{\small System monitor screenshot}
     \label{fig-monitor} 
 \end{figure} 
 
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=10cm]{monitor-2} 
-    \end{center}
-    \caption{\small Another terminal-based cylc system monitor}
-    \label{fig-monitor-r} 
-\end{figure} 
-
-
-Cylc currently includes two terminal-based monitors, which are effective
-but somewhat primitive.  The standard monitor (Figure~\ref{fig-monitor})
-shows the current state of all task proxy objects in the task pool:
-
 \begin{lstlisting}
-# in a new terminal!
-cylc monitor --align userguide
+cylc view userguide
 \end{lstlisting}
-
-The \lstinline=--align= option causes tasks to be displayed in columns
-(which is only useful for small systems in which all task names can fit
-on a single line).  Another system monitor (Figure~\ref{fig-monitor-r})
-shows the progress of just the running tasks in the pool:
-
-\begin{lstlisting}
-# in a new terminal!
-cylc monitor-r userguide
-\end{lstlisting}
-
-Section~\ref{SystemMonitors} discusses the limitations of the
-current system monitors, and plans for future development.
 
 \subsubsection{System Log Files}
 \label{QuickSystemLogFiles}
@@ -2692,33 +2664,15 @@ pyro-nsc delete-group {USER}^{SYSTEM}
 
 \pagebreak
 \section{Monitoring And Alerting}
-\label{SystemMonitors}
+\label{SystemMonitor}
 
 Cylc registers a {\em system state summary} object, which is constantly
 updated as the system evolves, with the Pyro nameserver. This provides a
 general mechanism for remote system monitoring. Monitor programs can
 connect to this object, extract whatever information they want from it,
-and ignore the rest. It is anticipated that monitors utilizing more
-sophisticated gui front ends will be developed in the future (we already
-have one web-based monitor, but it isn't quite ready for inclusion in
-the cylc repository). For the moment, the existing terminal based
-monitors are adequate, although they would need modification if there
-were too many tasks to display in a maximized terminal window at once.
-Terminal line-wrapping does allow a large number of tasks to be
-displayed, however (it's not pretty but it works!). 
+and ignore the rest. 
 
-\begin{figure}
-    \begin{center}
-        \includegraphics[width=14cm]{eco-monitor} 
-    \end{center}
-    \caption[monitor view of EcoConnect]{\small The main terminal-based
-    cylc system monitor viewing the entire EcoConnect system.}
-    \label{fig-monitor-eco} 
-\end{figure} 
-
-Screenshots of the two current system monitors can be seen in
-Figures~\ref{fig-monitor} and~\ref{fig-monitor-r}, and
-Figure~\ref{fig-monitor-eco} shows a view of the entire ecoconnect operation.
+A system monitor screenshot can be seen in Figure~\ref{fig-monitor}.
 
 \subsection{Automated Alerting}
 
