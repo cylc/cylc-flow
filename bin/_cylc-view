@@ -125,7 +125,7 @@ class MyThread(threading.Thread):
                     state_list.append( self.empty_led )
 
             self.led_liststore.append( state_list )
-            self.ctime_liststore.append( [ self.failed_led, '<span color="#05f"><b>' + ctime + '</b></span>'] )
+            self.ctime_liststore.append( [ self.finished_led, '<span color="#5af"><b>' + ctime + '</b></span>'] )
  
 
 
@@ -191,10 +191,11 @@ class CylcView:
     def __init__(self):
         # Create a new window
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
 
         self.window.set_title("cylc view <" + groupname + ">" )
 
-        self.window.set_size_request(600, 300)
+        self.window.set_size_request(500, 400)
 
         self.window.connect("delete_event", self.delete_event)
 
@@ -208,10 +209,12 @@ class CylcView:
         tvc = gtk.TreeViewColumn( 'cycle' )
         
         cellpb = gtk.CellRendererPixbuf()
+        cellpb.set_property( 'cell-background', 'black' )
         tvc.pack_start( cellpb, False )
         tvc.set_attributes( cellpb, pixbuf=0  )
 
         cell = gtk.CellRendererText()
+        cell.set_property( 'cell-background', 'black' )
         tvc.pack_start( cell, True )
         tvc.set_attributes( cell, markup=1 )
 
@@ -221,13 +224,18 @@ class CylcView:
         self.led_liststore = gtk.ListStore( *foo )
         self.led_treeview = gtk.TreeView( self.led_liststore )
 
-        for n in range( len( self.task_list )) :
+        # this doesn't show (brief flash of yellow at startup)
+        #self.led_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "yellow" ) )
+
+        for n in range( len( self.task_list )):
             cell = gtk.CellRendererPixbuf()
-            cell.set_property( 'cell-background', 'black' )
+            cell.set_property( 'cell_background', 'black' )
             tvc = gtk.TreeViewColumn( self.task_list[n] )
+            tvc.set_min_width( 30 )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cell, True )
-            tvc.set_attributes( cell, pixbuf=n  )
-            self.led_treeview.append_column(tvc)
+            #tvc.pack_end( cell, False )
+            tvc.set_attributes( cell, pixbuf=n )
+            self.led_treeview.append_column( tvc )
        
 
         # allow filtering out of 'finished' and 'waiting'
@@ -266,7 +274,7 @@ class CylcView:
             #self.treeview.columns[n].set_attributes( cell, text=n)
 
         # make it searchable
-        self.treeview.set_search_column(2)
+        self.treeview.set_search_column(1)
 
         # Allow sorting on the column
 
@@ -275,7 +283,9 @@ class CylcView:
         
         #self.treeview.expand_all()
 
-        self.vbox = gtk.VBox()
+        self.vpaned = gtk.VPaned()
+        #self.window.add( vpaned )
+        #vpaned.show()
 
         self.led_hbox = gtk.HBox()
 
@@ -286,16 +296,18 @@ class CylcView:
         self.led_hbox.pack_start( self.ctime_treeview, False )
         self.led_hbox.pack_start( self.led_scrolledwindow, True )
 
-        self.vbox.pack_start(self.led_hbox)
+        self.vpaned.add1( self.led_hbox )
 
         self.hbox = gtk.HBox()
 
         self.scrolledwindow = gtk.ScrolledWindow()
         self.scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
+        self.vbox = gtk.VBox()
+
         self.bbox = gtk.HButtonBox()
 
-        self.label = gtk.Label('Task State Filters')
+        self.label = gtk.Label('Task Filters:')
 
         self.hbox.pack_start( self.label, True )
         self.hbox.pack_start( self.bbox, False )
@@ -316,7 +328,10 @@ class CylcView:
 
         self.scrolledwindow.add( self.treeview )
 
-        self.window.add(self.vbox)
+        self.vpaned.add2( self.vbox )
+
+        self.window.add( self.vpaned )
+        #self.window.add(self.vbox)
 
         self.window.show_all()
 
@@ -326,7 +341,7 @@ class CylcView:
 if __name__ == "__main__":
     parser = NoPromptOptionParser_u( """cylc view [options] SYSTEM 
 
-A monitor that displays the state of all task proxies in a system. 
+A monitor that displays the state of all tasks in a running system. 
 
 THIS PROGRAM MONITORS TASK PROXY OBJECTS INSIDE THE SCHEDULER, NOT
 EXTERNAL SYSTEM TASKS (how to do that obviously depends on the job
