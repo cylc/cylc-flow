@@ -30,7 +30,7 @@ compress = True
 parser = NoPromptOptionParser_u( """cylc monitor [options] SYSTEM 
 
 A terminal-based monitor that displays the state of all tasks in the
-target system. 
+target system. DEPRECATED - USE THE cylc view GUI MONITOR INSTEAD. 
 
 THIS PROGRAM MONITORS TASK PROXY OBJECTS INSIDE THE SCHEDULER, NOT
 EXTERNAL SYSTEM TASKS (how to do that obviously depends on the job
