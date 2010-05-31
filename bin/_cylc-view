@@ -262,6 +262,7 @@ class CylcView:
         for n in range( len( self.task_list )):
             cell = gtk.CellRendererPixbuf()
             cell.set_property( 'cell_background', 'black' )
+            cell.set_property( 'xalign', 0 )
             tvc = gtk.TreeViewColumn( self.task_list[n] )
             tvc.set_min_width( 30 )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cell, True )
