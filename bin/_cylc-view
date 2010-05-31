@@ -29,15 +29,27 @@ def compare_dicts( one, two ):
             return False
 
 class MyThread(threading.Thread):
-    def __init__(self, treestore ):
+    def __init__(self, ctime_liststore, led_liststore, treestore, task_list ):
         super(MyThread, self).__init__()
 
-        self.treestore = treestore
         self.state_summary = {}
+
+        self.treestore = treestore
+        self.led_liststore = led_liststore
+        self.ctime_liststore = ctime_liststore
+        self.task_list = task_list
 
         self.god = connector( pns_host, groupname, 'state_summary' ).get()
 
         self.quit = False
+
+        self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-waiting-glow.xpm" )
+        self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-submitted-glow.xpm" )
+        self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-running-glow.xpm" )
+        self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-failed-glow.xpm" )
+        self.finished_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-finished.xpm" )
+        self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-empty.xpm" )
+
 
     def update_summary(self):
         #print "Updating Summary"
@@ -77,6 +89,46 @@ class MyThread(threading.Thread):
             message = self.state_summary[ id ][ 'latest_message' ]
             self.treestore.append( None, [ ctime, name, state, message ])
         
+        self.led_liststore.clear()
+        self.ctime_liststore.clear()
+
+        tasks = {}
+        for id in self.state_summary:
+            name, ctime = id.split( '%' )
+            if ctime not in tasks:
+                tasks[ ctime ] = [ name ]
+            else:
+                tasks[ ctime ].append( name )
+ 
+        # flat (a liststore would do)
+        ctimes = tasks.keys()
+        ctimes.sort()
+
+        for ctime in ctimes:
+            tasks_at_ctime = tasks[ ctime ]
+            state_list = [ ]
+
+            for name in self.task_list:
+                if name in tasks_at_ctime:
+                    state = self.state_summary[ name + '%' + ctime ][ 'state' ] 
+                    if state == 'waiting':
+                        state_list.append( self.waiting_led )
+                    elif state == 'submitted':
+                        state_list.append( self.submitted_led )
+                    elif state == 'running':
+                        state_list.append( self.running_led )
+                    elif state == 'finished':
+                        state_list.append( self.finished_led )
+                    elif state == 'failed':
+                        state_list.append( self.failed_led )
+                else:
+                    state_list.append( self.empty_led )
+
+            self.led_liststore.append( state_list )
+            self.ctime_liststore.append( [ self.failed_led, '<span color="#05f"><b>' + ctime + '</b></span>'] )
+ 
+
+
         return False
 
         # expanding treeview
@@ -108,7 +160,7 @@ class MyThread(threading.Thread):
         else:
             print "BYE"
 
-class BasicTreeViewExample:
+class CylcView:
 
     # visibility determined by state matching active toggle buttons
     def visible_cb(self, model, iter, data):
@@ -130,7 +182,6 @@ class BasicTreeViewExample:
         self.modelfilter.refilter()
         return
 
-
     # close the window and quit
     def delete_event(self, widget, event, data=None):
         gtk.main_quit()
@@ -146,6 +197,38 @@ class BasicTreeViewExample:
         self.window.set_size_request(600, 300)
 
         self.window.connect("delete_event", self.delete_event)
+
+        # LED MONITOR
+        ss = connector( pns_host, groupname, 'state_summary' ).get()
+        self.task_list = ss.get_config( 'task_list' )
+        self.task_list.sort()
+
+        self.ctime_liststore = gtk.ListStore( gtk.gdk.Pixbuf, str )
+        self.ctime_treeview = gtk.TreeView( self.ctime_liststore )
+        tvc = gtk.TreeViewColumn( 'cycle' )
+        
+        cellpb = gtk.CellRendererPixbuf()
+        tvc.pack_start( cellpb, False )
+        tvc.set_attributes( cellpb, pixbuf=0  )
+
+        cell = gtk.CellRendererText()
+        tvc.pack_start( cell, True )
+        tvc.set_attributes( cell, markup=1 )
+
+        self.ctime_treeview.append_column( tvc )
+
+        foo = tuple( [gtk.gdk.Pixbuf]*len( self.task_list ) )
+        self.led_liststore = gtk.ListStore( *foo )
+        self.led_treeview = gtk.TreeView( self.led_liststore )
+
+        for n in range( len( self.task_list )) :
+            cell = gtk.CellRendererPixbuf()
+            cell.set_property( 'cell-background', 'black' )
+            tvc = gtk.TreeViewColumn( self.task_list[n] )
+            tvc.pack_end( cell, True )
+            tvc.set_attributes( cell, pixbuf=n  )
+            self.led_treeview.append_column(tvc)
+       
 
         # allow filtering out of 'finished' and 'waiting'
         self.all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
@@ -193,6 +276,18 @@ class BasicTreeViewExample:
         #self.treeview.expand_all()
 
         self.vbox = gtk.VBox()
+
+        self.led_hbox = gtk.HBox()
+
+        self.led_scrolledwindow = gtk.ScrolledWindow()
+        self.led_scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+        self.led_scrolledwindow.add( self.led_treeview )
+
+        self.led_hbox.pack_start( self.ctime_treeview, False )
+        self.led_hbox.pack_start( self.led_scrolledwindow, True )
+
+        self.vbox.pack_start(self.led_hbox)
+
         self.hbox = gtk.HBox()
 
         self.scrolledwindow = gtk.ScrolledWindow()
@@ -206,7 +301,6 @@ class BasicTreeViewExample:
         self.hbox.pack_start( self.bbox, False )
 
         self.vbox.pack_start(self.scrolledwindow)
-
         self.vbox.pack_start(self.hbox, False)
         # create toggle buttons to select filtering based on
         # bug state and set buttons active
@@ -221,11 +315,12 @@ class BasicTreeViewExample:
             b.connect('toggled', self.check_buttons)
 
         self.scrolledwindow.add( self.treeview )
+
         self.window.add(self.vbox)
 
         self.window.show_all()
 
-        self.t = MyThread( self.treestore )
+        self.t = MyThread( self.ctime_liststore, self.led_liststore, self.treestore, self.task_list )
         self.t.start()
 
 if __name__ == "__main__":
@@ -256,7 +351,9 @@ submission method used by each task).""")
             if pyrex.discover( pns_host ).registered( groupname ):
                 break
 
+    imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+
     gobject.threads_init()
-    tvexample = BasicTreeViewExample()
+    tvexample = CylcView()
     gtk.main()
 
