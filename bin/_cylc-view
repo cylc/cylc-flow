@@ -18,6 +18,20 @@ import os, re, sys
 # 1/ see http://eccentric.cx/misc/pygtk/pygtkfaq.html#13.4
 #    How do I get changes in my TreeModel to show up in my TreeView?
 
+
+class color_chooser:
+    cols = [ '#f38', '#2a3', '#83f' ]
+    def __init__( self ):
+        self.index = 0
+
+    def get_color( self ):
+        if self.index >= len( color_chooser.cols ):
+            self.index = 0
+
+        res = color_chooser.cols[ self.index ]
+        self.index += 1
+        return res
+
 def compare_dicts( one, two ):
     for key,value in two.iteritems():
         try:
@@ -29,7 +43,7 @@ def compare_dicts( one, two ):
             return False
 
 class MyThread(threading.Thread):
-    def __init__(self, ctime_liststore, led_liststore, treestore, task_list ):
+    def __init__(self, ctime_liststore, led_liststore, treestore, task_list, status ):
         super(MyThread, self).__init__()
 
         self.state_summary = {}
@@ -38,6 +52,7 @@ class MyThread(threading.Thread):
         self.led_liststore = led_liststore
         self.ctime_liststore = ctime_liststore
         self.task_list = task_list
+        self.status = status
 
         self.god = connector( pns_host, groupname, 'state_summary' ).get()
 
@@ -50,6 +65,7 @@ class MyThread(threading.Thread):
         self.finished_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-finished.xpm" )
         self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-empty.xpm" )
 
+        self.cc = color_chooser()
 
     def update_summary(self):
         #print "Updating Summary"
@@ -62,7 +78,16 @@ class MyThread(threading.Thread):
         # TO DO: FOR NOW UPDATE GUI EVERY TIME
 
         #if not compare_dicts( states, self.state_summary ):
+
         self.state_summary = states
+
+        self.paused = glbl['paused']
+        self.stopping = glbl['stopping']
+        self.rate = glbl[ 'dummy_clock_rate' ]
+        self.dummy_mode = glbl[ 'dummy_mode' ]
+        self.will_pause_at = glbl['will_pause_at']
+        self.will_stop_at = glbl['will_stop_at']
+
         return True
         #    return True
         #else:
@@ -80,13 +105,14 @@ class MyThread(threading.Thread):
             if state == 'running':
                 state = '<span foreground="#0a0"><b>running</b></span>'
             elif state == 'waiting':
-                state = '<span foreground="#00a">waiting</span>'
+                state = '<span foreground="#38a">waiting</span>'
             elif state == 'submitted':
                 state = '<span foreground="#000"><b>submitted</b></span>'
             elif state == 'failed':
                 state = '<span foreground="#f00"><b>failed</b></span>'
 
             message = self.state_summary[ id ][ 'latest_message' ]
+            message = '<span foreground="' + self.cc.get_color() + '">' + message + '</span>'
             self.treestore.append( None, [ ctime, name, state, message ])
         
         self.led_liststore.clear()
@@ -288,10 +314,13 @@ class CylcView:
 
         self.top_hbox = gtk.HBox()
         self.label_sysname = gtk.Label( groupname )
+        self.status = "status..."
+        self.label_status = gtk.Label( self.status )
         self.quit_button = gtk.Button( "Quit" )
         self.quit_button.connect("clicked", self.click_exit )
 
         self.top_hbox.pack_start( self.label_sysname, True )
+        self.top_hbox.pack_start( self.label_status, True )
         self.top_hbox.pack_start( self.quit_button, True )
  
         self.vpaned = gtk.VPaned()
@@ -352,7 +381,7 @@ class CylcView:
 
         self.window.show_all()
 
-        self.t = MyThread( self.ctime_liststore, self.led_liststore, self.treestore, self.task_list )
+        self.t = MyThread( self.ctime_liststore, self.led_liststore, self.treestore, self.task_list, self.status )
         self.t.start()
 
 if __name__ == "__main__":
