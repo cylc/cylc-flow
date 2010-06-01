@@ -43,8 +43,8 @@ def compare_dicts( one, two ):
             return False
 
 class MyThread(threading.Thread):
-    def __init__(self, ctime_liststore, led_liststore, treestore, task_list, 
-            label_mode, label_status, label_time ):
+    def __init__(self, ctime_liststore, led_liststore, treestore,
+            task_list, label_mode, label_status, label_time ):
 
         super(MyThread, self).__init__()
 
@@ -57,7 +57,6 @@ class MyThread(threading.Thread):
         self.label_mode = label_mode
         self.label_status = label_status
         self.label_time = label_time
-
 
         try:
             self.god = connector( pns_host, groupname, 'state_summary' ).get()
@@ -120,27 +119,77 @@ class MyThread(threading.Thread):
 
     def update_gui( self ):
         #print "Updating View"
-        self.treestore.clear()
 
-        # flat (a liststore would do)
+        data = {}
         for id in self.state_summary:
-            name, ctime = id.split( '%' )
-            name = '<b>' + name + '</b>'
             state = self.state_summary[ id ][ 'state' ]
-            if state == 'running':
-                state = '<span foreground="#0a0"><b>running</b></span>'
-            elif state == 'waiting':
-                state = '<span foreground="#38a">waiting</span>'
-            elif state == 'submitted':
-                state = '<span foreground="#000"><b>submitted</b></span>'
-            elif state == 'failed':
-                state = '<span foreground="#f00"><b>failed</b></span>'
-
+            #if state == 'running':
+            #    state = '<span foreground="#0a0"><b>running</b></span>'
+            #elif state == 'waiting':
+            #    state = '<span foreground="#38a">waiting</span>'
+            #elif state == 'submitted':
+            #    state = '<span foreground="#000"><b>submitted</b></span>'
+            #elif state == 'failed':
+            #    state = '<span foreground="#f00"><b>failed</b></span>'
             message = self.state_summary[ id ][ 'latest_message' ]
             #message = '<span foreground="' + self.cc.get_color() + '">' + message + '</span>'
-            message = '<span foreground="#000">' + message + '</span>'
-            self.treestore.append( None, [ ctime, name, state, message ])
-        
+            #message = '<span foreground="#000">' + message + '</span>'
+
+            data[id] = [ state, message ]
+
+        # NOTE LISTSTORE HAS SLIGHTLY DIFFERENT remove() ETC.
+        tree_data = {}
+        iter = self.treestore.get_iter_first()
+        while iter:
+            row = []
+            for col in range( self.treestore.get_n_columns() ):
+                row.append( self.treestore.get_value( iter, col) )
+
+            [ctime, name, state, message] = row
+            id = name + '%' + ctime 
+            tree_data[ id ] = [ state, message ]
+
+            if id not in data:
+                # id no longer in system, remove from view
+                #print "REMOVING", id
+                self.treestore.remove( iter )
+
+            elif data[ id ] != tree_data[ id ]:
+                #print "CHANGING", id
+                # id still in system but data changed, so replace it
+                self.treestore.append( None, [ ctime, name ] + data[ id ] )
+                self.treestore.remove( iter )
+
+            else:
+                # id still exists and data has not changed
+                #print "UNCHANGED", id
+                iter = self.treestore.iter_next( iter )
+            
+        # add any new data    
+        for id in data:
+            name, ctime = id.split( '%' )
+            if id not in tree_data:
+                #print "ADDING", id
+                self.treestore.append( None, [ ctime, name ] + data[ id ] )
+
+
+#        data = {}
+#        for id in self.state_summary:
+#            name, ctime = id.split( '%' )
+#            if ctime not in data:
+#                data[ ctime ] = {}
+#            state = self.state_summary[ id ][ 'state' ]
+#            message = self.state_summary[ id ][ 'latest_message' ]
+#            data[ ctime ][ name ] = [ state, message ]
+
+#            # EXPANDING TREEVIEW
+#            for ctime in data:
+#                piter = self.treestore.append(None, [ctime, '','',''])
+#                for name in data[ ctime ]:
+#                    value = data[ ctime ][ name ]
+#                    self.treestore.append( piter, [ '', name ] + value )
+#            
+#
         self.led_liststore.clear()
         self.ctime_liststore.clear()
 
@@ -181,25 +230,6 @@ class MyThread(threading.Thread):
                 '<span color="#5af"><b>' + ctime + '</b></span>'] )
 
         return False
-
-        # expanding treeview
-        #members = {}
-        #for id in self.state_summary:
-        #   name, ctime = id.split( '%' )
-        #   if ctime not in members:
-        #       members[ ctime ] = [ id ]
-        #   else:
-        #        members[ ctime ].append( id )
-        #
-        #for ctime in members:
-        #    piter = self.treestore.append(None, [ctime, 'foo','running','bar'])
-        #    for id in members[ ctime ]:
-        #        name, junk = id.split( '%' )
-        #        state = self.state_summary[ id ][ 'state' ]
-        #        message = self.state_summary[ id ][ 'latest_message' ]
-        #        self.treestore.append( piter, [ ctime, name, state, message ])
-        #
-        #return False
 
     def run(self):
         glbl = None
@@ -431,6 +461,10 @@ class CylcView:
  
         label = gtk.Label("Flat List")
         notebook.append_page( vbox, label )
+
+        label = gtk.Label("Tree View")
+        tvvbox = gtk.VBox()
+        notebook.append_page( tvvbox, label )
 
         for st in all_states:
             b = gtk.ToggleButton( st )
