@@ -2922,8 +2922,8 @@ that comes about.
 \section{Network Issues}
 
 Cylc, the Pyro nameserver, and each system task, can all run on
-different hosts if necessary.  and be
-aware of the following issues: 
+different hosts if necessary.  If you do have a distributed system, in 
+any or all of these ways, be aware of the following issues: 
 
 \begin{itemize}
 
@@ -2940,12 +2940,23 @@ aware of the following issues:
          compatibility by attempting to run one of the cylc example
          system.
        
+        
     \item The Pyro Nameserver must not bind on a hostname that resolves
         to the loopback address (127.0.x.x) or it will not be accessible
         to Pyro clients on other hosts.  \lstinline=pyro-ns= emits a
         warning at startup if this occurs.  See the Pyro manual for how
         to resolve this issue by changing the network configuration
         settings on the nameserver host machine. 
+
+    \item Similarly, if the Pyro Nameserver binds on any other address
+        that is not accessible from the network. This, like the
+        aforementioned loopback problem, can be caused by certain kinds
+        of network configuration settings in the \lstinline=/etc/hosts=
+        file. Attempt to remotely monitor such as system (via
+        \lstinline=cylc view=) will result in Pyro reporting 
+        ``Protocol Error, connection failed''.  If you edit 
+        \lstinline=Pyro/protocol.py= to expose the lower level 
+        socket error, it will report ``No route to host''.
 
 \end{itemize}
         
