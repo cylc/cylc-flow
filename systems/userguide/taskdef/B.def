@@ -11,7 +11,7 @@
 
 
 %NAME
-    B
+    B, b
 
 %DESCRIPTION
     Could be a sea state model, driven by the atmospheric model.

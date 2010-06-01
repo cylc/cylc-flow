@@ -11,7 +11,7 @@
 
 
 %NAME
-    E
+    E, e
 
 %DESCRIPTION
     Post processing for the sea state model. 

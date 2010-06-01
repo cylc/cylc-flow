@@ -11,7 +11,7 @@
 
 
 %NAME
-    C
+    C, c
 
 %DESCRIPTION
     Could be a storm surge model, driving by the atmospheric model.

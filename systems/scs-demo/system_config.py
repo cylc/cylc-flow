@@ -20,7 +20,7 @@
 # Note that some "values" are themselves lists or dicts.
 
 from config import config
-from task_list import task_list
+from task_list import task_list, task_list_shortnames
 from system_info import info
 import logging  # for logging level
 import os       # os.environ['HOME']
@@ -38,6 +38,7 @@ class system_config( config ):
 
         # system task list
         self.items['task_list'] = task_list
+        self.items['task_list_shortnames'] = task_list_shortnames
 
         # list of legal startup hours, if this system is so restricted
         # e.g.: self.items['legal_startup_hours'] = [ 6 ]

@@ -14,7 +14,7 @@
 # VIA THE CYLC TASK WRAPPING MECHANISM.
 
 %NAME
-    F
+    F, f
 
 %DESCRIPTION
     Post processing for the storm surge model

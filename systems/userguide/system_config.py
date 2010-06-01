@@ -21,7 +21,7 @@
 # Note that some "values" are themselves lists or dicts.
 
 from config import config
-from task_list import task_list
+from task_list import task_list, task_list_shortnames
 from system_info import info
 import logging  # for logging level
 
@@ -40,6 +40,7 @@ class system_config( config ):
 
         # task list
         self.items['task_list'] = task_list    # SEE task_list.py
+        self.items['task_list_shortnames'] = task_list_shortnames    # SEE task_list.py
 
         # task insertion groups, e.g:
         # self.items['task_groups']['foo'] = ['bar', 'baz']
@@ -66,6 +67,8 @@ class system_config( config ):
 
         # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 
         self.items['environment']['REAL_TIME_ACCEL'] = '360'
+
+        self.items['environment']['FAIL_TASK'] = 'C%2010010112'
 
         #self.items['environment']['FOO'] = 'foo'
         #self.items['environment']['BAR'] = '$FOO'

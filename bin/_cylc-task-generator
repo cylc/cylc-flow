@@ -380,7 +380,7 @@ from dynamic_instantiation import get_object
         else:
             seen[ task_name ] = True
 
-        short_name = None
+        short_name = task_name
         m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
         if m:
             # short name given as well
@@ -395,8 +395,7 @@ from dynamic_instantiation import get_object
    
         # task name
         FILE.write( indent + 'name = \'' + task_name + '\'\n' )
-        if short_name:
-            FILE.write( indent + 'short_name = \'' + short_name + '\'\n' )
+        FILE.write( indent + 'short_name = \'' + short_name + '\'\n' )
 
         FILE.write( indent + 'instance_count = 0\n\n' )
 

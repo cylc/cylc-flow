@@ -11,7 +11,7 @@
 
 
 %NAME
-    coldstart
+    coldstart, cld
 
 %DESCRIPTION
     Provides the initial restart prerequisites for the forecast models.

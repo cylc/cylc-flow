@@ -11,7 +11,7 @@
 
 
 %NAME
-    startup
+    startup, stp
 
 %DESCRIPTION
     Cleans out the system working directory at startup.
