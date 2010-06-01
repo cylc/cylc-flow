@@ -54,7 +54,7 @@ def compare_dict_of_dict( one, two ):
     return True
 
 class MyThread(threading.Thread):
-    def __init__(self, ctime_liststore, led_liststore, treestore,
+    def __init__(self, ctime_liststore, led_liststore, treestore, ttreestore,
             task_list, label_mode, label_status, label_time ):
 
         super(MyThread, self).__init__()
@@ -62,6 +62,7 @@ class MyThread(threading.Thread):
         self.state_summary = {}
 
         self.treestore = treestore
+        self.ttreestore = ttreestore
         self.led_liststore = led_liststore
         self.ctime_liststore = ctime_liststore
         self.task_list = task_list
@@ -183,23 +184,25 @@ class MyThread(threading.Thread):
                 self.treestore.append( None, [ ctime, name ] + data[ id ] )
 
 
-#        data = {}
-#        for id in self.state_summary:
-#            name, ctime = id.split( '%' )
-#            if ctime not in data:
-#                data[ ctime ] = {}
-#            state = self.state_summary[ id ][ 'state' ]
-#            message = self.state_summary[ id ][ 'latest_message' ]
-#            data[ ctime ][ name ] = [ state, message ]
+        data = {}
+        for id in self.state_summary:
+            name, ctime = id.split( '%' )
+            if ctime not in data:
+                data[ ctime ] = {}
+            #state = self.state_summary[ id ][ 'state' ]
+            #message = self.state_summary[ id ][ 'latest_message' ]
+            #data[ ctime ][ name ] = [ state, message ]
+            data[ ctime ][ name ] = None
 
 #            # EXPANDING TREEVIEW
-#            for ctime in data:
-#                piter = self.treestore.append(None, [ctime, '','',''])
-#                for name in data[ ctime ]:
-#                    value = data[ ctime ][ name ]
-#                    self.treestore.append( piter, [ '', name ] + value )
-#            
-#
+            self.ttreestore.clear()
+            for ctime in data:
+                piter = self.ttreestore.append(None, [ctime, ''])
+                for name in data[ ctime ]:
+                    #value = data[ ctime ][ name ]
+                    self.ttreestore.append( piter, [ '', name ] )
+           
+
         self.led_liststore.clear()
         self.ctime_liststore.clear()
 
@@ -363,11 +366,8 @@ class CylcView:
         # create a liststore with one string column to use as the model
         treestore = gtk.TreeStore(str, str, str, str)
         self.modelfilter = treestore.filter_new()
-
         treeview = gtk.TreeView()
-
         self.modelfilter.set_visible_func(self.visible_cb, self.filter_states)
-
         modelsort = gtk.TreeModelSort( self.modelfilter )
         modelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
         treeview.set_model(modelsort)
@@ -472,9 +472,20 @@ class CylcView:
         label = gtk.Label("Flat List")
         notebook.append_page( vbox, label )
 
+        ttreestore = gtk.TreeStore(str, str)
+        ttreeview = gtk.TreeView()
+        ttreeview.set_model(ttreestore)
+
+        headings = ['cycle', 'name' ]
+
+        for n in range(2):
+            cell = gtk.CellRendererText()
+            tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+            ttreeview.append_column(tvc)
+            tvc.set_sort_column_id(n)
+ 
         label = gtk.Label("Tree View")
-        tvvbox = gtk.VBox()
-        notebook.append_page( tvvbox, label )
+        notebook.append_page( ttreeview, label )
 
         for st in all_states:
             b = gtk.ToggleButton( st )
@@ -501,7 +512,7 @@ class CylcView:
         window.show_all()
 
         self.t = MyThread( ctime_liststore, led_liststore, treestore,
-                task_list, label_mode, label_status, label_time )
+                ttreestore, task_list, label_mode, label_status, label_time )
 
         self.t.start()
 
