@@ -32,15 +32,26 @@ class color_chooser:
         self.index += 1
         return res
 
-def compare_dicts( one, two ):
-    for key,value in two.iteritems():
-        try:
-            if one[ key ] == value:
-                return True
-            else:
-                return False
-        except KeyError:
+def compare_dict_of_dict( one, two ):
+    for key in one:
+        if key not in two:
             return False
+        for subkey in one[ key ]:
+            if subkey not in two[ key ]:
+                return False
+            if one[key][subkey] != two[key][subkey]:
+                return False
+
+    for key in two:
+        if key not in one:
+            return False
+        for subkey in two[ key ]:
+            if subkey not in one[ key ]:
+                return False
+            if two[key][subkey] != one[key][subkey]:
+                return False
+
+    return True
 
 class MyThread(threading.Thread):
     def __init__(self, ctime_liststore, led_liststore, treestore,
@@ -83,9 +94,9 @@ class MyThread(threading.Thread):
             print x
             return False
 
-        # TO DO: FOR NOW UPDATE GUI EVERY TIME
-
-        #if not compare_dicts( states, self.state_summary ):
+        if compare_dict_of_dict( states, self.state_summary ):
+            #print "STATE UNCHANGED"
+            return False
 
         self.state_summary = states
 
@@ -104,7 +115,6 @@ class MyThread(threading.Thread):
         else:
             self.status = 'running'
 
-
         if glbl[ 'dummy_mode' ]:
             #rate = glbl[ 'dummy_clock_rate' ]
             #self.mode = 'DUMMY (' + str( rate ) + 's/hr)'
@@ -118,7 +128,7 @@ class MyThread(threading.Thread):
         return True
 
     def update_gui( self ):
-        #print "Updating View"
+        #print "Updating GUI"
 
         data = {}
         for id in self.state_summary:
