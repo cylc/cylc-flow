@@ -59,7 +59,11 @@ class MyThread(threading.Thread):
         self.label_time = label_time
 
 
-        self.god = connector( pns_host, groupname, 'state_summary' ).get()
+        try:
+            self.god = connector( pns_host, groupname, 'state_summary' ).get()
+        except Exception, x:
+            print x
+            raise
 
         self.quit = False
 
@@ -256,7 +260,11 @@ class CylcView:
         self.window.connect("delete_event", self.delete_event)
 
         # LED MONITOR
-        ss = connector( pns_host, groupname, 'state_summary' ).get()
+        try:
+            ss = connector( pns_host, groupname, 'state_summary' ).get()
+        except Exception, x:
+            print x
+
         self.task_list = ss.get_config( 'task_list' )
         self.task_list.sort()
 
@@ -347,6 +355,9 @@ class CylcView:
         self.quit_button = gtk.Button( "Quit" )
         self.quit_button.connect("clicked", self.click_exit )
 
+        self.tooltips = gtk.Tooltips()
+        self.tooltips.set_tip( self.quit_button, "Exit cylc view" )
+
         self.sysname_eb = gtk.EventBox()
         self.sysname_eb.add( self.label_sysname )
         self.sysname_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ) ) # f41 orange
@@ -366,7 +377,7 @@ class CylcView:
 
         self.time_eb = gtk.EventBox()
         self.time_eb.add( self.label_time )
-        #elf.label_time.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f0f' ))  
+        #self.label_time.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f0f' ))  
         self.time_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ccc' ) )
         self.top_hbox.pack_start( self.time_eb, True )
 
@@ -376,14 +387,14 @@ class CylcView:
 
         self.led_hbox = gtk.HBox()
 
+        self.led_hbox.pack_start( self.ctime_treeview, False )
+        self.led_hbox.pack_start( self.led_treeview, True )
+
         self.led_scrolledwindow = gtk.ScrolledWindow()
         self.led_scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-        self.led_scrolledwindow.add( self.led_treeview )
+        self.led_scrolledwindow.add_with_viewport( self.led_hbox )
 
-        self.led_hbox.pack_start( self.ctime_treeview, False )
-        self.led_hbox.pack_start( self.led_scrolledwindow, True )
-
-        self.vpaned.add1( self.led_hbox )
+        self.vpaned.add1( self.led_scrolledwindow )
 
         self.hbox = gtk.HBox()
 
