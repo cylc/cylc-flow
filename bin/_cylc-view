@@ -389,6 +389,11 @@ class CylcView:
         self.t.quit = True
         return False
 
+    def expand_all( self, widget, view ):
+        view.expand_all()
+ 
+    def collapse_all( self, widget, view ):
+        view.collapse_all()
 
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -491,10 +496,6 @@ class CylcView:
         # make it searchable
         treeview.set_search_column(1)
 
-        # Allow sorting on the column
-        # Allow drag and drop reordering of rows
-        #treeview.expand_all()
-
         user, name = groupname.split('^')
 
         label_status = gtk.Label( "status..." )
@@ -583,14 +584,28 @@ class CylcView:
             ttreeview.append_column(tvc)
             tvc.set_sort_column_id(n)
  
-
         label = gtk.Label("Cycle Tree")
 
         cycle_tree_scrolledwindow = gtk.ScrolledWindow()
         cycle_tree_scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         cycle_tree_scrolledwindow.add( ttreeview )
 
-        notebook.append_page( cycle_tree_scrolledwindow, label )
+        vbox = gtk.VBox()
+        bbox = gtk.HButtonBox()
+        expand_button = gtk.Button( "Expand All" )
+        expand_button.connect( 'clicked', self.expand_all, ttreeview )
+        collapse_button = gtk.Button( "Collapse All" )
+        collapse_button.connect( 'clicked', self.collapse_all, ttreeview )
+        bbox.pack_start( expand_button )
+        bbox.pack_start( collapse_button )
+
+        vbox.pack_start( cycle_tree_scrolledwindow )
+        vbox.pack_start( bbox, False )
+
+        notebook.append_page( vbox, label )
+
+
+
 
         for st in all_states:
             b = gtk.ToggleButton( st )
@@ -609,10 +624,6 @@ class CylcView:
         bigbox.pack_start( top_hbox, False )
         bigbox.pack_end( vpaned, True )
         window.add( bigbox )
-
-        #window.pack_start( top_hbox, False )
-        #window.add( vpaned, True )
-        #window.add(vbox)
 
         window.show_all()
 
