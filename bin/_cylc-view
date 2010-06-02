@@ -357,8 +357,8 @@ class CylcView:
 
         # allow filtering out of 'finished' and 'waiting'
         all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
-        # initially filter out only 'finished' tasks
-        self.filter_states = [ 'finished' ]
+        # initially filter out 'waiting' and 'finished' tasks
+        self.filter_states = [ 'waiting', 'finished' ]
 
 
         # LOWER DISPLAY
@@ -469,7 +469,7 @@ class CylcView:
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
  
-        label = gtk.Label("Flat List")
+        label = gtk.Label("Filtered List")
         notebook.append_page( vbox, label )
 
         ttreestore = gtk.TreeStore(str, str)
@@ -484,13 +484,13 @@ class CylcView:
             ttreeview.append_column(tvc)
             tvc.set_sort_column_id(n)
  
-        label = gtk.Label("Tree View")
+        label = gtk.Label("Cycle Tree")
         notebook.append_page( ttreeview, label )
 
         for st in all_states:
             b = gtk.ToggleButton( st )
             self.filter_buttonbox.pack_start(b)
-            if st == 'finished':
+            if st in self.filter_states:
                 b.set_active(False)
             else:
                 b.set_active(True)
