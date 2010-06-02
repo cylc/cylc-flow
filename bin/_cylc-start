@@ -366,7 +366,7 @@ if not practice:
 config.create_state_dump_dir( practice )
 config.create_logging_dir( practice )
 config.check_task_groups()
-config.job_submit_config()
+config.job_submit_config( dummy_mode )
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 nameserver = locate_pyro_nameserver()

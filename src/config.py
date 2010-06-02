@@ -113,9 +113,16 @@ class config:
                 if task not in self.items[ 'task_list' ]:
                     raise SystemExit( "Task group member " + task + " not in task list" )
 
-    def job_submit_config( self ):
+    def job_submit_config( self, dummy_mode = False ):
         # create dict of job submit methods by task name
         self.items['job submit class'] = {}
+
+        if dummy_mode:
+            # background job submission only
+            for task in self.items['task_list']:
+                self.items['job submit class'][ task ] = 'background'
+            return
+
         for task in self.items['task_list']:
             self.items['job submit class'][ task ] = self.items[ 'job_submit_method' ]
             for method in self.items[ 'job_submit_overrides' ]:
