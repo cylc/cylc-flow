@@ -484,8 +484,14 @@ class CylcView:
             ttreeview.append_column(tvc)
             tvc.set_sort_column_id(n)
  
+
         label = gtk.Label("Cycle Tree")
-        notebook.append_page( ttreeview, label )
+
+        cycle_tree_scrolledwindow = gtk.ScrolledWindow()
+        cycle_tree_scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+        cycle_tree_scrolledwindow.add( ttreeview )
+
+        notebook.append_page( cycle_tree_scrolledwindow, label )
 
         for st in all_states:
             b = gtk.ToggleButton( st )
