@@ -383,6 +383,10 @@ banner[ 'Pyro nameserver group' ] = groupname
  
 # REQUIRE SINGLE THREADED PYRO (see documentation)
 Pyro.config.PYRO_MULTITHREADED = 0
+# USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
+# (see the Userguide "Networking Issues" section).
+Pyro.config.PYRO_DNS_URI = True
+
 Pyro.core.initServer()
 
 # CREATE A PYRO DAEMON FOR THIS SYSTEM
