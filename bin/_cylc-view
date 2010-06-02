@@ -211,10 +211,10 @@ class MyThread(threading.Thread):
             name, ctime = id.split( '%' )
             if ctime not in new_data:
                 new_data[ ctime ] = {}
-            #state = self.state_summary[ id ][ 'state' ]
+            state = self.state_summary[ id ][ 'state' ]
             #message = self.state_summary[ id ][ 'latest_message' ]
             #new_data[ ctime ][ name ] = [ state, message ]
-            new_data[ ctime ][ name ] = None
+            new_data[ ctime ][ name ] = state
 
 
         # print existing tree:
@@ -242,7 +242,8 @@ class MyThread(threading.Thread):
             row = []
             for col in range( self.ttreestore.get_n_columns() ):
                 row.append( self.ttreestore.get_value( iter, col) )
-            [ ctime ] = row
+            [ ctime, state ] = row
+            # state is empty string for parent row
 
             tree_data[ ctime ] = {}
 
@@ -258,8 +259,8 @@ class MyThread(threading.Thread):
                     ch_row = []
                     for col in range( self.ttreestore.get_n_columns() ):
                         ch_row.append( self.ttreestore.get_value( iterch, col) )
-                    [ name ] = ch_row
-                    tree_data[ ctime ][name] = None
+                    [ name, state ] = ch_row
+                    tree_data[ ctime ][name] = state
 
                     if name not in new_data[ ctime ]:
                         #print "  removing", name, "from", ctime
@@ -269,6 +270,13 @@ class MyThread(threading.Thread):
                             # child, i.e. there is no next iterch.
                             # Remove leaves iterch at the old value,
                             # which has just become invalid.
+                            iterch = None
+                    elif state != new_data[ ctime ][name]:
+                        #print "   changing", name, "at", ctime, "to", new_data[ ctime ][ name ]
+                        self.ttreestore.append( iter, [ name, new_data[ctime][name] ] )
+                        result = self.ttreestore.remove( iterch )
+                        if not result:
+                            # see above
                             iterch = None
                     else:
                         iterch = self.ttreestore.iter_next( iterch )
@@ -280,10 +288,10 @@ class MyThread(threading.Thread):
             if ctime not in tree_data:
                 # add new ctime tree
                 #print "ADDING", ctime
-                piter = self.ttreestore.append(None, [ctime])
+                piter = self.ttreestore.append(None, [ctime, None])
                 for name in new_data[ ctime ]:
-                    #print "  adding", name, "to", ctime
-                    self.ttreestore.append( piter, [ name ] )
+                    print "  adding", name, "to", ctime, "state:", new_data[ctime][name]
+                    self.ttreestore.append( piter, [ name, new_data[ctime][name] ] )
                 continue
 
             # this ctime tree is already in model
@@ -298,7 +306,7 @@ class MyThread(threading.Thread):
                         self.match_func, (0, name ))
                 if not ch_iter:
                     #print "  adding", name, "to", ctime
-                    self.ttreestore.append( p_iter, [ name ] )
+                    self.ttreestore.append( p_iter, [ name, new_data[ctime][name] ] )
                     
 
         # LED VIEW
@@ -577,7 +585,7 @@ class CylcView:
         label = gtk.Label("Filtered List")
         notebook.append_page( vbox, label )
 
-        ttreestore = gtk.TreeStore(str)
+        ttreestore = gtk.TreeStore(str, str )
         ttreeview = gtk.TreeView()
         #tfilter = ttreestore.filter_new()   # E.G. HOW TO FILTER TREESTORE
         #tfilter.set_visible_func(self.tvisible)
@@ -587,7 +595,7 @@ class CylcView:
         ttreeview.set_model(tmodelsort)
         #ttreeview.set_model(ttreestore)
 
-        headings = ['task' ]
+        headings = ['task', 'state' ]
 
         for n in range(len(headings)):
             cell = gtk.CellRendererText()
