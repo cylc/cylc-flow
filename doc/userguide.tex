@@ -2934,12 +2934,11 @@ any or all of these ways, be aware of the following issues:
         Running Tasks On A Remote Host}
         (Section~\ref{RunningTasksOnARemoteHost}) for more on this.
 
-     \item Pyro must be installed on every host used by the system.
+    \item Pyro must be installed on every host used by the system.
          Ideally all relevant machines should have the same version of
          Pyro, but you can easily check for Pyro cross-version
          compatibility by attempting to run one of the cylc example
          system.
-       
         
     \item The Pyro Nameserver must not bind on a hostname that resolves
         to the loopback address (127.0.x.x) or it will not be accessible
@@ -2950,15 +2949,38 @@ any or all of these ways, be aware of the following issues:
 
     \item Similarly, if the Pyro Nameserver binds on any other address
         that is not accessible from the network. This, like the
-        aforementioned loopback problem, can be caused by certain kinds
-        of network configuration settings in the \lstinline=/etc/hosts=
-        file. Attempt to remotely monitor such as system (via
+        aforementioned loopback problem, can be caused by entries in
+        \lstinline=/etc/hosts= the cause the machine host name to
+        resolve to a different IP address locally than it does on the
+        network. Attempting to remotely monitor such as system (via
         \lstinline=cylc view=) will result in Pyro reporting 
-        ``Protocol Error, connection failed''.  If you edit 
+        ``Protocol Error, connection failed''; editing 
         \lstinline=Pyro/protocol.py= to expose the lower level 
         socket error, it will report ``No route to host''.
 
 \end{itemize}
+
+Other notes relevant to the last point above: the \lstinline=--host=
+cylc command option defaults to Python \lstinline=socket.getfqdn()=,
+which retrieves the fully qualified domain name of the local host
+if possible.  But \lstinline=/etc/hosts= may cause this to return
+just the hostname, which locally may resolve to the local-only IP
+address that is not accessible on the network.  Short of reconfiguring
+the hosts file, you may be able to workaround these problems by:
+
+\begin{itemize}
+
+    \item force the Pyro nameserver to bind on the external IP address
+        of the host: \lstinline=pyro-ns -n 192.168.33.8=
+
+    \item and, get cylc to configure the Pyro daemon 
+        with \lstinline@Pyro.config.PYRO_DNS_URI = True@ 
+        
+    \item and, use the \lstinline=--host= cylc command option where
+        required.
+
+\end{itemize}
+
         
 \section{Pyro} 
 \label{Pyro}
