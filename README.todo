@@ -1,5 +1,8 @@
 To Do
 
+* catch obscure errors, such as attempting to restart when one or more 
+  tasks has been commented out of the task list.
+
 * put python group separator ('^') as a variable in pyrex module, along
   with functions for manipulating nameserver registered names.
 
