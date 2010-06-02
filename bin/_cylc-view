@@ -395,6 +395,11 @@ class CylcView:
     def collapse_all( self, widget, view ):
         view.collapse_all()
 
+    #def tvisible( self, model, iter ):
+    #  E.G. HOW TO FILTER TREESTORE
+    #    value = model.get_value( iter, 0 )
+    #    return value != 'A'
+
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("cylc view <" + groupname + ">" )
@@ -574,7 +579,13 @@ class CylcView:
 
         ttreestore = gtk.TreeStore(str)
         ttreeview = gtk.TreeView()
-        ttreeview.set_model(ttreestore)
+        #tfilter = ttreestore.filter_new()   # E.G. HOW TO FILTER TREESTORE
+        #tfilter.set_visible_func(self.tvisible)
+        #ttreeview.set_model(tfilter)
+        tmodelsort = gtk.TreeModelSort( ttreestore )
+        tmodelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
+        ttreeview.set_model(tmodelsort)
+        #ttreeview.set_model(ttreestore)
 
         headings = ['task' ]
 
