@@ -503,7 +503,7 @@ class CylcView:
             #treeview.columns[n].set_attributes( cell, text=n)
 
         # make it searchable
-        treeview.set_search_column(1)
+        #treeview.set_search_column(1)
 
         user, name = groupname.split('^')
 
@@ -583,9 +583,10 @@ class CylcView:
 
         for n in range(len(headings)):
             cell = gtk.CellRendererText()
-            tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+            #tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+            tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
             ttreeview.append_column(tvc)
-            tvc.set_sort_column_id(n)
+            #tvc.set_sort_column_id(n)
  
         label = gtk.Label("Expandable Tree")
 
