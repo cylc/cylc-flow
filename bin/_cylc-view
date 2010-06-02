@@ -522,25 +522,28 @@ class CylcView:
         top_hbox = gtk.HBox()
         sysname_eb = gtk.EventBox()
         sysname_eb.add( label_sysname )
-        sysname_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ) ) # f41 orange
+        sysname_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f00' ) ) # f41 orange
         top_hbox.pack_start( sysname_eb, True )
 
         mode_eb = gtk.EventBox()
         mode_eb.add( label_mode )
         #label_mode.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f00' ))  
-        mode_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#aaa' ) )
+        #mode_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#aaa' ) )
+        mode_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fa4' ) )
         top_hbox.pack_start( mode_eb, True )
 
         status_eb = gtk.EventBox()
         status_eb.add( label_status )
         #elf.label_status.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))  
-        status_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbb' ) )
+        #status_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbb' ) )
+        status_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ) )
         top_hbox.pack_start( status_eb, True )
 
         time_eb = gtk.EventBox()
         time_eb.add( label_time )
         #label_time.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f0f' ))  
-        time_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ccc' ) )
+        #time_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ccc' ) )
+        time_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#4d8' ) )
         top_hbox.pack_start( time_eb, True )
 
         top_hbox.pack_start( quit_button, True )
