@@ -211,7 +211,7 @@ class manager:
         [ time_type, time_string ] = line1.split(' : ')
         if time_type == 'dummy time':
             if not self.dummy_mode:
-                raise SystemExit("You can't restart in dummy mode from a real mode state dump")
+                raise SystemExit("You can't restart in real mode from a dummy mode state dump")
             
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
