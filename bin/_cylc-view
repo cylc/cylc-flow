@@ -446,6 +446,7 @@ class CylcView:
         cell.set_property( 'cell-background', 'black' )
         tvc.pack_start( cell, True )
         tvc.set_attributes( cell, markup=1 )
+        #tvc.set_attributes( cell, text=1 )
 
         ctime_treeview.append_column( tvc )
 
@@ -460,13 +461,14 @@ class CylcView:
             cell = gtk.CellRendererPixbuf()
             cell.set_property( 'cell_background', 'black' )
             cell.set_property( 'xalign', 0 )
-            tvc = gtk.TreeViewColumn( task_name_heading[ task_list[n] ])
+	    # replace heading underscores with spaces (they display as underline!)
+	    heading = task_name_heading[ task_list[n]]
+	    heading = re.sub( '_', ' ', heading )
+            tvc = gtk.TreeViewColumn( heading  )
             tvc.set_min_width( 30 )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cell, True )
-            #tvc.pack_end( cell, False )
             tvc.set_attributes( cell, pixbuf=n )
             led_treeview.append_column( tvc )
-       
 
         # allow filtering out of 'finished' and 'waiting'
         all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
@@ -493,7 +495,8 @@ class CylcView:
             # add columns to treeview
             cell = gtk.CellRendererText()
             cell.set_property( 'cell-background', bkgcols[ n] )
-            tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+            #tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+            tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
             treeview.append_column(tvc)
             tvc.set_sort_column_id(n)
             # add the cells to the columns
@@ -503,7 +506,7 @@ class CylcView:
             #treeview.columns[n].set_attributes( cell, text=n)
 
         # make it searchable
-        #treeview.set_search_column(1)
+        treeview.set_search_column(1)
 
         user, name = groupname.split('^')
 
@@ -586,7 +589,7 @@ class CylcView:
             #tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
             tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
             ttreeview.append_column(tvc)
-            #tvc.set_sort_column_id(n)
+            tvc.set_sort_column_id(n)
  
         label = gtk.Label("Expandable Tree")
 
