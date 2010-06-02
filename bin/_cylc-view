@@ -54,14 +54,14 @@ def compare_dict_of_dict( one, two ):
     return True
 
 class MyThread(threading.Thread):
-    def __init__(self, ctime_liststore, led_liststore, treestore, ttreestore,
+    def __init__(self, ctime_liststore, led_liststore, fl_liststore, ttreestore,
             task_list, label_mode, label_status, label_time ):
 
         super(MyThread, self).__init__()
 
         self.state_summary = {}
 
-        self.treestore = treestore
+        self.fl_liststore = fl_liststore
         self.ttreestore = ttreestore
         self.led_liststore = led_liststore
         self.ctime_liststore = ctime_liststore
@@ -131,7 +131,7 @@ class MyThread(threading.Thread):
     def update_gui( self ):
         #print "Updating GUI"
 
-        data = {}
+        new_data = {}
         for id in self.state_summary:
             state = self.state_summary[ id ][ 'state' ]
             #if state == 'running':
@@ -146,43 +146,43 @@ class MyThread(threading.Thread):
             #message = '<span foreground="' + self.cc.get_color() + '">' + message + '</span>'
             #message = '<span foreground="#000">' + message + '</span>'
 
-            data[id] = [ state, message ]
+            new_data[id] = [ state, message ]
 
-        # NOTE LISTSTORE HAS SLIGHTLY DIFFERENT remove() ETC.
-        tree_data = {}
-        iter = self.treestore.get_iter_first()
+        list_data = {}
+        iter = self.fl_liststore.get_iter_first()
         while iter:
             row = []
-            for col in range( self.treestore.get_n_columns() ):
-                row.append( self.treestore.get_value( iter, col) )
+            for col in range( self.fl_liststore.get_n_columns() ):
+                row.append( self.fl_liststore.get_value( iter, col) )
 
             [ctime, name, state, message] = row
             id = name + '%' + ctime 
-            tree_data[ id ] = [ state, message ]
+            list_data[ id ] = [ state, message ]
 
-            if id not in data:
+            if id not in new_data:
                 # id no longer in system, remove from view
                 #print "REMOVING", id
-                self.treestore.remove( iter )
+                self.fl_liststore.remove( iter )
 
-            elif data[ id ] != tree_data[ id ]:
+            elif new_data[ id ] != list_data[ id ]:
                 #print "CHANGING", id
                 # id still in system but data changed, so replace it
-                self.treestore.append( None, [ ctime, name ] + data[ id ] )
-                self.treestore.remove( iter )
+                self.fl_liststore.append( [ ctime, name ] + new_data[ id ] )
+                self.fl_liststore.remove( iter )
 
             else:
                 # id still exists and data has not changed
                 #print "UNCHANGED", id
-                iter = self.treestore.iter_next( iter )
+                iter = self.fl_liststore.iter_next( iter )
             
         # add any new data    
-        for id in data:
+        for id in new_data:
             name, ctime = id.split( '%' )
-            if id not in tree_data:
+            if id not in list_data:
                 #print "ADDING", id
-                self.treestore.append( None, [ ctime, name ] + data[ id ] )
+                self.fl_liststore.append( [ ctime, name ] + new_data[ id ] )
 
+        # EXPANDING TREE VIEW
 
         data = {}
         for id in self.state_summary:
@@ -194,15 +194,15 @@ class MyThread(threading.Thread):
             #data[ ctime ][ name ] = [ state, message ]
             data[ ctime ][ name ] = None
 
-#            # EXPANDING TREEVIEW
-            self.ttreestore.clear()
-            for ctime in data:
-                piter = self.ttreestore.append(None, [ctime, ''])
-                for name in data[ ctime ]:
-                    #value = data[ ctime ][ name ]
-                    self.ttreestore.append( piter, [ '', name ] )
+        self.ttreestore.clear()
+        for ctime in data:
+            piter = self.ttreestore.append(None, [ctime, ''])
+            for name in data[ ctime ]:
+                #value = data[ ctime ][ name ]
+                self.ttreestore.append( piter, [ '', name ] )
            
 
+        # LED VIEW
         self.led_liststore.clear()
         self.ctime_liststore.clear()
 
@@ -363,9 +363,9 @@ class CylcView:
 
         # LOWER DISPLAY
 
-        # create a liststore with one string column to use as the model
-        treestore = gtk.TreeStore(str, str, str, str)
-        self.modelfilter = treestore.filter_new()
+        # TAB ONE: Filtered List
+        fl_liststore = gtk.ListStore(str, str, str, str)
+        self.modelfilter = fl_liststore.filter_new()
         treeview = gtk.TreeView()
         self.modelfilter.set_visible_func(self.visible_cb, self.filter_states)
         modelsort = gtk.TreeModelSort( self.modelfilter )
@@ -517,7 +517,7 @@ class CylcView:
 
         window.show_all()
 
-        self.t = MyThread( ctime_liststore, led_liststore, treestore,
+        self.t = MyThread( ctime_liststore, led_liststore, fl_liststore,
                 ttreestore, task_list, label_mode, label_status, label_time )
 
         self.t.start()
