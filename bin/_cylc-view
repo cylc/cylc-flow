@@ -128,6 +128,28 @@ class MyThread(threading.Thread):
         
         return True
 
+    def search_level( self, model, iter, func, data ):
+        while iter:
+            if func( model, iter, data):
+                return iter
+            iter = model.iter_next(iter)
+        return None
+
+    def search_treemodel( self, model, iter, func, data ):
+        while iter:
+            if func( model, iter, data):
+                return iter
+            result = self.search_treemodel( model, model.iter_children(iter), func, data)
+            if result:
+                return result
+            iter = model.iter_next(iter)
+        return None
+
+    def match_func( self, model, iter, data ):
+        column, key = data
+        value = model.get_value( iter, column )
+        return value == key
+
     def update_gui( self ):
         #print "Updating GUI"
 
@@ -184,23 +206,100 @@ class MyThread(threading.Thread):
 
         # EXPANDING TREE VIEW
 
-        data = {}
+        new_data = {}
         for id in self.state_summary:
             name, ctime = id.split( '%' )
-            if ctime not in data:
-                data[ ctime ] = {}
+            if ctime not in new_data:
+                new_data[ ctime ] = {}
             #state = self.state_summary[ id ][ 'state' ]
             #message = self.state_summary[ id ][ 'latest_message' ]
-            #data[ ctime ][ name ] = [ state, message ]
-            data[ ctime ][ name ] = None
+            #new_data[ ctime ][ name ] = [ state, message ]
+            new_data[ ctime ][ name ] = None
 
-        self.ttreestore.clear()
-        for ctime in data:
-            piter = self.ttreestore.append(None, [ctime, ''])
-            for name in data[ ctime ]:
-                #value = data[ ctime ][ name ]
-                self.ttreestore.append( piter, [ '', name ] )
-           
+
+        # print existing tree:
+        #print
+        #iter = self.ttreestore.get_iter_first()
+        #while iter:
+        #    row = []
+        #    for col in range( self.ttreestore.get_n_columns() ):
+        #        row.append( self.ttreestore.get_value( iter, col ))
+        #    print "==================", row
+        #    iterch = self.ttreestore.iter_children( iter )
+        #    while iterch:
+        #        ch_row = []
+        #        for col in range( self.ttreestore.get_n_columns() ):
+        #            ch_row.append( self.ttreestore.get_value( iterch, col ))
+        #        print "  ===========", ch_row
+        #        iterch = self.ttreestore.iter_next( iterch )
+        #    iter = self.ttreestore.iter_next( iter )
+        #print
+
+        tree_data = {}
+        iter = self.ttreestore.get_iter_first()
+        while iter:
+            # get parent ctime 
+            row = []
+            for col in range( self.ttreestore.get_n_columns() ):
+                row.append( self.ttreestore.get_value( iter, col) )
+            [ ctime ] = row
+
+            tree_data[ ctime ] = {}
+
+            if ctime not in new_data:
+                # parent ctime not in new data; remove it
+                #print "REMOVING", ctime
+                self.ttreestore.remove( iter )
+
+            else:
+                # parent ctime IS in new data; check children
+                iterch = self.ttreestore.iter_children( iter )
+                while iterch:
+                    ch_row = []
+                    for col in range( self.ttreestore.get_n_columns() ):
+                        ch_row.append( self.ttreestore.get_value( iterch, col) )
+                    [ name ] = ch_row
+                    tree_data[ ctime ][name] = None
+
+                    if name not in new_data[ ctime ]:
+                        #print "  removing", name, "from", ctime
+                        result = self.ttreestore.remove( iterch )
+                        if not result:
+                            # This indicates we removed the last 
+                            # child, i.e. there is no next iterch.
+                            # Remove leaves iterch at the old value,
+                            # which has just become invalid.
+                            iterch = None
+                    else:
+                        iterch = self.ttreestore.iter_next( iterch )
+
+                # then increment parent ctime
+                iter = self.ttreestore.iter_next( iter )
+
+        for ctime in new_data:
+            if ctime not in tree_data:
+                # add new ctime tree
+                #print "ADDING", ctime
+                piter = self.ttreestore.append(None, [ctime])
+                for name in new_data[ ctime ]:
+                    #print "  adding", name, "to", ctime
+                    self.ttreestore.append( piter, [ name ] )
+                continue
+
+            # this ctime tree is already in model
+            p_iter = self.search_level( self.ttreestore, 
+                    self.ttreestore.get_iter_first(),
+                    self.match_func, (0, ctime ))
+
+            for name in new_data[ ctime ]:
+                # look for a matching row in the model
+                ch_iter = self.search_treemodel( self.ttreestore, 
+                        self.ttreestore.iter_children( p_iter ),
+                        self.match_func, (0, name ))
+                if not ch_iter:
+                    #print "  adding", name, "to", ctime
+                    self.ttreestore.append( p_iter, [ name ] )
+                    
 
         # LED VIEW
         self.led_liststore.clear()
@@ -376,7 +475,7 @@ class CylcView:
         bkgcols = ['#def', '#fff', '#fff', '#fff' ]
 
         # create the TreeViewColumn to display the data
-        for n in range(4):
+        for n in range(len(headings)):
             # add columns to treeview
             cell = gtk.CellRendererText()
             cell.set_property( 'cell-background', bkgcols[ n] )
@@ -472,13 +571,13 @@ class CylcView:
         label = gtk.Label("Filtered List")
         notebook.append_page( vbox, label )
 
-        ttreestore = gtk.TreeStore(str, str)
+        ttreestore = gtk.TreeStore(str)
         ttreeview = gtk.TreeView()
         ttreeview.set_model(ttreestore)
 
-        headings = ['cycle', 'name' ]
+        headings = ['task' ]
 
-        for n in range(2):
+        for n in range(len(headings)):
             cell = gtk.CellRendererText()
             tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
             ttreeview.append_column(tvc)
