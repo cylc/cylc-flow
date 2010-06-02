@@ -511,9 +511,9 @@ class CylcView:
         label_mode = gtk.Label( "mode..." )
         label_time = gtk.Label( "time..." )
         label_sysname = gtk.Label( name )
+
         quit_button = gtk.Button( "Quit" )
         quit_button.connect("clicked", self.click_exit )
-
         tooltips = gtk.Tooltips()
         tooltips.set_tip( quit_button, "Exit cylc view" )
 
@@ -544,8 +544,7 @@ class CylcView:
         time_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#4d8' ) )
         top_hbox.pack_start( time_eb, True )
 
-        top_hbox.pack_start( quit_button, True )
- 
+
         vpaned = gtk.VPaned()
 
         led_hbox = gtk.HBox()
@@ -620,7 +619,13 @@ class CylcView:
                 b.set_active(True)
             b.connect('toggled', self.check_filter_buttons)
 
+        hbox = gtk.HBox()
+        hbox.pack_start( quit_button, False )
+
+        hbox.pack_start( self.filter_buttonbox, True )
+
         self.filter_buttonbox.set_layout( gtk.BUTTONBOX_END )
+
         scrolledwindow.add( treeview )
 
         vpaned.add2( notebook )
@@ -628,7 +633,7 @@ class CylcView:
         bigbox = gtk.VBox()
         bigbox.pack_start( top_hbox, False )
         bigbox.pack_start( vpaned, True )
-        bigbox.pack_end( self.filter_buttonbox, False )
+        bigbox.pack_end( hbox, False )
         window.add( bigbox )
 
         window.show_all()
