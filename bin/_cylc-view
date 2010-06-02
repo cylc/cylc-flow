@@ -365,23 +365,26 @@ class MyThread(threading.Thread):
 class CylcView:
 
     # visibility determined by state matching active toggle buttons
-    def visible_cb(self, model, iter, data):
+    def visible_cb(self, model, iter, col ):
+
         # set visible if model value NOT in filter_states
-
         # TO DO: WHY IS STATE SOMETIMES NONE?
-        state = model.get_value(iter, 2) 
-        if state:
-            p = re.compile( r'<.*?>')
-            state = re.sub( r'<.*?>', '', state )
+        state = model.get_value(iter, col) 
 
-        return state not in data
+        #if state:
+        #    p = re.compile( r'<.*?>')
+        #    state = re.sub( r'<.*?>', '', state )
+
+        return state not in self.filter_states
 
     def check_filter_buttons(self, tb):
         del self.filter_states[:]
         for b in self.filter_buttonbox.get_children():
             if not b.get_active():
                 self.filter_states.append(b.get_label())
+
         self.modelfilter.refilter()
+        self.tfilter.refilter()
         return
 
     # close the window and quit
@@ -400,11 +403,6 @@ class CylcView:
  
     def collapse_all( self, widget, view ):
         view.collapse_all()
-
-    #def tvisible( self, model, iter ):
-    #  E.G. HOW TO FILTER TREESTORE
-    #    value = model.get_value( iter, 0 )
-    #    return value != 'A'
 
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -482,7 +480,7 @@ class CylcView:
         fl_liststore = gtk.ListStore(str, str, str, str)
         self.modelfilter = fl_liststore.filter_new()
         treeview = gtk.TreeView()
-        self.modelfilter.set_visible_func(self.visible_cb, self.filter_states)
+        self.modelfilter.set_visible_func(self.visible_cb, 2)
         modelsort = gtk.TreeModelSort( self.modelfilter )
         modelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
         treeview.set_model(modelsort)
@@ -561,40 +559,26 @@ class CylcView:
 
         vpaned.add1( led_scrolledwindow )
 
-        hbox = gtk.HBox()
-
         scrolledwindow = gtk.ScrolledWindow()
         scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
-        vbox = gtk.VBox()
-
         self.filter_buttonbox = gtk.HButtonBox()
-
-        label = gtk.Label('Task Filters:')
-
-        hbox.pack_start( label, True )
-        hbox.pack_start( self.filter_buttonbox, False )
-
-        vbox.pack_start(scrolledwindow)
-        vbox.pack_start(hbox, False)
-        # create toggle buttons to select filtering based on
-        # bug state and set buttons active
 
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
  
-        label = gtk.Label("Filtered List")
-        notebook.append_page( vbox, label )
+        label = gtk.Label("Sortable List")
+        notebook.append_page( scrolledwindow, label )
 
+        # For reasons unknown, filter before sorting screws up the 
+        # treeview display here, but the other way around works.
         ttreestore = gtk.TreeStore(str, str, str )
         ttreeview = gtk.TreeView()
-        #tfilter = ttreestore.filter_new()   # E.G. HOW TO FILTER TREESTORE
-        #tfilter.set_visible_func(self.tvisible)
-        #ttreeview.set_model(tfilter)
         tmodelsort = gtk.TreeModelSort( ttreestore )
         tmodelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
-        ttreeview.set_model(tmodelsort)
-        #ttreeview.set_model(ttreestore)
+        self.tfilter = tmodelsort.filter_new()
+        self.tfilter.set_visible_func(self.visible_cb, 1 )
+        ttreeview.set_model(self.tfilter)
 
         headings = ['task', 'state', 'latest message' ]
 
@@ -604,7 +588,7 @@ class CylcView:
             ttreeview.append_column(tvc)
             tvc.set_sort_column_id(n)
  
-        label = gtk.Label("Cycle Tree")
+        label = gtk.Label("Expandable Tree")
 
         cycle_tree_scrolledwindow = gtk.ScrolledWindow()
         cycle_tree_scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
@@ -612,20 +596,20 @@ class CylcView:
 
         vbox = gtk.VBox()
         bbox = gtk.HButtonBox()
-        expand_button = gtk.Button( "Expand All" )
+        expand_button = gtk.Button( "Expand" )
         expand_button.connect( 'clicked', self.expand_all, ttreeview )
-        collapse_button = gtk.Button( "Collapse All" )
+    
+        collapse_button = gtk.Button( "Collapse" )
         collapse_button.connect( 'clicked', self.collapse_all, ttreeview )
-        bbox.pack_start( expand_button )
-        bbox.pack_start( collapse_button )
+
+        bbox.add( expand_button )
+        bbox.add( collapse_button )
+        bbox.set_layout( gtk.BUTTONBOX_END )
 
         vbox.pack_start( cycle_tree_scrolledwindow )
         vbox.pack_start( bbox, False )
 
         notebook.append_page( vbox, label )
-
-
-
 
         for st in all_states:
             b = gtk.ToggleButton( st )
@@ -636,13 +620,15 @@ class CylcView:
                 b.set_active(True)
             b.connect('toggled', self.check_filter_buttons)
 
+        self.filter_buttonbox.set_layout( gtk.BUTTONBOX_END )
         scrolledwindow.add( treeview )
 
         vpaned.add2( notebook )
 
         bigbox = gtk.VBox()
         bigbox.pack_start( top_hbox, False )
-        bigbox.pack_end( vpaned, True )
+        bigbox.pack_start( vpaned, True )
+        bigbox.pack_end( self.filter_buttonbox, False )
         window.add( bigbox )
 
         window.show_all()
