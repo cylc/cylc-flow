@@ -87,6 +87,12 @@ class MyThread(threading.Thread):
 
         self.cc = color_chooser()
 
+    def connection_lost( self ):
+        self.label_status.set_markup( "<b>CONNECTION LOST</b>" )
+        self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))
+
+
+ 
     def update_summary(self):
         #print "Updating Summary"
         try:
@@ -96,8 +102,8 @@ class MyThread(threading.Thread):
             self.ttreestore.clear()
             self.fl_liststore.clear()
             self.ctime_liststore.clear()
-            self.label_status.set_markup( "<b>CONNECTION LOST</b>" )
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))
+            gobject.idle_add( self.connection_lost )
+ 
             return False
 
         if compare_dict_of_dict( states, self.state_summary ):
@@ -156,7 +162,7 @@ class MyThread(threading.Thread):
         return value == key
 
     def update_gui( self ):
-        #print "Updating GUI"
+        print "Updating GUI"
 
         new_data = {}
         for id in self.state_summary:
