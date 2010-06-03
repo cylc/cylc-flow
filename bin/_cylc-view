@@ -395,7 +395,6 @@ class CylcView:
                 self.filter_states.append(b.get_label())
 
         self.modelfilter.refilter()
-        self.tfilter.refilter()
         return
 
     # close the window and quit
@@ -492,10 +491,10 @@ class CylcView:
         # TAB ONE: Filtered List
         fl_liststore = gtk.ListStore(str, str, str, str)
         self.modelfilter = fl_liststore.filter_new()
-        treeview = gtk.TreeView()
         self.modelfilter.set_visible_func(self.visible_cb, 2)
         modelsort = gtk.TreeModelSort( self.modelfilter )
         modelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
+        treeview = gtk.TreeView()
         treeview.set_model(modelsort)
 
         headings = ['cycle', 'name', 'state', 'latest message' ]
@@ -586,12 +585,10 @@ class CylcView:
         # For reasons unknown, filter before sorting screws up the 
         # treeview display here, but the other way around works.
         ttreestore = gtk.TreeStore(str, str, str )
-        ttreeview = gtk.TreeView()
         tmodelsort = gtk.TreeModelSort( ttreestore )
         tmodelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
-        self.tfilter = tmodelsort.filter_new()
-        self.tfilter.set_visible_func(self.visible_cb, 1 )
-        ttreeview.set_model(self.tfilter)
+        ttreeview = gtk.TreeView()
+        ttreeview.set_model(tmodelsort)
 
         headings = ['task', 'state', 'latest message' ]
 
