@@ -195,13 +195,17 @@ class MyThread(threading.Thread):
             if id not in new_data:
                 # id no longer in system, remove from view
                 #print "REMOVING", id
-                self.fl_liststore.remove( iter )
+                result = self.fl_liststore.remove( iter )
+                if not result:
+                    iter = None
 
             elif new_data[ id ] != list_data[ id ]:
                 #print "CHANGING", id
                 # id still in system but data changed, so replace it
                 self.fl_liststore.append( [ ctime, name ] + new_data[ id ] )
-                self.fl_liststore.remove( iter )
+                result = self.fl_liststore.remove( iter )
+                if not result:
+                    iter = None
 
             else:
                 # id still exists and data has not changed
@@ -377,11 +381,10 @@ class CylcView:
 
     # visibility determined by state matching active toggle buttons
     def visible_cb(self, model, iter, col ):
-
         # set visible if model value NOT in filter_states
         # TO DO: WHY IS STATE SOMETIMES NONE?
         state = model.get_value(iter, col) 
-
+        #print '-->', model.get_value( iter, 0 ), model.get_value( iter, 1 ), state, model.get_value( iter, 3 )
         #if state:
         #    p = re.compile( r'<.*?>')
         #    state = re.sub( r'<.*?>', '', state )
