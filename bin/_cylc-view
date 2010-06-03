@@ -523,7 +523,7 @@ class CylcView:
         top_hbox = gtk.HBox()
         sysname_eb = gtk.EventBox()
         sysname_eb.add( label_sysname )
-        sysname_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f00' ) ) # f41 orange
+        sysname_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ) ) 
         top_hbox.pack_start( sysname_eb, True )
 
         mode_eb = gtk.EventBox()
