@@ -92,7 +92,12 @@ class MyThread(threading.Thread):
         try:
             [glbl, states] = self.god.get_state_summary()
         except Exception,x:
-            print x
+            self.led_liststore.clear()
+            self.ttreestore.clear()
+            self.fl_liststore.clear()
+            self.ctime_liststore.clear()
+            self.label_status.set_markup( "<b>CONNECTION LOST</b>" )
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))
             return False
 
         if compare_dict_of_dict( states, self.state_summary ):
