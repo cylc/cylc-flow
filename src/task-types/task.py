@@ -156,7 +156,7 @@ class task( Pyro.core.ObjBase ):
         except ValueError:
             pass
         else:
-            message = '[' + tag + ']' + message
+            message = '[' + tag + '] ' + message
 
         if priority == "WARNING":
             logger.warning( message )
