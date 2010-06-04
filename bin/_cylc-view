@@ -13,6 +13,7 @@ from connector import connector
 import pyrex
 from cycle_time import _rt_to_dt, is_valid
 import os, re, sys
+import tail
 
 # TO DO:
 # 1/ see http://eccentric.cx/misc/pygtk/pygtkfaq.html#13.4
@@ -52,6 +53,27 @@ def compare_dict_of_dict( one, two ):
                 return False
 
     return True
+
+class LogThread(threading.Thread):
+    def __init__( self, logview, log ):
+        super( LogThread, self).__init__()
+        self.logview = logview
+        self.logbuffer = logview.get_buffer()
+        self.logfile = log
+        self.quit = False
+
+    def run( self ):
+        while not self.quit:
+            for line in tail.tail( open( self.logfile )):
+                gobject.idle_add( self.update_gui, line )
+        else:
+            print "BYE from log view thread"
+ 
+    def update_gui( self, line ):
+        self.logbuffer.insert( self.logbuffer.get_end_iter(), line )
+        self.logview.scroll_to_iter( self.logbuffer.get_end_iter(), 0 )
+        return False
+
 
 class MyThread(threading.Thread):
     def __init__(self, ctime_liststore, led_liststore, fl_liststore, ttreestore,
@@ -165,7 +187,7 @@ class MyThread(threading.Thread):
         return value == key
 
     def update_gui( self ):
-        print "Updating GUI"
+        #print "Updating GUI"
 
         new_data = {}
         for id in self.state_summary:
@@ -378,7 +400,7 @@ class MyThread(threading.Thread):
                 gobject.idle_add( self.label_time.set_text, self.dt )
             time.sleep(1)
         else:
-            print "BYE"
+            print "BYE from task view thread"
 
 class CylcView:
 
@@ -407,11 +429,13 @@ class CylcView:
     def delete_event(self, widget, event, data=None):
         gtk.main_quit()
         self.t.quit = True
+        self.lt.quit = True
         return False
 
     def click_exit( self, foo ):
         gtk.main_quit()
         self.t.quit = True
+        self.lt.quit = True
         return False
 
     def expand_all( self, widget, view ):
@@ -651,6 +675,19 @@ class CylcView:
 
         vpaned.add2( notebook )
 
+        logscroll = gtk.ScrolledWindow()
+        logscroll.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+        logview = gtk.TextView()
+        logscroll.add( logview )
+        logview.set_editable( False )
+        system_log = ss.get_config( 'logging_dir' ) + '/main'
+        vbox = gtk.VBox()
+        hbox = gtk.HBox()
+        hbox.pack_start( gtk.Label( system_log ), False )
+        vbox.pack_start( logscroll, True )
+        vbox.pack_start( hbox, False )
+        notebook.append_page( vbox, gtk.Label("Log Viewer") )
+
         bigbox = gtk.VBox()
         bigbox.pack_start( top_hbox, False )
         bigbox.pack_start( vpaned, True )
@@ -662,7 +699,10 @@ class CylcView:
         self.t = MyThread( ctime_liststore, led_liststore, fl_liststore,
                 ttreestore, task_list, label_mode, label_status, label_time )
 
+        self.lt = LogThread( logview, system_log )
+
         self.t.start()
+        self.lt.start()
 
 if __name__ == "__main__":
     parser = NoPromptOptionParser_u( """cylc view [options] SYSTEM 
