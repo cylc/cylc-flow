@@ -90,6 +90,9 @@ class MyThread(threading.Thread):
     def connection_lost( self ):
         self.label_status.set_markup( "<b>CONNECTION LOST</b>" )
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))
+        # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED 
+        # MULTIPLE TIMES???????????????///
+        return False
 
 
  

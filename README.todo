@@ -1,5 +1,8 @@
 To Do
 
+* OUTPUTS must contain $(CYCLE_TIME) NOT $CYCLE_TIME currently. Document
+  this or make it possible to use the environmenet variable!
+
 * catch obscure errors, such as attempting to restart when one or more 
   tasks has been commented out of the task list.
 
