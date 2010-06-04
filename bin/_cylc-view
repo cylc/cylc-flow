@@ -19,6 +19,18 @@ import tail
 # 1/ see http://eccentric.cx/misc/pygtk/pygtkfaq.html#13.4
 #    How do I get changes in my TreeModel to show up in my TreeView?
 
+def markup_state( state ):
+    if state == 'running':
+        result = '<span foreground="#0a0"><b>running</b></span>'
+    elif state == 'waiting':
+        result = '<span foreground="#38a">waiting</span>'
+    elif state == 'submitted':
+        result = '<span foreground="#f83"><b>submitted</b></span>'
+    elif state == 'failed':
+        result = '<span foreground="#f00"><b>failed</b></span>'
+    else:
+        result = state
+    return result
 
 class color_chooser:
     cols = [ '#f38', '#2a3', '#83f' ]
@@ -195,18 +207,11 @@ class MyThread(threading.Thread):
 
         new_data = {}
         for id in self.state_summary:
-            state = self.state_summary[ id ][ 'state' ]
-            #if state == 'running':
-            #    state = '<span foreground="#0a0"><b>running</b></span>'
-            #elif state == 'waiting':
-            #    state = '<span foreground="#38a">waiting</span>'
-            #elif state == 'submitted':
-            #    state = '<span foreground="#000"><b>submitted</b></span>'
-            #elif state == 'failed':
-            #    state = '<span foreground="#f00"><b>failed</b></span>'
+            state = markup_state( self.state_summary[ id ][ 'state' ] )
             message = self.state_summary[ id ][ 'latest_message' ]
             #message = '<span foreground="' + self.cc.get_color() + '">' + message + '</span>'
-            #message = '<span foreground="#000">' + message + '</span>'
+            message = '<span foreground="blue">' + message + '</span>'
+            message = '<span foreground="#000">' + message + '</span>'
 
             new_data[id] = [ state, message ]
 
@@ -255,7 +260,7 @@ class MyThread(threading.Thread):
             name, ctime = id.split( '%' )
             if ctime not in new_data:
                 new_data[ ctime ] = {}
-            state = self.state_summary[ id ][ 'state' ]
+            state = markup_state( self.state_summary[ id ][ 'state' ] )
             message = self.state_summary[ id ][ 'latest_message' ]
             new_data[ ctime ][ name ] = [ state, message ]
 
@@ -414,9 +419,9 @@ class CylcView:
         # TO DO: WHY IS STATE SOMETIMES NONE?
         state = model.get_value(iter, col) 
         #print '-->', model.get_value( iter, 0 ), model.get_value( iter, 1 ), state, model.get_value( iter, 3 )
-        #if state:
-        #    p = re.compile( r'<.*?>')
-        #    state = re.sub( r'<.*?>', '', state )
+        if state:
+            p = re.compile( r'<.*?>')
+            state = re.sub( r'<.*?>', '', state )
 
         return state not in self.filter_states
 
@@ -516,9 +521,9 @@ class CylcView:
             cell = gtk.CellRendererPixbuf()
             cell.set_property( 'cell_background', 'black' )
             cell.set_property( 'xalign', 0 )
-	    # replace heading underscores with spaces (they display as underline!)
-	    heading = task_name_heading[ task_list[n]]
-	    heading = re.sub( '_', ' ', heading )
+            # replace heading underscores with spaces (they display as underline!)
+            heading = task_name_heading[ task_list[n]]
+            heading = re.sub( '_', ' ', heading )
             tvc = gtk.TreeViewColumn( heading  )
             tvc.set_min_width( 30 )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cell, True )
@@ -550,8 +555,8 @@ class CylcView:
             # add columns to treeview
             cell = gtk.CellRendererText()
             cell.set_property( 'cell-background', bkgcols[ n] )
-            #tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
-            tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
+            tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+            #tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
             treeview.append_column(tvc)
             tvc.set_sort_column_id(n)
             # add the cells to the columns
@@ -638,8 +643,8 @@ class CylcView:
 
         for n in range(len(headings)):
             cell = gtk.CellRendererText()
-            #tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
-            tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
+            tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
+            #tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
             ttreeview.append_column(tvc)
             tvc.set_sort_column_id(n)
  
