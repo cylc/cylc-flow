@@ -61,14 +61,16 @@ class LogThread(threading.Thread):
         self.logbuffer = logview.get_buffer()
         self.logfile = log
         self.quit = False
+        self.freeze = False
 
     def run( self ):
         #for line in tail.tail( open( self.logfile )):
         gen = tail.tail( open( self.logfile ))
         while not self.quit:
-            line = gen.next()
-            if line: 
-                gobject.idle_add( self.update_gui, line )
+            if not self.freeze:
+                line = gen.next()
+                if line: 
+                    gobject.idle_add( self.update_gui, line )
         print "BYE from log viewer thread"
  
     def update_gui( self, line ):
@@ -435,6 +437,15 @@ class CylcView:
         print "BYE from main thread"
         return False
 
+    def freeze_log( self, b ):
+        # TO DO: HANDLE MORE STUFF IN THREADS LIKE THIS, RATHER THAN
+        # PASSING IN ARGUMENTS?
+        if b.get_active():
+            self.lt.freeze = True
+        else:
+            self.lt.freeze = False
+        return False
+
     def click_exit( self, foo ):
         gtk.main_quit()
         self.lt.quit = True
@@ -678,12 +689,17 @@ class CylcView:
         system_log = ss.get_config( 'logging_dir' ) + '/main'
         vbox = gtk.VBox()
         hbox = gtk.HBox()
-        hbox.pack_start( gtk.Label( system_log ), False )
+        hbox.pack_start( gtk.Label( system_log ), True )
+
+        freeze_button = gtk.ToggleButton( "Freeze" )
+        freeze_button.set_active(False)
+        freeze_button.connect("toggled", self.freeze_log )
+        hbox.pack_end( freeze_button, False )
+ 
         #quit_button = gtk.Button( "Quit" )
         #quit_button.connect("clicked", self.click_exit )
         #tooltips = gtk.Tooltips()
         #tooltips.set_tip( quit_button, "Exit cylc view" )
-        #hbox.pack_start( quit_button, False )
 
         vbox.pack_start( logscroll, True )
         vbox.pack_start( hbox, False )
