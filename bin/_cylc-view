@@ -540,8 +540,8 @@ class CylcView:
 
         # allow filtering out of 'finished' and 'waiting'
         all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
-        # initially filter out 'waiting' and 'finished' tasks
-        self.filter_states = [ 'waiting', 'finished' ]
+        # initially filter out only 'finished' tasks
+        self.filter_states = [ 'finished' ]
 
 
         # LOWER DISPLAY
