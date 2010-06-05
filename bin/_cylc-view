@@ -72,7 +72,7 @@ class LogThread(threading.Thread):
                 line = gen.next()
                 if line: 
                     gobject.idle_add( self.update_gui, line )
-        print "BYE from log viewer thread"
+        #print "Disconnecting from log viewer thread"
  
     def update_gui( self, line ):
         self.logbuffer.insert( self.logbuffer.get_end_iter(), line )
@@ -397,7 +397,8 @@ class MyThread(threading.Thread):
                 gobject.idle_add( self.label_time.set_text, self.dt )
             time.sleep(1)
         else:
-            print "BYE from task view thread"
+            pass
+            #print "Disconnecting task state info thread"
 
 class CylcView:
 
@@ -427,8 +428,19 @@ class CylcView:
         gtk.main_quit()
         self.lt.quit = True
         self.t.quit = True
-        print "BYE from main thread"
+        #print "BYE from main thread"
         return False
+
+    def replace_log( self, logfile ):
+        self.logfile = logfile
+        self.lt.quit = True
+        logpath = self.logdir + '/' + self.logfile 
+        logbuffer = self.logview.get_buffer()
+        logbuffer.delete( logbuffer.get_start_iter(), logbuffer.get_end_iter() )
+        self.log_label.set_text( logpath ) 
+        self.lt = LogThread( self.logview, logpath )
+        #print "Starting log viewer thread"
+        self.lt.start()
 
     def switch_log( self, cb ):
         model = cb.get_model()
@@ -437,18 +449,48 @@ class CylcView:
             return False
 
         task = model[index][0]
-        logfile = self.system_logging_dir + '/' + task
-
-        self.lt.quit = True
-
-        logbuffer = self.logview.get_buffer()
-        logbuffer.delete( logbuffer.get_start_iter(), logbuffer.get_end_iter() )
-
-        self.log_label.set_text( logfile ) 
-        self.lt = LogThread( self.logview, logfile )
-        self.lt.start()
+        self.replace_log( task )
 
         return False
+
+    def rotate_log( self, bt, go_older ):
+        cur_log = self.logfile
+        m = re.match( '(.*)\.(\d)$', cur_log ) 
+        if m:
+            level = int( m.groups()[1] )
+            log_base = m.groups()[0]
+        else:
+            level = 0
+            log_base = cur_log
+
+        warn = False
+
+        if go_older:
+            level += 1
+        else:
+            level -= 1
+
+        if level < 0:
+            self.warning_dialog( "You are already viewing the active (newest) log" )
+            return
+
+        if level == 0:
+            new_log = log_base
+        else:
+            new_log = log_base + '.' + str( level )
+
+        if new_log not in os.listdir( self.logdir ):
+            self.warning_dialog( "No older log available" )
+            return
+
+        self.replace_log( new_log )
+
+    def warning_dialog( self, msg ):
+        dialog = gtk.MessageDialog( None,
+                gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING,
+                gtk.BUTTONS_CLOSE, msg )
+        dialog.run()
+        dialog.destroy()
 
     def freeze_log( self, b ):
         # TO DO: HANDLE MORE STUFF IN THREADS LIKE THIS, RATHER THAN
@@ -466,8 +508,8 @@ class CylcView:
         about.set_copyright( "(c) Hilary Oliver, NIWA" )
         about.set_comments( 
 """
-cylc is a self organising dynamic metascheduler for cycling forecast
-systems
+Cylc View is a real time system monitor for Cylc, a self organising
+dynamic metascheduler for cycling forecast systems.
 """ )
         about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( gtk.gdk.pixbuf_new_from_file( imagedir + "/dew.jpg" ))
@@ -478,7 +520,7 @@ systems
         gtk.main_quit()
         self.lt.quit = True
         self.t.quit = True
-        print "BYE from main thread"
+        #print "BYE from main thread"
         return False
 
     def expand_all( self, widget, view ):
@@ -491,7 +533,7 @@ systems
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("cylc view <" + groupname + ">" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        window.set_size_request(500, 400)
+        window.set_size_request(600, 500)
         window.connect("delete_event", self.delete_event)
 
         # Get list of tasks in the system
@@ -725,11 +767,11 @@ systems
         self.logview = gtk.TextView()
         logscroll.add( self.logview )
         self.logview.set_editable( False )
-        self.system_logging_dir = ss.get_config( 'logging_dir' ) 
-        system_log = self.system_logging_dir + '/main'
+        self.logdir = ss.get_config( 'logging_dir' ) 
+        self.logfile = 'main'
         vbox = gtk.VBox()
         hbox = gtk.HBox()
-        self.log_label = gtk.Label( system_log )
+        self.log_label = gtk.Label( self.logdir + '/' + self.logfile )
         self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
         hbox.pack_start( self.log_label, True )
 
@@ -739,13 +781,21 @@ systems
         hbox.pack_end( freeze_button, False )
 
         combobox = gtk.combo_box_new_text()
-        combobox.append_text( 'Select System Log:' ) 
+        combobox.append_text( 'Select Log' ) 
         combobox.append_text( 'main' ) 
         for task in task_list:
             combobox.append_text( task ) 
 
         combobox.connect("changed", self.switch_log )
         combobox.set_active(0)
+
+        previous = gtk.Button( "newer rotation" )
+        previous.connect("clicked", self.rotate_log, False )
+        hbox.pack_end( previous, False )
+
+        previous = gtk.Button( "older rotation" )
+        previous.connect("clicked", self.rotate_log, True )
+        hbox.pack_end( previous, False )
 
         hbox.pack_end( combobox, False )
  
@@ -765,8 +815,10 @@ systems
         self.t = MyThread( ctime_liststore, led_liststore, fl_liststore,
                 ttreestore, task_list, label_mode, label_status, label_time )
 
-        self.lt = LogThread( self.logview, system_log )
+        self.lt = LogThread( self.logview, self.logdir + '/' + self.logfile )
+        #print "Starting task state info thread"
         self.t.start()
+        #print "Starting log viewer thread"
         self.lt.start()
 
 if __name__ == "__main__":
