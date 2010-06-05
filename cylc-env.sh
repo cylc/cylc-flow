@@ -5,11 +5,14 @@
 # You must move to the top level of your cylc installation before
 # sourcing this script OR first set $CYLC_DIR to that directory.
 
-function cycl {
-    echo "TYPO ALERT: it's 'cylc' NOT 'cycl'!"
-    cylc $@
-    return 0
-}
+# THE FOLLOWING IS A PROBLEM IF WE NEED TO CONFIGURE CYLC ENV INSIDE A
+# SHELL FUNCTION (SHELL FUNCTIONS CAN'T BE NESTED) - e.g. OPS and VAR
+# WRAPPERS, AS CURRENTLY IMPLEMENTED.
+#function cycl {
+#    echo "TYPO ALERT: it's 'cylc' NOT 'cycl'!"
+#    cylc $@
+#    return 0
+#}
 
 if [[ -f bin/cylc ]]; then
     # we're in the top level of a cylc installation
@@ -54,7 +57,7 @@ PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$
 
 if [[ -n $CYLC_SYSTEM_DIR ]]; then
     # caller must be a cylc jobfile; set system-specific paths
-    PATH=$CYLC_SYSTEM_DIR/scripts:$PATH
+    PATH=$CYLC_DIR/scripts:$CYLC_SYSTEM_DIR/scripts:$PATH
     PYTHON_PATH=$CYLC_SYSTEM_DIR:$PYTHONPATH
 fi
 

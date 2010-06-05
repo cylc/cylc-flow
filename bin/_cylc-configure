@@ -95,7 +95,6 @@ cd $SYS_DIR
 # bin/cylc checks that the cylc bin directory is accessible
 CYLC=$(which cylc)
 CYLC_DIR=${CYLC%/bin/cylc}
-CYLC_UTIL=${CYLC_DIR}/scripts
 
 echo
 echo "CONFIGURING CYLC SYSTEM $SYS_DIR"
@@ -290,20 +289,4 @@ THAT ARE CONFIGURABLE VIA CYLC.
 eof
 fi
 echo "$SYS_DIR/system_info.py"
-echo
-
-echo "copying cylc util scripts to system scripts dir:"
-mkdir -p scripts
-for SCR in $CYLC_UTIL/*; do
-    F=${SCR##*/}
-    if [[ $F != README.txt ]]; then
-        echo -n "  $F ... "
-        if [[ -f scripts/$F ]]; then
-            echo "(already exists)" 
-        else
-            cp $SCR scripts
-            echo "done"
-        fi
-    fi
-done
 echo
