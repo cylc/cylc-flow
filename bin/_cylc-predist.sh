@@ -49,6 +49,7 @@ chmod +x systems/distributed/scripts/*
 chmod +x systems/scs-demo/scripts/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
+perl -pi -e "s/X\.Y\.Z/$CYLC_VERSION/" bin/_cylc-view
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" doc/userguide.tex
 

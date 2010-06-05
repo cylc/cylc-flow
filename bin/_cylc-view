@@ -459,6 +459,21 @@ class CylcView:
             self.lt.freeze = False
         return False
 
+    def about( self, bt ):
+        about = gtk.AboutDialog()
+        about.set_program_name( "cylc" )
+        about.set_version( cylc_version )
+        about.set_copyright( "(c) Hilary Oliver, NIWA" )
+        about.set_comments( 
+"""
+cylc is a self organising dynamic metascheduler for cycling forecast
+systems
+""" )
+        about.set_website( "http://www.niwa.co.nz" )
+        about.set_logo( gtk.gdk.pixbuf_new_from_file( imagedir + "/dew.jpg" ))
+        about.run()
+        about.destroy()
+
     def click_exit( self, foo ):
         gtk.main_quit()
         self.lt.quit = True
@@ -582,6 +597,17 @@ class CylcView:
         label_mode = gtk.Label( "mode..." )
         label_time = gtk.Label( "time..." )
         label_sysname = gtk.Label( name )
+
+        topbuttonbox = gtk.HButtonBox()
+        quit_button = gtk.Button( "Quit" )
+        quit_button.connect("clicked", self.click_exit )
+        #tooltips = gtk.Tooltips()
+        #tooltips.set_tip( quit_button, "Exit cylc view" )
+        topbuttonbox.set_layout( gtk.BUTTONBOX_END )
+        about_button = gtk.Button( "About" )
+        about_button.connect("clicked", self.about )
+        topbuttonbox.add( about_button )
+        topbuttonbox.add( quit_button )
 
         top_hbox = gtk.HBox()
         sysname_eb = gtk.EventBox()
@@ -723,16 +749,12 @@ class CylcView:
 
         hbox.pack_end( combobox, False )
  
-        #quit_button = gtk.Button( "Quit" )
-        #quit_button.connect("clicked", self.click_exit )
-        #tooltips = gtk.Tooltips()
-        #tooltips.set_tip( quit_button, "Exit cylc view" )
-
         vbox.pack_start( logscroll, True )
         vbox.pack_start( hbox, False )
         notebook.append_page( vbox, gtk.Label("Log Viewer") )
 
         bigbox = gtk.VBox()
+        bigbox.pack_start( topbuttonbox, False )
         bigbox.pack_start( top_hbox, False )
         bigbox.pack_start( vpaned, True )
         #bigbox.pack_end( hbox, False )
@@ -778,6 +800,7 @@ submission method used by each task).""")
                 break
 
     imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+    cylc_version = "X.Y.Z"
 
     gobject.threads_init()
     tvexample = CylcView()
