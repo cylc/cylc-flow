@@ -19,31 +19,20 @@ import tail
 # 1/ see http://eccentric.cx/misc/pygtk/pygtkfaq.html#13.4
 #    How do I get changes in my TreeModel to show up in my TreeView?
 
-def markup_state( state ):
-    if state == 'running':
-        result = '<span foreground="#0a0"><b>running</b></span>'
-    elif state == 'waiting':
-        result = '<span foreground="#38a">waiting</span>'
+def get_col( state ):
+    if state == 'waiting':
+        return '#38a'
     elif state == 'submitted':
-        result = '<span foreground="#f83"><b>submitted</b></span>'
+        return '#f83'
+    elif state == 'running':
+        return '#0a0'
     elif state == 'failed':
-        result = '<span foreground="#f00"><b>failed</b></span>'
+        return '#f00'
     else:
-        result = state
-    return result
+        return '#000'
 
-class color_chooser:
-    cols = [ '#f38', '#2a3', '#83f' ]
-    def __init__( self ):
-        self.index = 0
-
-    def get_color( self ):
-        if self.index >= len( color_chooser.cols ):
-            self.index = 0
-
-        res = color_chooser.cols[ self.index ]
-        self.index += 1
-        return res
+def markup( col, string ):
+    return '<span foreground="' + col + '">' + string + '</span>'
 
 def compare_dict_of_dict( one, two ):
     for key in one:
@@ -206,12 +195,10 @@ class MyThread(threading.Thread):
 
         new_data = {}
         for id in self.state_summary:
-            state = markup_state( self.state_summary[ id ][ 'state' ] )
+            state = self.state_summary[ id ][ 'state' ]
             message = self.state_summary[ id ][ 'latest_message' ]
-            #message = '<span foreground="' + self.cc.get_color() + '">' + message + '</span>'
-            message = '<span foreground="blue">' + message + '</span>'
-            message = '<span foreground="#000">' + message + '</span>'
-
+            message = markup( get_col(state), message )
+            state = markup( get_col(state), state )
             new_data[id] = [ state, message ]
 
         list_data = {}
@@ -259,8 +246,10 @@ class MyThread(threading.Thread):
             name, ctime = id.split( '%' )
             if ctime not in new_data:
                 new_data[ ctime ] = {}
-            state = markup_state( self.state_summary[ id ][ 'state' ] )
+            state = self.state_summary[ id ][ 'state' ]
             message = self.state_summary[ id ][ 'latest_message' ]
+            message = markup( get_col( state ), message )
+            state = markup( get_col(state), state )
             new_data[ ctime ][ name ] = [ state, message ]
 
         # print existing tree:
