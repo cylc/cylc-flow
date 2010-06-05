@@ -437,12 +437,15 @@ class CylcView:
             return False
 
         task = model[index][0]
-        
+        logfile = self.system_logging_dir + '/' + task
+
         self.lt.quit = True
 
         logbuffer = self.logview.get_buffer()
         logbuffer.delete( logbuffer.get_start_iter(), logbuffer.get_end_iter() )
-        self.lt = LogThread( self.logview, self.system_logging_dir + '/' + task )
+
+        self.log_label.set_text( logfile ) 
+        self.lt = LogThread( self.logview, logfile )
         self.lt.start()
 
         return False
@@ -700,7 +703,9 @@ class CylcView:
         system_log = self.system_logging_dir + '/main'
         vbox = gtk.VBox()
         hbox = gtk.HBox()
-        hbox.pack_start( gtk.Label( system_log ), True )
+        self.log_label = gtk.Label( system_log )
+        self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
+        hbox.pack_start( self.log_label, True )
 
         freeze_button = gtk.ToggleButton( "Freeze" )
         freeze_button.set_active(False)
