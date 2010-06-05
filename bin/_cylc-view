@@ -90,7 +90,6 @@ class LogThread(threading.Thread):
         self.logview.scroll_to_iter( self.logbuffer.get_end_iter(), 0 )
         return False
 
-
 class MyThread(threading.Thread):
     def __init__(self, ctime_liststore, led_liststore, fl_liststore, ttreestore,
             task_list, label_mode, label_status, label_time ):
