@@ -441,6 +441,23 @@ class CylcView:
         print "BYE from main thread"
         return False
 
+    def switch_log( self, cb ):
+        model = cb.get_model()
+        index = cb.get_active()
+        if index == 0:
+            return False
+
+        task = model[index][0]
+        
+        self.lt.quit = True
+
+        logbuffer = self.logview.get_buffer()
+        logbuffer.delete( logbuffer.get_start_iter(), logbuffer.get_end_iter() )
+        self.lt = LogThread( self.logview, self.system_logging_dir + '/' + task )
+        self.lt.start()
+
+        return False
+
     def freeze_log( self, b ):
         # TO DO: HANDLE MORE STUFF IN THREADS LIKE THIS, RATHER THAN
         # PASSING IN ARGUMENTS?
@@ -687,10 +704,11 @@ class CylcView:
 
         logscroll = gtk.ScrolledWindow()
         logscroll.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-        logview = gtk.TextView()
-        logscroll.add( logview )
-        logview.set_editable( False )
-        system_log = ss.get_config( 'logging_dir' ) + '/main'
+        self.logview = gtk.TextView()
+        logscroll.add( self.logview )
+        self.logview.set_editable( False )
+        self.system_logging_dir = ss.get_config( 'logging_dir' ) 
+        system_log = self.system_logging_dir + '/main'
         vbox = gtk.VBox()
         hbox = gtk.HBox()
         hbox.pack_start( gtk.Label( system_log ), True )
@@ -699,6 +717,17 @@ class CylcView:
         freeze_button.set_active(False)
         freeze_button.connect("toggled", self.freeze_log )
         hbox.pack_end( freeze_button, False )
+
+        combobox = gtk.combo_box_new_text()
+        combobox.append_text( 'Select System Log:' ) 
+        combobox.append_text( 'main' ) 
+        for task in task_list:
+            combobox.append_text( task ) 
+
+        combobox.connect("changed", self.switch_log )
+        combobox.set_active(0)
+
+        hbox.pack_end( combobox, False )
  
         #quit_button = gtk.Button( "Quit" )
         #quit_button.connect("clicked", self.click_exit )
@@ -720,8 +749,7 @@ class CylcView:
         self.t = MyThread( ctime_liststore, led_liststore, fl_liststore,
                 ttreestore, task_list, label_mode, label_status, label_time )
 
-        self.lt = LogThread( logview, system_log )
-
+        self.lt = LogThread( self.logview, system_log )
         self.t.start()
         self.lt.start()
 
