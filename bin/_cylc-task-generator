@@ -143,7 +143,7 @@ def main( argv ):
 
     task_def_files = argv[1:]
 
-    allowed_keys = [ 'NAME', 'OWNER', 'CYCLES', 'TASK',
+    allowed_keys = [ 'INHERIT', 'NAME', 'OWNER', 'CYCLES', 'TASK',
             'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
             'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
@@ -257,6 +257,11 @@ from dynamic_instantiation import get_object
 
         # print_parsed_info()
 
+        inherit = False
+        if 'INHERIT' in parsed_def:
+            inherit = True
+            inherit_from = parsed_def['INHERIT'][0]
+
         # quick death (DEFAULT False)
         quick_death = False
         if 'NO_NONCOTEMPORAL_DEPENDANTS' in parsed_def:
@@ -264,18 +269,20 @@ from dynamic_instantiation import get_object
             if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
                 quick_death = True
 
+        delay = 0
+        catchup_contact = False
+        sequential = False
+        contact = False
+        oneoff = False
+        dummy = False
+        task_type = None
+
         if 'TYPE' not in parsed_def:
-            print "ERROR: no %TYPE specified"
-            sys.exit(1)
+            if not inherit:
+                print "ERROR: no %TYPE specified"
+                sys.exit(1)
 
         else:
-
-            delay = 0
-            catchup_contact = False
-            sequential = False
-            contact = False
-            oneoff = False
-            dummy = False
 
             tmp = parsed_def[ 'TYPE' ][0]
             typelist = tmp.split(',')
@@ -358,6 +365,7 @@ from dynamic_instantiation import get_object
                 oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
 
         task_init_def_args = 'c_time, initial_state, startup = False, no_reset = False'
+        task_inherit_super_args = 'c_time, initial_state, startup, no_reset'
         task_init_args = 'initial_state, no_reset'
 
         if contact:
@@ -387,7 +395,10 @@ from dynamic_instantiation import get_object
             [ task_name, short_name ] = m.groups()
 
         # class definition
-        FILE.write( 'class ' + task_name + '(' + derived_from + '):\n' )
+        if inherit:
+            FILE.write( 'class ' + task_name + '(' + inherit_from + '):\n' )
+        else:
+            FILE.write( 'class ' + task_name + '(' + derived_from + '):\n' )
 
         indent_more()
  
@@ -416,7 +427,7 @@ from dynamic_instantiation import get_object
         if 'OWNER' in parsed_def:
             owner = parsed_def[ 'OWNER' ][0]
             FILE.write( indent + 'owner = \'' + owner + '\'\n' )
-        else:
+        elif not inherit:
             FILE.write( indent + 'owner = None\n' )
 
         # external task
@@ -432,10 +443,19 @@ from dynamic_instantiation import get_object
 
         FILE.write( indent + 'job_submit_method = None\n' )
 
-        # valid hours
-        FILE.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLES' ][0] + ']\n\n' )
+        if 'CYCLES' not in parsed_def:
+            # ASYNC TASKS DON'T HAVE CYLCES
+            #if not inherit:
+            #    print "ERROR: no %CYCLES provided for task " + task_name
+            #    sys.exit(1)
+            pass
 
-        FILE.write( indent + 'quick_death = ' + str(quick_death) + '\n\n' )
+        else:
+            # valid hours
+            FILE.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLES' ][0] + ']\n\n' )
+
+        if 'NO_NONCOTEMPORAL_DEPENDANTS' in parsed_def:
+            FILE.write( indent + 'quick_death = ' + str(quick_death) + '\n\n' )
 
         if oneoff_follow_on:
             FILE.write( indent + 'oneoff_follow_on = "' + oneoff_follow_on + '"\n\n' )
@@ -445,14 +465,19 @@ from dynamic_instantiation import get_object
 
         indent_more()
 
-        FILE.write( indent + '# adjust cycle time to next valid for this task\n' )
-        FILE.write( indent + 'self.c_time = self.nearest_c_time( c_time )\n' )
-        FILE.write( indent + 'self.tag = self.c_time\n' )
-        FILE.write( indent + 'self.id = self.name + \'%\' + self.c_time\n' )
-        # FIXME ASYNC
-        FILE.write( indent + 'hour = self.c_time[8:10]\n\n' )
+        if inherit:
+            FILE.write( indent + 'super(' + task_name + ', self ).__init__(' + task_inherit_super_args + ' )\n\n' )
 
-        if contact:
+        if not inherit:
+            FILE.write( indent + '# adjust cycle time to next valid for this task\n' )
+            FILE.write( indent + 'self.c_time = self.nearest_c_time( c_time )\n' )
+            FILE.write( indent + 'self.tag = self.c_time\n' )
+            FILE.write( indent + 'self.id = self.name + \'%\' + self.c_time\n' )
+            # FIXME ASYNC
+            FILE.write( indent + 'hour = self.c_time[8:10]\n\n' )
+
+        #if contact:
+        if 'CONTACT_DELAY' in parsed_def: 
             for line in parsed_def[ 'CONTACT_DELAY' ]:
                 line = re.sub( '\s+$', '', line )
                 # look for conditionals
@@ -473,7 +498,9 @@ from dynamic_instantiation import get_object
             FILE.write( '\n' )
 
         # ... prerequisites
-        FILE.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
+        if not inherit or 'PREREQUISITES' in parsed_def:
+            FILE.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
+
         if 'PREREQUISITES' in parsed_def:
             for line in parsed_def[ 'PREREQUISITES' ]:
 
@@ -539,31 +566,34 @@ from dynamic_instantiation import get_object
             indent_less()
 
         # ... outputs
-        FILE.write( '\n' )
-        FILE.write( indent + 'self.outputs = outputs( self.id )\n' )
+        if not inherit or 'OUTPUTS' in parsed_def:
+            FILE.write( '\n' )
+            FILE.write( indent + 'self.outputs = outputs( self.id )\n' )
 
         # automatic 'started' and 'finished' outputs
         if 'ESTIMATED_RUN_TIME' not in parsed_def:
-            print "ERROR: %ESTIMATED_RUN_TIME not defined"
-            sys.exit(1)
+            if not inherit:
+                print "ERROR: %ESTIMATED_RUN_TIME not defined"
+                sys.exit(1)
 
-        FILE.write( '\n' )
-        for line in parsed_def[ 'ESTIMATED_RUN_TIME' ]:
-            line = re.sub( '\s+$', '', line )
-            # look for conditionals
-            m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
-            if m:
-                [ left, rlen ] = m.groups()
-                # get a list of hours
-                hours = left.split(',')
-                for hour in hours:
-                    FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
-                    indent_more()
-                    FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n' )
-                    indent_less()
-            else:
-                rlen = line
-                FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n\n' )
+        else:
+            FILE.write( '\n' )
+            for line in parsed_def[ 'ESTIMATED_RUN_TIME' ]:
+                line = re.sub( '\s+$', '', line )
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, rlen ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    for hour in hours:
+                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n' )
+                        indent_less()
+                else:
+                    rlen = line
+                    FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n\n' )
        
         if 'OUTPUTS' in parsed_def:
             for line in parsed_def[ 'OUTPUTS' ]:
@@ -596,15 +626,18 @@ from dynamic_instantiation import get_object
                     FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
 
         # ... output patterns
-        FILE.write( '\n' )
-        FILE.write( indent + 'self.output_patterns = []\n' )
+        if not inherit:
+            FILE.write( '\n' )
+            FILE.write( indent + 'self.output_patterns = []\n' )
 
         if 'OUTPUT_PATTERNS' in parsed_def:
             for line in parsed_def[ 'OUTPUT_PATTERNS' ]:
                  FILE.write( indent + 'self.output_patterns.append( ' + line + ')\n' )
 
         # environment variables
-        FILE.write( '\n' + indent + 'self.env_vars = {}\n' )
+        if not inherit:
+            FILE.write( '\n' + indent + 'self.env_vars = {}\n' )
+
         if 'ENVIRONMENT' in parsed_def:
             for pair in parsed_def[ 'ENVIRONMENT' ]:
                 ( var, val ) = pair.split( ' ', 1 )
@@ -614,7 +647,9 @@ from dynamic_instantiation import get_object
                 FILE.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
 
         # command line
-        FILE.write( '\n' + indent + 'self.commandline = []\n' )
+        if not inherit:
+            FILE.write( '\n' + indent + 'self.commandline = []\n' )
+
         if 'COMMANDLINE' in parsed_def:
             for line in parsed_def[ 'COMMANDLINE' ]:
                 line = "'" + line + "'"
@@ -623,7 +658,9 @@ from dynamic_instantiation import get_object
                 FILE.write( indent + 'self.commandline.append(' + line + ')\n' )
 
         # batch queue scheduler directives (qsub or loadleveler)
-        FILE.write( '\n' + indent + 'self.directives = {}\n' )
+        if not inherit:
+            FILE.write( '\n' + indent + 'self.directives = {}\n' )
+
         if 'DIRECTIVES' in parsed_def:
             for pair in parsed_def[ 'DIRECTIVES' ]:
                 ( var, val ) = pair.split( ' ', 1 )
@@ -633,7 +670,8 @@ from dynamic_instantiation import get_object
                 FILE.write( indent + 'self.directives[' + var + '] = ' + val + '\n' )
 
         # forecast model restarts
-        if task_type == 'tied':
+        if task_type == 'tied' or ( inherit and 'ESTIMATED_RESTART_OUTPUT_TIMES' in parsed_def ):
+
             for line in parsed_def['ESTIMATED_RESTART_OUTPUT_TIMES']:
 
                 line = re.sub( '\s+$', '', line )
@@ -664,12 +702,13 @@ from dynamic_instantiation import get_object
                     FILE.write( indent + 'restart_times = [' + ','.join( transt ) + ']\n' )
                     FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
 
-        # call parent init methods
-        # FOR PARENT CLASS TYPES THAT HAVE INIT METHODS!
-        if catchup_contact:
-            FILE.write( indent + 'catchup_contact.__init__( self )\n\n' )
+        if not inherit:
+            # call parent init methods
+            # FOR PARENT CLASS TYPES THAT HAVE INIT METHODS!
+            if catchup_contact:
+                FILE.write( indent + 'catchup_contact.__init__( self )\n\n' )
  
-        FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
+            FILE.write( indent + task_type + '.__init__( self, ' + task_init_args + ' )\n\n' )
 
         indent_less()
         indent_less()

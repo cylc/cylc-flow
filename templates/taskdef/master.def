@@ -12,6 +12,21 @@
 # Refer also to the cylc userguide. Optional keys: [square brackets].
 
 #----------------------------------------------------------------------
+[%INHERIT]
+    # - Name of another task from which to inherit taskdef properties.
+    # - You must supply new %NAME, %TASK, %DESCRIPTION, and %OUTPUTS,
+    #   at a minimum.
+    # - Any new values for non-singular quantities such as prerequisites
+    #   or environment variables will entirely OVERRIDE, not add to,
+    #   those defined in the parent task.
+    # - Task definition files are generally so brief that there is not 
+    #   a lot of benefit to inheritance, but it may same some effort
+    #   when defining a lot of very similar tasks (e.g. for obs
+    #   processing, or a forecast ensemble). 
+    
+    parent_task_name
+
+#----------------------------------------------------------------------
 %NAME
     # - name[, shortname]
     # - the optional short name can be displayed by the monitor to help

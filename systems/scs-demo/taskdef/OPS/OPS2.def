@@ -1,5 +1,7 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
+%INHERIT
+    OPS1
 
 %NAME
     OPS2
@@ -7,22 +9,12 @@
 %DESCRIPTION
     Obs processing for group 2 obs
 
-%TYPE
-    free
-
-%CYCLES
-    0,6,12,18
-
 %TASK
     ops_obsgroup2.sh
 
 %ESTIMATED_RUN_TIME
-    6 min
-
-%PREREQUISITES
-    "obstore files ready for $(CYCLE_TIME)"
-    "Cx background file ready for $(CYCLE_TIME)"
+    4 min
 
 %OUTPUTS
-    5 min: "obsgroup 2 varobs ready for $(CYCLE_TIME)"
-    6 min: "obsgroup 2 Cx columns ready for $(CYCLE_TIME)"
+    3 min: "obsgroup 2 varobs ready for $(CYCLE_TIME)"
+    4 min: "obsgroup 2 Cx columns ready for $(CYCLE_TIME)"
