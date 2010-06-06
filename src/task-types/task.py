@@ -89,7 +89,7 @@ class task( Pyro.core.ObjBase ):
             pass
 
 
-    def __init__( self, state, no_reset ):
+    def __init__( self, state ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
@@ -98,7 +98,7 @@ class task( Pyro.core.ObjBase ):
         #  * self.env_vars 
 
         class_vars = {}
-        self.state = task_state.task_state( state, no_reset )
+        self.state = task_state.task_state( state )
 
         # count instances of each top level object derived from task
         # top level derived classes must define:

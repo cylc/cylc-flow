@@ -50,7 +50,9 @@ class manager:
         if 'include' in startup:
             self.include = startup[ 'include' ]
         if 'no_reset' in startup:
-            self.no_reset = startup[ 'no_reset' ]
+            self.no_reset = True
+        else:
+            self.no_reset = False
         if 'initial_state_dump' in startup:
             self.initial_state_dump = startup[ 'initial_state_dump' ]
          
@@ -178,7 +180,7 @@ class manager:
                 self.tasks.append( itask )
 
 
-    def load_from_state_dump( self, filename, no_reset_val ):
+    def load_from_state_dump( self, filename, no_reset ):
         # load initial system state from the configured state dump file
         #--
 
@@ -247,7 +249,18 @@ class manager:
                 log_created[ name ] = True
 
             itask = get_object( 'task_classes', name )\
-                    ( c_time, state, startup=False, no_reset=no_reset_val )
+                    ( c_time, state, startup=False )
+
+            if ( itask.state.is_failed() and not no_reset ) or \
+                    itask.state.is_submitted() or itask.state.is_running():
+                # These tasks were all satisified before the system was
+                # shut down. Submitted or running tasks may have
+                # finished after shutdown, but we can't know that so
+                # re-run them to be safe.  Also re-run failed tasks 
+                # unless told not to (the system was probably shut down
+                # to fix them). Set to READY (waiting and satisfied).
+                itask.state.set_status( 'waiting' )
+                itask.prerequisites.set_all_satisfied()
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):

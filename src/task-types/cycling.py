@@ -66,7 +66,7 @@ class cycling( task ):
 
     # DERIVED CLASSES MUST OVERRIDE: ready_to_spawn()
 
-    def __init__( self, state, no_reset ):
+    def __init__( self, state ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
@@ -77,7 +77,7 @@ class cycling( task ):
         # Top level derived classes must define:
         #   <class>.instance_count = 0
 
-        task.__init__( self, state, no_reset )
+        task.__init__( self, state )
 
     def nearest_c_time( self, rt ):
         # return the next time >= rt for which this task is valid

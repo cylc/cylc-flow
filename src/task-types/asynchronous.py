@@ -20,7 +20,7 @@ class asynchronous( nopid, task ):
 
     used_outputs = {}
     
-    def __init__( self, state, no_reset ):
+    def __init__( self, state ):
         # Call this AFTER derived class initialisation
 
         # Derived class init MUST define:
@@ -42,7 +42,7 @@ class asynchronous( nopid, task ):
         else:
             self.asyncid = 'UNSET'
 
-        task.__init__( self, state, no_reset )
+        task.__init__( self, state )
 
 
     def next_tag( self ):

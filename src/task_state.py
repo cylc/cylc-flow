@@ -29,7 +29,7 @@ class task_state:
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING
     allowed_bool = [ 'true', 'false' ]
 
-    def __init__( self, initial_state, no_reset ):
+    def __init__( self, initial_state ):
 
         self.state = {}
 
@@ -45,16 +45,6 @@ class task_state:
             # or a raw string ('waiting' etc.)
             self.state = self.parse( initial_state )
             self.check()
-
-            if self.is_running() or self.is_submitted():
-                # we can't be sure that these tasks completed after the
-                # system was shut down, so reset to waiting to ensure
-                # they run again after restarting the system. 
-                self.set_status( 'waiting' )
-                
-            if self.is_failed() and not no_reset:
-                # reset failed tasks to waiting unless told not to do so.
-                self.set_status( 'waiting' )
 
     def has_key( self, key ):
         if key in self.state.keys():

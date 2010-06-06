@@ -23,7 +23,7 @@ class cycling_daemon( oneoff, cycling ):
     # due to the pyro daemon (I think).
     daemon_task = True  
 
-    def __init__( self, state, no_reset ):
+    def __init__( self, state ):
 
         m = re.match( '(\d{10}) \| (.*)', state )
         if m:
@@ -34,7 +34,7 @@ class cycling_daemon( oneoff, cycling ):
 
         self.env_vars[ 'START_CYCLE_TIME' ] = self.last_reported
 
-        cycling.__init__( self, state, no_reset )
+        cycling.__init__( self, state )
 
 
     def incoming( self, priority, message ):
