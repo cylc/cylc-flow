@@ -718,7 +718,7 @@ Cylc View is a real time system monitor for Cylc.
         topbuttonbox.set_layout( gtk.BUTTONBOX_END )
         about_button = gtk.Button( "About" )
         about_button.connect("clicked", self.about )
-        led_heading_button = gtk.Button( "Headings" )
+        led_heading_button = gtk.Button( "Task Names" )
         led_heading_button.connect("clicked", self.led_heading_toggle )
         self.led_heading_type = 0
         topbuttonbox.add( led_heading_button )
