@@ -431,12 +431,22 @@ class CylcView:
         #print "BYE from main thread"
         return False
 
+    def reset_logbuffer( self ):
+        # clear log buffer iters and tags
+        logbuffer = self.logview.get_buffer()
+        s,e = logbuffer.get_bounds()
+        logbuffer.remove_all_tags( s,e )
+        self.find_current_iter = None
+        self.find_current = None
+ 
     def replace_log( self, logfile ):
         self.logfile = logfile
         self.lt.quit = True
         logpath = self.logdir + '/' + self.logfile 
         logbuffer = self.logview.get_buffer()
-        logbuffer.delete( logbuffer.get_start_iter(), logbuffer.get_end_iter() )
+        s,e = logbuffer.get_bounds()
+        self.reset_logbuffer()
+        logbuffer.delete( s, e )
         self.log_label.set_text( logpath ) 
         self.lt = LogThread( self.logview, logpath )
         #print "Starting log viewer thread"
@@ -471,7 +481,7 @@ class CylcView:
             level -= 1
 
         if level < 0:
-            self.warning_dialog( "You are already viewing the active (newest) log" )
+            self.warning_dialog( "The newest (active) log is already displayed" )
             return
 
         if level == 0:
