@@ -497,8 +497,10 @@ class CylcView:
         # PASSING IN ARGUMENTS?
         if b.get_active():
             self.lt.freeze = True
+            b.set_label( 'UnFreeze' )
         else:
             self.lt.freeze = False
+            b.set_label( 'Freeze' )
         return False
 
     def about( self, bt ):
@@ -535,6 +537,13 @@ Cylc View is a real time system monitor for Cylc.
         if not needle:
             return
 
+        self.lt.freeze = True
+        self.freeze_button.set_active(True)
+        self.freeze_button.set_label('UnFreeze')
+        if not self.search_warning_done:
+            self.warning_dialog( "Find Next detaches the live log feed; click UnFreeze when you're done" ) 
+            self.search_warning_done = True
+
         tb = tv.get_buffer ()
 
         if needle == self.find_current:
@@ -564,6 +573,7 @@ Cylc View is a real time system monitor for Cylc.
 
         self.find_current = None
         self.find_current_iter = None
+        self.search_warning_done = False
 
         # Get list of tasks in the system
         try:
@@ -812,10 +822,10 @@ Cylc View is a real time system monitor for Cylc.
         self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
         hbox.pack_start( self.log_label, True )
 
-        freeze_button = gtk.ToggleButton( "Freeze" )
-        freeze_button.set_active(False)
-        freeze_button.connect("toggled", self.freeze_log )
-        hbox.pack_end( freeze_button, False )
+        self.freeze_button = gtk.ToggleButton( "Freeze" )
+        self.freeze_button.set_active(False)
+        self.freeze_button.connect("toggled", self.freeze_log )
+        hbox.pack_end( self.freeze_button, False )
 
         combobox = gtk.combo_box_new_text()
         combobox.append_text( 'Select Log' ) 
