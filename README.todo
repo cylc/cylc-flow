@@ -162,9 +162,6 @@ To Do
 
 * retrofit proper exception handling throughout (current use is sporadic).
 
-* task.quick_death should default to False? (as for the task 
-  def key that maps to it, %COTEMPORAL_DEPENDANTS_ONLY).
-
 ====================================
 FUZZY PREREQUISITES (only for infrequent 'advanced' usage - e.g. hourly
 TopNet in EcoConnect)

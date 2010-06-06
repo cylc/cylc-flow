@@ -42,8 +42,11 @@ state_changed = True
 
 class task( Pyro.core.ObjBase ):
     
-    # this only needed in cycling tasks?
-    quick_death = True
+    # QUICK DEATH IS A DECLARATION THAT A TASK HAS NO NON-COTEMPORAL
+    # DOWNSTREAM DEPENDENTS; IT THUS CANNOT BE ALLOWED FOR TIED TASKS
+    # BECAUSE OF THEIR RESTART PREREQUISITES => DEFAULT TO FALSE.
+    # SEE CYCLING.PY; IS THIS RELEVANT TO NON-CYCLING TASKS?
+    quick_death = False
 
     @classmethod
     def describe( cls ):

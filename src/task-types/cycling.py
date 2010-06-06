@@ -54,10 +54,15 @@ class cycling( task ):
     # task won't give rise (on abdicating) to a new task that does
     # depend on the task we're interested in). 
 
-    # Tasks that are needed to satisfy the prerequisites of other tasks
-    # in subsequent cycles, however, must set quick_death = False, in
-    # which case they will be removed according to system cutoff time.
-    quick_death = True
+    # QUICK DEATH IS A DECLARATION THAT A TASK HAS NO NON-COTEMPORAL
+    # DOWNSTREAM DEPENDENTS; IT THUS CANNOT BE ALLOWED FOR TIED TASKS
+    # BECAUSE OF THEIR RESTART PREREQUISITES => DEFAULT TO FALSE.
+    quick_death = False
+    # Quick death tasks will be removed when they have finished and
+    # there are no earlier or cotemporal unfinished tasks.  Tasks that
+    # are needed to satisfy the prerequisites of other tasks in
+    # subsequent cycles, however, must have quick_death = False, in
+    # which case they will be removed by the global cutoff time.
 
     # DERIVED CLASSES MUST OVERRIDE: ready_to_spawn()
 
