@@ -25,6 +25,9 @@
 %TASK
     D.sh
 
+%NO_NONCOTEMPORAL_DEPENDANTS
+    True
+
 %PREREQUISITES
     "sea state fields ready for $(CYCLE_TIME)"
     "storm surge fields ready for $(CYCLE_TIME)"

@@ -25,6 +25,9 @@
 %TASK
     E.sh
 
+%NO_NONCOTEMPORAL_DEPENDANTS
+    True
+
 %PREREQUISITES
     "sea state fields ready for $(CYCLE_TIME)"
 
