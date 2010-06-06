@@ -503,13 +503,14 @@ class CylcView:
 
     def about( self, bt ):
         about = gtk.AboutDialog()
-        about.set_program_name( "cylc" )
+        if gtk.gtk_version[1] >= 12:
+            # set_program_name() was added in PyGTK 2.12
+            about.set_program_name( "cylc" )
         about.set_version( cylc_version )
         about.set_copyright( "(c) Hilary Oliver, NIWA" )
         about.set_comments( 
 """
-Cylc View is a real time system monitor for Cylc, a self organising
-dynamic metascheduler for cycling forecast systems.
+Cylc View is a real time system monitor for Cylc.
 """ )
         about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( gtk.gdk.pixbuf_new_from_file( imagedir + "/dew.jpg" ))
@@ -529,12 +530,40 @@ dynamic metascheduler for cycling forecast systems.
     def collapse_all( self, widget, view ):
         view.collapse_all()
 
+    def on_find_clicked( self, tv, e ):
+        needle = e.get_text ()
+        if not needle:
+            return
+
+        tb = tv.get_buffer ()
+
+        if needle == self.find_current:
+            s = self.find_current_iter
+        else:
+            s,e = tb.get_bounds()
+            tb.remove_all_tags( s,e )
+            s = tb.get_end_iter ()
+            tv.scroll_to_iter( s, 0 )
+        try:
+            f, l = s.backward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY) 
+        except:
+            self.warning_dialog( '"' + needle + '"' + " not found" )
+        else:
+            tag = tb.create_tag( None, background="#70FFA9" )
+            tb.apply_tag( tag, f, l )
+            self.find_current_iter = f
+            self.find_current = needle
+            tv.scroll_to_iter( f, 0 )
+
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("cylc view <" + groupname + ">" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         window.set_size_request(600, 500)
         window.connect("delete_event", self.delete_event)
+
+        self.find_current = None
+        self.find_current_iter = None
 
         # Get list of tasks in the system
         try:
@@ -599,7 +628,6 @@ dynamic metascheduler for cycling forecast systems.
         all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
         # initially filter out only 'finished' tasks
         self.filter_states = [ 'finished' ]
-
 
         # LOWER DISPLAY
 
@@ -770,6 +798,15 @@ dynamic metascheduler for cycling forecast systems.
         self.logdir = ss.get_config( 'logging_dir' ) 
         self.logfile = 'main'
         vbox = gtk.VBox()
+
+        search_hbox = gtk.HBox()
+        e = gtk.Entry ()
+        search_hbox.pack_start (e, True)
+        e.show () 
+        b = gtk.Button ("Find Next")
+        b.connect_object ('clicked', self.on_find_clicked, self.logview, e)
+        search_hbox.pack_start (b, False)
+
         hbox = gtk.HBox()
         self.log_label = gtk.Label( self.logdir + '/' + self.logfile )
         self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
@@ -784,7 +821,7 @@ dynamic metascheduler for cycling forecast systems.
         combobox.append_text( 'Select Log' ) 
         combobox.append_text( 'main' ) 
         for task in task_list:
-            combobox.append_text( task ) 
+            combobox.append_text( task )
 
         combobox.connect("changed", self.switch_log )
         combobox.set_active(0)
@@ -800,7 +837,9 @@ dynamic metascheduler for cycling forecast systems.
         hbox.pack_end( combobox, False )
  
         vbox.pack_start( logscroll, True )
+        vbox.pack_start( search_hbox, False )
         vbox.pack_start( hbox, False )
+
         notebook.append_page( vbox, gtk.Label("Log Viewer") )
 
         bigbox = gtk.VBox()
