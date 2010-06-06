@@ -508,9 +508,11 @@ class CylcView:
         if b.get_active():
             self.lt.freeze = True
             b.set_label( 'UnFreeze' )
+            self.reset_logbuffer()
         else:
             self.lt.freeze = False
             b.set_label( 'Freeze' )
+
         return False
 
     def about( self, bt ):
