@@ -544,6 +544,29 @@ Cylc View is a real time system monitor for Cylc.
     def collapse_all( self, widget, view ):
         view.collapse_all()
 
+    def led_heading_toggle( self, b ):
+        if self.led_heading_type == 2:
+            self.led_heading_type = 0
+            # no headings
+            headings = ['-'] * len( self.task_list )
+
+        elif self.led_heading_type == 0:
+            # short name headings
+            self.led_heading_type = 1
+            headings = self.task_list_shortnames
+
+        elif self.led_heading_type == 1:
+            # long name headings
+            self.led_heading_type = 2
+            headings = self.task_list
+
+        tvcs = self.led_treeview.get_columns()
+        for n in range( len( self.task_list) ):
+            heading = headings[n]
+            # underscores treated as underlines markup?
+            heading = re.sub( '_', ' ', heading )
+            tvcs[n].set_title( headings[n] )
+
     def on_find_clicked( self, tv, e ):
         needle = e.get_text ()
         if not needle:
@@ -594,19 +617,18 @@ Cylc View is a real time system monitor for Cylc.
             print x
             raise
 
-        task_name_heading = {}
-        task_list = ss.get_config( 'task_list' )
-        if not longnames:
-            task_list_shortnames = ss.get_config( 'task_list_shortnames' )
+        self.task_list = ss.get_config( 'task_list' )
+        shortnames = ss.get_config( 'task_list_shortnames' )
 
-        for t in range( len( task_list )):
-            if not longnames:
-                task_name_heading[ task_list[ t ] ] = task_list_shortnames[ t ]
-            else:
-                task_name_heading[ task_list[ t ] ] = task_list[ t ]
-        
-        task_list.sort()
+        temp = {}
+        for t in range( len( self.task_list )):
+            temp[ self.task_list[ t ] ] = shortnames[ t ]
 
+        self.task_list.sort()
+        self.task_list_shortnames = []
+        for task in self.task_list:
+            self.task_list_shortnames.append( temp[ task ] )
+ 
         # construct the LED display
 
         ctime_liststore = gtk.ListStore( gtk.gdk.Pixbuf, str )
@@ -626,25 +648,23 @@ Cylc View is a real time system monitor for Cylc.
 
         ctime_treeview.append_column( tvc )
 
-        foo = tuple( [gtk.gdk.Pixbuf]*len( task_list ) )
+        foo = tuple( [gtk.gdk.Pixbuf]*len( self.task_list ) )
         led_liststore = gtk.ListStore( *foo )
-        led_treeview = gtk.TreeView( led_liststore )
+        self.led_treeview = gtk.TreeView( led_liststore )
 
         # this doesn't show (brief flash of yellow at startup)
         #led_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "yellow" ) )
 
-        for n in range( len( task_list )):
+        for n in range( len( self.task_list )):
             cell = gtk.CellRendererPixbuf()
             cell.set_property( 'cell_background', 'black' )
             cell.set_property( 'xalign', 0 )
             # replace heading underscores with spaces (they display as underline!)
-            heading = task_name_heading[ task_list[n]]
-            heading = re.sub( '_', ' ', heading )
-            tvc = gtk.TreeViewColumn( heading  )
+            tvc = gtk.TreeViewColumn( "-"  )
             tvc.set_min_width( 20 )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cell, True )
             tvc.set_attributes( cell, pixbuf=n )
-            led_treeview.append_column( tvc )
+            self.led_treeview.append_column( tvc )
 
         # allow filtering out of 'finished' and 'waiting'
         all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
@@ -698,6 +718,10 @@ Cylc View is a real time system monitor for Cylc.
         topbuttonbox.set_layout( gtk.BUTTONBOX_END )
         about_button = gtk.Button( "About" )
         about_button.connect("clicked", self.about )
+        led_heading_button = gtk.Button( "Headings" )
+        led_heading_button.connect("clicked", self.led_heading_toggle )
+        self.led_heading_type = 0
+        topbuttonbox.add( led_heading_button )
         topbuttonbox.add( about_button )
         topbuttonbox.add( quit_button )
 
@@ -734,7 +758,7 @@ Cylc View is a real time system monitor for Cylc.
         led_hbox = gtk.HBox()
 
         led_hbox.pack_start( ctime_treeview, False )
-        led_hbox.pack_start( led_treeview, True )
+        led_hbox.pack_start( self.led_treeview, True )
 
         led_scrolledwindow = gtk.ScrolledWindow()
         led_scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
@@ -842,7 +866,7 @@ Cylc View is a real time system monitor for Cylc.
         combobox = gtk.combo_box_new_text()
         combobox.append_text( 'Select Log' ) 
         combobox.append_text( 'main' ) 
-        for task in task_list:
+        for task in self.task_list:
             combobox.append_text( task )
 
         combobox.connect("changed", self.switch_log )
@@ -874,7 +898,7 @@ Cylc View is a real time system monitor for Cylc.
         window.show_all()
 
         self.t = MyThread( ctime_liststore, led_liststore, fl_liststore,
-                ttreestore, task_list, label_mode, label_status, label_time )
+                ttreestore, self.task_list, label_mode, label_status, label_time )
 
         self.lt = LogThread( self.logview, self.logdir + '/' + self.logfile )
         #print "Starting task state info thread"
@@ -891,16 +915,11 @@ THIS PROGRAM MONITORS TASK PROXY OBJECTS INSIDE THE SCHEDULER, NOT
 EXTERNAL SYSTEM TASKS (how to do that obviously depends on the job
 submission method used by each task).""")
 
-    parser.add_option( "--longnames", help="Display full task names. The default "
-        "is to display short tasknames, if defined, to save screen space.",
-        action="store_true", default=False, dest="longnames" )
-
     ( options, args ) = parser.parse_args()
 
     system_name = parser.get_system_name()
     pns_host = parser.get_pns_host()
     groupname = parser.get_groupname()
-    longnames = options.longnames
 
     # get systems currently registered in the Pyro nameserver
     #ns_groups = pyrex.discover( pns_host )
