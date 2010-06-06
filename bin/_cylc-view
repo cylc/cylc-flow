@@ -619,7 +619,7 @@ Cylc View is a real time system monitor for Cylc.
             heading = task_name_heading[ task_list[n]]
             heading = re.sub( '_', ' ', heading )
             tvc = gtk.TreeViewColumn( heading  )
-            tvc.set_min_width( 30 )  # WIDTH OF LED PIXBUFS
+            tvc.set_min_width( 20 )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cell, True )
             tvc.set_attributes( cell, pixbuf=n )
             led_treeview.append_column( tvc )
