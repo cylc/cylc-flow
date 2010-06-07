@@ -1,0 +1,27 @@
+/* XPM */
+static char *new_digit_blank[] = {
+/* columns rows colors chars-per-pixel */
+"15 20 1 1",
+"  c black",
+/* pixels */
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               ",
+"               "
+};

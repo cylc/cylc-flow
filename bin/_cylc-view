@@ -109,7 +109,14 @@ class MyThread(threading.Thread):
         self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-running-glow.xpm" )
         self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-failed-glow.xpm" )
         self.finished_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-finished.xpm" )
+
         self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-empty.xpm" )
+
+        self.led_digits_one = []
+        self.led_digits_two = []
+        for i in range(10):
+            self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
+            self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
         #self.cc = color_chooser()
 
@@ -189,6 +196,17 @@ class MyThread(threading.Thread):
         column, key = data
         value = model.get_value( iter, column )
         return value == key
+
+    def digitize( self, ct ):
+        led_ctime = []
+        for i in range( 10 ):
+            digit = int( ct[i:i+1] )
+            if i in [0,1,2,3,6,7]:
+                led_ctime.append( self.led_digits_one[ digit ] )  
+            else:
+                led_ctime.append( self.led_digits_two[ digit ] )  
+
+        return led_ctime
 
     def update_gui( self ):
         #print "Updating GUI"
@@ -381,8 +399,8 @@ class MyThread(threading.Thread):
                     state_list.append( self.empty_led )
 
             self.led_liststore.append( state_list )
-            self.ctime_liststore.append( [ self.empty_led, 
-                '<span color="#5af"><b>' + ctime + '</b></span>'] )
+            
+            self.ctime_liststore.append( self.digitize( ctime ) )
 
         return False
 
@@ -631,22 +649,25 @@ Cylc View is a real time system monitor for Cylc.
  
         # construct the LED display
 
-        ctime_liststore = gtk.ListStore( gtk.gdk.Pixbuf, str )
+        foo = tuple( [gtk.gdk.Pixbuf]*10 )
+        ctime_liststore = gtk.ListStore( *foo )
         ctime_treeview = gtk.TreeView( ctime_liststore )
         tvc = gtk.TreeViewColumn( 'cycle' )
         
-        cellpb = gtk.CellRendererPixbuf()
-        cellpb.set_property( 'cell-background', 'black' )
-        tvc.pack_start( cellpb, False )
-        tvc.set_attributes( cellpb, pixbuf=0  )
-
-        cell = gtk.CellRendererText()
-        cell.set_property( 'cell-background', 'black' )
-        tvc.pack_start( cell, True )
-        tvc.set_attributes( cell, markup=1 )
-        #tvc.set_attributes( cell, text=1 )
+        for i in range(10):
+            cellpb = gtk.CellRendererPixbuf()
+            cellpb.set_property( 'cell-background', 'black' )
+            tvc.pack_start( cellpb, False )
+            tvc.set_attributes( cellpb, pixbuf=i  )
 
         ctime_treeview.append_column( tvc )
+
+        #cell = gtk.CellRendererText()
+        #cell.set_property( 'cell-background', 'black' )
+        #tvc.pack_start( cell, True )
+        #tvc.set_attributes( cell, markup=1 )
+        #tvc.set_attributes( cell, text=1 )
+
 
         foo = tuple( [gtk.gdk.Pixbuf]*len( self.task_list ) )
         led_liststore = gtk.ListStore( *foo )
