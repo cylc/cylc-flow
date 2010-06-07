@@ -1,0 +1,95 @@
+#!/usr/bin/python
+
+import os, re
+import shutil
+import cycle_time
+from optparse import OptionParser
+
+usage = """rolling-archive [options] DIR
+
+Implement a cycle time based rolling archive.
+
+Matches FIRST cycle time found in file names
+"""
+
+parser = OptionParser( usage )
+
+parser.add_option( "-c", "--cycle-time",
+        metavar='YYYYMMDDHH',
+        help="Cycle time, defaults to $CYCLE_TIME",
+        action="store", dest="ctime" )
+
+parser.add_option( "-d", "--directories",
+        help="The archive contains sub-directories labeled by cycle time",
+        action="store_true", dest="subdirs", default=False )
+
+parser.add_option( "-o", "--offset",
+        metavar="HOURS",
+        help="""delete files in DIR more than HOUR hours older than
+cycle time""", action="store", dest="offset" )
+
+( options, args ) = parser.parse_args()
+
+if options.ctime:
+    ctime = options.ctime
+elif 'CYCLE_TIME' in os.environ:
+    ctime = os.environ[ 'CYCLE_TIME' ]
+else:
+    parser.error( "Use --cycle-time or define $CYCLE_TIME" )
+
+if options.offset:
+    offset_str = options.offset
+    try:
+        offset = int( offset_str )
+    except ValueError:
+        parser.error( "HOURS must be an integer" )
+    else:
+        if offset < 0:
+            parser.error( "HOURS must be positive" )
+
+else:
+    parser.error( "The --offset option is not optional" )
+
+if len( args ) != 1:
+    parser.error( "One argument required: DIR" ) 
+
+archive = args[0]
+
+if not os.path.isdir( archive ):
+    parser.error( "Directory not found: " + archive )
+
+if options.subdirs:
+    dirs = True
+else:
+    dirs = False
+
+
+remove = []
+for entry in os.listdir( archive ):
+    entrypath = archive + '/' + entry
+    if ( dirs and os.path.isdir( entrypath ) ) or ( not dirs and os.path.isfile( entrypath ) ):
+        found = False
+        times = re.findall( '(\d{10})', entry )
+        for time in times:
+            if cycle_time.is_valid( time ):
+                found = True
+                break
+        if not found:
+            continue
+
+        gap = cycle_time.diff_hours( ctime, time )
+        if gap > offset:
+            remove.append( entry )
+
+if len( remove ) == 0:
+    print "rolling-archive: Nothing to remove from " + archive
+else:
+    print "rolling-archive: Removing from " + archive + ":"
+
+for item in remove:
+    itempath = archive + '/' + item
+    print ' ', item 
+    if dirs:
+        shutil.rmtree( itempath )
+    else:
+        os.unlink( itempath )
