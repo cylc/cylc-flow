@@ -11,14 +11,12 @@
 
 
 """ 
-Ecoconnect CYCLE_TIME (YYYYMMDDHH)
-
-This was a class to define cycle time objects that know how to
-increment themselves, etc. But now that the controller does not have a
-global cycle time a procedural module will do.
+CYCLE TIME (YYYYMMDDHH)
 """
 
 # do logical comparisons of cycle times in integer form: int( rt )
+
+# (note "rt" == "reference time" = old cylc name for "cycle time")
 
 import datetime
 import re
