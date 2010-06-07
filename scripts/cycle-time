@@ -21,6 +21,18 @@ parser.add_option( "-o", "--offset", metavar="HOURS",
         help="Apply an offset of +/-HOURS to CYCLE", action="store",
         dest="offset" )
 
+parser.add_option( "--year", help="Print only YYYY of result",
+        action="store_true", default=False, dest="print_year" )
+
+parser.add_option( "--month", help="Print only MM of result",
+        action="store_true", default=False, dest="print_month" )
+
+parser.add_option( "--day", help="Print only DD of result",
+        action="store_true", default=False, dest="print_day" )
+
+parser.add_option( "--hour", help="Print only HH of result",
+        action="store_true", default=False, dest="print_hour" )
+
 (options, args) = parser.parse_args()
 
 if len( args ) == 0:
@@ -62,6 +74,31 @@ if options.offset:
 if n_chosen != 1:
     parser.error( "Choose ONE of subtract, add, or offset" )
 
+n_chosen = 0
+print_year = False
+print_month = False
+print_day = False
+print_hour = False
+
+if options.print_year:
+    n_chosen +=1
+    print_year = True
+
+if options.print_month:
+    n_chosen +=1
+    print_month = True
+
+if options.print_day:
+    n_chosen +=1
+    print_day = True
+
+if options.print_hour:
+    n_chosen +=1
+    print_hour = True
+
+if n_chosen != 0 and n_chosen != 1:
+    parser.error( "Choose NONE or ONE of print_(year|month|day|hour)" )
+
 try:
     hours = int( hours_str )
 except ValueError:
@@ -75,6 +112,17 @@ if offset:
         add = True
 
 if add:
-    print cycle_time.increment( cycle, hours )
+    result = cycle_time.increment( cycle, hours )
 elif subtract:
-    print cycle_time.decrement( cycle, hours )
+    result = cycle_time.decrement( cycle, hours )
+
+if print_year:
+    print result[0:4]
+elif print_month:
+    print result[4:6]
+elif print_day:
+    print result[6:8]
+elif print_hour:
+    print result[8:10]
+else:
+    print result
