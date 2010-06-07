@@ -50,14 +50,14 @@ PATH=$($CYLC_DIR/bin/_cylc-clean-path $PATH)
 PYTHONPATH=$($CYLC_DIR/bin/_cylc-clean-path $PYTHONPATH)
 
 # export PATH to cylc bin
-PATH=$CYLC_DIR/bin:$PATH
+PATH=$CYLC_DIR/bin:$CYLC_DIR/scripts:$PATH
 
 # export PYTHONPATH to cylc core source modules
 PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$PYTHONPATH
 
 if [[ -n $CYLC_SYSTEM_DIR ]]; then
-    # caller must be a cylc jobfile; set system-specific paths
-    PATH=$CYLC_DIR/scripts:$CYLC_SYSTEM_DIR/scripts:$PATH
+    # caller must be a cylc jobfile; add system-specific paths as well
+    PATH=$CYLC_SYSTEM_DIR/scripts:$PATH
     PYTHON_PATH=$CYLC_SYSTEM_DIR:$PYTHONPATH
 fi
 
