@@ -1,0 +1,89 @@
+#!/usr/bin/python
+
+import os, sys
+import cycle_time
+from optparse import OptionParser
+
+parser = OptionParser( usage = """cycle-time [options] CYCLE_TIME
+
+Print the result of adding or subtracting a specified number of 
+hours from a given cycle time (YYYYMMDDHH), or $CYCLE_TIME.""" )
+
+parser.add_option( "-s", "--subtract", metavar="HOURS",
+        help="Subtract HOURS from CYCLE", action="store",
+        dest="subtract" )
+
+parser.add_option( "-a", "--add", metavar="HOURS",
+        help="Add HOURS to CYCLE", action="store", dest="add" )
+
+parser.add_option( "-o", "--offset", metavar="+/-HOURS",
+        help="Apply an offset of +/-HOURS to CYCLE", action="store",
+        dest="offset" )
+
+(options, args) = parser.parse_args()
+
+if len( args ) == 0:
+    if 'CYCLE_TIME' not in os.environ:
+        parser.error( "Provide CYCLE arg, or define $CYCLE_TIME" )
+    else:
+        cycle = os.environ[ 'CYCLE_TIME' ]
+elif len( args ) == 1:
+    cycle = args[0]
+else:
+    parser.error( "Wrong number of arguments!" )
+
+if not cycle_time.is_valid( cycle ):
+    parser.error( "invalid cycle time: " + cycle )
+
+if not ( options.add or options.subtract or options.offset):
+    parser.error( "Choose either subtract, add, or offset" )
+
+n_chosen = 0
+subtract = False
+add = False
+offset = False
+
+if options.subtract:
+    subtract = True
+    n_chosen += 1 
+    try:
+        hours = int( options.subtract )
+    except ValueError:
+        parser.error( "HOURS must be integer" )
+    else:
+        if hours < 0:
+            parser.error( "HOURS must be a positive integer" )
+
+if options.add:
+    add = True
+    n_chosen += 1
+    try:
+        hours = int( options.add )
+    except ValueError:
+        parser.error( "HOURS must be integer" )
+    else:
+        if hours < 0:
+            parser.error( "HOURS must be a positive integer" )
+
+if options.offset:
+    offset = True
+    n_chosen += 1
+    try:
+        hours = int( options.offset )
+    except ValueError:
+        parser.error( "HOURS must be integer" )
+
+    if hours < 0:
+        subtract = True
+        hours = - hours
+    else:
+        add = True
+
+if n_chosen != 1:
+    parser.error( "Choose ONE of subtract, add, or offset" )
+
+if add:
+    print cycle_time.increment( cycle, hours )
+
+elif subtract:
+    print cycle_time.decrement( cycle, hours )
