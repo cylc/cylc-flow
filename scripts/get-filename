@@ -1,0 +1,54 @@
+#!/usr/bin/python
+
+import os, re
+from optparse import OptionParser
+
+usage = """get_filename [options] TEMPLATE-NAME
+
+Generate a cycle time dependent filename according to a template that
+has been exported into the environment. For example:
+    $ export FOO=fooHH-YYYYMMDD.nc
+    $ get_filename -c 2010111706 FOO
+    foo06-20101117.nc
+Filenaming conventions for an entire cylc system can thus be defined in 
+the system config file enviroment section.
+"""
+
+parser = OptionParser( usage )
+
+parser.add_option( "-c", "--cycle-time",
+        metavar='YYYYMMDDHH',
+        help="Cycle time, defaults to $CYCLE_TIME",
+        action="store", dest="cycle_time" )
+
+( options, args ) = parser.parse_args()
+
+if options.cycle_time:
+    cycle_time = options.cycle_time
+elif 'CYCLE_TIME' in os.environ:
+    cycle_time = os.environ[ 'CYCLE_TIME' ]
+else:
+    parser.error( "Use --cycle-time or define $CYCLE_TIME" )
+
+if len( args ) != 1:
+    parser.error( "Please supply a template name" )
+
+template_name = args[0]
+
+if template_name not in os.environ:
+    parser.error( "$" + template_name + " is not defined" )
+
+template = os.environ[ template_name ]
+
+# replace YYYYMMDDHH
+result = re.sub( "YYYYMMDDHH", cycle_time, template )
+# replace YYYY, MM, DD, HH
+result = re.sub( 'YYYY', cycle_time[0:4], result )
+result = re.sub( 'MM',   cycle_time[4:6], result )
+result = re.sub( 'DD',   cycle_time[6:8], result )
+result = re.sub( 'HH',   cycle_time[8:10], result )
+# replace YY
+result = re.sub( 'YY', cycle_time[2:3], result )
+
+print result
+
