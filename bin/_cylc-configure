@@ -73,17 +73,22 @@ shift $(( OPTIND -1 ))
 if [[ $# == 1 ]]; then 
     # all args supplied
     SYS_DIR=$1
-    if [[ $SYS_DIR != /* ]]; then
-        # make absolute path
-        SYS_DIR=$PWD/$SYS_DIR
-        # remove trailing '/'
-        SYS_DIR=${SYS_DIR%/}
-    fi
-
 else
     echo "WRONG NUMBER OF ARGS"
     print_usage
 	exit 1
+fi
+
+if [[ ! -d $SYS_DIR ]]; then
+    echo "Directory not found: $SYS_DIR"
+    exit 1
+fi
+
+if [[ $SYS_DIR != /* ]]; then
+    # make path absolute 
+    SYS_DIR=$PWD/$SYS_DIR
+    # remove trailing '/'
+    SYS_DIR=${SYS_DIR%/}
 fi
 
 # is SYS_DIR a cylc system definition directory?
