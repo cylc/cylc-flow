@@ -1,5 +1,9 @@
 To Do
 
+* JOBLOG file or dir in taskdef files -> task state summary object ->
+  allow cylc view to access task-specific stdout and stderr files (and
+  similar) as the system runs!
+
 * OUTPUTS must contain $(CYCLE_TIME) NOT $CYCLE_TIME currently. Document
   this or make it possible to use the environmenet variable!
 
