@@ -346,8 +346,7 @@ from dynamic_instantiation import get_object
                 print "WARNING: this task has the 'dummy' task type modifier, and therefore its"
                 print "external task, " + external_task + ", will be replaced by _cylc-dummy-task."
         else:
-            # no external task specified
-            if not dummy:
+            if not dummy and not inherit:
                 print 'ERROR: no external task specified'
                 sys.exit(1)
 

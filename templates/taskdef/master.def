@@ -14,8 +14,7 @@
 #----------------------------------------------------------------------
 [%INHERIT]
     # - Name of another task from which to inherit taskdef properties.
-    # - You must supply new %NAME, %TASK, %DESCRIPTION, and %OUTPUTS,
-    #   at a minimum.
+    # - You must supply at least %NAME, %DESCRIPTION, and %OUTPUTS.
     # - Any new values for non-singular quantities such as prerequisites
     #   or environment variables will entirely OVERRIDE, not add to,
     #   those defined in the parent task.
