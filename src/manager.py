@@ -41,6 +41,7 @@ class manager:
         # initialise the dependency broker
         self.broker = broker()
 
+        self.no_reset = False
         if 'start_time' in startup:
             self.start_time = startup[ 'start_time' ]
         if 'restart' in startup:
@@ -50,9 +51,7 @@ class manager:
         if 'include' in startup:
             self.include = startup[ 'include' ]
         if 'no_reset' in startup:
-            self.no_reset = True
-        else:
-            self.no_reset = False
+            self.no_reset = startup[ 'no_reset' ]
         if 'initial_state_dump' in startup:
             self.initial_state_dump = startup[ 'initial_state_dump' ]
          
@@ -71,10 +70,10 @@ class manager:
     def load( self ):
         # instantiate the initial task list and create loggers 
         if self.start_time:
-            self.load_from_config( self.start_time, self.exclude, self.include )
+            self.load_from_config()
 
         elif self.restart:
-            self.load_from_state_dump( self.initial_state_dump, self.no_reset )
+            self.load_from_state_dump()
         else:
             raise SystemExit( "No startup method defined!" )
 
@@ -137,10 +136,14 @@ class manager:
                 oldest = itask.c_time
         return oldest
 
-    def load_from_config ( self, start_time, exclude, include ):
+    def load_from_config ( self ):
         # load initial system state from configured tasks and start time
         #--
         
+        start_time = self.start_time
+        exclude = self.exclude
+        include = self.include
+
         # set clock before using log (affects dummy mode only)
         self.clock.set( start_time )
 
@@ -180,9 +183,12 @@ class manager:
                 self.tasks.append( itask )
 
 
-    def load_from_state_dump( self, filename, no_reset ):
+    def load_from_state_dump( self ):
         # load initial system state from the configured state dump file
         #--
+
+        filename = self.initial_state_dump
+        no_reset = self.no_reset
 
         print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
         self.log.info( 'Loading initial state from ' + filename )
@@ -251,16 +257,29 @@ class manager:
             itask = get_object( 'task_classes', name )\
                     ( c_time, state, startup=False )
 
-            if ( itask.state.is_failed() and not no_reset ) or \
-                    itask.state.is_submitted() or itask.state.is_running():
-                # These tasks were all satisified before the system was
-                # shut down. Submitted or running tasks may have
-                # finished after shutdown, but we can't know that so
-                # re-run them to be safe.  Also re-run failed tasks 
-                # unless told not to (the system was probably shut down
-                # to fix them). Set to READY (waiting and satisfied).
+            if itask.state.is_finished():  
+                # must have satisfied prerequisites and completed outputs
+                itask.log( 'NORMAL', "starting in FINISHED state" )
+                itask.prerequisites.set_all_satisfied()
+                itask.outputs.set_all_complete()
+
+            elif itask.state.is_submitted() or itask.state.is_running():  
+                # Must have satisfied prerequisites. These tasks may have
+                # finished after the system was shut down, but as we
+                # can't know that for sure we have to re-submit them.
+                itask.log( 'NORMAL', "starting in READY state" )
                 itask.state.set_status( 'waiting' )
                 itask.prerequisites.set_all_satisfied()
+
+            elif itask.state.is_failed():
+                # Re-submit these unless the system operator says not to. 
+                if no_reset:
+                    itask.log( 'WARNING', "starting in FAILED state: manual reset required" )
+                    itask.prerequisites.set_all_satisfied()
+                else:
+                    itask.log( 'NORMAL', "starting in READY state" )
+                    itask.state.set_status( 'waiting' )
+                    itask.prerequisites.set_all_satisfied()
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
@@ -873,6 +892,6 @@ class manager:
     def trash( self, task, reason ):
         self.tasks.remove( task )
         self.pyro.disconnect( task )
-        task.log( 'NORMAL', "disconnected; " + reason )
+        task.log( 'DEBUG', "disconnected; " + reason )
         task.prepare_for_death()
         del task

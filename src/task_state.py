@@ -37,9 +37,6 @@ class task_state:
             # defaults
             self.state[ 'status' ] = 'waiting'
             self.state[ 'spawned' ] = 'false'
-            #self.state[ 'satisfied' ] = 'false'
-
-
         else:
             # could be a state dump file entry
             # or a raw string ('waiting' etc.)
@@ -65,20 +62,11 @@ class task_state:
     def set_spawned( self ):
         self.state[ 'spawned' ] = 'true'
 
-    #def set_satisfied( self ):
-    #    self.state[ 'satisfied' ] = 'true'
-
     def has_spawned( self ):
         if self.state[ 'spawned' ] == 'true':
             return True
         else:
             return False
-
-    #def is_satisfied( self ):
-    #    if self.state[ 'satisfied' ] == 'true':
-    #        return True
-    #    else:
-    #        return False
 
     def is_finished( self ):
         if self.state[ 'status' ] == 'finished':

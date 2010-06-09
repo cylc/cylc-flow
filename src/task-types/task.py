@@ -114,26 +114,6 @@ class task( Pyro.core.ObjBase ):
 
         self.latest_message = ""
 
-        if self.state.is_running():  
-            # running tasks must have satisfied prerequisites
-            self.log( 'WARNING', " starting in RUNNING state: MANUAL RESET REQUIRED!" )
-            self.outputs.set_all_unsatisfied()
-            self.prerequisites.set_all_satisfied()
-
-        if self.state.is_finished():  
-            # finished tasks must have satisfied prerequisites
-            # and completed outputs
-            self.log( 'NORMAL', " starting in FINISHED state" )
-            self.outputs.set_all_satisfied()
-            self.prerequisites.set_all_satisfied()
-
-        #elif self.state.is_satisfied():
-        #    # a waiting state can be satisfied (i.e. ready to go)
-        #    # particular if the system has been paused before 
-        #    # shutdown (which happens in normal shutdown).
-        #    self.log( 'WARNING', " starting in SATISFIED state" )
-        #    self.prerequisites.set_all_satisfied()
-
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 
                         self.__class__.owner, self.__class__.remote_host )
