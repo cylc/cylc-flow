@@ -3169,18 +3169,19 @@ for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
 {\em The minimum cycle time granularity for a task is currently one hour}.
 
 Note that this is only loosely connected to when, or how frequently, a
-task actually runs, and only in real time operation: under cylc tasks
-can run as soon as their prerequisites are satisfied regardless of their
-nominal cycle time. However, it would be easy to extend this to minutes
-and seconds if necessary.  
+task actually runs, and then only in real time operation: the system's
+external contact tasks trigger at some interval passed their nominal
+cycle time, which in real time operation will be at most hourly for a
+given task. Aside from this tasks can run as soon as their prerequisites
+are satisfied regardless of their nominal cycle time. It would be easy
+to extend this minimum granularity to minutes and seconds if necessary.  
 
-\subsection{Task Frequency}
+{\em Every task must run at least once per day} (of cycle time, not real
+time, although the first implies the second in real time operation). 
 
-{\em Every task must run at least once per day.}
-
-(Of cycle time, not real time). Valid cycles times for a task are 
-specified in the taskdef \lstinline=CYCLES= key.  It would be
-easy to allow less frequent tasks if required. 
+Valid cycles times for a task are specified in the taskdef
+\lstinline=CYCLES= key.  It would be easy to extend this to allow less
+frequent tasks if required. 
 
 
 %\section{Miscellaneous Notes}
