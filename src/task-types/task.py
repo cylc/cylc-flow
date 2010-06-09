@@ -138,14 +138,6 @@ class task( Pyro.core.ObjBase ):
                 ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 
                         self.__class__.owner, self.__class__.remote_host )
 
-    def register_run_length( self, run_len_minutes ):
-        # automatically define special 'started' and 'finished' outputs
-        self.outputs.add( 0, self.id + ' started' )
-        # and 'completed' for dependant tasks that don't care about
-        # success or failure of this task, only completion
-        self.outputs.add( run_len_minutes - 0.01, self.id + ' completed' )
-        self.outputs.add( run_len_minutes, self.id + ' finished' )
-
     def log( self, priority, message ):
         # task-specific log file
 
@@ -208,10 +200,6 @@ class task( Pyro.core.ObjBase ):
             self.state.set_status( 'failed' )
             self.log( 'CRITICAL', "job submission failed" )
 
-    def get_timed_outputs( self ):
-        # NOT USED?
-        return self.outputs.get_timed_requisites()
-
     def set_all_internal_outputs_completed( self ):
         # used by the task wrapper 
         self.log( 'DEBUG', 'setting all internal outputs completed' )
@@ -229,8 +217,8 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
-    def get_postrequisite_list( self ):
-        return self.outputs.get_list()
+    def get_ordered_outputs( self ):
+        return self.outputs.get_ordered()
 
     def incoming( self, priority, message ):
         # receive all incoming pyro messages for this task 

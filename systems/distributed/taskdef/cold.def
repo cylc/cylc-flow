@@ -42,8 +42,5 @@
 %STARTUP_PREREQUISITES
     "startup%$(CYCLE_TIME) finished" 
 
-%ESTIMATED_RUN_TIME
-    10 min
-
 %OUTPUTS
-    7 min: "forecast restart files ready for $(CYCLE_TIME)"
+    "forecast restart files ready for $(CYCLE_TIME)"

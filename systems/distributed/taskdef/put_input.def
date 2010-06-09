@@ -34,9 +34,6 @@
 %PREREQUISITES
     "external data ready for $(CYCLE_TIME)"
 
-%ESTIMATED_RUN_TIME
-    10 min
-
 %OUTPUTS
-    10 min: "forecast input ready for $(CYCLE_TIME)"
+    "forecast input ready for $(CYCLE_TIME)"
 

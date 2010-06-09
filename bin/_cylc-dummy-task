@@ -26,7 +26,6 @@ from time import sleep
 import subprocess
 from connector import connector
 
-
 class dummy_task:
 
     def __init__( self, task_id, groupname, pns_host ):
@@ -55,49 +54,26 @@ class dummy_task:
 
 
     def run( self ):
-
         # get a list of output messages to fake: outputs[ time ] = [ output, ... ]
-        outputs = self.task.get_timed_outputs()
+        outputs = self.task.get_ordered_outputs()
+        n_outputs = len( outputs ) 
 
-        # ordered list of times
-        times = outputs.keys()
-        times.sort()
+        interval_m = run_length/(n_outputs -2 )  # (send 'completed' and 'finished' at once)
+        interval_s = interval_m * 60.0
+        interval_rs = interval_s * clock_rate / 3600.0
 
-        # time to stop counting and generate the output
-        # [ 0, 28, 30 ] dummy minutes
-        prev_time = times[0]
-        for time in times:
-            # wait until the stop time for each output, and then generate the output
-            diff_hrs = ( time - prev_time )/60.0
-            dt_diff = datetime.timedelta( 0,0,0,0,0,diff_hrs,0 )
-            # timedeltas are stored as days, seconds, milliseconds.
-            dt_diff_sec = dt_diff.days * 24 * 3600 + dt_diff.seconds
-            dt_diff_sec_real = dt_diff_sec * clock_rate / 3600.0
-            sleep( dt_diff_sec_real )
+        for i in range( n_outputs - 2 ):
+            self.send( outputs[i] )
 
-            # make sure the finished message is last
-            fin = self.id + ' finished' 
-            if fin in outputs[time]:
-                outputs[time].remove( fin )
-                outputs[time].append( fin )
-
-            for output in outputs[ time ]:
-                self.send( output )
-
-            if failout:
-                # fail after the first message (and a small delay)
+            sleep( interval_rs )
+            if i == 2 and failout:
                 sleep(2)
-
-                # but first report 'completed' for dependent tasks that
-                # don't care if this one finishes successfully or fails
-            
                 self.send( self.id + ' completed' )
                 self.send( self.id + ' failed' )
-                
                 sys.exit(1)
 
-            prev_time = time
-            
+        self.send( outputs[-2] )            
+        self.send( outputs[-1] )            
 
 #----------------------------------------------------------------------
 if __name__ == '__main__':
@@ -117,5 +93,24 @@ if __name__ == '__main__':
             print 'dummy task ' + task_id + ' programmed to FAIL!'
             failout = True
 
+    if 'CYLC_DUMMY_TASK_RUN_LENGTH' in os.environ:
+        run_length = int( os.environ[ 'CYLC_DUMMY_TASK_RUN_LENGTH' ] )
+        print 'dummy task ' + task_id + ' dummy task run length: ' + str( run_length )
+    else:
+        run_length = 20.0
+
     dummy = dummy_task( task_id, groupname, pns_host )
     dummy.run()
+
+
+#-------
+# Time arithmetic from earlier cylc versions in which an estimated
+# completion time had to be registered with each output, and these
+# were simulated accurately in dummy mode:
+
+#diff_hrs = ( time - prev_time )/60.0
+#dt_diff = datetime.timedelta( 0,0,0,0,0,diff_hrs,0 )
+## timedeltas are stored as days, seconds, milliseconds.
+#dt_diff_sec = dt_diff.days * 24 * 3600 + dt_diff.seconds
+#dt_diff_sec_real = dt_diff_sec * clock_rate / 3600.0
+#sleep( dt_diff_sec_real )

@@ -34,11 +34,8 @@
 %PREREQUISITES
     "surface wind fields ready for $(CYCLE_TIME)"
 
-%ESTIMATED_RUN_TIME
-    60 min
-
-%ESTIMATED_RESTART_OUTPUT_TIMES
-    10 min, 20 min
+%N_RESTART_OUTPUTS
+    2
 
 %OUTPUTS
-    60 min: "sea state fields ready for $(CYCLE_TIME)"
+    "sea state fields ready for $(CYCLE_TIME)"

@@ -146,9 +146,9 @@ def main( argv ):
     allowed_keys = [ 'INHERIT', 'NAME', 'OWNER', 'CYCLES', 'TASK',
             'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
             'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
-            'STARTUP_PREREQUISITES', 'OUTPUTS', 'ESTIMATED_RUN_TIME',
+            'STARTUP_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
-            'ONEOFF_FOLLOW_ON', 'ESTIMATED_RESTART_OUTPUT_TIMES' ]
+            'ONEOFF_FOLLOW_ON' ]
 
     allowed_types = ['tied', 'free', 'cycling_daemon' ]
     allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
@@ -373,11 +373,9 @@ from dynamic_instantiation import get_object
                 sys.exit(1)
 
         if task_type == 'tied':
-            if 'ESTIMATED_RESTART_OUTPUT_TIMES' not in parsed_def:
-                print 'Error: forecast models must define %ESTIMATED_RESTART_OUTPUT_TIMES'
+            if 'N_RESTART_OUTPUTS' not in parsed_def:
+                print 'Error: tied tasks must define %N_RESTART_OUTPUTS'
                 sys.exit(1)
-            #else:
-            #    restart_list = parsed_def[ 'ESTIMATED_RESTART_OUTPUT_TIMES' ][0]
 
         task_name = parsed_def[ 'NAME' ][0]
 
@@ -568,42 +566,16 @@ from dynamic_instantiation import get_object
         if not inherit or 'OUTPUTS' in parsed_def:
             FILE.write( '\n' )
             FILE.write( indent + 'self.outputs = outputs( self.id )\n' )
-
-        # automatic 'started' and 'finished' outputs
-        if 'ESTIMATED_RUN_TIME' not in parsed_def:
-            if not inherit:
-                print "ERROR: %ESTIMATED_RUN_TIME not defined"
-                sys.exit(1)
-
-        else:
-            FILE.write( '\n' )
-            for line in parsed_def[ 'ESTIMATED_RUN_TIME' ]:
-                line = re.sub( '\s+$', '', line )
-                # look for conditionals
-                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
-                if m:
-                    [ left, rlen ] = m.groups()
-                    # get a list of hours
-                    hours = left.split(',')
-                    for hour in hours:
-                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
-                        indent_more()
-                        FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n' )
-                        indent_less()
-                else:
-                    rlen = line
-                    FILE.write( indent + 'self.register_run_length( ' + time_trans( rlen ) + ' )\n\n' )
-       
+      
         if 'OUTPUTS' in parsed_def:
             for line in parsed_def[ 'OUTPUTS' ]:
 
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:
-                    [ left, timed_req ] = m.groups()
+                    [ left, req ] = m.groups()
                     # get a list of hours
                     hours = left.split(',')
-                    [ time, req ] = timed_req.split( ':' )
 
                     req = require_quotes( req, 'outputs' )
 
@@ -612,21 +584,42 @@ from dynamic_instantiation import get_object
                     for hour in hours:
                         FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
-                        FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
+                        FILE.write( indent + 'self.outputs.add( ' + req + ' )\n' )
                         indent_less()
                 else:
-                    timed_req = line
-                    [ time, req ] = timed_req.split( ':' )
+                    req = line
 
                     req = require_quotes( req, 'outputs' )
 
                     req = "'" + req + "'"
                     req = interpolate_cycle_times( req )
-                    FILE.write( indent + 'self.outputs.add( ' + time_trans( time ) + ', ' + req + ' )\n' )
+                    FILE.write( indent + 'self.outputs.add( ' + req + ' )\n' )
 
+        # forecast model restarts
+        if task_type == 'tied' or ( inherit and 'N_RESTART_OUTPUTS' in parsed_def ):
+            for line in parsed_def['N_RESTART_OUTPUTS']:
+                line = re.sub( '\s+$', '', line )
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, right ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    for hour in hours:
+                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        n_restart_outputs = right
+                        FILE.write( indent + 'self.register_restart_outputs(' + n_restart_outputs + ')\n' )
+
+                        indent_less()
+                else:
+                    n_restart_outputs = line
+                    FILE.write( indent + 'self.register_restart_outputs(' + n_restart_outputs +')\n' )
+
+        FILE.write( indent + 'self.outputs.register()\n\n' )
+ 
         # ... output patterns
         if not inherit:
-            FILE.write( '\n' )
             FILE.write( indent + 'self.output_patterns = []\n' )
 
         if 'OUTPUT_PATTERNS' in parsed_def:
@@ -668,39 +661,7 @@ from dynamic_instantiation import get_object
                 val = interpolate_cycle_times( "'" + val + "'" )
                 FILE.write( indent + 'self.directives[' + var + '] = ' + val + '\n' )
 
-        # forecast model restarts
-        if task_type == 'tied' or ( inherit and 'ESTIMATED_RESTART_OUTPUT_TIMES' in parsed_def ):
-
-            for line in parsed_def['ESTIMATED_RESTART_OUTPUT_TIMES']:
-
-                line = re.sub( '\s+$', '', line )
-                # look for conditionals
-                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
-                if m:
-                    [ left, right ] = m.groups()
-                    # get a list of hours
-                    hours = left.split(',')
-                    for hour in hours:
-                        FILE.write( indent + 'if int( hour ) == ' + hour + ':\n' )
-                        indent_more()
-                        restarts = right.split( ',' )
-                        transt = []
-                        for t in restarts:
-                            transt.append( time_trans( t ) )
-
-                        FILE.write( indent + 'restart_times = [' + ','.join( transt ) + ']\n' )
-                        FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
-
-                        indent_less()
-                else:
-                    restarts = line.split( ',' )
-                    transt = []
-                    for t in restarts:
-                        transt.append( time_trans( t ) )
-
-                    FILE.write( indent + 'restart_times = [' + ','.join( transt ) + ']\n' )
-                    FILE.write( indent + 'self.register_restarts( restart_times )\n\n' )
-
+       
         if not inherit:
             # call parent init methods
             # FOR PARENT CLASS TYPES THAT HAVE INIT METHODS!

@@ -32,8 +32,5 @@
     "sea state fields ready for $(CYCLE_TIME)"
     "storm surge fields ready for $(CYCLE_TIME)"
 
-%ESTIMATED_RUN_TIME
-    75 min 
-
 %OUTPUTS
-    75 min: "seagram products ready for $(CYCLE_TIME)"
+    "seagram products ready for $(CYCLE_TIME)"

@@ -41,12 +41,8 @@
 %PREREQUISITES
     "forecast input ready for $(CYCLE_TIME)"
 
-%ESTIMATED_RUN_TIME
-    90 min
-
-%ESTIMATED_RESTART_OUTPUT_TIMES
-    15 min
+%N_RESTART_OUTPUTS
+    1
 
 %OUTPUTS
-    90 min: "forecast output ready for $(CYCLE_TIME)"
-
+    "forecast output ready for $(CYCLE_TIME)"

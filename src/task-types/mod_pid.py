@@ -20,16 +20,16 @@ class pid:
     # prerequisites and outputs, and overrides
     # free.ready_to_spawn() appropriately.
     
-    def register_restarts( self, output_times ):
+    def register_restart_outputs( self, n_restart_outputs ):
         # call after parent init, so that self.c_time is defined!
 
         msg = self.name + ' restart files ready for '
         self.prerequisites.add(  msg + self.c_time )
 
         rt = self.c_time
-        for t in output_times:
+        for n in range( n_restart_outputs ):
             next_rt = self.next_c_time( rt )
-            self.outputs.add( t, msg + next_rt )
+            self.outputs.add( msg + next_rt )
             rt = next_rt
 
     def set_next_restart_completed( self ):

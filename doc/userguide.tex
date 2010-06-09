@@ -989,6 +989,18 @@ be completed as the task runs. {\em These are just literal text
 strings - messages that running tasks must send to their proxy objects,
 inside the cylc scheduler, whenever they complete a registered output}.
 
+In earlier versions of cylc an estimated run time for the task, and an
+estimated completion time for each task output, had to be supplied in
+the task definition, allowing very accurate simulation of each task
+in cylc's dummy mode.  However, this added some complexity to the task
+definition process, and because of inevitable variation in real task
+effective run times due to resource contention it probably gives no
+great benefit over the current simpler scheme: all dummy tasks are
+assigned the same run time and their outputs reported in regular
+intervals over that time - this is still a complete test of system
+meta-scheduling (i.e.\ tasks triggering as soon as their dependencies
+are satisfied). 
+
 \begin{itemize}
     \item A task proxy considers a registered output ``completed''
         if it has received a matching message from its external task.
@@ -1196,12 +1208,7 @@ type, that alter its behaviour to some extent:
 
 \end{itemize}
 
-\subsection{Timed Outputs}
 
-Outputs have to be registered with an {\em estimated time of completion}.
-The timing information is currently only used in dummy mode to simulate
-the correct task run time, so accuracy isn't critical. In the future
-it may also be used to check system progress against expected behaviour.
 
 \subsection{Automatic Started And Finished Outputs}
 

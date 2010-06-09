@@ -35,10 +35,7 @@
 %STARTUP_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"
 
-%ESTIMATED_RUN_TIME
-    50 min
-
 %OUTPUTS
-    47 min: "A restart files ready for $(CYCLE_TIME)"
-    48 min: "B restart files ready for $(CYCLE_TIME)"
-    49 min: "C restart files ready for $(CYCLE_TIME)"
+    "A restart files ready for $(CYCLE_TIME)"
+    "B restart files ready for $(CYCLE_TIME)"
+    "C restart files ready for $(CYCLE_TIME)"

@@ -32,8 +32,5 @@
 %STARTUP_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"
 
-%ESTIMATED_RUN_TIME
-    5 min
-
 %OUTPUTS
-    5 min: "obs data ready for $(CYCLE_TIME)"
+    "obs data ready for $(CYCLE_TIME)"

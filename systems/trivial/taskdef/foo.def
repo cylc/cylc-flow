@@ -30,6 +30,3 @@
 
 %ENVIRONMENT
     WRAP foo.sh
-
-%ESTIMATED_RUN_TIME
-    5 min

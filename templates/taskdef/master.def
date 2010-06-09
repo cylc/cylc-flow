@@ -74,13 +74,14 @@
     # - Located in the system definition scripts sub-directory,
     #     or an external location (full path, or not if in $PATH)
     # - Not required by tasks with the 'dummy' modifier.
+
     run-foo.sh
 
 #----------------------------------------------------------------------
 [%REMOTE_HOST]
-    # - URL of a remote machine on which this task must run.
+    # - URL of a remote machine on which this task must but submitted.
     # - Can be defined by an environment variable from system_config
-    # e.g.:
+
     $SUPERCOMPUTER
  
 #----------------------------------------------------------------------
@@ -91,6 +92,7 @@
     #     satisfied AND wall clock time > task cycle time + the delay.
     # - Has no affect on case study or sufficiently delayed operation
     #     (where wall clock time > cycle time + delay).
+
     4.5 hr
 
 #----------------------------------------------------------------------
@@ -98,7 +100,7 @@
     # - Submit the task to run under this username.
     # - Defaults to the cylc user.
     # - Can be defined by an environment variable from system_config
-    # e.g:
+
     bob
     # or:
     $REMOTE_MODEL_OWNER
@@ -175,17 +177,9 @@
     #   former version will be interpolated before reaching the shell.
     #   and can use cylc's internal cycle time arithmetic - note the
     #   parentheses to distinguish from shell environment variables.
+
     directive_name1 value1
     directive_name2 value2
-
-#----------------------------------------------------------------------
-%ESTIMATED_RUN_TIME   
-    # - Units: min, sec, hr
-    # - Used only in dummy mode, to simulate correct task run time
-    # - May be conditional on cycle hour.
-           20 min      # default 20 minutes
-    0,12 | 25 min      # 25 minutes if cycle hour is 00 or 12
-    6,18 | 35 min      # 35 minutes if cycle hour is 06 or 18
 
 #----------------------------------------------------------------------
 %PREREQUISITES      
@@ -205,45 +199,36 @@
 #----------------------------------------------------------------------
 [%STARTUP_PREREQUISITES]
     # - Prerequisites that are only used once, at system start up.
+
     "cold start outputs ready for $(CYCLE_TIME)"
 
 #----------------------------------------------------------------------
 %OUTPUTS
     # - Quoted string literals, one output message per line.
-    # - Prefix with estimated completion time in min, sec, or hr. 
-    #   - (used only in dummy mode, to simulate correct completion time).
     # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
-    # - DO NOT REGISTER the special 'started' and 'finished' messages,
-    #     or the special restart outputs of 'tied' tasks (i.e. forecast
-    #     models); these are all handled automatically by cylc.
+    # - DO NOT REGISTER THE SPECIAL 'started' and 'finished' MESSAGES,
+    #   OR THE SPECIAL RESTART OUTPUTS OF TIED TASKS, these are handled
+    #   automatically by cylc.
     # - May be conditional on cycle hour, as for prerequisites.
-    # - Should contain $(CYCLE_TIME) somewhere, to distinguish outputs
-    #     from different cycles.
+    # - $(CYCLE_TIME) should almost certainly appear somewhere in the
+    #   string to distinguish between the outputs of instances of this
+    #   task with different cycle times.
 
-           10 min: "file foo_0_$(CYCLE_TIME).nc ready"
-    0,12 | 15 min: "foo outputs ready for $(CYCLE_TIME)"
-    6,18 | 15 min: "file foo_2_$(CYCLE_TIME).nc ready"
+           "file foo_0_$(CYCLE_TIME).nc ready"
+    0,12 | "foo outputs ready for $(CYCLE_TIME)"
+    6,18 | "file foo_2_$(CYCLE_TIME).nc ready"
 
 #----------------------------------------------------------------------
-[%ESTIMATED_RESTART_OUTPUT_TIMES]
-    # - 'tied' tasks only (i.e. forecast models).
-    # - Comma separated list of estimated completion times, in min, sec,
-    #     or hr, for the restart outputs depended on by subsequent
-    #     instances of this task.
+[%N_RESTART_OUTPUTS]
+    # - Required for "tied" tasks (i.e. forecast models).
+    # - The number of subsequent consecutive cycles for which this task
+    #   writes "restart outputs".
     # - May be conditional on cycle hour, as for prerequisites.
-    # - The number of times listed should equal the number of restart
-    #   outputs dumped by the task in real operation.
-    # - The time estimates are used only in dummy mode, to correctly 
-    #     simulate the time that restart outputs are completed.
-    # - The time values are used only in dummy mode, but number of
-    #   times listed is more generally important: for N entries, ONE
-    #     special restart PREREQUISITE and N special restart OUTPUTS
-    #     are registered automatically.
-    # - The first restart output is assumed to valid at the cycle time 
-    #     of the NEXT task instance, the second for the NEXT NEXT
-    #     instance, and so on.
-    0,12 | 5 min
-    6,18 | 5 min, 10 min, 15 min
+    # - Results in ONE restart PREREQUISITE and N restart OUTPUTS
+    #   being registered automatically for this task.
+
+    0,12 | 2
+    6,18 | 4
 
 #----------------------------------------------------------------------
 [%NO_NONCOTEMPORAL_DEPENDANTS] 
@@ -253,6 +238,7 @@
     #     waiting at or prior to its cycle time.
     # - DO NOT SET TRUE FOR 'tied' TASKS (FORECAST MODELS), which by 
     #     definition depend on their predescessor's restart outputs.
+
     True
 
 #----------------------------------------------------------------------
@@ -262,4 +248,5 @@
     #   dependants (which your system will probably not have!) so
     #   that cylc knows when it can delete this task (it cannot be
     #   deleted before its depandants exist).
+
     task_foo

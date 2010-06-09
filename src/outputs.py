@@ -19,7 +19,6 @@ from requisites import requisites
 # "Satisfied" => the output has been completed.
 
 class outputs( requisites ):
-
     # outputs are requisites for which each message represents an
     # output or milestone that has either been completed (satisfied) or
     # not (not satisfied).
@@ -28,28 +27,31 @@ class outputs( requisites ):
     # completion time, used to simulate task execution in dummy mode.
 
     def __init__( self, owner_id ):
-        self.message = {}    # self.message[ t ] = [ "message1", "message2", ...] 
-        self.time = {}       # self.time[ "message1" ] = t, etc.
+        self.ordered = [] 
         requisites.__init__( self, owner_id )
+        # automatically define special 'started' and 'finished' outputs
 
-    def add( self, t, message ):
+    def add( self, message ):
         # Add a new unsatisfied output message for time t
-
         if message in self.satisfied.keys():
             # duplicate output messages are an error.
             print 'ERROR: already registered: ' + message
             sys.exit(1)
-
         self.satisfied[message] = False
-        if t not in self.message.keys():
-            self.message[ t ] = [ message ]
-        else:
-            self.message[ t ].append( message )
+        self.ordered.append( message )
 
-        self.time[message] = t
+    def register( self ):
+        message = self.owner_id + ' started'
+        self.satisfied[ message ] = False
+        self.ordered.insert(0, message )
 
-    def get_timed_requisites( self ):
-        return self.message
+        # and 'completed' for dependant tasks that don't care about
+        # success or failure of this task, only completion
+        self.add( self.owner_id + ' completed' )
+        self.add( self.owner_id + ' finished' )
+
+    def get_ordered( self ):
+        return self.ordered
 
     def set_all_incomplete( self ):
         requisites.set_all_unsatisfied( self )

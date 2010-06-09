@@ -28,8 +28,5 @@
 %PREREQUISITES
     "forecast output at $(CYCLE_TIME) ready for postprocessing"
 
-%ESTIMATED_RUN_TIME
-    10 min
-
 %OUTPUTS
-    10 min: "forecast products ready for $(CYCLE_TIME)"
+    "forecast products ready for $(CYCLE_TIME)"

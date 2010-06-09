@@ -35,11 +35,8 @@
     "surface pressure field ready for $(CYCLE_TIME)"
     "surface wind fields ready for $(CYCLE_TIME)"
 
-%ESTIMATED_RUN_TIME
-    120 min
-
-%ESTIMATED_RESTART_OUTPUT_TIMES
-    40 min, 80 min
+%N_RESTART_OUTPUTS
+    2
 
 %OUTPUTS
-    118 min: "storm surge fields ready for $(CYCLE_TIME)"
+    "storm surge fields ready for $(CYCLE_TIME)"

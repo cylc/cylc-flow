@@ -33,13 +33,10 @@
 %PREREQUISITES
     "obs data ready for $(CYCLE_TIME)"
 
-%ESTIMATED_RUN_TIME
-    90 min
-
-%ESTIMATED_RESTART_OUTPUT_TIMES
-    20 min
+%N_RESTART_OUTPUTS
+    1
 
 %OUTPUTS
-    80 min: "level forecast fields ready for $(CYCLE_TIME)"
-    80 min: "surface wind fields ready for $(CYCLE_TIME)"
-    80 min: "surface pressure field ready for $(CYCLE_TIME)"
+    "level forecast fields ready for $(CYCLE_TIME)"
+    "surface wind fields ready for $(CYCLE_TIME)"
+    "surface pressure field ready for $(CYCLE_TIME)"

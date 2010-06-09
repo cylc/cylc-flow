@@ -35,8 +35,5 @@
 %STARTUP_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"
 
-%ESTIMATED_RUN_TIME
-    10 min
-
 %OUTPUTS
-    9 min: "external data ready for $(CYCLE_TIME)"
+    "external data ready for $(CYCLE_TIME)"

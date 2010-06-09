@@ -42,8 +42,5 @@
 %PREREQUISITES
     "storm surge fields ready for $(CYCLE_TIME)"
 
-%ESTIMATED_RUN_TIME
-    50 min
-
 %OUTPUTS
-    50 min: "storm surge products ready for $(CYCLE_TIME)"
+    "storm surge products ready for $(CYCLE_TIME)"

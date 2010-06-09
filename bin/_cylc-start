@@ -192,6 +192,12 @@ def commandline_parser():
             "and then abort. Use this to test failure and recovery scenarios.",
             metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
 
+    parser.add_option( "--dummy-task-run-length", help=\
+            "(DUMMY MODE) change the length of the time interval, relative "
+            "to the dummy mode clock, taken by each running task. The default "
+            "is 20 minutes.",
+            metavar="MINUTES", action="store", dest="dummy_task_run_length" )
+
     return parser
 
 # =====================================================================
@@ -425,8 +431,11 @@ if dummy_mode:
     config.put_env( 'CYLC_CLOCK_RATE', str( options.clock_rate ) )
     # communicate failout_task_id to the dummy task program
     if options.failout_task_id:
-        print "FAILOUT: " + options.failout_task_id
+        print "SETTING FAILOUT: " + options.failout_task_id
         config.put_env( 'CYLC_FAILOUT_ID', options.failout_task_id )
+    if options.dummy_task_run_length:
+        print "SETTING DUMMY TASK RUN LENGTH: " + options.dummy_task_run_length
+        config.put_env( 'CYLC_DUMMY_TASK_RUN_LENGTH', options.dummy_task_run_length )
 
 config.check_environment()
 job_submit.dummy_mode = dummy_mode
