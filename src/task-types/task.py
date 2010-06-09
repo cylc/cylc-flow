@@ -116,7 +116,7 @@ class task( Pyro.core.ObjBase ):
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 
-                        self.__class__.owner, self.__class__.remote_host )
+                        self.logfile, self.__class__.owner, self.__class__.remote_host )
 
     def log( self, priority, message ):
         # task-specific log file
@@ -316,6 +316,9 @@ class task( Pyro.core.ObjBase ):
         summary[ 'n_completed_outputs' ] = n_satisfied
         summary[ 'spawned' ] = self.state.has_spawned()
         summary[ 'latest_message' ] = self.latest_message
+
+        if self.logfile:
+            summary[ 'logfile' ] = self.logfile
  
         return summary
 

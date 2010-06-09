@@ -55,7 +55,6 @@ class system_config( config ):
 
         # to override the default job submit method for specific tasks, e.g.:
         #self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
-        self.items['job_submit_overrides']['at_now'] = [ 'A' ]
 
         # Environment variables available to all tasks. Values can include
         # local environment variables, other environment variables

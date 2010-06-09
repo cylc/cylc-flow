@@ -22,5 +22,8 @@ class background( job_submit ):
         # file) - ssh can exit immediately after invoking the job
         # script, without waiting for the remote process to finish.
 
-        log = self.task_id + '-$$.log'
+        if self.logfile:
+            log = self.logfile
+        else:
+            log = self.task_id + '-$$.log'
         self.command = self.jobfile_path + " </dev/null > " + log + " 2>&1 &" 

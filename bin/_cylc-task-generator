@@ -143,8 +143,8 @@ def main( argv ):
 
     task_def_files = argv[1:]
 
-    allowed_keys = [ 'INHERIT', 'NAME', 'OWNER', 'CYCLES', 'TASK',
-            'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
+    allowed_keys = [ 'LOGFILE', 'INHERIT', 'NAME', 'OWNER', 'CYCLES',
+            'TASK', 'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
             'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
@@ -525,6 +525,11 @@ from dynamic_instantiation import get_object
                     req = interpolate_cycle_times( req )
                     FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
  
+        if 'LOGFILE' in parsed_def:
+            logfile = parsed_def[ 'LOGFILE' ][0] 
+            FILE.write( indent + 'self.logfile = "' + logfile + '"\n' )
+        else:
+            FILE.write( indent + 'self.logfile = None\n' )
 
         # are the prerequisites different for the first instance?
         if 'STARTUP_PREREQUISITES' in parsed_def:

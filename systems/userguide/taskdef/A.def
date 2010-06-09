@@ -13,6 +13,10 @@
 %NAME
     A, a
 
+%LOGFILE
+    #A-$(CYCLE_TIME).log
+    A-munge.log
+
 %DESCRIPTION
     Could be an atmospheric model. 
     Requires real time obs data, and own restart file.

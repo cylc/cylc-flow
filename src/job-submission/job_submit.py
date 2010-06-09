@@ -53,10 +53,12 @@ class job_submit:
     dummy_mode = False
     global_env = {}
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, log, owner, host ): 
 
         # unique task identity
         self.task_id = task_id
+
+        self.logfile = log
 
         # in dummy mode, replace the real external task with the dummy task
         self.task = ext_task
