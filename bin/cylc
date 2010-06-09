@@ -28,10 +28,14 @@ allowed_commands = \
     'resume',
     'lock',
     'unlock',
-    'reset',
+    'set-level',
+    'nudge',
     'insert',
+    'reset',
     'kill',
     'purge',
+    'run-task',
+    'message',
     'suicide',
     'view',
     'monitor',
@@ -39,11 +43,6 @@ allowed_commands = \
     'list-all',
     'what-is',
     'system-info',
-    'run-task',
-    'set-level',
-    'nudge',
-    'message',
-    'suicide',
     'unit-test'
     ]
 
