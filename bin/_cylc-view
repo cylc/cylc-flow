@@ -80,7 +80,7 @@ class LogThread(threading.Thread):
         return False
 
 class MyThread(threading.Thread):
-    def __init__(self, ctime_liststore, led_liststore, fl_liststore, ttreestore,
+    def __init__(self, led_liststore, fl_liststore, ttreestore,
             task_list, label_mode, label_status, label_time ):
 
         super(MyThread, self).__init__()
@@ -90,7 +90,6 @@ class MyThread(threading.Thread):
         self.fl_liststore = fl_liststore
         self.ttreestore = ttreestore
         self.led_liststore = led_liststore
-        self.ctime_liststore = ctime_liststore
         self.task_list = task_list
         self.label_mode = label_mode
         self.label_status = label_status
@@ -137,7 +136,6 @@ class MyThread(threading.Thread):
             self.led_liststore.clear()
             self.ttreestore.clear()
             self.fl_liststore.clear()
-            self.ctime_liststore.clear()
             gobject.idle_add( self.connection_lost )
  
             return False
@@ -364,7 +362,6 @@ class MyThread(threading.Thread):
 
         # LED VIEW
         self.led_liststore.clear()
-        self.ctime_liststore.clear()
 
         tasks = {}
         for id in self.state_summary:
@@ -398,9 +395,8 @@ class MyThread(threading.Thread):
                 else:
                     state_list.append( self.empty_led )
 
-            self.led_liststore.append( state_list )
+            self.led_liststore.append( self.digitize( ctime ) + state_list )
             
-            self.ctime_liststore.append( self.digitize( ctime ) )
 
         return False
 
@@ -566,23 +562,23 @@ Cylc View is a real time system monitor for Cylc.
         if self.led_heading_type == 2:
             self.led_heading_type = 0
             # no headings
-            headings = ['-'] * len( self.task_list )
+            headings = ['Cycle Time' ] + ['-'] * len( self.task_list )
 
         elif self.led_heading_type == 0:
             # short name headings
             self.led_heading_type = 1
-            headings = self.task_list_shortnames
+            headings = ['Cycle Time' ] + self.task_list_shortnames
 
         elif self.led_heading_type == 1:
             # long name headings
             self.led_heading_type = 2
-            headings = self.task_list
+            headings = ['Cycle Time' ] + self.task_list
 
         tvcs = self.led_treeview.get_columns()
-        for n in range( len( self.task_list) ):
+        for n in range( 1,1+len( self.task_list) ):
             heading = headings[n]
             # underscores treated as underlines markup?
-            heading = re.sub( '_', ' ', heading )
+            #heading = re.sub( '_', ' ', heading )
             tvcs[n].set_title( headings[n] )
 
     def on_find_clicked( self, tv, e ):
@@ -649,34 +645,23 @@ Cylc View is a real time system monitor for Cylc.
  
         # construct the LED display
 
-        foo = tuple( [gtk.gdk.Pixbuf]*10 )
-        ctime_liststore = gtk.ListStore( *foo )
-        ctime_treeview = gtk.TreeView( ctime_liststore )
-        tvc = gtk.TreeViewColumn( 'cycle' )
+        foo = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
+        led_liststore = gtk.ListStore( *foo )
+        self.led_treeview = gtk.TreeView( led_liststore )
+        tvc = gtk.TreeViewColumn( 'Cycle Time' )
         
         for i in range(10):
             cellpb = gtk.CellRendererPixbuf()
             cellpb.set_property( 'cell-background', 'black' )
             tvc.pack_start( cellpb, False )
-            tvc.set_attributes( cellpb, pixbuf=i  )
+            tvc.set_attributes( cellpb, pixbuf=i )
 
-        ctime_treeview.append_column( tvc )
-
-        #cell = gtk.CellRendererText()
-        #cell.set_property( 'cell-background', 'black' )
-        #tvc.pack_start( cell, True )
-        #tvc.set_attributes( cell, markup=1 )
-        #tvc.set_attributes( cell, text=1 )
-
-
-        foo = tuple( [gtk.gdk.Pixbuf]*len( self.task_list ) )
-        led_liststore = gtk.ListStore( *foo )
-        self.led_treeview = gtk.TreeView( led_liststore )
+        self.led_treeview.append_column( tvc )
 
         # this doesn't show (brief flash of yellow at startup)
-        #led_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "yellow" ) )
+        # led_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "yellow" ) )
 
-        for n in range( len( self.task_list )):
+        for n in range( 10, 10+len( self.task_list )):
             cell = gtk.CellRendererPixbuf()
             cell.set_property( 'cell_background', 'black' )
             cell.set_property( 'xalign', 0 )
@@ -778,7 +763,6 @@ Cylc View is a real time system monitor for Cylc.
 
         led_hbox = gtk.HBox()
 
-        led_hbox.pack_start( ctime_treeview, False )
         led_hbox.pack_start( self.led_treeview, True )
 
         led_scrolledwindow = gtk.ScrolledWindow()
@@ -919,7 +903,7 @@ Cylc View is a real time system monitor for Cylc.
 
         window.show_all()
 
-        self.t = MyThread( ctime_liststore, led_liststore, fl_liststore,
+        self.t = MyThread( led_liststore, fl_liststore,
                 ttreestore, self.task_list, label_mode, label_status, label_time )
 
         self.lt = LogThread( self.logview, self.logdir + '/' + self.logfile )
