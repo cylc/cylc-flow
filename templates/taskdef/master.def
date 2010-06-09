@@ -15,11 +15,11 @@
 [%INHERIT]
     # - Name of another task from which to inherit taskdef properties.
     # - You must supply at least %NAME, %DESCRIPTION, and %OUTPUTS.
-    # - Any new values for non-singular quantities such as prerequisites
-    #   or environment variables will entirely OVERRIDE, not add to,
+    # - Non-singular quantities such as prerequisites and environment
+    #   variables, if provided, will entirely OVERRIDE, not add to,
     #   those defined in the parent task.
     # - Task definition files are generally so brief that there is not 
-    #   a lot of benefit to inheritance, but it may same some effort
+    #   a lot of benefit to inheritance, but it may save some effort
     #   when defining a lot of very similar tasks (e.g. for obs
     #   processing, or a forecast ensemble). 
     
@@ -27,22 +27,25 @@
 
 #----------------------------------------------------------------------
 %NAME
-    # - name[, shortname]
-    # - the optional short name can be displayed by the monitor to help
-    #   clarify views of large systems. Cylc commands can refer to
-    #   tasks by their full or short names.
+    # - Name[, Shortname]
+
+    # - The optional short name can be displayed by system monitors to 
+    #   help save screen real estate when viewing large systems. 
+    # - Cylc commands can refer to tasks by full or short names.
+
     nz_forecast, nzf
 
 #----------------------------------------------------------------------
 %DESCRIPTION
     # - freeform multiline text description of what this task does.
+
     The quick brown fox jumped over the lazy dog.
 
 #----------------------------------------------------------------------
 %TYPE
-    # - Task type ('free' or 'tied') with optional type modifiers
     free[, oneoff, sequential, dummy, contact, catchup_contact ]
 
+    # - Task type ('free' or 'tied') with optional type modifiers
     # - FREE tasks have no previous-instance dependence: successive
     #     instances can run in parallel if the opportunity arises.
     #     Most non-forecast model tasks should be of this type.
@@ -66,6 +69,7 @@
 #----------------------------------------------------------------------
 %CYCLES
     # - Comma separated list of cycle hours valid for this task
+
     0,6,12,18
 
 #----------------------------------------------------------------------
