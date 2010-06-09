@@ -1,5 +1,7 @@
 To Do
 
+* Document UM-style custom-wrapper based job submission.
+
 * JOBLOG file or dir in taskdef files -> task state summary object ->
   allow cylc view to access task-specific stdout and stderr files (and
   similar) as the system runs!
