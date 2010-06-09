@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
@@ -156,7 +156,7 @@ def main( argv ):
     # open the output file
     FILE = open( task_class_file, 'w' )
     # python interpreter location
-    FILE.write( '#!/usr/bin/python\n\n' )
+    FILE.write( '#!/usr/bin/env python\n\n' )
     # auto-generation warning
     # preamble
     FILE.write( 

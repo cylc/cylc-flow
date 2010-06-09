@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|

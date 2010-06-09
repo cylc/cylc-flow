@@ -185,7 +185,7 @@ fi
 
 if $WRITE_CONFIG; then
 cat > system_config.py <<eof
-#!/usr/bin/python
+#!/usr/bin/env python
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
@@ -276,7 +276,7 @@ fi
 
 if $WRITE_INFO; then
 cat > system_info.py <<eof
-#!/usr/bin/python
+#!/usr/bin/env python
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
