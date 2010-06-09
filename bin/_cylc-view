@@ -648,8 +648,10 @@ Cylc View is a real time system monitor for Cylc.
         foo = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
         led_liststore = gtk.ListStore( *foo )
         self.led_treeview = gtk.TreeView( led_liststore )
+        ts = self.led_treeview.get_selection()
+        ts.set_mode( gtk.SELECTION_NONE )
+
         tvc = gtk.TreeViewColumn( 'Cycle Time' )
-        
         for i in range(10):
             cellpb = gtk.CellRendererPixbuf()
             cellpb.set_property( 'cell-background', 'black' )
@@ -687,6 +689,10 @@ Cylc View is a real time system monitor for Cylc.
         modelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
         treeview = gtk.TreeView()
         treeview.set_model(modelsort)
+        ts = treeview.get_selection()
+        ts.set_mode( gtk.SELECTION_NONE )
+
+
 
         headings = ['cycle', 'name', 'state', 'latest message' ]
         bkgcols = ['#def', '#fff', '#fff', '#fff' ]
@@ -724,12 +730,15 @@ Cylc View is a real time system monitor for Cylc.
         topbuttonbox.set_layout( gtk.BUTTONBOX_END )
         about_button = gtk.Button( "About" )
         about_button.connect("clicked", self.about )
-        led_heading_button = gtk.Button( "Task Names" )
+        led_heading_button = gtk.Button( "Toggle Task Name Headings" )
         led_heading_button.connect("clicked", self.led_heading_toggle )
         self.led_heading_type = 0
-        topbuttonbox.add( led_heading_button )
+
         topbuttonbox.add( about_button )
         topbuttonbox.add( quit_button )
+        hbox1 = gtk.HBox()
+        hbox1.pack_start( led_heading_button, False )
+        hbox1.pack_end( topbuttonbox, False )
 
         top_hbox = gtk.HBox()
         sysname_eb = gtk.EventBox()
@@ -793,6 +802,8 @@ Cylc View is a real time system monitor for Cylc.
         tmodelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
         ttreeview = gtk.TreeView()
         ttreeview.set_model(tmodelsort)
+        ts = ttreeview.get_selection()
+        ts.set_mode( gtk.SELECTION_NONE )
 
         headings = ['task', 'state', 'latest message' ]
 
@@ -895,7 +906,7 @@ Cylc View is a real time system monitor for Cylc.
         notebook.append_page( vbox, gtk.Label("Log Viewer") )
 
         bigbox = gtk.VBox()
-        bigbox.pack_start( topbuttonbox, False )
+        bigbox.pack_start( hbox1, False )
         bigbox.pack_start( top_hbox, False )
         bigbox.pack_start( vpaned, True )
         #bigbox.pack_end( hbox, False )
