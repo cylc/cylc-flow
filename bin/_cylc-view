@@ -109,38 +109,6 @@ Cylc View is a real time system monitor for Cylc.
             #heading = re.sub( '_', ' ', heading )
             tvcs[n].set_title( headings[n] )
 
-    def on_find_clicked( self, tv, e ):
-        needle = e.get_text ()
-        if not needle:
-            return
-
-        self.lt.freeze = True
-        self.freeze_button.set_active(True)
-        self.freeze_button.set_label('UnFreeze')
-        if not self.search_warning_done:
-            self.warning_dialog( "Find Next detaches the live log feed; click UnFreeze when you're done" ) 
-            self.search_warning_done = True
-
-        tb = tv.get_buffer ()
-
-        if needle == self.find_current:
-            s = self.find_current_iter
-        else:
-            s,e = tb.get_bounds()
-            tb.remove_all_tags( s,e )
-            s = tb.get_end_iter ()
-            tv.scroll_to_iter( s, 0 )
-        try:
-            f, l = s.backward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY) 
-        except:
-            self.warning_dialog( '"' + needle + '"' + " not found" )
-        else:
-            tag = tb.create_tag( None, background="#70FFA9" )
-            tb.apply_tag( tag, f, l )
-            self.find_current_iter = f
-            self.find_current = needle
-            tv.scroll_to_iter( f, 0 )
-
     def create_led_panel( self ):
         types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
         liststore = gtk.ListStore( *types )
