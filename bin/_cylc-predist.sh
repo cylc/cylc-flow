@@ -41,7 +41,7 @@ fi
 echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
-
+chmod +x scripts/*
 chmod +x doc/process
 chmod +x systems/userguide/scripts/*
 chmod +x systems/nested/scripts/*
@@ -80,7 +80,7 @@ mv userguide.pdf doc
 
 echo "DELETING EXTRANEOUS BIN SCRIPTS etc."
 rm bin/addcopyright.pl
-rm images/*.xcf
+rm -r images/not-active
 
 echo "DELETING DEVELOPER DOCS"
 rm README.todo
