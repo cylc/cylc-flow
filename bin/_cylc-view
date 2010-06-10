@@ -42,7 +42,6 @@ class CylcView:
     def delete_event(self, widget, event, data=None):
         gtk.main_quit()
         self.lt.quit = True
-        self.jt.quit = True
         self.t.quit = True
         #print "BYE from main thread"
         return False
@@ -123,7 +122,7 @@ class CylcView:
         # PASSING IN ARGUMENTS?
         if b.get_active():
             self.lt.freeze = True
-            b.set_label( 'UnFreeze' )
+            b.set_label( 'UNFREEZE' )
             self.reset_logbuffer()
         else:
             self.lt.freeze = False
@@ -150,7 +149,6 @@ Cylc View is a real time system monitor for Cylc.
     def click_exit( self, foo ):
         gtk.main_quit()
         self.lt.quit = True
-        self.jt.quit = True
         self.t.quit = True
         #print "BYE from main thread"
         return False
@@ -216,69 +214,84 @@ Cylc View is a real time system monitor for Cylc.
             self.find_current = needle
             tv.scroll_to_iter( f, 0 )
 
-    def create_led_treeview( self ):
-        foo = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
-        led_liststore = gtk.ListStore( *foo )
-        self.led_treeview = gtk.TreeView( led_liststore )
-        ts = self.led_treeview.get_selection()
-        ts.set_mode( gtk.SELECTION_NONE )
+    def create_led_panel( self ):
+        types = tuple( [gtk.gdk.Pixbuf]* (10 + len( self.task_list)))
+        liststore = gtk.ListStore( *types )
+        treeview = gtk.TreeView( liststore )
+        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
         tvc = gtk.TreeViewColumn( 'Cycle Time' )
         for i in range(10):
-            cellpb = gtk.CellRendererPixbuf()
-            cellpb.set_property( 'cell-background', 'black' )
-            tvc.pack_start( cellpb, False )
-            tvc.set_attributes( cellpb, pixbuf=i )
-
-        self.led_treeview.append_column( tvc )
-
-        # this doesn't show (brief flash of yellow at startup)
-        # led_treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "yellow" ) )
+            cr = gtk.CellRendererPixbuf()
+            cr.set_property( 'cell-background', 'black' )
+            tvc.pack_start( cr, False )
+            tvc.set_attributes( cr, pixbuf=i )
+        treeview.append_column( tvc )
 
         for n in range( 10, 10+len( self.task_list )):
-            cell = gtk.CellRendererPixbuf()
-            cell.set_property( 'cell_background', 'black' )
-            cell.set_property( 'xalign', 0 )
-            # replace heading underscores with spaces (they display as underline!)
+            cr = gtk.CellRendererPixbuf()
+            cr.set_property( 'cell_background', 'black' )
+            cr.set_property( 'xalign', 0 )
             tvc = gtk.TreeViewColumn( "-"  )
             tvc.set_min_width( 20 )  # WIDTH OF LED PIXBUFS
-            tvc.pack_end( cell, True )
-            tvc.set_attributes( cell, pixbuf=n )
-            self.led_treeview.append_column( tvc )
+            tvc.pack_end( cr, True )
+            tvc.set_attributes( cr, pixbuf=n )
+            treeview.append_column( tvc )
 
-    def create_ct_treeview( self ):
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
-        # For reasons unknown, filter before sorting screws up the 
-        # treeview display here, but the other way around works.
+        self.led_treeview = treeview
+        sw.add( treeview )
+
+        return sw
+
+    def create_tree_panel( self ):
         self.ttreestore = gtk.TreeStore(str, str, str )
-        tmodelsort = gtk.TreeModelSort( self.ttreestore )
-        tmodelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
-        ttreeview = gtk.TreeView()
-        ttreeview.set_model(tmodelsort)
-        ts = ttreeview.get_selection()
-        ts.set_mode( gtk.SELECTION_NONE )
+        tms = gtk.TreeModelSort( self.ttreestore )
+        tms.set_sort_column_id(0, gtk.SORT_ASCENDING)
+        treeview = gtk.TreeView()
+        treeview.set_model(tms)
+        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
         headings = ['task', 'state', 'latest message' ]
-
         for n in range(len(headings)):
-            cell = gtk.CellRendererText()
-            tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
-            #tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
-            ttreeview.append_column(tvc)
+            cr = gtk.CellRendererText()
+            tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
+            #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
+            treeview.append_column(tvc)
             tvc.set_sort_column_id(n)
  
-        return ttreeview
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+        sw.add( treeview )
 
-    def create_fl_treeview( self ):
+        vbox = gtk.VBox()
+        bbox = gtk.HButtonBox()
+        expand_button = gtk.Button( "Expand" )
+        expand_button.connect( 'clicked', self.expand_all, treeview )
+    
+        collapse_button = gtk.Button( "Collapse" )
+        collapse_button.connect( 'clicked', self.collapse_all, treeview )
+
+        bbox.add( expand_button )
+        bbox.add( collapse_button )
+        bbox.set_layout( gtk.BUTTONBOX_END )
+
+        vbox.pack_start( sw )
+        vbox.pack_start( bbox, False )
+
+        return vbox
+
+    def create_flatlist_panel( self ):
         self.fl_liststore = gtk.ListStore(str, str, str, str)
         self.modelfilter = self.fl_liststore.filter_new()
         self.modelfilter.set_visible_func(self.visible_cb, 2)
-        modelsort = gtk.TreeModelSort( self.modelfilter )
-        modelsort.set_sort_column_id(0, gtk.SORT_ASCENDING)
-        self.fl_treeview = gtk.TreeView()
-        self.fl_treeview.set_model(modelsort)
-        ts = self.fl_treeview.get_selection()
-        ts.set_mode( gtk.SELECTION_NONE )
+        tms = gtk.TreeModelSort( self.modelfilter )
+        tms.set_sort_column_id(0, gtk.SORT_ASCENDING)
+        treeview = gtk.TreeView()
+        treeview.set_model(tms)
+        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
         headings = ['cycle', 'name', 'state', 'latest message' ]
         bkgcols = ['#def', '#fff', '#fff', '#fff' ]
@@ -286,40 +299,89 @@ Cylc View is a real time system monitor for Cylc.
         # create the TreeViewColumn to display the data
         for n in range(len(headings)):
             # add columns to treeview
-            cell = gtk.CellRendererText()
-            cell.set_property( 'cell-background', bkgcols[ n] )
-            tvc = gtk.TreeViewColumn( headings[n], cell, markup=n )
-            #tvc = gtk.TreeViewColumn( headings[n], cell, text=n )
-            self.fl_treeview.append_column(tvc)
+            cr = gtk.CellRendererText()
+            cr.set_property( 'cell-background', bkgcols[ n] )
+            tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
+            #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
             tvc.set_sort_column_id(n)
-            # add the cells to the columns
-            #tvc.pack_start(cell, True)
+            treeview.append_column(tvc)
 
-            # set the cell attributes to the appropriate liststore column
-            #self.fl_treeview.columns[n].set_attributes( cell, text=n)
+        treeview.set_search_column(1)
 
-        # make it searchable
-        self.fl_treeview.set_search_column(1)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+        sw.add( treeview )
+
+        self.filter_buttonbox = gtk.HButtonBox()
+
+        # allow filtering out of 'finished' and 'waiting'
+        all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
+        # initially filter out only 'finished' tasks
+        self.filter_states = [ 'finished' ]
+
+        for st in all_states:
+            b = gtk.ToggleButton( st )
+            self.filter_buttonbox.pack_start(b)
+            if st in self.filter_states:
+                b.set_active(False)
+            else:
+                b.set_active(True)
+            b.connect('toggled', self.check_filter_buttons)
+
+        self.filter_buttonbox.set_layout( gtk.BUTTONBOX_END )
+
+        vbox = gtk.VBox()
+        vbox.pack_start( sw, True )
+        vbox.pack_start( self.filter_buttonbox, False )
+
+        return vbox
+
+    def logview_destroy( self, w, e, jt ):
+        jt.quit = True
+        
+    def test_logview( self, b ):
+        a_logfile = '/home/oliverh/cylc/A-munge.log'
+        window = gtk.Window()
+        window.set_title("log view" )
+        window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
+        window.set_size_request(600, 300)
+        window.add( self.create_task_logview() )
+        jt = tailer( gobject, self.jlogview, a_logfile )
+        jt.quit = False
+        window.connect("delete_event", self.logview_destroy, jt )
+        window.show_all()
+        #print "Starting job log viewer thread"
+        jt.start()
+
+
 
     def create_top_buttonbox( self ):
-        topbuttonbox = gtk.HButtonBox()
+        bb = gtk.HButtonBox()
+        bb.set_layout( gtk.BUTTONBOX_END )
+
         quit_button = gtk.Button( "Quit" )
         quit_button.connect("clicked", self.click_exit )
         #tooltips = gtk.Tooltips()
         #tooltips.set_tip( quit_button, "Exit cylc view" )
-        topbuttonbox.set_layout( gtk.BUTTONBOX_END )
+
         about_button = gtk.Button( "About" )
         about_button.connect("clicked", self.about )
-        led_heading_button = gtk.Button( "Toggle Task Name Headings" )
-        led_heading_button.connect("clicked", self.led_heading_toggle )
+
+        heading_button = gtk.Button( "Toggle Task Name Headings" )
+        heading_button.connect("clicked", self.led_heading_toggle )
         self.led_heading_type = 0
 
-        topbuttonbox.add( about_button )
-        topbuttonbox.add( quit_button )
-        hbox1 = gtk.HBox()
-        hbox1.pack_start( led_heading_button, False )
-        hbox1.pack_end( topbuttonbox, False )
-        return hbox1
+        test_button = gtk.Button( "Test" )
+        test_button.connect("clicked", self.test_logview )
+        bb.add( test_button )
+
+        bb.add( about_button )
+        bb.add( quit_button )
+
+        hb = gtk.HBox()
+        hb.pack_start( heading_button, False )
+        hb.pack_end( bb, False )
+        return hb
 
     def create_task_logview( self ):
         jlogscroll = gtk.ScrolledWindow()
@@ -362,158 +424,42 @@ Cylc View is a real time system monitor for Cylc.
         self.label_time = gtk.Label( "time..." )
         self.label_sysname = gtk.Label( name )
 
-        top_hbox = gtk.HBox()
-        sysname_eb = gtk.EventBox()
-        sysname_eb.add( self.label_sysname )
-        sysname_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ) ) 
-        top_hbox.pack_start( sysname_eb, True )
+        hbox = gtk.HBox()
 
-        mode_eb = gtk.EventBox()
-        mode_eb.add( self.label_mode )
-        #self.label_mode.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f00' ))  
-        #mode_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#aaa' ) )
-        mode_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff7800' ) )
-        top_hbox.pack_start( mode_eb, True )
+        eb = gtk.EventBox()
+        eb.add( self.label_sysname )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ) ) 
+        hbox.pack_start( eb, True )
 
-        status_eb = gtk.EventBox()
-        status_eb.add( self.label_status )
-        #elf.self.label_status.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))  
-        #status_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbb' ) )
-        status_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) )
-        top_hbox.pack_start( status_eb, True )
+        eb = gtk.EventBox()
+        eb.add( self.label_mode )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff7800' ) )
+        hbox.pack_start( eb, True )
 
-        time_eb = gtk.EventBox()
-        time_eb.add( self.label_time )
-        #self.label_time.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f0f' ))  
-        #time_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ccc' ) )
-        time_eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) )
-        top_hbox.pack_start( time_eb, True )
+        eb = gtk.EventBox()
+        eb.add( self.label_status )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) )
+        hbox.pack_start( eb, True )
 
-        return top_hbox
+        eb = gtk.EventBox()
+        eb.add( self.label_time )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) )
+        hbox.pack_start( eb, True )
 
+        return hbox
 
-    def __init__(self):
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_title("cylc view <" + groupname + ">" )
-        window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        window.set_size_request(600, 500)
-        window.connect("delete_event", self.delete_event)
+    def create_cylc_log_panel( self ):
 
-        self.find_current = None
-        self.find_current_iter = None
-        self.search_warning_done = False
-
-        # Get list of tasks in the system
-        try:
-            ss = connector( pns_host, groupname, 'state_summary' ).get()
-        except Exception, x:
-            print x
-            raise
-
-        self.task_list = ss.get_config( 'task_list' )
-        shortnames = ss.get_config( 'task_list_shortnames' )
-
-        temp = {}
-        for t in range( len( self.task_list )):
-            temp[ self.task_list[ t ] ] = shortnames[ t ]
-
-        self.task_list.sort()
-        self.task_list_shortnames = []
-        for task in self.task_list:
-            self.task_list_shortnames.append( temp[ task ] )
- 
-        # allow filtering out of 'finished' and 'waiting'
-        all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
-        # initially filter out only 'finished' tasks
-        self.filter_states = [ 'finished' ]
-
-        self.create_led_treeview()
-        self.create_fl_treeview()
-        ttreeview = self.create_ct_treeview()
-        hbox1 = self.create_top_buttonbox()
-
-        top_hbox = self.create_info_bar()
-
-
-        vpaned = gtk.VPaned()
-        vpaned.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ) )
-  
-        led_scrolledwindow = gtk.ScrolledWindow()
-        led_scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-        led_scrolledwindow.add( self.led_treeview )
-
-        vpaned.add1( led_scrolledwindow )
-
-        scrolledwindow = gtk.ScrolledWindow()
-        scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-
-        self.filter_buttonbox = gtk.HButtonBox()
-
-        vbox = gtk.VBox()
-        vbox.pack_start( scrolledwindow, True )
-        vbox.pack_start( self.filter_buttonbox, False )
-
-        notebook = gtk.Notebook()
-        notebook.set_tab_pos(gtk.POS_TOP)
- 
-        label = gtk.Label("List")
-        notebook.append_page( vbox, label )
-
-        cycle_tree_scrolledwindow = gtk.ScrolledWindow()
-        cycle_tree_scrolledwindow.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-        cycle_tree_scrolledwindow.add( ttreeview )
-
-        vbox = gtk.VBox()
-        bbox = gtk.HButtonBox()
-        expand_button = gtk.Button( "Expand" )
-        expand_button.connect( 'clicked', self.expand_all, ttreeview )
-    
-        collapse_button = gtk.Button( "Collapse" )
-        collapse_button.connect( 'clicked', self.collapse_all, ttreeview )
-
-        bbox.add( expand_button )
-        bbox.add( collapse_button )
-        bbox.set_layout( gtk.BUTTONBOX_END )
-
-        vbox.pack_start( cycle_tree_scrolledwindow )
-        vbox.pack_start( bbox, False )
-
-
-        label = gtk.Label("Tree")
-        notebook.append_page( vbox, label )
-
-        for st in all_states:
-            b = gtk.ToggleButton( st )
-            self.filter_buttonbox.pack_start(b)
-            if st in self.filter_states:
-                b.set_active(False)
-            else:
-                b.set_active(True)
-            b.connect('toggled', self.check_filter_buttons)
-
-        self.filter_buttonbox.set_layout( gtk.BUTTONBOX_END )
-
-        scrolledwindow.add( self.fl_treeview )
-
-        vpaned.add2( notebook )
-
-        logscroll = gtk.ScrolledWindow()
-        logscroll.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         self.logview = gtk.TextView()
         self.logview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fffaeb" ) )
-        logscroll.add( self.logview )
         self.logview.set_editable( False )
-        self.logdir = ss.get_config( 'logging_dir' ) 
-        self.logfile = 'main'
-        vbox = gtk.VBox()
 
-        search_hbox = gtk.HBox()
-        e = gtk.Entry ()
-        search_hbox.pack_start (e, True)
-        e.show () 
+        searchbox = gtk.HBox()
+        entry = gtk.Entry ()
+        searchbox.pack_start (entry, True)
         b = gtk.Button ("Find Next")
-        b.connect_object ('clicked', self.on_find_clicked, self.logview, e)
-        search_hbox.pack_start (b, False)
+        b.connect_object ('clicked', self.on_find_clicked, self.logview, entry)
+        searchbox.pack_start (b, False)
 
         hbox = gtk.HBox()
         self.log_label = gtk.Label( self.logdir + '/' + self.logfile )
@@ -544,18 +490,70 @@ Cylc View is a real time system monitor for Cylc.
 
         hbox.pack_end( combobox, False )
  
+        logscroll = gtk.ScrolledWindow()
+        logscroll.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+        logscroll.add( self.logview )
+
+        vbox = gtk.VBox()
         vbox.pack_start( logscroll, True )
-        vbox.pack_start( search_hbox, False )
+        vbox.pack_start( searchbox, False )
         vbox.pack_start( hbox, False )
 
-        notebook.append_page( vbox, gtk.Label("Cylc Logs") )
+        return vbox
 
-        notebook.append_page( self.create_task_logview(), gtk.Label("Task Output") )
+    def translate_task_names( self, shortnames ):
+        temp = {}
+        for t in range( len( self.task_list )):
+            temp[ self.task_list[ t ] ] = shortnames[ t ]
+
+        self.task_list.sort()
+        self.task_list_shortnames = []
+        for task in self.task_list:
+            self.task_list_shortnames.append( temp[ task ] )
+ 
+
+    def __init__(self):
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.set_title("cylc view <" + groupname + ">" )
+        window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
+        window.set_size_request(600, 500)
+        window.connect("delete_event", self.delete_event)
+
+        self.find_current = None
+        self.find_current_iter = None
+        self.search_warning_done = False
+
+        # Get list of tasks in the system
+        try:
+            ss = connector( pns_host, groupname, 'state_summary' ).get()
+        except Exception, x:
+            print x
+            raise
+
+        self.logdir = ss.get_config( 'logging_dir' ) 
+        self.logfile = 'main'
+
+        self.task_list = ss.get_config( 'task_list' )
+        shortnames = ss.get_config( 'task_list_shortnames' )
+
+        self.translate_task_names( shortnames )
+
+        notebook = gtk.Notebook()
+        notebook.set_tab_pos(gtk.POS_TOP)
+        notebook.append_page( self.create_flatlist_panel(), gtk.Label("List") )
+        notebook.append_page( self.create_tree_panel(), gtk.Label("Tree") )
+
+        main_panes = gtk.VPaned()
+        main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
+        main_panes.add1( self.create_led_panel())
+        main_panes.add2( notebook )
+
+        notebook.append_page( self.create_cylc_log_panel(), gtk.Label("Cylc Logs"))
 
         bigbox = gtk.VBox()
-        bigbox.pack_start( hbox1, False )
-        bigbox.pack_start( top_hbox, False )
-        bigbox.pack_start( vpaned, True )
+        bigbox.pack_start( self.create_top_buttonbox(), False )
+        bigbox.pack_start( self.create_info_bar(), False )
+        bigbox.pack_start( main_panes, True )
         window.add( bigbox )
 
         window.show_all()
@@ -570,16 +568,10 @@ Cylc View is a real time system monitor for Cylc.
         cylc_main_log = self.logdir + '/' + self.logfile 
         self.lt = tailer( gobject, self.logview, cylc_main_log )
 
-        a_logfile = '/home/oliverh/cylc/A-munge.log'
-        self.jt = tailer( gobject, self.jlogview, a_logfile )
-
         #print "Starting task state info thread"
         self.t.start()
         #print "Starting log viewer thread"
         self.lt.start()
-        #print "Starting job log viewer thread"
-        self.jt.start()
-
 
 if __name__ == "__main__":
     parser = NoPromptOptionParser_u( """cylc view [options] SYSTEM 

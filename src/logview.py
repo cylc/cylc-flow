@@ -24,7 +24,7 @@ class tailer(threading.Thread):
                 line = gen.next()
                 if line: 
                     self.gobject.idle_add( self.update_gui, line )
-        #print "Disconnecting from log viewer thread"
+        print "Disconnecting from log viewer thread"
  
     def update_gui( self, line ):
         self.logbuffer.insert( self.logbuffer.get_end_iter(), line )
