@@ -53,7 +53,7 @@ class job_submit:
     dummy_mode = False
     global_env = {}
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, log, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
 
         # unique task identity
         self.task_id = task_id
@@ -163,7 +163,7 @@ class job_submit:
         #else:
         #    self.logfile = None
 
-        self.log = log
+        self.logfiles = logs
 
         # by default, run in cylc user's home directory ...
         self.running_dir = '$HOME'

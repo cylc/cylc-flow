@@ -25,6 +25,8 @@ class background( job_submit ):
         #if self.logfile:
         #    log = self.logfile
         #else:
-        log = self.task_id + '.log'
-        self.command = self.jobfile_path + " </dev/null > " + log + " 2>&1 &" 
-        self.log.set_path( log )
+        out = self.task_id + '.out'
+        err = self.task_id + '.err'
+        self.command = self.jobfile_path + " </dev/null 1> " + out + " 2> " + err + " &" 
+        self.logfiles.add_path( out )
+        self.logfiles.add_path( err )

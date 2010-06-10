@@ -27,13 +27,15 @@ class logf:
     # need log file to be mutable (i.e. not a string) so that changes to
     # log paths in the job submit class are reflected in the task class.
     def __init__( self, path = None ):
-        self.path = path
+        self.paths = []
+        if path:
+            self.paths.append( path )
 
-    def set_path( self, path ):
-        self.path = path
+    def add_path( self, path ):
+        self.paths.append( path )
 
-    def get_path( self ):
-        return self.path
+    def get_paths( self ):
+        return self.paths
 
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
@@ -126,11 +128,11 @@ class task( Pyro.core.ObjBase ):
 
         self.latest_message = ""
 
-        self.logfile = logf()
+        self.logfiles = logf()
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 
-                        self.logfile, self.__class__.owner, self.__class__.remote_host )
+                        self.logfiles, self.__class__.owner, self.__class__.remote_host )
 
     def log( self, priority, message ):
         # task-specific log file
@@ -331,7 +333,7 @@ class task( Pyro.core.ObjBase ):
         summary[ 'spawned' ] = self.state.has_spawned()
         summary[ 'latest_message' ] = self.latest_message
 
-        summary[ 'logfile' ] = self.logfile.get_path()
+        summary[ 'logfiles' ] = self.logfiles.get_paths()
  
         return summary
 

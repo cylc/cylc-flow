@@ -3,7 +3,7 @@
 # example basictreeview.py
 
 from stateview import updater
-from logviewer import logviewer
+from combo_logviewer import combo_logviewer
 from cylc_logviewer import cylc_logviewer
 from warning_dialog import warning_dialog
 
@@ -67,7 +67,6 @@ Cylc View is a real time system monitor for Cylc.
 
     def click_exit( self, foo ):
         gtk.main_quit()
-        #self.lt.quit = True
         self.lvp.quit()
         self.t.quit = True
         #print "BYE from main thread"
@@ -140,7 +139,9 @@ Cylc View is a real time system monitor for Cylc.
         tms.set_sort_column_id(0, gtk.SORT_ASCENDING)
         treeview = gtk.TreeView()
         treeview.set_model(tms)
-        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
+        ts = treeview.get_selection()
+        ts.set_mode( gtk.SELECTION_SINGLE )
+        ts.set_select_function( self.get_selected_task_from_tree, tms )
 
         headings = ['task', 'state', 'latest message' ]
         for n in range(len(headings)):
@@ -171,19 +172,29 @@ Cylc View is a real time system monitor for Cylc.
 
         return vbox
 
-    def my_selection( self, selection, treemodel ):
-        #print selection, treeview
-        iter = treemodel.get_iter( selection )
+    def get_selected_task_from_tree( self, selection, treemodel ):
+        if len( selection ) == 1:
+            # top level, just ctime
+            return False
+
+        c_iter = treemodel.get_iter( selection )
+        name = treemodel.get_value( c_iter, 0 )
+ 
+        iter = treemodel.iter_parent( c_iter )
         ctime = treemodel.get_value( iter, 0 )
-        name = treemodel.get_value( iter, 1 )
         task_id = name + '%' + ctime
+
+        self.show_log( task_id )
+        return False
+
+    def show_log( self, task_id ):
 
         [ glbl, states ] = self.ss.get_state_summary()
 
         view = True
         reasons = []
 
-        if 'logfile' not in states[ task_id ]:
+        if 'logfiles' not in states[ task_id ]:
             view = False
             reasons.append( task_id + ' has no log files defined' )
 
@@ -195,9 +206,19 @@ Cylc View is a real time system monitor for Cylc.
             warning_dialog( '\n'.join( reasons ) ).warn()
 
         else:
-            logfile = states[ task_id ][ 'logfile' ]
-            self.popup_logview( logfile )
+            logfiles = states[ task_id ][ 'logfiles' ]
+            self.popup_logview( logfiles )
 
+        return False
+
+    def get_selected_task_from_list( self, selection, treemodel ):
+        #print selection, treeview
+        iter = treemodel.get_iter( selection )
+        ctime = treemodel.get_value( iter, 0 )
+        name = treemodel.get_value( iter, 1 )
+        task_id = name + '%' + ctime
+
+        self.show_log( task_id )
         return False
 
     def create_flatlist_panel( self ):
@@ -211,7 +232,7 @@ Cylc View is a real time system monitor for Cylc.
 
         ts = treeview.get_selection()
         ts.set_mode( gtk.SELECTION_SINGLE )
-        ts.set_select_function( self.my_selection, tms )
+        ts.set_select_function( self.get_selected_task_from_list, tms )
 
         headings = ['cycle', 'name', 'state', 'latest message' ]
         bkgcols = ['#def', '#fff', '#fff', '#fff' ]
@@ -256,15 +277,14 @@ Cylc View is a real time system monitor for Cylc.
 
         return vbox
 
-    def popup_logview( self, logfile ):
-        logdir = os.path.dirname( logfile )
-        logfile = os.path.basename( logfile )
+    def popup_logview( self, logfiles ):
+
         window = gtk.Window()
-        window.set_title("log view" )
+        window.set_title("log viewer" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         window.set_size_request(600, 300)
 
-        lv = logviewer( logfile, logdir, logfile )
+        lv = combo_logviewer( 'foo', logfiles )
         window.add( lv.get_widget() )
 
         #window.connect("delete_event", self.logview_destroy, lvp )
@@ -365,9 +385,8 @@ Cylc View is a real time system monitor for Cylc.
 
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
-        notebook.append_page( self.create_flatlist_panel(), gtk.Label("Filtered List with Job Logs") )
+        notebook.append_page( self.create_flatlist_panel(), gtk.Label("Filtered List") )
         notebook.append_page( self.create_tree_panel(), gtk.Label("Task Tree") )
-        #notebook.append_page( self.create_logtree_panel(), gtk.Label("Output"))
 
         main_panes = gtk.VPaned()
         main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
@@ -376,7 +395,7 @@ Cylc View is a real time system monitor for Cylc.
 
         cylc_log = self.logdir + '/' + self.logfile 
         self.lvp = cylc_logviewer( 'main', self.logdir, self.logfile, self.task_list )
-        notebook.append_page( self.lvp.get_widget(), gtk.Label("Cylc Scheduler Logs"))
+        notebook.append_page( self.lvp.get_widget(), gtk.Label("Scheduler Logs"))
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.create_top_buttonbox(), False )
