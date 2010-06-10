@@ -1,5 +1,5 @@
+#!/usr/bin/env python
 
-import gobject
 import gtk
 import pygtk
 pygtk.require('2.0')
@@ -20,12 +20,15 @@ class logviewer:
 
         self.create_gui_panel()
 
-        self.t = tailer( gobject, self.logview, self.path() )
-        print "Starting log viewer thread"
+        self.t = tailer( self.logview, self.path() )
+        print "Starting log viewer thread for " + self.name
         self.t.start()
     
     def path( self ):
-        return self.dir + '/' + self.file
+        if self.dir:
+            return self.dir + '/' + self.file
+        else:
+            return self.file
 
     def quit_w_e( self, w, e ):
         self.t.quit = True
@@ -92,7 +95,7 @@ class logviewer:
 
     def create_gui_panel( self ):
         self.logview = gtk.TextView()
-        self.logview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fffaeb" ) )
+        self.logview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f8833b" ) )
         self.logview.set_editable( False )
 
         searchbox = gtk.HBox()
@@ -120,5 +123,3 @@ class logviewer:
         self.vbox.pack_start( sw, True )
         self.vbox.pack_start( searchbox, False )
         self.vbox.pack_start( self.hbox, False )
-
-

@@ -14,8 +14,7 @@
     A, a
 
 %LOGFILE
-    #A-$(CYCLE_TIME).log
-    A-munge.log
+    A-$CYCLE_TIME.log
 
 %DESCRIPTION
     Could be an atmospheric model. 

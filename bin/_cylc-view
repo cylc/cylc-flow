@@ -134,44 +134,6 @@ Cylc View is a real time system monitor for Cylc.
 
         return sw
     
-    #def create_logtree_panel( self ):
-    #    self.logtreestore = gtk.TreeStore(str, str, str )
-    #    tms = gtk.TreeModelSort( self.logtreestore )
-    #    tms.set_sort_column_id(0, gtk.SORT_ASCENDING)
-    #    treeview = gtk.TreeView()
-    #    treeview.set_model(tms)
-    #    treeview.get_selection().set_mode( gtk.SELECTION_SINGLE )
-
-    #    headings = ['task', 'cycle', 'log files' ]
-    #    for n in range(len(headings)):
-    #        cr = gtk.CellRendererText()
-    #        tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
-    #        #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
-    #        treeview.append_column(tvc)
-    #        tvc.set_sort_column_id(n)
-# 
-#        sw = gtk.ScrolledWindow()
-#        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-#        sw.add( treeview )
-#
-#        vbox = gtk.VBox()
-#        bbox = gtk.HButtonBox()
-#        expand_button = gtk.Button( "Expand" )
-#        expand_button.connect( 'clicked', self.expand_all, treeview )
-#    
-#        collapse_button = gtk.Button( "Collapse" )
-#        collapse_button.connect( 'clicked', self.collapse_all, treeview )
-#
-#        bbox.add( expand_button )
-#        bbox.add( collapse_button )
-#        bbox.set_layout( gtk.BUTTONBOX_END )
-#
-#        vbox.pack_start( sw )
-#        vbox.pack_start( bbox, False )
-#
-#        return vbox
-
-
     def create_tree_panel( self ):
         self.ttreestore = gtk.TreeStore(str, str, str )
         tms = gtk.TreeModelSort( self.ttreestore )
@@ -234,9 +196,7 @@ Cylc View is a real time system monitor for Cylc.
 
         else:
             logfile = states[ task_id ][ 'logfile' ]
-            warning_dialog( task_id + ' logfile: ' + logfile ).warn()
-
-        self.test_logview()
+            self.popup_logview( logfile )
 
         return False
 
@@ -296,19 +256,19 @@ Cylc View is a real time system monitor for Cylc.
 
         return vbox
 
-    def popup_logview( self ):
-        logdir = '/home/oliverh/cylc/'
-        logfile = 'A-munge.log'
+    def popup_logview( self, logfile ):
+        logdir = os.path.dirname( logfile )
+        logfile = os.path.basename( logfile )
         window = gtk.Window()
         window.set_title("log view" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         window.set_size_request(600, 300)
 
-        lvp = logviewer( 'A', self.logdir, self.logfile )
-        window.add( lvp.get_widget() )
+        lv = logviewer( logfile, logdir, logfile )
+        window.add( lv.get_widget() )
 
         #window.connect("delete_event", self.logview_destroy, lvp )
-        window.connect("delete_event", lvp.quit_w_e)
+        window.connect("delete_event", lv.quit_w_e)
         window.show_all()
 
     def create_top_buttonbox( self ):
@@ -326,10 +286,6 @@ Cylc View is a real time system monitor for Cylc.
         heading_button = gtk.Button( "Toggle Task Name Headings" )
         heading_button.connect("clicked", self.led_heading_toggle )
         self.led_heading_type = 0
-
-        test_button = gtk.Button( "Test" )
-        test_button.connect("clicked", self.popup_logview )
-        bb.add( test_button )
 
         bb.add( about_button )
         bb.add( quit_button )
@@ -409,8 +365,8 @@ Cylc View is a real time system monitor for Cylc.
 
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
-        notebook.append_page( self.create_flatlist_panel(), gtk.Label("List") )
-        notebook.append_page( self.create_tree_panel(), gtk.Label("Tree") )
+        notebook.append_page( self.create_flatlist_panel(), gtk.Label("Filtered List with Job Logs") )
+        notebook.append_page( self.create_tree_panel(), gtk.Label("Task Tree") )
         #notebook.append_page( self.create_logtree_panel(), gtk.Label("Output"))
 
         main_panes = gtk.VPaned()
@@ -420,7 +376,7 @@ Cylc View is a real time system monitor for Cylc.
 
         cylc_log = self.logdir + '/' + self.logfile 
         self.lvp = cylc_logviewer( 'main', self.logdir, self.logfile, self.task_list )
-        notebook.append_page( self.lvp.get_widget(), gtk.Label("Logs"))
+        notebook.append_page( self.lvp.get_widget(), gtk.Label("Cylc Scheduler Logs"))
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.create_top_buttonbox(), False )

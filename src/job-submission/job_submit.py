@@ -58,27 +58,16 @@ class job_submit:
         # unique task identity
         self.task_id = task_id
 
-        self.logfile = log
-
         # in dummy mode, replace the real external task with the dummy task
         self.task = ext_task
         if job_submit.dummy_mode:
             self.task = "_cylc-dummy-task"
 
-        # extract cycle time (cylcing tasks) or tag (asynchronous tasks)
+        # extract cycle time (cycling tasks) or tag (asynchronous tasks)
         # from the task id: NAME%CYCLE_TIME or NAME%TAG.
-        self.cycle_time = None
-        try:
-            ( self.task_name, tag ) = task_id.split( '%' )
-        except ValueError:
-            self.task_name = task_id
-        else:
-            if cycle_time.is_valid( tag ):
-                self.cycle_time = tag
-                self.tag = None 
-            else:
-                self.cycle_time = None
-                self.tag = tag
+        ( self.task_name, tag ) = task_id.split( '%' )
+        if cycle_time.is_valid( tag ):
+            self.cycle_time = tag
 
         # The values of task-specific environment variables defined in
         # the taskdef file may reference other environment variables:
@@ -164,6 +153,17 @@ class job_submit:
             self.owner = owner
         else:
             self.owner = None
+
+        # a job submit log can be defined using environment variables
+        #if log:
+        #    log = interp_other_str( log, job_submit.global_env )
+        #    log = interp_other_str( log, self.task_env )
+        #    log = interp_local_str( log )
+        #    self.logfile = log
+        #else:
+        #    self.logfile = None
+
+        self.log = log
 
         # by default, run in cylc user's home directory ...
         self.running_dir = '$HOME'

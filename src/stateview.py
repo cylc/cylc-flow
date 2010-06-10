@@ -92,7 +92,6 @@ class updater(threading.Thread):
         except Exception,x:
             self.led_liststore.clear()
             self.ttreestore.clear()
-            #self.logtreestore.clear()
             self.fl_liststore.clear()
             self.gobject.idle_add( self.connection_lost )
  

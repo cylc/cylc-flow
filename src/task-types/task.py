@@ -23,6 +23,18 @@ global state_changed
 #state_changed = False
 state_changed = True
 
+class logf:
+    # need log file to be mutable (i.e. not a string) so that changes to
+    # log paths in the job submit class are reflected in the task class.
+    def __init__( self, path = None ):
+        self.path = path
+
+    def set_path( self, path ):
+        self.path = path
+
+    def get_path( self ):
+        return self.path
+
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
 # task attributes required for a system cold start are:
@@ -113,6 +125,8 @@ class task( Pyro.core.ObjBase ):
         state_changed = True
 
         self.latest_message = ""
+
+        self.logfile = logf()
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 
@@ -317,8 +331,7 @@ class task( Pyro.core.ObjBase ):
         summary[ 'spawned' ] = self.state.has_spawned()
         summary[ 'latest_message' ] = self.latest_message
 
-        if self.logfile:
-            summary[ 'logfile' ] = self.logfile
+        summary[ 'logfile' ] = self.logfile.get_path()
  
         return summary
 
