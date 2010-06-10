@@ -9,7 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
+import os
 from job_submit import job_submit
 
 class background( job_submit ):
@@ -22,11 +22,9 @@ class background( job_submit ):
         # file) - ssh can exit immediately after invoking the job
         # script, without waiting for the remote process to finish.
 
-        #if self.logfile:
-        #    log = self.logfile
-        #else:
-        out = self.task_id + '.out'
-        err = self.task_id + '.err'
+        cwd = os.getcwd()
+        out = cwd + '/' + self.task_id + '.out'
+        err = cwd + '/' + self.task_id + '.err'
         self.command = self.jobfile_path + " </dev/null 1> " + out + " 2> " + err + " &" 
         self.logfiles.add_path( out )
         self.logfiles.add_path( err )

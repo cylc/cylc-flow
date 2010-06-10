@@ -271,7 +271,20 @@ Cylc View is a real time system monitor for Cylc.
 
         self.filter_buttonbox.set_layout( gtk.BUTTONBOX_END )
 
+
+        hbox = gtk.HBox()
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "Click headings to sort.") )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff7800' ) ) 
+        hbox.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "Click rows to view task output" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
+        hbox.pack_start( eb, True )
+
         vbox = gtk.VBox()
+        vbox.pack_start( hbox, False )
         vbox.pack_start( sw, True )
         vbox.pack_start( self.filter_buttonbox, False )
 
@@ -398,8 +411,8 @@ Cylc View is a real time system monitor for Cylc.
         notebook.append_page( self.lvp.get_widget(), gtk.Label("Scheduler Logs"))
 
         bigbox = gtk.VBox()
-        bigbox.pack_start( self.create_top_buttonbox(), False )
         bigbox.pack_start( self.create_info_bar(), False )
+        bigbox.pack_start( self.create_top_buttonbox(), False )
         bigbox.pack_start( main_panes, True )
         window.add( bigbox )
 

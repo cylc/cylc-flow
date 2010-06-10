@@ -19,7 +19,7 @@ class combo_logviewer( logviewer ):
         logviewer.create_gui_panel( self )
         
         combobox = gtk.combo_box_new_text()
-        combobox.append_text( 'Select Log' ) 
+        combobox.append_text( 'Select File' ) 
         for file in self.file_list:
             combobox.append_text( os.path.basename( file ) )
 
