@@ -44,8 +44,9 @@ def get_col( state ):
 
 class updater(threading.Thread):
 
-    def __init__(self, gobject, god, imagedir, led_liststore, fl_liststore, ttreestore,
-            task_list, label_mode, label_status, label_time ):
+    def __init__(self, gobject, god, imagedir, led_liststore,
+            fl_liststore, ttreestore, task_list,
+            label_mode, label_status, label_time ):
 
         super(updater, self).__init__()
 
@@ -77,8 +78,6 @@ class updater(threading.Thread):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
-        #self.cc = color_chooser()
-
     def connection_lost( self ):
         self.label_status.set_markup( "<b>CONNECTION LOST</b>" )
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))
@@ -93,6 +92,7 @@ class updater(threading.Thread):
         except Exception,x:
             self.led_liststore.clear()
             self.ttreestore.clear()
+            #self.logtreestore.clear()
             self.fl_liststore.clear()
             self.gobject.idle_add( self.connection_lost )
  
@@ -244,6 +244,10 @@ class updater(threading.Thread):
         #    iter = self.ttreestore.iter_next( iter )
         #print
 
+        # NOTE: BELOW I'M ADDING SOME ITEMS TO TREE_DATA DICT
+        # IMMEDIATELY BEFORE REMOVING THEM FROM THE TREE ITSELF; CHECK
+        # THAT THIS HAS NO ADVERSE AFFECT LATER.
+
         tree_data = {}
         iter = self.ttreestore.get_iter_first()
         while iter:
@@ -259,7 +263,9 @@ class updater(threading.Thread):
             if ctime not in new_data:
                 # parent ctime not in new data; remove it
                 #print "REMOVING", ctime
-                self.ttreestore.remove( iter )
+                result = self.ttreestore.remove( iter )
+                if not result:
+                    iter = None
 
             else:
                 # parent ctime IS in new data; check children

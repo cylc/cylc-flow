@@ -5,12 +5,12 @@
 from stateview import updater
 from logviewer import logviewer
 from cylc_logviewer import cylc_logviewer
-
+from warning_dialog import warning_dialog
 
 import gobject
-import gtk
 import pygtk
 pygtk.require('2.0')
+import gtk
 import time, os, re, sys
 from CylcOptionParsers import NoPromptOptionParser_u
 from connector import connector
@@ -48,13 +48,6 @@ class CylcView:
         self.t.quit = True
         #print "BYE from main thread"
         return False
-
-    def warning_dialog( self, msg ):
-        dialog = gtk.MessageDialog( None,
-                gtk.DIALOG_DESTROY_WITH_PARENT, gtk.MESSAGE_WARNING,
-                gtk.BUTTONS_CLOSE, msg )
-        dialog.run()
-        dialog.destroy()
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -140,6 +133,44 @@ Cylc View is a real time system monitor for Cylc.
         sw.add( treeview )
 
         return sw
+    
+    #def create_logtree_panel( self ):
+    #    self.logtreestore = gtk.TreeStore(str, str, str )
+    #    tms = gtk.TreeModelSort( self.logtreestore )
+    #    tms.set_sort_column_id(0, gtk.SORT_ASCENDING)
+    #    treeview = gtk.TreeView()
+    #    treeview.set_model(tms)
+    #    treeview.get_selection().set_mode( gtk.SELECTION_SINGLE )
+
+    #    headings = ['task', 'cycle', 'log files' ]
+    #    for n in range(len(headings)):
+    #        cr = gtk.CellRendererText()
+    #        tvc = gtk.TreeViewColumn( headings[n], cr, markup=n )
+    #        #tvc = gtk.TreeViewColumn( headings[n], cr, text=n )
+    #        treeview.append_column(tvc)
+    #        tvc.set_sort_column_id(n)
+# 
+#        sw = gtk.ScrolledWindow()
+#        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+#        sw.add( treeview )
+#
+#        vbox = gtk.VBox()
+#        bbox = gtk.HButtonBox()
+#        expand_button = gtk.Button( "Expand" )
+#        expand_button.connect( 'clicked', self.expand_all, treeview )
+#    
+#        collapse_button = gtk.Button( "Collapse" )
+#        collapse_button.connect( 'clicked', self.collapse_all, treeview )
+#
+#        bbox.add( expand_button )
+#        bbox.add( collapse_button )
+#        bbox.set_layout( gtk.BUTTONBOX_END )
+#
+#        vbox.pack_start( sw )
+#        vbox.pack_start( bbox, False )
+#
+#        return vbox
+
 
     def create_tree_panel( self ):
         self.ttreestore = gtk.TreeStore(str, str, str )
@@ -178,6 +209,37 @@ Cylc View is a real time system monitor for Cylc.
 
         return vbox
 
+    def my_selection( self, selection, treemodel ):
+        #print selection, treeview
+        iter = treemodel.get_iter( selection )
+        ctime = treemodel.get_value( iter, 0 )
+        name = treemodel.get_value( iter, 1 )
+        task_id = name + '%' + ctime
+
+        [ glbl, states ] = self.ss.get_state_summary()
+
+        view = True
+        reasons = []
+
+        if 'logfile' not in states[ task_id ]:
+            view = False
+            reasons.append( task_id + ' has no log files defined' )
+
+        if states[ task_id ][ 'state' ] == 'waiting':
+            view = False
+            reasons.append( task_id + ' has not started' )
+
+        if not view:
+            warning_dialog( '\n'.join( reasons ) ).warn()
+
+        else:
+            logfile = states[ task_id ][ 'logfile' ]
+            warning_dialog( task_id + ' logfile: ' + logfile ).warn()
+
+        self.test_logview()
+
+        return False
+
     def create_flatlist_panel( self ):
         self.fl_liststore = gtk.ListStore(str, str, str, str)
         self.modelfilter = self.fl_liststore.filter_new()
@@ -186,7 +248,10 @@ Cylc View is a real time system monitor for Cylc.
         tms.set_sort_column_id(0, gtk.SORT_ASCENDING)
         treeview = gtk.TreeView()
         treeview.set_model(tms)
-        treeview.get_selection().set_mode( gtk.SELECTION_NONE )
+
+        ts = treeview.get_selection()
+        ts.set_mode( gtk.SELECTION_SINGLE )
+        ts.set_select_function( self.my_selection, tms )
 
         headings = ['cycle', 'name', 'state', 'latest message' ]
         bkgcols = ['#def', '#fff', '#fff', '#fff' ]
@@ -231,22 +296,20 @@ Cylc View is a real time system monitor for Cylc.
 
         return vbox
 
-    def logview_destroy( self, w, e, jt ):
-        jt.quit = True
-        
-    def test_logview( self, b ):
-        a_logfile = '/home/oliverh/cylc/A-munge.log'
+    def popup_logview( self ):
+        logdir = '/home/oliverh/cylc/'
+        logfile = 'A-munge.log'
         window = gtk.Window()
         window.set_title("log view" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         window.set_size_request(600, 300)
-        window.add( self.create_task_logview() )
-        jt = tailer( gobject, self.jlogview, a_logfile )
-        jt.quit = False
-        window.connect("delete_event", self.logview_destroy, jt )
+
+        lvp = logviewer( 'A', self.logdir, self.logfile )
+        window.add( lvp.get_widget() )
+
+        #window.connect("delete_event", self.logview_destroy, lvp )
+        window.connect("delete_event", lvp.quit_w_e)
         window.show_all()
-        #print "Starting job log viewer thread"
-        jt.start()
 
     def create_top_buttonbox( self ):
         bb = gtk.HButtonBox()
@@ -265,7 +328,7 @@ Cylc View is a real time system monitor for Cylc.
         self.led_heading_type = 0
 
         test_button = gtk.Button( "Test" )
-        test_button.connect("clicked", self.test_logview )
+        test_button.connect("clicked", self.popup_logview )
         bb.add( test_button )
 
         bb.add( about_button )
@@ -330,16 +393,17 @@ Cylc View is a real time system monitor for Cylc.
 
         # Get list of tasks in the system
         try:
-            ss = connector( pns_host, groupname, 'state_summary' ).get()
+            self.ss = connector( pns_host, groupname, 'state_summary' ).get()
         except Exception, x:
             print x
             raise
 
-        self.logdir = ss.get_config( 'logging_dir' ) 
+
+        self.logdir = self.ss.get_config( 'logging_dir' ) 
         self.logfile = 'main'
 
-        self.task_list = ss.get_config( 'task_list' )
-        shortnames = ss.get_config( 'task_list_shortnames' )
+        self.task_list = self.ss.get_config( 'task_list' )
+        shortnames = self.ss.get_config( 'task_list_shortnames' )
 
         self.translate_task_names( shortnames )
 
@@ -347,6 +411,7 @@ Cylc View is a real time system monitor for Cylc.
         notebook.set_tab_pos(gtk.POS_TOP)
         notebook.append_page( self.create_flatlist_panel(), gtk.Label("List") )
         notebook.append_page( self.create_tree_panel(), gtk.Label("Tree") )
+        #notebook.append_page( self.create_logtree_panel(), gtk.Label("Output"))
 
         main_panes = gtk.VPaned()
         main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
@@ -355,7 +420,7 @@ Cylc View is a real time system monitor for Cylc.
 
         cylc_log = self.logdir + '/' + self.logfile 
         self.lvp = cylc_logviewer( 'main', self.logdir, self.logfile, self.task_list )
-        notebook.append_page( self.lvp.get_widget(), gtk.Label("Cylc Logs"))
+        notebook.append_page( self.lvp.get_widget(), gtk.Label("Logs"))
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.create_top_buttonbox(), False )
@@ -365,12 +430,14 @@ Cylc View is a real time system monitor for Cylc.
 
         window.show_all()
 
-        self.t = updater( gobject, ss, imagedir, 
+        self.t = updater( gobject, self.ss, imagedir, 
                 self.led_treeview.get_model(), 
                 self.fl_liststore,
                 self.ttreestore, 
                 self.task_list, 
-                self.label_mode, self.label_status, self.label_time )
+                self.label_mode, 
+                self.label_status,
+                self.label_time )
 
         #print "Starting task state info thread"
         self.t.start()

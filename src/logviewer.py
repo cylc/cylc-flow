@@ -27,6 +27,9 @@ class logviewer:
     def path( self ):
         return self.dir + '/' + self.file
 
+    def quit_w_e( self, w, e ):
+        self.t.quit = True
+
     def quit( self ):
         self.t.quit = True
 
