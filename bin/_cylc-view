@@ -2,8 +2,10 @@
 
 # example basictreeview.py
 
-from logview import tailer
 from stateview import updater
+from logviewer import logviewer
+from cylc_logviewer import cylc_logviewer
+
 
 import gobject
 import gtk
@@ -14,6 +16,7 @@ from CylcOptionParsers import NoPromptOptionParser_u
 from connector import connector
 import pyrex
 from cycle_time import _rt_to_dt, is_valid
+
 
 class CylcView:
 
@@ -41,74 +44,10 @@ class CylcView:
     # close the window and quit
     def delete_event(self, widget, event, data=None):
         gtk.main_quit()
-        self.lt.quit = True
+        self.lvp.quit()
         self.t.quit = True
         #print "BYE from main thread"
         return False
-
-    def reset_logbuffer( self ):
-        # clear log buffer iters and tags
-        logbuffer = self.logview.get_buffer()
-        s,e = logbuffer.get_bounds()
-        logbuffer.remove_all_tags( s,e )
-        self.find_current_iter = None
-        self.find_current = None
- 
-    def replace_log( self, logfile ):
-        self.logfile = logfile
-        self.lt.quit = True
-        logpath = self.logdir + '/' + self.logfile 
-        logbuffer = self.logview.get_buffer()
-        s,e = logbuffer.get_bounds()
-        self.reset_logbuffer()
-        logbuffer.delete( s, e )
-        self.log_label.set_text( logpath ) 
-        self.lt = tailer( gobject, self.logview, logpath )
-        #print "Starting log viewer thread"
-        self.lt.start()
-
-    def switch_log( self, cb ):
-        model = cb.get_model()
-        index = cb.get_active()
-        if index == 0:
-            return False
-
-        task = model[index][0]
-        self.replace_log( task )
-
-        return False
-
-    def rotate_log( self, bt, go_older ):
-        cur_log = self.logfile
-        m = re.match( '(.*)\.(\d)$', cur_log ) 
-        if m:
-            level = int( m.groups()[1] )
-            log_base = m.groups()[0]
-        else:
-            level = 0
-            log_base = cur_log
-
-        warn = False
-
-        if go_older:
-            level += 1
-        else:
-            level -= 1
-
-        if level < 0:
-            self.warning_dialog( "The newest (active) log is already displayed" )
-            return
-
-        if level == 0:
-            new_log = log_base
-        else:
-            new_log = log_base + '.' + str( level )
-
-        if new_log not in os.listdir( self.logdir ):
-            self.warning_dialog( "No older log available" )
-            return
-
-        self.replace_log( new_log )
 
     def warning_dialog( self, msg ):
         dialog = gtk.MessageDialog( None,
@@ -116,19 +55,6 @@ class CylcView:
                 gtk.BUTTONS_CLOSE, msg )
         dialog.run()
         dialog.destroy()
-
-    def freeze_log( self, b ):
-        # TO DO: HANDLE MORE STUFF IN THREADS LIKE THIS, RATHER THAN
-        # PASSING IN ARGUMENTS?
-        if b.get_active():
-            self.lt.freeze = True
-            b.set_label( 'UNFREEZE' )
-            self.reset_logbuffer()
-        else:
-            self.lt.freeze = False
-            b.set_label( 'Freeze' )
-
-        return False
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -148,7 +74,8 @@ Cylc View is a real time system monitor for Cylc.
 
     def click_exit( self, foo ):
         gtk.main_quit()
-        self.lt.quit = True
+        #self.lt.quit = True
+        self.lvp.quit()
         self.t.quit = True
         #print "BYE from main thread"
         return False
@@ -353,8 +280,6 @@ Cylc View is a real time system monitor for Cylc.
         #print "Starting job log viewer thread"
         jt.start()
 
-
-
     def create_top_buttonbox( self ):
         bb = gtk.HButtonBox()
         bb.set_layout( gtk.BUTTONBOX_END )
@@ -382,38 +307,6 @@ Cylc View is a real time system monitor for Cylc.
         hb.pack_start( heading_button, False )
         hb.pack_end( bb, False )
         return hb
-
-    def create_task_logview( self ):
-        jlogscroll = gtk.ScrolledWindow()
-        jlogscroll.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-        self.jlogview = gtk.TextView()
-        self.jlogview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#afd" ) )
-        jlogscroll.add( self.jlogview )
-        self.jlogview.set_editable( False )
-        jvbox = gtk.VBox()
-
-        jsearch_hbox = gtk.HBox()
-        e = gtk.Entry ()
-        jsearch_hbox.pack_start (e, True)
-        e.show () 
-        b = gtk.Button ("Find Next")
-        b.connect_object ('clicked', self.on_find_clicked, self.jlogview, e)
-        jsearch_hbox.pack_start (b, False)
-
-        jhbox = gtk.HBox()
-        self.jlog_label = gtk.Label( "Job Log" )
-        self.jlog_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
-        jhbox.pack_start( self.jlog_label, True )
-
-        #self.jfreeze_button = gtk.ToggleButton( "Freeze" )
-        #self.jfreeze_button.set_active(False)
-        #self.jfreeze_button.connect("toggled", self.freeze_log )
-        #hbox.pack_end( self.jfreeze_button, False )
-
-        jvbox.pack_start( jlogscroll, True )
-        jvbox.pack_start( jsearch_hbox, False )
-        jvbox.pack_start( jhbox, False )
-        return jvbox
 
 
     def create_info_bar( self ):
@@ -448,58 +341,6 @@ Cylc View is a real time system monitor for Cylc.
 
         return hbox
 
-    def create_cylc_log_panel( self ):
-
-        self.logview = gtk.TextView()
-        self.logview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fffaeb" ) )
-        self.logview.set_editable( False )
-
-        searchbox = gtk.HBox()
-        entry = gtk.Entry ()
-        searchbox.pack_start (entry, True)
-        b = gtk.Button ("Find Next")
-        b.connect_object ('clicked', self.on_find_clicked, self.logview, entry)
-        searchbox.pack_start (b, False)
-
-        hbox = gtk.HBox()
-        self.log_label = gtk.Label( self.logdir + '/' + self.logfile )
-        self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
-        hbox.pack_start( self.log_label, True )
-
-        self.freeze_button = gtk.ToggleButton( "Freeze" )
-        self.freeze_button.set_active(False)
-        self.freeze_button.connect("toggled", self.freeze_log )
-        hbox.pack_end( self.freeze_button, False )
-
-        combobox = gtk.combo_box_new_text()
-        combobox.append_text( 'Select Log' ) 
-        combobox.append_text( 'main' ) 
-        for task in self.task_list:
-            combobox.append_text( task )
-
-        combobox.connect("changed", self.switch_log )
-        combobox.set_active(0)
-
-        previous = gtk.Button( "newer rotation" )
-        previous.connect("clicked", self.rotate_log, False )
-        hbox.pack_end( previous, False )
-
-        previous = gtk.Button( "older rotation" )
-        previous.connect("clicked", self.rotate_log, True )
-        hbox.pack_end( previous, False )
-
-        hbox.pack_end( combobox, False )
- 
-        logscroll = gtk.ScrolledWindow()
-        logscroll.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
-        logscroll.add( self.logview )
-
-        vbox = gtk.VBox()
-        vbox.pack_start( logscroll, True )
-        vbox.pack_start( searchbox, False )
-        vbox.pack_start( hbox, False )
-
-        return vbox
 
     def translate_task_names( self, shortnames ):
         temp = {}
@@ -518,10 +359,6 @@ Cylc View is a real time system monitor for Cylc.
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         window.set_size_request(600, 500)
         window.connect("delete_event", self.delete_event)
-
-        self.find_current = None
-        self.find_current_iter = None
-        self.search_warning_done = False
 
         # Get list of tasks in the system
         try:
@@ -548,7 +385,9 @@ Cylc View is a real time system monitor for Cylc.
         main_panes.add1( self.create_led_panel())
         main_panes.add2( notebook )
 
-        notebook.append_page( self.create_cylc_log_panel(), gtk.Label("Cylc Logs"))
+        cylc_log = self.logdir + '/' + self.logfile 
+        self.lvp = cylc_logviewer( 'main', self.logdir, self.logfile, self.task_list )
+        notebook.append_page( self.lvp.get_widget(), gtk.Label("Cylc Logs"))
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.create_top_buttonbox(), False )
@@ -565,13 +404,8 @@ Cylc View is a real time system monitor for Cylc.
                 self.task_list, 
                 self.label_mode, self.label_status, self.label_time )
 
-        cylc_main_log = self.logdir + '/' + self.logfile 
-        self.lt = tailer( gobject, self.logview, cylc_main_log )
-
         #print "Starting task state info thread"
         self.t.start()
-        #print "Starting log viewer thread"
-        self.lt.start()
 
 if __name__ == "__main__":
     parser = NoPromptOptionParser_u( """cylc view [options] SYSTEM 
