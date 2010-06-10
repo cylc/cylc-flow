@@ -196,32 +196,36 @@ else:
 
 
 # CHECK ARGS AND OPTIONS-----------------------------------------------
+
+if options.next_restart_completed:
+    message = "next restart completed"
+
+elif options.all_restarts_completed:
+    message = "all restarts completed"
+
+elif options.all_outputs_completed:
+    message = "all outputs completed"
+
+elif options.started:
+    message = "started"
+
+elif options.succeeded:
+    message = "completed (success)"
+
+elif options.failed:
+    message = "completed (failure)"
+
+else:
+    # message = message
+    pass
+
+print_message = 'cylc message (' + mode + '): ' + task_id + ' ' + message
+if options.failed or priority == 'WARNING' or priority == 'CRITICAL':
+    # print to stderr as well as stdout
+    print >> sys.stderr, print_message
+print print_message
+
 if mode != 'scheduler':
-    # there is no running scheduler assocated with this call
-
-    if options.next_restart_completed:
-        message = "next restart completed"
-
-    elif options.all_restarts_completed:
-        message = "all restarts completed"
-
-    elif options.all_outputs_completed:
-        message = "all outputs completed"
-
-    elif options.started:
-        message = "started"
-
-    elif options.succeeded:
-        message = "completed (success)"
-
-    elif options.failed:
-        message = "completed (failure)"
-
-    else:
-        # message = message
-        pass
-
-    print 'cylc message (' + mode + '): ' + task_id + ' ' + message
     sys.exit(0)
 
 # CONNECT TO THE CORRECT TASK PROXY OBJECT-----------------------------
