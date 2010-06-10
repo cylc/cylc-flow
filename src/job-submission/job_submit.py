@@ -195,7 +195,9 @@ class job_submit:
             return self.submit_jobfile_local( dry_run )
 
     def write_jobfile( self, FILE ):
-        FILE.write( '#!/bin/bash\n' )
+        FILE.write( '#!/bin/bash\n\n' )
+        FILE.write( '# THIS IS A CYLC JOB SUBMISSION FILE FOR ' + self.task_id + '.\n' )
+        FILE.write( '# It will be submitted to run by the "' + self.__class__.__name__ + '" method.\n\n' )
         self.write_directives( FILE )
         self.write_environment( FILE )
         self.write_cylc_scripting( FILE )
@@ -215,7 +217,7 @@ class job_submit:
 
         #for env in [ job_submit.global_env, self.task_env ]:
 
-        FILE.write( "\n# TASK EXECUTION ENVIRONMENT: system-wide variables\n" )
+        FILE.write( "# TASK EXECUTION ENVIRONMENT: system-wide variables\n" )
         for var in self.global_env:
             FILE.write( "export " + var + "=\"" + self.global_env[var] + "\"\n" )
 
@@ -229,16 +231,21 @@ class job_submit:
 
     def write_cylc_scripting( self, FILE ):
         FILE.write( "\n" )
+        FILE.write( "# CONFIGURE THE ENVIRONMENT FOR CYLC ACCESS.\n" )
         FILE.write( ". $CYLC_DIR/cylc-env.sh\n" )
 
     def write_task_execute( self, FILE ):
         FILE.write( "\n" )
+        FILE.write( "# EXECUTE THE TASK.\n" )
         FILE.write( self.task + " " + self.commandline + "\n\n" )
 
     def submit_jobfile_local( self, dry_run  ):
         # CONSTRUCT self.command, A LOCAL COMMAND THAT WILL SUBMIT THE
         # JOB THAT RUNS THE TASK. DERIVED CLASSES MUST PROVIDE THIS.
         self.construct_command()
+
+        # add local jobfile to list of viewable logfiles
+        self.logfiles.add_path( self.jobfile_path )
 
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
@@ -333,8 +340,9 @@ class job_submit:
         # now replace local jobfile path with remote jobfile path
         # (relative to $HOME)
 
-        print ' - deleting local jobfile ' + self.jobfile_path
-        os.unlink( self.jobfile_path )
+        #disable jobfile deletion as we're adding it to the viewable logfile list
+        #print ' - deleting local jobfile ' + self.jobfile_path
+        #os.unlink( self.jobfile_path )
 
         self.jobfile_path = os.path.basename( self.jobfile_path )
         self.jobfile_is_remote = True
@@ -375,6 +383,9 @@ class job_submit:
     def cleanup( self ):
         # called by task class when the job finishes
         
+        # DISABLE JOBFILE DELETION AS WE'RE ADDING IT TO THE VIEWABLE LOGFILE LIST
+        return 
+
         if self.jobfile_is_remote:
             print ' - deleting remote jobfile ' + self.jobfile_path
             os.system( 'ssh ' + self.destination + ' rm ' + self.jobfile_path )

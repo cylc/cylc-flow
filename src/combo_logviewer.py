@@ -35,13 +35,18 @@ class combo_logviewer( logviewer ):
         if index == 0:
             return False
 
-        task = model[index][0]
-        self.replace_log( task )
+        file = model[index][0]
+        for F in self.file_list:
+            if os.path.basename( F ) == file:
+                self.replace_log( F )
+                break
+
 
         return False
 
     def replace_log( self, file ):
-        self.file = file
+        self.file = os.path.basename( file )
+        self.dir = os.path.dirname( file )
         self.t.quit = True
         logbuffer = self.logview.get_buffer()
         s,e = logbuffer.get_bounds()
