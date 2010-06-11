@@ -8,11 +8,11 @@ from logviewer import logviewer
 
 class combo_logviewer( logviewer ):
  
-    def __init__( self, name, file_list ):
+    def __init__( self, name, file_list, color ):
         self.file_list = file_list
         file = os.path.basename( file_list[0] )
         dir = os.path.dirname( file_list[0] )
-        logviewer.__init__( self, name, dir, file )
+        logviewer.__init__( self, name, dir, file , color)
 
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )

@@ -17,6 +17,20 @@ from connector import connector
 import pyrex
 from cycle_time import _rt_to_dt, is_valid
 
+class color_rotator:
+    def __init__( self ):
+        self.colors = [ '#ed9638', '#dbd40a', '#a7c339', '#7bdec3' ]
+        self.current_color = 0
+ 
+    def get_color( self ):
+        index = self.current_color
+        if index == len( self.colors ) - 1:
+            index = 0
+        else:
+            index += 1
+
+        self.current_color = index
+        return self.colors[ index ]
 
 class CylcView:
 
@@ -305,10 +319,11 @@ Cylc View is a real time system monitor for Cylc.
 
         window = gtk.Window()
         window.set_title("log viewer" )
-        window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
+        #window.modify_bg( gtk.STATE_NORMAL, 
+        #        gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 300)
 
-        lv = combo_logviewer( 'foo', logfiles )
+        lv = combo_logviewer( 'foo', logfiles, self.log_colors.get_color() )
         window.add( lv.get_widget() )
 
         #window.connect("delete_event", self.logview_destroy, lvp )
@@ -390,6 +405,8 @@ Cylc View is a real time system monitor for Cylc.
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         window.set_size_request(600, 500)
         window.connect("delete_event", self.delete_event)
+
+        self.log_colors = color_rotator()
 
         # Get list of tasks in the system
         try:
