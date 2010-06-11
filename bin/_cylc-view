@@ -155,7 +155,17 @@ Cylc View is a real time system monitor for Cylc.
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         sw.add( treeview )
 
-        vbox = gtk.VBox()
+        hbox = gtk.HBox()
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "Click arrows to expand"))
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
+        hbox.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "Click rows to view task output" ))
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        hbox.pack_start( eb, True )
+ 
         bbox = gtk.HButtonBox()
         expand_button = gtk.Button( "Expand" )
         expand_button.connect( 'clicked', self.expand_all, treeview )
@@ -167,7 +177,9 @@ Cylc View is a real time system monitor for Cylc.
         bbox.add( collapse_button )
         bbox.set_layout( gtk.BUTTONBOX_END )
 
-        vbox.pack_start( sw )
+        vbox = gtk.VBox()
+        vbox.pack_start( hbox, False )
+        vbox.pack_start( sw, True )
         vbox.pack_start( bbox, False )
 
         return vbox
@@ -271,16 +283,15 @@ Cylc View is a real time system monitor for Cylc.
 
         self.filter_buttonbox.set_layout( gtk.BUTTONBOX_END )
 
-
         hbox = gtk.HBox()
         eb = gtk.EventBox()
         eb.add( gtk.Label( "Click headings to sort.") )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff7800' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( gtk.Label( "Click rows to view task output" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#7bdec3' ) ) 
         hbox.pack_start( eb, True )
 
         vbox = gtk.VBox()
@@ -341,22 +352,22 @@ Cylc View is a real time system monitor for Cylc.
 
         eb = gtk.EventBox()
         eb.add( self.label_sysname )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( self.label_mode )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff7800' ) )
-        hbox.pack_start( eb, True )
-
-        eb = gtk.EventBox()
-        eb.add( self.label_status )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( self.label_time )
+        eb.add( self.label_status )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) )
+        hbox.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( self.label_time )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#7bdec3' ) ) 
         hbox.pack_start( eb, True )
 
         return hbox
@@ -398,8 +409,8 @@ Cylc View is a real time system monitor for Cylc.
 
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
+        notebook.append_page( self.create_tree_panel(), gtk.Label("Expanding Tree") )
         notebook.append_page( self.create_flatlist_panel(), gtk.Label("Filtered List") )
-        notebook.append_page( self.create_tree_panel(), gtk.Label("Task Tree") )
 
         main_panes = gtk.VPaned()
         main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
@@ -408,7 +419,7 @@ Cylc View is a real time system monitor for Cylc.
 
         cylc_log = self.logdir + '/' + self.logfile 
         self.lvp = cylc_logviewer( 'main', self.logdir, self.logfile, self.task_list )
-        notebook.append_page( self.lvp.get_widget(), gtk.Label("Scheduler Logs"))
+        notebook.append_page( self.lvp.get_widget(), gtk.Label("Scheduler Log Files"))
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.create_info_bar(), False )
