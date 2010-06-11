@@ -1,5 +1,11 @@
 To Do
 
+* Record stopping time in state dump in case system shutdown and
+  restarted before all tasks reach the stop time is reached? (currently
+  at restart those that did reach the stop time will be finished and
+  unspawned, while those that didn't will carry on as if there was no
+  stop time).
+
 * Document UM-style custom-wrapper based job submission.
 
 * OUTPUTS must contain $(CYCLE_TIME) NOT $CYCLE_TIME currently. Document
