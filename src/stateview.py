@@ -4,7 +4,7 @@ import time
 import threading
 import gtk
 import pygtk
-pygtk.require('2.0')
+####pygtk.require('2.0')
 
 def compare_dict_of_dict( one, two ):
     for key in one:

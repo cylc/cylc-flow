@@ -2,7 +2,7 @@
 
 import gtk
 import pygtk
-pygtk.require('2.0')
+####pygtk.require('2.0')
 import time, os, re, sys
 from warning_dialog import warning_dialog
 

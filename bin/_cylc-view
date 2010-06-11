@@ -9,7 +9,7 @@ from warning_dialog import warning_dialog
 
 import gobject
 import pygtk
-pygtk.require('2.0')
+####pygtk.require('2.0')
 import gtk
 import time, os, re, sys
 from CylcOptionParsers import NoPromptOptionParser_u

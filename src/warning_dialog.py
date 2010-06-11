@@ -1,6 +1,6 @@
 import gtk
 import pygtk
-pygtk.require('2.0')
+####pygtk.require('2.0')
 
 class warning_dialog:
 
