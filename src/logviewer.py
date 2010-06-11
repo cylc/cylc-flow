@@ -52,6 +52,9 @@ class logviewer:
         self.find_current_iter = None
         self.find_current = None
 
+    def enter_clicked( self, e, tv ):
+        self.on_find_clicked( tv, e )
+
     def on_find_clicked( self, tv, e ):
         needle = e.get_text ()
         if not needle:
@@ -106,6 +109,7 @@ class logviewer:
 
         searchbox = gtk.HBox()
         entry = gtk.Entry ()
+        entry.connect( "activate", self.enter_clicked, self.logview )
         searchbox.pack_start (entry, True)
         b = gtk.Button ("Find Next")
         b.connect_object ('clicked', self.on_find_clicked, self.logview, entry)
