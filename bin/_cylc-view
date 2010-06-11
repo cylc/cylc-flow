@@ -206,9 +206,11 @@ Cylc View is a real time system monitor for Cylc.
         view = True
         reasons = []
 
-        if 'logfiles' not in states[ task_id ]:
+        logfiles = states[ task_id ][ 'logfiles' ]
+
+        if len(logfiles) == 0:
             view = False
-            reasons.append( task_id + ' has no log files defined' )
+            reasons.append( task_id + ' has no associated log files' )
 
         if states[ task_id ][ 'state' ] == 'waiting':
             view = False
@@ -216,9 +218,7 @@ Cylc View is a real time system monitor for Cylc.
 
         if not view:
             warning_dialog( '\n'.join( reasons ) ).warn()
-
         else:
-            logfiles = states[ task_id ][ 'logfiles' ]
             self.popup_logview( logfiles )
 
         return False
@@ -291,7 +291,7 @@ Cylc View is a real time system monitor for Cylc.
 
         eb = gtk.EventBox()
         eb.add( gtk.Label( "Click rows to view task output" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#7bdec3' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
         hbox.pack_start( eb, True )
 
         vbox = gtk.VBox()
