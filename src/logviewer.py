@@ -95,7 +95,7 @@ class logviewer:
 
     def create_gui_panel( self ):
         self.logview = gtk.TextView()
-        self.logview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f8833b" ) )
+        self.logview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff5d6" ) )
         self.logview.set_editable( False )
 
         searchbox = gtk.HBox()

@@ -10,6 +10,7 @@
 #         |________________________|
 
 import os
+import tempfile
 from job_submit import job_submit
 
 class background( job_submit ):
@@ -23,8 +24,17 @@ class background( job_submit ):
         # script, without waiting for the remote process to finish.
 
         cwd = os.getcwd()
-        out = cwd + '/' + self.task_id + '.out'
-        err = cwd + '/' + self.task_id + '.err'
+
+        out = tempfile.mktemp( 
+                suffix = ".out", 
+                prefix = self.task_id + "-",
+                dir = cwd )
+
+        err =  tempfile.mktemp( 
+                suffix = ".err", 
+                prefix = self.task_id + "-",
+                dir = cwd )
+
         self.command = self.jobfile_path + " </dev/null 1> " + out + " 2> " + err + " &" 
         self.logfiles.add_path( out )
         self.logfiles.add_path( err )

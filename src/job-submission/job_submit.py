@@ -176,7 +176,10 @@ class job_submit:
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
 
-        # get a new temp filename
+        # Get a new temp filename.
+        # TO DO: use [,dir=] argument and allow user to configure the
+        # temporary directory. For now the default is should be ok
+        # (it reads $TMPDIR, $TEMP, or $TMP)
         self.jobfile_path = tempfile.mktemp( prefix='cylc-') 
         
         # open the job file to write
