@@ -41,6 +41,7 @@
 # 'OWNER@REMOTE_HOST', thus passwordless ssh to remote host as OWNER
 # must be configured.
 
+import pwd
 import re, os, sys
 import subprocess
 import tempfile, stat
@@ -53,7 +54,32 @@ class job_submit:
     dummy_mode = False
     global_env = {}
 
+    def set_owner_and_homedir( self, owner = None ):
+        if owner:
+            self.owner = owner
+        else:
+            self.owner = self.cylc_owner
+
+        if not self.owner:
+            self.homedir = os.environ[ 'HOME' ]
+        else:
+            self.homedir = pwd.getpwnam( self.owner )[5]
+
+    def set_running_dir( self ):
+        # default to owner's home dir
+        self.running_dir = self.homedir
+
+
+    def interp_str( self, str ):
+        str = interp_other_str( str, self.task_env )
+        str = interp_other_str( str, job_submit.global_env )
+        str = interp_local_str( str )
+        str = replace_delayed_str( str )
+        return str
+
     def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
+
+        self.cylc_owner = os.environ['USER']
 
         # unique task identity
         self.task_id = task_id
@@ -119,12 +145,7 @@ class job_submit:
 
         # same for the task script command line
         commandline = ' '.join( com_line ) 
-        commandline = interp_other_str( commandline, self.task_env )
-        commandline = interp_other_str( commandline, job_submit.global_env )
-        commandline = interp_local_str( commandline )
-        commandline = replace_delayed_str( commandline )
-
-        self.commandline = commandline
+        self.commandline = self.interp_str( commandline )
 
         # queueing system directives
         self.directives  = dirs
@@ -138,21 +159,16 @@ class job_submit:
         
         # a remote host can be defined using environment variables
         if host:
-            host = interp_other_str( host, job_submit.global_env )
-            host = interp_other_str( host, self.task_env )
-            host = interp_local_str( host )
-            self.remote_host = host
+            self.remote_host = self.interp_str( host )
         else:
             self.remote_host = None
 
-        # a task owner can be defined using environment variables
-        if owner:
-            owner = interp_other_str( owner, job_submit.global_env )
-            owner = interp_other_str( owner, self.task_env )
-            owner = interp_local_str( owner )
-            self.owner = owner
-        else:
-            self.owner = None
+        # no need for task owner to be defined with environment variables?
+        #if owner:
+        #    owner = self.interp_str( owner )
+
+        self.set_owner_and_homedir( owner )
+        self.set_running_dir() 
 
         # a job submit log can be defined using environment variables
         logs.interpolate( job_submit.global_env )
@@ -160,13 +176,8 @@ class job_submit:
         logs.interpolate()
         self.logfiles = logs
 
-        # by default, run in cylc user's home directory ...
-        self.running_dir = '$HOME'
-        # ... because '~' not recognized by os.chdir().
-        #if self.owner:
-        #    self.running_dir = '~' + self.owner
-
         self.jobfile_is_remote = False
+
 
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
@@ -250,23 +261,19 @@ class job_submit:
 
         # run as owner, in owner's home directory, if owner is defined.
         # (write-permissions may be required in the running directory).
-        changed_dir = False
-        if self.owner and not job_submit.dummy_mode:
-            if self.owner != os.environ['USER']:
-                # change to the task owner's running directory before
-                # submitting the job
-                cwd = os.getcwd()
-                try:
-                    os.chdir( self.running_dir )
-                except OSError, e:
-                    print "Failed to change to task owner's running directory"
-                    print e
-                    return False
-                else:
-                    changed_dir = True
-                    new_dir = self.running_dir
+        cwd = os.getcwd()
+        try:
+            os.chdir( self.running_dir )
+        except OSError, e:
+            print "Failed to change to task owner's running directory"
+            print e
+            return False
+        else:
+            changed_dir = True
+            new_dir = self.running_dir
 
-                self.command = 'sudo -u ' + self.owner + ' ' + self.command
+        if self.owner != self.cylc_owner:
+            self.command = 'sudo -u ' + self.owner + ' ' + self.command
 
         # execute the local command to submit the job
         if dry_run:
@@ -305,8 +312,7 @@ class job_submit:
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
         self.destination = self.remote_host
-        if self.owner:
-            self.destination = self.owner + '@' + self.remote_host
+        self.destination = self.owner + '@' + self.remote_host
 
         # copy file to $HOME for owner on remote machine
         command_1 = 'scp ' + self.jobfile_path + ' ' + self.destination + ':'

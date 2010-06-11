@@ -9,7 +9,6 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
 import os, re
 import tempfile
 from job_submit import job_submit
@@ -20,8 +19,8 @@ class ll_basic( job_submit ):
     def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
         job_submit.__init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ) 
 
-        out = task_id + '.llout'
-        err = task_id + '.llerr'
+        out = self.running_dir + '/' + task_id + '.llout'
+        err = self.running_dir + '/' + task_id + '.llerr'
         self.logfiles.add_path( out )
         self.logfiles.add_path( err )
 
@@ -31,6 +30,7 @@ class ll_basic( job_submit ):
         directives[ 'job_name' ] = task_id
         directives[ 'output'   ] = out
         directives[ 'error'    ] = err
+        directives[ 'initialdir' ] = self.running_dir
 
         # add (or override with) taskdef directives
         for d in self.directives:

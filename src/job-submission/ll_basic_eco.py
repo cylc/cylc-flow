@@ -15,23 +15,22 @@ from ll_basic import ll_basic
 
 class ll_basic_eco( ll_basic ):
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
-        # check we are running in an ecoconnect system
+    def set_running_dir( self ):
+        # ~owner/running
+        self.running_dir = self.homedir + '/running'
+
+    def set_owner_and_homedir( self, owner = None ):
         # cylc should be running as ecoconnect_(devel|test|oper)
+        if not owner:
+            raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
 
-        cylc_owner = os.environ[ 'USER' ]
-
-        m = re.match( '^(.*)_(devel|test|oper)$', cylc_owner )
+        m = re.match( '^(.*)_(devel|test|oper)$', self.cylc_owner )
         if m:
             (junk, ecoc_system ) = m.groups()
         else:
             raise SystemExit( "Cylc is not running in an EcoConnect environment" )
 
-        if not owner:
-            raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
-
         # transform owner username for devel, test, or oper systems
-
         # strip off any existing system suffix defined in the taskdef file
         m = re.match( '^(.*)_(devel|test|oper)$', owner )
         if m:
@@ -42,10 +41,12 @@ class ll_basic_eco( ll_basic ):
         # append the correct system suffix
         owner = owner_name + '_' + ecoc_system
 
-        ll_basic.__init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ) 
+        ll_basic.set_owner_and_homedir( self, owner )
 
-        # override running dir to ~owner/running
-        self.running_dir = '/' + ecoc_system + '/ecoconnect/' + owner + '/running'
+
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
+
+        ll_basic.__init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ) 
 
         # ecoconnect-specific loadleveler directives
         # CHANGE ONCE PROPER LOADLEVELER QUEUES ARE CONFIGURED

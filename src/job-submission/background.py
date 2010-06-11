@@ -23,17 +23,15 @@ class background( job_submit ):
         # file) - ssh can exit immediately after invoking the job
         # script, without waiting for the remote process to finish.
 
-        cwd = os.getcwd()
-
         out = tempfile.mktemp( 
                 suffix = ".out", 
                 prefix = self.task_id + "-",
-                dir = cwd )
+                dir = self.running_dir )
 
         err =  tempfile.mktemp( 
                 suffix = ".err", 
                 prefix = self.task_id + "-",
-                dir = cwd )
+                dir = self.running_dir )
 
         self.command = self.jobfile_path + " </dev/null 1> " + out + " 2> " + err + " &" 
         self.logfiles.add_path( out )
