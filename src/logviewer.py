@@ -95,7 +95,6 @@ class logviewer:
 
         return False
 
-
     def create_gui_panel( self ):
         self.logview = gtk.TextView()
         self.logview.set_editable( False )

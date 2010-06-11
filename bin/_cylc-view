@@ -215,7 +215,6 @@ Cylc View is a real time system monitor for Cylc.
         return False
 
 
-
     def show_log( self, task_id ):
 
         self.popup_requisites( task_id )
@@ -337,9 +336,15 @@ Cylc View is a real time system monitor for Cylc.
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
+        vbox = gtk.VBox()
+        quit_button = gtk.Button( "Close" )
+        quit_button.connect("clicked", lambda x: window.destroy() )
+        vbox.pack_start( sw )
+        vbox.pack_start( quit_button, False )
+
         textview = gtk.TextView()
         sw.add( textview )
-        window.add( sw )
+        window.add( vbox )
         tb = textview.get_buffer()
 
         blue = tb.create_tag( None, foreground = "blue" )
@@ -359,7 +364,6 @@ Cylc View is a real time system monitor for Cylc.
         self.update_tb( tb, 'Prerequisites,', [bold])
         self.update_tb( tb, ' blue => satisfied,', [blue] )
         self.update_tb( tb, ' red => NOT satisfied:\n\n', [red]) 
-
 
         if len( pre ) == 0:
             self.update_tb( tb, '(None)\n' )
@@ -393,6 +397,9 @@ Cylc View is a real time system monitor for Cylc.
         #window.connect("delete_event", lv.quit_w_e)
         window.show_all()
 
+    def on_popup_quit( self, b, lv, w ):
+        lv.quit()
+        w.destroy()
 
     def popup_logview( self, logfiles ):
 
@@ -406,7 +413,10 @@ Cylc View is a real time system monitor for Cylc.
         lv = combo_logviewer( 'foo', logfiles )
         window.add( lv.get_widget() )
 
-        #window.connect("delete_event", self.logview_destroy, lvp )
+        quit_button = gtk.Button( "Close" )
+        quit_button.connect("clicked", self.on_popup_quit, lv, window )
+        lv.hbox.pack_start( quit_button )
+ 
         window.connect("delete_event", lv.quit_w_e)
         window.show_all()
 
