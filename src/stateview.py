@@ -85,8 +85,8 @@ class updater(threading.Thread):
         # MULTIPLE TIMES???????????????///
         return False
 
-    def update_summary(self):
-        #print "Updating Summary"
+    def update(self):
+        #print "Updating"
         try:
             [glbl, states] = self.god.get_state_summary()
         except Exception,x:
@@ -97,11 +97,7 @@ class updater(threading.Thread):
  
             return False
 
-        if compare_dict_of_dict( states, self.state_summary ):
-            #print "STATE UNCHANGED"
-            return False
-
-        self.state_summary = states
+        # always update global info
 
         if glbl['stopping']:
             self.status = 'STOPPING'
@@ -127,8 +123,14 @@ class updater(threading.Thread):
 
         dt = glbl[ 'last_updated' ]
         self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
-        
-        return True
+
+        # only update states if a change occurred
+        if compare_dict_of_dict( states, self.state_summary ):
+            #print "STATE UNCHANGED"
+            return False
+        else:
+            self.state_summary = states
+            return True
 
     def search_level( self, model, iter, func, data ):
         while iter:
@@ -359,7 +361,6 @@ class updater(threading.Thread):
                     state_list.append( self.empty_led )
 
             self.led_liststore.append( self.digitize( ctime ) + state_list )
-            
 
         return False
 
@@ -367,14 +368,13 @@ class updater(threading.Thread):
         glbl = None
         states = {}
         while not self.quit:
-            if self.update_summary():
+            if self.update():
                 self.gobject.idle_add( self.update_gui )
-                self.gobject.idle_add( self.label_mode.set_text, self.mode )
-                self.gobject.idle_add( self.label_status.set_text, self.status )
-                self.gobject.idle_add( self.label_time.set_text, self.dt )
+            # TO DO: only update globals if they change, as for tasks
+            self.gobject.idle_add( self.label_mode.set_text, self.mode )
+            self.gobject.idle_add( self.label_status.set_text, self.status )
+            self.gobject.idle_add( self.label_time.set_text, self.dt )
             time.sleep(1)
         else:
             pass
             #print "Disconnecting task state info thread"
-
-

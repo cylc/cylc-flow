@@ -19,7 +19,7 @@ from cycle_time import _rt_to_dt, is_valid
 
 class color_rotator:
     def __init__( self ):
-        self.colors = [ '#ed9638', '#dbd40a', '#a7c339', '#7bdec3' ]
+        self.colors = [ '#ed9638', '#dbd40a', '#a7c339', '#6ab7b4' ]
         self.current_color = 0
  
     def get_color( self ):
@@ -382,7 +382,7 @@ Cylc View is a real time system monitor for Cylc.
 
         eb = gtk.EventBox()
         eb.add( self.label_time )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#7bdec3' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#6ab7b4' ) ) 
         hbox.pack_start( eb, True )
 
         return hbox

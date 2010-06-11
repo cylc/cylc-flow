@@ -113,7 +113,7 @@ class logviewer:
 
         self.hbox = gtk.HBox()
         self.log_label = gtk.Label( self.name )
-        self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
+        #self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
         self.hbox.pack_start( self.log_label, True )
 
         self.freeze_button = gtk.ToggleButton( "Freeze" )

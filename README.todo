@@ -1,5 +1,7 @@
 To Do
 
+* get logviewer windows to shut down with main viewer window
+
 * Record stopping time in state dump in case system shutdown and
   restarted before all tasks reach the stop time is reached? (currently
   at restart those that did reach the stop time will be finished and
