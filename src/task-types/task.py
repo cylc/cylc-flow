@@ -18,24 +18,11 @@ import logging
 import Pyro.core
 from copy import deepcopy
 from dynamic_instantiation import get_object
+from task_output_logs import logfiles
 
 global state_changed
 #state_changed = False
 state_changed = True
-
-class logf:
-    # need log file to be mutable (i.e. not a string) so that changes to
-    # log paths in the job submit class are reflected in the task class.
-    def __init__( self, path = None ):
-        self.paths = []
-        if path:
-            self.paths.append( path )
-
-    def add_path( self, path ):
-        self.paths.append( path )
-
-    def get_paths( self ):
-        return self.paths
 
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
@@ -128,7 +115,7 @@ class task( Pyro.core.ObjBase ):
 
         self.latest_message = ""
 
-        self.logfiles = logf()
+        self.logfiles = logfiles()
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 

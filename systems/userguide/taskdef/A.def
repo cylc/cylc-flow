@@ -14,7 +14,7 @@
     A, a
 
 %LOGFILE
-    A-$CYCLE_TIME.log
+    $HOME/met.txt
 
 %DESCRIPTION
     Could be an atmospheric model. 
