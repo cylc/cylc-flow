@@ -347,7 +347,7 @@ Cylc View is a real time system monitor for Cylc.
         window.add( vbox )
         tb = textview.get_buffer()
 
-        blue = tb.create_tag( None, foreground = "blue" )
+        #blue = tb.create_tag( None, foreground = "blue" )
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
  
@@ -362,37 +362,36 @@ Cylc View is a real time system monitor for Cylc.
         [ pre, out, extra_info ] = result[ task_id ]
 
         self.update_tb( tb, 'Prerequisites,', [bold])
-        self.update_tb( tb, ' blue => satisfied,', [blue] )
+        #self.update_tb( tb, ' blue => satisfied,', [blue] )
         self.update_tb( tb, ' red => NOT satisfied:\n\n', [red]) 
 
         if len( pre ) == 0:
-            self.update_tb( tb, '(None)\n' )
+            self.update_tb( tb, ' - (None)\n' )
         for item in pre:
             [ msg, state ] = item
             if state:
-                tag = blue
+                tags = None
             else:
-                tag = red
-            self.update_tb( tb, ' - ' + msg + '\n', [tag] )
+                tags = [red]
+            self.update_tb( tb, ' - ' + msg + '\n', tags )
 
-        self.update_tb( tb, '\n\nOutputs,', [bold] )
-        self.update_tb( tb, ' blue => completed,', [blue] )
+        self.update_tb( tb, '\nOutputs,', [bold] )
         self.update_tb( tb, ' red => NOT completed:\n\n', [red]) 
 
         if len( out ) == 0:
-            self.update_tb( tb, '(None)\n')
+            self.update_tb( tb, ' - (None)\n')
         for item in out:
             [ msg, state ] = item
             if state:
-                tag = blue
+                tags = []
             else:
-                tag = red
-            self.update_tb( tb, ' - ' + msg + '\n', [tag] )
+                tags = [red]
+            self.update_tb( tb, ' - ' + msg + '\n', tags )
 
         if len( extra_info.keys() ) > 0:
-            self.update_tb( tb, '\nOther Information:\n', [bold] )
+            self.update_tb( tb, '\nOther\n\n', [bold] )
             for item in extra_info:
-                self.update_tb( tb, item, '...', extra_info[ item ] + '\n' )
+                self.update_tb( tb, ' - ' + item + ': ' + str( extra_info[ item ] ) + '\n' )
 
         #window.connect("delete_event", lv.quit_w_e)
         window.show_all()
@@ -406,7 +405,7 @@ Cylc View is a real time system monitor for Cylc.
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_border_width( 10 )
+        window.set_border_width(5)
         window.set_title("log viewer" )
         window.set_size_request(600, 300)
 
@@ -491,6 +490,7 @@ Cylc View is a real time system monitor for Cylc.
 
     def __init__(self):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        #window.set_border_width( 5 )
         window.set_title("cylc view <" + groupname + ">" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         window.set_size_request(600, 500)

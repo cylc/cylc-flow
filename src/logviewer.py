@@ -118,6 +118,7 @@ class logviewer:
         self.hbox.pack_end( self.freeze_button, False )
 
         sw = gtk.ScrolledWindow()
+        sw.set_border_width(5)
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         sw.add( self.logview )
 
