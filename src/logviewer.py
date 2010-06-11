@@ -9,16 +9,11 @@ from warning_dialog import warning_dialog
 from logview import tailer
 
 class logviewer:
-    def __init__( self, name, dir, file, color = None ):
+    def __init__( self, name, dir, file ):
         self.name = name
         self.dir = dir
         self.file = file
         
-        if color:
-            self.color = color
-        else:
-            self.color = "#fff5d6" 
-
         self.find_current = None
         self.find_current_iter = None
         self.search_warning_done = False
@@ -74,7 +69,7 @@ class logviewer:
         else:
             s,e = tb.get_bounds()
             tb.remove_all_tags( s,e )
-            s = tb.get_end_iter ()
+            s = tb.get_end_iter()
             tv.scroll_to_iter( s, 0 )
         try:
             f, l = s.backward_search (needle, gtk.TEXT_SEARCH_TEXT_ONLY) 
@@ -103,8 +98,6 @@ class logviewer:
 
     def create_gui_panel( self ):
         self.logview = gtk.TextView()
-        self.logview.modify_base( gtk.STATE_NORMAL, 
-                gtk.gdk.color_parse( self.color ) )
         self.logview.set_editable( False )
 
         searchbox = gtk.HBox()

@@ -8,11 +8,11 @@ from logviewer import logviewer
 
 class combo_logviewer( logviewer ):
  
-    def __init__( self, name, file_list, color ):
+    def __init__( self, name, file_list ):
         self.file_list = file_list
         file = os.path.basename( file_list[0] )
         dir = os.path.dirname( file_list[0] )
-        logviewer.__init__( self, name, dir, file , color)
+        logviewer.__init__( self, name, dir, file )
 
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
@@ -26,7 +26,6 @@ class combo_logviewer( logviewer ):
         combobox.set_active(0)
 
         self.hbox.pack_end( combobox, False )
-
 
     def switch_log( self, cb ):
         model = cb.get_model()

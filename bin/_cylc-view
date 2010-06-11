@@ -2,6 +2,7 @@
 
 # example basictreeview.py
 
+import pango
 from stateview import updater
 from combo_logviewer import combo_logviewer
 from cylc_logviewer import cylc_logviewer
@@ -176,7 +177,7 @@ Cylc View is a real time system monitor for Cylc.
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click rows to view task output" ))
+        eb.add( gtk.Label( "Click rows for real time task info" ))
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
         hbox.pack_start( eb, True )
  
@@ -213,7 +214,11 @@ Cylc View is a real time system monitor for Cylc.
         self.show_log( task_id )
         return False
 
+
+
     def show_log( self, task_id ):
+
+        self.popup_requisites( task_id )
 
         [ glbl, states ] = self.ss.get_state_summary()
 
@@ -304,7 +309,7 @@ Cylc View is a real time system monitor for Cylc.
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click rows to view task output" ) )
+        eb.add( gtk.Label( "Click rows for real time task info" ) )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
         hbox.pack_start( eb, True )
 
@@ -315,15 +320,90 @@ Cylc View is a real time system monitor for Cylc.
 
         return vbox
 
+    def update_tb( self, tb, line, tags = None ):
+        if tags:
+            tb.insert_with_tags( tb.get_end_iter(), line, *tags )
+        else:
+            tb.insert( tb.get_end_iter(), line )
+
+    def popup_requisites( self, task_id ):
+        window = gtk.Window()
+        window.set_border_width( 10 )
+        window.set_title( task_id + ": Prerequisites and Outputs" )
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_size_request(600, 300)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+
+        textview = gtk.TextView()
+        sw.add( textview )
+        window.add( sw )
+        tb = textview.get_buffer()
+
+        blue = tb.create_tag( None, foreground = "blue" )
+        red = tb.create_tag( None, foreground = "red" )
+        bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
+ 
+        result = self.rem.get_task_requisites( [ task_id ] )
+
+        if task_id not in result:
+            warning_dialog( "Task " + task_id + " not found in " + system_name ).warn()
+            return
+        
+        self.update_tb( tb, 'Task ' + task_id + ' in ' +  system_name + '\n\n', [bold])
+
+        [ pre, out, extra_info ] = result[ task_id ]
+
+        self.update_tb( tb, 'Prerequisites,', [bold])
+        self.update_tb( tb, ' blue => satisfied,', [blue] )
+        self.update_tb( tb, ' red => NOT satisfied:\n\n', [red]) 
+
+
+        if len( pre ) == 0:
+            self.update_tb( tb, '(None)\n' )
+        for item in pre:
+            [ msg, state ] = item
+            if state:
+                tag = blue
+            else:
+                tag = red
+            self.update_tb( tb, ' - ' + msg + '\n', [tag] )
+
+        self.update_tb( tb, '\n\nOutputs,', [bold] )
+        self.update_tb( tb, ' blue => completed,', [blue] )
+        self.update_tb( tb, ' red => NOT completed:\n\n', [red]) 
+
+        if len( out ) == 0:
+            self.update_tb( tb, '(None)\n')
+        for item in out:
+            [ msg, state ] = item
+            if state:
+                tag = blue
+            else:
+                tag = red
+            self.update_tb( tb, ' - ' + msg + '\n', [tag] )
+
+        if len( extra_info.keys() ) > 0:
+            self.update_tb( tb, '\nOther Information:\n', [bold] )
+            for item in extra_info:
+                self.update_tb( tb, item, '...', extra_info[ item ] + '\n' )
+
+        #window.connect("delete_event", lv.quit_w_e)
+        window.show_all()
+
+
     def popup_logview( self, logfiles ):
 
         window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width( 10 )
         window.set_title("log viewer" )
-        #window.modify_bg( gtk.STATE_NORMAL, 
-        #        gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 300)
 
-        lv = combo_logviewer( 'foo', logfiles, self.log_colors.get_color() )
+        lv = combo_logviewer( 'foo', logfiles )
         window.add( lv.get_widget() )
 
         #window.connect("delete_event", self.logview_destroy, lvp )
@@ -415,6 +495,11 @@ Cylc View is a real time system monitor for Cylc.
             print x
             raise
 
+        try:
+            self.rem = connector( pns_host, groupname, 'remote' ).get()
+        except Exception, x:
+            print x
+            raise
 
         self.logdir = self.ss.get_config( 'logging_dir' ) 
         self.logfile = 'main'
@@ -426,8 +511,8 @@ Cylc View is a real time system monitor for Cylc.
 
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
-        notebook.append_page( self.create_tree_panel(), gtk.Label("Expanding Tree") )
         notebook.append_page( self.create_flatlist_panel(), gtk.Label("Filtered List") )
+        notebook.append_page( self.create_tree_panel(), gtk.Label("Expanding Tree") )
 
         main_panes = gtk.VPaned()
         main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
@@ -489,4 +574,3 @@ submission method used by each task).""")
     gobject.threads_init()
     tvexample = CylcView()
     gtk.main()
-
