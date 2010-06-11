@@ -17,15 +17,20 @@ from job_submit import job_submit
 class ll_basic( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ): 
-        job_submit.__init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ) 
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
+        job_submit.__init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ) 
+
+        out = task_id + '.llout'
+        err = task_id + '.llerr'
+        self.logfiles.add_path( out )
+        self.logfiles.add_path( err )
 
         # default directives
         directives = {}
         directives[ 'shell'    ] = '/bin/bash'
         directives[ 'job_name' ] = task_id
-        directives[ 'output'   ] = '$(job_name)-$(jobid).out'
-        directives[ 'error'    ] = '$(job_name)-$(jobid).err'
+        directives[ 'output'   ] = out
+        directives[ 'error'    ] = err
 
         # add (or override with) taskdef directives
         for d in self.directives:

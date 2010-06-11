@@ -15,7 +15,7 @@ from ll_basic import ll_basic
 
 class ll_basic_eco( ll_basic ):
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
         # check we are running in an ecoconnect system
         # cylc should be running as ecoconnect_(devel|test|oper)
 
@@ -42,7 +42,7 @@ class ll_basic_eco( ll_basic ):
         # append the correct system suffix
         owner = owner_name + '_' + ecoc_system
 
-        ll_basic.__init__( self, task_id, ext_task, task_env, com_line, dirs, owner, host ) 
+        ll_basic.__init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ) 
 
         # override running dir to ~owner/running
         self.running_dir = '/' + ecoc_system + '/ecoconnect/' + owner + '/running'
