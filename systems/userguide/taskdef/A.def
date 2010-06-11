@@ -13,8 +13,9 @@
 %NAME
     A, a
 
-%LOGFILE
-    $HOME/met.txt
+#%LOGFILES
+#    $HOME/A-output/$CYCLE_TIME/met.out
+#    $HOME/A-output/$CYCLE_TIME/met.err
 
 %DESCRIPTION
     Could be an atmospheric model. 

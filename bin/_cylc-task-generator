@@ -143,7 +143,7 @@ def main( argv ):
 
     task_def_files = argv[1:]
 
-    allowed_keys = [ 'LOGFILE', 'INHERIT', 'NAME', 'OWNER', 'CYCLES',
+    allowed_keys = [ 'LOGFILES', 'INHERIT', 'NAME', 'OWNER', 'CYCLES',
             'TASK', 'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
             'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
@@ -185,7 +185,7 @@ from prerequisites import prerequisites
 from outputs import outputs
 from cycling_daemon import cycling_daemon
 from time import sleep
-
+from task_output_logs import logfiles
 import cycle_time
 import task_state
 
@@ -525,11 +525,10 @@ from dynamic_instantiation import get_object
                     req = interpolate_cycle_times( req )
                     FILE.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
  
-        if 'LOGFILE' in parsed_def:
-            logfile = parsed_def[ 'LOGFILE' ][0] 
-            FILE.write( indent + 'self.logfile = "' + logfile + '"\n' )
-        else:
-            FILE.write( indent + 'self.logfile = None\n' )
+        FILE.write( indent + 'self.logfiles = logfiles()\n' )
+        if 'LOGFILES' in parsed_def:
+            for lfile in parsed_def[ 'LOGFILES' ]:
+                FILE.write( indent + 'self.logfiles.add_path("' + lfile + '")\n' )
 
         # are the prerequisites different for the first instance?
         if 'STARTUP_PREREQUISITES' in parsed_def:

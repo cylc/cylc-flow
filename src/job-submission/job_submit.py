@@ -155,14 +155,9 @@ class job_submit:
             self.owner = None
 
         # a job submit log can be defined using environment variables
-        #if log:
-        #    log = interp_other_str( log, job_submit.global_env )
-        #    log = interp_other_str( log, self.task_env )
-        #    log = interp_local_str( log )
-        #    self.logfile = log
-        #else:
-        #    self.logfile = None
-
+        logs.interpolate( job_submit.global_env )
+        logs.interpolate( self.task_env )
+        logs.interpolate()
         self.logfiles = logs
 
         # by default, run in cylc user's home directory ...

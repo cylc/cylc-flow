@@ -36,6 +36,22 @@
     nz_forecast, nzf
 
 #----------------------------------------------------------------------
+[%LOGFILES]
+    # - List of "output logs" and similar, IN ADDITION TO stdout and
+    #   stderr capture from the cylc job submission process (which
+    #   should be provided automatically by the job submission method
+    #   where possible). This can be used for tasks that direct their
+    #   own stdout and stderr streams to named files.  It can also be
+    #   used to capture output from tasks with complicated native
+    #   job-submission procedures that have to be invoked by cylc
+    #   through a custom wrapper such that the initial process submitted 
+    #   by cylc is not the process that generates the output of
+    #   interest. See the Userguide on Custom Job Submit Wrappers.
+
+    $HOME/atmos/running/$CYCLE_TIME/met.out
+    $HOME/atmos/running/$CYCLE_TIME/met.err
+
+#----------------------------------------------------------------------
 %DESCRIPTION
     # - freeform multiline text description of what this task does.
 

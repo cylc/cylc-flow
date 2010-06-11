@@ -18,7 +18,6 @@ import logging
 import Pyro.core
 from copy import deepcopy
 from dynamic_instantiation import get_object
-from task_output_logs import logfiles
 
 global state_changed
 #state_changed = False
@@ -114,8 +113,6 @@ class task( Pyro.core.ObjBase ):
         state_changed = True
 
         self.latest_message = ""
-
-        self.logfiles = logfiles()
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 
