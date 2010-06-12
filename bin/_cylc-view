@@ -579,7 +579,7 @@ Cylc View is a real time system monitor for Cylc.
         self.create_menu()
 
         self.led_headings = None 
-        self.no_task_headings( None )
+        self.short_task_headings( None )
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )

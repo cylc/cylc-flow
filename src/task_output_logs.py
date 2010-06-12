@@ -17,6 +17,9 @@ class logfiles:
     def get_paths( self ):
         return self.paths
 
+    def empty( self ):
+        self.paths = []
+
     def interpolate( self, env = None ):
         new_paths = []
         for log in self.paths:

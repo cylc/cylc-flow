@@ -1,12 +1,13 @@
 To Do
 
-* get logviewer windows to shut down with main viewer window
-
 * Record stopping time in state dump in case system shutdown and
   restarted before all tasks reach the stop time is reached? (currently
   at restart those that did reach the stop time will be finished and
   unspawned, while those that didn't will carry on as if there was no
   stop time).
+
+* when a task is reset to waiting or ready, it needs to forget the
+  original job stdout and stderr logs (but not the other custom logs!)
 
 * Document UM-style custom-wrapper based job submission.
 
