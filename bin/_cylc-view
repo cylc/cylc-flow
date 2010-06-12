@@ -61,6 +61,11 @@ class CylcView:
         gtk.main_quit()
         self.lvp.quit()
         self.t.quit = True
+
+        for q in self.quitters:
+            #print "calling quit on ", q
+            q.quit()
+
         #print "BYE from main thread"
         return False
 
@@ -84,6 +89,11 @@ Cylc View is a real time system monitor for Cylc.
         gtk.main_quit()
         self.lvp.quit()
         self.t.quit = True
+
+        for q in self.quitters:
+            #print "calling quit on ", q
+            q.quit()
+
         #print "BYE from main thread"
         return False
 
@@ -171,14 +181,14 @@ Cylc View is a real time system monitor for Cylc.
         sw.add( treeview )
 
         hbox = gtk.HBox()
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click arrows to expand"))
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
-        hbox.pack_start( eb, True )
+        #eb = gtk.EventBox()
+        #eb.add( gtk.Label( " -oOo- "))
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        #hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click rows for real time task info" ))
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        eb.add( gtk.Label( "Click on rows to get Task Information" ))
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
         hbox.pack_start( eb, True )
  
         bbox = gtk.HButtonBox()
@@ -217,7 +227,7 @@ Cylc View is a real time system monitor for Cylc.
 
     def show_log( self, task_id ):
 
-        self.popup_requisites( task_id )
+        #self.popup_requisites( task_id )
 
         [ glbl, states ] = self.ss.get_state_summary()
 
@@ -237,7 +247,7 @@ Cylc View is a real time system monitor for Cylc.
         if not view:
             warning_dialog( '\n'.join( reasons ) ).warn()
         else:
-            self.popup_logview( logfiles )
+            self.popup_logview( task_id, logfiles )
 
         return False
 
@@ -303,13 +313,13 @@ Cylc View is a real time system monitor for Cylc.
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click headings to sort.") )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        eb.add( gtk.Label( "Click on table headings to sort tasks.") )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click rows for real time task info" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
+        eb.add( gtk.Label( "Click on rows to get Task Information" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
         hbox.pack_start( eb, True )
 
         vbox = gtk.VBox()
@@ -325,13 +335,13 @@ Cylc View is a real time system monitor for Cylc.
         else:
             tb.insert( tb.get_end_iter(), line )
 
-    def popup_requisites( self, task_id ):
+    def popup_requisites( self, w, task_id ):
         window = gtk.Window()
-        window.set_border_width( 10 )
+        #window.set_border_width( 10 )
         window.set_title( task_id + ": Prerequisites and Outputs" )
-        window.modify_bg( gtk.STATE_NORMAL, 
-                gtk.gdk.color_parse( self.log_colors.get_color()))
-        window.set_size_request(600, 300)
+        #window.modify_bg( gtk.STATE_NORMAL, 
+        #       gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_size_request(400, 300)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
@@ -343,11 +353,14 @@ Cylc View is a real time system monitor for Cylc.
         vbox.pack_start( quit_button, False )
 
         textview = gtk.TextView()
+        textview.set_border_width(5)
+        textview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
+        textview.set_editable( False )
         sw.add( textview )
         window.add( vbox )
         tb = textview.get_buffer()
 
-        #blue = tb.create_tag( None, foreground = "blue" )
+        blue = tb.create_tag( None, foreground = "blue" )
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
  
@@ -357,7 +370,11 @@ Cylc View is a real time system monitor for Cylc.
             warning_dialog( "Task " + task_id + " not found in " + system_name ).warn()
             return
         
-        self.update_tb( tb, 'Task ' + task_id + ' in ' +  system_name + '\n\n', [bold])
+        #self.update_tb( tb, 'Task ' + task_id + ' in ' +  system_name + '\n\n', [bold])
+        self.update_tb( tb, 'TASK ', [bold] )
+        self.update_tb( tb, task_id, [bold, blue])
+        self.update_tb( tb, ' in SYSTEM ', [bold] )
+        self.update_tb( tb, system_name + '\n\n', [bold, blue])
 
         [ pre, out, extra_info ] = result[ task_id ]
 
@@ -398,24 +415,33 @@ Cylc View is a real time system monitor for Cylc.
 
     def on_popup_quit( self, b, lv, w ):
         lv.quit()
+        self.quitters.remove( lv )
         w.destroy()
 
-    def popup_logview( self, logfiles ):
+    def popup_logview( self, task_id, logfiles ):
 
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title("log viewer" )
+        window.set_title( task_id + ": Task Information Viewer" )
         window.set_size_request(600, 300)
 
-        lv = combo_logviewer( 'foo', logfiles )
+        lv = combo_logviewer( task_id, logfiles )
+        #print "ADDING to quitters: ", lv
+        self.quitters.append( lv )
+
         window.add( lv.get_widget() )
 
+        state_button = gtk.Button( "Interrogate" )
+        state_button.connect("clicked", self.popup_requisites, task_id )
+ 
         quit_button = gtk.Button( "Close" )
         quit_button.connect("clicked", self.on_popup_quit, lv, window )
+        
         lv.hbox.pack_start( quit_button )
- 
+        lv.hbox.pack_start( state_button )
+
         window.connect("delete_event", lv.quit_w_e)
         window.show_all()
 
@@ -442,7 +468,6 @@ Cylc View is a real time system monitor for Cylc.
         hb.pack_start( heading_button, False )
         hb.pack_end( bb, False )
         return hb
-
 
     def create_info_bar( self ):
         user, name = groupname.split('^')
@@ -471,7 +496,8 @@ Cylc View is a real time system monitor for Cylc.
 
         eb = gtk.EventBox()
         eb.add( self.label_time )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#6ab7b4' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#6ab7b4' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fa87a4' ) ) 
         hbox.pack_start( eb, True )
 
         return hbox
@@ -540,6 +566,8 @@ Cylc View is a real time system monitor for Cylc.
         window.add( bigbox )
 
         window.show_all()
+
+        self.quitters = []
 
         self.t = updater( gobject, self.ss, imagedir, 
                 self.led_treeview.get_model(), 

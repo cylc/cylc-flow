@@ -39,7 +39,6 @@ class combo_logviewer( logviewer ):
                 self.replace_log( F )
                 break
 
-
         return False
 
     def replace_log( self, file ):
@@ -50,7 +49,7 @@ class combo_logviewer( logviewer ):
         s,e = logbuffer.get_bounds()
         self.reset_logbuffer()
         logbuffer.delete( s, e )
-        self.log_label.set_text( self.path() ) 
+        #self.log_label.set_text( self.path() ) 
         self.t = tailer( self.logview, self.path() )
         print "Starting log viewer thread"
         self.t.start()

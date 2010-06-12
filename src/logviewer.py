@@ -57,9 +57,9 @@ class logviewer:
 
         self.t.freeze = True
         self.freeze_button.set_active(True)
-        self.freeze_button.set_label('UnFreeze')
+        self.freeze_button.set_label('Reconnect')
         if not self.search_warning_done:
-            warning_dialog( "Find Next detaches the live log feed; click UnFreeze when you're done" ).warn()
+            warning_dialog( "Find Next disconnects the live feed; click Reconnect when you're done" ).warn()
             self.search_warning_done = True
 
         tb = tv.get_buffer ()
@@ -112,15 +112,18 @@ class logviewer:
         #self.log_label.modify_fg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#f00" ))
         self.hbox.pack_start( self.log_label, True )
 
-        self.freeze_button = gtk.ToggleButton( "Freeze" )
+        self.freeze_button = gtk.ToggleButton( "Disconnect" )
         self.freeze_button.set_active(False)
         self.freeze_button.connect("toggled", self.freeze_log )
-        self.hbox.pack_end( self.freeze_button, False )
+
+        searchbox.pack_end( self.freeze_button, False )
 
         sw = gtk.ScrolledWindow()
-        sw.set_border_width(5)
+        #sw.set_border_width(5)
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
         sw.add( self.logview )
+        self.logview.set_border_width(5)
+        self.logview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
 
         self.vbox = gtk.VBox()
         self.vbox.pack_start( sw, True )
