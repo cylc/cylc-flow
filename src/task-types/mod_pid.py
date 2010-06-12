@@ -15,11 +15,13 @@ import re
 class pid:
     # PREVIOUS INSTANCE DEPENDENCE FOR FORECAST MODELS
 
+    is_tied = True  # used in manager
+
     # Forecast models depend on a previous instance via their restart
     # files. This class provides a method to register special restart
     # prerequisites and outputs, and overrides
     # free.ready_to_spawn() appropriately.
-    
+
     def register_restart_outputs( self, n_restart_outputs ):
         # call after parent init, so that self.c_time is defined!
 
@@ -93,3 +95,22 @@ class pid:
                     break
 
         return ready
+
+    def my_successor_still_needs_me( self, tasks ):
+        my_ct = self.c_time
+        nx_ct = self.next_c_time()
+        my_name = self.name
+        for task in tasks:
+            if task.name != my_name:
+                continue
+            if task.c_time != nx_ct:
+                continue
+            # found my successor
+            if task.state.is_finished():
+                return False
+            else:
+                return True
+
+        # TO DO: consider, and observe, if this can ever happen: 
+        print "WARNING: FAILED TO FIND THE SUCCESSOR OF A SPAWNED TASK!"
+        return False

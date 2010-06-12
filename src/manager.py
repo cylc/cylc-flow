@@ -466,29 +466,30 @@ class manager:
         return [ all_finished, earliest_unfinished ]
 
     def cleanup( self ):
-        # Delete tasks that are no longer needed, i.e. those that:
-        #   (1) have finished and spawned, 
-        #       AND
-        #   (2) are no longer needed to satisfy prerequisites.
-
-        # Also, do not delete any task with the same cycle time as a
-        # failed task, because these could be needed to satisfy the
-        # failed task's prerequisites when it is re-submitted after the
-        # problem is fixed.
+        # Delete tasks that are no longer needed, i.e. those that
+        # spawned, finished, AND are no longer needed to satisfy
+        # the prerequisites of other tasks.
         #--
 
-        # A/ QUICK DEATH TASKS
-        # Tasks with 'quick_death = True', by definition they have only
-        # cotemporal downstream dependents, so they are no longer needed
-        # to satisfy prerequisites once all their cotemporal peers have
-        # finished. The only complication is that new cotemporal peers
-        # can appear, in principle, so long as there are unspawned
-        # tasks with earlier cycle times. Therefore they are spent 
-        # IF finished-and-spawned AND there are no unspawned tasks
-        # at the same cycle time or earlier.
-        #--
+        # TO DO: SEPARATE METHODS AND ALLOW USER TO CHOOSE:
+        # 1/ generic method only
+        # 2/ generic with quick death - (a) only free, (b) and tied
+        # 3/ new EXTREME method? extrapolate forward in time to see if a
+        # finished task *will* be needed in the future, and delete
+        # otherwise.
 
-        async_spent = []
+        # times of any failed tasks. 
+        failed_rt = {}
+        for itask in self.tasks:
+            if itask.state.is_failed():
+                failed_rt[ itask.c_time ] = True
+
+        self.cleanup_async()
+        self.cleanup_quick_death( failed_rt )
+        self.cleanup_generic( failed_rt )
+
+    def cleanup_async( self ):
+        spent = []
         for itask in self.tasks:
             if not itask.done():
                 continue
@@ -499,13 +500,35 @@ class manager:
             else:
                 if itask.death_prerequisites.all_satisfied():
                     print "ASYNC SPENT", itask.id
-                    async_spent.append( itask )
+                    spent.append( itask )
 
-        # times of any failed tasks. 
-        failed_rt = {}
-        for itask in self.tasks:
-            if itask.state.is_failed():
-                failed_rt[ itask.c_time ] = True
+        # delete the spent tasks
+        for itask in spent:
+            self.trash( itask, 'quick death' )
+
+
+
+    def cleanup_quick_death( self, failed_rt ):
+
+        # A/ QUICK DEATH TASKS
+        # Tasks with 'quick_death = True', by definition they have only
+        # cotemporal downstream dependents, so they are no longer needed
+        # to satisfy prerequisites once all their cotemporal peers have
+        # finished. The only complication is that new cotemporal peers
+        # can appear, in principle, so long as there are unspawned
+        # tasks with earlier cycle times. Therefore they are spent 
+        #
+        # (i) IF (free tasks):
+        #    spawned, finished, no earlier unspawned tasks.
+        #
+        # (ii) OR (tied tasks):
+        #    spawned, finished, no earlier unspawned tasks, AND there is
+        #    at least one subsequent instance that is FINISHED
+        #    ('satisfied' would do but that allows elimination of a tied
+        #    task whose successor could subsequently fail, thus
+        #    requiring manual task reset after a restart).
+        #  ALTERNATIVE TO (ii): DO NOT ALLOW QUICK_DEATH TIED TASKS
+        #--
 
         # time of the earliest unspawned task
         [all_spawned, earliest_unspawned] = self.earliest_unspawned()
@@ -517,19 +540,51 @@ class manager:
         # find the spent quick death tasks
         spent = []
         for itask in self.tasks:
+            if not itask.quick_death: 
+                # task not up for consideration here
+                continue
+            if not itask.has_spawned():
+                # task has not spawned yet, or will never spawn (oneoff tasks)
+                continue
             if not itask.done():
+                # task has not finished yet
                 continue
             if itask.c_time in failed_rt.keys():
+                # task is cotemporal with a failed task
                 continue
 
-            if itask.quick_death and not all_spawned: 
-                if all_spawned or int( itask.c_time ) < int( earliest_unspawned ):
-                    spent.append( itask )
+            if all_spawned:
+                # (happens prior to shutting down at stop top time)
+                # (otherwise earliest_unspawned is undefined)
+                continue
+
+            if int( itask.c_time ) >= int( earliest_unspawned ):
+                # An EARLIER unspawned task may still spawn a successor
+                # that may need me to satisfy its prerequisites.
+                # The '=' here catches cotemporal unsatisfied tasks
+                # (because an unsatisfied task cannot have spawned).
+                continue
+
+            if hasattr( itask, 'is_tied' ):
+                # tied task: is there a later finished instance
+                there_is = False
+                for t in self.tasks:
+                    if t.name == itask.name and \
+                            int( t.c_time ) > int( itask.c_time ) and \
+                            t.state.is_finished():
+                                there_is = True
+                                break
+                if not there_is:
+                    continue
+
+            # and, by a process of elimination
+            spent.append( itask )
  
         # delete the spent quick death tasks
-        for itask in spent + async_spent:
+        for itask in spent:
             self.trash( itask, 'quick death' )
 
+    def cleanup_generic( self, failed_rt ):
         # B/ THE GENERAL CASE
         # No finished-and-spawned task that is later than the earliest
         # unsatisfied task can be deleted yet because it may still be

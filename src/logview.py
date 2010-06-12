@@ -4,7 +4,7 @@ import gobject
 import threading
 import os
 import tail
-from warning_dialog import warning_dialog
+#from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
     def __init__( self, logview, log = None ):
@@ -19,15 +19,15 @@ class tailer(threading.Thread):
         s,e = self.logbuffer.get_bounds()
         self.logbuffer.delete( s,e )
 
-    def warn( self, message ):
-        warning_dialog( message ).warn()
-        return False
+    #def warn( self, message ):
+    #    warning_dialog( message ).warn()
+    #    return False
 
     def run( self ):
         #gobject.idle_add( self.clear )
 
         if not os.path.exists( self.logfile ):
-            gobject.idle_add( self.warn, "File not found: " + self.logfile )
+            #gobject.idle_add( self.warn, "File not found: " + self.logfile )
             print "Disconnecting from log viewer thread"
             return
 

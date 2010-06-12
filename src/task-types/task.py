@@ -42,11 +42,9 @@ state_changed = True
 
 class task( Pyro.core.ObjBase ):
     
-    # QUICK DEATH IS A DECLARATION THAT A TASK HAS NO NON-COTEMPORAL
-    # DOWNSTREAM DEPENDENTS; IT THUS CANNOT BE ALLOWED FOR TIED TASKS
-    # BECAUSE OF THEIR RESTART PREREQUISITES => DEFAULT TO FALSE.
-    # SEE CYCLING.PY; IS THIS RELEVANT TO NON-CYCLING TASKS?
-    quick_death = False
+    # QUICK DEATH: SEE NOTES IN CYCLING.PY; To Do: not relevant to
+    # asynchronous tasks, but manager still accesses the var for all. 
+    quick_death = False  # cycling task type resets this to True.
 
     @classmethod
     def describe( cls ):
@@ -327,3 +325,6 @@ class task( Pyro.core.ObjBase ):
     def next_tag( self ):
         raise SystemExit( "OVERRIDE ME" )
 
+    def my_successor_still_needs_me( self, tasks ):
+        # overridden in mod_pid
+        return False

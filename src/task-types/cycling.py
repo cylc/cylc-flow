@@ -57,7 +57,7 @@ class cycling( task ):
     # QUICK DEATH IS A DECLARATION THAT A TASK HAS NO NON-COTEMPORAL
     # DOWNSTREAM DEPENDENTS; IT THUS CANNOT BE ALLOWED FOR TIED TASKS
     # BECAUSE OF THEIR RESTART PREREQUISITES => DEFAULT TO FALSE.
-    quick_death = False
+    quick_death = True
     # Quick death tasks will be removed when they have finished and
     # there are no earlier or cotemporal unfinished tasks.  Tasks that
     # are needed to satisfy the prerequisites of other tasks in
