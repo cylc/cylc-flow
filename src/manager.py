@@ -549,13 +549,16 @@ class manager:
             if not itask.done():
                 # task has not finished yet
                 continue
-            if itask.c_time in failed_rt.keys():
-                # task is cotemporal with a failed task
-                continue
+
+            #if itask.c_time in failed_rt.keys():
+            #    # task is cotemporal with a failed task
+            #    # THIS IS NOT NECESSARY AS WE RESTART FAILED
+            #    # TASKS IN THE READY STATE?
+            #    continue
 
             if all_spawned:
                 # (happens prior to shutting down at stop top time)
-                # (otherwise earliest_unspawned is undefined)
+                # (=> earliest_unspawned is undefined)
                 continue
 
             if int( itask.c_time ) >= int( earliest_unspawned ):
@@ -566,7 +569,11 @@ class manager:
                 continue
 
             if hasattr( itask, 'is_tied' ):
-                # tied task: is there a later finished instance
+                # Is there a later finished instance of the same task?
+                # It must be FINISHED in case the current task fails and
+                # cannot be fixed => the task's manually inserted
+                # post-gap successor will need to be satisfied by said
+                # finished task. 
                 there_is = False
                 for t in self.tasks:
                     if t.name == itask.name and \
@@ -671,7 +678,7 @@ class manager:
             
         # now delete the spent tasks
         for itask in spent:
-            self.trash( itask, 'spent' )
+            self.trash( itask, 'general case' )
 
 
     def reset_task( self, task_id ):
