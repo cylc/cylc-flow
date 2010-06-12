@@ -87,11 +87,11 @@ class logviewer:
         # PASSING IN ARGUMENTS?
         if b.get_active():
             self.t.freeze = True
-            b.set_label( 'UNFREEZE' )
+            b.set_label( 'Reconnect' )
             self.reset_logbuffer()
         else:
             self.t.freeze = False
-            b.set_label( 'Freeze' )
+            b.set_label( 'Disconnect' )
 
         return False
 

@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import gobject
 import time
 import threading
 import gtk
@@ -44,13 +45,12 @@ def get_col( state ):
 
 class updater(threading.Thread):
 
-    def __init__(self, gobject, god, imagedir, led_liststore,
+    def __init__(self, god, imagedir, led_liststore,
             fl_liststore, ttreestore, task_list,
             label_mode, label_status, label_time ):
 
         super(updater, self).__init__()
 
-        self.gobject = gobject
         self.state_summary = {}
         self.god = god
 
@@ -79,7 +79,7 @@ class updater(threading.Thread):
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
     def connection_lost( self ):
-        self.label_status.set_markup( "<b>CONNECTION LOST</b>" )
+        self.status = "CONNECTION LOST"
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED 
         # MULTIPLE TIMES???????????????///
@@ -93,7 +93,7 @@ class updater(threading.Thread):
             self.led_liststore.clear()
             self.ttreestore.clear()
             self.fl_liststore.clear()
-            self.gobject.idle_add( self.connection_lost )
+            gobject.idle_add( self.connection_lost )
  
             return False
 
@@ -369,11 +369,11 @@ class updater(threading.Thread):
         states = {}
         while not self.quit:
             if self.update():
-                self.gobject.idle_add( self.update_gui )
+                gobject.idle_add( self.update_gui )
             # TO DO: only update globals if they change, as for tasks
-            self.gobject.idle_add( self.label_mode.set_text, self.mode )
-            self.gobject.idle_add( self.label_status.set_text, self.status )
-            self.gobject.idle_add( self.label_time.set_text, self.dt )
+            gobject.idle_add( self.label_mode.set_text, self.mode )
+            gobject.idle_add( self.label_status.set_text, self.status )
+            gobject.idle_add( self.label_time.set_text, self.dt )
             time.sleep(1)
         else:
             pass
