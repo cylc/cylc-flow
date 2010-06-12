@@ -26,6 +26,8 @@ class cylc_logviewer( logviewer ):
         combobox.connect("changed", self.switch_log )
         combobox.set_active(0)
 
+        self.hbox.pack_end( combobox, False )
+
         previous = gtk.Button( "newer rotation" )
         previous.connect("clicked", self.rotate_log, False )
         self.hbox.pack_end( previous, False )
@@ -34,7 +36,6 @@ class cylc_logviewer( logviewer ):
         previous.connect("clicked", self.rotate_log, True )
         self.hbox.pack_end( previous, False )
 
-        self.hbox.pack_end( combobox, False )
 
 
     def switch_log( self, cb ):
