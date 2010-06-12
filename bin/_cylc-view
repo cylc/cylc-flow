@@ -363,7 +363,9 @@ Cylc View is a real time system monitor for Cylc.
         result = self.rem.get_task_requisites( [ task_id ] )
 
         if task_id not in result:
-            warning_dialog( "Task " + task_id + " not found in " + system_name ).warn()
+            warning_dialog( 
+                    "Task proxy " + task_id + " not found in " + system_name + \
+                 ".\nTasks are removed once they are no longer needed.").warn()
             return
         
         #self.update_tb( tb, 'Task ' + task_id + ' in ' +  system_name + '\n\n', [bold])
@@ -376,7 +378,9 @@ Cylc View is a real time system monitor for Cylc.
 
         self.update_tb( tb, 'Prerequisites', [bold])
         #self.update_tb( tb, ' blue => satisfied,', [blue] )
-        self.update_tb( tb, ' (red => NOT satisfied)\n\n') 
+        self.update_tb( tb, ' (' )
+        self.update_tb( tb, 'red', [red] )
+        self.update_tb( tb, '=> NOT satisfied)\n\n') 
 
         if len( pre ) == 0:
             self.update_tb( tb, ' - (None)\n' )
@@ -389,7 +393,10 @@ Cylc View is a real time system monitor for Cylc.
             self.update_tb( tb, ' - ' + msg + '\n', tags )
 
         self.update_tb( tb, '\nOutputs', [bold] )
-        self.update_tb( tb, ' (red => NOT completed)\n\n') 
+        self.update_tb( tb, ' (' )
+        self.update_tb( tb, 'red', [red] )
+        self.update_tb( tb, '=> NOT completed)\n\n') 
+
 
         if len( out ) == 0:
             self.update_tb( tb, ' - (None)\n')
