@@ -142,7 +142,7 @@ else:
             #print 'cylc message: you appear to have invoked a raw task script'
             task_id = 'NAME%TAG'
         else:
-            print 'cylc message ERROR: no task id provided!'
+            print >> sys.stderr, 'cylc message ERROR: no task id provided!'
             sys.exit(1)
 
 # PRIORITY----------------------------
@@ -232,7 +232,7 @@ if mode != 'scheduler':
 try:
     task = connector( pns_host, groupname, task_id ).get()
 except:
-    print "ERROR: failed to connect to " + task_id + " in " + groupname
+    print >> sys.stderr, "ERROR: failed to connect to " + task_id + " in " + groupname
     sys.exit(1)
 
 # DO THE MESSAGING----------------------------------------------------
