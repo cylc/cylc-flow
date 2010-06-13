@@ -162,6 +162,9 @@ if options.system_name:
     groupname = username + '^' + options.system_name
 elif 'CYLC_NS_GROUP' in os.environ.keys():
     groupname = os.environ[ 'CYLC_NS_GROUP' ]
+else:
+    print sys.stderr, "ERROR: unable to determine Pyro nameserver group"
+    sys.exit(1)
 
 # PYRO NAMESERVER HOSTNAME---------------------------------------------
 if options.pns_host:
@@ -219,7 +222,7 @@ else:
     # message = message
     pass
 
-print_message = 'cylc message (' + mode + '): ' + task_id + ' ' + message
+print_message = 'cylc message (' + mode + ', ' + task_id + '): ' + message
 if options.failed or priority == 'WARNING' or priority == 'CRITICAL':
     # print to stderr
     print >> sys.stderr, print_message

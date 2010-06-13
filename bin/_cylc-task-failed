@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+""" 
+Documentation
+"""
+
+import sys
+from optparse import OptionParser
+from task_message import message
+from task_lock import lock
+
+usage = """cylc task-failed [options] [REASON]
+
+Tell cylc that the calling task has failed. 
+
+arguments:
+    REASON  - message explaining why the task failed.
+"""
+
+parser = OptionParser( usage )
+
+( options, args ) = parser.parse_args()
+
+if len( args ) == 0:
+    reason = None
+else:
+    reason = ' '.join( args )
+
+lock().release()
+message( reason ).send_failed()

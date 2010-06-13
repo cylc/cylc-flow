@@ -1,0 +1,66 @@
+#!/usr/bin/env python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+""" 
+Documentation
+"""
+
+import sys
+from optparse import OptionParser
+from task_message import message
+
+usage = """cylc task-finished [options]
+
+Tell cylc that the calling task has finished successfully. 
+"""
+
+parser = OptionParser( usage )
+
+parser.add_option( "-p",
+        metavar="PRIORITY", type="choice", 
+        choices=[ 'NORMAL', 'WARNING', 'CRITICAL' ],
+        help="message priority: NORMAL, WARNING, or CRITICAL; default NORMAL.",
+        action="store", dest="priority", default="NORMAL" )
+
+parser.add_option( "--next-restart-completed",
+        help="Report next restart file(s) completed",
+        action="store_true", dest="next_restart_completed" )
+
+parser.add_option( "--all-restart-outputs-completed", 
+        help="Report all restart outputs completed at once.",
+        action="store_true", dest="all_restarts_completed" )
+
+parser.add_option( "--all-outputs-completed", 
+        help="Report all internal outputs completed at once.",
+        action="store_true", dest="all_outputs_completed" )
+
+( options, args ) = parser.parse_args()
+
+if options.next_restart_completed:
+    message().shortcut_next_restart()
+    sys.exit(0)
+
+elif options.all_restarts_completed:
+    message().shortcut_all_restarts()
+    sys.exit(0)
+
+elif options.all_outputs_completed:
+    message().shortcut_all_outputs()
+    sys.exit(0)
+
+elif len( args ) == 0:
+    print sys.stderr, "ERROR: no message supplied"
+    sys.exit(1)
+
+else:
+    msg = ' '.join( args )
+    message( msg ).send()

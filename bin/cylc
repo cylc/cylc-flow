@@ -43,7 +43,11 @@ allowed_commands = \
     'list-all',
     'what-is',
     'system-info',
-    'unit-test'
+    'unit-test',
+    'task-started',
+    'task-finished',
+    'task-failed',
+    'task-message',
     ]
 
 usage = \
@@ -80,7 +84,8 @@ usage = \
     '  purge ....... Recursively kill a task and its downstream dependants',
     '  run-task .... Run a single task just as the scheduler would run it',
     'T-A-S-K--I-N-T-E-R-F-A-C-E',
-    '  message ..... Send a message to a task proxy object (for use by tasks)',
+    '  message ..... Send a message to a task proxy object. DEPRECATED: use',
+    '                task-started, task-message, task-finished, task-failed',
     '  suicide ..... Tell an inquiring task to shut itself down immediately',
     'I-N-F-O-R-M-A-T-I-O-N',
     '  view ........ Monitor the state of all tasks in a running system',
@@ -92,6 +97,8 @@ usage = \
     'O-T-H-E-R',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     '  unit-test ... An automated test of core cylc functionality',
+    '  task-started. TO DO',
+    '  task-finished. TO DO',
     ]
 
 def print_usage():
@@ -128,7 +135,8 @@ if sys.argv[1] == 'commands':
 # first argument must be COMMAND
 command = sys.argv[1]
 if command not in allowed_commands:
-    print_usage()
+    print "ERROR, illegal cylc command: " + command
+    print "Use 'cylc --help' to see legal commands"
     sys.exit(1)
 
 if command == 'help': 
