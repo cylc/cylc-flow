@@ -29,6 +29,7 @@ class ll_basic( job_submit ):
         # default directives
         directives = {}
         directives[ 'shell'    ] = '/bin/bash'
+        directives[ 'class'    ] = 'serial'
         directives[ 'job_name' ] = task_id
         directives[ 'output'   ] = out
         directives[ 'error'    ] = err

@@ -348,12 +348,13 @@ class job_submit:
         #print ' - deleting local jobfile ' + self.jobfile_path
         #os.unlink( self.jobfile_path )
 
-        self.jobfile_path = os.path.basename( self.jobfile_path )
+        # use explicit path to the location of the remote job submit file
+        self.jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
         self.jobfile_is_remote = True
 
         self.construct_command()
 
-        command_2 = "ssh " + self.destination + " '$HOME/" + self.command + "'"
+        command_2 = "ssh " + self.destination + " '" + self.command + "'"
 
         # execute the local command to submit the job
         if dry_run:
