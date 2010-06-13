@@ -108,14 +108,14 @@ echo
 echo "Processing task definition files"
 
 # if the command line gets too big we'll have to use xargs:
-#    find taskdef -name '*.def' -o -name '*.py' | xargs _cylc-task-generator
-# and modify task-generator.py so that it appends to the output
-# task_classes.py file rather than overwriting it each time.
+#    find taskdef -name '*.def' -o -name '*.py' | xargs _cylc-taskdef
+# and modify _cylc-taskdef so that it appends output to
+# task_classes.py file rather than overwriting.
 
 TASKDEFS=$( find $SYS_DIR/taskdef -name '*.def' -o -name '*.py' ) 
 
 # generate task class module
-_cylc-task-generator $TASKDEFS
+_cylc-taskdef $TASKDEFS
 echo "$SYS_DIR/task_classes.py"
 
 # generate task list module
