@@ -248,8 +248,8 @@ class task( Pyro.core.ObjBase ):
             # process task failure messages
 
             state_changed = True
-            if priority != 'CRITICAL':
-                self.log( 'WARNING', 'non-critical priority for task failure' )
+            #if priority != 'CRITICAL':
+            #    self.log( 'WARNING', 'non-critical priority for task failure' )
             self.log( 'CRITICAL',  message )
             self.state.set_status( 'failed' )
 
