@@ -19,8 +19,10 @@ class ll_basic( job_submit ):
     def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
         job_submit.__init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ) 
 
-        out = self.running_dir + '/' + task_id + '.llout'
-        err = self.running_dir + '/' + task_id + '.llerr'
+        #out = self.running_dir + '/' + task_id + '.out'
+        #err = self.running_dir + '/' + task_id + '.err'
+        out = tempfile.mktemp( prefix = task_id + '-', dir= self.running_dir, suffix = ".out" ) 
+        err = re.sub( '\.out$', '.err', out )
         self.logfiles.add_path( out )
         self.logfiles.add_path( err )
 
@@ -30,6 +32,7 @@ class ll_basic( job_submit ):
         directives[ 'job_name' ] = task_id
         directives[ 'output'   ] = out
         directives[ 'error'    ] = err
+        # is initialdir required if output and error are full path?
         directives[ 'initialdir' ] = self.running_dir
 
         # add (or override with) taskdef directives
