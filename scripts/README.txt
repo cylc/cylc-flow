@@ -1,2 +1,3 @@
-This directory contains cylc utility scripts and generic task scripts
-that are automatically accessible to cylc tasks.
+This directory is for generic task scripts and utility scripts that
+are not strictly part of the core cylc system but are made available to
+all tasks (via the cylc-env.sh environment script).
