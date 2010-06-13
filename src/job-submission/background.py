@@ -9,7 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import os
+import os, re
 import tempfile
 from job_submit import job_submit
 
@@ -28,10 +28,7 @@ class background( job_submit ):
                 prefix = self.task_id + "-",
                 dir = self.running_dir )
 
-        err =  tempfile.mktemp( 
-                suffix = ".err", 
-                prefix = self.task_id + "-",
-                dir = self.running_dir )
+        err = re.sub( '\.out$', '.err', out )
 
         self.command = self.jobfile_path + " </dev/null 1> " + out + " 2> " + err + " &" 
         self.logfiles.add_path( out )
