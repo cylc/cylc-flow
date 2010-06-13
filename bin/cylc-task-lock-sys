@@ -1,7 +1,11 @@
 #!/bin/bashX        # THIS SCRIPT MUST BE SOURCED IN THE CALLING SHELL
 
-# Prevent THIS TASK (or rather the task that SOURCES this script) from
-# running if another instance of it is running already. 
+# Implement a "locking directory" mechanism to prevent THIS TASK (or
+# rather the task that SOURCES this script) from running if another
+# instance of it is running already (and has already acquired the lock).
+# Locking must be done by the external task script, not by cylc, so that 
+# the lock will be released by external tasks when they finish even if
+# cylc has been shut down. 
 
 # This version acquires a lock to prevent multiple copies of the task
 # from running UNLESS they are running under different cylc system names. 
@@ -9,13 +13,14 @@
 # cylc system name in their important I/O directories and so on, so 
 # that parallel instances will not interfere with each other!
 
-# See also 'cylc-lock' for a general lock.
+# See also 'cylc-task-lock' for a general lock.
 
-# $TASK_ID (TASKNAME%YYYYMMDDHH) and $CYLC_SYSTEM_NAME are in the cylc
-# execution environment.
+# $TASK_ID and $CYLC_SYSTEM_NAME are in the cylc execution environment.
 
-# Original version of this script by Chris Edsall @ NIWA.
-# Uses mkdir to create the lock, as this operation is atomic.
+# Original version by Chris Edsall @ NIWA.
+# - Uses directory creation as mkdir is an atomic operation.
+# - Sourcing (dot-run) allows us to auto-release the lock on exit.
+
 
 # ATTEMPT TO ACQUIRE YOUR LOCK AFTER SENDING THE CYLC START MESSAGE
 # so that failure to lock will be reported to the cylc task logs, as
