@@ -221,9 +221,10 @@ else:
 
 print_message = 'cylc message (' + mode + '): ' + task_id + ' ' + message
 if options.failed or priority == 'WARNING' or priority == 'CRITICAL':
-    # print to stderr as well as stdout
+    # print to stderr
     print >> sys.stderr, print_message
-print print_message
+else:
+    print print_message
 
 if mode != 'scheduler':
     sys.exit(0)
