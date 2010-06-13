@@ -678,7 +678,7 @@ class manager:
             
         # now delete the spent tasks
         for itask in spent:
-            self.trash( itask, 'general case' )
+            self.trash( itask, 'general' )
 
 
     def reset_task( self, task_id ):
@@ -930,7 +930,7 @@ class manager:
                 pass
 
             # now kill the task
-            self.trash( itask, 'request' )
+            self.trash( itask, 'by request' )
 
     def kill( self, task_ids ):
         # kill without spawning all tasks in task_ids
@@ -949,11 +949,11 @@ class manager:
                 self.log.warning( "task to kill not found: " + id )
                 return
 
-            self.trash( itask, 'remote request' )
+            self.trash( itask, 'by request' )
 
     def trash( self, task, reason ):
         self.tasks.remove( task )
         self.pyro.disconnect( task )
-        task.log( 'DEBUG', "disconnected; " + reason )
+        task.log( 'NORMAL', "task removed from system (" + reason ")" )
         task.prepare_for_death()
         del task
