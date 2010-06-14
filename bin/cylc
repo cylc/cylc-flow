@@ -35,7 +35,6 @@ allowed_commands = \
     'kill',
     'purge',
     'run-task',
-    'message',
     'suicide',
     'view',
     'monitor',
@@ -44,10 +43,11 @@ allowed_commands = \
     'what-is',
     'system-info',
     'unit-test',
+    'message',
     'task-started',
+    'task-message',
     'task-finished',
     'task-failed',
-    'task-message',
     ]
 
 usage = \
@@ -83,10 +83,6 @@ usage = \
     '  kill ........ Delete tasks from a running system, once or permanently',
     '  purge ....... Recursively kill a task and its downstream dependants',
     '  run-task .... Run a single task just as the scheduler would run it',
-    'T-A-S-K--I-N-T-E-R-F-A-C-E',
-    '  message ..... Send a message to a task proxy object. DEPRECATED: use',
-    '                task-started, task-message, task-finished, task-failed',
-    '  suicide ..... Tell an inquiring task to shut itself down immediately',
     'I-N-F-O-R-M-A-T-I-O-N',
     '  view ........ Monitor the state of all tasks in a running system',
     '  monitor ..... (Deprecated terminal-based monitor)',
@@ -94,11 +90,17 @@ usage = \
     '  list-all .... List cylc systems currently using the Pyro nameserver',
     '  what-is ..... Print information about a task, or a running system',
     '  system-info . Print information about a registered system',
+    'T-A-S-K--I-N-T-E-R-F-A-C-E',
+    '  message ..... Send a message to a task proxy object. DEPRECATED: use',
+    '                task-started, task-message, task-finished, task-failed',
+    '  task-started  Report start up and acquire a task lock',
+    '  task-message  Report completed outputs and other messages',
+    '  task-finished Report successful completion, and release task lock',
+    '  task-failed . Report failure to complete, and release task lock',
+    '  suicide ..... Suggest that an inquiring task should shut itself down',
     'O-T-H-E-R',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     '  unit-test ... An automated test of core cylc functionality',
-    '  task-started. TO DO',
-    '  task-finished. TO DO',
     ]
 
 def print_usage():

@@ -11,6 +11,7 @@
 
 
 # CHECK ENVIRONMENT
+set -e; trap 'cylc task-failed "error trapped in check-env"' ERR
 
 echo "Hello from $TASK_ID"
 echo "Checking Environment ..."
@@ -30,6 +31,11 @@ if [[ -z $CYLC_TMPDIR ]]; then
     exit 1
 fi
 echo "ok"
+
+#echo "ABORTING"
+#cylc task-failed "ABORTING"
+mkdir /foo
+exit 1
 
 MSG="Environment checks out OK"
 cylc task-message $MSG

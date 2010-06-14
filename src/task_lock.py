@@ -73,11 +73,11 @@ class lock:
                 sys.exit(1)
 
         # acquire the lock
-        print "TRYING TO MAKE " + self.tasklock
         try:
             os.mkdir( self.tasklock )
         except:
             message( "failed to acquire lock " + self.tasklock ).send_failed()
+            # The calling script should NOT release the lock!
             sys.exit(1)
         else:
            # got it
@@ -89,9 +89,9 @@ class lock:
             try:
                 os.rmdir( self.tasklock )
             except:
-                message( "failed to release lock" + self.tasklock ).send_failed()
+                message( "failed to release lock " + self.tasklock ).send_failed()
             else:
-                message( "released task lock" + self.tasklock ).send()
+                message( "released task lock " + self.tasklock ).send()
 
         else:
             message( "task lock not found: " + self.tasklock, priority='WARNING' ).send()
