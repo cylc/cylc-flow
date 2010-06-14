@@ -17,10 +17,10 @@
 # run length 50 minutes, scaled by $REAL_TIME_ACCEL 
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # START MESSAGE
-cylc message --started
+cylc task-started || exit 1
 
 # check environment
 check-env.sh || exit 1
@@ -29,11 +29,11 @@ check-env.sh || exit 1
 sleep $(( 50 * 60 / REAL_TIME_ACCEL )) 
 
 touch $CYLC_TMPDIR/A-${CYCLE_TIME}.restart
-cylc message "A restart files ready for $CYCLE_TIME"
+cylc task-message "A restart files ready for $CYCLE_TIME"
 touch $CYLC_TMPDIR/B-${CYCLE_TIME}.restart
-cylc message "B restart files ready for $CYCLE_TIME"
+cylc task-message "B restart files ready for $CYCLE_TIME"
 touch $CYLC_TMPDIR/C-${CYCLE_TIME}.restart
-cylc message "C restart files ready for $CYCLE_TIME"
+cylc task-message "C restart files ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
-cylc message --succeeded
+cylc task-finished

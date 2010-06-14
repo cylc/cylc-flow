@@ -27,22 +27,17 @@ cylc task-message "HELLO"
 
 # check environment
 check-env.sh || exit 1
-#check-env.sh 
 
 #sleep 30
-cylc task-message "BYE"
-cylc task-finished
-exit 0
+#cylc task-message "BYE"
+#cylc task-finished
+#exit 0
 #sleep 30
 
 #cylc task-failed "ABORTING"
 #mkdir /illegal
 #echo hello
 #exit 1
-
-
-# check environment
-check-env.sh || exit 1
 
 # PARSE THE COMMAND LINE (SEE taskdef %COMMANDLINE)
 # This script expects: --file=FILE SENTENCE

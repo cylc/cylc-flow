@@ -32,11 +32,6 @@ if [[ -z $CYLC_TMPDIR ]]; then
 fi
 echo "ok"
 
-#echo "ABORTING"
-#cylc task-failed "ABORTING"
-mkdir /foo
-exit 1
-
 MSG="Environment checks out OK"
 cylc task-message $MSG
 
