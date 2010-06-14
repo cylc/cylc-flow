@@ -179,6 +179,8 @@ class task( Pyro.core.ObjBase ):
             self.log( 'CRITICAL', "job submission failed" )
 
     def set_all_internal_outputs_completed( self ):
+        if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
+            return
         # used by the task wrapper 
         self.log( 'DEBUG', 'setting all internal outputs completed' )
         for message in self.outputs.satisfied.keys():
@@ -198,7 +200,18 @@ class task( Pyro.core.ObjBase ):
     def get_ordered_outputs( self ):
         return self.outputs.get_ordered()
 
+    def reject_if_failed( self, message ):
+        if self.state.is_failed():
+            self.log( 'WARNING', 'rejecting the following message as I am in the failed state:' )
+            self.log( 'WARNING', '  ' + message )
+            return True
+        else:
+            return False
+
     def incoming( self, priority, message ):
+        if self.reject_if_failed( message ):
+            return
+
         # receive all incoming pyro messages for this task 
         self.latest_message = message
 
