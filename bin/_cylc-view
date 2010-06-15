@@ -619,7 +619,7 @@ submission method used by each task).""")
     groupname = parser.get_groupname()
 
     # get systems currently registered in the Pyro nameserver
-    #ns_groups = pyrex.discover( pns_host )
+    # ns_groups = pyrex.discover( pns_host )
 
     if not pyrex.discover(pns_host).registered( groupname ):
         print "No " + groupname + " group registered with Pyro yet, waiting ..." 

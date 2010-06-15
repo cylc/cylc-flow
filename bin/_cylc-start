@@ -22,6 +22,7 @@ from optparse import OptionParser
 # cylc source modules
 import manager
 import cycle_time
+import pyrex
 import dead_letter
 import state_summary
 import accelerated_clock 
@@ -54,48 +55,6 @@ def print_banner():
     for item in startup.keys():
         print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( startup[ item ] )
 
-def locate_pyro_nameserver():
-    try:
-        nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
-    except NamingError:
-        raise SystemExit("No Pyro nameserver found on " + pns_host )
-    else:
-        return nameserver
-
-def create_ns_groupname( nameserver, groupname ):
-    try:
-        nameserver.createGroup( groupname )
-
-    except NamingError:
-        # abort if any existing objects are registered in my group name
-        # (this may indicate another instance of cylc is running
-        # with the same groupname; must be unique for each instance
-        # else the different systems will interfere with each other) 
-        print "\nERROR: the Pyro Nameserver group '" + groupname + "' is already in use."
-        objs = nameserver.list( groupname )
-        if len( objs ) == 0:
-            print "It currently contains no objects."
-        else:
-            print "It contains the following registered objects:"
-            for obj in objs:
-                print '  + ' + obj[0]
-
-        print
-        print "YOUR OPTIONS ARE:"
-        print 
-        print "(1) If the nameserver group is being used by another cylc instance,"
-        print "re-register your system under a different name before running it."
-        print 
-        print "(2) If the nameserver group is a relic of a cylc instance that did"
-        print "not shut down cleanly, you can delete it from the nameserver by:"
-        print 
-        print "pyro-nsc deletegroup " + groupname + "   #<-------(manual cleanup)" 
-        print
-        raise SystemExit( "ABORTING NOW" )
-
-def ns_obj_name( name, groupname ):
-    # object name as registered with the Pyro nameserver
-    return groupname + '.' + name
 
 usage = """1/ cylc start [options] --at=CYCLE SYSTEM
 Usage: 2/ cylc start [options] --restart SYSTEM
@@ -225,10 +184,9 @@ if not options.pns_host:
     parser.error( "Required: Pyro nameserver hostname" )
 else:
     pns_host = options.pns_host
-    banner[ 'Pyro nameserver' ] = pns_host
+    banner[ 'Pyro nameserver host' ] = pns_host
 
 # get mode of operation------------------------------------------------
-
 if options.dummy_mode and options.practice_mode:
     parser.error( "Choose ONE of dummy or practice mode")
 
@@ -375,7 +333,7 @@ config.check_task_groups()
 config.job_submit_config( dummy_mode )
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
-nameserver = locate_pyro_nameserver()
+nameserver = pyrex.discover( pns_host )
 
 # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
 if practice:
@@ -384,7 +342,7 @@ if practice:
 else:
     groupname = os.environ['USER'] + '^' + name
 
-create_ns_groupname( nameserver, groupname )
+nameserver.create_groupname( groupname )
 banner[ 'Pyro nameserver group' ] = groupname
  
 # REQUIRE SINGLE THREADED PYRO (see documentation)
@@ -397,7 +355,7 @@ Pyro.core.initServer()
 
 # CREATE A PYRO DAEMON FOR THIS SYSTEM
 daemon = Pyro.core.Daemon()
-daemon.useNameServer(nameserver)
+daemon.useNameServer(nameserver.get_ns())
 
 # system clock for accelerated time in dummy mode
 clock = accelerated_clock.clock( 
@@ -405,15 +363,15 @@ clock = accelerated_clock.clock(
         int(options.clock_offset),
         dummy_mode ) 
 
-daemon.connect( clock, ns_obj_name( 'clock', groupname ))
+daemon.connect( clock, nameserver.obj_name( 'clock', groupname ))
 
 # remotely accessible system state summary
 system_state = state_summary.state_summary( config, dummy_mode )
-daemon.connect( system_state, ns_obj_name( 'state_summary', groupname ))
+daemon.connect( system_state, nameserver.obj_name( 'state_summary', groupname ))
 
 # dead letter box for remote use
 dead_letter_box = dead_letter.letter_box()
-daemon.connect( dead_letter_box, ns_obj_name( 'dead_letter_box', groupname))
+daemon.connect( dead_letter_box, nameserver.obj_name( 'dead_letter_box', groupname))
 
 # load some command line options and dynamic stuff into config
 # module, for easy handling.
@@ -442,7 +400,7 @@ job_submit.dummy_mode = dummy_mode
 job_submit.global_env = config.get( 'environment' )
 
 # initialize the task manager (and create main logger)
-pool = manager.manager( config, groupname, dummy_mode, startup )
+pool = manager.manager( config, nameserver, groupname, dummy_mode, startup )
 
 if options.stop_time:
     if not cycle_time.is_valid( options.stop_time ):
@@ -462,7 +420,7 @@ log = logging.getLogger( 'main' )
 
 # remote control switch
 remote = remote_switch.remote_switch( config, pool, options.failout_task_id )
-daemon.connect( remote, ns_obj_name( 'remote', groupname) )
+daemon.connect( remote, nameserver.obj_name( 'remote', groupname) )
 
 # print system information at startup----------------------------------
 print_banner()
@@ -528,7 +486,7 @@ print ""
 print "Shutting down my Pyro daemon"
 daemon.shutdown( True )
 print "Deleting Pyro nameserver group " + groupname
-nameserver.deleteGroup( groupname )
+nameserver.get_ns().deleteGroup( groupname )
 print "Bye!"
 
 # to simulate the effect on monitoring etc. of long task processing time

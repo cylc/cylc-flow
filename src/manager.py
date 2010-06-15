@@ -20,11 +20,8 @@ from dynamic_instantiation import get_object
 from Pyro.errors import NamingError
 from broker import broker
 
-def ns_obj_name( name, groupname ):
-    return groupname + '.' + name
-
 class manager:
-    def __init__( self, config, groupname, dummy_mode, startup ):
+    def __init__( self, config, nameserver, groupname, dummy_mode, startup ):
 
         self.config = config
         self.dummy_mode = dummy_mode
@@ -33,6 +30,7 @@ class manager:
         # TO DO: use self.config.get('foo') throughout
         self.clock = config.get('clock')
         self.pyro = config.get('daemon')  
+        self.nameserver = nameserver
 
         self.system_hold_now = False
         self.system_hold_ctime = None
@@ -179,7 +177,7 @@ class manager:
  
             else:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, ns_obj_name( itask.id, self.groupname) )
+                self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
                 self.tasks.append( itask )
 
 
@@ -290,7 +288,7 @@ class manager:
  
             else:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, ns_obj_name( itask.id, self.groupname) )
+                self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
                 self.tasks.append( itask )
 
     def no_tasks_running( self ):
@@ -380,7 +378,7 @@ class manager:
                 else:
                     # no stop time, or we haven't reached it yet.
                     try:
-                        self.pyro.connect( new_task, ns_obj_name( new_task.id, self.groupname) )
+                        self.pyro.connect( new_task, self.nameserver.obj_name( new_task.id, self.groupname) )
                     except Exception, x:
                         # THIS WILL BE A Pyro NamingError IF THE NEW TASK
                         # ALREADY EXISTS IN THE SYSTEM.
@@ -780,7 +778,7 @@ class manager:
 
                 if not skip:
                     itask.log( 'DEBUG', "connected" )
-                    self.pyro.connect( itask, ns_obj_name( itask.id, self.groupname) )
+                    self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
                     self.tasks.append( itask )
 
         #except NamingError, e:
@@ -921,7 +919,7 @@ class manager:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro.connect( new_task, ns_obj_name( new_task.id, self.groupname) )
+                    self.pyro.connect( new_task, self.nameserver.obj_name( new_task.id, self.groupname) )
                     new_task.log( 'DEBUG', 'connected' )
                     self.tasks.append( new_task )
 
