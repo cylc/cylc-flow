@@ -11,18 +11,15 @@
 
 
 # standard Python modules
-import re, os, sys
-import datetime
-import logging
+import re, os, sys, datetime, socket, logging
 from time import sleep
 from optparse import OptionParser
-from dynamic_instantiation import get_object
-from job_submit import job_submit
 
 # cycl source modules
+from dynamic_instantiation import get_object
 from registration import registrations
-import cycle_time
-import pimp_my_logger
+from job_submit import job_submit
+import pyrex, cycle_time, pimp_my_logger
 
 usage = """cylc run-task [options] SYSTEM
 
@@ -38,6 +35,8 @@ arguments:
 def commandline_parser():
     parser = OptionParser( usage )
 
+    parser.set_defaults( pns_host= socket.getfqdn() )
+
     parser.add_option( "-t", "--task",
             help="ID of the task to run.",
             metavar="TASK%CYCLE", action="store", dest="task_id" )
@@ -46,6 +45,11 @@ def commandline_parser():
             help="Generate the cylc task execution file for the "
             "task and report how it would be submitted to run.",
             action="store_true", default=False, dest="dry_run" )
+
+    parser.add_option( "--host",
+            help="Pyro nameserver host, defaults to the local hostname. Use "
+            "if not auto-detected (which depends on network config).", 
+            metavar="HOSTNAME", action="store", dest="pns_host" )
 
     return parser
 
@@ -107,10 +111,21 @@ log = logging.getLogger( 'main.' + task_name )
 pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
         logging.DEBUG, False, None, True )
 
+# get Pyro nameserver hostname-----------------------------------------
+if not options.pns_host:
+    # (this won't happen; defaults to local hostname)
+    parser.error( "Required: Pyro nameserver hostname" )
+else:
+    pns_host = options.pns_host
+
+# LOCATE THE PYRO NAMESERVER-------------------------------------------
+nameserver = pyrex.discover( pns_host )
+groupname = os.environ['USER'] + '^' + name
+
 # set global (all tasks) environment variables-------------------------
 config.put_env( 'CYLC_MODE', 'run-task' )
-config.put_env( 'CYLC_NS_HOST', 'NOT USED BY RUN-TASK' ) 
-config.put_env( 'CYLC_NS_GROUP', 'NOT USED BY RUN-TASK' )
+config.put_env( 'CYLC_NS_HOST', pns_host ) 
+config.put_env( 'CYLC_NS_GROUP', groupname )
 config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
 config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
 config.put_env( 'CYLC_SYSTEM_NAME', name )

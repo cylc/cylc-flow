@@ -504,8 +504,6 @@ class manager:
         for itask in spent:
             self.trash( itask, 'quick death' )
 
-
-
     def cleanup_quick_death( self, failed_rt ):
 
         # A/ QUICK DEATH TASKS

@@ -28,6 +28,7 @@ import state_summary
 import accelerated_clock 
 from job_submit import job_submit
 from registration import registrations
+from lockserver import syslock
 
 # pyro modules
 import Pyro.core, Pyro.naming
@@ -342,6 +343,10 @@ if practice:
 else:
     groupname = os.environ['USER'] + '^' + name
 
+# request system access from the lock server
+if not syslock( pns_host, groupname, system_dir, 'scheduler' ).request_system_access( True, False ):
+    raise SystemExit( 'locked out!' )
+
 nameserver.create_groupname( groupname )
 banner[ 'Pyro nameserver group' ] = groupname
  
@@ -483,6 +488,10 @@ while True: # MAIN LOOP
 print ""
 print "STOPPING"
 print ""
+print "Releasing system lock"
+if not syslock( pns_host, groupname, system_dir, 'scheduler' ).release_system_access():
+    print >> stderr, 'failed to release system!'
+
 print "Shutting down my Pyro daemon"
 daemon.shutdown( True )
 print "Deleting Pyro nameserver group " + groupname

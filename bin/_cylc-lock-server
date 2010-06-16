@@ -1,0 +1,73 @@
+#!/usr/bin/env python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+# standard Python modules
+import os, sys
+#import profile
+import socket
+from optparse import OptionParser
+
+# cylc source modules
+import pyrex
+
+# pyro modules
+import Pyro.core, Pyro.naming
+from Pyro.errors import NamingError
+
+from lockserver import lockserver
+
+
+usage = """1/ cylc lock-server [options]"""
+
+parser = OptionParser( usage )
+
+parser.set_defaults( pns_host= socket.getfqdn())
+
+parser.add_option( "--host",
+        help="Pyro nameserver host, defaults to the local hostname. Use "
+        "if not auto-detected (which depends on network config).", 
+        metavar="HOSTNAME", action="store", dest="pns_host" )
+
+( options, args ) = parser.parse_args()
+
+if len( args ) != 0:
+    parser.error( "No arguments required" )
+
+# get Pyro nameserver hostname-----------------------------------------
+if not options.pns_host:
+    # (this won't happen; defaults to local hostname)
+    parser.error( "Required: Pyro nameserver hostname" )
+else:
+    pns_host = options.pns_host
+
+# LOCATE THE PYRO NAMESERVER-------------------------------------------
+nameserver = pyrex.discover( pns_host )
+
+# CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------
+groupname = 'cylc'
+nameserver.create_groupname( groupname )
+ 
+# (single threaded prob not necessary for lockserver
+# but it doesn't matter as few connections needed)
+Pyro.config.PYRO_MULTITHREADED = 0
+# USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
+# (see the Userguide "Networking Issues" section).
+Pyro.config.PYRO_DNS_URI = True
+Pyro.config.PYRO_STDLOGGING = True
+Pyro.core.initServer()
+
+# CREATE A PYRO DAEMON FOR THIS SYSTEM
+daemon = Pyro.core.Daemon()
+daemon.useNameServer(nameserver.get_ns())
+locker = lockserver()
+daemon.connect( locker, nameserver.obj_name( 'lockserver', groupname ))
+while True:
+    daemon.handleRequests( timeout = None )
