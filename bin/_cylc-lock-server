@@ -14,6 +14,8 @@ import os, sys
 #import profile
 import socket
 from optparse import OptionParser
+from Daemon import Daemon
+from time import sleep
 
 # cylc source modules
 import pyrex
@@ -21,53 +23,140 @@ import pyrex
 # pyro modules
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
-
+from Pyro.ext.daemonizer import Daemonizer
 from lockserver import lockserver
 
+class ServerDaemon( Daemonizer ):
+    def __init__( self, pidfile, pns_host ):
+        self.pns_host = pns_host
 
-usage = """1/ cylc lock-server [options]"""
+        foo = open( "/home/oliverh/cylc/foo.txt", "a" )
+        try:
+            self.server = LockServer(pns_host)
+        except Exception, x:
+            foo.write( str(x) )
+        else:
+            pass
 
-parser = OptionParser( usage )
+        Daemonizer.__init__(self, pidfile)
 
-parser.set_defaults( pns_host= socket.getfqdn())
+    def main_loop( self ):
+        bar = open( "/home/oliverh/cylc/bar.txt", "a" )
+        try:
+            self.server.start()
+        except Exception, x:
+            bar.write( str(x) )
+        else:
+            pass
 
-parser.add_option( "--host",
-        help="Pyro nameserver host, defaults to the local hostname. Use "
-        "if not auto-detected (which depends on network config).", 
-        metavar="HOSTNAME", action="store", dest="pns_host" )
 
-( options, args ) = parser.parse_args()
 
-if len( args ) != 0:
-    parser.error( "No arguments required" )
+class LockServer:
 
-# get Pyro nameserver hostname-----------------------------------------
-if not options.pns_host:
-    # (this won't happen; defaults to local hostname)
-    parser.error( "Required: Pyro nameserver hostname" )
-else:
-    pns_host = options.pns_host
+    def __init__( self, pns_host ):
+        # LOCATE THE PYRO NAMESERVER-------------------------------------------
+        #self.nameserver = pyrex.discover( pns_host )
+        try:
+            self.nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
+        except NamingError:
+            raise SystemExit("Failed to find a Pyro nameserver on " + hostname )
 
-# LOCATE THE PYRO NAMESERVER-------------------------------------------
-nameserver = pyrex.discover( pns_host )
+        # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------
+        self.groupname = 'cylc'
+        #self.nameserver.create_groupname( self.groupname )
+        self.nameserver.createGroup( self.groupname )
 
-# CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------
-groupname = 'cylc'
-nameserver.create_groupname( groupname )
- 
-# (single threaded prob not necessary for lockserver
-# but it doesn't matter as few connections needed)
-Pyro.config.PYRO_MULTITHREADED = 0
-# USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
-# (see the Userguide "Networking Issues" section).
-Pyro.config.PYRO_DNS_URI = True
-Pyro.config.PYRO_STDLOGGING = True
-Pyro.core.initServer()
+        Pyro.config.PYRO_MULTITHREADED = 0
+        # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
+        # (see the Userguide "Networking Issues" section).
+        Pyro.config.PYRO_DNS_URI = True
+        Pyro.config.PYRO_STDLOGGING = True
+        Pyro.config.PYRO_TRACELEVEL = 3
+        Pyro.core.initServer()
 
-# CREATE A PYRO DAEMON FOR THIS SYSTEM
-daemon = Pyro.core.Daemon()
-daemon.useNameServer(nameserver.get_ns())
-locker = lockserver()
-daemon.connect( locker, nameserver.obj_name( 'lockserver', groupname ))
-while True:
-    daemon.handleRequests( timeout = None )
+
+    def start( self ):
+        # CREATE A PYRO pyro_daemon FOR THIS SYSTEM
+        # (single threaded prob not necessary for lockserver
+        # but it doesn't matter as few connections needed)
+        self.pyro_daemon = Pyro.core.Daemon()
+        #pyro_daemon.useNameServer(self.nameserver.get_ns())
+        self.pyro_daemon.useNameServer(self.nameserver)
+
+        self.locker = lockserver()
+        #pyro_daemon.connect( self.locker, self.nameserver.obj_name( 'lockserver', self.groupname ))
+        self.pyro_daemon.connect( self.locker, 'cylc.lockserver' )
+
+        while True:
+            self.pyro_daemon.handleRequests()
+
+
+if __name__ == "__main__":
+
+    usage = """1/ cylc lock-server --start|restart|stop|status [options]"""
+
+    parser = OptionParser( usage )
+
+    #parser.set_defaults( pns_host= socket.getfqdn(), start=False,
+    #        restart=False, stop=False, status=False )
+
+    parser.set_defaults( pns_host= socket.getfqdn() )
+
+    parser.add_option( "--host",
+            help="(--(re)start only) Pyro nameserver host, defaults to the local hostname. Use "
+            "if not auto-detected (which depends on network config).", 
+            metavar="HOSTNAME", action="store", dest="pns_host" )
+
+    #    parser.add_option( "--start", help="start the cylc lock server",
+    #        action="store_true", dest="start" )
+
+    #parser.add_option( "--stop", help="stop the cylc lock server",
+    #        action="store_true", dest="stop" )
+
+    #parser.add_option( "--restart", help="restart the cylc lock server",
+    #        action="store_true", dest="restart" )
+
+    #parser.add_option( "--status", help="check if the cylc lock server is running",
+    #        action="store_true", dest="status" )
+
+    ( options, args ) = parser.parse_args()
+
+    #count = 0
+    #for opt in [ options.start, options.restart, options.stop, options.status ]:
+    #    if opt:
+    #        count += 1
+
+    #if count != 1:
+    #    parser.error( "choose one option only!" )
+    
+    # get Pyro nameserver hostname-----------------------------------------
+    if not options.pns_host:
+        # (this won't happen; defaults to local hostname)
+        parser.error( "Required: Pyro nameserver hostname" )
+    else:
+        pns_host = options.pns_host
+
+    #server = None
+    #try:
+    #    if sys.argv[1] in ( 'start', 'debug' ):
+    #        server = LockServer( pns_host )
+    #except IndexError:
+    #    pass
+
+    #server_daemon = ServerDaemon( '/home/oliverh/cylc/ls.pid', server ) 
+    server_daemon = ServerDaemon( '/home/oliverh/cylc/ls.pid', pns_host ) 
+    server_daemon.process_command_line(sys.argv)
+
+    #argv = None
+    #if options.start:
+    #    argv = 'start'
+    #elif options.stop:
+    #    argv = 'stop'
+    #elif options.restart:
+    #    argv = 'restart'
+    #elif options.status:
+    #    argv = 'status'
+
+    #foo = LockServer( "/home/oliverh/cylc/lockserver.pid", pyro_daemon )
+    #foo.process_command_line( [ "foo", argv ] )
+    

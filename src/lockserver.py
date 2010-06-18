@@ -14,7 +14,6 @@ class lockserver( Pyro.core.ObjBase ):
         self.exclusive = {}       # exclusive[ system_dir ] = groupname
         self.allow_run_task = {}  # allow_run_task[ group_name ] = True/False
 
-
     def acquire( self, task_id, system_name ):
         if task_id not in self.locked:
             self.locked[ task_id ] = True
@@ -29,9 +28,9 @@ class lockserver( Pyro.core.ObjBase ):
         else:
             return False
 
-    def print_locks( self ):
-        for id in self.locked:
-            print id
+    #def print_locks( self ):
+    #    for id in self.locked:
+    #        print id
 
     def is_locked( self, task_id, system_name ):
         if task_id in self.locked:
@@ -40,9 +39,6 @@ class lockserver( Pyro.core.ObjBase ):
             return False
 
     def get_system_access( self, system_dir, group_name, cylc_mode, exclusive, allow_run_task ):
-        #import pdb
-        #pdb.set_trace()
-
         if system_dir not in self.exclusive:
             if cylc_mode != 'run-task':
                 if exclusive:
@@ -86,13 +82,13 @@ class lockserver( Pyro.core.ObjBase ):
         if system_dir in self.exclusive:
             del self.exclusive[ system_dir ]
         else:
-            print "WARNING: erroneous system release requested"
+            #print "WARNING: erroneous system release requested"
             result = False
 
         if group_name in self.allow_run_task:
             del self.allow_run_task[ group_name ]
         else:
-            print "WARNING: erroneous group release requested"
+            #print "WARNING: erroneous group release requested"
             result = False
 
         return result
