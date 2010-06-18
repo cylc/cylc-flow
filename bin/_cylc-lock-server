@@ -14,7 +14,6 @@ import os, sys
 #import profile
 import socket
 from optparse import OptionParser
-from Daemon import Daemon
 from time import sleep
 
 # cylc source modules
@@ -29,23 +28,23 @@ from lockserver import lockserver
 class ServerDaemon( Daemonizer ):
     def __init__( self, pidfile, pns_host ):
         self.pns_host = pns_host
-
-        foo = open( "/home/oliverh/cylc/foo.txt", "a" )
-        try:
-            self.server = LockServer(pns_host)
-        except Exception, x:
-            foo.write( str(x) )
-        else:
-            pass
-
         Daemonizer.__init__(self, pidfile)
 
     def main_loop( self ):
+        foo = open( "/home/oliverh/cylc/foo.txt", "a" )
+        server = None
+        try:
+            server = LockServer(self.pns_host)
+        except Exception, x:
+            foo.write( str(x) + "\n" )
+        else:
+            pass
+
         bar = open( "/home/oliverh/cylc/bar.txt", "a" )
         try:
-            self.server.start()
+            server.start()
         except Exception, x:
-            bar.write( str(x) )
+            bar.write( str(x) + "\n" )
         else:
             pass
 
@@ -64,7 +63,11 @@ class LockServer:
         # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------
         self.groupname = 'cylc'
         #self.nameserver.create_groupname( self.groupname )
-        self.nameserver.createGroup( self.groupname )
+        try:
+            self.nameserver.createGroup( self.groupname )
+        except:
+            self.nameserver.deleteGroup( self.groupname )
+            self.nameserver.createGroup( self.groupname )
 
         Pyro.config.PYRO_MULTITHREADED = 0
         # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
@@ -93,7 +96,17 @@ class LockServer:
 
 if __name__ == "__main__":
 
-    usage = """1/ cylc lock-server --start|restart|stop|status [options]"""
+    usage = """1/ cylc lock-server --start|debug [options]
+Usage: 2/ cylc lock-server --restart|stop|status" 
+
+    Start, stop, restart, or check the status of, the cylc lock server.
+    The lock server prevents accidental invocation of multiple instances
+    of the same task at the same cycle time. It works similarly to a
+    traditional "lock file", but works even for tasks that start and
+    finish running on different hosts. It also prevents multiple copies
+    of a system being run at once under different names, unless the
+    system definition indicates the system is capable of doing that. 
+    """
 
     parser = OptionParser( usage )
 
