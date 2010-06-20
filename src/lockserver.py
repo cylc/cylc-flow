@@ -3,29 +3,33 @@
 import Pyro.core
 import os,sys
 from connector import connector
+import logging
 
 class lockserver( Pyro.core.ObjBase ):
 
-    def __init__( self ):
+    def __init__( self, logfile ):
         Pyro.core.ObjBase.__init__(self)
-
         self.locked = {}      
-
         self.exclusive = {}       # exclusive[ system_dir ] = groupname
         self.allow_run_task = {}  # allow_run_task[ group_name ] = True/False
+        logging.basicConfig( filename=logfile, level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s" )
 
     def acquire( self, task_id, system_name ):
         if task_id not in self.locked:
             self.locked[ task_id ] = True
+            logging.info( "task lock acquired for " + system_name + ":" + task_id ) 
             return True
         else:
+            logging.warn( "task lock rejected for " + system_name + ":" + task_id ) 
             return False
 
     def release( self, task_id, system_name ):
         if task_id in self.locked:
             del self.locked[ task_id ]
+            logging.info( "task lock released for " + system_name + ":" + task_id ) 
             return True
         else:
+            logging.warn( "failed to release task lock for " + system_name + ":" + task_id ) 
             return False
 
     #def print_locks( self ):

@@ -26,39 +26,47 @@ from Pyro.ext.daemonizer import Daemonizer
 from lockserver import lockserver
 
 class ServerDaemon( Daemonizer ):
-    def __init__( self, pidfile, pns_host ):
+    def __init__( self, pidfile, pns_host, logfile ):
         self.pns_host = pns_host
+        self.logfile = logfile
         Daemonizer.__init__(self, pidfile)
 
     def main_loop( self ):
-        foo = open( "/home/oliverh/cylc/foo.txt", "a" )
-        server = None
-        try:
-            server = LockServer(self.pns_host)
-        except Exception, x:
-            foo.write( str(x) + "\n" )
-        else:
-            pass
+        # NOTE THE PYRO SERVER BEING DAEMONIZED MUST BE STARTED HERE
+        # OTHERWISE ITS SOCKET FILE DESCRIPTORS WILL BE CLOSED DOWN IN
+        # DAEMONIZER.__init__().
 
-        bar = open( "/home/oliverh/cylc/bar.txt", "a" )
-        try:
-            server.start()
-        except Exception, x:
-            bar.write( str(x) + "\n" )
-        else:
-            pass
+        # for debugging in daemon mode, uncomment the following so that
+        # exceptions will be written to log files.
 
+        #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
+        #server = None
+        #try:
+        server = LockServer(self.pns_host, self.logfile)
+        #except Exception, x:
+        #    foo.write( str(x) + "\n" )
+        #else:
+        #    pass
+
+        #bar = open( "/home/oliverh/cylc/bar.txt", "a" )
+        #try:
+        server.start()
+        #except Exception, x:
+        #    bar.write( str(x) + "\n" )
+        #else:
+        #    pass
 
 
 class LockServer:
-
-    def __init__( self, pns_host ):
+    def __init__( self, pns_host, logfile ):
         # LOCATE THE PYRO NAMESERVER-------------------------------------------
         #self.nameserver = pyrex.discover( pns_host )
         try:
             self.nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
         except NamingError:
             raise SystemExit("Failed to find a Pyro nameserver on " + hostname )
+
+        self.logfile = logfile
 
         # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------
         self.groupname = 'cylc'
@@ -77,7 +85,6 @@ class LockServer:
         Pyro.config.PYRO_TRACELEVEL = 3
         Pyro.core.initServer()
 
-
     def start( self ):
         # CREATE A PYRO pyro_daemon FOR THIS SYSTEM
         # (single threaded prob not necessary for lockserver
@@ -86,9 +93,9 @@ class LockServer:
         #pyro_daemon.useNameServer(self.nameserver.get_ns())
         self.pyro_daemon.useNameServer(self.nameserver)
 
-        self.locker = lockserver()
-        #pyro_daemon.connect( self.locker, self.nameserver.obj_name( 'lockserver', self.groupname ))
-        self.pyro_daemon.connect( self.locker, 'cylc.lockserver' )
+        locker = lockserver( logfile )
+        #pyro_daemon.connect( locker, self.nameserver.obj_name( 'lockserver', self.groupname ))
+        self.pyro_daemon.connect( locker, 'cylc.lockserver' )
 
         while True:
             self.pyro_daemon.handleRequests()
@@ -96,80 +103,73 @@ class LockServer:
 
 if __name__ == "__main__":
 
-    usage = """1/ cylc lock-server --start|debug [options]
-Usage: 2/ cylc lock-server --restart|stop|status" 
+    usage = """1/ cylc lock-server --start|restart|debug [options]
+Usage: 2/ cylc lock-server --status|stop" 
 
-    Start, stop, restart, or check the status of, the cylc lock server.
-    The lock server prevents accidental invocation of multiple instances
-    of the same task at the same cycle time. It works similarly to a
-    traditional "lock file", but works even for tasks that start and
-    finish running on different hosts. It also prevents multiple copies
-    of a system being run at once under different names, unless the
-    system definition indicates the system is capable of doing that. 
-    """
+Control the cylc lock server daemon. The lock server prevents multiple
+instances of a system from running simultaneously (even under different
+names) unless the system config file indicates this is permissible, and
+it prevents multiple instances of the same task (at the same cycle time)
+from running simultaneously. Unlike a traditional "lock file" the lock
+server works for tasks that start and finish executing on different hosts.""" 
 
     parser = OptionParser( usage )
 
-    #parser.set_defaults( pns_host= socket.getfqdn(), start=False,
-    #        restart=False, stop=False, status=False )
-
-    parser.set_defaults( pns_host= socket.getfqdn() )
+    parser.set_defaults( pns_host= socket.getfqdn(), logfile =
+            os.environ[ 'HOME' ] + '/locklog.txt', start=False,
+            debug=False, restart=False, status=False, stop=False )
 
     parser.add_option( "--host",
-            help="(--(re)start only) Pyro nameserver host, defaults to the local hostname. Use "
-            "if not auto-detected (which depends on network config).", 
+            help="(for --start|restart|debug). Pyro nameserver host, "
+            "defaults to the local hostname. Use if not auto-detected "
+            "(which depends on network config).", 
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
-    #    parser.add_option( "--start", help="start the cylc lock server",
-    #        action="store_true", dest="start" )
+    parser.add_option( "-l", "--logfile",
+            help="(for --start|restart|debug). Path of file in which "
+            "to log locking activity.", 
+            metavar="HOSTNAME", action="store", dest="logfile" )
 
-    #parser.add_option( "--stop", help="stop the cylc lock server",
-    #        action="store_true", dest="stop" )
+    parser.add_option( "--start", help="start up the server",
+            action="store_true", dest="start" )
 
-    #parser.add_option( "--restart", help="restart the cylc lock server",
-    #        action="store_true", dest="restart" )
+    parser.add_option( "--debug", help="do not daemonize the server, "
+           "i.e. do not detach from the parent environment.",
+            action="store_true", dest="debug" )
 
-    #parser.add_option( "--status", help="check if the cylc lock server is running",
-    #        action="store_true", dest="status" )
+    parser.add_option( "--restart", help="restart a running server",
+            action="store_true", dest="restart" )
+
+    parser.add_option( "--status", help="check that the cylc lock server is running",
+            action="store_true", dest="status" )
+
+    parser.add_option( "--stop", help="shut down the server",
+            action="store_true", dest="stop" )
 
     ( options, args ) = parser.parse_args()
 
-    #count = 0
-    #for opt in [ options.start, options.restart, options.stop, options.status ]:
-    #    if opt:
-    #        count += 1
+    count = 0
+    for opt in [ options.start, options.restart, options.stop, options.status, options.debug ]:
+        if opt:
+            count += 1
 
-    #if count != 1:
-    #    parser.error( "choose one option only!" )
+    if count != 1:
+        parser.error( "choose one option only!" )
     
-    # get Pyro nameserver hostname-----------------------------------------
-    if not options.pns_host:
-        # (this won't happen; defaults to local hostname)
-        parser.error( "Required: Pyro nameserver hostname" )
-    else:
-        pns_host = options.pns_host
+    pns_host = options.pns_host
+    logfile = options.logfile
 
-    #server = None
-    #try:
-    #    if sys.argv[1] in ( 'start', 'debug' ):
-    #        server = LockServer( pns_host )
-    #except IndexError:
-    #    pass
+    pidfile = '/home/oliverh/cylc/ls.pid'
+    server_daemon = ServerDaemon( pidfile, pns_host, logfile ) 
 
-    #server_daemon = ServerDaemon( '/home/oliverh/cylc/ls.pid', server ) 
-    server_daemon = ServerDaemon( '/home/oliverh/cylc/ls.pid', pns_host ) 
-    server_daemon.process_command_line(sys.argv)
+    argv = None
+    if options.start:
+        argv = 'start'
+    elif options.stop:
+        argv = 'stop'
+    elif options.restart:
+        argv = 'restart'
+    elif options.status:
+        argv = 'status'
 
-    #argv = None
-    #if options.start:
-    #    argv = 'start'
-    #elif options.stop:
-    #    argv = 'stop'
-    #elif options.restart:
-    #    argv = 'restart'
-    #elif options.status:
-    #    argv = 'status'
-
-    #foo = LockServer( "/home/oliverh/cylc/lockserver.pid", pyro_daemon )
-    #foo.process_command_line( [ "foo", argv ] )
-    
+    server_daemon.process_command_line([ sys.argv[0], argv ])
