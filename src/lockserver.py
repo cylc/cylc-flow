@@ -31,6 +31,9 @@ class lockserver( Pyro.core.ObjBase ):
     def get_lock_id( self, group_name, task_id ):
         return group_name + ':' + task_id
 
+    def get_sys_string( self, group_name, system_dir ):
+        return group_name + '-->' + system_dir
+
     def acquire( self, task_id, group_name ):
         id = self.get_lock_id( group_name, task_id )
         if id not in self.locked:
@@ -75,6 +78,8 @@ class lockserver( Pyro.core.ObjBase ):
         # INCLUSIVE: multiple named systems can use system_dir at once
         #   - run-task can attempt to get a task lock always
 
+        sys_descr = self.get_sys_string( group_name, system_dir ) 
+
         if ( request_exclusive and system_dir in self.inclusive ) or \
                 ( not request_exclusive and system_dir in self.exclusive ):
             logging.warn( "inconsistent system exclusivity detected!" ) 
@@ -84,17 +89,22 @@ class lockserver( Pyro.core.ObjBase ):
 
             if system_dir in self.exclusive:
                 name = self.exclusive[ system_dir ][0]
+                already = self.get_sys_string( name, system_dir )
 
                 if cylc_mode == 'run-task':
                     # grant access only if group_name is the same
                     if group_name == name:
+                        logging.info( "granting run-task access to " + sys_descr ) 
                         return ( True, "granted" )
                     else:
-                        return ( False, name + "-->" + system_dir + " in exclusive use" )
+                        logging.warning( "refusing run-task access to " + sys_descr ) 
+                        logging.warning( "(owned by: " + already + ")") 
+
+                        return ( False, self.get_sys_string( name, system_dir ) + " in exclusive use" )
 
                 else:
                     # no exclusive access to any system already in use
-                    return ( False, name + "-->" + system_dir + " in exclusive use" )
+                    return ( False, sys_desc + " in exclusive use" )
             else:
                 # grant exclusive access
                 self.exclusive[ system_dir ] = [ group_name ]
