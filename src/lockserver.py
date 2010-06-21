@@ -1,5 +1,14 @@
 #!/usr/bin/env python
 
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver\@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
 import Pyro.core
 import os,sys
 from connector import connector
@@ -7,12 +16,12 @@ import logging
 
 class lockserver( Pyro.core.ObjBase ):
 
-    def __init__( self, logfile ):
+    def __init__( self, logfile, loglevel=logging.INFO ):
         Pyro.core.ObjBase.__init__(self)
         self.locked = {}      
         self.exclusive = {}       # exclusive[ system_dir ] = groupname
         self.allow_run_task = {}  # allow_run_task[ group_name ] = True/False
-        logging.basicConfig( filename=logfile, level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s" )
+        logging.basicConfig( filename=logfile, level=loglevel, format="%(asctime)s [%(levelname)s] %(message)s" )
 
     def acquire( self, task_id, system_name ):
         if task_id not in self.locked:

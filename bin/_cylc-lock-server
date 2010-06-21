@@ -11,7 +11,7 @@
 
 # standard Python modules
 import os, sys
-#import profile
+import cylcrc
 import socket
 from optparse import OptionParser
 from time import sleep
@@ -111,12 +111,14 @@ instances of a system from running simultaneously (even under different
 names) unless the system config file indicates this is permissible, and
 it prevents multiple instances of the same task (at the same cycle time)
 from running simultaneously. Unlike a traditional "lock file" the lock
-server works for tasks that start and finish executing on different hosts.""" 
+server works for tasks that start and finish executing on different hosts.
+
+The lockserver pid (process ID) file and log file can be specified under
+the '[lockserver]' section of your .cylcrc file.""" 
 
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host= socket.getfqdn(), logfile =
-            os.environ[ 'HOME' ] + '/locklog.txt', start=False,
+    parser.set_defaults( pns_host= socket.getfqdn(), start=False,
             debug=False, restart=False, status=False, stop=False )
 
     parser.add_option( "--host",
@@ -125,26 +127,25 @@ server works for tasks that start and finish executing on different hosts."""
             "(which depends on network config).", 
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
-    parser.add_option( "-l", "--logfile",
-            help="(for --start|restart|debug). Path of file in which "
-            "to log locking activity.", 
-            metavar="HOSTNAME", action="store", dest="logfile" )
-
-    parser.add_option( "--start", help="start up the server",
+    parser.add_option( "--start", help="Start up the server.",
             action="store_true", dest="start" )
 
-    parser.add_option( "--debug", help="do not daemonize the server, "
+    parser.add_option( "--debug", help="Do not daemonize the server, "
            "i.e. do not detach from the parent environment.",
             action="store_true", dest="debug" )
 
-    parser.add_option( "--restart", help="restart a running server",
+    parser.add_option( "--restart", help="Restart a running server.",
             action="store_true", dest="restart" )
 
-    parser.add_option( "--status", help="check that the cylc lock server is running",
+    parser.add_option( "--status", help="Check that the server is running.",
             action="store_true", dest="status" )
 
-    parser.add_option( "--stop", help="shut down the server",
+    parser.add_option( "--stop", help="Shut down the server.",
             action="store_true", dest="stop" )
+
+    parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
+            "(default $HOME/.cylcrc).",
+            metavar="PATH", action="store", dest="rcfile" )
 
     ( options, args ) = parser.parse_args()
 
@@ -157,9 +158,16 @@ server works for tasks that start and finish executing on different hosts."""
         parser.error( "choose one option only!" )
     
     pns_host = options.pns_host
-    logfile = options.logfile
 
-    pidfile = '/home/oliverh/cylc/ls.pid'
+    rcfile = None
+    if options.rcfile:
+        config = cylcrc.rc( options.rcfile )
+    else:
+        config = cylcrc.rc()
+
+    logfile = config.get( 'lockserver', 'log file' )
+    pidfile = config.get( 'lockserver', 'pid file' )
+
     server_daemon = ServerDaemon( pidfile, pns_host, logfile ) 
 
     argv = None
