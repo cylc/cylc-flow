@@ -105,7 +105,7 @@ class rc:
     def get_system_logging_dir( self, system_name, practice_mode=False):
         if practice_mode:
             system_name += '-practice'
-         dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name )
+        dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name )
         if not os.path.exists( dir ):
             print "Creating directory", dir
             os.makedirs( dir )

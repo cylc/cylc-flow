@@ -192,6 +192,16 @@ else:
     pns_host = options.pns_host
     banner[ 'Pyro nameserver host' ] = pns_host
 
+# find location of the system task and config modules------------------
+reg = registrations()
+if reg.is_registered( name ):
+    system_dir = reg.get( name )
+else:
+    reg.print_all()
+    raise SystemExit( "System " + name + " is not registered!" )
+
+banner[ 'system definition' ] = system_dir
+
 # get mode of operation------------------------------------------------
 if options.dummy_mode and options.practice_mode:
     parser.error( "Choose ONE of dummy or practice mode")
@@ -201,6 +211,20 @@ if options.start_time and options.practice_mode:
 
 dummy_mode = False
 practice = False
+
+# LOCATE THE PYRO NAMESERVER-------------------------------------------
+nameserver = pyrex.discover( pns_host )
+
+# CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
+if practice:
+    # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
+    groupname = os.environ['USER'] + '^' + name + "_practice"
+else:
+    groupname = os.environ['USER'] + '^' + name
+
+# request system access from the lock server
+if not syslock( pns_host, groupname, system_dir, 'scheduler' ).request_system_access( True ):
+    raise SystemExit( 'locked out!' )
 
 if options.dummy_mode:
     dummy_mode = True
@@ -254,16 +278,6 @@ if options.include:
 else:
     include = []
 startup[ 'include' ] = include
-
-# find location of the system task and config modules------------------
-reg = registrations()
-if reg.is_registered( name ):
-    system_dir = reg.get( name )
-else:
-    reg.print_all()
-    raise SystemExit( "System " + name + " is not registered!" )
-
-banner[ 'system definition' ] = system_dir
 
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
@@ -338,19 +352,6 @@ if not practice:
 config.check_task_groups()
 config.job_submit_config( dummy_mode )
 
-# LOCATE THE PYRO NAMESERVER-------------------------------------------
-nameserver = pyrex.discover( pns_host )
-
-# CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
-if practice:
-    # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
-    groupname = os.environ['USER'] + '^' + name + "_practice"
-else:
-    groupname = os.environ['USER'] + '^' + name
-
-# request system access from the lock server
-if not syslock( pns_host, groupname, system_dir, 'scheduler' ).request_system_access( True, False ):
-    raise SystemExit( 'locked out!' )
 
 nameserver.create_groupname( groupname )
 banner[ 'Pyro nameserver group' ] = groupname

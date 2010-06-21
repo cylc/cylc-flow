@@ -20,6 +20,8 @@ from dynamic_instantiation import get_object
 from registration import registrations
 from job_submit import job_submit
 import pyrex, cycle_time, pimp_my_logger
+import cylcrc
+from lockserver import syslock
 
 usage = """cylc run-task [options] SYSTEM
 
@@ -51,6 +53,10 @@ def commandline_parser():
             "if not auto-detected (which depends on network config).", 
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
+    parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
+            "(default $HOME/.cylcrc).", default=None,
+            metavar="PATH", action="store", dest="rcfile" )
+
     return parser
 
 # parse commandline options and arguments------------------------------
@@ -65,6 +71,14 @@ elif len( args ) > 1:
 # get system name------------------------------------------------------
 name = args[0]
 
+# find location of the system task and config modules------------------
+reg = registrations()
+if reg.is_registered( name ):
+    system_dir = reg.get( name )
+else:
+    reg.print_all()
+    raise SystemExit( "System " + name + " is not registered!" )
+
 # get task ------------------------------------------------------------
 if not options.task_id:
     parser.error( "Please specify which task to run" )
@@ -75,13 +89,24 @@ else:
 if not cycle_time.is_valid( ctime ):
     parser.error( "invalid cycle time: " + ctime )
 
-# find location of the system task and config modules------------------
-reg = registrations()
-if reg.is_registered( name ):
-    system_dir = reg.get( name )
+# get Pyro nameserver hostname-----------------------------------------
+if not options.pns_host:
+    # (this won't happen; defaults to local hostname)
+    parser.error( "Required: Pyro nameserver hostname" )
 else:
-    reg.print_all()
-    raise SystemExit( "System " + name + " is not registered!" )
+    pns_host = options.pns_host
+
+
+groupname = os.environ['USER'] + '^' + name
+
+# request system access from the lock server
+# run-task does not need to call release_system_access()
+if not syslock( pns_host, groupname, system_dir, 'run-task' ).request_system_access( True ):
+    raise SystemExit( 'locked out!' )
+
+# load cylcrc file----------------------------------------------------
+rcfile = cylcrc.rc( options.rcfile )
+logging_dir = rcfile.get_system_logging_dir( name + '-run-task' ) 
 
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
@@ -101,26 +126,17 @@ import remote_switch
 
 # load system configuration--------------------------------------------
 config = system_config( name )
-logging_dir = config.get('logging_dir') + '-run-task'
 config.put( 'logging_dir', logging_dir ) 
-config.create_logging_dir( False )
 config.job_submit_config()
 
 # create the task log
 log = logging.getLogger( 'main.' + task_name )
-pimp_my_logger.pimp_it( log, task_name, config.get('logging_dir'), \
+pimp_my_logger.pimp_it( log, task_name, logging_dir, \
         logging.DEBUG, False, None, True )
 
-# get Pyro nameserver hostname-----------------------------------------
-if not options.pns_host:
-    # (this won't happen; defaults to local hostname)
-    parser.error( "Required: Pyro nameserver hostname" )
-else:
-    pns_host = options.pns_host
-
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
+# (required for system locking)
 nameserver = pyrex.discover( pns_host )
-groupname = os.environ['USER'] + '^' + name
 
 # set global (all tasks) environment variables-------------------------
 config.put_env( 'CYLC_MODE', 'run-task' )

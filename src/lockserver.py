@@ -5,12 +5,12 @@
 #         |                        |
 #         |  (c) NIWA, 2008-2010   |
 #         | Contact: Hilary Oliver |
-#         |  h.oliver\@niwa.co.nz   |
+#         |  h.oliver\@niwa.co.nz  |
 #         |    +64-4-386 0461      |
 #         |________________________|
 
 import Pyro.core
-import os,sys
+import os,sys,socket
 from connector import connector
 import logging
 
@@ -18,91 +18,142 @@ class lockserver( Pyro.core.ObjBase ):
 
     def __init__( self, logfile, loglevel=logging.INFO ):
         Pyro.core.ObjBase.__init__(self)
-        self.locked = {}      
-        self.exclusive = {}       # exclusive[ system_dir ] = groupname
-        self.allow_run_task = {}  # allow_run_task[ group_name ] = True/False
+
+        # task locks
+        self.locked = {}
+
+        # system locks
+        self.exclusive = {}       # exclusive[ system_dir ] = [ groupname ]
+        self.inclusive = {}       # inclusive[ system_dir ] = [ groupname, ... ]
+
         logging.basicConfig( filename=logfile, level=loglevel, format="%(asctime)s [%(levelname)s] %(message)s" )
 
-    def acquire( self, task_id, system_name ):
-        if task_id not in self.locked:
-            self.locked[ task_id ] = True
-            logging.info( "task lock acquired for " + system_name + ":" + task_id ) 
+    def get_lock_id( self, group_name, task_id ):
+        return group_name + ':' + task_id
+
+    def acquire( self, task_id, group_name ):
+        id = self.get_lock_id( group_name, task_id )
+        if id not in self.locked:
+            self.locked[ id ] = True
+            logging.info( "Acquired task lock for " + id ) 
             return True
         else:
-            logging.warn( "task lock rejected for " + system_name + ":" + task_id ) 
+            logging.info( "Refused task lock for " + id ) 
             return False
 
-    def release( self, task_id, system_name ):
-        if task_id in self.locked:
-            del self.locked[ task_id ]
-            logging.info( "task lock released for " + system_name + ":" + task_id ) 
+    def release( self, task_id, group_name ):
+        id = self.get_lock_id( group_name, task_id )
+        if id in self.locked:
+            del self.locked[ id ]
+            logging.info( "Released task lock for " + id ) 
             return True
         else:
-            logging.warn( "failed to release task lock for " + system_name + ":" + task_id ) 
+            logging.info( "Failed to release task lock for " + id ) 
             return False
 
-    #def print_locks( self ):
-    #    for id in self.locked:
-    #        print id
+    def dump( self ):
+         logging.info( "Dumping locks") 
+         return self.locked.keys()
 
-    def is_locked( self, task_id, system_name ):
-        if task_id in self.locked:
+    def clear( self ):
+        logging.info( "Clearing locks") 
+        # MUST USE .keys() here to avoid:
+        # RuntimeError: dictionary changed size during iteration
+        for id in self.locked.keys():
+            self.release( id, 'foo' )
+
+    def is_locked( self, task_id, group_name ):
+        id = self.get_lock_id( group_name, task_id )
+        if id in self.locked:
             return True
         else:
             return False
 
-    def get_system_access( self, system_dir, group_name, cylc_mode, exclusive, allow_run_task ):
-        if system_dir not in self.exclusive:
-            if cylc_mode != 'run-task':
-                if exclusive:
-                    self.exclusive[ system_dir ] = group_name
-                self.allow_run_task[ group_name ] = allow_run_task
-            return ( True, "granted" )
+    def get_system_access( self, system_dir, group_name, cylc_mode, request_exclusive ):
+        # EXCLUSIVE: one only named system can use system_dir at once
+        #   - run-task can attempt to get a task lock IF via the same name
+        # INCLUSIVE: multiple named systems can use system_dir at once
+        #   - run-task can attempt to get a task lock always
 
-        else:
-            # this system definition directory is already in use
-            # so check whether or not we can allow access to it.
+        if ( request_exclusive and system_dir in self.inclusive ) or \
+                ( not request_exclusive and system_dir in self.exclusive ):
+            logging.warn( "inconsistent system exclusivity detected!" ) 
+            return ( False, "inconsistent system exclusivity detected!" )
+ 
+        if request_exclusive:
+
             if system_dir in self.exclusive:
-                # is exclusive
-                # who's using it?
-                other_group = self.exclusive[ system_dir ]
-                if self.allow_run_task[ other_group ] and cylc_mode == 'run-task':
-                    return ( True, 'granted for run-task only' )
-                else:
-                    return ( False, 'denied, access is allowed for run-task only' )
+                name = self.exclusive[ system_dir ][0]
 
-            else:
-                # not exclusive (multiple groups for same system dir )
-                
-                if group_name in self.allow_run_task:
-                    # group already registered
-                    if self.allow_run_task[ group_name ] and cylc_mode == 'run-task':
-                        return ( True, 'granted, for run-task only' )
+                if cylc_mode == 'run-task':
+                    # grant access only if group_name is the same
+                    if group_name == name:
+                        return ( True, "granted" )
                     else:
-                        return ( False, 'denied, access to ' + group_name + ' is allowed for run-task only' )
+                        return ( False, name + "-->" + system_dir + " in exclusive use" )
 
                 else:
-                    # group not registered yet
-                    if cylc_mode != 'run-task':
-                        if exclusive:
-                            self.exclusive[ system_dir ] = group_name
-                        self.allow_run_task[ group_name ] = allow_run_task
+                    # no exclusive access to any system already in use
+                    return ( False, name + "-->" + system_dir + " in exclusive use" )
+            else:
+                # grant exclusive access
+                self.exclusive[ system_dir ] = [ group_name ]
+                return ( True, "granted" )
+ 
+        else:
+            # inclusive access requested
+
+            if system_dir in self.inclusive:
+                names = self.inclusive[ system_dir ]
+
+                if cylc_mode == 'run-task':
                     return ( True, "granted" )
 
+                else:
+                    # grant access unless same name already in use
+                    if group_name in names:
+                        return ( False, name + '-->' + system_dir + " already in use" )
+                    else:
+                        self.inclusive[ system_dir ].append( group_name )
+                        return ( True, "granted" )
+
+            else:
+                self.inclusive[ system_dir ] = [ group_name ]
+                return ( True, "granted" )
+ 
 
     def release_system_access( self, system_dir, group_name ):
         result = True
         if system_dir in self.exclusive:
-            del self.exclusive[ system_dir ]
+            if group_name not in self.exclusive[ system_dir ]:
+                #logging.warning( "system release group name error" )
+                result = False
+
+            else:
+                del self.exclusive[ system_dir ]
+                result = True
+
+        elif system_dir in self.inclusive:
+            names = self.inclusive[ system_dir ]
+            if group_name not in names:
+                #logging.warning( "system release group name error" )
+                result = False
+
+            elif len( names ) == 1:
+                del self.inclusive[ system_dir ]
+                result = True
+            else:
+                self.inclusive[ system_dir ].remove( group_name )
+                result = True
+            
         else:
-            #print "WARNING: erroneous system release requested"
+            #logging.warning( "erroneous system release request" )
             result = False
 
-        if group_name in self.allow_run_task:
-            del self.allow_run_task[ group_name ]
+        if result:
+            logging.info( "releasing system access for " + group_name + " --> " + system_dir )
         else:
-            #print "WARNING: erroneous group release requested"
-            result = False
+            logging.warning( "error in system access release for " + group_name + " --> " + system_dir )
 
         return result
 
@@ -114,7 +165,7 @@ class syslock:
         self.group_name = group_name
         self.cylc_mode = cylc_mode
 
-    def request_system_access( self, exclusive=True, allow_run_task=True ):
+    def request_system_access( self, exclusive=True ):
 
         # Cylc system name is user-specific (i.e. different users can
         # register systems with the same name), but the cylc groupname
@@ -124,15 +175,14 @@ class syslock:
         # System config files should specify whether or not a system is
         # 'exclusive' - i.e. is it possible to run multiple copies (with
         # different registered group names) of the entire system at
-        # once?  Then, on top of this, the user can choose whether or
-        # not to allow use of run-task simultaneously with a given
-        # running system.
- 
+        # once? 
+        
         server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
 
-        (result, reason) = server.get_system_access( self.system_dir, self.group_name, self.cylc_mode, exclusive, allow_run_task )
+        (result, reason) = server.get_system_access( self.system_dir, self.group_name, self.cylc_mode, exclusive )
         if not result:
-            print >> sys.stderr, "WARNING: system", self.group_name, "is locked (" + reason + ")"
+            print >> sys.stderr, 'ERROR, failed to get system access:'
+            print >> sys.stderr, reason
             return False
        
         else:
@@ -140,11 +190,10 @@ class syslock:
 
 
     def release_system_access( self):
-
         server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
         result = server.release_system_access( self.system_dir, self.group_name )
         if not result:
-            print >> sys.stderr, "WARNING: system", self.group_name, "release failed (" + reason + ")"
+            print >> sys.stderr, 'WARNING, failed to release system access: ', reason
             return False
        
         else:
@@ -161,60 +210,81 @@ class lock:
     # (a cylc message after that time will cause cylc to complain that
     # it has received a message from a task that has finished running). 
 
-    def __init__( self ):
-        if 'TASK_ID' in os.environ.keys():
-            self.task_id = os.environ[ 'TASK_ID' ]
-        elif self.mode == 'raw':
-            self.task_id = 'TASK_ID'
-        else:
-            print >> sys.stderr, '$TASK_ID not defined'
-            sys.exit(1)
+    def __init__( self, task_id=None, group_name=None, pns_host=None ):
+        self.mode = 'raw'
+        if 'CYLC_MODE' in os.environ:
+            self.mode = os.environ[ 'CYLC_MODE' ]
+            # 'scheduler' or 'run-task'
 
-        self.groupname = 'cylc'
-
-        if 'CYLC_SYSTEM_NAME' in os.environ.keys():
-            self.system_name = os.environ[ 'CYLC_SYSTEM_NAME' ]
-        elif self.mode == 'raw':
-            pass
+        if task_id:
+            self.task_id = task_id
         else:
-            # we always define the PNS Host explicitly, but could
-            # default to localhost's fully qualified domain name
-            # like this:   self.pns_host = socket.getfqdn()
-            print >> sys.stderr, '$CYLC_SYSTEM_NAME not defined'
-            sys.exit(1)
+            if 'TASK_ID' in os.environ.keys():
+                self.task_id = os.environ[ 'TASK_ID' ]
+            elif self.mode == 'raw':
+                self.task_id = 'TASK_ID'
+            else:
+                print >> sys.stderr, '$TASK_ID not defined'
+                sys.exit(1)
 
-        if 'CYLC_NS_HOST' in os.environ.keys():
-            self.pns_host = os.environ[ 'CYLC_NS_HOST' ]
-        elif self.mode == 'raw':
-            pass
+        if group_name:
+            self.group_name = group_name
         else:
-            # we always define the PNS Host explicitly, but could
-            # default to localhost's fully qualified domain name
-            # like this:   self.pns_host = socket.getfqdn()
-            print >> sys.stderr, '$CYLC_NS_GROUP not defined'
-            sys.exit(1)
+            if 'CYLC_SYSTEM_NAME' in os.environ.keys():
+                self.group_name = os.environ['USER'] + '^' + os.environ[ 'CYLC_SYSTEM_NAME' ]
+            elif self.mode == 'raw':
+                pass
+            else:
+                # we always define the PNS Host explicitly, but could
+                # default to localhost's fully qualified domain name
+                # like this:   self.pns_host = socket.getfqdn()
+                print >> sys.stderr, '$CYLC_SYSTEM_NAME not defined'
+                sys.exit(1)
+
+        if pns_host:
+            self.pns_host = pns_host
+        else:
+            if 'CYLC_NS_HOST' in os.environ.keys():
+                self.pns_host = os.environ[ 'CYLC_NS_HOST' ]
+            elif self.mode == 'raw':
+                pass
+            else:
+                # we always define the PNS Host explicitly, but could
+                # default to localhost's fully qualified domain name
+                # like this:   self.pns_host = socket.getfqdn()
+                print >> sys.stderr, '$CYLC_NS_GROUP not defined'
+                sys.exit(1)
 
     def acquire( self ):
-        server = connector( self.pns_host, self.groupname, 'lockserver' ).get() 
-        if server.is_locked( self.task_id, self.system_name ):
-            print >> sys.stderr, "WARNING: task", self.task_id, "is locked!"
-            return False
-        if server.acquire( self.task_id, self.system_name ):
-            print "Task lock acquired for", self.task_id
+        server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
+        if server.acquire( self.task_id, self.group_name ):
+            print "Acquired task lock for", self.group_name + ':' + self.task_id
             return True
         else:
-            print "Failed to acquire a task lock for", self.task_id
+            print >> sys.stderr, "Refused task lock for", self.group_name + ':' + self.task_id
+            if server.is_locked( self.task_id, self.group_name ):
+                print >> sys.stderr, self.group_name + ':' + self.task_id, "is already locked!"
             return False
 
     def release( self ):
-        server = connector( self.pns_host, self.groupname, 'lockserver' ).get()
-        if server.is_locked( self.task_id, self.system_name ):
-            if server.release( self.task_id, self.system_name ):
-                print "Released task lock for", self.task_id
+        server = connector( self.pns_host, 'cylc', 'lockserver' ).get()
+        if server.is_locked( self.task_id, self.group_name ):
+            if server.release( self.task_id, self.group_name ):
+                print "Released task lock for", self.group_name + ':' + self.task_id
                 return True
             else:
-                print "WARNING failed to release task lock for", self.task_id
+                print >> sys.stderr, "Failed to release task lock for", self.group_name + ':' + self.task_id
                 return False
         else:
-            print >> sys.stderr, "WARNING, task", self.task_id, "was not locked!"
+            print >> sys.stderr, "WARNING", self.group_name + ':' + self.task_id, "was not locked!"
             return True
+
+class control:
+    def __init__( self, pns_host=None ):
+        self.server = connector( pns_host, 'cylc', 'lockserver' ).get() 
+
+    def dump( self ):
+        return self.server.dump()
+
+    def clear( self ):
+        self.server.clear()

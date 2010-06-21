@@ -1,5 +1,16 @@
 To Do
 
+* iteration over dictionary items: DO NOT USE
+  = for item in dict:
+  =    (operation that adds or removes items from dict)
+  -> RuntimeError: dictionary changed size during iteration
+
+  Instead use
+  = for item in dict.keys():
+  which must build a temporary list?
+
+  CHECK MY USE OF DICTIOARY ITERATION THROUGHOUT THE CODE
+
 * Record stopping time in state dump in case system shutdown and
   restarted before all tasks reach the stop time is reached? (currently
   at restart those that did reach the stop time will be finished and

@@ -23,10 +23,10 @@ import pyrex
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 from Pyro.ext.daemonizer import Daemonizer
-from lockserver import lockserver
+from lockserver import lockserver, lock, control
 
 class ServerDaemon( Daemonizer ):
-    def __init__( self, pidfile, pns_host, logfile ):
+    def __init__( self, pidfile, pns_host, logfile, task_lock=None ):
         self.pns_host = pns_host
         self.logfile = logfile
         Daemonizer.__init__(self, pidfile)
@@ -120,7 +120,7 @@ the '[lockserver]' section of your .cylcrc file."""
 
     parser.set_defaults( pns_host= socket.getfqdn(), rcfile=None,
             start=False, debug=False, restart=False, status=False,
-            stop=False )
+            stop=False, acquire=None, release=None, list_all=False )
 
     parser.add_option( "--host",
             help="(for --start|restart|debug). Pyro nameserver host, "
@@ -131,7 +131,7 @@ the '[lockserver]' section of your .cylcrc file."""
     parser.add_option( "--start", help="Start up the server.",
             action="store_true", dest="start" )
 
-    parser.add_option( "--debug", help="Do not daemonize the server, "
+    parser.add_option( "--debug", help="(DEBUGGING) Do not daemonize the server, "
            "i.e. do not detach from the parent environment.",
             action="store_true", dest="debug" )
 
@@ -148,10 +148,24 @@ the '[lockserver]' section of your .cylcrc file."""
             "(default $HOME/.cylcrc).", metavar="PATH", action="store",
             dest="rcfile" )
 
+    parser.add_option( "--acquire", help="Acquire a task lock.",
+            metavar="SYSTEM:NAME%CYCLE", action="store", dest="acquire" )
+
+    parser.add_option( "--release", help="Release a task lock.",
+            metavar="SYSTEM:NAME%CYCLE", action="store", dest="release" )
+
+    parser.add_option( "--list-all", help="Get all task locks.",
+            action="store_true", dest="list_all" )
+
+    parser.add_option( "--clear-all", help="Release all task locks.",
+            action="store_true", dest="clear_all" )
+
     ( options, args ) = parser.parse_args()
 
     count = 0
-    for opt in [ options.start, options.restart, options.stop, options.status, options.debug ]:
+    for opt in [ options.start, options.restart, options.stop,
+            options.status, options.debug, options.acquire,
+            options.release, options.list_all, options.clear_all ]:
         if opt:
             count += 1
 
@@ -159,6 +173,33 @@ the '[lockserver]' section of your .cylcrc file."""
         parser.error( "choose one option only!" )
     
     pns_host = options.pns_host
+
+    if options.acquire:
+        (system, task_id) = options.acquire.split( ':' )
+        if not lock( task_id, system, pns_host ).acquire():
+            print >> sys.stderr, "ERROR: Failed to acquire a task lock"
+            sys.exit(1)
+        sys.exit(0)
+
+    if options.release:
+        (system, task_id) = options.release.split( ':' )
+        if not lock( task_id, system, pns_host ).release():
+            print >> sys.stderr, "ERROR: Failed to acquire a task lock"
+            sys.exit(1)
+        sys.exit(0)
+
+    if options.list_all:
+        locks = control( pns_host ).dump()
+        for lock in locks:
+            print lock
+        sys.exit(0)
+
+    if options.clear_all:
+        locks = control( pns_host ).clear()
+        #for lock in locks:
+        #    print lock
+        sys.exit(0)
+
     config = cylcrc.rc( options.rcfile )
     logfile = config.get( 'lockserver', 'log file' )
     pidfile = config.get( 'lockserver', 'pid file' )
