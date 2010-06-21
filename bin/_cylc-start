@@ -20,6 +20,7 @@ from time import sleep
 from optparse import OptionParser
 
 # cylc source modules
+import cylcrc
 import manager
 import cycle_time
 import pyrex
@@ -158,6 +159,10 @@ def commandline_parser():
             "is 20 minutes.",
             metavar="MINUTES", action="store", dest="dummy_task_run_length" )
 
+    parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
+            "(default $HOME/.cylcrc).", default=None,
+            metavar="PATH", action="store", dest="rcfile" )
+
     return parser
 
 # =====================================================================
@@ -209,8 +214,12 @@ elif options.practice_mode:
 else:
     banner[ 'mode of operation' ] = 'REAL'
 
-# check startup configuration------------------------------------------
+# load cylcrc file----------------------------------------------------
+rcfile = cylcrc.rc( options.rcfile )
+logging_dir = rcfile.get_system_logging_dir( name, practice ) 
+state_dump_dir = rcfile.get_system_statedump_dir( name, practice ) 
 
+# check startup configuration------------------------------------------
 startup = {}
 
 startup[ 'start_time'] = None
@@ -278,13 +287,13 @@ import remote_switch # ditto
 
 # load system configuration--------------------------------------------
 config = system_config( name )
+
 if options.start_time:
     config.check_start_time( options.start_time )
 
 # find initial state dump file
-
 initial_state_dump = None
-configured_state_dump = config.get('state_dump_file')
+configured_state_dump = rcfile.get_system_statedump_file( name )
 
 if options.restart:
     startup[ 'restart' ] = True
@@ -301,8 +310,8 @@ if options.restart_from:
         print "Restart from state dump: " + file
         initial_state_dump = file
 
-    elif os.path.exists( config.get( 'state_dump_dir' ) + '/' + options.restart_from ):
-        file = os.path.abspath( config.get( 'state_dump_dir' ) + '/' + options.restart_from )
+    elif os.path.exists( state_dump_dir + '/' + options.restart_from ):
+        file = os.path.abspath( state_dump_dir + '/' + options.restart_from )
         print "Restart from state dump: " + file
         initial_state_dump = file
 
@@ -326,10 +335,6 @@ if not practice:
         except:
             raise SystemExit( "ERROR: State dump file copy failed" )
 
-# now create state dump and logging dirs if they don't already exist
-# (with modified paths if in practice mode).
-config.create_state_dump_dir( practice )
-config.create_logging_dir( practice )
 config.check_task_groups()
 config.job_submit_config( dummy_mode )
 
@@ -382,6 +387,7 @@ daemon.connect( dead_letter_box, nameserver.obj_name( 'dead_letter_box', groupna
 # module, for easy handling.
 config.put( 'daemon', daemon )
 config.put( 'clock', clock )
+config.put( 'logging_dir', logging_dir )  # cylc view gets this from state_summary
 
 # set global (all tasks) environment variables-------------------------
 config.put_env( 'CYLC_MODE', 'scheduler' )
@@ -405,7 +411,8 @@ job_submit.dummy_mode = dummy_mode
 job_submit.global_env = config.get( 'environment' )
 
 # initialize the task manager (and create main logger)
-pool = manager.manager( config, nameserver, groupname, dummy_mode, startup )
+pool = manager.manager( config, nameserver, groupname, dummy_mode,
+        logging_dir, configured_state_dump, startup )
 
 if options.stop_time:
     if not cycle_time.is_valid( options.stop_time ):

@@ -15,7 +15,6 @@ from registration import registrations
 from interp_env import interp_self, interp_local, replace_delayed
 
 class config:
-
     def __init__( self, reg_name ):
         # derived class for system configuration must call this base
         # class init FIRST then override settings where required.
@@ -25,11 +24,6 @@ class config:
         self.set_defaults()
 
     def set_defaults( self ):
-
-        self.items[ 'logging_dir' ] = os.environ['HOME'] + '/cylc-logs/' + self.system_name
-        self.items[ 'state_dump_dir' ] = os.environ['HOME'] + '/cylc-state/' + self.system_name
-        self.items[ 'state_dump_file' ] = self.items['state_dump_dir'] + '/state'
-
         self.items[ 'task_list' ] = []
 
         self.items[ 'system_title' ] = 'SYSTEM TITLE (override me in system config)'
@@ -77,34 +71,6 @@ class config:
             if startup_hour not in legal_hours:
                 raise SystemExit( "Illegal Start Time" )
 
-    def create_state_dump_dir( self, practice ):
-        
-        if practice:
-            self.items[ 'state_dump_dir' ] += '-practice'
-
-        self.items[ 'state_dump_file' ] = self.items['state_dump_dir'] + '/state'
-
-        statedir = self.items[ 'state_dump_dir' ]
-        if not os.path.exists( statedir ):
-            try:
-                print "Creating state dump directory"
-                os.makedirs(  statedir )
-            except Exception, e:
-                raise SystemExit( e )
-
-    def create_logging_dir( self, practice ):
-        
-        if practice:
-            self.items[ 'logging_dir'    ] += '-practice'
-
-        logdir = self.items[ 'logging_dir' ]
-        if not os.path.exists( logdir ):
-            try:
-                print "Creating logging directory"
-                os.makedirs(  logdir )
-            except Exception, e:
-                raise SystemExit( e )
-
     def check_task_groups( self ):
         # check tasks in any named group are in the task list
         for group in ( self.items['task_groups'] ).keys():
@@ -151,8 +117,7 @@ class config:
             if item in ['clock', \
                     'daemon', \
                     'job_submit_method', \
-                    'job_submit_overrides', \
-                    'state_dump_file' ]:
+                    'job_submit_overrides', ]:
                 # TO DO: CLOCK AND DAEMON SHOULD NOT BE IN CONFIG!
                 # job_submit_method and _overrides are subsumed into
                 # the 'job submit class' item.

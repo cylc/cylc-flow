@@ -21,11 +21,13 @@ from Pyro.errors import NamingError
 from broker import broker
 
 class manager:
-    def __init__( self, config, nameserver, groupname, dummy_mode, startup ):
-
+    def __init__( self, config, nameserver, groupname, dummy_mode,
+            logging_dir, configured_state_dump, startup ):
         self.config = config
         self.dummy_mode = dummy_mode
         self.groupname = groupname
+        self.logging_dir = logging_dir
+        self.configured_state_dump_file = configured_state_dump
 
         # TO DO: use self.config.get('foo') throughout
         self.clock = config.get('clock')
@@ -78,7 +80,7 @@ class manager:
     def create_main_log( self ):
         log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
-             log, 'main', self.config.get('logging_dir'), \
+             log, 'main', self.logging_dir, \
                 self.config.get('logging_level'), self.dummy_mode, self.clock )
         # manager logs to the main log
         self.log = log
@@ -86,7 +88,7 @@ class manager:
     def create_task_log( self, name ):
         log = logging.getLogger( 'main.' + name )
         pimp_my_logger.pimp_it( \
-             log, name, self.config.get('logging_dir'), \
+             log, name, self.logging_dir, \
                 self.config.get('logging_level'), self.dummy_mode, self.clock )
 
     def get_tasks( self ):
@@ -391,7 +393,7 @@ class manager:
 
 
     def dump_state( self, new_file = False ):
-        filename = self.config.get('state_dump_file') 
+        filename = self.configured_state_dump_file 
         if new_file:
             filename += '.' + self.clock.dump_to_str()
 
@@ -760,7 +762,7 @@ class manager:
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
                     log = logging.getLogger( 'main.' + name )
-                    pimp_my_logger.pimp_it( log, name, self.config.get('logging_dir'), \
+                    pimp_my_logger.pimp_it( log, name, self.logging_dir, \
                             self.config.get('logging_level'), self.dummy_mode, self.clock )
  
                 # the initial task cycle time can be altered during

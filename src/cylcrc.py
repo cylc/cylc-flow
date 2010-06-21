@@ -16,29 +16,33 @@ from ConfigParser import SafeConfigParser
 
 class rc:
 
-    def __init__( self, rcfile=os.path.join( os.environ['HOME'], '.cylcrc' ) ):
+    def __init__( self, rcfile=None ):
+
+        if not rcfile:
+            rcfile = os.path.join( os.environ['HOME'], '.cylcrc' )
 
         self.rcfile = rcfile
         self.config = {}
         self.configparser = SafeConfigParser()
 
-        config_dir = os.path.join( os.environ[ 'HOME' ], '.cylc' )
+        self.config_dir = os.path.join( os.environ[ 'HOME' ], '.cylc' )
 
         self.config[ 'cylc' ] = {}
-        self.config[ 'cylc' ][ 'config directory' ] = config_dir
-        self.config[ 'cylc' ][ 'state dump directory' ] = os.path.join( config_dir, 'state-dumps' )
-        self.config[ 'cylc' ][ 'logging directory' ] = os.path.join( config_dir, 'log-files' )
+        self.config[ 'cylc' ][ 'state dump directory' ] = os.path.join( self.config_dir, 'state-dumps' )
+        self.config[ 'cylc' ][ 'logging directory' ] = os.path.join( self.config_dir, 'log-files' )
 
         self.config[ 'lockserver' ] = {}
-        self.config[ 'lockserver' ][ 'log file' ] = os.path.join( config_dir, 'lockserver.log' )
-        self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( config_dir, 'lockserver.pid' )
+        self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.config_dir, 'lockserver.log' )
+        self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.config_dir, 'lockserver.pid' )
 
         if os.path.exists( rcfile ):
-            print "Loading Cylc RC File $HOME/.cylcrc"
+            print "Loading Cylc RC File " + self.rcfile
             self.load()
         else:
-            print "Creating default Cylc RC File $HOME/.cylcrc"
+            print "Creating new Cylc RC File " + self.rcfile 
             self.write()
+
+        self.create_dirs()
 
     def load( self ):
         self.configparser.read( self.rcfile )
@@ -53,6 +57,17 @@ class rc:
                 else:
                     #print '  Loaded item', item, value
                     pass
+
+    def create_dirs( self ):
+        for dir in [ self.config_dir, 
+                self.config['cylc']['logging directory'],
+                self.config['cylc']['state dump directory'],
+                os.path.dirname( self.config[ 'lockserver' ][ 'log file' ] ),
+                os.path.dirname( self.config[ 'lockserver' ][ 'pid file' ] )]:
+
+            if not os.path.exists( dir ):
+                print "Creating directory: " + dir
+                os.makedirs( dir )
 
     def write( self ):
         for section in self.config:
@@ -77,3 +92,25 @@ class rc:
             return self.config[ section ][ item ]
         except:
             pass
+
+    def get_system_statedump_dir( self, system_name, practice_mode=False ):
+        if practice_mode:
+            system_name += '-practice'
+        dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], system_name )
+        if not os.path.exists( dir ):
+            print "Creating directory", dir
+            os.makedirs( dir )
+        return dir
+
+    def get_system_logging_dir( self, system_name, practice_mode=False):
+        if practice_mode:
+            system_name += '-practice'
+         dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name )
+        if not os.path.exists( dir ):
+            print "Creating directory", dir
+            os.makedirs( dir )
+        return dir
+
+    def get_system_statedump_file( self, system_name ):
+        dir = self.get_system_statedump_dir( system_name )
+        return os.path.join( dir, 'state' )

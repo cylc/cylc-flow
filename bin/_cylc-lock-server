@@ -118,8 +118,9 @@ the '[lockserver]' section of your .cylcrc file."""
 
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host= socket.getfqdn(), start=False,
-            debug=False, restart=False, status=False, stop=False )
+    parser.set_defaults( pns_host= socket.getfqdn(), rcfile=None,
+            start=False, debug=False, restart=False, status=False,
+            stop=False )
 
     parser.add_option( "--host",
             help="(for --start|restart|debug). Pyro nameserver host, "
@@ -144,8 +145,8 @@ the '[lockserver]' section of your .cylcrc file."""
             action="store_true", dest="stop" )
 
     parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-            "(default $HOME/.cylcrc).",
-            metavar="PATH", action="store", dest="rcfile" )
+            "(default $HOME/.cylcrc).", metavar="PATH", action="store",
+            dest="rcfile" )
 
     ( options, args ) = parser.parse_args()
 
@@ -158,13 +159,7 @@ the '[lockserver]' section of your .cylcrc file."""
         parser.error( "choose one option only!" )
     
     pns_host = options.pns_host
-
-    rcfile = None
-    if options.rcfile:
-        config = cylcrc.rc( options.rcfile )
-    else:
-        config = cylcrc.rc()
-
+    config = cylcrc.rc( options.rcfile )
     logfile = config.get( 'lockserver', 'log file' )
     pidfile = config.get( 'lockserver', 'pid file' )
 

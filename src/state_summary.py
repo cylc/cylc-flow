@@ -49,18 +49,3 @@ class state_summary( Pyro.core.ObjBase ):
 
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary ]
-
-    #def get_summary( self ):
-    #    # DEPRECATED. Remove when Bernard's monitor has been updated
-    #    # to use get_state_summary()
-    #
-        #old_style_summary = {}
-        #
-        #for task_id in self.task_summary.keys():
-        #    old_style_summary[ task_id ] = [ \
-        #                         self.task_summary[ task_id ][ 'state' ], \
-        #            str( self.task_summary[ task_id ][ 'n_completed_outputs' ] ), \
-        #            str( self.task_summary[ task_id ][ 'n_total_outputs' ] ), \
-        #                 self.task_summary[ task_id ][ 'latest_message' ] ]
-        #
-        #return old_style_summary
