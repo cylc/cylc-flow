@@ -80,13 +80,17 @@ class lockserver( Pyro.core.ObjBase ):
 
         sys_descr = self.get_sys_string( group_name, system_dir ) 
 
+        result = True
+        reason = "granted"
+ 
         if ( request_exclusive and system_dir in self.inclusive ) or \
                 ( not request_exclusive and system_dir in self.exclusive ):
-            logging.warn( "inconsistent system exclusivity detected!" ) 
-            return ( False, "inconsistent system exclusivity detected!" )
+            result = False
+            reason = "inconsistent system exclusivity detected!"
+            logging.warn( reason ) 
+            return ( False, reason )
  
         if request_exclusive:
-
             if system_dir in self.exclusive:
                 name = self.exclusive[ system_dir ][0]
                 already = self.get_sys_string( name, system_dir )
@@ -94,22 +98,20 @@ class lockserver( Pyro.core.ObjBase ):
                 if cylc_mode == 'run-task':
                     # grant access only if group_name is the same
                     if group_name == name:
-                        logging.info( "granting run-task access to " + sys_descr ) 
-                        return ( True, "granted" )
+                        result = True
+                        reason = "granting run-task access to " + sys_descr 
                     else:
-                        logging.warning( "refusing run-task access to " + sys_descr ) 
-                        logging.warning( "(owned by: " + already + ")") 
-
-                        return ( False, self.get_sys_string( name, system_dir ) + " in exclusive use" )
+                        result = False
+                        reason = self.get_sys_string( name, system_dir ) + " in exclusive use"
 
                 else:
                     # no exclusive access to any system already in use
-                    return ( False, sys_descr + " in exclusive use" )
+                    result = False
+                    reason = sys_descr + " in exclusive use" 
             else:
                 # grant exclusive access
                 self.exclusive[ system_dir ] = [ group_name ]
-                return ( True, "granted" )
- 
+
         else:
             # inclusive access requested
 
@@ -117,20 +119,31 @@ class lockserver( Pyro.core.ObjBase ):
                 names = self.inclusive[ system_dir ]
 
                 if cylc_mode == 'run-task':
-                    return ( True, "granted" )
+                    # granted
+                    pass
 
                 else:
                     # grant access unless same name already in use
                     if group_name in names:
-                        return ( False, name + '-->' + system_dir + " already in use" )
+                        result = False
+                        reason =  name + '-->' + system_dir + " already in use"
                     else:
+                        # granted
                         self.inclusive[ system_dir ].append( group_name )
-                        return ( True, "granted" )
 
             else:
+                # granted
                 self.inclusive[ system_dir ] = [ group_name ]
-                return ( True, "granted" )
  
+        if result:
+            logging.info( "acquired system access for " + group_name + " --> " + system_dir )
+        else:
+            logging.warning( "failed to acquire system acces for " + group_name + " --> " + system_dir )
+            logging.warning( " " + reason )
+
+        return ( result, reason )
+
+
 
     def release_system_access( self, system_dir, group_name ):
         result = True
@@ -203,7 +216,7 @@ class syslock:
         server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
         result = server.release_system_access( self.system_dir, self.group_name )
         if not result:
-            print >> sys.stderr, 'WARNING, failed to release system access: ', reason
+            print >> sys.stderr, 'WARNING, failed to release system access'
             return False
        
         else:
@@ -221,6 +234,12 @@ class lock:
     # it has received a message from a task that has finished running). 
 
     def __init__( self, task_id=None, group_name=None, pns_host=None ):
+
+        self.use_lock_server = False
+        if 'CYLC_USE_LOCK_SERVER' in os.environ:
+            if os.environ[ 'CYLC_USE_LOCK_SERVER' ] == 'True':
+                self.use_lock_server = True
+
         self.mode = 'raw'
         if 'CYLC_MODE' in os.environ:
             self.mode = os.environ[ 'CYLC_MODE' ]
@@ -266,6 +285,10 @@ class lock:
                 sys.exit(1)
 
     def acquire( self ):
+        if not self.use_lock_server:
+            print >> sys.stderr, "WARNING: you are not using cylc the lockserver." 
+            return True
+ 
         server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
         if server.acquire( self.task_id, self.group_name ):
             print "Acquired task lock for", self.group_name + ':' + self.task_id
@@ -277,6 +300,10 @@ class lock:
             return False
 
     def release( self ):
+        if not self.use_lock_server:
+            print >> sys.stderr, "WARNING: you are not using cylc the lockserver." 
+            return True
+
         server = connector( self.pns_host, 'cylc', 'lockserver' ).get()
         if server.is_locked( self.task_id, self.group_name ):
             if server.release( self.task_id, self.group_name ):

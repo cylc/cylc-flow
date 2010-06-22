@@ -26,14 +26,18 @@ class rc:
         self.configparser = SafeConfigParser()
 
         self.config_dir = os.path.join( os.environ[ 'HOME' ], '.cylc' )
+        self.lockserver_dir = os.path.join( self.config_dir, 'lockserver' )
+
 
         self.config[ 'cylc' ] = {}
         self.config[ 'cylc' ][ 'state dump directory' ] = os.path.join( self.config_dir, 'state-dumps' )
         self.config[ 'cylc' ][ 'logging directory' ] = os.path.join( self.config_dir, 'log-files' )
 
+        self.config[ 'cylc' ][ 'use lockserver' ] = 'False'
+
         self.config[ 'lockserver' ] = {}
-        self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.config_dir, 'lockserver.log' )
-        self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.config_dir, 'lockserver.pid' )
+        self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.lockserver_dir, 'logfile' )
+        self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.lockserver_dir, 'server.pid' )
 
         if os.path.exists( rcfile ):
             print "Loading Cylc RC File " + self.rcfile
@@ -85,7 +89,6 @@ class rc:
             print '[' + section + ']'
             for item in self.config[ section ]:
                 print ' ', item, '=', self.config[section][item]
-
 
     def get( self, section, item ):
         try:

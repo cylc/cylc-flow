@@ -200,10 +200,6 @@ if practice:
 else:
     groupname = os.environ['USER'] + '^' + name
 
-# request system access from the lock server
-if not syslock( pns_host, groupname, system_dir, 'scheduler' ).request_system_access( True ):
-    raise SystemExit( 'locked out!' )
-
 if options.dummy_mode:
     dummy_mode = True
     banner[ 'mode of operation' ] = 'DUMMY'
@@ -220,6 +216,16 @@ else:
 rcfile = cylcrc.rc( options.rcfile )
 logging_dir = rcfile.get_system_logging_dir( name, practice ) 
 state_dump_dir = rcfile.get_system_statedump_dir( name, practice ) 
+
+use_lockserver = False
+banner[ 'use lockserver' ] = 'False'
+if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
+    banner[ 'use lockserver' ] = 'True'
+    use_lockserver = True
+
+    # request system access from the lock server
+    if not syslock( pns_host, groupname, system_dir, 'scheduler' ).request_system_access( exclusive=True ):
+        raise SystemExit( 'locked out!' )
 
 # check startup configuration------------------------------------------
 
@@ -438,10 +444,12 @@ while True: # MAIN LOOP
 
 print ""
 print "STOPPING"
-print ""
-print "Releasing system lock"
-if not syslock( pns_host, groupname, system_dir, 'scheduler' ).release_system_access():
-    print >> stderr, 'failed to release system!'
+
+if use_lockserver:
+    print ""
+    print "Releasing system lock"
+    if not syslock( pns_host, groupname, system_dir, 'scheduler' ).release_system_access():
+        print >> stderr, 'failed to release system!'
 
 print "Shutting down my Pyro daemon"
 daemon.shutdown( True )

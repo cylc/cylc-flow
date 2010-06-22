@@ -99,14 +99,17 @@ else:
 
 groupname = os.environ['USER'] + '^' + name
 
-# request system access from the lock server
-# run-task does not need to call release_system_access()
-if not syslock( pns_host, groupname, system_dir, 'run-task' ).request_system_access( True ):
-    raise SystemExit( 'locked out!' )
-
 # load cylcrc file----------------------------------------------------
 rcfile = cylcrc.rc( options.rcfile )
 logging_dir = rcfile.get_system_logging_dir( name + '-run-task' ) 
+
+use_lockserver = False
+if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
+    use_lockserver = True
+    # request system access from the lock server
+    # run-task does not need to call release_system_access()
+    if not syslock( pns_host, groupname, system_dir, 'run-task' ).request_system_access( exclusive=True ):
+        raise SystemExit( 'locked out!' )
 
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
