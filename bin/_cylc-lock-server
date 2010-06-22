@@ -215,5 +215,8 @@ the '[lockserver]' section of your .cylcrc file."""
         argv = 'restart'
     elif options.status:
         argv = 'status'
+    elif options.debug:
+        argv = 'debug'
+
 
     server_daemon.process_command_line([ sys.argv[0], argv ])
