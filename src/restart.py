@@ -10,13 +10,22 @@
 #         |________________________|
 
 
-import manager
+from server import server
 import sys, os, re
 from dynamic_instantiation import get_object
 
-class restart_manager( manager.manager ):
+class restart( server ):
 
-    # ignores start time, uses init state dump
+    def __init__( self, config, nameserver, groupname, dummy_mode,
+            logging_dir, state_dump_file, exclude, include,
+            initial_state_dump, no_reset, stop_time, pause_time ):
+
+        self.initial_state_dump = initial_state_dump
+        self.no_reset = no_reset
+
+        server.__init__( self, config, nameserver, groupname,
+            dummy_mode, logging_dir, state_dump_file, 
+            exclude, include, stop_time, pause_time )
 
     def load_tasks( self ):
         # load initial system state from the configured state dump file

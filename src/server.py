@@ -20,55 +20,36 @@ from dynamic_instantiation import get_object
 from Pyro.errors import NamingError
 from broker import broker
 
-class manager:
-    def __init__( self, config, nameserver, groupname, dummy_mode,
-            logging_dir, state_dump, exclude, include, 
-            start_time=None, stop_time=None, pause_time=None,
-            initial_state_dump=None ):
+class server:
+    def __init__( self, config, nameserver, groupname,
+            dummy_mode, logging_dir, state_dump_file, 
+            exclude, include, stop_time, pause_time ):
 
         self.config = config
-        self.dummy_mode = dummy_mode
+        self.nameserver = nameserver
         self.groupname = groupname
+        self.dummy_mode = dummy_mode
         self.logging_dir = logging_dir
-        self.state_dump_file = state_dump
-        if initial_state_dump:
-            self.initial_state_dump = initial_state_dump
+        self.state_dump_file = state_dump_file
+        self.exclude = exclude
+        self.include = include
+        self.stop_time = stop_time
+        self.system_hold_ctime = pause_time
+        self.system_hold_now = False
 
         # TO DO: use self.config.get('foo') throughout
         self.clock = config.get('clock')
         self.pyro = config.get('daemon')  
-        self.nameserver = nameserver
 
-        self.system_hold_now = False
-        self.system_hold_ctime = None
-        self.stop_time = None
 
         # initialise the dependency broker
         self.broker = broker()
 
-        self.no_reset = False
-        self.start_time = start_time
-
-        if exclude:
-            self.exclude = exclude.split(',')
-        else:
-            self.exclude = []
-
-        if include:
-            self.include = include.split(',')
-        else:
-            self.include = []
-         
+        ######## self.no_reset = False
         self.tasks = []
 
         # create main logger
         self.create_main_log()
-
-        # these use log (above)
-        if stop_time:
-            self.set_stop_time( stop_time )
-        if pause_time:
-            self.set_system_hold( pause_time )
 
         # set job submit method for each task class
         jsc = config.get( 'job submit class' )
@@ -78,6 +59,7 @@ class manager:
             setattr( cls, 'job_submit_method', jsc[ name ] )
             
         # instantiate the initial task list and create loggers 
+        # PROVIDE THIS METHOD IN DERIVED CLASSES
         self.load_tasks()
 
     def create_main_log( self ):
@@ -85,7 +67,7 @@ class manager:
         pimp_my_logger.pimp_it( \
              log, 'main', self.logging_dir, \
                 self.config.get('logging_level'), self.dummy_mode, self.clock )
-        # manager logs to the main log
+        # log to the main log
         self.log = log
 
     def create_task_log( self, name ):
@@ -138,53 +120,6 @@ class manager:
             if int( itask.c_time ) < int( oldest ):
                 oldest = itask.c_time
         return oldest
-
-    def load_tasks( self ):
-        # load initial system state from configured tasks and start time
-        #--
-        
-        start_time = self.start_time
-        exclude = self.exclude
-        include = self.include
-
-        # set clock before using log (affects dummy mode only)
-        self.clock.set( start_time )
-
-        #print '\nSTARTING AT ' + start_time + ' FROM CONFIGURED TASK LIST\n'
-        self.log.info( 'Loading state from configured task list' )
-        # config.task_list = [ taskname1, taskname2, ...]
-
-        task_list = self.config.get('task_list')
-        # uniquify in case of accidental duplicates
-        task_list = list( set( task_list ) )
-
-        for name in task_list:
-
-            if name in exclude:
-                continue
-
-            if len( include ) > 0:
-                if name not in include:
-                    continue
-            
-            # create the task-specific logger
-            self.create_task_log( name )
-
-            itask = get_object( 'task_classes', name )\
-                    ( start_time, 'waiting', startup=True )
-
-            # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
-                # we've reached the stop time already: delete the new task 
-                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
-                itask.prepare_for_death()
-                del itask
- 
-            else:
-                itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
-                self.tasks.append( itask )
-
 
     def no_tasks_running( self ):
         # return True if no tasks are submitted or running

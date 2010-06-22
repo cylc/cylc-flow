@@ -21,7 +21,7 @@ from optparse import OptionParser
 
 # cylc source modules
 import cylcrc
-import manager
+from coldstart import coldstart
 import cycle_time
 import pyrex
 import dead_letter
@@ -72,7 +72,8 @@ def commandline_parser():
     parser = OptionParser( usage )
 
     parser.set_defaults( pns_host= socket.getfqdn(), dummy_mode=False,
-            include=None, exclude=None, clock_rate=10, clock_offset=24 )
+            rcfile=None, include=None, exclude=None, clock_rate=10,
+            clock_offset=24 )
 
     parser.add_option( "--at", 
             help="Initial cycle time (YYYYMMDDHH).",
@@ -129,8 +130,8 @@ def commandline_parser():
             metavar="MINUTES", action="store", dest="dummy_task_run_length" )
 
     parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-            "(default $HOME/.cylcrc).", default=None,
-            metavar="PATH", action="store", dest="rcfile" )
+            "(default $HOME/.cylcrc).", metavar="PATH", action="store",
+            dest="rcfile" )
 
     return parser
 
@@ -231,6 +232,13 @@ if options.pause_time:
 if options.include and options.exclude:
     parser.error( '--include and --exclude are mutually exclusive' )
 
+include_tasks = []
+if options.include:
+    include_tasks = options.include.split(',')
+exclude_tasks = []
+if options.exclude:
+    exclude_tasks = options.exclude.split(',')
+
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
 
@@ -259,19 +267,19 @@ config.check_start_time( start_time )
 
 # find initial state dump file
 initial_state_dump = None
-configured_state_dump = rcfile.get_system_statedump_file( name )
+state_dump_file = rcfile.get_system_statedump_file( name )
 
 if not practice:
     # back up the configured state dump (i.e. the one that will be used
     # by the system unless in practice mode, but not necessarily the
     # initial one). 
 
-    if os.path.exists( configured_state_dump ):
-        backup = configured_state_dump + '.' + datetime.datetime.now().isoformat()
-        print "Backing up configured state dump:"
-        print "  " + configured_state_dump + " --> " + backup
+    if os.path.exists( state_dump_file ):
+        backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
+        print "Backing up the state dump file:"
+        print "  " + state_dump_file + " --> " + backup
         try:
-            shutil.copyfile( configured_state_dump, backup )
+            shutil.copyfile( state_dump_file, backup )
         except:
             raise SystemExit( "ERROR: State dump file copy failed" )
 
@@ -337,10 +345,10 @@ config.check_environment()
 job_submit.dummy_mode = dummy_mode
 job_submit.global_env = config.get( 'environment' )
 
-# initialize the task manager (and create main logger)
-pool = manager.manager( config, nameserver, groupname, dummy_mode,
-        logging_dir, configured_state_dump, options.exclude,
-        options.include, start_time, stop_time, pause_time )
+# initialize the server (and create main logger)
+pool = coldstart( config, nameserver, groupname, dummy_mode,
+        logging_dir, state_dump_file, exclude_tasks, include_tasks,
+        start_time, stop_time, pause_time )
 
 # logger is now created and pimped
 log = logging.getLogger( 'main' )

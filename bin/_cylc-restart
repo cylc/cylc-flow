@@ -21,7 +21,7 @@ from optparse import OptionParser
 
 # cylc source modules
 import cylcrc
-import restart_manager
+from restart import restart
 import cycle_time
 import pyrex
 import dead_letter
@@ -71,7 +71,8 @@ def commandline_parser():
     parser = OptionParser( usage )
 
     parser.set_defaults( pns_host= socket.getfqdn(), dummy_mode=False,
-            include=None, exclude=None, clock_rate=10, clock_offset=24 )
+            rcfile=None, no_reset=False, include=None, exclude=None,
+            clock_rate=10, clock_offset=24 )
    
     parser.add_option( "--until", 
             help="Shut down after all tasks have PASSED this cycle time.",
@@ -89,18 +90,18 @@ def commandline_parser():
     parser.add_option( "--no-reset", 
             help="(RESTART) Do no reset failed tasks to the waiting "
             "state at startup. True by default in practice mode.",
-            action="store_true", default=False, dest="no_reset" )
+            action="store_true", dest="no_reset" )
 
-    #parser.add_option( "--exclude",
-    #        help="Exclude these tasks at startup. Equivalent to "
-    #        "deleting them from the system task list.",
-    #        metavar="Task1,Task2,...", action="store", dest='exclude' )
+    parser.add_option( "--exclude",
+            help="Exclude these tasks at startup. Equivalent to "
+            "deleting them from the system task list.",
+            metavar="Task1,Task2,...", action="store", dest='exclude' )
 
-    #parser.add_option( "--include",
-    #        help="Include only these tasks at startup. "
-    #        "Equivalent to deleting all other tasks from the "
-    #        "system task list.",
-    #        metavar="Task1,Task2,...", action="store", dest='include' )
+    parser.add_option( "--include",
+            help="Include only these tasks at startup. "
+            "Equivalent to deleting all other tasks from the "
+            "system task list.",
+            metavar="Task1,Task2,...", action="store", dest='include' )
 
     parser.add_option( "--host",
             help="Pyro nameserver host, defaults to the local hostname. Use "
@@ -141,8 +142,8 @@ def commandline_parser():
             metavar="MINUTES", action="store", dest="dummy_task_run_length" )
 
     parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-            "(default $HOME/.cylcrc).", default=None,
-            metavar="PATH", action="store", dest="rcfile" )
+            "(default $HOME/.cylcrc).", metavar="PATH", action="store",
+            dest="rcfile" )
 
     return parser
 
@@ -243,11 +244,19 @@ if options.pause_time:
         parser.error( "invalid cycle time: " + pause_time )
     pool.set_system_hold( pause_time )
 
+no_reset = False
 if options.no_reset or options.practice_mode:
     no_reset = True
 
 if options.include and options.exclude:
     parser.error( '--include and --exclude are mutually exclusive' )
+
+include_tasks = []
+if options.include:
+    include_tasks = options.include.split(',')
+exclude_tasks = []
+if options.exclude:
+    exclude_tasks = options.exclude.split(',')
 
 # provide access to the system scripts and source modules--------------
 # for external processes launched by this program.
@@ -273,8 +282,7 @@ import remote_switch # ditto
 config = system_config( name )
 
 # find initial state dump file
-initial_state_dump = None
-configured_state_dump = rcfile.get_system_statedump_file( name )
+state_dump_file = rcfile.get_system_statedump_file( name )
 
 if options.restart_from:
     if os.path.exists( options.restart_from ):
@@ -289,24 +297,22 @@ if options.restart_from:
 
     else:
         raise SystemExit( "File not found: " + options.restart_from )
-
 else:
-    initial_state_dump = configured_state_dump
+    initial_state_dump = state_dump_file
     if not os.path.exists( initial_state_dump ):
         raise SystemExit( "File not found: " + initial_state_dump )
-
 
 if not practice:
     # back up the configured state dump (i.e. the one that will be used
     # by the system unless in practice mode, but not necessarily the
     # initial one). 
 
-    if os.path.exists( configured_state_dump ):
-        backup = configured_state_dump + '.' + datetime.datetime.now().isoformat()
+    if os.path.exists( state_dump_file ):
+        backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
         print "Backing up configured state dump:"
-        print "  " + configured_state_dump + " --> " + backup
+        print "  " + state_dump_file + " --> " + backup
         try:
-            shutil.copyfile( configured_state_dump, backup )
+            shutil.copyfile( state_dump_file, backup )
         except:
             raise SystemExit( "ERROR: State dump file copy failed" )
 
@@ -371,11 +377,10 @@ config.check_environment()
 job_submit.dummy_mode = dummy_mode
 job_submit.global_env = config.get( 'environment' )
 
-# initialize the task manager (and create main logger)
-pool = restart_manager.restart_manager( config, nameserver, groupname,
-        dummy_mode, logging_dir, configured_state_dump, options.exclude,
-        options.include, start_time, stop_time, pause_time,
-        initial_state_dump=initial_state_dump )
+# initialize the server (and create main logger)
+pool = restart( config, nameserver, groupname, dummy_mode, logging_dir,
+        state_dump_file, options.exclude, options.include,
+        initial_state_dump, no_reset, stop_time, pause_time )
 
 # logger is now created and pimped
 log = logging.getLogger( 'main' )
