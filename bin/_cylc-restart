@@ -21,7 +21,7 @@ from optparse import OptionParser
 
 # cylc source modules
 import cylcrc
-import manager
+import restart_manager
 import cycle_time
 import pyrex
 import dead_letter
@@ -43,7 +43,6 @@ def print_banner():
     print "_______________C_Y_L_C___________________"
     print
 
-    #items = banner.keys() + startup.keys()
     items = banner.keys()
 
     longest_item = items[0]
@@ -59,11 +58,11 @@ def print_banner():
     #    print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( startup[ item ] )
 
 
-usage = """cylc start [options] SYSTEM
+usage = """cylc restart [options] SYSTEM
 
-Cold start a cylc system registered under the name SYSTEM. Each task in
-the system task list will be instantiated at the initial cycle time, or
-at the next cycle time valid for that task.  
+Restart a cylc system from a previous state as recorded in the default
+or given state dump file. Any task recorded as submitted, running, or
+failed will be reset at startup (unless '--practice' or '--no-reset').
 
 Arguments:
    SYSTEM               Registered name of the system to run.""" 
@@ -73,11 +72,7 @@ def commandline_parser():
 
     parser.set_defaults( pns_host= socket.getfqdn(), dummy_mode=False,
             include=None, exclude=None, clock_rate=10, clock_offset=24 )
-
-    parser.add_option( "--at", 
-            help="Initial cycle time (YYYYMMDDHH).",
-            metavar="CYCLE", action="store", dest="start_time" )
-    
+   
     parser.add_option( "--until", 
             help="Shut down after all tasks have PASSED this cycle time.",
             metavar="CYCLE", action="store", dest="stop_time" )
@@ -86,25 +81,41 @@ def commandline_parser():
             help="Refrain from running tasks AFTER this cycle time.",
             metavar="CYCLE", action="store", dest="pause_time" )
 
-    parser.add_option( "--exclude",
-            help="Exclude these tasks at startup. Equivalent to "
-            "deleting them from the system task list.",
-            metavar="Task1,Task2,...", action="store", dest='exclude' )
+    parser.add_option( "--from", 
+            help="Restart from a named state dump file in the configured "
+            "state dump directory, or give the file path.",
+            metavar="FILE", action="store", dest="restart_from" )
 
-    parser.add_option( "--include",
-            help="Include only these tasks at startup. "
-            "Equivalent to deleting all other tasks from the "
-            "system task list.",
-            metavar="Task1,Task2,...", action="store", dest='include' )
+    parser.add_option( "--no-reset", 
+            help="(RESTART) Do no reset failed tasks to the waiting "
+            "state at startup. True by default in practice mode.",
+            action="store_true", default=False, dest="no_reset" )
+
+    #parser.add_option( "--exclude",
+    #        help="Exclude these tasks at startup. Equivalent to "
+    #        "deleting them from the system task list.",
+    #        metavar="Task1,Task2,...", action="store", dest='exclude' )
+
+    #parser.add_option( "--include",
+    #        help="Include only these tasks at startup. "
+    #        "Equivalent to deleting all other tasks from the "
+    #        "system task list.",
+    #        metavar="Task1,Task2,...", action="store", dest='include' )
 
     parser.add_option( "--host",
             help="Pyro nameserver host, defaults to the local hostname. Use "
             "if not auto-detected (which depends on network config).", 
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
+    parser.add_option( "-p", "--practice",
+            help="Clone an existing system in dummy mode using new state "
+            "and logging directories to avoid corrupting the original. "
+            "Failed tasks will not be reset to waiting in the clone.",
+            action="store_true", dest="practice_mode" )
+
     parser.add_option( "-d", "--dummy-mode",
-            help="DUMMY MODE: replaces each task with a program that masquerades "
-            "as the the real thing and runs on an accelerated clock.",
+            help="DUMMY MODE: replace system tasks with a program that "
+            "masquerades as them and runs on an accelerated clock.",
             action="store_true", dest="dummy_mode" )
 
     parser.add_option( "--clock-rate", 
@@ -124,8 +135,9 @@ def commandline_parser():
             metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
 
     parser.add_option( "--dummy-task-run-length", help=\
-            "(DUMMY MODE) change the length of run time, relative to the dummy "
-            "mode clock, of each running task. The default is 20 minutes.",
+            "(DUMMY MODE) change the length of the time interval, relative "
+            "to the dummy mode clock, taken by each running task. The default "
+            "is 20 minutes.",
             metavar="MINUTES", action="store", dest="dummy_task_run_length" )
 
     parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
@@ -172,6 +184,9 @@ else:
 banner[ 'system definition' ] = system_dir
 
 # get mode of operation------------------------------------------------
+if options.dummy_mode and options.practice_mode:
+    parser.error( "Choose ONE of dummy or practice mode")
+
 dummy_mode = False
 practice = False
 
@@ -193,6 +208,11 @@ if options.dummy_mode:
     dummy_mode = True
     banner[ 'mode of operation' ] = 'DUMMY'
 
+elif options.practice_mode:
+    dummy_mode = True
+    practice = True
+    banner[ 'mode of operation' ] = 'PRACTICE DUMMY'
+
 else:
     banner[ 'mode of operation' ] = 'REAL'
 
@@ -203,12 +223,7 @@ state_dump_dir = rcfile.get_system_statedump_dir( name, practice )
 
 # check startup configuration------------------------------------------
 
-if not options.start_time:
-    parser.error( 'You must supply an initial cycle time' )
-start_time = options.start_time
-if not cycle_time.is_valid( start_time ):
-    parser.error( "invalid cycle time: " + start_time )
-
+start_time = None
 stop_time = None
 if options.stop_time:
     stop_time = options.stop_time
@@ -221,6 +236,9 @@ if options.pause_time:
     if not cycle_time.is_valid( pause_time ):
         parser.error( "invalid cycle time: " + pause_time )
     pool.set_system_hold( pause_time )
+
+if options.no_reset or options.practice_mode:
+    no_reset = True
 
 if options.include and options.exclude:
     parser.error( '--include and --exclude are mutually exclusive' )
@@ -248,12 +266,29 @@ import remote_switch # ditto
 # load system configuration--------------------------------------------
 config = system_config( name )
 
-# check for legal start time
-config.check_start_time( start_time )
-
 # find initial state dump file
 initial_state_dump = None
 configured_state_dump = rcfile.get_system_statedump_file( name )
+
+if options.restart_from:
+    if os.path.exists( options.restart_from ):
+        file = os.path.abspath( options.restart_from )
+        print "Restart from state dump: " + file
+        initial_state_dump = file
+
+    elif os.path.exists( state_dump_dir + '/' + options.restart_from ):
+        file = os.path.abspath( state_dump_dir + '/' + options.restart_from )
+        print "Restart from state dump: " + file
+        initial_state_dump = file
+
+    else:
+        raise SystemExit( "File not found: " + options.restart_from )
+
+else:
+    initial_state_dump = configured_state_dump
+    if not os.path.exists( initial_state_dump ):
+        raise SystemExit( "File not found: " + initial_state_dump )
+
 
 if not practice:
     # back up the configured state dump (i.e. the one that will be used
@@ -331,9 +366,10 @@ job_submit.dummy_mode = dummy_mode
 job_submit.global_env = config.get( 'environment' )
 
 # initialize the task manager (and create main logger)
-pool = manager.manager( config, nameserver, groupname, dummy_mode,
-        logging_dir, configured_state_dump, options.exclude,
-        options.include, start_time, stop_time, pause_time )
+pool = restart_manager.restart_manager( config, nameserver, groupname,
+        dummy_mode, logging_dir, configured_state_dump, options.exclude,
+        options.include, start_time, stop_time, pause_time,
+        initial_state_dump=initial_state_dump )
 
 # logger is now created and pimped
 log = logging.getLogger( 'main' )

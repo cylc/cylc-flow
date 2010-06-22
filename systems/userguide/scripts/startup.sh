@@ -25,7 +25,7 @@ if [[ -z $CYLC_TMPDIR ]]; then
     cylc task-failed "\$CYLC_TMPDIR must be defined in system_config.py for this system"
     exit 1
 fi
-sleep 10
+sleep 5
 
 mkdir -p $CYLC_TMPDIR || \
 {

@@ -22,12 +22,17 @@ from broker import broker
 
 class manager:
     def __init__( self, config, nameserver, groupname, dummy_mode,
-            logging_dir, configured_state_dump, startup ):
+            logging_dir, state_dump, exclude, include, 
+            start_time=None, stop_time=None, pause_time=None,
+            initial_state_dump=None ):
+
         self.config = config
         self.dummy_mode = dummy_mode
         self.groupname = groupname
         self.logging_dir = logging_dir
-        self.configured_state_dump_file = configured_state_dump
+        self.state_dump_file = state_dump
+        if initial_state_dump:
+            self.initial_state_dump = initial_state_dump
 
         # TO DO: use self.config.get('foo') throughout
         self.clock = config.get('clock')
@@ -42,23 +47,28 @@ class manager:
         self.broker = broker()
 
         self.no_reset = False
-        if 'start_time' in startup:
-            self.start_time = startup[ 'start_time' ]
-        if 'restart' in startup:
-            self.restart = startup[ 'restart' ]
-        if 'exclude' in startup:
-            self.exclude = startup[ 'exclude' ]
-        if 'include' in startup:
-            self.include = startup[ 'include' ]
-        if 'no_reset' in startup:
-            self.no_reset = startup[ 'no_reset' ]
-        if 'initial_state_dump' in startup:
-            self.initial_state_dump = startup[ 'initial_state_dump' ]
+        self.start_time = start_time
+
+        if exclude:
+            self.exclude = exclude.split(',')
+        else:
+            self.exclude = []
+
+        if include:
+            self.include = include.split(',')
+        else:
+            self.include = []
          
         self.tasks = []
 
         # create main logger
         self.create_main_log()
+
+        # these use log (above)
+        if stop_time:
+            self.set_stop_time( stop_time )
+        if pause_time:
+            self.set_system_hold( pause_time )
 
         # set job submit method for each task class
         jsc = config.get( 'job submit class' )
@@ -67,15 +77,8 @@ class manager:
             cls = getattr( clsmod, name )
             setattr( cls, 'job_submit_method', jsc[ name ] )
             
-    def load( self ):
         # instantiate the initial task list and create loggers 
-        if self.start_time:
-            self.load_from_config()
-
-        elif self.restart:
-            self.load_from_state_dump()
-        else:
-            raise SystemExit( "No startup method defined!" )
+        self.load_tasks()
 
     def create_main_log( self ):
         log = logging.getLogger( 'main' )
@@ -136,7 +139,7 @@ class manager:
                 oldest = itask.c_time
         return oldest
 
-    def load_from_config ( self ):
+    def load_tasks( self ):
         # load initial system state from configured tasks and start time
         #--
         
@@ -182,116 +185,6 @@ class manager:
                 self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
                 self.tasks.append( itask )
 
-
-    def load_from_state_dump( self ):
-        # load initial system state from the configured state dump file
-        #--
-
-        filename = self.initial_state_dump
-        no_reset = self.no_reset
-
-        print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
-        self.log.info( 'Loading initial state from ' + filename )
-
-        # The state dump file format is:
-        # system time : <time>
-        #   OR
-        # dummy time : <time>,rate
-        #   THEN
-        # class <classname>: item1=value1, item2=value2, ... 
-        # <task_id> : <state>
-        # <task_id> : <state>
-        #   ...
-        # The time format is defined by the clock.reset()
-        # task <state> format is defined by task_state.dump()
-
-        FILE = open( filename, 'r' )
-        lines = FILE.readlines()
-        FILE.close()
-
-        # RESET THE TIME TO THE LATEST DUMPED TIME
-        # The state dump file first line is:
-        # system time : <time>
-        #   OR
-        # dummy time : <time>,rate
-        line1 = lines[0]
-        line1 = line1.rstrip()
-        [ time_type, time_string ] = line1.split(' : ')
-        if time_type == 'dummy time':
-            if not self.dummy_mode:
-                raise SystemExit("You can't restart in real mode from a dummy mode state dump")
-            
-            [ time, rate ] = time_string.split( ',' )
-            self.clock.reset( time, rate )
-
-        log_created = {}
-
-        mod = __import__( 'task_classes' )
-
-        # parse each line and create the task it represents
-        for line in lines[1:]:
-            # strip trailing newlines
-            line = line.rstrip( '\n' )
-
-            if re.match( '^class', line ):
-                # class variables
-                [ left, right ] = line.split( ' : ' )
-                [ junk, classname ] = left.split( ' ' ) 
-                cls = getattr( mod, classname )
-                pairs = right.split( ', ' )
-                for pair in pairs:
-                    [ item, value ] = pair.split( '=' )
-                    cls.set_class_var( item, value )
-                 
-                continue
-
-            # instance variables
-            ( id, state ) = line.split(' : ')
-            ( name, c_time ) = id.split('%')
-
-            # create the task log
-            if name not in log_created.keys():
-                self.create_task_log( name )
-                log_created[ name ] = True
-
-            itask = get_object( 'task_classes', name )\
-                    ( c_time, state, startup=False )
-
-            if itask.state.is_finished():  
-                # must have satisfied prerequisites and completed outputs
-                itask.log( 'NORMAL', "starting in FINISHED state" )
-                itask.prerequisites.set_all_satisfied()
-                itask.outputs.set_all_complete()
-
-            elif itask.state.is_submitted() or itask.state.is_running():  
-                # Must have satisfied prerequisites. These tasks may have
-                # finished after the system was shut down, but as we
-                # can't know that for sure we have to re-submit them.
-                itask.log( 'NORMAL', "starting in READY state" )
-                itask.state.set_status( 'waiting' )
-                itask.prerequisites.set_all_satisfied()
-
-            elif itask.state.is_failed():
-                # Re-submit these unless the system operator says not to. 
-                if no_reset:
-                    itask.log( 'WARNING', "starting in FAILED state: manual reset required" )
-                    itask.prerequisites.set_all_satisfied()
-                else:
-                    itask.log( 'NORMAL', "starting in READY state" )
-                    itask.state.set_status( 'waiting' )
-                    itask.prerequisites.set_all_satisfied()
-
-            # check stop time in case the user has set a very quick stop
-            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
-                # we've reached the stop time already: delete the new task 
-                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
-                itask.prepare_for_death()
-                del itask
- 
-            else:
-                itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
-                self.tasks.append( itask )
 
     def no_tasks_running( self ):
         # return True if no tasks are submitted or running
@@ -393,7 +286,7 @@ class manager:
 
 
     def dump_state( self, new_file = False ):
-        filename = self.configured_state_dump_file 
+        filename = self.state_dump_file 
         if new_file:
             filename += '.' + self.clock.dump_to_str()
 

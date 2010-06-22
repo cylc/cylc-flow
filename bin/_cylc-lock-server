@@ -95,8 +95,13 @@ class LockServer:
 
         locker = lockserver( logfile )
         #pyro_daemon.connect( locker, self.nameserver.obj_name( 'lockserver', self.groupname ))
-        self.pyro_daemon.connect( locker, 'cylc.lockserver' )
-
+        #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
+        try:
+            self.pyro_daemon.connect( locker, 'cylc.lockserver' )
+        except Exception, x:
+            #    foo.write( str(x) + "\n" )
+            raise
+ 
         while True:
             self.pyro_daemon.handleRequests()
 
