@@ -104,7 +104,7 @@ class lockserver( Pyro.core.ObjBase ):
 
                 else:
                     # no exclusive access to any system already in use
-                    return ( False, sys_desc + " in exclusive use" )
+                    return ( False, sys_descr + " in exclusive use" )
             else:
                 # grant exclusive access
                 self.exclusive[ system_dir ] = [ group_name ]
