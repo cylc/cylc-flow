@@ -32,7 +32,9 @@ class system_config( config ):
 
         # system title
         self.items[ 'system_title' ] = 'USERGUIDE EXAMPLE SYSTEM'
-        
+
+        self.items[ 'allow_simultaneous_system_instances' ] = True
+ 
         # system info
         self.items['system_info']['info'] = info   # SEE system_info.py
         # add more descriptive information as you like, e.g.:

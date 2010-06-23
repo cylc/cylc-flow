@@ -280,12 +280,15 @@ You must be the system owner in order to do this."""
         (task_locks, system_ex, system_nonex ) = control( pns_host ).dump()
 
         print_heading( str( len( system_ex ) ) + " exclusive system locks" )
-        for lock in system_ex:
-            print " - ", lock
+        for sysdir in system_ex:
+            [ group ] = system_ex[ sysdir ]
+            print " - ", group, '-->', sysdir
 
         print_heading( str( len( system_nonex ) ) + " non-exclusive system locks" )
-        for lock in system_nonex:
-            print " - ", lock
+        for sysdir in system_nonex:
+            groups = system_nonex[ sysdir ]
+            for group in groups:
+                print " - ", group, '-->', sysdir
 
         print_heading( str( len( task_locks ) ) + " task locks" )
         for lock in task_locks:

@@ -28,6 +28,7 @@ class config:
 
         self.items[ 'system_title' ] = 'SYSTEM TITLE (override me in system config)'
         self.items[ 'system_registered_name' ] = self.system_name
+        self.items[ 'allow_simultaneous_system_instances' ] = False
         self.items[ 'system_username' ] = os.environ['USER']
 
         self.items[ 'system_info' ] = {}

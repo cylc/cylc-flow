@@ -204,10 +204,6 @@ if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     banner[ 'use lockserver' ] = 'True'
     use_lockserver = True
 
-    # request system access from the lock server
-    if not syslock( pns_host, groupname, system_dir, 'scheduler' ).request_system_access( exclusive=True ):
-        raise SystemExit( 'locked out!' )
-
 # check startup configuration------------------------------------------
 
 if not options.start_time:
@@ -261,6 +257,12 @@ import remote_switch # ditto
 
 # load system configuration--------------------------------------------
 config = system_config( name )
+
+if use_lockserver:
+    exclusive = not config.get( 'allow_simultaneous_system_instances' )
+    # request system access from the lock server
+    if not syslock( pns_host, groupname, system_dir, 'scheduler' ).request_system_access( exclusive ):
+        raise SystemExit( 'locked out!' )
 
 # check for legal start time
 config.check_start_time( start_time )

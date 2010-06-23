@@ -48,22 +48,41 @@ class lockserver( Pyro.core.ObjBase ):
         id = self.get_lock_id( group_name, task_id )
         if id in self.locked:
             del self.locked[ id ]
-            logging.info( "Released task lock for " + id ) 
+            logging.info( "Released " + id ) 
             return True
         else:
-            logging.info( "Failed to release task lock for " + id ) 
+            logging.info( "Failed to release " + id ) 
             return False
 
     def dump( self ):
          logging.info( "Dumping locks") 
-         return ( self.locked.keys(), self.exclusive.keys(), self.inclusive.keys() )
+         return ( self.locked.keys(), self.exclusive, self.inclusive )
 
     def clear( self ):
-        logging.info( "Clearing locks") 
+        # release all locks one at a time so each release gets logged
+        n = len( self.locked.keys() )
+        logging.info( "Clearing " + str(n) + " task locks") 
         # MUST USE .keys() here to avoid:
         # RuntimeError: dictionary changed size during iteration
-        for id in self.locked.keys():
-            self.release( id, 'foo' )
+        for lock in self.locked.keys():
+            ( group, id ) = lock.split( ':' )
+            self.release( id, group )
+
+        n = len( self.exclusive.keys() )
+        logging.info( "Clearing " + str(n) + " exclusive system locks") 
+        for sysdir in self.exclusive.keys():
+            [ group ] = self.exclusive[ sysdir ]
+            self.release_system_access( sysdir, group )
+
+        n = 0
+        for sysdir in self.inclusive.keys():
+            groups = self.inclusive[ sysdir ]
+            n += len( groups )
+        logging.info( "Clearing " + str(n) + " non-exlusive system locks") 
+        for sysdir in self.inclusive.keys():
+            groups = self.inclusive[ sysdir ]
+            for group in groups:
+                self.release_system_access( sysdir, group )
 
     def is_locked( self, task_id, group_name ):
         id = self.get_lock_id( group_name, task_id )
@@ -124,7 +143,7 @@ class lockserver( Pyro.core.ObjBase ):
                     # grant access unless same name already in use
                     if group_name in names:
                         result = False
-                        reason =  name + '-->' + system_dir + " already in use"
+                        reason =  group_name + '-->' + system_dir + " already in use"
                     else:
                         # granted
                         self.inclusive[ system_dir ].append( group_name )
@@ -139,7 +158,6 @@ class lockserver( Pyro.core.ObjBase ):
             logging.warning( " " + reason )
 
         return ( result, reason )
-
 
 
     def release_system_access( self, system_dir, group_name ):
