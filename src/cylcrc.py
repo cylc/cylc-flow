@@ -28,25 +28,25 @@ class rc:
         self.config_dir = os.path.join( os.environ[ 'HOME' ], '.cylc' )
         self.lockserver_dir = os.path.join( self.config_dir, 'lockserver' )
 
+        self.set_defaults()
+
+        if os.path.exists( rcfile ):
+            print "Loading Cylc Preferences file: " + self.rcfile
+            self.load()
+        else:
+            print "Creating new Cylc Preferences file: " + self.rcfile 
+            self.write()
+
+    def set_defaults( self ):
 
         self.config[ 'cylc' ] = {}
         self.config[ 'cylc' ][ 'state dump directory' ] = os.path.join( self.config_dir, 'state-dumps' )
         self.config[ 'cylc' ][ 'logging directory' ] = os.path.join( self.config_dir, 'log-files' )
-
         self.config[ 'cylc' ][ 'use lockserver' ] = 'False'
 
         self.config[ 'lockserver' ] = {}
         self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.lockserver_dir, 'logfile' )
         self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.lockserver_dir, 'server.pid' )
-
-        if os.path.exists( rcfile ):
-            print "Loading Cylc RC File " + self.rcfile
-            self.load()
-        else:
-            print "Creating new Cylc RC File " + self.rcfile 
-            self.write()
-
-        self.create_dirs()
 
     def load( self ):
         self.configparser.read( self.rcfile )
@@ -63,26 +63,39 @@ class rc:
                     pass
 
     def create_dirs( self ):
+        # get a unique list of directories to create
+        dirs = {}
         for dir in [ self.config_dir, 
                 self.config['cylc']['logging directory'],
                 self.config['cylc']['state dump directory'],
                 os.path.dirname( self.config[ 'lockserver' ][ 'log file' ] ),
                 os.path.dirname( self.config[ 'lockserver' ][ 'pid file' ] )]:
+            dirs[ dir ] = True
 
+        for dir in dirs:
             if not os.path.exists( dir ):
                 print "Creating directory: " + dir
-                os.makedirs( dir )
+                try:
+                    os.makedirs( dir )
+                except:
+                    raise SystemExit( "ERROR: unable to create directory" + dir )
+            else:
+                print "directory exists: " + dir
 
     def write( self ):
+        # write the file only if user has access to defined dirs
+        self.create_dirs()
+
         for section in self.config:
             if not self.configparser.has_section( section ):
                 self.configparser.add_section( section )
             for item in self.config[ section ]:
                 self.configparser.set( section, item, self.config[ section][item] )
 
+        print "Writing Cylc Preferences file: " + self.rcfile
         with open( self.rcfile, 'wb' ) as configfile:
             self.configparser.write( configfile )
-
+        print "Done"
 
     def dump( self ):
         for section in self.config:

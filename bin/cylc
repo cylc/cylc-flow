@@ -20,6 +20,7 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 allowed_commands = \
     [ 
     'help',
+    'preferences',
     'configure',
     'register',
     'start', 
@@ -70,6 +71,7 @@ usage = \
     'P-R-E-P-A-R-A-T-I-O-N',
     '  configure ... Create system-specific source modules from taskdef files',
     '  register .... Manage your system registrations',
+    '  preferences . View and manage your global preferences',
     'S-Y-S-T-E-M--C-O-N-T-R-O-L',
     '  start ....... Start scheduling a registered system',
     '  restart ..... Restart a registered system from a previous state',
