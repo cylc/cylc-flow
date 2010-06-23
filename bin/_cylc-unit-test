@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e; trap "UNIT TEST FAILED; see output log" ERR
+set -e; trap "echo 'UNIT TEST FAILED (see output log)'" ERR
 
 #          ________________________  
 #         |____C_O_P_Y_R_I_G_H_T___|
@@ -61,7 +61,9 @@ SYS_DIR=systems/UNIT
 # log file for stdout and stderr
 OUT=unit-test.out; OUT_SCHED=unit-test-sched.out
 # cylc system log
-LOG=$HOME/cylc-logs/unit/main
+LOGRC=$( grep 'logging directory' $HOME/.cylcrc )
+LOGDIR=${LOGRC#*= }
+LOG=$LOGDIR/unit/main
 
 # START FROM A CLEAN SLATE
 echo ">> CLEANING OUT any remnants of previous tests ... "
@@ -94,18 +96,31 @@ echo done
 
 # START UP THE TEST SYSTEM
 echo
-echo ">> STARTING at 2010010106, with FAIL_TASK=X%2010010112"
 if ! $dummy_mode; then
+    echo ">> STARTING at 2010010106, with FAIL_TASK=X%2010010112"
     echo "        self.items['environment']['FAIL_TASK'] = 'X%2010010112'" >> $SYS_DIR/system_config.py
+else
+    # use 36 hour clock offset, otherwise the system will catch up to
+    # the clock before it finishes (=> longer time to wait for finish).
+    echo ">> STARTING at 2010010106, with --clock-offset=36 --fail-out=X%2010010112"
 fi
-echo -n "   Will wait 5 seconds for startup ... "
+
+# startup errors (e.g. due to lockserver denying access to the system)
+# won't be trapped here because we run cylc in the background!
 if $dummy_mode; then
-    cylc start -d --fail-out=X%2010010112 --at=2010010106 unit >> $OUT_SCHED 2>&1 &
+    cylc start -d --clock-offset=36 --fail-out=X%2010010112 --at=2010010106 unit >> $OUT_SCHED 2>&1 &
 else
     cylc start --at=2010010106 unit >> $OUT_SCHED 2>&1 &
 fi
+echo -n "   Will wait 5 seconds for startup ... "
 sleep 5
 echo done
+
+# now check for startup errors, as just described.
+if grep '_cylc-start failed:  1' $OUT_SCHED  > /dev/null; then
+    cat $OUT_SCHED
+    munge 2> /dev/null # activate trap with a non-existent command
+fi
 
 # WAIT FOR ALL TASKS AT 2010010112 TO FINISH 
 # at which point the system is stalled because X failed.
@@ -165,21 +180,29 @@ echo done
 # RUN A SINGLE TASK
 # can be one that completes successfully or fails, it doesn't matter.
 echo
+# EXAMPLE OUTPUT FROM RUN-TASK:
+# % cylc run-task -t startup%2010010106 unit
+# Loading Cylc Preferences file: /home/oliverh/.cylcrc
+#
+# Cylc messages will be directed to stdout (=> the task log file).
+# Logging directory is /home/oliverh/.cylc/log-files/unit-run-task
+#
+#  > SUBMITTING TASK: /tmp/cylc-2H4HPc </dev/null 1> /home/oliverh/startup%2010010106-haDDeS.out 2> /home/oliverh/startup%2010010106-haDDeS.err &
 echo ">> RUN A SINGLE TASK (startup%2010010106) from the system"
-echo "   (note that messages from standalone tasks go to stdout)"
+FOO=$(cylc run-task -t startup%2010010106 unit)
+STDOUT=$( echo $FOO | sed -e 's/.*1> //' | sed -e 's/ 2>.*//' )
+STDERR=$( echo $FOO | sed -e 's/.*2> //' | sed -e 's/ &.*$//' )
+echo "TASK OUTPUT LOGS:"
+echo "  $STDOUT"
+echo "  $STDERR"
 echo -n "   ."
-rm -f startup*.log
-cylc run-task -t startup%2010010106 unit >> $OUT 2>&1
 READY=false
 while ! $READY; do
-    LOG=$(ls startup*.log 2> /dev/null ) && READY=true
+    grep 'cylc (run-task): startup%2010010106 finished' $STDOUT 2> /dev/null && READY=true
     echo -n .
     sleep 1
 done
 echo done
-echo
-echo "Here's the TASK OUTPUT LOG:"
-cat $LOG
 
 # DELETE THE SYSTEM DEFINITION DIRECTORY
 echo
@@ -189,7 +212,9 @@ echo done
 
 # FINISHED
 echo 
-echo ">> OUTPUT LOGS:"
+echo ">> UNIT TEST OUTPUT LOGS:"
 ls -l $OUT $OUT_SCHED
+echo ">> CYLC MAIN LOG FOR THE UNIT TEST:"
+ls -l $LOG
 echo
 echo ">> DONE"

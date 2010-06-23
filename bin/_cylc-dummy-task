@@ -62,15 +62,23 @@ class dummy_task:
         interval_s = interval_m * 60.0
         interval_rs = interval_s * clock_rate / 3600.0
 
+        if failout:
+            sleep(2)
+            self.send( self.id + ' completed' )
+            self.send( self.id + ' failed' )
+            sys.exit(1)
+
         for i in range( n_outputs - 2 ):
             self.send( outputs[i] )
 
             sleep( interval_rs )
-            if i == 2 and failout:
-                sleep(2)
-                self.send( self.id + ' completed' )
-                self.send( self.id + ' failed' )
-                sys.exit(1)
+
+            # WARNING: THE FOLLOWING FAILS FOR FAILOUT TASKS WITH FEW OUTPUTS!
+            #if i == 2 and failout:
+            #    sleep(2)
+            #    self.send( self.id + ' completed' )
+            #    self.send( self.id + ' failed' )
+            #    sys.exit(1)
 
         self.send( outputs[-2] )            
         self.send( outputs[-1] )            
@@ -90,7 +98,7 @@ if __name__ == '__main__':
     failout = False
     if 'CYLC_FAILOUT_ID' in os.environ:
         if os.environ['CYLC_FAILOUT_ID'] == task_id:
-            print 'dummy task ' + task_id + ' programmed to FAIL!'
+            print >> sys.stderr, 'dummy task ' + task_id + ' programmed to FAIL!'
             failout = True
 
     if 'CYLC_DUMMY_TASK_RUN_LENGTH' in os.environ:
