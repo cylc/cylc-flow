@@ -148,6 +148,7 @@ config.put_env( 'CYLC_NS_GROUP', groupname )
 config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
 config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
 config.put_env( 'CYLC_SYSTEM_NAME', name )
+config.put_env( 'CYLC_USE_LOCKSERVER', str( use_lockserver) )
 
 config.check_environment()
 job_submit.global_env = config.get( 'environment' )

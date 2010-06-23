@@ -32,11 +32,11 @@ parser.add_option( "--set-defaults",
         help="Revert to system default settings.",
         action="store_true", default=False, dest="set_defaults" )
 
-parser.add_option( "--set-lock-server", 
+parser.add_option( "--use-lockserver", 
         help="Switch on use of the cylc lock server.",
         action="store_true", default=False, dest="set_lockserver" )
 
-parser.add_option( "--unset-lock-server", 
+parser.add_option( "--do-not-use-lock-server", 
         help="Switch off use of the cylc lock server.",
         action="store_true", default=False, dest="unset_lockserver" )
 

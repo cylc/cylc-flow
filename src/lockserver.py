@@ -56,7 +56,7 @@ class lockserver( Pyro.core.ObjBase ):
 
     def dump( self ):
          logging.info( "Dumping locks") 
-         return self.locked.keys()
+         return ( self.locked.keys(), self.exclusive.keys(), self.inclusive.keys() )
 
     def clear( self ):
         logging.info( "Clearing locks") 
@@ -103,7 +103,6 @@ class lockserver( Pyro.core.ObjBase ):
                     else:
                         result = False
                         reason = self.get_sys_string( name, system_dir ) + " in exclusive use"
-
                 else:
                     # no exclusive access to any system already in use
                     result = False
@@ -111,7 +110,6 @@ class lockserver( Pyro.core.ObjBase ):
             else:
                 # grant exclusive access
                 self.exclusive[ system_dir ] = [ group_name ]
-
         else:
             # inclusive access requested
 
@@ -130,7 +128,6 @@ class lockserver( Pyro.core.ObjBase ):
                     else:
                         # granted
                         self.inclusive[ system_dir ].append( group_name )
-
             else:
                 # granted
                 self.inclusive[ system_dir ] = [ group_name ]
@@ -151,34 +148,30 @@ class lockserver( Pyro.core.ObjBase ):
             if group_name not in self.exclusive[ system_dir ]:
                 #logging.warning( "system release group name error" )
                 result = False
-
             else:
                 del self.exclusive[ system_dir ]
                 result = True
-
         elif system_dir in self.inclusive:
             names = self.inclusive[ system_dir ]
             if group_name not in names:
                 #logging.warning( "system release group name error" )
                 result = False
-
             elif len( names ) == 1:
                 del self.inclusive[ system_dir ]
                 result = True
             else:
                 self.inclusive[ system_dir ].remove( group_name )
                 result = True
-            
         else:
             #logging.warning( "erroneous system release request" )
             result = False
-
         if result:
             logging.info( "releasing system access for " + group_name + " --> " + system_dir )
         else:
             logging.warning( "error in system access release for " + group_name + " --> " + system_dir )
 
         return result
+
 
 class syslock:
 
@@ -207,7 +200,6 @@ class syslock:
             print >> sys.stderr, 'ERROR, failed to get system access:'
             print >> sys.stderr, reason
             return False
-       
         else:
            return True
 
@@ -218,7 +210,6 @@ class syslock:
         if not result:
             print >> sys.stderr, 'WARNING, failed to release system access'
             return False
-       
         else:
            return True
 
@@ -236,8 +227,8 @@ class lock:
     def __init__( self, task_id=None, group_name=None, pns_host=None ):
 
         self.use_lock_server = False
-        if 'CYLC_USE_LOCK_SERVER' in os.environ:
-            if os.environ[ 'CYLC_USE_LOCK_SERVER' ] == 'True':
+        if 'CYLC_USE_LOCKSERVER' in os.environ:
+            if os.environ[ 'CYLC_USE_LOCKSERVER' ] == 'True':
                 self.use_lock_server = True
 
         self.mode = 'raw'
@@ -258,16 +249,17 @@ class lock:
 
         if group_name:
             self.group_name = group_name
+            pass
         else:
-            if 'CYLC_SYSTEM_NAME' in os.environ.keys():
-                self.group_name = os.environ['USER'] + '^' + os.environ[ 'CYLC_SYSTEM_NAME' ]
+            if 'CYLC_NS_GROUP' in os.environ.keys():
+                self.group_name = os.environ[ 'CYLC_NS_GROUP' ]
             elif self.mode == 'raw':
                 pass
             else:
                 # we always define the PNS Host explicitly, but could
                 # default to localhost's fully qualified domain name
                 # like this:   self.pns_host = socket.getfqdn()
-                print >> sys.stderr, '$CYLC_SYSTEM_NAME not defined'
+                print >> sys.stderr, '$CYLC_NS_GROUP not defined'
                 sys.exit(1)
 
         if pns_host:
@@ -281,7 +273,7 @@ class lock:
                 # we always define the PNS Host explicitly, but could
                 # default to localhost's fully qualified domain name
                 # like this:   self.pns_host = socket.getfqdn()
-                print >> sys.stderr, '$CYLC_NS_GROUP not defined'
+                print >> sys.stderr, '$CYLC_NS_HOST not defined'
                 sys.exit(1)
 
     def acquire( self ):

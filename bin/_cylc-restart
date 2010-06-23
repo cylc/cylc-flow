@@ -363,6 +363,7 @@ config.put_env( 'CYLC_NS_GROUP',  groupname )
 config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
 config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
 config.put_env( 'CYLC_SYSTEM_NAME', name )
+config.put_env( 'CYLC_USE_LOCKSERVER', str( use_lockserver) )
 if dummy_mode:
     config.put_env( 'CYLC_CLOCK_RATE', str( options.clock_rate ) )
     # communicate failout_task_id to the dummy task program
