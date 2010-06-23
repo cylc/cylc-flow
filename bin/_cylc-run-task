@@ -108,7 +108,7 @@ if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     use_lockserver = True
     # request system access from the lock server
     # run-task does not need to call release_system_access()
-    if not syslock( pns_host, groupname, system_dir, 'run-task' ).request_system_access( exclusive=True ):
+    if not syslock( pns_host, groupname, system_dir, 'run-task' ).request_system_access():
         raise SystemExit( 'locked out!' )
 
 # provide access to the system scripts and source modules--------------

@@ -117,8 +117,7 @@ class lockserver( Pyro.core.ObjBase ):
                 if cylc_mode == 'run-task':
                     # grant access only if group_name is the same
                     if group_name == name:
-                        result = True
-                        reason = "granting run-task access to " + sys_descr 
+                        pass
                     else:
                         result = False
                         reason = self.get_sys_string( name, system_dir ) + " in exclusive use"
@@ -127,18 +126,21 @@ class lockserver( Pyro.core.ObjBase ):
                     result = False
                     reason = sys_descr + " in exclusive use" 
             else:
-                # grant exclusive access
-                self.exclusive[ system_dir ] = [ group_name ]
+                # system dir not already in self.exclusive
+                if cylc_mode == 'run-task':
+                    # grant access but don't set a lock
+                    pass 
+                else: 
+                    # grant exclusive access
+                    self.exclusive[ system_dir ] = [ group_name ]
         else:
             # inclusive access requested
-
             if system_dir in self.inclusive:
                 names = self.inclusive[ system_dir ]
 
                 if cylc_mode == 'run-task':
                     # granted
                     pass
-
                 else:
                     # grant access unless same name already in use
                     if group_name in names:
@@ -148,8 +150,12 @@ class lockserver( Pyro.core.ObjBase ):
                         # granted
                         self.inclusive[ system_dir ].append( group_name )
             else:
-                # granted
-                self.inclusive[ system_dir ] = [ group_name ]
+                if cylc_mode == 'run-task':
+                    # granted
+                    pass
+                else:
+                    # granted
+                    self.inclusive[ system_dir ] = [ group_name ]
  
         if result:
             logging.info( "acquired system access for " + group_name + " --> " + system_dir )
@@ -200,7 +206,6 @@ class syslock:
         self.cylc_mode = cylc_mode
 
     def request_system_access( self, exclusive=True ):
-
         # Cylc system name is user-specific (i.e. different users can
         # register systems with the same name), but the cylc groupname
         # (USERNAME^SYSTEMNAME) is unique (because two users cannot have
@@ -212,7 +217,6 @@ class syslock:
         # once? 
         
         server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
-
         (result, reason) = server.get_system_access( self.system_dir, self.group_name, self.cylc_mode, exclusive )
         if not result:
             print >> sys.stderr, 'ERROR, failed to get system access:'
