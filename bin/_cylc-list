@@ -16,7 +16,7 @@ from optparse import OptionParser
 from registration import registrations
 import pyrex
 
-parser = OptionParser( usage = """cylc list-all [options]
+parser = OptionParser( usage = """cylc list [options]
     
 List the user and system names of all cylc systems currently using the
 Pyro nameserver (the nameserver distinguishes different cylc systems by
