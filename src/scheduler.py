@@ -70,8 +70,8 @@ class scheduler:
                 metavar="HOSTNAME", action="store", dest="pns_host" )
 
         self.parser.add_option( "-d", "--dummy-mode",
-                help="DUMMY MODE: replaces each task with a program that masquerades "
-                "as the the real thing and runs on an accelerated clock.",
+                help="Replace each task with a program that masquerades "
+                "as the the real thing, and run the system on an accelerated clock.",
                 action="store_true", dest="dummy_mode" )
 
         self.parser.add_option( "-p", "--practice-mode",
@@ -81,12 +81,12 @@ class scheduler:
                 action="store_true", dest="practice_mode" )
 
         self.parser.add_option( "--clock-rate", 
-                help="(DUMMY MODE) accelerated clock rate: RATE seconds of "
-                "real time per simulated hour (defaults to 10).",
+                help="(DUMMY and PRACTICE modes) accelerated clock rate: RATE seconds of "
+                "real time per simulated hour (default 10).",
                 metavar="RATE", action="store", dest="clock_rate" )
 
         self.parser.add_option( "--clock-offset", 
-                help="(DUMMY MODE) start the accelerated clock at HOURS "
+                help="(DUMMY and PRACTICE modes) start the accelerated clock at HOURS "
                 "prior to the initial cycle time (default 24 hours). "
                 "This simulates catch up to real time operation.",
                 metavar="HOURS", action="store", dest="clock_offset" )

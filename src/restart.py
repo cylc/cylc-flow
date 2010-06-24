@@ -33,6 +33,8 @@ class restart( task_pool ):
 
         filename = self.initial_state_dump
         no_reset = self.no_reset
+        exclude = self.exclude
+        include = self.include
 
         print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
         self.log.info( 'Loading initial state from ' + filename )
@@ -92,6 +94,13 @@ class restart( task_pool ):
             # instance variables
             ( id, state ) = line.split(' : ')
             ( name, c_time ) = id.split('%')
+
+            if name in exclude:
+                continue
+
+            if len( include ) > 0:
+                if name not in include:
+                    continue
 
             # create the task log
             if name not in log_created.keys():
