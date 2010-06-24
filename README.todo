@@ -17,9 +17,6 @@ To Do
   unspawned, while those that didn't will carry on as if there was no
   stop time).
 
-* when a task is reset to waiting or ready, it needs to forget the
-  original job stdout and stderr logs (but not the other custom logs!)
-
 * Document UM-style custom-wrapper based job submission.
 
 * OUTPUTS must contain $(CYCLE_TIME) NOT $CYCLE_TIME currently. Document
