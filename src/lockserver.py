@@ -5,7 +5,7 @@
 #         |                        |
 #         |  (c) NIWA, 2008-2010   |
 #         | Contact: Hilary Oliver |
-#         |  h.oliver\@niwa.co.nz  |
+#         |  h.oliver@niwa.co.nz   |
 #         |    +64-4-386 0461      |
 #         |________________________|
 

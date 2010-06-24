@@ -23,8 +23,8 @@ class ll_basic( job_submit ):
         #err = self.running_dir + '/' + task_id + '.err'
         out = tempfile.mktemp( prefix = task_id + '-', dir= self.running_dir, suffix = ".out" ) 
         err = re.sub( '\.out$', '.err', out )
-        self.logfiles.add_path( out )
-        self.logfiles.add_path( err )
+        self.logfiles.replace_path( '/.*/' + task_id + '-.*\.out', out )
+        self.logfiles.replace_path( '/.*/' + task_id + '-.*\.err', err )
 
         # default directives
         directives = {}

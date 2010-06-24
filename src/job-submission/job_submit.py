@@ -17,7 +17,6 @@
         # above (then full path to remote task script not required - if
         # in the remote $CYLC_SYSTEM_DIR/scripts).
 
-
 # Job submission (external task execution) base class. Derived classes
 # must be added to job_submit_methods.py
 
@@ -254,7 +253,7 @@ class job_submit:
         self.construct_command()
 
         # add local jobfile to list of viewable logfiles
-        self.logfiles.add_path( self.jobfile_path )
+        self.logfiles.replace_path( '/.*/cylc-.*', self.jobfile_path )
 
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )

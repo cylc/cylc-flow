@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+import re
+
 from interp_env import interp_self, interp_other, interp_local, interp_local_str, replace_delayed, interp_other_str, replace_delayed_str
 
 class logfiles:
@@ -12,6 +23,17 @@ class logfiles:
             self.paths.append( path )
 
     def add_path( self, path ):
+        self.paths.append( path )
+
+    def replace_path( self, pattern, path ):
+        # replace a path that matches a pattern with another path
+        # (used to replace output logs when a failed task is reset)
+        for item in self.paths:
+            if re.match( pattern, item ):
+                #print 'REPLACING', item, 'WITH', path
+                self.paths.remove( item )
+                break
+        # add the new path even if a match to replace wasn't found
         self.paths.append( path )
 
     def get_paths( self ):

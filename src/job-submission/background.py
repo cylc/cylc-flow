@@ -31,5 +31,5 @@ class background( job_submit ):
         err = re.sub( '\.out$', '.err', out )
 
         self.command = self.jobfile_path + " </dev/null 1> " + out + " 2> " + err + " &" 
-        self.logfiles.add_path( out )
-        self.logfiles.add_path( err )
+        self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.out', out )
+        self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.err', err )
