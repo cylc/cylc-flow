@@ -78,7 +78,7 @@ class discover:
     def print_info( self ):
         groups = self.get_groups()
         n_groups = len( groups.keys() )
-        print "Currently ", len( groups.keys() ), " systems registered with Pyro"
+        print "There are ", len( groups.keys() ), " groups registered with Pyro"
         for group in groups:
             print ' + ', group, ' ... (', groups[group], 'objects )'
 

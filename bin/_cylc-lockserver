@@ -9,20 +9,17 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-# standard Python modules
 import os, sys, re
 import socket
 from optparse import OptionParser
 from time import sleep
 
-# cylc source modules
 import pyrex
 import cylcrc
 import cycle_time
 from registration import registrations
 from lockserver import lockserver, lock, syslock, control
 
-# pyro modules
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
 from Pyro.ext.daemonizer import Daemonizer
@@ -58,7 +55,6 @@ def check_task_spec( task_spec ):
         raise SystemExit( "Invalid cycle time: " + cycle )
 
     return ( system, task_id )
-
 
 class ServerDaemon( Daemonizer ):
     def __init__( self, pidfile, pns_host, logfile, task_lock=None ):

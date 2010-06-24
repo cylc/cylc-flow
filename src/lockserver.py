@@ -15,7 +15,6 @@ from connector import connector
 import logging
 
 class lockserver( Pyro.core.ObjBase ):
-
     def __init__( self, logfile, loglevel=logging.INFO ):
         Pyro.core.ObjBase.__init__(self)
 
@@ -196,7 +195,6 @@ class lockserver( Pyro.core.ObjBase ):
 
         return result
 
-
 class syslock:
 
     def __init__( self, pns_host, group_name, system_dir, cylc_mode ):
@@ -216,7 +214,11 @@ class syslock:
         # different registered group names) of the entire system at
         # once? 
         
-        server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
+        try:
+            server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
+        except:
+            raise SystemExit( "Failed to connect to a lockserver on " + self.pns_host )
+
         (result, reason) = server.get_system_access( self.system_dir, self.group_name, self.cylc_mode, exclusive )
         if not result:
             print >> sys.stderr, 'ERROR, failed to get system access:'
@@ -227,7 +229,11 @@ class syslock:
 
 
     def release_system_access( self):
-        server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
+        try:
+            server = connector( self.pns_host, 'cylc', 'lockserver' ).get() 
+        except:
+            raise SystemExit( "Failed to connect to a lockserver on " + self.pns_host )
+
         result = server.release_system_access( self.system_dir, self.group_name )
         if not result:
             print >> sys.stderr, 'WARNING, failed to release system access'

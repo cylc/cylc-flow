@@ -444,18 +444,20 @@ class scheduler:
         self.cleanup()
 
     def cleanup( self ):
+        print "Shutting down my Pyro daemon"
+        self.pyro_daemon.shutdown( True )
+        print "Deleting Pyro nameserver group " + self.groupname
+
+        self.nameserver.get_ns().deleteGroup( self.groupname )
+        print "Bye!"
+
         if self.use_lockserver:
+            # do this last
             print ""
             print "Releasing system lock"
             system_lock = syslock( self.pns_host, self.groupname, self.system_dir, 'scheduler' )
             if not system_lock.release_system_access():
                 print >> stderr, 'failed to release system!'
-
-        print "Shutting down my Pyro daemon"
-        self.pyro_daemon.shutdown( True )
-        print "Deleting Pyro nameserver group " + self.groupname
-        self.nameserver.get_ns().deleteGroup( self.groupname )
-        print "Bye!"
 
         # to simulate the effect on monitoring etc. of long task processing time
         # (many many many tasks...), put this in the task processing loop:
