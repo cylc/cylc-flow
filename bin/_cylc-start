@@ -70,4 +70,16 @@ Arguments:
 if __name__ == '__main__':
     server = coldstart_scheduler()
     server.configure()
-    server.run()
+    try:
+        server.run()
+    except Exception, x:
+        # catch proper exceptions
+        #print "ERROR 1"
+        print x
+        server.cleanup()
+        #raise
+    except:
+        # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
+        #print "ERROR 2"
+        server.cleanup()
+        #raise

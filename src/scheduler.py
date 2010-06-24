@@ -400,6 +400,7 @@ class scheduler:
 
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
+
             if task.state_changed or \
                     self.remote.process_tasks or \
                     self.pool.waiting_contact_task_ready( self.clock.get_datetime() ):
@@ -440,7 +441,9 @@ class scheduler:
 
         print ""
         print "STOPPING"
+        self.cleanup()
 
+    def cleanup( self ):
         if self.use_lockserver:
             print ""
             print "Releasing system lock"

@@ -101,4 +101,15 @@ Arguments:
 if __name__ == '__main__':
     server = restart_scheduler()
     server.configure()
-    server.run()
+    try:
+        server.run()
+        # catch proper exceptions
+        #print "ERROR 1"
+        print x
+        server.cleanup()
+        #raise
+    except:
+        # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
+        #print "ERROR 2"
+        server.cleanup()
+        #raise
