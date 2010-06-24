@@ -56,10 +56,7 @@ Arguments:
 
         scheduler.parse_commandline( self )
  
-    def load_preferences( self ):
-        scheduler.load_preferences( self )
-        # define initial state dump file to restart from
-        # (it does not have to be the system default file)
+    def find_initial_state_dump_file( self ):
         if self.restart_from:
             # user specified the initial state dump
             path = self.restart_from
@@ -68,21 +65,32 @@ Arguments:
                 self.initial_state_dump = os.path.abspath( path )
             else:
                 # check if the named file is in the system state dump dir
-                state_dump_dir = self.rcfile.get_system_logging_dir( self.system_name, self.practice )
+                # (in practice mode we want the source system state dump dir)
+                state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name )
+ 
                 path = os.path.join( state_dump_dir, self.restart_from )
                 if not os.path.exists( path ):
                     raise SystemExit( "File not found: " + self.restart_from )
                 self.initial_state_dump = os.path.abspath( path )
         else:
-            # no state dump specified, restart from the system default file
-            if not os.path.exists( self.state_dump_file ):
+            # No state dump specified, restart from the system default file.
+            # In practice mode we want the source system state dump
+            # file, not self.state_dump_file.
+            if self.practice:
+                state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name )
+                state_dump_file = os.path.join( state_dump_dir, 'state' )
+            else:
+                state_dump_file = self.state_dump_file
+
+            if not os.path.exists( state_dump_file ):
                 # can't restart a system that was never cold started!
-                raise SystemExit( "File not found: " + self.state_dump_file )
-            self.initial_state_dump = self.state_dump_file
+                raise SystemExit( "File not found: " + state_dump_file )
+            self.initial_state_dump = state_dump_file
 
         print "Restarting from: " + self.initial_state_dump
 
     def create_task_pool( self ):
+        self.find_initial_state_dump_file()
         # initialize the server (and create main logger)
         self.pool = restart( self.config, self.nameserver,
                 self.groupname, self.dummy_mode, self.logging_dir,

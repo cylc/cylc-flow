@@ -74,7 +74,7 @@ class scheduler:
                 "as the the real thing and runs on an accelerated clock.",
                 action="store_true", dest="dummy_mode" )
 
-        self.parser.add_option( "-p", "--practice",
+        self.parser.add_option( "-p", "--practice-mode",
                 help="Clone an existing system in dummy mode using new state "
                 "and logging directories to avoid corrupting the original. "
                 "Failed tasks will not be reset to waiting in the clone.",
@@ -191,8 +191,21 @@ class scheduler:
 
     def load_preferences( self ):
         self.rcfile = cylcrc.rc( self.rcfilepath )
-        self.logging_dir = self.rcfile.get_system_logging_dir( self.system_name, self.practice ) 
-        self.state_dump_file = self.rcfile.get_system_statedump_file( self.system_name )
+
+        self.logging_dir = self.rcfile.get_system_logging_dir( self.system_name ) 
+        state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name )
+        if self.practice:
+            self.logging_dir += "-practice"
+            state_dump_dir += "-practice"
+            for dir in [ self.logging_dir, state_dump_dir ]:
+                if not os.path.exists( dir ):
+                    print "Creating directory: " + dir
+                    try:
+                        os.makedirs( dir )
+                    except:
+                        raise SystemExit( "ERROR: unable to create directory " + dir )
+
+        self.state_dump_file = os.path.join( state_dump_dir, 'state' )
 
         self.use_lockserver = False
         self.banner[ 'use lockserver' ] = 'False'
@@ -216,15 +229,13 @@ class scheduler:
         self.nameserver = pyrex.discover( self.pns_host )
 
         # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM
+        self.groupname = os.environ['USER'] + '^' + self.system_name
         if self.practice:
             # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
-            self.groupname = os.environ['USER'] + '^' + self.system_name + "_practice"
-        else:
-            self.groupname = os.environ['USER'] + '^' + self.system_name
+            self.groupname += "-practice"
 
         self.nameserver.create_groupname( self.groupname )
         self.banner[ 'Pyro nameserver group' ] = self.groupname
- 
 
     def configure_environment( self ):
         # provide access to the system scripts and source modules
@@ -354,6 +365,7 @@ class scheduler:
         self.configure_system_state_summary()
         self.configure_job_submission()
 
+        # required before remote switch
         self.create_task_pool()
 
         self.configure_remote_switch()

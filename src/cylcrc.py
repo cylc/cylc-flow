@@ -78,7 +78,7 @@ class rc:
                 try:
                     os.makedirs( dir )
                 except:
-                    raise SystemExit( "ERROR: unable to create directory" + dir )
+                    raise SystemExit( "ERROR: unable to create directory " + dir )
             else:
                 print "directory exists: " + dir
 
@@ -109,24 +109,16 @@ class rc:
         except:
             pass
 
-    def get_system_statedump_dir( self, system_name, practice_mode=False ):
-        if practice_mode:
-            system_name += '-practice'
+    def get_system_statedump_dir( self, system_name ):
         dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], system_name )
-        if not os.path.exists( dir ):
-            print "Creating directory", dir
-            os.makedirs( dir )
+        #if not os.path.exists( dir ):
+        #    print "Creating directory", dir
+        #    os.makedirs( dir )
         return dir
 
-    def get_system_logging_dir( self, system_name, practice_mode=False):
-        if practice_mode:
-            system_name += '-practice'
+    def get_system_logging_dir( self, system_name ):
         dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name )
-        if not os.path.exists( dir ):
-            print "Creating directory", dir
-            os.makedirs( dir )
+        #if not os.path.exists( dir ):
+        #    print "Creating directory", dir
+        #    os.makedirs( dir )
         return dir
-
-    def get_system_statedump_file( self, system_name ):
-        dir = self.get_system_statedump_dir( system_name )
-        return os.path.join( dir, 'state' )

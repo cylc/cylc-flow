@@ -82,7 +82,7 @@ Arguments:
     def get_groupname( self ):
         groupname = self.username + '^' + self.system_name
         if self.practice:
-            groupname += '_practice'
+            groupname += '-practice'
         return groupname
 
 
@@ -141,7 +141,7 @@ arguments:
     def get_groupname( self ):
         groupname = self.username + '^' + self.system_name
         if self.practice:
-            groupname += '_practice'
+            groupname += '-practice'
         return groupname
 
 
