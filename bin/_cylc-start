@@ -9,432 +9,65 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
-# standard Python modules
-import re, os, sys, shutil
-#import profile
-import socket
-import logging
-import datetime
-from time import sleep
+import sys
 from optparse import OptionParser
 
-# cylc source modules
-import cylcrc
-from coldstart import coldstart
 import cycle_time
-import pyrex
-import dead_letter
-import state_summary
-import accelerated_clock 
-from job_submit import job_submit
-from registration import registrations
-from lockserver import syslock
+from coldstart import coldstart
+from scheduler import scheduler
 
-# pyro modules
-import Pyro.core, Pyro.naming
-from Pyro.errors import NamingError
+class coldstart_scheduler( scheduler ):
+    def __init__( self ):
+        usage = """cylc start [options] SYSTEM
 
-def print_banner():
-    print "_______________C_Y_L_C___________________"
-    print ". Self Organising Dynamic Metascheduler ."
-    print ".  (c) Hilary Oliver, NIWA, 2008-2010   ."
-    print ".       cylc is pronounced 'silk'       ."
-    print "_______________C_Y_L_C___________________"
-    print
-
-    #items = banner.keys() + startup.keys()
-    items = banner.keys()
-
-    longest_item = items[0]
-    for item in items:
-        if len(item) > len(longest_item):
-            longest_item = item
-
-    template = re.sub( '.', '.', longest_item )
-
-    for item in banner.keys():
-        print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( banner[ item ] )
-    #for item in startup.keys():
-    #    print ' o ', re.sub( '^.{' + str(len(item))+ '}', item, template) + '...' + str( startup[ item ] )
-
-
-usage = """cylc start [options] SYSTEM
-
-Cold start a cylc system registered under the name SYSTEM. Each task in
-the system task list will be instantiated at the initial cycle time, or
-at the next cycle time valid for that task.  
+Cold start a cylc system. By default, every task in the system will be
+instantiated, in the 'waiting' state, at the initial cycle time, or at
+the next valid cycle time for the task.  
 
 Arguments:
-   SYSTEM               Registered name of the system to run.""" 
+   SYSTEM               Registered name of the system to start.""" 
 
-def commandline_parser():
-    parser = OptionParser( usage )
+        self.parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host= socket.getfqdn(), dummy_mode=False,
-            rcfile=None, include=None, exclude=None, clock_rate=10,
-            clock_offset=24 )
-
-    parser.add_option( "--at", 
+        self.parser.add_option( "--at", 
             help="Initial cycle time (YYYYMMDDHH).",
-            metavar="CYCLE", action="store", dest="start_time" )
-    
-    parser.add_option( "--until", 
-            help="Shut down after all tasks have PASSED this cycle time.",
-            metavar="CYCLE", action="store", dest="stop_time" )
-
-    parser.add_option( "--pause",
-            help="Refrain from running tasks AFTER this cycle time.",
-            metavar="CYCLE", action="store", dest="pause_time" )
-
-    parser.add_option( "--exclude",
-            help="Exclude these tasks at startup. Equivalent to "
-            "deleting them from the system task list.",
-            metavar="Task1,Task2,...", action="store", dest='exclude' )
-
-    parser.add_option( "--include",
-            help="Include only these tasks at startup. "
-            "Equivalent to deleting all other tasks from the "
-            "system task list.",
-            metavar="Task1,Task2,...", action="store", dest='include' )
-
-    parser.add_option( "--host",
-            help="Pyro nameserver host, defaults to the local hostname. Use "
-            "if not auto-detected (which depends on network config).", 
-            metavar="HOSTNAME", action="store", dest="pns_host" )
-
-    parser.add_option( "-d", "--dummy-mode",
-            help="DUMMY MODE: replaces each task with a program that masquerades "
-            "as the the real thing and runs on an accelerated clock.",
-            action="store_true", dest="dummy_mode" )
-
-    parser.add_option( "--clock-rate", 
-            help="(DUMMY MODE) accelerated clock rate: RATE seconds of "
-            "real time per simulated hour (defaults to 10).",
-            metavar="RATE", action="store", dest="clock_rate" )
-
-    parser.add_option( "--clock-offset", 
-            help="(DUMMY MODE) start the accelerated clock at HOURS "
-            "prior to the initial cycle time (default 24 hours). "
-            "This simulates catch up to real time operation.",
-            metavar="HOURS", action="store", dest="clock_offset" )
-
-    parser.add_option( "--fail-out", help=\
-            "(DUMMY MODE) get task NAME at cycle time CYCLE to report failure "
-            "and then abort. Use this to test failure and recovery scenarios.",
-            metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
-
-    parser.add_option( "--dummy-task-run-length", help=\
-            "(DUMMY MODE) change the length of run time, relative to the dummy "
-            "mode clock, of each running task. The default is 20 minutes.",
-            metavar="MINUTES", action="store", dest="dummy_task_run_length" )
-
-    parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-            "(default $HOME/.cylcrc).", metavar="PATH", action="store",
-            dest="rcfile" )
-
-    return parser
-
-# =====================================================================
-# MAIN PROGRAM
-# =====================================================================
-
-banner = {}
-
-# parse commandline options and arguments------------------------------
-parser = commandline_parser()
-( options, args ) = parser.parse_args()
-
-if len( args ) == 0:
-    parser.error( "Please supply a target system name" )
-elif len( args ) > 1:
-    parser.error( "Too many arguments" )
-
-# get system name------------------------------------------------------
-name = args[0]
-banner[ 'system name' ] = name
-
-# get Pyro nameserver hostname-----------------------------------------
-if not options.pns_host:
-    # (this won't happen; defaults to local hostname)
-    parser.error( "Required: Pyro nameserver hostname" )
-else:
-    pns_host = options.pns_host
-    banner[ 'Pyro nameserver host' ] = pns_host
-
-# find location of the system task and config modules------------------
-reg = registrations()
-if reg.is_registered( name ):
-    system_dir = reg.get( name )
-else:
-    reg.print_all()
-    raise SystemExit( "System " + name + " is not registered!" )
-
-banner[ 'system definition' ] = system_dir
-
-# get mode of operation------------------------------------------------
-dummy_mode = False
-practice = False
-
-# LOCATE THE PYRO NAMESERVER-------------------------------------------
-nameserver = pyrex.discover( pns_host )
-
-# CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM-----------------
-if practice:
-    # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
-    groupname = os.environ['USER'] + '^' + name + "_practice"
-else:
-    groupname = os.environ['USER'] + '^' + name
-
-if options.dummy_mode:
-    dummy_mode = True
-    banner[ 'mode of operation' ] = 'DUMMY'
-
-else:
-    banner[ 'mode of operation' ] = 'REAL'
-
-# load cylcrc file----------------------------------------------------
-rcfile = cylcrc.rc( options.rcfile )
-logging_dir = rcfile.get_system_logging_dir( name, practice ) 
-state_dump_dir = rcfile.get_system_statedump_dir( name, practice ) 
-
-use_lockserver = False
-banner[ 'use lockserver' ] = 'False'
-if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
-    banner[ 'use lockserver' ] = 'True'
-    use_lockserver = True
-
-# check startup configuration------------------------------------------
-
-if not options.start_time:
-    parser.error( 'You must supply an initial cycle time' )
-start_time = options.start_time
-if not cycle_time.is_valid( start_time ):
-    parser.error( "invalid cycle time: " + start_time )
-
-stop_time = None
-if options.stop_time:
-    stop_time = options.stop_time
-    if not cycle_time.is_valid( stop_time ):
-        parser.error( "invalid cycle time: " + stop_time )
-
-pause_time = None
-if options.pause_time:
-    pause_time = options.pause_time
-    if not cycle_time.is_valid( pause_time ):
-        parser.error( "invalid cycle time: " + pause_time )
-    pool.set_system_hold( pause_time )
-
-if options.include and options.exclude:
-    parser.error( '--include and --exclude are mutually exclusive' )
-
-include_tasks = []
-if options.include:
-    include_tasks = options.include.split(',')
-exclude_tasks = []
-if options.exclude:
-    exclude_tasks = options.exclude.split(',')
-
-# provide access to the system scripts and source modules--------------
-# for external processes launched by this program.
-
-# prepend system scripts to $PATH (prepend in case this is a subsystem!)
-# (NOTE this is still somewhat dangerous: if a subsystem task script
-# that should be executable but isn't has the same filename as a task in
-# the parent system, the parent file will be found and executed).
-os.environ['PATH'] = system_dir + '/scripts:' + os.environ['PATH'] 
-# prepend add system Python modules to $PYTHONPATH (prepend, as above)
-os.environ['PYTHONPATH'] = system_dir + ':' + os.environ['PYTHONPATH']
-
-# provide access to the system source modules for THIS program---------
-# prepend to the module search path in case this is a subsystem
-sys.path.insert(0, system_dir )
-
-# import system-specific cylc modules now------------------------------ 
-from system_config import system_config 
-import task     # loads task_classes
-import remote_switch # ditto
-
-# load system configuration--------------------------------------------
-config = system_config( name )
-
-if use_lockserver:
-    exclusive = not config.get( 'allow_simultaneous_system_instances' )
-    # request system access from the lock server
-    if not syslock( pns_host, groupname, system_dir, 'scheduler' ).request_system_access( exclusive ):
-        raise SystemExit( 'locked out!' )
-
-# check for legal start time
-config.check_start_time( start_time )
-
-# find initial state dump file
-initial_state_dump = None
-state_dump_file = rcfile.get_system_statedump_file( name )
-
-if not practice:
-    # back up the configured state dump (i.e. the one that will be used
-    # by the system unless in practice mode, but not necessarily the
-    # initial one). 
-
-    if os.path.exists( state_dump_file ):
-        backup = state_dump_file + '.' + datetime.datetime.now().isoformat()
-        print "Backing up the state dump file:"
-        print "  " + state_dump_file + " --> " + backup
-        try:
-            shutil.copyfile( state_dump_file, backup )
-        except:
-            raise SystemExit( "ERROR: State dump file copy failed" )
-
-config.check_task_groups()
-config.job_submit_config( dummy_mode )
-
-nameserver.create_groupname( groupname )
-banner[ 'Pyro nameserver group' ] = groupname
- 
-# REQUIRE SINGLE THREADED PYRO (see documentation)
-Pyro.config.PYRO_MULTITHREADED = 0
-# USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
-# (see the Userguide "Networking Issues" section).
-Pyro.config.PYRO_DNS_URI = True
-
-Pyro.core.initServer()
-
-# CREATE A PYRO DAEMON FOR THIS SYSTEM
-daemon = Pyro.core.Daemon()
-daemon.useNameServer(nameserver.get_ns())
-
-# system clock for accelerated time in dummy mode
-clock = accelerated_clock.clock( 
-        int(options.clock_rate),
-        int(options.clock_offset),
-        dummy_mode ) 
-
-daemon.connect( clock, nameserver.obj_name( 'clock', groupname ))
-
-# remotely accessible system state summary
-system_state = state_summary.state_summary( config, dummy_mode )
-daemon.connect( system_state, nameserver.obj_name( 'state_summary', groupname ))
-
-# dead letter box for remote use
-dead_letter_box = dead_letter.letter_box()
-daemon.connect( dead_letter_box, nameserver.obj_name( 'dead_letter_box', groupname))
-
-# load some command line options and dynamic stuff into config
-# module, for easy handling.
-config.put( 'daemon', daemon )
-config.put( 'clock', clock )
-config.put( 'logging_dir', logging_dir )  # cylc view gets this from state_summary
-
-# set global (all tasks) environment variables-------------------------
-config.put_env( 'CYLC_MODE', 'scheduler' )
-config.put_env( 'CYLC_NS_HOST',  str( pns_host ) )  # may be an IP number
-config.put_env( 'CYLC_NS_GROUP',  groupname )
-config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
-config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
-config.put_env( 'CYLC_SYSTEM_NAME', name )
-config.put_env( 'CYLC_USE_LOCKSERVER', str( use_lockserver) )
-if dummy_mode:
-    config.put_env( 'CYLC_CLOCK_RATE', str( options.clock_rate ) )
-    # communicate failout_task_id to the dummy task program
-    if options.failout_task_id:
-        print "SETTING FAILOUT: " + options.failout_task_id
-        config.put_env( 'CYLC_FAILOUT_ID', options.failout_task_id )
-    if options.dummy_task_run_length:
-        print "SETTING DUMMY TASK RUN LENGTH: " + options.dummy_task_run_length
-        config.put_env( 'CYLC_DUMMY_TASK_RUN_LENGTH', options.dummy_task_run_length )
-
-config.check_environment()
-job_submit.dummy_mode = dummy_mode
-job_submit.global_env = config.get( 'environment' )
-
-# initialize the server (and create main logger)
-pool = coldstart( config, nameserver, groupname, dummy_mode,
-        logging_dir, state_dump_file, exclude_tasks, include_tasks,
-        start_time, stop_time, pause_time )
-
-# logger is now created and pimped
-log = logging.getLogger( 'main' )
-
-# remote control switch
-remote = remote_switch.remote_switch( config, pool, options.failout_task_id )
-daemon.connect( remote, nameserver.obj_name( 'remote', groupname) )
-
-# print system information at startup----------------------------------
-print_banner()
-print
-config.dump()
-print "\nSTARTING\n"
-
-count = 0
-task.state_changed = True
-
-while True: # MAIN LOOP
-
-    # PROCESS ALL TASKS whenever something has changed that might
-    # require renegotiation of dependencies, etc.
-    #--
-    if task.state_changed or \
-            remote.process_tasks or \
-            pool.waiting_contact_task_ready( clock.get_datetime() ):
-
-        pool.negotiate()
-
-        pool.run_tasks()
-
-        pool.cleanup()
-
-        # spawn after cleanup in case the system had stalled, unspawned
-        # at max runahead.
-        pool.spawn()
-
-        pool.dump_state()
-
-        system_state.update( pool.tasks, clock, \
-                pool.paused(), pool.will_pause_at(), \
-                remote.halt, pool.will_stop_at() )
-
-    if pool.all_tasks_finished():
-        log.critical( "ALL TASKS FINISHED" )
-        break
-
-    if remote.halt_now or remote.halt and pool.no_tasks_running():
-        log.critical( "ALL RUNNING TASKS FINISHED" )
-        break
-
-    # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
-    # handleRequests() returns after one or more remote method
-    # invocations are processed (these are not just task messages, hence
-    # the use of the state_changed variable above).
-    #--
-
-    # incoming task messages set this to True
-    task.state_changed = False
-    remote.process_tasks = False
-    # handle all remote calls
-    #print "hello ..."
-    daemon.handleRequests( timeout = None )
-    #print "      ... there"
-
-# END MAIN LOOP
-
-print ""
-print "STOPPING"
-
-if use_lockserver:
-    print ""
-    print "Releasing system lock"
-    if not syslock( pns_host, groupname, system_dir, 'scheduler' ).release_system_access():
-        print >> stderr, 'failed to release system!'
-
-print "Shutting down my Pyro daemon"
-daemon.shutdown( True )
-print "Deleting Pyro nameserver group " + groupname
-nameserver.get_ns().deleteGroup( groupname )
-print "Bye!"
-
-# to simulate the effect on monitoring etc. of long task processing time
-# (many many tasks...), put this in the task processing loop:
-#if count % 50 == 0:
-#    # every 50th time, sleep for 30s
-#    print 'SLEEPING 30s!'
-#    sleep(30)
+            metavar="CYCLE", action="store", default=None,
+            dest="start_time" )
+
+        scheduler.__init__( self )
+
+    def parse_commandline( self ):
+        ( self.options, self.args ) = self.parser.parse_args()
+
+        if len( self.args ) == 0:
+            self.parser.error( "System name argument required." )
+        elif len( self.args ) > 1:
+            self.parser.error( "Too many arguments." )
+
+        if not self.options.start_time:
+            parser.error( 'You must supply an initial cycle time' )
+        else:
+            self.start_time = self.options.start_time
+
+        if not cycle_time.is_valid( self.start_time ):
+            parser.error( "invalid cycle time: " + self.start_time )
+
+        scheduler.parse_commandline( self )
+        print "Starting from: " + self.start_time
+
+    def load_system_config( self ):
+        scheduler.load_system_config( self )
+        # check for legal start time
+        self.config.check_start_time( self.start_time )
+
+    def create_task_pool( self ):
+        # initialize the server (and create main logger)
+        self.pool = coldstart( self.config, self.nameserver, self.groupname,
+                self.dummy_mode, self.logging_dir, self.state_dump_file,
+                self.exclude_tasks, self.include_tasks,
+                self.start_time, self.stop_time, self.pause_time )
+
+if __name__ == '__main__':
+    server = coldstart_scheduler()
+    server.configure()
+    server.run()

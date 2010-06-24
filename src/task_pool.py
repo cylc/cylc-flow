@@ -20,7 +20,7 @@ from dynamic_instantiation import get_object
 from Pyro.errors import NamingError
 from broker import broker
 
-class server:
+class task_pool:
     def __init__( self, config, nameserver, groupname,
             dummy_mode, logging_dir, state_dump_file, 
             exclude, include, stop_time, pause_time ):

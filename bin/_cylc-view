@@ -380,7 +380,7 @@ Cylc View is a real time system monitor for Cylc.
         #self.update_tb( tb, ' blue => satisfied,', [blue] )
         self.update_tb( tb, ' (' )
         self.update_tb( tb, 'red', [red] )
-        self.update_tb( tb, '=> NOT satisfied)\n\n') 
+        self.update_tb( tb, '=> NOT satisfied)\n') 
 
         if len( pre ) == 0:
             self.update_tb( tb, ' - (None)\n' )
@@ -395,7 +395,7 @@ Cylc View is a real time system monitor for Cylc.
         self.update_tb( tb, '\nOutputs', [bold] )
         self.update_tb( tb, ' (' )
         self.update_tb( tb, 'red', [red] )
-        self.update_tb( tb, '=> NOT completed)\n\n') 
+        self.update_tb( tb, '=> NOT completed)\n') 
 
 
         if len( out ) == 0:

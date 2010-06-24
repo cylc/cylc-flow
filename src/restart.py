@@ -10,11 +10,11 @@
 #         |________________________|
 
 
-from server import server
+from task_pool import task_pool
 import sys, os, re
 from dynamic_instantiation import get_object
 
-class restart( server ):
+class restart( task_pool ):
 
     def __init__( self, config, nameserver, groupname, dummy_mode,
             logging_dir, state_dump_file, exclude, include,
@@ -23,7 +23,7 @@ class restart( server ):
         self.initial_state_dump = initial_state_dump
         self.no_reset = no_reset
 
-        server.__init__( self, config, nameserver, groupname,
+        task_pool.__init__( self, config, nameserver, groupname,
             dummy_mode, logging_dir, state_dump_file, 
             exclude, include, stop_time, pause_time )
 

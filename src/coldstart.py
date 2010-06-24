@@ -11,16 +11,16 @@
 
 
 from dynamic_instantiation import get_object
-from server import server
+from task_pool import task_pool
 
-class coldstart( server ):
+class coldstart( task_pool ):
     def __init__( self, config, nameserver, groupname, dummy_mode,
             logging_dir, state_dump_file, exclude, include,
             start_time, stop_time, pause_time ):
 
         self.start_time = start_time
 
-        server.__init__( self, config, nameserver, groupname,
+        task_pool.__init__( self, config, nameserver, groupname,
             dummy_mode, logging_dir, state_dump_file, 
             exclude, include, stop_time, pause_time )
 
