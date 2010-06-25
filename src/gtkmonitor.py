@@ -58,7 +58,7 @@ class monitor:
 
     # close the window and quit
     def delete_event(self, widget, event, data=None):
-        gtk.main_quit()
+        #gtk.main_quit()
         self.lvp.quit()
         self.t.quit = True
 
@@ -86,7 +86,7 @@ Cylc View is a real time system monitor for Cylc.
         about.destroy()
 
     def click_exit( self, foo ):
-        gtk.main_quit()
+        #gtk.main_quit()
         self.lvp.quit()
         self.t.quit = True
 

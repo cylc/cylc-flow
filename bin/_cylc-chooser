@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+
+import pango
+from warning_dialog import warning_dialog
+
+import gobject
+import pygtk
+####pygtk.require('2.0')
+import gtk
+import time, os, re, sys
+#from CylcOptionParsers import NoPromptOptionParser_u
+#from connector import connector
+#import pyrex
+#from cycle_time import _rt_to_dt, is_valid
+from gtkmonitor import monitor
+
+from pyrex import discover
+
+class chooser:
+
+    def launch_viewer( self, group ):
+        user, system = group.split( '^' ) 
+        imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+        tvexample = monitor(group, system, 'localhost', imagedir)
+
+    def delete_event( self, w, e, data=None ):
+        gtk.main_quit()
+
+    def get_selected_system( self, selection, treemodel ):
+        iter = treemodel.get_iter( selection )
+        system = treemodel.get_value( iter, 0 )
+        #self.show_log( task_id )
+        print '----------> ', system
+        self.launch_viewer( system )
+        return False
+
+
+    def __init__(self):
+        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        window.set_title("cylc view chooser" )
+        window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
+        window.set_size_request(200, 150)
+        window.connect("delete_event", self.delete_event)
+
+        liststore = gtk.ListStore( str )
+        treeview = gtk.TreeView()
+
+        ts = treeview.get_selection()
+        ts.set_mode( gtk.SELECTION_SINGLE )
+        ts.set_select_function( self.get_selected_system, liststore )
+
+        tvc = gtk.TreeViewColumn( 'Cylc Systems' )
+        cr = gtk.CellRendererText()
+        tvc.pack_start( cr, False )
+        tvc.set_attributes( cr, text=0 )
+ 
+        treeview.set_model(liststore)
+        treeview.append_column( tvc )
+
+        discoverer = discover( 'localhost' )
+        groups = discoverer.get_groups()
+        for group in groups:
+            if re.search( '\^', group ):
+                print group
+                liststore.append( [group] )
+
+        vbox = gtk.VBox()
+        quit_button = gtk.Button( "Close" )
+        quit_button.connect("clicked", self.delete_event, None, None )
+        vbox.pack_start( treeview, True )
+        vbox.pack_start( quit_button, False )
+        window.add( vbox )
+        window.show_all()
+
+
+if __name__ == "__main__":
+ 
+    gobject.threads_init()
+    app = chooser()
+    gtk.main()
+
