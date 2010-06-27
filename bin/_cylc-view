@@ -1,29 +1,24 @@
 #!/usr/bin/env python
 
-import pango
-from warning_dialog import warning_dialog
-
 import gobject
 import pygtk
+from optparse import OptionParser
 ####pygtk.require('2.0')
 import gtk
-import time, os, re, sys
-#from CylcOptionParsers import NoPromptOptionParser_u
-#from connector import connector
-#import pyrex
-#from cycle_time import _rt_to_dt, is_valid
-from gtkmonitor import monitor
+import time, os, re
+import socket
 import threading
 
+from gtkmonitor import monitor
 from pyrex import discover
 
 class chooser_updater(threading.Thread):
 
-    def __init__(self, liststore ):
+    def __init__(self, liststore, pns_host ):
         self.quit = False
         self.liststore = liststore
         super(chooser_updater, self).__init__()
-        self.discoverer = discover( 'localhost' )
+        self.discoverer = discover( pns_host )
         self.choices = []
 
     def run( self ):
@@ -58,7 +53,7 @@ class chooser:
     def launch_viewer( self, group ):
         root, user, system = group.split( '.' ) 
         imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-        tv = monitor(group, system, 'localhost', imagedir)
+        tv = monitor(group, system, self.pns_host, imagedir)
         self.viewer_list.append( tv )
 
     def delete_event( self, w, e, data=None ):
@@ -76,7 +71,10 @@ class chooser:
         return False
 
 
-    def __init__(self):
+    def __init__(self, pns_host ):
+
+        self.pns_host = pns_host
+
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("cylc view chooser" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
@@ -109,13 +107,30 @@ class chooser:
 
         self.viewer_list = []
 
-        self.updater = chooser_updater( liststore )
+        self.updater = chooser_updater( liststore, self.pns_host )
         self.updater.start()
 
 
 if __name__ == "__main__":
+
+    parser = OptionParser( """cylc view [options] SYSTEM 
+
+Launch one or more real-time system monitors on currently running systems. 
+
+Note that cylc system monitors display the stat of TASK PROXY OBJECTS
+INSIDE THE SCHEDULER, NOT EXTERNAL SYSTEM TASKS (how to do the latter
+depends on the job submission method used by each task).""")
+
+    parser.add_option( "--host",
+            help="Pyro nameserver host, defaults to local hostname. Use "
+            "if not auto-detected (which depends on network config).", 
+            metavar="HOSTNAME", action="store", default=socket.getfqdn(),
+            dest="pns_host" )
+
+    ( options, args ) = parser.parse_args()
+
+    pns_host = options.pns_host
  
     gobject.threads_init()
-    app = chooser()
+    app = chooser( pns_host )
     gtk.main()
-
