@@ -17,7 +17,7 @@ import datetime
 
 import cylcrc
 import cycle_time
-import pyrex
+from pyrex import pyrex
 import dead_letter
 import state_summary
 import accelerated_clock 
@@ -26,10 +26,6 @@ from registration import registrations
 from lockserver import syslock
 
 import task     # loads task_classes
-
-# pyro modules
-import Pyro.core, Pyro.naming
-from Pyro.errors import NamingError
 
 class scheduler:
 
@@ -225,18 +221,16 @@ class scheduler:
 
         self.banner[ 'system definition' ] = self.system_dir
 
-    def configure_pyro_nameserver( self ):
-        # LOCATE THE PYRO NAMESERVER
-        self.nameserver = pyrex.discover( self.pns_host )
-
-        # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THIS SYSTEM
-        self.groupname = os.environ['USER'] + '^' + self.system_name
+    def configure_pyro( self ):
         if self.practice:
             # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
-            self.groupname += "-practice"
+            sysname = self.system_name + "-practice"
+        else:
+            sysname = self.system_name
 
-        self.nameserver.create_groupname( self.groupname )
-        self.banner[ 'Pyro nameserver group' ] = self.groupname
+        self.pyro = pyrex( self.pns_host, sysname )
+
+        self.banner[ 'Pyro nameserver group' ] = self.pyro.get_groupname()
 
     def configure_environment( self ):
         # provide access to the system scripts and source modules
@@ -268,14 +262,14 @@ class scheduler:
         self.config.job_submit_config( self.dummy_mode )
 
         # load some command dynamic stuff into config module, for easy handling.
-        self.config.put( 'daemon', self.pyro_daemon )
+        ####self.config.put( 'daemon', self.pyro_daemon )
         self.config.put( 'clock', self.clock )
         self.config.put( 'logging_dir', self.logging_dir )  # cylc view gets this from state_summary
 
         # set global (all tasks) environment variables-------------------------
         self.config.put_env( 'CYLC_MODE', 'scheduler' )
         self.config.put_env( 'CYLC_NS_HOST',  str( self.pns_host ) )  # may be an IP number
-        self.config.put_env( 'CYLC_NS_GROUP',  self.groupname )
+        self.config.put_env( 'CYLC_NS_GROUP',  self.pyro.get_groupname() )
         self.config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
         self.config.put_env( 'CYLC_SYSTEM_DIR', self.system_dir )
         self.config.put_env( 'CYLC_SYSTEM_NAME', self.system_name )
@@ -307,19 +301,6 @@ class scheduler:
            except:
                raise SystemExit( "ERROR: State dump file copy failed" )
 
-    def configure_pyro_daemon( self ):
-        # REQUIRE SINGLE THREADED PYRO (see documentation)
-        Pyro.config.PYRO_MULTITHREADED = 0
-        # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
-        # (see the Userguide "Networking Issues" section).
-        Pyro.config.PYRO_DNS_URI = True
-
-        Pyro.core.initServer()
-
-        # CREATE A PYRO DAEMON FOR THIS SYSTEM
-        self.pyro_daemon = Pyro.core.Daemon()
-        self.pyro_daemon.useNameServer(self.nameserver.get_ns())
-
     def configure_dummy_mode_clock( self ):
         # system clock for accelerated time in dummy mode
         self.clock = accelerated_clock.clock( 
@@ -327,18 +308,18 @@ class scheduler:
                 int(self.clock_offset),
                 self.dummy_mode ) 
 
-        self.pyro_daemon.connect( self.clock, self.nameserver.obj_name( 'clock', self.groupname ))
+        self.pyro.connect( self.clock, 'clock' )
 
     def configure_system_state_summary( self ):
         # remotely accessible system state summary
         self.system_state = state_summary.state_summary( self.config, self.dummy_mode )
-        self.pyro_daemon.connect( self.system_state, self.nameserver.obj_name( 'state_summary', self.groupname ))
+        self.pyro.connect( self.system_state, 'state_summary')
 
     def configure_dead_letter_box( self ):
         # NOT USED
         # dead letter box for remote use
         self.dead_letter_box = dead_letter.letter_box()
-        self.pyro_daemon.connect( self.dead_letter_box, self.nameserver.obj_name( 'dead_letter_box', self.groupname))
+        self.pyro.connect( self.dead_letter_box, 'dead_letter_box')
 
     def configure_job_submission( self ):
         job_submit.dummy_mode = self.dummy_mode
@@ -348,7 +329,7 @@ class scheduler:
         # remote control switch
         import remote_switch
         self.remote = remote_switch.remote_switch( self.config, self.pool, self.failout_task_id )
-        self.pyro_daemon.connect( self.remote, self.nameserver.obj_name( 'remote', self.groupname) )
+        self.pyro.connect( self.remote, 'remote' )
 
     def create_task_pool( self ):
         self.pool = None
@@ -358,9 +339,8 @@ class scheduler:
         self.parse_commandline()
         self.load_preferences()
         self.get_system_def_dir()
-        self.configure_pyro_nameserver()
+        self.configure_pyro()
         self.configure_environment()
-        self.configure_pyro_daemon()
         self.configure_dummy_mode_clock()
         self.load_system_config()
         self.configure_system_state_summary()
@@ -378,7 +358,7 @@ class scheduler:
 
         if self.use_lockserver:
             # request system access from the lock server
-            system_lock = syslock( self.pns_host, self.groupname, self.system_dir, 'scheduler' )
+            system_lock = syslock( self.pns_host, self.system_dir, 'scheduler' )
             if not system_lock.request_system_access( self.exclusive_system_lock ):
                 raise SystemExit( 'locked out!' )
 
@@ -436,7 +416,7 @@ class scheduler:
             task.state_changed = False
             self.remote.process_tasks = False
             # handle all remote calls
-            self.pyro_daemon.handleRequests( timeout = None )
+            self.pyro.handleRequests( timeout=None )
 
         # END MAIN LOOP
 
@@ -445,17 +425,13 @@ class scheduler:
         self.cleanup()
 
     def cleanup( self ):
-        print "Shutting down my Pyro daemon"
-        self.pyro_daemon.shutdown( True )
-        print "Deleting Pyro nameserver group " + self.groupname
-        self.nameserver.get_ns().deleteGroup( self.groupname )
-        print "Bye!"
+        self.pyro.shutdown( True )
 
         if self.use_lockserver:
             # do this last
             print ""
             print "Releasing system lock"
-            system_lock = syslock( self.pns_host, self.groupname, self.system_dir, 'scheduler' )
+            system_lock = syslock( self.pns_host, self.pyro.get_groupname(), self.system_dir, 'scheduler' )
             if not system_lock.release_system_access():
                 print >> stderr, 'failed to release system!'
 

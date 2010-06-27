@@ -16,14 +16,14 @@ from dynamic_instantiation import get_object
 
 class restart( task_pool ):
 
-    def __init__( self, config, nameserver, groupname, dummy_mode,
+    def __init__( self, config, pyro, dummy_mode,
             logging_dir, state_dump_file, exclude, include,
             initial_state_dump, no_reset, stop_time, pause_time ):
 
         self.initial_state_dump = initial_state_dump
         self.no_reset = no_reset
 
-        task_pool.__init__( self, config, nameserver, groupname,
+        task_pool.__init__( self, config, pyro,
             dummy_mode, logging_dir, state_dump_file, 
             exclude, include, stop_time, pause_time )
 
@@ -143,7 +143,7 @@ class restart( task_pool ):
  
             else:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
+                self.pyro.connect( itask, itask.id )
                 self.tasks.append( itask )
 
 

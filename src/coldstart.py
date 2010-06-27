@@ -14,13 +14,13 @@ from dynamic_instantiation import get_object
 from task_pool import task_pool
 
 class coldstart( task_pool ):
-    def __init__( self, config, nameserver, groupname, dummy_mode,
+    def __init__( self, config, pyro, dummy_mode,
             logging_dir, state_dump_file, exclude, include,
             start_time, stop_time, pause_time ):
 
         self.start_time = start_time
 
-        task_pool.__init__( self, config, nameserver, groupname,
+        task_pool.__init__( self, config, pyro, 
             dummy_mode, logging_dir, state_dump_file, 
             exclude, include, stop_time, pause_time )
 
@@ -67,5 +67,5 @@ class coldstart( task_pool ):
  
             else:
                 itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
+                self.pyro.connect( itask, itask.id )
                 self.tasks.append( itask )

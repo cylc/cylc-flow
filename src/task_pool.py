@@ -17,17 +17,15 @@ import logging
 import traceback
 import sys, os, re
 from dynamic_instantiation import get_object
-from Pyro.errors import NamingError
 from broker import broker
 
 class task_pool:
-    def __init__( self, config, nameserver, groupname,
+    def __init__( self, config, pyro, 
             dummy_mode, logging_dir, state_dump_file, 
             exclude, include, stop_time, pause_time ):
 
         self.config = config
-        self.nameserver = nameserver
-        self.groupname = groupname
+        self.pyro = pyro
         self.dummy_mode = dummy_mode
         self.logging_dir = logging_dir
         self.state_dump_file = state_dump_file
@@ -39,8 +37,6 @@ class task_pool:
 
         # TO DO: use self.config.get('foo') throughout
         self.clock = config.get('clock')
-        self.pyro = config.get('daemon')  
-
 
         # initialise the dependency broker
         self.broker = broker()
@@ -208,7 +204,8 @@ class task_pool:
                 else:
                     # no stop time, or we haven't reached it yet.
                     try:
-                        self.pyro.connect( new_task, self.nameserver.obj_name( new_task.id, self.groupname) )
+                        # TO DO: EXCEPTION HANDLING IN PYREX CLASS
+                        self.pyro.connect( new_task, new_task.id )
                     except Exception, x:
                         # THIS WILL BE A Pyro NamingError IF THE NEW TASK
                         # ALREADY EXISTS IN THE SYSTEM.
@@ -606,7 +603,7 @@ class task_pool:
 
                 if not skip:
                     itask.log( 'DEBUG', "connected" )
-                    self.pyro.connect( itask, self.nameserver.obj_name( itask.id, self.groupname) )
+                    self.pyro.connect( itask, itask.id )
                     self.tasks.append( itask )
 
         #except NamingError, e:
@@ -747,7 +744,7 @@ class task_pool:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    self.pyro.connect( new_task, self.nameserver.obj_name( new_task.id, self.groupname) )
+                    self.pyro.connect( new_task, new_task.id )
                     new_task.log( 'DEBUG', 'connected' )
                     self.tasks.append( new_task )
 

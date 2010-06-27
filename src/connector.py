@@ -28,7 +28,7 @@ class connector:
         foo = pyrex.discover( hostname )
 
         if not foo.registered( groupname ):
-            print "WARNING: no such group registered with the Pyro nameserver:", groupname 
+            print "WARNING: no Pyro objects registered under", groupname 
             # print existing groups and exit
             print
             foo.print_info()

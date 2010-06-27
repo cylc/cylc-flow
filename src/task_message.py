@@ -64,8 +64,9 @@ class message:
         try:
             proxy = connector( self.pns_host, self.groupname, self.task_id ).get()
         except:
-            print >> sys.stderr, "Failed to connect to " + self.task_id + \
-            " in " + self.groupname + " on " + self.pns_host
+            #print >> sys.stderr, "Failed to connect to " + self.task_id + \
+            #" in " + self.groupname + " on " + self.pns_host
+            raise
             sys.exit(1)
         else:
             return proxy

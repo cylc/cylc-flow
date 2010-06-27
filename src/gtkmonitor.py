@@ -487,7 +487,7 @@ Cylc View is a real time system monitor for Cylc.
         self.menu_bar.append( help_menu_root )
 
     def create_info_bar( self ):
-        user, name = self.groupname.split('^')
+        root, user, name = self.groupname.split('.')
 
         self.label_status = gtk.Label( "status..." )
         self.label_mode = gtk.Label( "mode..." )

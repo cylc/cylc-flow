@@ -38,8 +38,7 @@ class chooser_updater(threading.Thread):
         groups = self.discoverer.get_groups()
         choices = []
         for group in groups:
-            if re.search( '\^', group ):
-                choices.append( group )
+            choices.append( group )
         choices.sort()
         if choices != self.choices:
             self.choices = choices
@@ -57,7 +56,7 @@ class chooser_updater(threading.Thread):
 
 class chooser:
     def launch_viewer( self, group ):
-        user, system = group.split( '^' ) 
+        root, user, system = group.split( '.' ) 
         imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
         tv = monitor(group, system, 'localhost', imagedir)
         self.viewer_list.append( tv )

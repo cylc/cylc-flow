@@ -92,8 +92,8 @@ Arguments:
     def create_task_pool( self ):
         self.find_initial_state_dump_file()
         # initialize the server (and create main logger)
-        self.pool = restart( self.config, self.nameserver,
-                self.groupname, self.dummy_mode, self.logging_dir,
+        self.pool = restart( self.config, self.pyro,
+                self.dummy_mode, self.logging_dir,
                 self.state_dump_file, self.exclude_tasks,
                 self.include_tasks, self.initial_state_dump,
                 self.no_reset, self.stop_time, self.pause_time )

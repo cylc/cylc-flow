@@ -80,7 +80,8 @@ Arguments:
         return self.pns_host
 
     def get_groupname( self ):
-        groupname = self.username + '^' + self.system_name
+        # TO DO: USER PYREX MODULE HERE
+        groupname = ':cylc.' + self.username + '.' + self.system_name
         if self.practice:
             groupname += '-practice'
         return groupname
@@ -139,7 +140,8 @@ arguments:
         return self.pns_host
 
     def get_groupname( self ):
-        groupname = self.username + '^' + self.system_name
+        # TO DO: USER PYREX MODULE HERE
+        groupname = ':cylc.' + self.username + '.' + self.system_name
         if self.practice:
             groupname += '-practice'
         return groupname
