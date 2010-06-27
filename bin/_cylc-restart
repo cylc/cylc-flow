@@ -52,7 +52,7 @@ Arguments:
 
         self.restart_from = None
         if self.options.restart_from:
-            self.restart_from = options.restart_from
+            self.restart_from = self.options.restart_from
 
         scheduler.parse_commandline( self )
  
@@ -103,6 +103,7 @@ if __name__ == '__main__':
     server.configure()
     try:
         server.run()
+    except Exception, x:
         # catch proper exceptions
         #print "ERROR 1"
         print x

@@ -447,7 +447,6 @@ class scheduler:
         print "Shutting down my Pyro daemon"
         self.pyro_daemon.shutdown( True )
         print "Deleting Pyro nameserver group " + self.groupname
-
         self.nameserver.get_ns().deleteGroup( self.groupname )
         print "Bye!"
 
