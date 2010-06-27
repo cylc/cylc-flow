@@ -71,9 +71,11 @@ class monitor:
 
     def about( self, bt ):
         about = gtk.AboutDialog()
-        if gtk.gtk_version[1] >= 12:
-            # set_program_name() was added in PyGTK 2.12
-            about.set_program_name( "cylc" )
+        if gtk.gtk_version[0] ==2:
+            if gtk.gtk_version[1] >= 12:
+                # set_program_name() was added in PyGTK 2.12
+                about.set_program_name( "cylc" )
+        cylc_version = 'THIS IS NOT A VERSIONED RELEASE'
         about.set_version( cylc_version )
         about.set_copyright( "(c) Hilary Oliver, NIWA" )
         about.set_comments( 
@@ -184,7 +186,7 @@ Cylc View is a real time system monitor for Cylc.
         #hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click on rows to get Task Information" ))
+        eb.add( gtk.Label( "Click rows for Task Info" ))
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
         hbox.pack_start( eb, True )
  
@@ -309,12 +311,12 @@ Cylc View is a real time system monitor for Cylc.
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click on table headings to sort tasks.") )
+        eb.add( gtk.Label( "Click headings to sort") )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click on rows to get Task Information" ) )
+        eb.add( gtk.Label( "Click rows for Task Info" ) )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
         hbox.pack_start( eb, True )
 
