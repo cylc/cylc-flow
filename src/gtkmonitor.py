@@ -89,12 +89,12 @@ Cylc View is a real time system monitor for Cylc.
         #gtk.main_quit()
         self.lvp.quit()
         self.t.quit = True
-
         for q in self.quitters:
             #print "calling quit on ", q
             q.quit()
 
         #print "BYE from main thread"
+        self.window.destroy()
         return False
 
     def expand_all( self, widget, view ):
@@ -536,12 +536,12 @@ Cylc View is a real time system monitor for Cylc.
         self.groupname = groupname
         self.pns_host = pns_host
         self.imagedir = imagedir
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #window.set_border_width( 5 )
-        window.set_title("cylc view <" + self.groupname + ">" )
-        window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        window.set_size_request(600, 500)
-        window.connect("delete_event", self.delete_event)
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        #self.window.set_border_width( 5 )
+        self.window.set_title("cylc view <" + self.groupname + ">" )
+        self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
+        self.window.set_size_request(600, 500)
+        self.window.connect("delete_event", self.delete_event)
 
         self.log_colors = color_rotator()
 
@@ -589,9 +589,9 @@ Cylc View is a real time system monitor for Cylc.
         bigbox.pack_start( self.menu_bar, False )
         bigbox.pack_start( self.create_info_bar(), False )
         bigbox.pack_start( main_panes, True )
-        window.add( bigbox )
+        self.window.add( bigbox )
 
-        window.show_all()
+        self.window.show_all()
 
         self.quitters = []
 
