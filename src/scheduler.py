@@ -197,13 +197,14 @@ class scheduler:
         if self.practice:
             self.logging_dir += "-practice"
             state_dump_dir += "-practice"
-            for dir in [ self.logging_dir, state_dump_dir ]:
-                if not os.path.exists( dir ):
-                    print "Creating directory: " + dir
-                    try:
-                        os.makedirs( dir )
-                    except:
-                        raise SystemExit( "ERROR: unable to create directory " + dir )
+
+        for dir in [ self.logging_dir, state_dump_dir ]:
+            if not os.path.exists( dir ):
+                print "Creating directory: " + dir
+                try:
+                    os.makedirs( dir )
+                except:
+                    raise SystemExit( "ERROR: unable to create directory " + dir )
 
         self.state_dump_file = os.path.join( state_dump_dir, 'state' )
 
