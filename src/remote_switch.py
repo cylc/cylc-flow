@@ -35,7 +35,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt = False
         self.halt_now = False
 
-        self.locked = True
+        self.blocked = True
         self.owner = os.environ['USER']
 
         self.create_name_translation_table()
@@ -48,10 +48,10 @@ class remote_switch( Pyro.core.ObjBase ):
             self.warning( "refusing remote request (wrong owner)" )
             reasons.append( "wrong owner: " + self.owner )
 
-        if self.locked:
+        if self.blocked:
             legal = False
-            self.warning( "refusing remote request (system locked)" )
-            reasons.append( "SYSTEM LOCKED" )
+            self.warning( "refusing remote request (system blocked)" )
+            reasons.append( "SYSTEM BLOCKED" )
 
         return ( legal, ', '.join( reasons ) )
 
@@ -111,26 +111,26 @@ class remote_switch( Pyro.core.ObjBase ):
         print
         self.log.warning( msg )
 
-    def lock( self, user ):
+    def block( self, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
             return reasons
 
-        self.warning( "system locked by remote request" )
+        self.warning( "system blocked by remote request" )
         self.locked = True
-        return "System locked"
+        return "System blocked"
 
-    def unlock( self, user ):
+    def unblock( self, user ):
         if user != self.owner:
             return "This system is owned by " + self.owner
 
-        if not self.locked:
-            return "System already unlocked"
+        if not self.blocked:
+            return "System already unblocked"
 
         else:
-            self.warning( "system unlocked by remote request" )
-            self.locked = False
-            return "System unlocked"
+            self.warning( "system unblocked by remote request" )
+            self.blocked = False
+            return "System unblocked"
 
 
     def nudge( self, user ):
@@ -434,9 +434,9 @@ class remote_switch( Pyro.core.ObjBase ):
         if user != self.owner:
             return "ILLEGAL OPERATION: This system is owned by " + self.owner
 
-        if self.locked:
-            self.warning( "REMOTE: refusing verbosity request (locked)" )
-            return "SORRY, THIS SYSTEM IS LOCKED"
+        if self.blocked:
+            self.warning( "REMOTE: refusing verbosity request (blocked)" )
+            return "SORRY, THIS SYSTEM IS BLOCKED"
 
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical

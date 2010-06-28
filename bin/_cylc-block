@@ -1,0 +1,30 @@
+#!/usr/bin/env python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+import os
+from connector import connector
+from CylcOptionParsers import PromptOptionParser
+
+parser = PromptOptionParser("""cylc block [options] SYSTEM 
+
+Tell a running system to ignore all intervention commands.
+
+The block/unblock commands are a safety device to help guard against
+inadvertent intervention by a system owner (which is easy to do if you
+have multiple systems running). The use of 'block' rather than 'lock' 
+distinguishes this functionality from the task and system locking
+provided by the cylc lockserver.""")
+
+(options, args) = parser.parse_args()
+
+if parser.prompt( 'Block' ):
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    print god.block( os.environ['USER'] )

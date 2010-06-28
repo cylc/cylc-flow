@@ -13,13 +13,18 @@ import os
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc unlock [options] SYSTEM 
+parser = PromptOptionParser( """cylc unblock [options] SYSTEM 
 
-Unlock a running system to allow intervention via other cylc commands.
-See 'cylc lock --help' for more information.""" )
+Tell a running system to comply with subsequent intervention commands.
+
+The block/unblock commands are a safety device to help guard against
+inadvertent intervention by a system owner (which is easy to do if you
+have multiple systems running). The use of 'block' rather than 'lock' 
+distinguishes this functionality from the task and system locking
+provided by the cylc lockserver.""")
 
 (options, args) = parser.parse_args()
 
-if parser.prompt( 'Unlock' ):
+if parser.prompt( 'Unblock' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.unlock( os.environ['USER'] )
+    print god.unblock( os.environ['USER'] )
