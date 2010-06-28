@@ -32,8 +32,5 @@
 %PREREQUISITES
     # NONE
 
-%ESTIMATED_RUN_TIME
-    2 min
-
 %OUTPUTS
-    2 min: "global model dump ready for $(CYCLE_TIME)"
+    "global model dump ready for $(CYCLE_TIME)"

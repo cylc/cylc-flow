@@ -16,6 +16,9 @@
 %CYCLES
     0,12
 
+%NO_NONCOTEMPORAL_DEPENDANTS
+    False
+
 %TASK
     file_transfer.sh
 
@@ -31,8 +34,5 @@
 %PREREQUISITES
     # NONE
 
-%ESTIMATED_RUN_TIME
-    2 min
-
 %OUTPUTS
-    2 min: "file lbc_$(CYCLE_TIME).um ready"
+    "file lbc_$(CYCLE_TIME).um ready"

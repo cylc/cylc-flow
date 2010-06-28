@@ -20,13 +20,10 @@
 %TASK
     UM_nz_coldstart.sh
 
-%ESTIMATED_RUN_TIME
-    15 min
-
 %PREREQUISITES
     "global model dump ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    10 min: "IAU start dump ready for $(CYCLE_TIME)"
-    10 min: "Cx background file ready for $(CYCLE_TIME)"
-     8 min: "UM_nz restart files ready for $(CYCLE_TIME)"
+    "IAU start dump ready for $(CYCLE_TIME)"
+    "Cx background file ready for $(CYCLE_TIME)"
+    "UM_nz restart files ready for $(CYCLE_TIME)"

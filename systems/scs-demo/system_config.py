@@ -33,6 +33,9 @@ class system_config( config ):
         # system title
         self.items[ 'system_title' ] = 'SCS DEMO EXAMPLE'
 
+        # multiple simultaneous system instances?
+        self.items[ 'allow_simultaneous_system_instances' ] = False
+
         # system info: add descriptive information as you like, e.g.:
         # self.items[ 'system_info' ]['foo'] = 'foo bar baz'
 

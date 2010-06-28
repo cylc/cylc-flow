@@ -17,6 +17,10 @@
 %ONEOFF_FOLLOW_ON
     g_lbc
 
+
+%NO_NONCOTEMPORAL_DEPENDANTS
+    False
+
 %CYCLES
     6
 
@@ -33,8 +37,5 @@
 %PREREQUISITES
     # NONE
 
-%ESTIMATED_RUN_TIME
-    2 min
-
 %OUTPUTS
-    2 min: "file lbc_$(CYCLE_TIME - 6).um ready"
+    "file lbc_$(CYCLE_TIME - 6).um ready"

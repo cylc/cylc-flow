@@ -16,9 +16,6 @@
 %TASK
     VAR_nz.sh
 
-%ESTIMATED_RUN_TIME
-    15 min
-
 %PREREQUISITES
     # trigger off "completed" OPS tasks, rather than particular
     # OPS outputs, so that the system is not held up by failure
@@ -28,4 +25,4 @@
     "OPS3%$(CYCLE_TIME) completed"
 
 %OUTPUTS
-    15 min: "VAR increments ready for $(CYCLE_TIME)"
+    "VAR increments ready for $(CYCLE_TIME)"

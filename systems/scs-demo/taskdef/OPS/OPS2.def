@@ -12,9 +12,6 @@
 %TASK
     ops_obsgroup2.sh
 
-%ESTIMATED_RUN_TIME
-    4 min
-
 %OUTPUTS
-    3 min: "obsgroup 2 varobs ready for $(CYCLE_TIME)"
-    4 min: "obsgroup 2 Cx columns ready for $(CYCLE_TIME)"
+    "obsgroup 2 varobs ready for $(CYCLE_TIME)"
+    "obsgroup 2 Cx columns ready for $(CYCLE_TIME)"

@@ -16,13 +16,10 @@
 %TASK
     ops_obsgroup1.sh
 
-%ESTIMATED_RUN_TIME
-    2 min
-
 %PREREQUISITES
     "obstore files ready for $(CYCLE_TIME)"
     "Cx background file ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    1 min: "obsgroup 1 varobs ready for $(CYCLE_TIME)"
-    2 min: "obsgroup 1 Cx columns ready for $(CYCLE_TIME)"
+    "obsgroup 1 varobs ready for $(CYCLE_TIME)"
+    "obsgroup 1 Cx columns ready for $(CYCLE_TIME)"

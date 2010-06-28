@@ -16,11 +16,8 @@
 %TASK
     nz_postproc.sh
 
-%ESTIMATED_RUN_TIME
-    15 min
-
 %PREREQUISITES
     "forecast diagnostics files ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    15 min: "forecast products ready for $(CYCLE_TIME)"
+    "forecast products ready for $(CYCLE_TIME)"

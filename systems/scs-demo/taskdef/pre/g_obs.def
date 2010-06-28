@@ -29,8 +29,5 @@
 %PREREQUISITES
     # NONE
 
-%ESTIMATED_RUN_TIME
-    2 min
-
 %OUTPUTS
-    2 min: "obstore files ready for $(CYCLE_TIME)"
+    "obstore files ready for $(CYCLE_TIME)"

@@ -16,21 +16,17 @@
 %TASK
     UM_nz.sh
 
-%ESTIMATED_RUN_TIME
-    0,12 | 15 min
-    6,18 | 60 min
-
 %PREREQUISITES
     "VAR increments ready for $(CYCLE_TIME)"
     ### "IAU start dump ready for $(CYCLE_TIME)"
     0,12 | "file lbc_$(CYCLE_TIME - 12).um ready"
     6,18 | "file lbc_$(CYCLE_TIME - 6).um ready"
 
-%ESTIMATED_RESTART_OUTPUT_TIMES
-    6,18 | 15 min, 30 min, 45 min, 59 min
-    0,12 | 15 min
+%N_RESTART_OUTPUTS
+    6,18 | 4
+    0,12 | 1
 
 %OUTPUTS
     ### 10 min: "IAU start dump ready for $(CYCLE_TIME + 6)"
-    12 min: "Cx background file ready for $(CYCLE_TIME + 6)"
-    6,18 | 55 min: "forecast diagnostics files ready for $(CYCLE_TIME)"
+    "Cx background file ready for $(CYCLE_TIME + 6)"
+    6,18 | "forecast diagnostics files ready for $(CYCLE_TIME)"

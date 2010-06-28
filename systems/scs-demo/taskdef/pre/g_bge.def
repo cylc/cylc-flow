@@ -29,8 +29,5 @@
 %PREREQUISITES
     # None
 
-%ESTIMATED_RUN_TIME
-    2 min
-
 %OUTPUTS
-    2 min: "bgerr file ready for $(CYCLE_TIME)"
+    "bgerr file ready for $(CYCLE_TIME)"

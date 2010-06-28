@@ -19,11 +19,8 @@
 %ENVIRONMENT
     NZLAM_OUTPUT_DIR /oper/output
 
-%ESTIMATED_RUN_TIME
-    10 min
-
 %PREREQUISITES
     "forecast diagnostics files ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    10 min: "forecast diagnostics archiving done for $(CYCLE_TIME)"
+    "forecast diagnostics archiving done for $(CYCLE_TIME)"
