@@ -17,7 +17,7 @@ Documentation
 import sys
 from optparse import OptionParser
 from task_message import message
-from lockserver import lock
+from task_lock import task_lock
 
 usage = """cylc task-failed [options] [REASON]
 
@@ -36,6 +36,6 @@ if len( args ) == 0:
 else:
     reason = ' '.join( args )
 
-if not lock().release():
+if not task_lock().release():
     print >> sys.stderr, "WARNING failed to release task lock"
 message( reason ).send_failed()

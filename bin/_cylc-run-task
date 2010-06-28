@@ -21,7 +21,7 @@ from registration import registrations
 from job_submit import job_submit
 import pyrex, cycle_time, pimp_my_logger
 import cylcrc
-from lockserver import syslock
+from system_lock import system_lock
 
 usage = """cylc run-task [options] SYSTEM
 
@@ -115,7 +115,7 @@ if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     use_lockserver = True
     # request system access from the lock server
     # run-task does not need to call release_system_access()
-    system_lock = syslock( pns_host, username, name, system_dir, 'run-task' )
+    system_lock = system_lock( pns_host, username, name, system_dir, 'run-task' )
     if not system_lock.request_system_access():
         raise SystemExit( 'locked out!' )
 

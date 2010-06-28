@@ -53,7 +53,7 @@ PYTHONPATH=$($CYLC_DIR/bin/_cylc-clean-path $PYTHONPATH)
 PATH=$CYLC_DIR/bin:$CYLC_DIR/scripts:$PATH
 
 # export PYTHONPATH to cylc core source modules
-PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$PYTHONPATH
+PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$CYLC_DIR/src/lockserver:$PYTHONPATH
 
 if [[ -n $CYLC_SYSTEM_DIR ]]; then
     # caller must be a cylc jobfile; add system-specific paths as well

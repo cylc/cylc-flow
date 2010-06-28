@@ -17,7 +17,7 @@ Documentation
 import sys
 from optparse import OptionParser
 from task_message import message
-from lockserver import lock
+from task_lock import task_lock
 
 usage = """cylc task-started [options]
 
@@ -35,7 +35,7 @@ if len( args ) != 0:
 
 message().send_started()
 
-if not lock().acquire():
+if not task_lock().acquire():
     print >> sys.stderr, "ERROR: Failed to acquire a task lock"
     message().send_failed()
     sys.exit(1)

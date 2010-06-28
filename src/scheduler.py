@@ -23,7 +23,7 @@ import state_summary
 import accelerated_clock 
 from job_submit import job_submit
 from registration import registrations
-from lockserver import syslock
+from system_lock import system_lock
 
 import task     # loads task_classes
 
@@ -359,9 +359,9 @@ class scheduler:
 
         if self.use_lockserver:
             # request system access from the lock server
-            system_lock = syslock( self.pns_host, self.username,
+            lock = system_lock( self.pns_host, self.username,
                     self.system_name, self.system_dir, 'scheduler' )
-            if not system_lock.request_system_access( self.exclusive_system_lock ):
+            if not lock.request_system_access( self.exclusive_system_lock ):
                 raise SystemExit( 'locked out!' )
 
         if not self.practice:
@@ -433,9 +433,9 @@ class scheduler:
             # do this last
             print ""
             print "Releasing system lock"
-            system_lock = syslock( self.pns_host, self.username,
+            lock = system_lock( self.pns_host, self.username,
                     self.system_name, self.system_dir, 'scheduler' )
-            if not system_lock.release_system_access():
+            if not lock.release_system_access():
                 print >> sys.stderr, 'failed to release system!'
 
         # to simulate the effect on monitoring etc. of long task processing time

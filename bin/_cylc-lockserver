@@ -18,7 +18,9 @@ import pyrex
 import cylcrc
 import cycle_time
 from registration import registrations
-from lockserver import lockserver, lock, syslock, control
+from lockserver import lockserver, control
+from task_lock import task_lock
+from system_lock import system_lock
 
 import Pyro.core, Pyro.naming
 from Pyro.errors import NamingError
@@ -222,14 +224,14 @@ locks left after a system or task exits without releasing its lock)."""
 
     if options.acquire:
         (system, task_id) = check_task_spec( options.acquire )
-        if not lock( task_id, user, system, pns_host ).acquire():
+        if not task_lock( task_id, user, system, pns_host ).acquire():
             print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.acquire
             sys.exit(1)
         sys.exit(0)
 
     if options.release:
         (system, task_id) = check_task_spec( options.release )
-        if not lock( task_id, user, system, pns_host ).release():
+        if not task_lock( task_id, user, system, pns_host ).release():
             print >> sys.stderr, "ERROR: Failed to release a lock for " + options.release
             sys.exit(1)
         sys.exit(0)
@@ -237,7 +239,7 @@ locks left after a system or task exits without releasing its lock)."""
     if options.system_acquire:
         sysname = options.system_acquire
         sysdir = check_system_spec( sysname )
-        if not syslock( pns_host, user, sysname, sysdir, 'scheduler' ).request_system_access( True ):
+        if not system_lock( pns_host, user, sysname, sysdir, 'scheduler' ).request_system_access( True ):
             print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.system_acquire
             sys.exit(1)
         sys.exit(0)
@@ -245,7 +247,7 @@ locks left after a system or task exits without releasing its lock)."""
     if options.system_acquire_nonex:
         sysname = options.system_acquire_nonex
         sysdir = check_system_spec( sysname )
-        if not syslock( pns_host, user, sysname, sysdir, 'scheduler' ).request_system_access( False ):
+        if not system_lock( pns_host, user, sysname, sysdir, 'scheduler' ).request_system_access( False ):
             print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.system_acquire_nonex
             sys.exit(1)
         sys.exit(0)
@@ -253,7 +255,7 @@ locks left after a system or task exits without releasing its lock)."""
     if options.system_release:
         sysname = options.system_release
         sysdir = check_system_spec( sysname )
-        if not syslock( pns_host, user, sysname, sysdir, 'scheduler' ).release_system_access():
+        if not system_lock( pns_host, user, sysname, sysdir, 'scheduler' ).release_system_access():
             print >> sys.stderr, "ERROR: Failed to release a lock for " + options.system_release
             sys.exit(1)
         sys.exit(0)

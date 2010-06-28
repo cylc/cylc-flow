@@ -32,7 +32,7 @@ if [[ $# != 0 ]]; then
         echo " 2 - Configures the new system;"
         echo " 3 - Registers the new system as 'unit';"
         echo " 4 - Starts the system at T0=06Z, with task X set to fail at 12Z;"
-        echo " 5 - Unlocks the running system;"
+        echo " 5 - Unblocks the running system;"
         echo " 6 - Sets a stop time at 12Z (i.e. T0+30 hours);"
         echo " 7 - Waits for the system to stall as result of X failing;"
         echo " 8 - Inserts a new coldstart task at 06Z (T0+24 hours);"
@@ -139,10 +139,10 @@ while ! $READY; do
 done
 echo done
 
-# UNLOCK THE SYSTEM
+# UNBLOCK THE SYSTEM
 echo
 echo -n ">> UNLOCKING the system to allow intervention ..."
-cylc unlock -f unit >> $OUT 2>&1
+cylc unblock -f unit >> $OUT 2>&1
 echo done
 
 # SET A STOP TIME OF
