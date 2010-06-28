@@ -37,7 +37,8 @@ arguments:
 def commandline_parser():
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host= socket.getfqdn() )
+    parser.set_defaults( pns_host= socket.getfqdn(), sched=False,
+            dry_run=False, rcfile=None )
 
     parser.add_option( "-t", "--task",
             help="ID of the task to run.",
@@ -46,16 +47,22 @@ def commandline_parser():
     parser.add_option( "-d", "--dry-run",
             help="Generate the cylc task execution file for the "
             "task and report how it would be submitted to run.",
-            action="store_true", default=False, dest="dry_run" )
+            action="store_true", dest="dry_run" )
 
     parser.add_option( "--host",
             help="Pyro nameserver host, defaults to the local hostname. Use "
             "if not auto-detected (which depends on network config).", 
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
+    parser.add_option( "--scheduler",
+            help="Run the task as a scheduler task.  WARNING: you "
+            "probably do not want to do this; to get failed system "
+            "tasks to re-run use the 'cylc reset' command.", 
+            action="store_true", dest="sched" )
+
     parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-            "(default $HOME/.cylcrc).", default=None,
-            metavar="PATH", action="store", dest="rcfile" )
+            "(default $HOME/.cylcrc).", metavar="PATH", action="store",
+            dest="rcfile" )
 
     return parser
 
@@ -96,8 +103,8 @@ if not options.pns_host:
 else:
     pns_host = options.pns_host
 
-
-groupname = os.environ['USER'] + '^' + name
+username = os.environ['USER']
+pyro_groupname = ':cylc.' + username + '.' + name
 
 # load cylcrc file----------------------------------------------------
 rcfile = cylcrc.rc( options.rcfile )
@@ -108,7 +115,7 @@ if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     use_lockserver = True
     # request system access from the lock server
     # run-task does not need to call release_system_access()
-    system_lock = syslock( pns_host, groupname, system_dir, 'run-task' )
+    system_lock = syslock( pns_host, username, name, system_dir, 'run-task' )
     if not system_lock.request_system_access():
         raise SystemExit( 'locked out!' )
 
@@ -143,9 +150,12 @@ pimp_my_logger.pimp_it( log, task_name, logging_dir, \
 nameserver = pyrex.discover( pns_host )
 
 # set global (all tasks) environment variables-------------------------
-config.put_env( 'CYLC_MODE', 'run-task' )
+if options.sched:
+    config.put_env( 'CYLC_MODE', 'scheduler' )
+else:
+    config.put_env( 'CYLC_MODE', 'run-task' )
 config.put_env( 'CYLC_NS_HOST', pns_host ) 
-config.put_env( 'CYLC_NS_GROUP', groupname )
+config.put_env( 'CYLC_NS_GROUP', pyro_groupname )
 config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
 config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
 config.put_env( 'CYLC_SYSTEM_NAME', name )
