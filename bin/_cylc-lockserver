@@ -100,8 +100,9 @@ class LockServer:
         # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
         # (see the Userguide "Networking Issues" section).
         Pyro.config.PYRO_DNS_URI = True
-        Pyro.config.PYRO_STDLOGGING = True
-        Pyro.config.PYRO_TRACELEVEL = 3
+        # UNCOMMENT THE FOLLOWING FOR LOGGING (goes to $PWD/Pyro_log)
+        #Pyro.config.PYRO_STDLOGGING = True
+        #Pyro.config.PYRO_TRACELEVEL = 3
         Pyro.core.initServer()
 
     def start( self ):
