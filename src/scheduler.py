@@ -433,7 +433,7 @@ class scheduler:
             print "Releasing system lock"
             system_lock = syslock( self.pns_host, self.pyro.get_groupname(), self.system_dir, 'scheduler' )
             if not system_lock.release_system_access():
-                print >> stderr, 'failed to release system!'
+                print >> sys.stderr, 'failed to release system!'
 
         # to simulate the effect on monitoring etc. of long task processing time
         # (many many many tasks...), put this in the task processing loop:
