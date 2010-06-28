@@ -88,7 +88,7 @@ class chooser:
         ts.set_mode( gtk.SELECTION_SINGLE )
         ts.set_select_function( self.get_selected_system, liststore )
 
-        tvc = gtk.TreeViewColumn( 'Choose Systems to View' )
+        tvc = gtk.TreeViewColumn( 'Viewable Systems' )
         cr = gtk.CellRendererText()
         cr.set_property( 'cell-background', 'lightblue' )
         tvc.pack_start( cr, False )

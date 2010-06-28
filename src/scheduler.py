@@ -128,6 +128,7 @@ class scheduler:
 
         # get system name
         self.system_name = self.args[0]
+        self.username = os.environ['USER']
         self.banner[ 'system name' ] = self.system_name
 
         # get Pyro nameserver hostname
@@ -358,7 +359,8 @@ class scheduler:
 
         if self.use_lockserver:
             # request system access from the lock server
-            system_lock = syslock( self.pns_host, self.system_dir, 'scheduler' )
+            system_lock = syslock( self.pns_host, self.username,
+                    self.system_name, self.system_dir, 'scheduler' )
             if not system_lock.request_system_access( self.exclusive_system_lock ):
                 raise SystemExit( 'locked out!' )
 
@@ -431,7 +433,8 @@ class scheduler:
             # do this last
             print ""
             print "Releasing system lock"
-            system_lock = syslock( self.pns_host, self.pyro.get_groupname(), self.system_dir, 'scheduler' )
+            system_lock = syslock( self.pns_host, self.username,
+                    self.system_name, self.system_dir, 'scheduler' )
             if not system_lock.release_system_access():
                 print >> sys.stderr, 'failed to release system!'
 

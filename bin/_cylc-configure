@@ -219,6 +219,9 @@ class system_config( config ):
         # system title
         # self.items[ 'system_title' ] = 'DEFAULT TITLE'
 
+        # can multiple instances of this system run at once?
+        self.items[ 'allow_simultaneous_system_instances' ] = False
+ 
         # system task list
         self.items['task_list'] = task_list   # SEE task_list.py
         self.items['task_list_shortnames'] = task_list_shortnames   # SEE task_list.py

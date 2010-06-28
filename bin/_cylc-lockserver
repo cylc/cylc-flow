@@ -91,21 +91,8 @@ class LockServer:
     def __init__( self, pns_host, logfile ):
         # LOCATE THE PYRO NAMESERVER-------------------------------------------
         #self.nameserver = pyrex.discover( pns_host )
-        try:
-            self.nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
-        except NamingError:
-            raise SystemExit("Failed to find a Pyro nameserver on " + hostname )
-
         self.logfile = logfile
-
-        # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------
-        self.groupname = 'cylc'
-        #self.nameserver.create_groupname( self.groupname )
-        try:
-            self.nameserver.createGroup( self.groupname )
-        except:
-            self.nameserver.deleteGroup( self.groupname )
-            self.nameserver.createGroup( self.groupname )
+        self.pns_host = pns_host
 
         Pyro.config.PYRO_MULTITHREADED = 0
         # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
@@ -119,15 +106,15 @@ class LockServer:
         # CREATE A PYRO pyro_daemon FOR THIS SYSTEM
         # (single threaded prob not necessary for lockserver
         # but it doesn't matter as few connections needed)
-        self.pyro_daemon = Pyro.core.Daemon()
-        #pyro_daemon.useNameServer(self.nameserver.get_ns())
-        self.pyro_daemon.useNameServer(self.nameserver)
 
-        locker = lockserver( logfile )
-        #pyro_daemon.connect( locker, self.nameserver.obj_name( 'lockserver', self.groupname ))
+        locker = lockserver( self.pns_host, logfile )
+
+        self.pyro_daemon = Pyro.core.Daemon()
+        self.pyro_daemon.useNameServer(locker.get_ns())
+
         #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
         try:
-            self.pyro_daemon.connect( locker, 'cylc.lockserver' )
+            self.pyro_daemon.connect( locker, locker.get_pyro_name() )
         except Exception, x:
             #    foo.write( str(x) + "\n" )
             raise
@@ -177,8 +164,7 @@ locks left after a system or task exits without releasing its lock)."""
     parser.add_option( "--start", help="Start up the server.",
             action="store_true", dest="start" )
 
-    parser.add_option( "--debug", help="(DEBUGGING) Do not daemonize the server, "
-           "i.e. do not detach from the parent environment.",
+    parser.add_option( "--debug", help="(DEBUGGING) Do not daemonize the server.",
             action="store_true", dest="debug" )
 
     parser.add_option( "--restart", help="Restart a running server.",
@@ -209,10 +195,10 @@ locks left after a system or task exits without releasing its lock)."""
     parser.add_option( "--release-system", help="Release a system lock.",
             metavar="SYSTEM", action="store", dest="system_release" )
 
-    parser.add_option( "--list-all", help="Get all task locks.",
+    parser.add_option( "--list", help="Get all task locks.",
             action="store_true", dest="list_all" )
 
-    parser.add_option( "--clear-all", help="Release all task locks.",
+    parser.add_option( "--clear", help="Release all task locks.",
             action="store_true", dest="clear_all" )
 
     ( options, args ) = parser.parse_args()
@@ -236,16 +222,14 @@ locks left after a system or task exits without releasing its lock)."""
 
     if options.acquire:
         (system, task_id) = check_task_spec( options.acquire )
-        group = user + '^' + system
-        if not lock( task_id, group, pns_host ).acquire():
+        if not lock( task_id, user, system, pns_host ).acquire():
             print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.acquire
             sys.exit(1)
         sys.exit(0)
 
     if options.release:
         (system, task_id) = check_task_spec( options.release )
-        group = user + '^' + system
-        if not lock( task_id, group, pns_host ).release():
+        if not lock( task_id, user, system, pns_host ).release():
             print >> sys.stderr, "ERROR: Failed to release a lock for " + options.release
             sys.exit(1)
         sys.exit(0)
@@ -253,8 +237,7 @@ locks left after a system or task exits without releasing its lock)."""
     if options.system_acquire:
         sysname = options.system_acquire
         sysdir = check_system_spec( sysname )
-        group = user + '^' + sysname
-        if not syslock( pns_host, group, sysdir, 'scheduler' ).request_system_access( True ):
+        if not syslock( pns_host, user, sysname, sysdir, 'scheduler' ).request_system_access( True ):
             print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.system_acquire
             sys.exit(1)
         sys.exit(0)
@@ -262,8 +245,7 @@ locks left after a system or task exits without releasing its lock)."""
     if options.system_acquire_nonex:
         sysname = options.system_acquire_nonex
         sysdir = check_system_spec( sysname )
-        group = user + '^' + sysname
-        if not syslock( pns_host, group, sysdir, 'scheduler' ).request_system_access( False ):
+        if not syslock( pns_host, user, sysname, sysdir, 'scheduler' ).request_system_access( False ):
             print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.system_acquire_nonex
             sys.exit(1)
         sys.exit(0)
@@ -271,8 +253,7 @@ locks left after a system or task exits without releasing its lock)."""
     if options.system_release:
         sysname = options.system_release
         sysdir = check_system_spec( sysname )
-        group = user + '^' + sysname
-        if not syslock( pns_host, group, sysdir, 'scheduler' ).release_system_access():
+        if not syslock( pns_host, user, sysname, sysdir, 'scheduler' ).release_system_access():
             print >> sys.stderr, "ERROR: Failed to release a lock for " + options.system_release
             sys.exit(1)
         sys.exit(0)
