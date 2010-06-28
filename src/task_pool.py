@@ -309,7 +309,7 @@ class task_pool:
             if itask.state.is_failed():
                 failed_rt[ itask.c_time ] = True
 
-        self.cleanup_async()
+        ##### self.cleanup_async()
         self.cleanup_quick_death( failed_rt )
         self.cleanup_generic( failed_rt )
 
@@ -484,17 +484,22 @@ class task_pool:
                     continue
             
             for itask in candidates[ rt ]:
-                try:
-                    # oneoff non quick death tasks need to nominate 
-                    # the task type that will take over from them.
-                    # (otherwise they will never be deleted).
-                    name = itask.oneoff_follow_on
-                except AttributeError:
+                if hasattr( itask, 'is_oneoff' ):
+                    # oneoff candidates that do not nominate a follow-on can
+                    # be assumed to have no non-cotemporal dependants
+                    # and can thus be eliminated.
+                    try:
+                        name = itask.oneoff_follow_on
+                    except AttributeError:
+                        spent.append( itask )
+                        continue
+                else:
                     name = itask.name
 
                 if name in seen.keys():
                     # already seen this guy, so he's spent
                     spent.append( itask )
+                    
                 else:
                     # first occurence
                     seen[ name ] = True
