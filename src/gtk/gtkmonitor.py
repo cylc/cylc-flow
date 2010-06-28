@@ -180,10 +180,10 @@ Cylc View is a real time system monitor for Cylc.
         sw.add( treeview )
 
         hbox = gtk.HBox()
-        #eb = gtk.EventBox()
-        #eb.add( gtk.Label( " -oOo- "))
-        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
-        #hbox.pack_start( eb, True )
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "Click headings to sort") )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( gtk.Label( "Click rows for Task Info" ))
@@ -411,7 +411,7 @@ Cylc View is a real time system monitor for Cylc.
             self.update_tb( tb, ' - ' + msg + '\n', tags )
 
         if len( extra_info.keys() ) > 0:
-            self.update_tb( tb, '\nOther\n\n', [bold] )
+            self.update_tb( tb, '\nOther\n', [bold] )
             for item in extra_info:
                 self.update_tb( tb, ' - ' + item + ': ' + str( extra_info[ item ] ) + '\n' )
 
