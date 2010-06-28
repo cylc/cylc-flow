@@ -24,8 +24,6 @@ set -e; trap 'cylc task-failed "error trapped"' ERR
 # START MESSAGE
 cylc task-started || exit 1
 
-sleep 30
-
 # check environment
 check-env.sh || exit 1
 

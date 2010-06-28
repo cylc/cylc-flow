@@ -15,7 +15,7 @@ import socket
 import logging
 import datetime
 
-import cylcrc
+from preferences import prefs
 import cycle_time
 from pyrex import pyrex
 import dead_letter
@@ -187,7 +187,7 @@ class scheduler:
         self.dummy_task_run_length = self.options.dummy_task_run_length
 
     def load_preferences( self ):
-        self.rcfile = cylcrc.rc( self.rcfilepath )
+        self.rcfile = prefs( self.rcfilepath )
 
         self.logging_dir = self.rcfile.get_system_logging_dir( self.system_name ) 
         state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name )

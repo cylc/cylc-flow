@@ -20,7 +20,7 @@ from dynamic_instantiation import get_object
 from registration import registrations
 from job_submit import job_submit
 import pyrex, cycle_time, pimp_my_logger
-import cylcrc
+from preferences import prefs
 from system_lock import system_lock
 
 usage = """cylc run-task [options] SYSTEM
@@ -107,7 +107,7 @@ username = os.environ['USER']
 pyro_groupname = ':cylc.' + username + '.' + name
 
 # load cylcrc file----------------------------------------------------
-rcfile = cylcrc.rc( options.rcfile )
+rcfile = prefs( options.rcfile )
 logging_dir = rcfile.get_system_logging_dir( name + '-run-task' ) 
 
 use_lockserver = False

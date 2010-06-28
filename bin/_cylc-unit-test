@@ -61,7 +61,7 @@ SYS_DIR=systems/UNIT
 # log file for stdout and stderr
 OUT=unit-test.out; OUT_SCHED=unit-test-sched.out
 # cylc system log
-LOGRC=$( grep 'logging directory' $HOME/.cylcrc )
+LOGRC=$( cylc preferences -p | grep 'logging directory' )
 LOGDIR=${LOGRC#*= }
 LOG=$LOGDIR/unit/main
 

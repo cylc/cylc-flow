@@ -14,8 +14,7 @@ from ConfigParser import SafeConfigParser
 
 # system-wide cylc settings
 
-class rc:
-
+class prefs:
     def __init__( self, rcfile=None ):
 
         if not rcfile:

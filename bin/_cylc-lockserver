@@ -15,7 +15,7 @@ from optparse import OptionParser
 from time import sleep
 
 import pyrex
-import cylcrc
+from preferences import prefs
 import cycle_time
 from registration import registrations
 from lockserver import lockserver, control
@@ -285,7 +285,7 @@ locks left after a system or task exits without releasing its lock)."""
         #    print lock
         sys.exit(0)
 
-    config = cylcrc.rc( options.rcfile )
+    config = prefs( options.rcfile )
     logfile = config.get( 'lockserver', 'log file' )
     pidfile = config.get( 'lockserver', 'pid file' )
 

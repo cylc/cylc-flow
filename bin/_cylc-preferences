@@ -16,7 +16,7 @@ Commandline interface to the $HOME/.cylcrc preferences file.
 
 import sys
 from optparse import OptionParser
-import cylcrc
+from preferences import prefs
 
 usage = """cylc preferences [options]
 
@@ -76,7 +76,7 @@ if len( args ) > 0 or len( sys.argv ) == 1:
     sys.exit(0)
 
 # load existing cylcrc file
-rcfile = cylcrc.rc( options.rcfile )
+rcfile = prefs( options.rcfile )
 
 rewrite = False
 
