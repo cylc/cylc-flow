@@ -769,12 +769,10 @@ delayed start time reached ... True
 Before shutting a system down - or indeed using any of the other cylc
 commands that can change the state of a running system but are not 
 covered in this Quick Start Guide (reset, kill, purge, pause, etc.) -
-you need to unlock the system:
+you need to {\em unblock} the system:
 
 \begin{lstlisting}
-# unlock:
-cylc unlock userguide
-# shutdown:
+cylc unblock userguide
 cylc stop userguide
 \end{lstlisting}
 
@@ -2475,7 +2473,7 @@ recover from failures.
 Note that other cylc commands for monitoring or interacting with the
 system must also use the \lstinline=--practice= option in order to
 target the practice system and not the real one. Be sure to set
-\lstinline=cylc lock= on the original system first, to avoid
+\lstinline=cylc block= on the original system first, to avoid
 accidentally messing with it (even if you do screw up, however, cylc's
 automatic pre-intervention state dumps will save you!).
 

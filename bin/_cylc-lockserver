@@ -140,21 +140,26 @@ if __name__ == "__main__":
 
     usage = """cylc lockserver [options]
 
-The cylc lockserver daemon provides task locking functionality: it
-prevents multiple instances of the same task at the same cycle time from
-running at the same time.  Unlike traditional "lock files" this works
-even for tasks that start and finish executing as different processes on
-different host machines.  Additionally, the lockserver prevents multiple
-instances of an entire cylc system from running at the same time, even
-if registered under different names (unless the system config file
-allows this!).
+The cylc lockserver brokers system and task locks for cylc systems. 
 
-Use of the lockserver is optional; see 'cylc preferences --help'.
+Task locks prevent multiple instances of the same task (NAME%CYCLE) from
+running simultaneously, whether they are spawned by a cylc scheduler or
+by 'run-task'. Traditional "lock files" cannot easily be used for cylc
+tasks because it is possible for the initial task script to spawn other
+processes that may even execute on another host machine.
+
+System locks prevent multiple instances of entire cylc systems from
+running simultaneously, even under different registered names (unless
+the system config file states that system is capable of doing this!).
+
+Use of the cylc lockserver is optional; see 'cylc preferences --help'.
+
+The lockserver is a daemon process (it automatically detaches from
+its parent environment and can be left running indefinitely). 
 
 Manual lock acquisition using this command is mainly for testing
-purposes; manual release, however, may be required to remove zombie
-locks (wherein a system or task has exited without releasing its lock).
-You must be the system owner in order to do this.""" 
+purposes; manual release, however, may be required to remove stale
+locks left after a system or task exits without releasing its lock).""" 
 
     parser = OptionParser( usage )
 
