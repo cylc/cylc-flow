@@ -297,13 +297,6 @@ class task_pool:
         # the prerequisites of other tasks.
         #--
 
-        # TO DO: SEPARATE METHODS AND ALLOW USER TO CHOOSE:
-        # 1/ generic method only
-        # 2/ generic with quick death - (a) only free, (b) and tied
-        # 3/ new EXTREME method? extrapolate forward in time to see if a
-        # finished task *will* be needed in the future, and delete
-        # otherwise.
-
         # times of any failed tasks. 
         failed_rt = {}
         for itask in self.tasks:
@@ -314,10 +307,8 @@ class task_pool:
         #### self.cleanup_async()
 
         if self.use_quick:
-            print
-            print '---------------------> USING QUICK ELIMINATION'
-            print
             self.cleanup_non_intercycle( failed_rt )
+
         self.cleanup_generic( failed_rt )
 
     def cleanup_async( self ):

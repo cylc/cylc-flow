@@ -1,13 +1,14 @@
 To Do
 
 * CLEANUP ALGORITHM: 
-    - if a oneoff task declares no follow-on task it can
-  be assumed to have no non-cotemporal dependants?
-    - check default quick_death settings and NO_NONCOTEMPORAL_DEPENDANTS
-      (currently default is different for cycling tasks?)
+    - if a oneoff task declares no follow-on task it can be assumed to
+      have no non-cotemporal dependants?
 
 * if taskdef INHERIT is used, the classes defined in task_classes.py
   must be ordered correctly.
+
+* extreme task elimination method - extrapolate forward in time to see
+  if a finished task will ever be needed, otherwise delete?
 
 * iteration over dictionary items: DO NOT USE
   = for item in dict:
