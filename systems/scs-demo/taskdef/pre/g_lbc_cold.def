@@ -14,12 +14,11 @@
 %CONTACT_DELAY
     4.0 hr
 
-%ONEOFF_FOLLOW_ON
+%INTERCYCLE
+    True
+
+%FOLLOW_ON
     g_lbc
-
-
-%NO_NONCOTEMPORAL_DEPENDANTS
-    False
 
 %CYCLES
     6

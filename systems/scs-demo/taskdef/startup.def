@@ -13,11 +13,11 @@
 %CYCLES
     6
 
-%NO_NONCOTEMPORAL_DEPENDANTS
+%INTERCYCLE
     # g_lbc in a subsequent cycle depends on me!
-    False
+    True
 
-%ONEOFF_FOLLOW_ON
+%FOLLOW_ON
     # see comment above
     g_lbc
 

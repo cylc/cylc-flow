@@ -10,9 +10,6 @@
 %TYPE
     free, contact, oneoff
 
-%NO_NONCOTEMPORAL_DEPENDANTS
-    True
-
 %CONTACT_DELAY
     4.0 hr
 

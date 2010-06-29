@@ -11,9 +11,6 @@
 %TYPE
     free, oneoff
 
-%NO_NONCOTEMPORAL_DEPENDANTS
-    True
-
 %CYCLES
     6
 

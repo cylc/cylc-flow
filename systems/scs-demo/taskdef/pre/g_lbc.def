@@ -16,8 +16,8 @@
 %CYCLES
     0,12
 
-%NO_NONCOTEMPORAL_DEPENDANTS
-    False
+%INTERCYCLE
+    True
 
 %TASK
     file_transfer.sh
