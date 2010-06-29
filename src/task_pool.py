@@ -310,7 +310,7 @@ class task_pool:
                 failed_rt[ itask.c_time ] = True
 
         ##### self.cleanup_async()
-        self.cleanup_quick_death( failed_rt )
+        self.cleanup_non_intercycle( failed_rt )
         self.cleanup_generic( failed_rt )
 
     def cleanup_async( self ):
@@ -331,26 +331,22 @@ class task_pool:
         for itask in spent:
             self.trash( itask, 'quick death' )
 
-    def cleanup_quick_death( self, failed_rt ):
-
-        # A/ QUICK DEATH TASKS
-        # Tasks with 'quick_death = True', by definition they have only
-        # cotemporal downstream dependents, so they are no longer needed
-        # to satisfy prerequisites once all their cotemporal peers have
-        # finished. The only complication is that new cotemporal peers
-        # can appear, in principle, so long as there are unspawned
-        # tasks with earlier cycle times. Therefore they are spent 
+    def cleanup_non_intercycle( self, failed_rt ):
+        # A/ Non INTERCYCLE tasks by definition have ONLY COTEMPORAL
+        # DOWNSTREAM DEPENDANTS). i.e. they are no longer needed once
+        # their cotemporal peers have finished AND there are no
+        # unspawned tasks with earlier cycle times. So:
         #
-        # (i) IF (free tasks):
+        # (i) FREE TASKS are spent if they are:
         #    spawned, finished, no earlier unspawned tasks.
         #
-        # (ii) OR (tied tasks):
+        # (ii) TIED TASKS are spent if they are:
         #    spawned, finished, no earlier unspawned tasks, AND there is
         #    at least one subsequent instance that is FINISHED
         #    ('satisfied' would do but that allows elimination of a tied
         #    task whose successor could subsequently fail, thus
         #    requiring manual task reset after a restart).
-        #  ALTERNATIVE TO (ii): DO NOT ALLOW QUICK_DEATH TIED TASKS
+        #  ALTERNATIVE TO (ii): DO NOT ALLOW non-INTERCYCLE tied tasks
         #--
 
         # time of the earliest unspawned task
@@ -363,7 +359,7 @@ class task_pool:
         # find the spent quick death tasks
         spent = []
         for itask in self.tasks:
-            if not itask.quick_death: 
+            if itask.intercycle: 
                 # task not up for consideration here
                 continue
             if not itask.has_spawned():

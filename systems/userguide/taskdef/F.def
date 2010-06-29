@@ -28,9 +28,6 @@
 %TASK
     cylc-wrapper
 
-%NO_NONCOTEMPORAL_DEPENDANTS
-    True
-
 %ENVIRONMENT
     WRAP F.sh
     FOO foo

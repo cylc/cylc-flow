@@ -358,9 +358,14 @@ class scheduler:
     def run( self ):
 
         if self.use_lockserver:
+            if self.practice:
+                sysname = self.system_name + '-practice'
+            else:
+                sysname = self.system_name
+
             # request system access from the lock server
             lock = system_lock( self.pns_host, self.username,
-                    self.system_name, self.system_dir, 'scheduler' )
+                    sysname, self.system_dir, 'scheduler' )
             if not lock.request_system_access( self.exclusive_system_lock ):
                 raise SystemExit( 'locked out!' )
 
@@ -431,10 +436,15 @@ class scheduler:
 
         if self.use_lockserver:
             # do this last
+            if self.practice:
+                sysname = self.system_name + '-practice'
+            else:
+                sysname = self.system_name
+
             print ""
             print "Releasing system lock"
             lock = system_lock( self.pns_host, self.username,
-                    self.system_name, self.system_dir, 'scheduler' )
+                    sysname, self.system_dir, 'scheduler' )
             if not lock.release_system_access():
                 print >> sys.stderr, 'failed to release system!'
 

@@ -145,10 +145,10 @@ def main( argv ):
 
     allowed_keys = [ 'LOGFILES', 'INHERIT', 'NAME', 'OWNER', 'CYCLES',
             'TASK', 'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
-            'ENVIRONMENT', 'NO_NONCOTEMPORAL_DEPENDANTS', 'PREREQUISITES',
+            'ENVIRONMENT', 'INTERCYCLE', 'PREREQUISITES',
             'STARTUP_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
-            'ONEOFF_FOLLOW_ON' ]
+            'FOLLOW_ON' ]
 
     allowed_types = ['tied', 'free', 'cycling_daemon' ]
     allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
@@ -249,7 +249,7 @@ from dynamic_instantiation import get_object
             else:
                 if current_key == None:
                     # can this ever happen?
-                    print "Error: no key identified"
+                    print "ERROR: no key identified"
                     sys.exit(1)
     
                 # data associated with current key
@@ -262,12 +262,12 @@ from dynamic_instantiation import get_object
             inherit = True
             inherit_from = parsed_def['INHERIT'][0]
 
-        # quick death (DEFAULT False)
-        quick_death = False
-        if 'NO_NONCOTEMPORAL_DEPENDANTS' in parsed_def:
-            delayed_death = parsed_def[ 'NO_NONCOTEMPORAL_DEPENDANTS' ][0]
-            if delayed_death == 'True' or delayed_death == 'true' or delayed_death == 'Yes' or delayed_death == 'yes':
-                quick_death = True
+        # intercycle (DEFAULT False)
+        intercycle = False
+        if 'INTERCYCLE' in parsed_def:
+            intercycle = parsed_def[ 'INTERCYCLE' ][0]
+            if intercycle == 'True' or intercycle == 'true':
+                intercycle = True
 
         delay = 0
         catchup_contact = False
@@ -291,12 +291,6 @@ from dynamic_instantiation import get_object
             if task_type not in allowed_types:
                 print 'ERROR, unknown task class:', task_type
                 sys.exit(1)
-
-            if task_type == 'tied':
-                if quick_death:
-                    print 'ERROR, tied tasks cannot set NO_NONCOTEMPORAL_DEPENDANTS'
-                    print 'because they necessarily have next-cycle dependants'
-                    sys.exit(1)
 
             if task_type == 'cycling_daemon':
                 if 'OUTPUT_PATTERNS' not in parsed_def:
@@ -354,14 +348,13 @@ from dynamic_instantiation import get_object
         if dummy:
             external_task = '_cylc-dummy-task'
 
-        oneoff_follow_on = False
-        if oneoff and not quick_death:
-            if 'ONEOFF_FOLLOW_ON' not in parsed_def:
-                print "Error: oneoff tasks that have non-cotemporal dependants"
-                print "must define %ONEOFF_FOLLOW_ON"
+        follow_on = False
+        if oneoff and intercycle:
+            if 'FOLLOW_ON' not in parsed_def:
+                print "ERROR: oneoff with intercycle dependants must define %FOLLOW_ON"
                 sys.exit(1)
             else:
-                oneoff_follow_on = parsed_def['ONEOFF_FOLLOW_ON'][0]
+                follow_on = parsed_def['FOLLOW_ON'][0]
 
         task_init_def_args = 'c_time, initial_state, startup = False'
         task_inherit_super_args = 'c_time, initial_state, startup'
@@ -369,12 +362,12 @@ from dynamic_instantiation import get_object
 
         if contact:
             if 'CONTACT_DELAY' not in parsed_def:
-                print "Error: contact classes must define %CONTACT_DELAY"
+                print "ERROR: contact classes must define %CONTACT_DELAY"
                 sys.exit(1)
 
         if task_type == 'tied':
             if 'N_RESTART_OUTPUTS' not in parsed_def:
-                print 'Error: tied tasks must define %N_RESTART_OUTPUTS'
+                print 'ERROR: tied tasks must define %N_RESTART_OUTPUTS'
                 sys.exit(1)
 
         task_name = parsed_def[ 'NAME' ][0]
@@ -451,11 +444,11 @@ from dynamic_instantiation import get_object
             # valid hours
             FILE.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLES' ][0] + ']\n\n' )
 
-        if 'NO_NONCOTEMPORAL_DEPENDANTS' in parsed_def:
-            FILE.write( indent + 'quick_death = ' + str(quick_death) + '\n\n' )
+        if intercycle:
+            FILE.write( indent + 'intercycle = ' + str(intercycle) + '\n\n' )
 
-        if oneoff_follow_on:
-            FILE.write( indent + 'oneoff_follow_on = "' + oneoff_follow_on + '"\n\n' )
+        if follow_on:
+            FILE.write( indent + 'follow_on = "' + follow_on + '"\n\n' )
 
         # class init function
         FILE.write( indent + 'def __init__( self, ' + task_init_def_args + ' ):\n\n' )

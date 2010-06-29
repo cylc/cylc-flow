@@ -43,28 +43,15 @@ state_changed = True
 
 class cycling( task ):
     
-    # Default task deletion: quick_death = True
-    # This amounts to a statement that the task has only cotemporal
-    # downstream dependents (i.e. the only other tasks that depend on it
-    # to satisfy their prerequisites have the same cycle time as it
-    # does) and as such can be deleted at the earliest possible
-    # opportunity - which is as soon as there are no non-finished
-    # tasks with cycle times the same or older than its cycle
-    # time (prior to that we can't be sure that an older non-finished 
-    # task won't give rise (on abdicating) to a new task that does
-    # depend on the task we're interested in). 
+    intercycle = False
+    # This is a statement that the task has only cotemporal dependants
+    # and as such can be deleted as soon as there are no non-finished
+    # tasks with cycle times equal to or older than its own cycle time
+    # (prior to that we can't be sure that an older non-finished 
+    # task won't give rise to a new task that does depend on the task
+    # we're interested in). 
 
-    # QUICK DEATH IS A DECLARATION THAT A TASK HAS NO NON-COTEMPORAL
-    # DOWNSTREAM DEPENDENTS; IT THUS CANNOT BE ALLOWED FOR TIED TASKS
-    # BECAUSE OF THEIR RESTART PREREQUISITES => DEFAULT TO FALSE.
-    quick_death = True
-    # Quick death tasks will be removed when they have finished and
-    # there are no earlier or cotemporal unfinished tasks.  Tasks that
-    # are needed to satisfy the prerequisites of other tasks in
-    # subsequent cycles, however, must have quick_death = False, in
-    # which case they will be removed by the global cutoff time.
-
-    # DERIVED CLASSES MUST OVERRIDE: ready_to_spawn()
+    # DERIVED CLASSES MUST OVERRIDE ready_to_spawn()
 
     def __init__( self, state ):
         # Call this AFTER derived class initialisation

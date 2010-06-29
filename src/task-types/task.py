@@ -42,9 +42,7 @@ state_changed = True
 
 class task( Pyro.core.ObjBase ):
     
-    # QUICK DEATH: SEE NOTES IN CYCLING.PY; To Do: not relevant to
-    # asynchronous tasks, but manager still accesses the var for all. 
-    quick_death = False  # cycling task type resets this to True.
+    intercycle = False
 
     @classmethod
     def describe( cls ):
