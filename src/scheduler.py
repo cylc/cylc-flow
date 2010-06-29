@@ -189,6 +189,12 @@ class scheduler:
     def load_preferences( self ):
         self.rcfile = prefs( self.rcfilepath )
 
+        use = self.rcfile.get( 'cylc', 'use quick task elimination') 
+        if use == "False":
+            self.use_quick_elim = False
+        else:
+            self.use_quick_elim = True
+
         self.logging_dir = self.rcfile.get_system_logging_dir( self.system_name ) 
         state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name )
         if self.practice:

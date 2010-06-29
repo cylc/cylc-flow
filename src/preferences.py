@@ -41,7 +41,8 @@ class prefs:
         self.config[ 'cylc' ] = {}
         self.config[ 'cylc' ][ 'state dump directory' ] = os.path.join( self.config_dir, 'state-dumps' )
         self.config[ 'cylc' ][ 'logging directory' ] = os.path.join( self.config_dir, 'log-files' )
-        self.config[ 'cylc' ][ 'use lockserver' ] = 'False'
+        self.config[ 'cylc' ][ 'use lockserver' ] = 'True'
+        self.config[ 'cylc' ][ 'use quick task elimination' ] = 'True'
 
         self.config[ 'lockserver' ] = {}
         self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.lockserver_dir, 'logfile' )

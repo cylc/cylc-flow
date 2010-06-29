@@ -20,11 +20,12 @@ from dynamic_instantiation import get_object
 from broker import broker
 
 class task_pool:
-    def __init__( self, config, pyro, 
-            dummy_mode, logging_dir, state_dump_file, 
-            exclude, include, stop_time, pause_time ):
+    def __init__( self, config, pyro, dummy_mode, use_quick,
+            logging_dir, state_dump_file, exclude, include, stop_time,
+            pause_time ):
 
         self.config = config
+        self.use_quick = use_quick
         self.pyro = pyro
         self.dummy_mode = dummy_mode
         self.logging_dir = logging_dir
@@ -309,8 +310,14 @@ class task_pool:
             if itask.state.is_failed():
                 failed_rt[ itask.c_time ] = True
 
-        ##### self.cleanup_async()
-        self.cleanup_non_intercycle( failed_rt )
+        #### RESTORE FOR TESTING ASYNCHRONOUS TASK FUNCTIONALITY:
+        #### self.cleanup_async()
+
+        if self.use_quick:
+            print
+            print '---------------------> USING QUICK ELIMINATION'
+            print
+            self.cleanup_non_intercycle( failed_rt )
         self.cleanup_generic( failed_rt )
 
     def cleanup_async( self ):
