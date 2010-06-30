@@ -15,13 +15,13 @@
 # run in dummy mode!
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # START MESSAGE
-cylc message --started
+cylc task-started
 
 # WARN AND ABORT
-cylc message -p CRITICAL "THIS EXAMPLE SYSTEM HAS NO REAL MODE IMPLEMENTATION"
-cylc message -p CRITICAL "YOU CAN RUN IT ONLY IN DUMMY MODE. GOODBYE. REALLY."
-cylc message --failed
+cylc task-message -p CRITICAL "THIS EXAMPLE SYSTEM HAS NO REAL MODE IMPLEMENTATION"
+cylc task-message -p CRITICAL "YOU CAN RUN IT ONLY IN DUMMY MODE. GOODBYE. REALLY."
+cylc task-failed
 exit 1
