@@ -121,6 +121,8 @@ parser.add_option( "--all-outputs-completed",
 
 ( options, args ) = parser.parse_args()
 
+print >> sys.stderr, "WARNING: cylc message is deprecated!"
+
 # MODE OF OPERATION ---------------------------------------------------
 # have we been invoked from a script that was launched by 'cylc start',
 # 'cylc run-task', or a raw task script?

@@ -42,7 +42,6 @@ class task_pool:
         # initialise the dependency broker
         self.broker = broker()
 
-        ######## self.no_reset = False
         self.tasks = []
 
         # create main logger

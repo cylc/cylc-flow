@@ -36,7 +36,6 @@ class dummy_task:
         # get a Pyro proxy for the dummy mode accelerated clock
         self.clock = connector( pns_host, groupname, 'clock' ).get()
 
-
     def send( self, message ):
         # send an output message to the task proxy object that I'm masquerading as
         command_list = [ 'cylc', 'message', message  ]
