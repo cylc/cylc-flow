@@ -114,8 +114,12 @@ echo "Processing task definition files"
 
 TASKDEFS=$( find $SYS_DIR/taskdef -name '*.def' -o -name '*.py' ) 
 
+# create task class output sub-dir if necessary
+TASKDIR=$SYS_DIR/tasks
+mkdir -p $TASKDIR
+
 # generate task class module
-_cylc-taskdef $TASKDEFS
+_cylc-taskdef $TASKDIR $TASKDEFS
 echo "$SYS_DIR/task_classes.py"
 
 # generate task list module
@@ -140,7 +144,8 @@ task_list = \\
 eof
 OIFS=$IFS
 IFS=$'\n'
-for NAME in $( egrep '^ *name = ' task_classes.py ); do
+for MOD in tasks/*.py; do
+    NAME=$( egrep '^ *name = ' $MOD )
     NAME=${NAME# *= }
     echo "       ${NAME}," >> task_list.py
 done
@@ -153,7 +158,8 @@ task_list_shortnames = \\
 eof
 OIFS=$IFS
 IFS=$'\n'
-for SHORTNAME in $( egrep '^ *short_name = ' task_classes.py ); do
+for MOD in tasks/*.py; do
+    SHORTNAME=$( egrep '^ *short_name = ' $MOD )
     SHORTNAME=${SHORTNAME# *= }
     echo "       ${SHORTNAME}," >> task_list.py
 done

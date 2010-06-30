@@ -253,6 +253,7 @@ class scheduler:
 
         # provide access to the system source modules for THIS program---------
         # prepend to the module search path in case this is a subsystem
+        sys.path.insert(0, os.path.join( self.system_dir, 'tasks' ))
         sys.path.insert(0, self.system_dir )
 
     def load_system_config( self ):

@@ -129,6 +129,7 @@ os.environ[ 'PYTHONPATH' ] += ':' + system_dir
 
 # provide access to the system source modules for THIS program---------
 sys.path.append( system_dir )
+sys.path.append( os.path.join( system_dir, 'tasks' ))
 
 # import system-specific cylc modules now------------------------------ 
 from system_config import system_config 

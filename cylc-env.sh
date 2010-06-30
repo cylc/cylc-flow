@@ -58,7 +58,7 @@ PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$
 if [[ -n $CYLC_SYSTEM_DIR ]]; then
     # caller must be a cylc jobfile; add system-specific paths as well
     PATH=$CYLC_SYSTEM_DIR/scripts:$PATH
-    PYTHON_PATH=$CYLC_SYSTEM_DIR:$PYTHONPATH
+    PYTHON_PATH=$CYLC_SYSTEM_DIR:$CYLC_SYSTEM_DIR/tasks:$PYTHONPATH
 fi
 
 export PATH
