@@ -39,14 +39,14 @@
 [%LOGFILES]
     # - List of "output logs" and similar, IN ADDITION TO stdout and
     #   stderr capture from the cylc job submission process (which
-    #   should be provided automatically by the job submission method
-    #   where possible). This can be used for tasks that direct their
-    #   own stdout and stderr streams to named files.  It can also be
-    #   used to capture output from tasks with complicated native
-    #   job-submission procedures that have to be invoked by cylc
-    #   through a custom wrapper such that the initial process submitted 
-    #   by cylc is not the process that generates the output of
-    #   interest. See the Userguide on Custom Job Submit Wrappers.
+    #   is are provided automatically by the job submission method
+    #   where possible) to make available via the cylc gtk monitor. 
+    #   This section can be used for tasks that direct their own stdout
+    #   and stderr streams to named files, and for tasks with
+    #   complicated native job-submission procedures that have to be
+    #   invoked by cylc via a custom wrapper such that the initial
+    #   process submitted by cylc is not the process that generates the
+    #   output of interest. See the Userguide on Custom Job Submit Wrappers.
 
     $HOME/atmos/running/$CYCLE_TIME/met.out
     $HOME/atmos/running/$CYCLE_TIME/met.err
@@ -90,7 +90,7 @@
 
 #----------------------------------------------------------------------
 %TASK
-    # - The program or script to submit to run this task.
+    # - The program or script cylc must submit to run this task.
     # - Located in the system definition scripts sub-directory,
     #     or an external location (full path, or not if in $PATH)
     # - Not required by tasks with the 'dummy' modifier.
@@ -101,6 +101,9 @@
 [%REMOTE_HOST]
     # - URL of a remote machine on which this task must but submitted.
     # - Can be defined by an environment variable from system_config
+    # - This section is not required IF the task runs on a remote
+    #   machine but is submitted locally (e.g. to a cross-platform
+    #   batch queue resource manager such as loadleveler).
 
     $SUPERCOMPUTER
  
@@ -251,22 +254,25 @@
     6,18 | 4
 
 #----------------------------------------------------------------------
-[%NO_NONCOTEMPORAL_DEPENDANTS] 
-    # - Set True if you can guarantee that this task has only cotemporal
-    #     (same cycle) dependants. This allows cylc to delete the task
-    #     as soon as it is finished AND there are no other tasks still 
-    #     waiting at or prior to its cycle time.
-    # - DO NOT SET TRUE FOR 'tied' TASKS (FORECAST MODELS), which by 
-    #     definition depend on their predescessor's restart outputs.
+[%INTERCYCLE] 
+    True   # Default is False
 
-    True
+    # - NON-RESTART INTERCYCLE DEPENDENCY INDICATOR, set True if this
+    #   task has any direct downstream dependants in subsequent cycles.
+    # - Not required to indicate normal tied task restart dependencies.
+    # - Cylc assumes by default that tasks have only cotemporal
+    #   dependants (other than restart dependencies) simply because 
+    #   this will be true of the vast majority of tasks in most systems,
+    #   and it allows spent tasks to be removed from the system earlier.
+    # - Setting "use quick task elimination = False" in cylc preferences 
+    #   is equivalent to assuming that all tasks could have general
+    #   intercycle dependencies, in which case %INTERCYCLE is not needed.
 
 #----------------------------------------------------------------------
-[%ONEOFF_FOLLOW_ON]
-    # - Name of another task to "hand the baton on to". 
-    # - This is only required for oneoff tasks with non-cotemporal 
-    #   dependants (which your system will probably not have!) so
-    #   that cylc knows when it can delete this task (it cannot be
-    #   deleted before its depandants exist).
+[%FOLLOW_ON]
+    foo
 
-    task_foo
+    # - This is required ONLY for oneoff tasks with INTERCYCLE=True.
+    # - Name of another task to "hand the baton on to". This task will
+    #   not be removed from the system until that task has finished. 
+
