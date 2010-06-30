@@ -58,9 +58,9 @@ elif options.all_outputs_completed:
     sys.exit(0)
 
 elif len( args ) == 0:
-    print sys.stderr, "ERROR: no message supplied"
+    print >> sys.stderr, "ERROR: no message supplied"
     sys.exit(1)
 
 else:
     msg = ' '.join( args )
-    message( msg ).send()
+    message( msg, priority=options.priority ).send()
