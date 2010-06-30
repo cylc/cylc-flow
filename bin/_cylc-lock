@@ -13,15 +13,15 @@ import os
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser("""cylc block [options] SYSTEM 
+parser = PromptOptionParser("""cylc lock [options] SYSTEM 
 
-Tell a running system to ignore all intervention commands.
+Tell a running system not to comply with subsequent intervention
+commands. The lock/unlock commands are a safety device to help guard
+against inadvertant intervention in a system.
 
-The block/unblock commands are a safety device to help guard against
-inadvertent intervention by a system owner (which is easy to do if you
-have multiple systems running). The use of 'block' rather than 'lock' 
-distinguishes this functionality from the task and system locking
-provided by the cylc lockserver.""")
+Note that this is unrelated to the functionality provided by the cylc
+lockserver, which prevents multiple instances of a task or system from
+running simultaneously.""")
 
 (options, args) = parser.parse_args()
 
