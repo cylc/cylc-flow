@@ -4,7 +4,9 @@ import os
 import gtk
 from optparse import OptionParser
 from chooser import chooser
-from gtkmonitor import standalone_monitor
+from registration import registrations
+from preferences import prefs
+from gtkmonitor import standalone_monitor, standalone_monitor_preload
 
 import socket
 
@@ -21,11 +23,16 @@ submission method used), provide access to the scheduler logs and to
 task stdout and stderr files, and allow you to view the current status
 of each task's prerequisites and outputs. 
 
-If a system name is supplied, a single system monitor will appear when
-the named system starts up (if it hasn't already started).
+If a system name is not supplied, a list of currently running systems,
+which updates itself in real time, allows you to choose which systems to
+monitor.
 
-If a system name is not supplied, you will be able to choose from a
-list of running systems (which updates itself in real time).""")
+If a system name is supplied, a single system monitor will appear when
+the named system starts up, if it hasn't already started.
+
+A system monitor displays "NO CONNECTION" if the target system is yet 
+to start up (or has shut down). It will connect when the system is
+started (or restarted).""")
 
     parser.add_option( "--host",
             help="Pyro nameserver host, defaults to local hostname. Use "
@@ -38,6 +45,10 @@ list of running systems (which updates itself in real time).""")
             "Needed to infer the Pyro nameserver group name.",
             metavar="USERNAME", default=os.environ["USER"],
             action="store", dest="username" )
+
+    parser.add_option( "-d", help="(with SYSTEM) load the initial task "
+            "list from the system definition directory.",
+            action="store_true", default=False, dest="use_sysdir" )
 
     ( options, args ) = parser.parse_args()
 
@@ -59,7 +70,22 @@ list of running systems (which updates itself in real time).""")
     if use_chooser:
         app = chooser( pns_host, imagedir )
     else:
-        app = standalone_monitor( group, system, pns_host, imagedir )
+        if options.use_sysdir:
+            # get system definition directory
+            reg = registrations()
+            if reg.is_registered( system ):
+                system_dir = reg.get( system )
+            else:
+                reg.print_all()
+                raise SystemExit( "System " + system + " is not registered!" )
+
+            # get system logging directory
+            # TO DO: the usual --rcfile option
+            rcfile = prefs()
+            logging_dir = rcfile.get_system_logging_dir( system )
+            app = standalone_monitor_preload( group, system, system_dir, logging_dir, pns_host, imagedir )
+        else:
+            app = standalone_monitor( group, system, pns_host, imagedir )
 
     gtk.main()
 

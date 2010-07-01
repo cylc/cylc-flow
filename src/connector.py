@@ -18,16 +18,13 @@ from time import sleep
 import pyrex
 
 class connector:
-
     def __init__( self, hostname, groupname, target, silent=False, check=False ):
-
         self.target = target
         self.hostname = hostname
         self.groupname = groupname
 
         if check:
             foo = pyrex.discover( hostname )
-
             if not foo.registered( groupname ):
                 msg = "WARNING: no Pyro objects registered under", groupname 
                 if not silent:
@@ -41,8 +38,12 @@ class connector:
     def get( self ):
         try:
             target = Pyro.core.getProxyForURI('PYRONAME://' + self.hostname + '/' + self.groupname + '.' + self.target )
+        except:
+            raise
+        else:
+            return target
 
-        except ProtocolError, x:
+        #except ProtocolError, x:
             # retry if temporary network problems prevented connection
 
             # TO DO: do we need to single out just the 'connection failed error?'
@@ -57,16 +58,14 @@ class connector:
             #                 (presumably after connection established - hjo)
 
             #raise SystemExit( x )
-            raise
+        #    raise
 
-        except NamingError, x:
+        #except NamingError, x:
             #print "\n\033[1;37;41m" + x + "\033[0m"
             #print x
             #raise SystemExit( "ERROR" )
-            raise
+        #    raise
 
-        except Exception, x:
+        #except Exception, x:
             #raise SystemExit( x )
-            raise
-
-        return target
+        #    raise

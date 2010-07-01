@@ -3,6 +3,7 @@
 import gobject
 import time
 import threading
+from connector import connector
 import gtk
 import pygtk
 ####pygtk.require('2.0')
@@ -45,17 +46,20 @@ def get_col( state ):
 
 class updater(threading.Thread):
 
-    def __init__(self, god, imagedir, led_liststore,
+    def __init__(self, pns_host, groupname, imagedir, led_liststore,
             fl_liststore, ttreestore, task_list,
             label_mode, label_status, label_time ):
 
         super(updater, self).__init__()
 
         self.quit = False
+        self.pns_host = pns_host
+        self.groupname = groupname
 
         self.state_summary = {}
-        self.godfather = god
-        self.reconnect()
+        self.god = None
+        self.mode = "waiting..."
+        self.dt = "waiting..."
 
         self.fl_liststore = fl_liststore
         self.ttreestore = ttreestore
@@ -64,6 +68,8 @@ class updater(threading.Thread):
         self.label_mode = label_mode
         self.label_status = label_status
         self.label_time = label_time
+
+        self.reconnect()
 
         self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-waiting-glow.xpm" )
         self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-submitted-glow.xpm" )
@@ -81,15 +87,18 @@ class updater(threading.Thread):
 
     def reconnect( self ):
         try:
-            self.god = self.godfather.get()
+            self.god = connector( self.pns_host, self.groupname, 'state_summary', silent=True, check=False ).get()
         except:
             return False
         else:
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ))
+            self.status = "connected"
+            self.label_status.set_text( self.status )
             return True
 
     def connection_lost( self ):
-        self.status = "CONNECTION LOST"
-        self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))
+        self.status = "NO CONNECTION"
+        self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f42' ))
         self.label_status.set_text( self.status )
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
@@ -100,7 +109,7 @@ class updater(threading.Thread):
         try:
             [glbl, states] = self.god.get_state_summary()
         except:
-            self.led_liststore.clear()
+            #self.led_liststore.clear()
             self.ttreestore.clear()
             self.fl_liststore.clear()
             gobject.idle_add( self.connection_lost )

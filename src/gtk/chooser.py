@@ -56,7 +56,7 @@ class chooser:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("cylc view chooser" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        window.set_size_request(200, 150)
+        window.set_size_request(400, 150)
         window.connect("delete_event", self.delete_event)
 
         liststore = gtk.ListStore( str )

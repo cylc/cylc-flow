@@ -34,7 +34,6 @@ class color_rotator:
         return self.colors[ index ]
 
 class monitor:
-
     # visibility determined by state matching active toggle buttons
     def visible_cb(self, model, iter, col ):
         # set visible if model value NOT in filter_states
@@ -224,7 +223,7 @@ Cylc View is a real time system monitor for Cylc.
 
     def show_log( self, task_id ):
 
-        [ glbl, states ] = self.ss.get().get_state_summary()
+        [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
 
         view = True
         reasons = []
@@ -360,6 +359,7 @@ Cylc View is a real time system monitor for Cylc.
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
  
+        rem = self.get_pyro( 'remote' )
         result = rem.get_task_requisites( [ task_id ] )
 
         if task_id not in result:
@@ -548,6 +548,37 @@ Cylc View is a real time system monitor for Cylc.
         # always return True so that we keep getting called
         return True
 
+    def get_pyro( self, object ):
+        foo = connector( self.pns_host, self.groupname, object, check=False )
+        bar = foo.get()
+        return bar
+ 
+    def block_till_connected( self ):
+        warned = False
+        while True:
+            try:
+                self.get_pyro( 'minimal' )
+            except:
+                if not warned:
+                    print "waiting for system " + self.system_name + ".",
+                    warned = True
+                else:
+                    print '.',
+                    sys.stdout.flush()
+            else:
+                print '.'
+                sys.stdout.flush()
+                time.sleep(1) # wait for system to start
+                break
+            time.sleep(1)
+
+    def load_task_list( self ):
+        self.block_till_connected()
+        ss = self.get_pyro( 'state_summary' )
+        self.logdir = ss.get_config( 'logging_dir' ) 
+        self.task_list = ss.get_config( 'task_list' )
+        self.shortnames = ss.get_config( 'task_list_shortnames' )
+
     def __init__(self, groupname, system_name, pns_host, imagedir ):
         self.system_name = system_name
         self.groupname = groupname
@@ -563,41 +594,9 @@ Cylc View is a real time system monitor for Cylc.
         self.log_colors = color_rotator()
 
         # Get list of tasks in the system
+        self.load_task_list()
 
-        self.ss = connector( self.pns_host, self.groupname, 'state_summary', silent=True, check=False )
-        self.rem = connector( self.pns_host, self.groupname, 'remote', silent=True, check=False )
-
-        warned = False
-        while True:
-            try:
-                ss = self.ss.get()
-            except:
-                if not warned:
-                    print "waiting for system " + system_name + ".",
-                    warned = True
-                else:
-                    print '.',
-                    sys.stdout.flush()
-            else:
-                print '.'
-                sys.stdout.flush()
-                time.sleep(1) # wait for system to start
-                break
-            time.sleep(1)
-
-        try:
-            rem = self.rem.get()
-        except Exception, x:
-            print x
-            raise
-
-        self.logdir = ss.get_config( 'logging_dir' ) 
-        self.logfile = 'main'
-
-        self.task_list = ss.get_config( 'task_list' )
-        shortnames = ss.get_config( 'task_list_shortnames' )
-
-        self.translate_task_names( shortnames )
+        self.translate_task_names( self.shortnames )
 
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
@@ -609,6 +608,7 @@ Cylc View is a real time system monitor for Cylc.
         main_panes.add1( self.create_led_panel())
         main_panes.add2( notebook )
 
+        self.logfile = 'main'
         cylc_log = self.logdir + '/' + self.logfile 
         self.lvp = cylc_logviewer( 'main', self.logdir, self.logfile, self.task_list )
         notebook.append_page( self.lvp.get_widget(), gtk.Label("Scheduler Log Files"))
@@ -631,14 +631,10 @@ Cylc View is a real time system monitor for Cylc.
         self.connection_lost = False
         gobject.timeout_add( 1000, self.check_connection )
 
-        self.t = updater( self.ss, self.imagedir, 
-                self.led_treeview.get_model(), 
-                self.fl_liststore,
-                self.ttreestore, 
-                self.task_list, 
-                self.label_mode, 
-                self.label_status,
-                self.label_time )
+        self.t = updater( self.pns_host, self.groupname, self.imagedir, 
+                self.led_treeview.get_model(), self.fl_liststore,
+                self.ttreestore, self.task_list, self.label_mode, 
+                self.label_status, self.label_time )
 
         #print "Starting task state info thread"
         self.t.start()
@@ -655,3 +651,16 @@ class standalone_monitor( monitor ):
     def click_exit( self, foo ):
         monitor.click_exit( self, foo )
         gtk.main_quit()
+
+
+class standalone_monitor_preload( standalone_monitor ):
+    def __init__(self, groupname, system_name, system_dir, logging_dir, pns_host, imagedir ):
+        self.logdir = logging_dir
+        self.system_dir = system_dir
+        standalone_monitor.__init__(self, groupname, system_name, pns_host, imagedir)
+ 
+    def load_task_list( self ):
+        sys.path.append( self.system_dir )
+        import task_list
+        self.task_list = task_list.task_list
+        self.shortnames = task_list.task_list_shortnames
