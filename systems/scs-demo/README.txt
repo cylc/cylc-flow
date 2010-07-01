@@ -19,11 +19,12 @@ ______________________________________________________+_T_A_S_K__L_I_S_T
 * OPS2        - OPS processing for obs group 2              (all cycles)
 * OPS3        - OPS processing for obs group 3              (all cycles)
 
-* VAR         - 3D-Var analysis                             (all cycles)
+* VAR         - Var analysis                                (all cycles)
 
 * UM_nz       - NZLAM forecast                    (short f/c 00 and 12Z,
                                                     long f/c 06 and 18Z)
 
+* post1       - nzlam long forecast post processing         (06 and 18Z)
 * post2       - nzlam long forecast post processing         (06 and 18Z)
 
 * arch        - archiving of NZLAM diagnostic output        (06 and 18Z)

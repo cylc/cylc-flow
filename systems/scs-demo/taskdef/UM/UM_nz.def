@@ -27,6 +27,6 @@
     0,12 | 1
 
 %OUTPUTS
-    ### 10 min: "IAU start dump ready for $(CYCLE_TIME + 6)"
+    ### "IAU start dump ready for $(CYCLE_TIME + 6)"
     "Cx background file ready for $(CYCLE_TIME + 6)"
     6,18 | "forecast diagnostics files ready for $(CYCLE_TIME)"
