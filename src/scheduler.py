@@ -24,6 +24,7 @@ import accelerated_clock
 from job_submit import job_submit
 from registration import registrations
 from system_lock import system_lock
+from life import minimal
 
 import task     # loads task_classes
 
@@ -239,6 +240,10 @@ class scheduler:
 
         self.banner[ 'Pyro nameserver group' ] = self.pyro.get_groupname()
 
+    def configure_lifecheck( self ):
+        self.lifecheck = minimal()
+        self.pyro.connect( self.lifecheck, 'minimal' )
+
     def configure_environment( self ):
         # provide access to the system scripts and source modules
         # for external processes launched by this program.
@@ -348,6 +353,7 @@ class scheduler:
         self.load_preferences()
         self.get_system_def_dir()
         self.configure_pyro()
+        self.configure_lifecheck()
         self.configure_environment()
         self.configure_dummy_mode_clock()
         self.load_system_config()

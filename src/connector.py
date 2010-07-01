@@ -19,22 +19,24 @@ import pyrex
 
 class connector:
 
-    def __init__( self, hostname, groupname, target, silent=False ):
+    def __init__( self, hostname, groupname, target, silent=False, check=False ):
 
         self.target = target
         self.hostname = hostname
         self.groupname = groupname
 
-        foo = pyrex.discover( hostname )
+        if check:
+            foo = pyrex.discover( hostname )
 
-        if not foo.registered( groupname ):
-            if not silent:
-                print "WARNING: no Pyro objects registered under", groupname 
-                # print existing groups and exit
-                print
-                foo.print_info()
-                print
-            sys.exit(1)
+            if not foo.registered( groupname ):
+                msg = "WARNING: no Pyro objects registered under", groupname 
+                if not silent:
+                    print msg
+                    # print existing groups and exit
+                    print
+                    foo.print_info()
+                    print
+                raise SystemExit( msg )
 
     def get( self ):
         try:
@@ -54,14 +56,17 @@ class connector:
             #                 Also the Pyro server may have crashed.
             #                 (presumably after connection established - hjo)
 
-            raise SystemExit( x )
+            #raise SystemExit( x )
+            raise
 
         except NamingError, x:
             #print "\n\033[1;37;41m" + x + "\033[0m"
-            print x
-            raise SystemExit( "ERROR" )
+            #print x
+            #raise SystemExit( "ERROR" )
+            raise
 
         except Exception, x:
-            raise SystemExit( x )
+            #raise SystemExit( x )
+            raise
 
         return target

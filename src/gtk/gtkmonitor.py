@@ -519,7 +519,6 @@ Cylc View is a real time system monitor for Cylc.
 
         return hbox
 
-
     def translate_task_names( self, shortnames ):
         temp = {}
         for t in range( len( self.task_list )):
@@ -530,6 +529,24 @@ Cylc View is a real time system monitor for Cylc.
         for task in self.task_list:
             self.task_list_shortnames.append( temp[ task ] )
  
+    def check_connection( self ):
+        # called on a timeout in the gtk main loop, tell the log viewer
+        # to reload if the connection has been lost and re-established,
+        # which probably means the cylc system was shutdown and
+        # restarted.
+        try:
+            connector( self.pns_host, self.groupname, 'minimal', silent=True ).get()
+        except:
+            print "NO CONNECTION"
+            self.connection_lost = True
+        else:
+            print "CONNECTED"
+            if self.connection_lost:
+                print "------>INITIAL RECON"
+                self.connection_lost = False
+                self.lvp.clear_and_reconnect()
+        # always return True so that we keep getting called
+        return True
 
     def __init__(self, groupname, system_name, pns_host, imagedir ):
         self.system_name = system_name
@@ -547,9 +564,9 @@ Cylc View is a real time system monitor for Cylc.
 
         # Get list of tasks in the system
 
-        self.ss = connector( self.pns_host, self.groupname, 'state_summary', silent=True )
-        self.rem = connector( self.pns_host, self.groupname, 'remote' )
-            
+        self.ss = connector( self.pns_host, self.groupname, 'state_summary', silent=True, check=False )
+        self.rem = connector( self.pns_host, self.groupname, 'remote', silent=True, check=False )
+
         warned = False
         while True:
             try:
@@ -611,6 +628,9 @@ Cylc View is a real time system monitor for Cylc.
 
         self.quitters = []
 
+        self.connection_lost = False
+        gobject.timeout_add( 1000, self.check_connection )
+
         self.t = updater( self.ss, self.imagedir, 
                 self.led_treeview.get_model(), 
                 self.fl_liststore,
@@ -618,7 +638,7 @@ Cylc View is a real time system monitor for Cylc.
                 self.task_list, 
                 self.label_mode, 
                 self.label_status,
-                self.label_time )#, self.lvp )
+                self.label_time )
 
         #print "Starting task state info thread"
         self.t.start()

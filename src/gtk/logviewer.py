@@ -20,12 +20,19 @@ class logviewer:
 
         self.create_gui_panel()
 
-        self.clear_and_reconnect()
+        self.connect()
 
     def clear_and_reconnect( self ):
+        self.t.quit = True
+        self.clear()
+        self.connect()
+
+    def clear(self):
         logbuffer = self.logview.get_buffer()
         s,e = logbuffer.get_bounds()
         logbuffer.delete( s,e )
+
+    def connect( self ):
         self.t = tailer( self.logview, self.path() )
         print "Starting log viewer thread for " + self.name
         self.t.start()

@@ -1,5 +1,7 @@
 To Do
 
+* rationalise use of the connector class, especially in the viewer.
+
 * extreme task elimination method - extrapolate forward in time to see
   if a finished task will ever be needed, otherwise delete?
 

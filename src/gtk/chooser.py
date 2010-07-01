@@ -5,7 +5,7 @@ import gtk
 import time, os, re
 import threading
 
-from gtkmonitor import monitor, standalone_monitor
+from gtkmonitor import monitor
 from pyrex import discover
 
 class chooser_updater(threading.Thread):
@@ -97,7 +97,6 @@ class chooser:
         self.updater.quit = True
         for item in self.viewer_list:
             item.click_exit( None )
-        print "HELLO"
         gtk.main_quit()
 
     def get_selected_system( self, selection, treemodel ):
