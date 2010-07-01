@@ -1,125 +1,31 @@
 #!/usr/bin/env python
 
-import gobject
-import pygtk
-from optparse import OptionParser
-####pygtk.require('2.0')
+import os
 import gtk
-import time, os, re
+from optparse import OptionParser
+from chooser import chooser
+from gtkmonitor import standalone_monitor
+
 import socket
-import threading
-
-from gtkmonitor import monitor
-from pyrex import discover
-
-class chooser_updater(threading.Thread):
-
-    def __init__(self, liststore, pns_host ):
-        self.quit = False
-        self.liststore = liststore
-        super(chooser_updater, self).__init__()
-        self.discoverer = discover( pns_host )
-        self.choices = []
-
-    def run( self ):
-        while not self.quit:
-            if self.choices_changed():
-                gobject.idle_add( self.update_gui )
-            time.sleep(1)
-        else:
-            pass
-    
-    def choices_changed( self ):
-        groups = self.discoverer.get_groups()
-        choices = []
-        for group in groups:
-            choices.append( group )
-        choices.sort()
-        if choices != self.choices:
-            self.choices = choices
-            return True
-        return False
-
-    def update_gui( self ):
-        # it is expected that choices will change infrequently,
-        # so just clear and recreate the list, rather than 
-        # adjusting element-by-element.
-        print "Updating system choice list"
-        self.liststore.clear()
-        for group in self.choices:
-            self.liststore.append( [group] )
-
-class chooser:
-    def launch_viewer( self, group ):
-        root, user, system = group.split( '.' ) 
-        imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
-        tv = monitor(group, system, self.pns_host, imagedir)
-        self.viewer_list.append( tv )
-
-    def delete_event( self, w, e, data=None ):
-        self.updater.quit = True
-        for item in self.viewer_list:
-            item.click_exit( None )
-        gtk.main_quit()
-
-    def get_selected_system( self, selection, treemodel ):
-        iter = treemodel.get_iter( selection )
-        system = treemodel.get_value( iter, 0 )
-        #self.show_log( task_id )
-        self.launch_viewer( system )
-
-        return False
-
-
-    def __init__(self, pns_host ):
-
-        self.pns_host = pns_host
-
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_title("cylc view chooser" )
-        window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        window.set_size_request(200, 150)
-        window.connect("delete_event", self.delete_event)
-
-        liststore = gtk.ListStore( str )
-        treeview = gtk.TreeView()
-
-        ts = treeview.get_selection()
-        ts.set_mode( gtk.SELECTION_SINGLE )
-        ts.set_select_function( self.get_selected_system, liststore )
-
-        tvc = gtk.TreeViewColumn( 'Viewable Systems' )
-        cr = gtk.CellRendererText()
-        cr.set_property( 'cell-background', 'lightblue' )
-        tvc.pack_start( cr, False )
-        tvc.set_attributes( cr, text=0 )
- 
-        treeview.set_model(liststore)
-        treeview.append_column( tvc )
-
-        vbox = gtk.VBox()
-        quit_button = gtk.Button( "Close" )
-        quit_button.connect("clicked", self.delete_event, None, None )
-        vbox.pack_start( treeview, True )
-        vbox.pack_start( quit_button, False )
-        window.add( vbox )
-        window.show_all()
-
-        self.viewer_list = []
-
-        self.updater = chooser_updater( liststore, self.pns_host )
-        self.updater.start()
-
 
 if __name__ == "__main__":
 
-    parser = OptionParser( """cylc view [options] SYSTEM 
+    parser = OptionParser( """cylc view [options]
+       cylc view [options] SYSTEM
 
-Launch one or more real-time system monitors on currently running systems. 
+Start one or more real time cylc system monitors.
 
-Note that cylc system monitors display the stat of TASK PROXY OBJECTS
-INSIDE THE SCHEDULER, NOT EXTERNAL SYSTEM TASKS (how to do the latter
-depends on the job submission method used by each task).""")
+These display the current state of a system as reported by its task
+proxy objects (how to monitor a *real* task depends on the job
+submission method used), provide access to the scheduler logs and to
+task stdout and stderr files, and allow you to view the current status
+of each task's prerequisites and outputs. 
+
+If a system name is supplied, a single system monitor will appear when
+the named system starts up (if it hasn't already started).
+
+If a system name is not supplied, you will be able to choose from a
+list of running systems (which updates itself in real time).""")
 
     parser.add_option( "--host",
             help="Pyro nameserver host, defaults to local hostname. Use "
@@ -127,10 +33,33 @@ depends on the job submission method used by each task).""")
             metavar="HOSTNAME", action="store", default=socket.getfqdn(),
             dest="pns_host" )
 
+    parser.add_option( "-u", "--user",
+            help="Owner of the target system, defaults to $USER. "
+            "Needed to infer the Pyro nameserver group name.",
+            metavar="USERNAME", default=os.environ["USER"],
+            action="store", dest="username" )
+
     ( options, args ) = parser.parse_args()
 
     pns_host = options.pns_host
+    user = options.username
  
-    gobject.threads_init()
-    app = chooser( pns_host )
+    if len( args ) == 0:
+        use_chooser = True
+        system = None
+    elif len( args ) == 1:
+        use_chooser = False
+        system = args[0]
+        group = ':cylc.' + user + '.' + system
+    else:
+        parser.error( "Wrong number of arguments" )
+
+    imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+
+    if use_chooser:
+        app = chooser( pns_host, imagedir )
+    else:
+        app = standalone_monitor( group, system, pns_host, imagedir )
+
     gtk.main()
+

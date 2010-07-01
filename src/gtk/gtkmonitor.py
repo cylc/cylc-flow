@@ -58,7 +58,6 @@ class monitor:
 
     # close the window and quit
     def delete_event(self, widget, event, data=None):
-        #gtk.main_quit()
         self.lvp.quit()
         self.t.quit = True
 
@@ -88,7 +87,6 @@ Cylc View is a real time system monitor for Cylc.
         about.destroy()
 
     def click_exit( self, foo ):
-        #gtk.main_quit()
         self.lvp.quit()
         self.t.quit = True
         for q in self.quitters:
@@ -548,11 +546,23 @@ Cylc View is a real time system monitor for Cylc.
         self.log_colors = color_rotator()
 
         # Get list of tasks in the system
-        try:
-            self.ss = connector( self.pns_host, self.groupname, 'state_summary' ).get()
-        except Exception, x:
-            print x
-            raise
+        warned = False
+        while True:
+            try:
+                self.ss = connector( self.pns_host, self.groupname, 'state_summary', silent=True ).get()
+            except:
+                if not warned:
+                    print "waiting for system " + system_name + ".",
+                    warned = True
+                else:
+                    print '.',
+                    sys.stdout.flush()
+            else:
+                print '.'
+                sys.stdout.flush()
+                time.sleep(2) # wait for system to start
+                break
+            time.sleep(1)
 
         try:
             self.rem = connector( self.pns_host, self.groupname, 'remote' ).get()
@@ -609,4 +619,15 @@ Cylc View is a real time system monitor for Cylc.
         #print "Starting task state info thread"
         self.t.start()
 
+class standalone_monitor( monitor ):
+    def __init__(self, groupname, system_name, pns_host, imagedir ):
+        gobject.threads_init()
+        monitor.__init__(self, groupname, system_name, pns_host, imagedir)
+ 
+    def delete_event(self, widget, event, data=None):
+        monitor.delete_event( self, widget, event, data )
+        gtk.main_quit()
 
+    def click_exit( self, foo ):
+        monitor.click_exit( self, foo )
+        gtk.main_quit()

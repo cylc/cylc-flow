@@ -19,7 +19,7 @@ import pyrex
 
 class connector:
 
-    def __init__( self, hostname, groupname, target ):
+    def __init__( self, hostname, groupname, target, silent=False ):
 
         self.target = target
         self.hostname = hostname
@@ -28,11 +28,12 @@ class connector:
         foo = pyrex.discover( hostname )
 
         if not foo.registered( groupname ):
-            print "WARNING: no Pyro objects registered under", groupname 
-            # print existing groups and exit
-            print
-            foo.print_info()
-            print
+            if not silent:
+                print "WARNING: no Pyro objects registered under", groupname 
+                # print existing groups and exit
+                print
+                foo.print_info()
+                print
             sys.exit(1)
 
     def get( self ):

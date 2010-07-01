@@ -25,6 +25,6 @@ running simultaneously.""")
 
 (options, args) = parser.parse_args()
 
-if parser.prompt( 'Block' ):
+if parser.prompt( 'lock' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
     print god.block( os.environ['USER'] )

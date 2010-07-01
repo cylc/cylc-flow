@@ -36,8 +36,7 @@ Arguments:
         self.add_option( "-u", "--user",
                 help="Owner of the target system, defaults to $USER. "
                 "Needed to infer the Pyro nameserver group name.",
-                metavar="USERNAME",
-                default=os.environ["USER"],
+                metavar="USERNAME", default=os.environ["USER"],
                 action="store", dest="username" )
 
         self.add_option( "--host",
