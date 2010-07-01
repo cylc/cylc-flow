@@ -13,7 +13,7 @@
 # THIS IS A CYLC TASK SCRIPT
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # this is a cylc task utility script, meant to be WRAPPED by specific
 # cylc tasks
@@ -43,14 +43,12 @@ set -e; trap 'cylc message --failed' ERR
 # some cases; imagine a tar archive of many compressed files).
 
 if [[ -z $TARG ]]; then
-    cylc message -p CRITICAL "TARG not defined"
-    cylc message --failed
+    cylc task-failed "TARG not defined"
     exit 1
 fi
 
 if [[ -z $DEST ]]; then
-    cylc message -p CRITICAL "DEST not defined"
-    cylc message --failed
+    cylc task-failed "DEST not defined"
     exit 1
 fi
 
@@ -60,7 +58,7 @@ for T in $TARG; do
     # remove this destination from the list of remaining destinations
     DEST=${DEST#* }
 
-    cylc message "initiating file transfer from $T to $D"
+    cylc task-message "initiating file transfer from $T to $D"
 
     # check destination directory exists
     if [[ $D = *:* ]]; then
@@ -71,11 +69,11 @@ for T in $TARG; do
         #RFILE=$( basename $RPATH )
         RDIR=$( dirname $RPATH )
 
-        #cylc message "making remote destination directory, $RDIR"
+        #cylc task-message "making remote destination directory, $RDIR"
         ssh $RMACH mkdir -p $RDIR
     else
         DIR=$( dirname $D )
-        #cylc message "making destination directory, $DIR"
+        #cylc task-message "making destination directory, $DIR"
         mkdir -p $DIR
     fi
 

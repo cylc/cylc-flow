@@ -13,10 +13,10 @@
 # run length 10 minutes
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # START MESSAGE
-cylc message --started
+cylc task-started || exit 1
 
 # check environment
 check-env.sh || exit 1
@@ -26,8 +26,7 @@ ONE=$CYLC_TMPDIR/pass-${ASYNCID}.nc
 for PRE in $ONE; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
-        cylc message -p CRITICAL "file not found: $PRE"
-        cylc message --failed
+        cylc task-failed "file not found: $PRE"
         exit 1
     fi
 done
@@ -37,7 +36,7 @@ sleep 10
 
 # create task outputs
 touch $CYLC_TMPDIR/products-${ASYNCID}.nc
-cylc message "products $ASYNCID ready"
+cylc task-message "products $ASYNCID ready"
 
 # SUCCESS MESSAGE
-cylc message --succeeded
+cylc task-finished

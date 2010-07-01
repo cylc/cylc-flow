@@ -13,10 +13,10 @@
 # Task to watch for satellite pass data
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # START MESSAGE
-cylc message --started
+cylc task-started || exit 1
 
 # check environment
 check-env.sh || exit 1
@@ -36,9 +36,9 @@ while true; do
     sleep 10
     touch $CYLC_TMPDIR/pass-ID${COUNT}.nc
     echo ID$COUNT >> $CYLC_TMPDIR/processed.txt
-    cylc message "pass ID$COUNT ready"
+    cylc task-message "pass ID$COUNT ready"
     COUNT=$(( COUNT + 10 ))
 done
 
 # SUCCESS MESSAGE
-cylc message --succeeded
+cylc task-finished

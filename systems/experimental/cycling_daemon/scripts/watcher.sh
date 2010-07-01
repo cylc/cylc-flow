@@ -15,10 +15,10 @@
 # run time scaled by $REAL_TIME_ACCEL 
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # START MESSAGE
-cylc message --started
+cylc task-started || exit 1
 
 # check environment
 check-env.sh || exit 1
@@ -26,7 +26,7 @@ check-env.sh || exit 1
 # no prerequisites to check
 
 #if [[ -z $START_CYCLE_TIME ]]; then
-#    cylc message -p CRITICAL "No start cycle time specified"
+#    cylc task-failed "No start cycle time specified"
 #    cylc --failed
 #    exit 1
 #fi
@@ -36,14 +36,14 @@ CYCLE=$CYCLE_TIME
 while true; do
     sleep 10
     if ! cylc suicide; then
-        cylc message -p CRITICAL 'STOPPING NOW; cylc request'
-        cylc message --succeeded
+        cylc task-failed 'STOPPING NOW; cylc request'
+        cylc task-finished
         exit 0
     fi
-    cylc message "external data ready for $CYCLE"
-    cylc message "crap ready for ${CYCLE}, ass hole"
+    cylc task-message "external data ready for $CYCLE"
+    cylc task-message "crap ready for ${CYCLE}, ass hole"
     CYCLE=$( cylc-time -a 6 $CYCLE )
 done
 
 # SUCCESS MESSAGE (NEVER REACHED!)
-cylc message --succeeded
+cylc task-finished
