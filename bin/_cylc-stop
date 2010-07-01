@@ -12,6 +12,7 @@
 
 import os
 import cycle_time
+import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -41,12 +42,11 @@ if options.stop_time:
     if not cycle_time.is_valid( stop_at ):
         parser.error( "invalid cycle time: " + stop_at )
     if parser.prompt( 'Set stop time ' + stop_at + ' for'):
-        print god.set_stop_time( stop_at, os.environ['USER'] )
+        check_switch.check( god.set_stop_time( stop_at, os.environ['USER'] ))
 
 elif options.shutdownnow:
     if parser.prompt( 'Shutdown NOW' ):
-        print god.shutdown_now( os.environ['USER'] )
-
+        check_switch.check( god.shutdown_now( os.environ['USER'] ))
 else:
     if parser.prompt( 'Shutdown' ):
-        print god.shutdown( os.environ['USER'] )
+        check_switch.check( god.shutdown( os.environ['USER'] ))

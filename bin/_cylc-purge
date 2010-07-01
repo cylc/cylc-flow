@@ -12,6 +12,7 @@
 
 import os
 import cycle_time
+import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -54,4 +55,4 @@ for cycle in [ start, stop ]:
 
 if parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.purge( target, stop, os.environ['USER'] )
+    check_switch.check( god.purge( target, stop, os.environ['USER'] ))

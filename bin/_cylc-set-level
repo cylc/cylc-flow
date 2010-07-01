@@ -11,6 +11,7 @@
 
 
 import os
+import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -30,4 +31,4 @@ if not options.verbosity:
 
 if parser.prompt( "Set logging level to " + options.verbosity + " in " ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.set_verbosity( options.verbosity, os.environ['USER'] )
+    check_switch.check( god.set_verbosity( options.verbosity, os.environ['USER'] ))

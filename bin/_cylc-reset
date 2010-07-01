@@ -12,6 +12,7 @@
 
 import os
 import cycle_time
+import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -61,10 +62,10 @@ if parser.prompt( 'Reset task ' + task_id + ' in'):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
 
     if options.waiting:
-        print god.reset_to_waiting( task_id, os.environ['USER'] )
+        check_switch.check( god.reset_to_waiting( task_id, os.environ['USER'] ))
 
     if options.ready:
-        print god.reset_to_ready( task_id, os.environ['USER'] )
+        check_switch.check( god.reset_to_ready( task_id, os.environ['USER'] ))
 
     elif options.finished:
-        print god.reset_to_finished( task_id, os.environ['USER'] )
+        check_switch.check( god.reset_to_finished( task_id, os.environ['USER'] ))

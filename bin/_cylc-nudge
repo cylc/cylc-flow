@@ -11,6 +11,7 @@
 
 
 import os
+import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -27,4 +28,4 @@ The cylc userguide explains when you might want to use this command.
 
 if parser.prompt( 'Nudge' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.nudge( os.environ['USER'] )
+    check_switch.check( god.nudge( os.environ['USER'] ))

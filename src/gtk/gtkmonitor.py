@@ -560,7 +560,7 @@ Cylc View is a real time system monitor for Cylc.
             else:
                 print '.'
                 sys.stdout.flush()
-                time.sleep(2) # wait for system to start
+                time.sleep(1) # wait for system to start
                 break
             time.sleep(1)
 

@@ -1,9 +1,5 @@
 To Do
 
-* CLEANUP ALGORITHM: 
-    - if a oneoff task declares no follow-on task it can be assumed to
-      have no non-cotemporal dependants?
-
 * extreme task elimination method - extrapolate forward in time to see
   if a finished task will ever be needed, otherwise delete?
 
@@ -59,10 +55,6 @@ To Do
 
 * message command (command line usage only!!!) needs lock and practice mode?
 
-* check interpolation of environment vars in task-generator. It works
-  for REMOTE host without any explicit interpolation? (so same with
-  other keys?)
-
 * FINISH OFF THE CONNECTION EXCEPTION HANDLING IN MANAGER CLASS.
 
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned
@@ -79,9 +71,6 @@ To Do
 
 * check that practice mode systems initialise with the same clock time
   as the original system!
-
-* intervention commands should return error status if the request is
-  refused (for unit test).
 
 * DOCUMENT: system shutdown for practice, while real tasks complete:
   restart with them FINISHED!

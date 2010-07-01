@@ -11,6 +11,7 @@
 
 import os
 import cycle_time
+import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -50,9 +51,9 @@ if options.kill_cycle:
 
     if parser.prompt( 'Kill ALL tasks in ' + cycle ):
         if options.no_spawn:
-            print god.die_cycle( cycle, os.environ['USER'] )
+            check_switch.check( god.die_cycle( cycle, os.environ['USER'] ))
         else:
-            print god.spawn_and_die_cycle( cycle, os.environ['USER'] )
+            check_switch( god.spawn_and_die_cycle( cycle, os.environ['USER'] ))
 
 if options.kill_id:
     target = options.kill_id  
@@ -62,6 +63,6 @@ if options.kill_id:
 
     if parser.prompt( 'Kill task ' + target + ' in'):
         if options.no_spawn:
-            print god.die( target, os.environ['USER'] )
+            check_switch.check( god.die( target, os.environ['USER'] ))
         else:
-            print god.spawn_and_die( target, os.environ['USER'] )
+            check_switch.check( god.spawn_and_die( target, os.environ['USER'] ))

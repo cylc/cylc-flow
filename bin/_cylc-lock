@@ -10,6 +10,7 @@
 #         |________________________|
 
 import os
+import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -27,4 +28,4 @@ running simultaneously.""")
 
 if parser.prompt( 'lock' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.block( os.environ['USER'] )
+    check_switch.check( god.block( os.environ['USER'] ))

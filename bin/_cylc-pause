@@ -10,8 +10,9 @@
 #         |________________________|
 
 
-import os
+import os, sys
 import cycle_time
+import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
 
@@ -34,8 +35,7 @@ if options.pause_time:
     if not cycle_time.is_valid( pause_at ):
         parser.error( "invalid cycle time: " + pause_at )
     if parser.prompt( 'Pause at ' + pause_at + ' for'):
-        print god.set_hold_time( pause_at, os.environ['USER'] )
-
+        check_switch.check( god.set_hold_time( pause_at, os.environ['USER'] ))
 else:
     if parser.prompt( 'Pause' ):
-        print god.hold( os.environ['USER'] )
+        check_switch.check( god.hold( os.environ['USER'] ))

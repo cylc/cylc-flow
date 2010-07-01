@@ -221,7 +221,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return "OK"
 
-
     def hold( self, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
