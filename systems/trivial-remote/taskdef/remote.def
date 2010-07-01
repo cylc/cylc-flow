@@ -18,7 +18,7 @@
 #    $HOME/A-output/$CYCLE_TIME/met.err
 
 %REMOTE_HOST
-    fitzroy
+    $REMOTE_HOST
 
 %DESCRIPTION
     Remote platform test task: the task script that does nothing except

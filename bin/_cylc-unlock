@@ -27,4 +27,4 @@ from running simultaneously.""")
 
 if parser.prompt( 'Unlock' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    print god.unblock( os.environ['USER'] )
+    print god.unlock( os.environ['USER'] )
