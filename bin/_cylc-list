@@ -46,8 +46,9 @@ if len(args) != 0:
 print len( groups ), "systems currently have objects registered in the Pyro nameserver"
 count = 0
 for group in groups:
+    print group
     count += 1
-    ( username, system ) = group.split('^', 1)
+    ( root, username, system ) = group.split('.')
 
     practice_mode = ""
     m = re.match( '(.*)_practice', system )
