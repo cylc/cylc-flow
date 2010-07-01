@@ -23,9 +23,6 @@
 %CYCLES
     0,6,12,18
 
-%NO_NONCOTEMPORAL_DEPENDANTS
-    True
-
 %TASK
     cold.sh
 

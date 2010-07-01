@@ -70,9 +70,9 @@ class system_config( config ):
         # new remote host can be configured entirely from here. 
         #
         # REMOTE HOST FOR THE FORECAST MODEL TASKS
-        self.items['environment']['SUPERCOMPUTER'] = 'fc-test'
+        self.items['environment']['SUPERCOMPUTER'] = 'localhost'
         # REMOTE FORECAST MODEL TASK OWNER
-        self.items['environment']['REMOTE_FC_USER'] = 'ecoconnect_devel'
+        self.items['environment']['REMOTE_FC_USER'] = '$USER'
         # PATH TO A CYLC INSTALLATION ON THE REMOTE HOST
         self.items['environment']['REMOTE_CYLC_DIR'] = '$[HOME]/cylc'
         # PATH TO THE CYLC SYSTEM DEFINITION DIRECTORY ON THE REMOTE HOST

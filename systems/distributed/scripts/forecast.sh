@@ -5,7 +5,7 @@
 
 # run length 10 minutes, one restart file
 
-cylc message --started
+cylc task-started || exit 1
 
 ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 10 * 60 / ACCEL ))
@@ -22,8 +22,7 @@ for PRE in $ONE $TWO; do
     [[ ! -f $PRE ]] && {
         MSG="file not found: $PRE"
         echo "ERROR, forecast: $MSG"
-        cylc message -p CRITICAL $MSG
-        cylc message --failed
+        cylc task-failed $MSG
         exit 1
     }
 done
@@ -33,11 +32,11 @@ sleep $SLEEP # 90 min
 RUNDIR=$CYLC_REMOTE_TMPDIR/running/$NEXT_CYCLE_TIME
 mkdir -p $RUNDIR
 touch $RUNDIR/restart
-cylc message --next-restart-completed
+cylc task-message --next-restart-completed
 
 OUTDIR=$CYLC_REMOTE_TMPDIR/output/$CYCLE_TIME
 mkdir -p $OUTDIR
 touch $OUTDIR/forecast.nc
-cylc message "forecast output ready for $CYCLE_TIME"
+cylc task-message "forecast output ready for $CYCLE_TIME"
 
-cylc message --succeeded
+cylc task-finished

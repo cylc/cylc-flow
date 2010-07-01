@@ -18,9 +18,9 @@
 # run length 10 minutes
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
-cylc message --started
+cylc task-started || exit 1
 
 ACCEL=$(( 3600 / 10 )) # 10 s => 1 hour
 SLEEP=$(( 10 * 60 / ACCEL )) 
@@ -30,6 +30,6 @@ sleep $SLEEP
 RUNDIR=$CYLC_REMOTE_TMPDIR/running/$CYCLE_TIME
 mkdir -p $RUNDIR
 touch $RUNDIR/restart
-cylc message "forecast restart files ready for $CYCLE_TIME"
+cylc task-message "forecast restart files ready for $CYCLE_TIME"
 
-cylc message --succeeded
+cylc task-finished
