@@ -20,10 +20,16 @@ class logviewer:
 
         self.create_gui_panel()
 
+        self.clear_and_reconnect()
+
+    def clear_and_reconnect( self ):
+        logbuffer = self.logview.get_buffer()
+        s,e = logbuffer.get_bounds()
+        logbuffer.delete( s,e )
         self.t = tailer( self.logview, self.path() )
         print "Starting log viewer thread for " + self.name
         self.t.start()
-    
+   
     def path( self ):
         if self.dir:
             return self.dir + '/' + self.file

@@ -224,7 +224,7 @@ Cylc View is a real time system monitor for Cylc.
 
     def show_log( self, task_id ):
 
-        [ glbl, states ] = self.ss.get_state_summary()
+        [ glbl, states ] = self.ss.get().get_state_summary()
 
         view = True
         reasons = []
@@ -360,7 +360,7 @@ Cylc View is a real time system monitor for Cylc.
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
  
-        result = self.rem.get_task_requisites( [ task_id ] )
+        result = rem.get_task_requisites( [ task_id ] )
 
         if task_id not in result:
             warning_dialog( 
@@ -546,10 +546,14 @@ Cylc View is a real time system monitor for Cylc.
         self.log_colors = color_rotator()
 
         # Get list of tasks in the system
+
+        self.ss = connector( self.pns_host, self.groupname, 'state_summary', silent=True )
+        self.rem = connector( self.pns_host, self.groupname, 'remote' )
+            
         warned = False
         while True:
             try:
-                self.ss = connector( self.pns_host, self.groupname, 'state_summary', silent=True ).get()
+                ss = self.ss.get()
             except:
                 if not warned:
                     print "waiting for system " + system_name + ".",
@@ -565,16 +569,16 @@ Cylc View is a real time system monitor for Cylc.
             time.sleep(1)
 
         try:
-            self.rem = connector( self.pns_host, self.groupname, 'remote' ).get()
+            rem = self.rem.get()
         except Exception, x:
             print x
             raise
 
-        self.logdir = self.ss.get_config( 'logging_dir' ) 
+        self.logdir = ss.get_config( 'logging_dir' ) 
         self.logfile = 'main'
 
-        self.task_list = self.ss.get_config( 'task_list' )
-        shortnames = self.ss.get_config( 'task_list_shortnames' )
+        self.task_list = ss.get_config( 'task_list' )
+        shortnames = ss.get_config( 'task_list_shortnames' )
 
         self.translate_task_names( shortnames )
 
@@ -614,7 +618,7 @@ Cylc View is a real time system monitor for Cylc.
                 self.task_list, 
                 self.label_mode, 
                 self.label_status,
-                self.label_time )
+                self.label_time )#, self.lvp )
 
         #print "Starting task state info thread"
         self.t.start()

@@ -47,12 +47,16 @@ class updater(threading.Thread):
 
     def __init__(self, god, imagedir, led_liststore,
             fl_liststore, ttreestore, task_list,
-            label_mode, label_status, label_time ):
+            label_mode, label_status, label_time ):#, logview ):
 
         super(updater, self).__init__()
 
+        #self.logview = logview
+        self.quit = False
+
         self.state_summary = {}
-        self.god = god
+        self.godfather = god
+        self.reconnect()
 
         self.fl_liststore = fl_liststore
         self.ttreestore = ttreestore
@@ -61,8 +65,6 @@ class updater(threading.Thread):
         self.label_mode = label_mode
         self.label_status = label_status
         self.label_time = label_time
-
-        self.quit = False
 
         self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-waiting-glow.xpm" )
         self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-submitted-glow.xpm" )
@@ -78,24 +80,37 @@ class updater(threading.Thread):
             self.led_digits_one.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/one/digit-" + str(i) + ".xpm" ))
             self.led_digits_two.append( gtk.gdk.pixbuf_new_from_file( imagedir + "/digits/two/digit-" + str(i) + ".xpm" ))
 
+    def reconnect( self ):
+        #while not self.quit:
+        try:
+            self.god = self.godfather.get()
+        except:
+            return False
+        else:
+            #gobject.idle_add( self.logview.clear_and_reconnect )
+            return True
+
     def connection_lost( self ):
         self.status = "CONNECTION LOST"
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff0' ))
+        self.label_status.set_text( self.status )
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED 
         # MULTIPLE TIMES???????????????///
+        self.reconnect()
+
         return False
 
     def update(self):
         #print "Updating"
         try:
             [glbl, states] = self.god.get_state_summary()
-        except Exception,x:
+        except:
             self.led_liststore.clear()
             self.ttreestore.clear()
             self.fl_liststore.clear()
             gobject.idle_add( self.connection_lost )
- 
             return False
+            #[glbl, states] = self.god.get_state_summary()
 
         # always update global info
 
@@ -377,4 +392,4 @@ class updater(threading.Thread):
             time.sleep(1)
         else:
             pass
-            #print "Disconnecting task state info thread"
+            print "Disconnecting task state info thread"
