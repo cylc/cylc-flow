@@ -55,7 +55,8 @@ class job_submit:
 
     def set_owner_and_homedir( self, owner = None ):
         if owner:
-            self.owner = owner
+            # owner can be defined using environment variables
+            self.owner = self.interp_str( owner )
         else:
             self.owner = self.cylc_owner
 
