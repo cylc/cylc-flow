@@ -35,6 +35,14 @@ echo "ok"
 MSG="Environment checks out OK"
 cylc task-message $MSG
 
+echo
+while (( COUNT < 10 )); do
+    cylc task-message "$COUNT - hello from $TASK_ID"
+    COUNT=$(( COUNT + 1 ))
+    sleep 1
+done
+echo
+
 if [[ ! -z FAIL_TASK ]]; then
     # user has ordered a particular task to fail
     if [[ $FAIL_TASK == ${TASK_NAME}%${CYCLE_TIME} ]]; then
