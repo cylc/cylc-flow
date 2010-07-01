@@ -83,10 +83,14 @@ parser.add_option( "--host",
         metavar="HOSTNAME", action="store", default=socket.getfqdn(),
         dest="pns_host" )
 
+parser.add_option( "--user",
+        help="Attempt to access another user's system registrations.", 
+        metavar="USER", action="store", default=None, dest="user" )
+
 ( options, args ) = parser.parse_args()
 
 # load registration file
-reg = registrations()
+reg = registrations( options.user )
 
 if options.get:
     if len( args ) != 1:

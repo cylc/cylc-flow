@@ -12,21 +12,33 @@
 
 import pickle
 import os, sys, re
+import pwd
 
 # cylc system registration module
 
 class registrations:
-    
-    def __init__( self, file=os.environ['HOME'] + '/.cylc/registrations' ):
+    def __init__( self, user=None ):
+        if not user:
+            self.readonly = False
+            home = os.environ['HOME']
+
+        elif user == os.environ['USER']:
+            self.readonly = False
+            home = os.environ['HOME']
+        else:
+           # attempt to read another user's system registration
+            self.readonly = True
+            home = pwd.getpwnam( user )[5]
+
         # filename used to store system registrations
-        file = os.path.abspath( file )
+        file = os.path.join( home, '.cylc', 'registrations' )
         self.filename = file
 
         # use a dict to make sure names are unique
         self.registrations = {}
 
         # make sure the registration directory exists
-        if not os.path.exists( os.path.dirname( file )):
+        if not self.readonly and not os.path.exists( os.path.dirname( file )):
             try:
                 os.makedirs( os.path.dirname( file ))
             except Exception,x:
@@ -46,8 +58,18 @@ class registrations:
         input = open( self.filename, 'rb' )
         self.registrations = pickle.load( input )
         input.close()
+
+    def deny_user( self ):
+        if self.readonly:
+            print "WARNING: you cannot write to another user's registration file"
+            return True
+        else:
+            return False
         
     def dump_to_file( self ):
+        if self.deny_user():
+            return
+
         output = open( self.filename, 'wb' )
         pickle.dump( self.registrations, output )
         output.close()
@@ -72,6 +94,9 @@ class registrations:
         return self.registrations.keys()
 
     def unregister( self, name ):
+        if self.deny_user():
+            return
+
         if self.is_registered( name ):
             print 'Unregistering ',
             self.print_reg( name )
@@ -80,6 +105,9 @@ class registrations:
             print 'Name ' + name + ' is not registered'
  
     def register( self, name, dir ):
+        if self.deny_user():
+            return
+
         if self.is_registered( name ):
             if dir == self.registrations[ name ]:
                 print name + " is already registered:"
