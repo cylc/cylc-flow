@@ -16,17 +16,17 @@
 # Run length 5 minutes, scaled by $REAL_TIME_ACCEL 
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # START MESSAGE
-cylc message --started
+cylc task-started || exit 1
 
 # EXECUTE THE TASK ...
 sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
 
 # "find" the external data and report it available
 touch $CYLC_TMPDIR/obs-${CYCLE_TIME}.nc
-cylc message "obs data ready for $CYCLE_TIME"
+cylc task-message "obs data ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
-cylc message --succeeded
+cylc task-finished

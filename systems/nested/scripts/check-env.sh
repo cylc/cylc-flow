@@ -14,14 +14,12 @@
 
 if [[ -z $REAL_TIME_ACCEL ]]; then
     # FAILURE MESSAGE
-    cylc message -p CRITICAL "\$REAL_TIME_ACCEL is not defined"
-    cylc message --failed
+    cylc task-failed "\$REAL_TIME_ACCEL is not defined"
     exit 1
 fi
 
 if [[ -z $CYLC_TMPDIR ]]; then
     # FAILURE MESSAGE
-    cylc message -p CRITICAL "\$CYLC_TMPDIR is not defined"
-    cylc message --failed
+    cylc task-failed "\$CYLC_TMPDIR is not defined"
     exit 1
 fi

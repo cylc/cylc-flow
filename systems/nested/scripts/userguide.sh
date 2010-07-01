@@ -19,10 +19,10 @@
 # run length 200 minutes, scaled by $REAL_TIME_ACCEL 
 
 # trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc message --failed' ERR
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # START MESSAGE
-cylc message --started
+cylc task-started || exit 1
 
 # check prerequisites
 ONE=$CYLC_TMPDIR/surface-winds-${CYCLE_TIME}.nc
@@ -30,8 +30,7 @@ TWO=$CYLC_TMPDIR/surface-pressure-${CYCLE_TIME}.nc
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
-        cylc message -p CRITICAL "file not found: $PRE"
-        cylc message --failed
+        cylc task-failed "file not found: $PRE"
         exit 1
     fi
 done
@@ -39,12 +38,11 @@ done
 # EXECUTE THE MODEL ...
 if ! cylc start --at=$CYCLE_TIME --until $CYCLE_TIME userguide; then
     # FAILURE MESSAGE
-    cylc message -p CRITICAL "subsystem scheduler failed"
-    cylc message --failed
+    cylc task-failed "subsystem scheduler failed"
     exit 1
 fi
 
-cylc message --all-outputs-completed
+cylc task-message --all-outputs-completed
 
 # SUCCESS MESSAGE
-cylc message --succeeded
+cylc task-finished
