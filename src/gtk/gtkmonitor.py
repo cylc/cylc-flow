@@ -537,12 +537,12 @@ Cylc View is a real time system monitor for Cylc.
         try:
             connector( self.pns_host, self.groupname, 'minimal', silent=True ).get()
         except:
-            print "NO CONNECTION"
+            #print "NO CONNECTION"
             self.connection_lost = True
         else:
-            print "CONNECTED"
+            #print "CONNECTED"
             if self.connection_lost:
-                print "------>INITIAL RECON"
+                #print "------>INITIAL RECON"
                 self.connection_lost = False
                 self.lvp.clear_and_reconnect()
         # always return True so that we keep getting called
