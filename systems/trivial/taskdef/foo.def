@@ -27,3 +27,6 @@
 
 %ENVIRONMENT
     WRAP foo.sh
+
+%OUTPUTS
+    "Hello from $(CYCLE_TIME) to $(CYCLE_TIME+6)"
