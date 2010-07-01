@@ -44,12 +44,12 @@ set -e
 # some cases; imagine a tar archive of many compressed files).
 
 if [[ -z $SRCE ]]; then
-    cylc message -p CRITICAL "SRCE not defined"
+    cylc task-message -p CRITICAL "SRCE not defined"
     exit 1
 fi
 
 if [[ -z $DEST ]]; then
-    cylc message -p CRITICAL "DEST not defined"
+    cylc task-message -p CRITICAL "DEST not defined"
     exit 1
 fi
 
@@ -61,7 +61,7 @@ for T in $SRCE; do
     # remove this destination from the list of remaining destinations
     DEST=${DEST#* }
 
-    cylc message "initiating file transfer from $T to $D"
+    cylc task-message "initiating file transfer from $T to $D"
 
     # check destination directory exists
     if [[ $D = *:* ]]; then
@@ -74,25 +74,25 @@ for T in $SRCE; do
 
         if ( ssh $RMACH "[[ -f $RPATH ]]" ); then
             if $RECOPY; then
-                cylc message -p WARNING "REcopying: $D"
+                cylc task-message -p WARNING "REcopying: $D"
             else
-                cylc message -p WARNING "NOT recopying: $D"
+                cylc task-message -p WARNING "NOT recopying: $D"
                 continue
             fi
         fi
-        #cylc message "making remote destination directory, $RDIR"
+        #cylc task-message "making remote destination directory, $RDIR"
         ssh $RMACH mkdir -p $RDIR
     else
         if [[ -f $D ]]; then
             if $RECOPY; then
-                cylc message -p WARNING "REcopying: $D"
+                cylc task-message -p WARNING "REcopying: $D"
             else
-                cylc message -p WARNING "NOT recopying: $D"
+                cylc task-message -p WARNING "NOT recopying: $D"
                 continue
             fi
         fi
         DIR=$( dirname $D )
-        #cylc message "making destination directory, $DIR"
+        #cylc task-message "making destination directory, $DIR"
         mkdir -p $DIR
     fi
 
