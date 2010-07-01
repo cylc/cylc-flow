@@ -27,25 +27,23 @@
 # messages, but in that case you might as well dispense with wrapping
 # and provide the started, finished, and failed messages as well.
 
-set -e  # abort on error
-
-# 'cylc message' checks for $TASK_NAME and $CYCLE_TIME  
-# so we only need to check for $WRAP here.
-
-if [[ -z $WRAP ]]; then
-    echo "ERROR, cylc-wrapper: \$WRAP not found"
-    exit 1
-fi
+set -e; trap 'cylc task-failed "error trapped"' ERR
 
 # send the startup message
-cylc message --started
+cylc task-started || exit 1
+
+# only need to check for $WRAP here.
+if [[ -z $WRAP ]]; then
+    cylc task-failed "ERROR, cylc-wrapper: \$WRAP not found"
+    exit 1
+fi
 
 # execute the wrapped task and check for success or failure
 if $WRAP $@; then 
     # succeeded
-    cylc message --all-outputs-completed
-    cylc message --succeeded
+    cylc task-message --all-outputs-completed
+    cylc task-finished
 else
     # failed
-    cylc message --failed 
+    cylc task-failed 
 fi

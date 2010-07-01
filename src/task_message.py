@@ -129,7 +129,7 @@ class message:
     def shortcut_all_outputs( self ):
         self.print_msg_sp( 'all outputs completed' )
         if self.mode == 'scheduler':
-            self.get_proxy().set_all_outputs_completed()
+            self.get_proxy().set_all_internal_outputs_completed()
 
 
 # TO DO: REINSTATE THE DEAD LETTER BOX
