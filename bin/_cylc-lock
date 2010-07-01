@@ -28,4 +28,4 @@ running simultaneously.""")
 
 if parser.prompt( 'lock' ):
     god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    check_switch.check( god.block( os.environ['USER'] ))
+    check_switch.check( god.lock( os.environ['USER'] ))

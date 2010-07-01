@@ -5,9 +5,9 @@
 # fails.  This can't be put in the remote switch file as it imports the
 # system tasks.
 
-import sys
+import sys, re
 
 def check( result ):
     print result
-    if result != "OK":
+    if not re.match( '^OK.*$', result ):
         sys.exit(1)

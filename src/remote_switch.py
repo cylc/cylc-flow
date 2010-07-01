@@ -118,19 +118,19 @@ class remote_switch( Pyro.core.ObjBase ):
 
         self.warning( "system locked by remote request" )
         self.locked = True
-        return "System locked"
+        return "OK"
 
     def unlock( self, user ):
         if user != self.owner:
             return "This system is owned by " + self.owner
 
         if not self.locked:
-            return "System already unlocked"
+            return "OK (system already unlocked)"
 
         else:
             self.warning( "system unlocked by remote request" )
             self.locked = False
-            return "System unlocked"
+            return "OK"
 
 
     def nudge( self, user ):
