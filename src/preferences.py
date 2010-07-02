@@ -109,8 +109,11 @@ class prefs:
                 self.configparser.set( section, item, self.config[ section][item] )
 
         print "Writing Cylc Preferences file: " + self.rcfile
-        with open( self.rcfile, 'wb' ) as configfile:
-            self.configparser.write( configfile )
+        # not compatible with python 2.4.3! 
+        #with open( self.rcfile, 'wb' ) as configfile:
+        #    self.configparser.write( configfile )
+        configfile = open( self.rcfile, 'wb' )
+        self.configparser.write( configfile )
         print "Done"
 
     def dump( self ):
