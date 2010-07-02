@@ -36,10 +36,11 @@ MSG="Environment checks out OK"
 cylc task-message $MSG
 
 echo
+COUNT=1
 while (( COUNT < 10 )); do
     cylc task-message "$COUNT - hello from $TASK_ID"
     COUNT=$(( COUNT + 1 ))
-    sleep 1
+    sleep 0.2
 done
 echo
 

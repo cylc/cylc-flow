@@ -116,6 +116,13 @@ TASKDEFS=$( find $SYS_DIR/taskdef -name '*.def' -o -name '*.py' )
 
 # create task class output sub-dir if necessary
 TASKDIR=$SYS_DIR/tasks
+if [[ -d $TASKDIR ]]; then
+    BKP=${TASKDIR}.$$
+    echo "Backing up existing task class directory to $BKP"
+    cp -r $TASKDIR $BKP
+    rm -rf $TASKDIR
+fi
+
 mkdir -p $TASKDIR
 
 # generate task class module
@@ -145,8 +152,10 @@ eof
 OIFS=$IFS
 IFS=$'\n'
 for MOD in tasks/*.py; do
+    echo -n "  $MOD"
     NAME=$( egrep '^ *name = ' $MOD )
     NAME=${NAME# *= }
+    echo " ... $NAME"
     echo "       ${NAME}," >> task_list.py
 done
 IFS=$OIFS
