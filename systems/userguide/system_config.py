@@ -70,7 +70,7 @@ class system_config( config ):
         # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 
         self.items['environment']['REAL_TIME_ACCEL'] = '360'
 
-        self.items['environment']['FAIL_TASK'] = 'A%2010010112'
+        self.items['environment']['FAIL_TASK'] = 'C%2010010112'
 
         #self.items['environment']['FOO'] = 'foo'
         #self.items['environment']['BAR'] = '$FOO'
