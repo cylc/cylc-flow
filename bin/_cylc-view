@@ -15,20 +15,17 @@ if __name__ == "__main__":
     parser = OptionParser( """cylc view [options]
        cylc view [options] SYSTEM
 
-Start one or more real time cylc system monitors.
-
-These display the current state of a system as reported by its task
-proxy objects (how to monitor a *real* task depends on the job
-submission method used), provide access to the scheduler logs and to
-task stdout and stderr files, and allow you to view the current status
-of each task's prerequisites and outputs. 
-
-If a system name is not supplied, a list of currently running systems,
-which updates itself in real time, allows you to choose which systems to
-monitor.
+Real time system monitoring: displays information about running cylc
+systems, including the current state of all tasks, scheduler log files,
+and task stdout and stderr files. Note that task state information comes
+from task proxy objects in the scheduler - how to monitor the real task
+processes depends on the job submission method used.
 
 If a system name is supplied, a single system monitor will appear when
 the named system starts up, if it hasn't already started.
+
+If a system name is NOT supplied, a chooser window is launched to let
+you select from the available running systems. 
 
 A system monitor displays "NO CONNECTION" if the target system is yet 
 to start up (or has shut down). It will connect when the system is
@@ -69,23 +66,22 @@ started (or restarted).""")
 
     if use_chooser:
         app = chooser( pns_host, imagedir )
-    else:
-        if options.use_sysdir:
-            # get system definition directory
-            reg = registrations()
-            if reg.is_registered( system ):
-                system_dir = reg.get( system )
-            else:
-                reg.print_all()
-                raise SystemExit( "System " + system + " is not registered!" )
 
-            # get system logging directory
-            # TO DO: the usual --rcfile option
-            rcfile = prefs()
-            logging_dir = rcfile.get_system_logging_dir( system )
-            app = standalone_monitor_preload( group, system, system_dir, logging_dir, pns_host, imagedir )
+    elif options.use_sysdir:
+        # get system definition directory
+        reg = registrations( options.username )
+        if reg.is_registered( system ):
+            system_dir = reg.get( system )
         else:
-            app = standalone_monitor( group, system, pns_host, imagedir )
+            reg.print_all()
+            raise SystemExit( "System " + system + " is not registered!" )
+
+        # get system logging directory
+        rcfile = prefs( options.username )
+        logging_dir = rcfile.get_system_logging_dir( system )
+        app = standalone_monitor_preload( group, system, system_dir, logging_dir, pns_host, imagedir )
+    else:
+        app = standalone_monitor( group, system, pns_host, imagedir )
 
     gtk.main()
 
