@@ -1,5 +1,7 @@
 To Do
 
+* IMPORTANT: task stdout and stderr for remote tasks!
+
 * rationalise use of the connector class, especially in the viewer.
 
 * extreme task elimination method - extrapolate forward in time to see
