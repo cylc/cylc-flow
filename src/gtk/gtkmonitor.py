@@ -422,13 +422,12 @@ Cylc View is a real time system monitor for Cylc.
         w.destroy()
 
     def popup_logview( self, task_id, logfiles ):
-
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
         window.set_title( task_id + ": Task Information Viewer" )
-        window.set_size_request(600, 300)
+        window.set_size_request(800, 300)
 
         lv = combo_logviewer( task_id, logfiles )
         #print "ADDING to quitters: ", lv
