@@ -12,9 +12,9 @@ class chooser_updater(threading.Thread):
 
     def __init__(self, liststore, pns_host ):
         self.quit = False
+        self.pns_host = pns_host
         self.liststore = liststore
         super(chooser_updater, self).__init__()
-        self.discoverer = discover( pns_host )
         self.choices = []
     
     def run( self ):
@@ -26,7 +26,10 @@ class chooser_updater(threading.Thread):
             pass
     
     def choices_changed( self ):
-        groups = self.discoverer.get_groups()
+        # renew the connection each time
+        # (if a single proxy is established in __init__() then Pyro 3.7 (old!) 
+        # complains that sharing a proxy between threads is not allowed).
+        groups = discover( self.pns_host ).get_groups()
         choices = []
         for group in groups:
             choices.append( group )
