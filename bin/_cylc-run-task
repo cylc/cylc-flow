@@ -38,7 +38,7 @@ def commandline_parser():
     parser = OptionParser( usage )
 
     parser.set_defaults( pns_host= socket.getfqdn(), sched=False,
-            dry_run=False, rcfile=None )
+            dry_run=False )
 
     parser.add_option( "-t", "--task",
             help="ID of the task to run.",
@@ -59,10 +59,6 @@ def commandline_parser():
             "probably do not want to do this; to get failed system "
             "tasks to re-run use the 'cylc reset' command.", 
             action="store_true", dest="sched" )
-
-    parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-            "(default $HOME/.cylcrc).", metavar="PATH", action="store",
-            dest="rcfile" )
 
     return parser
 
@@ -107,7 +103,7 @@ username = os.environ['USER']
 pyro_groupname = ':cylc.' + username + '.' + name
 
 # load cylcrc file----------------------------------------------------
-rcfile = prefs( options.rcfile )
+rcfile = prefs()
 logging_dir = rcfile.get_system_logging_dir( name + '-run-task' ) 
 
 use_lockserver = False

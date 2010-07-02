@@ -153,7 +153,7 @@ locks left after a system or task exits without releasing its lock)."""
 
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host= socket.getfqdn(), rcfile=None,
+    parser.set_defaults( pns_host= socket.getfqdn(), 
             start=False, debug=False, restart=False, status=False,
             stop=False, acquire=None, release=None, system_acquire=None,
             system_acquire_nonex=None, system_release=None, list_all=False )
@@ -178,10 +178,6 @@ locks left after a system or task exits without releasing its lock)."""
 
     parser.add_option( "--stop", help="Shut down the server.",
             action="store_true", dest="stop" )
-
-    parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-            "(default $HOME/.cylcrc).", metavar="PATH", action="store",
-            dest="rcfile" )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
             metavar="SYSTEM:NAME%CYCLE", action="store", dest="acquire" )
@@ -286,7 +282,7 @@ locks left after a system or task exits without releasing its lock)."""
         #    print lock
         sys.exit(0)
 
-    config = prefs( options.rcfile )
+    config = prefs()
     logfile = config.get( 'lockserver', 'log file' )
     pidfile = config.get( 'lockserver', 'pid file' )
 

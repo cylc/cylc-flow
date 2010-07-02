@@ -21,12 +21,11 @@ class registrations:
         if not user:
             self.readonly = False
             home = os.environ['HOME']
-
         elif user == os.environ['USER']:
             self.readonly = False
             home = os.environ['HOME']
         else:
-           # attempt to read another user's system registration
+            # attempt to read another user's system registration
             self.readonly = True
             home = pwd.getpwnam( user )[5]
 

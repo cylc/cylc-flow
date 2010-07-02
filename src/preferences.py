@@ -9,30 +9,40 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import os, sys
+import os, sys, pwd
 from ConfigParser import SafeConfigParser
 
 # system-wide cylc settings
 
 class prefs:
-    def __init__( self, rcfile=None ):
+    def __init__( self, user=None ):
+        if not user:
+            self.readonly = False
+            home = os.environ['HOME']
+        elif user == os.environ['USER']:
+            self.readonly = False
+            home = os.environ['HOME']
+        else:
+            # attempt to read another user's system registration
+            self.readonly = True
+            home = pwd.getpwnam( user )[5]
 
-        if not rcfile:
-            rcfile = os.path.join( os.environ['HOME'], '.cylcrc' )
+        # file used to store user preferences
+        self.rcfile = os.path.join( home, '.cylcrc' )
+        # cylc user config directory
+        self.config_dir = os.path.join( home, '.cylc' )
 
-        self.rcfile = rcfile
         self.config = {}
         self.configparser = SafeConfigParser()
 
-        self.config_dir = os.path.join( os.environ[ 'HOME' ], '.cylc' )
         self.lockserver_dir = os.path.join( self.config_dir, 'lockserver' )
 
         self.set_defaults()
 
-        if os.path.exists( rcfile ):
+        if os.path.exists( self.rcfile ):
             print "Loading Cylc Preferences file: " + self.rcfile
             self.load()
-        else:
+        elif not self.readonly:
             print "Creating new Cylc Preferences file: " + self.rcfile 
             self.write()
 
@@ -63,6 +73,9 @@ class prefs:
                     pass
 
     def create_dirs( self ):
+        if self.readonly:
+            return
+
         # get a unique list of directories to create
         dirs = {}
         for dir in [ self.config_dir, 
@@ -83,6 +96,9 @@ class prefs:
                 print "directory exists: " + dir
 
     def write( self ):
+        if self.readonly:
+            return
+
         # write the file only if user has access to defined dirs
         self.create_dirs()
 

@@ -60,9 +60,9 @@ parser.add_option( "--set-lockserver-logfile",
         default=None, metavar="PATH",
         action="store", dest="lockserver_logfile" )
 
-parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-        "(this must also be explicitly provided to other cylc commands).", 
-        default=None, metavar="PATH", action="store", dest="rcfile" )
+parser.add_option( "--user", help="Attempt read-only access to another "
+        "user's preferences.", 
+        default=None, metavar="USER", action="store", dest="user" )
 
 parser.add_option( "--create-directories", 
         help="Create all directories specified in your preferences file. "
@@ -76,7 +76,7 @@ if len( args ) > 0 or len( sys.argv ) == 1:
     sys.exit(0)
 
 # load existing cylcrc file
-rcfile = prefs( options.rcfile )
+rcfile = prefs( options.user )
 
 rewrite = False
 

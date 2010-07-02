@@ -38,7 +38,7 @@ class scheduler:
 
         self.parser.set_defaults( pns_host= socket.getfqdn(),
                 dummy_mode=False, practice_mode=False,
-                rcfile=None, include=None, exclude=None, 
+                include=None, exclude=None, 
                 clock_rate=10, clock_offset=24 )
 
         self.parser.add_option( "--until", 
@@ -98,10 +98,6 @@ class scheduler:
                 "mode clock, of each running task. The default is 20 minutes.",
                 metavar="MINUTES", action="store", dest="dummy_task_run_length" )
 
-        self.parser.add_option( "--rcfile", help="Use an alternative cylc rc file "
-                "(default $HOME/.cylcrc).", metavar="PATH", action="store",
-                dest="rcfile" )
-
     def print_banner( self ):
         print "_______________C_Y_L_C___________________"
         print "_ Self Organising Dynamic Metascheduler _"
@@ -157,8 +153,6 @@ class scheduler:
             self.practice = False
             self.banner[ 'mode of operation' ] = 'REAL'
 
-        self.rcfilepath = self.options.rcfile
-
         self.stop_time = None
         if self.options.stop_time:
             self.stop_time = self.options.stop_time
@@ -188,7 +182,7 @@ class scheduler:
         self.dummy_task_run_length = self.options.dummy_task_run_length
 
     def load_preferences( self ):
-        self.rcfile = prefs( self.rcfilepath )
+        self.rcfile = prefs()
 
         use = self.rcfile.get( 'cylc', 'use quick task elimination') 
         if use == "False":
