@@ -89,6 +89,7 @@ if __name__ == '__main__':
     pns_host = os.environ['CYLC_NS_HOST'] 
 
     print "This is _cylc-dummy-task, masquerading as " + task_id
+    sys.stdout.flush()
 
     clock_rate = 3600  # seconds per hour
     if 'CYLC_CLOCK_RATE' in os.environ:
