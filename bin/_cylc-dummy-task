@@ -38,7 +38,7 @@ class dummy_task:
 
     def send( self, message ):
         # send an output message to the task proxy object that I'm masquerading as
-        command_list = [ 'cylc', 'message', message  ]
+        command_list = [ 'cylc', 'task-message', message  ]
         try:
             retcode = subprocess.call( command_list )
             if retcode != 0:
