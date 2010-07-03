@@ -99,18 +99,22 @@ Arguments:
                 self.no_reset, self.stop_time, self.pause_time )
 
 if __name__ == '__main__':
-    server = restart_scheduler()
-    server.configure()
     try:
+        server = restart_scheduler()
+        server.configure()
         server.run()
     except Exception, x:
         # catch proper exceptions
         #print "ERROR 1"
-        print x
+        print "ERROR CAUGHT, will clean up before exit"
         server.cleanup()
+        print "THE ERROR MESSAGE IS:"
+        print x
         #raise
     except:
         # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
         #print "ERROR 2"
+        print "ERROR CAUGHT, will clean up before exit"
         server.cleanup()
-        #raise
+        print "THE ERROR IS:"
+        raise
