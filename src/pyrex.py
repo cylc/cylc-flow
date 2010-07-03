@@ -51,14 +51,14 @@ class pyrex:
         try:
             self.ns.createGroup( self.groupname )
         except Pyro.errors.NamingError:
-            print self.groupname, 'exists'
+            #print self.groupname, 'exists'
             pass
         
         self.groupname += '.' + self.username
         try:
             self.ns.createGroup( self.groupname )
         except Pyro.errors.NamingError:
-            print self.groupname, 'exists'
+            #print self.groupname, 'exists'
             pass
 
         self.groupname += '.' + sysname

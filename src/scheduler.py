@@ -32,6 +32,7 @@ class scheduler:
 
     def __init__( self ):
         self.banner = {}
+        self.lock_acquired = False
 
         # PROVIDE IN DERIVED CLASSES:
         # self.parser = OptionParser( usage )
@@ -375,6 +376,8 @@ class scheduler:
                     sysname, self.system_dir, 'scheduler' )
             if not lock.request_system_access( self.exclusive_system_lock ):
                 raise SystemExit( 'locked out!' )
+            else:
+                self.lock_acquired = True
 
         if not self.practice:
             self.back_up_statedump_file()
@@ -448,12 +451,12 @@ class scheduler:
             else:
                 sysname = self.system_name
 
-            print ""
-            print "Releasing system lock"
-            lock = system_lock( self.pns_host, self.username,
-                    sysname, self.system_dir, 'scheduler' )
-            if not lock.release_system_access():
-                print >> sys.stderr, 'failed to release system!'
+            if self.lock_acquired:
+                print "Releasing system lock"
+                lock = system_lock( self.pns_host, self.username,
+                        sysname, self.system_dir, 'scheduler' )
+                if not lock.release_system_access():
+                    print >> sys.stderr, 'failed to release system!'
 
         # to simulate the effect on monitoring etc. of long task processing time
         # (many many many tasks...), put this in the task processing loop:
