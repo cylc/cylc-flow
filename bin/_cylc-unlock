@@ -13,6 +13,7 @@ import os
 import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
+from Pyro.errors import NamingError
 
 parser = PromptOptionParser( """cylc unlock [options] SYSTEM 
 
@@ -27,5 +28,11 @@ from running simultaneously.""")
 (options, args) = parser.parse_args()
 
 if parser.prompt( 'Unlock' ):
-    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    check_switch.check( god.unlock( os.environ['USER'] ))
+    try:
+        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    except NamingError:
+        print 'ERROR: system ' + args[0] + ' not running?'
+    except Exception, x:
+        print 'ERROR: ', x
+    else:
+        check_switch.check( god.unlock( os.environ['USER'] ))

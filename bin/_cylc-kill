@@ -9,11 +9,12 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import os
+import os, sys
 import cycle_time
 import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
+from Pyro.errors import NamingError
 
 parser = PromptOptionParser( """cylc kill [options] SYSTEM 
 
@@ -42,7 +43,14 @@ parser.add_option( "--no-spawn",
 if not options.kill_id and not options.kill_cycle:
     parser.error( "Task identity or cycle time required" )
 
-god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+try:
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+except NamingError:
+    print 'ERROR: system ' + args[0] + ' not running?'
+    sys.exit(1)
+except Exception, x:
+    print 'ERROR: ', x
+    sys.exit(1)
  
 if options.kill_cycle:
     cycle = options.kill_cycle

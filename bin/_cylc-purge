@@ -15,6 +15,7 @@ import cycle_time
 import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
+from Pyro.errors import NamingError
 
 parser = PromptOptionParser( """cylc purge [options] SYSTEM 
 
@@ -54,5 +55,11 @@ for cycle in [ start, stop ]:
         parser.error( "invalid cycle time: " + cycle )
 
 if parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
-    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    check_switch.check( god.purge( target, stop, os.environ['USER'] ))
+    try:
+        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    except NamingError:
+        print 'ERROR: system ' + args[0] + ' not running?'
+    except Exception, x:
+        print 'ERROR: ', x
+    else:
+        check_switch.check( god.purge( target, stop, os.environ['USER'] ))

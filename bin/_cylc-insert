@@ -14,6 +14,7 @@ import cycle_time
 import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
+from Pyro.errors import NamingError
 
 parser = PromptOptionParser( """cylc insert [options] SYSTEM 
 
@@ -43,5 +44,11 @@ if parser.prompt( 'Insert ' + target + ' in'):
     if not cycle_time.is_valid( cycle ):
         parser.error( "invalid cycle time: " + cycle )
 
-    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    check_switch.check( god.insert( target,  os.environ['USER'] ))
+    try:
+        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    except NamingError:
+        print 'ERROR: system ' + args[0] + ' not running?'
+    except Exception, x:
+        print 'ERROR: ', x
+    else:
+        check_switch.check( god.insert( target,  os.environ['USER'] ))

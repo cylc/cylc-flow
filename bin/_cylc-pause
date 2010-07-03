@@ -15,6 +15,7 @@ import cycle_time
 import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
+from Pyro.errors import NamingError
 
 parser = PromptOptionParser( """cylc pause [options] SYSTEM 
 
@@ -27,7 +28,14 @@ parser.add_option( "--at",
 
 (options, args) = parser.parse_args()
 
-god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+try:
+    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+except NamingError:
+    print 'ERROR: system ' + args[0] + ' not running?'
+    sys.exit(1)
+except Exception, x:
+    print 'ERROR: ', x
+    sys.exit(1)
 
 if options.pause_time:
     pause_at = options.pause_time

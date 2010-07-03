@@ -14,6 +14,7 @@ import os
 import check_switch
 from connector import connector
 from CylcOptionParsers import PromptOptionParser
+from Pyro.errors import NamingError
 
 parser = PromptOptionParser( """cylc resume [options] SYSTEM 
 
@@ -22,5 +23,11 @@ Resume running a paused system.""" )
 (options, args) = parser.parse_args()
 
 if parser.prompt( 'Resume' ):
-    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    check_switch.check( god.resume( os.environ['USER'] ))
+    try:
+        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
+    except NamingError:
+        print 'ERROR: system ' + args[0] + ' not running?'
+    except Exception, x:
+        print 'ERROR: ', x
+    else:
+        check_switch.check( god.resume( os.environ['USER'] ))
