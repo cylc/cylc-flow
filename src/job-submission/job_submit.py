@@ -63,7 +63,10 @@ class job_submit:
         if not self.owner:
             self.homedir = os.environ[ 'HOME' ]
         else:
-            self.homedir = pwd.getpwnam( self.owner )[5]
+            try:
+                self.homedir = pwd.getpwnam( self.owner )[5]
+            except:
+                raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
 
     def set_running_dir( self ):
         # default to owner's home dir
@@ -167,6 +170,12 @@ class job_submit:
         #if owner:
         #    owner = self.interp_str( owner )
 
+        if job_submit.dummy_mode:
+            # ignore defined owners in dummy mode, so that systems
+            # containing owned tasks can be tested in dummy mode outside
+            # of their normal execution environment.
+            owner = None
+
         self.set_owner_and_homedir( owner )
         self.set_running_dir() 
 
@@ -198,7 +207,7 @@ class job_submit:
         JOBFILE.close() 
 
         # submit the file
-        if self.remote_host and not self.dummy_mode:
+        if self.remote_host and not job_submit.dummy_mode:
             return self.submit_jobfile_remote( dry_run )
         else:
             return self.submit_jobfile_local( dry_run )
