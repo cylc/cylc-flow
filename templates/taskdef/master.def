@@ -220,12 +220,12 @@
     0,12 | "foo output files ready for $(CYCLE_TIME)"
 
 #----------------------------------------------------------------------
-[%STARTUP_PREREQUISITES]
+[%COLDSTART_PREREQUISITES]
     # - Prerequisites that are only used once, at system start up.
     # - WARNING: use of this section heading exists with no prerequisites
-    #   listed under it implies => no prerequisites at startup. 
+    #   listed under it implies implies literally "no prerequisites" at startup. 
 
-    "cold start outputs ready for $(CYCLE_TIME)"
+    "cold start files ready for $(CYCLE_TIME)"
 
 #----------------------------------------------------------------------
 %OUTPUTS

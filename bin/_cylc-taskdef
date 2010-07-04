@@ -150,7 +150,7 @@ def main( argv ):
     allowed_keys = [ 'LOGFILES', 'INHERIT', 'NAME', 'OWNER', 'CYCLES',
             'TASK', 'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
             'ENVIRONMENT', 'INTERCYCLE', 'PREREQUISITES',
-            'STARTUP_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
+            'COLDSTART_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
             'FOLLOW_ON' ]
 
@@ -529,14 +529,14 @@ import task_state
                 OUT.write( indent + 'self.logfiles.add_path("' + lfile + '")\n' )
 
         # are the prerequisites different for the first instance?
-        if 'STARTUP_PREREQUISITES' in parsed_def:
+        if 'COLDSTART_PREREQUISITES' in parsed_def:
             # TO DO: use a function to re-use the normal prerequisite code (as above) here.
             OUT.write( '\n' + indent + "if startup:\n" )
             indent_more()
             OUT.write( indent + '# overwrite prerequisites for startup case\n' )
             OUT.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
 
-            for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
+            for line in parsed_def[ 'COLDSTART_PREREQUISITES' ]:
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:

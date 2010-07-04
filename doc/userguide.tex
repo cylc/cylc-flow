@@ -52,7 +52,7 @@ numbers=left,
 
 \lstdefinelanguage{cylctaskdef}
 {
-morekeywords={INHERIT,NAME,DESCRIPTION,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,CYCLES,TASK,ENVIRONMENT,COMMANDLINE,DIRECTIVES,PREREQUISITES,STARTUP_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,ONEOFF_FOLLOW_ON},
+morekeywords={INHERIT,NAME,DESCRIPTION,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,CYCLES,TASK,ENVIRONMENT,COMMANDLINE,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,ONEOFF_FOLLOW_ON},
 sensitive=false,
 morecomment=[l]{\#},
 morestring=[b]\",
@@ -1168,7 +1168,7 @@ type, that alter its behaviour to some extent:
         system. This can be used for tasks that clean out a system 
         workspace, for example, and {\em cold start} tasks that supply
         initial restart inputs to warm cycled forecast models. See also
-        the \lstinline=STARTUP_PREREQUISITES= task definition key, below.
+        the \lstinline=COLDSTART_PREREQUISITES= task definition key, below.
 
     \item A \lstinline=sequential= task does not spawn a successor until it is
         finished. You can use this to force successive instances of a
