@@ -2,8 +2,9 @@ To Do
 
 * IMPORTANT: server.cleanup() should not be used to catch exceptions
   that occur *before* all objects referred to in cleanup() have been
-  defined (e.g. coldstart_scheduler.pyro). Also consider exceptions
-  raised IN cleanup().
+  defined (e.g. coldstart_scheduler.pyro). Also: consider exceptions
+  raised IN cleanup().  Also: do not use cleanup catch on commandline
+  parser, or it triggers on 'cylc start --help' etc.
 
 * IMPORTANT: task stdout and stderr for remote tasks!
 

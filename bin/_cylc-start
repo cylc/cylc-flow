@@ -69,9 +69,10 @@ Arguments:
                 self.pause_time )
 
 if __name__ == '__main__':
+
+    server = coldstart_scheduler()
+    server.configure()
     try:
-        server = coldstart_scheduler()
-        server.configure()
         server.run()
     except Exception, x:
         # catch proper exceptions
