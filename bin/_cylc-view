@@ -65,10 +65,20 @@ SYSTEM                  Registered name of the cylc system to monitor""")
     else:
         parser.error( "Wrong number of arguments" )
 
+
+    rcfile = prefs( options.username )
+    lamp_size = rcfile.get( 'view', 'lamp size' )
+    if lamp_size == 'small':
+        image_subdir = '10px'
+    elif lamp_size == 'medium':
+        image_subdir = '20px'
+    elif lamp_size == 'large':
+        image_subdir = '50px'
+ 
     imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
     if use_chooser:
-        app = chooser( pns_host, imagedir )
+        app = chooser( pns_host, imagedir, image_subdir )
 
     elif options.preload:
         # get system definition directory
@@ -80,11 +90,10 @@ SYSTEM                  Registered name of the cylc system to monitor""")
             raise SystemExit( "System " + system + " is not registered!" )
 
         # get system logging directory
-        rcfile = prefs( options.username )
         logging_dir = rcfile.get_system_logging_dir( system )
-        app = standalone_monitor_preload( group, system, system_dir, logging_dir, pns_host, imagedir )
+        app = standalone_monitor_preload( group, system, system_dir, logging_dir, pns_host, imagedir, image_subdir )
     else:
-        app = standalone_monitor( group, system, pns_host, imagedir )
+        app = standalone_monitor( group, system, pns_host, imagedir, image_subdir )
 
     gtk.main()
 

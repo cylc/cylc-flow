@@ -136,12 +136,14 @@ Cylc View is a real time system monitor for Cylc.
             tvc.set_attributes( cr, pixbuf=i )
         treeview.append_column( tvc )
 
+        lamp_width = int( re.sub( 'px', '', self.lamp_subdir ))
+
         for n in range( 10, 10+len( self.task_list )):
             cr = gtk.CellRendererPixbuf()
             cr.set_property( 'cell_background', 'black' )
             cr.set_property( 'xalign', 0 )
             tvc = gtk.TreeViewColumn( "-"  )
-            tvc.set_min_width( 10 )  # WIDTH OF LED PIXBUFS
+            tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cr, True )
             tvc.set_attributes( cr, pixbuf=n )
             treeview.append_column( tvc )
@@ -578,11 +580,12 @@ Cylc View is a real time system monitor for Cylc.
         self.task_list = ss.get_config( 'task_list' )
         self.shortnames = ss.get_config( 'task_list_shortnames' )
 
-    def __init__(self, groupname, system_name, pns_host, imagedir ):
+    def __init__(self, groupname, system_name, pns_host, imagedir, lamp_subdir ):
         self.system_name = system_name
         self.groupname = groupname
         self.pns_host = pns_host
         self.imagedir = imagedir
+        self.lamp_subdir = lamp_subdir
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_border_width( 5 )
         self.window.set_title("cylc view <" + self.groupname + ">" )
@@ -631,18 +634,18 @@ Cylc View is a real time system monitor for Cylc.
         self.connection_lost = False
         gobject.timeout_add( 1000, self.check_connection )
 
-        self.t = updater( self.pns_host, self.groupname, self.imagedir, 
-                self.led_treeview.get_model(), self.fl_liststore,
-                self.ttreestore, self.task_list, self.label_mode, 
-                self.label_status, self.label_time )
+        self.t = updater( self.pns_host, self.groupname, self.imagedir,
+                self.lamp_subdir, self.led_treeview.get_model(),
+                self.fl_liststore, self.ttreestore, self.task_list,
+                self.label_mode, self.label_status, self.label_time )
 
         #print "Starting task state info thread"
         self.t.start()
 
 class standalone_monitor( monitor ):
-    def __init__(self, groupname, system_name, pns_host, imagedir ):
+    def __init__(self, groupname, system_name, pns_host, imagedir, lamp_subdir ):
         gobject.threads_init()
-        monitor.__init__(self, groupname, system_name, pns_host, imagedir)
+        monitor.__init__(self, groupname, system_name, pns_host, imagedir, lamp_subdir)
  
     def delete_event(self, widget, event, data=None):
         monitor.delete_event( self, widget, event, data )
@@ -654,10 +657,10 @@ class standalone_monitor( monitor ):
 
 
 class standalone_monitor_preload( standalone_monitor ):
-    def __init__(self, groupname, system_name, system_dir, logging_dir, pns_host, imagedir ):
+    def __init__(self, groupname, system_name, system_dir, logging_dir, pns_host, imagedir, lamp_subdir ):
         self.logdir = logging_dir
         self.system_dir = system_dir
-        standalone_monitor.__init__(self, groupname, system_name, pns_host, imagedir)
+        standalone_monitor.__init__(self, groupname, system_name, pns_host, imagedir, lamp_subdir)
  
     def load_task_list( self ):
         sys.path.append( self.system_dir )

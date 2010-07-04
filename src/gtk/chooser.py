@@ -49,7 +49,7 @@ class chooser_updater(threading.Thread):
             self.liststore.append( [group] )
 
 class chooser:
-    def __init__(self, pns_host, imagedir ):
+    def __init__(self, pns_host, imagedir, lamp_subdir ):
 
         gobject.threads_init()
 
@@ -93,7 +93,7 @@ class chooser:
 
     def launch_viewer( self, group ):
         root, user, system = group.split( '.' ) 
-        tv = monitor(group, system, self.pns_host, self.imagedir)
+        tv = monitor(group, system, self.pns_host, self.imagedir, lamp_subdir)
         self.viewer_list.append( tv )
 
     def delete_event( self, w, e, data=None ):

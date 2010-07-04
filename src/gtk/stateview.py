@@ -46,8 +46,8 @@ def get_col( state ):
 
 class updater(threading.Thread):
 
-    def __init__(self, pns_host, groupname, imagedir, led_liststore,
-            fl_liststore, ttreestore, task_list,
+    def __init__(self, pns_host, groupname, imagedir, lamp_subdir,
+            led_liststore, fl_liststore, ttreestore, task_list,
             label_mode, label_status, label_time ):
 
         super(updater, self).__init__()
@@ -71,13 +71,13 @@ class updater(threading.Thread):
 
         self.reconnect()
 
-        self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-waiting-glow.xpm" )
-        self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-submitted-glow.xpm" )
-        self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-running-glow.xpm" )
-        self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-failed-glow.xpm" )
-        self.finished_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-finished.xpm" )
+        self.waiting_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/" + lamp_subdir + "/led-waiting-glow.xpm" )
+        self.submitted_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/" + lamp_subdir + "/led-submitted-glow.xpm" )
+        self.running_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/" + lamp_subdir + "/led-running-glow.xpm" )
+        self.failed_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/" + lamp_subdir + "/led-failed-glow.xpm" )
+        self.finished_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/" + lamp_subdir + "/led-finished.xpm" )
 
-        self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/led-empty.xpm" )
+        self.empty_led = gtk.gdk.pixbuf_new_from_file( imagedir + "/" + lamp_subdir + "/led-empty.xpm" )
 
         self.led_digits_one = []
         self.led_digits_two = []
