@@ -45,12 +45,12 @@ Arguments:
             self.parser.error( "Too many arguments." )
 
         if not self.options.start_time:
-            parser.error( 'You must supply an initial cycle time' )
+            self.parser.error( 'You must supply an initial cycle time' )
         else:
             self.start_time = self.options.start_time
 
         if not cycle_time.is_valid( self.start_time ):
-            parser.error( "invalid cycle time: " + self.start_time )
+            self.parser.error( "invalid cycle time: " + self.start_time )
 
         scheduler.parse_commandline( self )
         print "Starting from: " + self.start_time
