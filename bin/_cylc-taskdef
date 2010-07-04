@@ -534,9 +534,9 @@ import task_state
             OUT.write( '\n' + indent + "if startup:\n" )
             indent_more()
             OUT.write( indent + '# overwrite prerequisites for startup case\n' )
-            #OUT.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
-            for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
+            OUT.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
 
+            for line in parsed_def[ 'STARTUP_PREREQUISITES' ]:
                 # look for conditionals
                 m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
                 if m:

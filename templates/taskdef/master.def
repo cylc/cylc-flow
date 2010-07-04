@@ -222,6 +222,8 @@
 #----------------------------------------------------------------------
 [%STARTUP_PREREQUISITES]
     # - Prerequisites that are only used once, at system start up.
+    # - WARNING: use of this section heading exists with no prerequisites
+    #   listed under it implies => no prerequisites at startup. 
 
     "cold start outputs ready for $(CYCLE_TIME)"
 
