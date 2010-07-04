@@ -141,7 +141,7 @@ Cylc View is a real time system monitor for Cylc.
             cr.set_property( 'cell_background', 'black' )
             cr.set_property( 'xalign', 0 )
             tvc = gtk.TreeViewColumn( "-"  )
-            tvc.set_min_width( 20 )  # WIDTH OF LED PIXBUFS
+            tvc.set_min_width( 10 )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cr, True )
             tvc.set_attributes( cr, pixbuf=n )
             treeview.append_column( tvc )

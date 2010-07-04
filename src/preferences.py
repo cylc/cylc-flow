@@ -58,6 +58,9 @@ class prefs:
         self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.lockserver_dir, 'logfile' )
         self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.lockserver_dir, 'server.pid' )
 
+        self.config[ 'view' ] = {}
+        self.config[ 'view' ]['lamp size'] = 'medium'
+
     def load( self ):
         self.configparser.read( self.rcfile )
         for section in self.configparser.sections():
