@@ -1,5 +1,10 @@
 To Do
 
+* IMPORTANT: server.cleanup() should not be used to catch exceptions
+  that occur *before* all objects referred to in cleanup() have been
+  defined (e.g. coldstart_scheduler.pyro). Also consider exceptions
+  raised IN cleanup().
+
 * IMPORTANT: task stdout and stderr for remote tasks!
 
 * rationalise use of the connector class, especially in the viewer.

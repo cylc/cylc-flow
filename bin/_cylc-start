@@ -75,7 +75,6 @@ if __name__ == '__main__':
         server.run()
     except Exception, x:
         # catch proper exceptions
-        #print "ERROR 1"
         print "ERROR CAUGHT, will clean up before exit"
         server.cleanup()
         print "THE ERROR MESSAGE IS:"
@@ -83,8 +82,7 @@ if __name__ == '__main__':
         #raise
     except:
         # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
-        #print "ERROR 2"
-        print "ERROR CAUGHT, will clean up before exit"
+        print "ERROR CAUGHT; will clean up before exit"
         server.cleanup()
         print "THE ERROR IS:"
         raise
