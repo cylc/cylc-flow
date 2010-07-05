@@ -131,16 +131,26 @@ class prefs:
         except:
             pass
 
-    def get_system_statedump_dir( self, system_name ):
-        dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], system_name )
-        #if not os.path.exists( dir ):
-        #    print "Creating directory", dir
-        #    os.makedirs( dir )
+    def get_system_statedump_dir( self, system_name, practice=False ):
+        if practice:
+            dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], system_name, '-practice' )
+        else:
+            dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], system_name )
+
+        if not os.path.exists( dir ):
+            print "Creating directory", dir
+            os.makedirs( dir )
+
         return dir
 
-    def get_system_logging_dir( self, system_name ):
-        dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name )
-        #if not os.path.exists( dir ):
-        #    print "Creating directory", dir
-        #    os.makedirs( dir )
+    def get_system_logging_dir( self, system_name, practice=False ):
+        if practice:
+            dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name, '-practice' )
+        else:
+            dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name )
+
+        if not os.path.exists( dir ):
+            print "Creating directory", dir
+            os.makedirs( dir )
+
         return dir

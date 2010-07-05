@@ -37,6 +37,9 @@ def pimp_it( log, name, dir, level, dummy_mode, clock = None, run_task = False )
     max_bytes = 1000000
     backups = 5
     logfile = dir + '/' + name
+    if not os.path.exists( dir ):
+        raise SystemExit( 'Logging dir ' + dir + ' does not exist' )
+
     h = logging.handlers.RotatingFileHandler( logfile, 'a', max_bytes, backups )
     # the above creates a zero-sized log file if one doesn't already exist
     if os.path.getsize( logfile ) > 0:

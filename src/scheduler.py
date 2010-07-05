@@ -191,20 +191,8 @@ class scheduler:
         else:
             self.use_quick_elim = True
 
-        self.logging_dir = self.rcfile.get_system_logging_dir( self.system_name ) 
-        state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name )
-        if self.practice:
-            self.logging_dir += "-practice"
-            state_dump_dir += "-practice"
-
-        for dir in [ self.logging_dir, state_dump_dir ]:
-            if not os.path.exists( dir ):
-                print "Creating directory: " + dir
-                try:
-                    os.makedirs( dir )
-                except:
-                    raise SystemExit( "ERROR: unable to create directory " + dir )
-
+        self.logging_dir = self.rcfile.get_system_logging_dir( self.system_name, self.practice ) 
+        state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name , self.practice )
         self.state_dump_file = os.path.join( state_dump_dir, 'state' )
 
         self.use_lockserver = False
