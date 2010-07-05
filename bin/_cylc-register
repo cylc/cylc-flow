@@ -9,10 +9,14 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
+# This command used to check the pyro nameserver to make sure a system
+# was not in use before deleting a registration. However, this just
+# gives a false sense of security because it won't work if the user
+# deliberately or otherwise gives the wrong pyro nameserver host to
+# check.
 
 import os, sys
 import socket
-import pyrex
 from optparse import OptionParser
 from registration import registrations
 
@@ -38,68 +42,131 @@ def check_dir( dir ):
  
 #----------------------------------------
 
-parser = OptionParser( usage = """1/ cylc register [-d,--delete] [-g,--get] [-s,--system=PATH] NAME
-Usage: 2/ cylc register [-p,--print]
-Usage: 3/ cylc register [--host=HOST] [-c,--check] [-w,--wipe]
+parser = OptionParser( usage = """1/ Create a new system registration:
+$ cylc register [options] [PATH] [SYSTEM]
 
-Create, print, or delete user-specific cylc system name registrations, 
-which associate a name with a configured system definition directory.
+Use this command to manage your cylc system registrations, which are
+stored under your cylc config directory ($HOME/.cylc).
 
-A system can be registered for use under multiple names. This allows,
-for example, real and dummy mode instances of a system to run at the
-same time (see also 'cylc start --practice' for this functionality).
+Cylc commands target a particular system via its registered name, and it
+is also used in system logging and state dump directory paths to allow
+you to run multiple systems at once. 
+
+If you register a single system under several different names you can
+run real and dummy mode instances of the system simultaneously without
+any interference between them (but see also 'cylc start --practice-mode'
+which automates this without requiring a new registration). 
+
+The registered name is also exported into the execution environment of
+all system tasks as $CYLC_SYSTEM_NAME. If tasks use this to dynamically
+configure their I/O directories it is even possible to run multiple
+simultaneous real mode instances of a single system. 
+
+Deletion of a system registration does not delete the system, just the
+assocation between the name and the system definition directory.
+
+If you delete the registration of a running system you will not be able
+to access the system with cylc commands until you re-register the system
+under the same name.
 
 Arguments:
-  NAME            Name to associate with the configured system directory.""" )
-
-parser.add_option( "-s", "--system",
-    help="Location of a cylc system definition directory.",
-    metavar="PATH", action="store", dest="dir" )
-
-parser.add_option( "-p", "--print",
-    help="Print all current system registrations.",
-    action="store_true", default=False, dest="printall" )
+  PATH            A configured cylc system definition directory.
+  SYSTEM          Name to associate with the configured system directory.""" )
 
 parser.add_option( "-g", "--get",
-    help="Print the system directory registered under NAME.",
-    action="store_true", default=False, dest="get" )
+        help="Print the system directory registered under NAME.",
+        action="store_true", default=False, dest="get" )
 
-parser.add_option( "-d", "--delete",
-    help="Delete the registered NAME.",
-    action="store_true", default=False, dest="delete" )
-
-parser.add_option( "-c", "--check",
-    help="Check all your current system registrations, and "
-    "delete any found to be invalid.",
-    action="store_true", default=False, dest="check" )
-
-parser.add_option( "-w", "--wipe",
-    help="Delete all of your current system registrations.",
-    action="store_true", default=False, dest="wipe" )
-
-parser.add_option( "--host",
-        help="Pyro nameserver host, defaults to local hostname. Use "
-        "if not auto-detected (which depends on network config).", 
-        metavar="HOSTNAME", action="store", default=socket.getfqdn(),
-        dest="pns_host" )
+parser.add_option( "-l", "--list",
+        help="Print all current system registrations.",
+        action="store_true", default=False, dest="listall" )
 
 parser.add_option( "--user",
-        help="Attempt to access another user's system registrations.", 
+        help="Attempt read-access to another user's system registrations.", 
         metavar="USER", action="store", default=None, dest="user" )
 
+parser.add_option( "-d", "--delete",
+        help="Delete the registered system name SYSTEM.",
+        action="store_true", default=False, dest="delete" )
+
+parser.add_option( "-c", "--check",
+        help="Check all your current system registrations, and "
+        "delete any found to be invalid.",
+        action="store_true", default=False, dest="check" )
+
+parser.add_option( "-w", "--wipe",
+        help="Delete all of your current system registrations.",
+        action="store_true", default=False, dest="wipe" )
+
 ( options, args ) = parser.parse_args()
+
+new_reg = False
+get_reg = False
+del_reg = False
+lst_reg = False
+chk_reg = False
+wpe_reg = False
+
+if len(args) == 2:
+    # + cylc register PATH SYSTEM
+    new_reg = True
+
+    dir = os.path.abspath( args[0] )
+    name = args[1]
+
+elif len(args) == 1:
+    # + cylc register --get SYSTEM
+    # + cylc register --delete SYSTEM
+    name = args[0]
+    if options.get:
+        get_reg = True
+    elif options.delete:
+        del_reg = True
+    else:
+        parser.error( "Please specify what to do with '" + name + "'" )
+
+elif len(args) == 0:
+    # + cylc register --check
+    # + cylc register --wipe
+    # + cylc register --list
+    if options.check:
+        chk_reg = True
+    elif options.wipe:
+        wpe_reg = True
+    elif options.listall:
+        lst_reg = True
+    else:
+        parser.print_usage()
+        sys.exit(0)
+else:
+    parser.error( "Wrong number of arguments")
+
+if [ new_reg, get_reg, del_reg, lst_reg, chk_reg, wpe_reg ].count( True ) != 1:
+    parser.error( "Choose one option only" )
+
+#---------------------------------------
+if new_reg:
+    if not os.path.exists( dir ):
+        raise SystemExit( "ERROR, directory not found: " + dir )
+
+    if not check_dir( dir ):
+        raise SystemExit( "ERROR, " + dir + " has not been configured" )
+
+    reg.register( name, dir )
+    reg.dump_to_file()
+    sys.exit(1)
+
+if options.user:
+    if options.user != os.environ[ 'USER' ]:
+        if del_reg or chk_reg or wpe_reg:
+            parser.error( "You cannot delete, wipe, or check another user's registrations" )
 
 # load registration file
 reg = registrations( options.user )
 
-if options.get:
-    if len( args ) != 1:
-        print "ERROR, system name required"
-        sys.exit(1)
-
+#---------------------------------------
+if get_reg:
     # print one registration and exit
-    name = args[0]
-
     if reg.is_registered( name ):
         print reg.get( name )
         sys.exit(0)
@@ -107,51 +174,22 @@ if options.get:
         print name + " is not registered"
         sys.exit(1)
 
-elif options.printall:
-    if len( args ) != 0:
-        print "ERROR, no arguments allowed for --print"
-        sys.exit(1)
-
+#---------------------------------------
+if lst_reg:
     # print all registrations and exit
     reg.print_all()
     sys.exit(0)
 
-elif options.dir:
-    # record a new registration
-    if len( args ) != 1:
-        parser.error( 'system name required' )
+#----------------------------------------
+twatted = []
 
-    name = args[0]
-
-    dir = os.path.abspath( options.dir )
-    if not os.path.exists( dir ):
-        print "ERROR, directory not found: " + dir
-        sys.exit(1)
-
-    if not check_dir( dir ):
-        print "ERROR, " + dir + " has not been configured"
-        sys.exit(1)
-
-    reg.register( name, dir )
-    reg.dump_to_file()
-
-elif options.delete or options.wipe or options.check:
-    # get system names currently in use in the Pyro nameserver
-    groups = pyrex.discover( options.pns_host ).get_groups()
-    username = os.environ[ 'USER' ]
- 
-    twatted = []
-
-    if options.check:
-        if len( args ) != 0:
-            print "ERROR, no arguments allowed for --check"
-            sys.exit(1)
-
+if chk_reg:
+    if chk_reg:
         count = 0
         for name in reg.get_all():
             count += 1
-            dir = reg.get(name)
-            if not check_dir( dir ):
+            rdir = reg.get(name)
+            if not check_dir( rdir ):
                 post = ' ... INVALID'
                 twatted.append( name )
 
@@ -159,39 +197,22 @@ elif options.delete or options.wipe or options.check:
                 post = ' ... OK'
             reg.print_reg( name, pre=' [' + str(count) + '] ', post=post )
 
-    elif options.wipe:
-        if len( args ) != 0:
-            print "ERROR, no arguments allowed for --wipe"
-            sys.exit(1)
+elif wpe_reg:
+    twatted = reg.get_all() 
 
-        twatted = reg.get_all() 
+elif del_reg:
+    twatted = [ args[0] ] 
 
-    elif options.delete:
-        if len( args ) != 1:
-            parser.error( 'system name to delete?' )
+if len(twatted) == 0:
+    print "No systems to unregister"
+    sys.exit(0)
 
-        twatted = [ args[0] ] 
+count = 0
+print "Unregistering " + str( len(twatted) ) + " systems:"
+for twat in twatted:
+    count += 1
+    print ' [' + str( count ) + '] ' + twat
+    reg.unregister( twat )
 
-    if len(twatted) == 0:
-        print "No systems to unregister"
-        sys.exit(0)
-
-    count = 0
-    print "Unregistering " + str( len(twatted) ) + " systems:"
-    for twat in twatted:
-        count += 1
-        print ' [' + str( count ) + '] ' + twat
-        if username + '_' + twat in groups or \
-                username + '_' + twat + '_practice' in groups:
-            print "  WARNING, a system called " + twat + " owned by you is currently using"
-            print "the Pyro nameserver. See 'cylc register --help' for information about"
-            response = raw_input( "exactly what this means. Proceed with deregistration (y/n)? " )
-            if response != 'y':
-                continue
-        reg.unregister( twat )
-
-    # record registration changes
-    reg.dump_to_file()
-
-else:
-    parser.error( 'input required' )
+# record registration changes
+reg.dump_to_file()

@@ -8,7 +8,7 @@ To Do
   raised IN cleanup().  Also: do not use cleanup catch on commandline
   parser, or it triggers on 'cylc start --help' etc.
 
-* IMPORTANT: task stdout and stderr for remote tasks!
+* task stdout and stderr for remote tasks!
 
 * rationalise use of the connector class, especially in the viewer.
 
