@@ -39,9 +39,6 @@ To Do
 * catch obscure errors, such as attempting to restart when one or more 
   tasks has been commented out of the task list.
 
-* put python group separator ('^') as a variable in pyrex module, along
-  with functions for manipulating nameserver registered names.
-
 * src/which.py, like the shell command, searches only for executable
   files. The ll_raw job submit classes use which to find task scripts
   that don't have a full path supplied in the taskdef; these need
