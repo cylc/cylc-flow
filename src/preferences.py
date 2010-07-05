@@ -49,14 +49,14 @@ class prefs:
     def set_defaults( self ):
 
         self.config[ 'cylc' ] = {}
-        self.config[ 'cylc' ][ 'state dump directory' ] = os.path.join( self.config_dir, 'state-dumps' )
-        self.config[ 'cylc' ][ 'logging directory' ] = os.path.join( self.config_dir, 'log-files' )
+        self.config[ 'cylc' ][ 'state dump directory' ] = os.path.join( self.config_dir, 'state' )
+        self.config[ 'cylc' ][ 'logging directory' ] = os.path.join( self.config_dir, 'logging' )
         self.config[ 'cylc' ][ 'use lockserver' ] = 'True'
         self.config[ 'cylc' ][ 'use quick task elimination' ] = 'True'
 
         self.config[ 'lockserver' ] = {}
-        self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.lockserver_dir, 'logfile' )
-        self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.lockserver_dir, 'server.pid' )
+        self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.lockserver_dir, 'log' )
+        self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.lockserver_dir, 'pid' )
 
         self.config[ 'view' ] = {}
         self.config[ 'view' ]['lamp size'] = 'medium'
