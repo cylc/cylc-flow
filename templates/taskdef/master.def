@@ -1,4 +1,6 @@
-# MASTER CYLC TASK DEFINITION FILE, All available options, annotated.
+# MASTER CYLC TASK DEFINITION FILE: all sections annotated.
+# Refer also to the cylc userguide. 
+# Optional sections: [square brackets].
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
@@ -9,23 +11,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-# Refer also to the cylc userguide. Optional keys: [square brackets].
-
-#----------------------------------------------------------------------
-[%INHERIT]
-    # - Name of another task from which to inherit taskdef properties.
-    # - You must supply at least %NAME, %DESCRIPTION, and %OUTPUTS.
-    # - Non-singular quantities such as prerequisites and environment
-    #   variables, if provided, will entirely OVERRIDE, not add to,
-    #   those defined in the parent task.
-    # - Task definition files are generally so brief that there is not 
-    #   a lot of benefit to inheritance, but it may save some effort
-    #   when defining a lot of very similar tasks (e.g. for obs
-    #   processing, or a forecast ensemble). 
-    
-    parent_task_name
-
-#----------------------------------------------------------------------
+#______________________________________________________________ALL TASKS
 %NAME
     # - Name[, Shortname]
 
@@ -35,29 +21,13 @@
 
     nz_forecast, nzf
 
-#----------------------------------------------------------------------
-[%LOGFILES]
-    # - List of "output logs" and similar, IN ADDITION TO stdout and
-    #   stderr capture from the cylc job submission process (which
-    #   is are provided automatically by the job submission method
-    #   where possible) to make available via the cylc gtk monitor. 
-    #   This section can be used for tasks that direct their own stdout
-    #   and stderr streams to named files, and for tasks with
-    #   complicated native job-submission procedures that have to be
-    #   invoked by cylc via a custom wrapper such that the initial
-    #   process submitted by cylc is not the process that generates the
-    #   output of interest. See the Userguide on Custom Job Submit Wrappers.
-
-    $HOME/atmos/running/$CYCLE_TIME/met.out
-    $HOME/atmos/running/$CYCLE_TIME/met.err
-
-#----------------------------------------------------------------------
+#______________________________________________________________ALL TASKS
 %DESCRIPTION
     # - freeform multiline text description of what this task does.
 
     The quick brown fox jumped over the lazy dog.
 
-#----------------------------------------------------------------------
+#______________________________________________________________ALL TASKS
 %TYPE
     free[, oneoff, sequential, dummy, contact, catchup_contact ]
 
@@ -82,13 +52,13 @@
 
     # SEE THE CYLC USERGUIDE FOR MORE ON TASK TYPES AND MODIFIERS.
 
-#----------------------------------------------------------------------
+#______________________________________________________________ALL TASKS
 %CYCLES
     # - Comma separated list of cycle hours valid for this task
 
     0,6,12,18
 
-#----------------------------------------------------------------------
+#______________________________________________________________ALL TASKS
 %TASK
     # - The program or script cylc must submit to run this task.
     # - Located in the system definition scripts sub-directory,
@@ -97,7 +67,39 @@
 
     run-foo.sh
 
-#----------------------------------------------------------------------
+#_______________________________________________________________________
+%PREREQUISITES      
+    # - Quoted string literals, one per lines.
+    # - $(CYCLE_TIME), $CYCLE_TIME, or ${CYCLE_TIME} should almost
+    #   certainly appear somewhere in the string to distinguish between
+    #   the outputs of task instances with different cycle times.
+    # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
+    # - May be conditional on cycle hour.
+    # - ONE SPECIAL PREREQUISITE IS REGISTERED AUTOMATICALLY BY CYLC:
+    #     + "NAME restart files ready for $CYCLE_TIME"  (TIED TASKS)
+    # - You may use the automatic started, completed, finished, outputs.
+
+           "baz finished for $(CYCLE_TIME)"
+           "file bar_$(CYCLE_TIME).nc ready"
+    0,12 | "foo output files ready for $(CYCLE_TIME)"
+
+#_______________________________________________________________________
+%OUTPUTS
+    # - Quoted string literals, one output message per line.
+    # - $(CYCLE_TIME), $CYCLE_TIME, or ${CYCLE_TIME} should almost
+    #   certainly appear somewhere in the string to distinguish between
+    #   the outputs of task instances with different cycle times.
+    # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
+    # - SOME SPECIAL OUTPUTS ARE REGISTERED AUTOMATICALLY BY CYLC:
+    #     + "NAME%CYCLE started|finished|failed|completed" (ALL TASKS)
+    #     + "NAME restart files ready for CYCLE"          (TIED TASKS)
+    # - May be conditional on cycle hour, as for prerequisites.
+    
+           "file foo-$(CYCLE_TIME).nc ready"
+    0,12 | "atmos model postprocessing done for $(CYCLE_TIME)"
+    6,18 | "file bar-$(CYCLE_TIME).nc ready"
+
+#_______________________________________________________________________
 [%REMOTE_HOST]
     # - URL of a remote machine on which this task must but submitted.
     # - Can be defined by an environment variable from system_config
@@ -107,7 +109,7 @@
 
     $SUPERCOMPUTER
  
-#----------------------------------------------------------------------
+#_______________________________________________________________________
 [%CONTACT_DELAY]
     # - Only for tasks with the 'contact' modifier.
     # - Units: min, sec, hr 
@@ -118,7 +120,7 @@
 
     4.5 hr
 
-#----------------------------------------------------------------------
+#_______________________________________________________________________
 [%OWNER]
     # - Submit the task to run under this username.
     # - Defaults to the cylc user.
@@ -128,7 +130,7 @@
     # or:
     $REMOTE_MODEL_OWNER
 
-#----------------------------------------------------------------------
+#_______________________________________________________________________
 [%ENVIRONMENT]
     # - Environment variables to export in the task execution environment
     # - The following variables are automatically set:
@@ -159,6 +161,7 @@
     REMOTE_HOME $[HOME]
     ANIMAL      foxy fox  # NOT QUOTED!
 
+#_______________________________________________________________________
 [%COMMANDLINE]
     # - Any strings listed here are concatenated to construct a
     #   commandline that will be passed to the task when it is executed.
@@ -185,8 +188,7 @@
     -v -h $HOME
     --quoted-arg="The quick brown $ANIMAL jumped" 
 
-
-#----------------------------------------------------------------------
+#_______________________________________________________________________
 [%DIRECTIVES]
     # - Scheduler directives for qsub, loadleveler, or similar.
     # - Choose a job submit class that makes use of these.
@@ -204,50 +206,19 @@
     directive_name1 value1
     directive_name2 value2
 
-#----------------------------------------------------------------------
-%PREREQUISITES      
-    # - Quoted string literals, one per lines.
-    # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
-    # - May be conditional on cycle hour.
-    # - Do not list the restart prerequisites of 'tied' tasks (forecast 
-    #     models), they are created and handled automatically.
-    # - You may use the automatic started, completed, finished, outputs.
-    # - Should contain $(CYCLE_TIME) somewhere, to distinguish outputs
-    #     from different cycles.
-
-           "baz finished for $(CYCLE_TIME)"
-           "file bar_$(CYCLE_TIME).nc ready"
-    0,12 | "foo output files ready for $(CYCLE_TIME)"
-
-#----------------------------------------------------------------------
+#_______________________________________________________________________
 [%COLDSTART_PREREQUISITES]
     # - Prerequisites that are only used once, at system start up.
     # - WARNING: use of this section heading exists with no prerequisites
-    #   listed under it implies implies literally "no prerequisites" at startup. 
+    #   listed under it implies literally "no prerequisites" at startup. 
 
     "cold start files ready for $(CYCLE_TIME)"
 
-#----------------------------------------------------------------------
-%OUTPUTS
-    # - Quoted string literals, one output message per line.
-    # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
-    # - DO NOT REGISTER THE SPECIAL 'started' and 'finished' MESSAGES,
-    #   OR THE SPECIAL RESTART OUTPUTS OF TIED TASKS, these are handled
-    #   automatically by cylc.
-    # - May be conditional on cycle hour, as for prerequisites.
-    # - $(CYCLE_TIME) should almost certainly appear somewhere in the
-    #   string to distinguish between the outputs of instances of this
-    #   task with different cycle times.
-
-           "file foo_0_$(CYCLE_TIME).nc ready"
-    0,12 | "foo outputs ready for $(CYCLE_TIME)"
-    6,18 | "file foo_2_$(CYCLE_TIME).nc ready"
-
-#----------------------------------------------------------------------
+#_______________________________________________________________________
 [%N_RESTART_OUTPUTS]
     # - Required for "tied" tasks (i.e. forecast models).
     # - The number of subsequent consecutive cycles for which this task
-    #   writes "restart outputs".
+    #   writes "restart files".
     # - May be conditional on cycle hour, as for prerequisites.
     # - Results in ONE restart PREREQUISITE and N restart OUTPUTS
     #   being registered automatically for this task.
@@ -255,7 +226,7 @@
     0,12 | 2
     6,18 | 4
 
-#----------------------------------------------------------------------
+#_______________________________________________________________________
 [%INTERCYCLE] 
     True   # Default is False
 
@@ -269,12 +240,38 @@
     # - Setting "use quick task elimination = False" in cylc preferences 
     #   is equivalent to assuming that all tasks could have general
     #   intercycle dependencies, in which case %INTERCYCLE is not needed.
-
-#----------------------------------------------------------------------
+#_______________________________________________________________________
 [%FOLLOW_ON]
     foo
 
     # - This is required ONLY for oneoff tasks with INTERCYCLE=True.
     # - Name of another task to "hand the baton on to". This task will
     #   not be removed from the system until that task has finished. 
+#_______________________________________________________________________
+[%INHERIT]
+    # - Name of another task from which to inherit taskdef properties.
+    # - You must supply at least %NAME, %DESCRIPTION, and %OUTPUTS.
+    # - Non-singular quantities such as prerequisites and environment
+    #   variables, if provided, will entirely OVERRIDE, not add to,
+    #   those defined in the parent task.
+    # - Task definition files are generally so brief that there is not 
+    #   a lot of benefit to inheritance, but it may save some effort
+    #   when defining a lot of very similar tasks (e.g. for obs
+    #   processing, or a forecast ensemble). 
+    
+    parent_task_name
+#_______________________________________________________________________
+[%LOGFILES]
+    # - List of "output logs" and similar, IN ADDITION TO stdout and
+    #   stderr capture from the cylc job submission process (which
+    #   is are provided automatically by the job submission method
+    #   where possible) to make available via the cylc gtk monitor. 
+    #   This section can be used for tasks that direct their own stdout
+    #   and stderr streams to named files, and for tasks with
+    #   complicated native job-submission procedures that have to be
+    #   invoked by cylc via a custom wrapper such that the initial
+    #   process submitted by cylc is not the process that generates the
+    #   output of interest. See the Userguide on Custom Job Submit Wrappers.
 
+    $HOME/atmos/running/$CYCLE_TIME/met.out
+    $HOME/atmos/running/$CYCLE_TIME/met.err
