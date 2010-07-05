@@ -27,7 +27,11 @@ class registrations:
         else:
             # attempt to read another user's system registration
             self.readonly = True
-            home = pwd.getpwnam( user )[5]
+            try:
+                home = pwd.getpwnam( user )[5]
+            except KeyError, x:
+                #raise SystemExit(x)
+                raise SystemExit('ERROR, user not found: ' + user )
 
         # filename used to store system registrations
         file = os.path.join( home, '.cylc', 'registrations' )

@@ -42,60 +42,72 @@ def check_dir( dir ):
  
 #----------------------------------------
 
-parser = OptionParser( usage = """1/ Create a new system registration:
-$ cylc register [options] [PATH] [SYSTEM]
+parser = OptionParser( usage = """cylc register [options] [PATH] [SYSTEM]
 
-Use this command to manage your cylc system registrations, which are
-stored under your cylc config directory ($HOME/.cylc).
+Use this command to create and manage cylc system registrations, which 
+are associations between system names and system definition directories.
+Registrations are stored in $HOME/.cylc/registrations.
 
-Cylc commands target a particular system via its registered name, and it
-is also used in system logging and state dump directory paths to allow
-you to run multiple systems at once. 
+1/ Create a new registration:
+     $ cylc register PATH SYSTEM
+
+2/ Retrieve or delete an existing registration:
+     $ cylc register [--get] [--delete] SYSTEM
+
+3/ List all of your registrations:
+     $ cylc register --list
+
+4/ Delete all registrations, or just those that are no longer valid
+  (i.e. that don't point to a configured system definition directory):
+     $ cylc register [--wipe] [--check]
+
+Most cylc commands require a registered system name argument in order to
+identify the target system. Registered names are also used, by default,
+in system logging and state dump directory paths, which allows you to
+run multiple systems at once without interference between them. 
 
 If you register a single system under several different names you can
-run real and dummy mode instances of the system simultaneously without
-any interference between them (but see also 'cylc start --practice-mode'
-which automates this without requiring a new registration). 
+also run real and dummy mode instances of that system simultaneously
+(but see also 'cylc restart --practice-mode' which automates this
+without requiring a new registration).
 
 The registered name is also exported into the execution environment of
-all system tasks as $CYLC_SYSTEM_NAME. If tasks use this to dynamically
-configure their I/O directories it is even possible to run multiple
-simultaneous real mode instances of a single system. 
+all system tasks as $CYLC_SYSTEM_NAME. If all tasks use this in all I/O
+directory and file paths, you can even run multiple simultaneous real
+mode instances of a single system (e.g. over different time periods). 
 
 Deletion of a system registration does not delete the system, just the
-assocation between the name and the system definition directory.
-
-If you delete the registration of a running system you will not be able
-to access the system with cylc commands until you re-register the system
-under the same name.
+assocation between the name and the system definition directory. If you
+delete the registration of a running system you will not be able to
+access the system with cylc commands until you re-register it under the
+same name.
 
 Arguments:
-  PATH            A configured cylc system definition directory.
-  SYSTEM          Name to associate with the configured system directory.""" )
+  PATH            Path to a configured cylc system definition directory.
+  SYSTEM          System name.""" )
 
 parser.add_option( "-g", "--get",
-        help="Print the system directory registered under NAME.",
+        help="Print the system definition directory registered as SYSTEM.",
         action="store_true", default=False, dest="get" )
 
 parser.add_option( "-l", "--list",
         help="Print all current system registrations.",
         action="store_true", default=False, dest="listall" )
 
-parser.add_option( "--user",
+parser.add_option( "-u", "--user",
         help="Attempt read-access to another user's system registrations.", 
         metavar="USER", action="store", default=None, dest="user" )
 
 parser.add_option( "-d", "--delete",
-        help="Delete the registered system name SYSTEM.",
+        help="Delete the registration with name SYSTEM.",
         action="store_true", default=False, dest="delete" )
 
 parser.add_option( "-c", "--check",
-        help="Check all your current system registrations, and "
-        "delete any found to be invalid.",
+        help="Check each registration and delete any that are not valid.",
         action="store_true", default=False, dest="check" )
 
 parser.add_option( "-w", "--wipe",
-        help="Delete all of your current system registrations.",
+        help="Delete all of your system registrations.",
         action="store_true", default=False, dest="wipe" )
 
 ( options, args ) = parser.parse_args()
@@ -144,6 +156,9 @@ else:
 if [ new_reg, get_reg, del_reg, lst_reg, chk_reg, wpe_reg ].count( True ) != 1:
     parser.error( "Choose one option only" )
 
+# load registration file
+reg = registrations( options.user )
+
 #---------------------------------------
 if new_reg:
     if not os.path.exists( dir ):
@@ -154,15 +169,12 @@ if new_reg:
 
     reg.register( name, dir )
     reg.dump_to_file()
-    sys.exit(1)
+    sys.exit(0)
 
 if options.user:
     if options.user != os.environ[ 'USER' ]:
         if del_reg or chk_reg or wpe_reg:
             parser.error( "You cannot delete, wipe, or check another user's registrations" )
-
-# load registration file
-reg = registrations( options.user )
 
 #---------------------------------------
 if get_reg:
