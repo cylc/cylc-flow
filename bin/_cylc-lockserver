@@ -274,7 +274,10 @@ locks left after a system or task exits without releasing its lock)."""
         except Pyro.errors.ProtocolError, x:
             print x
             print 'This may mean you have attempted to access a dead lockserver.'
-            print 'Start a lockserver (remove the old pid file first, if necessary).'
+            print 'Before starting a new lockserver, you may need to:'
+            print ' 1/ delete the old lockserver pid file (see cylc preferences)'
+            print ' 2/ delete the old lockserver group in the Pyro nameserver:'
+            print '    $ pyro-nsc deletegroup :cylc-lockserver'
             sys.exit(1)
             #raise
 
