@@ -63,8 +63,7 @@ class scheduler:
                 metavar="LIST", action="store", dest='include' )
 
         self.parser.add_option( "--host",
-                help="Pyro nameserver host, defaults to the local hostname. Use "
-                "if not auto-detected (which depends on network config).", 
+                help="Pyro Nameserver host (defaults to local host name).",
                 metavar="HOSTNAME", action="store", dest="pns_host" )
 
         self.parser.add_option( "-d", "--dummy-mode",

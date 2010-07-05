@@ -29,8 +29,7 @@ These can be removed from the nameserver using:
   % pyro-nsc deletegroup {USER}_{SYSTEM}""" )
 
 parser.add_option( "--host",
-        help="Pyro nameserver host, defaults to local hostname. Use "
-        "if not auto-detected (which depends on network config).", 
+        help="Pyro Nameserver host (defaults to local host name).",
         metavar="HOSTNAME", action="store", default=socket.getfqdn(),
         dest="pns_host" )
 

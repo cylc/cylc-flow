@@ -40,8 +40,7 @@ Arguments:
                 action="store", dest="username" )
 
         self.add_option( "--host",
-                help="Pyro nameserver host, defaults to local hostname. Use "
-                "if not auto-detected (which depends on network config).", 
+                help="Pyro Nameserver host (defaults to local host name).",
                 metavar="HOSTNAME", action="store", default=socket.getfqdn(),
                 dest="pns_host" )
 
@@ -101,8 +100,7 @@ arguments:
         OptionParser.__init__( self, usage )
 
         self.add_option( "--host",
-                help="Pyro nameserver host, defaults to local hostname. Use "
-                "if not auto-detected (which depends on network config).", 
+                help="Pyro Nameserver host (defaults to local hostname).",
                 metavar="HOSTNAME", action="store", default=socket.getfqdn(),
                 dest="pns_host" )
 

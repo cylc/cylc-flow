@@ -33,8 +33,7 @@ is shut down and restarted.
 SYSTEM                  Registered name of the cylc system to monitor""")
 
     parser.add_option( "--host",
-            help="Pyro nameserver host, defaults to local hostname. Use "
-            "if not auto-detected (which depends on network config).", 
+            help="Pyro nameserver host (defaults to local host name).",
             metavar="HOSTNAME", action="store", default=socket.getfqdn(),
             dest="pns_host" )
 

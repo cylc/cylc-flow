@@ -170,9 +170,8 @@ locks left after a system or task exits without releasing its lock)."""
             system_acquire_nonex=None, system_release=None, list_all=False )
 
     parser.add_option( "--host",
-            help="(for --start|restart|debug). Pyro nameserver host, "
-            "defaults to the local hostname. Use if not auto-detected "
-            "(which depends on network config).", 
+            help="(for --start|restart|debug). Pyro nameserver host "
+            "(defaults to local host name).",
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "--start", help="Start up the server.",
