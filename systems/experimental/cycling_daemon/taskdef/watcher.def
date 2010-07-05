@@ -25,11 +25,8 @@
 %TASK
     watcher.sh
 
-%STARTUP_PREREQUISITES
+%COLDSTART_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"
-
-%ESTIMATED_RUN_TIME
-    5 min
 
 %OUTPUT_PATTERNS
     "external data ready for (\d{10})"
