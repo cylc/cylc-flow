@@ -53,6 +53,8 @@ class chooser:
 
         gobject.threads_init()
 
+        self.lamp_subdir = lamp_subdir
+
         self.pns_host = pns_host
         self.imagedir = imagedir
 
@@ -93,7 +95,7 @@ class chooser:
 
     def launch_viewer( self, group ):
         root, user, system = group.split( '.' ) 
-        tv = monitor(group, system, self.pns_host, self.imagedir, lamp_subdir)
+        tv = monitor(group, system, self.pns_host, self.imagedir, self.lamp_subdir)
         self.viewer_list.append( tv )
 
     def delete_event( self, w, e, data=None ):
