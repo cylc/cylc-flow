@@ -1,5 +1,9 @@
 To Do
 
+* IMPORTANT: UPDATE SCRIPT TEMPLATES FOR TASK-MESSAGE ETC.
+
+* IMPORTANT: cold start prerequisites for tied tasks.
+
 * IMPORTANT: server.cleanup() should not be used to catch exceptions
   that occur *before* all objects referred to in cleanup() have been
   defined (e.g. coldstart_scheduler.pyro). Also: consider exceptions
