@@ -118,9 +118,20 @@ class LockServer:
         #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
         try:
             self.pyro_daemon.connect( locker, locker.get_pyro_name() )
+        except Pyro.errors.NamingError,x:
+            # foo.write( str(x) + "\n"
+            print 'Pyro Naming ERROR: ', str(x) + "\n"
+            print 'This probably means the lockserver previously suffered a hard shutdown'
+            print 'To remove the lockserver registration from the Pyro Nameserver, do this:'
+            print '% pyro-nsc deletegroup :cylc-lockserver'
+            print
+            sys.exit(1)
+            #raise
         except Exception, x:
-            #    foo.write( str(x) + "\n" )
-            raise
+            # foo.write( str(x) + "\n"
+            print 'ERROR: ', str(x) + "\n"
+            sys.exit(1)
+            #raise
  
         while True:
             self.pyro_daemon.handleRequests()
@@ -258,7 +269,14 @@ locks left after a system or task exits without releasing its lock)."""
         sys.exit(0)
 
     if options.list_all:
-        (task_locks, system_ex, system_nonex ) = control( pns_host ).dump()
+        try:
+            (task_locks, system_ex, system_nonex ) = control( pns_host ).dump()
+        except Pyro.errors.ProtocolError, x:
+            print x
+            print 'This may mean you have attempted to access a dead lockserver.'
+            print 'Start a lockserver (remove the old pid file first, if necessary).'
+            sys.exit(1)
+            #raise
 
         print_heading( str( len( system_ex ) ) + " exclusive system locks" )
         for sysdir in system_ex:
