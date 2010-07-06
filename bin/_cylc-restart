@@ -20,10 +20,15 @@ class restart_scheduler( scheduler ):
     def __init__( self ):
         usage = """cylc restart [options] SYSTEM
 
-Restart a cylc system from the most recent previous state (i.e. just
-prior to shutdown) or from any previously recorded state. Tasks recorded
-as 'submitted', 'running', or 'failed', will be reset to a
-ready-to-run state at startup, by default.
+Restart a cylc system from a previous state. By default, the most recent
+previous state is used (i.e. just prior to system shutdown), but you can
+specify any previous state by naming the state dump file. Cylc updates
+the default state dump file automatically whenever a task changes state,
+and also records a special named state dump before actioning any
+intervention command (the state dump name filename is logged).
+
+At restart, any task recorded as 'submitted', 'running', or 'failed',
+will be reset to a ready-to-run state, by default.
 
 Arguments:
    SYSTEM               Registered name of the system to restart.""" 
@@ -37,7 +42,7 @@ Arguments:
             dest="restart_from" )
 
         self.parser.add_option( "--no-reset", 
-            help="Do no automatically reset failed tasks at startup "
+            help="Do not automatically reset failed tasks at startup "
             "(this option is the default in practice mode).",
             action="store_true", dest="no_reset" )
 

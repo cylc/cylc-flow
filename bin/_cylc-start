@@ -18,39 +18,30 @@ from scheduler import scheduler
 
 class coldstart_scheduler( scheduler ):
     def __init__( self ):
-        usage = """cylc start [options] SYSTEM
+        usage = """cylc start [options] SYSTEM CYCLE
 
-Cold start a cylc system. By default, every task in the system will be
-instantiated, in the 'waiting' state, at the initial cycle time, or at
-the next valid cycle time for the task.  
+Cold start a cylc system at some initial cycle time. Each task in the
+system will be instantiated in the 'waiting' state at the initial cycle
+time, or at the next valid cycle time for the task.  
 
 Arguments:
-   SYSTEM               Registered name of the system to start.""" 
+   SYSTEM               Registered name of the system to start.
+   CYCLE                Initial cycle time (YYYYMMDDHH).""" 
 
         self.parser = OptionParser( usage )
-
-        self.parser.add_option( "--at", 
-            help="Initial cycle time (YYYYMMDDHH).",
-            metavar="CYCLE", action="store", default=None,
-            dest="start_time" )
 
         scheduler.__init__( self )
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
 
-        if len( self.args ) == 0:
-            self.parser.error( "System name argument required." )
-        elif len( self.args ) > 1:
-            self.parser.error( "Too many arguments." )
+        if len( self.args ) != 2:
+            self.parser.error( "Please supply a system name and initial cycle time." )
 
-        if not self.options.start_time:
-            self.parser.error( 'You must supply an initial cycle time' )
+        if cycle_time.is_valid( self.args[1] ):
+            self.start_time = self.args[1]
         else:
-            self.start_time = self.options.start_time
-
-        if not cycle_time.is_valid( self.start_time ):
-            self.parser.error( "invalid cycle time: " + self.start_time )
+            self.parser.error( "Invalid cycle time: " + self.args[1])
 
         scheduler.parse_commandline( self )
         print "Starting from: " + self.start_time
