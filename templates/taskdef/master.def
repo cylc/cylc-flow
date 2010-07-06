@@ -1,6 +1,6 @@
-# MASTER CYLC TASK DEFINITION FILE: all sections annotated.
+# MASTER CYLC TASK DEFINITION FILE with all sections annotated.
 # Refer also to the cylc userguide. 
-# Optional sections: [square brackets].
+# Optional (or task-type-dependent) sections: [square brackets].
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
