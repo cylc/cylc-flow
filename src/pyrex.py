@@ -66,26 +66,12 @@ class pyrex:
             self.ns.createGroup( self.groupname )
         except NamingError:
             # abort if any existing objects are registered in my group name
-            # (this may indicate another instance of cylc is running
-            # with the same groupname; must be unique for each instance
-            # else the different systems will interfere with each other) 
-            print "\nERROR: the Pyro Nameserver group '" + self.groupname + "' is already in use."
             objs = self.ns.list( self.groupname )
-            if len( objs ) == 0:
-                print "It currently contains no objects."
-            else:
-                print "It contains the following registered objects:"
-                for obj in objs:
-                    print '  + ' + obj[0]
-
-            print
-            print "YOUR OPTIONS ARE:"
-            print 
-            print "(1) If the nameserver group is being used by another cylc instance,"
-            print "re-register your system under a different name before running it."
-            print 
-            print "(2) If the nameserver group is a relic of a cylc instance that did"
-            print "not shut down cleanly, you can delete it from the nameserver by:"
+            print "\nERROR: " + self.groupname + " is already registered with Pyro (" + str( len( objs )) + " objects)."
+            for obj in objs:
+                print '  + ' + obj[0]
+            print "Either you are running system already", sysname, "OR the previous run failed"
+            print "to shut down cleanly, in which case you can clean up like this:"
             print 
             print "pyro-nsc deletegroup " + self.groupname + "   #<-------(manual cleanup)" 
             print
