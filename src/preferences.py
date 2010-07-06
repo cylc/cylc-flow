@@ -59,7 +59,7 @@ class prefs:
         self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.lockserver_dir, 'pid' )
 
         self.config[ 'view' ] = {}
-        self.config[ 'view' ]['lamp size'] = 'medium'
+        self.config[ 'view' ]['lamp size'] = 'large'
 
     def load( self ):
         self.configparser.read( self.rcfile )
@@ -69,10 +69,10 @@ class prefs:
                 try:
                     self.config[section][ item ] = value
                 except:
-                    #print '  Using default ', item, self.config[section][ item ]
+                    print '  Using default ', item, self.config[section][ item ]
                     pass
                 else:
-                    #print '  Loaded item', item, value
+                    print '  Loaded item', item, value
                     pass
 
     def create_dirs( self ):

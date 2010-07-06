@@ -50,10 +50,10 @@ parser.add_option( "--set-state-dump-dir",
         default=None, metavar="PATH",
         action="store", dest="statedump_dir" )
 
-parser.add_option( "--set-view-lamp-size",
+parser.add_option( "--set-viewer-lamp-size",
         help="Set the cylc view lamp dashboard lamp size",
-        metavar="SIZE", default="medium", action="store",
-        choices=[ 'small', 'medium', 'large' ], dest="lamp_size" )
+        metavar="SIZE", default=None, action="store",
+        choices=[ 'small', 'large' ], dest="lamp_size" )
 
 parser.add_option( "--set-lockserver-pidfile", 
         help="Set the cylc lockserver Process ID file path.",

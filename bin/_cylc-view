@@ -69,10 +69,8 @@ SYSTEM                  Registered name of the cylc system to monitor""")
     lamp_size = rcfile.get( 'view', 'lamp size' )
     if lamp_size == 'small':
         image_subdir = '10px'
-    elif lamp_size == 'medium':
-        image_subdir = '20px'
     elif lamp_size == 'large':
-        image_subdir = '50px'
+        image_subdir = '20px'
  
     imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
