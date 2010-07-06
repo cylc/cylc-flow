@@ -19,7 +19,7 @@ from optparse import OptionParser
 from dynamic_instantiation import get_object
 from registration import registrations
 from job_submit import job_submit
-import pyrex, cycle_time, pimp_my_logger
+import cylc_pyro_ns, cycle_time, pimp_my_logger
 from preferences import prefs
 from system_lock import system_lock
 
@@ -143,7 +143,7 @@ pimp_my_logger.pimp_it( log, task_name, logging_dir, \
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 # (required for system locking)
-nameserver = pyrex.discover( pns_host )
+nameserver = cylc_pyro_ns.ns( pns_host )
 
 # set global (all tasks) environment variables-------------------------
 if options.sched:

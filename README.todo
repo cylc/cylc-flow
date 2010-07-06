@@ -14,6 +14,9 @@ To Do
   parser, or it triggers on 'cylc start --help' etc.
   CURRENTLY: no cleanup occurs on early abort, e.g. non-dummy mode oper.
 
+* run-task --scheduler: task state resets to 'running' but all messages
+  are ignored.
+
 * task stdout and stderr for remote tasks!
 
 * consider how task timeout alerts might be incorporated into cylc? 

@@ -6,7 +6,7 @@ import time, os, re
 import threading
 
 from gtkmonitor import monitor
-from pyrex import discover
+import cylc_pyro_ns
 
 class chooser_updater(threading.Thread):
 
@@ -29,7 +29,7 @@ class chooser_updater(threading.Thread):
         # renew the connection each time
         # (if a single proxy is established in __init__() then Pyro 3.7 (old!) 
         # complains that sharing a proxy between threads is not allowed).
-        groups = discover( self.pns_host ).get_groups()
+        groups = cylc_pyro_ns.ns( self.pns_host ).get_groups()
         choices = []
         for group in groups:
             choices.append( group )

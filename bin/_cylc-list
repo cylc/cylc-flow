@@ -14,7 +14,7 @@ import os, sys, re
 import socket
 from optparse import OptionParser
 from registration import registrations
-import pyrex
+import cylc_pyro_ns
 
 parser = OptionParser( usage = """cylc list [options]
     
@@ -40,7 +40,7 @@ parser.add_option( "--host",
 ( options, args ) = parser.parse_args()
 
 # get system names currently in use in the Pyro nameserver
-groups = pyrex.discover( options.pns_host ).get_groups()
+groups = cylc_pyro_ns.ns( options.pns_host ).get_groups()
 myusername = os.environ[ 'USER' ]
  
 if len(args) != 0:

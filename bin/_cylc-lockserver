@@ -14,7 +14,6 @@ import socket
 from optparse import OptionParser
 from time import sleep
 
-import pyrex
 from preferences import prefs
 import cycle_time
 from registration import registrations
@@ -92,7 +91,6 @@ class ServerDaemon( Daemonizer ):
 class LockServer:
     def __init__( self, pns_host, logfile ):
         # LOCATE THE PYRO NAMESERVER-------------------------------------------
-        #self.nameserver = pyrex.discover( pns_host )
         self.logfile = logfile
         self.pns_host = pns_host
 

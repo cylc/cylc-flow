@@ -17,7 +17,7 @@ import datetime
 
 from preferences import prefs
 import cycle_time
-from pyrex import pyrex
+import cylc_pyro_server
 import dead_letter
 import state_summary
 import accelerated_clock 
@@ -218,7 +218,7 @@ class scheduler:
         else:
             sysname = self.system_name
 
-        self.pyro = pyrex( self.pns_host, sysname )
+        self.pyro = cylc_pyro_server.pyrex( self.pns_host, sysname )
 
         self.banner[ 'Pyro nameserver group' ] = self.pyro.get_groupname()
 

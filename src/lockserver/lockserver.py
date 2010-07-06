@@ -9,7 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import Pyro.core
+import Pyro.core, Pyro.errors
 import os,sys,socket
 import os, logging
 
@@ -19,8 +19,9 @@ name = 'broker'
 def get_lockserver( pns_host ):
     try:
         server = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + name)
-    except:
+    except Pyro.errors.NamingError:
         raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
+
     return server
 
 class lockserver( Pyro.core.ObjBase ):
@@ -35,12 +36,9 @@ class lockserver( Pyro.core.ObjBase ):
         # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------
         try:
             self.nameserver.createGroup( groupname )
-        except:
+        except Pyro.errors.NamingError:
             # group already exists
             pass
-            #raise
-            #self.nameserver.deleteGroup( groupname )
-            #self.nameserver.createGroup( groupname )
 
         # task locks
         self.locked = {}

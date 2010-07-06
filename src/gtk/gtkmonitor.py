@@ -15,7 +15,6 @@ import gtk
 import time, os, re, sys
 from CylcOptionParsers import NoPromptOptionParser_u
 from connector import connector
-import pyrex
 from cycle_time import _rt_to_dt, is_valid
 
 class color_rotator:

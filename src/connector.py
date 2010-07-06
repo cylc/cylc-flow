@@ -15,7 +15,7 @@ import Pyro.core
 from Pyro.errors import PyroError,NamingError,ProtocolError
 from optparse import OptionParser
 from time import sleep
-import pyrex
+import cylc_pyro_ns
 
 class connector:
     def __init__( self, hostname, groupname, target, silent=False, check=True ):
@@ -24,7 +24,7 @@ class connector:
         self.groupname = groupname
 
         if check:
-            foo = pyrex.discover( hostname )
+            foo = cylc_pyro_ns.ns( hostname )
             if not foo.registered( groupname ):
                 msg = "WARNING: no Pyro objects registered under", groupname 
                 if not silent:

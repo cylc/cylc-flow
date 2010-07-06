@@ -17,7 +17,7 @@ For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
 
-import pyrex
+import cylc_pyro_ns
 from cycle_time import _rt_to_dt, is_valid
 import os, re, sys
 import Pyro.core
@@ -51,7 +51,7 @@ pns_host = parser.get_pns_host()
 groupname = parser.get_groupname()
 
 # get systems currently registered in the Pyro nameserver
-ns_groups = pyrex.discover( pns_host )
+ns_groups = cylc_pyro_ns.ns( pns_host )
 
 if ns_groups.registered( groupname ):
     print "System: " + system_name
@@ -79,17 +79,7 @@ try:
             # timeout (sec) determines max wait for an answer from god.
             god._setTimeout(60)
 
-        except ProtocolError, x:
-            if not alerted:
-                print "\n\033[1;37;41mfailed to connect" + ctrl_end 
-                print x
-                alerted = True
-            #raise
-            # if no connection, try again to connect
-            sleep(1)
-            continue
-
-        except NamingError, x:
+        except Exception, x:
             if not alerted:
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 
                 print x
