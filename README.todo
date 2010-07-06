@@ -1,5 +1,8 @@
 To Do
 
+* absorb list into ping AND sort out the pyro connector and pyrex
+  classes (and their usage everywhere, including the viewer).
+
 * IMPORTANT: UPDATE SCRIPT TEMPLATES FOR TASK-MESSAGE ETC.
 
 * IMPORTANT: cold start prerequisites for tied tasks.
@@ -12,7 +15,7 @@ To Do
 
 * task stdout and stderr for remote tasks!
 
-* rationalise use of the connector class, especially in the viewer.
+* consider how task timeout alerts might be incorporated into cylc? 
 
 * extreme task elimination method - extrapolate forward in time to see
   if a finished task will ever be needed, otherwise delete?
