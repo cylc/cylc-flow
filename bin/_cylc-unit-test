@@ -91,26 +91,26 @@ echo done
 # REGISTER THE TEST SYSTEM
 echo
 echo -n ">> REGISTERING the test system as 'unit' ... "
-cylc register --system $SYS_DIR unit >> $OUT 2>&1
+cylc register $SYS_DIR unit >> $OUT 2>&1
 echo done
 
 # START UP THE TEST SYSTEM
 echo
 if ! $dummy_mode; then
-    echo ">> STARTING at 2010010106, with FAIL_TASK=X%2010010112"
-    echo "        self.items['environment']['FAIL_TASK'] = 'X%2010010112'" >> $SYS_DIR/system_config.py
+    echo ">> STARTING at 2010010106, with FAIL_TASK=TaskX%2010010112"
+    echo "        self.items['environment']['FAIL_TASK'] = 'TaskX%2010010112'" >> $SYS_DIR/system_config.py
 else
     # use 36 hour clock offset, otherwise the system will catch up to
     # the clock before it finishes (=> longer time to wait for finish).
-    echo ">> STARTING at 2010010106, with --clock-offset=36 --fail-out=X%2010010112"
+    echo ">> STARTING at 2010010106, with --clock-offset=36 --fail-out=TaskX%2010010112"
 fi
 
 # startup errors (e.g. due to lockserver denying access to the system)
 # won't be trapped here because we run cylc in the background!
 if $dummy_mode; then
-    cylc start -d --clock-offset=36 --fail-out=X%2010010112 --at=2010010106 unit >> $OUT_SCHED 2>&1 &
+    cylc start -d --clock-offset=36 --fail-out=TaskX%2010010112 unit 2010010106 >> $OUT_SCHED 2>&1 &
 else
-    cylc start --at=2010010106 unit >> $OUT_SCHED 2>&1 &
+    cylc start unit 2010010106 >> $OUT_SCHED 2>&1 &
 fi
 echo -n "   Will wait 5 seconds for startup ... "
 sleep 5
@@ -131,9 +131,9 @@ READY=false
 while ! $READY; do
     READY=true
     for TASK in A B C D E F; do
-        ! grep "${TASK}%2010010106 finished" $LOG > /dev/null 2>&1 && READY=false
+        ! grep "Task${TASK}%2010010106 finished" $LOG > /dev/null 2>&1 && READY=false
     done
-    ! grep "X%2010010112 failed" $LOG > /dev/null 2>&1 && READY=false
+    ! grep "TaskX%2010010112 failed" $LOG > /dev/null 2>&1 && READY=false
     echo -n .
     sleep 1
 done
@@ -159,9 +159,9 @@ echo done
 
 # PURGE THE FAILED TASK AND ITS DEPENDANTS THROUGH TO 2010010200
 echo
-echo ">> PURGING X%2010010112 and all dependants, through to 2010010200"
+echo ">> PURGING TaskX%2010010112 and all dependants, through to 2010010200"
 echo -n "   ... "
-cylc purge -f -t X%2010010112 -s 2010010200 unit >> $OUT 2>&1
+cylc purge -f -t TaskX%2010010112 -s 2010010200 unit >> $OUT 2>&1
 echo done
 
 # WAIT FOR THE SYSTEM TO FINISH AT 2010010212
