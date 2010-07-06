@@ -103,7 +103,8 @@ Cylc View is a real time system monitor for Cylc.
         view.collapse_all()
 
     def no_task_headings( self, w ):
-        self.led_headings = ['Cycle Time' ] + ['-'] * len( self.task_list )
+        #self.led_headings = ['Cycle Time' ] + ['-'] * len( self.task_list )
+        self.led_headings = ['Cycle Time' ] + [''] * len( self.task_list )
         self.reset_led_headings()
 
     def short_task_headings( self, w ):
