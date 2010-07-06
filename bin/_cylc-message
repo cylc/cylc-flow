@@ -35,16 +35,19 @@ import os, sys
 import socket
 from time import sleep
 from optparse import OptionParser
-from connector import connector
+import cylc_pyro_client
 
 # PARSE THE COMMAND LINE-----------------------------------------------
 usage = """cylc message [options] [MESSAGE] 
 
+THIS COMMAND IS DEPRECATED. Use task-started, task-message,
+task-finished, and task-failed instead.
+
 Send a message to a task proxy object in a running cylc system.
 
-THIS COMMAND IS FOR USE BY EXTERNAL TASKS TO UPDATE THE STATE OF THE
-PROXY OBJECTS THAT REPRESENT THEM IN A RUNNING CYLC SCHEDULER, in which 
-case it gets most of its inputs from the task execution environment.
+For use by external tasks to update the state of the proxy objects that
+represent them in a running cylc scheduler, in which case it gets most
+of its inputs from the task execution environment.
 
 If invoked by a task that does not belong to a cylc scheduler (e.g. by
 'cylc run-task') messages are directed to stdout instead of via the Pyro
@@ -236,7 +239,7 @@ if mode != 'scheduler':
 
 # CONNECT TO THE CORRECT TASK PROXY OBJECT-----------------------------
 try:
-    task = connector( pns_host, groupname, task_id ).get()
+    task = cycl_pyro_client.client( pns_host, groupname ).get_proxy( task_id )
 except:
     print >> sys.stderr, "ERROR: failed to connect to " + task_id + " in " + groupname
     sys.exit(1)

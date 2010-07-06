@@ -12,9 +12,8 @@
 
 import os
 import check_switch
-from connector import connector
+import cycl_pyro_client
 from CylcOptionParsers import PromptOptionParser
-from Pyro.errors import NamingError
 
 parser = PromptOptionParser( """cylc nudge [options] SYSTEM 
 
@@ -28,11 +27,8 @@ The cylc userguide explains when you might want to use this command.
 (options, args) = parser.parse_args()
 
 if parser.prompt( 'Nudge' ):
-    try:
-        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    except NamingError:
-        print 'ERROR: system ' + args[0] + ' not running?'
-    except Exception, x:
-        print 'ERROR: ', x
-    else:
-        check_switch.check( god.nudge( os.environ['USER'] ))
+    host = parser.get_pns_host()
+    group = parser.get_groupname()
+
+    god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
+    check_switch.check( god.nudge( os.environ['USER'] ))

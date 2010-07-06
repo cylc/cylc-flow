@@ -48,7 +48,7 @@ def check_task_spec( task_spec ):
 
     try:
         (name, cycle) = task_id.split( '%' )
-    except:
+    except ValueError:
         raise SystemExit( task_spec + " - Please specify SYSTEM:TASK_NAME%CYCLE_TIME" )
  
     if not cycle_time.is_valid( cycle ):

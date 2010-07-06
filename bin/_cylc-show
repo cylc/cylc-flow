@@ -11,9 +11,8 @@
 
 import re, sys
 import cycle_time
-from connector import connector
+import cylc_pyro_client
 from CylcOptionParsers import NoPromptOptionParser_u
-from Pyro.errors import NamingError
 
 def print_heading( strng ):
         underline = re.sub( '.', '_', strng )
@@ -37,14 +36,10 @@ parser.add_option( "-t", "--task",
  
 sysname = parser.get_system_name()
 
-try:
-    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-except NamingError:
-    print 'ERROR: system ' + args[0] + ' not running?'
-    sys.exit(1)
-except Exception, x:
-    print 'ERROR: ', x
-    sys.exit(1)
+host = parser.get_pns_host()
+group = parser.get_groupname()
+
+god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
 
 if not options.task:
     # print system information and exit
@@ -61,7 +56,7 @@ if not options.task:
 name_only = False
 try:
     name, cycle = options.task.split( '%' )
-except:
+except ValueError:
     name = options.task
     name_only = True
 

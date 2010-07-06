@@ -23,7 +23,7 @@ import cylc_pyro_ns, cycle_time, pimp_my_logger
 from preferences import prefs
 from system_lock import system_lock
 
-usage = """cylc run-task [options] SYSTEM
+usage = """cylc run-task [options] SYSTEM TASK_ID
 
 Run a single task just as the scheduler would run it. This can be used
 as an easy way to invoke single system tasks for any reason, but it is
@@ -32,17 +32,15 @@ development phase. When the cylc messaging interface is invoked by
 standalone tasks it simply directs all messages to stdout.
 
 arguments:
-   SYSTEM     Registered name of the target system.""" 
+   SYSTEM          Registered name of the target system.
+   TASK_ID         Identity of the task to run (NAME%YYYYMMDDHH).""" 
+
 
 def commandline_parser():
     parser = OptionParser( usage )
 
     parser.set_defaults( pns_host= socket.getfqdn(), sched=False,
             dry_run=False )
-
-    parser.add_option( "-t", "--task",
-            help="ID of the task to run.",
-            metavar="TASK%CYCLE", action="store", dest="task_id" )
 
     parser.add_option( "-d", "--dry-run",
             help="Generate the cylc task execution file for the "
@@ -54,9 +52,9 @@ def commandline_parser():
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "--scheduler",
-            help="Run the task as a scheduler task.  WARNING: you "
-            "probably do not want to do this; to get failed system "
-            "tasks to re-run use the 'cylc reset' command.", 
+            help="(EXPERIMENTAL) tell the task to run as a scheduler task, "
+            "i.e. to attempt to communicate with a task proxy in a running "
+            "cylc system (you probably do not want to do this).",
             action="store_true", dest="sched" )
 
     return parser
@@ -65,13 +63,12 @@ def commandline_parser():
 parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
-if len( args ) == 0:
-    parser.error( "Please supply a target system name" )
-elif len( args ) > 1:
-    parser.error( "Too many arguments" )
+if len( args ) != 2:
+    parser.error( "System name and task ID required." )
 
-# get system name------------------------------------------------------
+# get input args_------------------------------------------------------
 name = args[0]
+task_id = args[1]
 
 # find location of the system task and config modules------------------
 reg = registrations()
@@ -81,13 +78,11 @@ else:
     reg.print_all()
     raise SystemExit( "System " + name + " is not registered!" )
 
-# get task ------------------------------------------------------------
-if not options.task_id:
-    parser.error( "Please specify which task to run" )
-else:
-    task_id = options.task_id
-
-( task_name, ctime ) = task_id.split( '%' )
+# check task ----------------------------------------------------------
+try:
+    ( task_name, ctime ) = task_id.split( '%' )
+except ValueError:
+    parser.error( "Task ID must be NAME%YYYYMMDDHH" )
 if not cycle_time.is_valid( ctime ):
     parser.error( "invalid cycle time: " + ctime )
 

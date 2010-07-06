@@ -14,7 +14,7 @@ import pygtk
 import gtk
 import time, os, re, sys
 from CylcOptionParsers import NoPromptOptionParser_u
-from connector import connector
+import cylc_pyro_client
 from cycle_time import _rt_to_dt, is_valid
 
 class color_rotator:
@@ -539,7 +539,7 @@ Cylc View is a real time system monitor for Cylc.
         # which probably means the cylc system was shutdown and
         # restarted.
         try:
-            connector( self.pns_host, self.groupname, 'minimal', silent=True ).get()
+            cylc_pyro_client.client( self.pns_host, self.groupname ).get_proxy( 'minimal' )
         except:
             #print "NO CONNECTION"
             self.connection_lost = True
@@ -553,8 +553,8 @@ Cylc View is a real time system monitor for Cylc.
         return True
 
     def get_pyro( self, object ):
-        foo = connector( self.pns_host, self.groupname, object, check=False )
-        bar = foo.get()
+        foo = cylc_pyro_client.client( self.pns_host, self.groupname )
+        bar = foo.get_proxy( object)
         return bar
  
     def block_till_connected( self ):

@@ -3,7 +3,7 @@
 import gobject
 import time
 import threading
-from connector import connector
+import cylc_pyro_client
 import gtk
 import pygtk
 ####pygtk.require('2.0')
@@ -87,7 +87,7 @@ class updater(threading.Thread):
 
     def reconnect( self ):
         try:
-            self.god = connector( self.pns_host, self.groupname, 'state_summary', silent=True, check=False ).get()
+            self.god = cylc_pyro_client.client( self.pns_host, self.groupname ).get_proxy( 'state_summary' )
         except:
             return False
         else:

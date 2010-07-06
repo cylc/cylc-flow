@@ -14,7 +14,7 @@ import os, sys
 import socket
 from time import sleep
 from optparse import OptionParser
-from connector import connector
+import cylc_pyro_client
 
 # PARSE THE COMMAND LINE-----------------------------------------------
 usage = """cylc suicide [options]
@@ -113,7 +113,7 @@ if mode != 'scheduler':
 
 # CONNECT TO THE SUICIDE SUGGESTOR OBJECT-----------------------------
 try:
-    suggestor = connector( pns_host, groupname, 'remote' ).get()
+    suggestor = cylc_pyro_client.client( pns_host, groupname ).get_proxy( 'remote' )
 except:
     print "ERROR: failed to connect to the suicide suggestor"
     sys.exit(1)

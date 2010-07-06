@@ -13,48 +13,48 @@
 import os, sys
 import cycle_time
 import check_switch
-from connector import connector
+import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from Pyro.errors import NamingError
 
-parser = PromptOptionParser( """cylc stop [options] SYSTEM 
+parser = PromptOptionParser( """cylc stop [options] SYSTEM [CYCLE]
 
-Get a running scheduler to shut down after all currently running tasks
-have finished (this is the default), or after all tasks have passed some
-future cycle time and finished, or immediately (see WARNING below).""" )
+Shut a system down as soon as all currently running tasks have finished,
+or after each task has passed a specified cycle time and finished, or
+immediately (WARNING: see '--now' below).""",
+[ """[CYCLE]              Shut down after all tasks have passed this
+                        cycle time (YYYYMMDDHH)""" ] )
 
 parser.add_option( "--now", 
         help="Stop the system immediately. WARNING: any tasks that are "
-        "still running will be unable to phone home, AND the final cylc "
+        "still running will be unable to 'phone home', AND the final cylc "
         "state dump file will not correctly reflect the state of tasks "
-        "that finish successfully after the scheduler has shut down.",
+        "that finish successfully after the scheduler has shut down "
+        "(by default these will be re-run if the system is restarted).",
         action="store_true", default=False, dest="shutdownnow" )
 
-parser.add_option( "--at", 
-        help="Do not launch any new tasks beyond CYCLE, and "
-        "shut the system down when all tasks reach that cycle.",
-        metavar="CYCLE", action="store", dest="stop_time" )
-
 (options, args) = parser.parse_args()
-try:
-    god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-except NamingError:
-    print 'ERROR: system ' + args[0] + ' not running?'
-    sys.exit(1)
-except Exception, x:
-    print 'ERROR: ', x
-    sys.exit(1)
 
-if options.stop_time:
-    stop_at = options.stop_time
-    if not cycle_time.is_valid( stop_at ):
-        parser.error( "invalid cycle time: " + stop_at )
-    if parser.prompt( 'Set stop time ' + stop_at + ' for'):
-        check_switch.check( god.set_stop_time( stop_at, os.environ['USER'] ))
+stop_at = False
+if len( args ) == 2:
+    stop_at = True
+    stop_time = args[1] 
+
+host = parser.get_pns_host()
+group = parser.get_groupname()
+user = os.environ['USER']
+
+god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
+
+if stop_at:
+    if not cycle_time.is_valid( stop_time ):
+        parser.error( "invalid cycle time: " + stop_time )
+    if parser.prompt( 'Set stop time ' + stop_time + ' for'):
+        check_switch.check( god.set_stop_time( stop_time, user ))
 
 elif options.shutdownnow:
     if parser.prompt( 'Shutdown NOW' ):
-        check_switch.check( god.shutdown_now( os.environ['USER'] ))
+        check_switch.check( god.shutdown_now( user ))
 else:
     if parser.prompt( 'Shutdown' ):
-        check_switch.check( god.shutdown( os.environ['USER'] ))
+        check_switch.check( god.shutdown( user ))

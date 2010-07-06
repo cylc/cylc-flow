@@ -17,14 +17,12 @@
 # incoming() method, but now it invokes 'cylc message' as a subprocess
 # in order to more exactly model real system tasks. 
 
-import Pyro.naming, Pyro.core
-from Pyro.errors import NamingError
 import cycle_time
 import datetime
 import sys, os, re
 from time import sleep
 import subprocess
-from connector import connector
+import cylc_pyro_client
 
 class dummy_task:
 
@@ -32,9 +30,9 @@ class dummy_task:
 
         self.id = task_id
         # get a Pyro proxy for the task that I'm masquerading as
-        self.task  = connector( pns_host, groupname, task_id ).get()
+        self.task  = cylc_pyro_client.client( pns_host, groupname ).get_proxy( task_id )
         # get a Pyro proxy for the dummy mode accelerated clock
-        self.clock = connector( pns_host, groupname, 'clock' ).get()
+        self.clock = cylc_pyro_client.client( pns_host, groupname ).get_proxy( 'clock' )
 
     def send( self, message ):
         # send an output message to the task proxy object that I'm masquerading as

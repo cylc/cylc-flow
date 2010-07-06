@@ -88,7 +88,7 @@ Arguments:
 class NoPromptOptionParser( OptionParser ):
     # same, but own username
 
-    def __init__( self, usage ):
+    def __init__( self, usage, extra_args=None ):
 
         usage += """
 
@@ -96,6 +96,13 @@ You must be the owner of the target system in order to use this command.
 
 arguments:
    SYSTEM               Registered name of the target system.""" 
+
+        self.n_args = 1  # system name
+        if extra_args:
+            for arg in extra_args:
+                usage += '\n   ' + arg
+                self.n_args += 1
+
 
         OptionParser.__init__( self, usage )
 
@@ -116,7 +123,7 @@ arguments:
 
         if len( args ) == 0:
             self.error( "Please supply a target system name" )
-        elif len( args ) > 1:
+        elif len( args ) > self.n_args:
             self.error( "Too many arguments" )
 
         # system name
@@ -147,9 +154,9 @@ arguments:
 
 class PromptOptionParser( NoPromptOptionParser ):
 
-    def __init__( self, usage ):
+    def __init__( self, usage, extra_args=None ):
 
-        NoPromptOptionParser.__init__( self, usage )
+        NoPromptOptionParser.__init__( self, usage, extra_args )
 
         self.add_option( "-f", "--force",
                 help="Do not ask for confirmation before acting.",

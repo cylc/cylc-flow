@@ -12,9 +12,8 @@
 import os
 import cycle_time
 import check_switch
-from connector import connector
+import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
-from Pyro.errors import NamingError
 
 parser = PromptOptionParser( """cylc insert [options] SYSTEM 
 
@@ -29,26 +28,31 @@ parser.add_option( "-t", "--task-id",
 
 parser.add_option( "-g", "--group",
         help="Identity of a task group to insert.",
-        metavar="NAME%CYCLE", action="store", dest="task_id" )
+        metavar="NAME%CYCLE", action="store", dest="group_id" )
 
 (options, args) = parser.parse_args()
 
-if not options.task_id:
+if not options.task_id and not options.group_id:
     parser.error( "Task or Group ID required" )
+if options.task_id and options.group_id:
+    parser.error( "Task OR Group ID required" )
 
-target = options.task_id
+if options.task_id:
+    target = options.task_id
+elif options.group_id:
+    target = options.group_id
 
 if parser.prompt( 'Insert ' + target + ' in'):
     # check input
-    ( name, cycle ) = target.split('%')
+    try:
+        ( name, cycle ) = target.split('%')
+    except ValueError:
+        parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
     if not cycle_time.is_valid( cycle ):
         parser.error( "invalid cycle time: " + cycle )
 
-    try:
-        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    except NamingError:
-        print 'ERROR: system ' + args[0] + ' not running?'
-    except Exception, x:
-        print 'ERROR: ', x
-    else:
-        check_switch.check( god.insert( target,  os.environ['USER'] ))
+    host = parser.get_pns_host()
+    group = parser.get_groupname()
+
+    god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
+    check_switch.check( god.insert( target,  os.environ['USER'] ))

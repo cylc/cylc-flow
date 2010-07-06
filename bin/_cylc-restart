@@ -18,28 +18,26 @@ from scheduler import scheduler
 
 class restart_scheduler( scheduler ):
     def __init__( self ):
-        usage = """cylc restart [options] SYSTEM
+        usage = """cylc restart [options] SYSTEM [STATE_DUMP]
 
-Restart a cylc system from a previous state. By default, the most recent
-previous state is used (i.e. just prior to system shutdown), but you can
-specify any previous state by naming the state dump file. Cylc updates
-the default state dump file automatically whenever a task changes state,
-and also records a special named state dump before actioning any
-intervention command (the state dump name filename is logged).
+Restart a cylc system from a previous state. Tasks in the 'submitted',
+'running', or 'failed' states will immediately be resubmitted at
+startup unless you specity the '--no-reset' option.
 
-At restart, any task recorded as 'submitted', 'running', or 'failed',
-will be reset to a ready-to-run state, by default.
+By default the system will restart from the system state dump file, which is
+updated whenever a task changes state and thus records the most recent
+previous state of the system. However, cylc also records a special named
+state dump, and logs its filename, before actioning any intervention
+command, and you can choose to restart from one of these (just
+cut-and-paste the filename from the log to the commandline).
 
 Arguments:
-   SYSTEM               Registered name of the system to restart.""" 
+   SYSTEM               Registered name of the system to restart.
+   [STATE DUMP]         Optional non-default state dump file (assumed to
+                        be in the system state dump directory unless you
+                        supply the file path).""" 
 
         self.parser = OptionParser( usage )
-
-        self.parser.add_option( "--from", 
-            help="Restart from a named state dump file (in the "
-            "default state dump directory, or supply the full path).",
-            metavar="FILE", action="store", default=None,
-            dest="restart_from" )
 
         self.parser.add_option( "--no-reset", 
             help="Do not automatically reset failed tasks at startup "
@@ -56,8 +54,8 @@ Arguments:
             self.no_reset = True
 
         self.restart_from = None
-        if self.options.restart_from:
-            self.restart_from = self.options.restart_from
+        if len( self.args ) == 2:
+            self.restart_from = self.args[1]
 
         scheduler.parse_commandline( self )
  

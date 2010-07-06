@@ -11,7 +11,7 @@
 
 import os, sys
 import socket
-from connector import connector
+import cylc_pyro_client
 
 class message:
     def __init__( self, msg=None, priority='NORMAL' ):
@@ -61,15 +61,9 @@ class message:
             sys.exit(1)
 
     def get_proxy( self ):
-        try:
-            proxy = connector( self.pns_host, self.groupname, self.task_id ).get()
-        except:
-            #print >> sys.stderr, "Failed to connect to " + self.task_id + \
-            #" in " + self.groupname + " on " + self.pns_host
-            raise
-            sys.exit(1)
-        else:
-            return proxy
+        # this raises an exception on failure to connect:
+        proxy = cylc_pyro_client.client( self.pns_host, self.groupname ).get_proxy( self.task_id )
+        return proxy
 
     def print_msg_sp( self, msg ):
         prefix = 'cylc (' + self.mode + '): '

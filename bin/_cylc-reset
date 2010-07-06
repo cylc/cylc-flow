@@ -13,11 +13,10 @@
 import os, sys
 import cycle_time
 import check_switch
-from connector import connector
+import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
-from Pyro.errors import NamingError
 
-parser = PromptOptionParser( """cylc reset [options] SYSTEM 
+parser = PromptOptionParser( """cylc reset [options] SYSTEM TASK_ID
 
 Reset the state of a single task to 'waiting', 'ready' or 'finished'.
 
@@ -25,7 +24,8 @@ The principal intended use for this command is to reset a failed task to
 the WAITING state (i.e. waiting for its prerequisites to be satisfied)
 after fixing the problem that resulted in the failure, thereby causing
 the failed task to be resubmitted. See the cylc userguide for
-information on resetting tasks to ready or finished states.""")
+information on resetting tasks to ready or finished states.""",
+[ 'TASK_ID              Identity of the task to reset (NAME%YYYYMMDDHH).'] )
 
 parser.add_option( "--waiting", 
         help="Reset a task to the 'waiting' state (prerequisites yet "
@@ -42,38 +42,36 @@ parser.add_option( "--finished",
         "completed).", 
         action="store_true", default=False, dest="finished" )
 
-parser.add_option( "-t", "--task",
-        help="ID of the task to reset.",
-        metavar="TASK%CYCLE", action="store", dest="task_id" )
-
 (options, args) = parser.parse_args()
 
-if not options.task_id:
-    parser.error( "Specify a task to reset" )
+if len(args) != 2:
+    parser.error( "System name and task ID required." )
 
 if not options.waiting and not options.finished and not options.ready:
     parser.error( "Specify either waiting, ready, or finished" )
 
-task_id = options.task_id
-(name, cycle ) = task_id.split('%')
+if [options.waiting, options.finished, options.ready ].count( True ) != 1:
+    parser.error( "Specify either waiting, ready, or finished" )
+
+task_id = args[1]
+try:
+    (name, cycle ) = task_id.split('%')
+except ValueError:
+    parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
 if not cycle_time.is_valid( cycle ):
     parser.error( "invalid cycle time: " + cycle )
 
 if parser.prompt( 'Reset task ' + task_id + ' in'):
-    try:
-        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    except NamingError:
-        print 'ERROR: system ' + args[0] + ' not running?'
-        sys.exit(1)
-    except Exception, x:
-        print 'ERROR: ', x
-        sys.exit(1)
+    host = parser.get_pns_host()
+    group = parser.get_groupname()
+    user = os.environ['USER']  
 
+    god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
     if options.waiting:
-        check_switch.check( god.reset_to_waiting( task_id, os.environ['USER'] ))
+        check_switch.check( god.reset_to_waiting( task_id, user ))
 
     if options.ready:
-        check_switch.check( god.reset_to_ready( task_id, os.environ['USER'] ))
+        check_switch.check( god.reset_to_ready( task_id, user ))
 
     elif options.finished:
-        check_switch.check( god.reset_to_finished( task_id, os.environ['USER'] ))
+        check_switch.check( god.reset_to_finished( task_id, user ))
