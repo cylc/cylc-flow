@@ -10,13 +10,7 @@
 #         |________________________|
 
 
-# CYLC USERGUIDE EXAMPLE SYSTEM,
-# Task A: an atmospheric model.
-
-# Depends on real time obs, and own restart file.
-# Generates one restart file, valid for the next cycle.
-
-# Run length 90 minutes, scaled by $REAL_TIME_ACCEL 
+# CYLC USERGUIDE EXAMPLE SYSTEM Task A IMPLEMENTATION.
 
 # trap errors so that we need not check the success of basic operations.
 set -e; trap 'cylc task-failed "error trapped"' ERR
@@ -26,17 +20,6 @@ cylc task-started || exit 1
 
 # check environment
 check-env.sh || exit 1
-
-#sleep 30
-#cylc task-message "BYE"
-#cylc task-finished
-#exit 0
-#sleep 30
-
-#cylc task-failed "ABORTING"
-#mkdir /illegal
-#echo hello
-#exit 1
 
 # PARSE THE COMMAND LINE (SEE taskdef %COMMANDLINE)
 # This script expects: --file=FILE SENTENCE
@@ -56,7 +39,6 @@ fi
 
 if $BAD_COMMAND_LINE; then
     cylc task-failed "bad command line (see task stdout)"
-    echo "ERROR, bad command line:"
     COUNT=1
     for ARG in "$@"; do
         echo " ${COUNT}: $ARG"
@@ -83,15 +65,14 @@ for PRE in $ONE $TWO; do
 done
 
 # EXECUTE THE MODEL ...
-sleep $(( 10 * 60 / $REAL_TIME_ACCEL ))
 
 # create a restart file for the next cycle
+sleep $(( TASK_RUN_TIME_SECONDS / 2 ))
 touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
 cylc task-message --next-restart-completed
 
-sleep $(( 80 * 60 / $REAL_TIME_ACCEL ))
-
 # create forecast outputs
+sleep $(( TASK_RUN_TIME_SECONDS / 2 ))
 touch $CYLC_TMPDIR/surface-winds-${CYCLE_TIME}.nc
 cylc task-message "surface wind fields ready for $CYCLE_TIME"
 

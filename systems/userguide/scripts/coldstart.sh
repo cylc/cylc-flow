@@ -10,11 +10,7 @@
 #         |________________________|
 
 
-# CYLC USERGUIDE EXAMPLE SYSTEM. 
-# system cold start task, provides initial restart prerequisites
-# for the forecast models.
-
-# run length 50 minutes, scaled by $REAL_TIME_ACCEL 
+# CYLC USERGUIDE EXAMPLE SYSTEM cold start task IMPLEMENTATION.
 
 # trap errors so that we need not check the success of basic operations.
 set -e; trap 'cylc task-failed "error trapped"' ERR
@@ -26,14 +22,14 @@ cylc task-started || exit 1
 check-env.sh || exit 1
 
 # EXECUTE THE TASK ...
-sleep $(( 50 * 60 / REAL_TIME_ACCEL )) 
+sleep $TASK_RUN_TIME_SECONDS
 
-touch $CYLC_TMPDIR/A-${CYCLE_TIME}.restart
-cylc task-message "A restart files ready for $CYCLE_TIME"
-touch $CYLC_TMPDIR/B-${CYCLE_TIME}.restart
-cylc task-message "B restart files ready for $CYCLE_TIME"
-touch $CYLC_TMPDIR/C-${CYCLE_TIME}.restart
-cylc task-message "C restart files ready for $CYCLE_TIME"
+touch $CYLC_TMPDIR/TaskA-${CYCLE_TIME}.restart
+cylc task-message "TaskA restart files ready for $CYCLE_TIME"
+touch $CYLC_TMPDIR/TaskB-${CYCLE_TIME}.restart
+cylc task-message "TaskB restart files ready for $CYCLE_TIME"
+touch $CYLC_TMPDIR/TaskC-${CYCLE_TIME}.restart
+cylc task-message "TaskC restart files ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
 cylc task-finished

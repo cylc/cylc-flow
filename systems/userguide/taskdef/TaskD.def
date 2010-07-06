@@ -10,14 +10,12 @@
 #         |________________________|
 
 
-# UNLIKE THE OTHER TASKS, F.sh IS NOT CYLC-AWARE, SO WE HAVE TO RUN IT
-# VIA THE CYLC TASK WRAPPING MECHANISM.
-
 %NAME
-    F, f
+    TaskD, D
 
 %DESCRIPTION
-    Post processing for the storm surge model
+    Task D in the cylc userguide example system, representing combined
+    post processing for the sea state and storm surge forecasts.
 
 %TYPE
     free
@@ -26,18 +24,11 @@
     0,6,12,18
 
 %TASK
-    cylc-wrapper
-
-%ENVIRONMENT
-    WRAP F.sh
-    FOO foo
-    ANALYSIS_TIME $(CYCLE_TIME)
-
-%COMMANDLINE
-    --foo=$FOO
+    TaskD.sh
 
 %PREREQUISITES
+    "sea state fields ready for $(CYCLE_TIME)"
     "storm surge fields ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    "storm surge products ready for $(CYCLE_TIME)"
+    "seagram products ready for $(CYCLE_TIME)"

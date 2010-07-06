@@ -14,7 +14,8 @@
     startup, stp
 
 %DESCRIPTION
-    Cleans out the system working directory at startup.
+    Oneoff startup task for the cylc userguide example system: it cleans
+    out the system working directory.
 
 %TYPE
     free, oneoff

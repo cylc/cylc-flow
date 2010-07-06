@@ -11,11 +11,12 @@
 
 
 %NAME
-    X
+    TaskX, X
 
 %DESCRIPTION
-    Retrieve external observation data at cycle-time + 1 hour.
-    Depends only on the system startup task at start time.
+    Task X in the cylc userguide example system, representing retrieval
+    of external observation data at cycle-time + 1 hour. Depends only on
+    the system startup task at start time.
 
 %TYPE
     free, contact
@@ -27,7 +28,7 @@
     0,6,12,18
 
 %TASK
-    X.sh
+    TaskX.sh
 
 %COLDSTART_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"

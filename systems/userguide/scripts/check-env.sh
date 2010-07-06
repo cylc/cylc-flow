@@ -17,9 +17,9 @@ echo "Hello from $TASK_ID"
 echo "Checking Environment ..."
 
 echo -n " 1 ... "
-if [[ -z $REAL_TIME_ACCEL ]]; then
+if [[ -z $TASK_RUN_TIME_SECONDS ]]; then
     # FAILURE MESSAGE
-    cylc task-failed "\$REAL_TIME_ACCEL is not defined"
+    cylc task-failed "\$TASK_RUN_TIME_SECONDS is not defined"
     exit 1
 fi
 echo "ok"
@@ -44,7 +44,7 @@ while (( COUNT < 10 )); do
 done
 echo
 
-if [[ ! -z FAIL_TASK ]]; then
+if [[ ! -z $FAIL_TASK ]]; then
     # user has ordered a particular task to fail
     if [[ $FAIL_TASK == ${TASK_NAME}%${CYCLE_TIME} ]]; then
         if [[ -f $CYLC_TMPDIR/${TASK_NAME}%${CYCLE_TIME}.failed_already ]]; then

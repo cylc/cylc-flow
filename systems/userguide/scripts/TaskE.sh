@@ -10,10 +10,7 @@
 #         |________________________|
 
 
-# CYLC USERGUIDE EXAMPLE SYSTEM. 
-# Task E: postprocess the sea state model.
-
-# run length 15 minutes, scaled by $REAL_TIME_ACCEL 
+# CYLC USERGUIDE EXAMPLE SYSTEM Task E IMPLEMENTATION.
 
 # trap errors so that we need not check the success of basic operations.
 set -e; trap 'cylc task-failed "error trapped"' ERR
@@ -33,7 +30,7 @@ if [[ ! -f $PRE ]]; then
 fi
 
 # EXECUTE THE TASK ...
-sleep $(( 15 * 60 / $REAL_TIME_ACCEL ))
+sleep $TASK_RUN_TIME_SECONDS
 
 # create task outputs
 touch $CYLC_TMPDIR/sea-state-products-${CYCLE_TIME}.nc

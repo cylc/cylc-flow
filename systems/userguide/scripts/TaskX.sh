@@ -10,10 +10,7 @@
 #         |________________________|
 
 
-# CYLC USERGUIDE EXAMPLE SYSTEM,
-# Task to get real time obs data for the atmospheric model.
-
-# Run length 5 minutes, scaled by $REAL_TIME_ACCEL 
+# CYLC USERGUIDE EXAMPLE SYSTEM Task X IMPLEMENTATION.
 
 # trap errors so that we need not check the success of basic operations.
 set -e; trap 'cylc task-failed "error trapped"' ERR
@@ -25,7 +22,7 @@ cylc task-started || exit 1
 check-env.sh || exit 1
 
 # EXECUTE THE TASK ...
-sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
+sleep $TASK_RUN_TIME_SECONDS
 
 # "find" the external data and report it available
 touch $CYLC_TMPDIR/obs-${CYCLE_TIME}.nc

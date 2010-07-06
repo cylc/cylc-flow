@@ -10,14 +10,9 @@
 #         |________________________|
 
 
-# CYLC USERGUIDE EXAMPLE SYSTEM. 
-# Task F: postprocess the storm surge model.
+# CYLC USERGUIDE EXAMPLE SYSTEM Task F IMPLEMENTATION.
 
-# UNLIKE THE OTHER TASKS IN THE USERGUIDE EXAMPLE SYSTEM, THIS ONE IS
-# NOT CYLC-AWARE, SO IT HAS TO BE RUN USING THE CYLC TASK WRAPPING
-# MECHANISM. 
-
-# run length 5 minutes, scaled by $REAL_TIME_ACCEL 
+# THIS TASK IS NOT CYLC-AWARE: USE THE CYLC TASK WRAPPING MECHANISM.
 
 # check environment
 check-env.sh || exit 1
@@ -37,6 +32,6 @@ if [[ ! -f $PRE ]]; then
 fi
 
 # EXECUTE THE TASK ...
-sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
+sleep $TASK_RUN_TIME_SECONDS
 
 touch $CYLC_TMPDIR/storm-surge-products-${ANALYSIS_TIME}.nc

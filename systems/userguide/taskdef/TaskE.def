@@ -11,10 +11,11 @@
 
 
 %NAME
-    D, d
+    TaskE, E
 
 %DESCRIPTION
-    Combined post processing for the sea state and storm surge forecasts.
+    Task E in the cylc userguide example system, representing post
+    processing for the sea state model. 
 
 %TYPE
     free
@@ -23,11 +24,10 @@
     0,6,12,18
 
 %TASK
-    D.sh
+    TaskE.sh
 
 %PREREQUISITES
     "sea state fields ready for $(CYCLE_TIME)"
-    "storm surge fields ready for $(CYCLE_TIME)"
 
 %OUTPUTS
-    "seagram products ready for $(CYCLE_TIME)"
+    "sea state products ready for $(CYCLE_TIME)"

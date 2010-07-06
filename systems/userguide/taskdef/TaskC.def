@@ -11,12 +11,13 @@
 
 
 %NAME
-    B, b
+    TaskC, C
 
 %DESCRIPTION
-    Could be a sea state model, driven by the atmospheric model.
-    Requires surface wind fields, and own restart file.
-    Generates restart files for the next two cycles.
+    Task C in the cylc userguide example system. Representing a storm
+    surge model driven by the atmospheric model, it waits on surface
+    pressure and wind inpupts and its own restart file, and generates
+    restart files for the next two cycles.
 
 %TYPE
     tied
@@ -25,17 +26,18 @@
     0,6,12,18
 
 %TASK
-    B.sh
+    TaskC.sh
 
 %ENVIRONMENT
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
     NEXT_NEXT_CYCLE_TIME $(CYCLE_TIME + 12)
 
 %PREREQUISITES
+    "surface pressure field ready for $(CYCLE_TIME)"
     "surface wind fields ready for $(CYCLE_TIME)"
 
 %N_RESTART_OUTPUTS
     2
 
 %OUTPUTS
-    "sea state fields ready for $(CYCLE_TIME)"
+    "storm surge fields ready for $(CYCLE_TIME)"

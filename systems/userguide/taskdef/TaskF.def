@@ -1,0 +1,41 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+%NAME
+    TaskF, F
+
+%DESCRIPTION
+    Task F in the cylc userguide example system, representing post
+    processing for the storm surge model. The task script TaskF.sh
+    is not cylc-aware so we run it via cylc's wrapping mechanism.
+
+%TYPE
+    free
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    cylc-wrapper
+
+%ENVIRONMENT
+    WRAP TaskF.sh
+    FOO foo
+    ANALYSIS_TIME $(CYCLE_TIME)
+
+%COMMANDLINE
+    --foo=$FOO
+
+%PREREQUISITES
+    "storm surge fields ready for $(CYCLE_TIME)"
+
+%OUTPUTS
+    "storm surge products ready for $(CYCLE_TIME)"

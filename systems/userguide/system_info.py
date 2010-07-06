@@ -37,7 +37,7 @@ ___________________________________________________________________________
 | system in DUMMY MODE using 'cylc (re)start -d --fail-task=A%2010010106' |
 |_________________________________________________________________________|
 | + REAL TIME OPERATION                                                   |
-| The tasks in this system are designed to run quickly (~10 seconds), but |
+| The tasks in this system are designed to run quickly (~5 seconds), but  |
 | note that if the system catches up to real time operation there will be |
 | a real 6 hour delay between cycles - so you might want to make sure the |
 | initial cycle time in signficantly in the past. This is not an issue in |

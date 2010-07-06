@@ -10,10 +10,8 @@
 #         |________________________|
 
 
-# CYLC USERGUIDE EXAMPLE SYSTEM. 
-# oneoff startup task to clean out the system work space.
-
-# run length 5 minutes, scaled by $REAL_TIME_ACCEL 
+# CYLC USERGUIDE EXAMPLE SYSTEM startup task IMPLEMENTATION.
+# (cleans out the system work space).
 
 # trap errors so that we need not check the success of basic operations.
 set -e; trap 'cylc task-failed "error trapped"' ERR
@@ -36,7 +34,7 @@ mkdir -p $CYLC_TMPDIR || \
 chmod go+rxw $CYLC_TMPDIR
 
 # EXECUTE THE TASK ...
-sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
+sleep $TASK_RUN_TIME_SECONDS
 
 echo "CLEANING $CYLC_TMPDIR"
 rm -rf $CYLC_TMPDIR/* || \

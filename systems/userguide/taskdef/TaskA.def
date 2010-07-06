@@ -11,16 +11,13 @@
 
 
 %NAME
-    A, a
-
-#%LOGFILES
-#    $HOME/A-output/$CYCLE_TIME/met.out
-#    $HOME/A-output/$CYCLE_TIME/met.err
+    TaskA, A
 
 %DESCRIPTION
-    Could be an atmospheric model. 
-    Requires real time obs data, and own restart file.
-    Generates restart files for the next cycle only.
+    Task A, the main "driving model" in the cylc userguide example
+    system. Representing an atmospheric model, it waits on real time
+    obs and its own restart file, and generates restart files for the
+    next cycle.
 
 %TYPE
     tied
@@ -29,7 +26,7 @@
     0,6,12,18
 
 %TASK
-    A.sh
+    TaskA.sh
 
 %ENVIRONMENT
     NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
@@ -39,7 +36,7 @@
     FOO_TIME ${CYCLE_TIME} 
 
 %COMMANDLINE
-    # A.sh task 2 commandline args: --file=FILE SENTENCE
+    # TaskA.sh commandline: --file=FILE SENTENCE
     --file=${HOME}/data-$(CYCLE_TIME + 6).nc
     #--foo=$CYCLE_TIME
     # '$[HOME] evaluates as '$HOME' at execution time, e.g. on a remote machine

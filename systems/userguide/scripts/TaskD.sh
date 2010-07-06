@@ -10,10 +10,7 @@
 #         |________________________|
 
 
-# CYLC USERGUIDE EXAMPLE SYSTEM. 
-# Task D: postprocess sea state AND storm surge models.
-
-# run length 75 minutes, scaled by $REAL_TIME_ACCEL 
+# CYLC USERGUIDE EXAMPLE SYSTEM Task D IMPLEMENTATION.
 
 # trap errors so that we need not check the success of basic operations.
 set -e; trap 'cylc task-failed "error trapped"' ERR
@@ -36,7 +33,7 @@ for PRE in $ONE $TWO; do
 done
 
 # EXECUTE THE TASK ...
-sleep $(( 75 * 60 / $REAL_TIME_ACCEL ))
+sleep $TASK_RUN_TIME_SECONDS
 
 # create task outputs
 touch $CYLC_TMPDIR/seagram-products-${CYCLE_TIME}.nc

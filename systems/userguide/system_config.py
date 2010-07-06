@@ -42,42 +42,30 @@ class system_config( config ):
         # self.items[ 'system_info' ]['colours'] = 'red, blue, green'
 
         # task list
-        self.items['task_list'] = task_list    # SEE task_list.py
-        self.items['task_list_shortnames'] = task_list_shortnames    # SEE task_list.py
+        self.items['task_list'] = task_list                        # SEE task_list.py
+        self.items['task_list_shortnames'] = task_list_shortnames  # SEE task_list.py
 
         # task insertion groups, e.g:
         # self.items['task_groups']['foo'] = ['bar', 'baz']
 
         # list of legal startup hours, if this system is so restricted
-        # e.g.: self.items['legal_startup_hours'] = [ 6 ]
-        # or:   self.items['legal_startup_hours'] = [ 6, 18 ]
+        # e.g.: self.items['legal_startup_hours'] = [ 6, 18 ]
 
         # default job submit method, e.g.:
         self.items['job_submit_method'] = 'background'
-        #self.items['job_submit_method'] = 'at_now'
 
         # to override the default job submit method for specific tasks, e.g.:
         #self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
 
-        # Environment variables available to all tasks. Values can include
-        # local environment variables, other environment variables
-        # defined here, 'delayed evaluation' environment variables 
-        # (e.g. $[HOME] => '${HOME}' in the job script, to be evaluated
-        # when the task executes) and the registered system name via
-        # the Python variable 'sysname':
+        # Environment variables available to all tasks. See userguide.
         self.items['environment']['CYLC_TMPDIR'] = '/tmp/$USER/' + sysname
 
-        # 2/ $REAL_TIME_ACCEL, used to scale real run times for fast operation 
-        self.items['environment']['REAL_TIME_ACCEL'] = '360'
+        # Set task run time for real mode operation (see system task scripts), 
+        self.items['environment']['TASK_RUN_TIME_SECONDS'] = '5'
 
-        self.items['environment']['FAIL_TASK'] = 'C%2010010112'
+        # Set a task 
+        self.items['environment']['FAIL_TASK'] = 'TaskC%2010010112'
 
-        #self.items['environment']['FOO'] = 'foo'
-        #self.items['environment']['BAR'] = '$FOO'
-        #self.items['environment']['BAZ'] = '$BAR'
-        #self.items['environment']['CYLC_USER'] = '$USER'
-        #self.items['environment']['REMOTE_HOME'] = '$[HOME]'
-       
         #self.items['logging_level'] = logging.DEBUG
 
 # END OF FILE
