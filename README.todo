@@ -12,6 +12,7 @@ To Do
   defined (e.g. coldstart_scheduler.pyro). Also: consider exceptions
   raised IN cleanup().  Also: do not use cleanup catch on commandline
   parser, or it triggers on 'cylc start --help' etc.
+  CURRENTLY: no cleanup occurs on early abort, e.g. non-dummy mode oper.
 
 * task stdout and stderr for remote tasks!
 
