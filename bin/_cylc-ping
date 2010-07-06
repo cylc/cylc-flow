@@ -13,14 +13,8 @@
 import os, sys, re
 import socket
 from CylcOptionParsers import NoPromptOptionParser_u
-from connector import connector
 import Pyro.errors
-
-def bail():
-    if options.error:
-        sys.exit(1)
-    else:
-        sys.exit(0)
+import cylc_pyro_client
 
 parser = NoPromptOptionParser_u( usage = """cylc ping [options] SYSTEM
     
@@ -31,9 +25,9 @@ This command first checks that the named system has lodged a special
 that object in the parent cylc instance (because if a system exits
 uncleanly it can leave dead objects in the nameserver).""" )
 
-parser.add_option( "-e", "--error", 
-        help="Exit with non-zero error status if SYSTEM is not running.",
-        action="store_true", default=False, dest="error" )
+#parser.add_option( "-e", "--error", 
+#        help="Exit with non-zero error status if SYSTEM is not running.",
+#        action="store_true", default=False, dest="error" )
 
 ( options, args ) = parser.parse_args()
 
@@ -41,41 +35,12 @@ if len(args) != 1:
     parser.usage() 
     sys.exit(1)
 
-group = parser.get_groupname()
 host = parser.get_pns_host()
+group = parser.get_groupname()
 
 try:
-    # try to connect to the cylc instance 'minimal' life check object
-    lifeline = connector( host, group, 'minimal' ).get()
-except Pyro.errors.NamingError:
-    print group + ' is NOT running'
-    print '  (it is not registered with the Pyro Nameserver)'
-    bail()
-except Exception, x:
-    # THIS SHOULD NOT BE REACHED
-    print group + ' is PROBABLY NOT running'
-    print '  (an unexpected error occurred contacting the Pyro Nameserver)', x 
-    bail()
+    cylc_pyro_client.client( host, group ).ping()
+except:
+    print group + ' is not running'
 else:
-    # connected; now try to interact with the life check object
-    try:
-        result = lifeline.live()
-    except Pyro.errors.ProtocolError:
-        print group + ' is NOT RUNNING'
-        print '  But it IS registered with the Pyro Nameserver, which implies'
-        print '  that the system has previously exited without cleaning up.'
-        print '  To clean up manually:'
-        print '     $ pyro-nsc deletegroup ' + group
-        bail()
-    except Exception, x:
-        # THIS SHOULD NOT BE REACHED
-        print group + ' is PROBABLY NOT RUNNING'
-        print '  But it IS registered with the Pyro Nameserver, which implies'
-        print '  that the system has previously exited without cleaning up.'
-        print '  HOWEVER: an unexpected error occurred:', x
-        print '  Manual cleanup:'
-        print '     $ pyro-nsc deletegroup ' + group
-        bail()
- 
-    else:
-        print group + ' is running'
+    print group + ' is running'

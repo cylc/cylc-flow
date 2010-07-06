@@ -28,7 +28,7 @@ class ns:
         # LOCATE THE PYRO NAMESERVER
         try:
             self.ns = Pyro.naming.NameServerLocator().getNS( self.hostname )
-        except NamingError:
+        except Pyro.errors.NamingError:
             raise SystemExit("Failed to find a Pyro Nameserver on " + self.hostname )
 
     def get_ns( self ): ########################################### NEEDED?

@@ -9,7 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import Pyro.core, Pyro.errors
+import Pyro.core, Pyro.naming, Pyro.errors
 import os,sys,socket
 import os, logging
 
@@ -30,7 +30,7 @@ class lockserver( Pyro.core.ObjBase ):
 
         try:
             self.nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
-        except NamingError:
+        except Pyro.errors.NamingError:
             raise SystemExit("Failed to find a Pyro nameserver on " + hostname )
 
         # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------

@@ -11,7 +11,7 @@
 
 import os
 import check_switch
-from connector import connector
+import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from Pyro.errors import NamingError
 
@@ -27,12 +27,13 @@ running simultaneously.""")
 
 (options, args) = parser.parse_args()
 
+if len(args) != 1:
+    parser.usage() 
+    sys.exit(1)
+
+host = parser.get_pns_host()
+group = parser.get_groupname()
+
 if parser.prompt( 'lock' ):
-    try:
-        god = connector( parser.get_pns_host(), parser.get_groupname(), 'remote' ).get()
-    except NamingError:
-        print 'ERROR: system ' + args[0] + ' not running?'
-    except Exception, x:
-        print 'ERROR: ', x
-    else:
-        check_switch.check( god.lock( os.environ['USER'] ))
+    god = cylc_pyro_client.client( host, group ).get_proxy('remote')
+    check_switch.check( god.lock( os.environ['USER'] ))

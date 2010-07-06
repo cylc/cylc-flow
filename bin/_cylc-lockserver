@@ -21,8 +21,7 @@ from lockserver import lockserver, control
 from task_lock import task_lock
 from system_lock import system_lock
 
-import Pyro.core, Pyro.naming
-from Pyro.errors import NamingError
+import Pyro.core, Pyro.errors
 from Pyro.ext.daemonizer import Daemonizer
 
 def print_heading( heading ):
