@@ -16,4 +16,5 @@
 import Pyro.core
 
 class minimal( Pyro.core.ObjBase ):
-    pass
+    def live( self ):
+        return True

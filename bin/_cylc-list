@@ -23,10 +23,12 @@ Pyro nameserver (the nameserver distinguishes different cylc systems by
 means of a "groupname" that is constructed from username and registered
 system name; see 'cylc register --help'). 
 
-In addition to currently running systems this may include relics of
-dead systems that aborted without first disconnecting from Pyro.
-These can be removed from the nameserver using:
-  % pyro-nsc deletegroup {USER}_{SYSTEM}""" )
+In addition to running systems this may include relics of dead systems
+that aborted without properly disconnecting from Pyro. These can be
+removed by:
+  % pyro-nsc deletegroup :cylc-USER-SYSTEM
+where USER is the system owner's username, and SYSTEM is the registered
+name of the system.""" )
 
 parser.add_option( "--host",
         help="Pyro Nameserver host (defaults to local host name).",

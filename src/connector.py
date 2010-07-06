@@ -18,7 +18,7 @@ from time import sleep
 import pyrex
 
 class connector:
-    def __init__( self, hostname, groupname, target, silent=False, check=False ):
+    def __init__( self, hostname, groupname, target, silent=False, check=True ):
         self.target = target
         self.hostname = hostname
         self.groupname = groupname
