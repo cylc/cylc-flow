@@ -128,6 +128,9 @@ Cylc View is a real time system monitor for Cylc.
         treeview = gtk.TreeView( liststore )
         treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
+        # set background color of the entire treeview
+        treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
+
         tvc = gtk.TreeViewColumn( 'Cycle Time' )
         for i in range(10):
             cr = gtk.CellRendererPixbuf()
