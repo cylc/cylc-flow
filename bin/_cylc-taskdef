@@ -422,7 +422,8 @@ import task_state
             OUT.write( indent + 'description = [\n' )
             indent_more()
             for line in  parsed_def[ 'DESCRIPTION' ]:
-                OUT.write( indent + "'" + line + "',\n" )
+                # triple quotes in case of internal quoting.
+                OUT.write( indent + '"""' + line + '""",\n' )
             indent_less()
             OUT.write( indent + ']\n\n' )
         else:
