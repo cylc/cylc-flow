@@ -32,6 +32,10 @@ mkdir -p $CYLC_TMPDIR || \
     exit 1
 }
 
+# register the userguide sub-system
+# (this is ok if already registered)
+cylc register $CYLC_DIR/systems/userguide userguide
+
 # EXECUTE THE TASK ...
 sleep $(( 5 * 60 / $REAL_TIME_ACCEL ))
 
