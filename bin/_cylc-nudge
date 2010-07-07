@@ -12,7 +12,7 @@
 
 import os
 import check_switch
-import cycl_pyro_client
+import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc nudge [options] SYSTEM 

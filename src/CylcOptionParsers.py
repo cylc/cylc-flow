@@ -21,7 +21,7 @@ from optparse import OptionParser
 #class NoPromptOptionParser( OptionParser ):
 class NoPromptOptionParser_u( OptionParser ):
 
-    def __init__( self, usage ):
+    def __init__( self, usage, extra_args=None ):
 
         usage += """
 
@@ -30,6 +30,12 @@ supplied so that the Pyro nameserver group name can be inferred.
 
 Arguments:
    SYSTEM               Registered name of the target system.""" 
+
+        self.n_args = 1  # system name
+        if extra_args:
+            for arg in extra_args:
+                usage += '\n   ' + arg
+                self.n_args += 1
 
         OptionParser.__init__( self, usage )
 
@@ -54,7 +60,7 @@ Arguments:
 
         if len( args ) == 0:
             self.error( "Please supply a target system name" )
-        elif len( args ) > 1:
+        elif len( args ) > self.n_args:
             self.error( "Too many arguments" )
 
         # system name

@@ -20,22 +20,16 @@ parser = PromptOptionParser( """cylc reset [options] SYSTEM TASK_ID
 
 Reset the state of a single task to 'waiting', 'ready' or 'finished'.
 
-The principal intended use for this command is to reset a failed task to
-the WAITING state (i.e. waiting for its prerequisites to be satisfied)
-after fixing the problem that resulted in the failure, thereby causing
-the failed task to be resubmitted. See the cylc userguide for
-information on resetting tasks to ready or finished states.""",
+The principal use for this command is to cause a failed task to be
+resubmitted after fixing the problem. By default the task will be reset
+to the "ready" state (all prerequisites satisfied) and thus resubmitted
+immediately.""",
 [ 'TASK_ID              Identity of the task to reset (NAME%YYYYMMDDHH).'] )
 
 parser.add_option( "--waiting", 
-        help="Reset a task to the 'waiting' state (prerequisites yet "
+        help="Reset the task to the 'waiting' state (prerequisites yet "
         "to be satisfied).",
         action="store_true", default=False, dest="waiting" )
-
-parser.add_option( "--ready", 
-        help="Reset a task to the 'ready' state "
-        "(all prerequisites satisfied).", 
-        action="store_true", default=False, dest="ready" )
 
 parser.add_option( "--finished", 
         help="Reset a task to the 'finished' state (all outputs "
@@ -47,11 +41,22 @@ parser.add_option( "--finished",
 if len(args) != 2:
     parser.error( "System name and task ID required." )
 
-if not options.waiting and not options.finished and not options.ready:
-    parser.error( "Specify either waiting, ready, or finished" )
+if options.waiting and options.finished:
+    parser.error( "Specify waiting, finished, or neither (ready)" )
 
-if [options.waiting, options.finished, options.ready ].count( True ) != 1:
-    parser.error( "Specify either waiting, ready, or finished" )
+ready = True
+waiting = False
+finished = False
+
+if options.waiting:
+    ready = False
+    waiting = True
+    finished = False
+
+if options.finished:
+    ready = False
+    waiting = False
+    finished = True
 
 task_id = args[1]
 try:
@@ -67,10 +72,10 @@ if parser.prompt( 'Reset task ' + task_id + ' in'):
     user = os.environ['USER']  
 
     god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
-    if options.waiting:
+    if waiting:
         check_switch.check( god.reset_to_waiting( task_id, user ))
 
-    if options.ready:
+    elif ready:
         check_switch.check( god.reset_to_ready( task_id, user ))
 
     elif options.finished:

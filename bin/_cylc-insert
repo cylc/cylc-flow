@@ -15,32 +15,22 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc insert [options] SYSTEM 
+parser = PromptOptionParser( """cylc insert [options] SYSTEM ID
 
-Insert a single task or a task group into a running system. 
+Insert a single task or a task group into a running system. Task groups must be
+defined in the system config file located in the system definition directory.
 
-Inserted tasks will spawn successors as normal (unless they are of the
-'oneoff' type). If you don't want this, consider using 'cylc run-task').""" )
-
-parser.add_option( "-t", "--task-id",
-        help="Identity of a task to insert.",
-        metavar="NAME%CYCLE", action="store", dest="task_id" )
-
-parser.add_option( "-g", "--group",
-        help="Identity of a task group to insert.",
-        metavar="NAME%CYCLE", action="store", dest="group_id" )
+Inserted tasks will spawn successors as normal, unless they are 'oneoff' tasks.
+See also 'cylc run-task', for submitting single tasks without a scheduler.""",
+[ 'ID                   Identity of a task or group to insert (NAME%YYYYMMDDHH)']
+)
 
 (options, args) = parser.parse_args()
 
-if not options.task_id and not options.group_id:
-    parser.error( "Task or Group ID required" )
-if options.task_id and options.group_id:
-    parser.error( "Task OR Group ID required" )
+if len(args) != 2:
+    parser.error( "System name and one Task or Group ID required" )
 
-if options.task_id:
-    target = options.task_id
-elif options.group_id:
-    target = options.group_id
+target = args[1]
 
 if parser.prompt( 'Insert ' + target + ' in'):
     # check input

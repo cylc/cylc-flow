@@ -16,42 +16,33 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc purge [options] SYSTEM 
+parser = PromptOptionParser( """cylc purge [options] SYSTEM TASK_ID STOP
 
 Force a task to spawn and die, and then force every task that depends on
 its outputs to spawn and die, and then force every task that depends on
-their outputs to spawn and die, and so on down to a given cycle time.
+their outputs to spawn and die, and so on until a given stop cycle time.
 
-WARNING: THIS COMMAND IS DANGEROUS, but if necessary you can restart
-the system from the automatic pre-purge state dump (see the main log)
-
-WARNING: This kills task proxy objects in the scheduler, NOT running
-external tasks!""")
-
-parser.add_option( "-t", "--task",
-        help="ID of the task whose decendants are to be wiped out.",
-        metavar="TASK%CYCLE", action="store", dest="target_id" )
-
-parser.add_option( "-s", "--stop",
-        help="Purge tasks down to this cycle time (inclusive!).",
-        metavar="CYCLE", action="store", dest="stop" )
+WARNING: THIS COMMAND IS DANGEROUS, but you can use an instant practice
+mode clone (see 'cylc restart --help') to test your planned intervention,
+or in case of disaster simply restart the system from the automatic
+pre-purge state dump (the filename will be logged by cylc before
+actioning the purge.)""",
+["TASK_ID              Task at which to start the purge (NAME%YYYYMMDDHH).",
+ "STOP                 Cycle (inclusive!) at which to stop (YYYYMMDDHH)"] )
 
 (options, args) = parser.parse_args()
 
-if not options.target_id:
-    parser.error( "Task ID required" )
+if len( args ) != 3:
+    parser.error( "System name, task ID, and stop cycle required." )
 
-if not options.stop:
-    parser.error( "Stop time required" )
-
-target = options.target_id  
-stop = options.stop
+target = args[1]
+stop = args[2]
 
 # check inputs
 try:
     ( name, start ) = target.split('%')
 except ValueError:
-    parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
+    parser.error( "Task ID must be NAME%YYYYMMDDHH")
  
 for cycle in [ start, stop ]:
     if not cycle_time.is_valid( cycle ):

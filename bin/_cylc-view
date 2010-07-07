@@ -12,8 +12,7 @@ import socket
 
 if __name__ == "__main__":
 
-    parser = OptionParser( """cylc view [options]
-       cylc view [options] SYSTEM
+    parser = OptionParser( """cylc view [options] [SYSTEM]
 
 Display real time information about cylc systems, including the current
 state of all tasks, scheduler log files, task stdout and stderr files, 
@@ -30,7 +29,7 @@ an auto-updating list of currently running systems.
 Cylc system monitors reconnect if left running while their target system
 is shut down and restarted. 
 
-SYSTEM                  Registered name of the cylc system to monitor""")
+SYSTEM                  Registered name of a cylc system""")
 
     parser.add_option( "--host",
             help="Pyro nameserver host (defaults to local host name).",

@@ -9,29 +9,22 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import os, sys
+import os, sys, re
 import cycle_time
 import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc kill [options] SYSTEM 
+parser = PromptOptionParser( """cylc kill [options] SYSTEM [TASK_ID] [CYCLE]
 
-Delete task proxy objects from a running scheduler. 
+Remove a task, or all tasks with a given cycle time, from a running
+system. See also 'cylc purge'.
 
-The target tasks will be forced to spawn successors first, if they
-haven't done so already, unless you use the '--no-spawn' option. 
-
-WARNING: THIS COMMAND IS DANGEROUS, but if necessary you can restart
-the system from the automatic pre-kill state dump (see the main log).""" )
-
-parser.add_option( "-t", "--task-id",
-        help="Identity of the task to kill.",
-        metavar="NAME%CYCLE", action="store", dest="kill_id" )
-
-parser.add_option( "-c", "--cycle",
-        help="Kill all tasks currently at this cycle time.",
-        metavar="CYCLE", action="store", dest="kill_cycle" )
+The target task will be forced to a spawn successor, if it has
+not done so already, before being removed, unless you specify the
+'--no-spawn' option.""",
+["""TASK_ID              Task to remove (NAME%YYYYMMDDHH).
+   CYCLE                Remove all tasks at this cycle (YYYYMMDDHH)."""])
 
 parser.add_option( "--no-spawn", 
         help="Do not spawn successors before dying.",
@@ -39,10 +32,27 @@ parser.add_option( "--no-spawn",
 
 (options, args) = parser.parse_args()
 
-if not options.kill_id and not options.kill_cycle:
-    parser.error( "Task identity or cycle time required" )
-if options.kill_id and options.kill_cycle:
-    parser.error( "Task identity OR cycle time required" )
+if len(args) != 2:
+    parser.error( "Task ID or cycle time required" )
+
+target = args[1]
+
+kill_cycle = False
+kill_task = False
+
+if cycle_time.is_valid( target ):
+    kill_cycle = True
+elif re.search( '%', target ):
+    kill_task = True
+    try:
+        ( name, cycle ) = target.split('%')
+    except ValueError:
+        parser.error( "Task ID must be NAME%YYYYMMDDHH")
+    if not cycle_time.is_valid( cycle ):
+        parser.error( "invalid cycle time: " + cycle )
+else:
+    parser.error( 'Input Format error? must be NAME%YYYYMMDDHH or YYYYMMDDHH' )
+
 
 host = parser.get_pns_host()
 group = parser.get_groupname()
@@ -50,26 +60,14 @@ user = os.environ['USER']
 
 god = cylc_pyro_client.client( host, group).get_proxy( 'remote' )
 
-if options.kill_cycle:
-    cycle = options.kill_cycle
-    if not cycle_time.is_valid( cycle ):
-        parser.error( "invalid cycle time: " + cycle )
-
-    if parser.prompt( 'Kill ALL tasks in ' + cycle ):
+if kill_cycle:
+    if parser.prompt( 'Kill ALL tasks in ' + target + ' in' ):
         if options.no_spawn:
-            check_switch.check( god.die_cycle( cycle, user ))
+            check_switch.check( god.die_cycle( target, user ))
         else:
-            check_switch( god.spawn_and_die_cycle( cycle, user ))
+            check_switch.check( god.spawn_and_die_cycle( target, user ))
 
-if options.kill_id:
-    target = options.kill_id  
-    try:
-        ( name, cycle ) = target.split('%')
-    except ValueError:
-        parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
-    if not cycle_time.is_valid( cycle ):
-        parser.error( "invalid cycle time: " + cycle )
-
+if kill_task:
     if parser.prompt( 'Kill task ' + target + ' in'):
         if options.no_spawn:
             check_switch.check( god.die( target, user ))

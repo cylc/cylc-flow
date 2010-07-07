@@ -742,7 +742,14 @@ class task_pool:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
+                    # TO DO: IS THE FOLLOWING EXCEPTION HANDLING REQUIRED?
+                    #try:
                     self.pyro.connect( new_task, new_task.id )
+                    #except Pyro.errors.NamingError:
+                    #    self.log.warning( 'cannot connect ' + new_task.id + ', it already exists!' )
+                    #except Exception, x:
+                    #    self.log.warning( 'failed to cannot connect ' + new_task.id + ': ' + x )
+                    #else:
                     new_task.log( 'DEBUG', 'connected' )
                     self.tasks.append( new_task )
 
