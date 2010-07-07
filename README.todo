@@ -1,5 +1,7 @@
 To Do
 
+* CYLC (RE)START --HELP CAUSES ERROR ABORT
+
 * submit --scheduler: task state resets to 'running' but all messages
   are ignored.
 

@@ -38,23 +38,23 @@
     up to real time operation a series of distinct forecast cycles will
     naturally emerge. Cylc is easily interfaced to existing tasks and is
     extremely flexible and easy to use. It can be stopped and restarted
-    in arbitrarily complex states of operation and dynamically adapts to
-    insertion or removal of tasks. If a task fails it will inevitably
-    delay its downstream dependants, but the rest of the system can
-    carry on unaffected while the problem is addressed, after which time
-    the delayed tasks will catch up as quickly as possible. Cylc's
-    handling of forecast model intercycle ``restart'' dependencies
-    allows continued operation, with very little operator intervention,
-    over major failures that result in omitted forecasts in the driving
-    models.  Ability to control the configured task set, and failure
-    recovery scenarios, can be completely tested in an accelerated
-    simulation mode that is indistinguishable (to cylc) from real
-    operation. Cylc is written in object oriented Python and uses {\em
-    Pyro}\footnote{Pyro (Python Remote Objects) is an objected oriented
-    Remote Procedure Call technology, copyright Irmen de Jong,
-    distributed under the MIT open source license (see
-    Appendix~\ref{Pyro}).} to control tasks across heterogenous
-    distributed networks.  
+    in any state of operation and dynamically adapts to insertion or
+    removal of tasks and to delays or failures in any part of the
+    system. If a task fails it will inevitably delay its downstream
+    dependants, but the rest of the system can carry on unaffected while
+    the problem is addressed, after which time the delayed tasks will
+    catch up as quickly as possible. Cylc's handling of forecast model
+    intercycle ``restart'' dependencies allows continued operation, with
+    very little operator intervention, over major failures that result
+    in omitted forecasts in the driving models.  Ability to control the
+    configured task set, and failure recovery scenarios, can be
+    completely tested in an accelerated simulation mode that is
+    indistinguishable (to cylc) from real operation. Cylc is written in
+    object oriented Python and uses {\em Pyro}\footnote{Pyro (Python
+    Remote Objects) is an objected oriented Remote Procedure Call
+    technology, copyright Irmen de Jong, distributed under the MIT open
+    source license (see Appendix~\ref{Pyro}).} to control tasks across
+    heterogenous distributed networks.  
 
     %\footnote{Cylc also
     %enables new modes of real time operation, for example a catchment

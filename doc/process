@@ -81,7 +81,7 @@ for COMMAND in $(cylc commands); do
     echo "\lstinputlisting{command-usage/$COMMAND.txt}" >> doc/commands.tex
     [[ -f doc/post-command/$COMMAND.tex ]] && \
         echo "\input{post-command/$COMMAND.tex}" >> doc/commands.tex
-    echo "\pagebreak" >> doc/commands.tex
+    #echo "\pagebreak" >> doc/commands.tex
 done
 #-----------------------------------------------------------------------
 
