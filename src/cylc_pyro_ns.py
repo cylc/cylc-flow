@@ -20,7 +20,7 @@ import os, re
 import Pyro.naming, Pyro.errors
 
 class ns:
-    def __init__( self, hostname, username=os.environ['USER'] ):
+    def __init__( self, hostname ):
         self.hostname = hostname
 
         self.rootgroup = ':cylc'

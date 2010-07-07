@@ -12,35 +12,68 @@
 
 import os, sys, re
 import socket
-from CylcOptionParsers import NoPromptOptionParser_u
+from optparse import OptionParser
 import Pyro.errors
+import cylc_pyro_ns
 import cylc_pyro_client
 
-parser = NoPromptOptionParser_u( usage = """cylc ping [options] SYSTEM
+parser = OptionParser( """cylc ping [options] [SYSTEM]
     
-Check whether or not a particular cylc system is currently running. 
+Check if a particular cylc system is running, or list all running systems. 
 
-This command first checks that the named system has lodged a special
-'pulse' object with the Pyro Nameserver, then it attempts to contact
-that object in the parent cylc instance (because if a system exits
-uncleanly it can leave dead objects in the nameserver).""" )
+This command first attempts to get a proxy for a particular system
+object from the Pyro Nameserver, then it attempts to call a method on
+the remote object (the former condition is necessary but not sufficient
+to show that a system is running, because it is possible for a system
+to abort without deregistering its Pyro Nameserver objects.
+
+If you are not the owner of the target system, the username must be
+supplied so that the Pyro nameserver group name can be inferred.
+
+Arguments:
+SYSTEM            Name of a cylc system to check on """ )
 
 #parser.add_option( "-e", "--error", 
 #        help="Exit with non-zero error status if SYSTEM is not running.",
 #        action="store_true", default=False, dest="error" )
 
+parser.add_option( "-u", "--user",
+        help="Owner of the target system, defaults to $USER. "
+        "Needed to infer the Pyro nameserver group name.",
+        metavar="USERNAME", default=os.environ["USER"],
+        action="store", dest="username" )
+
+parser.add_option( "--host",
+        help="Pyro Nameserver host (defaults to local host name).",
+        metavar="HOSTNAME", action="store", default=socket.getfqdn(),
+        dest="pns_host" )
+
+parser.add_option( "-p", "--practice",
+        help="Target a system running in practice mode.", 
+        action="store_true", default=False, dest="practice" )
+
 ( options, args ) = parser.parse_args()
 
-if len(args) != 1:
-    parser.usage() 
-    sys.exit(1)
+host = options.pns_host
+user = options.username
 
-host = parser.get_pns_host()
-group = parser.get_groupname()
+groups = []
+if len(args) == 1:
+    sysname = args[0]
+    # TO DO: groupname calc should be centralised
+    groups = [ ':cylc.' + user + '.' + sysname ]
 
-try:
-    cylc_pyro_client.client( host, group ).ping()
-except:
-    print group + ' is not running'
+elif len(args) == 0:
+    ns = cylc_pyro_ns.ns( host )
+    groups = ns.get_groups()
+
 else:
-    print group + ' is running'
+    parser.error( "Too many arguments" ) 
+
+for group in groups:
+    try:
+        cylc_pyro_client.client( host, group ).ping()
+    except:
+        print group + ' is not running'
+    else:
+        print group + ' is running'
