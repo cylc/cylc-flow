@@ -10,6 +10,7 @@
 #         |________________________|
 
 import os, sys, pwd
+import logging
 from ConfigParser import SafeConfigParser
 
 # system-wide cylc settings
@@ -51,6 +52,7 @@ class prefs:
         self.config[ 'cylc' ] = {}
         self.config[ 'cylc' ][ 'state dump directory' ] = os.path.join( self.config_dir, 'state' )
         self.config[ 'cylc' ][ 'logging directory' ] = os.path.join( self.config_dir, 'logging' )
+        self.config[ 'cylc' ][ 'logging level' ] = 'info'
         self.config[ 'cylc' ][ 'use lockserver' ] = 'True'
         self.config[ 'cylc' ][ 'use quick task elimination' ] = 'True'
 
@@ -154,3 +156,21 @@ class prefs:
             os.makedirs( dir )
 
         return dir
+
+    def get_logging_level( self ):
+        level = self.config[ 'cylc' ][ 'logging level' ]
+        # default
+        value = logging.INFO
+
+        if level == 'debug':
+            value = logging.DEBUG
+        elif level == 'info':
+            value = logging.INFO
+        elif level == 'warning':
+            value = logging.WARNING
+        elif level == 'error':
+            value = logging.ERROR
+        elif level == 'critical':
+            value = logging.CRITICAL
+
+        return value

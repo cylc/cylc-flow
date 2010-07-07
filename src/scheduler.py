@@ -191,6 +191,7 @@ class scheduler:
             self.use_quick_elim = True
 
         self.logging_dir = self.rcfile.get_system_logging_dir( self.system_name, self.practice ) 
+        self.logging_level = self.rcfile.get_logging_level()
         state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name , self.practice )
         self.state_dump_file = os.path.join( state_dump_dir, 'state' )
 

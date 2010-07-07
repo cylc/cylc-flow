@@ -99,6 +99,7 @@ pyro_groupname = ':cylc.' + username + '.' + name
 # load cylcrc file----------------------------------------------------
 rcfile = prefs()
 logging_dir = rcfile.get_system_logging_dir( name + '-submit' ) 
+logging_lvl = rcfile.get_logging_level()
 
 use_lockserver = False
 if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
@@ -134,7 +135,7 @@ config.job_submit_config()
 # create the task log
 log = logging.getLogger( 'main.' + task_name )
 pimp_my_logger.pimp_it( log, task_name, logging_dir, \
-        logging.DEBUG, False, None, True )
+        logging_lvl, False, None, True )
 
 # LOCATE THE PYRO NAMESERVER-------------------------------------------
 # (required for system locking)

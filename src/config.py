@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-import logging, sys, os, re
+import sys, os, re
 from registration import registrations
 from interp_env import interp_self, interp_local, replace_delayed
 
@@ -38,7 +38,6 @@ class config:
 
         self.items['max_runahead_hours'] = 24
         self.items['job_submit_method'] = 'background'
-        self.items['logging_level'] = logging.INFO
 
         reg = registrations()
         self.items['system_def_dir' ] = reg.get( self.system_name )

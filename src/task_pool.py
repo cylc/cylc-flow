@@ -21,14 +21,15 @@ from broker import broker
 
 class task_pool:
     def __init__( self, config, pyro, dummy_mode, use_quick,
-            logging_dir, state_dump_file, exclude, include, stop_time,
-            pause_time ):
+            logging_dir, logging_level, state_dump_file, exclude,
+            include, stop_time, pause_time ):
 
         self.config = config
         self.use_quick = use_quick
         self.pyro = pyro
         self.dummy_mode = dummy_mode
         self.logging_dir = logging_dir
+        self.logging_level = logging_level
         self.state_dump_file = state_dump_file
         self.exclude = exclude
         self.include = include
@@ -62,7 +63,7 @@ class task_pool:
         log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
              log, 'main', self.logging_dir, \
-                self.config.get('logging_level'), self.dummy_mode, self.clock )
+                self.logging_level, self.dummy_mode, self.clock )
         # log to the main log
         self.log = log
 
@@ -70,7 +71,7 @@ class task_pool:
         log = logging.getLogger( 'main.' + name )
         pimp_my_logger.pimp_it( \
              log, name, self.logging_dir, \
-                self.config.get('logging_level'), self.dummy_mode, self.clock )
+                self.logging_level, self.dummy_mode, self.clock )
 
     def get_tasks( self ):
         return self.tasks
@@ -586,7 +587,7 @@ class task_pool:
                     # first task of its type, so create the log
                     log = logging.getLogger( 'main.' + name )
                     pimp_my_logger.pimp_it( log, name, self.logging_dir, \
-                            self.config.get('logging_level'), self.dummy_mode, self.clock )
+                            self.logging_level, self.dummy_mode, self.clock )
  
                 # the initial task cycle time can be altered during
                 # creation, so we have to create the task before

@@ -18,6 +18,8 @@ import sys
 from optparse import OptionParser
 from preferences import prefs
 
+vchoices = ['debug','info', 'warning', 'error', 'critical'] 
+
 usage = """cylc preferences [options]
 
 Manage your global cylc preferences, stored in $HOME/.cylcrc."""
@@ -28,7 +30,7 @@ parser.add_option( "-p", "--print",
         help="Print your current preferences.",
         action="store_true", default=False, dest="print_all" )
  
-parser.add_option( "--set-defaults", 
+parser.add_option( "--reset", 
         help="Revert to system default settings.",
         action="store_true", default=False, dest="set_defaults" )
 
@@ -37,13 +39,21 @@ parser.add_option( "--use-lockserver",
         metavar='Y/N', action="store", dest="use_lockserver" )
 
 parser.add_option( "--use-quick-elimination", 
-        help="Control use of the quick task elimination algorithm.",
+        help="Control use of the quick spent-task elimination algorithm.",
         metavar='Y/N', action="store", dest="use_quick" )
 
 parser.add_option( "--set-logging-dir", 
         help="Set the top level cylc server logging directory.",
         default=None, metavar="PATH",
         action="store", dest="logging_dir" )
+
+parser.add_option( "--set-logging-level", 
+        help="Set the default cylc logging level. Note that if you choose "
+        "'warning', for example, only warning messages and worse will be "
+        "logged. The 'info' level is appropriate under most "
+        "circumstances. (" + ','.join(vchoices) + ')',
+        default=None, choices=vchoices, metavar="PATH",
+        action="store", dest="logging_level" )
 
 parser.add_option( "--set-state-dump-dir", 
         help="Set the top level cylc state dump directory.",
@@ -122,6 +132,10 @@ if options.lockserver_logfile:
 
 if options.logging_dir:
     rcfile.config[ 'cylc' ][ 'logging directory' ] = options.logging_dir
+    rewrite = True
+
+if options.logging_level:
+    rcfile.config[ 'cylc' ][ 'logging level' ] = options.logging_level
     rewrite = True
 
 if options.statedump_dir:

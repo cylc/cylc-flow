@@ -17,14 +17,14 @@ from dynamic_instantiation import get_object
 class restart( task_pool ):
 
     def __init__( self, config, pyro, dummy_mode, use_quick,
-            logging_dir, state_dump_file, exclude, include,
+            logging_dir, logging_level, state_dump_file, exclude, include,
             initial_state_dump, no_reset, stop_time, pause_time ):
 
         self.initial_state_dump = initial_state_dump
         self.no_reset = no_reset
 
         task_pool.__init__( self, config, pyro, dummy_mode, use_quick,
-                logging_dir, state_dump_file, exclude, include,
+                logging_dir, logging_level, state_dump_file, exclude, include,
                 stop_time, pause_time )
 
     def load_tasks( self ):

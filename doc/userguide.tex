@@ -2177,16 +2177,13 @@ self.items['state_dump_dir'] = '/foo/bar/baz/state'
 self.items['logging_dir'] = '/foo/bar/baz/logging'
         \end{lstlisting}
 
-    \item {\bf logging verbosity}: Cylc's logging subsystem is based on
-        the standard Python logging module (see
-        Section~\ref{SystemLogFiles}). The 'info' level logs messages
-        relevant to task execution and scheduling, while the more
-        verbose 'debug' level adds messages that trace the execution of
-        cylc itself.
 
-        \begin{lstlisting}
-self.items['logging_level'] = logging.INFO
-        \end{lstlisting}
+        %\item {\bf logging verbosity}: Cylc's logging subsystem is based on
+        %the standard Python logging module (see
+        %Section~\ref{SystemLogFiles}). The 'info' level logs messages
+        %relevant to task execution and scheduling, while the more
+        %verbose 'debug' level adds messages that trace the execution of
+        %cylc itself.
 
     \item {\bf environment variables}: You can export variables into the 
         environment of all external tasks that the system runs. Note that
@@ -2571,7 +2568,7 @@ fixing the problem that cause the failure.
 \end{itemize}
 
 To confirm that the runahead limit is causing a stall, you can use 
-\lstinline=cylc set-level= to set the verbose logging level, then
+\lstinline=cylc verbosity= to set the debug logging level, then
 \lstinline=cylc nudge= to invoke the task processing loop - any task
 that is not spawning a successor only because it has exceeded the runahead
 limit will report that to the log.

@@ -15,13 +15,13 @@ from task_pool import task_pool
 
 class coldstart( task_pool ):
     def __init__( self, config, pyro, dummy_mode, use_quick,
-            logging_dir, state_dump_file, exclude, include,
+            logging_dir, logging_level, state_dump_file, exclude, include,
             start_time, stop_time, pause_time ):
 
         self.start_time = start_time
 
         task_pool.__init__( self, config, pyro, dummy_mode, use_quick,
-                logging_dir, state_dump_file, exclude, include,
+                logging_dir, logging_level, state_dump_file, exclude, include,
                 stop_time, pause_time )
 
     def load_tasks( self ):
