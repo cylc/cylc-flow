@@ -38,7 +38,10 @@
 %TASK
     coldstart.sh
 
-%PREREQUISITES
+%COLDSTART_PREREQUISITES
+    # this task only depends on the startup task at system start up
+    # want it to have no prerequisites otherwise, so it can be inserted
+    # for "live" partial system coldstart as in 'cylc test'.
     "startup%$(CYCLE_TIME) finished"
 
 %OUTPUTS
