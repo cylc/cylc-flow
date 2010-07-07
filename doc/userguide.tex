@@ -1217,7 +1217,7 @@ and {\em finished} outputs for every task:
 "[estimated run length]: foo%$(CYCLE_TIME) finished"
 \end{lstlisting}
 
-And \lstinline=cylc message= has special options allowing external
+And \lstinline=cylc task-message= has special options allowing external
 tasks to send these messages automatically, so you don't have to worry
 about typos in the message.
 
@@ -1229,17 +1229,14 @@ less flexible.
 
 \subsection{Failure Messages}
 
-A {\em failed} message should be reported by external tasks, using 
-\lstinline=cylc message --failed=, whenever the task fails. This is 
-not an ``output'' to be registered in the taskdef file because the
-completion time is unknown at best (at what point in a tasks execution
-does a failure occur?) and more usually undefined (hopefully the task
-will not fail). 
+\lstinline=cylc task-failed= should be used to report critical task
+failures. A failed task will remain in the system until explicitly dealt
+with by the system operator.
 
 \subsection{Completion Messages}
 
-\lstinline=cylc message= automatically sends a special {\em completed}
-message whenever a tasks reports {\em success or failure}:
+A special {\em task completed} message is sent whenever a tasks reports
+success {\em or} failure:
 \begin{lstlisting}
 "foo completed for $(CYCLE_TIME)"
 \end{lstlisting}
@@ -1275,7 +1272,7 @@ and the following two outputs:
 "10 min: foo restart files ready for $(CYCLE_TIME + 12)"
 \end{lstlisting}
 
-\lstinline=cylc message= also has special options for reporting restart
+\lstinline=cylc task-message= also has special options for reporting restart
 outputs so that you do not have to worry about typos in the message. 
 
 \subsubsection{Restart Gotchas}
@@ -1768,8 +1765,7 @@ you to submit a job on the local host to run on the remote host.
 \begin{itemize}
 
     \item Cylc (and Pyro) must be installed on the remote host, so that 
-        the task can use \lstinline=cylc message= to communicate with
-        its controlling scheduler.
+        the task can communicate with its parent scheduler.
         
     \item The task itself must be installed on the remote host (the task
         execution script that is copied to the remote host is what
@@ -1777,8 +1773,7 @@ you to submit a job on the local host to run on the remote host.
 
     \item The task execution environment, as specified in the task
         execution script, must provide access to the remote cylc
-        installation (for \lstinline=cylc message=) and to the remote
-        task.
+        installation and to the remote task.
 
 \end{itemize}
 
@@ -1852,8 +1847,7 @@ execution script} that configures the execution environment before
 executing the task itself.  The task execution environment must provide
 access to the task script (so that the full path is not required in the
 taskdef file if the script resides in the system definition
-\lstinline=scripts= sub-directory), and to cylc itself (so that the task
-can call \lstinline=cylc message= as it executes). And it must also
+\lstinline=scripts= sub-directory), and to cylc itself. And it must also
 contain environment variables required by cylc, any system-wide
 environment variables defined in the system config file, and any
 task-specific environment variables defined in the taskdef file.
@@ -1866,7 +1860,7 @@ The following environment variables are automatically defined by cylc
 for all tasks:
 
 \begin{lstlisting}
-  CYLC_MODE         # tells 'cylc message' what invoked a calling task
+  CYLC_MODE         # was the task invoked by a full scheduler or not?
   CYLC_DIR          # path to the local cylc installation
   CYLC_SYSTEM_DIR   # path to the system defintion directory
   CYLC_SYSTEM_NAME  # registered name of the running system 
@@ -1911,7 +1905,7 @@ defined by cylc:
 Executing tasks will almost certainly need to use
 \lstinline=$CYCLE_TIME= to determine what forecast cycle to run,
 but they don't need to know the name or ID used by cylc to identify
-them. \lstinline=$TASK_ID= is used by \lstinline=cylc message= to 
+them. \lstinline=$TASK_ID= is used by the cylc messaging scripts to
 identify which task is sending a message and therefore which task proxy
 object to communicate the message to.
 
@@ -2644,14 +2638,12 @@ down. There will be nothing to clean up.
 
 \subsubsection{Shutdown NOW or Controlled Abort}
 
-If the system operator uses \lstinline=cylc stop --now SYSTEM=, or the
-system shuts down after detecting some know error condition, cylc will
-unregister its objects from the Pyro nameserver before shutting down
-immediately, even if there are still tasks running. After shutdown any
-calls to \lstinline=cylc message= made by still-running tasks will
-fail, because the system being targetted by the messages no longer
-exists.  Consequently the system operator may need to manually kill some
-left over tasks or zombie \lstinline=_cylc-message= processes. 
+If a critical error of some kind, or use of \lstinline=cylc stop --now=,
+results in an immediate system shutdown while there are still external
+tasks running, any subsequent cylc messaging calls made by the
+still-running tasks will fail because the parent system no longer
+exists. Depending on the exact circumstances this may result in some 
+orphaned processes that need to be killed manually.
 
 \subsubsection{Uncontrolled System Abort}
 
@@ -2771,7 +2763,7 @@ your network. You will need to:
 
     \item install Pyro, if necessary, on the remote host.
 
-    \item install cylc on the remote host (for \lstinline=cylc message=).
+    \item install cylc on the remote host.
 
     \item install the ``forecast model'' tasks on the remote host.
 
@@ -2928,8 +2920,7 @@ any or all of these ways, be aware of the following issues:
 \begin{itemize}
 
     \item In addition to the cylc host, cylc must be installed on all
-        task hosts (so that running tasks have access to 
-        \lstinline=cylc message=); and the remote task scripts must
+        task hosts; and the remote task scripts must
         themselves be installed on their host machines.  Refer to {\em
         Running Tasks On A Remote Host}
         (Section~\ref{RunningTasksOnARemoteHost}) for more on this.
