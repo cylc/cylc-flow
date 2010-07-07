@@ -103,9 +103,9 @@ Arguments:
 
 if __name__ == '__main__':
 
-    server = restart_scheduler()
-    server.configure()
     try:
+        server = restart_scheduler()
+        server.configure()
         server.run()
     except Exception, x:
         # catch proper exceptions

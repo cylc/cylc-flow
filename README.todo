@@ -1,13 +1,6 @@
 To Do
 
-* IMPORTANT: server.cleanup() should not be used to catch exceptions
-  that occur *before* all objects referred to in cleanup() have been
-  defined (e.g. coldstart_scheduler.pyro). Also: consider exceptions
-  raised IN cleanup().  Also: do not use cleanup catch on commandline
-  parser, or it triggers on 'cylc start --help' etc.
-  CURRENTLY: no cleanup occurs on early abort, e.g. non-dummy mode oper.
-
-* run-task --scheduler: task state resets to 'running' but all messages
+* submit --scheduler: task state resets to 'running' but all messages
   are ignored.
 
 * task stdout and stderr for remote tasks!

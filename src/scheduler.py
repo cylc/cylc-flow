@@ -32,6 +32,8 @@ class scheduler:
 
     def __init__( self ):
         self.banner = {}
+        self.pyro = None
+        self.use_lockserver = False
         self.lock_acquired = False
 
         # PROVIDE IN DERIVED CLASSES:
@@ -352,7 +354,6 @@ class scheduler:
         self.config.dump()
 
     def run( self ):
-
         if self.use_lockserver:
             if self.practice:
                 sysname = self.system_name + '-practice'
@@ -430,7 +431,8 @@ class scheduler:
         self.cleanup()
 
     def cleanup( self ):
-        self.pyro.shutdown( True )
+        if self.pyro:
+            self.pyro.shutdown( True )
 
         if self.use_lockserver:
             # do this last
@@ -446,9 +448,9 @@ class scheduler:
                 if not lock.release_system_access():
                     print >> sys.stderr, 'failed to release system!'
 
-        # to simulate the effect on monitoring etc. of long task processing time
-        # (many many many tasks...), put this in the task processing loop:
-        #if count % 50 == 0:
-        #    # every 50th time, sleep for 30s
-        #    print 'SLEEPING 30s!'
-        #    time.sleep(30)
+# to simulate the effect on monitoring etc. of long task processing time
+# (many many many tasks...), put this in the task processing loop:
+#if count % 50 == 0:
+#    # every 50th time, sleep for 30s
+#    print 'SLEEPING 30s!'
+#    time.sleep(30)
