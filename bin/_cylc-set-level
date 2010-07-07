@@ -18,7 +18,7 @@ from CylcOptionParsers import PromptOptionParser
 parser = PromptOptionParser( """cylc set-level [options] SYSTEM LEVEL
 
 Change the logging verbosity level of a running system (default is INFO).""",
-['LEVEL           Logging level (debug, info, warning, error, critical)'] )
+['LEVEL                Logging level (debug, info, warning, error, critical)'] )
 
 vchoices = ['debug','info', 'warning', 'error', 'critical'] 
 

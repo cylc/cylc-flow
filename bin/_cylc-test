@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e; trap "echo 'UNIT TEST FAILED (see output log)'" ERR
+set -e; trap "echo 'TEST FAILED (see output log)'" ERR
 
 #          ________________________  
 #         |____C_O_P_Y_R_I_G_H_T___|
@@ -18,19 +18,19 @@ if [[ $# != 0 ]]; then
         dummy_mode=true
 
     elif [[ $1 == '-h' || $1 == '--help' ]]; then
-        echo "Usage: cylc unit-test [options]"
+        echo "Usage: cylc test [options]"
         echo 
         echo "Run an automated test of core cylc functionality using a new copy of"
         echo "the userguide example system. This should be used to check that new"
         echo "developments in the cylc codebase have not introduced serious bugs."
-        echo "The test runs a system registered as 'unit'; to watch its progress"
-        echo "use 'cylc monitor -a unit'. Aside from small timing differences,"
-        echo "results should be the same in real or dummy mode."
+        echo "The test runs a system registered as 'test'; to watch its progress"
+        echo "use 'cylc view'. Aside from timing differences results should be the"
+        echo "same in real or dummy mode."
         echo
-        echo "Currently the unit test does the following:"
+        echo "Currently the test does the following:"
         echo " 1 - Copies the userguide example system definition directory;"
         echo " 2 - Configures the new system;"
-        echo " 3 - Registers the new system as 'unit';"
+        echo " 3 - Registers the new system as 'test';"
         echo " 4 - Starts the system at T0=06Z, with task X set to fail at 12Z;"
         echo " 5 - Unlocks the running system;"
         echo " 6 - Sets a stop time at 12Z (i.e. T0+30 hours);"
@@ -43,7 +43,7 @@ if [[ $# != 0 ]]; then
         echo
         echo "Options:"
         echo "  -h, --help   Print this help message and exit."
-        echo "  -d, --dummy  Run the unit test in dummy mode."
+        echo "  -d, --dummy  Run the test in dummy mode."
         exit 0
     else
         echo "ERROR, no arguments required."
@@ -52,26 +52,26 @@ if [[ $# != 0 ]]; then
 fi
 
 if [[ ! -x bin/cylc ]]; then
-    echo  "ERROR: run this unit test from the top level of a cylc installation."
+    echo  "ERROR: run this test from the top level of a cylc installation."
     exit 1
 fi
 
-# UNIT TEST SYSTEM DIRECTORY
-SYS_DIR=systems/UNIT
+# TEST SYSTEM DIRECTORY
+SYS_DIR=systems/TEST
 # log file for stdout and stderr
-OUT=unit-test.out; OUT_SCHED=unit-test-sched.out
+OUT=test.out; OUT_SCHED=test-sched.out
 # cylc system log
 LOGRC=$( cylc preferences -p | grep 'logging directory' )
 LOGDIR=${LOGRC#*= }
-LOG=$LOGDIR/unit/main
+LOG=$LOGDIR/test/main
 
 # START FROM A CLEAN SLATE
 echo ">> CLEANING OUT any remnants of previous tests ... "
-  # remove any existing unit test system
+  # remove any existing test system
 [[ -d $SYS_DIR ]] && rm -rf $SYS_DIR
-  # unregister any existing registration for unit
+  # unregister any existing registration for test
   # 'register -d' fails if no Pyro nameserver!
-cylc register -g unit && cylc register -d unit
+cylc register -g test && cylc register -d test
   # remove output files
 rm -f $OUT $OUT_SCHED
 echo done
@@ -90,8 +90,8 @@ echo done
 
 # REGISTER THE TEST SYSTEM
 echo
-echo -n ">> REGISTERING the test system as 'unit' ... "
-cylc register $SYS_DIR unit >> $OUT 2>&1
+echo -n ">> REGISTERING the test system as 'test' ... "
+cylc register $SYS_DIR test >> $OUT 2>&1
 echo done
 
 # START UP THE TEST SYSTEM
@@ -108,9 +108,9 @@ fi
 # startup errors (e.g. due to lockserver denying access to the system)
 # won't be trapped here because we run cylc in the background!
 if $dummy_mode; then
-    cylc start -d --clock-offset=36 --fail-out=TaskX%2010010112 unit 2010010106 >> $OUT_SCHED 2>&1 &
+    cylc start -d --clock-offset=36 --fail-out=TaskX%2010010112 test 2010010106 >> $OUT_SCHED 2>&1 &
 else
-    cylc start unit 2010010106 >> $OUT_SCHED 2>&1 &
+    cylc start test 2010010106 >> $OUT_SCHED 2>&1 &
 fi
 echo -n "   Will wait 5 seconds for startup ... "
 sleep 5
@@ -142,26 +142,26 @@ echo done
 # UNLOCK THE SYSTEM
 echo
 echo -n ">> UNLOCKING the system to allow intervention ..."
-cylc unlock -f unit >> $OUT 2>&1
+cylc unlock -f test >> $OUT 2>&1
 echo done
 
 # SET A STOP TIME OF
 echo
 echo -n ">> SETTING STOP TIME 2010010212 ..."
-cylc stop -f --at=2010010212 unit >> $OUT 2>&1
+cylc stop -f test 2010010212 >> $OUT 2>&1
 echo done
 
 # INSERT A COLDSTART TASK AT 2010010206
 echo
 echo -n ">> INSERTING a coldstart task at 2010010206 ..."
-cylc insert -f -t coldstart%2010010206 unit >> $OUT 2>&1
+cylc insert -f test coldstart%2010010206 >> $OUT 2>&1
 echo done
 
 # PURGE THE FAILED TASK AND ITS DEPENDANTS THROUGH TO 2010010200
 echo
 echo ">> PURGING TaskX%2010010112 and all dependants, through to 2010010200"
 echo -n "   ... "
-cylc purge -f -t TaskX%2010010112 -s 2010010200 unit >> $OUT 2>&1
+cylc purge -f test TaskX%2010010112 2010010200 >> $OUT 2>&1
 echo done
 
 # WAIT FOR THE SYSTEM TO FINISH AT 2010010212
@@ -181,15 +181,15 @@ echo done
 # can be one that completes successfully or fails, it doesn't matter.
 echo
 # EXAMPLE OUTPUT FROM RUN-TASK:
-# % cylc run-task -t startup%2010010106 unit
+# % cylc run-task -t startup%2010010106 test
 # Loading Cylc Preferences file: /home/oliverh/.cylcrc
 #
 # Cylc messages will be directed to stdout (=> the task log file).
-# Logging directory is /home/oliverh/.cylc/log-files/unit-run-task
+# Logging directory is /home/oliverh/.cylc/log-files/test-run-task
 #
 #  > SUBMITTING TASK: /tmp/cylc-2H4HPc </dev/null 1> /home/oliverh/startup%2010010106-haDDeS.out 2> /home/oliverh/startup%2010010106-haDDeS.err &
 echo ">> RUN A SINGLE TASK (startup%2010010106) from the system"
-FOO=$(cylc run-task -t startup%2010010106 unit)
+FOO=$(cylc run-task test startup%2010010106 )
 STDOUT=$( echo $FOO | sed -e 's/.*1> //' | sed -e 's/ 2>.*//' )
 STDERR=$( echo $FOO | sed -e 's/.*2> //' | sed -e 's/ &.*$//' )
 echo "TASK OUTPUT LOGS:"
@@ -212,9 +212,9 @@ echo done
 
 # FINISHED
 echo 
-echo ">> UNIT TEST OUTPUT LOGS:"
+echo ">> TEST OUTPUT LOGS:"
 ls -l $OUT $OUT_SCHED
-echo ">> CYLC MAIN LOG FOR THE UNIT TEST:"
+echo ">> CYLC MAIN LOG FOR THE TEST:"
 ls -l $LOG
 echo
 echo ">> DONE"

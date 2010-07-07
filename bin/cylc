@@ -46,7 +46,7 @@ allowed_commands = \
     'preferences',
     'set-level',
     'nudge',
-    'unit-test',
+    'test',
     'suicide',
     'monitor',
     'message',
@@ -102,7 +102,7 @@ usage = \
     '  suicide ..... Suggest that an inquiring task should shut itself down',
     '  monitor ..... Terminal based system monitor (DEPRECATED ,use "cylc view"',
     '  message ..... Task message interface (DEPRECATED, use task-started etc.).',
-    '  unit-test ... An automated test of core cylc functionality',
+    '  test ........ An automated test of core cylc functionality',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     ]
 
