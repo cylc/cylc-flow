@@ -31,12 +31,18 @@ cylc task-started || exit 1
 # and/or by:
 #  o invoking other scripts and executables ("sub-processes", below)
 
-# Sub-processes (and sub-sub-processes, etc.) invoked by this script: 
+# Sub-processes (and sub-sub-processes, etc.) that do not detach from
+# this script: 
 #  o MUST EXIT WITH NON-ZERO STATUS ON FAILURE
 #    + so this script can check for success
 #  o MUST NOT CALL cylc task-started OR task-finished
-#    + these must wrap the entire task
+#    + this script does that
 #  o MAY CALL cylc task-message AND task-failed ("cylc-aware", below)
+
+# If the final task sub-process detaches from this script (e.g. this
+# script submits a job to loadleveller and then exits), it:
+#  o MUST CALL cylc task-finished OR task-failed when done.
+#    + this script can't because it has exited.
 
 # For cylc-aware sub-processes:
 #  o messages are logged by cylc, including the reason for a failure
@@ -56,11 +62,21 @@ if ! non-cylc-aware-script_2; then
     exit 1
 fi
 
+# send a progress message
 cylc task-message "Hello World"
 
-#
+# report a registered output complete
+cylc task-message "sent one progress message for $CYCLE_TIME"
+
+# execute an external program
 if ! run_atmos_model; then
-    cylc task-failed ""
+    cylc task-failed "model failed"
+    exit 1
+fi
+
+#__________________________________________________________REPORT OUTPUTS
+# if atmos_model does not report its own outputs as it runs we can cheat
+cylc task-message --all-outputs-completed
 
 #__________________________________________________________________FINISH
 # release the task lock and report finished

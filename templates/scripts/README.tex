@@ -5,28 +5,10 @@ use the task scripts described in this section).
 
 \lstset{language=bash}
 
-The following variables are automatically exported by cylc into
-the execution environment of a each task:
-\begin{itemize}
-   \item \lstinline=$SYSTEM_NAME= - registered name of the running system.
-   \item \lstinline=$TASK_NAME= - how cylc refers to the task (not the
-       filename of the task script). 
-   \item \lstinline=$CYCLE_TIME= - task-specific forecast cycle time.
-   \item \lstinline=$CYLC_NS_GROUP= - Pyro nameserver group name used by the system.
-   \item \lstinline=$CYLC_NS_HOST= - Pyro nameserver hostname.
-\end{itemize}
+When called by a task script, the cylc task messaging scripts read the task
+name and cycle time from their execution environment and use these to
+target the correct task proxy object in the running scheduler.
 
-\lstset{language=bash}
-When called by a task script, \lstinline=cylc message= read the task
-name and cycle time from the environment and uses these to target the
-correct task proxy object within the running scheduler.
-\lstset{language=cylctaskdef=}
-A task can also access any task-specific
-environment variables set in the task definition file
-\lstinline=ENVIRONMENT= key.
-
-\lstset{language=bash}
-
-If a task script is executed manually or by \lstinline=cylc run-task=
+If a task script is executed manually or by \lstinline=cylc submit=
 cylc messages will be printed to stdout and no attempt will be made to
 communicate with a task proxy object registered in a Pyro nameserver.
