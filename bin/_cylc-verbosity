@@ -15,16 +15,12 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc set-level [options] SYSTEM LEVEL
+parser = PromptOptionParser( """cylc verbosity [options] SYSTEM LEVEL
 
-Change the logging verbosity level of a running system (default is INFO).""",
+Change the logging level of a running system (default is INFO).""",
 ['LEVEL                Logging level (debug, info, warning, error, critical)'] )
 
 vchoices = ['debug','info', 'warning', 'error', 'critical'] 
-
-parser.add_option( "-l", "--level",
-        help="Logging level: " + ', '.join(vchoices),
-        action="store", choices=vchoices, dest="verbosity" )
 
 (options, args) = parser.parse_args()
 
