@@ -541,42 +541,6 @@ import task_state
             for lfile in parsed_def[ 'LOGFILES' ]:
                 OUT.write( indent + 'self.logfiles.add_path("' + lfile + '")\n' )
 
-        # are the prerequisites different for the first instance?
-        if 'COLDSTART_PREREQUISITES' in parsed_def:
-            # TO DO: use a function to re-use the normal prerequisite code (as above) here.
-            OUT.write( '\n' + indent + "if startup:\n" )
-            indent_more()
-            OUT.write( indent + '# overwrite prerequisites for startup case\n' )
-            OUT.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
-
-            for line in parsed_def[ 'COLDSTART_PREREQUISITES' ]:
-                # look for conditionals
-                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
-                if m:
-                    [ left, req ] = m.groups()
-                    # get a list of hours
-                    hours = left.split(',')
-                    req = re.sub( '^\s+', '', req )
-
-                    req = require_quotes( req, 'prerequisites' )
-
-                    req = "'" + req + "'"
-                    req = interpolate_cycle_times( req )
-                    for hour in hours:
-                        OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
-                        indent_more()
-                        OUT.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
-                        indent_less()
-                else:
-
-                    line = require_quotes( line, 'prerequisites' )
-
-                    req = "'" + line + "'"
-                    req = interpolate_cycle_times( req )
-                    OUT.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
- 
-            indent_less()
-
         # ... outputs
         if not inherit or 'OUTPUTS' in parsed_def:
             OUT.write( '\n' )
@@ -624,14 +588,50 @@ import task_state
                         OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
                         n_restart_outputs = right
-                        OUT.write( indent + 'self.register_restart_outputs(' + n_restart_outputs + ')\n' )
+                        OUT.write( indent + 'self.register_restart_requisites(' + n_restart_outputs + ')\n' )
 
                         indent_less()
                 else:
                     n_restart_outputs = line
-                    OUT.write( indent + 'self.register_restart_outputs(' + n_restart_outputs +')\n' )
+                    OUT.write( indent + 'self.register_restart_requisites(' + n_restart_outputs +')\n' )
 
         OUT.write( indent + 'self.outputs.register()\n\n' )
+
+        # are the prerequisites different for the first instance?
+        if 'COLDSTART_PREREQUISITES' in parsed_def:
+            # TO DO: use a function to re-use the normal prerequisite code (as above) here.
+            OUT.write( indent + "if startup:\n" )
+            indent_more()
+            OUT.write( indent + '# overwrite prerequisites for startup case\n' )
+            OUT.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
+
+            for line in parsed_def[ 'COLDSTART_PREREQUISITES' ]:
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, req ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    req = re.sub( '^\s+', '', req )
+
+                    req = require_quotes( req, 'prerequisites' )
+
+                    req = "'" + req + "'"
+                    req = interpolate_cycle_times( req )
+                    for hour in hours:
+                        OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        OUT.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
+                        indent_less()
+                else:
+
+                    line = require_quotes( line, 'prerequisites' )
+
+                    req = "'" + line + "'"
+                    req = interpolate_cycle_times( req )
+                    OUT.write( indent + 'self.prerequisites.add( ' + req + ' )\n\n' )
+ 
+            indent_less()
  
         # ... output patterns
         if not inherit:

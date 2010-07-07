@@ -22,7 +22,7 @@ class pid:
     # prerequisites and outputs, and overrides
     # free.ready_to_spawn() appropriately.
 
-    def register_restart_outputs( self, n_restart_outputs ):
+    def register_restart_requisites( self, n_restart_outputs ):
         # call after parent init, so that self.c_time is defined!
 
         msg = self.name + ' restart files ready for '

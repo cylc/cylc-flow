@@ -31,6 +31,7 @@
     TaskX.sh
 
 %COLDSTART_PREREQUISITES
+    # this task has no prerequisites, except at startup
     "startup%$(CYCLE_TIME) finished"
 
 %OUTPUTS
