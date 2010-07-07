@@ -93,7 +93,7 @@
     # - SOME SPECIAL OUTPUTS ARE REGISTERED AUTOMATICALLY BY CYLC:
     #     + "NAME%CYCLE started|finished|failed|completed" (ALL TASKS)
     #     + "NAME restart files ready for CYCLE"          (TIED TASKS)
-    # - May be conditional on cycle hour, as for prerequisites.
+    # - May be conditional on cycle hour
     
            "file foo-$(CYCLE_TIME).nc ready"
     0,12 | "atmos model postprocessing done for $(CYCLE_TIME)"
@@ -208,18 +208,20 @@
 
 #_______________________________________________________________________
 [%COLDSTART_PREREQUISITES]
-    # - Prerequisites that are only used once, at system start up.
-    # - WARNING: use of this section heading exists with no prerequisites
-    #   listed under it implies literally "no prerequisites" at startup. 
+    # - Prerequisites that are only used at system start up.
+    # - In subsquent cycles only %PREREQUISITES are used.
+    # - These entirely override (rather than add to) %PREREQUISITES
+    # - Use of this section heading with no prerequisites listed under
+    #   it implies literally "no prerequisites" at startup. 
 
     "cold start files ready for $(CYCLE_TIME)"
 
 #_______________________________________________________________________
 [%N_RESTART_OUTPUTS]
-    # - Required for "tied" tasks (i.e. forecast models).
     # - The number of subsequent consecutive cycles for which this task
     #   writes "restart files".
-    # - May be conditional on cycle hour, as for prerequisites.
+    # - Required for "tied" tasks (i.e. forecast models).
+    # - May be conditional on cycle hour.
     # - Results in ONE restart PREREQUISITE and N restart OUTPUTS
     #   being registered automatically for this task.
 
