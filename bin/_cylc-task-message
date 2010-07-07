@@ -18,10 +18,11 @@ import sys
 from optparse import OptionParser
 from task_message import message
 
-usage = """cylc task-finished [options]
+usage = """cylc task-message [options]
 
-Tell cylc that the calling task has finished successfully. 
-"""
+This is part of the cylc external task interface.
+
+Report completed outputs, progress, or any other messages."""
 
 parser = OptionParser( usage )
 

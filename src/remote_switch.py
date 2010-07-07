@@ -429,14 +429,6 @@ class remote_switch( Pyro.core.ObjBase ):
         if not legal:
             return reasons
 
-
-        if user != self.owner:
-            return "ILLEGAL OPERATION: This system is owned by " + self.owner
-
-        if self.locked:
-            self.warning( "REMOTE: refusing verbosity request (locked)" )
-            return "SORRY, THIS SYSTEM IS LOCKED"
-
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
         self.warning( "REMOTE: set verbosity " + level )
@@ -470,6 +462,7 @@ class remote_switch( Pyro.core.ObjBase ):
             log = logging.getLogger( name )
             log.setLevel( new_level )
 
+        return 'OK'
 
     def should_i_die( self, task_id ):
         if self.halt:

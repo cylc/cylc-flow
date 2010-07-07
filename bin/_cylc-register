@@ -87,7 +87,7 @@ Arguments:
   SYSTEM          System name.""" )
 
 parser.add_option( "-g", "--get",
-        help="Print the system definition directory registered as SYSTEM.",
+        help="Get the system definition directory for SYSTEM.",
         action="store_true", default=False, dest="get" )
 
 parser.add_option( "-l", "--list",
@@ -95,7 +95,7 @@ parser.add_option( "-l", "--list",
         action="store_true", default=False, dest="listall" )
 
 parser.add_option( "-u", "--user",
-        help="Attempt read-access to another user's system registrations.", 
+        help="Read another user's system registrations.", 
         metavar="USER", action="store", default=None, dest="user" )
 
 parser.add_option( "-d", "--delete",
@@ -103,7 +103,7 @@ parser.add_option( "-d", "--delete",
         action="store_true", default=False, dest="delete" )
 
 parser.add_option( "-c", "--check",
-        help="Check each registration and delete any that are not valid.",
+        help="Delete any registrations that are not valid.",
         action="store_true", default=False, dest="check" )
 
 parser.add_option( "-w", "--wipe",

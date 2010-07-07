@@ -21,11 +21,12 @@ from task_lock import task_lock
 
 usage = """cylc task-failed [options] [REASON]
 
-Tell cylc that the calling task has failed. 
+This is part of the cylc external task interface.
 
-arguments:
-    REASON  - message explaining why the task failed.
-"""
+Release my lock to the lockserver, and report that I have failed.
+
+Arguments:
+    REASON        - message explaining why the task failed."""
 
 parser = OptionParser( usage )
 

@@ -21,8 +21,9 @@ from task_lock import task_lock
 
 usage = """cylc task-started [options]
 
-Tell cylc that the calling task has started running. 
-"""
+This is part of the cylc external task interface.
+
+Acquire a lock from the lockserver, and report that I have started."""
 
 parser = OptionParser( usage )
 

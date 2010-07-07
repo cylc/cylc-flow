@@ -140,13 +140,13 @@ if __name__ == "__main__":
 
 The cylc lockserver brokers system and task locks for cylc systems. 
 
-Task locks prevent multiple instances of the same task (NAME%CYCLE) from
+TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
 running simultaneously, whether they are spawned by a cylc scheduler or
-by 'run-task'. Traditional "lock files" cannot easily be used for cylc
-tasks because it is possible for the initial task script to spawn other
-processes that may even execute on another host machine.
+by 'cylc run-task'. Traditional lock files cannot easily be used by cylc
+because it is possible for an external task that consists of multiple
+components to start and finish executing on different host machines.
 
-System locks prevent multiple instances of entire cylc systems from
+SYSTEM LOCKS prevent multiple instances of entire cylc systems from
 running simultaneously, even under different registered names (unless
 the system config file states that system is capable of doing this!).
 
