@@ -66,6 +66,7 @@ SYSTEM                  Registered name of a cylc system""")
 
     rcfile = prefs( options.username )
     lamp_size = rcfile.get( 'view', 'lamp size' )
+    image_subdir = '20px'
     if lamp_size == 'small':
         image_subdir = '10px'
     elif lamp_size == 'large':
