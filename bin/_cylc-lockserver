@@ -142,7 +142,7 @@ The cylc lockserver brokers system and task locks for cylc systems.
 
 TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
 running simultaneously, whether they are spawned by a cylc scheduler or
-by 'cylc run-task'. Traditional lock files cannot easily be used by cylc
+by 'cylc submit'. Traditional lock files cannot easily be used by cylc
 because it is possible for an external task that consists of multiple
 components to start and finish executing on different host machines.
 

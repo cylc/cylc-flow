@@ -38,7 +38,7 @@ class task_lock:
         self.mode = 'raw'
         if 'CYLC_MODE' in os.environ:
             self.mode = os.environ[ 'CYLC_MODE' ]
-            # 'scheduler' or 'run-task'
+            # 'scheduler' or 'submit'
 
         if task_id:
             self.task_id = task_id

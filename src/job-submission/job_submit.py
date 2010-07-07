@@ -133,7 +133,7 @@ class job_submit:
         # reference to '$CYCLE_TIME' in the taskdef file will be 
         # interpolated to the value of self.cycle time and NOT to
         # any $CYCLE_TIME that happens to be in the user's environment
-        # prior to running the scheduler or run-task!
+        # prior to running the scheduler or submit!
         task_env[ 'TASK_ID'    ] = self.task_id
         task_env[ 'CYCLE_TIME' ] = self.cycle_time
         task_env[ 'TASK_NAME'  ] = self.task_name

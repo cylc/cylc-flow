@@ -21,7 +21,7 @@ Insert a single task or a task group into a running system. Task groups must be
 defined in the system config file located in the system definition directory.
 
 Inserted tasks will spawn successors as normal, unless they are 'oneoff' tasks.
-See also 'cylc run-task', for submitting single tasks without a scheduler.""",
+See also 'cylc submit', for running single tasks without a scheduler.""",
 [ 'ID                   Identity of a task or group to insert (NAME%YYYYMMDDHH)']
 )
 

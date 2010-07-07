@@ -1580,7 +1580,7 @@ your own system- and task-specific environment variables in cylc.
 The filename of the temporary task execution script is reported to
 stdout. It is deleted automatically if the task completes successfully,
 but otherwise remains available for inspection.  You can also use
-\lstinline=cylc run-task --dry-run= to generate task
+\lstinline=cylc submit --dry-run= to generate task
 execution scripts for inspection:
 
 %, if you have configured the userguide example system, registered it
@@ -1588,7 +1588,7 @@ execution scripts for inspection:
 %method unchanged
 
 \begin{lstlisting}
-oliverh:~/cylc % cylc run-task --dry-run --task=E%2009112318 userguide
+oliverh:~/cylc % cylc submit --dry-run --task=E%2009112318 userguide
   > TASK EXECUTION SCRIPT: /tmp/cylc-IU0DDH
   > JOB SUBMISSION METHOD: /tmp/cylc-IU0DDH </dev/null > E%2009112318-$$.log 2>&1 &
   
@@ -1596,12 +1596,12 @@ oliverh~/cylc % cat /tmp/cylc-IU0DDH
   #!/bin/bash
   
   # TASK EXECUTION ENVIRONMENT: system-wide variables
-  export CYLC_MODE="run-task"
+  export CYLC_MODE="submit"
   export CYLC_DIR="/home/oliverh/cylc"
   export CYLC_SYSTEM_DIR="/home/oliverh/cylc/systems/userguide"
   export CYLC_SYSTEM_NAME="userguide"
-  export CYLC_NS_HOST="NOT USED BY RUN-TASK"
-  export CYLC_NS_GROUP="NOT USED BY RUN-TASK"
+  export CYLC_NS_HOST="NOT USED BY SUBMIT"
+  export CYLC_NS_GROUP="NOT USED BY SUBMIT"
   export CYLC_TMPDIR="/tmp/oliverh/userguide"
   export REAL_TIME_ACCEL="360"
   

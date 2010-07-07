@@ -39,7 +39,7 @@ if [[ $# != 0 ]]; then
         echo " 9 - Purges the failed X and dependants through to 00Z (T0+18 hours)"
         echo "     inclusive, which allows the system to get going again at 06Z;"
         echo "10 - Waits for the system to shut itself down at the 12Z stop time."
-        echo "11 - Run a single task (startup) from the system with run-task." 
+        echo "11 - Run a single task (startup) from the system with submit." 
         echo
         echo "Options:"
         echo "  -h, --help   Print this help message and exit."
@@ -180,16 +180,16 @@ echo done
 # RUN A SINGLE TASK
 # can be one that completes successfully or fails, it doesn't matter.
 echo
-# EXAMPLE OUTPUT FROM RUN-TASK:
-# % cylc run-task -t startup%2010010106 test
+# EXAMPLE OUTPUT FROM submit:
+# % cylc submit -t startup%2010010106 test
 # Loading Cylc Preferences file: /home/oliverh/.cylcrc
 #
 # Cylc messages will be directed to stdout (=> the task log file).
-# Logging directory is /home/oliverh/.cylc/log-files/test-run-task
+# Logging directory is /home/oliverh/.cylc/log-files/test-submit
 #
 #  > SUBMITTING TASK: /tmp/cylc-2H4HPc </dev/null 1> /home/oliverh/startup%2010010106-haDDeS.out 2> /home/oliverh/startup%2010010106-haDDeS.err &
 echo ">> RUN A SINGLE TASK (startup%2010010106) from the system"
-FOO=$(cylc run-task test startup%2010010106 )
+FOO=$(cylc submit test startup%2010010106 )
 STDOUT=$( echo $FOO | sed -e 's/.*1> //' | sed -e 's/ 2>.*//' )
 STDERR=$( echo $FOO | sed -e 's/.*2> //' | sed -e 's/ &.*$//' )
 echo "TASK OUTPUT LOGS:"
@@ -198,7 +198,7 @@ echo "  $STDERR"
 echo -n "   ."
 READY=false
 while ! $READY; do
-    grep 'cylc (run-task): startup%2010010106 finished' $STDOUT 2> /dev/null && READY=true
+    grep 'cylc (submit): startup%2010010106 finished' $STDOUT 2> /dev/null && READY=true
     echo -n .
     sleep 1
 done

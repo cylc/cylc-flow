@@ -6,7 +6,7 @@
 #  (a) called by a task that was invoked by a cylc scheduler
 #  (b) invoked manually on the command line
 # OTHERWISE DIVERT MESSAGES TO STDOUT, i.e. IF THIS SCRIPT WAS:
-#  (a) called by a task that was invoked by 'cylc run-task'
+#  (a) called by a task that was invoked by 'cylc submit'
 #  (b) called by a task that was run manually on the command line
 
 import os, sys
@@ -29,7 +29,7 @@ class message:
         self.username = os.environ[ 'USER' ] 
 
         if 'CYLC_MODE' in os.environ:
-            self.mode = os.environ[ 'CYLC_MODE' ] # 'scheduler' or 'run-task'
+            self.mode = os.environ[ 'CYLC_MODE' ] # 'scheduler' or 'submit'
         else:
             self.mode = 'raw'
 

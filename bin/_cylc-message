@@ -27,7 +27,7 @@ $CYCLE_TIME into the environment of each external task.
 #  (a) called by a task that was invoked by a cylc scheduler
 #  (b) invoked manually on the command line
 # OTHERWISE DIVERT MESSAGES TO STDOUT, i.e. IF THIS SCRIPT WAS:
-#  (a) called by a task that was invoked by 'cylc run-task'
+#  (a) called by a task that was invoked by 'cylc submit'
 #  (b) called by a task that was run manually on the command line
 
 
@@ -50,7 +50,7 @@ represent them in a running cylc scheduler, in which case it gets most
 of its inputs from the task execution environment.
 
 If invoked by a task that does not belong to a cylc scheduler (e.g. by
-'cylc run-task') messages are directed to stdout instead of via the Pyro
+'cylc submit') messages are directed to stdout instead of via the Pyro
 nameserver to task proxy objects in a running scheduler.
 
 It can also be used to send messages manually to tasks in a running
@@ -128,11 +128,11 @@ print >> sys.stderr, "WARNING: cylc message is deprecated!"
 
 # MODE OF OPERATION ---------------------------------------------------
 # have we been invoked from a script that was launched by 'cylc start',
-# 'cylc run-task', or a raw task script?
+# 'cylc submit', or a raw task script?
 mode = 'raw'
 if 'CYLC_MODE' in os.environ:
     mode = os.environ[ 'CYLC_MODE' ]
-    # 'scheduler' or 'run-task'
+    # 'scheduler' or 'submit'
 
 # TASK IDENTITY ---------------------------------------------------
 if options.task_id:

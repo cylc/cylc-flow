@@ -120,16 +120,16 @@ class lockserver( Pyro.core.ObjBase ):
 
     def get_system_access( self, system_dir, lockgroup, cylc_mode, request_exclusive ):
         # EXCLUSIVE: one only named system can use system_dir at once
-        #   - run-task can attempt to get a task lock IF via the same name
+        #   - submit can attempt to get a task lock IF via the same name
         # INCLUSIVE: multiple named systems can use system_dir at once
-        #   - run-task can attempt to get a task lock always
+        #   - submit can attempt to get a task lock always
 
         sys_descr = self.get_sys_string( lockgroup, system_dir ) 
 
         result = True
         reason = "granted"
  
-        if cylc_mode != 'run-task':
+        if cylc_mode != 'submit':
             if ( request_exclusive and system_dir in self.inclusive ) or \
                     ( not request_exclusive and system_dir in self.exclusive ):
                 result = False
@@ -142,7 +142,7 @@ class lockserver( Pyro.core.ObjBase ):
                 name = self.exclusive[ system_dir ][0]
                 already = self.get_sys_string( name, system_dir )
 
-                if cylc_mode == 'run-task':
+                if cylc_mode == 'submit':
                     # grant access only if lockgroup is the same
                     if lockgroup == name:
                         pass
@@ -155,7 +155,7 @@ class lockserver( Pyro.core.ObjBase ):
                     reason = sys_descr + " in exclusive use" 
             else:
                 # system dir not already in self.exclusive
-                if cylc_mode == 'run-task':
+                if cylc_mode == 'submit':
                     # grant access but don't set a lock
                     pass 
                 else: 
@@ -166,7 +166,7 @@ class lockserver( Pyro.core.ObjBase ):
             if system_dir in self.inclusive:
                 names = self.inclusive[ system_dir ]
 
-                if cylc_mode == 'run-task':
+                if cylc_mode == 'submit':
                     # granted
                     pass
                 else:
@@ -178,7 +178,7 @@ class lockserver( Pyro.core.ObjBase ):
                         # granted
                         self.inclusive[ system_dir ].append( lockgroup )
             else:
-                if cylc_mode == 'run-task':
+                if cylc_mode == 'submit':
                     # granted
                     pass
                 else:
@@ -186,12 +186,12 @@ class lockserver( Pyro.core.ObjBase ):
                     self.inclusive[ system_dir ] = [ lockgroup ]
  
         if result:
-            if cylc_mode == 'run-task':
+            if cylc_mode == 'submit':
                 logging.info( "granted system access " + lockgroup + " --> " + system_dir )
             else:
                 logging.info( "acquired system lock " + lockgroup + " --> " + system_dir )
         else:
-            if cylc_mode == 'run-task':
+            if cylc_mode == 'submit':
                 logging.warning( "refused system access " + lockgroup + " --> " + system_dir )
             else:
                 logging.warning( "refused system lock " + lockgroup + " --> " + system_dir )

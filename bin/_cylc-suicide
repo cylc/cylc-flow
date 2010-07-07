@@ -26,7 +26,7 @@ told the corresponding task proxy to shut down, in which case the
 external task can shut itself down cleanly before being orphaned.
 
 If invoked by a task that does not belong to a cylc scheduler (e.g. by
-'cylc run-task') it has no effect."""
+'cylc submit') it has no effect."""
 
 parser = OptionParser( usage )
 
@@ -58,11 +58,11 @@ parser.add_option( "--host",
 
 # MODE OF OPERATION ---------------------------------------------------
 # have we been invoked from a script that was launched by 'cylc start',
-# 'cylc run-task', or a raw task script?
+# 'cylc submit', or a raw task script?
 mode = 'raw'
 if 'CYLC_MODE' in os.environ:
     mode = os.environ[ 'CYLC_MODE' ]
-    # 'scheduler' or 'run-task'
+    # 'scheduler' or 'submit'
 
 # TASK IDENTITY ---------------------------------------------------
 if options.task_id:

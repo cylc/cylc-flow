@@ -23,12 +23,12 @@ import cylc_pyro_ns, cycle_time, pimp_my_logger
 from preferences import prefs
 from system_lock import system_lock
 
-usage = """cylc run-task [options] SYSTEM TASK_ID
+usage = """cylc submit [options] SYSTEM TASK_ID
 
-Run a single task just as the scheduler would run it. This can be used
-as an easy way to invoke single system tasks for any reason, but it is
-particularly useful for testing external task scripts during the system
-development phase. When the cylc messaging interface is invoked by
+Submit a single task to run as the scheduler would submit it. This can
+be used as an easy way to invoke single tasks for any reason, but it is
+particularly useful for testing external task scripts during forecast
+system development. When the cylc messaging interface is invoked by
 standalone tasks it simply directs all messages to stdout.
 
 arguments:
@@ -98,14 +98,14 @@ pyro_groupname = ':cylc.' + username + '.' + name
 
 # load cylcrc file----------------------------------------------------
 rcfile = prefs()
-logging_dir = rcfile.get_system_logging_dir( name + '-run-task' ) 
+logging_dir = rcfile.get_system_logging_dir( name + '-submit' ) 
 
 use_lockserver = False
 if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     use_lockserver = True
     # request system access from the lock server
-    # run-task does not need to call release_system_access()
-    system_lock = system_lock( pns_host, username, name, system_dir, 'run-task' )
+    # submit does not need to call release_system_access()
+    system_lock = system_lock( pns_host, username, name, system_dir, 'submit' )
     if not system_lock.request_system_access():
         raise SystemExit( 'locked out!' )
 
@@ -144,7 +144,7 @@ nameserver = cylc_pyro_ns.ns( pns_host )
 if options.sched:
     config.put_env( 'CYLC_MODE', 'scheduler' )
 else:
-    config.put_env( 'CYLC_MODE', 'run-task' )
+    config.put_env( 'CYLC_MODE', 'submit' )
 config.put_env( 'CYLC_NS_HOST', pns_host ) 
 config.put_env( 'CYLC_NS_GROUP', pyro_groupname )
 config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
