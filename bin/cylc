@@ -89,10 +89,10 @@ usage = \
     '  info ........ Retrieve information from a registered system',
     '  ping ........ Check if a system is running, or list all systems that are',
     'T-A-S-K--I-N-T-E-R-F-A-C-E',
-    '  task-started. Report that a task has started and acquire a task lock',
-    '  task-message. Report completion of task outputs, and other messages',
-    '  task-finished Report successful completion, and release task lock',
-    '  task-failed . Report failure to complete, and release task lock',
+    '  task-started ... Acquire a lock from the lockserver, and report started',
+    '  task-message ... Report completion of outputs, and other messages',
+    '  task-finished... Release lock to the lockserver, and report finished',
+    '  task-failed .... Release lock to the lockserver, and report failure',
     'M-I-S-C-E-L-L-A-N-E-O-U-S',
     '  submit ...... Submit a single task to run just as the scheduler would',
     '  lockserver .. Control the cylc lockserver daemon',
@@ -102,7 +102,7 @@ usage = \
     '  suicide ..... Suggest that an inquiring task should shut itself down',
     '  monitor ..... Terminal based system monitor (DEPRECATED ,use "cylc view"',
     '  message ..... Task message interface (DEPRECATED, use task-started etc.).',
-    '  test ........ An automated test of core cylc functionality',
+    '  test ........ Run an automated test of core cylc functionality',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     ]
 
