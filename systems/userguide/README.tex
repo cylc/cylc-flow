@@ -2,7 +2,7 @@
 %THIS FILE IS INCLUDED AUTOMATICALLY IN THE USERGUIDE LaTeX SOURCE
 %DURING DOCUMENT PROCESSING
 
-This system can be run in real or dummy mode; the resulting job 
+This system can run in real or dummy mode; the resulting job 
 schedules should be the same apart from small timing differences.
 The task scripts invoked in real mode create zero-sized output files
 with the \lstinline=touch= command, and input files are ``read'' by
@@ -44,7 +44,7 @@ There are also two additional tasks not mentioned in Section~\ref{HowCylcWorks}:
 
 Task F illustrates the use of cylc's {\em task wrapping} mechanism
 (Section~\ref{TaskWrapping}) for running unmodified external tasks. 
-The taskdef file ENVIRONMENT key is used to put the cycle time
+The taskdef ENVIRONMENT key is used to put the cycle time
 into the task execution environment in the form expected by the wrapped
 external task (\lstinline=$ANALYSIS_TIME= in this case). 
 

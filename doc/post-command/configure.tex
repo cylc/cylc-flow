@@ -1,13 +1,4 @@
-Default versions of the customizable files are generated the first time
-a system is configured. Currently they are raw Python source modules,
+Currently the system config and info files are Python source modules,
 but they are very simple and it should be reasonably obvious, by
-inspection, how to modify them (if you are not a Python programmer, be
-aware that indentation is important in Python).  If you wish to revert
-to default customizable config files, delete or rename your customized
-files before reconfiguring.
-
-Any customized configuration files should be added to you system's
-revision control repository, particularly if the customizations
-therein are critical to the running of the system (e.g.\ the
-\lstinline=$CYLC_TMPDIR= environment variable in the userguide example
-system).
+inspection, how to modify them. Customized configuration files should
+be added to your system definition revision control repository.

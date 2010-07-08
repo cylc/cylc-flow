@@ -42,16 +42,16 @@ for PDEF in $DIR/taskdef/*.def; do
     NAME=${DEF%.def}
     SCR=${NAME}.sh
 
-    echo "\subsection{Task $NAME}" >> $OUT
+    echo "\subsection{$NAME}" >> $OUT
     echo "\label{task$NAME}" >> $OUT
-    echo "\subsubsection{Definition}" >> $OUT
+    echo "\subsubsection{$NAME Definition}" >> $OUT
     echo "\lstset{language=cylctaskdef}" >> $OUT
     echo "\lstinputlisting{../$DIR/taskdef/$DEF}" >> $OUT
-    echo "\pagebreak" >> $OUT
-    echo "\subsubsection{Implementation}" >> $OUT
+    #echo "\pagebreak" >> $OUT
+    echo "\subsubsection{$NAME Implementation}" >> $OUT
     echo "\lstset{language=bash}" >> $OUT
     echo "\lstinputlisting{../$DIR/scripts/$SCR}" >> $OUT
-    echo "\pagebreak" >> $OUT
+    #echo "\pagebreak" >> $OUT
     echo "" >> $OUT
 done
 
@@ -60,7 +60,7 @@ echo "\label{utility}" >> $OUT
 echo "\subsubsection{check-env.sh}" >> $OUT
 echo "\lstset{language=bash}" >> $OUT
 echo "\lstinputlisting{../$DIR/scripts/check-env.sh}" >> $OUT
-echo "\pagebreak" >> $OUT
+echo #"\pagebreak" >> $OUT
 echo "" >> $OUT
 
 #-----------------------------------------------------------------------

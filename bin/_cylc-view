@@ -42,10 +42,10 @@ SYSTEM                  Registered name of a cylc system""")
             action="store", dest="username" )
 
     parser.add_option( "-p", "--preload", 
-            help="Load the task list from SYSTEM's system definition "
+            help="Load the task list from the system definition "
             "directory, so that a monitor can be displayed before the "
-            "system starts up (the task list is acquired dynamically "
-            "via Pyro, from a running systems's state summary object).",
+            "system starts up (normally the task list is acquired "
+            " dynamically from a running systems via Pyro).",
             action="store_true", default=False, dest="preload" )
 
     ( options, args ) = parser.parse_args()

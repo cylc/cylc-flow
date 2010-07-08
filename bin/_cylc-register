@@ -75,6 +75,7 @@ The registered name is also exported into the execution environment of
 all system tasks as $CYLC_SYSTEM_NAME. If all tasks use this in all I/O
 directory and file paths, you can even run multiple simultaneous real
 mode instances of a single system (e.g. over different time periods). 
+The cylc Userguide example system is capable of this.
 
 Deletion of a system registration does not delete the system, just the
 assocation between the name and the system definition directory. If you

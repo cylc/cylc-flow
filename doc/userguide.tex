@@ -77,7 +77,7 @@ morecomment=[l]{\#}
 }
 
 \title{Cylc \linebreak 
-A Self-Organising Optimal Multicycle Scheduler \linebreak 
+A Self-Organising Optimal Adaptive Metascheduler \linebreak 
 For Complex Forecasting Systems \linebreak 
 {\em \small Version THIS IS NOT A VERSIONED RELEASE} \linebreak
 {\small Copyright (c) NIWA, 2008-2010} }
@@ -628,28 +628,43 @@ start it with the \lstinline=nohup= command
 (see \lstinline=man nohup=) to effectively detach it from your terminal
 login session.
 
-\subsection{Defining A System (Set of Tasks)} 
+\subsection{Starting The Cylc Lockserver}
+\label{QuickStartingTheCylcLockserver}
+
+\begin{lstlisting}
+cylc lockserver --start
+\end{lstlisting}
+
+The lockserver daemon prevents you from accidentally running multiple
+instances of the same task at once, which could result in corrupted
+files or other problems. However, you can choose not to use it if you
+like:
+
+\begin{lstlisting}
+# choose not to use the cylc lockserver for now
+cylc preferences --use-lockserver=N
+\end{lstlisting}
+
+
+\subsection{Defining A System} 
 \label{QuickDefiningASystem}
 
-For cylc to schedule a system, each task must be defined in terms that
-it understands, in a {\em System Definition}
-(Section~\ref{SystemDefinition}). This involves:
+A cylc system is defined by a set of simple {\em task definition files}
+that describe the properties of each task that are relevant from a
+scheduling perspective (see {\em System Definition},
+Section~\ref{SystemDefinition}); in particular, for cylc, the
+prerequisites and outputs of each task.
 
-\begin{itemize}
+In addition, a few cylc commands must be inserted into the scripts that
+execute the system tasks, or otherwise you can use cylc's {\em task
+wrapping} mechanism (Section~\ref{TaskWrapping}) to run existing scripts
+unmodified.
 
-    \item writing some simple {\em task definition files} that
-        describe just the scheduling-relevant properties of each task
-        ({\em prerequisites} and {\em outputs} in particular).
-    
-    \item inserting a few cylc messaging commands into the scripts that
-        execute your tasks, or using cylc's {\em task wrapping} mechanism
-        (Section~\ref{TaskWrapping}) to run existing scripts unmodified.
+The complete system definition and implementation for the ``userguide
+example system'' is provided in \lstinline=$CYLC_DIR/systems/userguide=. 
 
-\end{itemize}
 
-The userguide example's system definition is provided for you in
-\lstinline=$CYLC_DIR/systems/userguide=. 
-
+   
 \subsection{System Configuration}
 \label{QuickSystemConfiguration}
 
@@ -694,9 +709,10 @@ the different instances will not interfere.
 
 \begin{figure}
     \begin{center}
-        \includegraphics[width=8cm]{monitor} 
+        %\includegraphics[width=12cm]{monitor} 
+        \includegraphics[width=12cm]{cylc-view-ecoconnect} 
     \end{center}
-    \caption{\small {\em cylc view} screenshot (somewhat out of date!)}
+    \caption{\small {\em cylc view} screenshot}
     \label{fig-monitor} 
 \end{figure} 
 
@@ -705,14 +721,17 @@ the system evolves, most of which can also be accessed via the
 commandline interface (\lstinline=cylc ping, show=, etc.).
 
 \begin{lstlisting}
-cylc view userguide
+cylc view userguide &
 \end{lstlisting}
 
-The system {\em Log Files} (Section~\ref{SystemLogFiles}) are located by
-default under \lstinline=$HOME/.cylc/logging/SYSTEM= (you can use
-\lstinline=cylc preferences= to alter this). Each task has its own log
-file for task-specific events and the \lstinline=main= log file records
-all events in sequence.
+Cylc {\em Log Files} (Section~\ref{SystemLogFiles}) are located 
+under \lstinline=$HOME/.cylc/logging/SYSTEM= (you can use
+\lstinline=cylc preferences= to change the default location). Each task
+has its own log file for task-specific events and the \lstinline=main=
+log file records all events in sequence.
+
+You can also retrieve information from running cylc systems with the 
+\lstinline=cylc show= command:
 
 \lstset{language=}
 \begin{lstlisting}
@@ -840,8 +859,11 @@ organising, so there are advantages fine-graining a system:
 
 
 
-\subsection{External Task Requirements} 
-\label{ExternalTaskRequirements}
+\subsection{System Task Guidelines} 
+\label{SystemTaskGuidelines}
+
+The first three the following subsections are meant to encourage good
+system design in general, and the final two are more cylc-specific.
 
 \subsubsection{Restartability}
 
@@ -1162,17 +1184,19 @@ type, that alter its behaviour to some extent:
         running immediately (other prerequisites allowing) because the
         delayed start time has already passed.  
         
-    \item A \lstinline=catchup_contact= task maintains awareness,
-        through a class variable (i.e.\ not per instance), of whether or
-        not it has `caught up' yet.  This can be used for rare occasions
-        when some dependant task needs to behave differently according
-        to whether its upstream contact task has caught up or not (in
-        EcoConnect, only the TopNet river model).
+
+    % TO DO: PUT IN AN ``ADVANCED'' SECTION
+    %\item A \lstinline=catchup_contact= task maintains awareness,
+    %    through a class variable (i.e.\ not per instance), of whether or
+    %    not it has `caught up' yet.  This can be used for rare occasions
+    %    when some dependant task needs to behave differently according
+    %    to whether its upstream contact task has caught up or not (in
+    %    EcoConnect, only the TopNet river model).
 
     \item A \lstinline=dummy= task always invokes the cylc dummy task
         program, even when operating in real mode.  The dummy task
         program masquerades as the task it represents by reporting its
-        registered outputs completed at the right times. This can be
+        registered outputs completed after a short interval. This can be
         used to ``fake'' provision of initial restart prerequisites to a
         forecast model whose real initial inputs have been put in place
         by some external means (perhaps a long ``spin up'' process)
@@ -1188,13 +1212,9 @@ type, that alter its behaviour to some extent:
 and {\em finished} outputs for every task: 
 
 \begin{lstlisting}
-foo%$(CYCLE_TIME) started"
-foo%$(CYCLE_TIME) finished"
+"foo%$(CYCLE_TIME) started"
+"foo%$(CYCLE_TIME) finished"
 \end{lstlisting}
-
-And \lstinline=cylc task-message= has special options allowing external
-tasks to send these messages automatically, so you don't have to worry
-about typos in the message.
 
 Be aware that triggering off these messages introduces explicit
 dependence on specific tasks, rather than on outputs that could be
@@ -1225,14 +1245,13 @@ available for the forecast cycle in question).
 
 \subsection{Forecast Model Restart Outputs}
 
-Task of the tied type (i.e.\ forecast models) must declare, in their
-task definition files, the number of restart outputs that they generate
-to satisfy the previous-instance dependence of their successors. {\em
-Cylc configure then automatically generates special restart outputs and
-prerequisites for the task}.  For example, consider a forecast
-model {\em foo} that runs on a 6 hour cycle and generates restart dumps
-for the next 2 cycles. If this information is put into the task
-definition file for task foo, it will result in the following
+Task of the tied type (i.e.\ warm-cycled forecast models) must declare,
+in their task definition files, the number of restart outputs that they
+generate to satisfy the previous-instance dependence of their
+successors. Cylc configure then uses this information to automatically
+register special restart outputs and prerequisites for the task. For
+example, if a forecast model task called {\em foo} has a 6 hour cycle
+and generates restart files for the next 2 cycles, the following
 prerequisite:
 
 \begin{lstlisting}
@@ -1246,19 +1265,19 @@ and the following two outputs:
 "foo restart files ready for $(CYCLE_TIME + 12)"
 \end{lstlisting}
 
-\lstinline=cylc task-message= also has special options for reporting
-restart outputs so that you do not have to worry about typos in the
-message. 
+will be automatically registered for the task.
 
-\subsubsection{Restart Prerequisites at Startup}
+%\lstinline=cylc task-message= also has special options for reporting
+%restart outputs so that you do not have to worry about typos in the
+%message. 
+
+\subsubsection{Restart Prerequisites at System Startup}
 
 Note that while cylc automates registration of restart prerequisites and 
-outputs for convenience, behind the scenes these are still nothing more
-than ordinary cylc output messages, and there is one situation in which
-you still need to register these explicitly in the taskdef file: {\em
-oneoff cold start tasks} that provide the initial restart inputs to
-{\em other} tasks (as opposed to a task's own successor, which has the 
-same name) - restart messages contain the host task name. 
+outputs for convenience, these are still nothing more than ordinary cylc
+output messages, and there is one situation in which you still need to
+register them explicitly in the taskdef file: {\em oneoff cold start
+tasks} that provide the initial restart inputs to {\em other} tasks.
 The userguide example system shows this clearly.
 
 % TO DO:
@@ -1273,21 +1292,19 @@ The userguide example system shows this clearly.
 %        restart output messages in the two tasks. 
 
 
-\subsubsection{Why Use Restart Outputs}
+\subsubsection{Use Of Tied Tasks and Restart Outputs Is Optional}
 
-It should be noted that you don't have to use them at all! You could
-instead declare all your forecast models to be of the  
-\lstinline=free, sequential= type. These tasks cannot start until their
-previous instances have finished, so any restart prerequisites are
-implicitly satisfied.
-
-However, if you do use restart outputs, you gain the following advantages:
+Instead you could declare your forecast model to be 
+\lstinline=%TYPE free, sequential=. 
+Sequential tasks cannot start until their previous instances have
+finished, so any restart prerequisites will be implicitly satisfied.
+However, use of the tied task type does have the following advantages:
 
 \begin{itemize}
 
-    \item a more efficient system: forecast model tasks that can start
-        up before their previous instances have finished (other
-        prerequisites allowing).  
+    \item a more efficient system: forecast models can start up before
+        their previous instances have finished, other prerequisites
+        allowing.  
     
     \item automatic post-intervention recovery from nasty system
         failures, because cylc will know about the actual restart
@@ -1422,8 +1439,8 @@ contain everything you will need for a typical real forecasting system
 (and similarly for the example system task scripts).
 
 The {\em Task Definition Reference} file listed in
-Section~\ref{TaskDefinitionReference}, however, contains all possible 
-taskdef sections, with documentation.
+Section~\ref{AnnotatedTaskDefinitionReferenceFile}, however, contains
+all possible taskdef sections, with documentation.
 
 %Other task-specific configuration settings that are not relevant to
 %scheduling (e.g.\ numerical method choices, MPP
@@ -1797,18 +1814,18 @@ for all tasks:
 
 \begin{lstlisting}
   CYLC_MODE         # was the task invoked by a full scheduler or not?
-  CYLC_DIR          # path to the local cylc installation
-  CYLC_SYSTEM_DIR   # path to the system defintion directory
-  CYLC_SYSTEM_NAME  # registered name of the running system 
-  CYLC_NS_HOST      # host running the Pyro nameserver
-  CYLC_NS_GROUP     # group name used by this system in the Pyro nameserver
+  CYLC_DIR          # location of the cylc installation
+  CYLC_SYSTEM_DIR   # location of the system definition directory
+  CYLC_SYSTEM_NAME  # registered name of the parent system 
+  CYLC_NS_HOST      # host running the Pyro Nameserver
+  CYLC_NS_GROUP     # system group name in the Pyro nameserver
 \end{lstlisting}
 
 Most of these are for internal use by cylc, except in the case of remote
-tasks wherein the cylc directory and system directory variables must be
-overridden to point at the remote cylc installation; see
-Section~\ref{RunningJobsOnARemoteHost}, {\em Running
-Jobs On A Remote Host}. 
+tasks wherein the cylc directory and system directory should be
+overridden (using the taskdef ENVIRONMENT key) to point at the remote
+cylc installation; see Section~\ref{RunningTasksOnARemoteHost}, {\em
+Running Tasks On A Remote Host}. 
 
 \subsubsection{User Defined}
 \label{SystemWideVariables}
@@ -2027,9 +2044,6 @@ do not need to know their place in the wider system.
 
 
 
-
-
-\pagebreak
 \pagebreak
 \section{System Config Files}
 \label{SystemConfigFiles}
@@ -2058,7 +2072,10 @@ self.items['item'] = value
 \label{ConfigurableItems}
 
 \begin{itemize} 
-    \item {\bf allow multiple system instances running at once}: 
+    \item {\bf simultaneous systems control:} for certain systems, cylc
+        can run multiple system instances at once under different names
+        (see \lstinline=cylc register --help=). The example systems
+        can do this. 
          \begin{lstlisting}
 self.items[ 'allow_simultaneous_system_instances' ] = False
          \end{lstlisting}
@@ -2138,9 +2155,8 @@ self.items['system_info'] = info
         start it for any cycle time with an hour value that is not in a given
         list of hours (e.g. 6 or 18Z). This is useful if your system 
         can only start at certain cycles because of external constraints
-        such as availability of model start dumps. The {\em SCS Demo}
-        example system is in this category.
-
+        such as availability of model start dumps.
+        
     \begin{lstlisting}
 self.items['legal_startup_hours'] = [ 6, 18 ]
 # for a single value you must still enclose in list brackets: [ 6 ] 
@@ -2149,7 +2165,7 @@ self.items['legal_startup_hours'] = [ 6, 18 ]
 \end{itemize}
 
 
-\pagebreak
+%\pagebreak
 
 %\subsection{Example Config File}
 %\label{ExampleConfigFile}
@@ -2179,8 +2195,8 @@ cylc start SYSTEM 2009101218
 
 \subsubsection{Oneoff Coldstart Tasks}
 
-A special {\em oneoff coldstart task} should be defined for any task
-that has different input requirements in the initial cycle than it does
+A special {\em oneoff coldstart task} can be defined for any task
+that has different input requirements in the first cycle than it does
 subsequently. This generally applies to warm-cycling forecast models
 that need to have their initial restart prerequisites satisfied somehow. 
 
@@ -2563,38 +2579,14 @@ orphaned processes that need to be killed manually.
 \subsubsection{Uncontrolled System Abort}
 
 If cylc is forced to abort suddenly without cleaning up after itself it
-may leave objects registered in the Pyro nameserver.  Cylc will refuse
-to restart the same system until you delete the offending group from the
-Namerserver:
+may leave objects registered in the Pyro Nameserver. Cylc will refuse
+to start or restart the same system while this is the case. However, it
+will prompt you to delete the offending group manually:
 
 \begin{lstlisting}
-pyro-nsc delete-group :cylc.USER.SYSTEM
+pyro-nsc deletegroup :cylc.USER.SYSTEM
 \end{lstlisting}
 
-\section{Monitoring And Alerting}
-\label{SystemMonitor}
-
-Cylc registers a {\em system state summary} object, which is constantly
-updated as the system evolves, with the Pyro nameserver. This provides a
-general mechanism for remote system monitoring. Monitor programs can
-connect to this object, extract whatever information they want from it,
-and ignore the rest. 
-
-A system monitor screenshot can be seen in Figure~\ref{fig-monitor}.
-
-\subsection{Automated Alerting}
-
-A real forecasting system probably needs an automated alerting system  
-to let the system operators know of task failures or timeouts, e.g.\ 
-by email, SMS, or pager.  EcoConnect currently uses {\em Nagios}
-(http://www.nagios.org) for this purpose.  Each part of the forecasting
-system can raise its own alerts {\em or} alerting could be handled
-centrally through cylc via a minor change to the cylc messaging
-interface so that \lstinline=cylc task-message= automatically notifies 
-nagios as well as cylc whenever a CRITICAL message comes in.
-
-
-\pagebreak
 \section{A Complete Working Example}
 \label{ACompleteWorkingExample}
 
@@ -2617,6 +2609,7 @@ $CYLC_DIR/system/userguide/
 \pagebreak
 \input{example-system.tex}
 
+\pagebreak
 \section{Other Working Examples}
 \label{OtherWorkingExamples}
 
@@ -2688,7 +2681,6 @@ machine.
 Finally, see {\em Running Tasks On A Remote Host}
 (Section~\ref{RunningTasksOnARemoteHost} ) for more on how this works.
 
-\pagebreak
 \subsection{SCS Demo}
 
 This example system runs {\bf only in dummy-mode} (no task scripts
@@ -2730,13 +2722,13 @@ Here's some more information from the system README file:
 \lstset{language=}
 \lstinputlisting{../systems/scs-demo/README.txt}
 
-\subsubsection{Finishing It Off}
-
-Configure the OPS, VAR, and UM tasks as standalone jobs via their
-respective UIs, then perform some minor surgery the resulting
-job scripts so that they take \lstinline=$CYCLE_TIME= from the
-environment, and add cylc messaging to report startup, finish, failure,
-and completed outputs.
+%\subsubsection{Finishing It Off}
+%
+%Configure the OPS, VAR, and UM tasks as standalone jobs via their
+%respective UIs, then perform some minor surgery the resulting
+%job scripts so that they take \lstinline=$CYCLE_TIME= from the
+%environment, and add cylc messaging to report startup, finish, failure,
+%and completed outputs.
 
 \pagebreak
 \section{Command Reference}
@@ -2755,11 +2747,8 @@ some cases.
 \input{commands.tex}
 
 \pagebreak
-\section{Task Definition Reference}
-\label{TaskDefinitionReference}
-
-Listed below is the full task definitition template with all items
-documented.
+\section{Annotated Task Definition Reference File}
+\label{AnnotatedTaskDefinitionReferenceFile}
 
 \lstset{language=cylctaskdef}
 
@@ -2768,18 +2757,37 @@ documented.
 \lstset{language=}
 
 \pagebreak
-\section{Annotated Task Script Template}
-\label{AnnotatedTaskScriptTemplate}
+\section{Annotated Task Script}
+\label{AnnotatedTaskScript}
 
 \input{../templates/scripts/README.tex}
 
 \lstset{language=bash}
 
-\pagebreak
-\subsection{Annotated}
 \lstinputlisting{../templates/scripts/annotated.sh}
 
 \pagebreak
+\appendix
+
+\section{Monitoring And Alerting}
+\label{SystemMonitor}
+
+Cylc registers a {\em system state summary} object, which is constantly
+updated as the system evolves, with the Pyro nameserver. This provides a
+general interface for remote system monitoring. Monitor programs can
+connect to state summary object, extract whatever information they want
+from it, and ignore the rest. A system monitor screenshot can be seen in
+Figure~\ref{fig-monitor}.
+
+A real forecasting system probably needs an automated alerting system
+to let the system operators know of task failures or timeouts by pager,
+SMS, email, etc.  EcoConnect currently uses {\em Nagios}
+(http://www.nagios.org) for this purpose. Each part of the forecasting
+system can communicate with Nagios itself {\em or} alerting could be
+handled centrally through cylc via a minor change to the messaging
+interface - i.e.\ \lstinline=cylc task-message= could contact Nagios
+whenever a CRITICAL message comes in.
+
 \section{Orderly Product Generation}
 \label{OrderlyProductGeneration}
 
@@ -2806,7 +2814,7 @@ cycle, then:
         real product generation tasks at the same cycle time.
 \end{itemize}
 
-\pagebreak
+%\pagebreak
 \section{How Cylc Interacts With Batch Queue Schedulers}
 \label{HowCylcInteractsWithBatchQueueSchedulers}
 
@@ -2820,8 +2828,7 @@ until it does run, and no dependent downstream tasks will trigger until
 that comes about.
 
 
-\pagebreak
-\appendix
+%\pagebreak
 
 \section{Network Issues}
 
@@ -2980,7 +2987,7 @@ will not die with your terminal session:
 For more information, see the Pyro userguide.
 
 
-\pagebreak
+%\pagebreak
 \section{Object Oriented Programming}
 \label{ObjectOrientedProgramming}
 
@@ -3037,32 +3044,32 @@ any current or future derived task object can be handled by the program
 without modification (other than deriving the new subclass itself).
 
 
-\pagebreak
-\section{Upgrading Taskdefs}
+%\pagebreak
+%\section{Upgrading Taskdefs}
+%
+%A suggested relatively painless way to make textual changes to many
+%taskdef files {\em en masse}, e.g.\ to make them compatible with a new
+%version of cylc that is not backward compatible in this respect:
+%
+%\begin{itemize}
+%    \item record all pending changes to the system repository
+%    \item make bulk changes in-place using perl's powerful regex 
+%       substitution mechanism, e.g.:
+%       \begin{lstlisting}
+%for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
+%       \end{lstlisting}
+%   \item check this had the desired effect with 
+%       \lstinline=darcs whatsnew= (or the equivalent in your chosen
+%       revision control system). If not, revert and try again.
+%\end{itemize}
 
-A suggested relatively painless way to make textual changes to many
-taskdef files {\em en masse}, e.g.\ to make them compatible with a new
-version of cylc that is not backward compatible in this respect:
+
+%\pagebreak
+\section{Cylc- Current Limitations}
 
 \begin{itemize}
-    \item record all pending changes to the system repository
-    \item make bulk changes in-place using perl's powerful regex 
-       substitution mechanism, e.g.:
-       \begin{lstlisting}
-for F in *.def; do perl -pi -e 's/OLD/NEW/g' $F; done
-       \end{lstlisting}
-   \item check this had the desired effect with 
-       \lstinline=darcs whatsnew= (or the equivalent in your chosen
-       revision control system). If not, revert and try again.
-\end{itemize}
 
-
-\pagebreak
-\section{Current Limitations}
-
-\subsection{Cycle Time Granularity}
-
-{\em The minimum cycle time granularity for a task is currently one hour}.
+        \item {\em The minimum cycle time granularity for a task is currently one hour}.
 
 Note that this is only loosely connected to when, or how frequently, a
 task actually runs, and then only in real time operation: the system's
@@ -3072,13 +3079,15 @@ given task. Aside from this tasks can run as soon as their prerequisites
 are satisfied regardless of their nominal cycle time. It would be easy
 to extend this minimum granularity to minutes and seconds if necessary.  
 
-{\em Every task must run at least once per day} (of cycle time, not real
-time, although the first implies the second in real time operation). 
+    \item {\em Every task must run at least once per day} (of cycle
+        time, not real time, although the first implies the second in
+        real time operation). 
 
 Valid cycles times for a task are specified in the taskdef
 \lstinline=CYCLES= key.  It would be easy to extend this to allow less
 frequent tasks if required. 
 
+\end{itemize}
 
 %\section{Miscellaneous Notes}
 %\label{MiscellaneousNotes}

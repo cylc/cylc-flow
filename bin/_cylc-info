@@ -20,7 +20,10 @@ parser = OptionParser( usage = """cylc info [options] SYSTEM
 Retrieve the system-specific information about a registered system. This
 command does not interact with a running system, it simply accesses the
 'system_info' module in a system definition directory. The same
-information can be retrieved from a running system by 'cylc show'""")
+information can be retrieved from a running system by 'cylc show'.
+
+Arguments:
+   SYSTEM     Registered name of the target system.""")
 
 (options, args) = parser.parse_args()
 

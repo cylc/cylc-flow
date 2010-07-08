@@ -11,73 +11,55 @@
 
 # THIS IS AN ANNOTATED CYLC TASK SCRIPT
 
-#__1______________________________________________________ERROR_TRAPPING
-# On error, report failure and release my task lock
+# A cylc "task" must:
+#  + send a "task started" message at startup
+#  + report registered outputs completed, any time before it finishes 
+#  + send a "task finished" message on successful completion
+#  + send a "task failed" message in case of failure
+
+# This example is a single monolithic script, but it does not have to
+# be - so long as the first script invoked sends the started message
+# and the last the finished message.  
+
+# TRAP ERRORS: automatically report failure and release my task lock
+# (means we don't have to check success of all operations manually)
 set -e; trap 'cylc task-failed "error trapped"' ERR
 
-#__2_______________________________________________________________START
-# Acquire a task lock and report started 
-#  o If 'cylc task-started' cannot acquire a task lock it will report
-#    failure to cylc and exit with error status. This implies another
-#    instance of the same task (NAME%CYCLE) could still be running,
-#    perhaps left over from a recent hard shutdown of the system. If so
-#    we must exit manually to avoid the ERR trap - which would otherwise
-#    call task-failed a second time and erroneously remove the lock.
+# ACQUIRE A TASK LOCK AND REPORT STARTED 
+# inline error checking avoids the ERR trap (here 'cylc task-started'
+# reports failure to cylc itself so we don't want to invoke the trap).
 cylc task-started || exit 1
 
-#__3_____________________________________________________TASK_PROCESSING
-# Can be done:
-#  o in this script
-# and/or by:
-#  o invoking other scripts and executables ("sub-processes", below)
+# Scripting errors etc will be caught by the ERR trap
+mkdir /illegal/dir/path
 
-# Sub-processes (and sub-sub-processes, etc.) that do not detach from
-# this script: 
-#  o MUST EXIT WITH NON-ZERO STATUS ON FAILURE
-#    + so this script can check for success
-#  o MUST NOT CALL cylc task-started OR task-finished
-#    + this script does that
-#  o MAY CALL cylc task-message AND task-failed ("cylc-aware", below)
+# Cylc-aware scripts or exes call 'task-failed' themselves on error
+cylc-aware-script || exit 1
 
-# If the final task sub-process detaches from this script (e.g. this
-# script submits a job to loadleveller and then exits), it:
-#  o MUST CALL cylc task-finished OR task-failed when done.
-#    + this script can't because it has exited.
+# DO NOT DO THIS:
+cylc-aware-script
+if [[ $? != 0 ]]; then
+    # this line will never be reached because of the ERR trap above
+fi
 
-# For cylc-aware sub-processes:
-#  o messages are logged by cylc, including the reason for a failure
-#  o failure must be detected manually in this script or the ERR trap
-#    will result in a second call to 'cylc task-failed'.
+# Non-cylc-aware scripts or exes 'exit 1' on error - leave to the trap.
+non-cylc-aware-script_1            
 
-cylc-aware-script || exit 1         # manual exit on error (not trapped)
-
-# Non-cylc-aware sub-processes:
-#  o output appears in task stdout and stderr, but not the cylc log
-#  o failure can be trapped automatically OR manually detected 
-
-non-cylc-aware-script_1                     # leave it to the error trap
-
+# or inline manual check if you prefer:
 if ! non-cylc-aware-script_2; then
-    cylc task-failed "non-cylc-aware-script_2 failed"           # manual
+    cylc task-failed "non-cylc-aware-script_2 failed"
     exit 1
 fi
 
 # send a progress message
 cylc task-message "Hello World"
 
-# report a registered output complete
+# REPORT OUTPUTS (just messages that are registered as task outputs)
 cylc task-message "sent one progress message for $CYCLE_TIME"
 
-# execute an external program
-if ! run_atmos_model; then
-    cylc task-failed "model failed"
-    exit 1
-fi
-
-#__________________________________________________________REPORT OUTPUTS
-# if atmos_model does not report its own outputs as it runs we can cheat
+# If model does not report its own outputs as it runs we can cheat now
 cylc task-message --all-outputs-completed
 
-#__________________________________________________________________FINISH
+# FINISH
 # release the task lock and report finished
 cylc task-finished

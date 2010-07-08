@@ -25,7 +25,7 @@ This command first attempts to get a proxy for a particular system
 object from the Pyro Nameserver, then it attempts to call a method on
 the remote object (the former condition is necessary but not sufficient
 to show that a system is running, because it is possible for a system
-to abort without deregistering its Pyro Nameserver objects.
+to abort without deregistering its Pyro Nameserver objects).
 
 If you are not the owner of the target system, the username must be
 supplied so that the Pyro nameserver group name can be inferred.

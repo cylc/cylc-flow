@@ -1,13 +1,11 @@
 You can reset a task to {\em finished} (i.e.\ completed outputs) if you
 know that the external task has completed successfully prior to starting
-the scheduler, or by some external means (e.g. use of
-\lstinline=cylc run-task=).
+the scheduler, or by some external means 
+(e.g. use of \lstinline=cylc submit=).
 
-Similarly, resetting a task to {\em ready} (i.e.\ satisfied
-prerequisites) can be done if you know that the task's prerequisites
-have been satisfied by some external means, perhaps prior to starting
-the system.  If you are dealing with a failed task that has been fixed,
-doing this is functionally equivalent to resetting the task to {\em
-waiting} (i.e.\ waiting for its prerequisites to be satisfied) {\em
-unless} the tasks responsible for satisfying those prerequisites are no
-longer present in the task pool (this should not happen!).
+Similarly, you can reset a task to {\em ready} (i.e.\ satisfied
+prerequisites) if you know that the task's prerequisites have been
+satisfied by some external means.  Generally this is functionally
+equivalent to resetting the task to {\em waiting} (i.e.\ waiting for its
+prerequisites to be satisfied) {\em unless} the tasks responsible for
+satisfying those prerequisites are no longer present in the task pool.

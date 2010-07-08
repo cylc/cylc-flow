@@ -1,34 +1,23 @@
-Registration serves two purposes: (1) cylc commands that need to access
-system-specific modules can do so without the user constantly having to
-type the full system definition directory path on the command line; and
-(2) the registered name is used along with your username to distinguish
-between different systems using the Pyro nameserver at the same time (so
-different users can register the same system under the same name). 
-
 Registration is only required if you want to start scheduling a system
-(\lstinline=cylc start= or \lstinline=cylc restart=), run a single task
-from a system (\lstinline=cylc run-task=), or print system-specific
-descriptive information (\lstinline=system-info=), because these
+(\lstinline=cylc start= or \lstinline=restart=), run a single task
+from a system (\lstinline=cylc submit=), or access system-specific
+descriptive information (\lstinline=cylc info=), because these
 commands need to access system-specific code modules.
 
 Other cylc commands interact with a running target system via the Pyro
-nameserver; for these you need to know the registered name of the
+Nameserver; for these you need to know the registered name of the
 system, and the username under which it is running (use 
-\lstinline=cylc list= to discover which systems are running), but you
+\lstinline=cylc ping= to discover which systems are running), but you
 don't need to have registered it yourself. 
 
-The userguide example system uses the registered system name in all file
-I/O operations, so you can run multiple instances of it at the same time
-if each instance is registered under a different name.  This may be
-useful, at least in relatively small systems that are not too
-resource-constrained, to run several historical case studies at once
-over different time periods, for instance, or to run a case study at the
-same time as the real time operation using the exact operational system
-(which guarantees the two systems really are identical). The alternative
-to this would be to (i) copy the system definition directory to create
-an entirely new system based on the original, and (ii) make sure the
-task definitions also invoke different scripts/programs to run the real
-tasks.
+The ability to run several instances of a single system at once could
+allow, for example, running several historical case studies over
+different time periods at once, or running a case study at the same time
+as the real time operation, using the exact operational system (which
+guarantees the two systems are identical). The alternative to this would
+be to (i) copy the system definition directory to create an entirely new
+system based on the original, and (ii) make sure the task definitions
+also invoke different scripts/programs to run the real tasks.
 
 Note that the cylc lockserver prevents multiple instances of a system
 from running at the same time, even under different names or different
