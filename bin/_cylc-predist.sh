@@ -79,8 +79,12 @@ mkdir doc
 mv userguide.pdf doc
 
 echo "DELETING EXTRANEOUS BIN SCRIPTS etc."
+rm convert.pl
 rm bin/addcopyright.pl
 rm -r images/not-active
 
 echo "DELETING DEVELOPER DOCS"
 rm README.todo
+
+echo "REMOVING ANY PYC FILES"
+find . -name '*.pyc' | xargs rm
