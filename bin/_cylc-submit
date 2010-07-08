@@ -158,7 +158,12 @@ job_submit.global_env = config.get( 'environment' )
 
 jsc = config.get('job submit class')
 clsmod = __import__( 'task_classes' )
-cls = getattr( clsmod, task_name )
+try:
+    cls = getattr( clsmod, task_name )
+except AttributeError:
+    print "ERROR: " + task_name + " not found in " + name
+    sys.exit(1)
+
 setattr( cls, 'job_submit_method', jsc[ task_name ] )
 
 # intantiate the task--------------------------------------------------
