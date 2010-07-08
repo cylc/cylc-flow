@@ -52,7 +52,7 @@ numbers=left,
 
 \lstdefinelanguage{cylctaskdef}
 {
-morekeywords={INHERIT,NAME,DESCRIPTION,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,CYCLES,TASK,ENVIRONMENT,COMMANDLINE,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,ONEOFF_FOLLOW_ON},
+morekeywords={INHERIT,NAME,DESCRIPTION,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,CYCLES,TASK,ENVIRONMENT,COMMANDLINE,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,FOLLOW_ON},
 sensitive=false,
 morecomment=[l]{\#},
 morestring=[b]\",
@@ -1345,13 +1345,15 @@ the task execution environment, to tasks launched by cylc.
 \subsubsection{Generic Task Scripts}
 
 If your system has several tasks that do essentially the same thing with
-minor variations they can all invoke the same external script, supplying
-it with task-specific input parameters via environment variables
+minor variations, they can all invoke the same external script with 
+any task-specific input parameters provided via environment variables
 specified in the Task Definition Files. Forecasting systems commonly
-have to move a lot of files around (from the output directory of one
-task to the input directory of another, for instance). See
-Section~\ref{HandlingRealDependencies}, and cylc's {\em distributed}
-example system. 
+have to move files around a lot (e.g. from the output directory of one
+task to the input directory of another). Cylc therefore has a generic
+file transfer script for this purpose,
+\lstinline=$CYLC_DIR/scripts/file-transfer.sh=. It is used in the
+{\em distributed} example system. 
+%(See also Section~\ref{HandlingRealDependencies}).
 
 \subsubsection{Task Messages}
 
