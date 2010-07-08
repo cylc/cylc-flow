@@ -71,7 +71,7 @@ echo ">> CLEANING OUT any remnants of previous tests ... "
 [[ -d $SYS_DIR ]] && rm -rf $SYS_DIR
   # unregister any existing registration for test
   # 'register -d' fails if no Pyro nameserver!
-cylc register -g test && cylc register -d test
+cylc register -g test && cylc register -d test >> $OUT 2>&1
   # remove output files
 rm -f $OUT $OUT_SCHED
 echo done
@@ -208,6 +208,12 @@ echo done
 echo
 echo -n ">> DELETING system definition directory ..."
 rm -rf $SYS_DIR
+echo done
+
+# UNREGISTER THE test SYSTEM
+echo
+echo -n ">> UNREGISTERING system test ..."
+cylc register -d test >> $OUT 2>&1
 echo done
 
 # FINISHED
