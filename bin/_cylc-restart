@@ -73,7 +73,7 @@ Arguments:
  
                 path = os.path.join( state_dump_dir, self.restart_from )
                 if not os.path.exists( path ):
-                    raise SystemExit( "File not found: " + self.restart_from )
+                    raise SystemExit( "state dump file not found: " + self.restart_from )
                 self.initial_state_dump = os.path.abspath( path )
         else:
             # No state dump specified, restart from the system default file.
@@ -87,7 +87,7 @@ Arguments:
 
             if not os.path.exists( state_dump_file ):
                 # can't restart a system that was never cold started!
-                raise SystemExit( "File not found: " + state_dump_file )
+                raise SystemExit( "restart state dump file not found: " + state_dump_file )
             self.initial_state_dump = state_dump_file
 
         print "Restarting from: " + self.initial_state_dump
@@ -104,8 +104,18 @@ Arguments:
 if __name__ == '__main__':
 
     try:
+        # parse the commandline and initialize the cylc server
         server = restart_scheduler()
+    except Exception, x:
+        print x
+        #raise
+        sys.exit(1)
+
+    try:
+        # configure pyro, logging, etc., and load the system task pool 
         server.configure()
+
+        # crank it up baby!
         server.run()
     except Exception, x:
         # catch proper exceptions

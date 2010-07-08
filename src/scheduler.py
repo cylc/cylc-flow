@@ -100,6 +100,8 @@ class scheduler:
                 "mode clock, of each running task. The default is 20 minutes.",
                 metavar="MINUTES", action="store", dest="dummy_task_run_length" )
 
+        self.parse_commandline()
+
     def print_banner( self ):
         print "_______________C_Y_L_C___________________"
         print "_ Self Organising Dynamic Metascheduler _"
@@ -334,7 +336,6 @@ class scheduler:
         # OVERRIDE IN DERIVED CLASSES
 
     def configure( self ):
-        self.parse_commandline()
         self.load_preferences()
         self.get_system_def_dir()
         self.configure_pyro()

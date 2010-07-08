@@ -62,8 +62,18 @@ Arguments:
 if __name__ == '__main__':
 
     try:
+        # parse the commandline and initialize the cylc server
         server = coldstart_scheduler()
+    except Exception, x:
+        print x
+        #raise
+        sys.exit(1)
+
+    try:
+        # configure pyro, logging, etc., and load the system task pool 
         server.configure()
+
+        # crank it up baby!
         server.run()
     except Exception, x:
         # catch proper exceptions
@@ -73,7 +83,8 @@ if __name__ == '__main__':
         print x
         #raise
     except:
-        # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
+        # catch any remaining 'sys.exit(1)'
+        # and 'raise SystemExit("foo")'
         print "ERROR CAUGHT; will clean up before exit"
         server.cleanup()
         print "THE ERROR IS:"
