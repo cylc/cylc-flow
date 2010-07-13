@@ -23,7 +23,7 @@
     TARG download:/oper/ecoconnect_oper/output/obstores.$(CYCLE_TIME)
     DEST hpc:/oper/input/
 
-%STARTUP_PREREQUISITES
+%COLDSTART_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"
 
 %PREREQUISITES

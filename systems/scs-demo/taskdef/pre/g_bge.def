@@ -23,7 +23,7 @@
     TARG ftpserver:/download/bgerr.$(CYCLE_TIME).um
     DEST hpc:/oper/input/
 
-%STARTUP_PREREQUISITES
+%COLDSTART_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"
 
 %PREREQUISITES

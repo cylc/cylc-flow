@@ -30,7 +30,7 @@
     TARG ftpserver:/download/lbc_$(CYCLE_TIME - 6).um
     DEST hpc:/oper/input/
 
-%STARTUP_PREREQUISITES
+%COLDSTART_PREREQUISITES
     "startup%$(CYCLE_TIME) finished"
 
 %PREREQUISITES
