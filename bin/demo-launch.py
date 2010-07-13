@@ -2,13 +2,14 @@
 
 import os
 import gtk
+import time
 import pango
 import subprocess
 
 class launcher:
     def __init__(self ):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_title("cylc ministerial launcher" )
+        window.set_title("HPCF Ministerial Launch Button" )
         window.set_size_request(400, 400)
         window.connect("delete_event", self.quit )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#def" ))
@@ -35,6 +36,7 @@ class launcher:
     def launch_and_quit( self, w, e, data=None ):
         command = "cylc start -d oper 2010050618 &"
         res = subprocess.call( command, shell=True )
+        time.sleep(2)
         gtk.main_quit()
 
 if __name__ == "__main__":
