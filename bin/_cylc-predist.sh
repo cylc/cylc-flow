@@ -80,6 +80,7 @@ mv userguide.pdf doc
 
 echo "DELETING EXTRANEOUS BIN SCRIPTS etc."
 rm convert.pl
+rm demo-launch.py
 rm bin/addcopyright.pl
 rm -r images/not-active
 
