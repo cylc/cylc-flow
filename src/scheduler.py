@@ -103,11 +103,11 @@ class scheduler:
         self.parse_commandline()
 
     def print_banner( self ):
-        print "_______________C_Y_L_C___________________"
-        print "_ Self Organising Dynamic Metascheduler _"
-        print "_  (c) Hilary Oliver, NIWA, 2008-2010   _"
-        print "_       cylc is pronounced 'silk'       _"
-        print "_______________C_Y_L_C___________________"
+        print "_______________________________________________"
+        print "_ Cylc Self Organising Adaptive Metascheduler _"
+        print "_     (c) Hilary Oliver, NIWA, 2008-2010      _"
+        print "_          cylc is pronounced 'silk'          _"
+        print "____________________C_Y_L_C____________________"
         print
 
         items = self.banner.keys()
