@@ -297,8 +297,8 @@ Cylc View is a real time system monitor for Cylc.
 
         # allow filtering out of 'finished' and 'waiting'
         all_states = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
-        # initially filter out only 'finished' tasks
-        self.filter_states = [ 'finished' ]
+        # initially filter out 'finished' and 'waiting' tasks
+        self.filter_states = [ 'waiting', 'finished' ]
 
         for st in all_states:
             b = gtk.ToggleButton( st )
