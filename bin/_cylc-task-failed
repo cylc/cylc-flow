@@ -15,6 +15,7 @@ Documentation
 """
 
 import sys
+import cylc_mode
 from optparse import OptionParser
 from task_message import message
 from task_lock import task_lock
@@ -37,6 +38,8 @@ if len( args ) == 0:
 else:
     reason = ' '.join( args )
 
-if not task_lock().release():
-    print >> sys.stderr, "WARNING failed to release task lock"
+if not cylc_mode.mode().is_raw():
+    if not task_lock().release():
+        print >> sys.stderr, "WARNING failed to release task lock"
+
 message( reason ).send_failed()

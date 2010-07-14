@@ -1,5 +1,7 @@
 To Do
 
+* use new cylc_mode class everywhere mode test is required.
+
 * lockserver: non-user-specific ($HOME-relative) pid file required, so
   user-specific .cylcrc is not the right place to store this information
   (multiple users need to be able to access the lockserver, but perhaps not
