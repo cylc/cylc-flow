@@ -1,6 +1,6 @@
 To Do
 
-* CYLC (RE)START --HELP CAUSES ERROR ABORT
+* lockserver need system-level non-$HOME-relative pid file!
 
 * submit --scheduler: task state resets to 'running' but all messages
   are ignored.
