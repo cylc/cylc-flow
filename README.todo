@@ -1,6 +1,9 @@
 To Do
 
-* lockserver need system-level non-$HOME-relative pid file!
+* lockserver: non-user-specific ($HOME-relative) pid file required, so
+  user-specific .cylcrc is not the right place to store this information
+  (multiple users need to be able to access the lockserver, but perhaps not
+   start and stop it).  MAYBE $CYLC_DIR/.cylcrc IS REQUIRED?
 
 * submit --scheduler: task state resets to 'running' but all messages
   are ignored.
