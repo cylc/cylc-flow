@@ -136,9 +136,10 @@ class updater(threading.Thread):
         if glbl[ 'dummy_mode' ]:
             #rate = glbl[ 'dummy_clock_rate' ]
             #self.mode = 'DUMMY (' + str( rate ) + 's/hr)'
-            self.mode = 'DUMMY'
+            #self.mode = 'DUMMY'
+            self.mode = 'simulation'
         else:
-            self.mode = 'REAL'
+            self.mode = 'operation'
 
         dt = glbl[ 'last_updated' ]
         self.dt = dt.strftime( " %Y/%m/%d %H:%M:%S" ) 
