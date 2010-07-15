@@ -42,11 +42,17 @@
 
 import pwd
 import re, os, sys
-import subprocess
 import tempfile, stat
 import cycle_time
 from interp_env import interp_self, interp_other, interp_local, interp_local_str, replace_delayed, interp_other_str, replace_delayed_str
 
+try:
+    import subprocess
+    # see documentation in bin/cylc
+    use_subprocess = True
+except:
+    use_subprocess = False
+ 
 class job_submit:
 
     # class variables to be set by the task manager
@@ -291,24 +297,30 @@ class job_submit:
             success = True
         else:
             print " > SUBMITTING TASK: " + self.command
-            try:
-                res = subprocess.call( self.command, shell=True )
-                if res < 0:
-                    print "command terminated by signal", res
+
+            if use_subprocess:
+                try:
+                    res = subprocess.call( self.command, shell=True )
+                    if res < 0:
+                        print "command terminated by signal", res
+                        success = False
+                    elif res > 0:
+                        print "command failed", res
+                        success = False
+                    else:
+                        # res == 0
+                        success = True
+                except OSError, e:
+                    # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
+                    # because subprocess.call( 'foo &' ) returns immediately
+                    # and the failure occurs in the detached sub-shell.
+                    print "Job submission failed", e
                     success = False
-                elif res > 0:
-                    print "command failed", res
-                    success = False
-                else:
-                    # res == 0
-                    success = True
-            except OSError, e:
-                # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
-                # because subprocess.call( 'foo &' ) returns immediately
-                # and the failure occurs in the detached sub-shell.
-                print "Job submission failed", e
-                success = False
-           
+            else:
+                #print "OS.SYSTEM: " + self.command
+                os.system( self.command )
+                success = True
+
         if changed_dir:
             # change back
             os.chdir( cwd )
@@ -330,26 +342,31 @@ class job_submit:
             print " > WOULD COPY TO REMOTE HOST AS: " + command_1
             success = True
         else:
-            print " > COPYING TO REMOTE HOST: " + command_1
-            try:
-                res = subprocess.call( command_1, shell=True )
-                if res < 0:
-                    print "scp terminated by signal", res
+            if use_subprocess:
+                print " > COPYING TO REMOTE HOST: " + command_1
+                try:
+                    res = subprocess.call( command_1, shell=True )
+                    if res < 0:
+                        print "scp terminated by signal", res
+                        success = False
+                    elif res > 0:
+                        print "scp failed", res
+                        success = False
+                    else:
+                        # res == 0
+                        success = True
+                except OSError, e:
+                    # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
+                    # (i.e. cylc's simplest "background" job submit method)
+                    # because subprocess.call( 'foo &' ) returns immediately
+                    # and the failure occurs in the detached sub-shell.
+                    print "Failed to execute scp command", e
                     success = False
-                elif res > 0:
-                    print "scp failed", res
-                    success = False
-                else:
-                    # res == 0
-                    success = True
-            except OSError, e:
-                # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
-                # (i.e. cylc's simplest "background" job submit method)
-                # because subprocess.call( 'foo &' ) returns immediately
-                # and the failure occurs in the detached sub-shell.
-                print "Failed to execute scp command", e
-                success = False
- 
+            else:
+                #print "OS.SYSTEM: " + command_1
+                os.system( command_1 )
+                success = True
+
         # now replace local jobfile path with remote jobfile path
         # (relative to $HOME)
 
@@ -371,26 +388,32 @@ class job_submit:
             print " > REMOTE JOB SUBMISSION METHOD: " + command_2
         else:
             print " > SUBMITTING TASK: " + command_2
-            try:
-                res = subprocess.call( command_2, shell=True )
-                if res < 0:
-                    print "command terminated by signal", res
+            if use_subprocess:
+                try:
+                    res = subprocess.call( command_2, shell=True )
+                    if res < 0:
+                        print "command terminated by signal", res
+                        success = False
+                    elif res > 0:
+                        print "command failed", res
+                        success = False
+                    else:
+                        # res == 0
+                        success = True
+                except OSError, e:
+                    # THIS DOES NOT CATCH REMOTE BACKGROUND EXECUTION FAILURE
+                    # (i.e. cylc's simplest "background" job submit method)
+                    # as subprocess.call( 'ssh dest "foo </dev/null &"' )
+                    # returns immediately and the failure occurs in the
+                    # remote background sub-shell.
+                    print "Job submission failed", e
                     success = False
-                elif res > 0:
-                    print "command failed", res
-                    success = False
-                else:
-                    # res == 0
-                    success = True
-            except OSError, e:
-                # THIS DOES NOT CATCH REMOTE BACKGROUND EXECUTION FAILURE
-                # (i.e. cylc's simplest "background" job submit method)
-                # as subprocess.call( 'ssh dest "foo </dev/null &"' )
-                # returns immediately and the failure occurs in the
-                # remote background sub-shell.
-                print "Job submission failed", e
-                success = False
  
+            else:
+                #print "OS.SYSTEM: " + command_2
+                os.system( command_2 )
+                success = True
+
         return success
 
 

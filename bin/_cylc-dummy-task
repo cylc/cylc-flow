@@ -21,9 +21,15 @@ import cycle_time
 import datetime
 import sys, os, re
 from time import sleep
-import subprocess
 import cylc_pyro_client
 
+try:
+    import subprocess
+    # see documentation in bin/cylc
+    use_subprocess = True
+except:
+    use_subprocess = False
+ 
 class dummy_task:
 
     def __init__( self, task_id, groupname, pns_host ):
@@ -37,17 +43,23 @@ class dummy_task:
     def send( self, message ):
         # send an output message to the task proxy object that I'm masquerading as
         command_list = [ 'cylc', 'task-message', message  ]
-        try:
-            retcode = subprocess.call( command_list )
-            if retcode != 0:
-                # the command returned non-zero exist status
-                print >> sys.stderr, ' '.join( command_list ) + ' failed: ', retcode
-                sys.exit(1)
-        except OSError:
+
+        if use_subprocess:
+            try:
+                retcode = subprocess.call( command_list )
+                if retcode != 0:
+                    # the command returned non-zero exist status
+                    print >> sys.stderr, ' '.join( command_list ) + ' failed: ', retcode
+                    sys.exit(1)
+            except OSError:
                 # the command was not invoked
                 print >> sys.stderr, 'ERROR: unable to execute ' + command_list
                 print >> sys.stderr, ' * Is [cylc]/bin in your $PATH?'
                 sys.exit(1)
+        else:
+                command = ' '.join( command_list )
+                #print "OS.SYSTEM: " + command
+                os.system( command )
 
 
     def run( self ):
