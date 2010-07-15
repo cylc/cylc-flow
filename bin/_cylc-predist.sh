@@ -83,6 +83,7 @@ rm convert.pl
 rm demo-launch.py
 rm bin/addcopyright.pl
 rm -r images/not-active
+rm bin/new-release
 
 echo "DELETING DEVELOPER DOCS"
 rm README.todo

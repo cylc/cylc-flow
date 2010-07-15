@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -e
+
+if [[ $# != 2 ]]; then
+    echo "USAGE: $0 CYLC_DIR x.y.z"
+    exit 1
+fi
+
+CYLC_DIR=$1
+VERSION=$2
+
+export CYLC_VERSION=$VERSION
+
+echo cd $CYLC_DIR
+cd $CYLC_DIR
+
+echo darcs tag $CYLC_VERSION
+darcs tag $CYLC_VERSION
+
+echo darcs dist -d cylc-$CYLC_VERSION
+darcs dist -d cylc-$CYLC_VERSION
+
+echo mv cylc-$CYLC_VERSION.tar.gz ~
+mv cylc-$CYLC_VERSION.tar.gz ~
+
+echo cd
+cd
+
+echo tar xzf cylc-$CYLC_VERSION.tar.gz
+tar xzf cylc-$CYLC_VERSION.tar.gz
+
+echo done
