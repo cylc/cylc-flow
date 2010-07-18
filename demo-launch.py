@@ -34,9 +34,17 @@ class launcher:
         gtk.main_quit()
 
     def launch_and_quit( self, w, e, data=None ):
-        command = "cylc start -d oper 2010050618 &"
+
+        command = "/usr/local/bin/ministerial-opening &"
         res = subprocess.call( command, shell=True )
+
+        #time.sleep(2)
+
+        command = "cylc start -d oper 2010072206 &"
+        res = subprocess.call( command, shell=True )
+
         time.sleep(2)
+
         gtk.main_quit()
 
 if __name__ == "__main__":
