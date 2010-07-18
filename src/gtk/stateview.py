@@ -97,6 +97,9 @@ class updater(threading.Thread):
             return True
 
     def connection_lost( self ):
+        #self.led_liststore.clear()
+        self.ttreestore.clear()
+        self.fl_liststore.clear()
         self.status = "NO CONNECTION"
         self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f42' ))
         self.label_status.set_text( self.status )
@@ -109,12 +112,8 @@ class updater(threading.Thread):
         try:
             [glbl, states] = self.god.get_state_summary()
         except:
-            #self.led_liststore.clear()
-            self.ttreestore.clear()
-            self.fl_liststore.clear()
             gobject.idle_add( self.connection_lost )
             return False
-            #[glbl, states] = self.god.get_state_summary()
 
         # always update global info
 
