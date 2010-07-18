@@ -234,7 +234,7 @@ class job_submit:
             return
         for d in self.directives:
             FILE.write( self.directive_prefix + d + " = " + self.directives[ d ] + "\n" )
-        FILE.write( self.final_directive + "\n" )
+        FILE.write( self.final_directive + "\n\n" )
 
     def write_environment( self, FILE ):
         # write the environment scripting to the jobfile

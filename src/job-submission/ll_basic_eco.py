@@ -46,9 +46,10 @@ class ll_basic_eco( ll_basic ):
 
     def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
 
+        if 'class' not in dirs:
+            # DEFAULT ECOCONNECT LOADLEVELER DIRECTIVES
+            # dirs[ 'class'    ] = self.system !!!! TO DO: WHEN FINAL LL CLASSES CONFIGURED
+            dirs[ 'class' ] = 'test_linux'
+
         ll_basic.__init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ) 
 
-        # ecoconnect-specific loadleveler directives
-        # CHANGE ONCE PROPER LOADLEVELER QUEUES ARE CONFIGURED
-        #!!!! self.directives[ 'class'    ] = self.system !!!!
-        self.directives[ 'class' ] = 'test_linux'
