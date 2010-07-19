@@ -156,6 +156,10 @@ class job_submit:
         commandline = ' '.join( com_line ) 
         self.commandline = self.interp_str( commandline )
 
+        # same for external task, which may be defined in terms of
+        # $[HOME], for example.
+        self.task = self.interp_str( self.task )
+
         # queueing system directives
         self.directives  = dirs
         
