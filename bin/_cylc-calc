@@ -8,7 +8,7 @@ parser = OptionParser( usage = """cylc calc [options] [CYCLE] [STRING]
 
 Cycle time arithmetic with optional transformation of the result via a
 template string. Can be used by task scripts to calculate offsets from
-the current cycle time, or to access cycle-dependant file naming
+the current cycle time, or to access cycle time-dependent file naming
 conventions encoded in variables defined in the sytem config file.
 The result is printed to stdout. 
 
