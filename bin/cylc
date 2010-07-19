@@ -114,8 +114,8 @@ usage = \
     '  verbosity ... Change the logging verbosity level in a running system',
     '  nudge ....... Cause the main task processing loop to be invoked',
     '  suicide ..... Suggest that an inquiring task should shut itself down',
-    '  monitor ..... Terminal based system monitor (DEPRECATED ,use "cylc view"',
-    '  message ..... Task message interface (DEPRECATED, use task-started etc.).',
+    '  monitor ..... Terminal based system monitor (DEPRECATED, use "cylc view")',
+    '  message ..... Task message interface (DEPRECATED, use task-started etc.)',
     '  test ........ Run an automated test of core cylc functionality',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     ]
