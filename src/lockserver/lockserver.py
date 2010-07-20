@@ -11,7 +11,7 @@
 
 import Pyro.core, Pyro.naming, Pyro.errors
 import os,sys,socket
-import os, logging
+import logging, logging.handlers
 
 groupname = ':cylc-lockserver'
 name = 'broker'
@@ -47,7 +47,27 @@ class lockserver( Pyro.core.ObjBase ):
         self.exclusive = {}       # exclusive[ system_dir ] = [ groupname ]
         self.inclusive = {}       # inclusive[ system_dir ] = [ groupname, ... ]
 
-        logging.basicConfig( filename=logfile, level=loglevel, format="%(asctime)s [%(levelname)s] %(message)s" )
+        self.configure_logging( logfile, loglevel )
+
+    def configure_logging( self, logfile, loglevel ):
+        self.log = logging.getLogger( logfile )
+        self.log.setLevel( loglevel )
+        max_bytes = 1000000
+        backups = 5
+        logging_dir = os.path.dirname( logfile )
+        if not os.path.exists( logging_dir ):
+            try:
+                os.makedirs( logging_dir )
+            except:
+                raise SystemExit( 'Unable to create lockserver logging directory ' + logging_dir )
+
+        h = logging.handlers.RotatingFileHandler( logfile, 'a', max_bytes, backups )
+        # roll the log file if it already exists
+        if os.path.getsize( logfile ) > 0:
+            h.doRollover()
+
+        self.log.addHandler( h )
+
 
     def get_ns( self ):
         return self.nameserver
@@ -65,30 +85,30 @@ class lockserver( Pyro.core.ObjBase ):
         id = self.get_lock_id( lockgroup, task_id )
         if id not in self.locked:
             self.locked[ id ] = True
-            logging.info( "acquired task lock " + id ) 
+            self.log.info( "acquired task lock " + id ) 
             return True
         else:
-            logging.warning( "refused task lock " + id ) 
+            self.log.warning( "refused task lock " + id ) 
             return False
 
     def release( self, task_id, lockgroup ):
         id = self.get_lock_id( lockgroup, task_id )
         if id in self.locked:
             del self.locked[ id ]
-            logging.info( "released task lock " + id ) 
+            self.log.info( "released task lock " + id ) 
             return True
         else:
-            logging.warning( "failed to release task lock " + id ) 
+            self.log.warning( "failed to release task lock " + id ) 
             return False
 
     def dump( self ):
-         logging.info( "Dumping locks") 
+         self.log.info( "Dumping locks") 
          return ( self.locked.keys(), self.exclusive, self.inclusive )
 
     def clear( self ):
         # release all locks one at a time so each release gets logged
         n = len( self.locked.keys() )
-        logging.info( "Clearing " + str(n) + " task locks") 
+        self.log.info( "Clearing " + str(n) + " task locks") 
         # MUST USE .keys() here to avoid:
         # RuntimeError: dictionary changed size during iteration
         for lock in self.locked.keys():
@@ -96,7 +116,7 @@ class lockserver( Pyro.core.ObjBase ):
             self.release( id, group )
 
         n = len( self.exclusive.keys() )
-        logging.info( "Clearing " + str(n) + " exclusive system locks") 
+        self.log.info( "Clearing " + str(n) + " exclusive system locks") 
         for sysdir in self.exclusive.keys():
             [ group ] = self.exclusive[ sysdir ]
             self.release_system_access( sysdir, group )
@@ -105,7 +125,7 @@ class lockserver( Pyro.core.ObjBase ):
         for sysdir in self.inclusive.keys():
             groups = self.inclusive[ sysdir ]
             n += len( groups )
-        logging.info( "Clearing " + str(n) + " non-exlusive system locks") 
+        self.log.info( "Clearing " + str(n) + " non-exlusive system locks") 
         for sysdir in self.inclusive.keys():
             groups = self.inclusive[ sysdir ]
             for group in groups:
@@ -134,7 +154,7 @@ class lockserver( Pyro.core.ObjBase ):
                     ( not request_exclusive and system_dir in self.exclusive ):
                 result = False
                 reason = "inconsistent exclusivity for " + system_dir
-                logging.warning( reason ) 
+                self.log.warning( reason ) 
                 return ( False, reason )
  
         if request_exclusive:
@@ -187,15 +207,15 @@ class lockserver( Pyro.core.ObjBase ):
  
         if result:
             if cylc_mode == 'submit':
-                logging.info( "granted system access " + lockgroup + " --> " + system_dir )
+                self.log.info( "granted system access " + lockgroup + " --> " + system_dir )
             else:
-                logging.info( "acquired system lock " + lockgroup + " --> " + system_dir )
+                self.log.info( "acquired system lock " + lockgroup + " --> " + system_dir )
         else:
             if cylc_mode == 'submit':
-                logging.warning( "refused system access " + lockgroup + " --> " + system_dir )
+                self.log.warning( "refused system access " + lockgroup + " --> " + system_dir )
             else:
-                logging.warning( "refused system lock " + lockgroup + " --> " + system_dir )
-            logging.warning( " " + reason )
+                self.log.warning( "refused system lock " + lockgroup + " --> " + system_dir )
+            self.log.warning( " " + reason )
 
         return ( result, reason )
 
@@ -204,7 +224,7 @@ class lockserver( Pyro.core.ObjBase ):
         result = True
         if system_dir in self.exclusive:
             if lockgroup not in self.exclusive[ system_dir ]:
-                #logging.warning( "system release group name error" )
+                #self.log.warning( "system release group name error" )
                 result = False
             else:
                 del self.exclusive[ system_dir ]
@@ -212,7 +232,7 @@ class lockserver( Pyro.core.ObjBase ):
         elif system_dir in self.inclusive:
             names = self.inclusive[ system_dir ]
             if lockgroup not in names:
-                #logging.warning( "system release group name error" )
+                #self.log.warning( "system release group name error" )
                 result = False
             elif len( names ) == 1:
                 del self.inclusive[ system_dir ]
@@ -221,12 +241,12 @@ class lockserver( Pyro.core.ObjBase ):
                 self.inclusive[ system_dir ].remove( lockgroup )
                 result = True
         else:
-            #logging.warning( "erroneous system release request" )
+            #self.log.warning( "erroneous system release request" )
             result = False
         if result:
-            logging.info( "released system lock " + lockgroup + " --> " + system_dir )
+            self.log.info( "released system lock " + lockgroup + " --> " + system_dir )
         else:
-            logging.warning( "failed to release system lock " + lockgroup + " --> " + system_dir )
+            self.log.warning( "failed to release system lock " + lockgroup + " --> " + system_dir )
 
         return result
 

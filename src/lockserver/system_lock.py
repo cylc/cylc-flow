@@ -11,7 +11,7 @@
 
 import Pyro.core
 import os,sys,socket
-import os, logging
+import os
 
 groupname = ':cylc-lockserver'
 name = 'broker'
