@@ -1,5 +1,8 @@
 To Do
 
+* check use of double-quotes in taskdef %DESCRIPTIONs (which get triple
+  double-quoted).
+
 * cycle-time conditional environment and commandlines in tasksdefs.
 
 * use new cylc_mode class everywhere mode test is required.
