@@ -14,6 +14,8 @@ import task_classes
 import logging
 import sys, os
 
+from job_submit import job_submit
+
 class remote_switch( Pyro.core.ObjBase ):
     "class to take remote system control requests" 
     # the task manager can take action on these when convenient.
@@ -156,7 +158,8 @@ class remote_switch( Pyro.core.ObjBase ):
         self.warning( "REMOTE: reset to waiting: " + task_id )
         if task_id == self.failout_id:
             print "resetting failout on " + self.failout_id + " prior to reset"
-            os.environ['FAILOUT_ID'] = ""
+            job_submit.global_env[ 'CYLC_FAILOUT_ID' ] = 'NONE'
+
         self.pool.reset_task( task_id )
         self.process_tasks = True
         return "OK"
@@ -174,7 +177,8 @@ class remote_switch( Pyro.core.ObjBase ):
         self.warning( "REMOTE: reset to ready: " + task_id )
         if task_id == self.failout_id:
             print "resetting failout on " + self.failout_id + " prior to reset"
-            os.environ['FAILOUT_ID'] = ""
+            job_submit.global_env[ 'CYLC_FAILOUT_ID' ] = 'NONE'
+
         self.pool.reset_task_to_ready( task_id )
         self.process_tasks = True
         return "OK"
@@ -216,7 +220,8 @@ class remote_switch( Pyro.core.ObjBase ):
         if ins == self.failout_id:
             # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
             print "resetting failout on " + self.failout_id + " prior to insertion"
-            os.environ['FAILOUT_ID'] = ""
+            job_submit.global_env['CYLC_FAILOUT_ID'] = 'NONE'
+
         self.pool.insertion( ins )
         self.process_tasks = True
         return "OK"

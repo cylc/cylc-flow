@@ -148,7 +148,10 @@ class job_submit:
         task_env = interp_other( task_env, job_submit.global_env )
         task_env = interp_local( task_env )
         task_env = replace_delayed( task_env )
-        self.global_env = replace_delayed( job_submit.global_env )
+
+        # GLOBAL ENVIRONMENT: now extracted just before use in
+        # write_environment() so that remote_switch can dynamically
+        # reset the dummy mode CYLC_FAILOUT_ID variable.
 
         self.task_env = task_env
 
@@ -197,7 +200,6 @@ class job_submit:
 
         self.jobfile_is_remote = False
 
-
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
 
@@ -244,6 +246,9 @@ class job_submit:
         # write the environment scripting to the jobfile
 
         #for env in [ job_submit.global_env, self.task_env ]:
+
+        # global env: see comment in __init__() environment section
+        self.global_env = replace_delayed( job_submit.global_env )
 
         FILE.write( "# TASK EXECUTION ENVIRONMENT: system-wide variables\n" )
         for var in self.global_env:
