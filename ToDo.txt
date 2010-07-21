@@ -1,6 +1,26 @@
 To Do
 
-* cycle-time conditional environment and commandlines in tasksdefs.
+* --debug for main progs: raise the exception instead of just printing
+  errors.
+
+* if chooser is clicked just as target system shuts down, failure to
+  connect error breaks the app, requiring use of 'kill'.
+
+* lockserver errors to a logfile (e.g. if it is killed it silently 
+  fails to restart due to existing Pyro nameserver entry).
+
+* cylc ping hangs if cylc is killed without cleaning up: needs timeout.
+
+* long-running (almost 1 day) dummy mode oper run (started via vnc for
+  ministerial opening demo) could not be unlocked or stopped (etc.) -
+  got remote I/O Error via Pyro?
+
+* env vars in %TASK - e.g. $[HOME]
+
+* cycle-time conditional environment and commandlines in taskdefs.
+
+* check use of double-quotes in taskdef %DESCRIPTIONs (which get triple
+  double-quoted).
 
 * use new cylc_mode class everywhere mode test is required.
 
@@ -91,8 +111,6 @@ To Do
   previous instance. However, they could die as soon as their successor
   is satisfied. 
 
-* put monitor pyro connection in the same "connector" framework.
-
 * DOCUMENT: OPS-style tasks -if others only depend on "completion", then
   failure won't delay downstream tasks. However, cylc still does not
   delete them automatically because the failed task should still be seen
@@ -129,10 +147,6 @@ To Do
   validated for type (e.g. ID must be name%YYYYMMDDHH) before being
   passed into the program.
 
-* catch deliberate exits in manager, in order cleanly shutdown pyro
-
-* allow task shortnames for control and question commands.
-
 * 'raise SystemExit(message)' everywhere instead of sys.exit(1)?
   print error messages to stderr: print >> sys.stderr, 'message'
 
@@ -143,8 +157,6 @@ To Do
   shorter timestep; if the original forecast succeeds, the backup can
   self destruct. The forecast post-processing task(s) would trigger off
   either the original or the backup forecast.
-
-* check that task output times do not exceed the registered run time?
 
 * allow cylc task proxies to kill their real external tasks at shutdown
   (and otherwise)?
@@ -166,7 +178,7 @@ To Do
   choose the latest task as satisfier if more than one can do it.
 
 * python script for easy viewing of configured log files without having
-  to know their location?
+  to know their location? [cylc view now does this]
 
 * the task-generator script should check that the user-defined task
   names do not clash with parent class or attribute names.
