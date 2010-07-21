@@ -1,23 +1,6 @@
 To Do
 
-* if chooser is clicked just as target system shuts down, failure to
-  connect error breaks the app, requiring use of 'kill'.
-
-* lockserver errors to a logfile (e.g. if it is killed it silently 
-  fails to restart due to existing Pyro nameserver entry).
-
-* cylc ping hangs if cylc is killed without cleaning up: needs timeout.
-
-* long-running (almost 1 day) dummy mode oper run (started via vnc for
-  ministerial opening demo) could not be unlocked or stopped (etc.) -
-  got remote I/O Error via Pyro?
-
-* env vars in %TASK - e.g. $[HOME]
-
-* cycle-time conditional environment and commandlines in taskdefs.
-
-* check use of double-quotes in taskdef %DESCRIPTIONs (which get triple
-  double-quoted).
+* cycle-time conditional environment and commandlines in tasksdefs.
 
 * use new cylc_mode class everywhere mode test is required.
 
