@@ -43,6 +43,7 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 chmod +x bin/*
 chmod +x scripts/*
 chmod +x doc/process
+chmod +x systems/trivial/scripts/*
 chmod +x systems/userguide/scripts/*
 chmod +x systems/nested/scripts/*
 chmod +x systems/distributed/scripts/*
@@ -86,7 +87,10 @@ rm -r images/not-active
 rm bin/new-release
 
 echo "DELETING DEVELOPER DOCS"
-rm README.todo
+rm ToDo.txt
+
+echo "DELETING EXPERIMENTAL SYSTEMS"
+rm -rf systems/experimental
 
 echo "REMOVING ANY PYC FILES"
 find . -name '*.pyc' | xargs rm
