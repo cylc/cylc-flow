@@ -43,7 +43,7 @@ class launcher:
         command = "cylc start -d oper 2010072206 &"
         res = subprocess.call( command, shell=True )
 
-        time.sleep(2)
+        #time.sleep(2)
 
         gtk.main_quit()
 
