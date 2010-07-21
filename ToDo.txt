@@ -79,9 +79,6 @@ To Do
 
 * parse "HH:mm" for contact delay times etc.
 
-* allow de-registration without a nameserver (pyrex.discover currently
-  aborts without raising if no nameserver is found).
-
 * message command (command line usage only!!!) needs lock and practice mode?
 
 * FINISH OFF THE CONNECTION EXCEPTION HANDLING IN MANAGER CLASS.
@@ -101,24 +98,10 @@ To Do
 * check that practice mode systems initialise with the same clock time
   as the original system!
 
-* DOCUMENT: system shutdown for practice, while real tasks complete:
-  restart with them FINISHED!
-
-* forecast tasks cannot be 'quick death' because they depend on a
-  previous instance. However, they could die as soon as their successor
-  is satisfied. 
-
-* DOCUMENT: OPS-style tasks -if others only depend on "completion", then
-  failure won't delay downstream tasks. However, cylc still does not
-  delete them automatically because the failed task should still be seen
-  by the system operator - and this will eventually stall the system at
-  max runahead.
-
-* DOCUMENT: cotemporal mates of failed tasks are not deleted
-  automatically because they record the state of system tasks that may
-  be required to satisfy the failed task's prerequisites when it is
-  reset after fixing the problem. Otherwise the sysop can use 
-  'cylc reset --ready'
+* DOCUMENT or CHANGE: cotemporal peers of failed tasks are not deleted
+  automatically because they we USED TO restart with failed tasks in the 
+  'waiting' state (not 'ready') - thus the aforementioned peers may be
+  required to satisfy the failed task's prerequisites post resetting.
 
 * Consider the effect of "# uncomment for earliest NON-FAILED" (x2) in
   manager.py - and test with dummy mode failout tasks.  For failed F in
@@ -140,12 +123,12 @@ To Do
 * optionally allow a pyro request handling (or main loop?) timeout.
   (this is not needed now that the stalling problem is solved?)
 
-* check that ALL input, including that from remote insertion etc., is 
-  validated for type (e.g. ID must be name%YYYYMMDDHH) before being
-  passed into the program.
+* consistent system exit strategy: 
+   -sys.exit(1), 
+   -raise SystemExit(message)
+   -custom exceptions
 
-* 'raise SystemExit(message)' everywhere instead of sys.exit(1)?
-  print error messages to stderr: print >> sys.stderr, 'message'
+* all error messages should go to stderr: print >> sys.stderr, 'message'
 
 * consider implementing "either or" and "self destruct"
   prerequisites (Phil's idea) - this would allow automated
@@ -158,12 +141,8 @@ To Do
 * allow cylc task proxies to kill their real external tasks at shutdown
   (and otherwise)?
 
-* improved exception handling and retry and/or alert in case in message 
-  script and dummy tasks?
-
-* use exception handling as in manager.insert() to prevent remote
-  control operations that throw an exception (e.g. due to mis-formatted 
-  user input) from bringing the system down.
+* make sure that no remote operation, other than 'stop', can bring a
+  system down (exception handling on all remote switches).
 
 * when there are multiple finished tasks that can satisfy a new task's
   restart prerequisites, the one that actually satisfies the new task
@@ -173,9 +152,6 @@ To Do
   prerequisite satisfied. However, we could get tasks to record the ID
   of the satisfier task as well, for each prerequisite, and also to
   choose the latest task as satisfier if more than one can do it.
-
-* python script for easy viewing of configured log files without having
-  to know their location? [cylc view now does this]
 
 * the task-generator script should check that the user-defined task
   names do not clash with parent class or attribute names.
@@ -195,8 +171,6 @@ To Do
 
 * clean up the clock class with respect to dummy vs real time, and move
   it into task manager?
-
-* retrofit proper exception handling throughout (current use is sporadic).
 
 ====================================
 FUZZY PREREQUISITES (only for infrequent 'advanced' usage - e.g. hourly
