@@ -201,7 +201,10 @@ locks left after a system or task exits without releasing its lock)."""
     parser.add_option( "--release-system", help="Release a system lock.",
             metavar="SYSTEM", action="store", dest="system_release" )
 
-    parser.add_option( "--list", help="Get all task locks.",
+    parser.add_option( "-p", "--print", help="Print currently held locks.",
+            action="store_true", dest="list_all" )
+
+    parser.add_option( "-l", "--list", help="List currently held locks.",
             action="store_true", dest="list_all" )
 
     parser.add_option( "--clear", help="Release all task locks.",

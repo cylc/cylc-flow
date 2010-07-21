@@ -91,8 +91,12 @@ parser.add_option( "-g", "--get",
         help="Get the system definition directory for SYSTEM.",
         action="store_true", default=False, dest="get" )
 
+parser.add_option( "-p", "--print",
+        help="Print current system registrations (same as --list).",
+        action="store_true", default=False, dest="listall" )
+
 parser.add_option( "-l", "--list",
-        help="Print all current system registrations.",
+        help="List current system registrations.",
         action="store_true", default=False, dest="listall" )
 
 parser.add_option( "-u", "--user",
