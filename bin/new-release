@@ -1,33 +1,25 @@
 #!/bin/bash
 
-set -e
+set -e; trap "echo ERROR" ERR
 
-if [[ $# != 2 ]]; then
-    echo "USAGE: $0 CYLC_DIR x.y.z"
+if [[ $# != 1 ]]; then
+    echo "USAGE: $0 x.y.z"
+    echo "You must be in top level CYLC_DIR to run this script"
     exit 1
 fi
 
-CYLC_DIR=$1
-VERSION=$2
+export CYLC_VERSION=$1
+export CYLC_DIR=$PWD
 
-export CYLC_VERSION=$VERSION
+ls bin/cylc > /dev/null 2>&1  # set -e => this aborts if not in CYLC_DIR
 
-echo cd $CYLC_DIR
-cd $CYLC_DIR
+TARBALL="cylc-${CYLC_VERSION}.tar.gz"
 
-echo darcs tag $CYLC_VERSION
-darcs tag $CYLC_VERSION
+# tag, create release tarball, and move it to $HOME
+darcs tag $VERSION
+darcs dist -d ${TARBALL%.tar.gz}
+mv $TARBALL $HOME 
 
-echo darcs dist -d cylc-$CYLC_VERSION
-darcs dist -d cylc-$CYLC_VERSION
-
-echo mv cylc-$CYLC_VERSION.tar.gz ~
-mv cylc-$CYLC_VERSION.tar.gz ~
-
-echo cd
+# unpack new release
 cd
-
-echo tar xzf cylc-$CYLC_VERSION.tar.gz
-tar xzf cylc-$CYLC_VERSION.tar.gz
-
-echo done
+tar xzf $TARBALL
