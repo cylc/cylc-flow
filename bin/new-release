@@ -16,7 +16,7 @@ ls bin/cylc > /dev/null 2>&1  # set -e => this aborts if not in CYLC_DIR
 TARBALL="cylc-${CYLC_VERSION}.tar.gz"
 
 # tag, create release tarball, and move it to $HOME
-darcs tag $VERSION
+darcs tag $CYLC_VERSION
 darcs dist -d ${TARBALL%.tar.gz}
 mv $TARBALL $HOME 
 
