@@ -137,9 +137,10 @@ log = logging.getLogger( 'main.' + task_name )
 pimp_my_logger.pimp_it( log, task_name, logging_dir, \
         logging_lvl, False, None, True )
 
-# LOCATE THE PYRO NAMESERVER-------------------------------------------
-# (required for system locking)
-nameserver = cylc_pyro_ns.ns( pns_host )
+if use_lockserver:
+    # LOCATE THE PYRO NAMESERVER---------------------------------------
+    # (required for system locking)
+    nameserver = cylc_pyro_ns.ns( pns_host )
 
 # set global (all tasks) environment variables-------------------------
 if options.sched:
