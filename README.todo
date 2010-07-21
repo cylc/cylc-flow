@@ -3,7 +3,7 @@ To Do
 * check use of double-quotes in taskdef %DESCRIPTIONs (which get triple
   double-quoted).
 
-* cycle-time conditional environment and commandlines in tasksdefs.
+* cycle-time conditional environment and commandlines in taskdefs.
 
 * use new cylc_mode class everywhere mode test is required.
 
@@ -33,7 +33,7 @@ To Do
   = for item in dict.keys():
   which must build a temporary list?
 
-  CHECK MY USE OF DICTIOARY ITERATION THROUGHOUT THE CODE
+  CHECK MY USE OF DICTIONARY ITERATION THROUGHOUT THE CODE
 
 * Record stopping time in state dump in case system shutdown and
   restarted before all tasks reach the stop time is reached? (currently
