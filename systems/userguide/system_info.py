@@ -33,7 +33,7 @@ ___________________________________________________________________________
 | If the task is subsequently reset, or the system restarted, the task    |
 | will not abort again, as if the "problem" had been fixed.               |
 |   NOTE in DUMMY MODE you can do the same for ANY system, by using the   |
-| '--fail-task=TaskC%2010010106' commandline option at startup.           |
+| '--fail=TaskC%2010010106' commandline option at startup.           |
 |_________________________________________________________________________|
 | + REAL TIME OPERATION                                                   |
 | The tasks in this system are designed to run quickly (~5 seconds), but  |

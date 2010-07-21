@@ -102,13 +102,13 @@ if ! $dummy_mode; then
 else
     # use 36 hour clock offset, otherwise the system will catch up to
     # the clock before it finishes (=> longer time to wait for finish).
-    echo ">> STARTING at 2010010106, with --clock-offset=36 --fail-out=TaskX%2010010112"
+    echo ">> STARTING at 2010010106, with --clock-offset=36 --fail=TaskX%2010010112"
 fi
 
 # startup errors (e.g. due to lockserver denying access to the system)
 # won't be trapped here because we run cylc in the background!
 if $dummy_mode; then
-    cylc start -d --clock-offset=36 --fail-out=TaskX%2010010112 test 2010010106 >> $OUT_SCHED 2>&1 &
+    cylc start -d --clock-offset=36 --fail=TaskX%2010010112 test 2010010106 >> $OUT_SCHED 2>&1 &
 else
     cylc start test 2010010106 >> $OUT_SCHED 2>&1 &
 fi

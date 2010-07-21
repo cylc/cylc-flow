@@ -1,8 +1,5 @@
 To Do
 
-* --debug for main progs: raise the exception instead of just printing
-  errors.
-
 * if chooser is clicked just as target system shuts down, failure to
   connect error breaks the app, requiring use of 'kill'.
 
@@ -25,6 +22,8 @@ To Do
 * use new cylc_mode class everywhere mode test is required.
 
 * dummy task does not use lockserver
+
+* dummy mode --fail does not reset if the failed task is reset?
 
 * lockserver: non-user-specific ($HOME-relative) pid file required, so
   user-specific .cylcrc is not the right place to store this information

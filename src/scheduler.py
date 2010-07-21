@@ -90,7 +90,7 @@ class scheduler:
                 "This simulates catch up to real time operation.",
                 metavar="HOURS", action="store", dest="clock_offset" )
 
-        self.parser.add_option( "--fail-out", help=\
+        self.parser.add_option( "--fail", help=\
                 "(DUMMY MODE) get task NAME at cycle time CYCLE to report failure "
                 "and then abort. Use this to test failure and recovery scenarios.",
                 metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
