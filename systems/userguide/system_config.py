@@ -63,9 +63,6 @@ class system_config( config ):
         # Set task run time for real mode operation (see system task scripts), 
         self.items['environment']['TASK_RUN_TIME_SECONDS'] = '5'
 
-        # Set a task 
-        self.items['environment']['FAIL_TASK'] = 'TaskC%2010010112'
-
         #self.items['logging_level'] = logging.DEBUG
 
 # END OF FILE

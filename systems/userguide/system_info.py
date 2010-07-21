@@ -17,8 +17,8 @@ info = """
 ___________________________________________________________________________
 | This implements the cylc userguide example system, tasks A,B,C,D,E,F,X. |
 | + HOW THE SYSTEM WORKS                                                  |
-| Each task aborts if its expected input files do not exist (but does not |
-| use them), and then creates its (empty) output files using 'touch'.     |
+| Each task generates empty output files using the touch command, and     |
+| "reads" empty input files, aborting if they do not exist                |
 |_________________________________________________________________________|
 | + RUNNING MULTIPLE SYSTEM INSTANCES AT ONCE                             |
 | All task I/O is done under $CYLC_TMPDIR, defined at run time to include |
@@ -27,20 +27,19 @@ ___________________________________________________________________________
 | system instances at once without any interference between them.         |
 |_________________________________________________________________________|
 | + GETTING TASKS TO FAIL ON DEMAND IN REAL MODE OPERATION                |
-| Set $FAIL_TASK in the system config file, e.g.:                         |
-|    self.items['environment']['FAIL_TASK'] = 'A%2010010106'              |
-| The task will self-abort via systems/userguide/scripts/check-env.sh.    |
-| If the task is reset, or the system restarted, it will run successfully |
-| as if the "problem" has been fixed.                                     |                           
-|                                                                         |
-| Note: this is system-specific, but you can do the same thing for any    |
-| system in DUMMY MODE using 'cylc (re)start -d --fail-task=A%2010010106' |
+| For this example system only, before starting the system set:           |
+|   $ export FAIL_TASK=TaskC%2010010106                                   |
+| This causes TaskC to abort (via systems/userguide/scripts/check-env.sh )|
+| If the task is subsequently reset, or the system restarted, the task    |
+| will not abort again, as if the "problem" had been fixed.               |
+|   NOTE in DUMMY MODE you can do the same for ANY system, by using the   |
+| '--fail-task=TaskC%2010010106' commandline option at startup.           |
 |_________________________________________________________________________|
 | + REAL TIME OPERATION                                                   |
 | The tasks in this system are designed to run quickly (~5 seconds), but  |
 | note that if the system catches up to real time operation there will be |
 | a real 6 hour delay between cycles - so you might want to make sure the |
-| initial cycle time in signficantly in the past. This is not an issue in |
+| initial cycle time is signficantly in the past. This is not an issue in |
 | dummy mode, however, because of the accelerated dummy mode clock.       |
 |_________________________________________________________________________|
 """

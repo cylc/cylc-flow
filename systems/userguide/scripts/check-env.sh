@@ -52,7 +52,7 @@ if [[ ! -z $FAIL_TASK ]]; then
         else
             # FAILURE MESSAGE
             touch $CYLC_TMPDIR/${TASK_NAME}%${CYCLE_TIME}.failed_already 
-            MSG="ABORTING: requested via \$FAIL_TASK in system config"
+            MSG="ABORTING by user request (\$FAIL_TASK)"
             cylc task-failed $MSG
             exit 1
         fi
