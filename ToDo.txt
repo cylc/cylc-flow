@@ -172,6 +172,10 @@ To Do
 * clean up the clock class with respect to dummy vs real time, and move
   it into task manager?
 
+* do we need non-interpolation of single-quoted strings in taksdef
+  environment vars, commandline, extra scripting etc. (would be
+  implemented in jobs_submit.py)?
+
 ====================================
 FUZZY PREREQUISITES (only for infrequent 'advanced' usage - e.g. hourly
 TopNet in EcoConnect)

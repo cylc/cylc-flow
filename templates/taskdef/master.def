@@ -207,6 +207,20 @@
     directive_name2 value2
 
 #_______________________________________________________________________
+[%EXTRA_SCRIPTING]
+    # - Any additional SHELL SCRIPTING to execute before the task script.
+    # - Can be used to source existing environment setup scripts etc.
+    # - Can include and environment variables as for COMMANDLINE etc.
+    #   but NOT $(CYCLE_TIME [+/-N]) - which gets translated to Python.
+    #   (you can achieve the same result using 'cylc calc' however:)
+
+    echo "hello from $[USER]"
+    echo "This cycle is $CYCLE_TIME"
+    echo "Next cycle is $( cylc calc --add=6 )"
+    uname -a
+    . $[HOME]/environment/configure.sh
+
+ #_______________________________________________________________________
 [%COLDSTART_PREREQUISITES]
     # - Prerequisites that are only used at system start up.
     # - In subsquent cycles only %PREREQUISITES are used.

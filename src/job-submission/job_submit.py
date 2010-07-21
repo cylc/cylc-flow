@@ -86,7 +86,7 @@ class job_submit:
         str = replace_delayed_str( str )
         return str
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, logs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, com_line, dirs, extra, logs, owner, host ): 
 
         self.cylc_owner = os.environ['USER']
 
@@ -165,6 +165,11 @@ class job_submit:
 
         # queueing system directives
         self.directives  = dirs
+
+        # extra scripting
+        self.extra_scripting = []
+        for line in extra:
+            self.extra_scripting.append( self.interp_str( line ) )
         
         # directive prefix, e.g. '#QSUB ' (qsub), or '#@ ' (loadleveler)
         # OVERRIDE IN DERIVED CLASSES
@@ -260,7 +265,10 @@ class job_submit:
 
     def write_extra_scripting( self, FILE ):
         # override if required
-        pass
+        FILE.write( "\n" )
+        FILE.write( "# EXTRA SCRIPTING\n" )
+        for line in self.extra_scripting:
+            FILE.write( line + '\n' )
 
     def write_cylc_scripting( self, FILE ):
         FILE.write( "\n" )
