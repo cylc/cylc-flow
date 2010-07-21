@@ -16,6 +16,8 @@ import cycle_time
 from restart import restart
 from scheduler import scheduler
 
+debug = True
+
 class restart_scheduler( scheduler ):
     def __init__( self ):
         usage = """cylc restart [options] SYSTEM [STATE_DUMP]
@@ -58,6 +60,9 @@ Arguments:
             self.restart_from = self.args[1]
 
         scheduler.parse_commandline( self )
+
+        global debug
+        debug = self.options.debug
  
     def find_initial_state_dump_file( self ):
         if self.restart_from:
@@ -107,9 +112,12 @@ if __name__ == '__main__':
         # parse the commandline and initialize the cylc server
         server = restart_scheduler()
     except Exception, x:
-        print x
-        #raise
-        sys.exit(1)
+        if debug:
+            raise
+        else:
+            print x
+            print "(use --traceback to see exception traceback)"
+            sys.exit(1)
 
     try:
         # configure pyro, logging, etc., and load the system task pool 
@@ -117,16 +125,23 @@ if __name__ == '__main__':
 
         # crank it up baby!
         server.run()
+
     except Exception, x:
-        # catch proper exceptions
+
         print "ERROR CAUGHT, will clean up before exit"
         server.cleanup()
-        print "THE ERROR MESSAGE IS:"
-        print x
-        #raise
+
+        if debug:
+            raise
+        else:
+            print "THE ERROR WAS:"
+            print x
+            print "(use --debug to see exception traceback)"
+            sys.exit(1)
+
     except:
         # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
+        # TO DO: check these can actually be caught
         print "ERROR CAUGHT; will clean up before exit"
         server.cleanup()
-        print "THE ERROR IS:"
         raise

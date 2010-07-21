@@ -41,7 +41,7 @@ class scheduler:
 
         self.parser.set_defaults( pns_host= socket.getfqdn(),
                 dummy_mode=False, practice_mode=False,
-                include=None, exclude=None, 
+                include=None, exclude=None, debug=False,
                 clock_rate=10, clock_offset=24 )
 
         self.parser.add_option( "--until", 
@@ -99,6 +99,10 @@ class scheduler:
                 "(DUMMY MODE) change the length of run time, relative to the dummy "
                 "mode clock, of each running task. The default is 20 minutes.",
                 metavar="MINUTES", action="store", dest="dummy_task_run_length" )
+
+        self.parser.add_option( "--traceback", help=\
+                "Print the full exception traceback in case of error.",
+                action="store_true", dest="debug" )
 
         self.parse_commandline()
 
@@ -355,6 +359,7 @@ class scheduler:
         self.config.dump()
 
     def run( self ):
+
         if self.use_lockserver:
             if self.practice:
                 sysname = self.system_name + '-practice'

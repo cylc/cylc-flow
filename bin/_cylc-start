@@ -16,8 +16,11 @@ import cycle_time
 from coldstart import coldstart
 from scheduler import scheduler
 
+debug = True
+
 class coldstart_scheduler( scheduler ):
     def __init__( self ):
+
         usage = """cylc start [options] SYSTEM CYCLE
 
 Cold start a cylc system at some initial cycle time. Each task in the
@@ -44,6 +47,10 @@ Arguments:
             self.parser.error( "Invalid cycle time: " + self.args[1])
 
         scheduler.parse_commandline( self )
+
+        global debug
+        debug = self.options.debug
+
         print "Starting from: " + self.start_time
 
     def load_system_config( self ):
@@ -65,9 +72,12 @@ if __name__ == '__main__':
         # parse the commandline and initialize the cylc server
         server = coldstart_scheduler()
     except Exception, x:
-        print x
-        #raise
-        sys.exit(1)
+        if debug:
+            raise
+        else:
+            print x
+            print "(use --traceback to see exception traceback)"
+            sys.exit(1)
 
     try:
         # configure pyro, logging, etc., and load the system task pool 
@@ -75,17 +85,25 @@ if __name__ == '__main__':
 
         # crank it up baby!
         server.run()
+
     except Exception, x:
-        # catch proper exceptions
+
         print "ERROR CAUGHT, will clean up before exit"
+
+        # this assumes no exceptions in cleanup()
         server.cleanup()
-        print "THE ERROR MESSAGE IS:"
-        print x
-        #raise
+
+        if debug:
+            raise
+        else:
+            print "THE ERROR WAS:"
+            print x
+            print "(use --debug to see exception traceback)"
+            sys.exit(1)
+
     except:
-        # catch any remaining 'sys.exit(1)'
-        # and 'raise SystemExit("foo")'
+        # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
+        # TO DO: check these can actually be caught
         print "ERROR CAUGHT; will clean up before exit"
         server.cleanup()
-        print "THE ERROR IS:"
         raise
