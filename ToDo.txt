@@ -127,13 +127,14 @@ To Do
 
 * all error messages should go to stderr: print >> sys.stderr, 'message'
 
-* consider implementing "either or" and "self destruct"
-  prerequisites (Phil's idea) - this would allow automated
-  control-system initiated response to failed tasks.  EXAMPLE: if a
-  weather forecast fails, run a backup forecast configured with a
-  shorter timestep; if the original forecast succeeds, the backup can
-  self destruct. The forecast post-processing task(s) would trigger off
-  either the original or the backup forecast.
+* Conditional and "self destruct" prerequisites would allow automated
+  response, by cylc, to failed tasks rather than delegating that
+  responsibility to the system operator or to the external task
+  implementation. For example IF a weather forecast fails, run a backup
+  forecast configured with a shorter timestep, but IF the original
+  forecast succeeds, the backup can self destruct (remove itself from
+  the system). Forecast post-processing task(s) would trigger off EITHER
+  the original or the backup forecast.
 
 * allow cylc task proxies to kill their real external tasks at shutdown
   (and otherwise)?
