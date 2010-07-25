@@ -37,8 +37,9 @@
 %PREREQUISITES
     "storm surge fields ready for $(CYCLE_TIME)"
 
-%SUICIDE_PREREQUISITES
-    "TaskA%$(CYCLE_TIME) finished"
+# to test suicide prerequisites (Task F will never run):
+# %SUICIDE_PREREQUISITES
+#     "TaskA%$(CYCLE_TIME) finished"
 
 %OUTPUTS
     "storm surge products ready for $(CYCLE_TIME)"
