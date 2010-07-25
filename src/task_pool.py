@@ -303,6 +303,12 @@ class task_pool:
             if itask.state.is_failed():
                 failed_rt[ itask.c_time ] = True
 
+        # suicide
+        for itask in self.tasks:
+            if itask.suicide_prerequisites.count() != 0:
+                if itask.suicide_prerequisites.all_satisfied():
+                    self.spawn_and_die( [itask.id], dump_state=False, reason='death by suicide' )
+
         #### RESTORE FOR TESTING ASYNCHRONOUS TASK FUNCTIONALITY:
         #### self.cleanup_async()
 
@@ -708,10 +714,14 @@ class task_pool:
         self.spawn_and_die( task_ids )
 
 
-    def spawn_and_die( self, task_ids ):
+    def spawn_and_die( self, task_ids, dump_state=True, reason='suicide by remote request' ):
         # spawn and kill all tasks in task_ids.keys()
+        # works for dict or list input
 
-        self.log.warning( 'pre-spawn-and-die state dump: ' + self.dump_state( new_file = True ))
+        # TO DO: clean up use of spawn_and_die (the keyword args are clumsy)
+
+        if dump_state:
+            self.log.warning( 'pre-spawn-and-die state dump: ' + self.dump_state( new_file = True ))
 
         for id in task_ids:
             # find the task
@@ -727,7 +737,7 @@ class task_pool:
                 self.log.warning( "task to kill not found: " + id )
                 return
 
-            itask.log( 'DEBUG', "killing myself by remote request" )
+            itask.log( 'DEBUG', reason )
 
             if not itask.state.has_spawned():
                 # forcibly spawn the task and create its successor
@@ -759,7 +769,7 @@ class task_pool:
                 pass
 
             # now kill the task
-            self.trash( itask, 'by request' )
+            self.trash( itask, reason )
 
     def kill( self, task_ids ):
         # kill without spawning all tasks in task_ids

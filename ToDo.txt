@@ -66,9 +66,6 @@ To Do
   to check that which returns a result before continuing (e.g. if 
   the task script has not been set executable). 
 
-* DOCUMENT: suicide prerequisites: necessary for asynchronous tasks, but 
-  could also be useful in cycling systems.
-
 * DOCUMENT: daemon and asynchronous task
 
 * WILL_SATSIFY_ME() REQUIRED FOR FUZZY and LOOSE PREREQUISITES?

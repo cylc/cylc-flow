@@ -220,7 +220,7 @@
     uname -a
     . $[HOME]/environment/configure.sh
 
- #_______________________________________________________________________
+#_______________________________________________________________________
 [%COLDSTART_PREREQUISITES]
     # - Prerequisites that are only used at system start up.
     # - In subsquent cycles only %PREREQUISITES are used.
@@ -229,6 +229,15 @@
     #   it implies literally "no prerequisites" at startup. 
 
     "cold start files ready for $(CYCLE_TIME)"
+
+#_______________________________________________________________________
+[%SUICIDE_PREREQUISITES]
+    # - Prerequisites that, if satisfied, cause task to self destruct.
+
+    # - E.g. for a special failure recovery task that is not needed if
+    #   the main task completes successfully:
+
+    "main_forecast%$(CYCLE_TIME) finished"
 
 #_______________________________________________________________________
 [%N_RESTART_OUTPUTS]

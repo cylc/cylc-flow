@@ -160,9 +160,9 @@ def main( argv ):
 
     allowed_keys = [ 'LOGFILES', 'INHERIT', 'NAME', 'OWNER', 'CYCLES',
             'TASK', 'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
-            'EXTRA_SCRIPTING',
-            'ENVIRONMENT', 'INTERCYCLE', 'PREREQUISITES',
-            'COLDSTART_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
+            'EXTRA_SCRIPTING', 'ENVIRONMENT', 'INTERCYCLE',
+            'PREREQUISITES', 'COLDSTART_PREREQUISITES',
+            'SUICIDE_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
             'FOLLOW_ON' ]
 
@@ -532,6 +532,37 @@ import task_state
                     req = "'" + line + "'"
                     req = interpolate_cycle_times( req )
                     OUT.write( indent + 'self.prerequisites.add( ' + req + ' )\n' )
+
+         # ... suicide prerequisites
+        if not inherit or 'SUICIDE_PREREQUISITES' in parsed_def:
+            OUT.write( indent + 'self.suicide_prerequisites = prerequisites( self.id )\n' )
+
+        if 'SUICIDE_PREREQUISITES' in parsed_def:
+            for line in parsed_def[ 'SUICIDE_PREREQUISITES' ]:
+
+                # look for conditionals
+                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
+                if m:
+                    [ left, req ] = m.groups()
+                    # get a list of hours
+                    hours = left.split(',')
+                    req = re.sub( '^\s+', '', req )
+
+                    req = require_quotes( req, 'prerequisites' )
+
+                    req = "'" + req + "'"
+                    req = interpolate_cycle_times( req )
+                    for hour in hours:
+                        OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                        indent_more()
+                        OUT.write( indent + 'self.suicide_prerequisites.add( ' + req + ' )\n' )
+                        indent_less()
+                else:
+                    line = require_quotes( line, 'prerequisites' )
+
+                    req = "'" + line + "'"
+                    req = interpolate_cycle_times( req )
+                    OUT.write( indent + 'self.suicide_prerequisites.add( ' + req + ' )\n' )
  
         OUT.write( indent + 'self.logfiles = logfiles()\n' )
         if 'LOGFILES' in parsed_def:
