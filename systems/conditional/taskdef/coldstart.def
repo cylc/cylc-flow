@@ -14,20 +14,8 @@
     coldstart, cld
 
 %DESCRIPTION
-    Oneoff coldstart task for the userguide example system. This task
-    provides the initial restart prerequisites for the forecast models
-    (during warm cycling, i.e. once the system is running, these are
-    provided by the previous forecasts).  A real system would likely
-    have separate cold start tasks for each forecast model, to represent
-    actual cold start processing: e.g. an initial forecast from a global
-    model state to provide a background state for a limited-area model,
-    or a series of runs to "spin up" the model to the initial cycle
-    time. If these processes have been completed previously,
-    independently of the cylc system, the the coldstart task(s) can be
-    of the "tied, dummy" type, which means they will simply report that
-    the restart outputs are ready for the first cycle. See the userguide
-    for alternative ways of starting up a system (%COLDSTART_PREREQUISITES 
-    or manual task reset). 
+    Supplies restart files for the main forecast model, as if it were a
+    warm-started previous cycle.
 
 %TYPE
     free, oneoff
@@ -45,4 +33,4 @@
     "startup%$(CYCLE_TIME) finished"
 
 %OUTPUTS
-    "TaskA restart files ready for $(CYCLE_TIME)"
+    "FCModel restart files ready for $(CYCLE_TIME)"

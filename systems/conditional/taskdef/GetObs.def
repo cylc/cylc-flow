@@ -11,12 +11,10 @@
 
 
 %NAME
-    TaskX, X
+    GetObs, gobs
 
 %DESCRIPTION
-    Task X in the cylc userguide example system, representing retrieval
-    of external observation data at cycle-time + 1 hour. Depends only on
-    the system startup task at start time.
+    Retrieves obs for assimilation by the main forecast model
 
 %TYPE
     free, contact
@@ -28,7 +26,8 @@
     0,6,12,18
 
 %TASK
-    TaskX.sh
+    # No implementation provided
+    /bin/false
 
 %COLDSTART_PREREQUISITES
     # this task has no prerequisites, except at startup

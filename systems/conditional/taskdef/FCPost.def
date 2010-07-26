@@ -11,10 +11,10 @@
 
 
 %NAME
-    recovery, rec
+    FCPost, fcp
 
 %DESCRIPTION
-    foo
+    Forecast model post processing
 
 %TYPE
     free
@@ -23,17 +23,11 @@
     0,6,12,18
 
 %TASK
-    recovery.sh
-
-%ENVIRONMENT
-    NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
+    # no task implementation 
+    /bin/true
 
 %PREREQUISITES
-    "TaskA restart files ready for $(CYCLE_TIME)"
-    "TaskA%$(CYCLE_TIME) failed"
-
-%SUICIDE_PREREQUISITES
-    "TaskA%$(CYCLE_TIME) finished"
-
-%OUTPUTS
-    "TaskA restart files ready for $(CYCLE_TIME+6)"
+    A "FCModel%$(CYCLE_TIME) finished"
+    B "FCModelRecover%$(CYCLE_TIME) finished"
+    C "Obs ready for use in verification at $(CYCLE_TIME)"
+    conditional: ([A] or [B]) and [C]
