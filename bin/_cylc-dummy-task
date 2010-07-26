@@ -71,14 +71,15 @@ class dummy_task:
         interval_s = interval_m * 60.0
         interval_rs = interval_s * clock_rate / 3600.0
 
-        if failout:
-            sleep(2)
-            self.send( self.id + ' completed' )
-            self.send( self.id + ' failed' )
-            sys.exit(1)
-
         for i in range( n_outputs - 2 ):
             self.send( outputs[i] )
+
+            # failout after sending started message
+            if failout:
+                sleep(2)
+                self.send( self.id + ' completed' )
+                self.send( self.id + ' failed' )
+                sys.exit(1)
 
             sleep( interval_rs )
 
