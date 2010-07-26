@@ -70,18 +70,27 @@
 #_______________________________________________________________________
 %PREREQUISITES      
     # - Quoted string literals, one per lines.
-    # - $(CYCLE_TIME), $CYCLE_TIME, or ${CYCLE_TIME} should almost
-    #   certainly appear somewhere in the string to distinguish between
-    #   the outputs of task instances with different cycle times.
-    # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
-    # - May be conditional on cycle hour.
-    # - ONE SPECIAL PREREQUISITE IS REGISTERED AUTOMATICALLY BY CYLC:
-    #     + "NAME restart files ready for $CYCLE_TIME"  (TIED TASKS)
-    # - You may use the automatic started, completed, finished, outputs.
+    # - Use $(CYCLE_TIME), $CYCLE_TIME, or ${CYCLE_TIME} to distinguish
+    #   between the outputs of task instances with different cycle times.
+    # - Cycle time arithmetic is supported: $(CYCLE_TIME [+/- <hours>])
+    # - May depend on cycle time, e.g.: O,12 | "message string"
+    # - A RESTART PREREQUISITE IS REGISTERED AUTOMATICALLY FOR TIED TASKS:
+    #     + "NAME restart files ready for $CYCLE_TIME"
+    # - You may trigger off started, completed, finished, failed messages.
 
-           "baz finished for $(CYCLE_TIME)"
-           "file bar_$(CYCLE_TIME).nc ready"
-    0,12 | "foo output files ready for $(CYCLE_TIME)"
+           "baz%$(CYCLE_TIME) finished"
+           "baz%$(CYCLE_TIME) failed"
+           "file bar-$(CYCLE_TIME).nc ready"
+    00,12 | "foo output files ready for $(CYCLE_TIME)"
+
+    # All prerequisites must be satisfied for the task to be submitted,
+    # unless you label prerequisites and give a conditional expression:
+
+    A  "main_forecast%$(CYCLE_TIME) finished"
+    00,12 | B  "recovery_forecast%$(CYCLE_TIME) finished"
+    06,18 | B  "short_recovery_forecast%$(CYCLE_TIME) finished"
+    C  "processed obs ready for plotting"
+    conditional: ( [A] or [B] ) and [C]
 
 #_______________________________________________________________________
 %OUTPUTS
@@ -228,11 +237,16 @@
     # - Use of this section heading with no prerequisites listed under
     #   it implies literally "no prerequisites" at startup. 
 
+    # - Maybe depend on cycle time, and conditional expressions are 
+    #   allowed as for %PREREQUISITES.
+
     "cold start files ready for $(CYCLE_TIME)"
 
 #_______________________________________________________________________
 [%SUICIDE_PREREQUISITES]
     # - Prerequisites that, if satisfied, cause task to self destruct.
+    # - Maybe depend on cycle time, and conditional expressions are 
+    #   allowed as for %PREREQUISITES.
 
     # - E.g. for a special failure recovery task that is not needed if
     #   the main task completes successfully:
