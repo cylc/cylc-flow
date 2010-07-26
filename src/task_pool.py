@@ -538,6 +538,13 @@ class task_pool:
             itask.state.set_status( 'waiting' )
             itask.prerequisites.set_all_satisfied()
             itask.outputs.set_all_incomplete()
+
+            try:
+                itask.outputs.remove( task_id + ' failed' )
+            except:
+                # did not have the 'failed' output
+                pass
+
         else:
             self.log.warning( "task to reset not found: " + task_id )
 

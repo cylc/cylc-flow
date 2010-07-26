@@ -11,57 +11,88 @@
 
 
 import re
-from requisites import requisites
 
-# PREREQUISITES:
-# A collection of messages representing the prerequisite conditions
-# of ONE TASK. "Satisfied" => the prerequisite has been satisfied.
-# Prerequisites can interact with a broker (above) to get satisfied.
+# PREREQUISITES: A collection of messages representing the prerequisite
+# conditions for a task, each of which can be "satisfied" or not.  An
+# unsatisfied prerequisite becomes satisfied if it matches a satisfied
+# output message from another task (via the cylc requisite broker).
 
-class prerequisites( requisites ):
-
-    # prerequisites are requisites for which each message represents a
-    # prerequisite condition that is either satisifed or not satisfied.
-
-    # prerequisite messages can change state from unsatisfied to
-    # satisfied if another object has a matching output message that is
-    # satisfied (i.e. a completed output). 
-
+class prerequisites:
     def __init__( self, owner_id ):
-        self.satisfied_by = {}  # self.satisfied_by[ "message" ] = task_id
-        requisites.__init__( self, owner_id )
+        self.labels = {}   # labels[ message ] = label
+        self.messages = {}   # messages[ label ] = message 
+        self.satisfied = {}    # satisfied[ label ] = True/False
+        self.satisfied_by = {}   # self.satisfied_by[ label ] = task_id
+        self.conditional = False
+        self.auto_label = 0
 
-    def add( self, message ):
+    def add( self, message, label = None ):
         # Add a new prerequisite message in an UNSATISFIED state.
-        # We don't need to check if the new prerequisite message has
-        # already been registered because duplicate prerequisites add no
-        # information.
-        self.satisfied[message] = False
+        if label:
+            pass
+        else:
+            self.auto_label += 1
+            label = str( self.auto_label )
 
+        if message in self.labels:
+            raise SystemExit( "Duplicate prerequisite: " + message )
+        self.messages[ label ] = message
+        self.labels[ message ] = label
+        self.satisfied[label] = False
+
+    def get_not_satisfied_list( self ):
+        not_satisfied = []
+        for label in self.satisfied:
+            if not self.satisfied[ label ]:
+                not_satisfied.append( label )
+        return not_satisfied
+
+    def set_conditional_expression( self, expr ):
+        self.conditional = True
+        for l in self.messages:
+            expr = re.sub( '\['+l+'\]', "self.satisfied['" + l + "']", expr )
+        self.conditional_expression = expr
+
+    def all_satisfied( self ):
+        # TO DO: CHANGE NAME TO REFLECT CONDITIONAL SATISFACTION?
+        if self.conditional:
+            result = eval( self.conditional_expression )
+        else:
+            result = not ( False in self.satisfied.values() ) 
+        return result
+            
     def satisfy_me( self, outputs ):
         # can any completed outputs satisfy any of my prequisites?
-        for prereq in self.get_not_satisfied_list():
+        for label in self.get_not_satisfied_list():
             # for each of my unsatisfied prerequisites
             for output in outputs.get_satisfied_list():
                 # compare it with each of the completed outputs
-                #if output == prereq and outputs.satisfied[output]:
-                if re.match( prereq, output ):
-                    # if they match, my prereq has been satisfied
-                    self.set_satisfied( prereq )
-                    self.satisfied_by[ prereq ] = outputs.owner_id
+                if re.match( self.messages[label], output ):
+                    self.satisfied[ label ] = True
+                    self.satisfied_by[ label ] = outputs.owner_id
 
     def will_satisfy_me( self, outputs ):
-        # return True if the outputs, when completed, would satisfy any of my prequisites
-        for prereq in self.get_not_satisfied_list():
-            #print "PRE: " + prereq
-            # for each of my prerequisites
-            for output in outputs.satisfied.keys():
-                #print "POST: " + output
+        # WILL outputs, WHEN COMPLETED, satisfy ANY of my prerequisites
+        for label in self.get_not_satisfied_list():
+            # for each of my unsatisfied prerequisites
+            for output in outputs.satisfied: # NOTE: this can be T or F
                 # compare it with each of the outputs
-                #if output == prereq:   # (DIFFERENT FROM ABOVE HERE)
-                if re.match( prereq, output ):   # (DIFFERENT FROM ABOVE HERE)
-                    # if they match, my prereq has been satisfied
-                    # self.set_satisfied( prereq )
+                if re.match( self.messages[label], output ):
                     return True
 
         return False
+
+    def count( self ):
+        # how many messages are stored
+        return len( self.satisfied.keys() )
+
+    def dump( self ):
+        # return an array of strings representing each message and its state
+        res = []
+        for key in self.satisfied:
+            res.append( [ self.messages[key], self.satisfied[ key ] ]  )
+        return res
+
+    def set_all_satisfied( self ):
+        for label in self.messages:
+            self.satisfied[ label ] = True

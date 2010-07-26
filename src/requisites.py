@@ -34,7 +34,7 @@ class requisites:
         return n
 
     def dump( self ):
-        # return an array of strings representing each message and its state
+        # return a list of strings representing each message and its state
         res = []
         for key in self.satisfied.keys():
             res.append( [ key, self.satisfied[ key ] ]  )

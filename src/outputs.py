@@ -40,6 +40,12 @@ class outputs( requisites ):
         self.satisfied[message] = False
         self.ordered.append( message )
 
+    def remove( self, message ):
+        # calling function should catch exceptions due to attempting to
+        # delete a non-existent item.
+        del self.satisfied[ message ]
+        self.ordered.remove( message )
+
     def register( self ):
         message = self.owner_id + ' started'
         self.satisfied[ message ] = False

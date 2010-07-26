@@ -264,6 +264,10 @@ class task( Pyro.core.ObjBase ):
             self.log( 'CRITICAL',  message )
             self.state.set_status( 'failed' )
 
+            msg = self.id + ' failed' 
+            self.outputs.add( msg )
+            self.outputs.set_satisfied( msg )
+
         else:
             # log other (non-failed) unregistered messages with a '*' prefix
             message = '*' + message

@@ -1,5 +1,9 @@
 To Do
 
+* document new use of 'TaskID failed' as an output: added on the fly as
+  a new output if failure occurs, then removed from the output list on
+  reset.
+
 * if chooser is clicked just as target system shuts down, failure to
   connect error breaks the app, requiring use of 'kill'.
 
