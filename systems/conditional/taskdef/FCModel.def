@@ -28,9 +28,6 @@
     # None
     /bin/true
 
-%ENVIRONMENT
-    NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
-
 %PREREQUISITES
     "obs data ready for $(CYCLE_TIME)"
 

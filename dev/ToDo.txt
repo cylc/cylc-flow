@@ -1,5 +1,7 @@
 To Do
 
+* change terminology: 'system' -> 'suite'.
+
 * make task-specific logs optional, esp for large systems.
 
 * lockserver option to delete all locks for a given system.
