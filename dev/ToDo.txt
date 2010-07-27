@@ -1,5 +1,9 @@
 To Do
 
+* make task-specific logs optional, esp for large systems.
+
+* lockserver option to delete all locks for a given system.
+
 * document new use of 'TaskID failed' as an output: added on the fly as
   a new output if failure occurs, then removed from the output list on
   reset.
