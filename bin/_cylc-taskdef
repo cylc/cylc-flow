@@ -497,10 +497,10 @@ import task_state
         OUT.write( indent + 'job_submit_method = None\n' )
 
         if 'CYCLES' not in parsed_def:
-            # ASYNC TASKS DON'T HAVE CYLCES
-            #if not inherit:
-            #    print "ERROR: no %CYCLES provided for task " + task_name
-            #    sys.exit(1)
+            # NOTE: THIS WILL NEED TO BE MODIFIED FOR ASYNC TASKS
+            if not inherit:
+                print "ERROR: no %CYCLES provided for task " + task_name
+                sys.exit(1)
             pass
 
         else:
