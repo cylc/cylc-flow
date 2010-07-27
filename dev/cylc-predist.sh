@@ -79,15 +79,11 @@ rm -r doc
 mkdir doc
 mv userguide.pdf doc
 
-echo "DELETING EXTRANEOUS BIN SCRIPTS etc."
-rm convert.pl
-rm demo-launch.py
-rm bin/addcopyright.pl
+echo "DELETING UNUSED IMAGE FILES"
 rm -r images/not-active
-rm bin/new-release
 
-echo "DELETING DEVELOPER DOCS"
-rm ToDo.txt
+echo "DELETING DEV STUFF"
+rm -r dev
 
 echo "DELETING EXPERIMENTAL SYSTEMS"
 rm -rf systems/experimental

@@ -398,6 +398,8 @@ class scheduler:
                     self.remote.process_tasks or \
                     self.pool.waiting_contact_task_ready( self.clock.get_datetime() ):
 
+                # print '...................................', datetime.datetime.now()
+
                 self.pool.negotiate()
                 self.pool.run_tasks()
                 self.pool.cleanup()
@@ -453,10 +455,3 @@ class scheduler:
                         sysname, self.system_dir, 'scheduler' )
                 if not lock.release_system_access():
                     print >> sys.stderr, 'failed to release system!'
-
-# to simulate the effect on monitoring etc. of long task processing time
-# (many many many tasks...), put this in the task processing loop:
-#if count % 50 == 0:
-#    # every 50th time, sleep for 30s
-#    print 'SLEEPING 30s!'
-#    time.sleep(30)
