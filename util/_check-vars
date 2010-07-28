@@ -1,0 +1,75 @@
+#!/usr/bin/env python
+
+import os, sys
+from optparse import OptionParser
+
+parser = OptionParser( usage = """cylc check-vars [options] VARNAMES
+
+Check that each of a list of environment variables has been defined,
+and then optionally check their values according to the commandline
+options chosen.
+
+Each variable is checked in turn, then the script aborts with exit
+status 1 if any undefined or fail their checks.
+
+Arguments:
+   VARNAMES     Space-separated list of environment variable names.""")
+
+parser.add_option( "-d", "--dirs-exist", 
+        help="Check the variables represent directories that exist.", 
+        action="store_true", default=False, dest="checkdirs" )
+
+parser.add_option( "-f", "--files-exist", 
+        help="Check the variables represent files that exist.", 
+        action="store_true", default=False, dest="checkfiles" )
+
+parser.add_option( "-s", "--silent", 
+        help="Do not print the result of each check.", 
+        action="store_false", default=True, dest="verbose" )
+
+(options, args) = parser.parse_args()
+
+if len( args ) == 0:
+    parser.error( "VARNAMES argument is required" )
+
+if options.checkdirs and options.checkfiles:
+    parser.error( "Choose one of -f or -d" )
+
+varnames = args
+
+failed = False
+
+for varname in varnames:
+    if varname in os.environ:
+        value = os.environ[ varname ]
+
+        if options.verbose:
+            print varname, "is defined:", value
+
+        if options.checkdirs:
+            if os.path.isdir( os.environ[ varname ] ):
+                if options.verbose:
+                    print 'directory $' + varname, 'exists'
+            else:
+                fail = True
+                if options.verbose:
+                    print 'directory $' + varname, 'does NOT exist'
+
+        if options.checkfiles:
+            if os.path.isfile( os.environ[ varname ] ):
+                if options.verbose:
+                    print 'file $' + varname, 'exists'
+            else:
+                fail = True
+                if options.verbose:
+                    print 'file $' + varname, 'does NOT exist'
+
+    else:
+        failed = True
+        if options.verbose:
+            print varname, "is NOT defined"
+
+if failed:
+    sys.exit(1)
+
+

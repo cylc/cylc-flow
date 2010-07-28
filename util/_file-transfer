@@ -96,7 +96,7 @@ for T in $SRCE; do
         mkdir -p $DIR
     fi
 
-    echo "file_transfer: scp -B $T $D > /dev/null"
+    echo "_file-transfer: scp -B $T $D > /dev/null"
     scp -B $T $D > /dev/null
 
 done
