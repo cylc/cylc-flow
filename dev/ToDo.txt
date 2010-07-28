@@ -1,5 +1,8 @@
 To Do
 
+* configure should check INHERIT targets actually exist.  At the moment
+  this causes an exception early on at run time.
+
 * update master.def on environment variables, interpolation, delayed
   evaluation, etc., for environment, commandline, %TASK, etc.
 
