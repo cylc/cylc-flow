@@ -28,7 +28,7 @@
     cylc-wrapper
 
 %ENVIRONMENT
-    WRAP file_transfer.sh
+    WRAP _file-transfer
     SRCE $REMOTE_FC_USER@$SUPERCOMPUTER:$CYLC_REMOTE_TMPDIR/output/$(CYCLE_TIME)/forecast.nc
     DEST $CYLC_TMPDIR/postproc/input/$(CYCLE_TIME)/forecast.nc
 

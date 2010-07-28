@@ -38,7 +38,7 @@ if [[ ! -x $CYLC_DIR/bin/cylc ]]; then
     echo "If this is a cylc darcs repository, rather than an"
     echo "installed cylc release, you may need to do this:"
     echo " % cd $CYLC_DIR"
-    echo " % chmod +x bin/* scripts/* systems/*/scripts/*"
+    echo " % chmod +x bin/* util/* systems/*/scripts/*"
     return 1
 fi
 
@@ -50,7 +50,7 @@ PATH=$($CYLC_DIR/bin/_cylc-clean-path $PATH)
 PYTHONPATH=$($CYLC_DIR/bin/_cylc-clean-path $PYTHONPATH)
 
 # export PATH to cylc bin
-PATH=$CYLC_DIR/bin:$CYLC_DIR/scripts:$PATH
+PATH=$CYLC_DIR/bin:$CYLC_DIR/util:$PATH
 
 # export PYTHONPATH to cylc core source modules
 PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$CYLC_DIR/src/lockserver:$CYLC_DIR/src/gtk:$PYTHONPATH

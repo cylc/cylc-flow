@@ -27,7 +27,7 @@
     cylc-wrapper
 
 %ENVIRONMENT
-    WRAP file_transfer.sh
+    WRAP _file-transfer
     SRCE $CYLC_TMPDIR/ext/output/$(CYCLE_TIME)/extdata
     DEST $REMOTE_FC_USER@$SUPERCOMPUTER:$CYLC_REMOTE_TMPDIR/input/$(CYCLE_TIME)/extdata
 
