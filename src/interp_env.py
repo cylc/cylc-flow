@@ -5,9 +5,17 @@ import os,re
 def interp_local_str( strng ):
     # interpolate any local environment variables $FOO or ${FOO} in strng
     result = strng
-    for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", strng ):
+    # $foo
+    for var in re.findall( "\$(\w+)", strng ):
         if var in os.environ:
-            result = re.sub( '\$\{{0,1}' + var + '\}{0,1}', os.environ[var], result )
+            result = re.sub( '\$' + var + '(?=\W)', os.environ[var], result )
+    # ${foo}
+    # bash parameter expansion expressions will pass through as they
+    # will not be found in the environment.
+    for var in re.findall( "\$\{([^\{]+)\}", strng ):
+        if var in os.environ:
+            result = re.sub( '\$\{' + var + '\}', os.environ[var], result )
+
     return result
 
 def interp_local( env ):
@@ -19,19 +27,27 @@ def interp_local( env ):
     return intenv
  
 def interp_other_str( strng, other ):
-    # interpolate any local environment variables $FOO or ${FOO} in strng
+    # interpolate any variables $FOO or ${FOO} from other into strng
     result = strng
-    for var in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", strng ):
+    # foo
+    for var in re.findall( "\$(\w+)", strng ):
         if var in other:
-            result = re.sub( '\$\{{0,1}' + var + '\}{0,1}', other[var], result )
+            result = re.sub( '\$' + var + '(?=\W)', other[var], result )
+
+    # ${foo}
+    # bash parameter expansion expressions will pass through as they
+    # will not be found in the environment.
+    for var in re.findall( "\$\{([^\{]+)\}", strng ):
+        if var in os.environ:
+            result = re.sub( '\$\{' + var + '\}', other[var], result )
+
     return result
 
 def replace_delayed_str( strng ):
-    # replace '$[foo]' with '${foo}' (env vars to evaluate at execution time)
-    #return re.sub( "\$\[(?P<z>\w+)\]", "${\g<z>}", strng )
-    # allow bash style variable munging, e.g.
-    # FOO=nwp_test => ${FOO#*_} = 'test'; ${FOO%_*} = 'nwp'
-    return re.sub( "\$\[(?P<z>[\w#%*]+)\]", "${\g<z>}", strng )
+    # $[foo] - variables to evaluate at run time: replace with '${foo}'.
+    # No resetriction on 'foo', to allow bash parameter expansion, E.g.:
+    # FOO=sea_level_test: ${FOO#*_} -> 'test'; ${FOO%_*} = 'sea_level'
+    return re.sub( "\$\[(?P<z>[^\[]+)\]", "${\g<z>}", strng )
 
 def replace_delayed( env ):
     new_env = {}
@@ -76,13 +92,28 @@ def interp_recursive( val, env ):
     # interpolate potentially self-referencing environment variables
     # from the env dict, in val.
 
-    # WARNING: USE EXCEPTION HANDLING WITH THIS FUNCTION, AS SHOWN ABOVE
+    # WARNING: USE EXCEPTION HANDLING WITH THIS FUNCTION AS SHOWN ABOVE
+
+    # This will match '${foo[\W]' (i.e. no trailing '}')
+    #new_val = val
+    #for i_name in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", val ):
+    #    if i_name in env:
+    #        i_value = interp_recursive( env[ i_name ], env )
+    #        new_val = re.sub( '\$\{{0,1}' + i_name + '\}{0,1}', i_value, new_val )
+    #return new_val
 
     new_val = val
-    for i_name in re.findall( "\$\{{0,1}([a-zA-Z0-9_]+)\}{0,1}", val ):
+    # $foo
+    for i_name in re.findall( "\$(\w+)", val ):
         if i_name in env:
             i_value = interp_recursive( env[ i_name ], env )
-            new_val = re.sub( '\$\{{0,1}' + i_name + '\}{0,1}', i_value, new_val )
+            new_val = re.sub( '\$' + i_name + '(?=\W)', i_value, new_val )
+
+    # ${foo}
+    for i_name in re.findall( "\$\{([^\{]+)\}", val ):
+        if i_name in env:
+            i_value = interp_recursive( env[ i_name ], env )
+            new_val = re.sub( '\$\{' + i_name + '\}', i_value, new_val )
     return new_val
 
 if __name__ == '__main__':

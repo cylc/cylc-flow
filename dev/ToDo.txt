@@ -1,8 +1,12 @@
 To Do
 
-* general bash parameter expansion in delayed evaluation variables
-  (as of the moment only '#', '%', and '*', are allowed through by
-  interp_env.py).
+* document WHY variable interpolation is done: so you can refer to
+  global and task-specific variables, including self-referencing without
+  worrying about the order in which variables are defined, even though
+  the task execution environment may be disconnected from the
+  environment in which cylc is executing.  $[foo] AND parameter
+  expansion expressions are 'delayed'  $[foo] AND parameter expansion
+  expressions are 'delayed'.
 
 * document EXTRA_SCRIPTING as the ultimate in run-time environment setup
 * allow reference to external script files!
