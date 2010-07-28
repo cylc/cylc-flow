@@ -47,27 +47,29 @@ for varname in varnames:
             print '$' + varname, "evaluates to", value
 
         if options.checkdirs:
-            if os.path.isdir( os.environ[ varname ] ):
-                if options.verbose:
-                    print '   directory exists'
+            if os.path.isdir( value ):
+                #if options.verbose:
+                #    print '   directory exists'
+                pass
             else:
                 failed = True
                 if options.verbose:
-                    print >> sys.stderr, '   ERROR: directory not found'
+                    print >> sys.stderr, '   ERROR, directory not found:', value
 
         if options.checkfiles:
-            if os.path.isfile( os.environ[ varname ] ):
-                if options.verbose:
-                    print '   file exists'
+            if os.path.isfile( value ):
+                #if options.verbose:
+                #    print '   file exists'
+                pass
             else:
                 failed = True
                 if options.verbose:
-                    print >> sys.stderr, '   ERROR: file not found'
+                    print >> sys.stderr, '   ERROR, file not found:', value
 
     else:
         failed = True
         if options.verbose:
-            print >> sys.stderr, 'ERROR: $' + varname, "is not defined"
+            print >> sys.stderr, 'ERROR, variable not defined: $' + varname
 
 if failed:
     sys.exit(1)
