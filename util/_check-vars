@@ -43,7 +43,7 @@ if len( args ) == 0:
 
 
 if [ options.checkdirs, options.createdirs, options.checkfiles, \
-        options.checkint ].count( True ) != 1:
+        options.checkint ].count( True ) > 1:
     parser.error( "Please choose at most one option." )
 
 varnames = args
