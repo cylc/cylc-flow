@@ -53,7 +53,7 @@ for varname in varnames:
             else:
                 failed = True
                 if options.verbose:
-                    print '   ERROR: directory not found'
+                    print >> sys.stderr, '   ERROR: directory not found'
 
         if options.checkfiles:
             if os.path.isfile( os.environ[ varname ] ):
@@ -62,14 +62,12 @@ for varname in varnames:
             else:
                 failed = True
                 if options.verbose:
-                    print '   ERROR: file not found'
+                    print >> sys.stderr, '   ERROR: file not found'
 
     else:
         failed = True
         if options.verbose:
-            print 'ERROR: $' + varname, "is not defined"
+            print >> sys.stderr, 'ERROR: $' + varname, "is not defined"
 
 if failed:
     sys.exit(1)
-
-
