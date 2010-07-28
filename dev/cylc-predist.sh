@@ -41,9 +41,11 @@ fi
 echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
-chmod +x scripts/*
+chmod +x util/*
 chmod +x doc/process
+chmod +x systems/conditional/scripts/*
 chmod +x systems/trivial/scripts/*
+chmod +x systems/trivial-remote/scripts/*
 chmod +x systems/userguide/scripts/*
 chmod +x systems/nested/scripts/*
 chmod +x systems/distributed/scripts/*
