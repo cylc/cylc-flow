@@ -16,12 +16,21 @@ Arguments:
    VARNAMES     Space-separated list of environment variable names.""")
 
 parser.add_option( "-d", "--dirs-exist", 
-        help="Check the variables represent directories that exist.", 
+        help="Check that the variables refer to directories that exist.", 
         action="store_true", default=False, dest="checkdirs" )
 
+parser.add_option( "-c", "--create-dirs", 
+        help="Attempt to create the directories referred to the "
+        "variables, if they do not already exist.",
+        action="store_true", default=False, dest="createdirs" )
+
 parser.add_option( "-f", "--files-exist", 
-        help="Check the variables represent files that exist.", 
+        help="Check that the variables refer to files that exist.", 
         action="store_true", default=False, dest="checkfiles" )
+
+parser.add_option( "-i", "--int",
+        help="Check that the variables refer to integer values.", 
+        action="store_true", default=False, dest="checkint" )
 
 parser.add_option( "-s", "--silent", 
         help="Do not print the result of each check.", 
@@ -32,8 +41,10 @@ parser.add_option( "-s", "--silent",
 if len( args ) == 0:
     parser.error( "VARNAMES argument is required" )
 
-if options.checkdirs and options.checkfiles:
-    parser.error( "Choose at most one of -f or -d" )
+
+if [ options.checkdirs, options.createdirs, options.checkfiles, \
+        options.checkint ].count( True ) != 1:
+    parser.error( "Please choose at most one option." )
 
 varnames = args
 
@@ -48,24 +59,48 @@ for varname in varnames:
 
         if options.checkdirs:
             if os.path.isdir( value ):
-                #if options.verbose:
-                #    print '   directory exists'
-                pass
+                if options.verbose:
+                    print '(directory exists)'
+            else:
+                try:
+                    os.makedirs( value )
+                except:
+                    failed = True
+                    print >> sys.stderr, 'ERROR, cannot create directory:', value
+                else:
+                    print '(directory created)'
+
+        if options.createdirs:
+            if os.path.isdir( value ):
+                if options.verbose:
+                    print '(directory exists)'
             else:
                 failed = True
                 if options.verbose:
-                    print >> sys.stderr, '   ERROR, directory not found:', value
+                    print >> sys.stderr, 'ERROR, directory not found:', value
 
         if options.checkfiles:
             if os.path.isfile( value ):
-                #if options.verbose:
-                #    print '   file exists'
-                pass
+                if options.verbose:
+                    print '(file exists)'
             else:
                 failed = True
                 if options.verbose:
-                    print >> sys.stderr, '   ERROR, file not found:', value
+                    print >> sys.stderr, 'ERROR, file not found:', value
 
+        if options.checkint:
+            # value is a string; conversion from string to int fails
+            # unless the string contains *only* digits:
+            # int( 100.1 ) = 100, but int( '100.1') fails.
+            try:
+                int( value )
+            except:
+                failed = True
+                if options.verbose:
+                    print >> sys.stderr, 'ERROR, value is not an integer:', value
+            else:
+                if options.verbose:
+                    print '(is an integer)'
     else:
         failed = True
         if options.verbose:
