@@ -28,7 +28,10 @@ def interp_other_str( strng, other ):
 
 def replace_delayed_str( strng ):
     # replace '$[foo]' with '${foo}' (env vars to evaluate at execution time)
-    return re.sub( "\$\[(?P<z>\w+)\]", "${\g<z>}", strng )
+    #return re.sub( "\$\[(?P<z>\w+)\]", "${\g<z>}", strng )
+    # allow bash style variable munging, e.g.
+    # FOO=nwp_test => ${FOO#*_} = 'test'; ${FOO%_*} = 'nwp'
+    return re.sub( "\$\[(?P<z>[\w#%*]+)\]", "${\g<z>}", strng )
 
 def replace_delayed( env ):
     new_env = {}

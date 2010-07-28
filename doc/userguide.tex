@@ -1935,27 +1935,28 @@ warning.
 \label{DelayedEvaluationVariables}
 
 Any reference to an environment variable (in system-wide, task-specific,
-or command line argument definitions) {\em enclosed in square brackets}:
+or command line argument definitions) {\em enclosed in square brackets}
+\lstinline=$[FOO]  # square brackets= will not be ``interpolated out''
+by cylc but will be written to the task execution script as a proper
+environment variable reference, \lstinline=${FOO}  # curly brackets=,
+which will not be evaluated until the task executes. This allows
+user- or host-specific environment information (for example) to be used
+in constructing file paths (for example) for tasks that will run under
+other usernames and/or on remote hosts: e.g.\ \lstinline=$[HOME]= will
+evaluate at run time as the home directory of the task owner on the host
+that runs the task, not as the home directory of the cylc user on the
+host that is running cylc.
 
-\begin{lstlisting}
-$[FOO]  # square brackets
-\end{lstlisting}
+You can also use bash-style `\#' and `\%' ``parameter expansion'' (see man
+bash) in delayed evaluation variables (cylc job scripts are executed by bash),
+for example:
 
-will not be ``interpolated out'' by cylc; instead it will be written to
-the task execution script as a literal proper environment variable
-reference:
+\lstinline=$[USER##*_]= becomes \lstinline=${USER##*_}=; for username
+`sea\_level\_devel', say, this will evaluate to `devel'.
 
-\begin{lstlisting}
-${FOO}  # curly brackets
-\end{lstlisting}
+(For the moment other types of bash parameter expansion may not be
+correctly handled by the parser).
 
-which will not be evaluated until the the task executes. This allows
-user- or host-specific environment information (for example) to
-be used in constructing file paths (for example) for tasks that will run
-under other usernames and/or on remote hosts: e.g.\ \lstinline=$[HOME]=
-will evaluate at run time as the home directory of the task owner on the
-host that runs the task, not as the home directory of the cylc user on
-the host that is running cylc.
 
 \pagebreak
 \section{Handling Real Dependencies}
