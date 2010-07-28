@@ -1803,8 +1803,8 @@ executing the task itself.  The task execution environment must provide
 access to the task script (so that the full path is not required in the
 taskdef file if the script resides in the system definition
 \lstinline=scripts= sub-directory), and to cylc itself. And it must also
-contain environment variables required by cylc, any system-wide
-environment variables defined in the system config file, and any
+define any environment variables required by cylc, system-wide
+environment variables defined in the system config file, and 
 task-specific environment variables defined in the taskdef file.
 
 \subsection{System Wide Variables}
@@ -1854,16 +1854,16 @@ defined by cylc:
 \begin{lstlisting}
   export CYCLE_TIME="2009112318"
   export TASK_ID="E%2009112318"
-  export TASK_NAME="E"
+  export TASK_NAME="foo"
 \end{lstlisting}
 
-Executing tasks will almost certainly need to use
-\lstinline=$CYCLE_TIME= to determine what forecast cycle to run,
-but they don't need to know the name or ID used by cylc to identify
-them. \lstinline=$TASK_ID= is used by the cylc messaging scripts to
-identify which task is sending a message and therefore which task proxy
-object to communicate the message to.
-
+Executing tasks will almost certainly need to access
+\lstinline=$CYCLE_TIME= in order to determine which forecast cycle to
+run. \lstinline=$TASK_ID=, the unique name used to refer to the task
+within cylc, is also available to the task, but it will probably not be
+needed. It used by the cylc messaging interface to identify which task
+is sending a message, however, and therefore which task proxy object to
+communicate the message to in the scheduler.
 
 \subsubsection{User Defined}
 \label{TaskSpecificVariables}
@@ -1902,7 +1902,7 @@ You can refer to other environment variables in the values of
 system-wide or task-specific environment variables, and in task command
 line arguments, as shown in the examples above. These will be explicitly
 interpolated by cylc prior to writting the task execution script (i.e.
-the variables will be replaced by their values). The distributed example
+the variables will be replaced by their values).  The distributed example
 system (Section~\ref{Distributed}) exploits this to define task-specific
 I/O sub-directories underneath a top level working directory that is
 defined by a global environment variable that includes the registered
@@ -1923,40 +1923,55 @@ Environment variables found in {\em task commandline argument}
 definitions are interpolated as for those in task-specific variable
 definitions.
 
-\subsubsection{Nested Environment Variables}
+\subsubsection{Interpolation of Nested Variables}
 
-An environment variable's value can refer to other environment
-variables, which can in turn refer to others, and so on. Such nested
-definitions will be fully interpolated out by cylc before writing the 
-task execution script.  Circular definitions, however, will raise a
-warning.
+Cylc environment variables can refer to other variables, which can in
+turn refer to others, and so on: system-wide variables can refer to
+other system-wide variables and to environment variables; task-specific
+variables can refer to system-wide variables, environment variables, and
+to other task-specific variables. These nested definitions are fully
+interpolated out by cylc before writing the task execution script so
+that you don't need to worry about the order in which they are defined. 
+
+Circular variable definitions will raise a warning.
+
+Any referenced variables containing bash parameter expansion expressions
+will be passed through as-is to the job submission script, as for
+{\em delayed evaluation variables}, below).
 
 \subsubsection{Delayed Evaluation Variables}
 \label{DelayedEvaluationVariables}
 
-Any reference to an environment variable (in system-wide, task-specific,
-or command line argument definitions) {\em enclosed in square brackets}
-\lstinline=$[FOO]  # square brackets= will not be ``interpolated out''
-by cylc but will be written to the task execution script as a proper
-environment variable reference, \lstinline=${FOO}  # curly brackets=,
-which will not be evaluated until the task executes. This allows
-user- or host-specific environment information (for example) to be used
-in constructing file paths (for example) for tasks that will run under
-other usernames and/or on remote hosts: e.g.\ \lstinline=$[HOME]= will
-evaluate at run time as the home directory of the task owner on the host
-that runs the task, not as the home directory of the cylc user on the
-host that is running cylc.
+Any variable reference {\em in square brackets} 
+\lstinline=$[FOO]= will not be interpolated out by cylc but will be
+written to the task execution script as a proper environment variable
+reference, \lstinline=${FOO}= and will therefore not be evaluated until
+the task executes. This allows user- or host-specific
+environment information (for example) to be used in constructing file
+paths (for example) for tasks that will run under other usernames and/or
+on remote hosts: e.g.\ \lstinline=$[HOME]= will evaluate at run time as
+the home directory of the task owner on the host that runs the task, not
+as the home directory of the cylc user on the host that is running cylc.
 
-You can also use bash-style `\#' and `\%' ``parameter expansion'' (see man
-bash) in delayed evaluation variables (cylc job scripts are executed by bash),
-for example:
+Variable references containing parameter expansion expressions such as 
+\lstinline=${CYCLE_TIME:8:2}= or \lstinline=${USER##*_}= are also passed
+through to the job script (in this case square or curly brackets have
+the same effect).
 
-\lstinline=$[USER##*_]= becomes \lstinline=${USER##*_}=; for username
-`sea\_level\_devel', say, this will evaluate to `devel'.
+\subsection{Extra Scripting}
 
-(For the moment other types of bash parameter expansion may not be
-correctly handled by the parser).
+Any scripting found in the taskdef \lstinline=%EXTRA_SCRIPTING= section
+will be passed through verbatim, except for variable interpolation as
+described above, into the job script just before the external task is
+called. This can be used for ultimate control over the task execution
+environment, by exporting variables, sourcing external scripts,
+executing cylc utilities, and so on.
 
+\begin{lstlisting}
+%EXTRA_SCRIPTING
+    export NEXT_CYCLE=$( cylcutil time-calc --add=6 )
+    . $[HOME]/env-setup.sh
+\end{lstlisting}
 
 \pagebreak
 \section{Handling Real Dependencies}

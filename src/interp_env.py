@@ -169,3 +169,13 @@ if __name__ == '__main__':
     print local[ 'FOO' ]
     print local[ 'BAR' ]
     print
+
+    # DELAYED
+    strng = "foo $[HOME] ${HOME} ${HOME#*_} $[HOME#*_]" 
+    strng = interp_local_str( strng )
+    strng = replace_delayed_str( strng )
+
+    # should print: "foo ${HOME} /home/oliverh ${HOME#*_} ${HOME#*_}
+    print
+    print strng
+
