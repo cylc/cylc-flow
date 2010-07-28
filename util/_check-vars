@@ -33,7 +33,7 @@ if len( args ) == 0:
     parser.error( "VARNAMES argument is required" )
 
 if options.checkdirs and options.checkfiles:
-    parser.error( "Choose one of -f or -d" )
+    parser.error( "Choose at most one of -f or -d" )
 
 varnames = args
 
@@ -44,7 +44,7 @@ for varname in varnames:
         value = os.environ[ varname ]
 
         if options.verbose:
-            print varname, "is defined:", value
+            print '$' + varname, "is defined:", value
 
         if options.checkdirs:
             if os.path.isdir( os.environ[ varname ] ):
