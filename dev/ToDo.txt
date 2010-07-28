@@ -4,6 +4,13 @@ To Do
   (as of the moment only '#', '%', and '*', are allowed through by
   interp_env.py).
 
+* document EXTRA_SCRIPTING as the ultimate in run-time environment setup
+* allow reference to external script files!
+
+* consider a special file for all global environment vars, rather than
+  setting them in system_config. (and document that task-specific env
+  vars CAN be set globally too, they're unique and it's convenient.
+
 * change terminology: 'system' -> 'suite'.
 
 * make task-specific logs optional, esp for large systems.
