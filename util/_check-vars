@@ -57,7 +57,7 @@ for varname in varnames:
         if options.verbose:
             print '$' + varname, "evaluates to", value
 
-        if options.checkdirs:
+        if options.createdirs:
             if os.path.isdir( value ):
                 if options.verbose:
                     print '(directory exists)'
@@ -70,7 +70,7 @@ for varname in varnames:
                 else:
                     print '(directory created)'
 
-        if options.createdirs:
+        if options.checkdirs:
             if os.path.isdir( value ):
                 if options.verbose:
                     print '(directory exists)'
