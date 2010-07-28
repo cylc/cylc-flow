@@ -5,12 +5,12 @@ from optparse import OptionParser
 
 parser = OptionParser( usage = """cylc check-vars [options] VARNAMES
 
-Check that each of a list of environment variables has been defined,
-and then optionally check their values according to the commandline
-options chosen.
+Check that each member of a list of environment variables is defined,
+and then optionally check their values according to the chosen
+commandline option.
 
-Each variable is checked in turn, then the script aborts with exit
-status 1 if any undefined or fail their checks.
+All the input variables are checked in turn, after which the script
+aborts with exit status 1 if any are undefined or fail their checks.
 
 Arguments:
    VARNAMES     Space-separated list of environment variable names.""")
@@ -44,30 +44,30 @@ for varname in varnames:
         value = os.environ[ varname ]
 
         if options.verbose:
-            print '$' + varname, "is defined:", value
+            print '$' + varname, "evaluates to", value
 
         if options.checkdirs:
             if os.path.isdir( os.environ[ varname ] ):
                 if options.verbose:
-                    print 'directory $' + varname, 'exists'
+                    print '   directory exists'
             else:
-                fail = True
+                failed = True
                 if options.verbose:
-                    print 'directory $' + varname, 'does NOT exist'
+                    print '   ERROR: directory not found'
 
         if options.checkfiles:
             if os.path.isfile( os.environ[ varname ] ):
                 if options.verbose:
-                    print 'file $' + varname, 'exists'
+                    print '   file exists'
             else:
-                fail = True
+                failed = True
                 if options.verbose:
-                    print 'file $' + varname, 'does NOT exist'
+                    print '   ERROR: file not found'
 
     else:
         failed = True
         if options.verbose:
-            print varname, "is NOT defined"
+            print 'ERROR: $' + varname, "is not defined"
 
 if failed:
     sys.exit(1)
