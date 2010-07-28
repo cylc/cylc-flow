@@ -50,7 +50,7 @@ def interp_other_str( strng, other ):
     # bash parameter expansion expressions will pass through as they
     # will not be found in the environment.
     for var in re.findall( "\$\{([^\{]+)\}", strng ):
-        if var in os.environ:
+        if var in other:
             result = re.sub( '\$\{' + var + '\}', other[var], result )
 
     return result
