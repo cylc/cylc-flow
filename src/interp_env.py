@@ -1,5 +1,17 @@
 #!/usr/bin/env python
 
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+# environment variable interpolation functions
+# used mainly in the cylc job submission code.
+
 import os,re
 
 def interp_local_str( strng ):
@@ -8,7 +20,7 @@ def interp_local_str( strng ):
     # $foo
     for var in re.findall( "\$(\w+)", strng ):
         if var in os.environ:
-            result = re.sub( '\$' + var + '(?=\W)', os.environ[var], result )
+            result = re.sub( '\$' + var + '(?!\w)', os.environ[var], result )
     # ${foo}
     # bash parameter expansion expressions will pass through as they
     # will not be found in the environment.
@@ -32,7 +44,7 @@ def interp_other_str( strng, other ):
     # foo
     for var in re.findall( "\$(\w+)", strng ):
         if var in other:
-            result = re.sub( '\$' + var + '(?=\W)', other[var], result )
+            result = re.sub( '\$' + var + '(?!\w)', other[var], result )
 
     # ${foo}
     # bash parameter expansion expressions will pass through as they
@@ -107,7 +119,7 @@ def interp_recursive( val, env ):
     for i_name in re.findall( "\$(\w+)", val ):
         if i_name in env:
             i_value = interp_recursive( env[ i_name ], env )
-            new_val = re.sub( '\$' + i_name + '(?=\W)', i_value, new_val )
+            new_val = re.sub( '\$' + i_name + '(?!\w)', i_value, new_val )
 
     # ${foo}
     for i_name in re.findall( "\$\{([^\{]+)\}", val ):
@@ -121,8 +133,8 @@ if __name__ == '__main__':
 
     # ENVIRONMENT VARIABLE INTERPOLATION
     print
-    print interp_local_str( "I am $USER residing at${HOME}" )
-    print interp_local_str( "This variable should be left alone: $UNKNOWN" ) 
+    print interp_local_str( "I am $USER residing at ${HOME}" )       # will be interpolated
+    print interp_local_str( "unknown vars: $UNKNOWN ${UNKNOWN}" )    # will not be interpolated
 
     # SELF-INTERPOLATION
     testenv = {}
@@ -132,12 +144,11 @@ if __name__ == '__main__':
     testenv[ 'BAZ' ] = '$BAR'
     testenv[ 'BAM' ] = '$BAZ'
 
-    testenv[ 'WOO' ] = '$WAZ'   # circular reference
+    testenv[ 'WOO' ] = '$WAZ'   # circular reference - should be detected
     testenv[ 'WAZ' ] = '$WOO'
 
     print
     intenv = interp_self( testenv )
-
     print
     for var in intenv:
         print var, intenv[ var ]
