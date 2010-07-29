@@ -58,6 +58,12 @@ class system_config( config ):
         #self.items['job_submit_overrides']['at_now'] = [ 'A', 'B', 'D' ]
 
         # Environment variables available to all tasks. See userguide.
+
+        self.items['environment']['ONE'] = '1'
+        self.items['environment']['TWO'] = '2'
+        self.items['environment']['THREE'] = '3'
+        self.items['environment']['FOUR'] = '4'
+
         self.items['environment']['CYLC_TMPDIR'] = '/tmp/$USER/' + sysname
 
         # Set task run time for real mode operation (see system task scripts), 

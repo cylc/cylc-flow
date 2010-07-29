@@ -29,18 +29,15 @@
     TaskA.sh
 
 %ENVIRONMENT
-    NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
     ANIMAL foxy fox
-    REMOTE_HOME $[HOME]
-    TASK_FOO global-${BAZ}
-    FOO_TIME ${CYCLE_TIME} 
+    REMOTE_HOME ${HOME}
+    FOO_TIME $CYCLE_TIME 
 
 %COMMANDLINE
     # TaskA.sh commandline: --file=FILE SENTENCE
     --file=${HOME}/data-$(CYCLE_TIME + 6).nc
     #--foo=$CYCLE_TIME
-    # '$[HOME] evaluates as '$HOME' at execution time, e.g. on a remote machine
-    "the quick brown $ANIMAL went $[HOME]"
+    "the quick brown $ANIMAL went ${HOME}"
 
 %PREREQUISITES
     "obs data ready for $(CYCLE_TIME)"

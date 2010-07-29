@@ -65,10 +65,11 @@ for PRE in $ONE $TWO; do
 done
 
 # EXECUTE THE MODEL ...
+NEXT_CYCLE=$(cylcutil time-calc -a 6)
 
 # create a restart file for the next cycle
 sleep $(( TASK_RUN_TIME_SECONDS / 2 ))
-touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_CYCLE}.restart
 cylc task-message --next-restart-completed
 
 # create forecast outputs

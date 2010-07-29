@@ -48,12 +48,6 @@ The taskdef ENVIRONMENT key is used to put the cycle time
 into the task execution environment in the form expected by the wrapped
 external task (\lstinline=$ANALYSIS_TIME= in this case). 
 
-The \lstinline=$NEXT_CYCLE_TIME= and \lstinline=$NEXT_NEXT_CYCLE_TIME=
-variables defined in the task definition files are used by the external
-``forecast model'' tasks for their restart outputs (so that  
-the minimalist task scripts can avoid doing their own cycle time
-arithmetic).
-
 To run the system follow the {\em Quick Start Guide}
 (Section~\ref{QuickStartGuide}) from the `configure' step onward. 
 {\em Be careful to set an initial cycle time in the past, in real mode,

@@ -29,13 +29,16 @@
     TaskC.sh
 
 %ENVIRONMENT
-    FOO $[BAR##*_]$[BAZ]
-    NEXT_CYCLE_TIME $(CYCLE_TIME + 6)
-    NEXT_NEXT_CYCLE_TIME $(CYCLE_TIME + 12)
+    BAR bar
+    BAZ baz
+    FOO ${BAR##*_}$BAZ
 
 %EXTRA_SCRIPTING
     export HR=${CYCLE_TIME:8:2}
-    export HR=$( cylcutil time-calc --hour )
+    export HR2=$(cylcutil time-calc --hour)
+
+%COMMANDLINE
+    -f -g $HOME ${CYCLE_TIME:8:2} $BAR $ONE $(cylcutil time-calc --hour )
 
 %PREREQUISITES
     "surface pressure field ready for $(CYCLE_TIME)"

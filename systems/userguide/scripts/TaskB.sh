@@ -33,15 +33,17 @@ for PRE in $ONE $TWO; do
 done
 
 # EXECUTE THE MODEL ...
+NEXT_CYCLE=$(cylcutil time-calc -a 6)
+NEXT_NEXT_CYCLE=$(cylcutil time-calc -a 12)
 
 # create a restart file for the next cycle
 sleep $(( TASK_RUN_TIME_SECONDS / 3 ))
-touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_CYCLE}.restart
 cylc task-message --next-restart-completed
 
 # create a restart file for the next next cycle
 sleep $(( TASK_RUN_TIME_SECONDS / 3 ))
-touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE_TIME}.restart
+touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE}.restart
 cylc task-message --next-restart-completed
 
 # create sea state forecast output
