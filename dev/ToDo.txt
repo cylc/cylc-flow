@@ -1,5 +1,11 @@
 To Do
 
+* allow $(CYCLE_HOUR) etc. in output and prereq messages (needed if
+  anyone insists on using actual filenames in messages). 
+
+* userguide system: check-env.sh should check task run-length var is
+  defined, in case user overwrote the system config file.
+
 * configure should check INHERIT targets actually exist.  At the moment
   this causes an exception early on at run time.
 
