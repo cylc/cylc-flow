@@ -17,7 +17,7 @@ import sys, os
 from job_submit import job_submit
 
 class remote_switch( Pyro.core.ObjBase ):
-    "class to take remote system control requests" 
+    "class to take remote suite control requests" 
     # the task manager can take action on these when convenient.
 
     def __init__( self, config, pool, failout_id = None ):
@@ -52,8 +52,8 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if self.locked:
             legal = False
-            self.warning( "refusing remote request (system locked)" )
-            reasons.append( "SYSTEM LOCKED" )
+            self.warning( "refusing remote request (suite locked)" )
+            reasons.append( "SUITE LOCKED" )
 
         return ( legal, ', '.join( reasons ) )
 
@@ -88,7 +88,7 @@ class remote_switch( Pyro.core.ObjBase ):
                 self.real_name[ name ] = name
 
     def task_type_exists( self, name_or_id ):
-        # does a task name or id match a known task type in this system?
+        # does a task name or id match a known task type in this suite?
         name = name_or_id
         if '%' in name_or_id:
             name, tag = name.split('%' )
@@ -118,19 +118,19 @@ class remote_switch( Pyro.core.ObjBase ):
         if not legal:
             return reasons
 
-        self.warning( "system locked by remote request" )
+        self.warning( "suite locked by remote request" )
         self.locked = True
         return "OK"
 
     def unlock( self, user ):
         if user != self.owner:
-            return "This system is owned by " + self.owner
+            return "This suite is owned by " + self.owner
 
         if not self.locked:
-            return "OK (system already unlocked)"
+            return "OK (suite already unlocked)"
 
         else:
-            self.warning( "system unlocked by remote request" )
+            self.warning( "suite unlocked by remote request" )
             self.locked = False
             return "OK"
 
@@ -215,7 +215,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if self.task_type_exists( ins_name ):
             ins = self.translate( ins_id )
 
-        # insert a new task or task group into the system
+        # insert a new task or task group into the suite
         self.warning( "REMOTE: task or group insertion: " + ins )
         if ins == self.failout_id:
             # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
@@ -231,8 +231,8 @@ class remote_switch( Pyro.core.ObjBase ):
         if not legal:
             return reasons
 
-        self.warning( "REMOTE: system hold" )
-        self.pool.set_system_hold()
+        self.warning( "REMOTE: suite hold" )
+        self.pool.set_suite_hold()
         # process, to update state summary
         self.process_tasks = True
         return "OK"
@@ -243,8 +243,8 @@ class remote_switch( Pyro.core.ObjBase ):
         if not legal:
             return reasons
 
-        self.warning( "REMOTE: system resume" )
-        self.pool.unset_system_hold()
+        self.warning( "REMOTE: suite resume" )
+        self.pool.unset_suite_hold()
         # process, to update state summary
         self.process_tasks = True
         return "OK"
@@ -267,7 +267,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return reasons
 
         self.warning( "REMOTE: set hold time" )
-        self.pool.set_system_hold( ctime )
+        self.pool.set_suite_hold( ctime )
         # process, to update state summary
         self.process_tasks = True
         return "OK"
@@ -305,12 +305,12 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return result
 
-    def get_sys_info( self ):
-        self.warning( "REMOTE: system info requested" )
-        return [ self.config.get('system_title'), \
-                self.config.get('system_def_dir'), \
-                self.config.get('system_username'), \
-                self.config.get('system_info') ]
+    def get_suite_info( self ):
+        self.warning( "REMOTE: suite info requested" )
+        return [ self.config.get('suite_title'), \
+                self.config.get('suite_def_dir'), \
+                self.config.get('suite_username'), \
+                self.config.get('suite_info') ]
 
     def get_task_info( self, task_names ):
         self.warning( "REMOTE: task info: " + ','.join(task_names ))
@@ -337,7 +337,7 @@ class remote_switch( Pyro.core.ObjBase ):
         dump = {}
         found = False
         for task in self.tasks:
-            # loop through the system task list
+            # loop through the suite task list
             id = task.id
 
             if id in in_ids_back:

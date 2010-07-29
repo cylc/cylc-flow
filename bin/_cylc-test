@@ -21,25 +21,25 @@ if [[ $# != 0 ]]; then
         echo "Usage: cylc test [options]"
         echo 
         echo "Run an automated test of core cylc functionality using a new copy of"
-        echo "the userguide example system. This should be used to check that new"
+        echo "the userguide example suite. This should be used to check that new"
         echo "developments in the cylc codebase have not introduced serious bugs."
-        echo "The test runs a system registered as 'test'; to watch its progress"
+        echo "The test runs a suite registered as 'test'; to watch its progress"
         echo "use 'cylc view'. Aside from timing differences results should be the"
         echo "same in real or dummy mode."
         echo
         echo "Currently the test does the following:"
-        echo " 1 - Copies the userguide example system definition directory;"
-        echo " 2 - Configures the new system;"
-        echo " 3 - Registers the new system as 'test';"
-        echo " 4 - Starts the system at T0=06Z, with task X set to fail at 12Z;"
-        echo " 5 - Unlocks the running system;"
+        echo " 1 - Copies the userguide example suite definition directory;"
+        echo " 2 - Configures the new suite;"
+        echo " 3 - Registers the new suite as 'test';"
+        echo " 4 - Starts the suite at T0=06Z, with task X set to fail at 12Z;"
+        echo " 5 - Unlocks the running suite;"
         echo " 6 - Sets a stop time at 12Z (i.e. T0+30 hours);"
-        echo " 7 - Waits for the system to stall as result of X failing;"
+        echo " 7 - Waits for the suite to stall as result of X failing;"
         echo " 8 - Inserts a new coldstart task at 06Z (T0+24 hours);"
         echo " 9 - Purges the failed X and dependants through to 00Z (T0+18 hours)"
-        echo "     inclusive, which allows the system to get going again at 06Z;"
-        echo "10 - Waits for the system to shut itself down at the 12Z stop time."
-        echo "11 - Run a single task (startup) from the system with submit." 
+        echo "     inclusive, which allows the suite to get going again at 06Z;"
+        echo "10 - Waits for the suite to shut itself down at the 12Z stop time."
+        echo "11 - Run a single task (startup) from the suite with submit." 
         echo
         echo "Options:"
         echo "  -h, --help   Print this help message and exit."
@@ -56,19 +56,19 @@ if [[ ! -x bin/cylc ]]; then
     exit 1
 fi
 
-# TEST SYSTEM DIRECTORY
-SYS_DIR=systems/TEST
+# TEST SUITE DIRECTORY
+SUITE_DIR=suites/TEST
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-sched.out
-# cylc system log
+# cylc suite log
 LOGRC=$( cylc preferences -p | grep 'logging directory' )
 LOGDIR=${LOGRC#*= }
 LOG=$LOGDIR/test/main
 
 # START FROM A CLEAN SLATE
 echo ">> CLEANING OUT any remnants of previous tests ... "
-  # remove any existing test system
-[[ -d $SYS_DIR ]] && rm -rf $SYS_DIR
+  # remove any existing test suite
+[[ -d $SUITE_DIR ]] && rm -rf $SUITE_DIR
   # unregister any existing registration for test
   # 'register -d' fails if no Pyro nameserver!
 cylc register -g test && cylc register -d test >> $OUT 2>&1
@@ -76,36 +76,36 @@ cylc register -g test && cylc register -d test >> $OUT 2>&1
 rm -f $OUT $OUT_SCHED
 echo done
 
-# COPY THE USERGUIDE EXAMPLE SYSTEM
+# COPY THE USERGUIDE EXAMPLE SUITE
 echo
-echo -n ">> COPYING userguide example system to $SYS_DIR ... "
-cp -r systems/userguide $SYS_DIR > $OUT 2>&1 
+echo -n ">> COPYING userguide example suite to $SUITE_DIR ... "
+cp -r suites/userguide $SUITE_DIR > $OUT 2>&1 
 echo done
 
-# CONFIGURE THE TEST SYSTEM
+# CONFIGURE THE TEST SUITE
 echo
-echo -n ">> CONFIGURING the test system ... "
-cylc configure $SYS_DIR >> $OUT 2>&1
+echo -n ">> CONFIGURING the test suite ... "
+cylc configure $SUITE_DIR >> $OUT 2>&1
 echo done
 
-# REGISTER THE TEST SYSTEM
+# REGISTER THE TEST SUITE
 echo
-echo -n ">> REGISTERING the test system as 'test' ... "
-cylc register $SYS_DIR test >> $OUT 2>&1
+echo -n ">> REGISTERING the test suite as 'test' ... "
+cylc register $SUITE_DIR test >> $OUT 2>&1
 echo done
 
-# START UP THE TEST SYSTEM
+# START UP THE TEST SUITE
 echo
 if ! $dummy_mode; then
     echo ">> STARTING at 2010010106, with FAIL_TASK=TaskX%2010010112"
-    echo "        self.items['environment']['FAIL_TASK'] = 'TaskX%2010010112'" >> $SYS_DIR/system_config.py
+    echo "        self.items['environment']['FAIL_TASK'] = 'TaskX%2010010112'" >> $SUITE_DIR/suite_config.py
 else
-    # use 36 hour clock offset, otherwise the system will catch up to
+    # use 36 hour clock offset, otherwise the suite will catch up to
     # the clock before it finishes (=> longer time to wait for finish).
     echo ">> STARTING at 2010010106, with --clock-offset=36 --fail=TaskX%2010010112"
 fi
 
-# startup errors (e.g. due to lockserver denying access to the system)
+# startup errors (e.g. due to lockserver denying access to the suite)
 # won't be trapped here because we run cylc in the background!
 if $dummy_mode; then
     cylc start -d --clock-offset=36 --fail=TaskX%2010010112 test 2010010106 >> $OUT_SCHED 2>&1 &
@@ -123,9 +123,9 @@ if grep '_cylc-start failed:  1' $OUT_SCHED  > /dev/null; then
 fi
 
 # WAIT FOR ALL TASKS AT 2010010112 TO FINISH 
-# at which point the system is stalled because X failed.
+# at which point the suite is stalled because X failed.
 echo
-echo ">> WAITING for system to stall at 2010010112 due to failed X"
+echo ">> WAITING for suite to stall at 2010010112 due to failed X"
 echo -n "   ."
 READY=false
 while ! $READY; do
@@ -139,9 +139,9 @@ while ! $READY; do
 done
 echo done
 
-# UNLOCK THE SYSTEM
+# UNLOCK THE SUITE
 echo
-echo -n ">> UNLOCKING the system to allow intervention ..."
+echo -n ">> UNLOCKING the suite to allow intervention ..."
 cylc unlock -f test >> $OUT 2>&1
 echo done
 
@@ -164,9 +164,9 @@ echo -n "   ... "
 cylc purge -f test TaskX%2010010112 2010010200 >> $OUT 2>&1
 echo done
 
-# WAIT FOR THE SYSTEM TO FINISH AT 2010010212
+# WAIT FOR THE SUITE TO FINISH AT 2010010212
 echo
-echo ">> WAITING for the system to shut down at 2010010112"
+echo ">> WAITING for the suite to shut down at 2010010112"
 echo -n "   ."
 READY=false
 while ! $READY; do
@@ -188,7 +188,7 @@ echo
 # Logging directory is /home/oliverh/.cylc/log-files/test-submit
 #
 #  > SUBMITTING TASK: /tmp/cylc-2H4HPc </dev/null 1> /home/oliverh/startup%2010010106-haDDeS.out 2> /home/oliverh/startup%2010010106-haDDeS.err &
-echo ">> RUN A SINGLE TASK (startup%2010010106) from the system"
+echo ">> RUN A SINGLE TASK (startup%2010010106) from the suite"
 FOO=$(cylc submit test startup%2010010106 )
 STDOUT=$( echo $FOO | sed -e 's/.*1> //' | sed -e 's/ 2>.*//' )
 STDERR=$( echo $FOO | sed -e 's/.*2> //' | sed -e 's/ &.*$//' )
@@ -204,15 +204,15 @@ while ! $READY; do
 done
 echo done
 
-# DELETE THE SYSTEM DEFINITION DIRECTORY
+# DELETE THE SUITE DEFINITION DIRECTORY
 echo
-echo -n ">> DELETING system definition directory ..."
-rm -rf $SYS_DIR
+echo -n ">> DELETING suite definition directory ..."
+rm -rf $SUITE_DIR
 echo done
 
-# UNREGISTER THE test SYSTEM
+# UNREGISTER THE test SUITE
 echo
-echo -n ">> UNREGISTERING system test ..."
+echo -n ">> UNREGISTERING suite test ..."
 cylc register -d test >> $OUT 2>&1
 echo done
 

@@ -26,20 +26,20 @@ class ll_basic_eco( ll_basic ):
 
         m = re.match( '^(.*)_(devel|test|oper)$', self.cylc_owner )
         if m:
-            (junk, ecoc_system ) = m.groups()
+            (junk, ecoc_suite ) = m.groups()
         else:
             raise SystemExit( "Cylc is not running in an EcoConnect environment" )
 
-        # transform owner username for devel, test, or oper systems
-        # strip off any existing system suffix defined in the taskdef file
+        # transform owner username for devel, test, or oper suites
+        # strip off any existing suite suffix defined in the taskdef file
         m = re.match( '^(.*)_(devel|test|oper)$', owner )
         if m:
             ( owner_name, junk ) = m.groups()
         else:
             owner_name = owner
 
-        # append the correct system suffix
-        owner = owner_name + '_' + ecoc_system
+        # append the correct suite suffix
+        owner = owner_name + '_' + ecoc_suite
 
         ll_basic.set_owner_and_homedir( self, owner )
 
@@ -48,7 +48,7 @@ class ll_basic_eco( ll_basic ):
 
         if 'class' not in dirs:
             # DEFAULT ECOCONNECT LOADLEVELER DIRECTIVES
-            # dirs[ 'class'    ] = self.system !!!! TO DO: WHEN FINAL LL CLASSES CONFIGURED
+            # dirs[ 'class'    ] = self.suite !!!! TO DO: WHEN FINAL LL CLASSES CONFIGURED
             dirs[ 'class' ] = 'test_linux'
 
         ll_basic.__init__( self, task_id, ext_task, task_env, com_line, dirs, extra, logs, owner, host ) 

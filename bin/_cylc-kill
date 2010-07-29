@@ -15,10 +15,10 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc kill [options] SYSTEM [TASK_ID] [CYCLE]
+parser = PromptOptionParser( """cylc kill [options] SUITE [TASK_ID] [CYCLE]
 
 Remove a task, or all tasks with a given cycle time, from a running
-system. See also 'cylc purge'.
+suite. See also 'cylc purge'.
 
 The target task will be forced to a spawn successor, if it has
 not done so already, before being removed, unless you specify the

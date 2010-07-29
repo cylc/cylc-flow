@@ -28,7 +28,7 @@ class task_lock:
     # (a cylc message after that time will cause cylc to complain that
     # it has received a message from a task that has finished running). 
 
-    def __init__( self, task_id=None, user=None, sysname=None, pns_host=None ):
+    def __init__( self, task_id=None, user=None, suitename=None, pns_host=None ):
 
         self.use_lock_server = False
         if 'CYLC_USE_LOCKSERVER' in os.environ:
@@ -56,18 +56,18 @@ class task_lock:
         else:
             self.username = os.environ['USER']
 
-        if sysname:
-            self.system_name = sysname
+        if suitename:
+            self.suite_name = suitename
         else:
-            if 'CYLC_SYSTEM_NAME' in os.environ.keys():
-                self.system_name = os.environ[ 'CYLC_SYSTEM_NAME' ]
+            if 'CYLC_SUITE_NAME' in os.environ.keys():
+                self.suite_name = os.environ[ 'CYLC_SUITE_NAME' ]
             elif self.mode == 'raw':
                 pass
             else:
-                print >> sys.stderr, '$CYLC_SYSTEM_NAME not defined'
+                print >> sys.stderr, '$CYLC_SUITE_NAME not defined'
                 sys.exit(1)
 
-        self.lockgroup = self.username + '.' + self.system_name
+        self.lockgroup = self.username + '.' + self.suite_name
 
         if pns_host:
             self.pns_host = pns_host

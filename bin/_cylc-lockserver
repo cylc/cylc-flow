@@ -19,7 +19,7 @@ import cycle_time
 from registration import registrations
 from lockserver import lockserver, control
 from task_lock import task_lock
-from system_lock import system_lock
+from suite_lock import suite_lock
 
 import Pyro.core, Pyro.errors
 from Pyro.ext.daemonizer import Daemonizer
@@ -29,32 +29,32 @@ def print_heading( heading ):
         print line
         print heading
 
-def check_system_spec( name ):
+def check_suite_spec( name ):
     reg = registrations()
     if reg.is_registered( name ):
-        system_dir = reg.get( name )
+        suite_dir = reg.get( name )
     else:
         reg.print_all()
-        raise SystemExit( "System " + name + " is not registered!" )
-    return system_dir
+        raise SystemExit( "suite " + name + " is not registered!" )
+    return suite_dir
 
 def check_task_spec( task_spec ):
     try:
-        (system, task_id) = task_spec.split( ':' )
+        (suite, task_id) = task_spec.split( ':' )
     except:
-        raise SystemExit( task_spec + " - Please specify SYSTEM:TASK_NAME%CYCLE_TIME" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
         
-    check_system_spec( system )
+    check_suite_spec( suite )
 
     try:
         (name, cycle) = task_id.split( '%' )
     except ValueError:
-        raise SystemExit( task_spec + " - Please specify SYSTEM:TASK_NAME%CYCLE_TIME" )
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
  
     if not cycle_time.is_valid( cycle ):
         raise SystemExit( "Invalid cycle time: " + cycle )
 
-    return ( system, task_id )
+    return ( suite, task_id )
 
 class ServerDaemon( Daemonizer ):
     def __init__( self, pidfile, pns_host, logfile, task_lock=None ):
@@ -103,7 +103,7 @@ class LockServer:
         Pyro.core.initServer()
 
     def start( self ):
-        # CREATE A PYRO pyro_daemon FOR THIS SYSTEM
+        # CREATE A PYRO pyro_daemon FOR THIS SUITE
         # (single threaded prob not necessary for lockserver
         # but it doesn't matter as few connections needed)
 
@@ -138,7 +138,7 @@ if __name__ == "__main__":
 
     usage = """cylc lockserver [options]
 
-The cylc lockserver brokers system and task locks for cylc systems. 
+The cylc lockserver brokers suite and task locks for cylc suites. 
 
 TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
 running simultaneously, whether they are spawned by a cylc scheduler or
@@ -146,9 +146,9 @@ by 'cylc submit'. Traditional lock files cannot easily be used by cylc
 because it is possible for an external task that consists of multiple
 components to start and finish executing on different host machines.
 
-SYSTEM LOCKS prevent multiple instances of entire cylc systems from
+SUITE LOCKS prevent multiple instances of entire cylc suites from
 running simultaneously, even under different registered names (unless
-the system config file states that system is capable of doing this!).
+the suite config file states that suite is capable of doing this!).
 
 Use of the cylc lockserver is optional; see 'cylc preferences --help'.
 
@@ -157,14 +157,14 @@ its parent environment and can be left running indefinitely).
 
 Manual lock acquisition using this command is mainly for testing
 purposes; manual release, however, may be required to remove stale
-locks left after a system or task exits without releasing its lock).""" 
+locks left after a suite or task exits without releasing its lock).""" 
 
     parser = OptionParser( usage )
 
     parser.set_defaults( pns_host= socket.getfqdn(), 
             start=False, debug=False, restart=False, status=False,
-            stop=False, acquire=None, release=None, system_acquire=None,
-            system_acquire_nonex=None, system_release=None, list_all=False )
+            stop=False, acquire=None, release=None, suite_acquire=None,
+            suite_acquire_nonex=None, suite_release=None, list_all=False )
 
     parser.add_option( "--host",
             help="(for --start|restart|debug). Pyro nameserver host "
@@ -187,19 +187,19 @@ locks left after a system or task exits without releasing its lock)."""
             action="store_true", dest="stop" )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
-            metavar="SYSTEM:NAME%CYCLE", action="store", dest="acquire" )
+            metavar="SUITE:NAME%CYCLE", action="store", dest="acquire" )
 
     parser.add_option( "--release-task", help="Release a task lock.",
-            metavar="SYSTEM:NAME%CYCLE", action="store", dest="release" )
+            metavar="SUITE:NAME%CYCLE", action="store", dest="release" )
 
-    parser.add_option( "--acquire-system", help="Acquire an exclusive system lock.",
-            metavar="SYSTEM", action="store", dest="system_acquire" )
+    parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
+            metavar="SUITE", action="store", dest="suite_acquire" )
 
-    parser.add_option( "--acquire-system-nonex", help="Acquire a non-exclusive system lock.",
-            metavar="SYSTEM", action="store", dest="system_acquire_nonex" )
+    parser.add_option( "--acquire-suite-nonex", help="Acquire a non-exclusive suite lock.",
+            metavar="SUITE", action="store", dest="suite_acquire_nonex" )
 
-    parser.add_option( "--release-system", help="Release a system lock.",
-            metavar="SYSTEM", action="store", dest="system_release" )
+    parser.add_option( "--release-suite", help="Release a suite lock.",
+            metavar="SUITE", action="store", dest="suite_release" )
 
     parser.add_option( "-p", "--print", help="Print currently held locks.",
             action="store_true", dest="list_all" )
@@ -215,8 +215,8 @@ locks left after a system or task exits without releasing its lock)."""
     count = 0
     for opt in [ options.start, options.restart, options.stop,
             options.status, options.debug, options.acquire,
-            options.release, options.system_acquire,
-            options.system_acquire_nonex, options.system_release,
+            options.release, options.suite_acquire,
+            options.suite_acquire_nonex, options.suite_release,
             options.list_all, options.clear_all ]:
         if opt:
             count += 1
@@ -230,46 +230,46 @@ locks left after a system or task exits without releasing its lock)."""
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
     if options.acquire:
-        (system, task_id) = check_task_spec( options.acquire )
-        if not task_lock( task_id, user, system, pns_host ).acquire():
+        (suite, task_id) = check_task_spec( options.acquire )
+        if not task_lock( task_id, user, suite, pns_host ).acquire():
             print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.acquire
             sys.exit(1)
         sys.exit(0)
 
     if options.release:
-        (system, task_id) = check_task_spec( options.release )
-        if not task_lock( task_id, user, system, pns_host ).release():
+        (suite, task_id) = check_task_spec( options.release )
+        if not task_lock( task_id, user, suite, pns_host ).release():
             print >> sys.stderr, "ERROR: Failed to release a lock for " + options.release
             sys.exit(1)
         sys.exit(0)
 
-    if options.system_acquire:
-        sysname = options.system_acquire
-        sysdir = check_system_spec( sysname )
-        if not system_lock( pns_host, user, sysname, sysdir, 'scheduler' ).request_system_access( True ):
-            print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.system_acquire
+    if options.suite_acquire:
+        suitename = options.suite_acquire
+        suitedir = check_suite_spec( suitename )
+        if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
+            print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.suite_acquire
             sys.exit(1)
         sys.exit(0)
 
-    if options.system_acquire_nonex:
-        sysname = options.system_acquire_nonex
-        sysdir = check_system_spec( sysname )
-        if not system_lock( pns_host, user, sysname, sysdir, 'scheduler' ).request_system_access( False ):
-            print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.system_acquire_nonex
+    if options.suite_acquire_nonex:
+        suitename = options.suite_acquire_nonex
+        suitedir = check_suite_spec( suitename )
+        if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
+            print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex
             sys.exit(1)
         sys.exit(0)
 
-    if options.system_release:
-        sysname = options.system_release
-        sysdir = check_system_spec( sysname )
-        if not system_lock( pns_host, user, sysname, sysdir, 'scheduler' ).release_system_access():
-            print >> sys.stderr, "ERROR: Failed to release a lock for " + options.system_release
+    if options.suite_release:
+        suitename = options.suite_release
+        suitedir = check_suite_spec( suitename )
+        if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).release_suite_access():
+            print >> sys.stderr, "ERROR: Failed to release a lock for " + options.suite_release
             sys.exit(1)
         sys.exit(0)
 
     if options.list_all:
         try:
-            (task_locks, system_ex, system_nonex ) = control( pns_host ).dump()
+            (task_locks, suite_ex, suite_nonex ) = control( pns_host ).dump()
         except Pyro.errors.ProtocolError, x:
             print x
             print 'This may mean you have attempted to access a dead lockserver.'
@@ -280,16 +280,16 @@ locks left after a system or task exits without releasing its lock)."""
             sys.exit(1)
             #raise
 
-        print_heading( str( len( system_ex ) ) + " exclusive system locks" )
-        for sysdir in system_ex:
-            [ group ] = system_ex[ sysdir ]
-            print " - ", group, '-->', sysdir
+        print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
+        for suitedir in suite_ex:
+            [ group ] = suite_ex[ suitedir ]
+            print " - ", group, '-->', suitedir
 
-        print_heading( str( len( system_nonex ) ) + " non-exclusive system locks" )
-        for sysdir in system_nonex:
-            groups = system_nonex[ sysdir ]
+        print_heading( str( len( suite_nonex ) ) + " non-exclusive suite locks" )
+        for suitedir in suite_nonex:
+            groups = suite_nonex[ suitedir ]
             for group in groups:
-                print " - ", group, '-->', sysdir
+                print " - ", group, '-->', suitedir
 
         print_heading( str( len( task_locks ) ) + " task locks" )
         for lock in task_locks:

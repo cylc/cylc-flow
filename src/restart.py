@@ -28,7 +28,7 @@ class restart( task_pool ):
                 stop_time, pause_time )
 
     def load_tasks( self ):
-        # load initial system state from the configured state dump file
+        # load initial suite state from the configured state dump file
         #--
 
         filename = self.initial_state_dump
@@ -40,7 +40,7 @@ class restart( task_pool ):
         self.log.info( 'Loading initial state from ' + filename )
 
         # The state dump file format is:
-        # system time : <time>
+        # suite time : <time>
         #   OR
         # dummy time : <time>,rate
         #   THEN
@@ -57,7 +57,7 @@ class restart( task_pool ):
 
         # RESET THE TIME TO THE LATEST DUMPED TIME
         # The state dump file first line is:
-        # system time : <time>
+        # suite time : <time>
         #   OR
         # dummy time : <time>,rate
         line1 = lines[0]
@@ -118,14 +118,14 @@ class restart( task_pool ):
 
             elif itask.state.is_submitted() or itask.state.is_running():  
                 # Must have satisfied prerequisites. These tasks may have
-                # finished after the system was shut down, but as we
+                # finished after the suite was shut down, but as we
                 # can't know that for sure we have to re-submit them.
                 itask.log( 'NORMAL', "starting in READY state" )
                 itask.state.set_status( 'waiting' )
                 itask.prerequisites.set_all_satisfied()
 
             elif itask.state.is_failed():
-                # Re-submit these unless the system operator says not to. 
+                # Re-submit these unless the suite operator says not to. 
                 if no_reset:
                     itask.log( 'WARNING', "starting in FAILED state: manual reset required" )
                     itask.prerequisites.set_all_satisfied()

@@ -25,7 +25,7 @@ class coldstart( task_pool ):
                 stop_time, pause_time )
 
     def load_tasks( self ):
-        # load initial system state from configured tasks and start time
+        # load initial suite state from configured tasks and start time
         #--
         
         start_time = self.start_time

@@ -1,0 +1,36 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+%NAME
+    ext
+
+%DESCRIPTION
+    Provides the external input required by the forecast task.
+    Depends only on the suite startup task at start time.
+
+%TYPE
+    free, contact
+
+%CONTACT_DELAY
+    1.0 hr
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    ext.sh
+
+%COLDSTART_PREREQUISITES
+    "startup%$(CYCLE_TIME) finished"
+
+%OUTPUTS
+    "external data ready for $(CYCLE_TIME)"

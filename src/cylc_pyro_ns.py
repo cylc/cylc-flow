@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-# Different cylc systems must register their Pyro objects under
+# Different cylc suites must register their Pyro objects under
 # different "group names" in the Pyro Nameserver so that they don't 
 # interfere with each other. 
 

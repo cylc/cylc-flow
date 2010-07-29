@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-# Different cylc systems must register their Pyro objects under
+# Different cylc suites must register their Pyro objects under
 # different "group names" in the Pyro Nameserver so that they don't 
 # interfere with each other. 
 
@@ -20,12 +20,12 @@ import os, re
 import Pyro.naming, Pyro.errors
 
 class pyrex:
-    def __init__( self, hostname, sysname, username=os.environ['USER'] ):
+    def __init__( self, hostname, suitename, username=os.environ['USER'] ):
         self.hostname = hostname
 
         self.rootgroup = ':cylc'
         self.usergroup = self.rootgroup + '.' + username
-        self.groupname = self.usergroup + '.' + sysname
+        self.groupname = self.usergroup + '.' + suitename
 
         # LOCATE THE PYRO NAMESERVER
         try:
@@ -56,7 +56,7 @@ class pyrex:
             print "\nERROR: " + self.groupname + " is already registered with Pyro (" + str( len( objs )) + " objects)."
             for obj in objs:
                 print '  + ' + obj[0]
-            print "Either you are running system already", sysname, "OR the previous run failed"
+            print "Either you are running suite already", suitename, "OR the previous run failed"
             print "to shut down cleanly, in which case you can clean up like this:"
             print 
             print "pyro-nsc deletegroup " + self.groupname + "   #<-------(manual cleanup)" 
@@ -71,7 +71,7 @@ class pyrex:
 
         Pyro.core.initServer()
 
-        # CREATE A PYRO DAEMON FOR THIS SYSTEM
+        # CREATE A PYRO DAEMON FOR THIS SUITE
         self.pyro_daemon = Pyro.core.Daemon()
         self.pyro_daemon.useNameServer(self.ns)
 

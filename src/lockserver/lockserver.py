@@ -43,9 +43,9 @@ class lockserver( Pyro.core.ObjBase ):
         # task locks
         self.locked = {}
 
-        # system locks
-        self.exclusive = {}       # exclusive[ system_dir ] = [ groupname ]
-        self.inclusive = {}       # inclusive[ system_dir ] = [ groupname, ... ]
+        # suite locks
+        self.exclusive = {}       # exclusive[ suite_dir ] = [ groupname ]
+        self.inclusive = {}       # inclusive[ suite_dir ] = [ groupname, ... ]
 
         self.configure_logging( logfile, loglevel )
 
@@ -78,8 +78,8 @@ class lockserver( Pyro.core.ObjBase ):
     def get_lock_id( self, lockgroup, task_id ):
         return lockgroup + ':' + task_id
 
-    def get_sys_string( self, lockgroup, system_dir ):
-        return lockgroup + '-->' + system_dir
+    def get_suite_string( self, lockgroup, suite_dir ):
+        return lockgroup + '-->' + suite_dir
 
     def acquire( self, task_id, lockgroup ):
         id = self.get_lock_id( lockgroup, task_id )
@@ -116,20 +116,20 @@ class lockserver( Pyro.core.ObjBase ):
             self.release( id, group )
 
         n = len( self.exclusive.keys() )
-        self.log.info( "Clearing " + str(n) + " exclusive system locks") 
-        for sysdir in self.exclusive.keys():
-            [ group ] = self.exclusive[ sysdir ]
-            self.release_system_access( sysdir, group )
+        self.log.info( "Clearing " + str(n) + " exclusive suite locks") 
+        for suitedir in self.exclusive.keys():
+            [ group ] = self.exclusive[ suitedir ]
+            self.release_suite_access( suitedir, group )
 
         n = 0
-        for sysdir in self.inclusive.keys():
-            groups = self.inclusive[ sysdir ]
+        for suitedir in self.inclusive.keys():
+            groups = self.inclusive[ suitedir ]
             n += len( groups )
-        self.log.info( "Clearing " + str(n) + " non-exlusive system locks") 
-        for sysdir in self.inclusive.keys():
-            groups = self.inclusive[ sysdir ]
+        self.log.info( "Clearing " + str(n) + " non-exlusive suite locks") 
+        for suitedir in self.inclusive.keys():
+            groups = self.inclusive[ suitedir ]
             for group in groups:
-                self.release_system_access( sysdir, group )
+                self.release_suite_access( suitedir, group )
 
     def is_locked( self, task_id, lockgroup ):
         id = self.get_lock_id( lockgroup, task_id )
@@ -138,29 +138,29 @@ class lockserver( Pyro.core.ObjBase ):
         else:
             return False
 
-    def get_system_access( self, system_dir, lockgroup, cylc_mode, request_exclusive ):
-        # EXCLUSIVE: one only named system can use system_dir at once
+    def get_suite_access( self, suite_dir, lockgroup, cylc_mode, request_exclusive ):
+        # EXCLUSIVE: one only named suite can use suite_dir at once
         #   - submit can attempt to get a task lock IF via the same name
-        # INCLUSIVE: multiple named systems can use system_dir at once
+        # INCLUSIVE: multiple named suites can use suite_dir at once
         #   - submit can attempt to get a task lock always
 
-        sys_descr = self.get_sys_string( lockgroup, system_dir ) 
+        suite_descr = self.get_suite_string( lockgroup, suite_dir ) 
 
         result = True
         reason = "granted"
  
         if cylc_mode != 'submit':
-            if ( request_exclusive and system_dir in self.inclusive ) or \
-                    ( not request_exclusive and system_dir in self.exclusive ):
+            if ( request_exclusive and suite_dir in self.inclusive ) or \
+                    ( not request_exclusive and suite_dir in self.exclusive ):
                 result = False
-                reason = "inconsistent exclusivity for " + system_dir
+                reason = "inconsistent exclusivity for " + suite_dir
                 self.log.warning( reason ) 
                 return ( False, reason )
  
         if request_exclusive:
-            if system_dir in self.exclusive:
-                name = self.exclusive[ system_dir ][0]
-                already = self.get_sys_string( name, system_dir )
+            if suite_dir in self.exclusive:
+                name = self.exclusive[ suite_dir ][0]
+                already = self.get_suite_string( name, suite_dir )
 
                 if cylc_mode == 'submit':
                     # grant access only if lockgroup is the same
@@ -168,23 +168,23 @@ class lockserver( Pyro.core.ObjBase ):
                         pass
                     else:
                         result = False
-                        reason = self.get_sys_string( name, system_dir ) + " in exclusive use"
+                        reason = self.get_suite_string( name, suite_dir ) + " in exclusive use"
                 else:
-                    # no exclusive access to any system already in use
+                    # no exclusive access to any suite already in use
                     result = False
-                    reason = sys_descr + " in exclusive use" 
+                    reason = suite_descr + " in exclusive use" 
             else:
-                # system dir not already in self.exclusive
+                # suite dir not already in self.exclusive
                 if cylc_mode == 'submit':
                     # grant access but don't set a lock
                     pass 
                 else: 
                     # grant exclusive access
-                    self.exclusive[ system_dir ] = [ lockgroup ]
+                    self.exclusive[ suite_dir ] = [ lockgroup ]
         else:
             # inclusive access requested
-            if system_dir in self.inclusive:
-                names = self.inclusive[ system_dir ]
+            if suite_dir in self.inclusive:
+                names = self.inclusive[ suite_dir ]
 
                 if cylc_mode == 'submit':
                     # granted
@@ -193,60 +193,60 @@ class lockserver( Pyro.core.ObjBase ):
                     # grant access unless same name already in use
                     if lockgroup in names:
                         result = False
-                        reason =  lockgroup + '-->' + system_dir + " already in use"
+                        reason =  lockgroup + '-->' + suite_dir + " already in use"
                     else:
                         # granted
-                        self.inclusive[ system_dir ].append( lockgroup )
+                        self.inclusive[ suite_dir ].append( lockgroup )
             else:
                 if cylc_mode == 'submit':
                     # granted
                     pass
                 else:
                     # granted
-                    self.inclusive[ system_dir ] = [ lockgroup ]
+                    self.inclusive[ suite_dir ] = [ lockgroup ]
  
         if result:
             if cylc_mode == 'submit':
-                self.log.info( "granted system access " + lockgroup + " --> " + system_dir )
+                self.log.info( "granted suite access " + lockgroup + " --> " + suite_dir )
             else:
-                self.log.info( "acquired system lock " + lockgroup + " --> " + system_dir )
+                self.log.info( "acquired suite lock " + lockgroup + " --> " + suite_dir )
         else:
             if cylc_mode == 'submit':
-                self.log.warning( "refused system access " + lockgroup + " --> " + system_dir )
+                self.log.warning( "refused suite access " + lockgroup + " --> " + suite_dir )
             else:
-                self.log.warning( "refused system lock " + lockgroup + " --> " + system_dir )
+                self.log.warning( "refused suite lock " + lockgroup + " --> " + suite_dir )
             self.log.warning( " " + reason )
 
         return ( result, reason )
 
 
-    def release_system_access( self, system_dir, lockgroup ):
+    def release_suite_access( self, suite_dir, lockgroup ):
         result = True
-        if system_dir in self.exclusive:
-            if lockgroup not in self.exclusive[ system_dir ]:
-                #self.log.warning( "system release group name error" )
+        if suite_dir in self.exclusive:
+            if lockgroup not in self.exclusive[ suite_dir ]:
+                #self.log.warning( "suite release group name error" )
                 result = False
             else:
-                del self.exclusive[ system_dir ]
+                del self.exclusive[ suite_dir ]
                 result = True
-        elif system_dir in self.inclusive:
-            names = self.inclusive[ system_dir ]
+        elif suite_dir in self.inclusive:
+            names = self.inclusive[ suite_dir ]
             if lockgroup not in names:
-                #self.log.warning( "system release group name error" )
+                #self.log.warning( "suite release group name error" )
                 result = False
             elif len( names ) == 1:
-                del self.inclusive[ system_dir ]
+                del self.inclusive[ suite_dir ]
                 result = True
             else:
-                self.inclusive[ system_dir ].remove( lockgroup )
+                self.inclusive[ suite_dir ].remove( lockgroup )
                 result = True
         else:
-            #self.log.warning( "erroneous system release request" )
+            #self.log.warning( "erroneous suite release request" )
             result = False
         if result:
-            self.log.info( "released system lock " + lockgroup + " --> " + system_dir )
+            self.log.info( "released suite lock " + lockgroup + " --> " + suite_dir )
         else:
-            self.log.warning( "failed to release system lock " + lockgroup + " --> " + system_dir )
+            self.log.warning( "failed to release suite lock " + lockgroup + " --> " + suite_dir )
 
         return result
 

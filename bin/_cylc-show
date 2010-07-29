@@ -19,18 +19,18 @@ def print_heading( strng ):
         print underline
         print strng
 
-parser = NoPromptOptionParser_u( """cylc show [options] SYSTEM [TASK_NAME] [TASK_ID]
+parser = NoPromptOptionParser_u( """cylc show [options] SUITE [TASK NAME] [TASK ID]
 
-Print descriptive information about a running system, or a task class
-from the system, or complete information about a specific task from the
-system (current state of its prerequisites and outputs and, for contact
+Print descriptive information about a running suite, or a task class
+from the suite, or complete information about a specific task from the
+suite (current state of its prerequisites and outputs and, for contact
 tasks, whether or not the delayed start time is up).""",
-["""TASK_NAME            Name of a system task class - print description.
-   TASK_ID              ID (NAME%YYYYMMDDHH) - also print prerequisites etc."""] )
+["""TASK NAME            Name of a suite task class - print description.
+   TASK ID              ID (NAME%YYYYMMDDHH) - also print prerequisites etc."""] )
 
 (options, args) = parser.parse_args()
 
-prnt_sys = False
+prnt_suite = False
 prnt_name = False
 prnt_id = False
 
@@ -44,21 +44,21 @@ if len(args) == 2:
     else:
         prnt_id = True
 else:
-    prnt_sys = True
+    prnt_suite = True
  
-sysname = parser.get_system_name()
+suitename = parser.get_suite_name()
 
 host = parser.get_pns_host()
 group = parser.get_groupname()
 
 god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
 
-if prnt_sys:
-    # print system information and exit
-    ( title, sysdef_dir, username, info ) = god.get_sys_info()
+if prnt_suite:
+    # print suite information and exit
+    ( title, suitedef_dir, username, info ) = god.get_suite_info()
 
     print title
-    print ' * ' + username + ': ' + sysname + ' --> ' + sysdef_dir
+    print ' * ' + username + ': ' + suitename + ' --> ' + suitedef_dir
     for item in info.keys():
         print ' + ' + item + ': ' +  info[item]
 
@@ -68,7 +68,7 @@ if prnt_sys:
 # print task description
 info = god.get_task_info( [ name ] )
 
-print_heading( 'Task ' + name + ' in ' + sysname + ':' )
+print_heading( 'Task ' + name + ' in ' + suitename + ':' )
 for name in info.keys():
     for line in info[name]:
         print '  ' + line
@@ -83,7 +83,7 @@ id = target
 result = god.get_task_requisites( [ id ] )
 
 if id not in result:
-    print "Task " + id + " not found in " + sysname
+    print "Task " + id + " not found in " + suitename
     sys.exit(1)
 
 # PREREQUISTIES AND OUTPUTS

@@ -23,7 +23,7 @@ class nopid:
         # Abdicating instead when they start running prevents excess
         # waiting tasks without preventing instances from running in
         # parallel if the opportunity arises. BUT this does mean that a
-        # failed or lame task's successor won't exist until the system
+        # failed or lame task's successor won't exist until the suite
         # operator gets the offender to spawn and die.
 
         # Note that tasks with no previous instance dependence and  NO

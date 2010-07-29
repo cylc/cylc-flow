@@ -15,9 +15,9 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc verbosity [options] SYSTEM LEVEL
+parser = PromptOptionParser( """cylc verbosity [options] SUITE LEVEL
 
-Change the logging level of a running system.  Note that if you choose
+Change the logging level of a running suite.  Note that if you choose
 'warning', for example, only warning messages and worse will be logged.
 The 'info' level is appropriate under most circumstances.""",
 ['LEVEL                debug, info, warning, error, or critical'] )
@@ -27,7 +27,7 @@ vchoices = ['debug','info', 'warning', 'error', 'critical']
 (options, args) = parser.parse_args()
 
 if len( args ) != 2:
-    parser.error( "System name and logging level required." )
+    parser.error( "suite name and logging level required." )
 
 verbosity = args[1]
 if verbosity not in vchoices:

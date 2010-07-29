@@ -14,14 +14,14 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser("""cylc lock [options] SYSTEM 
+parser = PromptOptionParser("""cylc lock [options] SUITE 
 
-Tell a running system not to comply with subsequent intervention
+Tell a running suite not to comply with subsequent intervention
 commands. The lock/unlock commands are a safety device to help guard
-against inadvertant intervention in a system.
+against inadvertant intervention in a suite.
 
 Note that this is unrelated to the functionality provided by the cylc
-lockserver, which prevents multiple instances of a task or system from
+lockserver, which prevents multiple instances of a task or suite from
 running simultaneously.""")
 
 (options, args) = parser.parse_args()

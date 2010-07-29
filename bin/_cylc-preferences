@@ -31,7 +31,7 @@ parser.add_option( "-p", "--print",
         action="store_true", default=False, dest="print_all" )
  
 parser.add_option( "--reset", 
-        help="Revert to system default settings.",
+        help="Revert to default settings.",
         action="store_true", default=False, dest="set_defaults" )
 
 parser.add_option( "--use-lockserver", 

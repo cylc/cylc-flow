@@ -12,24 +12,21 @@ import socket
 
 if __name__ == "__main__":
 
-    parser = OptionParser( """cylc view [options] [SYSTEM]
+    parser = OptionParser( """cylc view [options] [SUITE]
 
-Display real time information about cylc systems, including the current
-state of all tasks, scheduler log files, task stdout and stderr files, 
-and task prerequisites and outputs. Note that the task state information
-displayed comes from task proxy objects in the scheduler - how to
-monitor the *real* tasks depends on the job submission method used.
+Display real time information about running cylc suites, including the
+current state of all tasks, scheduler log files, task stdout and stderr
+log, and task prerequisites and outputs.
 
-If SYSTEM is supplied, a single monitor application will appear when
-the named system starts up (or immediately, with --preload).
+If SUITE is supplied, a single monitor application will appear when
+the named suite starts up (or immediately, with --preload).
 
-If SYSTEM is NOT supplied, you can select which system to monitor from 
-an auto-updating list of currently running systems.
+If SUITE is NOT supplied, you can select which suite to monitor from 
+an auto-updating list of currently running suites.
 
-Cylc system monitors reconnect if left running while their target system
-is shut down and restarted. 
+Cylc monitors reconnect if their target suite is restarted. 
 
-SYSTEM                  Registered name of a cylc system""")
+SUITE                  Registered name of a cylc suite""")
 
     parser.add_option( "--host",
             help="Pyro nameserver host (defaults to local host name).",
@@ -37,15 +34,15 @@ SYSTEM                  Registered name of a cylc system""")
             dest="pns_host" )
 
     parser.add_option( "-u", "--user",
-            help="Owner of the SYSTEM, if you are not the owner.",
+            help="Owner of the SUITE, if you are not the owner.",
             metavar="USERNAME", default=os.environ["USER"],
             action="store", dest="username" )
 
     parser.add_option( "-p", "--preload", 
-            help="Load the task list from the system definition "
+            help="Load the task list from the suite definition "
             "directory, so that a monitor can be displayed before the "
-            "system starts up (normally the task list is acquired "
-            " dynamically from a running systems via Pyro).",
+            "suite starts up (normally the task list is acquired "
+            " dynamically from a running suite via Pyro).",
             action="store_true", default=False, dest="preload" )
 
     ( options, args ) = parser.parse_args()
@@ -55,11 +52,11 @@ SYSTEM                  Registered name of a cylc system""")
  
     if len( args ) == 0:
         use_chooser = True
-        system = None
+        suite = None
     elif len( args ) == 1:
         use_chooser = False
-        system = args[0]
-        group = ':cylc.' + user + '.' + system
+        suite = args[0]
+        group = ':cylc.' + user + '.' + suite
     else:
         parser.error( "Wrong number of arguments" )
 
@@ -78,19 +75,19 @@ SYSTEM                  Registered name of a cylc system""")
         app = chooser( pns_host, imagedir, image_subdir )
 
     elif options.preload:
-        # get system definition directory
+        # get suite definition directory
         reg = registrations( options.username )
-        if reg.is_registered( system ):
-            system_dir = reg.get( system )
+        if reg.is_registered( suite ):
+            suite_dir = reg.get( suite )
         else:
             reg.print_all()
-            raise SystemExit( "System " + system + " is not registered!" )
+            raise SystemExit( "suite " + suite + " is not registered!" )
 
-        # get system logging directory
-        logging_dir = rcfile.get_system_logging_dir( system )
-        app = standalone_monitor_preload( group, system, system_dir, logging_dir, pns_host, imagedir, image_subdir )
+        # get suite logging directory
+        logging_dir = rcfile.get_suite_logging_dir( suite )
+        app = standalone_monitor_preload( group, suite, suite_dir, logging_dir, pns_host, imagedir, image_subdir )
     else:
-        app = standalone_monitor( group, system, pns_host, imagedir, image_subdir )
+        app = standalone_monitor( group, suite, pns_host, imagedir, image_subdir )
 
     gtk.main()
 

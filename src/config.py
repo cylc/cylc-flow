@@ -17,22 +17,22 @@ from interp_env import interp_self, interp_local, replace_delayed
 
 class config:
     def __init__( self, reg_name ):
-        # derived class for system configuration must call this base
+        # derived class for suite configuration must call this base
         # class init FIRST then override settings where required.
 
         self.items = {}
-        self.system_name = reg_name
+        self.suite_name = reg_name
         self.set_defaults()
 
     def set_defaults( self ):
         self.items[ 'task_list' ] = []
 
-        self.items[ 'system_title' ] = 'SYSTEM TITLE (override me in system config)'
-        self.items[ 'system_registered_name' ] = self.system_name
-        self.items[ 'allow_simultaneous_system_instances' ] = False
-        self.items[ 'system_username' ] = os.environ['USER']
+        self.items[ 'suite_title' ] = 'SUITE TITLE (override me in suite config)'
+        self.items[ 'suite_registered_name' ] = self.suite_name
+        self.items[ 'allow_simultaneous_suite_instances' ] = False
+        self.items[ 'suite_username' ] = os.environ['USER']
 
-        self.items[ 'system_info' ] = {}
+        self.items[ 'suite_info' ] = {}
         self.items[ 'task_groups' ] = {}
         self.items[ 'environment' ] = ordered_dict.ordered_dict()
         self.items['job_submit_overrides'] = {}
@@ -41,13 +41,13 @@ class config:
         self.items['job_submit_method'] = 'background'
 
         reg = registrations()
-        self.items['system_def_dir' ] = reg.get( self.system_name )
+        self.items['suite_def_dir' ] = reg.get( self.suite_name )
 
     def check_environment( self ):
 
         env = self.items[ 'environment' ]
         # Convert all values to strings in case the user set integer
-        # values, say, in the system config file.
+        # values, say, in the suite config file.
         for var in env.order():
             env[ var ] = str( env[ var ] )
 
@@ -68,7 +68,7 @@ class config:
             # convert to integer to deal with leading zeroes (06 == 6)
             startup_hour = int( startup_cycle[8:10] )
             legal_hours = [ int(i) for i in self.items[ 'legal_startup_hours' ] ]
-            print "Legal startup hours for " + self.system_name + ":",
+            print "Legal startup hours for " + self.suite_name + ":",
             for item in legal_hours:
                 print item,
             print

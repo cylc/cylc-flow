@@ -11,11 +11,11 @@
 
 # TO DO: UPDATE, MOVE, OR DELETE THIS DOCUMENTATION:
         # REMOTE TASKS MUST DEFINE (the remote) CYLC_DIR and
-        # CYLC_SYSTEM_DIR in the taskdef file %ENVIRONMENT key
+        # CYLC_SUITE_DIR in the taskdef file %ENVIRONMENT key
         # (full path with no interpolation).  The new (remote) values
         # will will replace the original (local) values in big_env
         # above (then full path to remote task script not required - if
-        # in the remote $CYLC_SYSTEM_DIR/scripts).
+        # in the remote $CYLC_SUITE_DIR/scripts).
 
 # Job submission (external task execution) base class. Derived classes
 # must be added to job_submit_methods.py
@@ -121,7 +121,7 @@ class job_submit:
         #  * then interpolate any references to cylc global variables
         #    (this is usually not necessary if we export globals before
         #    task-specifics, but doing so allows users to override local
-        #    environment variables in the system_config file ... which
+        #    environment variables in the suite_config file ... which
         #    may be useful).
         #  * then interpolate any remaining variables from the local env
         #    (leaving them as literal '$FOO' could be a mistake for 
@@ -195,7 +195,7 @@ class job_submit:
         #    owner = self.interp_str( owner )
 
         if job_submit.dummy_mode:
-            # ignore defined owners in dummy mode, so that systems
+            # ignore defined owners in dummy mode, so that suites
             # containing owned tasks can be tested in dummy mode outside
             # of their normal execution environment.
             owner = None
@@ -340,7 +340,6 @@ class job_submit:
                     print "Job submission failed", e
                     success = False
             else:
-                #print "OS.SYSTEM: " + self.command
                 os.system( self.command )
                 success = True
 
@@ -386,7 +385,6 @@ class job_submit:
                     print "Failed to execute scp command", e
                     success = False
             else:
-                #print "OS.SYSTEM: " + command_1
                 os.system( command_1 )
                 success = True
 
@@ -433,7 +431,6 @@ class job_submit:
                     success = False
  
             else:
-                #print "OS.SYSTEM: " + command_2
                 os.system( command_2 )
                 success = True
 

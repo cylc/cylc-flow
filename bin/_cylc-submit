@@ -21,18 +21,18 @@ from registration import registrations
 from job_submit import job_submit
 import cylc_pyro_ns, cycle_time, pimp_my_logger
 from preferences import prefs
-from system_lock import system_lock
+from suite_lock import suite_lock
 
-usage = """cylc submit [options] SYSTEM TASK_ID
+usage = """cylc submit [options] SUITE TASK_ID
 
 Submit a single task to run as the scheduler would submit it. This can
 be used as an easy way to invoke single tasks for any reason, but it is
 particularly useful for testing external task scripts during forecast
-system development. When the cylc messaging interface is invoked by
+suite development. When the cylc messaging interface is invoked by
 standalone tasks it simply directs all messages to stdout.
 
 arguments:
-   SYSTEM          Registered name of the target system.
+   SUITE           Registered name of the target suite.
    TASK_ID         Identity of the task to run (NAME%YYYYMMDDHH).""" 
 
 
@@ -54,7 +54,7 @@ def commandline_parser():
     parser.add_option( "--scheduler",
             help="(EXPERIMENTAL) tell the task to run as a scheduler task, "
             "i.e. to attempt to communicate with a task proxy in a running "
-            "cylc system (you probably do not want to do this).",
+            "cylc suite (you probably do not want to do this).",
             action="store_true", dest="sched" )
 
     return parser
@@ -64,19 +64,19 @@ parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
 if len( args ) != 2:
-    parser.error( "System name and task ID required." )
+    parser.error( "suite name and task ID required." )
 
 # get input args_------------------------------------------------------
 name = args[0]
 task_id = args[1]
 
-# find location of the system task and config modules------------------
+# find location of the suite task and config modules------------------
 reg = registrations()
 if reg.is_registered( name ):
-    system_dir = reg.get( name )
+    suite_dir = reg.get( name )
 else:
     reg.print_all()
-    raise SystemExit( "System " + name + " is not registered!" )
+    raise SystemExit( "suite " + name + " is not registered!" )
 
 # check task ----------------------------------------------------------
 try:
@@ -98,37 +98,37 @@ pyro_groupname = ':cylc.' + username + '.' + name
 
 # load cylcrc file----------------------------------------------------
 rcfile = prefs()
-logging_dir = rcfile.get_system_logging_dir( name + '-submit' ) 
+logging_dir = rcfile.get_suite_logging_dir( name + '-submit' ) 
 logging_lvl = rcfile.get_logging_level()
 
 use_lockserver = False
 if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     use_lockserver = True
-    # request system access from the lock server
-    # submit does not need to call release_system_access()
-    system_lock = system_lock( pns_host, username, name, system_dir, 'submit' )
-    if not system_lock.request_system_access():
+    # request suite access from the lock server
+    # submit does not need to call release_suite_access()
+    suite_lock = suite_lock( pns_host, username, name, suite_dir, 'submit' )
+    if not suite_lock.request_suite_access():
         raise SystemExit( 'locked out!' )
 
-# provide access to the system scripts and source modules--------------
+# provide access to the suite scripts and source modules--------------
 # for external processes launched by this program.
 
-# add system scripts to $PATH
-os.environ[ 'PATH' ] += ':' + system_dir + '/scripts'
-# add system Python modules to $PYTHONPATH
-os.environ[ 'PYTHONPATH' ] += ':' + system_dir
+# add suite scripts to $PATH
+os.environ[ 'PATH' ] += ':' + suite_dir + '/scripts'
+# add suite Python modules to $PYTHONPATH
+os.environ[ 'PYTHONPATH' ] += ':' + suite_dir
 
-# provide access to the system source modules for THIS program---------
-sys.path.append( system_dir )
-sys.path.append( os.path.join( system_dir, 'tasks' ))
+# provide access to the suite source modules for THIS program---------
+sys.path.append( suite_dir )
+sys.path.append( os.path.join( suite_dir, 'tasks' ))
 
-# import system-specific cylc modules now------------------------------ 
-from system_config import system_config 
+# import suite-specific cylc modules now------------------------------ 
+from suite_config import suite_config 
 import task
 import remote_switch
 
-# load system configuration--------------------------------------------
-config = system_config( name )
+# load suite configuration--------------------------------------------
+config = suite_config( name )
 config.put( 'logging_dir', logging_dir ) 
 config.job_submit_config()
 
@@ -139,7 +139,7 @@ pimp_my_logger.pimp_it( log, task_name, logging_dir, \
 
 if use_lockserver:
     # LOCATE THE PYRO NAMESERVER---------------------------------------
-    # (required for system locking)
+    # (required for suite locking)
     nameserver = cylc_pyro_ns.ns( pns_host )
 
 # set global (all tasks) environment variables-------------------------
@@ -150,8 +150,8 @@ else:
 config.put_env_prepend( 'CYLC_NS_HOST', pns_host ) 
 config.put_env_prepend( 'CYLC_NS_GROUP', pyro_groupname )
 config.put_env_prepend( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
-config.put_env_prepend( 'CYLC_SYSTEM_DIR', system_dir )
-config.put_env_prepend( 'CYLC_SYSTEM_NAME', name )
+config.put_env_prepend( 'CYLC_SUITE_DIR', suite_dir )
+config.put_env_prepend( 'CYLC_SUITE_NAME', name )
 config.put_env_prepend( 'CYLC_USE_LOCKSERVER', str( use_lockserver) )
 
 config.check_environment()

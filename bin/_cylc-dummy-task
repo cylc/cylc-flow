@@ -15,7 +15,7 @@
 
 # This program could (and  in fact used to) make direct calls the task proxy
 # incoming() method, but now it invokes 'cylc message' as a subprocess
-# in order to more exactly model real system tasks. 
+# in order to more exactly model real suite tasks. 
 
 import cycle_time
 import datetime
@@ -58,7 +58,6 @@ class dummy_task:
                 sys.exit(1)
         else:
                 command = ' '.join( command_list )
-                #print "OS.SYSTEM: " + command
                 os.system( command )
 
 

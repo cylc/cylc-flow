@@ -15,10 +15,10 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc insert [options] SYSTEM ID
+parser = PromptOptionParser( """cylc insert [options] SUITE ID
 
-Insert a single task or a task group into a running system. Task groups must be
-defined in the system config file located in the system definition directory.
+Insert a single task or a task group into a running suite. Task groups must be
+defined in the suite config file located in the suite definition directory.
 
 Inserted tasks will spawn successors as normal, unless they are 'oneoff' tasks.
 See also 'cylc submit', for running single tasks without a scheduler.""",
@@ -28,7 +28,7 @@ See also 'cylc submit', for running single tasks without a scheduler.""",
 (options, args) = parser.parse_args()
 
 if len(args) != 2:
-    parser.error( "System name and one Task or Group ID required" )
+    parser.error( "suite name and one Task or Group ID required" )
 
 target = args[1]
 

@@ -10,8 +10,7 @@
 #         |________________________|
 
 
-# a Pyro object proving miminalist connection check (to see if a system
-# is running)
+# a Pyro object for miminal connection to check if a suite is running
 
 import Pyro.core
 

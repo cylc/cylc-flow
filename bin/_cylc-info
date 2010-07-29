@@ -15,15 +15,15 @@ import os, sys
 from optparse import OptionParser
 from registration import registrations
 
-parser = OptionParser( usage = """cylc info [options] SYSTEM 
+parser = OptionParser( usage = """cylc info [options] SUITE 
 
-Retrieve the system-specific information about a registered system. This
-command does not interact with a running system, it simply accesses the
-'system_info' module in a system definition directory. The same
-information can be retrieved from a running system by 'cylc show'.
+Retrieve the suite-specific information about a registered suite. This
+command does not interact with a running suite, it simply accesses the
+'suite_info' module in a suite definition directory. The same
+information can be retrieved from a running suite by 'cylc show'.
 
 Arguments:
-   SYSTEM     Registered name of the target system.""")
+   SUITE     Registered name of the target suite.""")
 
 (options, args) = parser.parse_args()
 
@@ -32,20 +32,20 @@ if len( args ) != 1:
 
 name = args[0]
 
-# find location of the system task and config modules
+# find location of the suite task and config modules
 reg = registrations()
 if reg.is_registered( name ):
-    system_dir = reg.get( name )
+    suite_dir = reg.get( name )
     reg.print_reg( name )
 else:
     reg.print_all()
-    raise SystemExit( "System " + name + " is not registered!" )
+    raise SystemExit( "suite " + name + " is not registered!" )
 
-# prepend system Python modules to the python search path
-sys.path.insert(0, system_dir )
+# prepend suite Python modules to the python search path
+sys.path.insert(0, suite_dir )
 
-# import system-specific help module
-import system_info
+# import suite-specific help module
+import suite_info
 
-# print system_specific information
-print system_info.info
+# print suite_specific information
+print suite_info.info

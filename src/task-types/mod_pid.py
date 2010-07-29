@@ -70,7 +70,7 @@ class pid:
         # later restart outputs of an earlier previous instance, and
         # thereby start too soon (we want this to happen ONLY if the
         # previous task fails and is subsequently made to spawn and 
-        # die by the system operator).
+        # die by the suite operator).
 
         if self.has_spawned():
             # already spawned

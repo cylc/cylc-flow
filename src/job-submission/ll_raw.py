@@ -19,7 +19,7 @@ class ll_raw( job_submit ):
     def write_jobfile( self, JOBFILE ):
 
         # get full path of task script (it could be defined relative
-        # to system scripts dir in the taskdef file).
+        # to suite scripts dir in the taskdef file).
         orig_file = which.which( self.task )
 
         # read original and count '#@ queue' directives, in case is

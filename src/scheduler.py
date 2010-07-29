@@ -23,7 +23,7 @@ import state_summary
 import accelerated_clock 
 from job_submit import job_submit
 from registration import registrations
-from system_lock import system_lock
+from suite_lock import suite_lock
 from life import minimal
 
 import task     # loads task_classes
@@ -55,13 +55,13 @@ class scheduler:
         self.parser.add_option( "--exclude",
                 help="Comma-separated list of tasks to exclude at startup "
                 "(this option has the same effect as deleting tasks from "
-                "task_list.py in the configured system definition directory).",
+                "task_list.py in the configured suite definition directory).",
                 metavar="LIST", action="store", dest='exclude' )
 
         self.parser.add_option( "--include",
                 help="Comma-separated list of tasks to include at startup "
                 "(this option has the same effect as deleting all *other* tasks "
-                "from task_list.py in the configured system definition directory).",
+                "from task_list.py in the configured suite definition directory).",
                 metavar="LIST", action="store", dest='include' )
 
         self.parser.add_option( "--host",
@@ -70,11 +70,11 @@ class scheduler:
 
         self.parser.add_option( "-d", "--dummy-mode",
                 help="Replace each task with a program that masquerades "
-                "as the the real thing, and run the system on an accelerated clock.",
+                "as the the real thing, and run the suite on an accelerated clock.",
                 action="store_true", dest="dummy_mode" )
 
         self.parser.add_option( "-p", "--practice-mode",
-                help="Clone an existing system in dummy mode using new state "
+                help="Clone an existing suite in dummy mode using new state "
                 "and logging directories to avoid corrupting the original. "
                 "Failed tasks will not be reset to waiting in the clone.",
                 action="store_true", dest="practice_mode" )
@@ -131,10 +131,10 @@ class scheduler:
         # DERIVED CLASSES PROVIDE:
         #( self.options, self.args ) = self.parser.parse_args()
 
-        # get system name
-        self.system_name = self.args[0]
+        # get suite name
+        self.suite_name = self.args[0]
         self.username = os.environ['USER']
-        self.banner[ 'system name' ] = self.system_name
+        self.banner[ 'suite name' ] = self.suite_name
 
         # get Pyro nameserver hostname
         if not self.options.pns_host:
@@ -198,9 +198,9 @@ class scheduler:
         else:
             self.use_quick_elim = True
 
-        self.logging_dir = self.rcfile.get_system_logging_dir( self.system_name, self.practice ) 
+        self.logging_dir = self.rcfile.get_suite_logging_dir( self.suite_name, self.practice ) 
         self.logging_level = self.rcfile.get_logging_level()
-        state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name , self.practice )
+        state_dump_dir = self.rcfile.get_suite_statedump_dir( self.suite_name , self.practice )
         self.state_dump_file = os.path.join( state_dump_dir, 'state' )
 
         self.use_lockserver = False
@@ -209,25 +209,25 @@ class scheduler:
             self.banner[ 'use lockserver' ] = 'True'
             self.use_lockserver = True
 
-    def get_system_def_dir( self ):
-        # find location of the system task and config modules
+    def get_suite_def_dir( self ):
+        # find location of the suite task and config modules
         reg = registrations()
-        if reg.is_registered( self.system_name ):
-            self.system_dir = reg.get( self.system_name )
+        if reg.is_registered( self.suite_name ):
+            self.suite_dir = reg.get( self.suite_name )
         else:
             reg.print_all()
-            raise SystemExit( "System " + self.system_name + " is not registered!" )
+            raise SystemExit( "suite " + self.suite_name + " is not registered!" )
 
-        self.banner[ 'system definition' ] = self.system_dir
+        self.banner[ 'suite definition' ] = self.suite_dir
 
     def configure_pyro( self ):
         if self.practice:
-            # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SYSTEM.
-            sysname = self.system_name + "-practice"
+            # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SUITE.
+            suitename = self.suite_name + "-practice"
         else:
-            sysname = self.system_name
+            suitename = self.suite_name
 
-        self.pyro = cylc_pyro_server.pyrex( self.pns_host, sysname )
+        self.pyro = cylc_pyro_server.pyrex( self.pns_host, suitename )
 
         self.banner[ 'Pyro nameserver group' ] = self.pyro.get_groupname()
 
@@ -236,31 +236,31 @@ class scheduler:
         self.pyro.connect( self.lifecheck, 'minimal' )
 
     def configure_environment( self ):
-        # provide access to the system scripts and source modules
+        # provide access to the suite scripts and source modules
         # for external processes launched by this program.
 
-        # prepend system scripts to $PATH (prepend in case this is a subsystem!)
-        # (NOTE this is still somewhat dangerous: if a subsystem task script
+        # prepend suite scripts to $PATH (prepend in case this is a subsuite!)
+        # (NOTE this is still somewhat dangerous: if a subsuite task script
         # that should be executable but isn't has the same filename as a task in
-        # the parent system, the parent file will be found and executed).
-        os.environ['PATH'] = self.system_dir + '/scripts:' + os.environ['PATH'] 
-        # prepend add system Python modules to $PYTHONPATH (prepend, as above)
-        os.environ['PYTHONPATH'] = self.system_dir + ':' + os.environ['PYTHONPATH']
+        # the parent suite, the parent file will be found and executed).
+        os.environ['PATH'] = self.suite_dir + '/scripts:' + os.environ['PATH'] 
+        # prepend add suite Python modules to $PYTHONPATH (prepend, as above)
+        os.environ['PYTHONPATH'] = self.suite_dir + ':' + os.environ['PYTHONPATH']
 
-        # provide access to the system source modules for THIS program---------
-        # prepend to the module search path in case this is a subsystem
-        sys.path.insert(0, os.path.join( self.system_dir, 'tasks' ))
-        sys.path.insert(0, self.system_dir )
+        # provide access to the suite source modules for THIS program---------
+        # prepend to the module search path in case this is a subsuite
+        sys.path.insert(0, os.path.join( self.suite_dir, 'tasks' ))
+        sys.path.insert(0, self.suite_dir )
 
-    def load_system_config( self ):
+    def load_suite_config( self ):
         # TO DO: PUTENV STUFF BELOW COULD GO STRAIGHT TO JOB_SUBMIT
         # ENVIRONMENT (NOT NEEDED IN CONFIG?)
 
-        # import system-specific cylc modules now
-        from system_config import system_config 
+        # import suite-specific cylc modules now
+        from suite_config import suite_config 
 
-        # load system configuration
-        self.config = system_config( self.system_name )
+        # load suite configuration
+        self.config = suite_config( self.suite_name )
 
         self.config.check_task_groups()
         self.config.job_submit_config( self.dummy_mode )
@@ -275,8 +275,8 @@ class scheduler:
         self.config.put_env( 'CYLC_NS_HOST',  str( self.pns_host ) )  # may be an IP number
         self.config.put_env( 'CYLC_NS_GROUP',  self.pyro.get_groupname() )
         self.config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
-        self.config.put_env( 'CYLC_SYSTEM_DIR', self.system_dir )
-        self.config.put_env( 'CYLC_SYSTEM_NAME', self.system_name )
+        self.config.put_env( 'CYLC_SUITE_DIR', self.suite_dir )
+        self.config.put_env( 'CYLC_SUITE_NAME', self.suite_name )
         self.config.put_env( 'CYLC_USE_LOCKSERVER', str( self.use_lockserver) )
         if self.dummy_mode:
             self.config.put_env( 'CYLC_CLOCK_RATE', str( self.clock_rate ) )
@@ -290,11 +290,11 @@ class scheduler:
 
         self.config.check_environment()
 
-        self.exclusive_system_lock = not self.config.get( 'allow_simultaneous_system_instances' )
+        self.exclusive_suite_lock = not self.config.get( 'allow_simultaneous_suite_instances' )
 
     def back_up_statedump_file( self ):
        # back up the configured state dump (i.e. the one that will be used
-       # by the system unless in practice mode, but not necessarily the
+       # by the suite unless in practice mode, but not necessarily the
        # initial one). 
        if os.path.exists( self.state_dump_file ):
            backup = self.state_dump_file + '.' + datetime.datetime.now().isoformat()
@@ -306,7 +306,7 @@ class scheduler:
                raise SystemExit( "ERROR: State dump file copy failed" )
 
     def configure_dummy_mode_clock( self ):
-        # system clock for accelerated time in dummy mode
+        # suite clock for accelerated time in dummy mode
         self.clock = accelerated_clock.clock( 
                 int(self.clock_rate),
                 int(self.clock_offset),
@@ -314,10 +314,10 @@ class scheduler:
 
         self.pyro.connect( self.clock, 'clock' )
 
-    def configure_system_state_summary( self ):
-        # remotely accessible system state summary
-        self.system_state = state_summary.state_summary( self.config, self.dummy_mode )
-        self.pyro.connect( self.system_state, 'state_summary')
+    def configure_suite_state_summary( self ):
+        # remotely accessible suite state summary
+        self.suite_state = state_summary.state_summary( self.config, self.dummy_mode )
+        self.pyro.connect( self.suite_state, 'state_summary')
 
     def configure_dead_letter_box( self ):
         # NOT USED
@@ -341,13 +341,13 @@ class scheduler:
 
     def configure( self ):
         self.load_preferences()
-        self.get_system_def_dir()
+        self.get_suite_def_dir()
         self.configure_pyro()
         self.configure_lifecheck()
         self.configure_environment()
         self.configure_dummy_mode_clock()
-        self.load_system_config()
-        self.configure_system_state_summary()
+        self.load_suite_config()
+        self.configure_suite_state_summary()
         self.configure_job_submission()
 
         # required before remote switch
@@ -362,14 +362,14 @@ class scheduler:
 
         if self.use_lockserver:
             if self.practice:
-                sysname = self.system_name + '-practice'
+                suitename = self.suite_name + '-practice'
             else:
-                sysname = self.system_name
+                suitename = self.suite_name
 
-            # request system access from the lock server
-            lock = system_lock( self.pns_host, self.username,
-                    sysname, self.system_dir, 'scheduler' )
-            if not lock.request_system_access( self.exclusive_system_lock ):
+            # request suite access from the lock server
+            lock = suite_lock( self.pns_host, self.username,
+                    suitename, self.suite_dir, 'scheduler' )
+            if not lock.request_suite_access( self.exclusive_suite_lock ):
                 raise SystemExit( 'locked out!' )
             else:
                 self.lock_acquired = True
@@ -382,7 +382,7 @@ class scheduler:
 
         if self.pause_time:
             # TO DO: HANDLE STOP AND PAUSE TIMES THE SAME WAY?
-            self.pool.set_system_hold( self.pause_time )
+            self.pool.set_suite_hold( self.pause_time )
 
         print "\nSTARTING\n"
 
@@ -403,12 +403,12 @@ class scheduler:
                 self.pool.negotiate()
                 self.pool.run_tasks()
                 self.pool.cleanup()
-                # spawn after cleanup in case the system stalled
+                # spawn after cleanup in case the suite stalled
                 # unspawned at max runahead.
                 self.pool.spawn()
                 self.pool.dump_state()
 
-                self.system_state.update( self.pool.tasks, self.clock, \
+                self.suite_state.update( self.pool.tasks, self.clock, \
                         self.pool.paused(), self.pool.will_pause_at(), \
                         self.remote.halt, self.pool.will_stop_at() )
 
@@ -445,13 +445,13 @@ class scheduler:
         if self.use_lockserver:
             # do this last
             if self.practice:
-                sysname = self.system_name + '-practice'
+                suitename = self.suite_name + '-practice'
             else:
-                sysname = self.system_name
+                suitename = self.suite_name
 
             if self.lock_acquired:
-                print "Releasing system lock"
-                lock = system_lock( self.pns_host, self.username,
-                        sysname, self.system_dir, 'scheduler' )
-                if not lock.release_system_access():
-                    print >> sys.stderr, 'failed to release system!'
+                print "Releasing suite lock"
+                lock = suite_lock( self.pns_host, self.username,
+                        suitename, self.suite_dir, 'scheduler' )
+                if not lock.release_suite_access():
+                    print >> sys.stderr, 'failed to release suite!'

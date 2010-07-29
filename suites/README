@@ -1,0 +1,3 @@
+This directory contains example cylc suites. External suites should be
+maintained in their own repositories with tags to indicate version
+compatibility with cylc.

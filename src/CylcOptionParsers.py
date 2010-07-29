@@ -14,7 +14,7 @@
 
 # TO DO: CLEAN UP OR REDESIGN THESE CLASSES.
 
-import os, sys
+import os
 import socket
 from optparse import OptionParser
 
@@ -25,13 +25,13 @@ class NoPromptOptionParser_u( OptionParser ):
 
         usage += """
 
-If you are not the owner of the target system, the username must be
+If you are not the owner of the target suite, the username must be
 supplied so that the Pyro nameserver group name can be inferred.
 
 Arguments:
-   SYSTEM               Registered name of the target system.""" 
+   SUITE                Registered name of the target suite.""" 
 
-        self.n_args = 1  # system name
+        self.n_args = 1  # suite name
         if extra_args:
             for arg in extra_args:
                 usage += '\n   ' + arg
@@ -40,7 +40,7 @@ Arguments:
         OptionParser.__init__( self, usage )
 
         self.add_option( "-u", "--user",
-                help="Owner of the target system, defaults to $USER. "
+                help="Owner of the target suite, defaults to $USER. "
                 "Needed to infer the Pyro nameserver group name.",
                 metavar="USERNAME", default=os.environ["USER"],
                 action="store", dest="username" )
@@ -51,7 +51,7 @@ Arguments:
                 dest="pns_host" )
 
         self.add_option( "-p", "--practice",
-                help="Target a system running in practice mode.", 
+                help="Target a suite running in practice mode.", 
                 action="store_true", default=False, dest="practice" )
 
     def parse_args( self ):
@@ -59,12 +59,12 @@ Arguments:
         (options, args) = OptionParser.parse_args( self )
 
         if len( args ) == 0:
-            self.error( "Please supply a target system name" )
+            self.error( "Please supply a target suite name" )
         elif len( args ) > self.n_args:
             self.error( "Too many arguments" )
 
-        # system name
-        self.system_name = args[0]
+        # suite name
+        self.suite_name = args[0]
 
         # user name 
         self.username = options.username  # see default above!
@@ -77,15 +77,15 @@ Arguments:
         return ( options, args )
 
 
-    def get_system_name( self ):
-        return self.system_name
+    def get_suite_name( self ):
+        return self.suite_name
 
     def get_pns_host( self ):
         return self.pns_host
 
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE
-        groupname = ':cylc.' + self.username + '.' + self.system_name
+        groupname = ':cylc.' + self.username + '.' + self.suite_name
         if self.practice:
             groupname += '-practice'
         return groupname
@@ -98,12 +98,12 @@ class NoPromptOptionParser( OptionParser ):
 
         usage += """
 
-You must be the owner of the target system in order to use this command.
+You must be the owner of the target suite in order to use this command.
 
 arguments:
-   SYSTEM               Registered name of the target system.""" 
+   SUITE                Registered name of the target suite.""" 
 
-        self.n_args = 1  # system name
+        self.n_args = 1  # suite name
         if extra_args:
             for arg in extra_args:
                 usage += '\n   ' + arg
@@ -118,7 +118,7 @@ arguments:
                 dest="pns_host" )
 
         self.add_option( "-p", "--practice",
-                help="Target a system running in practice mode.", 
+                help="Target a suite running in practice mode.", 
                 action="store_true", default=False, dest="practice" )
 
         self.username = os.environ['USER']
@@ -128,12 +128,12 @@ arguments:
         (options, args) = OptionParser.parse_args( self )
 
         if len( args ) == 0:
-            self.error( "Please supply a target system name" )
+            self.error( "Please supply a target suite name" )
         elif len( args ) > self.n_args:
             self.error( "Too many arguments" )
 
-        # system name
-        self.system_name = args[0]
+        # suite name
+        self.suite_name = args[0]
 
         # nameserver host
         self.pns_host = options.pns_host   # see default above!
@@ -143,15 +143,15 @@ arguments:
         return ( options, args )
 
 
-    def get_system_name( self ):
-        return self.system_name
+    def get_suite_name( self ):
+        return self.suite_name
 
     def get_pns_host( self ):
         return self.pns_host
 
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE
-        groupname = ':cylc.' + self.username + '.' + self.system_name
+        groupname = ':cylc.' + self.username + '.' + self.suite_name
         if self.practice:
             groupname += '-practice'
         return groupname
@@ -180,7 +180,7 @@ class PromptOptionParser( NoPromptOptionParser ):
         return (options, args)
 
     def prompt( self, reason ):
-        msg =  reason + " '" + self.system_name + "'"
+        msg =  reason + " '" + self.suite_name + "'"
 
         if self.force:
             return True

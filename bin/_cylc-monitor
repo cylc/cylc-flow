@@ -27,18 +27,15 @@ from CylcOptionParsers import NoPromptOptionParser_u
 
 compress = True
 
-parser = NoPromptOptionParser_u( """cylc monitor [options] SYSTEM 
+parser = NoPromptOptionParser_u( """cylc monitor [options] SUITE 
 
 A terminal-based monitor that displays the state of all tasks in the
-target system. DEPRECATED - USE THE cylc view GUI MONITOR INSTEAD. 
-
-THIS PROGRAM MONITORS TASK PROXY OBJECTS INSIDE THE SCHEDULER, NOT
-EXTERNAL SYSTEM TASKS (how to do that obviously depends on the job
-submission method used by each task).""")
+target suite. DEPRECATED - USE THE cylc view GUI MONITOR INSTEAD. 
+""")
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "
-        "is only useful for relatively small systems (i.e. a few tasks).",
+        "is only useful for relatively small suites (i.e. a few tasks).",
         action="store_true", default=False, dest="align_columns" )
 
 parser.add_option( "--shortnames", help="Display short task names, if defined.",
@@ -46,15 +43,15 @@ parser.add_option( "--shortnames", help="Display short task names, if defined.",
 
 ( options, args ) = parser.parse_args()
 
-system_name = parser.get_system_name()
+suite_name = parser.get_suite_name()
 pns_host = parser.get_pns_host()
 groupname = parser.get_groupname()
 
-# get systems currently registered in the Pyro nameserver
+# get suites currently registered in the Pyro nameserver
 ns_groups = cylc_pyro_ns.ns( pns_host )
 
 if ns_groups.registered( groupname ):
-    print "System: " + system_name
+    print "suite: " + suite_name
 else:
     print "No " + groupname + " group registered with Pyro yet, waiting ..." 
 
@@ -183,7 +180,7 @@ try:
                     tmp = re.sub( '.', ' ', tmp )
                     task_info[ rt ][name] = tmp
 
-            # now loop through all tasks in the system and assign their
+            # now loop through all tasks in the suite and assign their
             # display info to the correct place in the task_info structure
             for task_id in task_ids:
 
@@ -231,11 +228,11 @@ try:
 
             # MONITOR HEADER and CURRENT TIME
             blit = []
-            # SYSTEM NAME, NUMBER OF TASKS, DUMMY MODE
+            # SUITE NAME, NUMBER OF TASKS, DUMMY MODE
             foo = header
-            bar = system_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
+            bar = suite_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
             foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
-            foo = re.sub( '.{' + str(len(system_name)) + '}$', system_name, foo )
+            foo = re.sub( '.{' + str(len(suite_name)) + '}$', suite_name, foo )
 
             blit.append( '\033[1;37;43m' + foo + ctrl_end )
 

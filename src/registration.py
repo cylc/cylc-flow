@@ -14,7 +14,7 @@ import pickle
 import os, sys, re
 import pwd
 
-# cylc system registration module
+# cylc suite registration module
 
 class registrations:
     def __init__( self, user=None ):
@@ -25,7 +25,7 @@ class registrations:
             self.readonly = False
             home = os.environ['HOME']
         else:
-            # attempt to read another user's system registration
+            # attempt to read another user's suite registration
             self.readonly = True
             try:
                 home = pwd.getpwnam( user )[5]
@@ -33,7 +33,7 @@ class registrations:
                 #raise SystemExit(x)
                 raise SystemExit('ERROR, user not found: ' + user )
 
-        # filename used to store system registrations
+        # filename used to store suite registrations
         file = os.path.join( home, '.cylc', 'registrations' )
         self.filename = file
 
@@ -53,9 +53,9 @@ class registrations:
             self.load_from_file()
 
     def load_from_file( self ):
-        #print "Loading your cylc system registrations"
+        #print "Loading your cylc suite registrations"
         if not os.path.exists( self.filename ):
-            # no systems registered yet, so the file does not exist
+            # no suites registered yet, so the file does not exist
             return
 
         input = open( self.filename, 'rb' )
@@ -87,7 +87,7 @@ class registrations:
             return False
 
     def get( self, name ):
-        # return system directory registered under name
+        # return suite directory registered under name
         if self.is_registered( name ):
             return self.registrations[ name ]
         else:
@@ -148,9 +148,9 @@ if __name__ == '__main__':
 
     reg = registrations( 'REGISTRATIONS' )
 
-    reg.register( 'foo', 'systems/userguide' )
-    reg.register( 'bar', 'systems/userguide' )
-    reg.register( 'bar', 'systems/userguidex' )
+    reg.register( 'foo', 'suites/userguide' )
+    reg.register( 'bar', 'suites/userguide' )
+    reg.register( 'bar', 'suites/userguidex' )
 
     reg.print_all()
     reg.dump_to_file()

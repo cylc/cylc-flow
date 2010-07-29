@@ -15,14 +15,14 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from Pyro.errors import NamingError
 
-parser = PromptOptionParser( """cylc unlock [options] SYSTEM 
+parser = PromptOptionParser( """cylc unlock [options] SUITE 
 
-Tell a running system to comply with subsequent intervention commands.
+Tell a running suite to comply with subsequent intervention commands.
 The lock/unlock commands are a safety device to help guard against
-inadvertant intervention in a system.
+inadvertant intervention in a suite.
 
 Note that this is unrelated to the functionality provided by the cylc
-lockserver, which prevents multiple instances of a task or system
+lockserver, which prevents multiple instances of a task or suite
 from running simultaneously.""")
 
 (options, args) = parser.parse_args()

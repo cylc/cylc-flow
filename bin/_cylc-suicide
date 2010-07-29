@@ -39,13 +39,13 @@ parser.add_option( "-t", "--task-identity",
         help="Task identity, defaults to $TASK_ID.",
         action="store", dest="task_id" )
 
-parser.add_option( "-s", "--system",
-        metavar="SYSTEM",
-        help="The name of the system hosting the target task proxy object.",
-        action="store", dest="system_name" )
+parser.add_option( "-s", "--suite",
+        metavar="SUITE",
+        help="The name of the suite hosting the target task proxy object.",
+        action="store", dest="suite_name" )
 
 parser.add_option( "-u", "--user",
-        help="Owner of the target system, defaults to $USER. Needed "
+        help="Owner of the target suite, defaults to $USER. Needed "
         "to infer the Pyro nameserver groupname",
         metavar="USERNAME", action="store", dest="username" )
 
@@ -87,8 +87,8 @@ else:
     username = os.environ[ 'USER' ] 
 
 # NAMESERVER GROUP NAME-------------------------------------------------
-if options.system_name:
-    groupname = username + '_' + options.system_name
+if options.suite_name:
+    groupname = username + '_' + options.suite_name
 elif 'CYLC_NS_GROUP' in os.environ.keys():
     groupname = os.environ[ 'CYLC_NS_GROUP' ]
 

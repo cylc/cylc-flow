@@ -77,7 +77,7 @@ class monitor:
         about.set_copyright( "(c) Hilary Oliver, NIWA" )
         about.set_comments( 
 """
-Cylc View is a real time system monitor for Cylc.
+Cylc View is a real time suite monitor for Cylc.
 """ )
         about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/dew.jpg" ))
@@ -369,15 +369,15 @@ Cylc View is a real time system monitor for Cylc.
 
         if task_id not in result:
             warning_dialog( 
-                    "Task proxy " + task_id + " not found in " + self.system_name + \
+                    "Task proxy " + task_id + " not found in " + self.suite_name + \
                  ".\nTasks are removed once they are no longer needed.").warn()
             return
         
-        #self.update_tb( tb, 'Task ' + task_id + ' in ' +  self.system_name + '\n\n', [bold])
+        #self.update_tb( tb, 'Task ' + task_id + ' in ' +  self.suite_name + '\n\n', [bold])
         self.update_tb( tb, 'TASK ', [bold] )
         self.update_tb( tb, task_id, [bold, blue])
-        self.update_tb( tb, ' in SYSTEM ', [bold] )
-        self.update_tb( tb, self.system_name + '\n\n', [bold, blue])
+        self.update_tb( tb, ' in SUITE ', [bold] )
+        self.update_tb( tb, self.suite_name + '\n\n', [bold, blue])
 
         [ pre, out, extra_info ] = result[ task_id ]
 
@@ -496,12 +496,12 @@ Cylc View is a real time system monitor for Cylc.
         self.label_status = gtk.Label( "status..." )
         self.label_mode = gtk.Label( "mode..." )
         self.label_time = gtk.Label( "time..." )
-        self.label_sysname = gtk.Label( name )
+        self.label_suitename = gtk.Label( name )
 
         hbox = gtk.HBox()
 
         eb = gtk.EventBox()
-        eb.add( self.label_sysname )
+        eb.add( self.label_suitename )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) )
         hbox.pack_start( eb, True )
 
@@ -536,7 +536,7 @@ Cylc View is a real time system monitor for Cylc.
     def check_connection( self ):
         # called on a timeout in the gtk main loop, tell the log viewer
         # to reload if the connection has been lost and re-established,
-        # which probably means the cylc system was shutdown and
+        # which probably means the cylc suite was shutdown and
         # restarted.
         try:
             cylc_pyro_client.client( self.pns_host, self.groupname ).get_proxy( 'minimal' )
@@ -564,7 +564,7 @@ Cylc View is a real time system monitor for Cylc.
                 self.get_pyro( 'minimal' )
             except:
                 if not warned:
-                    print "waiting for system " + self.system_name + ".",
+                    print "waiting for suite " + self.suite_name + ".",
                     warned = True
                 else:
                     print '.',
@@ -572,7 +572,7 @@ Cylc View is a real time system monitor for Cylc.
             else:
                 print '.'
                 sys.stdout.flush()
-                time.sleep(1) # wait for system to start
+                time.sleep(1) # wait for suite to start
                 break
             time.sleep(1)
 
@@ -583,8 +583,8 @@ Cylc View is a real time system monitor for Cylc.
         self.task_list = ss.get_config( 'task_list' )
         self.shortnames = ss.get_config( 'task_list_shortnames' )
 
-    def __init__(self, groupname, system_name, pns_host, imagedir, lamp_subdir ):
-        self.system_name = system_name
+    def __init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir ):
+        self.suite_name = suite_name
         self.groupname = groupname
         self.pns_host = pns_host
         self.imagedir = imagedir
@@ -598,7 +598,7 @@ Cylc View is a real time system monitor for Cylc.
 
         self.log_colors = color_rotator()
 
-        # Get list of tasks in the system
+        # Get list of tasks in the suite
         self.load_task_list()
 
         self.translate_task_names( self.shortnames )
@@ -646,9 +646,9 @@ Cylc View is a real time system monitor for Cylc.
         self.t.start()
 
 class standalone_monitor( monitor ):
-    def __init__(self, groupname, system_name, pns_host, imagedir, lamp_subdir ):
+    def __init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir ):
         gobject.threads_init()
-        monitor.__init__(self, groupname, system_name, pns_host, imagedir, lamp_subdir)
+        monitor.__init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir)
  
     def delete_event(self, widget, event, data=None):
         monitor.delete_event( self, widget, event, data )
@@ -660,13 +660,13 @@ class standalone_monitor( monitor ):
 
 
 class standalone_monitor_preload( standalone_monitor ):
-    def __init__(self, groupname, system_name, system_dir, logging_dir, pns_host, imagedir, lamp_subdir ):
+    def __init__(self, groupname, suite_name, suite_dir, logging_dir, pns_host, imagedir, lamp_subdir ):
         self.logdir = logging_dir
-        self.system_dir = system_dir
-        standalone_monitor.__init__(self, groupname, system_name, pns_host, imagedir, lamp_subdir)
+        self.suite_dir = suite_dir
+        standalone_monitor.__init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir)
  
     def load_task_list( self ):
-        sys.path.append( self.system_dir )
+        sys.path.append( self.suite_dir )
         import task_list
         self.task_list = task_list.task_list
         self.shortnames = task_list.task_list_shortnames

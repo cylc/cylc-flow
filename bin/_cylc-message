@@ -43,7 +43,7 @@ usage = """cylc message [options] [MESSAGE]
 THIS COMMAND IS DEPRECATED. Use task-started, task-message,
 task-finished, and task-failed instead.
 
-Send a message to a task proxy object in a running cylc system.
+Send a message to a task proxy object in a running cylc suite.
 
 For use by external tasks to update the state of the proxy objects that
 represent them in a running cylc scheduler, in which case it gets most
@@ -54,8 +54,8 @@ If invoked by a task that does not belong to a cylc scheduler (e.g. by
 nameserver to task proxy objects in a running scheduler.
 
 It can also be used to send messages manually to tasks in a running
-system, in which case most of its inputs can be supplied on the
-command line. This command currently does not respect the system
+suite, in which case most of its inputs can be supplied on the
+command line. This command currently does not respect the suite
 lock and is not aware of practice mode, but there should be no need to
 for manual invocation of cylc message if you are not a cylc developer. 
 
@@ -73,13 +73,13 @@ parser.add_option( "-t", "--task-identity",
         help="Task identity, defaults to $TASK_ID.",
         action="store", dest="task_id" )
 
-parser.add_option( "-s", "--system",
-        metavar="SYSTEM",
-        help="The name of the system hosting the target task proxy object.",
-        action="store", dest="system_name" )
+parser.add_option( "-s", "--suite",
+        metavar="SUITE",
+        help="The name of the suite hosting the target task proxy object.",
+        action="store", dest="suite_name" )
 
 parser.add_option( "-u", "--user",
-        help="Owner of the target system, defaults to $USER. Needed "
+        help="Owner of the target suite, defaults to $USER. Needed "
         "to infer the Pyro nameserver groupname",
         metavar="USERNAME", action="store", dest="username" )
 
@@ -163,8 +163,8 @@ else:
     username = os.environ[ 'USER' ] 
 
 # NAMESERVER GROUP NAME-------------------------------------------------
-if options.system_name:
-    groupname = username + '^' + options.system_name
+if options.suite_name:
+    groupname = username + '^' + options.suite_name
 elif 'CYLC_NS_GROUP' in os.environ.keys():
     groupname = os.environ[ 'CYLC_NS_GROUP' ]
 else:

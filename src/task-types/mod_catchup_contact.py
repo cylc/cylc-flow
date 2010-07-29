@@ -27,7 +27,7 @@
 # real time streamflow observations), but when catching up (e.g.
 # starting along way behind real time) it would be counter productive
 # for TopNet to get more than the minimum 0-12 hours ahead of NZLAM.
-# E.g. if TopNet is say 18 hours ahead of NZLAM when the system is
+# E.g. if TopNet is say 18 hours ahead of NZLAM when the suite is
 # stopped, we don't want to assume catching up on restart as that would
 # result in a 12 hour fuzzy prerequisites window that would cause TopNet
 # to wait on the next NZLAM instead of running immediately.

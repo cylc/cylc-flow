@@ -15,9 +15,9 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc nudge [options] SYSTEM 
+parser = PromptOptionParser( """cylc nudge [options] SUITE 
 
-Cause the cylc task processing loop to be invoked in a running system.
+Cause the cylc task processing loop to be invoked in a running suite.
 The cylc userguide explains when you might want to use this command.
 """ )
 

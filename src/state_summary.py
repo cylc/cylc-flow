@@ -14,7 +14,7 @@ import Pyro.core
 import logging
 
 class state_summary( Pyro.core.ObjBase ):
-    "class to supply system state summary to external monitoring programs"
+    "class to supply suite state summary to external monitoring programs"
 
     def __init__( self, config, dummy_mode ):
         Pyro.core.ObjBase.__init__(self)

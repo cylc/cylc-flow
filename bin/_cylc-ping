@@ -17,28 +17,28 @@ import Pyro.errors
 import cylc_pyro_ns
 import cylc_pyro_client
 
-parser = OptionParser( """cylc ping [options] [SYSTEM]
+parser = OptionParser( """cylc ping [options] [SUITE]
     
-Check if a particular cylc system is running, or list all running systems. 
+Check if a particular cylc suite is running, or list all running suites. 
 
-This command first attempts to get a proxy for a particular system
+This command first attempts to get a proxy for a particular suite
 object from the Pyro Nameserver, then it attempts to call a method on
 the remote object (the former condition is necessary but not sufficient
-to show that a system is running, because it is possible for a system
+to show that a suite is running, because it is possible for a suite
 to abort without deregistering its Pyro Nameserver objects).
 
-If you are not the owner of the target system, the username must be
+If you are not the owner of the target suite, the username must be
 supplied so that the Pyro nameserver group name can be inferred.
 
 Arguments:
-SYSTEM            Name of a cylc system to check on """ )
+SUITE             Name of a cylc suite to check on """ )
 
 #parser.add_option( "-e", "--error", 
-#        help="Exit with non-zero error status if SYSTEM is not running.",
+#        help="Exit with non-zero error status if SUITE  is not running.",
 #        action="store_true", default=False, dest="error" )
 
 parser.add_option( "-u", "--user",
-        help="Owner of the target system, defaults to $USER. "
+        help="Owner of the target suite, defaults to $USER. "
         "Needed to infer the Pyro nameserver group name.",
         metavar="USERNAME", default=os.environ["USER"],
         action="store", dest="username" )
@@ -49,7 +49,7 @@ parser.add_option( "--host",
         dest="pns_host" )
 
 parser.add_option( "-p", "--practice",
-        help="Target a system running in practice mode.", 
+        help="Target a suite running in practice mode.", 
         action="store_true", default=False, dest="practice" )
 
 ( options, args ) = parser.parse_args()
@@ -59,9 +59,9 @@ user = options.username
 
 groups = []
 if len(args) == 1:
-    sysname = args[0]
+    suitename = args[0]
     # TO DO: groupname calc should be centralised
-    groups = [ ':cylc.' + user + '.' + sysname ]
+    groups = [ ':cylc.' + user + '.' + suitename ]
 
 elif len(args) == 0:
     ns = cylc_pyro_ns.ns( host )

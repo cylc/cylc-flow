@@ -21,14 +21,14 @@ debug = True
 class coldstart_scheduler( scheduler ):
     def __init__( self ):
 
-        usage = """cylc start [options] SYSTEM CYCLE
+        usage = """cylc start [options] SUITE CYCLE
 
-Cold start a cylc system at some initial cycle time. Each task in the
-system will be instantiated in the 'waiting' state at the initial cycle
+Cold start a cylc suite at some initial cycle time. Each task in the
+suite will be instantiated in the 'waiting' state at the initial cycle
 time, or at the next valid cycle time for the task.  
 
 Arguments:
-   SYSTEM               Registered name of the system to start.
+   SUITE                Registered name of the suite to start.
    CYCLE                Initial cycle time (YYYYMMDDHH).""" 
 
         self.parser = OptionParser( usage )
@@ -39,7 +39,7 @@ Arguments:
         ( self.options, self.args ) = self.parser.parse_args()
 
         if len( self.args ) != 2:
-            self.parser.error( "Please supply a system name and initial cycle time." )
+            self.parser.error( "Please supply a suite name and initial cycle time." )
 
         if cycle_time.is_valid( self.args[1] ):
             self.start_time = self.args[1]
@@ -53,8 +53,8 @@ Arguments:
 
         print "Starting from: " + self.start_time
 
-    def load_system_config( self ):
-        scheduler.load_system_config( self )
+    def load_suite_config( self ):
+        scheduler.load_suite_config( self )
         # check for legal start time
         self.config.check_start_time( self.start_time )
 
@@ -80,7 +80,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
     try:
-        # configure pyro, logging, etc., and load the system task pool 
+        # configure pyro, logging, etc., and load the suite task pool 
         server.configure()
 
         # crank it up baby!

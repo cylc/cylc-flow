@@ -43,7 +43,7 @@ class chooser_updater(threading.Thread):
         # it is expected that choices will change infrequently,
         # so just clear and recreate the list, rather than 
         # adjusting element-by-element.
-        print "Updating list of available systems"
+        print "Updating list of available suites"
         self.liststore.clear()
         for group in self.choices:
             self.liststore.append( [group] )
@@ -69,9 +69,9 @@ class chooser:
 
         ts = treeview.get_selection()
         ts.set_mode( gtk.SELECTION_SINGLE )
-        ts.set_select_function( self.get_selected_system, liststore )
+        ts.set_select_function( self.get_selected_suite, liststore )
 
-        tvc = gtk.TreeViewColumn( 'Viewable Systems' )
+        tvc = gtk.TreeViewColumn( 'Viewable Suites' )
         cr = gtk.CellRendererText()
         cr.set_property( 'cell-background', 'lightblue' )
         tvc.pack_start( cr, False )
@@ -94,8 +94,8 @@ class chooser:
         self.updater.start()
 
     def launch_viewer( self, group ):
-        root, user, system = group.split( '.' ) 
-        tv = monitor(group, system, self.pns_host, self.imagedir, self.lamp_subdir)
+        root, user, suite = group.split( '.' ) 
+        tv = monitor(group, suite, self.pns_host, self.imagedir, self.lamp_subdir)
         self.viewer_list.append( tv )
 
     def delete_event( self, w, e, data=None ):
@@ -104,11 +104,11 @@ class chooser:
             item.click_exit( None )
         gtk.main_quit()
 
-    def get_selected_system( self, selection, treemodel ):
+    def get_selected_suite( self, selection, treemodel ):
         iter = treemodel.get_iter( selection )
-        system = treemodel.get_value( iter, 0 )
+        suite = treemodel.get_value( iter, 0 )
         #self.show_log( task_id )
-        self.launch_viewer( system )
+        self.launch_viewer( suite )
 
         return False
 

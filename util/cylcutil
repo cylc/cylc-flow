@@ -133,5 +133,4 @@ if use_subprocess:
         sys.exit(1)
 else:
     command = ' '.join(execute)
-    #print "OS.SYSTEM: " + command
     os.system( command )

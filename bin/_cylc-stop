@@ -10,27 +10,27 @@
 #         |________________________|
 
 
-import os, sys
+import os
 import cycle_time
 import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from Pyro.errors import NamingError
 
-parser = PromptOptionParser( """cylc stop [options] SYSTEM [CYCLE]
+parser = PromptOptionParser( """cylc stop [options] SUITE [CYCLE]
 
-Shut a system down as soon as all currently running tasks have finished,
+Shut a suite down as soon as all currently running tasks have finished,
 or after each task has passed a specified cycle time and finished, or
 immediately (WARNING: see '--now' below).""",
 [ """[CYCLE]              Shut down after all tasks have passed this
                         cycle time (YYYYMMDDHH)""" ] )
 
 parser.add_option( "--now", 
-        help="Stop the system immediately. WARNING: any tasks that are "
+        help="Stop the suite immediately. WARNING: any tasks that are "
         "still running will be unable to 'phone home', AND the final cylc "
         "state dump file will not correctly reflect the state of tasks "
         "that finish successfully after the scheduler has shut down "
-        "(by default these will be re-run if the system is restarted).",
+        "(by default these will be re-run if the suite is restarted).",
         action="store_true", default=False, dest="shutdownnow" )
 
 (options, args) = parser.parse_args()

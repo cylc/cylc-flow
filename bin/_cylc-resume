@@ -15,9 +15,9 @@ import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc resume [options] SYSTEM 
+parser = PromptOptionParser( """cylc resume [options] SUITE 
 
-Resume running a paused system.""" )
+Resume running a paused suite.""" )
 
 (options, args) = parser.parse_args()
 

@@ -15,9 +15,6 @@
 # on-the-fly for a cylc instance different to that set up in 
 # the users login scripts.
 
-# Enables reconfiguring cylc to a different task system
-# without logging out and in again.
-
 [[ $# > 1 ]] && {
 	# ok to call for empty variables
 	echo "USAGE: $0 <PATH-variable>"

@@ -207,7 +207,7 @@ class updater(threading.Thread):
             list_data[ id ] = [ state, message ]
 
             if id not in new_data:
-                # id no longer in system, remove from view
+                # id no longer in suite, remove from view
                 #print "REMOVING", id
                 result = self.fl_liststore.remove( iter )
                 if not result:
@@ -215,7 +215,7 @@ class updater(threading.Thread):
 
             elif new_data[ id ] != list_data[ id ]:
                 #print "CHANGING", id
-                # id still in system but data changed, so replace it
+                # id still in suite but data changed, so replace it
                 self.fl_liststore.append( [ ctime, name ] + new_data[ id ] )
                 result = self.fl_liststore.remove( iter )
                 if not result:

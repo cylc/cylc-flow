@@ -24,7 +24,7 @@ class prefs:
             self.readonly = False
             home = os.environ['HOME']
         else:
-            # attempt to read another user's system registration
+            # attempt to read another user's suite registration
             self.readonly = True
             home = pwd.getpwnam( user )[5]
 
@@ -133,11 +133,11 @@ class prefs:
         except:
             pass
 
-    def get_system_statedump_dir( self, system_name, practice=False ):
+    def get_suite_statedump_dir( self, suite_name, practice=False ):
         if practice:
-            dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], system_name, '-practice' )
+            dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], suite_name, '-practice' )
         else:
-            dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], system_name )
+            dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], suite_name )
 
         if not os.path.exists( dir ):
             print "Creating directory", dir
@@ -145,11 +145,11 @@ class prefs:
 
         return dir
 
-    def get_system_logging_dir( self, system_name, practice=False ):
+    def get_suite_logging_dir( self, suite_name, practice=False ):
         if practice:
-            dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name, '-practice' )
+            dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], suite_name, '-practice' )
         else:
-            dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], system_name )
+            dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], suite_name )
 
         if not os.path.exists( dir ):
             print "Creating directory", dir

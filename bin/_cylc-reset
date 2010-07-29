@@ -10,13 +10,13 @@
 #         |________________________|
 
 
-import os, sys
+import os
 import cycle_time
 import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 
-parser = PromptOptionParser( """cylc reset [options] SYSTEM TASK_ID
+parser = PromptOptionParser( """cylc reset [options] SUITE TASK_ID
 
 Reset the state of a single task to 'waiting', 'ready' or 'finished'.
 
@@ -39,7 +39,7 @@ parser.add_option( "--finished",
 (options, args) = parser.parse_args()
 
 if len(args) != 2:
-    parser.error( "System name and task ID required." )
+    parser.error( "Suite name and task ID required." )
 
 if options.waiting and options.finished:
     parser.error( "Specify waiting, finished, or neither (ready)" )

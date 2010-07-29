@@ -22,7 +22,7 @@ class client:
         self.group = group
 
     def ping( self ):
-        # Check the target system is running by attempting to contact
+        # Check the target suite is running by attempting to contact
         # and then interact with its minimal life indicator object.
         # If this works client commands don't need to catch exceptions?
 
@@ -33,7 +33,7 @@ class client:
         except Pyro.errors.ProtocolError:
             print 'ERROR: ' + self.group + ' is NOT RUNNING'
             print '  But it IS registered with the Pyro Nameserver, which implies'
-            print '  that the system has previously exited without cleaning up.'
+            print '  that the suite has previously exited without cleaning up.'
             print '  To clean up manually:'
             print '     $ pyro-nsc deletegroup ' + group
             sys.exit(1)
@@ -41,7 +41,7 @@ class client:
             # THIS SHOULD NOT BE REACHED
             print 'ERROR: ' + self.group + ' is PROBABLY NOT RUNNING'
             print '  But it IS registered with the Pyro Nameserver, which implies'
-            print '  that the system has previously exited without cleaning up.'
+            print '  that the suite has previously exited without cleaning up.'
             print '  HOWEVER: an unexpected error occurred:', x
             print '  Manual cleanup:'
             print '     $ pyro-nsc deletegroup ' + group
@@ -56,10 +56,10 @@ class client:
             target = Pyro.core.getProxyForURI('PYRONAME://' + self.host + '/' + self.group + '.' + target )
         except Pyro.errors.NamingError:
             # THIS IMPLIES self.group IS NOT RUNNING
-            # OR NO SUCH SYSTEM OBJECT IS REGISTERED.
+            # OR NO SUCH suite OBJECT IS REGISTERED.
             raise SystemExit( 
                     'ERROR: failed to get a pyro proxy for ' + target + ' in ' + self.group + \
-                    '\n => system not running, or system object not registered with Pyro.')
+                    '\n => suite not running, or suite object not registered with Pyro.')
         except Exception, x:
             # THIS SHOULD NOT BE REACHED
             print group + ' is PROBABLY NOT running'

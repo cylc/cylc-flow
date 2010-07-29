@@ -34,8 +34,8 @@ class task_pool:
         self.exclude = exclude
         self.include = include
         self.stop_time = stop_time
-        self.system_hold_ctime = pause_time
-        self.system_hold_now = False
+        self.suite_hold_ctime = pause_time
+        self.suite_hold_now = False
 
         # TO DO: use self.config.get('foo') throughout
         self.clock = config.get('clock')
@@ -80,28 +80,28 @@ class task_pool:
         self.log.debug( "Setting stop time: " + stop_time )
         self.stop_time = stop_time
 
-    def set_system_hold( self, ctime = None ):
+    def set_suite_hold( self, ctime = None ):
         self.log.warning( 'pre-hold state dump: ' + self.dump_state( new_file = True ))
         if ctime:
-            self.system_hold_ctime = ctime
+            self.suite_hold_ctime = ctime
             self.log.critical( "HOLD: no new tasks will run from " + ctime )
         else:
-            self.system_hold_now = True
+            self.suite_hold_now = True
             self.log.critical( "HOLD: no more tasks will run")
 
-    def unset_system_hold( self ):
+    def unset_suite_hold( self ):
         self.log.critical( "UNHOLD: new tasks will run when ready")
-        self.system_hold_now = False
-        self.system_hold_ctime = None
+        self.suite_hold_now = False
+        self.suite_hold_ctime = None
 
     def will_stop_at( self ):
         return self.stop_time
 
     def paused( self ):
-        return self.system_hold_now
+        return self.suite_hold_now
 
     def will_pause_at( self ):
-        return self.system_hold_ctime
+        return self.suite_hold_ctime
 
     def get_oldest_c_time( self ):
         # return the cycle time of the oldest task
@@ -160,17 +160,17 @@ class task_pool:
 
     def run_tasks( self ):
         # tell each task to run if it is ready
-        # unless the system is on hold
+        # unless the suite is on hold
         #--
-        if self.system_hold_now:
-            # general system hold
-            self.log.debug( 'not asking any tasks to run (general system hold in place)' )
+        if self.suite_hold_now:
+            # general suite hold
+            self.log.debug( 'not asking any tasks to run (general suite hold in place)' )
             return
 
         for itask in self.tasks:
-                if self.system_hold_ctime:
-                    if int( itask.c_time ) > int( self.system_hold_ctime ):
-                        self.log.debug( 'not asking ' + itask.id + ' to run (' + self.system_hold_ctime + ' hold in place)' )
+                if self.suite_hold_ctime:
+                    if int( itask.c_time ) > int( self.suite_hold_ctime ):
+                        self.log.debug( 'not asking ' + itask.id + ' to run (' + self.suite_hold_ctime + ' hold in place)' )
                         continue
 
                 current_time = self.clock.get_datetime()
@@ -181,7 +181,7 @@ class task_pool:
         # the slowest task, and if foo(T) spawns
         #--
 
-        # update oldest system cycle time
+        # update oldest suite cycle time
         oldest_c_time = self.get_oldest_c_time()
 
         for itask in self.tasks:
@@ -209,7 +209,7 @@ class task_pool:
                         self.pyro.connect( new_task, new_task.id )
                     except Exception, x:
                         # THIS WILL BE A Pyro NamingError IF THE NEW TASK
-                        # ALREADY EXISTS IN THE SYSTEM.
+                        # ALREADY EXISTS IN THE SUITE.
                         print x
                         self.log.critical( new_task.id + ' cannot be added!' )
 
@@ -223,12 +223,12 @@ class task_pool:
         if new_file:
             filename += '.' + self.clock.dump_to_str()
 
-        # system time
+        # suite time
         FILE = open( filename, 'w' )
         if self.dummy_mode:
             FILE.write( 'dummy time : ' + self.clock.dump_to_str() + ',' + str( self.clock.get_rate()) + '\n' )
         else:
-            FILE.write( 'system time : ' + self.clock.dump_to_str() + '\n' )
+            FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
 
         # task class variables
         for name in self.config.get('task_list'):
@@ -620,7 +620,7 @@ class task_pool:
 
         #except NamingError, e:
         except Exception, e:
-            # A failed remote insertion should not bring the system
+            # A failed remote insertion should not bring the suite
             # down.  This catches requests to insert undefined tasks and
             # task groups. Is there any reason to use the more specific
             # Pyro.errors.NamingError here?
@@ -800,6 +800,6 @@ class task_pool:
     def trash( self, task, reason ):
         self.tasks.remove( task )
         self.pyro.disconnect( task )
-        task.log( 'NORMAL', "task removed from system (" + reason + ")" )
+        task.log( 'NORMAL', "task removed from suite (" + reason + ")" )
         task.prepare_for_death()
         del task

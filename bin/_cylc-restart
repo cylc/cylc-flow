@@ -20,23 +20,23 @@ debug = True
 
 class restart_scheduler( scheduler ):
     def __init__( self ):
-        usage = """cylc restart [options] SYSTEM [STATE_DUMP]
+        usage = """cylc restart [options] SUITE [STATE DUMP]
 
-Restart a cylc system from a previous state. Tasks in the 'submitted',
+Restart a cylc suite from a previous state. Tasks in the 'submitted',
 'running', or 'failed' states will immediately be resubmitted at
 startup unless you specity the '--no-reset' option.
 
-By default the system will restart from the system state dump file, which is
+By default the suite will restart from the suite state dump file, which is
 updated whenever a task changes state and thus records the most recent
-previous state of the system. However, cylc also records a special named
+previous state of the suite. However, cylc also records a special named
 state dump, and logs its filename, before actioning any intervention
 command, and you can choose to restart from one of these (just
 cut-and-paste the filename from the log to the commandline).
 
 Arguments:
-   SYSTEM               Registered name of the system to restart.
+   SUITE                Registered name of the suite to restart.
    [STATE DUMP]         Optional non-default state dump file (assumed to
-                        be in the system state dump directory unless you
+                        be in the suite state dump directory unless you
                         supply the file path).""" 
 
         self.parser = OptionParser( usage )
@@ -72,26 +72,26 @@ Arguments:
                 # relative or full path was specified
                 self.initial_state_dump = os.path.abspath( path )
             else:
-                # check if the named file is in the system state dump dir
-                # (in practice mode we want the source system state dump dir)
-                state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name )
+                # check if the named file is in the suite state dump dir
+                # (in practice mode we want the source suite state dump dir)
+                state_dump_dir = self.rcfile.get_suite_statedump_dir( self.suite_name )
  
                 path = os.path.join( state_dump_dir, self.restart_from )
                 if not os.path.exists( path ):
                     raise SystemExit( "state dump file not found: " + self.restart_from )
                 self.initial_state_dump = os.path.abspath( path )
         else:
-            # No state dump specified, restart from the system default file.
-            # In practice mode we want the source system state dump
+            # No state dump specified, restart from the suite default file.
+            # In practice mode we want the source suite state dump
             # file, not self.state_dump_file.
             if self.practice:
-                state_dump_dir = self.rcfile.get_system_statedump_dir( self.system_name )
+                state_dump_dir = self.rcfile.get_suite_statedump_dir( self.suite_name )
                 state_dump_file = os.path.join( state_dump_dir, 'state' )
             else:
                 state_dump_file = self.state_dump_file
 
             if not os.path.exists( state_dump_file ):
-                # can't restart a system that was never cold started!
+                # can't restart a suite that was never cold started!
                 raise SystemExit( "restart state dump file not found: " + state_dump_file )
             self.initial_state_dump = state_dump_file
 
@@ -120,7 +120,7 @@ if __name__ == '__main__':
             sys.exit(1)
 
     try:
-        # configure pyro, logging, etc., and load the system task pool 
+        # configure pyro, logging, etc., and load the suite task pool 
         server.configure()
 
         # crank it up baby!

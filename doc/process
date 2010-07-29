@@ -30,11 +30,11 @@ if [[ $# == 1 ]]; then
     fi
 fi
 
-# GENERATE USERGUIDE SYSTEM EXAMPLE CHAPTER CONTENTS -----------------
-OUT=doc/example-system.tex
+# GENERATE USERGUIDE SUITE EXAMPLE CHAPTER CONTENTS -----------------
+OUT=doc/example-suite.tex
 rm -f $OUT
 
-DIR=systems/userguide
+DIR=suites/userguide
 
 for PDEF in $DIR/taskdef/*.def; do 
 
@@ -87,7 +87,7 @@ done
 
 #Comment-stripped taskdef files:
 #perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
-#    sys/examples/userguide-1/system_config.py > doc/system_config.py.stripped
+#    sys/examples/userguide-1/suite_config.py > doc/suite_config.py.stripped
 #perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
 #    sys/templates/full-template.def > doc/full-template.def.stripped
 
