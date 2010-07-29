@@ -144,15 +144,15 @@ if use_lockserver:
 
 # set global (all tasks) environment variables-------------------------
 if options.sched:
-    config.put_env( 'CYLC_MODE', 'scheduler' )
+    config.put_env_prepend( 'CYLC_MODE', 'scheduler' )
 else:
-    config.put_env( 'CYLC_MODE', 'submit' )
-config.put_env( 'CYLC_NS_HOST', pns_host ) 
-config.put_env( 'CYLC_NS_GROUP', pyro_groupname )
-config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
-config.put_env( 'CYLC_SYSTEM_DIR', system_dir )
-config.put_env( 'CYLC_SYSTEM_NAME', name )
-config.put_env( 'CYLC_USE_LOCKSERVER', str( use_lockserver) )
+    config.put_env_prepend( 'CYLC_MODE', 'submit' )
+config.put_env_prepend( 'CYLC_NS_HOST', pns_host ) 
+config.put_env_prepend( 'CYLC_NS_GROUP', pyro_groupname )
+config.put_env_prepend( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
+config.put_env_prepend( 'CYLC_SYSTEM_DIR', system_dir )
+config.put_env_prepend( 'CYLC_SYSTEM_NAME', name )
+config.put_env_prepend( 'CYLC_USE_LOCKSERVER', str( use_lockserver) )
 
 config.check_environment()
 job_submit.global_env = config.get( 'environment' )

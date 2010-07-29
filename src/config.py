@@ -12,6 +12,7 @@
 
 import sys, os, re
 from registration import registrations
+import ordered_dict
 from interp_env import interp_self, interp_local, replace_delayed
 
 class config:
@@ -33,7 +34,7 @@ class config:
 
         self.items[ 'system_info' ] = {}
         self.items[ 'task_groups' ] = {}
-        self.items[ 'environment' ] = {}
+        self.items[ 'environment' ] = ordered_dict.ordered_dict()
         self.items['job_submit_overrides'] = {}
 
         self.items['max_runahead_hours'] = 24
@@ -43,16 +44,19 @@ class config:
         self.items['system_def_dir' ] = reg.get( self.system_name )
 
     def check_environment( self ):
+
         env = self.items[ 'environment' ]
         # Convert all values to strings in case the user set integer
         # values, say, in the system config file.
-        for var in env:
+        for var in env.order():
             env[ var ] = str( env[ var ] )
 
         # work out any references to other global variables or local
         # environment variables
-        env = interp_self( env )
-        env = interp_local( env )
+
+        ###env = interp_self( env )
+        ###env = interp_local( env )
+
         # don't interpolate delayed variables here though; this must
         # be done at the last, before job submission.
         #env = replace_delayed( env )
@@ -107,6 +111,9 @@ class config:
 
     def put_env( self, key, value ):
         self.items[ 'environment' ][ key ] = value
+
+    def put_env_prepend( self, key, value ):
+        self.items[ 'environment' ].prepend( key, value )
 
     def dump( self ):
         items = self.items.keys()

@@ -254,6 +254,7 @@ from time import sleep
 from task_output_logs import logfiles
 import cycle_time
 import task_state
+import ordered_dict
 
 '''
 
@@ -649,7 +650,7 @@ import task_state
 
         # environment variables
         if not inherit:
-            OUT.write( '\n' + indent + 'self.env_vars = {}\n' )
+            OUT.write( '\n' + indent + 'self.env_vars = ordered_dict.ordered_dict()\n' )
 
         if 'ENVIRONMENT' in parsed_def:
             for pair in parsed_def[ 'ENVIRONMENT' ]:

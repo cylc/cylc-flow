@@ -57,7 +57,7 @@ class job_submit:
 
     # class variables to be set by the task manager
     dummy_mode = False
-    global_env = {}
+    ####global_env = {}
 
     def set_owner_and_homedir( self, owner = None ):
         if owner:
@@ -140,14 +140,18 @@ class job_submit:
         # interpolated to the value of self.cycle time and NOT to
         # any $CYCLE_TIME that happens to be in the user's environment
         # prior to running the scheduler or submit!
-        task_env[ 'TASK_ID'    ] = self.task_id
-        task_env[ 'CYCLE_TIME' ] = self.cycle_time
-        task_env[ 'TASK_NAME'  ] = self.task_name
+        ###task_env[ 'TASK_ID'    ] = self.task_id
+        ###task_env[ 'CYCLE_TIME' ] = self.cycle_time
+        ###task_env[ 'TASK_NAME'  ] = self.task_name
 
-        task_env = interp_self( task_env )
-        task_env = interp_other( task_env, job_submit.global_env )
-        task_env = interp_local( task_env )
-        task_env = replace_delayed( task_env )
+        task_env.prepend( 'TASK_NAME', self.task_name )
+        task_env.prepend( 'TASK_ID', self.task_id )
+        task_env.prepend( 'CYCLE_TIME', self.cycle_time )
+
+        ###task_env = interp_self( task_env )
+        ###task_env = interp_other( task_env, job_submit.global_env )
+        ###task_env = interp_local( task_env )
+        ###task_env = replace_delayed( task_env )
 
         # GLOBAL ENVIRONMENT: now extracted just before use in
         # write_environment() so that remote_switch can dynamically
@@ -157,7 +161,8 @@ class job_submit:
 
         # same for the task script command line
         commandline = ' '.join( com_line ) 
-        self.commandline = self.interp_str( commandline )
+        ####self.commandline = self.interp_str( commandline )
+        self.commandline = commandline
 
         # same for external task, which may be defined in terms of
         # $[HOME], for example.
@@ -167,9 +172,10 @@ class job_submit:
         self.directives  = dirs
 
         # extra scripting
-        self.extra_scripting = []
-        for line in extra:
-            self.extra_scripting.append( self.interp_str( line ) )
+        ####self.extra_scripting = []
+        ####for line in extra:
+        ####    self.extra_scripting.append( self.interp_str( line ) )
+        self.extra_scripting = extra
         
         # directive prefix, e.g. '#QSUB ' (qsub), or '#@ ' (loadleveler)
         # OVERRIDE IN DERIVED CLASSES
@@ -253,14 +259,14 @@ class job_submit:
         #for env in [ job_submit.global_env, self.task_env ]:
 
         # global env: see comment in __init__() environment section
-        self.global_env = replace_delayed( job_submit.global_env )
+        #### self.global_env = replace_delayed( job_submit.global_env )
 
-        FILE.write( "# TASK EXECUTION ENVIRONMENT: system-wide variables\n" )
-        for var in self.global_env:
+        FILE.write( "# TASK EXECUTION ENVIRONMENT global variables:\n" )
+        for var in self.global_env.order():
             FILE.write( "export " + var + "=\"" + self.global_env[var] + "\"\n" )
 
-        FILE.write( "\n# TASK EXECUTION ENVIRONMENT: task-specific variables:\n" )
-        for var in self.task_env:
+        FILE.write( "\n# TASK EXECUTION ENVIRONMENT task variables:\n" )
+        for var in self.task_env.order():
             FILE.write( "export " + var + "=\"" + self.task_env[var] + "\"\n" )
 
     def write_extra_scripting( self, FILE ):

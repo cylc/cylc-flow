@@ -1509,7 +1509,7 @@ script} that explicitly configures the environment and then invokes the
 taskdef file. This temporary script is then submitted to run by the
 method specified for the task in the system config file (see above).
 Other scripting, e.g.\ loadleveler directives, may also be written to
-the task execution script, depending on the job submission method.
+the job script, depending on the job submission method.
 
 \lstset{language=bash}
 
@@ -1517,7 +1517,7 @@ Section~\ref{TaskExecutionEnvironment}, {\em Task Execution
 Environment}, describes how the environment is defined, and how to set
 your own system- and task-specific environment variables in cylc.
 
-The filename of the temporary task execution script is reported to
+The filename of the temporary job script is reported to
 stdout. It is deleted automatically if the task completes successfully,
 but otherwise remains available for inspection.  You can also use
 \lstinline=cylc submit --dry-run= to generate task
@@ -1529,8 +1529,8 @@ execution scripts for inspection:
 
 \begin{lstlisting}
 oliverh:~/cylc % cylc submit --dry-run --task=E%2009112318 userguide
-  > TASK EXECUTION SCRIPT: /tmp/cylc-IU0DDH
-  > JOB SUBMISSION METHOD: /tmp/cylc-IU0DDH </dev/null > E%2009112318-$$.log 2>&1 &
+  > JOB SCRIPT:     /tmp/cylc-IU0DDH
+  > JOB SUBMISSION: /tmp/cylc-IU0DDH </dev/null > E%2009112318-$$.log 2>&1 &
   
 oliverh~/cylc % cat /tmp/cylc-IU0DDH
   #!/bin/bash
@@ -1595,7 +1595,7 @@ scheduler or cross-platform resource manager such as {\em loadleveler}
     \item \lstinline=ll_raw= - submit a loadleveler-ready task to loadleveler (the task 
         script must contain all required directives already). This may be necessary for
         complex (e.g.\ multi-step) jobs. The original task script is copied to
-        make the temporary task execution script, and cylc environment
+        make the temporary job script, and cylc environment
         scripting is inserted into it immediately after the loadleveler directives.
 
     \item \lstinline=ll_basic_eco= and \lstinline=ll_raw_eco= - these
@@ -1647,7 +1647,7 @@ from job_submit import job_submit
 
 class at_now( job_submit ):
     # This class overrides job submission command construction so that
-    # the cylc task execution file will be submitted to the Unix 'at'
+    # the cylc job script will be submitted to the Unix 'at'
     # scheduler ('at -f FILE now').
 
     def construct_command( self ):
@@ -1678,7 +1678,7 @@ sudo -u OWNER [SUBMISSION-COMMAND]
 For this to work \lstinline=/etc/sudoers= must be configured to allow
 the cylc user to invoke the relevant job submission commands as the task
 owner.  This might be difficult to arrange for the background execution
-method (wherein task execution scripts are invoked directly) but is
+method (wherein job scripts are invoked directly) but is
 otherwise easy to do: for the \lstinline=at_now= or loadleveler methods,
 for instance, the cylc user only needs \lstinline=sudo= access, as the
 task owner, to \lstinline=at= or \lstinline=llsubmit= respectively.
@@ -1705,7 +1705,7 @@ cylc-user% ssh REMOTE_HOST hostname
 \end{lstlisting}
 
 If the task additionally declares an \lstinline=%OWNER= section in the
-taskdef file owner, the task execution file will be copied to and
+taskdef file owner, the job script will be copied to and
 invoked on the remote host as the task owner; thus {\em you must have
 passwordless ssh configured, as the cylc user, to the remote host, as
 the task owner}:
@@ -1726,8 +1726,8 @@ cylc-user% ssh OWNER@REMOTE_HOST hostname
         execution script that is copied to the remote host is what
         invokes the task, but is not the task itself. 
 
-    \item The task execution environment, as specified in the task
-        execution script, must provide access to the remote cylc
+    \item The task execution environment, as specified in the job
+        script, must provide access to the remote cylc
         installation and to the remote task.
 
 \end{itemize}
@@ -1746,7 +1746,7 @@ If you have installed your entire system definition directory on the
 remote platform (it is not necessary to do this, but it may be
 convenient) then you can also override \lstinline=$CYLC_SYSTEM_DIR= to
 point to that location. Then, if the remote task script resides in the
-system definition scripts sub-directory, the task execution script will
+system definition scripts sub-directory, the job script will
 automatically be able to find it after the cylc environment is
 configured.
 
@@ -1756,7 +1756,7 @@ CYLC_SYSTEM_DIR  /path/to/system/definition/directory
 
 (\lstinline=CYLC_DIR=  and \lstinline=CYLC_SYSTEM_DIR= are inserted
 into your \lstinline=PATH= by \lstinline=cylc-env.sh=, which is sourced
-in the task execution script before executing the task).
+in the job script before executing the task).
 
 Alternatively, you could specify the full path to the task script:
 
@@ -1775,7 +1775,7 @@ Environment}, Section~\ref{TaskExecutionEnvironment}):
     foo.sh
 
 %ENVIRONMENT
-    PATH     /remote/path:$[PATH]   # note square brackets!
+    PATH     /remote/path:$PATH
 \end{lstlisting}
 
 \subsubsection{Remote Host Example}
@@ -1797,17 +1797,17 @@ stderr being emailed to the task owner when the task completes.
 \label{TaskExecutionEnvironment}
 
 As described in Section~\ref{JobSubmission}, {\em Job Submission}, cylc
-tasks are executed by means of submitting a temporary {\em task
-execution script} that configures the execution environment before
-executing the task itself.  The task execution environment must provide
-access to the task script (so that the full path is not required in the
+tasks are executed by means of submitting a temporary {\em job script}
+that configures the execution environment before
+executing the task itself. The task execution environment provides
+access to the task so that the full path is not required in the
 taskdef file if the script resides in the system definition
-\lstinline=scripts= sub-directory), and to cylc itself. And it must also
-define any environment variables required by cylc, system-wide
+\lstinline=scripts= sub-directory), and to cylc itself. It also
+defines any environment variables required by cylc, global
 environment variables defined in the system config file, and 
 task-specific environment variables defined in the taskdef file.
 
-\subsection{System Wide Variables}
+\subsection{Global Variables}
 \lstset{language=bash}
 
 \subsubsection{Automatic}
@@ -1844,6 +1844,7 @@ self.items['environment']['MY_TMPDIR'] = '/tmp/${CYLC_SYSTEM_NAME}'
 
 
 \subsection{Task-specific Variables}
+\label{TaskSpecificVariables}
 \lstset{language=bash}
 
 \subsubsection{Automatic}
@@ -1866,8 +1867,6 @@ is sending a message, however, and therefore which task proxy object to
 communicate the message to in the scheduler.
 
 \subsubsection{User Defined}
-\label{TaskSpecificVariables}
-
 \lstset{language=cylctaskdef}
 
 Environment variables defined in a task definition file
@@ -1879,19 +1878,10 @@ to just the one task, e.g.:
     FOOBAR           foo bar
     ANALYSIS_TIME    $CYCLE_TIME
     OUTPUT_FILE      foo-${TASK_NAME}-${CYCLE_TIME}.nc
-    NEXT_CYCLE_TIME  $(CYCLE_TIME + 6)   # NOTE round parentheses!
-    REMOTE_HOME      $[HOME]             # NOTE square brackets!
+    NEXT_CYCLE       $(cylcutil --time-calc --add=6)
 \end{lstlisting}
 
 \lstset{language=bash}
-
-Note the two unusual cases above. \lstinline=$(CYCLE_TIME + 6)= is 
-special notation that gives access to cylc's internal datetime arithmetic.
-With no arithmetic, \lstinline=$(CYCLE_TIME)= is equivalent to 
-the normal shell variables \lstinline=$CYCLE_TIME= and
-\lstinline=${CYCLE_TIME}=. The square brackets are explained 
-below in {\em Delayed Evaluation Variables},
-Section~\ref{DelayedEvaluationVariables}.
 
 \subsection{Referring To Other Variables}
 \label{ReferringToOtherVariables}
@@ -1901,76 +1891,23 @@ Section~\ref{DelayedEvaluationVariables}.
 You can refer to other environment variables in the values of
 system-wide or task-specific environment variables, and in task command
 line arguments, as shown in the examples above. These will be explicitly
-interpolated by cylc prior to writting the task execution script (i.e.
+interpolated by cylc prior to writting the job script (i.e.
 the variables will be replaced by their values).  The distributed example
 system (Section~\ref{Distributed}) exploits this to define task-specific
 I/O sub-directories underneath a top level working directory that is
 defined by a global environment variable that includes the registered
 system name.
 
-\subsubsection{Precedence}
-
-In {\em system-wide variable} definitions, cylc looks for a match
-amongst other defined system-wide variables, then in the local
-environment (i.e.\ the environment in which cylc is running).
-
-In {\em task-specific variable} definitions, cylc looks for a match
-amongst other task-specific variables, then amongst the system-wide
-variables, and finally in the local environment (i.e.\ the environment
-in which cylc is running).
-
-Environment variables found in {\em task commandline argument}
-definitions are interpolated as for those in task-specific variable
-definitions.
-
-\subsubsection{Interpolation of Nested Variables}
-
-Cylc environment variables can refer to other variables, which can in
-turn refer to others, and so on: system-wide variables can refer to
-other system-wide variables and to environment variables; task-specific
-variables can refer to system-wide variables, environment variables, and
-to other task-specific variables. These nested definitions are fully
-interpolated out by cylc before writing the task execution script so
-that you don't need to worry about the order in which they are defined. 
-
-Circular variable definitions will raise a warning.
-
-Any referenced variables containing bash parameter expansion expressions
-will be passed through as-is to the job submission script, as for
-{\em delayed evaluation variables}, below).
-
-\subsubsection{Delayed Evaluation Variables}
-\label{DelayedEvaluationVariables}
-
-Any variable reference {\em in square brackets} 
-\lstinline=$[FOO]= will not be interpolated out by cylc but will be
-written to the task execution script as a proper environment variable
-reference, \lstinline=${FOO}= and will therefore not be evaluated until
-the task executes. This allows user- or host-specific
-environment information (for example) to be used in constructing file
-paths (for example) for tasks that will run under other usernames and/or
-on remote hosts: e.g.\ \lstinline=$[HOME]= will evaluate at run time as
-the home directory of the task owner on the host that runs the task, not
-as the home directory of the cylc user on the host that is running cylc.
-
-Variable references containing parameter expansion expressions such as 
-\lstinline=${CYCLE_TIME:8:2}= or \lstinline=${USER##*_}= are also passed
-through to the job script (in this case square or curly brackets have
-the same effect).
-
 \subsection{Extra Scripting}
 
-Any scripting found in the taskdef \lstinline=%EXTRA_SCRIPTING= section
-will be passed through verbatim, except for variable interpolation as
-described above, into the job script just before the external task is
-called. This can be used for ultimate control over the task execution
-environment, by exporting variables, sourcing external scripts,
-executing cylc utilities, and so on.
+The \lstinline=%EXTRA_SCRIPTING= taskdef section provides ultimate
+control over the task execution environment, allowing you to source
+external scripts, execute cylc utilities, and so on.
 
 \begin{lstlisting}
 %EXTRA_SCRIPTING
     export NEXT_CYCLE=$( cylcutil time-calc --add=6 )
-    . $[HOME]/env-setup.sh
+    . $HOME/env-setup.sh
 \end{lstlisting}
 
 \pagebreak
