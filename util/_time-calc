@@ -16,22 +16,22 @@ STRING can be the name of an environment variable containing a template
 string OR the template string itself. In the template, 'YYYY', 'MM',
 'DD', or 'HH' will be replaced with computed cycle time components.
 
-   $ cylc calc -s 6 2010082318 #.............explicit cycle time offset
+   $ cylcutil time-calc -s 6 2010082318 #....explicit cycle time offset
   2010082312
 
    $ export CYCLE_TIME=2010082318 # (as from task execution environment)
 
-   $ cylc calc -s 6 #.........................offset from current cycle
+   $ cylcutil time-calc -s 6 #...............offset from current cycle
   2010082312
 
-   $ cylc calc -s 6 fooHH-YYYYMMDD.nc #....explicit filename convention
+   $ cylcutil time-calc -s 6 fooHH-YYYYMMDD.nc #explicit name convention
   foo12-20100823.nc
 
    $ export NCONV=fooHH-YYYYMMDD.nc    # (as if from system config file)
 
-   $ cylc calc NCONV #.....................implicit filename convention
+   $ cylcutil time-calc NCONV #.............implicit filename convention
   foo18-20100823.nc
-   $ cylc calc -s 6 NCONV_FOO #..........same, with current cycle offset
+   $ cylcutil time-calc -s 6 NCONV_FOO #..same, with current cycle offset
   foo12-20100823.nc
 
 Arguments:
