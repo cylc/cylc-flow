@@ -26,7 +26,18 @@
     cylc-wrapper
 
 %ENVIRONMENT
-    WRAP foo.sh
+    WRAP echo
+
+    TASK_ONE   bar
+    TASK_TWO   $GLOBAL_TWO
+    TASK_THREE   $TASK_TWO
+
+%EXTRA_SCRIPTING
+    # stay in "submitted" state for 5 seconds to slow down cycling
+    sleep 5
+
+%COMMANDLINE
+    $TASK_THREE $( cylcutil time-calc TEMPLATE ) 
 
 %OUTPUTS
     "Hello from $(CYCLE_TIME) to $(CYCLE_TIME+6)"

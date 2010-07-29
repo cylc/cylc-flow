@@ -1,5 +1,8 @@
 To Do
 
+* exception handling for viewer: if user clicks on a task that has 
+  just been eliminated (test this with quick cycling trivial suite).
+
 * allow $(CYCLE_HOUR) etc. in output and prereq messages (needed if
   anyone insists on using actual filenames in messages). 
 
