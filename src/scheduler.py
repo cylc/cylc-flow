@@ -387,24 +387,18 @@ class scheduler:
         print "\nSTARTING\n"
 
         #count = 0
-        task.state_changed = True
-
         while True: # MAIN LOOP
 
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
-            if task.state_changed or \
-                    self.remote.process_tasks or \
-                    self.pool.waiting_contact_task_ready( self.clock.get_datetime() ):
-
-                # print '...................................', datetime.datetime.now()
+            if self.process_tasks():
+                #print '...................................', datetime.datetime.now()
 
                 self.pool.negotiate()
                 self.pool.run_tasks()
                 self.pool.cleanup()
-                # spawn after cleanup in case the suite stalled
-                # unspawned at max runahead.
+                # spawn after cleanup to avoid unspawned stall at max runahead.
                 self.pool.spawn()
                 self.pool.dump_state()
 
@@ -426,10 +420,8 @@ class scheduler:
             # the use of the state_changed variable above).
             #--
 
-            # incoming task messages set this to True
-            task.state_changed = False
-            self.remote.process_tasks = False
             # handle all remote calls
+            # incoming task messages set task.state_changed to True
             self.pyro.handleRequests( timeout=None )
 
         # END MAIN LOOP
@@ -437,6 +429,22 @@ class scheduler:
         print ""
         print "STOPPING"
         self.cleanup()
+
+    def process_tasks( self ):
+        answer = False
+        if task.state_changed:
+            answer = True
+            task.state_changed = False
+            
+        if self.remote.process_tasks:
+            answer = True
+            self.remote_process_tasks = False
+            
+        if self.pool.waiting_contact_task_ready( self.clock.get_datetime() ):
+            answer = True
+
+        return answer
+
 
     def cleanup( self ):
         if self.pyro:
