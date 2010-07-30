@@ -306,7 +306,7 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def check_requisites( self ):
-        # overridden by asynchronous tasks
+        # overridden by asynchronous tasks and task families
         pass
 
     def get_state_summary( self ):
@@ -333,6 +333,13 @@ class task( Pyro.core.ObjBase ):
         summary[ 'logfiles' ] = self.logfiles.get_paths()
  
         return summary
+
+    def not_fully_satisfied( self ):
+        if not self.prerequisites.all_satisfied():
+            return True
+        if not self.suicide_prerequisites.all_satisfied():
+            return True
+        return False
 
     def satisfy_me( self, task ):
         self.prerequisites.satisfy_me( task )

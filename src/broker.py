@@ -41,10 +41,9 @@ class broker:
 
         self.all_outputs[ owner_id ] = outputs
 
-        # TO DO: CHECK FOR DUPLICATE OUTPUTS NOT OWNED BY THE SAME TASK
-        # type (successive tasks of the same type can register identical
-        # outputs if they write staggered restart files.
-
+        # TO DO: SHOULD WE CHECK FOR SYSTEM-WIDE DUPLICATE OUTPUTS?
+        # (note that successive tasks of the same type can register
+        # identical outputs if they write staggered restart files).
 
     def reset( self ):
         # throw away all messages
@@ -61,4 +60,10 @@ class broker:
     def negotiate( self, task ):
         # can my outputs satisfy any of task's prerequisites
         for id in self.all_outputs.keys():
+            # TO DO: if task becomes fully satsified mid-loop we could
+            # bail out with the following commented-out conditional, but
+            # is the cost of doing the test every time more than that of
+            # continuing when task is fully satisfied?
+            # CONDITIONAL: if task.not_fully_satisfied():
             task.satisfy_me( self.all_outputs[ id ] )
+

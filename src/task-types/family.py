@@ -1,5 +1,16 @@
 #!/usr/bin/env python
 
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+import task
 from free import free
 from mod_sequential import sequential
 
@@ -20,3 +31,12 @@ class family( sequential, free ):
             self.set_all_internal_outputs_completed()
             self.incoming( 'NORMAL', self.id + ' completed' )
             self.incoming( 'NORMAL', self.id + ' finished' )
+            task.state_changed = True
+
+    def not_fully_satisfied( self ):
+        result = False
+        if not self.familyfinished_prerequisites.all_satisfied():
+            result = True
+        if free.not_fully_satisfied( self ):
+            result = True
+        return result

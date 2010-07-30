@@ -138,9 +138,8 @@ class task_pool:
     def negotiate( self ):
         # run time dependency negotiation: tasks attempt to get their
         # prerequisites satisfied by other tasks' outputs.
+        # BROKERED NEGOTIATION is O(n) in number of tasks.
         #--
-    
-        # Instead: O(n) BROKERED NEGOTIATION
 
         self.broker.reset()
 
@@ -148,12 +147,10 @@ class task_pool:
             # register task outputs
             self.broker.register( itask )
 
-        # for debugging;            
-        # self.broker.dump()
-
         for itask in self.tasks:
-            # get the broker to satisfy tasks prerequisites
-            self.broker.negotiate( itask )
+            # try to satisfy me (itask) if I'm not already satisfied.
+            if itask.not_fully_satisfied():
+                self.broker.negotiate( itask )
 
         for itask in self.tasks:
             itask.check_requisites()
