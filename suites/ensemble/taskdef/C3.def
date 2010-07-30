@@ -1,0 +1,32 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+%NAME
+    C3, c3
+
+%DESCRIPTION
+    Task C3, ensemble example suite.
+
+%MEMBER_OF
+    ensemble
+
+%TYPE
+    free
+
+%CYCLES
+    0,6,12,18
+
+%TASK
+    C3.sh
+
+%PREREQUISITES
+    "A%$(CYCLE_TIME) finished"

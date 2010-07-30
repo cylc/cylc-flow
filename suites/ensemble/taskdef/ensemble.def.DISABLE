@@ -1,0 +1,11 @@
+
+%FAMILY
+    ensemble
+
+%MEMBERS
+    C1
+    C2
+    C3
+
+%PREREQUISITES
+    "A%$(CYCLE_TIME) finished"
