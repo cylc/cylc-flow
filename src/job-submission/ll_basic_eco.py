@@ -22,7 +22,7 @@ class ll_basic_eco( ll_basic ):
     def set_owner_and_homedir( self, owner = None ):
         # cylc should be running as ecoconnect_(devel|test|oper)
         if not owner:
-            raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
+            raise SystemExit( "EcoConnect tasks require an owner: " + self.task_id )
 
         m = re.match( '^(.*)_(devel|test|oper)$', self.cylc_owner )
         if m:
