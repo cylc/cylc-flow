@@ -1,0 +1,14 @@
+Task family F, with members A, B, C
+
+Is a task proxy with prerequisites (none, or possibly some others),
+and outputs (default, and possibly some others)
+
+A,B,C declare themselves to be members of F, which results in them auto
+depending on F starting.
+
+If A,B,C don't declare, then F is a "group finished" indicator!
+
+F has no task (not even dummy) so no external task to complete its
+outputs. Instead it has special "finished prerequisites" that depend on
+its members all finishing; when satisfied it sets its own outputs
+completed. 
