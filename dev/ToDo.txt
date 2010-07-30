@@ -1,5 +1,8 @@
 To Do
 
+* allow cylc-wrapper to take target script on the commandline so that
+  use of %ENVIRONMENT $WRAP is not required.
+
 * exception handling for viewer: if user clicks on a task that has 
   just been eliminated (test this with quick cycling trivial suite).
 
