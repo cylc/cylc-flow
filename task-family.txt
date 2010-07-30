@@ -1,14 +1,12 @@
 Task family F, with members A, B, C
 
-Is a task proxy with prerequisites (none, or possibly some others),
-and outputs (default, and possibly some others)
+Is a task proxy that does not launch a real task. It can optionally have
+explicit prerequisites and outputs defined, but it automatically depends
+on all of its members finishing, through ("familyfinished"
+prerequisites), at which point it sets its own outputs completed and
+enters the finished state.
 
-A,B,C declare themselves to be members of F, which results in them auto
-depending on F starting.
-
-If A,B,C don't declare, then F is a "group finished" indicator!
-
-F has no task (not even dummy) so no external task to complete its
-outputs. Instead it has special "finished prerequisites" that depend on
-its members all finishing; when satisfied it sets its own outputs
-completed. 
+If in addition, A,B,C declare themselves to be members of F, it
+results in them automatically depending on F starting.  If they don't,
+then they don't have to wait on F before starting as a group, but F can
+still be used as a "group finished" event that others can depend on.

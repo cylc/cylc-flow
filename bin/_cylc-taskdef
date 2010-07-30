@@ -212,7 +212,7 @@ def main( argv ):
             'PREREQUISITES', 'COLDSTART_PREREQUISITES',
             'SUICIDE_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
-            'FOLLOW_ON' ]
+            'FOLLOW_ON', 'FAMILY', 'MEMBERS', 'MEMBER_OF' ]
 
     allowed_types = ['tied', 'free', 'cycling_daemon' ]
     allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
@@ -242,6 +242,7 @@ from daemon import daemon
 from asynchronous import asynchronous
 from tied import tied
 from free import free
+from family import family
 from mod_oneoff import oneoff
 from mod_sequential import sequential
 from mod_contact import contact
@@ -302,6 +303,26 @@ import ordered_dict
         # -----------------------------------------------DONE
         # print_parsed_info()
 
+        family = False
+        member_of = None
+        if 'FAMILY' in parsed_def:
+            family = True
+            if 'NAME' in parsed_def:
+                print "ERROR: choose %FAMILY or %NAME"
+                sys.exit(1)
+
+            family_members = []
+            if 'MEMBERS' not in parsed_def:
+                print "ERROR: task families need %MEMBERS"
+                sys.exit(1)
+            else:
+                for member in parsed_def['MEMBERS']:
+                    family_members.append( member )
+        else:
+            # not a task family, but is it a member of one?
+            if 'MEMBER_OF' in parsed_def:
+                member_of = parsed_def['MEMBER_OF'][0]
+
         inherit = False
         if 'INHERIT' in parsed_def:
             inherit = True
@@ -325,7 +346,6 @@ import ordered_dict
             OUT.write( '\n' )
             continue
 
-
         # intercycle (DEFAULT False)
         intercycle = False
         if 'INTERCYCLE' in parsed_def:
@@ -342,11 +362,13 @@ import ordered_dict
         task_type = None
 
         if 'TYPE' not in parsed_def:
-            if not inherit:
+            if not inherit and not family:
                 print "ERROR: no %TYPE specified"
                 sys.exit(1)
-
         else:
+            if family:
+                print "ERROR: task families have no %TYPE spec"
+                sys.exit(1)
 
             tmp = parsed_def[ 'TYPE' ][0]
             typelist = tmp.split(',')
@@ -404,13 +426,16 @@ import ordered_dict
                 print "WARNING: this task has the 'dummy' task type modifier, and therefore its"
                 print "external task, " + external_task + ", will be replaced by _cylc-dummy-task."
         else:
-            if not dummy and not inherit:
+            if not dummy and not inherit and not family:
                 print 'ERROR: no external task specified'
                 sys.exit(1)
 
         # set external task for dummy tasks
         if dummy:
             external_task = '_cylc-dummy-task'
+
+        if family:
+            external_task = 'NONE'
 
         follow_on = False
         if oneoff and intercycle:
@@ -434,9 +459,13 @@ import ordered_dict
                 print 'ERROR: tied tasks must define %N_RESTART_OUTPUTS'
                 sys.exit(1)
 
-        task_name = parsed_def[ 'NAME' ][0]
-
+        if family:
+            task_name = parsed_def[ 'FAMILY' ][0]
+            task_type = "family"
+        else:
+            task_name = parsed_def[ 'NAME' ][0]
         short_name = task_name
+
         m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
         if m:
             # short name given as well
@@ -453,6 +482,8 @@ import ordered_dict
         # class definition
         if inherit:
             OUT.write( 'class ' + task_name + '(' + inherit_from + '):\n' )
+        elif family:
+            OUT.write( 'class ' + task_name + '( family ):\n' )
         else:
             OUT.write( 'class ' + task_name + '(' + derived_from + '):\n' )
 
@@ -559,6 +590,9 @@ import ordered_dict
             for line in parsed_def[ 'PREREQUISITES' ]:
                 parse_prereq( line, OUT, 'prerequisites' )
 
+        if member_of:
+            OUT.write( indent + "self.prerequisites.add( '" + member_of + "%' + self.c_time + ' started' )\n")
+
         # ... suicide prerequisites
         if not inherit or 'SUICIDE_PREREQUISITES' in parsed_def:
             OUT.write( indent + 'self.suicide_prerequisites = prerequisites( self.id )\n' )
@@ -566,6 +600,12 @@ import ordered_dict
         if 'SUICIDE_PREREQUISITES' in parsed_def:
             for line in parsed_def[ 'SUICIDE_PREREQUISITES' ]:
                 parse_prereq( line, OUT, 'suicide_prerequisites' )
+
+        # ... familyfinished prerequisites
+        if family:
+            OUT.write( indent + 'self.familyfinished_prerequisites = prerequisites( self.id )\n' )
+            for member in family_members:
+                OUT.write( indent + 'self.familyfinished_prerequisites.add( "' + member + '%" + self.c_time + " finished" )\n')
  
         OUT.write( indent + 'self.logfiles = logfiles()\n' )
         if 'LOGFILES' in parsed_def:
