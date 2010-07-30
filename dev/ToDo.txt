@@ -1,5 +1,8 @@
 To Do
 
+* make $(CYCLE_TIME) implicit in messages except where reference to
+  *other* cycles are required?
+
 * note that %COMMANDLINE is not necessary but may enable more clarity
   than listing arguments after the task name.
 
