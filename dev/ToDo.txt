@@ -1,5 +1,8 @@
 To Do
 
+* note that %COMMANDLINE is not necessary but may enable more clarity
+  than listing arguments after the task name.
+
 * allow cylc-wrapper to take target script on the commandline so that
   use of %ENVIRONMENT $WRAP is not required.
 
