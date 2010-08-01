@@ -110,8 +110,10 @@ class task( Pyro.core.ObjBase ):
 
         self.latest_message = ""
 
+        self.external_task = self.external_tasks.popleft()
+
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
-                ( self.id, self.__class__.external_task, self.env_vars, self.commandline, self.directives, 
+                ( self.id, self.external_task, self.env_vars, self.commandline, self.directives, 
                         self.extra_scripting, self.logfiles, self.__class__.owner, self.__class__.remote_host )
 
     def log( self, priority, message ):
@@ -264,9 +266,20 @@ class task( Pyro.core.ObjBase ):
             self.log( 'CRITICAL',  message )
             self.state.set_status( 'failed' )
 
-            msg = self.id + ' failed' 
-            self.outputs.add( msg )
-            self.outputs.set_satisfied( msg )
+            try:
+                # is there another task lined up for a retry?
+                self.external_task = self.external_tasks.popleft()
+            except IndexError:
+                # no, can't retry.
+                self.outputs.add( message )
+                self.outputs.set_satisfied( message )
+            else:
+                # yes, do retry.
+                self.log( 'CRITICAL',  'Retrying with next %TASK' )
+                self.launcher.task = self.external_task
+                self.state.set_status( 'waiting' )
+                self.prerequisites.set_all_satisfied()
+                self.outputs.set_all_incomplete()
 
         else:
             # log other (non-failed) unregistered messages with a '*' prefix

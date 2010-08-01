@@ -256,6 +256,7 @@ from task_output_logs import logfiles
 import cycle_time
 import task_state
 import ordered_dict
+from collections import deque
 
 '''
 
@@ -420,8 +421,9 @@ import ordered_dict
                 if len( modifiers ) >= 1:
                     derived_from = ','.join( modifiers ) + ', ' + derived_from
 
+        external_tasks = []
         if 'TASK' in parsed_def:
-            external_task = parsed_def[ 'TASK' ][0]
+            external_tasks = parsed_def[ 'TASK' ]
             if dummy:
                 print "WARNING: this task has the 'dummy' task type modifier, and therefore its"
                 print "external task, " + external_task + ", will be replaced by _cylc-dummy-task."
@@ -432,10 +434,10 @@ import ordered_dict
 
         # set external task for dummy tasks
         if dummy:
-            external_task = '_cylc-dummy-task'
+            external_tasks = ['_cylc-dummy-task']
 
         if family:
-            external_task = 'NONE'
+            external_tasks = ['NONE']
 
         follow_on = False
         if oneoff and intercycle:
@@ -515,9 +517,6 @@ import ordered_dict
         elif not inherit:
             OUT.write( indent + 'owner = None\n' )
 
-        # external task
-        OUT.write( indent + 'external_task = \'' + external_task + '\'\n\n' )
-
         # remote host
         remote_host = None
         if 'REMOTE_HOST' in parsed_def:
@@ -549,6 +548,11 @@ import ordered_dict
         OUT.write( indent + 'def __init__( self, ' + task_init_def_args + ' ):\n\n' )
 
         indent_more()
+
+        # external task
+        OUT.write( indent + 'self.external_tasks = deque()\n' )
+        for task in external_tasks:
+            OUT.write( indent + 'self.external_tasks.append( \'' + task + '\')\n' )
 
         if inherit:
             OUT.write( indent + 'super(' + task_name + ', self ).__init__(' + task_inherit_super_args + ' )\n\n' )
