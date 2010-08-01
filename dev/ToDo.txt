@@ -1,7 +1,5 @@
 To Do
 
-* %TASK: allow single quotes in commandline
-
 * task families: currently have to specify %CYCLES, which (a) should be
   checked for consistency with family members, or (b) should not be
   necessary (get it from members).
