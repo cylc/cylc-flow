@@ -100,9 +100,16 @@ class scheduler:
                 "mode clock, of each running task. The default is 20 minutes.",
                 metavar="MINUTES", action="store", dest="dummy_task_run_length" )
 
-        self.parser.add_option( "--traceback", help=\
-                "Print the full exception traceback in case of error.",
+        self.parser.add_option( "--debug", help=\
+                "Turn on the 'debug' logging level and print the Python "
+                "source traceback for unhandled exceptions (otherwise "
+                "just the error message will be printed).",
                 action="store_true", dest="debug" )
+
+        self.parser.add_option( "--timing", help=\
+                "Turn on main task processing loop timing, which may be useful "
+                "for testing very large suites of 1000+ tasks.",
+                action="store_true", default=False, dest="timing" )
 
         self.parse_commandline()
 
@@ -199,7 +206,10 @@ class scheduler:
             self.use_quick_elim = True
 
         self.logging_dir = self.rcfile.get_suite_logging_dir( self.suite_name, self.practice ) 
-        self.logging_level = self.rcfile.get_logging_level()
+        if self.options.debug:
+            self.logging_level = logging.DEBUG
+        else:
+            self.logging_level = self.rcfile.get_logging_level()
         state_dump_dir = self.rcfile.get_suite_statedump_dir( self.suite_name , self.practice )
         self.state_dump_file = os.path.join( state_dump_dir, 'state' )
 
@@ -393,7 +403,8 @@ class scheduler:
             # require renegotiation of dependencies, etc.
 
             if self.process_tasks():
-                #print '...................................', datetime.datetime.now()
+                if self.options.timing:
+                    main_loop_start_time = datetime.datetime.now()
 
                 self.pool.negotiate()
                 self.pool.run_tasks()
@@ -405,6 +416,11 @@ class scheduler:
                 self.suite_state.update( self.pool.tasks, self.clock, \
                         self.pool.paused(), self.pool.will_pause_at(), \
                         self.remote.halt, self.pool.will_stop_at() )
+
+                if self.options.timing:
+                    delta = datetime.datetime.now() - main_loop_start_time
+                    seconds = delta.seconds + float(delta.microseconds)/10**6
+                    print "MAIN LOOP TIME TAKEN:", seconds, "seconds"
 
             if self.pool.all_tasks_finished():
                 log.critical( "ALL TASKS FINISHED" )

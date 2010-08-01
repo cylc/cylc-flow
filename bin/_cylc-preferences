@@ -48,11 +48,11 @@ parser.add_option( "--set-logging-dir",
         action="store", dest="logging_dir" )
 
 parser.add_option( "--set-logging-level", 
-        help="Set the default cylc logging level. Note that if you choose "
-        "'warning', for example, only warning messages and worse will be "
-        "logged. The 'info' level is appropriate under most "
-        "circumstances. (" + ','.join(vchoices) + ')',
-        default=None, choices=vchoices, metavar="PATH",
+        help="Set the default cylc logging level: " + \
+        ', '.join(vchoices) + ". If you choose 'warning', "
+        "for example, only warning messages "
+        "and worse will be logged. Use 'info' for normal operation.",
+        default=None, choices=vchoices, metavar="LEVEL",
         action="store", dest="logging_level" )
 
 parser.add_option( "--set-state-dump-dir", 

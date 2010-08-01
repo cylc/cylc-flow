@@ -4,6 +4,13 @@ To Do
   checked for consistency with family members, or (b) should not be
   necessary (get it from members).
 
+* fix cylc stdout satisfaction attribution since adding prerequisite
+  labels for conditional prerequisites:
+TaskC%2010010106  READY
+ o "1" <--- TaskA%2010010106
+ o "3" <--- coldstart%2010010106
+ o "2" <--- TaskA%2010010106
+
 * make $(CYCLE_TIME) implicit in messages except where reference to
   *other* cycles are required?
 

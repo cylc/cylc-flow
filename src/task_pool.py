@@ -14,7 +14,6 @@ import datetime
 import cycle_time
 import pimp_my_logger
 import logging
-import traceback
 import sys, os, re
 from dynamic_instantiation import get_object
 from broker import broker

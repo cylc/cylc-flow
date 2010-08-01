@@ -76,7 +76,7 @@ if __name__ == '__main__':
             raise
         else:
             print x
-            print "(use --traceback to see exception traceback)"
+            print "(use --debug to see exception traceback)"
             sys.exit(1)
 
     try:
@@ -98,7 +98,7 @@ if __name__ == '__main__':
         else:
             print "THE ERROR WAS:"
             print x
-            print "(use --traceback to see exception traceback)"
+            print "(use --debug to see exception traceback)"
             sys.exit(1)
 
     except:
