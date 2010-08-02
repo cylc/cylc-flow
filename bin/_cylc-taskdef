@@ -425,8 +425,8 @@ from collections import deque
         if 'TASK' in parsed_def:
             external_tasks = parsed_def[ 'TASK' ]
             if dummy:
-                print "WARNING: this task has the 'dummy' task type modifier, and therefore its"
-                print "external task, " + external_task + ", will be replaced by _cylc-dummy-task."
+                print "WARNING: this task has the 'dummy' type modifier so its"
+                print "external task(s) will be replaced by _cylc-dummy-task."
         else:
             if not dummy and not inherit and not family:
                 print 'ERROR: no external task specified'
