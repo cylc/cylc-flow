@@ -5,7 +5,7 @@ import shutil
 import cycle_time
 from optparse import OptionParser
 
-usage = """rolling-archive [options] DIR
+usage = """cylcutil rolling-archive [options] DIR
 
 Implement a cycle time based rolling archive.
 

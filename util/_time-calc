@@ -4,7 +4,7 @@ import os, sys, re
 import cycle_time
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylc time-calc [options] [CYCLE] [STRING]
+parser = OptionParser( usage = """cylcutil time-calc [options] [CYCLE] [STRING]
 
 Cycle time arithmetic with optional transformation of the result via a
 template string. Can be used by task scripts to calculate offsets from
