@@ -1,5 +1,15 @@
 To Do
 
+* %TASK: allow single quotes in commandline
+
+* IMPORTANT: 'cylc view -p' crashes nastily on unconfigured suites.
+
+* document that simple tasks can be entirely contained in taskdef files,
+  via a simple wrapped commandline and %EXTRA_SCRIPTING.
+
+* allow $(CYCLE_TIME+/-N) in %EXTRA_SCRIPTING and %TASK (it is allowed
+  in %ENVIRONMENT and %COMMANDLINE)
+
 * task families: currently have to specify %CYCLES, which (a) should be
   checked for consistency with family members, or (b) should not be
   necessary (get it from members).
