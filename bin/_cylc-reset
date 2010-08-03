@@ -18,22 +18,17 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc reset [options] SUITE TASK_ID
 
-Reset the state of a single task to 'waiting', 'ready' or 'finished'.
-
-The principal use for this command is to cause a failed task to be
-resubmitted after fixing the problem. By default the task will be reset
-to the "ready" state (all prerequisites satisfied) and thus resubmitted
-immediately.""",
+Reset a task to the 'ready' state (all prerequisites satisfied) thereby
+causing it to trigger immediately, or optionally to the 'waiting' or
+'finished' states.""",
 [ 'TASK_ID              Identity of the task to reset (NAME%YYYYMMDDHH).'] )
 
 parser.add_option( "--waiting", 
-        help="Reset the task to the 'waiting' state (prerequisites yet "
-        "to be satisfied).",
+        help="Reset to 'waiting' state (prerequisites not satisfied).",
         action="store_true", default=False, dest="waiting" )
 
 parser.add_option( "--finished", 
-        help="Reset a task to the 'finished' state (all outputs "
-        "completed).", 
+        help="Reset to 'finished' state (outputs completed).", 
         action="store_true", default=False, dest="finished" )
 
 (options, args) = parser.parse_args()
