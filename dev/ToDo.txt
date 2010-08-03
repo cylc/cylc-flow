@@ -1,4 +1,7 @@
 To Do
+* suite_config.py is now only used for environment vars and job submit
+  method => no need for it to be Python source.
+
 
 * %TASK: allow single quotes in commandline
 
