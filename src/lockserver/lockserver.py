@@ -78,6 +78,10 @@ class lockserver( Pyro.core.ObjBase ):
     def get_lock_id( self, lockgroup, task_id ):
         return lockgroup + ':' + task_id
 
+    def get_lockgroup( self, lock_id ):
+        (lockgroup, id) = lock_id.split(':')
+        return lockgroup
+
     def get_suite_string( self, lockgroup, suite_dir ):
         return lockgroup + '-->' + suite_dir
 
@@ -221,6 +225,15 @@ class lockserver( Pyro.core.ObjBase ):
 
 
     def release_suite_access( self, suite_dir, lockgroup ):
+        # first release any task locks held by the suite
+        for id in self.locked.keys():
+            print id
+            print self.get_lockgroup( id ), lockgroup
+            if self.get_lockgroup( id ) == lockgroup:
+                print "HELLO"
+                del self.locked[ id ]
+                self.log.info( "released task lock " + id ) 
+
         result = True
         if suite_dir in self.exclusive:
             if lockgroup not in self.exclusive[ suite_dir ]:

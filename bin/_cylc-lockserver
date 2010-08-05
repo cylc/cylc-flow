@@ -198,7 +198,8 @@ locks left after a suite or task exits without releasing its lock)."""
     parser.add_option( "--acquire-suite-nonex", help="Acquire a non-exclusive suite lock.",
             metavar="SUITE", action="store", dest="suite_acquire_nonex" )
 
-    parser.add_option( "--release-suite", help="Release a suite lock.",
+    parser.add_option( "--release-suite", help="Release a suite, and "
+            "any tasks held by it.",
             metavar="SUITE", action="store", dest="suite_release" )
 
     parser.add_option( "-p", "--print", help="Print currently held locks.",

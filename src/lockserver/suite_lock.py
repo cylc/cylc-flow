@@ -19,14 +19,12 @@ name = 'broker'
 from lockserver import get_lockserver
 
 class suite_lock:
-    def __init__( self, pns_host, username, sysname, suite_dir, cylc_mode ):
+    def __init__( self, pns_host, username, suitename, suite_dir, cylc_mode ):
 
         self.pns_host = pns_host
         self.suite_dir = suite_dir
         self.cylc_mode = cylc_mode
-
-        self.lockgroup = username + '.' + sysname
-
+        self.lockgroup = username + '.' + suitename
 
     def request_suite_access( self, exclusive=True ):
         # Cylc suite name is user-specific (i.e. different users can
