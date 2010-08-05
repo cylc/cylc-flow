@@ -1,7 +1,12 @@
 To Do
+
+* --include and --exclude with task families
+* %OWNER should not be required with task families, which has no %TASK.
+
 * suite_config.py is now only used for environment vars and job submit
   method => no need for it to be Python source.
 
+* %TASK conditional on cycle time? and how would that work with retry?
 
 * %TASK: allow single quotes in commandline
 
