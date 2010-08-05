@@ -1,7 +1,12 @@
 To Do
 
-* --include and --exclude with task families
-* %OWNER should not be required with task families, which has no %TASK.
+* TASK FAMILIES:
+  + --include and --exclude with task families
+  + configure should check for consistency of MEMBER and MEMBER_OF
+  + %OWNER should not be required with families (no %TASK).
+  + currently have to specify %CYCLES, which (a) should be
+  checked for consistency with family members, or (b) should not be
+  necessary (get it from members).
 
 * suite_config.py is now only used for environment vars and job submit
   method => no need for it to be Python source.
@@ -17,10 +22,6 @@ To Do
 
 * allow $(CYCLE_TIME+/-N) in %EXTRA_SCRIPTING and %TASK (it is allowed
   in %ENVIRONMENT and %COMMANDLINE)
-
-* task families: currently have to specify %CYCLES, which (a) should be
-  checked for consistency with family members, or (b) should not be
-  necessary (get it from members).
 
 * fix cylc stdout satisfaction attribution since adding prerequisite
   labels for conditional prerequisites:
