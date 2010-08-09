@@ -560,7 +560,21 @@ from collections import deque
 
         # external task
         OUT.write( indent + 'self.external_tasks = deque()\n' )
-        for task in external_tasks:
+
+        # concatenate any commandlines ending in '\'
+        newt = []
+        cat = ''
+        for t in external_tasks:
+            if t[-1] == '\\':
+                cat += t[0:-1]
+                continue
+            if cat != '':
+                newt.append( cat + t )
+                cat = ''
+            else:
+                newt.append( t )
+
+        for task in newt:
             # interpolate $(CYCLE_TIME [+/-n]) 
             task = interpolate_cycle_times( task )
             OUT.write( indent + 'self.external_tasks.append( \'' + task + '\')\n' )

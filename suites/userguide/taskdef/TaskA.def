@@ -26,7 +26,9 @@
     0,6,12,18
 
 %TASK
-    TaskA.sh --file=${HOME}/data-$(CYCLE_TIME + 6).nc "the quick brown $ANIMAL went ${HOME}"
+    TaskA.sh --file=${HOME}/data-$(CYCLE_TIME + 6).nc \
+    "the quick brown $ANIMAL went ${HOME}"
+    /bin/echo "fuck off"
 
 %ENVIRONMENT
     ANIMAL foxy fox

@@ -64,8 +64,13 @@
     # - Located in the system definition scripts sub-directory,
     #     or an external location (full path, or not if in $PATH)
     # - Not required by tasks with the 'dummy' modifier.
+    # - RETRY LIST: each listed commandline will be used in turn if 
+    #   the task reports failure on the previous commandline 
 
-    run-foo.sh
+    run-foo.sh                                          # try no.1
+    run-foo.sh --try-again-with-a-long-commandline \    # try no.2
+        "like this: the quick brown fox jumped over the lazy dog"
+    disaster-recovery.sh                                # try no.3
 
 #_______________________________________________________________________
 %PREREQUISITES      
@@ -157,8 +162,8 @@
     # defined previously in this section, and $(CYCLE_TIME [+/-N]) 
 
     VARNAME     value
-    REMOTE_HOME $[HOME]
-    ANIMAL      foxy fox  # NOT QUOTED!
+    OTHER_VARNAME     other_value
+
 
 #_______________________________________________________________________
 [%DIRECTIVES]

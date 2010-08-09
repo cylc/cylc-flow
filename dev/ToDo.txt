@@ -1,5 +1,7 @@
 To Do
 
+* RENAME? NAME -> TASK, TASK -> COMMANDLINE
+
 * TASK FAMILIES:
   + --include and --exclude with task families
   + configure should check for consistency of MEMBER and MEMBER_OF
@@ -46,11 +48,7 @@ TaskC%2010010106  READY
   setting them in system_config. (and document that task-specific env
   vars CAN be set globally too, they're unique and it's convenient.
 
-* change terminology: 'system' -> 'suite'.
-
 * make task-specific logs optional, esp for large systems.
-
-* lockserver option to delete all locks for a given system.
 
 * document new use of 'TaskID failed' as an output: added on the fly as
   a new output if failure occurs, then removed from the output list on
@@ -67,8 +65,6 @@ TaskC%2010010106  READY
 * long-running (almost 1 day) dummy mode oper run (started via vnc for
   ministerial opening demo) could not be unlocked or stopped (etc.) -
   got remote I/O Error via Pyro?
-
-* env vars in %TASK?
 
 * cycle-time conditional environment and TASK in taskdefs.
 
@@ -123,9 +119,6 @@ TaskC%2010010106  READY
   the task script has not been set executable). 
 
 * DOCUMENT: daemon and asynchronous task
-
-* WILL_SATSIFY_ME() REQUIRED FOR FUZZY and LOOSE PREREQUISITES?
-  (else purge will fail if involving these tasks).
 
 * task groups defined in system_config cause abort if any of the tasks
   therein are not defined (e.g. if commented out of the task list!)
@@ -252,3 +245,6 @@ TopNet in EcoConnect)
   for other prerequisites to be satisfied ... OR (better?!) don't try to
   satisfy fuzzy prerequistes until after all non-fuzzy ones have been
   satsified. 
+
+* WILL_SATSIFY_ME() REQUIRED FOR FUZZY and LOOSE PREREQUISITES?
+  (else purge will fail if involving these tasks).
