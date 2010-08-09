@@ -26,7 +26,7 @@
     0,6,12,18
 
 %TASK
-    TaskC.sh
+    TaskC.sh -f -g $HOME ${CYCLE_TIME:8:2} $BAR $ONE $(cylcutil time-calc --hour )
 
 %ENVIRONMENT
     BAR bar
@@ -36,9 +36,6 @@
 %EXTRA_SCRIPTING
     export HR=${CYCLE_TIME:8:2}
     export HR2=$(cylcutil time-calc --hour)
-
-%COMMANDLINE
-    -f -g $HOME ${CYCLE_TIME:8:2} $BAR $ONE $(cylcutil time-calc --hour )
 
 %PREREQUISITES
     "surface pressure field ready for $(CYCLE_TIME)"

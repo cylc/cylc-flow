@@ -24,15 +24,12 @@
     0,6,12,18
 
 %TASK
-    cylc-wrapper
+    cylc-wrapper --foo=$FOO
 
 %ENVIRONMENT
     WRAP TaskF.sh
     FOO foo
     ANALYSIS_TIME $(CYCLE_TIME)
-
-%COMMANDLINE
-    --foo=$FOO
 
 %PREREQUISITES
     "storm surge fields ready for $(CYCLE_TIME)"

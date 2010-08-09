@@ -13,15 +13,12 @@ To Do
 
 * %TASK conditional on cycle time? and how would that work with retry?
 
-* %TASK: allow single quotes in commandline
+* %TASK: allow single quotes in path or commandline
 
 * IMPORTANT: 'cylc view -p' crashes nastily on unconfigured suites.
 
 * document that simple tasks can be entirely contained in taskdef files,
   via a simple wrapped commandline and %EXTRA_SCRIPTING.
-
-* allow $(CYCLE_TIME+/-N) in %EXTRA_SCRIPTING and %TASK (it is allowed
-  in %ENVIRONMENT and %COMMANDLINE)
 
 * fix cylc stdout satisfaction attribution since adding prerequisite
   labels for conditional prerequisites:
@@ -32,12 +29,6 @@ TaskC%2010010106  READY
 
 * make $(CYCLE_TIME) implicit in messages except where reference to
   *other* cycles are required?
-
-* note that %COMMANDLINE is not necessary but may enable more clarity
-  than listing arguments after the task name.
-
-* allow cylc-wrapper to take target script on the commandline so that
-  use of %ENVIRONMENT $WRAP is not required.
 
 * exception handling for viewer: if user clicks on a task that has 
   just been eliminated (test this with quick cycling trivial suite).
@@ -50,9 +41,6 @@ TaskC%2010010106  READY
 
 * configure should check INHERIT targets actually exist.  At the moment
   this causes an exception early on at run time.
-
-* update master.def on environment variables, interpolation, delayed
-  evaluation, etc., for environment, commandline, %TASK, etc.
 
 * consider a special file for all global environment vars, rather than
   setting them in system_config. (and document that task-specific env
@@ -80,9 +68,9 @@ TaskC%2010010106  READY
   ministerial opening demo) could not be unlocked or stopped (etc.) -
   got remote I/O Error via Pyro?
 
-* env vars in %TASK - e.g. $[HOME]
+* env vars in %TASK?
 
-* cycle-time conditional environment and commandlines in taskdefs.
+* cycle-time conditional environment and TASK in taskdefs.
 
 * persistent state for lockserver, in case of crash or restart while
   systems are running. 
@@ -238,7 +226,7 @@ TaskC%2010010106  READY
 * clean up the clock class with respect to dummy vs real time, and move
   it into task manager?
 
-* do we need non-interpolation of single-quoted strings in taksdef
+* do we need non-interpolation of single-quoted strings in taskdef
   environment vars, commandline, extra scripting etc. (would be
   implemented in jobs_submit.py)?
 

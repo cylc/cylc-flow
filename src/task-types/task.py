@@ -113,7 +113,7 @@ class task( Pyro.core.ObjBase ):
         self.external_task = self.external_tasks.popleft()
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
-                ( self.id, self.external_task, self.env_vars, self.commandline, self.directives, 
+                ( self.id, self.external_task, self.env_vars, self.directives, 
                         self.extra_scripting, self.logfiles, self.__class__.owner, self.__class__.remote_host )
 
     def log( self, priority, message ):

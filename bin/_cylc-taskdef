@@ -207,7 +207,7 @@ def main( argv ):
     task_def_files = argv[2:]
 
     allowed_keys = [ 'LOGFILES', 'INHERIT', 'NAME', 'OWNER', 'CYCLES',
-            'TASK', 'REMOTE_HOST', 'DIRECTIVES', 'COMMANDLINE',
+            'TASK', 'REMOTE_HOST', 'DIRECTIVES', 
             'EXTRA_SCRIPTING', 'ENVIRONMENT', 'INTERCYCLE',
             'PREREQUISITES', 'COLDSTART_PREREQUISITES',
             'SUICIDE_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
@@ -549,14 +549,7 @@ from collections import deque
 
         indent_more()
 
-        # external task
-        OUT.write( indent + 'self.external_tasks = deque()\n' )
-        for task in external_tasks:
-            OUT.write( indent + 'self.external_tasks.append( \'' + task + '\')\n' )
-
-        if inherit:
-            OUT.write( indent + 'super(' + task_name + ', self ).__init__(' + task_inherit_super_args + ' )\n\n' )
-
+        # cycle time
         if not inherit:
             OUT.write( indent + '# adjust cycle time to next valid for this task\n' )
             OUT.write( indent + 'self.c_time = self.nearest_c_time( c_time )\n' )
@@ -564,6 +557,16 @@ from collections import deque
             OUT.write( indent + 'self.id = self.name + \'%\' + self.c_time\n' )
             # FIXME ASYNC
             OUT.write( indent + 'hour = self.c_time[8:10]\n\n' )
+
+        # external task
+        OUT.write( indent + 'self.external_tasks = deque()\n' )
+        for task in external_tasks:
+            # interpolate $(CYCLE_TIME [+/-n]) 
+            task = interpolate_cycle_times( task )
+            OUT.write( indent + 'self.external_tasks.append( \'' + task + '\')\n' )
+
+        if inherit:
+            OUT.write( indent + 'super(' + task_name + ', self ).__init__(' + task_inherit_super_args + ' )\n\n' )
 
         #if contact:
         if 'CONTACT_DELAY' in parsed_def: 
@@ -704,17 +707,6 @@ from collections import deque
                 val = interpolate_cycle_times( "'" + val + "'" )
                 OUT.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
 
-        # command line
-        if not inherit:
-            OUT.write( '\n' + indent + 'self.commandline = []\n' )
-
-        if 'COMMANDLINE' in parsed_def:
-            for line in parsed_def[ 'COMMANDLINE' ]:
-                line = "'" + line + "'"
-                # interpolate $(CYCLE_TIME [+/-n]) 
-                line = interpolate_cycle_times( line )
-                OUT.write( indent + 'self.commandline.append(' + line + ')\n' )
-
         # batch queue scheduler directives (qsub or loadleveler)
         if not inherit:
             OUT.write( '\n' + indent + 'self.directives = {}\n' )
@@ -735,8 +727,11 @@ from collections import deque
             for line in parsed_def[ 'EXTRA_SCRIPTING' ]:
                 # cannot interpolate $(CYCLE_TIME+/-N) here because this
                 # section is for shell scripting, not generated python.
-                line = escape_quotes( line )
-                OUT.write( indent + 'self.extra_scripting.append("' + line + '")\n' )
+
+                # interpolate $(CYCLE_TIME [+/-n]) 
+                line = interpolate_cycle_times( "'" + line + "'" )
+                #line = escape_quotes( line )
+                OUT.write( indent + 'self.extra_scripting.append(' + line + ')\n' )
             OUT.write( '\n' )
 
         if not inherit:

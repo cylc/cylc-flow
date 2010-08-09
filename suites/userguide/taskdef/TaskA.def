@@ -26,18 +26,17 @@
     0,6,12,18
 
 %TASK
-    TaskA.sh
+    TaskA.sh --file=${HOME}/data-$(CYCLE_TIME + 6).nc "the quick brown $ANIMAL went ${HOME}"
 
 %ENVIRONMENT
     ANIMAL foxy fox
+    BAR $( CYCLE_TIME - 12 )
     REMOTE_HOME ${HOME}
     FOO_TIME $CYCLE_TIME 
 
-%COMMANDLINE
-    # TaskA.sh commandline: --file=FILE SENTENCE
-    --file=${HOME}/data-$(CYCLE_TIME + 6).nc
-    #--foo=$CYCLE_TIME
-    "the quick brown $ANIMAL went ${HOME}"
+%EXTRA_SCRIPTING
+    export FOO=$( CYCLE_TIME - 12 )
+    export SENTENCE="the quick brown dog when $HOME"
 
 %PREREQUISITES
     "obs data ready for $(CYCLE_TIME)"

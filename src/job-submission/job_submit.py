@@ -86,7 +86,7 @@ class job_submit:
         str = replace_delayed_str( str )
         return str
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, extra, logs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
 
         self.cylc_owner = os.environ['USER']
 
@@ -158,11 +158,6 @@ class job_submit:
         # reset the dummy mode CYLC_FAILOUT_ID variable.
 
         self.task_env = task_env
-
-        # same for the task script command line
-        commandline = ' '.join( com_line ) 
-        ####self.commandline = self.interp_str( commandline )
-        self.commandline = commandline
 
         # same for external task, which may be defined in terms of
         # $[HOME], for example.
@@ -284,7 +279,7 @@ class job_submit:
     def write_task_execute( self, FILE ):
         FILE.write( "\n" )
         FILE.write( "# EXECUTE THE TASK.\n" )
-        FILE.write( self.task + " " + self.commandline + "\n\n" )
+        FILE.write( self.task + "\n\n" )
 
     def submit_jobfile_local( self, dry_run  ):
         # CONSTRUCT self.command, A LOCAL COMMAND THAT WILL SUBMIT THE
