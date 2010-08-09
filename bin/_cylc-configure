@@ -115,13 +115,13 @@ if $CLEAN; then
     echo "CLEANING CYLC SUITE $SUITE_DIR"
 
     # remove compiled python
-    rm *.pyc
+    rm -f *.pyc
     # remove auto-generated files
-    rm task_classes.py
-    rm task_list.py
-    rm -r tasks
+    rm -f task_classes.py
+    rm -f task_list.py
+    rm -rf  tasks
     # remove task directory backups
-    rm -r tasks.[0-9]*
+    rm -rf tasks.[0-9]*
     echo "Done"
     exit 0
 fi
