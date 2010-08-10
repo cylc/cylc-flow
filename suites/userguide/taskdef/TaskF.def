@@ -9,7 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-%NAME
+%TASK
     TaskF, F
 
 %DESCRIPTION
@@ -20,10 +20,10 @@
 %TYPE
     free
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     cylc-wrapper --foo=$FOO
 
 %ENVIRONMENT

@@ -231,9 +231,9 @@ def main( argv ):
 
     task_def_files = argv[2:]
 
-    allowed_keys = [ 'LOGFILES', 'INHERIT', 'NAME', 'OWNER', 'CYCLES',
-            'TASK', 'REMOTE_HOST', 'DIRECTIVES', 
-            'EXTRA_SCRIPTING', 'ENVIRONMENT', 'INTERCYCLE',
+    allowed_keys = [ 'LOGFILES', 'INHERIT', 'TASK', 'OWNER', 'HOURS',
+            'COMMAND', 'REMOTE_HOST', 'DIRECTIVES', 
+            'SCRIPTING', 'ENVIRONMENT', 'INTERCYCLE',
             'PREREQUISITES', 'COLDSTART_PREREQUISITES',
             'SUICIDE_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
             'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
@@ -343,8 +343,8 @@ from collections import deque
         member_of = None
         if 'FAMILY' in parsed_def:
             family = True
-            if 'NAME' in parsed_def:
-                print "ERROR: choose %FAMILY or %NAME"
+            if 'TASK' in parsed_def:
+                print "ERROR: choose %FAMILY or %TASK"
                 sys.exit(1)
 
             family_members = []
@@ -357,13 +357,11 @@ from collections import deque
         else:
             # not a task family, but is it a member of one?
             if 'MEMBER_OF' in parsed_def:
-                #member_of = parsed_def['MEMBER_OF'][0]
                 member_of = get_parsed('MEMBER_OF')[0]
 
         inherit = False
         if 'INHERIT' in parsed_def:
             inherit = True
-            #inherit_from = parsed_def['INHERIT'][0]
             inherit_from = get_parsed( 'INHERIT' )[0]
 
         taskdef_name = os.path.basename( task_def_file )
@@ -387,7 +385,6 @@ from collections import deque
         # intercycle (DEFAULT False)
         intercycle = False
         if 'INTERCYCLE' in parsed_def:
-            #intercycle = parsed_def[ 'INTERCYCLE' ][0]
             intercycle = get_parsed( 'INTERCYCLE' )[0]
             if intercycle == 'True' or intercycle == 'true':
                 intercycle = True
@@ -409,7 +406,6 @@ from collections import deque
                 print "ERROR: task families have no %TYPE spec"
                 sys.exit(1)
 
-            #tmp = parsed_def[ 'TYPE' ][0]
             tmp = get_parsed( 'TYPE' )[0]
             typelist = tmp.split(',')
 
@@ -461,9 +457,8 @@ from collections import deque
                     derived_from = ','.join( modifiers ) + ', ' + derived_from
 
         external_tasks = []
-        if 'TASK' in parsed_def:
-            #external_tasks = parsed_def[ 'TASK' ]
-            external_tasks = get_parsed( 'TASK' )
+        if 'COMMAND' in parsed_def:
+            external_tasks = get_parsed( 'COMMAND' )
             if dummy:
                 print "WARNING: this task has the 'dummy' type modifier so its"
                 print "external task(s) will be replaced by _cylc-dummy-task."
@@ -485,7 +480,6 @@ from collections import deque
                 print "ERROR: oneoff with intercycle dependants must define %FOLLOW_ON"
                 sys.exit(1)
             else:
-                #follow_on = parsed_def['FOLLOW_ON'][0]
                 follow_on = get_parsed('FOLLOW_ON')[0]
 
         task_init_def_args = 'c_time, initial_state, startup = False'
@@ -503,12 +497,10 @@ from collections import deque
                 sys.exit(1)
 
         if family:
-            #task_name = parsed_def[ 'FAMILY' ][0]
             task_name = get_parsed( 'FAMILY' )[0]
             task_type = "family"
         else:
-            #task_name = parsed_def[ 'NAME' ][0]
-            task_name = get_parsed( 'NAME' )[0]
+            task_name = get_parsed( 'TASK' )[0]
         short_name = task_name
 
         m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
@@ -545,7 +537,6 @@ from collections import deque
         # task description
         if 'DESCRIPTION' in parsed_def:
             OUT.write( indent + 'description = []\n' )
-            #for line in  parsed_def[ 'DESCRIPTION' ]:
             for line in  get_parsed( 'DESCRIPTION' ):
                 OUT.write( indent + 'description.append("' + escape_quotes(line) + '")\n' )
             OUT.write( '\n' )
@@ -556,7 +547,6 @@ from collections import deque
         # owner
         owner = None
         if 'OWNER' in parsed_def:
-            #owner = parsed_def[ 'OWNER' ][0]
             owner = get_parsed( 'OWNER' )[0]
             OUT.write( indent + 'owner = \'' + owner + '\'\n' )
         elif not inherit:
@@ -565,7 +555,6 @@ from collections import deque
         # remote host
         remote_host = None
         if 'REMOTE_HOST' in parsed_def:
-            #remote_host = parsed_def[ 'REMOTE_HOST' ][0]
             remote_host = get_parsed( 'REMOTE_HOST' )[0]
             OUT.write( indent + 'remote_host = \'' + remote_host + '\'\n\n' )
         else:
@@ -573,17 +562,15 @@ from collections import deque
 
         OUT.write( indent + 'job_submit_method = None\n' )
 
-        if 'CYCLES' not in parsed_def:
+        if 'HOURS' not in parsed_def:
             # NOTE: THIS WILL NEED TO BE MODIFIED FOR ASYNC TASKS
             if not inherit:
-                print "ERROR: no %CYCLES provided for task " + task_name
+                print "ERROR: no %HOURS provided for task " + task_name
                 sys.exit(1)
             pass
 
         else:
-            valid = get_parsed( 'CYCLES' )[0]
-            # valid hours
-            #OUT.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLES' ][0] + ']\n\n' )
+            valid = get_parsed( 'HOURS' )[0]
             OUT.write( indent + 'valid_hours = [' + valid + ']\n\n' )
 
         if intercycle:
@@ -702,7 +689,6 @@ from collections import deque
             OUT.write( indent + 'self.output_patterns = []\n' )
 
         if 'OUTPUT_PATTERNS' in parsed_def:
-            #for line in parsed_def[ 'OUTPUT_PATTERNS' ]:
             for line in get_parsed( 'OUTPUT_PATTERNS' ):
                  OUT.write( indent + 'self.output_patterns.append( ' + line + ')\n' )
 
@@ -711,7 +697,6 @@ from collections import deque
             OUT.write( '\n' + indent + 'self.env_vars = ordered_dict.ordered_dict()\n' )
 
         if 'ENVIRONMENT' in parsed_def:
-            #for pair in parsed_def[ 'ENVIRONMENT' ]:
             for pair in get_parsed( 'ENVIRONMENT' ):
                 ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
@@ -724,7 +709,6 @@ from collections import deque
             OUT.write( '\n' + indent + 'self.directives = {}\n' )
 
         if 'DIRECTIVES' in parsed_def:
-            #for pair in parsed_def[ 'DIRECTIVES' ]:
             for pair in get_parsed( 'DIRECTIVES' ):
                 ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
@@ -736,9 +720,8 @@ from collections import deque
         if not inherit:
             OUT.write( '\n' + indent + 'self.extra_scripting = []\n' )
 
-        if 'EXTRA_SCRIPTING' in parsed_def:
-            #for line in parsed_def[ 'EXTRA_SCRIPTING' ]:
-            for line in get_parsed( 'EXTRA_SCRIPTING' ):
+        if 'SCRIPTING' in parsed_def:
+            for line in get_parsed( 'SCRIPTING' ):
                 # cannot interpolate $(CYCLE_TIME+/-N) here because this
                 # section is for shell scripting, not generated python.
 

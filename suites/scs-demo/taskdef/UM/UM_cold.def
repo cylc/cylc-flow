@@ -1,7 +1,7 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 
-%NAME
+%TASK
     UM_cold
 
 %DESCRIPTION
@@ -11,10 +11,10 @@
 %TYPE
     free, oneoff
 
-%CYCLES
+%HOURS
     6
 
-%TASK
+%COMMAND
     UM_nz_coldstart.sh
 
 %PREREQUISITES

@@ -1,7 +1,7 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 
-%NAME
+%TASK
     OPS1
 
 %DESCRIPTION
@@ -10,10 +10,10 @@
 %TYPE
     free
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     ops_obsgroup1.sh
 
 %PREREQUISITES

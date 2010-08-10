@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     C2, c2
 
 %DESCRIPTION
@@ -22,10 +22,10 @@
 %TYPE
     free
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     C2.sh
 
 %PREREQUISITES

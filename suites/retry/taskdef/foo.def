@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     foo
 
 %DESCRIPTION
@@ -19,14 +19,14 @@
 %TYPE
     free, sequential
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     # main task:
     cylc-wrapper /bin/false
     # on failure, do this:
     cylc-wrapper echo "post-failure recovery task"
 
-%EXTRA_SCRIPTING
+%SCRIPTING
     sleep 5

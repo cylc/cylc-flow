@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     TaskA, A
 
 %DESCRIPTION
@@ -22,10 +22,10 @@
 %TYPE
     tied
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     TaskA.sh --file=${HOME}/data-$(CYCLE_TIME + 6).nc \
     "the quick brown $ANIMAL went ${HOME}"
     /bin/echo "fuck off"
@@ -36,7 +36,7 @@
     REMOTE_HOME ${HOME}
     FOO_TIME $CYCLE_TIME 
 
-%EXTRA_SCRIPTING
+%SCRIPTING
     export FOO=$( CYCLE_TIME - 12 )
     export SENTENCE="the quick brown dog when $HOME"
 

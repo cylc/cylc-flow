@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     ext
 
 %DESCRIPTION
@@ -23,10 +23,10 @@
 %CONTACT_DELAY
     1.0 hr
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     ext.sh
 
 %COLDSTART_PREREQUISITES

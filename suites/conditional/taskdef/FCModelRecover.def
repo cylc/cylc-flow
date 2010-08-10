@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     FCModelRecover, rec
 
 %DESCRIPTION
@@ -23,10 +23,10 @@
     # the main model, not for its own use.
     free
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     # None
     /bin/true
 

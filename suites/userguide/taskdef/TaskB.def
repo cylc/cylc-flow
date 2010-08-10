@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     TaskB, B
 
 %DESCRIPTION
@@ -22,16 +22,16 @@
 %TYPE
     tied
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     TaskB.sh
 
 %PREREQUISITES
     "surface wind fields ready for $(CYCLE_TIME)"
 
-%EXTRA_SCRIPTING
+%SCRIPTING
     uname -a
     export FOO=BAR
     echo "hello from $USER"

@@ -3,13 +3,13 @@
 %INHERIT
     OPS1
 
-%NAME
+%TASK
     OPS3
 
 %DESCRIPTION
     Obs processing for group 3 obs
 
-%TASK
+%COMMAND
     ops_obsgroup3.sh
 
 %OUTPUTS

@@ -52,7 +52,7 @@ numbers=left,
 
 \lstdefinelanguage{cylctaskdef}
 {
-morekeywords={INHERIT,NAME,DESCRIPTION,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,CYCLES,TASK,ENVIRONMENT,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,FOLLOW_ON},
+morekeywords={INHERIT,TASK,FAMILY,DESCRIPTION,SCRIPTING,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,HOURS,COMMAND,ENVIRONMENT,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,SUICIDE_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,FOLLOW_ON,conditional},
 sensitive=false,
 morecomment=[l]{\#},
 morestring=[b]\",
@@ -1900,12 +1900,12 @@ suite name.
 
 \subsection{Extra Scripting}
 
-The \lstinline=%EXTRA_SCRIPTING= taskdef section provides ultimate
+The \lstinline=%SCRIPTING= taskdef section provides ultimate
 control over the task execution environment, allowing you to source
 external scripts, execute cylc utilities, and so on.
 
 \begin{lstlisting}
-%EXTRA_SCRIPTING
+%SCRIPTING
     export NEXT_CYCLE=$( cylcutil time-calc --add=6 )
     . $HOME/env-setup.sh
 \end{lstlisting}
@@ -2702,14 +2702,20 @@ some cases.
 \input{commands.tex}
 
 \pagebreak
-\section{Annotated Task Definition Reference File}
+\section{Annotated Task Definition Reference}
+
+\subsection{Task Definition}
 \label{AnnotatedTaskDefinitionReferenceFile}
-
 \lstset{language=cylctaskdef}
-
-\lstinputlisting{../templates/taskdef/master.def}
-
+\lstinputlisting{../templates/taskdef/task.def}
 \lstset{language=}
+
+\subsection{Task Family Definition}
+\label{AnnotatedTaskFamilyDefinitionReferenceFile}
+\lstset{language=cylctaskdef}
+\lstinputlisting{../templates/taskdef/family.def}
+\lstset{language=}
+
 
 \pagebreak
 \section{Annotated Task Script}
@@ -3039,7 +3045,7 @@ to extend this minimum granularity to minutes and seconds if necessary.
         real time operation). 
 
 Valid cycles times for a task are specified in the taskdef
-\lstinline=CYCLES= key.  It would be easy to extend this to allow less
+\lstinline=HOURS= key.  It would be easy to extend this to allow less
 frequent tasks if required. 
 
 \end{itemize}

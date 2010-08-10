@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     TaskC, C
 
 %DESCRIPTION
@@ -22,10 +22,10 @@
 %TYPE
     tied
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     TaskC.sh -f -g $HOME ${CYCLE_TIME:8:2} $BAR $ONE $(cylcutil time-calc --hour )
 
 %ENVIRONMENT
@@ -33,7 +33,7 @@
     BAZ baz
     FOO ${BAR##*_}$BAZ
 
-%EXTRA_SCRIPTING
+%SCRIPTING
     export HR=${CYCLE_TIME:8:2}
     export HR2=$(cylcutil time-calc --hour)
 

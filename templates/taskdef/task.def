@@ -12,8 +12,12 @@
 #         |________________________|
 
 #______________________________________________________________ALL TASKS
-%NAME
-    # - Name[, Shortname]
+%TASK
+    Name
+
+    # or, optionally:
+
+    Longname, shortname
 
     # - The optional short name can be displayed by system monitors to 
     #   help save screen real estate when viewing large systems. 
@@ -51,13 +55,13 @@
     # SEE THE CYLC USERGUIDE FOR MORE ON TASK TYPES AND MODIFIERS.
 
 #______________________________________________________________ALL TASKS
-%CYCLES
+%HOURS
     # - Comma separated list of cycle hours valid for this task
 
     0,6,12,18
 
 #______________________________________________________________ALL TASKS
-%TASK
+%COMMAND
     # - The program or script cylc must submit to run this task.
     # - Located in the system definition scripts sub-directory,
     #     or an external location (full path, or not if in $PATH)
@@ -77,8 +81,7 @@
     #   between the outputs of task instances with different cycle times.
     # - Cycle time arithmetic is supported: $(CYCLE_TIME [+/- <hours>])
     # - A RESTART PREREQUISITE IS REGISTERED AUTOMATICALLY FOR TIED TASKS:
-    #     + "NAME restart files ready for $CYCLE_TIME"
-    # - You may trigger off started, completed, finished, failed messages.
+    #     + "TASK restart files ready for $CYCLE_TIME"
 
     "foo output files ready for $(CYCLE_TIME)"
     "file bar-$(CYCLE_TIME).nc ready"
@@ -107,9 +110,8 @@
     #   the outputs of task instances with different cycle times.
     # - Cycle time arithmetic supported: $(CYCLE_TIME [+/- <hours>])
     # - SOME SPECIAL OUTPUTS ARE REGISTERED AUTOMATICALLY BY CYLC:
-    #     + "NAME%CYCLE started|finished|failed|completed" (ALL TASKS)
-    #     + "NAME restart files ready for CYCLE"          (TIED TASKS)
-    # - May be conditional on cycle hour
+    #     + "TASK%CYCLE started|finished|failed|completed" (ALL TASKS)
+    #     + "TASK restart files ready for CYCLE"          (TIED TASKS)
     
     "file foo-$(CYCLE_TIME).nc ready"
     "atmos model postprocessing done for $(CYCLE_TIME)"
@@ -192,7 +194,7 @@
     directive_name2 value2
 
 #_______________________________________________________________________
-[%EXTRA_SCRIPTING]
+[%SCRIPTING]
     # - Any additional SHELL SCRIPTING to execute before the task script.
     # - Can be used to source existing environment setup scripts etc.
     # - Can include and environment variables as for COMMANDLINE etc.
@@ -264,7 +266,7 @@
 #_______________________________________________________________________
 [%INHERIT]
     # - Name of another task from which to inherit taskdef properties.
-    # - You must supply at least %NAME, %DESCRIPTION, and %OUTPUTS.
+    # - You must supply at least %TASK, %DESCRIPTION, and %OUTPUTS.
     # - Non-singular quantities such as prerequisites and environment
     #   variables, if provided, will entirely OVERRIDE, not add to,
     #   those defined in the parent task.
@@ -292,11 +294,16 @@
 
 #_______________________________________________________________________
 #_S_E_C_T_I_O_N_S__T_H_A_T__M_A_Y__D_E_P_E_N_D__O_N__C_Y_C_L_E__H_O_U_R_
+#
 
-    # %PREREQUISITES, %COLDSTART_PREREQUISITES, %SUICIDE_PREREQUISITES,
-    # %OUTPUTS, %CONTACT_DELAY, %N_RESTART_OUTPUTS. 
+# %PREREQUISITES
+# %COLDSTART_PREREQUISITES
+# %SUICIDE_PREREQUISITES
+# %OUTPUTS
+# %CONTACT_DELAY
+# %N_RESTART_OUTPUTS. 
 
-    # Example:
+ # Example:
 
       general1
       general2
@@ -308,8 +315,8 @@
       if HOUR in 6,18:
         conditional3
 
-    # Note that the general case can be used as a default that gets
-    # overridden by the specific cases below it, EXCEPT in the case of
-    # prerequisites and outputs: these are *added* to a list so that
-    # hour-specific requisites will, if the hour is right, add to but
-    # not replace any general ones that have already been defined. 
+# Note that the general case can be used as a default that gets
+# overridden by the specific cases below it, EXCEPT in the case of
+# prerequisites and outputs: these are *added* to a list so that
+# hour-specific requisites will, if the hour is right, add to but not
+# replace any general ones that have already been defined. 

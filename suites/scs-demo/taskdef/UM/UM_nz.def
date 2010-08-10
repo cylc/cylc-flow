@@ -1,7 +1,7 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 
-%NAME
+%TASK
     UM_nz
 
 %DESCRIPTION
@@ -10,10 +10,10 @@
 %TYPE
     tied
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     UM_nz.sh
 
 %PREREQUISITES

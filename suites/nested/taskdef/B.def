@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     B
 
 %DESCRIPTION
@@ -21,10 +21,10 @@
 %TYPE
     tied
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     B.sh
 
 %ENVIRONMENT

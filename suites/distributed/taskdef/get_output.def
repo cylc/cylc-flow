@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     get_output
 
 %DESCRIPTION
@@ -21,10 +21,10 @@
 %TYPE
     free
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     cylc-wrapper
 
 %ENVIRONMENT

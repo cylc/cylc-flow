@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     foo
 
 %DESCRIPTION
@@ -19,10 +19,10 @@
 %TYPE
     free, sequential
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     cylc-wrapper
 
 %ENVIRONMENT
@@ -32,7 +32,7 @@
     TASK_TWO   $GLOBAL_TWO
     TASK_THREE   $TASK_TWO
 
-%EXTRA_SCRIPTING
+%SCRIPTING
     # stay in "submitted" state for 5 seconds to slow down cycling
     sleep 5
 

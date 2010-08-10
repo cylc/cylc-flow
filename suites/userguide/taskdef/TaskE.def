@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     TaskE, E
 
 %DESCRIPTION
@@ -20,10 +20,10 @@
 %TYPE
     free
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     TaskE.sh
 
 %PREREQUISITES

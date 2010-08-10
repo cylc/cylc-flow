@@ -1,7 +1,7 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 
-%NAME
+%TASK
     g_obs
 
 %DESCRIPTION
@@ -13,10 +13,10 @@
 %CONTACT_DELAY
     3.0 hr
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     file_transfer.sh
 
 %ENVIRONMENT

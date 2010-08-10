@@ -1,7 +1,7 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 
 
-%NAME
+%TASK
     startup
 
 %DESCRIPTION
@@ -10,7 +10,7 @@
 %TYPE
     free, oneoff
 
-%CYCLES
+%HOURS
     6
 
 %INTERCYCLE
@@ -21,7 +21,7 @@
     # see comment above
     g_lbc
 
-%TASK
+%COMMAND
     startup.sh
 
 %PREREQUISITES

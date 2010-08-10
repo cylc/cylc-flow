@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     startup, stp
 
 %DESCRIPTION
@@ -20,8 +20,8 @@
 %TYPE
     free, oneoff
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     startup.sh

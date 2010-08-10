@@ -1,7 +1,7 @@
 # THIS IS A CYLC TASK DEFINITION FILE
 # See full_template.def for documented entries
 
-%NAME
+%TASK
     post2
 
 %DESCRIPTION
@@ -10,10 +10,10 @@
 %TYPE
     free
 
-%CYCLES
+%HOURS
     6,18
 
-%TASK
+%COMMAND
     nz_postproc.sh
 
 %PREREQUISITES

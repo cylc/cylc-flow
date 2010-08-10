@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     FCPost, fcp
 
 %DESCRIPTION
@@ -19,10 +19,10 @@
 %TYPE
     free
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     # no task implementation 
     /bin/true
 

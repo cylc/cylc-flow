@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-%NAME
+%TASK
     remote_test, rem
 
 #%LOGFILES
@@ -27,10 +27,10 @@
 %TYPE
     free
 
-%CYCLES
+%HOURS
     0,6,12,18
 
-%TASK
+%COMMAND
     remote-test.sh
 
 %ENVIRONMENT
