@@ -1,0 +1,8 @@
+
+1. new taskdef conditional format
+
+2. taskdef section name changes (use util/upgrade-taskdefs.sh):
+    CYCLES -> HOURS
+    NAME -> TASK
+    TASK -> COMMAND
+    EXTRA_SCRIPTING -> SCRIPTING
