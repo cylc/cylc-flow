@@ -1,57 +1,47 @@
 To Do
 
-* RENAME? NAME -> TASK, TASK -> COMMANDLINE
-
-* In new-style HOUR conditional taskdefs: document that conditional
-  prerequisites and outputs ADD TO rather than OVERRIDE any defaults
-  'any hour' ones.
-
 * TASK FAMILIES:
   + --include and --exclude with task families
   + configure should check for consistency of MEMBER and MEMBER_OF
-  + %OWNER should not be required with families (no %TASK).
-  + currently have to specify %CYCLES, which (a) should be
+  + %OWNER should not be required with families (no %COMMAND).
+  + currently have to specify %HOURS, which (a) should be
   checked for consistency with family members, or (b) should not be
   necessary (get it from members).
 
 * suite_config.py is now only used for environment vars and job submit
   method => no need for it to be Python source.
 
-* %TASK conditional on cycle time? and how would that work with retry?
+* %COMMAND:
+    - conditional on HOUR? 
+    - allow single quotes in path or commandline
 
-* %TASK: allow single quotes in path or commandline
-
-* IMPORTANT: 'cylc view -p' crashes nastily on unconfigured suites.
+* cylc view
+    - 'view -p' crashes nastily on unconfigured suites.
+    - exception handling: if user clicks on a task that has just been
+      eliminated (test this with quick cycling trivial suite).
 
 * document that simple tasks can be entirely contained in taskdef files,
-  via a simple wrapped commandline and %EXTRA_SCRIPTING.
+  via a simple wrapped commandline and %SCRIPTING.
 
-* make $(CYCLE_TIME) implicit in messages except where reference to
-  *other* cycles are required?
-
-* exception handling for viewer: if user clicks on a task that has 
-  just been eliminated (test this with quick cycling trivial suite).
+* could make $(CYCLE_TIME) implicit in messages except where reference
+  to *other* cycles are required?
 
 * allow $(CYCLE_HOUR) etc. in output and prereq messages (needed if
   anyone insists on using actual filenames in messages). 
 
-* userguide system: check-env.sh should check task run-length var is
-  defined, in case user overwrote the system config file.
+* userguide suite: check-env.sh should check task run-length var is
+  defined, in case user overwrote the suite config file.
 
 * configure should check INHERIT targets actually exist.  At the moment
   this causes an exception early on at run time.
 
-* consider a special file for all global environment vars, rather than
-  setting them in system_config. (and document that task-specific env
-  vars CAN be set globally too, they're unique and it's convenient.
-
-* make task-specific logs optional, esp for large systems.
+* make task-specific logs optional, esp for large suites.
 
 * document new use of 'TaskID failed' as an output: added on the fly as
   a new output if failure occurs, then removed from the output list on
   reset.
 
-* if chooser is clicked just as target system shuts down, failure to
+* if chooser is clicked just as target suite shuts down, failure to
   connect error breaks the app, requiring use of 'kill'.
 
 * lockserver errors to a logfile (e.g. if it is killed it silently 
@@ -66,7 +56,7 @@ To Do
 * cycle-time conditional environment and TASK in taskdefs.
 
 * persistent state for lockserver, in case of crash or restart while
-  systems are running. 
+  suites are running. 
 
 * use new cylc_mode class everywhere mode test is required.
 
@@ -98,13 +88,11 @@ To Do
 
   CHECK MY USE OF DICTIONARY ITERATION THROUGHOUT THE CODE
 
-* Record stopping time in state dump in case system shutdown and
+* Record stopping time in state dump in case suite shutdown and
   restarted before all tasks reach the stop time is reached? (currently
   at restart those that did reach the stop time will be finished and
   unspawned, while those that didn't will carry on as if there was no
   stop time).
-
-* Document UM-style custom-wrapper based job submission.
 
 * catch obscure errors, such as attempting to restart when one or more 
   tasks has been commented out of the task list.
@@ -117,20 +105,20 @@ To Do
 
 * DOCUMENT: daemon and asynchronous task
 
-* task groups defined in system_config cause abort if any of the tasks
+* task groups defined in suite_config cause abort if any of the tasks
   therein are not defined (e.g. if commented out of the task list!)
 
 * parse "HH:mm" for contact delay times etc.
 
 * message command (command line usage only!!!) needs lock and practice mode?
 
-* FINISH OFF THE CONNECTION EXCEPTION HANDLING IN MANAGER CLASS.
+* finish off the connection exception handling in manager class.
 
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned
   task to finished, which made it spawn ... is this the desired
   behaviour?)
 
-* insert may need a no-spawn option!
+* insert may need a no-spawn option?
 
 * consider restart messages for split tasks that actually use the same 
   restart files: e.g. nzlam_long (06,18Z) and nzlam_short (00,12Z). 
@@ -138,8 +126,8 @@ To Do
   register (and report) restart messages explicitly because the
   automatic restart messages will not have the right task name.
 
-* check that practice mode systems initialise with the same clock time
-  as the original system!
+* check that practice mode suites initialise with the same clock time
+  as the original suite!
 
 * DOCUMENT or CHANGE: cotemporal peers of failed tasks are not deleted
   automatically because they we USED TO restart with failed tasks in the 
@@ -148,7 +136,7 @@ To Do
 
 * Consider the effect of "# uncomment for earliest NON-FAILED" (x2) in
   manager.py - and test with dummy mode failout tasks.  For failed F in
-  userguide example system, it allows some intermediate finished cycles
+  userguide example suite, it allows some intermediate finished cycles
   to be deleted, but this does not affect the delay due to max runahead.
 
 * consider task proc loop invocation - could we separate summary update
@@ -156,37 +144,28 @@ To Do
   (?) through the loop in order to update the summary immediately for
   monitoring.
 
-* warn about consequences of deleting a task: system may move on so that
+* warn about consequences of deleting a task: suite may move on so that
   a reinserted task will not get its prerequisites satisfied.
 
 * task generator should look for mispelled $(CYLCE_TIME)
 
-* is taskdef CYCLES sorted for order?
+* is taskdef HOURS sorted for order?
 
 * optionally allow a pyro request handling (or main loop?) timeout.
   (this is not needed now that the stalling problem is solved?)
 
-* consistent system exit strategy: 
+* consistent suite exit strategy: 
    -sys.exit(1), 
    -raise SystemExit(message)
    -custom exceptions
 
 * all error messages should go to stderr: print >> sys.stderr, 'message'
 
-* Conditional and "self destruct" prerequisites would allow automated
-  response, by cylc, to failed tasks rather than delegating that
-  responsibility to the system operator or to the external task
-  implementation. For example IF a weather forecast fails, run a backup
-  forecast configured with a shorter timestep, but IF the original
-  forecast succeeds, the backup can self destruct (remove itself from
-  the system). Forecast post-processing task(s) would trigger off EITHER
-  the original or the backup forecast.
-
 * allow cylc task proxies to kill their real external tasks at shutdown
   (and otherwise)?
 
 * make sure that no remote operation, other than 'stop', can bring a
-  system down (exception handling on all remote switches).
+  suite down (exception handling on all remote switches).
 
 * when there are multiple finished tasks that can satisfy a new task's
   restart prerequisites, the one that actually satisfies the new task
@@ -201,15 +180,15 @@ To Do
   names do not clash with parent class or attribute names.
 
 * when remote killing all waiting tasks at a ref time, check that (a)
-  the system has moved on passed that time, and (b) none of the waiting
+  the suite has moved on passed that time, and (b) none of the waiting
   tasks are contact tasks whose time has not come up yet.
 
-* tasks with conditional outputs may have trouble with the "keep one
-  finished task of each kind" procedure in kill_spent_tasks(). best to
-  have multiple tasks instead? 
+* tasks with HOUR-conditional outputs may have trouble with the "keep
+  one finished task of each kind" procedure in kill_spent_tasks(). Best
+  to have multiple tasks instead? 
 
 * detect when taskdef files are newer than task_classes file, and warn
-  that use of configure-system may be required.
+  that use of configure may be required.
 
 * use the custom clock everywhere (it knows about dummy mode).
 
@@ -217,8 +196,7 @@ To Do
   it into task manager?
 
 * do we need non-interpolation of single-quoted strings in taskdef
-  environment vars, commandline, extra scripting etc. (would be
-  implemented in jobs_submit.py)?
+  environment, scripting, command? (implement in job_submit.py)?
 
 * see To Do comment in broker.negotiate() - priority low.
 
@@ -232,7 +210,7 @@ TopNet in EcoConnect)
 
 * FUZZY MATCHING CURRENTLY ASSUMES AT MOST ONE COMPATIBLE OLDER FINISHED
   VERSION OF THE UPSTREAM TASK IS PRESENT, otherwise the match occurs
-  with the first one found, whichever it is. This can fail if a system
+  with the first one found, whichever it is. This can fail if a suite
   problem puts a hold on spent task deletion! E.g.: topnet and oper
   interface go on ahead when topnet_vis has failed (unlikely to happen
   though!)
