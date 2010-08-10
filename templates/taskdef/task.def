@@ -1,5 +1,5 @@
-# MASTER CYLC TASK DEFINITION FILE with all sections annotated.
-# Refer also to the cylc userguide. 
+# ANNOTATED CYLC TASK DEFINITION FILE.
+# See also family.defand the cylc userguide. 
 # Optional (or task-type-dependent) sections: [square brackets].
 
 #         __________________________
@@ -18,8 +18,6 @@
     # - The optional short name can be displayed by system monitors to 
     #   help save screen real estate when viewing large systems. 
     # - Cylc commands can refer to tasks by full or short names.
-
-    nz_forecast, nzf
 
 #______________________________________________________________ALL TASKS
 %DESCRIPTION
@@ -73,32 +71,36 @@
     disaster-recovery.sh                                # try no.3
 
 #_______________________________________________________________________
-%PREREQUISITES      
+%PREREQUISITES                    # MAY DEPEND ON CYCLE HOUR - see below
     # - Quoted string literals, one per lines.
     # - Use $(CYCLE_TIME), $CYCLE_TIME, or ${CYCLE_TIME} to distinguish
     #   between the outputs of task instances with different cycle times.
     # - Cycle time arithmetic is supported: $(CYCLE_TIME [+/- <hours>])
-    # - May depend on cycle time, e.g.: O,12 | "message string"
     # - A RESTART PREREQUISITE IS REGISTERED AUTOMATICALLY FOR TIED TASKS:
     #     + "NAME restart files ready for $CYCLE_TIME"
     # - You may trigger off started, completed, finished, failed messages.
 
-           "baz%$(CYCLE_TIME) finished"
-           "baz%$(CYCLE_TIME) failed"
-           "file bar-$(CYCLE_TIME).nc ready"
-    00,12 | "foo output files ready for $(CYCLE_TIME)"
+    "foo output files ready for $(CYCLE_TIME)"
+    "file bar-$(CYCLE_TIME).nc ready"
 
-    # All prerequisites must be satisfied for the task to be submitted,
-    # unless you label prerequisites and give a conditional expression:
+    # - You may trigger off started, completed, finished, failed messages.
+
+    "baz%$(CYCLE_TIME) finished"
+    "baz%$(CYCLE_TIME) failed"
+    
+    #___________________________________________________________________
+    # CONDITIONAL PREREQUISITES
+    # By default ALL prerequisites must be satified before the task gets
+    # submitted; alternatively you can provide labels and a conditional
+    # expression as follows:
 
     A  "main_forecast%$(CYCLE_TIME) finished"
-    00,12 | B  "recovery_forecast%$(CYCLE_TIME) finished"
-    06,18 | B  "short_recovery_forecast%$(CYCLE_TIME) finished"
+    B  "recovery_forecast%$(CYCLE_TIME) finished"
     C  "processed obs ready for plotting"
     conditional: ( [A] or [B] ) and [C]
 
 #_______________________________________________________________________
-%OUTPUTS
+%OUTPUTS                          # MAY DEPEND ON CYCLE HOUR - see below
     # - Quoted string literals, one output message per line.
     # - $(CYCLE_TIME), $CYCLE_TIME, or ${CYCLE_TIME} should almost
     #   certainly appear somewhere in the string to distinguish between
@@ -109,9 +111,22 @@
     #     + "NAME restart files ready for CYCLE"          (TIED TASKS)
     # - May be conditional on cycle hour
     
-           "file foo-$(CYCLE_TIME).nc ready"
-    0,12 | "atmos model postprocessing done for $(CYCLE_TIME)"
-    6,18 | "file bar-$(CYCLE_TIME).nc ready"
+    "file foo-$(CYCLE_TIME).nc ready"
+    "atmos model postprocessing done for $(CYCLE_TIME)"
+    "file bar-$(CYCLE_TIME).nc ready"
+
+#_______________________________________________________________________
+%[MEMBER_OF]
+    FamilyX
+ 
+    # - See the annotated family.def file.
+    # - Task triggers when FamilyX starts (if no other prerequisites).
+    # - A task family finishes when its member tasks have all finished.
+    # - Use of task families can dramatically reduce scheduling
+    #   efficiency, particularly during catchup operation, except when
+    #   a group of tasks, such as a forecast ensemble, necessarily run
+    #   together anyway (in which case use of a task family will save 
+    #   you from having to write a lot of explicit prerequisites).  
 
 #_______________________________________________________________________
 [%REMOTE_HOST]
@@ -124,7 +139,7 @@
     $SUPERCOMPUTER
  
 #_______________________________________________________________________
-[%CONTACT_DELAY]
+[%CONTACT_DELAY]                  # MAY DEPEND ON CYCLE HOUR - see below
     # - Only for tasks with the 'contact' modifier.
     # - Units: min, sec, hr 
     # - Task will not be submitted unless its prerequisites are
@@ -164,7 +179,6 @@
     VARNAME     value
     OTHER_VARNAME     other_value
 
-
 #_______________________________________________________________________
 [%DIRECTIVES]
     # - Scheduler directives for qsub, loadleveler, or similar.
@@ -198,7 +212,7 @@
     . $[HOME]/environment/configure.sh
 
 #_______________________________________________________________________
-[%COLDSTART_PREREQUISITES]
+[%COLDSTART_PREREQUISITES]        # MAY DEPEND ON CYCLE HOUR - see below
     # - Prerequisites that are only used at system start up.
     # - In subsquent cycles only %PREREQUISITES are used.
     # - These entirely override (rather than add to) %PREREQUISITES
@@ -211,7 +225,7 @@
     "cold start files ready for $(CYCLE_TIME)"
 
 #_______________________________________________________________________
-[%SUICIDE_PREREQUISITES]
+[%SUICIDE_PREREQUISITES]          # MAY DEPEND ON CYCLE HOUR - see below
     # - Prerequisites that, if satisfied, cause task to self destruct.
     # - Maybe depend on cycle time, and conditional expressions are 
     #   allowed as for %PREREQUISITES.
@@ -222,7 +236,7 @@
     "main_forecast%$(CYCLE_TIME) finished"
 
 #_______________________________________________________________________
-[%N_RESTART_OUTPUTS]
+[%N_RESTART_OUTPUTS]              # MAY DEPEND ON CYCLE HOUR - see below
     # - The number of subsequent consecutive cycles for which this task
     #   writes "restart files".
     # - Required for "tied" tasks (i.e. forecast models).
@@ -230,8 +244,7 @@
     # - Results in ONE restart PREREQUISITE and N restart OUTPUTS
     #   being registered automatically for this task.
 
-    0,12 | 2
-    6,18 | 4
+    4
 
 #_______________________________________________________________________
 [%INTERCYCLE] 
@@ -282,3 +295,28 @@
 
     $HOME/atmos/running/$CYCLE_TIME/met.out
     $HOME/atmos/running/$CYCLE_TIME/met.err
+
+#_______________________________________________________________________
+#_S_E_C_T_I_O_N_S__T_H_A_T__M_A_Y__D_E_P_E_N_D__O_N__C_Y_C_L_E__H_O_U_R_
+
+    # %PREREQUISITES, %COLDSTART_PREREQUISITES, %SUICIDE_PREREQUISITES,
+    # %OUTPUTS, %CONTACT_DELAY, %N_RESTART_OUTPUTS. 
+
+    # Example:
+
+      general1
+      general2
+
+      if HOUR in 0,12:
+        conditional1
+        conditional2
+
+      if HOUR in 6,18:
+        conditional3
+
+    # Note that the general case can be used as a default that gets
+    # overridden only in the specific cases listed below it, except in
+    # the case of prerequisites and outputs - these are *added* to a
+    # list so that hour-specific requisites will add to (if the cycle
+    # hour is right) but not replace any general ones that have been
+    # defined. 

@@ -28,8 +28,10 @@
 
 %COLDSTART_PREREQUISITES
     # make sure this task waits on the oneoff 06Z startup task 
-    0  | "startup%$(CYCLE_TIME - 18) finished"
-    12 | "startup%$(CYCLE_TIME - 6) finished"
+    if HOUR in 0:
+        "startup%$(CYCLE_TIME - 18) finished"
+    if HOUR in 12:
+        "startup%$(CYCLE_TIME -  6) finished"
 
 %PREREQUISITES
     # NONE

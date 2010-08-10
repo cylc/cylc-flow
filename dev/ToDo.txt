@@ -2,6 +2,10 @@ To Do
 
 * RENAME? NAME -> TASK, TASK -> COMMANDLINE
 
+* In new-style HOUR conditional taskdefs: document that conditional
+  prerequisites and outputs ADD TO rather than OVERRIDE any defaults
+  'any hour' ones.
+
 * TASK FAMILIES:
   + --include and --exclude with task families
   + configure should check for consistency of MEMBER and MEMBER_OF

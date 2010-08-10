@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-# TO DO: THIS SCRIPT NEEDS TO BE CLEANED UP WITH MORE CODE REUSE
+# TO DO: THIS SCRIPT NEEDS TO BE CLEANED UP AND RESTRUCTURED.
 
 import string, glob
 import sys, os, re
@@ -36,11 +36,13 @@ def print_parsed_info():
 
     global parsed_def
 
-    for k in parsed_def:
+    for item in parsed_def:
         print
-        print k + ':' 
-        for val in parsed_def[ k ]:
-            print ' - ' + val
+        print item + ':' 
+        for condition in parsed_def[ item ]:
+            print '  ' + condition + ':'
+            for line in parsed_def[ item ][ condition ]:
+                print '   - ', line
 
 def interpolate_cycle_times( strng ):
     # interpolate $(CYCLE_TIME [+/-N]) in a string
@@ -95,7 +97,8 @@ def require_quotes( strng, item ):
     if m:
         stripped = string.strip( str, '"' )
     else:
-        print 'ERROR: ' + item + ' must be enclosed in double quotes'
+        print 'ERROR: ' + item + ' must be enclosed in double quotes:'
+        print strng
         sys.exit(1)
 
     return stripped
@@ -136,15 +139,52 @@ def time_trans( strng, hours=False ):
         else:
             return str( float(hrs)*60.0 )
 
-def parse_prereq( prereq, OUT, name ):
-    # case 0: conditional: [A] or [B]
-    # case 1:                 "the quick brown fox"
-    # case 2:          labelA "the quick brown fox"
-    # case 3: 0,6,12 |        "the quick brown fox"
-    # case 4: 0,6,12 | labelA "the quick brown fox"
+def get_parsed( item ):
+    if parsed_def[ item ].keys() != [ 'any' ]:
+        print 'ERROR: ' + item + ' is conditional'
+        sys.exit(1)
+    return parsed_def[ item ][ 'any' ]
 
-    #import pdb
-    #pdb.set_trace()
+def get_conditions( item ):
+    # return specific (not 'any') conditions for parsed item
+    cond = parsed_def[ item ].keys()
+    cond.remove( 'any' )
+    return cond
+
+def write_reqs( key, name, type ):
+    global inherit
+
+    if not inherit or key in parsed_def:
+        OUT.write( indent + 'self.' + name + ' = ' + type + '( self.id )\n' )
+
+    if key in parsed_def:
+        for line in parsed_def[ key ]['any']:
+            if type == 'outputs':
+                parse_output( line, name )
+            else:
+                parse_prereq( line, name )
+        for condition in get_conditions( key ):
+            hours = condition.split(',')
+            for line in parsed_def[ key ][ condition ]:
+                for hour in hours:
+                    OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
+                    indent_more()
+                    if type == 'outputs':
+                        parse_output( line, name )
+                    else:
+                        parse_prereq( line, name )
+                    indent_less()
+
+def parse_output( output, name ):
+    req = require_quotes( output, name )
+    req = "'" + req + "'"
+    req = interpolate_cycle_times( req )
+    OUT.write( indent + 'self.' + name + '.add( ' + req + ' )\n' )
+ 
+def parse_prereq( prereq, name ):
+    # case 0: conditional: [A] or [B]
+    # case 1:     "the quick brown fox"
+    # case 2:   A "the quick brown fox"
 
     # conditional expression
     m = re.search( 'conditional:\s+(.*)$', prereq )
@@ -152,17 +192,6 @@ def parse_prereq( prereq, OUT, name ):
         expr = m.groups()[0]
         OUT.write( indent + 'self.' + name + '.set_conditional_expression( "' + expr + '" )\n' )
         return
-
-    # cycle time conditional
-    m = re.match( '^([\d,]+)\s*\|\s*(.*)$', prereq )
-    if m:
-        [ left, prereq ] = m.groups()
-        # get a list of hours
-        hours = left.split(',')
-        prereq = re.sub( '^\s+', '', prereq )
-
-    else:
-        hours = None
 
     # label
     m = re.match( '^\s*(\w+)\s+(.*)$', prereq )
@@ -172,17 +201,11 @@ def parse_prereq( prereq, OUT, name ):
     else:
         label = "None"
 
-    req = require_quotes( prereq, 'prerequisites' )
+    req = require_quotes( prereq, name )
     req = "'" + req + "'"
     req = interpolate_cycle_times( req )
-    if hours:
-        for hour in hours:
-            OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
-            indent_more()
-            OUT.write( indent + 'self.' + name + '.add( ' + req + ', ' + label + ' )\n' )
-            indent_less()
-    else:
-        OUT.write( indent + 'self.' + name + '.add( ' + req + ', ' + label + ' )\n' )
+
+    OUT.write( indent + 'self.' + name + '.add( ' + req + ', ' + label + ' )\n' )
  
 
 #================= MAIN PROGRAM ========================================
@@ -190,6 +213,8 @@ def main( argv ):
 
     global parsed_def
     global FILE
+    global inherit
+    global OUT
 
     global indent, indent_unit
     indent = ''
@@ -286,23 +311,33 @@ from collections import deque
             # skip comment lines
             if re.match( '^\s*#.*', line ):
                 continue
+            # detect conditionals:
+            m = re.match( '^\s*if HOUR in \s*([\d,]+)\s*:', lline )
+            if m:
+                print '!   ', condition
+                condition = m.groups()[0]
+                parsed_def[ current_key ][ condition ] = []
+                continue
+        
             if re.match( '^%.*', line ):
                 # new key identified
+                condition = 'any'
                 current_key = string.lstrip( line, '%' )
-                # print 'new key: ' + current_key,
+                parsed_def[ current_key ] = {}
+                # always define an 'any' key
+                parsed_def[ current_key ][ condition ] = []
                 if current_key not in allowed_keys:
                     print 'ILLEGAL KEY ERROR: ' + current_key
                     sys.exit(1)
-                parsed_def[ current_key ] = []
             else:
                 if current_key == None:
                     # can this ever happen?
                     print "ERROR: no key identified"
                     sys.exit(1)
                 # data associated with current key
-                parsed_def[ current_key ].append( line ) 
+                parsed_def[ current_key ][ condition ].append( line ) 
         # -----------------------------------------------DONE
-        # print_parsed_info()
+        print_parsed_info()
 
         family = False
         member_of = None
@@ -322,12 +357,14 @@ from collections import deque
         else:
             # not a task family, but is it a member of one?
             if 'MEMBER_OF' in parsed_def:
-                member_of = parsed_def['MEMBER_OF'][0]
+                #member_of = parsed_def['MEMBER_OF'][0]
+                member_of = get_parsed('MEMBER_OF')[0]
 
         inherit = False
         if 'INHERIT' in parsed_def:
             inherit = True
-            inherit_from = parsed_def['INHERIT'][0]
+            #inherit_from = parsed_def['INHERIT'][0]
+            inherit_from = get_parsed( 'INHERIT' )[0]
 
         taskdef_name = os.path.basename( task_def_file )
         task_name = 'class_' + re.sub( '.def$', '.py', taskdef_name )
@@ -350,7 +387,8 @@ from collections import deque
         # intercycle (DEFAULT False)
         intercycle = False
         if 'INTERCYCLE' in parsed_def:
-            intercycle = parsed_def[ 'INTERCYCLE' ][0]
+            #intercycle = parsed_def[ 'INTERCYCLE' ][0]
+            intercycle = get_parsed( 'INTERCYCLE' )[0]
             if intercycle == 'True' or intercycle == 'true':
                 intercycle = True
 
@@ -371,7 +409,8 @@ from collections import deque
                 print "ERROR: task families have no %TYPE spec"
                 sys.exit(1)
 
-            tmp = parsed_def[ 'TYPE' ][0]
+            #tmp = parsed_def[ 'TYPE' ][0]
+            tmp = get_parsed( 'TYPE' )[0]
             typelist = tmp.split(',')
 
             task_type = typelist[0]
@@ -423,7 +462,8 @@ from collections import deque
 
         external_tasks = []
         if 'TASK' in parsed_def:
-            external_tasks = parsed_def[ 'TASK' ]
+            #external_tasks = parsed_def[ 'TASK' ]
+            external_tasks = get_parsed( 'TASK' )
             if dummy:
                 print "WARNING: this task has the 'dummy' type modifier so its"
                 print "external task(s) will be replaced by _cylc-dummy-task."
@@ -445,7 +485,8 @@ from collections import deque
                 print "ERROR: oneoff with intercycle dependants must define %FOLLOW_ON"
                 sys.exit(1)
             else:
-                follow_on = parsed_def['FOLLOW_ON'][0]
+                #follow_on = parsed_def['FOLLOW_ON'][0]
+                follow_on = get_parsed('FOLLOW_ON')[0]
 
         task_init_def_args = 'c_time, initial_state, startup = False'
         task_inherit_super_args = 'c_time, initial_state, startup'
@@ -462,10 +503,12 @@ from collections import deque
                 sys.exit(1)
 
         if family:
-            task_name = parsed_def[ 'FAMILY' ][0]
+            #task_name = parsed_def[ 'FAMILY' ][0]
+            task_name = get_parsed( 'FAMILY' )[0]
             task_type = "family"
         else:
-            task_name = parsed_def[ 'NAME' ][0]
+            #task_name = parsed_def[ 'NAME' ][0]
+            task_name = get_parsed( 'NAME' )[0]
         short_name = task_name
 
         m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
@@ -502,7 +545,8 @@ from collections import deque
         # task description
         if 'DESCRIPTION' in parsed_def:
             OUT.write( indent + 'description = []\n' )
-            for line in  parsed_def[ 'DESCRIPTION' ]:
+            #for line in  parsed_def[ 'DESCRIPTION' ]:
+            for line in  get_parsed( 'DESCRIPTION' ):
                 OUT.write( indent + 'description.append("' + escape_quotes(line) + '")\n' )
             OUT.write( '\n' )
         else:
@@ -512,7 +556,8 @@ from collections import deque
         # owner
         owner = None
         if 'OWNER' in parsed_def:
-            owner = parsed_def[ 'OWNER' ][0]
+            #owner = parsed_def[ 'OWNER' ][0]
+            owner = get_parsed( 'OWNER' )[0]
             OUT.write( indent + 'owner = \'' + owner + '\'\n' )
         elif not inherit:
             OUT.write( indent + 'owner = None\n' )
@@ -520,7 +565,8 @@ from collections import deque
         # remote host
         remote_host = None
         if 'REMOTE_HOST' in parsed_def:
-            remote_host = parsed_def[ 'REMOTE_HOST' ][0]
+            #remote_host = parsed_def[ 'REMOTE_HOST' ][0]
+            remote_host = get_parsed( 'REMOTE_HOST' )[0]
             OUT.write( indent + 'remote_host = \'' + remote_host + '\'\n\n' )
         else:
             OUT.write( indent + 'remote_host = None\n' )
@@ -535,8 +581,10 @@ from collections import deque
             pass
 
         else:
+            valid = get_parsed( 'CYCLES' )[0]
             # valid hours
-            OUT.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLES' ][0] + ']\n\n' )
+            #OUT.write( indent + 'valid_hours = [' + parsed_def[ 'CYCLES' ][0] + ']\n\n' )
+            OUT.write( indent + 'valid_hours = [' + valid + ']\n\n' )
 
         if intercycle:
             OUT.write( indent + 'intercycle = ' + str(intercycle) + '\n\n' )
@@ -584,43 +632,29 @@ from collections import deque
 
         #if contact:
         if 'CONTACT_DELAY' in parsed_def: 
-            for line in parsed_def[ 'CONTACT_DELAY' ]:
-                line = re.sub( '\s+$', '', line )
-                # look for conditionals
-                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
-                if m:
-                    [ left, delay ] = m.groups()
-                    # get a list of hours
-                    hours = left.split(',')
+            for line in parsed_def[ 'CONTACT_DELAY' ]['any']:
+                delay = re.sub( '\s+$', '', line )
+                OUT.write( indent + 'self.real_time_delay = ' + time_trans( delay, hours=True ) + '\n' )
+            for condition in get_conditions( 'CONTACT_DELAY' ):
+                hours = condition.split(',')
+                for line in parsed_def[ 'CONTACT_DELAY' ][ condition ]:
+                    delay = re.sub( '\s+$', '', line )
                     for hour in hours:
                         OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
                         OUT.write( indent + 'self.real_time_delay = ' + time_trans( delay, hours=True ) + '\n' )
                         indent_less()
-                else:
-                    delay = line
-                    OUT.write( indent + 'self.real_time_delay = ' + time_trans( delay, hours=True ) + '\n' )
-
+                    
             OUT.write( '\n' )
 
         # ... prerequisites
-        if not inherit or 'PREREQUISITES' in parsed_def:
-            OUT.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
-
-        if 'PREREQUISITES' in parsed_def:
-            for line in parsed_def[ 'PREREQUISITES' ]:
-                parse_prereq( line, OUT, 'prerequisites' )
+        write_reqs( 'PREREQUISITES', 'prerequisites', 'prerequisites' )
 
         if member_of:
             OUT.write( indent + "self.prerequisites.add( '" + member_of + "%' + self.c_time + ' started' )\n")
 
         # ... suicide prerequisites
-        if not inherit or 'SUICIDE_PREREQUISITES' in parsed_def:
-            OUT.write( indent + 'self.suicide_prerequisites = prerequisites( self.id )\n' )
-
-        if 'SUICIDE_PREREQUISITES' in parsed_def:
-            for line in parsed_def[ 'SUICIDE_PREREQUISITES' ]:
-                parse_prereq( line, OUT, 'suicide_prerequisites' )
+        write_reqs( 'SUICIDE_PREREQUISITES', 'suicide_prerequisites', 'prerequisites' )
 
         # ... familyfinished prerequisites
         if family:
@@ -634,71 +668,33 @@ from collections import deque
                 OUT.write( indent + 'self.logfiles.add_path("' + lfile + '")\n' )
 
         # ... outputs
-        if not inherit or 'OUTPUTS' in parsed_def:
-            OUT.write( '\n' )
-            OUT.write( indent + 'self.outputs = outputs( self.id )\n' )
-      
-        if 'OUTPUTS' in parsed_def:
-            for line in parsed_def[ 'OUTPUTS' ]:
-
-                # look for conditionals
-                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
-                if m:
-                    [ left, req ] = m.groups()
-                    # get a list of hours
-                    hours = left.split(',')
-
-                    req = require_quotes( req, 'outputs' )
-
-                    req = "'" + req + "'"
-                    req = interpolate_cycle_times( req )
-                    for hour in hours:
-                        OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
-                        indent_more()
-                        OUT.write( indent + 'self.outputs.add( ' + req + ' )\n' )
-                        indent_less()
-                else:
-                    req = line
-
-                    req = require_quotes( req, 'outputs' )
-
-                    req = "'" + req + "'"
-                    req = interpolate_cycle_times( req )
-                    OUT.write( indent + 'self.outputs.add( ' + req + ' )\n' )
-
+        write_reqs( 'OUTPUTS', 'outputs', 'outputs' )
+     
         # forecast model restarts
         if task_type == 'tied' or ( inherit and 'N_RESTART_OUTPUTS' in parsed_def ):
-            for line in parsed_def['N_RESTART_OUTPUTS']:
+            for line in parsed_def['N_RESTART_OUTPUTS']['any']:
                 line = re.sub( '\s+$', '', line )
-                # look for conditionals
-                m = re.match( '^([\d,]+)\s*\|\s*(.*)$', line )
-                if m:
-                    [ left, right ] = m.groups()
-                    # get a list of hours
-                    hours = left.split(',')
+                n_restart_outputs = line
+                OUT.write( indent + 'self.register_restart_requisites(' + n_restart_outputs +')\n' )
+
+            for condition in get_conditions( 'N_RESTART_OUTPUTS' ):
+                hours = condition.split(',')
+                for line in parsed_def[ 'N_RESTART_OUTPUTS' ][ condition ]:
+                    n_restart_outputs = re.sub( '\s+$', '', line )
                     for hour in hours:
                         OUT.write( indent + 'if int( hour ) == ' + hour + ':\n' )
                         indent_more()
-                        n_restart_outputs = right
                         OUT.write( indent + 'self.register_restart_requisites(' + n_restart_outputs + ')\n' )
-
                         indent_less()
-                else:
-                    n_restart_outputs = line
-                    OUT.write( indent + 'self.register_restart_requisites(' + n_restart_outputs +')\n' )
-
+ 
         OUT.write( indent + 'self.outputs.register()\n\n' )
 
         # are the prerequisites different for the first instance?
         if 'COLDSTART_PREREQUISITES' in parsed_def:
             OUT.write( indent + "if startup:\n" )
             indent_more()
-            OUT.write( indent + '# overwrite prerequisites for startup case\n' )
-            OUT.write( indent + 'self.prerequisites = prerequisites( self.id )\n' )
-
-            for line in parsed_def[ 'COLDSTART_PREREQUISITES' ]:
-                parse_prereq( line, OUT, 'prerequisites' )
-
+            OUT.write( indent + '# overwrite prerequisites for startup only\n' )
+            write_reqs( 'COLDSTART_PREREQUISITES', 'prerequisites', 'prerequisites' )
             indent_less()
  
         # ... output patterns
@@ -706,7 +702,8 @@ from collections import deque
             OUT.write( indent + 'self.output_patterns = []\n' )
 
         if 'OUTPUT_PATTERNS' in parsed_def:
-            for line in parsed_def[ 'OUTPUT_PATTERNS' ]:
+            #for line in parsed_def[ 'OUTPUT_PATTERNS' ]:
+            for line in get_parsed( 'OUTPUT_PATTERNS' ):
                  OUT.write( indent + 'self.output_patterns.append( ' + line + ')\n' )
 
         # environment variables
@@ -714,7 +711,8 @@ from collections import deque
             OUT.write( '\n' + indent + 'self.env_vars = ordered_dict.ordered_dict()\n' )
 
         if 'ENVIRONMENT' in parsed_def:
-            for pair in parsed_def[ 'ENVIRONMENT' ]:
+            #for pair in parsed_def[ 'ENVIRONMENT' ]:
+            for pair in get_parsed( 'ENVIRONMENT' ):
                 ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
                 # interpolate $(CYCLE_TIME [+/-n]) 
@@ -726,7 +724,8 @@ from collections import deque
             OUT.write( '\n' + indent + 'self.directives = {}\n' )
 
         if 'DIRECTIVES' in parsed_def:
-            for pair in parsed_def[ 'DIRECTIVES' ]:
+            #for pair in parsed_def[ 'DIRECTIVES' ]:
+            for pair in get_parsed( 'DIRECTIVES' ):
                 ( var, val ) = pair.split( ' ', 1 )
                 var = "'" + var + "'"
                 # interpolate $(CYCLE_TIME [+/-n]) 
@@ -738,7 +737,8 @@ from collections import deque
             OUT.write( '\n' + indent + 'self.extra_scripting = []\n' )
 
         if 'EXTRA_SCRIPTING' in parsed_def:
-            for line in parsed_def[ 'EXTRA_SCRIPTING' ]:
+            #for line in parsed_def[ 'EXTRA_SCRIPTING' ]:
+            for line in get_parsed( 'EXTRA_SCRIPTING' ):
                 # cannot interpolate $(CYCLE_TIME+/-N) here because this
                 # section is for shell scripting, not generated python.
 
