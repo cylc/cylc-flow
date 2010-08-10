@@ -1,0 +1,78 @@
+# ANNOTATED CYLC TASK FAMILY DEFINITION FILE.
+# See also task.def and the cylc userguide. 
+# Optional (or task-type-dependent) sections: [square brackets].
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+#_______________________________________________________________________
+%FAMILY
+    Name
+
+    # or, optionally:
+
+    Longname, shortname
+
+    # - The optional short name can be displayed by system monitors to 
+    #   help save screen real estate when viewing large systems. 
+    # - Cylc commands can refer to task families by full or short names.
+
+#_______________________________________________________________________
+%DESCRIPTION
+    # - freeform multiline text description of what this task does.
+
+    The quick brown fox jumped over the lazy dog.
+
+#_______________________________________________________________________
+%CYCLES
+    # - Comma separated list of cycle hours valid for this task
+    0,6,12,18
+
+#_______________________________________________________________________
+%MEMBERS
+    # list of task names, each on a new line.
+    TaskA
+    TaskB
+    TaskC
+
+    # - Member tasks currently have to declare themselves to be a
+    #   members of this family too (see task.def %MEMBER_OF).
+
+#_______________________________________________________________________
+%PREREQUISITES
+    
+    # - These determine when the task family triggers; they are defined
+    # exactly as for tasks - see annotated task.def
+
+#_N_O_T_E_S___________________________________
+
+    # - A task family cannot define %OUTPUTS. Cylc automatically
+    #   registers the usual "FAMILY%CYCLE_TIME finished" output, which
+    #   downstream tasks can trigger off, and sets this "completed" when
+    #   all family members have finished.
+    
+    # - Member tasks automatically depend on the family starting, which
+    #   depends on the family prerequisites. However, member tasks
+    #   can also register other prerequisites if they wish.
+
+    # - Task families are implemented internally as another task proxy
+    #   subclass with some special prerequisites and outputs defined
+    #   (for the family and its members) that enforce the family
+    #   relationship (additionally, the family task proxy itself does
+    #   not launch an external command when it triggers, and sets itself
+    #   finished when all of its member tasks have finished).
+
+    # - Use of task families can dramatically reduce scheduling
+    #   efficiency, particularly during catchup operation. There is no
+    #   penalty, however, when a group of related tasks, such as a
+    #   forecast ensemble, necessarily run together anyway: a task
+    #   family in this case allows the suite designer to omit a lot of
+    #   explicit prerequisites and outputs from among the member tasks.  
+
+

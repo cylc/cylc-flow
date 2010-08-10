@@ -1,5 +1,5 @@
 # ANNOTATED CYLC TASK DEFINITION FILE.
-# See also family.defand the cylc userguide. 
+# See also family.def and the cylc userguide. 
 # Optional (or task-type-dependent) sections: [square brackets].
 
 #         __________________________
@@ -122,12 +122,6 @@
     # - See the annotated family.def file.
     # - Task triggers when FamilyX starts (if no other prerequisites).
     # - A task family finishes when its member tasks have all finished.
-    # - Use of task families can dramatically reduce scheduling
-    #   efficiency, particularly during catchup operation, except when
-    #   a group of tasks, such as a forecast ensemble, necessarily run
-    #   together anyway (in which case use of a task family will save 
-    #   you from having to write a lot of explicit prerequisites).  
-
 #_______________________________________________________________________
 [%REMOTE_HOST]
     # - URL of a remote machine on which this task must but submitted.
@@ -315,8 +309,7 @@
         conditional3
 
     # Note that the general case can be used as a default that gets
-    # overridden only in the specific cases listed below it, except in
-    # the case of prerequisites and outputs - these are *added* to a
-    # list so that hour-specific requisites will add to (if the cycle
-    # hour is right) but not replace any general ones that have been
-    # defined. 
+    # overridden by the specific cases below it, EXCEPT in the case of
+    # prerequisites and outputs: these are *added* to a list so that
+    # hour-specific requisites will, if the hour is right, add to but
+    # not replace any general ones that have already been defined. 
