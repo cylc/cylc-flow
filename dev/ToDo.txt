@@ -26,13 +26,6 @@ To Do
 * document that simple tasks can be entirely contained in taskdef files,
   via a simple wrapped commandline and %EXTRA_SCRIPTING.
 
-* fix cylc stdout satisfaction attribution since adding prerequisite
-  labels for conditional prerequisites:
-TaskC%2010010106  READY
- o "1" <--- TaskA%2010010106
- o "3" <--- coldstart%2010010106
- o "2" <--- TaskA%2010010106
-
 * make $(CYCLE_TIME) implicit in messages except where reference to
   *other* cycles are required?
 
