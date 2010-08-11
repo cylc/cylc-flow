@@ -314,7 +314,7 @@ from collections import deque
             # detect conditionals:
             m = re.match( '^\s*if HOUR in \s*([\d,]+)\s*:', lline )
             if m:
-                print '!   ', condition
+                #print '!   ', condition
                 condition = m.groups()[0]
                 parsed_def[ current_key ][ condition ] = []
                 continue
