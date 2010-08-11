@@ -337,7 +337,7 @@ from collections import deque
                 # data associated with current key
                 parsed_def[ current_key ][ condition ].append( line ) 
         # -----------------------------------------------DONE
-        print_parsed_info()
+        # print_parsed_info()
 
         family = False
         member_of = None
