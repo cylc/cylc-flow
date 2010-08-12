@@ -6,3 +6,7 @@
     NAME -> TASK
     TASK -> COMMAND
     EXTRA_SCRIPTING -> SCRIPTING
+
+3. cylcutil changes:
+    cylcutil time-calc -> cylcutil cycle-time
+                          cylcutil template
