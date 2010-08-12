@@ -34,8 +34,11 @@ To Do
 * userguide suite: check-env.sh should check task run-length var is
   defined, in case user overwrote the suite config file.
 
-* configure should check INHERIT targets actually exist.  At the moment
+* INHERIT
+  + configure should check INHERIT targets actually exist.  At the moment
   this causes an exception early on at run time.
+  + currently inheriting tasks must define %OUTPUTS even if empty; is
+    this necessary?
 
 * make task-specific logs optional, esp for large suites.
 

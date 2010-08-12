@@ -352,7 +352,7 @@ from collections import deque
                 print "ERROR: task families need %MEMBERS"
                 sys.exit(1)
             else:
-                for member in parsed_def['MEMBERS']:
+                for member in get_parsed('MEMBERS'):
                     family_members.append( member )
         else:
             # not a task family, but is it a member of one?
