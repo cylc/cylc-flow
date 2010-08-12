@@ -5,11 +5,17 @@ import shutil
 import cycle_time
 from optparse import OptionParser
 
-usage = """cylcutil rolling-archive [options] DIR
+usage = """cylcutil rolling-archive [options] PATH HOURS
 
 Implement a cycle time based rolling archive.
 
 Matches FIRST cycle time found in file names
+
+Arguments:
+    PATH  - a directory that contains files or sub-directories
+            labelled by cycle time.
+    HOURS - offset from the base cycle time, obtained from '-c'
+            or $CYCLE_TIME, beyond which to delete archived items.
 """
 
 parser = OptionParser( usage )
@@ -37,23 +43,17 @@ elif 'CYCLE_TIME' in os.environ:
 else:
     parser.error( "Use --cycle-time or define $CYCLE_TIME" )
 
-if options.offset:
-    offset_str = options.offset
-    try:
-        offset = int( offset_str )
-    except ValueError:
-        parser.error( "HOURS must be an integer" )
-    else:
-        if offset < 0:
-            parser.error( "HOURS must be positive" )
-
-else:
-    parser.error( "The --offset option is not optional" )
-
-if len( args ) != 1:
-    parser.error( "One argument required: DIR" ) 
+if len( args ) != 2:
+    parser.error( "Two arguments required (PATH, HOURS)" ) 
 
 archive = args[0]
+try:
+    offset = int( args[1] )
+except ValueError:
+    parser.error( "HOURS must be integer" )
+else:
+    if offset < 0:
+        parser.error( "HOURS must be positive" )
 
 if not os.path.isdir( archive ):
     parser.error( "Directory not found: " + archive )
