@@ -1,5 +1,7 @@
 To Do
 
+* check for ',' between long and short names in taskdef.
+
 * TASK FAMILIES:
   + --include and --exclude with task families
   + configure should check for consistency of MEMBER and MEMBER_OF

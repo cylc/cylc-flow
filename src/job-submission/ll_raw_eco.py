@@ -15,7 +15,7 @@ from ll_raw import ll_raw
 
 class ll_raw_eco( ll_raw ):
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, extra, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, dirs, extra, owner, host ): 
         # check we are running in an ecoconnect suite
         # cylc should be running as ecoconnect_(devel|test|oper)
 
@@ -42,7 +42,7 @@ class ll_raw_eco( ll_raw ):
         # append the correct suite suffix
         owner = owner_name + '_' + ecoc_suite
 
-        ll_raw.__init__( self, task_id, ext_task, task_env, com_line, dirs, extra, owner, host ) 
+        ll_raw.__init__( self, task_id, ext_task, task_env, dirs, extra, owner, host ) 
 
         # override running dir to ~owner/running
         self.running_dir = '/' + ecoc_suite + '/ecoconnect/' + owner + '/running'

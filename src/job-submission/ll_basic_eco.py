@@ -44,12 +44,12 @@ class ll_basic_eco( ll_basic ):
         ll_basic.set_owner_and_homedir( self, owner )
 
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, extra, logs, owner, host ): 
+    def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
 
         if 'class' not in dirs:
             # DEFAULT ECOCONNECT LOADLEVELER DIRECTIVES
             # dirs[ 'class'    ] = self.suite !!!! TO DO: WHEN FINAL LL CLASSES CONFIGURED
             dirs[ 'class' ] = 'test_linux'
 
-        ll_basic.__init__( self, task_id, ext_task, task_env, com_line, dirs, extra, logs, owner, host ) 
+        ll_basic.__init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ) 
 

@@ -16,8 +16,8 @@ from job_submit import job_submit
 class ll_basic( job_submit ):
     # Submit a job to run via loadleveler (llsubmit)
 
-    def __init__( self, task_id, ext_task, task_env, com_line, dirs, extra, logs, owner, host ): 
-        job_submit.__init__( self, task_id, ext_task, task_env, com_line, dirs, extra, logs, owner, host ) 
+    def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
+        job_submit.__init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ) 
 
         #out = self.running_dir + '/' + task_id + '.out'
         #err = self.running_dir + '/' + task_id + '.err'
