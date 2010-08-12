@@ -43,6 +43,18 @@ set -e
 # TO DO: allow for unpacking at destination? (this is more difficult in
 # some cases; imagine a tar archive of many compressed files).
 
+if [[ $@ = '--help' ]]; then
+    echo "USAGE cylcutil file-transfer"
+    echo ""
+    echo "General file transfer utility for cylc suites, using scp."
+    echo ""
+    echo "Environment inputs:"
+    echo "\$SRCE  - source file as scp URL"
+    echo "\$DEST  - destination file as scp URL"
+    echo ""
+    exit 0
+fi
+
 if [[ -z $SRCE ]]; then
     cylc task-message -p CRITICAL "SRCE not defined"
     exit 1

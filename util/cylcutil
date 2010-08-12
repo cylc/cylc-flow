@@ -33,8 +33,11 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 allowed_commands = \
     [ 
+    'help',
     'rolling-archive',
-    'time-calc',
+    'file-transfer',
+    'cycle-time',
+    'template',
     'check-vars',
     ]
 
@@ -52,9 +55,12 @@ usage = \
     '  cylcutil COMMAND --help',
     '',
     'COMMANDS:',
-    '  time-calc .......... foo',
-    '  rolling-archive .... bar',
-    '  check-vars ......... baz',
+    '  rolling-archive .... To Do',
+    '  file-transfer ...... To Do',
+    '  cycle-time ......... To Do',
+    '  template ........... To Do',
+    '  check-vars ......... To Do',
+    '  help ............... Print this message and exit; also [-h], [--help]',
     ]
 
 def print_usage():

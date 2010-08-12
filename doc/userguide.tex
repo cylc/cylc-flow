@@ -52,7 +52,7 @@ numbers=left,
 
 \lstdefinelanguage{cylctaskdef}
 {
-morekeywords={INHERIT,TASK,FAMILY,DESCRIPTION,SCRIPTING,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,HOURS,COMMAND,ENVIRONMENT,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,SUICIDE_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,FOLLOW_ON,conditional},
+morekeywords={INHERIT,TASK,FAMILY,DESCRIPTION,SCRIPTING,TYPE,LOGFILES,CONTACT_DELAY,OWNER,REMOTE_HOST,HOURS,COMMAND,MEMBERS,MEMBER_OF,ENVIRONMENT,DIRECTIVES,PREREQUISITES,COLDSTART_PREREQUISITES,SUICIDE_PREREQUISITES,OUTPUTS,N_RESTART_OUTPUTS,INTERCYCLE,FOLLOW_ON,conditional},
 sensitive=false,
 morecomment=[l]{\#},
 morestring=[b]\",
@@ -1878,7 +1878,7 @@ to just the one task, e.g.:
     FOOBAR           foo bar
     ANALYSIS_TIME    $CYCLE_TIME
     OUTPUT_FILE      foo-${TASK_NAME}-${CYCLE_TIME}.nc
-    NEXT_CYCLE       $(cylcutil --time-calc --add=6)
+    NEXT_CYCLE       $(cylcutil cycle-time --add=6)
 \end{lstlisting}
 
 \lstset{language=bash}
@@ -1906,7 +1906,7 @@ external scripts, execute cylc utilities, and so on.
 
 \begin{lstlisting}
 %SCRIPTING
-    export NEXT_CYCLE=$( cylcutil time-calc --add=6 )
+    export NEXT_CYCLE=$( cylcutil cycle-time --add=6 )
     . $HOME/env-setup.sh
 \end{lstlisting}
 
@@ -2698,10 +2698,24 @@ some cases.
   
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 \lstset{language=usage}
-
 \input{commands.tex}
-
 \pagebreak
+
+\section{Utility Command Reference}
+\label{UtilityCommandReference}
+
+The information in this section is auto-generated from
+the current command set during document processing, using  
+\lstinline=cylcutil COMMAND --help=. 
+%Command self-documentation, however, is intended as a minimalist
+%on-the-fly usage reminder so additional information is appended in
+%some cases.
+ \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+\lstset{language=usage}
+\input{commands-util.tex}
+\pagebreak
+
+
 \section{Annotated Task Definition Reference}
 
 \subsection{Task Definition}

@@ -4,7 +4,7 @@ import os, sys, re
 import cycle_time
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylcutil time-calc [options] [CYCLE] [STRING]
+parser = OptionParser( usage = """cylcutil cycle-time [options] [CYCLE]
 
 Cycle time arithmetic with optional transformation of the result via a
 template string. Can be used by task scripts to calculate offsets from
@@ -12,31 +12,16 @@ the current cycle time, or to access cycle time-dependent file naming
 conventions encoded in variables defined in the sytem config file.
 The result is printed to stdout. 
 
-STRING can be the name of an environment variable containing a template
-string OR the template string itself. In the template, 'YYYY', 'MM',
-'DD', or 'HH' will be replaced with computed cycle time components.
-
-   $ cylcutil time-calc -s 6 2010082318 #....explicit cycle time offset
+   $ cylcutil cycle-time -s 6 2010082318 #....explicit cycle time offset
   2010082312
 
    $ export CYCLE_TIME=2010082318 # (as from task execution environment)
 
-   $ cylcutil time-calc -s 6 #...............offset from current cycle
+   $ cylcutil cycle-time -s 6 #...............offset from current cycle
   2010082312
 
-   $ cylcutil time-calc -s 6 fooHH-YYYYMMDD.nc #explicit name convention
-  foo12-20100823.nc
-
-   $ export NCONV=fooHH-YYYYMMDD.nc    # (as if from system config file)
-
-   $ cylcutil time-calc NCONV #.............implicit filename convention
-  foo18-20100823.nc
-   $ cylcutil time-calc -s 6 NCONV_FOO #..same, with current cycle offset
-  foo12-20100823.nc
-
 Arguments:
-   CYCLE        Cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.
-   STRING       Template-containing env variable OR a template.""" )
+   CYCLE        Cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.""" )
 
 parser.add_option( "-s", "--subtract", metavar="HOURS",
         help="Subtract HOURS from CYCLE", 
@@ -64,8 +49,6 @@ parser.add_option( "--hour", help="Print only HH of result",
 
 (options, args) = parser.parse_args()
 
-got_template = False
-
 if len( args ) == 0:
     # input cycle time must be definied in the environment.
     if 'CYCLE_TIME' not in os.environ:
@@ -77,41 +60,11 @@ if len( args ) == 0:
     # DONE (no args)
 
 elif len( args ) == 1:
-    # could be a cycle time or a template (name or string)
-    tmp = args[0]
-    if cycle_time.is_valid( tmp ):
-        # arg is a cycle time
-        cycle = tmp
-
-    else:
-        # cycle time must be defined in the environment
-        if 'CYCLE_TIME' in os.environ:
-            cycle = os.environ[ 'CYCLE_TIME' ]
-            if not cycle_time.is_valid( cycle ):
-                parser.error( "invalid cycle time: " + cycle )
-        else:
-            parser.error( "no valid cycle time found" )
-
-        # arg must be a template name OR a template
-        got_template = True
-        if tmp in os.environ:
-            template = os.environ[ tmp ]
-        else:
-            template = tmp
-
-        # DONE (one arg)
-
-elif len(args) == 2:
+    # must be cycle time
     cycle = args[0]
     if not cycle_time.is_valid( cycle ):
         parser.error( "invalid cycle time: " + cycle )
 
-    got_template = True
-    tmp = args[1]
-    if tmp in os.environ:
-        template = os.environ[ tmp ]
-    else:
-        template = tmp
 else:
     parser.error( "Wrong number of arguments!" )
 
@@ -140,10 +93,6 @@ if options.offset:
 if n_chosen > 1:
     parser.error( "Choose ZERO or ONE of subtract, add, or offset" )
 
-if options.print_year or options.print_month or options.print_day or options.print_hour:
-    if got_template:
-        parser.error( 'specific print options are not compatible with STRING')
- 
 n_chosen = 0
 print_year = False
 print_month = False
@@ -186,21 +135,7 @@ if add:
 elif subtract:
     cycle = cycle_time.decrement( cycle, hours )
 
-if got_template:
-    string = template
-    # replace YYYYMMDDHH
-    string = re.sub( "YYYYMMDDHH", cycle, string )
-    # replace YYYY, MM, DD, HH
-    string = re.sub( 'YYYY', cycle[0:4],  string )
-    string = re.sub( 'MM',   cycle[4:6],  string )
-    string = re.sub( 'DD',   cycle[6:8],  string )
-    string = re.sub( 'HH',   cycle[8:10], string )
-    # replace YY
-    string = re.sub( 'YY',   cycle[2:3],  string )
-
-    print string
-
-elif print_year:
+if print_year:
     print cycle[0:4]
 elif print_month:
     print cycle[4:6]

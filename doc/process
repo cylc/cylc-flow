@@ -83,6 +83,24 @@ for COMMAND in $(cylc commands); do
         echo "\input{post-command/$COMMAND.tex}" >> doc/commands.tex
     #echo "\pagebreak" >> doc/commands.tex
 done
+
+rm -rf doc/command-util-usage; mkdir -p doc/command-util-usage
+rm -f doc/commands-util.tex
+
+for COMMAND in $(cylcutil commands); do 
+    # direct command help into a txt file
+    cylcutil $COMMAND --help >> doc/command-util-usage/$COMMAND.txt
+    # append to a latex file for inclusion in the userguide
+    echo "\subsection{$COMMAND}" >> doc/commands-util.tex
+    echo "\label{$COMMAND}" >> doc/commands-util.tex
+    #[[ -f doc/pre-command/$COMMAND.tex ]] && \
+    #    echo "\input{pre-command/$COMMAND.tex}" >> doc/commands-util.tex
+    echo "\lstinputlisting{command-util-usage/$COMMAND.txt}" >> doc/commands-util.tex
+    #[[ -f doc/post-command/$COMMAND.tex ]] && \
+    #    echo "\input{post-command/$COMMAND.tex}" >> doc/commands-util.tex
+    #echo "\pagebreak" >> doc/commands-util.tex
+done
+
 #-----------------------------------------------------------------------
 
 #Comment-stripped taskdef files:

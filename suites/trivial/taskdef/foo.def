@@ -37,7 +37,7 @@
     sleep 5
 
 %COMMANDLINE
-    $TASK_THREE $( cylcutil time-calc TEMPLATE ) 
+    $TASK_THREE $( cylcutil template TEMPLATE ) 
 
 %OUTPUTS
     "Hello from $(CYCLE_TIME) to $(CYCLE_TIME+6)"

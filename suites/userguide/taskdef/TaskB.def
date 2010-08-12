@@ -36,7 +36,7 @@
     export FOO=BAR
     echo "hello from $USER"
     echo "this cycle is $CYCLE_TIME"
-    echo "next CYCLE_TIME is $( cylcutil time-calc --add=6 )"
+    echo "next CYCLE_TIME is $( cylcutil cycle-time --add=6 )"
 
 %N_RESTART_OUTPUTS
     2
