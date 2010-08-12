@@ -34,14 +34,11 @@ set -e; trap 'cylc task-failed "error trapped"' ERR
 # send the startup message
 cylc task-started || exit 1
 
-if [[ -n $WRAP ]]; then
-    # commandline now preferred but allow $WRAP for backward compatibility
-    TASK_SCRIPT=$WRAP
-elif (( $# >= 1 )); then
+if (( $# >= 1 )); then
     TASK_SCRIPT=$1
     shift
 else
-    cylc task-failed "cylc-wrapper: no task script (use commandline or \$WRAP)"
+    cylc task-failed "cylc-wrapper: no script to wrap"
     exit 1
 fi
 

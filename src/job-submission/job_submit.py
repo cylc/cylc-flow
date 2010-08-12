@@ -96,6 +96,7 @@ class job_submit:
         # in dummy mode, replace the real external task with the dummy task
         self.task = ext_task
         if job_submit.dummy_mode:
+            #self.task = "cylc-wrapper sleep 5 && /bin/true"
             self.task = "_cylc-dummy-task"
 
         # extract cycle time (cycling tasks) or tag (asynchronous tasks)

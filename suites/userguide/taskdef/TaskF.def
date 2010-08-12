@@ -24,10 +24,9 @@
     0,6,12,18
 
 %COMMAND
-    cylc-wrapper --foo=$FOO
+    cylc-wrapper TaskF.sh --foo=$FOO
 
 %ENVIRONMENT
-    WRAP TaskF.sh
     FOO foo
     ANALYSIS_TIME $(CYCLE_TIME)
 

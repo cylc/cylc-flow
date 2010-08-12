@@ -1,5 +1,10 @@
 To Do
 
+* CLEAN UP THE USERGUIDE SYSTEM
+
+* dummy task program can be replaced by 'cylc-wrapper /bin/true'!
+  (but what about --fail-task?)
+
 * check for ',' between long and short names in taskdef.
 
 * TASK FAMILIES:

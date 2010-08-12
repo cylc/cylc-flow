@@ -28,7 +28,7 @@
 %COMMAND
     TaskA.sh --file=${HOME}/data-$(CYCLE_TIME + 6).nc \
     "the quick brown $ANIMAL went ${HOME}"
-    /bin/echo "fuck off"
+    cylc-wrapper /bin/echo "this will do it"
 
 %ENVIRONMENT
     ANIMAL foxy fox

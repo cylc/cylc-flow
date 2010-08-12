@@ -1,4 +1,6 @@
 
+0. cylc-wrapper use now explicit, not via $WRAP
+
 1. new taskdef conditional format
 
 2. taskdef section name changes (use util/upgrade-taskdefs.sh):
