@@ -311,6 +311,13 @@ from collections import deque
             # skip comment lines
             if re.match( '^\s*#.*', line ):
                 continue
+
+            # warn of possible illegal trailing comments
+            if re.search( '#', line ):
+                print 'WARNING: possible illegal trailing comment detected:'
+                print '   --> ', line
+                print "(OK if the '#' is part of a string or shell variable expansion)"
+
             # detect conditionals:
             m = re.match( '^\s*if HOUR in \s*([\d,]+)\s*:', lline )
             if m:
@@ -496,17 +503,25 @@ from collections import deque
                 print 'ERROR: tied tasks must define %N_RESTART_OUTPUTS'
                 sys.exit(1)
 
+        # task or family name
         if family:
             task_name = get_parsed( 'FAMILY' )[0]
             task_type = "family"
         else:
             task_name = get_parsed( 'TASK' )[0]
+
+        # short name
         short_name = task_name
 
         m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
         if m:
             # short name given as well
             [ task_name, short_name ] = m.groups()
+
+        if re.search( ' ', task_name ):
+            print 'ERROR: name contains spaces', task_name 
+            print '(did you miss the comma between the full and short task names?)'
+            sys.exit(1)
 
         if task_name in seen:
             print "ERROR: task name '" + task_name + "' has been defined already!"

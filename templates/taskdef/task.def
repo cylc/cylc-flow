@@ -2,6 +2,10 @@
 # See also family.def and the cylc userguide. 
 # Optional (or task-type-dependent) sections: [square brackets].
 
+# CURRENTLY ONLY FULL LINE COMMENTS ARE ALLOWED because it is difficult
+# to accurately distinguish between trailing comments and hash characters
+# that legitimately belong inside a string or shell variable expansion.
+
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
 #         |                        |
