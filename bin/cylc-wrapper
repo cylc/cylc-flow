@@ -29,7 +29,7 @@
 # registered output messages.
 
 # SEND THE STARTUP MESSAGE
-Cylc task-started || exit 1
+cylc task-started || exit 1
 
 if (( $# == 0 )); then
     cylc task-failed "cylc-wrapper: no script to wrap"
