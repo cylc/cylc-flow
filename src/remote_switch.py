@@ -145,6 +145,10 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return "OK"
 
+    def reset_failout( self ):
+            print "resetting failout on " + self.failout_id
+            job_submit.failout_id = None
+
     def reset_to_waiting( self, task_id, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
@@ -156,9 +160,9 @@ class remote_switch( Pyro.core.ObjBase ):
 
         # reset a task to the waiting state
         self.warning( "REMOTE: reset to waiting: " + task_id )
+
         if task_id == self.failout_id:
-            print "resetting failout on " + self.failout_id + " prior to reset"
-            job_submit.global_env[ 'CYLC_FAILOUT_ID' ] = 'NONE'
+            self.reset_dummy_failout()
 
         self.pool.reset_task( task_id )
         self.process_tasks = True
@@ -176,8 +180,7 @@ class remote_switch( Pyro.core.ObjBase ):
         # reset a task to the ready state
         self.warning( "REMOTE: reset to ready: " + task_id )
         if task_id == self.failout_id:
-            print "resetting failout on " + self.failout_id + " prior to reset"
-            job_submit.global_env[ 'CYLC_FAILOUT_ID' ] = 'NONE'
+            self.reset_failout()
 
         self.pool.reset_task_to_ready( task_id )
         self.process_tasks = True
@@ -219,8 +222,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.warning( "REMOTE: task or group insertion: " + ins )
         if ins == self.failout_id:
             # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
-            print "resetting failout on " + self.failout_id + " prior to insertion"
-            job_submit.global_env['CYLC_FAILOUT_ID'] = 'NONE'
+            self.reset_failout()
 
         self.pool.insertion( ins )
         self.process_tasks = True

@@ -273,11 +273,12 @@ class task( Pyro.core.ObjBase ):
                 self.outputs.set_satisfied( message )
             else:
                 # yes, do retry.
-                self.log( 'CRITICAL',  'Retrying with next %TASK' )
-                self.launcher.task = self.external_task
-                self.state.set_status( 'waiting' )
-                self.prerequisites.set_all_satisfied()
-                self.outputs.set_all_incomplete()
+                if not self.launcher.dummy_mode:
+                    self.log( 'CRITICAL',  'Retrying with next %TASK' )
+                    self.launcher.task = self.external_task
+                    self.state.set_status( 'waiting' )
+                    self.prerequisites.set_all_satisfied()
+                    self.outputs.set_all_incomplete()
 
         else:
             # log other (non-failed) unregistered messages with a '*' prefix

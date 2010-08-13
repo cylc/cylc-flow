@@ -42,7 +42,7 @@ class scheduler:
         self.parser.set_defaults( pns_host= socket.getfqdn(),
                 dummy_mode=False, practice_mode=False,
                 include=None, exclude=None, debug=False,
-                clock_rate=10, clock_offset=24 )
+                clock_rate=10, clock_offset=24, dummy_run_length='20' )
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
@@ -98,7 +98,7 @@ class scheduler:
         self.parser.add_option( "--dummy-task-run-length", help=\
                 "(DUMMY MODE) change the length of run time, relative to the dummy "
                 "mode clock, of each running task. The default is 20 minutes.",
-                metavar="MINUTES", action="store", dest="dummy_task_run_length" )
+                metavar="MINUTES", action="store", dest="dummy_run_length" )
 
         self.parser.add_option( "--debug", help=\
                 "Turn on the 'debug' logging level and print the Python "
@@ -194,7 +194,7 @@ class scheduler:
         self.clock_rate = self.options.clock_rate
         self.clock_offset = self.options.clock_offset
         self.failout_task_id = self.options.failout_task_id
-        self.dummy_task_run_length = self.options.dummy_task_run_length
+        self.dummy_run_length = self.options.dummy_run_length
 
     def load_preferences( self ):
         self.rcfile = prefs()
@@ -288,15 +288,19 @@ class scheduler:
         self.config.put_env( 'CYLC_SUITE_DIR', self.suite_dir )
         self.config.put_env( 'CYLC_SUITE_NAME', self.suite_name )
         self.config.put_env( 'CYLC_USE_LOCKSERVER', str( self.use_lockserver) )
+
         if self.dummy_mode:
             self.config.put_env( 'CYLC_CLOCK_RATE', str( self.clock_rate ) )
             # communicate failout_task_id to the dummy task program
+
             if self.failout_task_id:
-                print "SETTING FAILOUT: " + self.failout_task_id
-                self.config.put_env( 'CYLC_FAILOUT_ID', self.failout_task_id )
-            if self.dummy_task_run_length:
-                print "SETTING DUMMY TASK RUN LENGTH: " + self.dummy_task_run_length
-                self.config.put_env( 'CYLC_DUMMY_TASK_RUN_LENGTH', self.dummy_task_run_length )
+                print "SETTING A FAILOUT TASK: " + self.failout_task_id
+                # now done below in configure_job_submission()
+
+            print "SETTING DUMMY TASK RUN LENGTH: " + self.dummy_run_length + " dummy clock minutes"
+            dummy_seconds = int( self.dummy_run_length ) * 60.0
+            real_seconds = dummy_seconds * self.clock_rate / 3600.0
+            self.config.put_env( 'CYLC_DUMMY_SLEEP', real_seconds )
 
         self.config.check_environment()
 
@@ -338,6 +342,8 @@ class scheduler:
     def configure_job_submission( self ):
         job_submit.dummy_mode = self.dummy_mode
         job_submit.global_env = self.config.get( 'environment' )
+        if self.dummy_mode and self.failout_task_id:
+            job_submit.failout_id = self.failout_task_id
 
     def configure_remote_switch( self ):
         # remote control switch

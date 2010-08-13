@@ -86,6 +86,13 @@ class job_submit:
         str = replace_delayed_str( str )
         return str
 
+    def use_dummy_task( self ):
+        # $CYLC_DUMMY_SLEEP is set at start up
+        if job_submit.failout_id != self.task_id:
+            self.task = 'cylc-wrapper eval "sleep $CYLC_DUMMY_SLEEP; /bin/true"'
+        else: 
+            self.task = 'cylc-wrapper eval "sleep $CYLC_DUMMY_SLEEP; /bin/false"'
+
     def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
 
         self.cylc_owner = os.environ['USER']
@@ -93,11 +100,8 @@ class job_submit:
         # unique task identity
         self.task_id = task_id
 
-        # in dummy mode, replace the real external task with the dummy task
+        # command to run
         self.task = ext_task
-        if job_submit.dummy_mode:
-            #self.task = "cylc-wrapper sleep 5 && /bin/true"
-            self.task = "_cylc-dummy-task"
 
         # extract cycle time (cycling tasks) or tag (asynchronous tasks)
         # from the task id: NAME%CYCLE_TIME or NAME%TAG.
@@ -106,71 +110,30 @@ class job_submit:
             self.cycle_time = tag
 
         # The values of task-specific environment variables defined in
-        # the taskdef file may reference other environment variables:
-        # (i) other task-specific environment variables $FOO, ${FOO}
-        # (ii) global cylc environment variables $FOO, ${FOO}
-        # (iii) local environment variables $FOO, ${FOO}
-        # (iv) "delayed local" environment varables $[BAR] that should
-        #      not be evaluated until the task executes (potentially on
-        #      a remote platform under another username).
-
-        # So, for each task-specific environment variable VALUE:
-        #  * interpolate any references to other task-specific variables
-        #    (otherwise we have to arrange for the variables to be
-        #    exported in the right order so that all variables are
-        #    defined before they are used).
-        #  * then interpolate any references to cylc global variables
-        #    (this is usually not necessary if we export globals before
-        #    task-specifics, but doing so allows users to override local
-        #    environment variables in the suite_config file ... which
-        #    may be useful).
-        #  * then interpolate any remaining variables from the local env
-        #    (leaving them as literal '$FOO' could be a mistake for 
-        #    tasks that are submitted on remote machines; that's what
-        #    cylc's $[FOO] is for).
-        #  * then replace delayed variables $[FOO] with literal '$FOO'
-
-        # Note that global env already has self-, environment- variable
-        # references worked out in config init (but not delayed
-        # variables, as user may define global delayed vars that are
-        # then referred to in task-specific vars!) .
-
-        # Add the variables that all tasks must have
-        # (doing this *before* interpolating, below, means that any
-        # reference to '$CYCLE_TIME' in the taskdef file will be 
-        # interpolated to the value of self.cycle time and NOT to
-        # any $CYCLE_TIME that happens to be in the user's environment
-        # prior to running the scheduler or submit!
-        ###task_env[ 'TASK_ID'    ] = self.task_id
-        ###task_env[ 'CYCLE_TIME' ] = self.cycle_time
-        ###task_env[ 'TASK_NAME'  ] = self.task_name
+        # the taskdef file may reference other task-specific 
+        # global cylc environment variables $FOO, ${FOO}, ${FOO#_*nc}
+        # etc. Thus we ensure that the order of definition is preserved
+        # and parse any such references through as-is to the job script.
 
         task_env.prepend( 'TASK_NAME', self.task_name )
         task_env.prepend( 'TASK_ID', self.task_id )
         task_env.prepend( 'CYCLE_TIME', self.cycle_time )
 
-        ###task_env = interp_self( task_env )
-        ###task_env = interp_other( task_env, job_submit.global_env )
-        ###task_env = interp_local( task_env )
-        ###task_env = replace_delayed( task_env )
-
-        # GLOBAL ENVIRONMENT: now extracted just before use in
-        # write_environment() so that remote_switch can dynamically
-        # reset the dummy mode CYLC_FAILOUT_ID variable.
+        # TO DO: The GLOBAL ENVIRONMENT is currently extracted just
+        # before use in write_environment(). This WAS so that
+        # remote_switch could dynamically reset the dummy mode
+        # CYLC_FAILOUT_ID variable - but dummy failouts are now handled
+        # differently so we could bring the global env back here.
 
         self.task_env = task_env
 
-        # same for external task, which may be defined in terms of
-        # $[HOME], for example.
-        self.task = self.interp_str( self.task )
+        ### INTERP OF TASK PATH NOT REQUIRED:
+        #### self.task = self.interp_str( self.task )
 
         # queueing system directives
         self.directives  = dirs
 
         # extra scripting
-        ####self.extra_scripting = []
-        ####for line in extra:
-        ####    self.extra_scripting.append( self.interp_str( line ) )
         self.extra_scripting = extra
         
         # directive prefix, e.g. '#QSUB ' (qsub), or '#@ ' (loadleveler)
@@ -209,6 +172,11 @@ class job_submit:
 
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
+
+        if job_submit.dummy_mode:
+            # this is done here so that it also happens
+            # after resetting a dummy failout task.
+            self.use_dummy_task()
 
         # Get a new temp filename.
         # TO DO: use [,dir=] argument and allow user to configure the
