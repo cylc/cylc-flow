@@ -12,47 +12,36 @@
 
 # Cylc task wrapper script.
 
-# This script allows cylc to control existing tasks that have not been
-# modified to do their own cylc messaging.  It can only be used for
-# tasks that:
+# Allows cylc to control existing tasks that have not been modified to
+# do their own cylc messaging. It can only be used for tasks that:
 # (a) see their processing through till the end (as opposed to
-# submitting or spawning subprocesses and then exiting). 
-# (b) return the standard non-zeros exit status for failure. 
+#    submitting or spawning subprocesses and then exiting), and 
+# (b) return non-zero exit status for failure. 
 
 # The task wrapper does the following:
 # (1) sends special 'started' message
-# (2) executes the wrapped task (passes any commandline on)
-# (3) sends the special 'succeed' message on completion,
-#     or the special 'failed' message if an error occurs.
+# (2) executes the wrapped task, with any commandline arguments
+# (3) if success: reports all registered outputs completed and finishes
+#     if failure: reports failure.
 
 # Wrapped tasks can also send their own cylc messages, which will be
-# logged by cylc, otherwise task stdout and stderr will end up in the
-# job log files, depending on the job submission method.
+# logged by cylc, but must not send their own start/finished/failed or
+# registered output messages.
 
-set -e; trap 'cylc task-failed "error trapped"' ERR
+# SEND THE STARTUP MESSAGE
+Cylc task-started || exit 1
 
-# send the startup message
-cylc task-started || exit 1
-
-if (( $# >= 1 )); then
-    TASK_SCRIPT=$1
-    shift
-else
+if (( $# == 0 )); then
     cylc task-failed "cylc-wrapper: no script to wrap"
     exit 1
 fi
 
-which $TASK_SCRIPT > /dev/null 2>&1 || {
-    cylc task-failed "cylc-wrapper: task script $TASK_SCRIPT not found"
-    exit 1
-}
-
-# execute the wrapped task and check for success or failure
-if $TASK_SCRIPT $@; then 
-    # succeeded
+# EXECUTE THE WRAPPED TASK AND CHECK FOR SUCCESS OR FAILURE
+if $@; then 
+    # SUCCEEDED
     cylc task-message --all-outputs-completed
     cylc task-finished
 else
-    # failed
+    # FAILED
     cylc task-failed 
 fi
