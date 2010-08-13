@@ -1,5 +1,12 @@
 To Do
 
+* consider getting rid of tied tasks and forcing explicit handling of
+  restart dependencies? (they're a source of some confusion, and in any
+  case explicit output messages are still required for coldstart tasks
+  that supply restart dependencies to other tasks, and in some cases
+  are not appropriate even for forecast models: e.g. UM in a DA suite
+  with sometime reconfiguration of the restart dump.
+
 * CLEAN UP THE USERGUIDE SYSTEM
 
 * check for ',' between long and short names in taskdef.
