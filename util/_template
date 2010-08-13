@@ -1,0 +1,156 @@
+#!/usr/bin/env python
+
+import os, sys, re
+import cycle_time
+from optparse import OptionParser
+
+parser = OptionParser( usage = """cylcutil template [options] [CYCLE] [STRING]
+
+Compute cycle time-dependent file names based on template strings, and
+print the result to stdout. The base cycle time can be taken from the
+environment or the command line, and offsets can be computed a la
+'cylcutil cycle-time'. Suite file naming conventions can thus be encoded
+in template variables defined in the suite config file.
+
+STRING can be the name of an environment variable containing a template
+string OR the template string itself. In the template, 'YYYY', 'MM',
+'DD', or 'HH' will be replaced with computed cycle time components.
+
+   $ export CYCLE_TIME=2010082318 # (as from task execution environment)
+
+   $ cylcutil template -s 6 fooHH-YYYYMMDD.nc #explicit name convention
+  foo12-20100823.nc
+
+   $ export NCONV=fooHH-YYYYMMDD.nc    # (as if from system config file)
+
+   $ cylcutil template NCONV #.............implicit filename convention
+  foo18-20100823.nc
+   $ cylcutil template -s 6 NCONV_FOO #..same, with current cycle offset
+  foo12-20100823.nc
+
+Arguments:
+   CYCLE        Cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.
+   STRING       Template-containing env variable OR a template.""" )
+
+parser.add_option( "-s", "--subtract", metavar="HOURS",
+        help="Subtract HOURS from CYCLE", 
+        action="store", dest="subtract" )
+
+parser.add_option( "-a", "--add", metavar="HOURS",
+        help="Add HOURS to CYCLE", 
+        action="store", dest="add" )
+
+parser.add_option( "-o", "--offset", metavar="HOURS",
+        help="Apply an offset of +/-HOURS to CYCLE", 
+        action="store", dest="offset" )
+
+(options, args) = parser.parse_args()
+
+got_template = False
+
+if len( args ) == 0:
+    # input cycle time must be definied in the environment.
+    if 'CYCLE_TIME' not in os.environ:
+        parser.error( "Provide CYCLE arg, or define $CYCLE_TIME" )
+    else:
+        cycle = os.environ[ 'CYCLE_TIME' ]
+        if not cycle_time.is_valid( cycle ):
+            parser.error( "invalid cycle time: " + cycle )
+    # DONE (no args)
+
+elif len( args ) == 1:
+    # could be a cycle time or a template (name or string)
+    tmp = args[0]
+    if cycle_time.is_valid( tmp ):
+        # arg is a cycle time
+        cycle = tmp
+
+    else:
+        # cycle time must be defined in the environment
+        if 'CYCLE_TIME' in os.environ:
+            cycle = os.environ[ 'CYCLE_TIME' ]
+            if not cycle_time.is_valid( cycle ):
+                parser.error( "invalid cycle time: " + cycle )
+        else:
+            parser.error( "no valid cycle time found" )
+
+        # arg must be a template name OR a template
+        got_template = True
+        if tmp in os.environ:
+            template = os.environ[ tmp ]
+        else:
+            template = tmp
+
+        # DONE (one arg)
+
+elif len(args) == 2:
+    cycle = args[0]
+    if not cycle_time.is_valid( cycle ):
+        parser.error( "invalid cycle time: " + cycle )
+
+    got_template = True
+    tmp = args[1]
+    if tmp in os.environ:
+        template = os.environ[ tmp ]
+    else:
+        template = tmp
+else:
+    parser.error( "Wrong number of arguments!" )
+
+n_chosen = 0
+subtract = False
+add = False
+offset = False
+
+hours_str = int( cycle[8:10] ) 
+
+if options.subtract:
+    subtract = True
+    n_chosen += 1 
+    hours_str = int( options.subtract )
+
+if options.add:
+    add = True
+    n_chosen += 1
+    hours_str = int( options.add )
+
+if options.offset:
+    offset = True
+    n_chosen += 1
+    hours_str = int( options.offset )
+
+if n_chosen > 1:
+    parser.error( "Choose ZERO or ONE of subtract, add, or offset" )
+
+try:
+    hours = int( hours_str )
+except ValueError:
+    parser.error( "HOURS must be integer" )
+
+if offset:
+    if hours < 0:
+        subtract = True
+        hours = - hours
+    else:
+        add = True
+
+if not got_template:
+    parser.error( "No template string found." )
+
+if add:
+    cycle = cycle_time.increment( cycle, hours )
+elif subtract:
+    cycle = cycle_time.decrement( cycle, hours )
+
+string = template
+# replace YYYYMMDDHH
+string = re.sub( "YYYYMMDDHH", cycle, string )
+# replace YYYY, MM, DD, HH
+string = re.sub( 'YYYY', cycle[0:4],  string )
+string = re.sub( 'MM',   cycle[4:6],  string )
+string = re.sub( 'DD',   cycle[6:8],  string )
+string = re.sub( 'HH',   cycle[8:10], string )
+# replace YY
+string = re.sub( 'YY',   cycle[2:3],  string )
+
+print string
