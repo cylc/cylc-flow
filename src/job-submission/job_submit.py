@@ -57,6 +57,7 @@ class job_submit:
 
     # class variables to be set by the task manager
     dummy_mode = False
+    failout_id = None
     ####global_env = {}
 
     def set_owner_and_homedir( self, owner = None ):
