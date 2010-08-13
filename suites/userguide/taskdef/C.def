@@ -11,13 +11,12 @@
 
 
 %TASK
-    TaskC, C
+    C, c
 
 %DESCRIPTION
-    Task C in the cylc userguide example system. Representing a storm
-    surge model driven by the atmospheric model, it waits on surface
-    pressure and wind inpupts and its own restart file, and generates
-    restart files for the next two cycles.
+    Userguide Example Suite: Task C represents a storm surge model.
+    It depends on surface pressure and wind fields from the atmospheric
+    model, and generates restart files for the next two cycles.
 
 %TYPE
     tied
@@ -26,16 +25,7 @@
     0,6,12,18
 
 %COMMAND
-    TaskC.sh -f -g $HOME ${CYCLE_TIME:8:2} $BAR $ONE $(cylcutil cycle-time --hour )
-
-%ENVIRONMENT
-    BAR bar
-    BAZ baz
-    FOO ${BAR##*_}$BAZ
-
-%SCRIPTING
-    export HR=${CYCLE_TIME:8:2}
-    export HR2=$(cylcutil cycle-time --hour)
+    C.sh
 
 %PREREQUISITES
     "surface pressure field ready for $(CYCLE_TIME)"

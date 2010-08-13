@@ -11,13 +11,12 @@
 
 
 %TASK
-    TaskA, A
+    A, a
 
 %DESCRIPTION
-    Task A, the main "driving model" in the cylc userguide example
-    system. Representing an atmospheric model, it waits on real time
-    obs and its own restart file, and generates restart files for the
-    next cycle.
+    Userguide Example Suite: Task A is the main "driving model",
+    probably an atmospheric model. It waits on real time obs and
+    generates restart files for just the next cycle.
 
 %TYPE
     tied
@@ -26,19 +25,7 @@
     0,6,12,18
 
 %COMMAND
-    TaskA.sh --file=${HOME}/data-$(CYCLE_TIME + 6).nc \
-    "the quick brown $ANIMAL went ${HOME}"
-    cylc-wrapper /bin/echo "this will do it"
-
-%ENVIRONMENT
-    ANIMAL foxy fox
-    BAR $( CYCLE_TIME - 12 )
-    REMOTE_HOME ${HOME}
-    FOO_TIME $CYCLE_TIME 
-
-%SCRIPTING
-    export FOO=$( CYCLE_TIME - 12 )
-    export SENTENCE="the quick brown dog when $HOME"
+    A.sh
 
 %PREREQUISITES
     "obs data ready for $(CYCLE_TIME)"

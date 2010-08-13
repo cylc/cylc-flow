@@ -11,13 +11,12 @@
 
 
 %TASK
-    TaskB, B
+    B, b
 
 %DESCRIPTION
-    Task B in the cylc userguide example system, representing a sea
-    state model that is driven by the atmospheric model, it waits on
-    surface wind input and its own restart file, and generates restart
-    files for the next two cycles.
+    Userguide Example Suite: Task B represents a sea state model.  It is
+    driven by wind fields from the atmospheric model and generates
+    restart files for the next two cycles.
 
 %TYPE
     tied
@@ -26,17 +25,10 @@
     0,6,12,18
 
 %COMMAND
-    TaskB.sh
+    B.sh
 
 %PREREQUISITES
     "surface wind fields ready for $(CYCLE_TIME)"
-
-%SCRIPTING
-    uname -a
-    export FOO=BAR
-    echo "hello from $USER"
-    echo "this cycle is $CYCLE_TIME"
-    echo "next CYCLE_TIME is $( cylcutil cycle-time --add=6 )"
 
 %N_RESTART_OUTPUTS
     2

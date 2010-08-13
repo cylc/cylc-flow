@@ -10,12 +10,12 @@
 #         |________________________|
 
 %TASK
-    TaskF, F
+    F, f
 
 %DESCRIPTION
-    Task F in the cylc userguide example system, representing post
-    processing for the storm surge model. The task script TaskF.sh
-    is not cylc-aware so we run it via cylc's wrapping mechanism.
+    Userguide Example Suite: Task F represents post processing for the
+    storm surge model. The task script F.sh is not cylc-aware so we run
+    it via cylc's task wrapping mechanism.
 
 %TYPE
     free
@@ -23,19 +23,14 @@
 %HOURS
     0,6,12,18
 
-%COMMAND
-    cylc-wrapper TaskF.sh --foo=$FOO
-
 %ENVIRONMENT
-    FOO foo
-    ANALYSIS_TIME $(CYCLE_TIME)
+    ANALYSIS_TIME $CYCLE_TIME
+
+%COMMAND
+    cylc-wrapper F.sh
 
 %PREREQUISITES
     "storm surge fields ready for $(CYCLE_TIME)"
-
-# to test suicide prerequisites (Task F will never run):
-# %SUICIDE_PREREQUISITES
-#     "TaskA%$(CYCLE_TIME) finished"
 
 %OUTPUTS
     "storm surge products ready for $(CYCLE_TIME)"

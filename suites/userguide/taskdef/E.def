@@ -11,11 +11,11 @@
 
 
 %TASK
-    TaskE, E
+    E, e
 
 %DESCRIPTION
-    Task E in the cylc userguide example system, representing post
-    processing for the sea state model. 
+    Userguide Example Suite: Task E represents post processing for the
+    sea state model. 
 
 %TYPE
     free
@@ -24,7 +24,7 @@
     0,6,12,18
 
 %COMMAND
-    TaskE.sh
+    E.sh
 
 %PREREQUISITES
     "sea state fields ready for $(CYCLE_TIME)"

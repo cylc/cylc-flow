@@ -24,12 +24,12 @@ check-env.sh || exit 1
 # EXECUTE THE TASK ...
 sleep $TASK_RUN_TIME_SECONDS
 
-touch $CYLC_TMPDIR/TaskA-${CYCLE_TIME}.restart
-cylc task-message "TaskA restart files ready for $CYCLE_TIME"
-touch $CYLC_TMPDIR/TaskB-${CYCLE_TIME}.restart
-cylc task-message "TaskB restart files ready for $CYCLE_TIME"
-touch $CYLC_TMPDIR/TaskC-${CYCLE_TIME}.restart
-cylc task-message "TaskC restart files ready for $CYCLE_TIME"
+touch $CYLC_TMPDIR/A-${CYCLE_TIME}.restart
+cylc task-message "A restart files ready for $CYCLE_TIME"
+touch $CYLC_TMPDIR/B-${CYCLE_TIME}.restart
+cylc task-message "B restart files ready for $CYCLE_TIME"
+touch $CYLC_TMPDIR/C-${CYCLE_TIME}.restart
+cylc task-message "C restart files ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
 cylc task-finished

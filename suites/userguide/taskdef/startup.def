@@ -14,8 +14,8 @@
     startup, stp
 
 %DESCRIPTION
-    Oneoff startup task for the cylc userguide example system: it cleans
-    out the system working directory.
+    Userguide Example Suite: a oneoff startup task that cleans out the
+    suite working directory.
 
 %TYPE
     free, oneoff

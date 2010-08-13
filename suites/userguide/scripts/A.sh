@@ -21,38 +21,6 @@ cylc task-started || exit 1
 # check environment
 check-env.sh || exit 1
 
-# PARSE THE COMMAND LINE (SEE taskdef %COMMANDLINE)
-# This script expects: --file=FILE SENTENCE
-NUM_EXPECTED_ARGS=2
-BAD_COMMAND_LINE=false
-if (( $# != NUM_EXPECTED_ARGS )); then
-    BAD_COMMAND_LINE=true
-else
-    FILEARG=$1
-    SENTENCE=$2
-    if [[ $FILEARG != --file=* ]]; then
-        BAD_COMMAND_LINE=true
-    else
-        FILE=${FILEARG#--file=}
-    fi
-fi
-
-if $BAD_COMMAND_LINE; then
-    cylc task-failed "bad command line (see task stdout)"
-    COUNT=1
-    for ARG in "$@"; do
-        echo " ${COUNT}: $ARG"
-        COUNT=$((COUNT + 1 ))
-    done
-    exit 1
-fi
-
-echo
-echo "Command line:"
-echo " FILE:     $FILE"
-echo " SENTENCE: $SENTENCE"
-echo
-
 # CHECK PREREQUISITES
 ONE=$CYLC_TMPDIR/obs-${CYCLE_TIME}.nc
 TWO=$CYLC_TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart
@@ -65,7 +33,7 @@ for PRE in $ONE $TWO; do
 done
 
 # EXECUTE THE MODEL ...
-NEXT_CYCLE=$(cylcutil time-calc -a 6)
+NEXT_CYCLE=$(cylcutil cycle-time -a 6)
 
 # create a restart file for the next cycle
 sleep $(( TASK_RUN_TIME_SECONDS / 2 ))

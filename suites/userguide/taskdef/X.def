@@ -11,12 +11,11 @@
 
 
 %TASK
-    TaskX, X
+    X, x
 
 %DESCRIPTION
-    Task X in the cylc userguide example system, representing retrieval
-    of external observation data at cycle-time + 1 hour. Depends only on
-    the system startup task at start time.
+    Userguide Example Suite: Task X represents retrieval of external
+    observation data at cycle time + 1 hour.
 
 %TYPE
     free, contact
@@ -28,10 +27,10 @@
     0,6,12,18
 
 %COMMAND
-    TaskX.sh
+    X.sh
 
 %COLDSTART_PREREQUISITES
-    # this task has no prerequisites, except at startup
+    # no prerequisites except at startup
     "startup%$(CYCLE_TIME) finished"
 
 %OUTPUTS

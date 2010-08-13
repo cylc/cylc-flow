@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-# CYLC USERGUIDE EXAMPLE SYSTEM Task C IMPLEMENTATION.
+# CYLC USERGUIDE EXAMPLE SYSTEM Task B IMPLEMENTATION.
 
 # trap errors so that we need not check the success of basic operations.
 set -e; trap 'cylc task-failed "error trapped"' ERR
@@ -21,21 +21,20 @@ cylc task-started || exit 1
 # check environment
 check-env.sh || exit 1
 
-# check prerequisites
-ONE=$CYLC_TMPDIR/surface-winds-${CYCLE_TIME}.nc
-TWO=$CYLC_TMPDIR/surface-pressure-${CYCLE_TIME}.nc
-THR=$CYLC_TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart
-for PRE in $ONE $TWO $THR; do
+# CHECK PREREQUISITES
+ONE=$CYLC_TMPDIR/surface-winds-${CYCLE_TIME}.nc       # surface winds
+TWO=$CYLC_TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart   # restart file
+for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         # FAILURE MESSAGE
         cylc task-failed "file not found: $PRE"
         exit 1
-    fi
+    fi 
 done
 
 # EXECUTE THE MODEL ...
-NEXT_CYCLE=$(cylcutil time-calc -a 6)
-NEXT_NEXT_CYCLE=$(cylcutil time-calc -a 12)
+NEXT_CYCLE=$(cylcutil cycle-time -a 6)
+NEXT_NEXT_CYCLE=$(cylcutil cycle-time -a 12)
 
 # create a restart file for the next cycle
 sleep $(( TASK_RUN_TIME_SECONDS / 3 ))
@@ -47,10 +46,10 @@ sleep $(( TASK_RUN_TIME_SECONDS / 3 ))
 touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE}.restart
 cylc task-message --next-restart-completed
 
-# create storm surge forecast output
+# create sea state forecast output
 sleep $(( TASK_RUN_TIME_SECONDS / 3 ))
-touch $CYLC_TMPDIR/storm-surge-${CYCLE_TIME}.nc
-cylc task-message "storm surge fields ready for $CYCLE_TIME"
+touch $CYLC_TMPDIR/sea-state-${CYCLE_TIME}.nc
+cylc task-message "sea state fields ready for $CYCLE_TIME"
 
 # SUCCESS MESSAGE
 cylc task-finished
