@@ -4,7 +4,7 @@ import os, sys, re
 import cycle_time
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylcutil template [options] [CYCLE] [STRING]
+parser = OptionParser( usage = """cylcutil template [options] STRING [CYCLE] 
 
 Compute cycle time-dependent file names based on template strings, and
 print the result to stdout. The base cycle time can be taken from the
@@ -29,8 +29,8 @@ string OR the template string itself. In the template, 'YYYY', 'MM',
   foo12-20100823.nc
 
 Arguments:
-   CYCLE        Cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.
-   STRING       Template-containing env variable OR a template.""" )
+   STRING       Template-containing env variable OR a template.
+   CYCLE        Cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.""" )
 
 parser.add_option( "-s", "--subtract", metavar="HOURS",
         help="Subtract HOURS from CYCLE", 
@@ -46,56 +46,32 @@ parser.add_option( "-o", "--offset", metavar="HOURS",
 
 (options, args) = parser.parse_args()
 
-got_template = False
+cycle = None
 
-if len( args ) == 0:
-    # input cycle time must be definied in the environment.
-    if 'CYCLE_TIME' not in os.environ:
-        parser.error( "Provide CYCLE arg, or define $CYCLE_TIME" )
-    else:
-        cycle = os.environ[ 'CYCLE_TIME' ]
-        if not cycle_time.is_valid( cycle ):
-            parser.error( "invalid cycle time: " + cycle )
-    # DONE (no args)
+if len( args ) == 0 or len( args ) > 2:
+    parser.error( "Wrong number of arguments!" )
 
-elif len( args ) == 1:
-    # could be a cycle time or a template (name or string)
-    tmp = args[0]
-    if cycle_time.is_valid( tmp ):
-        # arg is a cycle time
-        cycle = tmp
+# template string
+tmp = args[0]
+if tmp in os.environ:
+    template = os.environ[ tmp ]
+else:
+    template = tmp
 
-    else:
-        # cycle time must be defined in the environment
-        if 'CYCLE_TIME' in os.environ:
-            cycle = os.environ[ 'CYCLE_TIME' ]
-            if not cycle_time.is_valid( cycle ):
-                parser.error( "invalid cycle time: " + cycle )
-        else:
-            parser.error( "no valid cycle time found" )
-
-        # arg must be a template name OR a template
-        got_template = True
-        if tmp in os.environ:
-            template = os.environ[ tmp ]
-        else:
-            template = tmp
-
-        # DONE (one arg)
-
-elif len(args) == 2:
-    cycle = args[0]
+if len(args) == 2:
+    # explicit cycle time
+    cycle = args[1]
     if not cycle_time.is_valid( cycle ):
         parser.error( "invalid cycle time: " + cycle )
 
-    got_template = True
-    tmp = args[1]
-    if tmp in os.environ:
-        template = os.environ[ tmp ]
+if not cycle:
+    # cycle time must be defined in the environment
+    if 'CYCLE_TIME' in os.environ:
+        cycle = os.environ[ 'CYCLE_TIME' ]
+        if not cycle_time.is_valid( cycle ):
+            parser.error( "invalid cycle time: " + cycle )
     else:
-        template = tmp
-else:
-    parser.error( "Wrong number of arguments!" )
+        parser.error( "no valid cycle time found" )
 
 n_chosen = 0
 subtract = False
@@ -134,8 +110,6 @@ if offset:
     else:
         add = True
 
-if not got_template:
-    parser.error( "No template string found." )
 
 if add:
     cycle = cycle_time.increment( cycle, hours )
