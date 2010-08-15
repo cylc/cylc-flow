@@ -1,6 +1,11 @@
 To Do
 
+* TASKDEF FILENAME MUST BE SAME AS TASK NAME ALL THE CLASS LOADING
+  MECHANISM FAILS - FIX THIS!
+
 * --fail=TASKID: check that TASKID exists in the target suite.
+
+* NOTE THAT FAILURE INSIDE RES=$( foo.sh ) DOES NOT TRIGGER THE ERR TRAP!
 
 * consider getting rid of tied tasks and forcing explicit handling of
   restart dependencies? (they're a source of some confusion, and in any
