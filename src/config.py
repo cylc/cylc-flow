@@ -29,13 +29,15 @@ class config:
     def set_defaults( self ):
         self.items[ 'task_list' ] = task_list
 
-        self.items[ 'suite_title' ] = 'SUITE TITLE (override me in suite config)'
         self.items[ 'suite_registered_name' ] = self.suite_name
 
         self.items[ 'suite_username' ] = os.environ['USER']
 
         self.items[ 'task_groups' ] = {}
+
         self.items[ 'environment' ] = ordered_dict.ordered_dict()
+
+        #self.items[ 'suite_title' ] = 'SUITE TITLE (override me in suite config)'
         #self.items[ 'allow_simultaneous_suite_instances' ] = False
         #self.items['job_submit_overrides'] = {}
         #self.items['job_submit_method'] = 'background'
@@ -44,26 +46,6 @@ class config:
 
         reg = registrations()
         self.items['suite_def_dir' ] = reg.get( self.suite_name )
-
-    def check_environment( self ):
-
-        env = self.items[ 'environment' ]
-        # Convert all values to strings in case the user set integer
-        # values, say, in the suite config file.
-        for var in env.order():
-            env[ var ] = str( env[ var ] )
-
-        # work out any references to other global variables or local
-        # environment variables
-
-        ###env = interp_self( env )
-        ###env = interp_local( env )
-
-        # don't interpolate delayed variables here though; this must
-        # be done at the last, before job submission.
-        #env = replace_delayed( env )
-
-        self.items[ 'environment' ] = env
 
     def check_start_time( self, startup_cycle ):
         if 'legal_startup_hours' in self.items.keys():

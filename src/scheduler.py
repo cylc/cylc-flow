@@ -302,8 +302,6 @@ class scheduler:
             real_seconds = dummy_seconds * self.clock_rate / 3600.0
             self.config.put_env( 'CYLC_DUMMY_SLEEP', real_seconds )
 
-        self.config.check_environment()
-
         self.exclusive_suite_lock = not self.config.get( 'allow_simultaneous_suite_instances' )
 
     def back_up_statedump_file( self ):

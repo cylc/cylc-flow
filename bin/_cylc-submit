@@ -165,7 +165,6 @@ config.put_env_prepend( 'CYLC_SUITE_DIR', suite_dir )
 config.put_env_prepend( 'CYLC_SUITE_NAME', name )
 config.put_env_prepend( 'CYLC_USE_LOCKSERVER', str( use_lockserver) )
 
-config.check_environment()
 job_submit.global_env = config.get( 'environment' )
 
 jsc = config.get('job submit class')
