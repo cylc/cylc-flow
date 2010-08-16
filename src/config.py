@@ -15,6 +15,8 @@ from registration import registrations
 import ordered_dict
 from interp_env import interp_self, interp_local, replace_delayed
 
+from task_list import task_list, task_list_shortnames
+
 class config:
     def __init__( self, reg_name ):
         # derived class for suite configuration must call this base
@@ -25,20 +27,20 @@ class config:
         self.set_defaults()
 
     def set_defaults( self ):
-        self.items[ 'task_list' ] = []
+        self.items[ 'task_list' ] = task_list
 
         self.items[ 'suite_title' ] = 'SUITE TITLE (override me in suite config)'
         self.items[ 'suite_registered_name' ] = self.suite_name
-        self.items[ 'allow_simultaneous_suite_instances' ] = False
+
         self.items[ 'suite_username' ] = os.environ['USER']
 
-        self.items[ 'suite_info' ] = {}
         self.items[ 'task_groups' ] = {}
         self.items[ 'environment' ] = ordered_dict.ordered_dict()
-        self.items['job_submit_overrides'] = {}
+        #self.items[ 'allow_simultaneous_suite_instances' ] = False
+        #self.items['job_submit_overrides'] = {}
+        #self.items['job_submit_method'] = 'background'
 
         self.items['max_runahead_hours'] = 24
-        self.items['job_submit_method'] = 'background'
 
         reg = registrations()
         self.items['suite_def_dir' ] = reg.get( self.suite_name )

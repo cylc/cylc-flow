@@ -10,18 +10,17 @@
 #         |________________________|
 
 
-# standard Python modules
 import re, os, sys, datetime, socket, logging
 from time import sleep
 from optparse import OptionParser
 
-# cycl source modules
 from dynamic_instantiation import get_object
 from registration import registrations
 from job_submit import job_submit
 import cylc_pyro_ns, cycle_time, pimp_my_logger
 from preferences import prefs
 from suite_lock import suite_lock
+from suiterc import suiterc
 
 usage = """cylc submit [options] SUITE TASK_ID
 
@@ -122,14 +121,26 @@ os.environ[ 'PYTHONPATH' ] += ':' + suite_dir
 sys.path.append( suite_dir )
 sys.path.append( os.path.join( suite_dir, 'tasks' ))
 
-# import suite-specific cylc modules now------------------------------ 
-from suite_config import suite_config 
+# import suite modules now that PYTHONPATH is defined------------------ 
+from config import config
 import task
 import remote_switch
 
 # load suite configuration--------------------------------------------
-config = suite_config( name )
+rc = suiterc( suite_dir ) 
+config = config( name )
 config.put( 'logging_dir', logging_dir ) 
+config.put( 'job_submit_method',  rc.get_default_job_submission() )
+config.put( 'job_submit_overrides', rc.get_nondefault_job_submission() )
+config.put( 'suite_title', rc.get( 'general', 'title' ) )
+allow = rc.get( 'general', 'allow simultaneous instances' )
+if allow == 'True':
+    config.put( 'allow_simultaneous_suite_instances', True )
+else:
+    config.put( 'allow_simultaneous_suite_instances', False )
+config.put( 'task_groups', rc.get_task_insertion_groups() )
+for (item, val) in rc.get_global_environment():
+    config.put_env( item, val )
 config.job_submit_config()
 
 # create the task log

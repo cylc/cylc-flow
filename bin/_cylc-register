@@ -27,7 +27,7 @@ def check_dir( dir ):
         return False
 
     files = [\
-            dir + '/suite_config.py',
+            dir + '/suite.config',
             dir + '/task_classes.py',
             dir + '/task_list.py',
             ]

@@ -1,5 +1,7 @@
 To Do
 
+* swap OrderedDict in for ordered_dict
+
 * consider automatic task-started message as first line of SCRIPTING.
 
 * current method of setting task commands is not very robust: each new
