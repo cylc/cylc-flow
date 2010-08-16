@@ -12,40 +12,48 @@
 
 import sys, os, re
 from registration import registrations
-import ordered_dict
 from interp_env import interp_self, interp_local, replace_delayed
 
 from task_list import task_list, task_list_shortnames
+from suiterc import suiterc
 
 class config:
-    def __init__( self, reg_name ):
+    def __init__( self, reg_name, global_env, logging_dir ):
         # derived class for suite configuration must call this base
         # class init FIRST then override settings where required.
 
         self.items = {}
         self.suite_name = reg_name
-        self.set_defaults()
-
-    def set_defaults( self ):
-        self.items[ 'task_list' ] = task_list
 
         self.items[ 'suite_registered_name' ] = self.suite_name
-
+        self.items[ 'task_list' ] = task_list
+        self.items[ 'task_list_shortnames' ] = task_list_shortnames
         self.items[ 'suite_username' ] = os.environ['USER']
-
         self.items[ 'task_groups' ] = {}
 
-        self.items[ 'environment' ] = ordered_dict.ordered_dict()
+        self.items[ 'logging_dir' ] = logging_dir
 
-        #self.items[ 'suite_title' ] = 'SUITE TITLE (override me in suite config)'
-        #self.items[ 'allow_simultaneous_suite_instances' ] = False
-        #self.items['job_submit_overrides'] = {}
-        #self.items['job_submit_method'] = 'background'
+        suite_dir = registrations().get( self.suite_name )
+        self.items['suite_def_dir' ] = suite_dir
 
-        self.items['max_runahead_hours'] = 24
+        rc = suiterc( os.path.join( suite_dir, 'suite.config' ) )
 
-        reg = registrations()
-        self.items['suite_def_dir' ] = reg.get( self.suite_name )
+        self.items['job_submit_method'] = rc.get_default_job_submission()
+        self.items['job_submit_overrides' ] = rc.get_nondefault_job_submission()
+        self.items['suite_title' ] = rc.get( 'general', 'title' )
+        self.items['max_runahead_hours' ] = rc.get( 'general', 'maximum runahead (hours)' )
+        self.items['task_groups' ] = rc.get_task_insertion_groups()
+
+        allow = rc.get( 'general', 'allow simultaneous instances' )
+        if allow == 'True':
+            self.items[ 'allow_simultaneous_suite_instances' ] = True
+        else:
+            self.items[ 'allow_simultaneous_suite_instances' ] = False
+
+        self.items[ 'environment' ] = global_env  # must be OrderedDict
+        for (item,value) in rc.get_global_environment():
+            self.items['environment'][ item ] = value
+
 
     def check_start_time( self, startup_cycle ):
         if 'legal_startup_hours' in self.items.keys():
@@ -95,9 +103,6 @@ class config:
 
     def put_env( self, key, value ):
         self.items[ 'environment' ][ key ] = value
-
-    def put_env_prepend( self, key, value ):
-        self.items[ 'environment' ].prepend( key, value )
 
     def dump( self ):
         items = self.items.keys()

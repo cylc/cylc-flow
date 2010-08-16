@@ -98,7 +98,7 @@ echo done
 echo
 if ! $dummy_mode; then
     echo ">> STARTING at 2010010106, with FAIL_TASK=TaskX%2010010112"
-    echo "        self.items['environment']['FAIL_TASK'] = 'TaskX%2010010112'" >> $SUITE_DIR/suite_config.py
+    perl -pi -e 's/(\[global environment\])/\1\nFAIL_TASK=TaskX%%2010010112/' $SUITE_DIR/suite.config
 else
     # use 36 hour clock offset, otherwise the suite will catch up to
     # the clock before it finishes (=> longer time to wait for finish).

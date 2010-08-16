@@ -42,6 +42,7 @@ class suiterc:
         self.config.add_section( 'general' )
         self.config.set( 'general', 'title', 'REPLACE WITH SUITE TITLE STRING' )
         self.config.set( 'general', 'allow simultaneous instances', 'False' )
+        self.config.set( 'general', 'maximum runahead (hours)', '24' )
         #self.config.set( 'general', 'restricted startup hours', 'True' )
         #self.config.set( 'general', 'logging level', 'info' )
 
@@ -54,7 +55,7 @@ class suiterc:
         #Example: self.config.set( 'job submission', 'at_now', 'A,B,C' )
 
         self.config.add_section( 'global environment' )
-        self.config.set( 'global environment','MY_EXAMPLE_TMP_DIR', '/tmp/$USER/$CYLC_SUITE_NAME' )
+        #self.config.set( 'global environment','MY_EXAMPLE_TMP_DIR', '/tmp/$USER/$CYLC_SUITE_NAME' )
 
         if os.path.exists( self.rcfile ):
             print "Loading Suite Config File: " + self.rcfile

@@ -115,10 +115,6 @@ class job_submit:
         # etc. Thus we ensure that the order of definition is preserved
         # and parse any such references through as-is to the job script.
 
-        task_env.prepend( 'TASK_NAME', self.task_name )
-        task_env.prepend( 'TASK_ID', self.task_id )
-        task_env.prepend( 'CYCLE_TIME', self.cycle_time )
-
         # TO DO: The GLOBAL ENVIRONMENT is currently extracted just
         # before use in write_environment(). This WAS so that
         # remote_switch could dynamically reset the dummy mode
@@ -226,12 +222,12 @@ class job_submit:
         #### self.global_env = replace_delayed( job_submit.global_env )
 
         FILE.write( "# TASK EXECUTION ENVIRONMENT global variables:\n" )
-        for var in self.global_env.order():
-            FILE.write( "export " + var + "=\"" + self.global_env[var] + "\"\n" )
+        for var in self.global_env:
+            FILE.write( "export " + var + "=\"" + str( self.global_env[var] ) + "\"\n" )
 
         FILE.write( "\n# TASK EXECUTION ENVIRONMENT task variables:\n" )
-        for var in self.task_env.order():
-            FILE.write( "export " + var + "=\"" + self.task_env[var] + "\"\n" )
+        for var in self.task_env:
+            FILE.write( "export " + var + "=\"" + str( self.task_env[var] ) + "\"\n" )
 
     def write_extra_scripting( self, FILE ):
         # override if required

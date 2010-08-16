@@ -1,6 +1,6 @@
 To Do
 
-* swap OrderedDict in for ordered_dict
+* check all example systems since recent changes.
 
 * consider automatic task-started message as first line of SCRIPTING.
 
@@ -28,9 +28,6 @@ To Do
   checked for consistency with family members, or (b) should not be
   necessary (get it from members).
 
-* suite_config.py is now only used for environment vars and job submit
-  method => no need for it to be Python source.
-
 * %COMMAND:
     - conditional on HOUR? 
     - allow single quotes in path or commandline
@@ -48,9 +45,6 @@ To Do
 
 * allow $(CYCLE_HOUR) etc. in output and prereq messages (needed if
   anyone insists on using actual filenames in messages). 
-
-* userguide suite: check-env.sh should check task run-length var is
-  defined, in case user overwrote the suite config file.
 
 * INHERIT
   + configure should check INHERIT targets actually exist.  At the moment

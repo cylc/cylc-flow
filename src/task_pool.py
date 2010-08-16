@@ -182,7 +182,7 @@ class task_pool:
 
         for itask in self.tasks:
 
-            tdiff = cycle_time.decrement( itask.c_time, self.config.get('max_runahead_hours') )
+            tdiff = cycle_time.decrement( itask.c_time, int( self.config.get('max_runahead_hours')))
             if int( tdiff ) > int( oldest_c_time ):
                 # too far ahead: don't spawn this task.
                 itask.log( 'DEBUG', "delaying spawning (too far ahead)" )

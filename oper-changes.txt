@@ -12,3 +12,5 @@
 3. cylcutil changes:
     cylcutil time-calc -> cylcutil cycle-time
                           cylcutil template
+
+4. reconfigure, modify new suite.config, then rm suite_config.py, suite_info.py, 

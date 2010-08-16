@@ -220,6 +220,7 @@ item = value
 - Full line or trailing comments: '#'.
 - No multiline values allowed.
 - List values may be comma and/or space separated.
+- '%' in values must be doubled up: MY_TASK_ID = foo%%2010010106
 
 _________________________________
 *** ANNOTATED CONFIGURABLE ITEMS:

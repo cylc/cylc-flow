@@ -23,7 +23,7 @@
     0,6,12,18
 
 %COMMAND
-    cylc-wrapper
+    cylc-wrapper $TASK_THREE $( cylcutil template TEMPLATE ) 
 
 %ENVIRONMENT
     WRAP echo
@@ -35,9 +35,6 @@
 %SCRIPTING
     # stay in "submitted" state for 5 seconds to slow down cycling
     sleep 5
-
-%COMMANDLINE
-    $TASK_THREE $( cylcutil template TEMPLATE ) 
 
 %OUTPUTS
     "Hello from $(CYCLE_TIME) to $(CYCLE_TIME+6)"

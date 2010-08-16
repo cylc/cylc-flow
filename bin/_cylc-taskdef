@@ -280,7 +280,7 @@ from time import sleep
 from task_output_logs import logfiles
 import cycle_time
 import task_state
-import ordered_dict
+from OrderedDict import OrderedDict
 from collections import deque
 
 '''
@@ -737,8 +737,12 @@ from collections import deque
 
         # environment variables
         if not inherit:
-            OUT.write( '\n' + indent + 'self.env_vars = ordered_dict.ordered_dict()\n' )
+            OUT.write( '\n' + indent + 'self.env_vars = OrderedDict()\n' )
 
+        OUT.write( indent + "self.env_vars['TASK_NAME'] = self.name\n" )
+        OUT.write( indent + "self.env_vars['TASK_ID'] = self.id\n" )
+        OUT.write( indent + "self.env_vars['CYCLE_TIME'] = self.c_time\n" )
+       
         if 'ENVIRONMENT' in parsed_def:
             for pair in get_parsed( 'ENVIRONMENT' ):
                 ( var, val ) = pair.split( ' ', 1 )

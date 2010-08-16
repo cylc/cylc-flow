@@ -87,7 +87,7 @@ class task_lock:
         # print statements here will go to task stdout and stderr
 
         if not self.use_lock_server:
-            print >> sys.stderr, "WARNING: you are not using cylc the lockserver." 
+            print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
  
         server = get_lockserver( self.pns_host )
@@ -102,7 +102,7 @@ class task_lock:
 
     def release( self ):
         if not self.use_lock_server:
-            print >> sys.stderr, "WARNING: you are not using cylc the lockserver." 
+            print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
 
         server = get_lockserver( self.pns_host )

@@ -13,6 +13,7 @@
 import re, os, sys, datetime, socket, logging
 from time import sleep
 from optparse import OptionParser
+from OrderedDict import OrderedDict
 
 from dynamic_instantiation import get_object
 from registration import registrations
@@ -126,21 +127,21 @@ from config import config
 import task
 import remote_switch
 
-# load suite configuration--------------------------------------------
-rc = suiterc( suite_dir ) 
-config = config( name )
-config.put( 'logging_dir', logging_dir ) 
-config.put( 'job_submit_method',  rc.get_default_job_submission() )
-config.put( 'job_submit_overrides', rc.get_nondefault_job_submission() )
-config.put( 'suite_title', rc.get( 'general', 'title' ) )
-allow = rc.get( 'general', 'allow simultaneous instances' )
-if allow == 'True':
-    config.put( 'allow_simultaneous_suite_instances', True )
+# initial global environment ----------------------------------------
+globalenv = OrderedDict()
+if options.sched:
+    globalenv[ 'CYLC_MODE' ] = 'scheduler'
 else:
-    config.put( 'allow_simultaneous_suite_instances', False )
-config.put( 'task_groups', rc.get_task_insertion_groups() )
-for (item, val) in rc.get_global_environment():
-    config.put_env( item, val )
+    globalenv[ 'CYLC_MODE' ] = 'submit'
+globalenv[ 'CYLC_NS_HOST' ] = pns_host
+globalenv[ 'CYLC_NS_GROUP' ] = pyro_groupname
+globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+globalenv[ 'CYLC_SUITE_DIR' ] = suite_dir
+globalenv[ 'CYLC_SUITE_NAME' ] = name
+globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
+
+# load suite configuration--------------------------------------------
+config = config( name, globalenv, logging_dir )
 config.job_submit_config()
 
 # create the task log
@@ -152,18 +153,6 @@ if use_lockserver:
     # LOCATE THE PYRO NAMESERVER---------------------------------------
     # (required for suite locking)
     nameserver = cylc_pyro_ns.ns( pns_host )
-
-# set global (all tasks) environment variables-------------------------
-if options.sched:
-    config.put_env_prepend( 'CYLC_MODE', 'scheduler' )
-else:
-    config.put_env_prepend( 'CYLC_MODE', 'submit' )
-config.put_env_prepend( 'CYLC_NS_HOST', pns_host ) 
-config.put_env_prepend( 'CYLC_NS_GROUP', pyro_groupname )
-config.put_env_prepend( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
-config.put_env_prepend( 'CYLC_SUITE_DIR', suite_dir )
-config.put_env_prepend( 'CYLC_SUITE_NAME', name )
-config.put_env_prepend( 'CYLC_USE_LOCKSERVER', str( use_lockserver) )
 
 job_submit.global_env = config.get( 'environment' )
 

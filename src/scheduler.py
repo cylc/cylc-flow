@@ -25,6 +25,7 @@ from job_submit import job_submit
 from registration import registrations
 from suite_lock import suite_lock
 from life import minimal
+from OrderedDict import OrderedDict
 
 import task     # loads task_classes
 
@@ -267,27 +268,24 @@ class scheduler:
         # ENVIRONMENT (NOT NEEDED IN CONFIG?)
 
         # import suite-specific cylc modules now
-        from suite_config import suite_config 
+        from config import config 
 
-        # load suite configuration
-        self.config = suite_config( self.suite_name )
+        # initial global environment
+        globalenv = OrderedDict()
+        globalenv[ 'CYLC_MODE' ] = 'scheduler'
+        globalenv[ 'CYLC_NS_HOST' ] =  str( self.pns_host )
+        globalenv[ 'CYLC_NS_GROUP' ] =  self.pyro.get_groupname()
+        globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+        globalenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
+        globalenv[ 'CYLC_SUITE_NAME' ] = self.suite_name
+        globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
 
+        self.config = config( self.suite_name, globalenv, self.logging_dir )
         self.config.check_task_groups()
         self.config.job_submit_config( self.dummy_mode )
 
         # load some command dynamic stuff into config module, for easy handling.
-        ####self.config.put( 'daemon', self.pyro_daemon )
         self.config.put( 'clock', self.clock )
-        self.config.put( 'logging_dir', self.logging_dir )  # cylc view gets this from state_summary
-
-        # set global (all tasks) environment variables-------------------------
-        self.config.put_env( 'CYLC_MODE', 'scheduler' )
-        self.config.put_env( 'CYLC_NS_HOST',  str( self.pns_host ) )  # may be an IP number
-        self.config.put_env( 'CYLC_NS_GROUP',  self.pyro.get_groupname() )
-        self.config.put_env( 'CYLC_DIR', os.environ[ 'CYLC_DIR' ] )
-        self.config.put_env( 'CYLC_SUITE_DIR', self.suite_dir )
-        self.config.put_env( 'CYLC_SUITE_NAME', self.suite_name )
-        self.config.put_env( 'CYLC_USE_LOCKSERVER', str( self.use_lockserver) )
 
         if self.dummy_mode:
             self.config.put_env( 'CYLC_CLOCK_RATE', str( self.clock_rate ) )
