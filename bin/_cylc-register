@@ -28,8 +28,8 @@ def check_dir( dir ):
 
     files = [\
             dir + '/suite.config',
-            dir + '/task_classes.py',
-            dir + '/task_list.py',
+            dir + '/configured/task_classes.py',
+            dir + '/configured/task_list.py',
             ]
 
     good = True

@@ -56,9 +56,9 @@ PATH=$CYLC_DIR/bin:$CYLC_DIR/util:$PATH
 PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$CYLC_DIR/src/lockserver:$CYLC_DIR/src/gtk:$PYTHONPATH
 
 if [[ -n $CYLC_SUITE_DIR ]]; then
-    # caller must be a cylc jobfile; add suite-specific paths as well
+    # caller must be a cylc job scritp; add suite-specific paths as well
     PATH=$CYLC_SUITE_DIR/scripts:$PATH
-    PYTHON_PATH=$CYLC_SUITE_DIR:$CYLC_SUITE_DIR/tasks:$PYTHONPATH
+    PYTHON_PATH=$CYLC_SUITE_DIR/configured:$PYTHONPATH
 fi
 
 export PATH

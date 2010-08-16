@@ -256,12 +256,12 @@ class scheduler:
         # the parent suite, the parent file will be found and executed).
         os.environ['PATH'] = self.suite_dir + '/scripts:' + os.environ['PATH'] 
         # prepend add suite Python modules to $PYTHONPATH (prepend, as above)
-        os.environ['PYTHONPATH'] = self.suite_dir + ':' + os.environ['PYTHONPATH']
+        confdir = os.path.join( self.suite_dir, 'configured' )
+        os.environ['PYTHONPATH'] = confdir + ':' + os.environ['PYTHONPATH']
 
         # provide access to the suite source modules for THIS program---------
         # prepend to the module search path in case this is a subsuite
-        sys.path.insert(0, os.path.join( self.suite_dir, 'tasks' ))
-        sys.path.insert(0, self.suite_dir )
+        sys.path.insert(0, confdir )
 
     def load_suite_config( self ):
         # TO DO: PUTENV STUFF BELOW COULD GO STRAIGHT TO JOB_SUBMIT

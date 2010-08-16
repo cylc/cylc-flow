@@ -116,7 +116,7 @@ if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
 # add suite scripts to $PATH
 os.environ[ 'PATH' ] += ':' + suite_dir + '/scripts'
 # add suite Python modules to $PYTHONPATH
-os.environ[ 'PYTHONPATH' ] += ':' + suite_dir
+os.environ[ 'PYTHONPATH' ] += ':' + suite_dir + '/configured'
 
 # provide access to the suite source modules for THIS program---------
 sys.path.append( suite_dir )
