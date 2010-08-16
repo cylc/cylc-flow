@@ -1397,34 +1397,13 @@ directly with cylc if necessary.
 \subsection{Task Wrapping}
 \label{TaskWrapping}
 
-If you have a task that for some reason you cannot, or do not want to,
-modify to send the startup, output, and failure or completion messages, 
-you can have cylc wrap the task in a special script that does the following:
-
-\begin{itemize}
-    \item reports task startup
-    \item invokes the wrapped task, and checks for success or failure
-    \item if the task failed, it reports the failure. 
-    \item if the task succeeded, it automatically reports all the task's
-        registered outputs complete, and then reports success.
-\end{itemize}
-
-Note the assumption that successful completion of an external task
-implies all registered outputs were completed by it.
-
-If you wrap all tasks like this you can run an entire suite without
-modifying the tasks at all to accommodate cylc (although you can 
-add additional informative messages (but not registered outputs) to
-wrapped tasks too if you want). The only downside to task wrapping is
-that the task outputs are reported complete only when the wrapped
-task finishes, not at the time they are actually completed. This means
-successive instances of a `tied' (forecast model) task cannot run in
-parallel, or overlap, if the opportunity arises (because the restart
-outputs, which are normally created early in the forecast, won't be
-reported until the end of the forecast).  However, forecast models are
-usually monolithic executables that are not well suited to the spawning
-of external messaging processes anyway, so this may be of no consequence
-in practice.
+Tasks that do not report outputs prior to finishing might as well be 
+run by cylc's task wrapper, which automatically reports all registered 
+outputs completed when the task finishes, and reports failure if the
+wrapped task aborts with non-zero exit status. In this way it is
+possible to build an entire suite without modifying any of the task
+scripts to accommodate cylc (although wrapped tasks can still send 
+task messages (and even outputs) to be logged by cylc if you like).
 
 \subsection{Task Definition Files} 
 \label{TaskDefinitionFiles}

@@ -79,7 +79,6 @@ class job_submit:
         # default to owner's home dir
         self.running_dir = self.homedir
 
-
     def interp_str( self, str ):
         str = interp_other_str( str, self.task_env )
         str = interp_other_str( str, job_submit.global_env )
@@ -237,13 +236,13 @@ class job_submit:
     def write_extra_scripting( self, FILE ):
         # override if required
         FILE.write( "\n" )
-        FILE.write( "# EXTRA SCRIPTING\n" )
+        FILE.write( "# SCRIPTING.\n" )
         for line in self.extra_scripting:
             FILE.write( line + '\n' )
 
     def write_cylc_scripting( self, FILE ):
         FILE.write( "\n" )
-        FILE.write( "# CONFIGURE THE ENVIRONMENT FOR CYLC ACCESS.\n" )
+        FILE.write( "# CONFIGURE THE ENVIRONMENT FOR CYLC.\n" )
         FILE.write( ". $CYLC_DIR/cylc-env.sh\n" )
 
     def write_task_execute( self, FILE ):

@@ -78,6 +78,11 @@
         "like this: the quick brown fox jumped over the lazy dog"
     disaster-recovery.sh                                # try no.3
 
+    # WRAPPING UNMODIFIED (non-cylc-aware) TASKS. The wrapper will
+    # automatically report startup and success or failure, and all
+    # registered outputs complete, on finishing, in case of success.
+
+    cylc-wrapper foo.sh --foo-option1 --etc
 #_______________________________________________________________________
 %PREREQUISITES                    # MAY DEPEND ON CYCLE HOUR - see below
     # - Quoted string literals, one per lines.
@@ -199,11 +204,13 @@
 
 #_______________________________________________________________________
 [%SCRIPTING]
-    # - Any additional SHELL SCRIPTING to execute before the task script.
+    # - Any additional scripting to execute before the task COMMAND.
     # - Can be used to source existing environment setup scripts etc.
     # - Can include and environment variables as for COMMANDLINE etc.
     #   but NOT $(CYCLE_TIME [+/-N]) - which gets translated to Python.
     #   (you can achieve the same result using 'cylc calc' however:)
+    # - If no COMMAND is supplied SCRIPTING will be auto-wrapped,
+    #   allowing simple tasks to be reside entirely in the taskdef file.
 
     echo "hello from $[USER]"
     echo "This cycle is $CYCLE_TIME"

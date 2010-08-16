@@ -464,22 +464,50 @@ from collections import deque
                     derived_from = ','.join( modifiers ) + ', ' + derived_from
 
         external_tasks = []
+        got_command = False
         if 'COMMAND' in parsed_def:
+            got_command = True
             external_tasks = get_parsed( 'COMMAND' )
             if dummy:
-                print "WARNING: this task has the 'dummy' type modifier so its"
-                print "external task(s) will be replaced by _cylc-dummy-task."
-        else:
-            if not dummy and not inherit and not family:
-                print 'ERROR: no external task specified'
+                print "WARNING: COMMAND will be ignored due to the 'dummy' type modifier."
+
+        got_scripting = False
+        scripting = []
+        if 'SCRIPTING' in parsed_def:
+            if dummy:
+                print "WARNING: SCRIPTING will be ignored due to the 'dummy' type modifier."
+            else:
+                got_scripting = True
+                scripting = get_parsed( 'SCRIPTING' )
+                if not got_command:
+                    # if no command is supplied this is a scripting-only
+                    # tasks, which should be auto-wrapped
+                    print "SCRIPTING will be wrapped (no COMMAND defined)."
+                    scripting.insert( 0, "cylc task-started || exit 1" )
+                    scripting.insert( 0, 'set -e; trap \\\'cylc task-failed "error trapped"\\\' ERR' )
+                    scripting.append( "cylc task-message --all-outputs-completed" )
+                    scripting.append( "cylc task-finished" )
+                    # currently a task command is still required
+                    # (must not be empty string because of t[-1] below) 
+                    external_tasks = [ ' ' ]
+
+        if not got_command and not got_scripting:
+            if family:
+                pass
+            elif inherit:
+                print 'WARNING: assuming COMMAND or SCRIPTING in INHERITed'
+            elif dummy:
+                pass
+            else:
+                print 'ERROR: you must supply COMMAND and/or SCRIPTING'
                 sys.exit(1)
 
-        # set external task for dummy tasks
         if dummy:
-            external_tasks = ['_cylc-dummy-task']
+            external_tasks = ['cylc-wrapper /bin/true']
 
         if family:
-            external_tasks = ['NONE']
+            # families do not use a task command
+            external_tasks = [' ']
 
         follow_on = False
         if oneoff and intercycle:
@@ -736,7 +764,7 @@ from collections import deque
             OUT.write( '\n' + indent + 'self.extra_scripting = []\n' )
 
         if 'SCRIPTING' in parsed_def:
-            for line in get_parsed( 'SCRIPTING' ):
+            for line in scripting:
                 # cannot interpolate $(CYCLE_TIME+/-N) here because this
                 # section is for shell scripting, not generated python.
 

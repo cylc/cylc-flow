@@ -1,7 +1,9 @@
 To Do
 
-* TASKDEF FILENAME MUST BE SAME AS TASK NAME ALL THE CLASS LOADING
-  MECHANISM FAILS - FIX THIS!
+* consider automatic task-started message as first line of SCRIPTING.
+
+* current method of setting task commands is not very robust: each new
+  command in a retry list is set in jobsubmit.py "remotely" from task.py
 
 * --fail=TASKID: check that TASKID exists in the target suite.
 
@@ -78,8 +80,6 @@ To Do
   suites are running. 
 
 * use new cylc_mode class everywhere mode test is required.
-
-* dummy task does not use lockserver
 
 * lockserver: non-user-specific ($HOME-relative) pid file required, so
   user-specific .cylcrc is not the right place to store this information

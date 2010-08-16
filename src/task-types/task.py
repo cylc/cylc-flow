@@ -110,8 +110,14 @@ class task( Pyro.core.ObjBase ):
 
         self.latest_message = ""
 
-        self.external_task = self.external_tasks.popleft()
-
+        try:
+            # is there a task command lined up?
+            self.external_task = self.external_tasks.popleft()
+        except IndexError:
+            # this is currently an error; scripting-only tasks
+            # are given the command /bin/true by configure.
+            raise
+ 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.external_task, self.env_vars, self.directives, 
                         self.extra_scripting, self.logfiles, self.__class__.owner, self.__class__.remote_host )
