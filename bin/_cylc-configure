@@ -113,9 +113,6 @@ fi
 CYLC=$(which cylc)
 CYLC_DIR=${CYLC%/bin/cylc}
 
-#echo "CONFIGURING CYLC SUITE $SUITE_DIR"
-mkdir -p $CONFIGURED
-
 # if the command line gets too big we'll have to use xargs:
 #    find taskdef -name '*.def' -o -name '*.py' | xargs _cylc-taskgen
 # and modify _cylc-taskgen so that it appends output to
@@ -144,10 +141,14 @@ if $ZIPPO; then
     exit 0
 fi
 
-# back up the configured dir
-BKP=${CONFIGURED}.$$
-echo "Suite configuration backup: $BKP"
-cp -r $CONFIGURED $BKP
+if [[ -d $CONFIGURED ]]; then
+    # back up the configured dir
+    BKP=${CONFIGURED}.$$
+    echo "Suite configuration backup: $BKP"
+    cp -r $CONFIGURED $BKP
+else
+    mkdir -p $CONFIGURED
+fi
 
 echo "Parsing task definition files:"
 _cylc-taskgen $CONFIGURED $TASKDEFS

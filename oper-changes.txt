@@ -16,3 +16,6 @@
 4. generate and modify new suite.config, rm old suite_config.py, suite_info.py, 
 
 5. rm old task_classes.py, task_list.py, and tasks/
+
+6. note: taskdef-only scripted tasks, configuration now incremental and
+   automatic.

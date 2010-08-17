@@ -488,7 +488,7 @@ from collections import deque
             if family:
                 pass
             elif inherit:
-                print 'WARNING: assuming COMMAND or SCRIPTING in INHERITed'
+                print "WARNING: assuming COMMAND and/or SCRIPTING defined in the INHERITed task"
             elif dummy:
                 pass
             else:
