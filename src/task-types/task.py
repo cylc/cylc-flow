@@ -9,6 +9,20 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
+# This module uses the @classmethod decorator, introduced in Python 2.4.
+# To get it to work with Python 2.3 (note that cylc view will not work!)
+# replace:
+# 
+# @classmethod
+# def foo( bar ):
+#   pass
+# 
+# with:
+#
+# def foo( bar ):
+#   pass
+# foo = classmethod( foo )
+
 
 # TASK BASE CLASS:
 
