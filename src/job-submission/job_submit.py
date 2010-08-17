@@ -154,6 +154,8 @@ class job_submit:
             # containing owned tasks can be tested in dummy mode outside
             # of their normal execution environment.
             owner = None
+            # ignore the scripting section in dummy mode
+            self.extra_scripting = []
 
         self.set_owner_and_homedir( owner )
         self.set_running_dir() 
