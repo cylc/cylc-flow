@@ -61,7 +61,7 @@ class suiterc:
             print "Loading Suite Config File: " + self.rcfile
             self.load()
         else:
-            print "Writing new default Suite Config File: " + self.rcfile 
+            print "Writing new Suite Config File: " + self.rcfile 
             self.write()
 
     def load( self ):

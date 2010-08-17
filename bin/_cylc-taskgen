@@ -220,8 +220,6 @@ def main( argv ):
     indent = ''
     indent_unit = '    '
 
-    task_class_file = 'task_classes.py'
-
     if len( argv ) < 2:
         usage()
 
@@ -232,21 +230,15 @@ def main( argv ):
     task_def_files = argv[2:]
 
     allowed_keys = [ 'LOGFILES', 'INHERIT', 'TASK', 'OWNER', 'HOURS',
-            'COMMAND', 'REMOTE_HOST', 'DIRECTIVES', 
-            'SCRIPTING', 'ENVIRONMENT', 'INTERCYCLE',
-            'PREREQUISITES', 'COLDSTART_PREREQUISITES',
-            'SUICIDE_PREREQUISITES', 'OUTPUTS', 'N_RESTART_OUTPUTS',
-            'TYPE', 'CONTACT_DELAY', 'DESCRIPTION', 'OUTPUT_PATTERNS',
-            'FOLLOW_ON', 'FAMILY', 'MEMBERS', 'MEMBER_OF' ]
+            'COMMAND', 'REMOTE_HOST', 'DIRECTIVES', 'SCRIPTING',
+            'ENVIRONMENT', 'INTERCYCLE', 'PREREQUISITES',
+            'COLDSTART_PREREQUISITES', 'SUICIDE_PREREQUISITES',
+            'OUTPUTS', 'N_RESTART_OUTPUTS', 'TYPE', 'CONTACT_DELAY',
+            'DESCRIPTION', 'OUTPUT_PATTERNS', 'FOLLOW_ON', 'FAMILY',
+            'MEMBERS', 'MEMBER_OF' ]
 
     allowed_types = ['tied', 'free', 'cycling_daemon' ]
     allowed_modifiers = ['dummy', 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
-
-    # open the output file
-    FILE = open( task_class_file, 'w' )
-
-    # python interpreter location
-    FILE.write( '#!/usr/bin/env python\n\n' )
 
     # preamble for task class files
     preamble = '''
@@ -285,6 +277,7 @@ from collections import deque
 
 '''
 
+
     n_files = len(task_def_files)
     i = 0
 
@@ -292,8 +285,10 @@ from collections import deque
 
     for task_def_file in task_def_files:
 
-        print '  + ' + task_def_file
+        taskdef_name = os.path.basename( task_def_file )
+        task_name = 'class_' + re.sub( '.def$', '.py', taskdef_name )
 
+        print '  + ' + taskdef_name + ' --> configured/' + task_name
         i += 1
 
         DEF = open( task_def_file, 'r' )
@@ -371,8 +366,6 @@ from collections import deque
             inherit = True
             inherit_from = get_parsed( 'INHERIT' )[0]
 
-        taskdef_name = os.path.basename( task_def_file )
-        task_name = 'class_' + re.sub( '.def$', '.py', taskdef_name )
         outfile = os.path.join( taskdir, task_name )
         modname = re.sub( '.py', '', os.path.basename( outfile ))
         OUT = open( outfile, 'w' )
@@ -556,8 +549,6 @@ from collections import deque
             sys.exit(1)
         else:
             seen[ task_name ] = True
-
-        FILE.write( 'from ' + modname + ' import ' + task_name + '\n' )
 
         # class definition
         if inherit:
@@ -791,8 +782,6 @@ from collections import deque
 
         OUT.close()
  
-    FILE.close()
-
 if __name__ == '__main__':
     main( sys.argv )
 
