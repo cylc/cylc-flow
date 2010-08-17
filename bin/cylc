@@ -129,7 +129,7 @@ try:
     import requisites
 except:
     print >> sys.stderr, "ERROR: the cylc core modules are not accessible to Python"
-    print >> sys.stderr, "Please add [cylc-top-dir]/src to your $PYTHONPATH." 
+    print >> sys.stderr, "Source $CYLC_DIR/cylc-env.sh in your command shell." 
     sys.exit(1)
 
 if len( sys.argv ) < 2:
@@ -171,9 +171,8 @@ else:
 # construct command to execute
 execute = ''
 
-# construct the actual command name
+# construct command to execute
 command = '_cylc-' + command 
-
 # subprocess.call() takes a list: [ command, arg1, arg2, ...]
 execute = [ command ]
 for f in command_options:
@@ -192,7 +191,6 @@ if use_subprocess:
         print >> sys.stderr, 'ERROR: unable to execute ' + command
         print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
         print >> sys.stderr, " * Are all cylc scripts executable?"
-        print >> sys.stderr, " * Have you run 'cylc configure' yet?"
         sys.exit(1)
 else:
     command = ' '.join(execute)

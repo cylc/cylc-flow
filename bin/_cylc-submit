@@ -117,10 +117,8 @@ if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
 os.environ[ 'PATH' ] += ':' + suite_dir + '/scripts'
 # add suite Python modules to $PYTHONPATH
 os.environ[ 'PYTHONPATH' ] += ':' + suite_dir + '/configured'
-
 # provide access to the suite source modules for THIS program---------
-sys.path.append( suite_dir )
-sys.path.append( os.path.join( suite_dir, 'tasks' ))
+sys.path.append( os.path.join( suite_dir, 'configured' ))
 
 # import suite modules now that PYTHONPATH is defined------------------ 
 from config import config
