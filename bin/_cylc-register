@@ -15,8 +15,7 @@
 # deliberately or otherwise gives the wrong pyro nameserver host to
 # check.
 
-import os, sys
-import socket
+import os, sys, socket
 from optparse import OptionParser
 from registration import registrations
 
@@ -26,27 +25,19 @@ def check_dir( dir ):
         print "ERROR, dir not found: " + dir
         return False
 
-    files = [\
-            dir + '/suite.config',
-            dir + '/configured/task_classes.py',
-            dir + '/configured/task_list.py',
-            ]
+    # this just checks that a taskdef sub-dir exists
 
-    good = True
-    for file in files:
-        if not os.path.exists( file ):
-            print "file not found: " + file
-            good = False
+    if os.path.isdir( os.path.join( dir, 'taskdef' )):
+        return True
+    else:
+        return False
 
-    return good
- 
 #----------------------------------------
 
 parser = OptionParser( usage = """cylc register [options] [PATH] [SUITE]
 
-Use this command to create and manage cylc suite registrations, which 
-are associations between suite names and suite definition directories.
-Registrations are stored in $HOME/.cylc/registrations.
+Create and manage cylc suite registrations, which associate a suite name
+with a suite definition directory (stored in $HOME/.cylc/registrations).
 
 1/ Create a new registration:
      $ cylc register PATH SUITE
@@ -57,34 +48,30 @@ Registrations are stored in $HOME/.cylc/registrations.
 3/ List all of your registrations:
      $ cylc register --list
 
-4/ Delete all registrations, or just those that are no longer valid
-  (i.e. that don't point to a configured suite definition directory):
+4/ Delete all registrations, or just those that are no longer valid:
      $ cylc register [--wipe] [--check]
 
-Most cylc commands require a registered suite name argument in order to
-identify the target suite. Registered names are also used, by default,
-in suite logging and state dump directory paths, which allows you to
-run multiple suites at once without interference between them. 
+Registered names are used to target particular suites with cylc
+commands. They are also used in logging and state dump directory
+paths, allowing multiple suites to run at once without interference.
 
-If you register a single suite under several different names you can
-also run real and dummy mode instances of that suite simultaneously
-(but see also 'cylc restart --practice-mode' which automates this
-without requiring a new registration).
+Real and dummy mode instances of a suite can be run simultaneously
+under different names (but see 'cylc restart --practice-mode' which
+automates this without requiring a new registration).
 
 The registered name is also exported into the execution environment of
 all suite tasks as $CYLC_SUITE_NAME. If all tasks use this in all I/O
-directory and file paths, you can even run multiple simultaneous real
-mode instances of a single suite (e.g. over different time periods). 
-The cylc Userguide example suite is capable of this.
+paths you can run multiple simultaneous real mode instances of the same
+suite under different names (e.g. over different time periods). The cylc
+lockserver, via a suite.config setting, does not allow this. The cylc
+userguide example suite can do this, however. 
 
-Deletion of a suite registration does not delete the suite, just the
-assocation between the name and the suite definition directory. If you
-delete the registration of a running suite you will not be able to
-access the suite with cylc commands until you re-register it under the
-same name.
+Deletion of a suite registration does not delete the suite. If you
+delete a running suite's registration you will not be able to access it
+with cylc commands unless you re-register it under the same name.
 
 Arguments:
-  PATH            Path to a configured cylc suite definition directory.
+  PATH            Path to a cylc suite definition directory.
   SUITE           Suite name.""" )
 
 parser.add_option( "-g", "--get",
@@ -170,7 +157,7 @@ if new_reg:
         raise SystemExit( "ERROR, directory not found: " + dir )
 
     if not check_dir( dir ):
-        raise SystemExit( "ERROR, " + dir + " has not been configured" )
+        raise SystemExit( "ERROR, directory not found: " + dir + '/taskdef' )
 
     reg.register( name, dir )
     reg.dump_to_file()

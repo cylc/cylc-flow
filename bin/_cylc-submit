@@ -17,6 +17,7 @@ from OrderedDict import OrderedDict
 
 from dynamic_instantiation import get_object
 from registration import registrations
+from execute import execute
 from job_submit import job_submit
 import cylc_pyro_ns, cycle_time, pimp_my_logger
 from preferences import prefs
@@ -59,14 +60,14 @@ def commandline_parser():
 
     return parser
 
-# parse commandline options and arguments------------------------------
+# parse commandline options and arguments-----------------------------
 parser = commandline_parser()
 ( options, args ) = parser.parse_args()
 
 if len( args ) != 2:
     parser.error( "suite name and task ID required." )
 
-# get input args_------------------------------------------------------
+# get input args------------------------------------------------------
 name = args[0]
 task_id = args[1]
 
@@ -77,6 +78,24 @@ if reg.is_registered( name ):
 else:
     reg.print_all()
     raise SystemExit( "suite " + name + " is not registered!" )
+
+# provide access to the suite scripts and source modules--------------
+# for external processes launched by this program.
+
+# add suite scripts to $PATH
+os.environ[ 'PATH' ] += ':' + suite_dir + '/scripts'
+# add suite Python modules to $PYTHONPATH
+os.environ[ 'PYTHONPATH' ] += ':' + suite_dir + '/configured'
+# provide access to the suite source modules for THIS program---------
+sys.path.append( os.path.join( suite_dir, 'configured' ))
+
+# import suite modules now that PYTHONPATH is defined------------------ 
+from config import config
+import task
+import remote_switch
+
+# make sure the suite is configured -----------------------------------
+execute( [ '_cylc-configure', suite_dir ] )
 
 # check task ----------------------------------------------------------
 try:
@@ -109,21 +128,6 @@ if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     suite_lock = suite_lock( pns_host, username, name, suite_dir, 'submit' )
     if not suite_lock.request_suite_access():
         raise SystemExit( 'locked out!' )
-
-# provide access to the suite scripts and source modules--------------
-# for external processes launched by this program.
-
-# add suite scripts to $PATH
-os.environ[ 'PATH' ] += ':' + suite_dir + '/scripts'
-# add suite Python modules to $PYTHONPATH
-os.environ[ 'PYTHONPATH' ] += ':' + suite_dir + '/configured'
-# provide access to the suite source modules for THIS program---------
-sys.path.append( os.path.join( suite_dir, 'configured' ))
-
-# import suite modules now that PYTHONPATH is defined------------------ 
-from config import config
-import task
-import remote_switch
 
 # initial global environment ----------------------------------------
 globalenv = OrderedDict()

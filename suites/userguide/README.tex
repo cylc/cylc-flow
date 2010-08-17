@@ -58,14 +58,14 @@ you register the suite under multiple names you can run suite instances
 at once without any interference between them.          
 
 {\em GETTING TASKS TO FAIL ON DEMAND IN REAL MODE OPERATION:} For this
-example suite only, before starting the suite set
-\lstinline=FAIL_TASK\=TaskC\%2010010106= (for example) in the suite config
-file or at the command line - this will causes TaskC to abort via
-suites/userguide/scripts/check-env.sh.  If the task is subsequently
-reset, or the suite restarted, the task will not abort again, as if the
-problem had been fixed. NOTE in DUMMY MODE you can do the same for ANY
-suite, by using the \lstinline=--fail\=TaskC\%2010010106= commandline
-option at startup.                
+example suite only, before startup set the environment variable
+\lstinline=FAIL_TASK= to the ID of the task you want to fail, in the
+suite config file or at the command line - the specified task will
+abort via \lstinline=suites/userguide/scripts/check-env.sh=.  If the
+task is subsequently reset, or the suite restarted, the task will not
+abort again, as if the problem had been fixed. NOTE in DUMMY MODE you
+can do the same for ANY suite, with the \lstinline=--fail= commandline
+option.
 
 {\em REAL TIME OPERATION:} The tasks in this suite are designed to run
 quickly (a few seconds) but if the suite catches up to real time

@@ -24,10 +24,9 @@
     0,6,12,18
 
 %COMMAND
-    cylc-wrapper
+    cylc-wrapper _file-transfer
 
 %ENVIRONMENT
-    WRAP _file-transfer
     SRCE $CYLC_TMPDIR/ext/output/$(CYCLE_TIME)/extdata
     DEST $REMOTE_FC_USER@$SUPERCOMPUTER:$CYLC_REMOTE_TMPDIR/input/$(CYCLE_TIME)/extdata
 

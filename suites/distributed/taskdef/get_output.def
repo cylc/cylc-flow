@@ -25,10 +25,9 @@
     0,6,12,18
 
 %COMMAND
-    cylc-wrapper
+    cylc-wrapper _file-transfer
 
 %ENVIRONMENT
-    WRAP _file-transfer
     SRCE $REMOTE_FC_USER@$SUPERCOMPUTER:$CYLC_REMOTE_TMPDIR/output/$(CYCLE_TIME)/forecast.nc
     DEST $CYLC_TMPDIR/postproc/input/$(CYCLE_TIME)/forecast.nc
 

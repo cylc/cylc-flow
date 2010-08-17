@@ -13,20 +13,7 @@
 import os
 import sys
 
-try:
-    import subprocess
-    use_subprocess = True
-except:
-    use_subprocess = False
-    print "+++++++++++++++++++++++++++++++++++++++++++++++"
-    print "WARNING: UNABLE TO IMPORT THE SUBPROCESS MODULE"
-    pyver = sys.version_info
-    if pyver < (2, 4):
-        print "  (subprocess was introduced in Python 2.4)"
-    print "Cylc will use os.system to invoke subprocesses,"
-    print "but it cannot check for successful invocation."
-    print "+++++++++++++++++++++++++++++++++++++++++++++++"
-    print
+from execute import execute
 
 # auto-replace with version tag at build/install:
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"
@@ -169,29 +156,10 @@ else:
     command_options = sys.argv[2:]
 
 # construct command to execute
-execute = ''
-
-# construct command to execute
 command = '_cylc-' + command 
 # subprocess.call() takes a list: [ command, arg1, arg2, ...]
-execute = [ command ]
+commandlist = [ command ]
 for f in command_options:
-    execute.append( f )
+    commandlist.append( f )
 
-if use_subprocess:
-    try:
-        retcode = subprocess.call( execute )
-        if retcode != 0:
-            # the command returned non-zero exist status
-            print >> sys.stderr, command + ' failed: ', retcode
-            sys.exit(1)
-
-    except OSError:
-        # the command was not invoked
-        print >> sys.stderr, 'ERROR: unable to execute ' + command
-        print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
-        print >> sys.stderr, " * Are all cylc scripts executable?"
-        sys.exit(1)
-else:
-    command = ' '.join(execute)
-    os.system( command )
+execute( commandlist )

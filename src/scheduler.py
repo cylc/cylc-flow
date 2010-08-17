@@ -16,6 +16,7 @@ import logging
 import datetime
 
 from preferences import prefs
+from execute import execute
 import cycle_time
 import cylc_pyro_server
 import dead_letter
@@ -263,6 +264,9 @@ class scheduler:
         # prepend to the module search path in case this is a subsuite
         sys.path.insert(0, confdir )
 
+    def configure_suite( self ):
+        execute( [ '_cylc-configure', self.suite_dir ] )
+
     def load_suite_config( self ):
         # TO DO: PUTENV STUFF BELOW COULD GO STRAIGHT TO JOB_SUBMIT
         # ENVIRONMENT (NOT NEEDED IN CONFIG?)
@@ -357,6 +361,7 @@ class scheduler:
         self.configure_pyro()
         self.configure_lifecheck()
         self.configure_environment()
+        self.configure_suite()
         self.configure_dummy_mode_clock()
         self.load_suite_config()
         self.configure_suite_state_summary()
