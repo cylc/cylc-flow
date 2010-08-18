@@ -28,8 +28,13 @@ string OR the template string itself. In the template, 'YYYY', 'MM',
    $ cylcutil template -s 6 NCONV_FOO #..same, with current cycle offset
   foo12-20100823.nc
 
+Note that 'cylcutil template NCONV' and 'cylcutil template $NCONV' will
+generate the same result, but the former is preferred so that we can
+detect accidental use of undefined environment variables.
+
 Arguments:
-   STRING       Template-containing env variable OR a template.
+   STRING       A template string, or the name of an env variable that
+                contains a template.
    CYCLE        Cycle time (YYYYMMDDHH) defaults to $CYCLE_TIME.""" )
 
 parser.add_option( "-s", "--subtract", metavar="HOURS",
