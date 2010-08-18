@@ -63,8 +63,8 @@ elif len( args ) == 1:
     # must be cycle time
     cycle = args[0]
     if not cycle_time.is_valid( cycle ):
-        parser.error( "invalid cycle time: " + cycle )
-
+        print 'ERROR, invalid cycle time:', cycle
+        sys.exit(1)
 else:
     parser.error( "Wrong number of arguments!" )
 
