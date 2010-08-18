@@ -11,7 +11,11 @@
 
 import os, sys, pwd, re
 import logging
-from ConfigParser import SafeConfigParser
+# Python 2.6+:
+# from ConfigParser import SafeConfigParser
+# Python 2.4+:
+from CylcSafeConfigParser import CylcSafeConfigParser
+# Pre Python 2.7:
 from OrderedDict import OrderedDict
 
 # suite-wide settings
@@ -35,7 +39,11 @@ class suiterc:
 
         cdefaults = OrderedDict()
 
-        self.config = SafeConfigParser( defaults=None, dict_type=OrderedDict )
+        # Python 2.6+:
+        #self.config = SafeConfigParser( defaults=None, dict_type=OrderedDict )
+        # Python 2.4+:
+        self.config = CylcSafeConfigParser()
+
         # prevent conversion of item names to lower case
         self.config.optionxform = str
 

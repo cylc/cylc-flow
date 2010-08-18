@@ -2,6 +2,7 @@ from UserDict import DictMixin
 
 # Active State Recipe 576693: Ordered Dictionary for Py2.4 (Python)
 # Python got OrderedDict as standard in 2.7.
+
 # This works only for Python 2.4+ due to use of @classmethod decorator.
 # If Python 2.3 is required, see documentation in task.py on how to
 # avoid @classmethod (and note that cylc view will not be usable).
