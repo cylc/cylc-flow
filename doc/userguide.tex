@@ -1960,12 +1960,12 @@ Examples}, Section~\ref{OtherWorkingExamples}).
 
 \subsection{(c) Dynamic Configuration Of External Tasks}
 
-You could configure your external tasks to set their input and output
-directories or filenames dynamically, according to input taken from
-environment variables defined in the corresponding cylc task definition
-files. This would result in a suite that has no need for extra
-``connector'' tasks that move files around, and yet the external tasks
-do not need to know their place in the wider system.
+You could configure your external tasks to set their respective input
+and output directories or filenames dynamically from environment
+variables defined in the global suite config file. This results in a
+suite that has no need for extra ``connector'' tasks to move files
+around, and yet the tasks do not need to know their place in the wider
+system.
 
 %\subsubsection{Alternative Method 3}
 %

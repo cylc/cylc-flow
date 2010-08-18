@@ -234,10 +234,10 @@ cat > $SUITE_DIR/suite.config.README <<eof
 ___________________________
 *** CYLC SUITE CONFIG FILES
 
-A default file is generated the first time a system is configured.
+These conform to the standard Python ConfigParser module specs: 
+http://docs.python.org/library/configparser.html.
 
-Suite config files are parsed with the standard Python ConfigParser
-module: http://docs.python.org/library/configparser.html.
+A default config file is generated on first use of a suite.
 
 ; comment
 [Section]
