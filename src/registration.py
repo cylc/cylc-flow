@@ -73,7 +73,7 @@ class registrations:
         if self.deny_user():
             return
 
-        output = open( self.filename, 'wb' )
+        output = open( self.filename, 'w' )
         pickle.dump( self.registrations, output )
         output.close()
 

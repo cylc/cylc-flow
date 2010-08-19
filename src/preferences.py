@@ -115,9 +115,9 @@ class prefs:
 
         print "Writing Cylc Preferences file: " + self.rcfile
         # not compatible with python 2.4.3! 
-        #with open( self.rcfile, 'wb' ) as configfile:
+        #with open( self.rcfile, 'w' ) as configfile:
         #    self.configparser.write( configfile )
-        configfile = open( self.rcfile, 'wb' )
+        configfile = open( self.rcfile, 'w' )
         self.configparser.write( configfile )
         print "Done"
 

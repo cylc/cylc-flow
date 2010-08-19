@@ -77,9 +77,9 @@ class suiterc:
 
     def write( self ):
         # not compatible with python 2.4.3: 
-        #with open( self.rcfile, 'wb' ) as configfile:
+        #with open( self.rcfile, 'w' ) as configfile:
         #    self.config.write( configfile )
-        configfile = open( self.rcfile, 'wb' )
+        configfile = open( self.rcfile, 'w' )
         self.config.write( configfile )
 
     def get( self, section, item ):
