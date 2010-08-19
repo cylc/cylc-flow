@@ -104,7 +104,7 @@ Arguments:
                 self.dummy_mode, self.use_quick_elim, self.logging_dir,
                 self.logging_level, self.state_dump_file, self.exclude_tasks,
                 self.include_tasks, self.initial_state_dump,
-                self.no_reset, self.stop_time, self.pause_time )
+                self.no_reset, self.stop_time, self.pause_time, self.graphfile )
 
 if __name__ == '__main__':
 

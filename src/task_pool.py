@@ -21,7 +21,7 @@ from broker import broker
 class task_pool:
     def __init__( self, config, pyro, dummy_mode, use_quick,
             logging_dir, logging_level, state_dump_file, exclude,
-            include, stop_time, pause_time ):
+            include, stop_time, pause_time, graphfile ):
 
         self.config = config
         self.use_quick = use_quick
@@ -57,6 +57,8 @@ class task_pool:
         # instantiate the initial task list and create loggers 
         # PROVIDE THIS METHOD IN DERIVED CLASSES
         self.load_tasks()
+
+        self.graphfile = graphfile
 
     def create_main_log( self ):
         log = logging.getLogger( 'main' )
@@ -170,7 +172,13 @@ class task_pool:
                         continue
 
                 current_time = self.clock.get_datetime()
-                itask.run_if_ready( current_time )
+                dep_res = itask.run_if_ready( current_time )
+
+                if self.graphfile:
+                    target = re.sub( '%', '_', itask.id )
+                    for id in dep_res:
+                        source = re.sub( '%', '_', id )
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of

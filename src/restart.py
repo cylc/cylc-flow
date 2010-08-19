@@ -18,14 +18,14 @@ class restart( task_pool ):
 
     def __init__( self, config, pyro, dummy_mode, use_quick,
             logging_dir, logging_level, state_dump_file, exclude, include,
-            initial_state_dump, no_reset, stop_time, pause_time ):
+            initial_state_dump, no_reset, stop_time, pause_time, graphfile ):
 
         self.initial_state_dump = initial_state_dump
         self.no_reset = no_reset
 
         task_pool.__init__( self, config, pyro, dummy_mode, use_quick,
                 logging_dir, logging_level, state_dump_file, exclude, include,
-                stop_time, pause_time )
+                stop_time, pause_time, graphfile )
 
     def load_tasks( self ):
         # load initial suite state from the configured state dump file

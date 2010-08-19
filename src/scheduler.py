@@ -113,6 +113,14 @@ class scheduler:
                 "for testing very large suites of 1000+ tasks.",
                 action="store_true", default=False, dest="timing" )
 
+        self.parser.add_option( "--graphfile", help=\
+                "Write a suite dependency graph in the dot language "
+                "for the graphviz package - see comments at the head "
+                "of the resulting file. WARNING: the dependency graph "
+                "is continually updated: use this only for short runs!",
+                metavar="FILENAME.dot", action="store", default=None,
+                dest="graphfile" )
+
         self.parse_commandline()
 
     def print_banner( self ):
@@ -197,6 +205,28 @@ class scheduler:
         self.clock_offset = self.options.clock_offset
         self.failout_task_id = self.options.failout_task_id
         self.dummy_run_length = self.options.dummy_run_length
+
+        if self.options.graphfile:
+            print "Opening dot graph file", self.options.graphfile 
+            self.graphfile = open( self.options.graphfile, 'w' )
+
+            self.graphfile.write( '''/* This is cylc-generated graph file in the "dot" language.
+ * It encodes dependencies resolved during one run of the 
+ * "foo" cylc suite, and can be visualized with the graphiz
+ * package (http://www.graphviz.org). Minimal processing:"
+ *  $ dot -Teps foo.dot -o foo.eps"
+ *  $ display foo.eps &"
+ * To get a more pleasing result you may also want to edit
+ * this file and use other graphviz commands, in which 
+ * case refer to graphviz documentation, in particular
+ * the userguide document "Drawing graphs with dot".
+ */\n\n''' )
+
+            self.graphfile.write( 'digraph ' + self.suite_name + ' {\n' )
+            self.graphfile.write( '    graph [bgcolor=White, \n' )
+            self.graphfile.write( '          label="' + self.suite_name + ' dependency graph by cylc" ];\n' )
+            self.graphfile.write( '    node [ style=filled, fillcolor=darkseagreen1, color=darkslategrey ];\n' )
+            self.graphfile.write( '    edge [ color=darkslategrey ];\n' )
 
     def load_preferences( self ):
         self.rcfile = prefs()
@@ -470,6 +500,12 @@ class scheduler:
 
 
     def cleanup( self ):
+
+        if self.graphfile:
+            print "Closing graphfile", self.options.graphfile 
+            self.graphfile.write( '}\n' )
+            self.graphfile.close()
+
         if self.pyro:
             self.pyro.shutdown( True )
 
