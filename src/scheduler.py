@@ -209,7 +209,6 @@ class scheduler:
         if self.options.graphfile:
             print "Opening dot graph file", self.options.graphfile 
             self.graphfile = open( self.options.graphfile, 'w' )
-
             self.graphfile.write( '''/* This is cylc-generated graph file in the "dot" language.
  * It encodes dependencies resolved during one run of the 
  * "foo" cylc suite, and can be visualized with the graphiz
@@ -227,6 +226,9 @@ class scheduler:
             self.graphfile.write( '          label="' + self.suite_name + ' dependency graph by cylc" ];\n' )
             self.graphfile.write( '    node [ style=filled, fillcolor=darkseagreen1, color=darkslategrey ];\n' )
             self.graphfile.write( '    edge [ color=darkslategrey ];\n' )
+        else:
+            self.graphfile = None
+
 
     def load_preferences( self ):
         self.rcfile = prefs()
