@@ -57,13 +57,13 @@ class scheduler:
         self.parser.add_option( "--exclude",
                 help="Comma-separated list of tasks to exclude at startup "
                 "(this option has the same effect as deleting tasks from "
-                "task_list.py in the configured suite definition directory).",
+                "configured/task_list.py in the suite definition directory).",
                 metavar="LIST", action="store", dest='exclude' )
 
         self.parser.add_option( "--include",
                 help="Comma-separated list of tasks to include at startup "
-                "(this option has the same effect as deleting all *other* tasks "
-                "from task_list.py in the configured suite definition directory).",
+                "(this has the same effect as deleting all *other* tasks from "
+                "configured/task_list.py in the suite definition directory).",
                 metavar="LIST", action="store", dest='include' )
 
         self.parser.add_option( "--host",
