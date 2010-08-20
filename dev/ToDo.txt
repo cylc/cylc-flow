@@ -1,6 +1,6 @@
 To Do
 
-* GRAPHVIZ: reconstruct dependency graphs from cylc output?
+* keep a limited number of configured backup directories.
 
 * check all example systems since recent changes.
 
