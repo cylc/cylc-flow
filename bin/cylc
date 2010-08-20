@@ -71,9 +71,9 @@ usage = \
     'COMMANDS:',
     'S-Y-S-T-E-M--P-R-E-P-A-R-A-T-I-O-N',
     '  configure ... Create a cylc suite from a set of task definitions',
-    '  register .... Register a configured suite for use under a given name',
+    '  register .... Register a suite for use under a particular name',
     'S-Y-S-T-E-M--C-O-N-T-R-O-L',
-    '  start ....... Start scheduling a registered suite',
+    '  start ....... Start running a suite',
     '  restart ..... Restart a suite that was previously shut down',
     '  stop ........ Shut down a running suite, or set a final cycle time',
     '  pause ....... Refrain from submitting tasks that are ready to run',
@@ -100,11 +100,13 @@ usage = \
     '  preferences . Manage your .cylcrc global preferences',
     '  verbosity ... Change the logging verbosity level in a running suite',
     '  nudge ....... Cause the main task processing loop to be invoked',
-    '  suicide ..... Suggest that an inquiring task should shut itself down',
-    '  monitor ..... Terminal based suite monitor (DEPRECATED, use "cylc view")',
-    '  message ..... Task message interface (DEPRECATED, use task-started etc.)',
     '  test ........ Run an automated test of core cylc functionality',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
+    'D-E-P-R-E-C-A-T-E-D',
+    '  monitor ..... Terminal based suite monitor (DEPRECATED, use "cylc view")',
+    '  message ..... Task message interface (DEPRECATED, use task-started etc.)',
+    'E-X-P-E-R-I-M-E-N-T-A-L',
+    '  suicide ..... Suggest that an inquiring task should shut itself down',
     ]
 
 def print_usage():
