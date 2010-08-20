@@ -63,7 +63,7 @@ The registered name is also exported into the execution environment of
 all suite tasks as $CYLC_SUITE_NAME. If all tasks use this in all I/O
 paths you can run multiple simultaneous real mode instances of the same
 suite under different names (e.g. over different time periods). The cylc
-lockserver, via a suite.config setting, does not allow this. The cylc
+lockserver, via a suite.rc setting, does not allow this. The cylc
 userguide example suite can do this, however. 
 
 Deletion of a suite registration does not delete the suite. If you

@@ -36,7 +36,7 @@ class config:
         suite_dir = registrations().get( self.suite_name )
         self.items['suite_def_dir' ] = suite_dir
 
-        rc = suiterc( os.path.join( suite_dir, 'suite.config' ) )
+        rc = suiterc( os.path.join( suite_dir, 'suite.rc' ) )
 
         self.items['job_submit_method'] = rc.get_default_job_submission()
         self.items['job_submit_overrides' ] = rc.get_nondefault_job_submission()

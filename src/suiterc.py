@@ -33,7 +33,7 @@ class suiterc:
     def __init__( self, path=None ):
         if not path:
             suite_dir = os.environ[ 'CYLC_SUITE_DIR' ]  
-            self.rcfile = os.path.join( suite_dir, 'suite.config' )
+            self.rcfile = os.path.join( suite_dir, 'suite.rc' )
         else:
             self.rcfile = path
 

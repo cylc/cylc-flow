@@ -230,7 +230,7 @@ eof
 export CYLC_SUITE_DIR=$SUITE_DIR
 python -c 'from suiterc import suiterc; rc=suiterc()'
 
-cat > $SUITE_DIR/suite.config.README <<eof
+cat > $SUITE_DIR/suite.rc.README <<eof
 ___________________________
 *** CYLC SUITE CONFIG FILES
 
