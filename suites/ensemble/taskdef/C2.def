@@ -28,5 +28,5 @@
 %COMMAND
     C2.sh
 
-%PREREQUISITES
-    "A%$(CYCLE_TIME) finished"
+#%PREREQUISITES
+#    "A%$(CYCLE_TIME) finished"

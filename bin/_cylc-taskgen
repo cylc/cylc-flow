@@ -613,6 +613,16 @@ from collections import deque
         if follow_on:
             OUT.write( indent + 'follow_on = "' + follow_on + '"\n\n' )
 
+        # family members
+        if family:
+            OUT.write( indent + 'members = []\n' )
+            for member in family_members:
+                OUT.write( indent + 'members.append("' + member + '" )\n' )
+
+        # member of a family?
+        if member_of:
+            OUT.write( indent + 'member_of = "' + member_of  + '" \n' )
+
         # class init function
         OUT.write( indent + 'def __init__( self, ' + task_init_def_args + ' ):\n\n' )
 

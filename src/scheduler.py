@@ -222,7 +222,7 @@ class scheduler:
  */\n\n''' )
 
             self.graphfile.write( 'digraph ' + self.suite_name + ' {\n' )
-            self.graphfile.write( '    graph [bgcolor=White, \n' )
+            self.graphfile.write( '    graph [bgcolor=White, compound=true, \n' )
             self.graphfile.write( '          label="' + self.suite_name + ' dependency graph by cylc" ];\n' )
             self.graphfile.write( '    node [ style=filled, fillcolor=darkseagreen1, color=darkslategrey ];\n' )
             self.graphfile.write( '    edge [ color=darkslategrey ];\n' )

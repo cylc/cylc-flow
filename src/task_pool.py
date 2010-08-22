@@ -60,6 +60,31 @@ class task_pool:
 
         self.graphfile = graphfile
 
+        # determine task families and family members
+        # (used in writing out the 'dot' graph file).
+        self.members = {}
+        self.middle_member = {}
+        self.member_of = {}
+        for name in self.config.get('task_list'):
+            mod = __import__( 'task_classes' )
+            cls = getattr( mod, name )
+            try:
+                mems = getattr( cls, 'members' ) 
+            except AttributeError:
+                pass
+            else:
+                self.members[ name ] = mems
+                mems.sort()
+                self.middle_member[ name ] = mems[ len( mems ) / 2  ]
+
+            try:
+                memof = getattr( cls, 'member_of' )
+            except AttributeError:
+                pass
+            else:
+                self.member_of[ name ] = memof
+ 
+
     def create_main_log( self ):
         log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
@@ -172,13 +197,67 @@ class task_pool:
                         continue
 
                 current_time = self.clock.get_datetime()
-                dep_res = itask.run_if_ready( current_time )
+                if itask.run_if_ready( current_time ):
 
-                if self.graphfile:
-                    target = re.sub( '%', '_', itask.id )
-                    for id in dep_res:
-                        source = re.sub( '%', '_', id )
-                        self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
+                    if self.graphfile:
+                        raw_graphfile = False  ####### MAKE OPTIONAL
+                        if raw_graphfile:
+                            target = re.sub( '%', '_', itask.id )
+                            for source_id in itask.get_resolved_dependencies():
+                                source = re.sub( '%', '_', source_id )
+                                self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
+                            continue
+
+                        # THIS CODE BLOCK IS JUST TO WRITE OUT TASK FAMILIES IN THE INTUITIVE WAY. TO DO: CLEAN UP THE CODE
+
+                        # a task family and its members must be cotemporal
+                        target_id = itask.id
+                        target_name = itask.name
+                        ctime = itask.c_time
+                        # dot files do not like percent characters
+                        target_string = target_name + '_' + ctime
+
+                        if target_name in self.members:
+                            # target is a task family
+                            members = self.members[ target_name ]
+                            # define the subgraph ...
+                            self.graphfile.write( '    subgraph cluster_' + target_string + ' {\n' )
+                            for member in members:
+                                member_id = member + '_' + ctime
+                                self.graphfile.write( '        ' + member_id + ';\n' )
+                            self.graphfile.write( '    };\n' )
+                            # ... and replace target with link to a family member
+                            repl_target_string = self.middle_member[target_name] + '_' + ctime
+                            for source_id in itask.get_resolved_dependencies():
+                                source = re.sub( '%', '_', source_id )
+                                self.graphfile.write( '    ' + source + ' -> ' + repl_target_string + '[lhead=cluster_' + target_string + '];\n' )
+
+                        elif target_name in self.member_of:
+                            # target is a member
+                            for source_id in itask.get_resolved_dependencies():
+                                (source_name, source_ctime ) = source_id.split('%')
+                                if source_name in self.members:
+                                    # target is a member, source is a family
+                                    pass
+                                else:
+                                    # target is a member, source is not a family, 
+                                    source = re.sub( '%', '_', source_id )
+                                    self.graphfile.write( '    ' + source + ' -> ' + target_string + ';\n' )
+
+                        else:
+                            # target is not a family or a member
+                            for source_id in itask.get_resolved_dependencies():
+                                (source_name, source_ctime ) = source_id.split('%')
+                                source_string = re.sub( '%', '_', source_id )
+                                if source_name in self.members:
+                                    # source is a family, replace with one of its members
+                                    source = self.middle_member[source_name] + '_' + source_ctime
+                                    self.graphfile.write( '    ' + source + ' -> ' + target_string + '[ltail=cluster_' + source_string + '];\n' )
+                                else:
+                                    # target is not a family or a family member
+                                    source = re.sub( '%', '_', source_id )
+                                    self.graphfile.write( '    ' + source + ' -> ' + target_string + ';\n' )
+
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
