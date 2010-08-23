@@ -2,7 +2,7 @@
 
 import os, sys
 from optparse import OptionParser
-import mkdir_p
+from mkdir_p import mkdir_p
 
 parser = OptionParser( usage = """cylcutil check-vars [options] VARNAMES
 
