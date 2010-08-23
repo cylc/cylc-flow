@@ -243,7 +243,8 @@ A default config file is generated on first use of a suite.
 [Section]
 item = value ; comment
 
-- COMMENTS start with ';' ('#' is allowed only for full line comments).
+- COMMENTS start with ';'
+   - Trailing comments must have whitespace after the ';'
 - Multiline values are not permitted.
 - The '%' character must be doubled up: 
      MY_TASK_ID = foo%%2010010106 becomes MY_TASK_ID=foo%2010010106
