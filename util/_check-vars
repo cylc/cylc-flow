@@ -2,6 +2,7 @@
 
 import os, sys
 from optparse import OptionParser
+import mkdir_p
 
 parser = OptionParser( usage = """cylcutil check-vars [options] VARNAMES
 
@@ -64,8 +65,10 @@ for varname in varnames:
                     print '(directory exists)'
             else:
                 try:
-                    os.makedirs( value )
+                    # (see documentation in src/mkdir_p)
+                    mkdir_p( value )
                 except:
+                    # failed for reason other than dir exists already
                     failed = True
                     print >> sys.stderr, 'ERROR, cannot create directory:', value
                 else:
