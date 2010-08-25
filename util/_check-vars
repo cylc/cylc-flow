@@ -22,9 +22,14 @@ parser.add_option( "-d", "--dirs-exist",
         action="store_true", default=False, dest="checkdirs" )
 
 parser.add_option( "-c", "--create-dirs", 
-        help="Attempt to create the directories referred to the "
+        help="Attempt to create the directories referred to by the "
         "variables, if they do not already exist.",
         action="store_true", default=False, dest="createdirs" )
+
+parser.add_option( "-p", "--create-parent-dirs", 
+        help="Attempt to create the parent directories of files "
+        "referred to by the variables, if they do not already exist.",
+        action="store_true", default=False, dest="createparentdirs" )
 
 parser.add_option( "-f", "--files-exist", 
         help="Check that the variables refer to files that exist.", 
@@ -44,8 +49,8 @@ if len( args ) == 0:
     parser.error( "VARNAMES argument is required" )
 
 
-if [ options.checkdirs, options.createdirs, options.checkfiles, \
-        options.checkint ].count( True ) > 1:
+if [ options.checkdirs, options.createdirs, options.createparentdirs, \
+        options.checkfiles, options.checkint ].count( True ) > 1:
     parser.error( "Please choose at most one option." )
 
 varnames = args
@@ -73,6 +78,22 @@ for varname in varnames:
                     print >> sys.stderr, 'ERROR, cannot create directory:', value
                 else:
                     print '(directory created)'
+
+        if options.createparentdirs:
+            parent = os.path.dirname( value )
+            if os.path.isdir( parent ):
+                if options.verbose:
+                    print '(parent directory exists)'
+            else:
+                try:
+                    # (see documentation in src/mkdir_p)
+                    mkdir_p( parent )
+                except:
+                    # failed for reason other than dir exists already
+                    failed = True
+                    print >> sys.stderr, 'ERROR, cannot create directory:', parent
+                else:
+                    print '(parent directory created)'
 
         if options.checkdirs:
             if os.path.isdir( value ):
