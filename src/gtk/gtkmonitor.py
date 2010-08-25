@@ -666,7 +666,7 @@ class standalone_monitor_preload( standalone_monitor ):
         standalone_monitor.__init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir)
  
     def load_task_list( self ):
-        sys.path.append( self.suite_dir )
+        sys.path.append( os.path.join( self.suite_dir, 'configured'))
         import task_list
         self.task_list = task_list.task_list
         self.shortnames = task_list.task_list_shortnames
