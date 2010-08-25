@@ -1,0 +1,56 @@
+___________________________
+*** CYLC SUITE CONFIG FILES
+
+These conform to the standard Python ConfigParser module specs: 
+http://docs.python.org/library/configparser.html.
+
+A default config file is generated on first use of a suite.
+
+; comment
+[Section]
+item = value ; comment
+
+- COMMENTS start with ';'
+   - Trailing comments must have whitespace after the ';'
+- Multiline values are not permitted.
+- The '%' character must be doubled up: 
+     MY_TASK_ID = foo%%2010010106 becomes MY_TASK_ID=foo%2010010106
+- List values may be comma and/or space separated (cylc-specific).
+
+_________________________________________
+*** CYLC CONFIGURATION SECTIONS AND ITEMS
+
+[general] ;----------------------
+
+; title string describing suite
+title = USERGUIDE EXAMPLE SUITE
+
+; can multiple instances of this suite run at once under different names?
+allow simultaneous instances = False
+
+[task insertion groups] ;-------
+
+; you can insert multiple tasks at once with 'cylc insert'
+coldstart = modelX, modelY, cold_postp
+
+[job submission] ;--------------
+
+; the 'default' method for the entire system ...
+default = background
+
+; ... except for tasks singled out for different methods:
+at_now = task1, task3, task5
+ll_raw = task6
+
+[global environment] ;--------- 
+
+; Environment variables accessible to all suite tasks.
+; Not evaluated until task execution time.
+; Order of definition is preserved:
+ONE = one
+TWO = $ONE
+
+; You can use shell expansion expressions and so on:
+FOO = ${HOME##*_}
+; But note that '%' characters must be doubled up:
+BAR = ${HOME%%%%_*}  ; becomes ${HOME%%_*}
