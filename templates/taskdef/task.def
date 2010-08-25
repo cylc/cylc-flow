@@ -26,6 +26,7 @@
     # - The optional short name can be displayed by system monitors to 
     #   help save screen real estate when viewing large systems. 
     # - Cylc commands can refer to tasks by full or short names.
+    # - May contain underscores but not hyphens.
 
 #______________________________________________________________ALL TASKS
 %DESCRIPTION

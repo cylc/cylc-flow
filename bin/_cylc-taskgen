@@ -9,9 +9,6 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
-# TO DO: THIS SCRIPT NEEDS TO BE CLEANED UP AND RESTRUCTURED.
-
 import string, glob
 import sys, os, re
 
@@ -227,7 +224,7 @@ def main( argv ):
     if not os.path.isdir( taskdir ):
         raise SystemExit( "Directory not found: " + taskdir )
 
-    task_def_files = argv[2:]
+    taskdef_files = argv[2:]
 
     allowed_keys = [ 'LOGFILES', 'INHERIT', 'TASK', 'OWNER', 'HOURS',
             'COMMAND', 'REMOTE_HOST', 'DIRECTIVES', 'SCRIPTING',
@@ -277,23 +274,34 @@ from collections import deque
 
 '''
 
-
-    n_files = len(task_def_files)
+    n_files = len(taskdef_files)
+    seen = {}
     i = 0
 
-    seen = {}
-
-    for task_def_file in task_def_files:
-
-        taskdef_name = os.path.basename( task_def_file )
-        task_name = 'class_' + re.sub( '.def$', '.py', taskdef_name )
-
-        print '  + ' + taskdef_name + ' --> configured/' + task_name
+    for taskdef_file in taskdef_files:
         i += 1
+        taskdef_filename = os.path.basename( taskdef_file )
 
-        DEF = open( task_def_file, 'r' )
+        # check for use of illegal '-' characters and similar
+        # (would result in Python syntax errors in generated code).
+        if not re.match( '^[\w]+\.', taskdef_filename ):
+            print 'ERROR:', taskdef_filename, 'contains illegal characters'
+            print '       only a-z, A-Z, 0-9, and _ are allowed'
+            sys.exit(1)
+
+        print 'Processing', taskdef_filename
+
+        DEF = open( taskdef_file, 'r' )
         lines = DEF.readlines()
         DEF.close()
+
+        delay = 0
+        catchup_contact = False
+        sequential = False
+        contact = False
+        oneoff = False
+        dummy = False
+        task_type = None
 
         # PARSE THE TASKDEF FILE----------------------------
         current_key = None
@@ -345,6 +353,8 @@ from collections import deque
         member_of = None
         if 'FAMILY' in parsed_def:
             family = True
+            task_name = get_parsed( 'FAMILY' )[0]
+            task_type = "family"
             if 'TASK' in parsed_def:
                 print "ERROR: choose %FAMILY or %TASK"
                 sys.exit(1)
@@ -358,23 +368,50 @@ from collections import deque
                     family_members.append( member )
         else:
             # not a task family, but is it a member of one?
+            task_name = get_parsed( 'TASK' )[0]
             if 'MEMBER_OF' in parsed_def:
                 member_of = get_parsed('MEMBER_OF')[0]
+
+        # short name
+        short_name = task_name
+
+        m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
+        if m:
+            # short name given as well
+            [ task_name, short_name ] = m.groups()
+
+        if re.search( ' ', task_name ):
+            print 'ERROR: name contains spaces', task_name 
+            print '(did you miss the comma between the full and short task names?)'
+            sys.exit(1)
+
+        # check for use of illegal '-' characters and similar
+        # (would result in Python syntax errors in generated code).
+        if re.search( '[^\w]', task_name ):
+            print 'ERROR:', task_name, 'contains illegal characters'
+            print '       only a-z, A-Z, 0-9, and _ are allowed'
+            sys.exit(1)
+
+        if task_name in seen:
+            print "ERROR: task name '" + task_name + "' has been defined already!"
+            sys.exit(1)
+        else:
+            seen[ task_name ] = True
 
         inherit = False
         if 'INHERIT' in parsed_def:
             inherit = True
             inherit_from = get_parsed( 'INHERIT' )[0]
 
-        outfile = os.path.join( taskdir, task_name )
+        outfile = os.path.join( taskdir, '__' + task_name + '.py' )
         modname = re.sub( '.py', '', os.path.basename( outfile ))
         OUT = open( outfile, 'w' )
 
         OUT.write( preamble )
         if inherit:
-            OUT.write( 'from class_' + inherit_from + ' import ' + inherit_from + '\n\n')
+            OUT.write( 'from __' + inherit_from + ' import ' + inherit_from + '\n\n')
 
-        if re.match( '^.*\.py$', task_def_file ):
+        if re.match( '^.*\.py$', taskdef_file ):
             # this file is a python class definition
             for line in lines:
                 OUT.write( line )
@@ -389,14 +426,6 @@ from collections import deque
             if intercycle == 'True' or intercycle == 'true':
                 intercycle = True
 
-        delay = 0
-        catchup_contact = False
-        sequential = False
-        contact = False
-        oneoff = False
-        dummy = False
-        task_type = None
-
         if 'TYPE' not in parsed_def:
             if not inherit and not family:
                 print "ERROR: no %TYPE specified"
@@ -408,7 +437,6 @@ from collections import deque
 
             tmp = get_parsed( 'TYPE' )[0]
             typelist = tmp.split(',')
-
             task_type = typelist[0]
             if task_type not in allowed_types:
                 print 'ERROR, unknown task class:', task_type
@@ -524,32 +552,6 @@ from collections import deque
                 print 'ERROR: tied tasks must define %N_RESTART_OUTPUTS'
                 sys.exit(1)
 
-        # task or family name
-        if family:
-            task_name = get_parsed( 'FAMILY' )[0]
-            task_type = "family"
-        else:
-            task_name = get_parsed( 'TASK' )[0]
-
-        # short name
-        short_name = task_name
-
-        m = re.search( '^\s*(.*),\s*(.*)\s*$', task_name )
-        if m:
-            # short name given as well
-            [ task_name, short_name ] = m.groups()
-
-        if re.search( ' ', task_name ):
-            print 'ERROR: name contains spaces', task_name 
-            print '(did you miss the comma between the full and short task names?)'
-            sys.exit(1)
-
-        if task_name in seen:
-            print "ERROR: task name '" + task_name + "' has been defined already!"
-            sys.exit(1)
-        else:
-            seen[ task_name ] = True
-
         # class definition
         if inherit:
             OUT.write( 'class ' + task_name + '(' + inherit_from + '):\n' )
@@ -560,7 +562,7 @@ from collections import deque
 
         indent_more()
  
-        OUT.write( indent + '# AUTO-GENERATED FROM ' + task_def_file + '\n\n' )  
+        OUT.write( indent + '# AUTO-GENERATED FROM ' + taskdef_file + '\n\n' )  
    
         # task name
         OUT.write( indent + 'name = \'' + task_name + '\'\n' )

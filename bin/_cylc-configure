@@ -128,7 +128,7 @@ else
     ZIPPO=true
     for DEF in $ALL_TASKDEFS; do
         FNAME=$( basename $DEF )
-        CLS="$CONFIGURED/class_${FNAME%.def}.py"
+        CLS="$CONFIGURED/__${FNAME%.def}.py"
         if [[ ! -f $CLS ]] || [[ $DEF -nt $CLS ]]; then
             ZIPPO=false
             TASKDEFS="$TASKDEFS $DEF"
@@ -169,13 +169,10 @@ cat > $CONFIGURED/task_classes.py <<eof
 
 eof
 
-for FILE in $CONFIGURED/class_*.py; do
+for FILE in $CONFIGURED/__*.py; do
     FNAME=$( basename $FILE )
     MODNAME=${FNAME%.py}
-    CLSLINE=$( egrep '^class ' $FILE )
-    # e.g. 'class foo(free):'
-    CLS=$( echo $CLSLINE | sed -e 's/class //' )
-    CLSNAME=$( echo $CLS | sed -e 's/(.*$//' )
+    CLSNAME=${MODNAME#__}
     echo "from $MODNAME import $CLSNAME" >> $CONFIGURED/task_classes.py
 done
 
@@ -199,7 +196,7 @@ task_list = \\
 eof
 OIFS=$IFS
 IFS=$'\n'
-for MOD in $CONFIGURED/class_*.py; do
+for MOD in $CONFIGURED/__*.py; do
     #echo -n "  $MOD"
     NAME=$( egrep '^ *name = ' $MOD )
     NAME=${NAME# *= }
@@ -215,7 +212,7 @@ task_list_shortnames = \\
 eof
 OIFS=$IFS
 IFS=$'\n'
-for MOD in $CONFIGURED/class_*.py; do
+for MOD in $CONFIGURED/__*.py; do
     SHORTNAME=$( egrep '^ *short_name = ' $MOD )
     SHORTNAME=${SHORTNAME# *= }
     echo "       ${SHORTNAME}," >> $CONFIGURED/task_list.py
