@@ -1,5 +1,7 @@
 To Do
 
+* allow ',' or ', ' in "if HOUR in 0,6,12:" taskdef conditionals.
+
 * error trapping on wrapped SCRIPTING-only tasks: auto, or supply your
   own?
 
