@@ -96,3 +96,7 @@ class prerequisites:
     def set_all_satisfied( self ):
         for label in self.messages:
             self.satisfied[ label ] = True
+
+    def set_all_unsatisfied( self ):
+        for label in self.messages:
+            self.satisfied[ label ] = False
