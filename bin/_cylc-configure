@@ -127,8 +127,8 @@ if $FORCE; then
 else
     ZIPPO=true
     for DEF in $ALL_TASKDEFS; do
-        FNAME=$( basename $DEF )
-        CLS="$CONFIGURED/__${FNAME%.def}.py"
+        CLSNAME=$( _cylc-get-taskname < $DEF )
+        CLS=$CONFIGURED/__${CLSNAME}.py
         if [[ ! -f $CLS ]] || [[ $DEF -nt $CLS ]]; then
             ZIPPO=false
             TASKDEFS="$TASKDEFS $DEF"
