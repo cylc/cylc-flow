@@ -1,0 +1,44 @@
+#!/usr/bin/perl -w
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+# Extract the task name from a cylc taskdef file.
+
+# Use as a file filter: NAME=$( _cylc-get-taskname < foo.def ).
+
+# Look for '%TASK' or '%FAMILY' at the start of a line, then ignore any
+# subsequent blank lines, and ignore any subsequent comment # lines
+# (possible white space followed by '#') => "name[, shortname]" is on
+# the next line .
+
+my $name;
+search: while ( my $line = <> ) {
+
+    # raw python task definition
+    if ( $line =~ m/name = ['"]([\w]+)['"]/ ) {
+        $name = $1;
+        last search
+    }
+
+    # taskdef file
+    if ( $line =~ m/%TASK/ or $line =~ m/%FAMILY/ ) {
+        while ( my $next_line = <> ) {
+            if ( $next_line !~ m/^\s*\#/ && $next_line !~ m/^\s*$/ ) {
+                $name = $next_line;
+                $name =~ s/,.*$//;
+                last search;
+            }
+        }
+    }
+}
+
+$name =~ s/\s*//;
+chomp( $name );
+print $name;
