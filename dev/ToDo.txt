@@ -1,5 +1,16 @@
 To Do
 
+* note that prerequisites are no longer derived from requisites. Change
+  documentation in the latter class (and elsewhere?) to reflect this.
+
+* allow "warm start" as opposed to "warm restarts" - useful for testing
+  suites when you know all the files are in place. (difficult?)
+
+* if a job with a stop time has task failures and is then restarted the
+  restart should know about the stop time (otherwise the restart has no
+  stop time but tasks that previously reached the stop time will not
+  respawn -although this can be rectified by task insertion).
+
 * allow ',' or ', ' in "if HOUR in 0,6,12:" taskdef conditionals.
 
 * error trapping on wrapped SCRIPTING-only tasks: auto, or supply your
