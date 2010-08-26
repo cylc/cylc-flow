@@ -1,5 +1,8 @@
 To Do
 
+* error trapping on wrapped SCRIPTING-only tasks: auto, or supply your
+  own?
+
 * if configure aborts it can leave the suite definition directory in a
   state that appears to be configured at next run, but isn't. So, delete
   the configured/ sub-directory in case of error, before aborting.
