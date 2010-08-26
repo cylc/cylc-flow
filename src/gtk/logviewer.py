@@ -34,7 +34,7 @@ class logviewer:
 
     def connect( self ):
         self.t = tailer( self.logview, self.path() )
-        print "Starting log viewer thread for " + self.name
+        ####print "Starting log viewer thread for " + self.name
         self.t.start()
    
     def path( self ):

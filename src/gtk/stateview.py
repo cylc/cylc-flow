@@ -400,4 +400,4 @@ class updater(threading.Thread):
             time.sleep(1)
         else:
             pass
-            print "Disconnecting task state info thread"
+            ####print "Disconnecting task state info thread"

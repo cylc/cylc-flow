@@ -51,5 +51,5 @@ class combo_logviewer( logviewer ):
         logbuffer.delete( s, e )
         #self.log_label.set_text( self.path() ) 
         self.t = tailer( self.logview, self.path() )
-        print "Starting log viewer thread"
+        ###print "Starting log viewer thread"
         self.t.start()

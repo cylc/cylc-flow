@@ -28,7 +28,7 @@ class tailer(threading.Thread):
 
         if not os.path.exists( self.logfile ):
             #gobject.idle_add( self.warn, "File not found: " + self.logfile )
-            print "Disconnecting from log viewer thread"
+            ###print "Disconnecting from log viewer thread"
             return
 
         gen = tail.tail( open( self.logfile ))
@@ -37,7 +37,7 @@ class tailer(threading.Thread):
                 line = gen.next()
                 if line: 
                     gobject.idle_add( self.update_gui, line )
-        print "Disconnecting from log viewer thread"
+        ###print "Disconnecting from log viewer thread"
  
     def update_gui( self, line ):
         self.logbuffer.insert( self.logbuffer.get_end_iter(), line )
