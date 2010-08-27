@@ -1,5 +1,8 @@
 To Do
 
+* check effect of reset to waiting on task families - need to reset the
+  special finished prerequisites too?
+
 * note that prerequisites are no longer derived from requisites. Change
   documentation in the latter class (and elsewhere?) to reflect this.
 
