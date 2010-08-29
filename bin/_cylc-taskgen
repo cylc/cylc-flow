@@ -276,6 +276,7 @@ from collections import deque
 
     n_files = len(taskdef_files)
     seen = {}
+    seen_short = {}
     i = 0
 
     for taskdef_file in taskdef_files:
@@ -397,6 +398,12 @@ from collections import deque
             sys.exit(1)
         else:
             seen[ task_name ] = True
+
+        if short_name in seen_short:
+            print "ERROR: short task name '" + short_name + "' has been defined already!"
+            sys.exit(1)
+        else:
+            seen_short[ short_name ] = True
 
         inherit = False
         if 'INHERIT' in parsed_def:

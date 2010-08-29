@@ -1,5 +1,10 @@
 To Do
 
+* duplicate task name (and short name) check should be done on
+  generated task_list.py in addition to the check within configure,
+  because the latter check is not always global now that configure is 
+  incremental.
+
 * task state at initialization: there's no point in giving initial
   state of "finished" for example, if this does not result in setting
   prerequisites and outputs satisfied and completed, respectively.
