@@ -1,5 +1,9 @@
 To Do
 
+* task state at initialization: there's no point in giving initial
+  state of "finished" for example, if this does not result in setting
+  prerequisites and outputs satisfied and completed, respectively.
+
 * check effect of reset to waiting on task families - need to reset the
   special finished prerequisites too?
 

@@ -28,10 +28,13 @@ title = USERGUIDE EXAMPLE SUITE
 ; can multiple instances of this suite run at once under different names?
 allow simultaneous instances = False
 
+; coldstart tasks (for 'cylc start --warm').
+coldstart tasks = startup, foo, bar
+
 [task insertion groups] ;-------
 
 ; you can insert multiple tasks at once with 'cylc insert'
-coldstart = modelX, modelY, cold_postp
+coldstart_modelX = foo, bar, baz
 
 [job submission] ;--------------
 

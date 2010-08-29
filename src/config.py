@@ -43,6 +43,7 @@ class config:
         self.items['suite_title' ] = rc.get( 'general', 'title' )
         self.items['max_runahead_hours' ] = rc.get( 'general', 'maximum runahead (hours)' )
         self.items['task_groups' ] = rc.get_task_insertion_groups()
+        self.items['coldstart_tasks' ] = rc.get_coldstart_tasks()
 
         allow = rc.get( 'general', 'allow simultaneous instances' )
         if allow == 'True':

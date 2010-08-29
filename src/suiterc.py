@@ -11,10 +11,16 @@
 
 import os, sys, pwd, re
 import logging
-# Python 2.6+:
-# from ConfigParser import SafeConfigParser
-# Python 2.4+:
-from CylcSafeConfigParser import CylcSafeConfigParser
+
+if sys.version_info >= (2,6):
+    # Python 2.6+:
+    from ConfigParser import SafeConfigParser
+elif sys.version_info >= (2,4):
+    # Python 2.4+:
+    from CylcSafeConfigParser import CylcSafeConfigParser
+else:
+    raise SystemExit( "suiterc.py in not compatible with Python < 2.4)" )
+
 # Pre Python 2.7:
 from OrderedDict import OrderedDict
 
@@ -39,10 +45,14 @@ class suiterc:
 
         cdefaults = OrderedDict()
 
-        # Python 2.6+:
-        #self.config = SafeConfigParser( defaults=None, dict_type=OrderedDict )
-        # Python 2.4+:
-        self.config = CylcSafeConfigParser()
+        if sys.version_info >= (2,6):
+            # Python 2.6+:
+            self.config = SafeConfigParser( defaults=None, dict_type=OrderedDict )
+        elif sys.version_info >= (2,4 ):
+            # Python 2.4+:
+            self.config = CylcSafeConfigParser()
+        else:
+            raise SystemExit( "Python 2.4+ required" )
 
         # prevent conversion of item names to lower case
         self.config.optionxform = str
@@ -54,6 +64,8 @@ class suiterc:
         #self.config.set( 'general', 'restricted startup hours', 'True' )
         #self.config.set( 'general', 'logging level', 'info' )
 
+        self.config.set( 'general', 'coldstart tasks', '' )
+ 
         self.config.add_section( 'task insertion groups' )
         #Example: self.config.set( 'task insertion groups', 'coldstart', 'A,B,C,D' )
         #Example: self.config.set( 'task insertion groups', 'foo', 'A,B,D,F' )
@@ -85,6 +97,10 @@ class suiterc:
     def get( self, section, item ):
         return self.config.get( section, item )
 
+    def get_coldstart_tasks( self ):
+        tlist = self.get( 'general', 'coldstart tasks' )
+        return re.split( r', *| +', tlist )
+ 
     def get_global_environment( self ):
         return self.config.items( 'global environment' )
 

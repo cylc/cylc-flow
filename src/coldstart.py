@@ -16,9 +16,10 @@ from task_pool import task_pool
 class coldstart( task_pool ):
     def __init__( self, config, pyro, dummy_mode, use_quick,
             logging_dir, logging_level, state_dump_file, exclude, include,
-            start_time, stop_time, pause_time, graphfile ):
+            start_time, stop_time, pause_time, warm_start, graphfile ):
 
         self.start_time = start_time
+        self.warm_start = warm_start
 
         task_pool.__init__( self, config, pyro, dummy_mode, use_quick,
                 logging_dir, logging_level, state_dump_file, exclude, include,
@@ -40,8 +41,11 @@ class coldstart( task_pool ):
         # config.task_list = [ taskname1, taskname2, ...]
 
         task_list = self.config.get('task_list')
-        # uniquify in case of accidental duplicates
+
+        # uniquify in case of accidental duplicates (Python 2.4+)
         task_list = list( set( task_list ) )
+
+        coldstart_tasks = self.config.get( 'coldstart_tasks' )
 
         for name in task_list:
 
@@ -57,6 +61,12 @@ class coldstart( task_pool ):
 
             itask = get_object( 'task_classes', name )\
                     ( start_time, 'waiting', startup=True )
+
+            if self.warm_start and name in coldstart_tasks:
+                itask.log( 'WARNING', "warm start: starting in finished state" )
+                itask.state.set_status( 'finished' )
+                itask.prerequisites.set_all_satisfied()
+                itask.outputs.set_all_complete()
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):

@@ -2,6 +2,7 @@
 title = implementation of the main cylc userguide example suite
 allow simultaneous instances = False
 maximum runahead (hours) = 24
+coldstart tasks = startup, coldstart
 
 [task insertion groups]
 
