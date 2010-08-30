@@ -35,8 +35,9 @@ class client:
             print '  But it IS registered with the Pyro Nameserver, which implies'
             print '  that the suite has previously exited without cleaning up.'
             print '  To clean up manually:'
-            print '     $ pyro-nsc deletegroup ' + group
-            sys.exit(1)
+            print '     $ pyro-nsc deletegroup ' + self.group
+            ####sys.exit(1)
+            raise
         except Exception, x:
             # THIS SHOULD NOT BE REACHED
             print 'ERROR: ' + self.group + ' is PROBABLY NOT RUNNING'
@@ -44,8 +45,9 @@ class client:
             print '  that the suite has previously exited without cleaning up.'
             print '  HOWEVER: an unexpected error occurred:', x
             print '  Manual cleanup:'
-            print '     $ pyro-nsc deletegroup ' + group
-            sys.exit(1)
+            print '     $ pyro-nsc deletegroup ' + self.group
+            ####sys.exit(1)
+            raise
  
     def get_proxy( self, target ):
         # check nameserver is running (aborts if none found)

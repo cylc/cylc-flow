@@ -56,8 +56,8 @@ class pyrex:
             print "\nERROR: " + self.groupname + " is already registered with Pyro (" + str( len( objs )) + " objects)."
             for obj in objs:
                 print '  + ' + obj[0]
-            print "Either you are running suite already", suitename, "OR the previous run failed"
-            print "to shut down cleanly, in which case you can clean up like this:"
+            print "Either you are running suite ", suitename, "already OR its previous run"
+            print "failed to shut down cleanly, in which case you can clean up like this:"
             print 
             print "pyro-nsc deletegroup " + self.groupname + "   #<-------(manual cleanup)" 
             print
