@@ -48,6 +48,8 @@ ll_raw = task6
 [global environment] ;--------- 
 
 ; Environment variables accessible to all suite tasks.
+; You can use the registered suite name: $CYLC_SUITE_NAME.
+
 ; Not evaluated until task execution time.
 ; Order of definition is preserved:
 ONE = one

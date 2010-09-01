@@ -516,7 +516,7 @@ class task_pool:
         # result in deletion of finished tasks that are still required
         # to satisfy others after a restart.
 
-        # THEREFORE the correct deletion cutoff is 'earliest unfinished'
+        # THEREFORE the correct deletion cutoff is 'EARLIEST UNFINISHED'
         # (members of which will remain in, or be reset to, the waiting
         # state on a restart. The only way to use 'earliest unsatisfied'
         # over a restart would be to record the state of all
