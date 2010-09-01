@@ -1,8 +1,44 @@
 To Do
 
+__________
+LOCKSERVER
+
+ * system operator currently can't release locks acquired by tasks that
+   run under other usernames (easy to fix). Workaround: su to other user
+   then register the suite and release the task as that user (see next
+   point for why this works).
+
+ * can release tasks of other users suites by registering their suite
+   yourself (is this desirable?)
+
+ * send lockserver errors to a logfile (e.g. if it is killed it silently 
+  fails to restart due to existing Pyro nameserver entry).
+
+ * persistent state (file) in case of crash or restart while suites are
+   running. 
+
+ * non-user-specific ($HOME-relative) pid file required, so
+  user-specific .cylcrc is not the right place to store this information
+  (multiple users need to be able to access the lockserver, but perhaps
+  not start and stop it).  MAYBE $CYLC_DIR/.cylcrc IS REQUIRED?
+
+
+______
+VIEWER
+
 * coloring indicating CRITICAL or WARNING messages, in viewer.
 
 * allow to put single tasks on hold / paused. 
+
+* 'view -p' crashes nastily on unconfigured suites.
+
+* exception handling: if user clicks on a task that has just been
+  eliminated (test this with quick cycling trivial suite).
+
+* access to task stdout and stderr for remote tasks?
+
+_______
+GENERAL
 
 * make incremental configure handle deletion of taskdefs.
 
@@ -16,8 +52,8 @@ To Do
   prerequisites and outputs satisfied and completed, respectively.
   Consolidate this task state resetting code into methods in task.py?
 
-* check effect of reset to waiting on task families - need to reset the
-  special finished prerequisites too?
+* check effect of 'reset to waiting' on task families - need to reset
+  the special finished prerequisites too?
 
 * note that prerequisites are no longer derived from requisites. Change
   documentation in the latter class (and elsewhere?) to reflect this.
@@ -57,7 +93,9 @@ To Do
   case explicit output messages are still required for coldstart tasks
   that supply restart dependencies to other tasks, and in some cases
   are not appropriate even for forecast models: e.g. UM in a DA suite
-  with sometime reconfiguration of the restart dump.
+  with sometime reconfiguration of the restart dump. (BUT NOTE: tied 
+  tasks also have special spawning behavior - after the first restart 
+  output is completed!!!! - otherwise sequential is required.)
 
 * check that the main uses for "oneoff cold start tasks" are documented.
 
@@ -73,14 +111,6 @@ To Do
     - conditional on HOUR? 
     - allow single quotes in path or commandline
 
-* cylc view
-    - 'view -p' crashes nastily on unconfigured suites.
-    - exception handling: if user clicks on a task that has just been
-      eliminated (test this with quick cycling trivial suite).
-
-* document that simple tasks can be entirely contained in taskdef files,
-  via a simple wrapped commandline and %SCRIPTING.
-
 * could make $(CYCLE_TIME) implicit in messages except where reference
   to *other* cycles are required?
 
@@ -93,7 +123,7 @@ To Do
   + currently inheriting tasks must define %OUTPUTS even if empty; is
     this necessary?
 
-* make task-specific logs optional, esp for large suites.
+* make task-specific logs optional, especially for large suites.
 
 * document new use of 'TaskID failed' as an output: added on the fly as
   a new output if failure occurs, then removed from the output list on
@@ -102,31 +132,17 @@ To Do
 * if chooser is clicked just as target suite shuts down, failure to
   connect error breaks the app, requiring use of 'kill'.
 
-* lockserver errors to a logfile (e.g. if it is killed it silently 
-  fails to restart due to existing Pyro nameserver entry).
-
 * cylc ping hangs if cylc is killed without cleaning up: needs timeout.
 
 * long-running (almost 1 day) dummy mode oper run (started via vnc for
   ministerial opening demo) could not be unlocked or stopped (etc.) -
-  got remote I/O Error via Pyro?
-
-* cycle-time conditional environment and TASK in taskdefs.
-
-* persistent state for lockserver, in case of crash or restart while
-  suites are running. 
+  got remote I/O Error via Pyro?  Is this related to running a suite
+  from a VNC (or similar) remote desktop that gets disconnected?
 
 * use new cylc_mode class everywhere mode test is required.
 
-* lockserver: non-user-specific ($HOME-relative) pid file required, so
-  user-specific .cylcrc is not the right place to store this information
-  (multiple users need to be able to access the lockserver, but perhaps not
-   start and stop it).  MAYBE $CYLC_DIR/.cylcrc IS REQUIRED?
-
 * submit --scheduler: task state resets to 'running' but all messages
   are ignored.
-
-* task stdout and stderr for remote tasks!
 
 * consider how task timeout alerts might be incorporated into cylc? 
 
@@ -159,7 +175,8 @@ To Do
   to check that which returns a result before continuing (e.g. if 
   the task script has not been set executable). 
 
-* DOCUMENT: daemon and asynchronous task
+* daemon and asynchronous task: initial tests done, but will need to go
+  back, check, and complete, for new versions of cylc.
 
 * task groups defined in suite_config cause abort if any of the tasks
   therein are not defined (e.g. if commented out of the task list!)
@@ -242,9 +259,6 @@ To Do
 * tasks with HOUR-conditional outputs may have trouble with the "keep
   one finished task of each kind" procedure in kill_spent_tasks(). Best
   to have multiple tasks instead? 
-
-* detect when taskdef files are newer than task_classes file, and warn
-  that use of configure may be required.
 
 * use the custom clock everywhere (it knows about dummy mode).
 
