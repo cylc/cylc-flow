@@ -162,7 +162,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.warning( "REMOTE: reset to waiting: " + task_id )
 
         if task_id == self.failout_id:
-            self.reset_dummy_failout()
+            self.reset_failout()
 
         self.pool.reset_task( task_id )
         self.process_tasks = True

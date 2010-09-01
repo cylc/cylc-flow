@@ -605,6 +605,12 @@ class task_pool:
             itask.state.set_status( 'waiting' )
             itask.prerequisites.set_all_unsatisfied()
             itask.outputs.set_all_incomplete()
+            try:
+                # remove the tasks's "failed" output
+                itask.outputs.remove( task_id + ' failed' )
+            except:
+                # task had no "failed" output
+                pass
         else:
             self.log.warning( "task to reset not found: " + task_id )
 
@@ -621,13 +627,12 @@ class task_pool:
             itask.state.set_status( 'waiting' )
             itask.prerequisites.set_all_satisfied()
             itask.outputs.set_all_incomplete()
-
             try:
+                # remove the tasks's "failed" output
                 itask.outputs.remove( task_id + ' failed' )
             except:
-                # did not have the 'failed' output
+                # task had no "failed" output
                 pass
-
         else:
             self.log.warning( "task to reset not found: " + task_id )
 
@@ -644,6 +649,12 @@ class task_pool:
             itask.state.set_status( 'finished' )
             itask.prerequisites.set_all_satisfied()
             itask.outputs.set_all_complete()
+            try:
+                # remove the tasks's "failed" output
+                itask.outputs.remove( task_id + ' failed' )
+            except:
+                # task had no "failed" output
+                pass
         else:
             self.log.warning( "task to reset not found: " + task_id )
 
