@@ -37,6 +37,10 @@ VIEWER
 
 * access to task stdout and stderr for remote tasks?
 
+* more information about tasks to "interrogate" window:
+  - HOURS
+  - type (and spawning behaviour)
+
 _______
 GENERAL
 
