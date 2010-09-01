@@ -1,5 +1,9 @@
 To Do
 
+* coloring indicating CRITICAL or WARNING messages, in viewer.
+
+* allow to put single tasks on hold / paused. 
+
 * make incremental configure handle deletion of taskdefs.
 
 * duplicate task name (and short name) check should be done on
