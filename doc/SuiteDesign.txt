@@ -56,14 +56,13 @@ ______________________
 SUITE DEPENDENCY GRAPH
 
 A cylc suite is just a collection of individual tasks that interact, via
-task proxies inside cylc, to negotiate dependencies at run time by
-matching unsatisifed prerequisites with completed outputs. Thus there is
-no need for a traditional "top down" suite definition that explicitly
-prescribes either execution order or dependencies (triggers). 
-
-However, for those who like a global view of how a suite works, cylc can
-generate a nice graphical view of the suite from the dependencies it
-resolves at run time (see 'cylc start --graphfile'). 
+task proxies, to negotiate dependencies at run time by matching
+unsatisifed prerequisites with completed outputs. Thus there is no need
+for a traditional "top down" suite definition that explicitly prescribes
+either execution order or dependencies (triggers).  One might lament the
+lack of such a file, however, for the global view of suite structure
+that it provides. If so, cylc can do even better than this; use 'cylc
+start --graphfile' to generate a resolved dependency graph at run time. 
 
 ___________________________________
 PROVIDING INPUT PARAMETERS TO TASKS
@@ -131,12 +130,10 @@ the suite, both in terms of job submission method and execution
 environment. This can be particularly valuable when building a new
 suite or debugging single tasks.
 
-The submit command necessarily assumes that the user has arranged for
-the task's input files to be satisfied beforehand.  It is also a good
-idea to ensure that all tasks create their own output directories if
-necessary, rather than assuming they will exist due to the action of
-other suite tasks; this will maximize you ability to run single tasks 
-with setting up the filesystem environment manually.
+It is a good idea to ensure that all tasks create their own output
+directories if necessary, rather than assuming they will exist due to
+the action of other suite tasks; this will maximize you ability to run
+single tasks with setting up the filesystem environment manually.
 
   % mkdir -p $OUTDIR
   % mkdir -p $( dirname $OUTFILE )

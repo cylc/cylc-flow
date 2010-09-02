@@ -1,5 +1,3 @@
-To Do
-
 __________
 LOCKSERVER
 
@@ -43,6 +41,8 @@ VIEWER
 
 _______
 GENERAL
+
+* currently, INHERITing tasks must define %OUTPUTS even if empty!
 
 * make incremental configure handle deletion of taskdefs.
 
@@ -121,11 +121,8 @@ GENERAL
 * allow $(CYCLE_HOUR) etc. in output and prereq messages (needed if
   anyone insists on using actual filenames in messages). 
 
-* INHERIT
-  + configure should check INHERIT targets actually exist.  At the moment
+* configure should check INHERIT targets actually exist.  At the moment
   this causes an exception early on at run time.
-  + currently inheriting tasks must define %OUTPUTS even if empty; is
-    this necessary?
 
 * make task-specific logs optional, especially for large suites.
 
