@@ -28,8 +28,6 @@ VIEWER
 
 * allow to put single tasks on hold / paused. 
 
-* 'view -p' crashes nastily on unconfigured suites.
-
 * exception handling: if user clicks on a task that has just been
   eliminated (test this with quick cycling trivial suite).
 

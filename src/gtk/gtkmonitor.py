@@ -558,6 +558,7 @@ Cylc View is a real time suite monitor for Cylc.
         return bar
  
     def block_till_connected( self ):
+        # IS THIS STILL NEEDED (since non-task-list-preload startup disabled)?
         warned = False
         while True:
             try:
@@ -666,6 +667,9 @@ class standalone_monitor_preload( standalone_monitor ):
  
     def load_task_list( self ):
         sys.path.append( os.path.join( self.suite_dir, 'configured'))
-        import task_list
+        try:
+            import task_list
+        except ImportError:
+            raise SystemExit( "Error: unable to load task list (suite not configured?)" )
         self.task_list = task_list.task_list
         self.shortnames = task_list.task_list_shortnames
