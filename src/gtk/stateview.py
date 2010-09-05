@@ -44,6 +44,19 @@ def get_col( state ):
     else:
         return '#000'
 
+def get_col_priority( priority ):
+    if priority == 'NORMAL':
+        return '#2a2'
+    elif priority == 'WARNING':
+        return '#0af'
+    elif priority == 'CRITICAL':
+        return '#f00'
+    elif priority == 'DEBUG':
+        return '#cf0'
+    else:
+        # not needed
+        return '#f0f'
+
 class updater(threading.Thread):
 
     def __init__(self, pns_host, groupname, imagedir, lamp_subdir,
@@ -191,7 +204,8 @@ class updater(threading.Thread):
         for id in self.state_summary:
             state = self.state_summary[ id ][ 'state' ]
             message = self.state_summary[ id ][ 'latest_message' ]
-            message = markup( get_col(state), message )
+            priority = self.state_summary[ id ][ 'latest_message_priority' ]
+            message = markup( get_col_priority(priority), message )
             state = markup( get_col(state), state )
             new_data[id] = [ state, message ]
 
@@ -242,7 +256,8 @@ class updater(threading.Thread):
                 new_data[ ctime ] = {}
             state = self.state_summary[ id ][ 'state' ]
             message = self.state_summary[ id ][ 'latest_message' ]
-            message = markup( get_col( state ), message )
+            priority = self.state_summary[ id ][ 'latest_message_priority' ]
+            message = markup( get_col_priority( priority ), message )
             state = markup( get_col(state), state )
             new_data[ ctime ][ name ] = [ state, message ]
 
