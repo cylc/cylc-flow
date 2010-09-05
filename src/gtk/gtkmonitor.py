@@ -658,7 +658,6 @@ class standalone_monitor( monitor ):
         monitor.click_exit( self, foo )
         gtk.main_quit()
 
-
 class standalone_monitor_preload( standalone_monitor ):
     def __init__(self, groupname, suite_name, suite_dir, logging_dir, pns_host, imagedir, lamp_subdir ):
         self.logdir = logging_dir

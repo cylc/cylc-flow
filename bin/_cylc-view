@@ -18,8 +18,10 @@ Display real time information about running cylc suites, including the
 current state of all tasks, scheduler log files, task stdout and stderr
 log, and task prerequisites and outputs.
 
-If SUITE is supplied, a single monitor application will appear when
-the named suite starts up (or immediately, with --preload).
+If SUITE is supplied, the task list will be loaded from the suite
+definition directory so that a monitor can be displayed before the
+suite starts up (normally the task list is acquired dynamically from a
+running suite, via Pyro.
 
 If SUITE is NOT supplied, you can select which suite to monitor from 
 an auto-updating list of currently running suites.
@@ -37,13 +39,6 @@ SUITE                  Registered name of a cylc suite""")
             help="Owner of the SUITE, if you are not the owner.",
             metavar="USERNAME", default=os.environ["USER"],
             action="store", dest="username" )
-
-    parser.add_option( "-p", "--preload", 
-            help="Load the task list from the suite definition "
-            "directory, so that a monitor can be displayed before the "
-            "suite starts up (normally the task list is acquired "
-            " dynamically from a running suite via Pyro).",
-            action="store_true", default=False, dest="preload" )
 
     ( options, args ) = parser.parse_args()
 
@@ -74,7 +69,7 @@ SUITE                  Registered name of a cylc suite""")
     if use_chooser:
         app = chooser( pns_host, imagedir, image_subdir )
 
-    elif options.preload:
+    else:
         # get suite definition directory
         reg = registrations( options.username )
         if reg.is_registered( suite ):
@@ -86,8 +81,5 @@ SUITE                  Registered name of a cylc suite""")
         # get suite logging directory
         logging_dir = rcfile.get_suite_logging_dir( suite )
         app = standalone_monitor_preload( group, suite, suite_dir, logging_dir, pns_host, imagedir, image_subdir )
-    else:
-        app = standalone_monitor( group, suite, pns_host, imagedir, image_subdir )
 
     gtk.main()
-

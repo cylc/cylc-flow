@@ -123,6 +123,7 @@ class task( Pyro.core.ObjBase ):
         state_changed = True
 
         self.latest_message = ""
+        self.latest_message_priority = "NORMAL"
 
         try:
             # is there a task command lined up?
@@ -215,8 +216,6 @@ class task( Pyro.core.ObjBase ):
             if message != self.id + ' started' and \
                     message != self.id + ' finished' and \
                     message != self.id + ' completed':
-                #self.outputs.set_satisfied( message )
-                #self.latest_message = message
                 self.incoming( 'NORMAL', message )
 
     def is_complete( self ):  # not needed?
@@ -242,6 +241,7 @@ class task( Pyro.core.ObjBase ):
 
         # receive all incoming pyro messages for this task 
         self.latest_message = message
+        self.latest_message_priority = priority
 
         # setting state_change results in task processing loop
         # invocation. We should really only do this when the
@@ -369,6 +369,8 @@ class task( Pyro.core.ObjBase ):
         summary[ 'n_completed_outputs' ] = n_satisfied
         summary[ 'spawned' ] = self.state.has_spawned()
         summary[ 'latest_message' ] = self.latest_message
+        summary[ 'latest_message_priority' ] = self.latest_message_priority
+
 
         summary[ 'logfiles' ] = self.logfiles.get_paths()
  
