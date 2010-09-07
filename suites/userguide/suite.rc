@@ -3,6 +3,7 @@ title = implementation of the main cylc userguide example suite
 allow simultaneous instances = False
 maximum runahead (hours) = 24
 coldstart tasks = startup, coldstart
+job log directory (relative to $HOME) = running/logs
 
 [task insertion groups]
 

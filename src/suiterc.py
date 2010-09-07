@@ -19,7 +19,7 @@ elif sys.version_info >= (2,4):
     # Python 2.4+:
     from CylcSafeConfigParser import CylcSafeConfigParser
 else:
-    raise SystemExit( "suiterc.py in not compatible with Python < 2.4)" )
+    raise SystemExit( "suiterc.py is not compatible with pre version 2.4 Python)" )
 
 # Pre Python 2.7:
 from OrderedDict import OrderedDict
@@ -63,6 +63,7 @@ class suiterc:
         self.config.set( 'general', 'maximum runahead (hours)', '24' )
         #self.config.set( 'general', 'restricted startup hours', 'True' )
         #self.config.set( 'general', 'logging level', 'info' )
+        self.config.set( 'general', 'task running directory', 'running' )
 
         self.config.set( 'general', 'coldstart tasks', '' )
  
@@ -83,6 +84,10 @@ class suiterc:
         else:
             print "Writing new Suite Config File: " + self.rcfile 
             self.write()
+
+        running_dir = self.get( 'general', 'task running directory' )
+        if not os.path.isdir( running_dir ):
+            os.makedirs(  running_dir )
 
     def load( self ):
         self.config.read( self.rcfile )

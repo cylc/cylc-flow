@@ -31,6 +31,10 @@ allow simultaneous instances = False
 ; coldstart tasks (for 'cylc start --warm').
 coldstart tasks = startup, foo, bar
 
+; directory from which tasks are submitted to run, relative to task owner's
+; home directory.  This is where job submission log files end up.
+task running directory = running/logs
+
 [task insertion groups] ;-------
 
 ; you can insert multiple tasks at once with 'cylc insert'

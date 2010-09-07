@@ -16,22 +16,17 @@ from ll_raw import ll_raw
 class ll_raw_eco( ll_raw ):
 
     def __init__( self, task_id, ext_task, task_env, dirs, extra, owner, host ): 
-        # check we are running in an ecoconnect suite
         # cylc should be running as ecoconnect_(devel|test|oper)
-
-        cylc_owner = os.environ[ 'USER' ]
-
-        m = re.match( '^(.*)_(devel|test|oper)$', cylc_owner )
-        if m:
-            (junk, ecoc_suite ) = m.groups()
-        else:
-            raise SystemExit( "Cylc is not running in an EcoConnect environment" )
-
         if not owner:
             raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
 
-        # transform owner username for devel, test, or oper suites
+        m = re.match( '^(.*)_(devel|test|oper)$', cylc_owner )
+        if m:
+            (junk, ecoc_sys ) = m.groups()
+        else:
+            raise SystemExit( "Cylc is not running in an EcoConnect environment" )
 
+        # transform owner username for devel, test, or oper suites
         # strip off any existing suite suffix defined in the taskdef file
         m = re.match( '^(.*)_(devel|test|oper)$', owner )
         if m:
@@ -40,11 +35,6 @@ class ll_raw_eco( ll_raw ):
             owner_name = owner
 
         # append the correct suite suffix
-        owner = owner_name + '_' + ecoc_suite
+        owner = owner_name + '_' + ecoc_sys
 
         ll_raw.__init__( self, task_id, ext_task, task_env, dirs, extra, owner, host ) 
-
-        # override running dir to ~owner/running
-        self.running_dir = '/' + ecoc_suite + '/ecoconnect/' + owner + '/running'
-
-

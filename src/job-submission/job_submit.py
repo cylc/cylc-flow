@@ -75,10 +75,6 @@ class job_submit:
             except:
                 raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
 
-    def set_running_dir( self ):
-        # default to owner's home dir
-        self.running_dir = self.homedir
-
     def interp_str( self, str ):
         str = interp_other_str( str, self.task_env )
         str = interp_other_str( str, job_submit.global_env )
@@ -158,7 +154,6 @@ class job_submit:
             self.extra_scripting = []
 
         self.set_owner_and_homedir( owner )
-        self.set_running_dir() 
 
         # a job submit log can be defined using environment variables
         logs.interpolate( job_submit.global_env )
@@ -263,14 +258,14 @@ class job_submit:
         # (write-permissions may be required in the running directory).
         cwd = os.getcwd()
         try:
-            os.chdir( self.running_dir )
+            os.chdir( self.__class__.running_dir )
         except OSError, e:
             print "Failed to change to task owner's running directory"
             print e
             return False
         else:
             changed_dir = True
-            new_dir = self.running_dir
+            new_dir = self.__class__.running_dir
 
         if self.owner != self.cylc_owner:
             self.command = 'sudo -u ' + self.owner + ' ' + self.command

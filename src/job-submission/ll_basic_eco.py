@@ -15,10 +15,6 @@ from ll_basic import ll_basic
 
 class ll_basic_eco( ll_basic ):
 
-    def set_running_dir( self ):
-        # ~owner/running
-        self.running_dir = self.homedir + '/running'
-
     def set_owner_and_homedir( self, owner = None ):
         # cylc should be running as ecoconnect_(devel|test|oper)
         if not owner:
@@ -26,7 +22,7 @@ class ll_basic_eco( ll_basic ):
 
         m = re.match( '^(.*)_(devel|test|oper)$', self.cylc_owner )
         if m:
-            (junk, ecoc_suite ) = m.groups()
+            (junk, ecoc_sys ) = m.groups()
         else:
             raise SystemExit( "Cylc is not running in an EcoConnect environment" )
 
@@ -39,7 +35,7 @@ class ll_basic_eco( ll_basic ):
             owner_name = owner
 
         # append the correct suite suffix
-        owner = owner_name + '_' + ecoc_suite
+        owner = owner_name + '_' + ecoc_sys
 
         ll_basic.set_owner_and_homedir( self, owner )
 

@@ -22,7 +22,6 @@ from job_submit import job_submit
 import cylc_pyro_ns, cycle_time, pimp_my_logger
 from preferences import prefs
 from suite_lock import suite_lock
-from suiterc import suiterc
 
 usage = """cylc submit [options] SUITE TASK_ID
 
@@ -157,6 +156,7 @@ if use_lockserver:
     nameserver = cylc_pyro_ns.ns( pns_host )
 
 job_submit.global_env = config.get( 'environment' )
+job_submit.running_dir = config.get( 'running_dir' )
 
 jsc = config.get('job submit class')
 clsmod = __import__( 'task_classes' )

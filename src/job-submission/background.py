@@ -26,8 +26,10 @@ class background( job_submit ):
         out = tempfile.mktemp( 
                 suffix = ".out", 
                 prefix = self.task_id + "-",
-                dir = self.running_dir )
+                dir = self.__class__.running_dir )
 
+        # now strip of the running dir, as the task will run there
+        out = re.sub( '^' + self.__class__.running_dir + '/', '', out )
         err = re.sub( '\.out$', '.err', out )
 
         self.command = self.jobfile_path + " </dev/null 1> " + out + " 2> " + err + " &" 
