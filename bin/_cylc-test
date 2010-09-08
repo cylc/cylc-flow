@@ -150,6 +150,10 @@ echo -n ">> INSERTING a coldstart task at 2010010206 ..."
 cylc insert -f test coldstart%2010010206 >> $OUT 2>&1
 echo done
 
+echo "TEMPORARY SLEEP 10 UNTIL PURGE ALGORITHM UNSETS FINAL SPAWNED"
+echo "TASKS PREREQUISITES (so that the cold start task runs first)"
+sleep 10
+
 # PURGE THE FAILED TASK AND ITS DEPENDANTS THROUGH TO 2010010200
 echo
 echo ">> PURGING X%2010010112 and all dependants, through to 2010010200"
