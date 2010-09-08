@@ -72,6 +72,7 @@ class prerequisites:
                     self.satisfied_by[ label ] = outputs.owner_id
 
     def will_satisfy_me( self, outputs ):
+        # NOT USED (WAS REQUIRED FOR OLD RECURSIVE PURGE ALGORITHM)
         # WILL outputs, WHEN COMPLETED, satisfy ANY of my prerequisites
         for label in self.get_not_satisfied_list():
             # for each of my unsatisfied prerequisites

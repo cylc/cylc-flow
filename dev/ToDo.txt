@@ -40,7 +40,12 @@ VIEWER
 _______
 GENERAL
 
-* ONE pre-purge state dump.
+* new purge algorithm: just to ensure that final post-gap spawned tasks
+  have their prerequisites unset (else they'll be satisfied by the purge
+  sequence tasks).
+
+* stop (without --now) won't cause shutdown if a task family (but not
+  it's members!) has just triggered.
 
 * currently, INHERITing tasks must define %OUTPUTS even if empty!
 
@@ -291,6 +296,3 @@ TopNet in EcoConnect)
   for other prerequisites to be satisfied ... OR (better?!) don't try to
   satisfy fuzzy prerequistes until after all non-fuzzy ones have been
   satsified. 
-
-* WILL_SATSIFY_ME() REQUIRED FOR FUZZY and LOOSE PREREQUISITES?
-  (else purge will fail if involving these tasks).

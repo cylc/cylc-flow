@@ -390,6 +390,10 @@ class task( Pyro.core.ObjBase ):
     def next_tag( self ):
         raise SystemExit( "OVERRIDE ME" )
 
+    def set_finished( self ):
+        self.outputs.set_all_complete()
+        self.state.set_status( 'finished' )
+
     def my_successor_still_needs_me( self, tasks ):
         # overridden in mod_pid
         return False

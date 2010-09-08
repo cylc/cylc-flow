@@ -301,6 +301,33 @@ class task_pool:
                         self.tasks.append( new_task )
 
 
+    def force_spawn( self, itask ):
+    
+        itask.log( 'DEBUG', 'forced spawning')
+
+        # dynamic task object creation by task and module name
+        new_task = itask.spawn( 'waiting' )
+        if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
+            # we've reached the stop time: delete the new task 
+            new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+            new_task.prepare_for_death()
+            del new_task
+        else:
+            # no stop time, or we haven't reached it yet.
+            try:
+                # TO DO: EXCEPTION HANDLING IN PYREX CLASS
+                self.pyro.connect( new_task, new_task.id )
+            except Exception, x:
+                # THIS WILL BE A Pyro NamingError IF THE NEW TASK
+                # ALREADY EXISTS IN THE SUITE.
+                print x
+                self.log.critical( new_task.id + ' cannot be added!' )
+
+            else:
+                new_task.log('DEBUG', "connected" )
+                self.tasks.append( new_task )
+
+
     def dump_state( self, new_file = False ):
         filename = self.state_dump_file 
         if new_file:
@@ -723,6 +750,8 @@ class task_pool:
             # now carry one operating!
 
     def find_dependees( self, parent ):
+        # NOT USED (WAS USED IN OLD RECURSIVE PURGE ALGORITHM)
+
         # recursively find the group of all tasks that depend
         # directly or indirectly on parent
 
@@ -754,50 +783,40 @@ class task_pool:
         return c
 
     def purge( self, id, stop ):
-        # get a task and, recursively, its dependants down to the given
-        # stop time, to spawn and die.
         self.log.warning( 'pre-purge state dump: ' + self.dump_state( new_file = True ))
-        self.recursive_purge( id, stop )
 
-    def recursive_purge( self, id, stop ):
-        # get a task and, recursively, its dependants down to the given
-        # stop time, to spawn and die.
-
-        # THINK: find all current immediate dependees, and theirs, ...
-        # in current task pool.  Then spawn-and-die them all.  Then
-        # do the same, recursively, with their successors AND the
-        # successor of initial task (separately, or together?).
-
-        # find the task
-        found = False
+        # Find the target task, set it finished, spawn it, and mark it
+        # for later removal.
         for itask in self.tasks:
             if itask.id == id:
-                found = True
-                next = itask.next_tag()
-                name = itask.name
+                itask.set_finished()
+                self.force_spawn( itask )
+                die = [ id ]
                 break
 
-        if not found:
-            self.log.warning( 'task to purge not found: ' + id )
-            #return
-        else:
-            # find then spawn and kill all dependees
-            # this returns tasks, we want task names
-            # TO DO: GET RID OF THE MIDDLE MAN HERE
-            cond = {}
-            for jtask in self.tasks:
-                if jtask.prerequisites.will_satisfy_me( itask.outputs ):
-                    print '    ', jtask.id
-                    self.recursive_purge( jtask.id, stop )
-                    cond[ jtask.id ] = True
+        # Now simulate the downstream events caused by the target task
+        # triggering. Use a dependency negotiation loop but instead of
+        # triggering tasks that are ready set them finished, spawn them,
+        # and mark them for removal. Stop the process when we reach the
+        # stop time, then remove all marked tasks.
+        something_triggered = True
+        while something_triggered:
+            self.negotiate()
+            something_triggered = False
+            for itask in self.tasks:
+                current_time = self.clock.get_datetime()
+                if itask.ready_to_run( current_time ) and int( itask.c_time ) <= int( stop ):
+                    something_triggered = True
+                    itask.set_finished()
+                    self.force_spawn( itask )
+                    die.append( itask.id )
+ 
+        self.kill( die )
 
-            new_cond = {}
-            for id in cond:
-                name, c_time = id.split( '%' )
-                if int( c_time  ) <= int( stop ):
-                    new_cond[ id ] = True
+        # TO DO: TO COMPLETE THIS ALGORITHM, JUST MAKE SURE THE FINAL
+        # POST-GAP SPAWNED TASKS HAVE THE PREREQUISITES UNSET (otherwise
+        # they will be satisfied by tasks in the purge sequence, above).
 
-            self.spawn_and_die( new_cond, dump_state=False )
 
     def waiting_contact_task_ready( self, current_time ):
         result = False
