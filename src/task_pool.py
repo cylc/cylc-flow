@@ -722,22 +722,22 @@ class task_pool:
             print 
             # now carry one operating!
 
-    def find_cotemporal_dependees( self, parent ):
-        # recursively find the group of all cotemporal tasks that depend
+    def find_dependees( self, parent ):
+        # recursively find the group of all tasks that depend
         # directly or indirectly on parent
 
         deps = {}
         for itask in self.tasks:
-            if itask.c_time != parent.c_time:
-                # not cotemporal
-                continue
+            #if itask.c_time != parent.c_time:
+            #    # not cotemporal
+            #    continue
 
             if itask.prerequisites.will_satisfy_me( parent.outputs ):
                 #print 'dependee: ' + itask.id
                 deps[ itask ] = True
 
         for itask in deps:
-            res = self.find_cotemporal_dependees( itask )
+            res = self.find_dependees( itask )
             deps = self.addDicts( res, deps ) 
 
         deps[ parent ] = True
@@ -753,12 +753,20 @@ class task_pool:
                 c[item] = b[item]
         return c
 
-
     def purge( self, id, stop ):
         # get a task and, recursively, its dependants down to the given
         # stop time, to spawn and die.
-
         self.log.warning( 'pre-purge state dump: ' + self.dump_state( new_file = True ))
+        self.recursive_purge( id, stop )
+
+    def recursive_purge( self, id, stop ):
+        # get a task and, recursively, its dependants down to the given
+        # stop time, to spawn and die.
+
+        # THINK: find all current immediate dependees, and theirs, ...
+        # in current task pool.  Then spawn-and-die them all.  Then
+        # do the same, recursively, with their successors AND the
+        # successor of initial task (separately, or together?).
 
         # find the task
         found = False
@@ -771,21 +779,25 @@ class task_pool:
 
         if not found:
             self.log.warning( 'task to purge not found: ' + id )
-            return
+            #return
+        else:
+            # find then spawn and kill all dependees
+            # this returns tasks, we want task names
+            # TO DO: GET RID OF THE MIDDLE MAN HERE
+            cond = {}
+            for jtask in self.tasks:
+                if jtask.prerequisites.will_satisfy_me( itask.outputs ):
+                    print '    ', jtask.id
+                    self.recursive_purge( jtask.id, stop )
+                    cond[ jtask.id ] = True
 
-        # find then spawn and kill all cotemporal dependees
-        condemned = self.find_cotemporal_dependees( itask )
-        # this returns tasks, we want task names
-        # TO DO: GET RID OF THE MIDDLE MAN HERE
-        cond = {}
-        for itask in condemned:
-            cond[ itask.id ] = True
-        
-        self.spawn_and_die( cond )
+            new_cond = {}
+            for id in cond:
+                name, c_time = id.split( '%' )
+                if int( c_time  ) <= int( stop ):
+                    new_cond[ id ] = True
 
-        # now do the same for the next instance of the task
-        if int( next ) <= int( stop ):
-            self.purge( name + '%' + next, stop )
+            self.spawn_and_die( new_cond, dump_state=False )
 
     def waiting_contact_task_ready( self, current_time ):
         result = False

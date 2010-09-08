@@ -40,6 +40,8 @@ VIEWER
 _______
 GENERAL
 
+* ONE pre-purge state dump.
+
 * currently, INHERITing tasks must define %OUTPUTS even if empty!
 
 * make incremental configure handle deletion of taskdefs.
