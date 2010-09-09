@@ -44,6 +44,10 @@ GENERAL
   have their prerequisites unset (else they'll be satisfied by the purge
   sequence tasks).
 
+* test non $HOME running dirs for OWNER and REMOTE tasks.
+
+* practice mode should be allowed even for exclusive suite locks. 
+
 * stop (without --now) won't cause shutdown if a task family (but not
   it's members!) has just triggered.
 
