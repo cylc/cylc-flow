@@ -71,18 +71,6 @@ class prerequisites:
                     self.satisfied[ label ] = True
                     self.satisfied_by[ label ] = outputs.owner_id
 
-    def will_satisfy_me( self, outputs ):
-        # NOT USED (WAS REQUIRED FOR OLD RECURSIVE PURGE ALGORITHM)
-        # WILL outputs, WHEN COMPLETED, satisfy ANY of my prerequisites
-        for label in self.get_not_satisfied_list():
-            # for each of my unsatisfied prerequisites
-            for output in outputs.satisfied: # NOTE: this can be T or F
-                # compare it with each of the outputs
-                if re.match( self.messages[label], output ):
-                    return True
-
-        return False
-
     def count( self ):
         # how many messages are stored
         return len( self.satisfied.keys() )

@@ -302,7 +302,6 @@ class task_pool:
 
 
     def force_spawn( self, itask ):
-    
         itask.log( 'DEBUG', 'forced spawning')
 
         # dynamic task object creation by task and module name
@@ -327,6 +326,7 @@ class task_pool:
                 new_task.log('DEBUG', "connected" )
                 self.tasks.append( new_task )
 
+        return new_task
 
     def dump_state( self, new_file = False ):
         filename = self.state_dump_file 
@@ -749,31 +749,6 @@ class task_pool:
             print 
             # now carry one operating!
 
-    def find_dependees( self, parent ):
-        # NOT USED (WAS USED IN OLD RECURSIVE PURGE ALGORITHM)
-
-        # recursively find the group of all tasks that depend
-        # directly or indirectly on parent
-
-        deps = {}
-        for itask in self.tasks:
-            #if itask.c_time != parent.c_time:
-            #    # not cotemporal
-            #    continue
-
-            if itask.prerequisites.will_satisfy_me( parent.outputs ):
-                #print 'dependee: ' + itask.id
-                deps[ itask ] = True
-
-        for itask in deps:
-            res = self.find_dependees( itask )
-            deps = self.addDicts( res, deps ) 
-
-        deps[ parent ] = True
-
-        return deps
-
-
     def addDicts(self, a, b):
         c = {}
         for item in a:
@@ -783,22 +758,51 @@ class task_pool:
         return c
 
     def purge( self, id, stop ):
-        self.log.warning( 'pre-purge state dump: ' + self.dump_state( new_file = True ))
+        # Remove an entire dependancy tree rooted on the target task,
+        # through to the given stop time (inclusive). In general this
+        # involves tasks that do not even exist yet within the pool.
 
-        # Find the target task, set it finished, spawn it, and mark it
-        # for later removal.
+        # Method: trigger the target task *virtually* (i.e. without
+        # running the real task) by: setting it to the finished state,
+        # setting all of its outputs completed, and forcing it to spawn.
+        # (this is equivalent to instantaneous successful completion as
+        # far as cylc is concerned). Then enter the normal dependency
+        # negotation process to trace the downstream effects of this,
+        # also triggering subsequent tasks virtually. Each time a task
+        # triggers mark it as a dependency of the target task for later
+        # deletion (but not immmediate deletion because other downstream
+        # tasks may still trigger off its outputs).  Downstream tasks
+        # (freshly spawned or not) are not triggered if they have passed
+        # the stop time, and the process is stopped is soon as a
+        # dependency negotation round results in no new tasks
+        # triggering.
+
+        # Finally, reset the prerequisites of all tasks spawned during
+        # the purge to unsatisfied, since they may have been satisfied
+        # by the purged tasks in the "virtual" dependency negotiations.
+        # TO DO: THINK ABOUT WHETHER THIS CAN APPLY TO TASKS THAT
+        # ALREADY EXISTED PRE-PURGE, NOT ONLY THE JUST-SPAWNED ONES. If
+        # so we should explicitly record the tasks that get satisfied
+        # during the purge.
+
+        self.log.warning( 'pre-purge state dump: ' + self.dump_state(
+            new_file = True ))
+
+        die = []
+        spawn = []
+
         for itask in self.tasks:
+            # Find the target task
             if itask.id == id:
+                # set it finished
                 itask.set_finished()
-                self.force_spawn( itask )
-                die = [ id ]
+                # force it to spawn
+                spawn.append( self.force_spawn( itask ) )
+                # mark it for later removal
+                die.append( id )
                 break
 
-        # Now simulate the downstream events caused by the target task
-        # triggering. Use a dependency negotiation loop but instead of
-        # triggering tasks that are ready set them finished, spawn them,
-        # and mark them for removal. Stop the process when we reach the
-        # stop time, then remove all marked tasks.
+        # trace out the tree of dependent tasks
         something_triggered = True
         while something_triggered:
             self.negotiate()
@@ -808,14 +812,15 @@ class task_pool:
                 if itask.ready_to_run( current_time ) and int( itask.c_time ) <= int( stop ):
                     something_triggered = True
                     itask.set_finished()
-                    self.force_spawn( itask )
+                    spawn.append( self.force_spawn( itask ) )
                     die.append( itask.id )
  
-        self.kill( die )
+        # reset any prerequisites "virtually" satisfied during the purge
+        for task in spawn:
+            task.prerequisites.set_all_unsatisfied()
 
-        # TO DO: TO COMPLETE THIS ALGORITHM, JUST MAKE SURE THE FINAL
-        # POST-GAP SPAWNED TASKS HAVE THE PREREQUISITES UNSET (otherwise
-        # they will be satisfied by tasks in the purge sequence, above).
+        # finally, purge all tasks marked as depending on the target
+        self.kill( die )
 
 
     def waiting_contact_task_ready( self, current_time ):
