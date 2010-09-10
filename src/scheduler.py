@@ -434,7 +434,6 @@ class scheduler:
 
         print "\nSTARTING\n"
 
-        #count = 0
         while True: # MAIN LOOP
 
             # PROCESS ALL TASKS whenever something has changed that might
@@ -472,11 +471,14 @@ class scheduler:
             # handleRequests() returns after one or more remote method
             # invocations are processed (these are not just task messages, hence
             # the use of the state_changed variable above).
+            # HOWEVER, we now need to check if contact tasks are ready
+            # to trigger according on wall clock time, so we also need a
+            # timeout to handle this when nothing else is happening.
             #--
 
-            # handle all remote calls
             # incoming task messages set task.state_changed to True
-            self.pyro.handleRequests( timeout=None )
+            self.pyro.handleRequests(timeout=1)
+            print
 
         # END MAIN LOOP
 
