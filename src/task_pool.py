@@ -302,31 +302,32 @@ class task_pool:
 
 
     def force_spawn( self, itask ):
-        itask.log( 'DEBUG', 'forced spawning')
-
-        # dynamic task object creation by task and module name
-        new_task = itask.spawn( 'waiting' )
-        if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
-            # we've reached the stop time: delete the new task 
-            new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
-            new_task.prepare_for_death()
-            del new_task
+        if itask.state.has_spawned():
+            return None
         else:
-            # no stop time, or we haven't reached it yet.
-            try:
-                # TO DO: EXCEPTION HANDLING IN PYREX CLASS
-                self.pyro.connect( new_task, new_task.id )
-            except Exception, x:
-                # THIS WILL BE A Pyro NamingError IF THE NEW TASK
-                # ALREADY EXISTS IN THE SUITE.
-                print x
-                self.log.critical( new_task.id + ' cannot be added!' )
-
+            itask.state.set_spawned()
+            itask.log( 'DEBUG', 'forced spawning')
+            # dynamic task object creation by task and module name
+            new_task = itask.spawn( 'waiting' )
+            if self.stop_time and int( new_task.c_time ) > int( self.stop_time ):
+                # we've reached the stop time: delete the new task 
+                new_task.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                new_task.prepare_for_death()
+                del new_task
             else:
-                new_task.log('DEBUG', "connected" )
-                self.tasks.append( new_task )
-
-        return new_task
+                # no stop time, or we haven't reached it yet.
+                try:
+                    # TO DO: EXCEPTION HANDLING IN PYREX CLASS
+                    self.pyro.connect( new_task, new_task.id )
+                except Exception, x:
+                    # THIS WILL BE A Pyro NamingError IF THE NEW TASK
+                    # ALREADY EXISTS IN THE SUITE.
+                    print x
+                    self.log.critical( new_task.id + ' cannot be added!' )
+                else:
+                    new_task.log('DEBUG', "connected" )
+                    self.tasks.append( new_task )
+            return new_task
 
     def dump_state( self, new_file = False ):
         filename = self.state_dump_file 
@@ -797,7 +798,9 @@ class task_pool:
                 # set it finished
                 itask.set_finished()
                 # force it to spawn
-                spawn.append( self.force_spawn( itask ) )
+                foo = self.force_spawn( itask )
+                if foo:
+                    spawn.append( foo )
                 # mark it for later removal
                 die.append( id )
                 break
@@ -812,7 +815,9 @@ class task_pool:
                 if itask.ready_to_run( current_time ) and int( itask.c_time ) <= int( stop ):
                     something_triggered = True
                     itask.set_finished()
-                    spawn.append( self.force_spawn( itask ) )
+                    foo = self.force_spawn( itask )
+                    if foo:
+                        spawn.append( foo )
                     die.append( itask.id )
  
         # reset any prerequisites "virtually" satisfied during the purge
@@ -820,8 +825,7 @@ class task_pool:
             task.prerequisites.set_all_unsatisfied()
 
         # finally, purge all tasks marked as depending on the target
-        self.kill( die )
-
+        self.kill( die, dump_state=False )
 
     def waiting_contact_task_ready( self, current_time ):
         result = False
@@ -908,9 +912,10 @@ class task_pool:
             # now kill the task
             self.trash( itask, reason )
 
-    def kill( self, task_ids ):
+    def kill( self, task_ids, dump_state=True ):
         # kill without spawning all tasks in task_ids
-        self.log.warning( 'pre-kill state dump: ' + self.dump_state( new_file = True ))
+        if dump_state:
+            self.log.warning( 'pre-kill state dump: ' + self.dump_state( new_file = True ))
         for id in task_ids:
             # find the task
             found = False
