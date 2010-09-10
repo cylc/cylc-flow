@@ -478,7 +478,6 @@ class scheduler:
 
             # incoming task messages set task.state_changed to True
             self.pyro.handleRequests(timeout=1)
-            print
 
         # END MAIN LOOP
 
