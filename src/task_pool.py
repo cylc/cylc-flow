@@ -17,6 +17,7 @@ import logging
 import sys, os, re
 from dynamic_instantiation import get_object
 from broker import broker
+from Pyro.errors import NamingError, ProtocolError
 
 class task_pool:
     def __init__( self, config, pyro, dummy_mode, use_quick,
@@ -287,18 +288,26 @@ class task_pool:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    try:
-                        # TO DO: EXCEPTION HANDLING IN PYREX CLASS
-                        self.pyro.connect( new_task, new_task.id )
-                    except Exception, x:
-                        # THIS WILL BE A Pyro NamingError IF THE NEW TASK
-                        # ALREADY EXISTS IN THE SUITE.
-                        print x
-                        self.log.critical( new_task.id + ' TASK PROXY CANNOT BE ADDED!' )
-
-                    else:
-                        new_task.log('NORMAL', "task proxy added to suite" )
-                        self.tasks.append( new_task )
+                    count = 0
+                    while count <= 10:
+                        count += 1
+                        try:
+                            self.pyro.connect( new_task, new_task.id )
+                        except NamingError:
+                            # HANDLE ATTEMPTED INSERTION OF A TASK THAT ALREADY EXISTS.
+                            self.log.critical( new_task.id + ' TASK PROXY CANNOT BE ADDED (task already exists)' )
+                            break
+                        except ProtocolError:
+                            # HANDLE MYSTERIOUS PYRO NAMESERVER PROBLEM (NIWA 11-12 SEPT 2010):
+                            # registering and deregistering objects from pyro-ns (and even use of 
+                            # 'pyro-nsc ping'!) caused occasional 'incompatible protocol version'
+                            # errors, which were fixed by restarting pyro-ns.
+                            self.log.critical( new_task.id + ' TASK PROXY CANNOT BE ADDED (pyro protocol error)' )
+                            self.log.critical( ' ... This is attempt ' + str( count ) + ' of 10' )
+                            self.log.critical( ' ... Check pyro installs are compatible, restart the Pyro Nameserver' )
+                        else:
+                            new_task.log('NORMAL', "task proxy added to suite" )
+                            self.tasks.append( new_task )
 
 
     def force_spawn( self, itask ):
