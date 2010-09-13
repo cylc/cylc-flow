@@ -294,10 +294,10 @@ class task_pool:
                         # THIS WILL BE A Pyro NamingError IF THE NEW TASK
                         # ALREADY EXISTS IN THE SUITE.
                         print x
-                        self.log.critical( new_task.id + ' cannot be added!' )
+                        self.log.critical( new_task.id + ' TASK PROXY CANNOT BE ADDED!' )
 
                     else:
-                        new_task.log('DEBUG', "connected" )
+                        new_task.log('NORMAL', "task proxy added to suite" )
                         self.tasks.append( new_task )
 
 
@@ -325,7 +325,7 @@ class task_pool:
                     print x
                     self.log.critical( new_task.id + ' cannot be added!' )
                 else:
-                    new_task.log('DEBUG', "connected" )
+                    new_task.log('NORMAL', "task proxy added to suite" )
                     self.tasks.append( new_task )
             return new_task
 
@@ -736,7 +736,7 @@ class task_pool:
                         skip = True
 
                 if not skip:
-                    itask.log( 'DEBUG', "connected" )
+                    itask.log( 'NORMAL', "task proxy added to suite" )
                     self.pyro.connect( itask, itask.id )
                     self.tasks.append( itask )
 
@@ -902,7 +902,7 @@ class task_pool:
                     #except Exception, x:
                     #    self.log.warning( 'failed to cannot connect ' + new_task.id + ': ' + x )
                     #else:
-                    new_task.log( 'DEBUG', 'connected' )
+                    new_task.log( 'NORMAL', 'task proxy added to suite' )
                     self.tasks.append( new_task )
 
             else:
@@ -935,6 +935,6 @@ class task_pool:
     def trash( self, task, reason ):
         self.tasks.remove( task )
         self.pyro.disconnect( task )
-        task.log( 'NORMAL', "task removed from suite (" + reason + ")" )
+        task.log( 'NORMAL', "task proxy removed from suite (" + reason + ")" )
         task.prepare_for_death()
         del task
