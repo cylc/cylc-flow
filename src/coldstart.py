@@ -76,6 +76,4 @@ class coldstart( task_pool ):
                 del itask
  
             else:
-                itask.log( 'DEBUG', "connected" )
-                self.pyro.connect( itask, itask.id )
-                self.tasks.append( itask )
+                self.insert( itask )

@@ -288,26 +288,7 @@ class task_pool:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    count = 0
-                    while count <= 10:
-                        count += 1
-                        try:
-                            self.pyro.connect( new_task, new_task.id )
-                        except NamingError:
-                            # HANDLE ATTEMPTED INSERTION OF A TASK THAT ALREADY EXISTS.
-                            self.log.critical( new_task.id + ' TASK PROXY CANNOT BE ADDED (task already exists)' )
-                            break
-                        except ProtocolError:
-                            # HANDLE MYSTERIOUS PYRO NAMESERVER PROBLEM (NIWA 11-12 SEPT 2010):
-                            # registering and deregistering objects from pyro-ns (and even use of 
-                            # 'pyro-nsc ping'!) caused occasional 'incompatible protocol version'
-                            # errors, which were fixed by restarting pyro-ns.
-                            self.log.critical( new_task.id + ' TASK PROXY CANNOT BE ADDED (pyro protocol error)' )
-                            self.log.critical( ' ... This is attempt ' + str( count ) + ' of 10' )
-                            self.log.critical( ' ... Check pyro installs are compatible, restart the Pyro Nameserver' )
-                        else:
-                            new_task.log('NORMAL', "task proxy added to suite" )
-                            self.tasks.append( new_task )
+                    self.insert( new_task )
 
 
     def force_spawn( self, itask ):
@@ -325,17 +306,7 @@ class task_pool:
                 del new_task
             else:
                 # no stop time, or we haven't reached it yet.
-                try:
-                    # TO DO: EXCEPTION HANDLING IN PYREX CLASS
-                    self.pyro.connect( new_task, new_task.id )
-                except Exception, x:
-                    # THIS WILL BE A Pyro NamingError IF THE NEW TASK
-                    # ALREADY EXISTS IN THE SUITE.
-                    print x
-                    self.log.critical( new_task.id + ' cannot be added!' )
-                else:
-                    new_task.log('NORMAL', "task proxy added to suite" )
-                    self.tasks.append( new_task )
+                self.insert( new_task )
             return new_task
 
     def dump_state( self, new_file = False ):
@@ -699,19 +670,14 @@ class task_pool:
         # for remote insertion of a new task, or task group
         self.log.warning( 'pre-insertion state dump: ' + self.dump_state( new_file = True ))
         try:
-
             ( ins_name, ins_ctime ) = ins_id.split( '%' )
-
             print
             if ins_name in self.config.get( 'task_list' ):
                 print "INSERTING A TASK"
                 ids = [ ins_id ]
-
             elif ins_name in ( self.config.get( 'task_groups' ) ).keys():
                 print "INSERTING A GROUP OF TASKS"
-
                 tasknames = self.config.get( 'task_groups')[ins_name]
-
                 ids = []
                 for name in tasknames:
                     ids.append( name + '%' + ins_ctime )
@@ -719,20 +685,16 @@ class task_pool:
                 # THIS WILL BE CAUGHT BY THE TRY BLOCK
                 raise SystemExit("no such task or group")
 
-
             for task_id in ids:
                 [ name, c_time ] = task_id.split( '%' )
-
-                # instantiate the task object
+                # instantiate the task proxy
                 itask = get_object( 'task_classes', name )\
                         ( c_time, 'waiting', startup=False )
- 
                 if itask.instance_count == 1:
                     # first task of its type, so create the log
                     log = logging.getLogger( 'main.' + name )
                     pimp_my_logger.pimp_it( log, name, self.logging_dir, \
                             self.logging_level, self.dummy_mode, self.clock )
- 
                 # the initial task cycle time can be altered during
                 # creation, so we have to create the task before
                 # checking if stop time has been reached.
@@ -743,29 +705,16 @@ class task_pool:
                         itask.prepare_for_death()
                         del itask
                         skip = True
-
                 if not skip:
-                    itask.log( 'NORMAL', "task proxy added to suite" )
-                    self.pyro.connect( itask, itask.id )
-                    self.tasks.append( itask )
+                    self.insert( itask )
 
         #except NamingError, e:
         except Exception, e:
-            # A failed remote insertion should not bring the suite
-            # down.  This catches requests to insert undefined tasks and
-            # task groups. Is there any reason to use the more specific
-            # Pyro.errors.NamingError here?
+            # A failed remote insertion should not bring the suite down
+            # under any circumstances (e.g. requests to insert undefined
+            # tasks).
             print 'INSERTION FAILED:', e
             print 
-            # now carry one operating!
-
-    def addDicts(self, a, b):
-        c = {}
-        for item in a:
-            c[item] = a[item]
-            for item in b:
-                c[item] = b[item]
-        return c
 
     def purge( self, id, stop ):
         # Remove an entire dependancy tree rooted on the target task,
@@ -903,17 +852,7 @@ class task_pool:
                     del new_task
                 else:
                     # no stop time, or we haven't reached it yet.
-                    # TO DO: IS THE FOLLOWING EXCEPTION HANDLING REQUIRED?
-                    #try:
-                    self.pyro.connect( new_task, new_task.id )
-                    #except Pyro.errors.NamingError:
-                    #    self.log.warning( 'cannot connect ' + new_task.id + ', it already exists!' )
-                    #except Exception, x:
-                    #    self.log.warning( 'failed to cannot connect ' + new_task.id + ': ' + x )
-                    #else:
-                    new_task.log( 'NORMAL', 'task proxy added to suite' )
-                    self.tasks.append( new_task )
-
+                    self.insert( new_task )
             else:
                 # already spawned: the successor already exists
                 pass
@@ -934,16 +873,71 @@ class task_pool:
                     found = True
                     itask = t
                     break
-
             if not found:
                 self.log.warning( "task to kill not found: " + id )
                 return
-
             self.trash( itask, 'by request' )
 
     def trash( self, task, reason ):
-        self.tasks.remove( task )
-        self.pyro.disconnect( task )
-        task.log( 'NORMAL', "task proxy removed from suite (" + reason + ")" )
-        task.prepare_for_death()
-        del task
+        # remove a task from the pool
+        count = 0
+        alerted = False
+        while count < 10:
+            # retry loop for Pyro protocol error (see below)
+            count += 1
+            try:
+                self.pyro.disconnect( task )
+            except NamingError:
+                # HANDLE ATTEMPTED INSERTION OF A TASK THAT ALREADY EXISTS.
+                self.log.critical( task.id + ' CANNOT BE REMOVED (no such task)' )
+                # do not retry
+                break
+            except ProtocolError, x:
+                # HANDLE MYSTERIOUS PYRO NAMESERVER PROBLEM (NIWA 11-12 SEPT 2010):
+                # registering and deregistering objects from pyro-ns (and even use of 
+                # 'pyro-nsc ping'!) caused occasional 'incompatible protocol version'
+                # errors. Fixed by restarting pyro-ns, but cause unknown thus far.
+                self.log.critical( task.id + ' CANNOT BE REMOVED (Pyro protocol error) ' + str( count ) + '/10' )
+                if not alerted:
+                    alerted = True
+                    print x
+                    self.log.critical( ' ... (a) Check your pyro installations are version compatible' )
+                    self.log.critical( ' ... (b) Restart the Pyro Nameserver' )
+            else:
+                task.log( 'NORMAL', "removing from suite (" + reason + ")" )
+                task.prepare_for_death()
+                self.tasks.remove( task )
+                del task
+                # do not retry
+                break
+
+    def insert( self, task ):
+        # insert a task into the pool
+        count = 0
+        alerted = False
+        while count < 10:
+            # retry loop for Pyro protocol error (see below)
+            count += 1
+            try:
+                self.pyro.connect( task, task.id )
+            except NamingError:
+                # HANDLE ATTEMPTED INSERTION OF A TASK THAT ALREADY EXISTS.
+                self.log.critical( task.id + ' CANNOT BE INSERTED (already exists)' )
+                # do not retry
+                break
+            except ProtocolError, x:
+                # HANDLE MYSTERIOUS PYRO NAMESERVER PROBLEM (NIWA 11-12 SEPT 2010):
+                # registering and deregistering objects from pyro-ns (and even use of 
+                # 'pyro-nsc ping'!) caused occasional 'incompatible protocol version'
+                # errors. Fixed by restarting pyro-ns, but cause unknown thus far.
+                self.log.critical( task.id + ' CANNOT BE INSERTED (Pyro protocol error) ' + str( count ) + '/10' )
+                if not alerted:
+                    alerted = True
+                    print x
+                    self.log.critical( ' ... (a) Check your pyro installations are version compatible' )
+                    self.log.critical( ' ... (b) Restart the Pyro Nameserver' )
+            else:
+                task.log('NORMAL', "task proxy inserted" )
+                self.tasks.append( task )
+                # do not retry
+                break
