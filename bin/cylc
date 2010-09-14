@@ -36,6 +36,7 @@ allowed_commands = \
     'purge',
     'view',
     'show',
+    'dump',
     'ping',
     'task-started',
     'task-message',
@@ -89,6 +90,7 @@ usage = \
     '  view ........ Start the Cylc Suite Monitor GUI',
     '  show ........ Retrieve information from a running suite',
     '  ping ........ Check if a suite is running, or list all suites that are',
+    '  dump ........ Dump the current state of all suite tasks to stdout'
     'T-A-S-K--I-N-T-E-R-F-A-C-E',
     '  task-started ... Acquire a lock from the lockserver, and report started',
     '  task-message ... Report completion of outputs, and other messages',

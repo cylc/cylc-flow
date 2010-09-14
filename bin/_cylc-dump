@@ -1,0 +1,91 @@
+#!/usr/bin/env python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+"""
+Dump the current state of all suite tasks to stdout.
+
+For color terminal ASCII escape codes, see
+http://ascii-table.com/ansi-escape-sequences.php
+"""
+
+import cylc_pyro_ns
+from cycle_time import _rt_to_dt, is_valid
+import os, re, sys
+import Pyro.core
+from time import sleep
+from CylcOptionParsers import NoPromptOptionParser_u
+
+parser = NoPromptOptionParser_u( """cylc dump [options] SUITE 
+
+Dump the current state of all suite tasks to stdout. 
+""")
+
+#parser.add_option( "--shortnames", help="Display short task names, if defined.",
+#        action="store_true", default=False, dest="shortnames" )
+
+( options, args ) = parser.parse_args()
+
+suite_name = parser.get_suite_name()
+pns_host = parser.get_pns_host()
+groupname = parser.get_groupname()
+
+# get suites currently registered in the Pyro nameserver
+ns_groups = cylc_pyro_ns.ns( pns_host )
+
+if ns_groups.registered( groupname ):
+    print "suite: " + suite_name
+else:
+    print "No " + groupname + " group registered with Pyro yet, waiting ..." 
+
+# TO DO: EXCEPTION HANDLING FOR PYRO CONNECTIONS (see monitor, for example)
+# TimeoutError, ConnectionClosedError, ProtocolError
+
+# connect to remote suite state summary object
+god = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.state_summary')
+# timeout (sec) determines max wait for an answer from god.
+# god._setTimeout(60)
+
+# get state summary, task names, cycle times
+[glbl, states] = god.get_state_summary()
+
+print 'SUITE INFORMATION'
+
+dummy_mode = glbl[ 'dummy_mode' ]
+if dummy_mode:
+    print '  + SIMULATION MODE (clock rate: ', glbl[ 'dummy_clock_rate' ], ')'
+
+dt = glbl[ 'last_updated' ]
+print '  + last state change: ' +  dt.strftime( "%Y/%m/%d %H:%M:%S" )
+
+if glbl['paused']:
+    print '  + PAUSED'
+
+if glbl['stopping']:
+    print '  + STOPPING'
+
+pausing_at = glbl['will_pause_at']
+if pausing_at:
+    print '  + PAUSING AT ' + pausing_at
+
+stopping_at = glbl['will_stop_at']
+if stopping_at:
+    print '  + STOPPING AT ' + stopping_at
+
+
+print 'TASK INFORMATION'
+
+for id in task_ids:
+    name = states[ id ][ 'name' ]
+    short_name = states[ id ][ 'short_name' ]
+    ctime = states[ id ][ 'label' ]
+    state      = states[ id ][ 'state' ]
+    spawned    = states[ id ][ 'spawned' ]:
