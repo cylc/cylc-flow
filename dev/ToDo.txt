@@ -24,7 +24,7 @@ LOCKSERVER
 ______
 VIEWER
 
-* coloring indicating CRITICAL or WARNING messages, in viewer.
+* task control interface.
 
 * allow to put single tasks on hold / paused. 
 
@@ -40,11 +40,15 @@ VIEWER
 _______
 GENERAL
 
-* new purge algorithm: just to ensure that final post-gap spawned tasks
-  have their prerequisites unset (else they'll be satisfied by the purge
-  sequence tasks).
-
 * test non $HOME running dirs for OWNER and REMOTE tasks.
+
+* allow insertion of tasks in 'spawned already' state, for oneoff runs 
+  of non-oneoff tasks.
+
+* purge algorithm: see TO DO in the in-method comments: ensure that ALL
+  tasks whose prerequisites get satisfied in the virtual system
+  evolution that occurs in the purge algorithm, get unsatisfied again at
+  the end of it.
 
 * practice mode should be allowed even for exclusive suite locks. 
 
@@ -70,9 +74,6 @@ GENERAL
 
 * note that prerequisites are no longer derived from requisites. Change
   documentation in the latter class (and elsewhere?) to reflect this.
-
-* allow "warm start" as opposed to "warm restarts" - useful for testing
-  suites when you know all the files are in place. (difficult?)
 
 * if a job with a stop time has task failures and is then restarted the
   restart should know about the stop time (otherwise the restart has no
