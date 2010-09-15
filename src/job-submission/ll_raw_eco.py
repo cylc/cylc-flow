@@ -16,11 +16,14 @@ from ll_raw import ll_raw
 class ll_raw_eco( ll_raw ):
 
     def __init__( self, task_id, ext_task, task_env, dirs, extra, owner, host ): 
-        # cylc should be running as ecoconnect_(devel|test|oper)
+
+        # all ecoconnect tasks must be explicitly owned
         if not owner:
             raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
 
-        m = re.match( '^(.*)_(devel|test|oper)$', owner )
+        # cylc should be running as ecoconnect_(devel|test|oper)
+        cylc_owner = os.environ['USER']
+        m = re.match( '^(.*)_(devel|test|oper)$', cylc_owner )
         if m:
             (junk, ecoc_sys ) = m.groups()
         else:
