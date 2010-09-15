@@ -75,6 +75,15 @@ class job_submit:
             self.task = 'cylc-wrapper eval "sleep $CYLC_DUMMY_SLEEP; /bin/false"'
 
     def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
+
+        # TO DO: The GLOBAL ENVIRONMENT is currently extracted just
+        # before use in write_environment(). This WAS so that
+        # remote_switch could dynamically reset the dummy mode
+        # CYLC_FAILOUT_ID variable - but dummy failouts are now handled
+        # differently so we could bring the global env back here.
+        self.task_env = task_env
+        # task_env is needed by the call to inter_str() immediately below.
+ 
         # username under which the suite is running
         self.cylc_owner = os.environ['USER']
         # task owner
@@ -100,13 +109,6 @@ class job_submit:
         # global cylc environment variables $FOO, ${FOO}, ${FOO#_*nc}
         # etc. Thus we ensure that the order of definition is preserved
         # and parse any such references through as-is to the job script.
-
-        # TO DO: The GLOBAL ENVIRONMENT is currently extracted just
-        # before use in write_environment(). This WAS so that
-        # remote_switch could dynamically reset the dummy mode
-        # CYLC_FAILOUT_ID variable - but dummy failouts are now handled
-        # differently so we could bring the global env back here.
-        self.task_env = task_env
 
         ### INTERP OF TASK PATH NOT REQUIRED:
         #### self.task = self.interp_str( self.task )
