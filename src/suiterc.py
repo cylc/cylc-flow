@@ -63,7 +63,7 @@ class suiterc:
         self.config.set( 'general', 'maximum runahead (hours)', '24' )
         #self.config.set( 'general', 'restricted startup hours', 'True' )
         #self.config.set( 'general', 'logging level', 'info' )
-        self.config.set( 'general', 'task running directory', 'running' )
+        self.config.set( 'general', 'job log directory', '' )
 
         self.config.set( 'general', 'coldstart tasks', '' )
  
@@ -85,9 +85,12 @@ class suiterc:
             print "Writing new Suite Config File: " + self.rcfile 
             self.write()
 
-        running_dir = self.get( 'general', 'task running directory' )
-        if not os.path.isdir( running_dir ):
-            os.makedirs(  running_dir )
+        # we don't check for the existence of, or create, the job log
+        # directory because there may be tasks that run under other
+        # usernames or on other machines. So job all log directories
+        # required by the suite (i.e. same dir relatively to $HOME for
+        # all task owners on their respecitve task host machines) must
+        # exist before the suite is started. 
 
     def load( self ):
         self.config.read( self.rcfile )

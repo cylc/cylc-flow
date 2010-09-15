@@ -31,9 +31,14 @@ allow simultaneous instances = False
 ; coldstart tasks (for 'cylc start --warm').
 coldstart tasks = startup, foo, bar
 
-; directory from which tasks are submitted to run, relative to task owner's
-; home directory.  This is where job submission log files end up.
-task running directory = running/logs
+; job submission log file directory. Must be relative to the home
+; directory so it can be used for all suite tasks regardless of task
+; owner or remote host machine. Cylc job submission methods should
+; be configured to use this directory where possible. The default 
+; job log directory is the home directory (i.e. the variable is set to
+; nothing) because that can be guaranteed to exist.
+; e.g. to use $HOME/running/logs:
+job log directory = running/logs
 
 [task insertion groups] ;-------
 

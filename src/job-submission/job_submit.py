@@ -60,21 +60,6 @@ class job_submit:
     failout_id = None
     ####global_env = {}
 
-    def set_owner_and_homedir( self, owner = None ):
-        if owner:
-            # owner can be defined using environment variables
-            self.owner = self.interp_str( owner )
-        else:
-            self.owner = self.cylc_owner
-
-        if not self.owner:
-            self.homedir = os.environ[ 'HOME' ]
-        else:
-            try:
-                self.homedir = pwd.getpwnam( self.owner )[5]
-            except:
-                raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
-
     def interp_str( self, str ):
         str = interp_other_str( str, self.task_env )
         str = interp_other_str( str, job_submit.global_env )
@@ -90,12 +75,17 @@ class job_submit:
             self.task = 'cylc-wrapper eval "sleep $CYLC_DUMMY_SLEEP; /bin/false"'
 
     def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
-
+        # username under which the suite is running
         self.cylc_owner = os.environ['USER']
+        # task owner
+        if owner:
+            # owner can be defined using environment variables
+            self.owner = self.interp_str( owner )
+        else:
+            self.owner = self.cylc_owner
 
         # unique task identity
         self.task_id = task_id
-
         # command to run
         self.task = ext_task
 
@@ -116,7 +106,6 @@ class job_submit:
         # remote_switch could dynamically reset the dummy mode
         # CYLC_FAILOUT_ID variable - but dummy failouts are now handled
         # differently so we could bring the global env back here.
-
         self.task_env = task_env
 
         ### INTERP OF TASK PATH NOT REQUIRED:
@@ -141,19 +130,13 @@ class job_submit:
         else:
             self.remote_host = None
 
-        # no need for task owner to be defined with environment variables?
-        #if owner:
-        #    owner = self.interp_str( owner )
-
         if job_submit.dummy_mode:
-            # ignore defined owners in dummy mode, so that suites
+            # ignore defined task owners in dummy mode, so that suites
             # containing owned tasks can be tested in dummy mode outside
             # of their normal execution environment.
             owner = None
             # ignore the scripting section in dummy mode
             self.extra_scripting = []
-
-        self.set_owner_and_homedir( owner )
 
         # a job submit log can be defined using environment variables
         logs.interpolate( job_submit.global_env )
@@ -162,6 +145,7 @@ class job_submit:
         self.logfiles = logs
 
         self.jobfile_is_remote = False
+
 
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
@@ -254,18 +238,30 @@ class job_submit:
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
-        # run as owner, in owner's home directory, if owner is defined.
-        # (write-permissions may be required in the running directory).
-        cwd = os.getcwd()
+        # Local jobs: run as task owner in the task owner's home
+        # directory (some job submission methods may require that the
+        # running directory exists, and the only directory we can be
+        # sure of in advance is a user's home directory. Note that in
+        # general it may not be easy to create a new running directory
+        # on the fly: e.g. for tasks that we 'sudo llsubmit' as another
+        # owner, sudo would have to be explicitly configured to allow
+        # use of 'mkdir' as well as the job submission command.
+ 
         try:
-            os.chdir( self.__class__.running_dir )
+            self.homedir = pwd.getpwnam( self.owner )[5]
+        except:
+            raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
+
+        cwd = os.getcwd()
+        try: 
+            os.chdir( self.homedir )
         except OSError, e:
-            print "Failed to change to task owner's running directory"
+            print "Failed to change to task owner's home directory"
             print e
             return False
         else:
             changed_dir = True
-            new_dir = self.__class__.running_dir
+            new_dir = self.homedir
 
         if self.owner != self.cylc_owner:
             self.command = 'sudo -u ' + self.owner + ' ' + self.command
@@ -305,7 +301,6 @@ class job_submit:
             os.chdir( cwd )
 
         return success
-
 
     def submit_jobfile_remote( self, dry_run ):
         # make sure the local jobfile is executable (file mode is preserved by scp?)

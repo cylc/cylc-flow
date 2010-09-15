@@ -19,7 +19,7 @@ class ll_basic( job_submit ):
     def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
         job_submit.__init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ) 
 
-        out = tempfile.mktemp( prefix = task_id + '-', dir= self.running_dir, suffix = ".out" ) 
+        out = tempfile.mktemp( prefix = task_id + '-', dir= self.joblog_dir, suffix = ".out" ) 
         err = re.sub( '\.out$', '.err', out )
         self.logfiles.replace_path( '/.*/' + task_id + '-.*\.out', out )
         self.logfiles.replace_path( '/.*/' + task_id + '-.*\.err', err )
@@ -32,7 +32,7 @@ class ll_basic( job_submit ):
         directives[ 'job_name' ] = task_id
         directives[ 'output'   ] = out
         directives[ 'error'    ] = err
-        directives[ 'initialdir' ] = self.running_dir
+        directives[ 'initialdir' ] = self.joblog_dir
 
         # add (or override with) taskdef directives
         for d in self.directives:

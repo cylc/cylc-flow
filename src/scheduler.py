@@ -373,7 +373,7 @@ class scheduler:
     def configure_job_submission( self ):
         job_submit.dummy_mode = self.dummy_mode
         job_submit.global_env = self.config.get( 'environment' )
-        job_submit.running_dir = self.config.get( 'running_dir' )
+        job_submit.joblog_dir = self.config.get( 'joblog_dir' )
         if self.dummy_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
 

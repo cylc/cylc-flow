@@ -24,7 +24,7 @@ class ll_raw_eco( ll_raw ):
         if m:
             (junk, ecoc_sys ) = m.groups()
         else:
-            raise SystemExit( "Cylc is not running in an EcoConnect environment" )
+            raise SystemExit( "This suite is not running in an EcoConnect environment" )
 
         # transform owner username for devel, test, or oper suites
         # strip off any existing suite suffix defined in the taskdef file

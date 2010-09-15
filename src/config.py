@@ -44,7 +44,7 @@ class config:
         self.items['max_runahead_hours' ] = rc.get( 'general', 'maximum runahead (hours)' )
         self.items['task_groups' ] = rc.get_task_insertion_groups()
         self.items['coldstart_tasks' ] = rc.get_coldstart_tasks()
-        self.items['running_dir' ] = rc.get( 'general', 'task running directory' )
+        self.items['joblog_dir' ] = rc.get( 'general', 'job log directory' )
 
         allow = rc.get( 'general', 'allow simultaneous instances' )
         if allow == 'True':

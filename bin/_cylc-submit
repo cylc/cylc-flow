@@ -156,7 +156,7 @@ if use_lockserver:
     nameserver = cylc_pyro_ns.ns( pns_host )
 
 job_submit.global_env = config.get( 'environment' )
-job_submit.running_dir = config.get( 'running_dir' )
+job_submit.joblog_dir = config.get( 'joblog_dir' )
 
 jsc = config.get('job submit class')
 clsmod = __import__( 'task_classes' )
