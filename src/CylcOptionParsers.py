@@ -25,8 +25,8 @@ class NoPromptOptionParser_u( OptionParser ):
 
         usage += """
 
-If you are not the owner of the target suite, the username must be
-supplied so that the Pyro nameserver group name can be inferred.
+If you are not the owner of the target suite, you must provide the
+owner's username so that the Pyro nameserver group can be inferred.
 
 Arguments:
    SUITE                Registered name of the target suite.""" 
@@ -40,14 +40,13 @@ Arguments:
         OptionParser.__init__( self, usage )
 
         self.add_option( "-u", "--user",
-                help="Owner of the target suite, defaults to $USER. "
-                "Needed to infer the Pyro nameserver group name.",
-                metavar="USERNAME", default=os.environ["USER"],
+                help="Owner of the target suite (defaults to $USER).",
+                metavar="USER", default=os.environ["USER"],
                 action="store", dest="username" )
 
         self.add_option( "--host",
-                help="Pyro Nameserver host (defaults to local host name).",
-                metavar="HOSTNAME", action="store", default=socket.getfqdn(),
+                help="Pyro Nameserver host (defaults to local host).",
+                metavar="HOST", action="store", default=socket.getfqdn(),
                 dest="pns_host" )
 
         self.add_option( "-p", "--practice",

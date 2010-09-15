@@ -26,13 +26,40 @@ from CylcOptionParsers import NoPromptOptionParser_u
 
 parser = NoPromptOptionParser_u( """cylc dump [options] SUITE 
 
-Dump the current state of all suite tasks to stdout. 
-""")
+Print suite and task state information to stdout. All available
+information is printed by default but some options are provided to
+restrict the output, which is also designed to be grep-friendly.
 
-#parser.add_option( "--shortnames", help="Display short task names, if defined.",
-#        action="store_true", default=False, dest="shortnames" )
+For more information about a specific task, such as the current 
+state of each registered prerequisite and output, see 'cylc show'.
+
+Examples:
+ Display the state of all running tasks, sorted by cycle time:
+ % cylc dump -ts SUITE | grep running
+
+ Display the state of all tasks in a particular cycle:
+ % cylc dump -t SUITE | grep 2010082406""")
+
+parser.add_option( "-g", "--global", help="Global information only.",
+        action="store_true", default=False, dest="global_only" )
+
+parser.add_option( "-t", "--tasks", help="Task states only.",
+        action="store_true", default=False, dest="tasks_only" )
+
+parser.add_option( "-s", "--sort", help="Task states only; "
+        "sort by cycle instead of name.",
+        action="store_true", default=False, dest="sort_by_cycle" )
 
 ( options, args ) = parser.parse_args()
+
+# default: display all information
+display_tasks = True
+display_global = True
+# check for restricted output
+if options.global_only:
+    display_tasks = False
+if options.tasks_only:
+    display_global = False
 
 suite_name = parser.get_suite_name()
 pns_host = parser.get_pns_host()
@@ -41,51 +68,83 @@ groupname = parser.get_groupname()
 # get suites currently registered in the Pyro nameserver
 ns_groups = cylc_pyro_ns.ns( pns_host )
 
-if ns_groups.registered( groupname ):
-    print "suite: " + suite_name
-else:
-    print "No " + groupname + " group registered with Pyro yet, waiting ..." 
+#print 'SUITE INFORMATION'
 
-# TO DO: EXCEPTION HANDLING FOR PYRO CONNECTIONS (see monitor, for example)
-# TimeoutError, ConnectionClosedError, ProtocolError
+if ns_groups.registered( groupname ):
+    if display_global:
+        print "suite name: " + suite_name
+else:
+    SystemExit( "No " + groupname + " group registered with the Pyro nameserver" )
+
+# TO DO: BETTER EXCEPTION HANDLING FOR PYRO CONNECTIONS ETC HERE (e.g.
+# see monitor, for example) TimeoutError, ConnectionClosedError,
+# ProtocolError; and maybe use 'cylc ping' to check that the suite is
+# running first.
 
 # connect to remote suite state summary object
-god = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.state_summary')
-# timeout (sec) determines max wait for an answer from god.
-# god._setTimeout(60)
+try:
+    god = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.state_summary')
+    # timeout (sec) determines max wait for an answer from god.
+    # god._setTimeout(60)
+except Exception, x:
+    print "ERROR: Failed to connect to suite"
+    print x
+    sys.exit(1)
 
-# get state summary, task names, cycle times
-[glbl, states] = god.get_state_summary()
+try:
+    # get state summary, task names, cycle times
+    [glbl, states] = god.get_state_summary()
+except Exception, x:
+    print "ERROR: Failed to retrieve suite state summary"
+    print x
+    sys.exit(1)
 
-print 'SUITE INFORMATION'
+if display_global:
 
-dummy_mode = glbl[ 'dummy_mode' ]
-if dummy_mode:
-    print '  + SIMULATION MODE (clock rate: ', glbl[ 'dummy_clock_rate' ], ')'
+    dummy_mode = glbl[ 'dummy_mode' ]
+    if dummy_mode:
+        print 'DUMMY MODE (clock rate: ', glbl[ 'dummy_clock_rate' ], ')'
 
-dt = glbl[ 'last_updated' ]
-print '  + last state change: ' +  dt.strftime( "%Y/%m/%d %H:%M:%S" )
+    dt = glbl[ 'last_updated' ]
+    print 'last summary update: ' +  dt.strftime( "%Y/%m/%d %H:%M:%S" )
 
-if glbl['paused']:
-    print '  + PAUSED'
+    if glbl['paused']:
+        print 'PAUSED'
 
-if glbl['stopping']:
-    print '  + STOPPING'
+    if glbl['stopping']:
+        print 'STOPPING'
 
-pausing_at = glbl['will_pause_at']
-if pausing_at:
-    print '  + PAUSING AT ' + pausing_at
+    pausing_at = glbl['will_pause_at']
+    if pausing_at:
+        print 'PAUSING AT ' + pausing_at
 
-stopping_at = glbl['will_stop_at']
-if stopping_at:
-    print '  + STOPPING AT ' + stopping_at
+    stopping_at = glbl['will_stop_at']
+    if stopping_at:
+        print 'STOPPING AT ' + stopping_at
 
+if display_tasks:
+    lines = []
+    #print 'TASK INFORMATION'
+    task_ids = states.keys()
+    #task_ids.sort()
+ 
+    for id in task_ids:
+        name = states[ id ][ 'name' ]
+        short_name = states[ id ][ 'short_name' ]
+        ctime = states[ id ][ 'label' ]
+        state      = states[ id ][ 'state' ]
 
-print 'TASK INFORMATION'
+        if states[ id ][ 'spawned' ]:
+            spawned = 'spawned'
+        else:
+            spawned = 'unspawned'
 
-for id in task_ids:
-    name = states[ id ][ 'name' ]
-    short_name = states[ id ][ 'short_name' ]
-    ctime = states[ id ][ 'label' ]
-    state      = states[ id ][ 'state' ]
-    spawned    = states[ id ][ 'spawned' ]:
+        if options.sort_by_cycle:
+            lines.append( ctime + ', ' + name + ', ' + state + ', ' + spawned )
+        else:
+            lines.append( name + ', ' + ctime + ', ' + state + ', ' + spawned )
+
+    lines.sort()
+    for line in lines:
+        print line
+     

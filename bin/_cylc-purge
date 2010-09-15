@@ -18,9 +18,10 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc purge [options] SUITE TASK_ID STOP
 
-Force a task to spawn and die, and then force every task that depends on
-its outputs to spawn and die, and then force every task that depends on
-their outputs to spawn and die, and so on until a given stop cycle time.
+Remove an entire tree of dependent tasks, rooted on a given task, from a
+running suite. The root task will be forced to spawn and die, and then
+force every task that depends on it, and then every task that depends on
+them, and so on until the given stop cycle time.
 
 WARNING: THIS COMMAND IS DANGEROUS, but you can use an instant practice
 mode clone (see 'cylc restart --help') to test your planned intervention,
