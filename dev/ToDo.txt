@@ -40,7 +40,8 @@ VIEWER
 _______
 GENERAL
 
-* test non $HOME running dirs for OWNER and REMOTE tasks.
+* example system implementations should always use $USER in temp dir
+  paths, to avoid interference between users.
 
 * allow insertion of tasks in 'spawned already' state, for oneoff runs 
   of non-oneoff tasks.
