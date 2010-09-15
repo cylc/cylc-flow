@@ -148,6 +148,21 @@ class job_submit:
 
         self.jobfile_is_remote = False
 
+        # Local jobs: run as task owner in the task owner's home
+        # directory (some job submission methods may require that the
+        # running directory exists, and the only directory we can be
+        # sure of in advance is a user's home directory. Note that in
+        # general it may not be easy to create a new running directory
+        # on the fly: e.g. for tasks that we 'sudo llsubmit' as another
+        # owner, sudo would have to be explicitly configured to allow
+        # use of 'mkdir' as well as the job submission command.
+ 
+        try:
+            self.homedir = pwd.getpwnam( self.owner )[5]
+        except:
+            raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
+        else:
+            self.homedir = None
 
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
@@ -240,30 +255,16 @@ class job_submit:
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
-        # Local jobs: run as task owner in the task owner's home
-        # directory (some job submission methods may require that the
-        # running directory exists, and the only directory we can be
-        # sure of in advance is a user's home directory. Note that in
-        # general it may not be easy to create a new running directory
-        # on the fly: e.g. for tasks that we 'sudo llsubmit' as another
-        # owner, sudo would have to be explicitly configured to allow
-        # use of 'mkdir' as well as the job submission command.
- 
-        try:
-            self.homedir = pwd.getpwnam( self.owner )[5]
-        except:
-            raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
-
-        cwd = os.getcwd()
-        try: 
-            os.chdir( self.homedir )
-        except OSError, e:
-            print "Failed to change to task owner's home directory"
-            print e
-            return False
-        else:
-            changed_dir = True
-            new_dir = self.homedir
+        #cwd = os.getcwd()
+        #try: 
+        #    os.chdir( self.homedir )
+        #except OSError, e:
+        #    print "Failed to change to task owner's home directory"
+        #    print e
+        #    return False
+        #else:
+        #    changed_dir = True
+        #    new_dir = self.homedir
 
         if self.owner != self.cylc_owner:
             self.command = 'sudo -u ' + self.owner + ' ' + self.command
@@ -298,9 +299,9 @@ class job_submit:
                 os.system( self.command )
                 success = True
 
-        if changed_dir:
-            # change back
-            os.chdir( cwd )
+        #if changed_dir:
+        #    # change back
+        #    os.chdir( cwd )
 
         return success
 
