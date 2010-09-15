@@ -21,7 +21,7 @@ class ll_basic_eco( ll_basic ):
         if not owner:
             raise SystemExit( "EcoConnect tasks require an owner: " + self.task_id )
 
-        m = re.match( '^(.*)_(devel|test|oper)$', self.cylc_owner )
+        m = re.match( '^(.*)_(devel|test|oper)$', owner )
         if m:
             (junk, ecoc_sys ) = m.groups()
         else:
