@@ -557,28 +557,28 @@ Cylc View is a real time suite monitor for Cylc.
         bar = foo.get_proxy( object)
         return bar
  
-    def block_till_connected( self ):
-        # IS THIS STILL NEEDED (since non-task-list-preload startup disabled)?
-        warned = False
-        while True:
-            try:
-                self.get_pyro( 'minimal' )
-            except:
-                if not warned:
-                    print "waiting for suite " + self.suite_name + ".",
-                    warned = True
-                else:
-                    print '.',
-                    sys.stdout.flush()
-            else:
-                print '.'
-                sys.stdout.flush()
-                time.sleep(1) # wait for suite to start
-                break
-            time.sleep(1)
+    #def block_till_connected( self ):
+    #    # IS THIS STILL NEEDED (since non-task-list-preload startup disabled)?
+    #    warned = False
+    #    while True:
+    #        try:
+    #            self.get_pyro( 'minimal' )
+    #        except:
+    #            if not warned:
+    #                print "waiting for suite " + self.suite_name + ".",
+    #                warned = True
+    #            else:
+    #                print '.',
+    #                sys.stdout.flush()
+    #        else:
+    #            print '.'
+    #            sys.stdout.flush()
+    #            time.sleep(1) # wait for suite to start
+    #            break
+    #        time.sleep(1)
 
     def load_task_list( self ):
-        self.block_till_connected()
+        #self.block_till_connected()
         ss = self.get_pyro( 'state_summary' )
         self.logdir = ss.get_config( 'logging_dir' ) 
         self.task_list = ss.get_config( 'task_list' )

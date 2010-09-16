@@ -43,7 +43,7 @@ class chooser_updater(threading.Thread):
         # it is expected that choices will change infrequently,
         # so just clear and recreate the list, rather than 
         # adjusting element-by-element.
-        print "Updating list of available suites"
+        ##print "Updating list of available suites"
         self.liststore.clear()
         for group in self.choices:
             self.liststore.append( [group] )
