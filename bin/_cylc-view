@@ -55,8 +55,7 @@ SUITE                  Registered name of a cylc suite""")
     else:
         parser.error( "Wrong number of arguments" )
 
-
-    rcfile = prefs( options.username )
+    rcfile = prefs( user=options.username, silent=True )
     lamp_size = rcfile.get( 'view', 'lamp size' )
     image_subdir = '20px'
     if lamp_size == 'small':

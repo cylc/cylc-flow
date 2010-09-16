@@ -16,7 +16,10 @@ from ConfigParser import SafeConfigParser
 # system-wide cylc settings
 
 class prefs:
-    def __init__( self, user=None ):
+    def __init__( self, user=None, silent=False ):
+
+        self.silent = silent
+
         if not user:
             self.readonly = False
             home = os.environ['HOME']
@@ -41,10 +44,12 @@ class prefs:
         self.set_defaults()
 
         if os.path.exists( self.rcfile ):
-            print "Loading Cylc Preferences file: " + self.rcfile
+            if not self.silent:
+                print "Loading Cylc Preferences file: " + self.rcfile
             self.load()
         elif not self.readonly:
-            print "Creating new Cylc Preferences file: " + self.rcfile 
+            if not self.silent:
+                print "Creating new Cylc Preferences file: " + self.rcfile 
             self.write()
 
     def set_defaults( self ):
@@ -92,13 +97,15 @@ class prefs:
 
         for dir in dirs:
             if not os.path.exists( dir ):
-                print "Creating directory: " + dir
+                if not self.silent:
+                    print "Creating directory: " + dir
                 try:
                     os.makedirs( dir )
                 except:
                     raise SystemExit( "ERROR: unable to create directory " + dir )
             else:
-                print "directory exists: " + dir
+                if not self.silent:
+                    print "directory exists: " + dir
 
     def write( self ):
         if self.readonly:
@@ -113,13 +120,15 @@ class prefs:
             for item in self.config[ section ]:
                 self.configparser.set( section, item, self.config[ section][item] )
 
-        print "Writing Cylc Preferences file: " + self.rcfile
+        if not self.silent:
+            print "Writing Cylc Preferences file: " + self.rcfile
         # not compatible with python 2.4.3! 
         #with open( self.rcfile, 'w' ) as configfile:
         #    self.configparser.write( configfile )
         configfile = open( self.rcfile, 'w' )
         self.configparser.write( configfile )
-        print "Done"
+        if not self.silent:
+            print "Done"
 
     def dump( self ):
         for section in self.config:
@@ -140,7 +149,8 @@ class prefs:
             dir = os.path.join( self.config[ 'cylc' ][ 'state dump directory' ], suite_name )
 
         if not os.path.exists( dir ):
-            print "Creating directory", dir
+            if not self.silent:
+                print "Creating directory", dir
             os.makedirs( dir )
 
         return dir
@@ -152,7 +162,8 @@ class prefs:
             dir = os.path.join( self.config[ 'cylc' ][ 'logging directory' ], suite_name )
 
         if not os.path.exists( dir ):
-            print "Creating directory", dir
+            if not self.silent:
+                print "Creating directory", dir
             os.makedirs( dir )
 
         return dir
