@@ -55,12 +55,10 @@ god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
 
 if prnt_suite:
     # print suite information and exit
-    ( title, suitedef_dir, username, info ) = god.get_suite_info()
+    ( title, suitedef_dir, username ) = god.get_suite_info()
 
     print title
     print ' * ' + username + ': ' + suitename + ' --> ' + suitedef_dir
-    for item in info.keys():
-        print ' + ' + item + ': ' +  info[item]
 
     print
     sys.exit(0)
