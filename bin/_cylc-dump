@@ -27,8 +27,9 @@ from CylcOptionParsers import NoPromptOptionParser_u
 parser = NoPromptOptionParser_u( """cylc dump [options] SUITE 
 
 Print suite and task state information to stdout. All available
-information is printed by default but some options are provided to
-restrict the output, which is also designed to be grep-friendly.
+information is printed by default. Output is designed to be
+grep-friendly. For small suites 'watch cylc dump SUITE' is an 
+effective non-gui real time monitor.
 
 For more information about a specific task, such as the current 
 state of each registered prerequisite and output, see 'cylc show'.
