@@ -1560,8 +1560,7 @@ used for small tasks in a real forecasting system):
         (\lstinline=foo &=). 
 
      \item \lstinline=at_now= - submit a task to run immediately via the
-         unix \lstinline=at= command (a rudimentary batch queue
-         scheduler that reports job output to the user by email).
+         unix \lstinline=at= command (the rudimentary unix scheduler).
 
 \end{itemize}
 
@@ -1772,11 +1771,9 @@ See cylc's ``Distributed'' example suite, Section~\ref{Distributed}.
 \subsection{Task stdout And stderr}
 \label{TaskstdoutAndstderr}
 
-Where job stdout and stderr ends up depends on the job submission
+Where job stdout and stderr end up depends on the job submission
 method: normally log files in the user's home directory (or perhaps
 elsewhere if the job submission method allows this to be configured).
-Choosing the \lstinline=at_now= method will results in stdout and
-stderr being emailed to the task owner when the task completes.
 
 \pagebreak
 \section{Task Execution Environment}
