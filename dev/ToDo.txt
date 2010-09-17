@@ -41,6 +41,15 @@ VIEWER
 _______
 GENERAL
 
+* VIEWING AND INTERACTING WITH REMOTE SUITES:
+  'cylc view --host=foo'               .... works
+  'cylc view -u USER --host=foo SUITE' .... fails
+  The '-u USER' option does not work for cylc commands when '--host' is
+  required (remote machine) because cylc preferences looks for USER's
+  home directory locally => WHEN --host IS USED WE CANNOT LOAD PREFS (TO
+  PRELOAD THE TASK LIST; HAVE TO GET IT DYNAMICALLY FROM THE RUNNING
+  SUITE).  
+
 * example system implementations should always use $USER in temp dir
   paths, to avoid interference between users.
 
