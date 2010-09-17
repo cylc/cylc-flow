@@ -9,9 +9,10 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import re, sys
+import os, re, sys
 import cycle_time
 import cylc_pyro_client
+from registration import registrations
 from CylcOptionParsers import NoPromptOptionParser_u
 
 def print_heading( strng ):
@@ -21,10 +22,10 @@ def print_heading( strng ):
 
 parser = NoPromptOptionParser_u( """cylc show [options] SUITE [TASK NAME] [TASK ID]
 
-Print descriptive information about a running suite, or a task class
-from the suite, or complete information about a specific task from the
-suite (current state of its prerequisites and outputs and, for contact
-tasks, whether or not the delayed start time is up).""",
+Print suite information: title and task list, task descriptions, current
+state of task prerequisites and outputs and, for contact tasks, whether
+or not the delayed start time has been reached. For a suite that is not
+running just the task list is printed.""",
 ["""TASK NAME            Name of a suite task class - print description.
    TASK ID              ID (NAME%YYYYMMDDHH) - also print prerequisites etc."""] )
 
@@ -51,16 +52,38 @@ suitename = parser.get_suite_name()
 host = parser.get_pns_host()
 group = parser.get_groupname()
 
-god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
+try:
+    god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
+except:
+    suite_is_running = False
+else:
+    suite_is_running = True
 
 if prnt_suite:
     # print suite information and exit
-    ( title, suitedef_dir, username ) = god.get_suite_info()
 
-    print title
-    print ' * ' + username + ': ' + suitename + ' --> ' + suitedef_dir
+    if suite_is_running:
+        ( title, suitedef_dir, username ) = god.get_suite_info()
 
-    print
+        print title
+        print ' * ' + username + ': ' + suitename + ' --> ' + suitedef_dir
+        print
+
+    # find location of the suite task and config modules
+    reg = registrations()
+    if reg.is_registered( suitename ):
+        suite_dir = reg.get( suitename )
+    else:
+        reg.print_all()
+        raise SystemExit( "suite " + suitename + " is not registered!" )
+    
+    # provide access to the suite source modules for THIS program---------
+    sys.path.append( os.path.join( suite_dir, 'configured' ))
+    from task_list import task_list
+
+    print 'Suite tasks:'
+    for task in task_list:
+        print ' + ', task
     sys.exit(0)
 
 # print task description
