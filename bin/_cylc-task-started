@@ -38,7 +38,14 @@ if len( args ) != 0:
 message().send_started()
 
 if not cylc_mode.mode().is_raw():
-    if not task_lock().acquire():
-        print >> sys.stderr, "ERROR: Failed to acquire a task lock"
-        message().send_failed()
+    try:
+        if not task_lock().acquire():
+            # If using the lockserver, failing to acquire a lock is an error
+            msg = "FAILED TO ACQUIRE A TASK LOCK" 
+            message( msg ).send_failed()
+            sys.exit(1)
+    except:
+        # failed to connect to lockserver
+        msg = "FAILED TO CONNECT TO A LOCKSERVER" 
+        message( msg ).send_failed()
         sys.exit(1)

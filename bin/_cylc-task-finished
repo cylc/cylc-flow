@@ -36,8 +36,15 @@ if len( args ) != 0:
         print sys.stderr, arg
 
 if not cylc_mode.mode().is_raw():
-    if not task_lock().release():
-        print >> sys.stderr, "WARNING: failed to release task lock"
-        sys.exit(1)
-
+    try:
+        if not task_lock().release():
+            msg = "FAILED TO RELEASE TASK LOCK"
+            message( msg, 'WARNING' ).send()
+            # this implies a bug in the lockserver, maybe? but is not a
+            # task failure condition (the task completed successfully).
+    except:
+        # failed to connect to lockserver
+        msg = "FAILED TO CONNECT TO A LOCKSERVER"
+        message( msg, 'WARNING' ).send()
+ 
 message().send_finished()

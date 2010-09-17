@@ -39,7 +39,16 @@ else:
     reason = ' '.join( args )
 
 if not cylc_mode.mode().is_raw():
-    if not task_lock().release():
-        print >> sys.stderr, "WARNING failed to release task lock"
-
+    try:
+        if not task_lock().release():
+            msg = "FAILED TO RELEASE TASK LOCK"
+            print >> sys.stderr, msg
+            message( msg, 'WARNING' ).send()
+            # this implies a bug in the lockserver, maybe? 
+    except:
+        # failed to connect to lockserver
+        msg = "FAILED TO CONNECT TO A LOCKSERVER"
+        message( msg, 'WARNING' ).send()
+        print >> sys.stderr, msg
+ 
 message( reason ).send_failed()

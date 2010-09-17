@@ -418,10 +418,13 @@ class scheduler:
             # request suite access from the lock server
             lock = suite_lock( self.pns_host, self.username,
                     suitename, self.suite_dir, 'scheduler' )
-            if not lock.request_suite_access( self.exclusive_suite_lock ):
-                raise SystemExit( 'locked out!' )
-            else:
-                self.lock_acquired = True
+            try:
+                if not lock.request_suite_access( self.exclusive_suite_lock ):
+                    raise SystemExit( 'ERROR: failed to acquire a suite lock' )
+                else:
+                    self.lock_acquired = True
+            except:
+                raise SystemExit( 'ERROR: failed connect to the cylc lockserver' )
 
         if not self.practice:
             self.back_up_statedump_file()

@@ -17,11 +17,10 @@ groupname = ':cylc-lockserver'
 name = 'broker'
 
 def get_lockserver( pns_host ):
-    try:
-        server = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + name)
-    except Pyro.errors.NamingError:
-        raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
-
+    #try:
+    server = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + name)
+    #except Pyro.errors.NamingError:
+    #    raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
     return server
 
 class lockserver( Pyro.core.ObjBase ):
