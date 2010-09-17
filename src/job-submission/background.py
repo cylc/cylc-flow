@@ -23,13 +23,22 @@ class background( job_submit ):
         # file) - ssh can exit immediately after invoking the job
         # script, without waiting for the remote process to finish.
 
-        out = tempfile.mktemp( 
-                suffix = ".out", 
+        if self.local_job_submit:
+            # can uniquify the name locally
+            out = tempfile.mktemp( 
                 prefix = self.task_id + "-",
-                dir = self.__class__.joblog_dir )
+                suffix = ".out", 
+                dir = os.path.join( self.homedir, self.__class__.joblog_dir ))
 
-        err = re.sub( '\.out$', '.err', out )
+            err = re.sub( '\.out$', '.err', out )
+
+            # record log files for access by cylc view
+            self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.out', out )
+            self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.err', err )
+
+        else:
+            # remote jobs are submitted from remote $HOME, via ssh
+            out = self.task_id + '.out'
+            err = self.task_id + '.err'
 
         self.command = self.jobfile_path + " </dev/null 1> " + out + " 2> " + err + " &" 
-        self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.out', out )
-        self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.err', err )

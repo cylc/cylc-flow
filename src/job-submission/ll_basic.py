@@ -20,10 +20,23 @@ class ll_basic( job_submit ):
         # parent class init first
         job_submit.__init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ) 
 
-        out = tempfile.mktemp( prefix = task_id + '-', dir= self.joblog_dir, suffix = ".out" ) 
-        err = re.sub( '\.out$', '.err', out )
-        self.logfiles.replace_path( '/.*/' + task_id + '-.*\.out', out )
-        self.logfiles.replace_path( '/.*/' + task_id + '-.*\.err', err )
+        if self.local_job_submit:
+            # can uniquify the name locally
+            out = tempfile.mktemp(
+                prefix = task_id + '-', 
+                suffix = ".out",
+                dir= os.path.join( self.homedir, self.joblog_dir )) 
+
+            err = re.sub( '\.out$', '.err', out )
+
+            # record log files for access by cylc view
+            self.logfiles.replace_path( '/.*/' + task_id + '-.*\.out', out )
+            self.logfiles.replace_path( '/.*/' + task_id + '-.*\.err', err )
+
+        else:
+            # remote jobs are submitted from remote $HOME, via ssh
+            out = self.task_id + '.out'
+            err = self.task_id + '.err'
 
         # default directives
         directives = {}
@@ -34,10 +47,9 @@ class ll_basic( job_submit ):
         directives[ 'output'   ] = out
         directives[ 'error'    ] = err
 
-        if self.homedir:
-            # For local job submits self.homedir is defined
-            # need to set initialdir directive, as we may be submitting
-            # as a different user.
+        if self.local_job_submit:
+            # This is probably  not necessary as we cd to homedir before
+            # submitting. 
             directives[ 'initialdir' ] = self.homedir
             # For remote job submits we don't necessarily know the
             # remote homedir, but ssh automatically puts us there, so

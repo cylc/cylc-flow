@@ -62,14 +62,14 @@ class job_submit:
 
     def interp_str( self, str ):
         str = interp_other_str( str, self.task_env )
-        str = interp_other_str( str, job_submit.global_env )
+        str = interp_other_str( str, self.__class__.global_env )
         str = interp_local_str( str )
         str = replace_delayed_str( str )
         return str
 
     def use_dummy_task( self ):
         # $CYLC_DUMMY_SLEEP is set at start up
-        if job_submit.failout_id != self.task_id:
+        if self.__class__.failout_id != self.task_id:
             self.task = 'cylc-wrapper eval "sleep $CYLC_DUMMY_SLEEP; /bin/true"'
         else: 
             self.task = 'cylc-wrapper eval "sleep $CYLC_DUMMY_SLEEP; /bin/false"'
@@ -126,13 +126,35 @@ class job_submit:
         # final directive, WITH PREFIX, e.g. '#@ queue' for loadleveler
         self.final_directive = ""
         
-        # a remote host can be defined using environment variables
-        if host:
-            self.remote_host = self.interp_str( host )
-        else:
-            self.remote_host = None
+        if host and not self.__class__.dummy_mode:
+            # REMOTE JOB SUBMISSION as owner
 
-        if job_submit.dummy_mode:
+            self.local_job_submit = False
+            # a remote host can be defined using environment variables
+            self.remote_host = self.interp_str( host )
+
+        else:
+            # LOCAL JOB SUBMISSION as owner
+            self.local_job_submit = True
+
+            # The job will be submitted from the owner's home directory,
+            # in case the job submission method requires that the
+            # "running directory" exists - the only directory we can be
+            # sure exists in advance is the home directory; in general
+            # it is difficult to create a new directory on the fly if it
+            # must exist *before the job is submitted*.  E.g. for tasks
+            # that we 'sudo llsubmit' as another owner, sudo would have
+            # to be explicitly configured to allow use of 'mkdir' as
+            # well as 'llsubmit' (llsubmitting a special directory
+            # creation script in advance, *and* detect when it has
+            # finished, is too complicated).
+ 
+            try:
+                self.homedir = pwd.getpwnam( self.owner )[5]
+            except:
+                raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
+
+        if self.__class__.dummy_mode:
             # ignore defined task owners in dummy mode, so that suites
             # containing owned tasks can be tested in dummy mode outside
             # of their normal execution environment.
@@ -141,33 +163,15 @@ class job_submit:
             self.extra_scripting = []
 
         # a job submit log can be defined using environment variables
-        logs.interpolate( job_submit.global_env )
+        logs.interpolate( self.__class__.global_env )
         logs.interpolate( self.task_env )
         logs.interpolate()
         self.logfiles = logs
 
-        self.jobfile_is_remote = False
-
-        # Local jobs: run as task owner in the task owner's home
-        # directory (some job submission methods may require that the
-        # running directory exists, and the only directory we can be
-        # sure of in advance is a user's home directory. Note that in
-        # general it may not be easy to create a new running directory
-        # on the fly: e.g. for tasks that we 'sudo llsubmit' as another
-        # owner, sudo would have to be explicitly configured to allow
-        # use of 'mkdir' as well as the job submission command.
- 
-        try:
-            self.homedir = pwd.getpwnam( self.owner )[5]
-        except:
-            raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
-        else:
-            self.homedir = None
-
     def submit( self, dry_run ):
         # CALL THIS TO SUBMIT THE TASK
 
-        if job_submit.dummy_mode:
+        if self.__class__.dummy_mode:
             # this is done here so that it also happens
             # after resetting a dummy failout task.
             self.use_dummy_task()
@@ -188,7 +192,7 @@ class job_submit:
         JOBFILE.close() 
 
         # submit the file
-        if self.remote_host and not job_submit.dummy_mode:
+        if not self.local_job_submit:
             return self.submit_jobfile_remote( dry_run )
         else:
             return self.submit_jobfile_local( dry_run )
@@ -214,10 +218,10 @@ class job_submit:
     def write_environment( self, FILE ):
         # write the environment scripting to the jobfile
 
-        #for env in [ job_submit.global_env, self.task_env ]:
+        #for env in [ self.__class__.global_env, self.task_env ]:
 
         # global env: see comment in __init__() environment section
-        #### self.global_env = replace_delayed( job_submit.global_env )
+        #### self.global_env = replace_delayed( self.__class__.global_env )
 
         FILE.write( "# TASK EXECUTION ENVIRONMENT global variables:\n" )
         for var in self.global_env:
@@ -255,16 +259,16 @@ class job_submit:
         # make sure the jobfile is executable
         os.chmod( self.jobfile_path, stat.S_IRWXU | stat.S_IRWXG | stat.S_IRWXO )
 
-        #cwd = os.getcwd()
-        #try: 
-        #    os.chdir( self.homedir )
-        #except OSError, e:
-        #    print "Failed to change to task owner's home directory"
-        #    print e
-        #    return False
-        #else:
-        #    changed_dir = True
-        #    new_dir = self.homedir
+        cwd = os.getcwd()
+        try: 
+            os.chdir( self.homedir )
+        except OSError, e:
+            print "Failed to change to task owner's home directory"
+            print e
+            return False
+        else:
+            changed_dir = True
+            new_dir = self.homedir
 
         if self.owner != self.cylc_owner:
             self.command = 'sudo -u ' + self.owner + ' ' + self.command
@@ -352,7 +356,6 @@ class job_submit:
 
         # use explicit path to the location of the remote job submit file
         self.jobfile_path = '$HOME/' + os.path.basename( self.jobfile_path )
-        self.jobfile_is_remote = True
 
         self.construct_command()
 
@@ -398,7 +401,7 @@ class job_submit:
         # DISABLE JOBFILE DELETION AS WE'RE ADDING IT TO THE VIEWABLE LOGFILE LIST
         return 
 
-        if self.jobfile_is_remote:
+        if not self.local_job_submit:
             print ' - deleting remote jobfile ' + self.jobfile_path
             os.system( 'ssh ' + self.destination + ' rm ' + self.jobfile_path )
         else:

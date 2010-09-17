@@ -34,6 +34,7 @@ class at_now( job_submit ):
             self.logfiles.replace_path( '/.*/' + self.task_id + '-.*\.err', err )
 
         else:
+            # remote jobs are submitted from remote $HOME, via ssh
             out = self.task_id + '.out'
             err = self.task_id + '.err'
 
