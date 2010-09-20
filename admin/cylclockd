@@ -9,19 +9,94 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import Pyro.core, Pyro.naming, Pyro.errors
-import os,sys,socket
+import os, sys, re
+import socket
 import logging, logging.handlers
 
-groupname = ':cylc-lockserver'
+import Pyro.core, Pyro.errors, Pyro.naming
+from Pyro.ext.daemonizer import Daemonizer
+
+# Pyro nameserver group and object name.
+# Must agree with $CYLC_DIR/src/lockserver/*.py.
+groupname = ':cylclockd'
 name = 'broker'
 
-def get_lockserver( pns_host ):
-    #try:
-    server = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + name)
-    #except Pyro.errors.NamingError:
-    #    raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
-    return server
+class ServerDaemon( Daemonizer ):
+    def __init__( self, pidfile, pns_host, logfile, task_lock=None ):
+        self.pns_host = pns_host
+        self.logfile = logfile
+        Daemonizer.__init__(self, pidfile)
+
+    def main_loop( self ):
+        # NOTE THE PYRO SERVER BEING DAEMONIZED MUST BE STARTED HERE
+        # OTHERWISE ITS SOCKET FILE DESCRIPTORS WILL BE CLOSED DOWN IN
+        # Pyro's daemonizer.__init__() (a Pyro bug, I think).
+
+        # for debugging in daemon mode, uncomment the following so that
+        # exceptions will be written to log files.
+
+        #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
+        #server = None
+        #try:
+        server = LockServer(self.pns_host, self.logfile)
+        #except Exception, x:
+        #    foo.write( str(x) + "\n" )
+        #else:
+        #    pass
+
+        #bar = open( "/home/oliverh/cylc/bar.txt", "a" )
+        #try:
+        server.start()
+        #except Exception, x:
+        #    bar.write( str(x) + "\n" )
+        #else:
+        #    pass
+
+class LockServer:
+    def __init__( self, pns_host, logfile ):
+        # LOCATE THE PYRO NAMESERVER-------------------------------------------
+        self.logfile = logfile
+        self.pns_host = pns_host
+
+        Pyro.config.PYRO_MULTITHREADED = 0
+        # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
+        # (see the Userguide "Networking Issues" section).
+        Pyro.config.PYRO_DNS_URI = True
+        # UNCOMMENT THE FOLLOWING FOR LOGGING (goes to $PWD/Pyro_log)
+        #Pyro.config.PYRO_STDLOGGING = True
+        #Pyro.config.PYRO_TRACELEVEL = 3
+        Pyro.core.initServer()
+
+    def start( self ):
+        # CREATE A PYRO pyro_daemon FOR THIS SUITE
+        # (single threaded prob not necessary for lockserver
+        # but it doesn't matter as few connections needed)
+
+        locker = lockserver( self.pns_host, logfile )
+
+        self.pyro_daemon = Pyro.core.Daemon()
+        self.pyro_daemon.useNameServer(locker.get_ns())
+
+        #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
+        try:
+            self.pyro_daemon.connect( locker, locker.get_pyro_name() )
+        except Pyro.errors.NamingError,x:
+            # foo.write( str(x) + "\n"
+            print 'Pyro Naming ERROR: ', str(x) + "\n"
+            print 'This probably means the lockserver previously suffered a hard shutdown'
+            print 'To remove the lockserver registration from the Pyro Nameserver, do this:'
+            print '% pyro-nsc deletegroup ' + groupname
+            print
+            sys.exit(1)
+            #raise
+        except Exception, x:
+            # foo.write( str(x) + "\n"
+            print 'ERROR: ', str(x) + "\n"
+            sys.exit(1)
+            #raise
+ 
+        while True:
+            self.pyro_daemon.handleRequests()
 
 class lockserver( Pyro.core.ObjBase ):
     def __init__( self, pns_host, logfile, loglevel=logging.INFO ):
@@ -65,6 +140,8 @@ class lockserver( Pyro.core.ObjBase ):
         if os.path.getsize( logfile ) > 0:
             h.doRollover()
 
+        f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y/%m/%d %H:%M:%S' )
+        h.setFormatter(f)
         self.log.addHandler( h )
 
 
@@ -262,12 +339,24 @@ class lockserver( Pyro.core.ObjBase ):
 
         return result
 
-class control:
-    def __init__( self, pns_host=None ):
-        self.server = get_lockserver( pns_host )
+if __name__ == "__main__":
 
-    def dump( self ):
-        return self.server.dump()
+    if len( sys.argv ) < 2:
+        raise SystemExit( "Usage: cylclockd start|stop|status|restart|debug [PYRO-NS HOST]" )
 
-    def clear( self ):
-        self.server.clear()
+    action = sys.argv[1]
+
+    if len( sys.argv ) == 3:
+        # pyro nameserver host
+        pns_host = sys.argv[2]
+    else:
+        # default to local host
+        pns_host = socket.getfqdn()
+
+    home = os.environ['HOME']
+    logfile = os.path.join( home, 'cylclockd.log' )
+    pidfile = os.path.join( home, 'cylclockd.pid' )
+
+    server_daemon = ServerDaemon( pidfile, pns_host, logfile ) 
+    server_daemon.process_command_line( sys.argv )
+

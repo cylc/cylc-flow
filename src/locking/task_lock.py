@@ -16,7 +16,7 @@ import os
 groupname = ':cylc-lockserver'
 name = 'broker'
 
-from lockserver import get_lockserver
+from lockserver import lockserver
 
 class task_lock:
     # ATTEMPT TO ACQUIRE YOUR LOCK AFTER SENDING THE CYLC START MESSAGE
@@ -90,7 +90,7 @@ class task_lock:
             print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
  
-        server = get_lockserver( self.pns_host )
+        server = lockserver( self.pns_host ).get()
         if server.acquire( self.task_id, self.lockgroup ):
             print "Acquired task lock"
             return True
@@ -105,7 +105,7 @@ class task_lock:
             print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
 
-        server = get_lockserver( self.pns_host )
+        server = lockserver( self.pns_host ).get()
         if server.is_locked( self.task_id, self.lockgroup ):
             if server.release( self.task_id, self.lockgroup ):
                 print "Released task lock"

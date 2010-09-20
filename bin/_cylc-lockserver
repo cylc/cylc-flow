@@ -17,12 +17,11 @@ from time import sleep
 from preferences import prefs
 import cycle_time
 from registration import registrations
-from lockserver import lockserver, control
+from lockserver import lockserver
 from task_lock import task_lock
 from suite_lock import suite_lock
 
 import Pyro.core, Pyro.errors
-from Pyro.ext.daemonizer import Daemonizer
 
 def print_heading( heading ):
         line = re.sub( '.', '_', heading )
@@ -56,89 +55,17 @@ def check_task_spec( task_spec ):
 
     return ( suite, task_id )
 
-class ServerDaemon( Daemonizer ):
-    def __init__( self, pidfile, pns_host, logfile, task_lock=None ):
-        self.pns_host = pns_host
-        self.logfile = logfile
-        Daemonizer.__init__(self, pidfile)
-
-    def main_loop( self ):
-        # NOTE THE PYRO SERVER BEING DAEMONIZED MUST BE STARTED HERE
-        # OTHERWISE ITS SOCKET FILE DESCRIPTORS WILL BE CLOSED DOWN IN
-        # DAEMONIZER.__init__().
-
-        # for debugging in daemon mode, uncomment the following so that
-        # exceptions will be written to log files.
-
-        #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
-        #server = None
-        #try:
-        server = LockServer(self.pns_host, self.logfile)
-        #except Exception, x:
-        #    foo.write( str(x) + "\n" )
-        #else:
-        #    pass
-
-        #bar = open( "/home/oliverh/cylc/bar.txt", "a" )
-        #try:
-        server.start()
-        #except Exception, x:
-        #    bar.write( str(x) + "\n" )
-        #else:
-        #    pass
-
-class LockServer:
-    def __init__( self, pns_host, logfile ):
-        # LOCATE THE PYRO NAMESERVER-------------------------------------------
-        self.logfile = logfile
-        self.pns_host = pns_host
-
-        Pyro.config.PYRO_MULTITHREADED = 0
-        # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
-        # (see the Userguide "Networking Issues" section).
-        Pyro.config.PYRO_DNS_URI = True
-        # UNCOMMENT THE FOLLOWING FOR LOGGING (goes to $PWD/Pyro_log)
-        #Pyro.config.PYRO_STDLOGGING = True
-        #Pyro.config.PYRO_TRACELEVEL = 3
-        Pyro.core.initServer()
-
-    def start( self ):
-        # CREATE A PYRO pyro_daemon FOR THIS SUITE
-        # (single threaded prob not necessary for lockserver
-        # but it doesn't matter as few connections needed)
-
-        locker = lockserver( self.pns_host, logfile )
-
-        self.pyro_daemon = Pyro.core.Daemon()
-        self.pyro_daemon.useNameServer(locker.get_ns())
-
-        #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
-        try:
-            self.pyro_daemon.connect( locker, locker.get_pyro_name() )
-        except Pyro.errors.NamingError,x:
-            # foo.write( str(x) + "\n"
-            print 'Pyro Naming ERROR: ', str(x) + "\n"
-            print 'This probably means the lockserver previously suffered a hard shutdown'
-            print 'To remove the lockserver registration from the Pyro Nameserver, do this:'
-            print '% pyro-nsc deletegroup :cylc-lockserver'
-            print
-            sys.exit(1)
-            #raise
-        except Exception, x:
-            # foo.write( str(x) + "\n"
-            print 'ERROR: ', str(x) + "\n"
-            sys.exit(1)
-            #raise
- 
-        while True:
-            self.pyro_daemon.handleRequests()
-
 
 if __name__ == "__main__":
 
     usage = """cylc lockserver [options]
 
-The cylc lockserver brokers suite and task locks for cylc suites. 
+This is the user interface to the cylc lockserver daemon, cylclockd,
+which brokers suite and task locks for cylc suites.  For information
+on how to start, stop, restart, and check the status of cylclockd,
+see $CYLC_DIR/admin/cylclockd.README.
+
+Use of the lockserver is optional - see cylc preferences. 
 
 TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
 running simultaneously, whether they are spawned by a cylc scheduler or
@@ -150,41 +77,20 @@ SUITE LOCKS prevent multiple instances of entire cylc suites from
 running simultaneously, even under different registered names (unless
 the suite config file states that suite is capable of doing this!).
 
-Use of the cylc lockserver is optional; see 'cylc preferences --help'.
-
-The lockserver is a daemon process (it automatically detaches from
-its parent environment and can be left running indefinitely). 
-
-Manual lock acquisition using this command is mainly for testing
-purposes; manual release, however, may be required to remove stale
-locks left after a suite or task exits without releasing its lock).""" 
+Manual lock acquisition is mainly for testing purposes, but manual
+release may be required to remove stale locks left after a suite or task
+exits without releasing its locks).""" 
 
     parser = OptionParser( usage )
 
     parser.set_defaults( pns_host= socket.getfqdn(), 
-            start=False, debug=False, restart=False, status=False,
-            stop=False, acquire=None, release=None, suite_acquire=None,
+            acquire=None, release=None, suite_acquire=None,
             suite_acquire_nonex=None, suite_release=None, list_all=False )
 
     parser.add_option( "--host",
             help="(for --start|restart|debug). Pyro nameserver host "
             "(defaults to local host name).",
             metavar="HOSTNAME", action="store", dest="pns_host" )
-
-    parser.add_option( "--start", help="Start up the server.",
-            action="store_true", dest="start" )
-
-    parser.add_option( "--debug", help="(DEBUGGING) Do not daemonize the server.",
-            action="store_true", dest="debug" )
-
-    parser.add_option( "--restart", help="Restart a running server.",
-            action="store_true", dest="restart" )
-
-    parser.add_option( "--status", help="Check that the server is running.",
-            action="store_true", dest="status" )
-
-    parser.add_option( "--stop", help="Shut down the server.",
-            action="store_true", dest="stop" )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
             metavar="SUITE:NAME%CYCLE", action="store", dest="acquire" )
@@ -208,17 +114,15 @@ locks left after a suite or task exits without releasing its lock)."""
     parser.add_option( "-l", "--list", help="List currently held locks.",
             action="store_true", dest="list_all" )
 
-    parser.add_option( "--clear", help="Release all task locks.",
+    parser.add_option( "-c", "--clear", help="Release all task locks.",
             action="store_true", dest="clear_all" )
 
     ( options, args ) = parser.parse_args()
 
     count = 0
-    for opt in [ options.start, options.restart, options.stop,
-            options.status, options.debug, options.acquire,
-            options.release, options.suite_acquire,
-            options.suite_acquire_nonex, options.suite_release,
-            options.list_all, options.clear_all ]:
+    for opt in [ options.acquire, options.release,
+            options.suite_acquire, options.suite_acquire_nonex,
+            options.suite_release, options.list_all, options.clear_all ]:
         if opt:
             count += 1
 
@@ -232,54 +136,62 @@ locks left after a suite or task exits without releasing its lock)."""
 
     if options.acquire:
         (suite, task_id) = check_task_spec( options.acquire )
-        if not task_lock( task_id, user, suite, pns_host ).acquire():
-            print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.acquire
-            sys.exit(1)
-        sys.exit(0)
+        try:
+            if not task_lock( task_id, user, suite, pns_host ).acquire():
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
+        except Pyro.errors.NamingError:
+            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    if options.release:
+    elif options.release:
         (suite, task_id) = check_task_spec( options.release )
-        if not task_lock( task_id, user, suite, pns_host ).release():
-            print >> sys.stderr, "ERROR: Failed to release a lock for " + options.release
-            sys.exit(1)
-        sys.exit(0)
+        try:
+            if not task_lock( task_id, user, suite, pns_host ).release():
+                raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
+        except Pyro.errors.NamingError:
+            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    if options.suite_acquire:
+    elif options.suite_acquire:
         suitename = options.suite_acquire
         suitedir = check_suite_spec( suitename )
-        if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
-            print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.suite_acquire
-            sys.exit(1)
-        sys.exit(0)
+        try:
+            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
+        except Pyro.errors.NamingError:
+            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    if options.suite_acquire_nonex:
+    elif options.suite_acquire_nonex:
         suitename = options.suite_acquire_nonex
         suitedir = check_suite_spec( suitename )
-        if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
-            print >> sys.stderr, "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex
-            sys.exit(1)
-        sys.exit(0)
+        try:
+            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
+        except Pyro.errors.NamingError:
+            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    if options.suite_release:
+    elif options.suite_release:
         suitename = options.suite_release
         suitedir = check_suite_spec( suitename )
-        if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).release_suite_access():
-            print >> sys.stderr, "ERROR: Failed to release a lock for " + options.suite_release
-            sys.exit(1)
-        sys.exit(0)
-
-    if options.list_all:
         try:
-            (task_locks, suite_ex, suite_nonex ) = control( pns_host ).dump()
-        except Pyro.errors.ProtocolError, x:
-            print x
-            print 'This may mean you have attempted to access a dead lockserver.'
-            print 'Before starting a new lockserver, you may need to:'
-            print ' 1/ delete the old lockserver pid file (see cylc preferences)'
-            print ' 2/ delete the old lockserver group in the Pyro nameserver:'
-            print '    $ pyro-nsc deletegroup :cylc-lockserver'
-            sys.exit(1)
-            #raise
+            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).release_suite_access():
+                raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
+        except Pyro.errors.NamingError:
+            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
+
+    elif options.list_all:
+        try:
+            (task_locks, suite_ex, suite_nonex ) = lockserver( pns_host ).dump()
+        except Pyro.errors.NamingError:
+            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
+        #except Pyro.errors.ProtocolError, x:
+        #  ?huh?
+        #    print x
+        #    print 'This may mean you have attempted to access a dead lockserver.'
+        #    print 'Before starting a new lockserver, you may need to:'
+        #    print ' 1/ delete the old lockserver pid file (see cylc preferences)'
+        #    print ' 2/ delete the old lockserver group in the Pyro nameserver:'
+        #    print '    $ pyro-nsc deletegroup :cylc-lockserver'
+        #    sys.exit(1)
+        #    #raise
 
         print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
         for suitedir in suite_ex:
@@ -295,30 +207,13 @@ locks left after a suite or task exits without releasing its lock)."""
         print_heading( str( len( task_locks ) ) + " task locks" )
         for lock in task_locks:
             print " - ", lock
-        sys.exit(0)
 
-    if options.clear_all:
-        locks = control( pns_host ).clear()
-        #for lock in locks:
-        #    print lock
-        sys.exit(0)
+    elif options.clear_all:
+        try:
+            lockserver( pns_host ).clear()
+        except Pyro.errors.NamingError:
+            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    config = prefs()
-    logfile = config.get( 'lockserver', 'log file' )
-    pidfile = config.get( 'lockserver', 'pid file' )
-
-    server_daemon = ServerDaemon( pidfile, pns_host, logfile ) 
-
-    argv = None
-    if options.start:
-        argv = 'start'
-    elif options.stop:
-        argv = 'stop'
-    elif options.restart:
-        argv = 'restart'
-    elif options.status:
-        argv = 'status'
-    elif options.debug:
-        argv = 'debug'
-
-    server_daemon.process_command_line([ sys.argv[0], argv ])
+    else:
+        # should not be reached
+        raise SystemExit( "unknown cylc lockserver option" )

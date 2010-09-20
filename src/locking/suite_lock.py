@@ -13,10 +13,13 @@ import Pyro.core
 import os,sys,socket
 import os
 
-groupname = ':cylc-lockserver'
+# PYRO NAMESERVER GROUP AND OBJECT NAME MUST MATCH THAT USED BY
+# src/locking/lockserver (but not importing from that module as
+# cylclockd should be independent of the main cycl code base).
+groupname = ':cylclockd'
 name = 'broker'
 
-from lockserver import get_lockserver
+from lockserver import lockserver
 
 class suite_lock:
     def __init__( self, pns_host, username, suitename, suite_dir, cylc_mode ):
@@ -40,7 +43,7 @@ class suite_lock:
         # GET A NEW CONNECTION WITH EACH REQUEST
         # TO DO: OR GET A SINGLE CONNECTION IN INIT
 
-        server = get_lockserver( self.pns_host )
+        server = lockserver( self.pns_host ).get()
         (result, reason) = server.get_suite_access( self.suite_dir, self.lockgroup, self.cylc_mode, exclusive )
         if not result:
             print >> sys.stderr, 'ERROR, failed to get suite access:'
@@ -50,7 +53,7 @@ class suite_lock:
            return True
 
     def release_suite_access( self):
-        server = get_lockserver( self.pns_host )
+        server = lockserver( self.pns_host ).get()
         result = server.release_suite_access( self.suite_dir, self.lockgroup )
         if not result:
             print >> sys.stderr, 'WARNING, failed to release suite access'
