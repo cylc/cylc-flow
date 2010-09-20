@@ -60,10 +60,9 @@ if __name__ == "__main__":
 
     usage = """cylc lockserver [options]
 
-This is the user interface to the cylc lockserver daemon, cylclockd,
-which brokers suite and task locks for cylc suites.  For information
-on how to start, stop, restart, and check the status of cylclockd,
-see $CYLC_DIR/admin/cylclockd.README.
+The cylc lockserver daemon, cylclockd, brokers suite and task locks for
+cylc suites. This is the command line interface for interrogating the
+daemon and manual lock management.
 
 Use of the lockserver is optional - see cylc preferences. 
 

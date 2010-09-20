@@ -341,21 +341,44 @@ class lockserver( Pyro.core.ObjBase ):
 
 if __name__ == "__main__":
 
-    if len( sys.argv ) < 2:
-        raise SystemExit( "Usage: cylclockd start|stop|status|restart|debug [PYRO-NS HOST]" )
+    if len( sys.argv ) < 4:
+        raise SystemExit( """Usage: cylclockd ACTION LOGFILE PIDFILE [PYRO-NS HOST]
+
+This is the cylc lockserver daemon, which brokers suite and task locks
+for cylc suites. The command line interface for interrogating the daemon 
+and manual lock management is 'cylc lockserver'.
+
+One lockserver is used by all cylc suites on the network, so it should
+be installed under a system account (e.g. user 'cylclockd') with log
+and pid files under /var or similar. However, normal users can specify
+local log and pid files for testing purposes.
+
+Arguments:
+
+  ACTION   -  Lockserver control:  
+                start
+                stop
+                status
+                restart
+                debug
+              
+              debug prevents cylclockd from detaching from the terminal.
+
+  LOGFILE  -  All locking activity will be logged to this file.
+
+  PIDFILE  -  Process ID file used by cylclockd.""" )
 
     action = sys.argv[1]
 
-    if len( sys.argv ) == 3:
+    if len( sys.argv ) == 5:
         # pyro nameserver host
-        pns_host = sys.argv[2]
+        pns_host = sys.argv[4]
     else:
         # default to local host
         pns_host = socket.getfqdn()
 
-    home = os.environ['HOME']
-    logfile = os.path.join( home, 'cylclockd.log' )
-    pidfile = os.path.join( home, 'cylclockd.pid' )
+    logfile = sys.argv[1]
+    pidfile = sys.argv[2]
 
     server_daemon = ServerDaemon( pidfile, pns_host, logfile ) 
     server_daemon.process_command_line( sys.argv )
