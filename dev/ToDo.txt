@@ -1,43 +1,3 @@
-__________
-LOCKSERVER
-
- * system operator currently can't release locks acquired by tasks that
-   run under other usernames (easy to fix). Workaround: su to other user
-   then register the suite and release the task as that user (see next
-   point for why this works).
-
- * can release tasks of other users suites by registering their suite
-   yourself (is this desirable?)
-
- * send lockserver errors to a logfile (e.g. if it is killed it silently 
-  fails to restart due to existing Pyro nameserver entry).
-
- * persistent state (file) in case of crash or restart while suites are
-   running. 
-
- * non-user-specific ($HOME-relative) pid file required, so
-  user-specific .cylcrc is not the right place to store this information
-  (multiple users need to be able to access the lockserver, but perhaps
-  not start and stop it).  MAYBE $CYLC_DIR/.cylcrc IS REQUIRED?
-
-
-______
-VIEWER
-
-* task control interface.
-
-* allow to put single tasks on hold / paused. 
-
-* exception handling: if user clicks on a task that has just been
-  eliminated (test this with quick-cycling trivial suite).
-
-* access to task stdout and stderr for remote tasks? In fact, more
-  generally, current we assume the viewer is running locally.
-
-* more information about tasks to "interrogate" window:
-  - HOURS
-  - type (and spawning behaviour)
-
 _______
 GENERAL
 
@@ -294,6 +254,48 @@ GENERAL
   environment, scripting, command? (implement in job_submit.py)?
 
 * see To Do comment in broker.negotiate() - priority low.
+
+__________
+LOCKSERVER
+
+ * system operator currently can't release locks acquired by tasks that
+   run under other usernames (easy to fix). Workaround: su to other user
+   then register the suite and release the task as that user (see next
+   point for why this works).
+
+ * can release tasks of other users suites by registering their suite
+   yourself (is this desirable?)
+
+ * send lockserver errors to a logfile (e.g. if it is killed it silently 
+  fails to restart due to existing Pyro nameserver entry).
+
+ * persistent state (file) in case of crash or restart while suites are
+   running. 
+
+ * non-user-specific ($HOME-relative) pid file required, so
+  user-specific .cylcrc is not the right place to store this information
+  (multiple users need to be able to access the lockserver, but perhaps
+  not start and stop it).  MAYBE $CYLC_DIR/.cylcrc IS REQUIRED?
+
+
+______
+VIEWER
+
+* task control interface.
+
+* allow to put single tasks on hold / paused. 
+
+* exception handling: if user clicks on a task that has just been
+  eliminated (test this with quick-cycling trivial suite).
+
+* access to task stdout and stderr for remote tasks? In fact, more
+  generally, current we assume the viewer is running locally.
+
+* more information about tasks to "interrogate" window:
+  - HOURS
+  - type (and spawning behaviour)
+
+
 
 ====================================
 FUZZY PREREQUISITES (only for infrequent 'advanced' usage - e.g. hourly
