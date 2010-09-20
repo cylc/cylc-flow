@@ -139,7 +139,8 @@ Cylc View is a real time suite monitor for Cylc.
             tvc.set_attributes( cr, pixbuf=i )
         treeview.append_column( tvc )
 
-        lamp_width = int( re.sub( 'px', '', self.lamp_subdir ))
+        # hardwired 10px lamp image width!
+        lamp_width = 10
 
         for n in range( 10, 10+len( self.task_list )):
             cr = gtk.CellRendererPixbuf()
@@ -584,12 +585,11 @@ Cylc View is a real time suite monitor for Cylc.
         self.task_list = ss.get_config( 'task_list' )
         self.shortnames = ss.get_config( 'task_list_shortnames' )
 
-    def __init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir ):
+    def __init__(self, groupname, suite_name, pns_host, imagedir ):
         self.suite_name = suite_name
         self.groupname = groupname
         self.pns_host = pns_host
         self.imagedir = imagedir
-        self.lamp_subdir = lamp_subdir
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_border_width( 5 )
         self.window.set_title("cylc view <" + self.groupname + ">" )
@@ -638,8 +638,8 @@ Cylc View is a real time suite monitor for Cylc.
         self.connection_lost = False
         gobject.timeout_add( 1000, self.check_connection )
 
-        self.t = updater( self.pns_host, self.groupname, self.imagedir,
-                self.lamp_subdir, self.led_treeview.get_model(),
+        self.t = updater( self.pns_host, self.groupname, self.imagedir, 
+                self.led_treeview.get_model(),
                 self.fl_liststore, self.ttreestore, self.task_list,
                 self.label_mode, self.label_status, self.label_time )
 
@@ -647,9 +647,9 @@ Cylc View is a real time suite monitor for Cylc.
         self.t.start()
 
 class standalone_monitor( monitor ):
-    def __init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir ):
+    def __init__(self, groupname, suite_name, pns_host, imagedir ):
         gobject.threads_init()
-        monitor.__init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir)
+        monitor.__init__(self, groupname, suite_name, pns_host, imagedir )
  
     def delete_event(self, widget, event, data=None):
         monitor.delete_event( self, widget, event, data )
@@ -660,10 +660,10 @@ class standalone_monitor( monitor ):
         gtk.main_quit()
 
 class standalone_monitor_preload( standalone_monitor ):
-    def __init__(self, groupname, suite_name, suite_dir, logging_dir, pns_host, imagedir, lamp_subdir ):
+    def __init__(self, groupname, suite_name, suite_dir, logging_dir, pns_host, imagedir ):
         self.logdir = logging_dir
         self.suite_dir = suite_dir
-        standalone_monitor.__init__(self, groupname, suite_name, pns_host, imagedir, lamp_subdir)
+        standalone_monitor.__init__(self, groupname, suite_name, pns_host, imagedir )
  
     def load_task_list( self ):
         sys.path.append( os.path.join( self.suite_dir, 'configured'))

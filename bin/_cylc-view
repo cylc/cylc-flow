@@ -56,17 +56,10 @@ SUITE                  Registered name of a cylc suite""")
         parser.error( "Wrong number of arguments" )
 
     rcfile = prefs( user=options.username, silent=True )
-    lamp_size = rcfile.get( 'view', 'lamp size' )
-    image_subdir = '20px'
-    if lamp_size == 'small':
-        image_subdir = '10px'
-    elif lamp_size == 'large':
-        image_subdir = '20px'
- 
     imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
     if use_chooser:
-        app = chooser( pns_host, imagedir, image_subdir )
+        app = chooser( pns_host, imagedir )
 
     else:
         # get suite definition directory
@@ -79,6 +72,6 @@ SUITE                  Registered name of a cylc suite""")
 
         # get suite logging directory
         logging_dir = rcfile.get_suite_logging_dir( suite )
-        app = standalone_monitor_preload( group, suite, suite_dir, logging_dir, pns_host, imagedir, image_subdir )
+        app = standalone_monitor_preload( group, suite, suite_dir, logging_dir, pns_host, imagedir )
 
     gtk.main()

@@ -60,11 +60,6 @@ parser.add_option( "--set-state-dump-dir",
         default=None, metavar="PATH",
         action="store", dest="statedump_dir" )
 
-parser.add_option( "--set-viewer-lamp-size",
-        help="Set the cylc view lamp dashboard lamp size",
-        metavar="SIZE", default=None, action="store",
-        choices=[ 'small', 'large' ], dest="lamp_size" )
-
 parser.add_option( "--set-lockserver-pidfile", 
         help="Set the cylc lockserver Process ID file path.",
         default=None, metavar="PATH",
@@ -140,10 +135,6 @@ if options.logging_level:
 
 if options.statedump_dir:
     rcfile.config[ 'cylc' ][ 'state dump directory' ] = options.statedump_dir
-    rewrite = True
-
-if options.lamp_size:
-    rcfile.config[ 'view' ][ 'lamp size' ] = options.lamp_size
     rewrite = True
 
 if options.create_dirs:
