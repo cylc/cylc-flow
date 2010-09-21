@@ -129,14 +129,17 @@ class lockserver( Pyro.core.ObjBase ):
             # group already exists
             pass
 
-        if not self.load_state():
+        self.configure_logging( log_file, loglevel )
+
+        if self.load_state():
+            self.log.info( 'Loaded initial state from ' + self.log_file )
+        else:
+            self.log.info( 'Starting with a clean slate' )
             # task locks
             self.locked = {}
             # suite locks
             self.exclusive = {}       # exclusive[ suite_dir ] = [ groupname ]
             self.inclusive = {}       # inclusive[ suite_dir ] = [ groupname, ... ]
-
-        self.configure_logging( log_file, loglevel )
 
     def dump_state( self ):
         output = open( self.state_file, 'w' )
@@ -221,7 +224,7 @@ class lockserver( Pyro.core.ObjBase ):
          return ( self.pid_file, self.log_file, self.state_file )
 
     def dump( self ):
-         self.log.info( "Dumping locks") 
+         self.log.info( "Return lock information") 
          return ( self.locked.keys(), self.exclusive, self.inclusive )
 
     def clear( self ):
@@ -446,9 +449,9 @@ Arguments:
     log_file   = config.get( 'main', 'log file' )
     state_file = config.get( 'main', 'state file' ) 
 
-    print "PID File:", pid_file
-    print "Log File:", log_file
-    print "State File:", state_file
+    print "PID File:        ", pid_file
+    print "Logging To:      ", log_file
+    print "Persistent State:", state_file
 
     server_daemon = ServerDaemon( pid_file, options.pns_host, log_file, state_file ) 
     server_daemon.process_command_line( [ sys.argv[0] ] + args )
