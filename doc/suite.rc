@@ -1,0 +1,18 @@
+[general]
+title = implementation of the main cylc userguide example suite
+allow simultaneous instances = False
+maximum runahead (hours) = 24
+coldstart tasks = startup, coldstart
+job log directory =
+
+[task insertion groups]
+
+[job submission]
+default = background
+
+[global environment]
+TASK_RUN_TIME_SECONDS = 10
+CYLC_TMPDIR = /tmp/$CYLC_SUITE_NAME
+FOO = ${HOME##*_}
+BAR = ${HOME%%_*}
+BAZ = ${HOME%%%%_*}
