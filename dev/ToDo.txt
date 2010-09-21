@@ -267,9 +267,7 @@ GENERAL
 
 __________
 LOCKSERVER
-
- * it is possible to release tasks owned by other users, by registering
-   their suite yourself - can this be easily prevented?
+  (currently no known issues)
 
 ______
 VIEWER
