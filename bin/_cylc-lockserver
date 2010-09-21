@@ -201,18 +201,18 @@ exits without releasing its locks)."""
             raise SystemExit( "unknown cylc lockserver option" )
 
     except Pyro.errors.NamingError:
-        print "ERROR: there is no lockserver registered with pyro-ns on " + pns_host
-        print "(this probably means that cylclockd has not been started)"
+        print "ERROR: there is no cylc lockserver registered with pyro-ns on"
+        print " ", pns_host
+        print "See 'cylclockd --help' for how to start up the lockserver."
         sys.exit(1)
 
     except Pyro.errors.ProtocolError, x:
         if str(x) == "connection failed":
             print "\nERROR: we are unable to connect to cylclockd via its Pyro proxy on"
             print " ", pns_host
-            print "This probably means the daemon suffered a hard shutdown; if so its PID"
-            print "file and pyro-ns registration will need to be removed before restart."
-            print "For the PID file location:   > see 'cylclockd --help'."
-            print "To unregister from pyro-ns:  > pyro-nsc deletegroup :cylclockd\n"
+            print "This probably means the daemon suffered a hard shutdown; the current"
+            print "pyro-ns registration will need to be removed manually before restart:"
+            print "$ pyro-nsc deletegroup :cylclockd\n"
             sys.exit(1)
         else:
             # unknown error

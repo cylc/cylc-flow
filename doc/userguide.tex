@@ -631,17 +631,30 @@ login session.
 \subsection{Starting The Cylc Lockserver}
 \label{QuickStartingTheCylcLockserver}
 
+The cylc lockserver prevents you from accidentally running multiple
+instances of the same suite or task (at the same cycle time) at once,
+which could result in a corrupted system state (your real forcasting
+system, that is, not cylc) or other problems. 
+
+It consists of a {\em Unix daemon} 
+\lstinline=$CYLC_DIR/admin/cylclockd= that runs autonomously, brokering
+locks for all cylc suites running on the network, and a command line
+user interface, \lstinline=cylc lockserver=
+
+The daemon should be started at boot time as a special system user, but
+for testing purposes you can run it as a normal user as follows: 
+Edit \lstinline=$CYLC_DIR/admin/cylclockd.conf.test= to set process ID,
+log, and state file locations, then start it up like this:
+
 \begin{lstlisting}
-cylc lockserver --start
+cylclockd -f cylclockd.conf.test start
 \end{lstlisting}
 
-The lockserver daemon prevents you from accidentally running multiple
-instances of the same task at once, which could result in corrupted
-files or other problems. However, you can choose not to use it if you
-like:
+See \lstinline=cylclockd --help= for other usage information.
+
+Alternatively, you can choose not to use the lockserver for the moment:
 
 \begin{lstlisting}
-# choose not to use the cylc lockserver for now
 cylc preferences --use-lockserver=N
 \end{lstlisting}
 
