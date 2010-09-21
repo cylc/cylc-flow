@@ -101,6 +101,21 @@ for COMMAND in $(cylcutil commands); do
     #echo "\pagebreak" >> doc/commands-util.tex
 done
 
+rm -rf doc/command-cylclockd-usage; mkdir -p doc/command-cylclockd-usage
+rm -f doc/commands-cylclockd.tex
+
+# direct command help into a txt file
+admin/cylclockd --help >> doc/command-cylclockd-usage/cylclockd.txt
+# append to a latex file for inclusion in the userguide
+echo "\subsection{cylclockd}" >> doc/commands-cylclockd.tex
+echo "\label{cylclockd}" >> doc/commands-cylclockd.tex
+#[[ -f doc/pre-command/cylclockd.tex ]] && \
+#    echo "\input{pre-command/cylclockd.tex}" >> doc/commands-util.tex
+echo "\lstinputlisting{command-cylclockd-usage/cylclockd.txt}" >> doc/commands-cylclockd.tex
+#[[ -f doc/post-command/cylclockd.tex ]] && \
+#    echo "\input{post-command/cylclockd.tex}" >> doc/commands-cylclockd.tex
+#echo "\pagebreak" >> doc/commands-cylclockd.tex
+
 #-----------------------------------------------------------------------
 
 #Comment-stripped taskdef files:

@@ -392,30 +392,25 @@ if __name__ == "__main__":
 
     usage = """Usage: cylclockd [-f CONFIG] [--host=HOST] ACTION 
 
-This is the cylc lockserver daemon, which brokers suite and task locks
-for all cylc suites on the network. The command line user interface for
-interrogating the daemon, and for manual lock management, is 'cylc
-lockserver'.
+The cylc lockserver daemon brokers suite and task locks for all cylc
+suites on the network. The command line user interface for interrogating
+the daemon, and for manual lock management, is 'cylc lockserver'.
 
-cylclockd should be started at boot time as a special system user, e.g.
-'cylc'. At startup, it reads a config file '/etc/cylclockd.conf' that
-specifies the location of the daemon's process ID file, state file, and
-a log file. The state file is updated whenever a lock is acquired or
-released, and if the file exists at start time the lockserver will
-initialize from it. This allows the lockserver to remain consistent with
-running cylc suites across a shutdown/restart cycle.  If you want to
-start with a clean slate use the command line user interface to release 
-all locks manually after startup.  All locking activitiy is recorded in
-the log file. 
+The daemon should be started at boot time, running under a special system
+user account.  At startup, it reads a config file '/etc/cylclockd.conf' that
+specifies the location of the daemon's process ID, state, and log files. 
+The state file records currently held locks and, if it exists at
+startup, is used to initialize the lockserver (i.e. suite and task locks
+are not lost if the lockserver is restarted). All locking activitiy is
+recorded in the log file. 
 
 For testing cylclockd as a normal user, use the [-f] command line option
-to specify local PID, state, and log files in an alternative config
-file.
+to specify your own PID, state, and log files in your own config file.
 
 Arguments:
-  ACTION   -  start, stop, status, restart, or debug
-                 The debug action starts cylclockd without detaching
-                 from the terminal (stdout and stderr are not lost)."""
+  ACTION   -  'start', 'stop', 'status', 'restart', or 'debug'.
+              debug starts cylclockd without 'daemonizing', i.e. it won't
+              detach from the terminal and stdout and stderr are not lost."""
 
     parser = OptionParser( usage )
 
@@ -426,9 +421,9 @@ Arguments:
             help="Pyro nameserver host (default: to local host).",
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
-    parser.add_option( "-f", "--config-file",
+    parser.add_option( "-f", 
             help="Alternative config file (default /etc/cylclockd.conf)",
-            metavar="CONFIG", action="store", dest="config" )
+            metavar="CONFIGFILE", action="store", dest="config" )
 
     ( options, args ) = parser.parse_args()
 
