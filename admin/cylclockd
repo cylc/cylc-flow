@@ -190,6 +190,10 @@ class lockserver( Pyro.core.ObjBase ):
     def get_lock_id( self, lockgroup, task_id ):
         return lockgroup + ':' + task_id
 
+    def get_lock_owner( self, lockgroup ):
+        owner, suite = lockgroup.split( '.' )
+        return owner
+
     def get_lockgroup( self, lock_id ):
         (lockgroup, id) = lock_id.split(':')
         return lockgroup
@@ -227,31 +231,29 @@ class lockserver( Pyro.core.ObjBase ):
          self.log.info( "Return lock information") 
          return ( self.locked.keys(), self.exclusive, self.inclusive )
 
-    def clear( self ):
+    def clear( self, user ):
         # release all locks one at a time so each release gets logged
-        n = len( self.locked.keys() )
-        self.log.info( "Clearing " + str(n) + " task locks") 
+        self.log.info( "Releasing ALL locks held by " + user ) 
+
         # MUST USE .keys() here to avoid:
         # RuntimeError: dictionary changed size during iteration
-        for lock in self.locked.keys():
-            ( group, id ) = lock.split( ':' )
-            self.release( id, group )
 
-        n = len( self.exclusive.keys() )
-        self.log.info( "Clearing " + str(n) + " exclusive suite locks") 
+        # no need to release task locks separately; this will be
+        # achieved when the suite is released.
+        #for lock in self.locked.keys():
+        #    ( group, id ) = lock.split( ':' )
+        #    self.release( id, group )
+
         for suitedir in self.exclusive.keys():
             [ group ] = self.exclusive[ suitedir ]
-            self.release_suite_access( suitedir, group )
+            if self.get_lock_owner( group ) == user:
+                self.release_suite_access( suitedir, group )
 
-        n = 0
-        for suitedir in self.inclusive.keys():
-            groups = self.inclusive[ suitedir ]
-            n += len( groups )
-        self.log.info( "Clearing " + str(n) + " non-exlusive suite locks") 
         for suitedir in self.inclusive.keys():
             groups = self.inclusive[ suitedir ]
             for group in groups:
-                self.release_suite_access( suitedir, group )
+                if self.get_lock_owner( group ) == user:
+                    self.release_suite_access( suitedir, group )
 
         self.dump_state()
         return
@@ -352,7 +354,6 @@ class lockserver( Pyro.core.ObjBase ):
             print id
             print self.get_lockgroup( id ), lockgroup
             if self.get_lockgroup( id ) == lockgroup:
-                print "HELLO"
                 del self.locked[ id ]
                 self.log.info( "released task lock " + id ) 
 

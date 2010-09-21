@@ -62,9 +62,9 @@ if __name__ == "__main__":
 
 The cylc lockserver daemon, cylclockd, brokers suite and task locks for
 cylc suites. This is the command line interface for interrogating the
-daemon and manual lock management.
+lockserver, and for manual lock management.
 
-Use of the lockserver is optional - see cylc preferences. 
+Use of the cylc lockserver is optional - see 'cylc preferences --help'. 
 
 TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
 running simultaneously, whether they are spawned by a cylc scheduler or
@@ -78,7 +78,10 @@ the suite config file states that suite is capable of doing this!).
 
 Manual lock acquisition is mainly for testing purposes, but manual
 release may be required to remove stale locks left after a suite or task
-exits without releasing its locks).""" 
+exits without releasing its locks).
+
+Locks can only be released by the suite owner. For suites with tasks
+owned by other users, task locks are always held by the suite owner.""" 
 
     parser = OptionParser( usage )
 
@@ -103,17 +106,16 @@ exits without releasing its locks)."""
     parser.add_option( "--acquire-suite-nonex", help="Acquire a non-exclusive suite lock.",
             metavar="SUITE", action="store", dest="suite_acquire_nonex" )
 
-    parser.add_option( "--release-suite", help="Release a suite, and "
-            "any tasks held by it.",
+    parser.add_option( "--release-suite", help="Release a suite and associated task locks",
             metavar="SUITE", action="store", dest="suite_release" )
 
-    parser.add_option( "-p", "--print", help="Print currently held locks.",
+    parser.add_option( "-p", "--print", help="Print all locks.",
             action="store_true", dest="list_all" )
 
-    parser.add_option( "-l", "--list", help="List currently held locks.",
+    parser.add_option( "-l", "--list", help="List all locks (same as -p).",
             action="store_true", dest="list_all" )
 
-    parser.add_option( "-c", "--clear", help="Release all task locks.",
+    parser.add_option( "-c", "--clear", help="Release all locks owned by you.",
             action="store_true", dest="clear_all" )
 
     parser.add_option( "-f", "--filenames", 
@@ -135,6 +137,7 @@ exits without releasing its locks)."""
     
     pns_host = options.pns_host
 
+    user = os.environ[ 'USER' ]
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
     try:
@@ -151,19 +154,19 @@ exits without releasing its locks)."""
         elif options.suite_acquire:
             suitename = options.suite_acquire
             suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
+            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
 
         elif options.suite_acquire_nonex:
             suitename = options.suite_acquire_nonex
             suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
+            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
 
         elif options.suite_release:
             suitename = options.suite_release
             suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, suitename, suitedir, 'scheduler' ).release_suite_access():
+            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).release_suite_access():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
 
         elif options.list_all:
@@ -185,7 +188,7 @@ exits without releasing its locks)."""
                 print " - ", lock
 
         elif options.clear_all:
-            lockserver( pns_host ).clear()
+            lockserver( pns_host ).clear( user )
 
         elif options.get_filenames:
             pid, log, state = lockserver( pns_host ).get_filenames()

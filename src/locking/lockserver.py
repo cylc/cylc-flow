@@ -28,8 +28,8 @@ class lockserver:
     def dump( self ):
         return self.server.dump()
 
-    def clear( self ):
-        return self.server.clear()
+    def clear( self, user ):
+        return self.server.clear( user )
 
     def get_filenames( self ):
         return self.server.get_filenames()
