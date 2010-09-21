@@ -50,7 +50,6 @@ allowed_commands = \
     'test',
     'suicide',
     'monitor',
-    'message',
     ]
 
 usage = \
@@ -88,6 +87,7 @@ usage = \
     '  purge ....... Remove an entire dependency tree rooted on a single task',
     'I-N-F-O-R-M-A-T-I-O-N',
     '  view ........ The Cylc Suite Monitor GUI',
+    '  monitor ..... Older terminal based suite monitor',
     '  dump ........ Dump the current state of all suite tasks to stdout',
     '  show ........ Retrieve information from a running suite',
     '  ping ........ Check that a suite is running, or list running suites',
@@ -104,9 +104,6 @@ usage = \
     '  nudge ....... Cause the main task processing loop to be invoked',
     '  test ........ Run an automated test of core cylc functionality',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
-    'D-E-P-R-E-C-A-T-E-D',
-    '  monitor ..... Terminal based suite monitor (DEPRECATED, use "cylc view")',
-    '  message ..... Task message interface (DEPRECATED, use task-started etc.)',
     'E-X-P-E-R-I-M-E-N-T-A-L',
     '  suicide ..... Suggest that an inquiring task should shut itself down',
     ]
