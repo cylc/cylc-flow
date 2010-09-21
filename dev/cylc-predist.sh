@@ -1,4 +1,5 @@
 #!/bin/bashXXX
+# THIS IS A DARCS PREDIST SCRIPT.
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
@@ -11,9 +12,6 @@
 
 
 set -e
-
-# DO NOT RUN THIS COMMAND MANUALLY, IT IS A DARCS PREDIST SCRIPT.
-
 trap "ABORTING PREDIST, DELETE THE NEW TARBALL IF DARCS CONTINUES!" ERR
 
 echo "PRE MARCH 2009 (?) VERSIONS OF DARCS IGNORE NON-ZERO EXIT CODE IN"
@@ -42,17 +40,18 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
 chmod +x util/*
+chmod +x admin/*
 chmod +x doc/process
-chmod +x systems/conditional/scripts/*
-chmod +x systems/trivial/scripts/*
-chmod +x systems/trivial-remote/scripts/*
-chmod +x systems/userguide/scripts/*
-chmod +x systems/nested/scripts/*
-chmod +x systems/distributed/scripts/*
-chmod +x systems/scs-demo/scripts/*
+chmod +x suites/conditional/scripts/*
+chmod +x suites/trivial/scripts/*
+chmod +x suites/trivial-remote/scripts/*
+chmod +x suites/userguide/scripts/*
+chmod +x suites/nested/scripts/*
+chmod +x suites/distributed/scripts/*
+chmod +x suites/scs-demo/scripts/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/gtk/gtkmonitor.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/viewer/gtkmonitor.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" doc/userguide.tex
 
@@ -87,8 +86,8 @@ rm -r images/not-active
 echo "DELETING DEV STUFF"
 rm -r dev
 
-echo "DELETING EXPERIMENTAL SYSTEMS"
-rm -rf systems/experimental
+echo "DELETING EXPERIMENTAL SUITES"
+rm -rf suites/experimental
 
 echo "REMOVING ANY PYC FILES"
 find . -name '*.pyc' | xargs rm
