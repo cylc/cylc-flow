@@ -1,0 +1,11 @@
+; cylclockd.conf.test
+
+; local test config file
+
+; paths must be absolute as the cylclockd cds to the root directrory
+; when it daemonizes.
+
+[main]
+pid file   = /home/oliverh/cylc/master/admin/cylclockd.pid
+log file   = /home/oliverh/cylc/master/admin/cylclockd.log
+state file = /home/oliverh/cylc/master/admin/cylclockd.state

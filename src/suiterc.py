@@ -14,12 +14,13 @@ import logging
 
 if sys.version_info >= (2,6):
     # Python 2.6+:
+    # (because we need the dict_type argument)
     from ConfigParser import SafeConfigParser
 elif sys.version_info >= (2,4):
     # Python 2.4+:
     from CylcSafeConfigParser import CylcSafeConfigParser
 else:
-    raise SystemExit( "suiterc.py is not compatible with pre version 2.4 Python)" )
+    raise SystemExit( "suiterc.py is not compatible with Python < 2.4)" )
 
 # Pre Python 2.7:
 from OrderedDict import OrderedDict

@@ -87,8 +87,7 @@ exits without releasing its locks)."""
             suite_acquire_nonex=None, suite_release=None, list_all=False )
 
     parser.add_option( "--host",
-            help="(for --start|restart|debug). Pyro nameserver host "
-            "(defaults to local host name).",
+            help="Pyro nameserver host (default: to local host).",
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
