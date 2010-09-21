@@ -252,6 +252,10 @@ class scheduler:
             self.banner[ 'use lockserver' ] = 'True'
             self.use_lockserver = True
 
+        if self.dummy_mode:
+            # no need to use the lockserver in dummy mode
+            self.use_lockserver = False
+
     def get_suite_def_dir( self ):
         # find location of the suite task and config modules
         reg = registrations()

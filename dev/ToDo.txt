@@ -4,9 +4,6 @@ GENERAL
 * check all open( file, mode ) statements for mode 'rb' etc.  What is
   'b'? "binary"? if so, is this appropriate for cylc's usage.
 
-* dummy mode should not use lockserver (implement inside task
-  interface).
-
 * wherever I've used this:
     os.makedirs( os.path.dirname( filename ) )
   check that filename is not just a bare local dir filename like foo.bar
