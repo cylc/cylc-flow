@@ -25,7 +25,7 @@ echo "PREDIST SCRIPTS: WATCH FOR THIS AND DELETE THE RESULTING TARBALL!"
 
 # TO CREATE A CLEAN CYLC DISTRIBUTION IN A NEW REPOSITORY:
 # 1/ record any changes to this script
-# 2/ darcs setpref predist 'sh bin/_cylc-predist.sh; rm bin/_cylc-predist.sh'
+# 2/ darcs setpref predist 'sh dev/cylc-predist.sh; rm dev/cylc-predist.sh'
 # 3/ final 'darcs tag'
 # 4/ export CYLC_VERSION=[final version tag]
 # 5/ darcs dist
@@ -51,7 +51,7 @@ chmod +x suites/distributed/scripts/*
 chmod +x suites/scs-demo/scripts/*
 
 echo "SETTING VERSION TAG IN MAIN COMMAND AND USERGUIDE"
-perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/viewer/gtkmonitor.py
+perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" src/view/gtkmonitor.py
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" bin/cylc
 perl -pi -e "s/THIS IS NOT A VERSIONED RELEASE/$CYLC_VERSION/" doc/userguide.tex
 
