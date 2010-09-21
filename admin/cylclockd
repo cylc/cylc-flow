@@ -10,7 +10,7 @@
 #         |________________________|
 
 import os, sys, re
-import socket
+import socket, pickle
 import logging, logging.handlers
 from optparse import OptionParser
 
@@ -129,14 +129,31 @@ class lockserver( Pyro.core.ObjBase ):
             # group already exists
             pass
 
-        # task locks
-        self.locked = {}
-
-        # suite locks
-        self.exclusive = {}       # exclusive[ suite_dir ] = [ groupname ]
-        self.inclusive = {}       # inclusive[ suite_dir ] = [ groupname, ... ]
+        if not self.load_state():
+            # task locks
+            self.locked = {}
+            # suite locks
+            self.exclusive = {}       # exclusive[ suite_dir ] = [ groupname ]
+            self.inclusive = {}       # inclusive[ suite_dir ] = [ groupname, ... ]
 
         self.configure_logging( log_file, loglevel )
+
+    def dump_state( self ):
+        output = open( self.state_file, 'w' )
+        pickle.dump( ( self.exclusive, self.inclusive, self.locked ), output )
+        output.close()
+
+    def load_state( self ):
+        if not os.path.exists( self.state_file ):
+            # 
+            print "File not found:", self.state_file
+            print "(i.e. no previous state to load)"
+            return False
+
+        state = open( self.state_file, 'rb' )
+        ( self.exclusive, self.inclusive, self.locked ) = pickle.load( state )
+        state.close()
+        return True
 
     def configure_logging( self, log_file, loglevel ):
         self.log = logging.getLogger( log_file )
@@ -182,6 +199,7 @@ class lockserver( Pyro.core.ObjBase ):
         if id not in self.locked:
             self.locked[ id ] = True
             self.log.info( "acquired task lock " + id ) 
+            self.dump_state()
             return True
         else:
             self.log.warning( "refused task lock " + id ) 
@@ -192,6 +210,7 @@ class lockserver( Pyro.core.ObjBase ):
         if id in self.locked:
             del self.locked[ id ]
             self.log.info( "released task lock " + id ) 
+            self.dump_state()
             return True
         else:
             self.log.warning( "failed to release task lock " + id ) 
@@ -230,6 +249,9 @@ class lockserver( Pyro.core.ObjBase ):
             groups = self.inclusive[ suitedir ]
             for group in groups:
                 self.release_suite_access( suitedir, group )
+
+        self.dump_state()
+        return
 
     def is_locked( self, task_id, lockgroup ):
         id = self.get_lock_id( lockgroup, task_id )
@@ -306,6 +328,7 @@ class lockserver( Pyro.core.ObjBase ):
                     self.inclusive[ suite_dir ] = [ lockgroup ]
  
         if result:
+            self.dump_state() 
             if cylc_mode == 'submit':
                 self.log.info( "granted suite access " + lockgroup + " --> " + suite_dir )
             else:
@@ -353,6 +376,7 @@ class lockserver( Pyro.core.ObjBase ):
             #self.log.warning( "erroneous suite release request" )
             result = False
         if result:
+            self.dump_state() 
             self.log.info( "released suite lock " + lockgroup + " --> " + suite_dir )
         else:
             self.log.warning( "failed to release suite lock " + lockgroup + " --> " + suite_dir )

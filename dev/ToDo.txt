@@ -1,6 +1,19 @@
 _______
 GENERAL
 
+* check all open( file, mode ) statements for mode 'rb' etc.  What is
+  'b'? "binary"? if so, is this appropriate for cylc's usage.
+
+* dummy mode should not use lockserver (implement inside task
+  interface).
+
+* wherever I've used this:
+    os.makedirs( os.path.dirname( filename ) )
+  check that filename is not just a bare local dir filename like foo.bar
+  as opposed to dir/foo.bar, else dirname() will return empty string and 
+  makedirs() will fail.  This could happen if the user tries to use
+  files in $PWD without specifying the full path.
+
 * VIEWING AND INTERACTING WITH REMOTE SUITES:
   'cylc view --host=foo'               .... works
   'cylc view -u USER --host=foo SUITE' .... fails

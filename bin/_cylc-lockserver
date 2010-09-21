@@ -224,9 +224,10 @@ exits without releasing its locks)."""
         except Pyro.errors.NamingError:
             raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-        print "cylclockd PID file:  ", pid
-        print "cylclockd log file:  ", log
-        print "cylclockd state file:", state
+        print "cylclockd files:"
+        print "  PID ......", pid
+        print "  log ......", log
+        print "  state ....", state
 
     else:
         # should not be reached
