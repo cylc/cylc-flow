@@ -25,7 +25,7 @@ echo "PREDIST SCRIPTS: WATCH FOR THIS AND DELETE THE RESULTING TARBALL!"
 
 # TO CREATE A CLEAN CYLC DISTRIBUTION IN A NEW REPOSITORY:
 # 1/ record any changes to this script
-# 2/ darcs setpref predist 'sh dev/cylc-predist.sh; rm dev/cylc-predist.sh'
+# 2/ darcs setpref predist 'sh dev/cylc-predist.sh'
 # 3/ final 'darcs tag'
 # 4/ export CYLC_VERSION=[final version tag]
 # 5/ darcs dist
@@ -40,7 +40,7 @@ echo "SETTING EXECUTABLE PERMISSIONS"
 
 chmod +x bin/*
 chmod +x util/*
-chmod +x admin/*
+chmod +x admin/cylclockd
 chmod +x doc/process
 chmod +x suites/conditional/scripts/*
 chmod +x suites/trivial/scripts/*
