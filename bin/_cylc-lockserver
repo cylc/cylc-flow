@@ -84,7 +84,8 @@ exits without releasing its locks)."""
 
     parser.set_defaults( pns_host= socket.getfqdn(), 
             acquire=None, release=None, suite_acquire=None,
-            suite_acquire_nonex=None, suite_release=None, list_all=False )
+            suite_acquire_nonex=None, suite_release=None, 
+            list_all=False, get_filenames=False )
 
     parser.add_option( "--host",
             help="Pyro nameserver host (default: to local host).",
@@ -115,12 +116,17 @@ exits without releasing its locks)."""
     parser.add_option( "-c", "--clear", help="Release all task locks.",
             action="store_true", dest="clear_all" )
 
+    parser.add_option( "-f", "--filenames", 
+            help="Print cylclockd PID, log, and state filenames.",
+            action="store_true", dest="get_filenames" )
+
     ( options, args ) = parser.parse_args()
 
     count = 0
     for opt in [ options.acquire, options.release,
             options.suite_acquire, options.suite_acquire_nonex,
-            options.suite_release, options.list_all, options.clear_all ]:
+            options.suite_release, options.list_all, 
+            options.clear_all, options.get_filenames ]:
         if opt:
             count += 1
 
@@ -211,6 +217,16 @@ exits without releasing its locks)."""
             lockserver( pns_host ).clear()
         except Pyro.errors.NamingError:
             raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
+
+    elif options.get_filenames:
+        try:
+            pid, log, state = lockserver( pns_host ).get_filenames()
+        except Pyro.errors.NamingError:
+            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
+
+        print "cylclockd PID file:  ", pid
+        print "cylclockd log file:  ", log
+        print "cylclockd state file:", state
 
     else:
         # should not be reached

@@ -27,10 +27,12 @@ import os, sys, pwd, re
 import logging
 
 class ServerDaemon( Daemonizer ):
-    def __init__( self, pidfile, pns_host, logfile ):
+    def __init__( self, pid_file, pns_host, log_file, state_file ):
         self.pns_host = pns_host
-        self.logfile = logfile
-        Daemonizer.__init__(self, pidfile)
+        self.log_file = log_file
+        self.state_file = state_file
+        Daemonizer.__init__(self, pid_file)
+        self.pid_file = pid_file
 
     def main_loop( self ):
         # NOTE THE PYRO SERVER BEING DAEMONIZED MUST BE STARTED HERE
@@ -43,7 +45,7 @@ class ServerDaemon( Daemonizer ):
         #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
         #server = None
         #try:
-        server = LockServer(self.pns_host, self.logfile)
+        server = LockServer( self.pns_host, self.pid_file, self.log_file, self.state_file )
         #except Exception, x:
         #    foo.write( str(x) + "\n" )
         #else:
@@ -58,10 +60,12 @@ class ServerDaemon( Daemonizer ):
         #    pass
 
 class LockServer:
-    def __init__( self, pns_host, logfile ):
+    def __init__( self, pns_host, pid_file, log_file, state_file ):
         # LOCATE THE PYRO NAMESERVER-------------------------------------------
-        self.logfile = logfile
+        self.log_file = log_file
         self.pns_host = pns_host
+        self.pid_file = pid_file
+        self.state_file = state_file
 
         Pyro.config.PYRO_MULTITHREADED = 0
         # USE DNS NAMES INSTEAD OF FIXED IP ADDRESSES FROM /etc/hosts
@@ -77,7 +81,7 @@ class LockServer:
         # (single threaded prob not necessary for lockserver
         # but it doesn't matter as few connections needed)
 
-        locker = lockserver( self.pns_host, self.logfile )
+        locker = lockserver( self.pns_host, self.pid_file, self.log_file, self.state_file )
 
         self.pyro_daemon = Pyro.core.Daemon()
         self.pyro_daemon.useNameServer(locker.get_ns())
@@ -104,8 +108,14 @@ class LockServer:
             self.pyro_daemon.handleRequests()
 
 class lockserver( Pyro.core.ObjBase ):
-    def __init__( self, pns_host, logfile, loglevel=logging.INFO ):
+    def __init__( self, pns_host, pid_file, log_file, state_file, loglevel=logging.INFO ):
         Pyro.core.ObjBase.__init__(self)
+
+        # pid file is passed through to here purely so it can be
+        # retrieved by user request, through 'cylc lockserver -f'.
+        self.pid_file = pid_file
+        self.log_file = log_file
+        self.state_file = state_file
 
         try:
             self.nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
@@ -126,24 +136,24 @@ class lockserver( Pyro.core.ObjBase ):
         self.exclusive = {}       # exclusive[ suite_dir ] = [ groupname ]
         self.inclusive = {}       # inclusive[ suite_dir ] = [ groupname, ... ]
 
-        self.configure_logging( logfile, loglevel )
+        self.configure_logging( log_file, loglevel )
 
-    def configure_logging( self, logfile, loglevel ):
-        self.log = logging.getLogger( logfile )
+    def configure_logging( self, log_file, loglevel ):
+        self.log = logging.getLogger( log_file )
         self.log.setLevel( loglevel )
         max_bytes = 1000000
         backups = 5
-        if os.path.basename( logfile ) != logfile:
-            logging_dir = os.path.dirname( logfile )
+        if os.path.basename( log_file ) != log_file:
+            logging_dir = os.path.dirname( log_file )
             if not os.path.exists( logging_dir ):
                 try:
                     os.makedirs( logging_dir )
                 except:
                     raise SystemExit( 'Failed to create logging directory ' + logging_dir + '!')
 
-        h = logging.handlers.RotatingFileHandler( logfile, 'a', max_bytes, backups )
+        h = logging.handlers.RotatingFileHandler( log_file, 'a', max_bytes, backups )
         # roll the log file if it already exists
-        if os.path.getsize( logfile ) > 0:
+        if os.path.getsize( log_file ) > 0:
             h.doRollover()
 
         f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y/%m/%d %H:%M:%S' )
@@ -186,6 +196,10 @@ class lockserver( Pyro.core.ObjBase ):
         else:
             self.log.warning( "failed to release task lock " + id ) 
             return False
+
+    def get_filenames( self ):
+         self.log.info( "Returning server filenames") 
+         return ( self.pid_file, self.log_file, self.state_file )
 
     def dump( self ):
          self.log.info( "Dumping locks") 
@@ -412,6 +426,6 @@ Arguments:
     print "Log File:", log_file
     print "State File:", state_file
 
-    server_daemon = ServerDaemon( pid_file, options.pns_host, log_file ) 
+    server_daemon = ServerDaemon( pid_file, options.pns_host, log_file, state_file ) 
     server_daemon.process_command_line( [ sys.argv[0] ] + args )
 

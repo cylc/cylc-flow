@@ -30,3 +30,6 @@ class lockserver:
 
     def clear( self ):
         return self.server.clear()
+
+    def get_filenames( self ):
+        return self.server.get_filenames()
