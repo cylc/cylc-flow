@@ -13,9 +13,6 @@ import Pyro.core
 import os,sys,socket
 import os
 
-groupname = ':cylc-lockserver'
-name = 'broker'
-
 from lockserver import lockserver
 
 class task_lock:
@@ -28,7 +25,7 @@ class task_lock:
     # (a cylc message after that time will cause cylc to complain that
     # it has received a message from a task that has finished running). 
 
-    def __init__( self, task_id=None, user=None, suitename=None, pns_host=None ):
+    def __init__( self, task_id=None, suitename=None, pns_host=None, owner=None ):
 
         self.use_lock_server = False
         if 'CYLC_USE_LOCKSERVER' in os.environ:
@@ -51,10 +48,16 @@ class task_lock:
                 print >> sys.stderr, '$TASK_ID not defined'
                 sys.exit(1)
 
-        if user:
-            self.username = user
+        if owner:
+            self.owner = owner
         else:
-            self.username = os.environ['USER']
+            if 'CYLC_SUITE_OWNER' in os.environ.keys():
+                self.owner = os.environ['CYLC_SUITE_OWNER']
+            elif self.mode == 'raw':
+                self.owner = os.environ['USER']
+            else:
+                print >> sys.stderr, '$CYLC_SUITE_OWNER not defined'
+                sys.exit(1)
 
         if suitename:
             self.suite_name = suitename
@@ -67,7 +70,7 @@ class task_lock:
                 print >> sys.stderr, '$CYLC_SUITE_NAME not defined'
                 sys.exit(1)
 
-        self.lockgroup = self.username + '.' + self.suite_name
+        self.lockgroup = self.owner + '.' + self.suite_name
 
         if pns_host:
             self.pns_host = pns_host

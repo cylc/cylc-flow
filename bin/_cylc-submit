@@ -142,6 +142,7 @@ globalenv[ 'CYLC_NS_GROUP' ] = pyro_groupname
 globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
 globalenv[ 'CYLC_SUITE_DIR' ] = suite_dir
 globalenv[ 'CYLC_SUITE_NAME' ] = name
+globalenv[ 'CYLC_SUITE_OWNER' ] = username
 globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 
 # load suite configuration--------------------------------------------

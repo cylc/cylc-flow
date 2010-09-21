@@ -13,12 +13,6 @@ import Pyro.core
 import os,sys,socket
 import os
 
-# PYRO NAMESERVER GROUP AND OBJECT NAME MUST MATCH THAT USED BY
-# src/locking/lockserver (but not importing from that module as
-# cylclockd should be independent of the main cycl code base).
-groupname = ':cylclockd'
-name = 'broker'
-
 from lockserver import lockserver
 
 class suite_lock:

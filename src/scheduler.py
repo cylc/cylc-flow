@@ -317,6 +317,7 @@ class scheduler:
         globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
         globalenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
         globalenv[ 'CYLC_SUITE_NAME' ] = self.suite_name
+        globalenv[ 'CYLC_SUITE_OWNER' ] = self.username
         globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
 
         self.config = config( self.suite_name, globalenv, self.logging_dir )

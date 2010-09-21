@@ -9,6 +9,7 @@ job log directory =
 
 [job submission]
 default = background
+;default = at_now
 
 [global environment]
 TASK_RUN_TIME_SECONDS = 10

@@ -135,36 +135,35 @@ exits without releasing its locks)."""
     
     pns_host = options.pns_host
 
-    user = os.environ[ 'USER' ]
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
     try:
         if options.acquire:
             (suite, task_id) = check_task_spec( options.acquire )
-            if not task_lock( task_id, user, suite, pns_host ).acquire():
+            if not task_lock( task_id, suite, pns_host ).acquire():
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
 
         elif options.release:
             (suite, task_id) = check_task_spec( options.release )
-            if not task_lock( task_id, user, suite, pns_host ).release():
+            if not task_lock( task_id, suite, pns_host ).release():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
 
         elif options.suite_acquire:
             suitename = options.suite_acquire
             suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
+            if not suite_lock( pns_host, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
 
         elif options.suite_acquire_nonex:
             suitename = options.suite_acquire_nonex
             suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
+            if not suite_lock( pns_host, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
 
         elif options.suite_release:
             suitename = options.suite_release
             suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).release_suite_access():
+            if not suite_lock( pns_host, suitename, suitedir, 'scheduler' ).release_suite_access():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
 
         elif options.list_all:
