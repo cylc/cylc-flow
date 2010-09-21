@@ -268,25 +268,8 @@ GENERAL
 __________
 LOCKSERVER
 
- * system operator currently can't release locks acquired by tasks that
-   run under other usernames (easy to fix). Workaround: su to other user
-   then register the suite and release the task as that user (see next
-   point for why this works).
-
- * can release tasks of other users suites by registering their suite
-   yourself (is this desirable?)
-
- * send lockserver errors to a logfile (e.g. if it is killed it silently 
-  fails to restart due to existing Pyro nameserver entry).
-
- * persistent state (file) in case of crash or restart while suites are
-   running. 
-
- * non-user-specific ($HOME-relative) pid file required, so
-  user-specific .cylcrc is not the right place to store this information
-  (multiple users need to be able to access the lockserver, but perhaps
-  not start and stop it).  MAYBE $CYLC_DIR/.cylcrc IS REQUIRED?
-
+ * it is possible to release tasks owned by other users, by registering
+   their suite yourself - can this be easily prevented?
 
 ______
 VIEWER
