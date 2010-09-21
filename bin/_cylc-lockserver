@@ -138,97 +138,82 @@ exits without releasing its locks)."""
     user = os.environ[ 'USER' ]
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
-    if options.acquire:
-        (suite, task_id) = check_task_spec( options.acquire )
-        try:
+    try:
+        if options.acquire:
+            (suite, task_id) = check_task_spec( options.acquire )
             if not task_lock( task_id, user, suite, pns_host ).acquire():
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
-        except Pyro.errors.NamingError:
-            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    elif options.release:
-        (suite, task_id) = check_task_spec( options.release )
-        try:
+        elif options.release:
+            (suite, task_id) = check_task_spec( options.release )
             if not task_lock( task_id, user, suite, pns_host ).release():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
-        except Pyro.errors.NamingError:
-            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    elif options.suite_acquire:
-        suitename = options.suite_acquire
-        suitedir = check_suite_spec( suitename )
-        try:
+        elif options.suite_acquire:
+            suitename = options.suite_acquire
+            suitedir = check_suite_spec( suitename )
             if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
-        except Pyro.errors.NamingError:
-            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    elif options.suite_acquire_nonex:
-        suitename = options.suite_acquire_nonex
-        suitedir = check_suite_spec( suitename )
-        try:
+        elif options.suite_acquire_nonex:
+            suitename = options.suite_acquire_nonex
+            suitedir = check_suite_spec( suitename )
             if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
-        except Pyro.errors.NamingError:
-            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    elif options.suite_release:
-        suitename = options.suite_release
-        suitedir = check_suite_spec( suitename )
-        try:
+        elif options.suite_release:
+            suitename = options.suite_release
+            suitedir = check_suite_spec( suitename )
             if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).release_suite_access():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
-        except Pyro.errors.NamingError:
-            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    elif options.list_all:
-        try:
+        elif options.list_all:
             (task_locks, suite_ex, suite_nonex ) = lockserver( pns_host ).dump()
-        except Pyro.errors.NamingError:
-            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
-        #except Pyro.errors.ProtocolError, x:
-        #  ?huh?
-        #    print x
-        #    print 'This may mean you have attempted to access a dead lockserver.'
-        #    print 'Before starting a new lockserver, you may need to:'
-        #    print ' 1/ delete the old lockserver pid file (see cylc preferences)'
-        #    print ' 2/ delete the old lockserver group in the Pyro nameserver:'
-        #    print '    $ pyro-nsc deletegroup :cylc-lockserver'
-        #    sys.exit(1)
-        #    #raise
 
-        print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
-        for suitedir in suite_ex:
-            [ group ] = suite_ex[ suitedir ]
-            print " - ", group, '-->', suitedir
-
-        print_heading( str( len( suite_nonex ) ) + " non-exclusive suite locks" )
-        for suitedir in suite_nonex:
-            groups = suite_nonex[ suitedir ]
-            for group in groups:
+            print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
+            for suitedir in suite_ex:
+                [ group ] = suite_ex[ suitedir ]
                 print " - ", group, '-->', suitedir
 
-        print_heading( str( len( task_locks ) ) + " task locks" )
-        for lock in task_locks:
-            print " - ", lock
+            print_heading( str( len( suite_nonex ) ) + " non-exclusive suite locks" )
+            for suitedir in suite_nonex:
+                groups = suite_nonex[ suitedir ]
+                for group in groups:
+                    print " - ", group, '-->', suitedir
 
-    elif options.clear_all:
-        try:
+            print_heading( str( len( task_locks ) ) + " task locks" )
+            for lock in task_locks:
+                print " - ", lock
+
+        elif options.clear_all:
             lockserver( pns_host ).clear()
-        except Pyro.errors.NamingError:
-            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-    elif options.get_filenames:
-        try:
+        elif options.get_filenames:
             pid, log, state = lockserver( pns_host ).get_filenames()
-        except Pyro.errors.NamingError:
-            raise SystemExit( "Failed to connect to a lockserver on " + pns_host )
 
-        print "cylclockd files:"
-        print "  PID ......", pid
-        print "  log ......", log
-        print "  state ....", state
+            print "cylclockd files:"
+            print "  PID ......", pid
+            print "  log ......", log
+            print "  state ....", state
 
-    else:
-        # should not be reached
-        raise SystemExit( "unknown cylc lockserver option" )
+        else:
+            # should not be reached
+            raise SystemExit( "unknown cylc lockserver option" )
+
+    except Pyro.errors.NamingError:
+        print "ERROR: there is no lockserver registered with pyro-ns on " + pns_host
+        print "(this probably means that cylclockd has not been started)"
+        sys.exit(1)
+
+    except Pyro.errors.ProtocolError, x:
+        if str(x) == "connection failed":
+            print "\nERROR: we are unable to connect to cylclockd via its Pyro proxy on"
+            print " ", pns_host
+            print "This probably means the daemon suffered a hard shutdown; if so its PID"
+            print "file and pyro-ns registration will need to be removed before restart."
+            print "For the PID file location:   > see 'cylclockd --help'."
+            print "To unregister from pyro-ns:  > pyro-nsc deletegroup :cylclockd\n"
+            sys.exit(1)
+        else:
+            # unknown error
+            raise
