@@ -238,12 +238,6 @@ class lockserver( Pyro.core.ObjBase ):
         # MUST USE .keys() here to avoid:
         # RuntimeError: dictionary changed size during iteration
 
-        # no need to release task locks separately; this will be
-        # achieved when the suite is released.
-        #for lock in self.locked.keys():
-        #    ( group, id ) = lock.split( ':' )
-        #    self.release( id, group )
-
         for suitedir in self.exclusive.keys():
             [ group ] = self.exclusive[ suitedir ]
             if self.get_lock_owner( group ) == user:
@@ -254,6 +248,13 @@ class lockserver( Pyro.core.ObjBase ):
             for group in groups:
                 if self.get_lock_owner( group ) == user:
                     self.release_suite_access( suitedir, group )
+
+        # release task locks with no associated suite lock
+        # (acquired manually, or through 'cylc submit').
+        for lock in self.locked.keys():
+            ( group, id ) = lock.split( ':' )
+            if self.get_lock_owner( group ) == user:
+                self.release( id, group )
 
         self.dump_state()
         return
