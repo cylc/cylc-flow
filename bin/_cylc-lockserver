@@ -60,9 +60,8 @@ if __name__ == "__main__":
 
     usage = """cylc lockserver [options]
 
-The cylc lockserver daemon, cylclockd, brokers suite and task locks for
-cylc suites. This is the command line interface for interrogating the
-lockserver, and for manual lock management.
+This is the command line interface to cylclockd, the cylc lockserver
+daemon, which brokers suite and task locks for cylc suites. 
 
 Use of the cylc lockserver is optional - see 'cylc preferences --help'. 
 
@@ -78,10 +77,11 @@ the suite config file states that suite is capable of doing this!).
 
 Manual lock acquisition is mainly for testing purposes, but manual
 release may be required to remove stale locks left after a suite or task
-exits without releasing its locks).
+exits without releasing its locks.
 
-Locks can only be released by the suite owner. For suites with tasks
-owned by other users, task locks are always held by the suite owner.""" 
+Locks held by cylclockd persist across shutdown/restart, and can only 
+be released by the suite owner. In multiple user (task owner) suites,
+task locks are always held by the suite owner, not the task owner."""
 
     parser = OptionParser( usage )
 
