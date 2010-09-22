@@ -397,7 +397,7 @@ suites on the network. The command line user interface for interrogating
 the daemon, and for manual lock management, is 'cylc lockserver'.
 
 The daemon should be started at boot time, running under a special system
-user account.  At startup, it reads a config file '/etc/cylclockd.conf' that
+user account.  At startup, it reads a config file '/etc/cylc/cylclockd.conf' that
 specifies the location of the daemon's process ID, state, and log files. 
 The state file records currently held locks and, if it exists at
 startup, is used to initialize the lockserver (i.e. suite and task locks
@@ -415,14 +415,14 @@ Arguments:
     parser = OptionParser( usage )
 
     parser.set_defaults( pns_host = socket.getfqdn(), 
-                         config = '/etc/cylclockd.conf' )
+                         config = '/etc/cylc/cylclockd.conf' )
 
     parser.add_option( "--host",
             help="Pyro nameserver host (default: to local host).",
             metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "-f", 
-            help="Alternative config file (default /etc/cylclockd.conf)",
+            help="Alternative config file (default /etc/cylc/cylclockd.conf)",
             metavar="CONFIGFILE", action="store", dest="config" )
 
     ( options, args ) = parser.parse_args()
