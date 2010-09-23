@@ -128,7 +128,6 @@ class job_submit:
         
         if host and not self.__class__.dummy_mode:
             # REMOTE JOB SUBMISSION as owner
-
             self.local_job_submit = False
             # a remote host can be defined using environment variables
             self.remote_host = self.interp_str( host )
@@ -136,6 +135,14 @@ class job_submit:
         else:
             # LOCAL JOB SUBMISSION as owner
             self.local_job_submit = True
+
+            if self.__class__.dummy_mode:
+                # ignore defined task owners in dummy mode, so that suites
+                # containing owned tasks can be tested in dummy mode outside
+                # of their normal execution environment.
+                self.owner = self.cylc_owner
+                # ignore the scripting section in dummy mode
+                self.extra_scripting = []
 
             # The job will be submitted from the owner's home directory,
             # in case the job submission method requires that the
@@ -153,14 +160,6 @@ class job_submit:
                 self.homedir = pwd.getpwnam( self.owner )[5]
             except:
                 raise SystemExit( "Task " + self.task_id + ", owner not found: " + self.owner )
-
-        if self.__class__.dummy_mode:
-            # ignore defined task owners in dummy mode, so that suites
-            # containing owned tasks can be tested in dummy mode outside
-            # of their normal execution environment.
-            owner = None
-            # ignore the scripting section in dummy mode
-            self.extra_scripting = []
 
         # a job submit log can be defined using environment variables
         logs.interpolate( self.__class__.global_env )
