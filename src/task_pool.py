@@ -223,6 +223,7 @@ class task_pool:
                             members = self.members[ target_name ]
                             # define the subgraph ...
                             self.graphfile.write( '    subgraph cluster_' + target_string + ' {\n' )
+                            self.graphfile.write( '        label = "' + target_name + ' task family";\n' )
                             for member in members:
                                 member_id = member + '_' + ctime
                                 self.graphfile.write( '        ' + member_id + ';\n' )
