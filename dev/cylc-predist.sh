@@ -75,10 +75,20 @@ echo
 doc/process
 
 echo "DELETING DOCUMENTATION SOURCE"
+# copy and restore from doc/:
+#  1/ the PDF userguide
+#  2/ SuiteDesign.txt
+#  3/ suite.rc.README
+# (2 and 3 are required by 'cylc configure', which copies them into
+# suite defintion directores for the endless edification of users).
 cp doc/userguide.pdf .
+cp doc/suite.rc.README .
+cp doc/SuiteDesign.txt .
 rm -r doc
 mkdir doc
 mv userguide.pdf doc
+mv SuiteDesign.txt doc
+mv suite.rc.README doc
 
 echo "DELETING UNUSED IMAGE FILES"
 rm -r images/not-active
