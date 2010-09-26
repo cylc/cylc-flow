@@ -223,8 +223,12 @@ class task_pool:
                             members = self.members[ target_name ]
                             # define the subgraph ...
                             self.graphfile.write( '    subgraph cluster_' + target_string + ' {\n' )
-                            self.graphfile.write( '        graph [ bgcolor=silver];\n' )
-                            self.graphfile.write( '        node [ fillcolor=darkseagreen3 ];\n' )
+                            self.graphfile.write( '        // NOTE: nodes (tasks) in a subgraph with no internal edges (arrows) all have\n' )
+                            self.graphfile.write( '        // the same "rank", which determines horizontal placement. To split the subgraph\n' )
+                            self.graphfile.write( '        // onto several rows you can manually add some invisible edges, like this:\n' )
+                            self.graphfile.write( '        //   node1 -> node2 [color=invis];\n' )
+                            self.graphfile.write( '        graph [ color=midnightblue];\n' )
+                            self.graphfile.write( '        node [ fillcolor=paleturquoise ];\n' )
                             self.graphfile.write( '        label = "' + target_name + ' task family";\n' )
                             for member in members:
                                 member_id = member + '_' + ctime
