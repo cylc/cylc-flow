@@ -16,6 +16,7 @@ from interp_env import interp_self, interp_local, replace_delayed
 
 from task_list import task_list, task_list_shortnames
 from suiterc import suiterc
+from ConfigParser import NoOptionError
 
 class config:
     def __init__( self, reg_name, global_env, logging_dir ):
@@ -56,6 +57,32 @@ class config:
         for (item,value) in rc.get_global_environment():
             self.items['environment'][ item ] = value
 
+        self.items[ 'default_node_color' ] = rc.get( 'dependency graph', 'default node color' )
+        self.items[ 'default_node_shape' ] = rc.get( 'dependency graph', 'default node shape' )
+        self.items[ 'default_edge_color' ] = rc.get( 'dependency graph', 'default edge color' )
+        if rc.get( 'dependency graph', 'use node color for edges' ) == 'True':
+            self.items[ 'use_node_color_for_edges' ] = True
+        else:
+            self.items[ 'use_node_color_for_edges' ] = False
+        if rc.get( 'dependency graph', 'task families in subgraphs' ) == 'True':
+            self.items[ 'task_families_in_subgraphs' ] = True
+        else:
+            self.items[ 'task_families_in_subgraphs' ] = False
+
+        self.items[ 'node_colors' ] = {}
+        self.items[ 'node_shapes' ] = {}
+        for task in task_list:
+            try:
+                self.items[ 'node_colors' ][ task ] = rc.get( 'dependency graph', 'color ' + task )
+            except NoOptionError:
+                # non-default color not defined for this task
+                pass
+
+            try:
+                self.items[ 'node_shapes' ][ task ] = rc.get( 'dependency graph', 'shape ' + task )
+            except NoOptionError:
+                # non-default color not defined for this task
+                pass
 
     def check_start_time( self, startup_cycle ):
         if 'legal_startup_hours' in self.items.keys():

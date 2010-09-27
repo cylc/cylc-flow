@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* dot-file graph output assumes that task families are internally
+  cotemporal. Is this necessarily the case?
+
 * check all open( file, mode ) statements for mode 'rb' etc.  What is
   'b'? "binary"? if so, is this appropriate for cylc's usage.
 

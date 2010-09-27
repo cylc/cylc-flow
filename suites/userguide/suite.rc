@@ -17,3 +17,19 @@ CYLC_TMPDIR = /tmp/$CYLC_SUITE_NAME
 FOO = ${HOME##*_}
 BAR = ${HOME%%_*}
 BAZ = ${HOME%%%%_*}
+
+[dependency graph]
+default node color = gray
+default edge color = red
+default node shape = ellipse
+use node color for edges = True
+color A = blue
+color B = yellow
+color C = green
+color F = green
+color D = yellowgreen
+color E = yellow
+color startup = steelblue
+color coldstart = steelblue
+color X = red
+shape X = box

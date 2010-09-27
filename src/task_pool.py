@@ -59,7 +59,21 @@ class task_pool:
         # PROVIDE THIS METHOD IN DERIVED CLASSES
         self.load_tasks()
 
+        # configure graph file parameters
         self.graphfile = graphfile
+        if graphfile:
+            self.node_color = {}
+            self.node_shape = {}
+            self.edge_color = {}
+            for task in self.config.get( 'task_list' ):
+                node_colors = self.config.get( 'node_colors' )
+                node_shapes = self.config.get( 'node_shapes' )
+                if task in node_colors:
+                    self.node_color[ task ] = node_colors[ task ]
+                    if self.config.get( 'use_node_color_for_edges' ):
+                        self.edge_color[ task ] = node_colors[ task ]
+                if task in node_shapes:
+                    self.node_shape[ task ] = node_shapes[ task ]
 
         # determine task families and family members
         # (used in writing out the 'dot' graph file).
@@ -182,6 +196,58 @@ class task_pool:
         for itask in self.tasks:
             itask.check_requisites()
 
+    def set_node( self, node_id ):
+
+        if node_id in self.node_seen:
+            return
+
+        self.node_seen[ node_id ] = True
+        name, ctime = node_id.split( '%' )
+        node = name + '_' + ctime
+ 
+        col = False
+        shp = False
+        if name in self.node_color:
+            col = True
+            colstr = 'fillcolor=' + self.node_color[ name ] 
+        if name in self.node_shape:
+            shp = True
+            shpstr = 'shape=' + self.node_shape[ name ]
+
+        if col and shp:
+            self.graphfile.write( node + ' [ ' + colstr + ', ' + shpstr + ' ];\n' )
+        elif col:
+            self.graphfile.write( node + ' [ ' + colstr + ' ];\n' )
+        elif shp:
+            self.graphfile.write( node + ' [ ' + shpstr + ' ];\n' )
+
+
+    def set_graph( self, source_id, target_id=None, edge_spec=None ):
+
+            name, ctime = source_id.split( '%' )
+            # dot files do not like percent characters
+            source = name + '_' + ctime
+            self.set_node( source_id )
+
+            if target_id:
+                target = re.sub( '%', '_', target_id )
+                self.set_node( target_id )
+
+                if name in self.edge_color:
+                    if edge_spec:
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + ', color=' + self.edge_color[name] + '];\n' )
+                    else:
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [color=' + self.edge_color[name] + '];\n' )
+                else:
+                    if edge_spec:
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + '];\n' )
+                    else:
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
+
+            else:
+                # family member
+                self.graphfile.write( '        ' + source + ';\n' )
+
     def run_tasks( self ):
         # tell each task to run if it is ready
         # unless the suite is on hold
@@ -201,71 +267,72 @@ class task_pool:
                 if itask.run_if_ready( current_time ):
 
                     if self.graphfile:
-                        raw_graphfile = False  ####### MAKE OPTIONAL
-                        if raw_graphfile:
-                            target = re.sub( '%', '_', itask.id )
+                        self.node_seen = {}
+
+                        target_id = itask.id 
+                        if not self.config.get( 'task_families_in_subgraphs' ):
                             for source_id in itask.get_resolved_dependencies():
-                                source = re.sub( '%', '_', source_id )
-                                self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
+                                self.set_graph( source_id, target_id )
                             continue
 
-                        # THIS CODE BLOCK IS JUST TO WRITE OUT TASK FAMILIES IN THE INTUITIVE WAY. TO DO: CLEAN UP THE CODE
+                        # GRAPH TASK FAMILIES IN AN INTUITIVE WAY (boxed subgraph):
 
-                        # a task family and its members must be cotemporal
-                        target_id = itask.id
+                        # ASSUME a task family and its members are cotemporal
                         target_name = itask.name
                         ctime = itask.c_time
-                        # dot files do not like percent characters
-                        target_string = target_name + '_' + ctime
+                        target = target_name + '_' + ctime
 
                         if target_name in self.members:
-                            # target is a task family
+                            # TARGET IS A TASK FAMILY
+                            # replace target with a boxed subgraph of
+                            # family members with no internal edges.
                             members = self.members[ target_name ]
                             # define the subgraph ...
-                            self.graphfile.write( '    subgraph cluster_' + target_string + ' {\n' )
-                            self.graphfile.write( '        // NOTE: nodes (tasks) in a subgraph with no internal edges (arrows) all have\n' )
-                            self.graphfile.write( '        // the same "rank", which determines horizontal placement. To split the subgraph\n' )
-                            self.graphfile.write( '        // onto several rows you can manually add some invisible edges, like this:\n' )
-                            self.graphfile.write( '        //   node1 -> node2 [color=invis];\n' )
-                            self.graphfile.write( '        graph [ color=midnightblue];\n' )
-                            self.graphfile.write( '        node [ fillcolor=paleturquoise ];\n' )
+                            self.graphfile.write( '    subgraph cluster_' + target + ' {\n' )
+                            self.graphfile.write( '        //graph [ color=midnightblue];\n' )
+                            self.graphfile.write( '        //node [ fillcolor=paleturquoise ];\n' )
                             self.graphfile.write( '        label = "' + target_name + ' task family";\n' )
+
                             for member in members:
-                                member_id = member + '_' + ctime
-                                self.graphfile.write( '        ' + member_id + ';\n' )
+                                # write family members with no edges
+                                member_id = member + '%' + ctime
+                                self.set_graph( member_id )
+
+                            # close subgraph
                             self.graphfile.write( '    };\n' )
-                            # ... and replace target with link to a family member
-                            repl_target_string = self.middle_member[target_name] + '_' + ctime
+
+                            # ... and replace target with an edge to the middle family member
+                            repl_target_id = self.middle_member[target_name] + '%' + ctime
+
                             for source_id in itask.get_resolved_dependencies():
-                                source = re.sub( '%', '_', source_id )
-                                self.graphfile.write( '    ' + source + ' -> ' + repl_target_string + '[lhead=cluster_' + target_string + '];\n' )
+                                self.set_graph( source_id, repl_target_id, 'lhead=cluster_' + target )
 
                         elif target_name in self.member_of:
-                            # target is a member
+                            # TARGET IS A FAMILY MEMBER
                             for source_id in itask.get_resolved_dependencies():
+
                                 (source_name, source_ctime ) = source_id.split('%')
+
                                 if source_name in self.members:
                                     # target is a member, source is a family
                                     pass
                                 else:
                                     # target is a member, source is not a family, 
-                                    source = re.sub( '%', '_', source_id )
-                                    self.graphfile.write( '    ' + source + ' -> ' + target_string + ';\n' )
+                                    self.set_graph( source_id, target_id )
 
                         else:
-                            # target is not a family or a member
+                            # TARGET IS NOT A FAMILY OR A FAMILY MEMBER
                             for source_id in itask.get_resolved_dependencies():
-                                (source_name, source_ctime ) = source_id.split('%')
-                                source_string = re.sub( '%', '_', source_id )
-                                if source_name in self.members:
-                                    # source is a family, replace with one of its members
-                                    source = self.middle_member[source_name] + '_' + source_ctime
-                                    self.graphfile.write( '    ' + source + ' -> ' + target_string + '[ltail=cluster_' + source_string + '];\n' )
-                                else:
-                                    # target is not a family or a family member
-                                    source = re.sub( '%', '_', source_id )
-                                    self.graphfile.write( '    ' + source + ' -> ' + target_string + ';\n' )
 
+                                source_name, source_ctime = source_id.split('%')
+                                source = source_name + '_' + source_ctime
+
+                                if source_name in self.members:
+                                    # SOURCE IS A FAMILY, REPLACE WITH MIDDLE MEMBER
+                                    repl_source_id = self.middle_member[source_name] + '%' + source_ctime
+                                    self.set_graph( repl_source_id, target_id, 'ltail=cluster_' + source )
+                                else:
+                                    self.set_graph( source_id, target_id )
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of

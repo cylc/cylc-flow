@@ -79,6 +79,13 @@ class suiterc:
         self.config.add_section( 'global environment' )
         #self.config.set( 'global environment','MY_EXAMPLE_TMP_DIR', '/tmp/$USER/$CYLC_SUITE_NAME' )
 
+        self.config.add_section( 'dependency graph' )
+        self.config.set( 'dependency graph','default node color', 'gray' )
+        self.config.set( 'dependency graph','default node shape', 'ellipse' )
+        self.config.set( 'dependency graph','default edge color', 'black' )
+        self.config.set( 'dependency graph','use node color for edges', 'True' )
+        self.config.set( 'dependency graph','task families in subgraphs', 'True' )
+
         if os.path.exists( self.rcfile ):
             print "Loading Suite Config File: " + self.rcfile
             self.load()
@@ -109,7 +116,7 @@ class suiterc:
     def get_coldstart_tasks( self ):
         tlist = self.get( 'general', 'coldstart tasks' )
         return re.split( r', *| +', tlist )
- 
+
     def get_global_environment( self ):
         return self.config.items( 'global environment' )
 
