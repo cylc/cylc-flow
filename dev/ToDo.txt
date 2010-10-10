@@ -1,6 +1,21 @@
 _______
 GENERAL
 
+* cycle-dependent number of restarts: this can cause problems because
+  only the most recent finished task is retained to satisfy
+  prerequisites. If a task alternately does short and long forecasts
+  with accordingly few and many restart outputs, we must retain *both*
+  previously finished short and long versions of the task when currently
+  only the short one would be retained. THE CYLC TASK ELIMINATION
+  ALGORITHM MUST TASK RESTART OUTPUTS INTO ACCOUNT: Do not eliminate a
+  finished task if its restart outputs are still valid.
+
+* some kind of internal queuing system as a more flexible alternative to
+  the simple max runahead limit?
+
+* a new task type modifier that allows failed "non-critical" tasks to be
+  ignored when applying the max runahead limit.
+
 * dot-file graph output assumes that task families are internally
   cotemporal. Is this necessarily the case?
 
