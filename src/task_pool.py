@@ -36,6 +36,7 @@ class task_pool:
         self.stop_time = stop_time
         self.suite_hold_ctime = pause_time
         self.suite_hold_now = False
+        self.node_seen = {}
 
         # TO DO: use self.config.get('foo') throughout
         self.clock = config.get('clock')
@@ -61,19 +62,15 @@ class task_pool:
 
         # configure graph file parameters
         self.graphfile = graphfile
+        self.edge_color = {}   # TEMP
         if graphfile:
-            self.node_color = {}
-            self.node_shape = {}
-            self.edge_color = {}
+            self.node_attributes = {}
             for task in self.config.get( 'task_list' ):
-                node_colors = self.config.get( 'node_colors' )
-                node_shapes = self.config.get( 'node_shapes' )
-                if task in node_colors:
-                    self.node_color[ task ] = node_colors[ task ]
-                    if self.config.get( 'use_node_color_for_edges' ):
-                        self.edge_color[ task ] = node_colors[ task ]
-                if task in node_shapes:
-                    self.node_shape[ task ] = node_shapes[ task ]
+                node_attributes = self.config.get( 'node_attributes' )
+                if task in node_attributes:
+                    self.node_attributes[ task ] = node_attributes[ task ]
+                    #if self.config.get( 'use_node_color_for_edges' ):
+                        #self.edge_color[ task ] = node_colors[ task ]
 
         # determine task families and family members
         # (used in writing out the 'dot' graph file).
@@ -197,33 +194,15 @@ class task_pool:
             itask.check_requisites()
 
     def set_node( self, node_id ):
-
         if node_id in self.node_seen:
             return
-
         self.node_seen[ node_id ] = True
         name, ctime = node_id.split( '%' )
         node = name + '_' + ctime
- 
-        col = False
-        shp = False
-        if name in self.node_color:
-            col = True
-            colstr = 'fillcolor=' + self.node_color[ name ] 
-        if name in self.node_shape:
-            shp = True
-            shpstr = 'shape=' + self.node_shape[ name ]
-
-        if col and shp:
-            self.graphfile.write( node + ' [ ' + colstr + ', ' + shpstr + ' ];\n' )
-        elif col:
-            self.graphfile.write( node + ' [ ' + colstr + ' ];\n' )
-        elif shp:
-            self.graphfile.write( node + ' [ ' + shpstr + ' ];\n' )
-
+        if name in self.node_attributes:
+            self.graphfile.write( node + ' [ ' + self.node_attributes[ name ] + ' ];\n' )
 
     def set_graph( self, source_id, target_id=None, edge_spec=None ):
-
             name, ctime = source_id.split( '%' )
             # dot files do not like percent characters
             source = name + '_' + ctime
@@ -233,16 +212,16 @@ class task_pool:
                 target = re.sub( '%', '_', target_id )
                 self.set_node( target_id )
 
-                if name in self.edge_color:
-                    if edge_spec:
-                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + ', color=' + self.edge_color[name] + '];\n' )
-                    else:
-                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [color=' + self.edge_color[name] + '];\n' )
+                #if name in self.edge_color:
+                #    if edge_spec:
+                #        self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + ', color=' + self.edge_color[name] + '];\n' )
+                #    else:
+                #        self.graphfile.write( '    ' + source + ' -> ' + target + ' [color=' + self.edge_color[name] + '];\n' )
+                #else:
+                if edge_spec:
+                    self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + '];\n' )
                 else:
-                    if edge_spec:
-                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + '];\n' )
-                    else:
-                        self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
+                    self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
 
             else:
                 # family member
@@ -267,7 +246,6 @@ class task_pool:
                 if itask.run_if_ready( current_time ):
 
                     if self.graphfile:
-                        self.node_seen = {}
 
                         target_id = itask.id 
                         if not self.config.get( 'task_families_in_subgraphs' ):

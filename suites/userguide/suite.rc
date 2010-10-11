@@ -18,18 +18,23 @@ FOO = ${HOME##*_}
 BAR = ${HOME%%_*}
 BAZ = ${HOME%%%%_*}
 
-[dependency graph]
-default node color = gray
-default edge color = red
-default node shape = ellipse
-use node color for edges = True
-color A = blue
-color B = yellow
-color C = green
-color F = green
-color D = yellowgreen
-color E = yellow
-color startup = steelblue
-color coldstart = steelblue
-color X = red
-shape X = box
+[dependency graph defaults]
+node attributes = style=filled, fillcolor=gray, color=blue, shape=ellipse
+edge attributes = color=black, style=bold
+
+[dependency graph node attributes]
+contact attributes = shape=septagon, color=black
+contact nodes = X
+
+coldstart attributes = style=unfilled, shape=box, color=black
+coldstart nodes = startup, coldstart
+
+red attributes = fillcolor=orange, color=invis
+yellow attributes = fillcolor=yellow, color=invis
+blue attributes = fillcolor=skyblue, color=invis
+green attributes = fillcolor=green, color=invis
+
+red nodes = A
+yellow nodes = C,F
+blue nodes = B,E
+green nodes = D
