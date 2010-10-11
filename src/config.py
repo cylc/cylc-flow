@@ -72,7 +72,7 @@ class config:
         self.items[ 'node_attributes' ] = {}
         foo = rc.config.items( 'dependency graph node attributes' )
         for bar in foo:
-            print bar
+            #print bar
             m = re.match( '(.*) attributes', bar[0] )
             n = re.match( '(.*) nodes', bar[0] )
             if m:

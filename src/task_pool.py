@@ -71,8 +71,14 @@ class task_pool:
                     self.node_attributes[ task ] = node_attributes[ task ]
                     if self.config.get( 'use_node_color_for_edges' ):
                         m = re.search( 'fillcolor *= *(\w+)', self.node_attributes[ task ] )
+                        n = re.search( 'color *= *(\w+)', self.node_attributes[ task ] )
                         if m:
                             self.edge_colors[ task ] = m.groups()[0]
+                        elif n:
+                            self.edge_colors[ task ] = n.groups()[0]
+                        else:
+                            # stick with default color 
+                            pass
 
         # determine task families and family members
         # (used in writing out the 'dot' graph file).
@@ -269,9 +275,8 @@ class task_pool:
                             members = self.members[ target_name ]
                             # define the subgraph ...
                             self.graphfile.write( '    subgraph cluster_' + target + ' {\n' )
-                            self.graphfile.write( '        //graph [ color=midnightblue];\n' )
-                            self.graphfile.write( '        //node [ fillcolor=paleturquoise ];\n' )
-                            self.graphfile.write( '        label = "' + target_name + ' task family";\n' )
+                            self.graphfile.write( '        graph [ fontsize=30,\n' )
+                            self.graphfile.write( '        label = "' + target_name + ' task family" ];\n' )
 
                             for member in members:
                                 # write family members with no edges
