@@ -21,6 +21,7 @@ BAZ = ${HOME%%%%_*}
 [dependency graph defaults]
 node attributes = style=filled, fillcolor=gray, color=blue, shape=ellipse
 edge attributes = color=black, style=bold
+use node color for edges = True
 
 [dependency graph node attributes]
 contact attributes = shape=septagon, color=black

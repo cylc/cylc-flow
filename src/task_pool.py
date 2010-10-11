@@ -62,15 +62,17 @@ class task_pool:
 
         # configure graph file parameters
         self.graphfile = graphfile
-        self.edge_color = {}   # TEMP
         if graphfile:
+            self.edge_colors = {}
             self.node_attributes = {}
             for task in self.config.get( 'task_list' ):
                 node_attributes = self.config.get( 'node_attributes' )
                 if task in node_attributes:
                     self.node_attributes[ task ] = node_attributes[ task ]
-                    #if self.config.get( 'use_node_color_for_edges' ):
-                        #self.edge_color[ task ] = node_colors[ task ]
+                    if self.config.get( 'use_node_color_for_edges' ):
+                        m = re.search( 'fillcolor *= *(\w+)', self.node_attributes[ task ] )
+                        if m:
+                            self.edge_colors[ task ] = m.groups()[0]
 
         # determine task families and family members
         # (used in writing out the 'dot' graph file).
@@ -212,16 +214,16 @@ class task_pool:
                 target = re.sub( '%', '_', target_id )
                 self.set_node( target_id )
 
-                #if name in self.edge_color:
-                #    if edge_spec:
-                #        self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + ', color=' + self.edge_color[name] + '];\n' )
-                #    else:
-                #        self.graphfile.write( '    ' + source + ' -> ' + target + ' [color=' + self.edge_color[name] + '];\n' )
-                #else:
-                if edge_spec:
-                    self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + '];\n' )
+                if name in self.edge_colors:
+                    if edge_spec:
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + ', color=' + self.edge_colors[name] + '];\n' )
+                    else:
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [color=' + self.edge_colors[name] + '];\n' )
                 else:
-                    self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
+                    if edge_spec:
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ' [' + edge_spec + '];\n' )
+                    else:
+                        self.graphfile.write( '    ' + source + ' -> ' + target + ';\n' )
 
             else:
                 # family member

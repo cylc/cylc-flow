@@ -10,6 +10,8 @@ GENERAL
   ALGORITHM MUST TASK RESTART OUTPUTS INTO ACCOUNT: Do not eliminate a
   finished task if its restart outputs are still valid.
 
+* merge the config and suiterc modules?
+
 * some kind of internal queuing system as a more flexible alternative to
   the simple max runahead limit?
 
