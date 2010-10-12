@@ -236,9 +236,26 @@ class scheduler:
  * specific nodes that are unfilled (this seems to be undocumented)
  * or just fill with the graph background color.
  *
- * If using dummy mode to generate the graph specify --clock-offset=0 
- * so that nodes are printed to the dot file in the most sensible order
- * as this may affect the final graph layout.
+ * If using dummy mode to generate the graph, specify --clock-offset=0 
+ * so that the suite will not simulate catchup to real time operation
+ * and nodes will therefore be printed out in a reasonably sensible
+ * order as this may affect the final graph layout.
+ *
+ * Processing this file with the graphviz 'unflatten' command may result
+ * in a more pleasing layout.
+ *
+ * You can use the 'dot -G|N|E' commandline options to experiment with
+ * different global settings without editing this dot file directly.
+ *
+ * Printing large graphs successfully can be problematic. One method 
+ * that works on Linux is to generate an svg layout, load into inkscape 
+ * and set the page size to A3 under "document properties", save a PDF
+ * copy, load that into evince, set A3 again, and 'landscape' if
+ * necessary, in "Print Setup", then print the frickin' thing.
+ *
+ * You can tell dot to split a large layout into a multi-page mosaic
+ * that can be pieced together after printing: use the 'page=x,y' and
+ * 'size' graph attributes (see dot documentation for details).
  */\n\n''' )
         self.graphfile.write( 'digraph ' + self.suite_name + ' {\n' )
         self.graphfile.write( '    graph [bgcolor=White, fontsize=40, compound=true, \n' )
