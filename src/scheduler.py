@@ -44,7 +44,7 @@ class scheduler:
         self.parser.set_defaults( pns_host= socket.getfqdn(),
                 dummy_mode=False, practice_mode=False,
                 include=None, exclude=None, debug=False,
-                clock_rate=10, clock_offset=24, dummy_run_length='20' )
+                clock_rate=10, clock_offset=24, dummy_run_length=20 )
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
@@ -201,10 +201,10 @@ class scheduler:
         if self.options.exclude:
             self.exclude_tasks = self.options.exclude.split(',')
 
-        self.clock_rate = self.options.clock_rate
-        self.clock_offset = self.options.clock_offset
+        self.clock_rate = float( self.options.clock_rate )
+        self.clock_offset = float( self.options.clock_offset )
+        self.dummy_run_length = float( self.options.dummy_run_length )
         self.failout_task_id = self.options.failout_task_id
-        self.dummy_run_length = self.options.dummy_run_length
 
     def initialize_graphfile( self ):
         print "Opening dot graph file", self.options.graphfile 
@@ -362,15 +362,12 @@ class scheduler:
         self.config.put( 'clock', self.clock )
 
         if self.dummy_mode:
-            self.config.put_env( 'CYLC_CLOCK_RATE', str( self.clock_rate ) )
-            # communicate failout_task_id to the dummy task program
-
             if self.failout_task_id:
                 print "SETTING A FAILOUT TASK: " + self.failout_task_id
                 # now done below in configure_job_submission()
 
-            print "SETTING DUMMY TASK RUN LENGTH: " + self.dummy_run_length + " dummy clock minutes"
-            dummy_seconds = int( self.dummy_run_length ) * 60.0
+            print "SETTING DUMMY TASK RUN LENGTH: " + str( self.dummy_run_length ) + " dummy clock minutes"
+            dummy_seconds = self.dummy_run_length * 60
             real_seconds = dummy_seconds * self.clock_rate / 3600.0
             self.config.put_env( 'CYLC_DUMMY_SLEEP', real_seconds )
 
