@@ -566,8 +566,8 @@ class task_pool:
 
     def cleanup_generic( self, failed_rt ):
         # B/ THE GENERAL CASE
-        # No finished-and-spawned task that is later than the earliest
-        # unsatisfied task can be deleted yet because it may still be
+        # No finished-and-spawned task that is later than the *EARLIEST
+        # UNSATISFIED* task can be deleted yet because it may still be
         # needed to satisfy new tasks that may appear when earlier (but
         # currently unsatisfied) tasks spawn. Therefore only
         # finished-and-spawned tasks that are earlier than the
@@ -583,12 +583,16 @@ class task_pool:
         # result in deletion of finished tasks that are still required
         # to satisfy others after a restart.
 
-        # THEREFORE the correct deletion cutoff is 'EARLIEST UNFINISHED'
-        # (members of which will remain in, or be reset to, the waiting
-        # state on a restart. The only way to use 'earliest unsatisfied'
-        # over a restart would be to record the state of all
+        # THEREFORE the correct deletion cutoff is the earlier of:
+        # *EARLIEST UNFINISHED*  OR *EARLIEST UNSPAWNED*, the latter
+        # being required to account for sequential (and potentially
+        # tied) tasks that can spawn only after finishing - thus there
+        # may be tasks in the system that have finished but have not yet
+        # spawned a successor that could still depend on the deletion
+        # candidate.  The only way to use 'earliest unsatisfied'
+        # over a suite restart would be to record the state of all
         # prerequisites for each task in the state dump (which may be a
-        # good thing to do?)
+        # good thing to do, eventually!)
 
         [ all_finished, earliest_unfinished ] = self.earliest_unfinished()
         if all_finished:
@@ -596,7 +600,18 @@ class task_pool:
         else:
             self.log.debug( "earliest unfinished: " + earliest_unfinished )
 
-         # find candidates for deletion
+        # time of the earliest unspawned task
+        [all_spawned, earliest_unspawned] = self.earliest_unspawned()
+        if all_spawned:
+            self.log.debug( "all tasks spawned")
+        else:
+            self.log.debug( "earliest unspawned task at: " + earliest_unspawned )
+
+        cutoff = int( earliest_unfinished )
+        if int( earliest_unspawned ) < cutoff:
+            cutoff = int( earliest_unspawned )
+
+        # find candidates for deletion
         candidates = {}
         for itask in self.tasks:
 
@@ -610,7 +625,7 @@ class task_pool:
             #    if int( itask.c_time ) >= int( earliest_unsatisfied ):
             #        continue
             if not all_finished:
-                if int( itask.c_time ) >= int( earliest_unfinished ):
+                if int( itask.c_time ) >= cutoff:
                     continue
             
             if itask.c_time in candidates.keys():
@@ -630,7 +645,7 @@ class task_pool:
             #    if int( rt ) >= int( earliest_unsatisfied ):
             #        continue
             if not all_finished:
-                if int( rt ) >= int( earliest_unfinished ):
+                if int( rt ) >= cutoff:
                     continue
             
             for itask in candidates[ rt ]:
