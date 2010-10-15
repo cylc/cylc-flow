@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* task ID should not be needed in message strings (?); it can be supplied 
+  automatically by access methods (for started, finished, etc.)
+
 * cycle-dependent number of restarts: this can cause problems because
   only the most recent finished task is retained to satisfy
   prerequisites. If a task alternately does short and long forecasts
