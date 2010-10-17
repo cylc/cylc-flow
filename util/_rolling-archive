@@ -29,11 +29,6 @@ parser.add_option( "-d", "--directories",
         help="The archive contains sub-directories labeled by cycle time",
         action="store_true", dest="subdirs", default=False )
 
-parser.add_option( "-o", "--offset",
-        metavar="HOURS",
-        help="""delete files in DIR more than HOUR hours older than
-cycle time""", action="store", dest="offset" )
-
 ( options, args ) = parser.parse_args()
 
 if options.ctime:
