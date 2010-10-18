@@ -1,6 +1,15 @@
 _______
 GENERAL
 
+* check use of re m.group() and m.groups(): 
+
+    m.group(0)  # entire match
+    m.group(1)  # first parenthesised sub-group
+                # ...
+
+    m.groups()  # tuple of parenthesised sub-groups
+
+
 * task ID should not be needed in message strings (?); it can be supplied 
   automatically by access methods (for started, finished, etc.)
 
