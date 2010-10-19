@@ -1,0 +1,320 @@
+#!/usr/bin/env python
+
+import os, re, sys
+import shutil
+import cycle_time
+from optparse import OptionParser
+from execute import execute
+from mkdir_p import mkdir_p
+
+# ASSUMPTIONS: First matched string of 10 digits in a file or directory
+# name must be cycle time OR, if no string of 10 digits is found, first
+# matched strings of 8 and 2 digits combine to make cycle time. We could
+# use re.findall() to match all strings of 10 digits and then find the
+# first one that is a valid cycle time, but it isn't clear what do to 
+# in a similar vein for the separate (YYYYMMDD, HH) cases.
+
+usage = """1/ cylcutil manage-files [options] SOURCE MATCH OFFSET [DESTINATION]
+Usage: 2/ cylcutil manage-files CONFIG
+
+Cycle time based file management: delete, move, or copy, en masse, files
+and directories that are older than some cutoff relative to current cycle time. 
+
+Arguments:
+    SOURCE - path to a directory containing files or sub-directories
+             that are labelled by some combination of YYYY,MM,DD,HH.
+    MATCH  - python-style regular expression for matching files or 
+             directories (under SOURCE) to manage.
+    OFFSET - offset from base cycle time (from $CYCLE_TIME or command
+             line) beyond which to delete, move, or copy items.
+    CONFIG - config files specifying a list of sources and how to
+             manage them.
+"""
+
+parser = OptionParser( usage )
+
+parser.add_option( "--cycle-time",
+        metavar='YYYYMMDDHH',
+        help="Cycle time, defaults to $CYCLE_TIME",
+        action="store", dest="ctime" )
+
+parser.add_option( "--delete", "-d",
+        help="delete target entries",
+        action="store_true", dest="delete", default=False )
+
+parser.add_option( "--copy", "-c",
+        help="copy target entries",
+        action="store_true", dest="copy", default=False )
+
+parser.add_option( "--move", "-m",
+        help="move target entries",
+        action="store_true", dest="move", default=False )
+
+parser.add_option( "--debug", 
+        help="write out details of what was done",
+        action="store_true", dest="debug", default=False )
+
+( options, args ) = parser.parse_args()
+
+if len( args ) == 0  or len( args ) > 4:
+    parser.error( "Wrong number of arguments" ) 
+
+if options.ctime:
+    ctime = options.ctime
+elif 'CYCLE_TIME' in os.environ:
+    ctime = os.environ[ 'CYCLE_TIME' ]
+else:
+    parser.error( "Use --cycle-time or define $CYCLE_TIME" )
+
+if len( args ) == 1:
+    config = args[0]
+
+    if not os.path.isfile( config ):
+        parser.error( "Config file not found: " + config )
+
+    FILE = open( config, 'r' )
+    lines = FILE.readlines()
+    FILE.close()
+
+    if not re.match ('# cylcutil manage-files', lines[0] ):
+        raise SystemExit( config + " is not declared as a cylcutil manage-files config file" )
+
+    if options.debug:
+        print "Parsing config file:", config
+
+    for line in lines:
+        # strip trailing newlines
+        line = line.rstrip( '\n' )
+
+        # omit blank lines
+        if re.match( '^\s*$', line ):
+            continue
+
+        # omit full line comments
+        if re.match( '^\s*#', line ):
+            continue
+
+        # strip trailing comments
+        line = re.sub( '#.*$', '', line )
+
+        # parse line
+        tokens = line.split()
+        destination = ''
+        if len( tokens ) == 5:
+            source, match, operation, offset, destination = tokens
+        elif len( tokens ) == 4:
+            source, match, operation, offset = tokens
+        else:
+            raise SystemExit( "illegal config line:\n  " + line )
+
+        if options.debug:
+            print " - source: ", source
+            print " - match:  ", match
+            print " - opern:  ", operation
+            print " - offset: ", offset
+            print " - destin: ", destination
+
+        # construct command to execute
+        command = '_manage-files'
+        # subprocess.call() takes a list: [ command, arg1, arg2, ...]
+        commandlist = [ command ]
+        if options.debug:
+            commandlist.append( '--debug' )
+        commandlist.append( '--cycle-time=' + ctime )
+        commandlist.append( '--' + operation )
+        commandlist.append( source )
+        commandlist.append( match )
+        commandlist.append( offset )
+        commandlist.append( destination )
+        execute( commandlist )
+
+else:
+
+    destination = None
+
+    if not options.delete and not options.move and not options.copy:
+        parser.error( "Choose 'delete', 'move', or 'copy'" )
+
+    if len( args ) == 4:
+        # DESTINATION
+        destination = args[3]
+
+    elif options.move or options.copy:
+        parser.error( "Operations 'copy' and 'move' require a destination" )
+
+    # SOURCE
+    source = args[0]
+
+    # MATCH
+    match = args[1]
+
+    # OFFSET
+    try:
+        offset = int( args[2] )
+    except ValueError:
+        parser.error( "OFFSET must be an integer: " + offset )
+    else:
+        if offset < 0:
+            parser.error( "OFFSET must be a positive integer" )
+
+    if options.debug:
+        print "Parsed commandline arguments:"
+        print " o source directory:", source
+        print " o match regex:    :", match
+        print " o offset (hourse) :", offset
+        if destination:
+            print " o destination:    ", destination
+
+    # replace YYYYMMDDHH, and YYYYMMDD, HH in match patterns
+    digits10 = False
+    if re.search( 'YYYYMMDDHH', match ):
+        match_regex = re.sub( 'YYYYMMDDHH', '(\d{10})', match )
+        digits10 = True
+    else:
+        if re.search( 'YYYYMMDD', match ) and re.search( 'HH', match ):
+            match_regex = re.sub( 'YYYYMMDD', '(\d{8})', match_regex )
+            match_regex = re.sub( 'HH', '(\d{2})', match_regex )
+        else:
+            raise SystemExit( "Illegal match pattern: " + match )
+
+    # interpolate SIMPLE environment variables ($foo, ${foo}) into paths
+    source = os.path.expandvars( source )
+    if destination:
+        destination = os.path.expandvars( destination )
+
+    if options.debug:
+        print "Post environment variable interpolation:"
+        print " o source directory:", source
+        if destination:
+            print " o destination:    ", destination
+
+    # check source exists
+    if not os.path.isdir( source ):
+        raise SystemExit( "Source directory not found: " + source )
+
+    ignored = []
+    actioned= []
+    for entry in os.listdir( source ):
+        entrypath = os.path.join( source, entry )
+
+        if options.debug:
+            print "Source item:", entry
+
+        m = re.search( match_regex, entry )
+        if not m:
+            ignored.append( entry )
+            if options.debug:
+                print " + (no match)"
+            continue
+
+        mgrps = m.groups()
+        if len(mgrps) == 1:
+            matched_ctime = mgrps[0]
+
+        elif len(mgrps) == 2:
+            foo, bar = mgrps
+            if len(foo) == 8 and len(bar) == 2:
+                matched_ctime = foo + bar
+            elif len(foo) == 2 and len(bar) == 8:
+                matched_ctime = bar + foo
+ 
+        else:
+            raise SystemExit( "Illegal regex?: " + match + ' -> ' + match_regex )
+
+        if options.debug:
+            print " + matched:", matched_ctime, 
+
+        if not cycle_time.is_valid( matched_ctime ):
+            # match is not a valid cycle time: ignore
+            if options.debug:
+                print " ... NOT VALID"
+            ignored.append( entry )
+            continue
+        else:
+            if options.debug:
+                print " ... valid"
+
+        # can assume ctime is >= matched_ctime
+        gap = cycle_time.diff_hours( ctime, matched_ctime )
+        if options.debug:
+            print " + computed offset (hours):", gap
+        if gap <= offset:
+            # younger than cutoff: ignore
+            ignored.append( entry )
+            if options.debug:
+                print " + (younger than cutoff)"
+            continue
+        else:
+            if options.debug:
+                print " + OLDER THAN CUTOFF"
+
+        # older than cutoff: action
+        actioned.append( entry )
+
+        # DELETE
+        if options.delete:
+            if os.path.isdir( entrypath ):
+                shutil.rmtree( entrypath )
+            elif os.path.isfile( entrypath ):
+                os.unlink( entrypath )
+            continue
+
+        # COPY or MOVE
+        # destination directory may be cycle time dependent
+        dest = destination
+        dest = re.sub( "YYYYMMDDHH", matched_ctime, dest )
+        dest = re.sub( 'YYYYMMDD', matched_ctime[0:8], dest )
+        dest = re.sub( 'YYYYMM', matched_ctime[0:6], dest )
+        dest = re.sub( 'MMDD', matched_ctime[4:8], dest )
+        dest = re.sub( 'YYYY', matched_ctime[0:4], dest )
+        dest = re.sub( 'MM', matched_ctime[8:10], dest )
+        dest = re.sub( 'DD', matched_ctime[6:8], dest )
+        dest = re.sub( 'HH', matched_ctime[8:10], dest )
+
+        if options.debug:
+            print " + destination directory:", dest,
+
+        if os.path.isfile( dest ):
+            raise SystemExit( "Destination directory exists as a file: " + dest )
+    
+        elif os.path.isdir( dest ):
+            if options.debug:
+                print " ... already exists"
+        else:
+            if options.debug:
+                print " ... creating"
+            mkdir_p( dest )
+
+        if options.copy:
+            # NOTE: shutils.copytree() does not allow the destination
+            # directory to exist beforehand; i.e. it won't add files to an
+            # existing directory. So for now we'll do it by executing a
+            # shell command.
+    
+            # construct command to execute
+            command = 'cp'
+            # subprocess.call() takes a list: [ command, arg1, arg2, ...]
+            commandlist = [ command ]
+            commandlist.append( '-r')
+            commandlist.append( entrypath )
+            commandlist.append( dest )
+            execute( commandlist )
+    
+        elif options.move:
+            # shutil.move is SAFE, docs say:
+            #   Recursively move a file or directory to another location.
+            #   If the destination is on the current filesystem, then simply
+            #   use rename. Otherwise, copy src (with copy2()) to the dst
+            #   and then remove src.
+    
+            shutil.move( entrypath, dest )
+    
+        else:
+            # will not be reached due to the check above
+            raise SystemExit( "No operation chosen (delete,move,copy)")
+    
+    print "----"
+    print "File Management SUMMARY:"
+    print "   ", len( actioned ), "entries actioned"
+    print "   ", len( ignored ), "entries ignored"
+    print "----"

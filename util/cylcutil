@@ -35,6 +35,7 @@ allowed_commands = \
     [ 
     'help',
     'rolling-archive',
+    'manage-files',
     'file-transfer',
     'cycle-time',
     'template',
