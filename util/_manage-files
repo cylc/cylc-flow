@@ -281,14 +281,13 @@ else:
         if options.debug:
             print " + computed offset hours", gap, 
         if gap <= offset:
-            # younger than cutoff: ignore
             ignored += 1
             if options.debug:
-                print " not actionable (younger than cutoff)"
+                print "- ignoring (younger than cutoff)"
             continue
         else:
             if options.debug:
-                print " ACTIONING (older than cutoff)"
+                print "- ACTIONING (older than cutoff)"
 
         if destination:
             # destination directory may be cycle time dependent
