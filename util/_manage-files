@@ -36,13 +36,17 @@ DESTINATION may contain the strings YYYYMMDDHH, YYYY, MM, DD, HH; e.g.
 $ARCHIVE/oper/YYYYMM/DD. These will be replaced, for each matched item,
 using the extracted cycle time.
 
-If DESTINATION is specified for the delete operation, matched items in
+If DESTINATION is specified for the [delete] operation, matched items in
 SOURCE will not be deleted unless they are found in DESTINATION. This
 can be used to check that important files have been successfully
 archived before deleting the originals. 
 
 The [move] and [copy] operations are skipped if the item already exists 
 in DESTINATION. Use '--force' to change this default behavior.
+
+The [delete] operation can be used to implement a simple rolling archive
+of cycle-time labelled files or directories: just set OFFSET to the
+appropriate archive length.
 
 Item names must contain a cycle time YYYYMMDDHH, or YYYYMMDD and HH
 separately, for comparison with the offset from current cycle time.
