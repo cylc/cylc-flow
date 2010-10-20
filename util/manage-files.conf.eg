@@ -1,0 +1,12 @@
+# THIS IS AN EXAMPLE FILE MANAGEMENT CONFIG FOR 'cylcutil manage-files' 
+
+# For documentation of the file format: 'cylcutil manage-files --help'
+
+# SOURCE     MATCH           OPERATION   OFFSET   [DESTINATION]
+
+# Copy the foo netcdf files to archive.
+#$OUTPUT   foo-(\d{10})\.nc   copy        6         $ARCHIVE/YYYYMM/DD
+
+# Delete the same files if they are already in the archive.
+# Offset 48 allows the original files to remain accessible for one day.
+$OUTPUT   foo-(\d{10})\.nc   delete     12         $ARCHIVE/YYYYMM/DD
