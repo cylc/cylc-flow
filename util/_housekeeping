@@ -13,8 +13,8 @@ def right_justify( short, long ):
     short_re = re.sub( '.', '.', short ) + '$'
     return re.sub( short_re, short, template )
  
-usage = """1/ cylcutil manage-files [options] SOURCE MATCH OFFSET [DESTINATION]
-Usage: 2/ cylcutil manage-files [options] CONFIG
+usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OFFSET [DESTINATION]
+Usage: 2/ cylcutil housekeeping [options] CONFIG
 
 Cycle time based file management: delete, move, or copy, items (files or
 directories) whose cycle times (extracted from the item name) are more
@@ -27,7 +27,7 @@ SOURCE    MATCH    OPERATION   OFFSET   [DESTINATION]
 
 Where OPERATION is one of 'copy', 'move', or 'delete', and SOURCE,
 MATCH, OFFSET, and DESTINATION are as described below for commandline
-invocation. See also the example $CYLC_DIR/util/manage-files.conf.eg.
+invocation. See also the example $CYLC_DIR/util/housekeeping.conf.eg.
 
 The SOURCE and DESTINATION directories must be on the local filesystem,
 and may contain environment varables such as $HOME or ${HOME}.
@@ -157,7 +157,7 @@ if len( args ) == 1:
             raise SystemExit( "illegal config line:\n  " + line )
 
         # construct command to execute
-        command = '_manage-files'
+        command = '_housekeeping'
         # subprocess.call() takes a list: [ command, arg1, arg2, ...]
         commandlist = [ command ]
         if options.debug:

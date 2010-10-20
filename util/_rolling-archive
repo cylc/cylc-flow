@@ -9,9 +9,7 @@ usage = """cylcutil rolling-archive [options] PATH HOURS
 
 Implement a cycle time based rolling archive.
 
-DEPRECATED
-  => use cylcutil manage-files instead
-DEPRECATED
+DEPRECATED use cylcutil housekeeping instead DEPRECATED
 
 Matches FIRST cycle time found in file names
 

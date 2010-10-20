@@ -1,5 +1,5 @@
-# THIS IS AN EXAMPLE FILE MANAGEMENT CONFIG FOR 'cylcutil manage-files' 
-# For documentation, see 'cylcutil manage-files --help'.
+# THIS IS AN EXAMPLE CONFIG FOR 'cylcutil housekeeping' 
+# For documentation, see 'cylcutil housekeeping --help'.
 
 # SOURCE     MATCH           OPERATION   OFFSET   [DESTINATION]
 
