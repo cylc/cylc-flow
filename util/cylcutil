@@ -56,11 +56,12 @@ usage = \
     '  cylcutil COMMAND --help',
     '',
     'COMMANDS:',
-    '  rolling-archive .... To Do',
-    '  file-transfer ...... To Do',
-    '  cycle-time ......... To Do',
-    '  template ........... To Do',
-    '  check-vars ......... To Do',
+    '  rolling-archive .... (deprecated: use manage-files)',
+    '  manage-files ....... general file archiving and cleanup tool',
+    '  file-transfer ...... general scp-based file transfer tool',
+    '  cycle-time ......... cycle time arithmetic',
+    '  template ........... cycle time based filename templating',
+    '  check-vars ......... check that required variables are defined',
     '  help ............... Print this message and exit; also [-h], [--help]',
     ]
 
