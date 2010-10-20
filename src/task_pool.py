@@ -597,6 +597,7 @@ class task_pool:
         [ all_finished, earliest_unfinished ] = self.earliest_unfinished()
         if all_finished:
             self.log.debug( "all tasks finished" )
+            return
         else:
             self.log.debug( "earliest unfinished: " + earliest_unfinished )
 
@@ -607,6 +608,8 @@ class task_pool:
         else:
             self.log.debug( "earliest unspawned task at: " + earliest_unspawned )
 
+        # note that earliest unfinished is undefined if all tasks are
+        # finished, but we return above in that case.
         cutoff = int( earliest_unfinished )
         if int( earliest_unspawned ) < cutoff:
             cutoff = int( earliest_unspawned )
