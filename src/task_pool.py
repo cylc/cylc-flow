@@ -395,7 +395,7 @@ class task_pool:
 
     def earliest_unspawned( self ):
         all_spawned = True
-        earliest_unspawned = None
+        earliest_unspawned = '0001010100'
         for itask in self.tasks:
             if not itask.state.has_spawned():
                 all_spawned = False
@@ -409,7 +409,7 @@ class task_pool:
     def earliest_unsatisfied( self ):
         # find the earliest unsatisfied task
         all_satisfied = True
-        earliest_unsatisfied = None
+        earliest_unsatisfied = '0001010100'
         for itask in self.tasks:
             if not itask.prerequisites.all_satisfied():
                 all_satisfied = False
@@ -423,7 +423,7 @@ class task_pool:
     def earliest_unfinished( self ):
         # find the earliest unfinished task
         all_finished = True
-        earliest_unfinished = None
+        earliest_unfinished = '0001010100'
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED
             #    continue
@@ -597,7 +597,6 @@ class task_pool:
         [ all_finished, earliest_unfinished ] = self.earliest_unfinished()
         if all_finished:
             self.log.debug( "all tasks finished" )
-            return
         else:
             self.log.debug( "earliest unfinished: " + earliest_unfinished )
 
@@ -608,8 +607,6 @@ class task_pool:
         else:
             self.log.debug( "earliest unspawned task at: " + earliest_unspawned )
 
-        # note that earliest unfinished is undefined if all tasks are
-        # finished, but we return above in that case.
         cutoff = int( earliest_unfinished )
         if int( earliest_unspawned ) < cutoff:
             cutoff = int( earliest_unspawned )
