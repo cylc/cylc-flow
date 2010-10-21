@@ -8,6 +8,22 @@ from execute import execute
 from mkdir_p import mkdir_p
 from task_message import message
 
+try:
+    import subprocess
+    use_subprocess = True
+except:
+    use_subprocess = False
+    print "+++++++++++++++++++++++++++++++++++++++++++++++"
+    print "WARNING: UNABLE TO IMPORT THE SUBPROCESS MODULE"
+    pyver = sys.version_info
+    if pyver < (2, 4):
+        print "  (subprocess was introduced in Python 2.4)"
+    print "=> the file differencing check functionality is"
+    print "not available for housekeeping delete operation"
+    print "+++++++++++++++++++++++++++++++++++++++++++++++"
+    print
+
+
 def right_justify( short, long ):
     template = re.sub( '.', ' ', long )
     short_re = re.sub( '.', '.', short ) + '$'
@@ -37,9 +53,13 @@ $ARCHIVE/oper/YYYYMM/DD. These will be replaced, for each matched item,
 using the extracted cycle time.
 
 If DESTINATION is specified for the [delete] operation, matched items in
-SOURCE will not be deleted unless they are found in DESTINATION. This
-can be used to check that important files have been successfully
-archived before deleting the originals. 
+SOURCE will not be deleted unless an identical file is found in
+DESTINATION. This can be used to check that important files have been
+successfully archived before deleting the originals. !!!WARNING!!! this
+functionality uses Python 'subprocess' module to spawn a shell 'diff
+-s' command. Subprocess is not available for Python < 2.4, in which case
+the file will be deleted if a file with the *same name* (but not
+necessarily identical contents) is found in DESTINATION.
 
 The [move] and [copy] operations are skipped if the item already exists 
 in DESTINATION. Use '--force' to change this default behavior.
@@ -317,20 +337,74 @@ else:
                 mkdir_p( dest )
 
             target = os.path.join( dest, entry )
-            target_exists = os.path.exists( target )
-            if options.delete:
+            if options.debug:
+                print " + target:", target, 
+
+            if not os.path.exists( target ):
+                target_exists = False
                 if options.debug:
-                    print " + delete only IF this file exists:", target 
-                if not target_exists:
-                    msg = "NOT DELETING " + entrypath + " (" + target + " not found)"
+                    print "... does not exist"
+            else:
+                target_exists = True
+                if options.debug:
+                    print "... exists"
+
+                if use_subprocess:
+                    # Are the files identical?
+                    # There seems to be no obvious Pythonic 'diff -s'...
+                    command = 'diff'
+                    # subprocess.call() takes a list: [ command, arg1, arg2, ...]
+                    commandlist = [ command ]
+                    commandlist.append( '-s')
+                    commandlist.append( target )
+                    commandlist.append( entrypath )
+                    try:
+                        execute( commandlist, ignore_output=True )
+                    except:
+                        target_identical = False
+                    else:
+                        target_identical = True
+
+            if options.delete:
+                if use_subprocess:
+                    if target_exists and target_identical:
+                        # delete the file (handled below)
+                        pass
+
+                    elif target_exists and not target_identical:
+                        msg = "NOT DELETING " + entrypath + " (" + target + " DIFFERS)"
+                        message( msg, priority='WARNING' ).send()
+                        aborted += 1
+                        continue
+
+                    else:
+                        # target does not exist
+                        msg = "NOT DELETING " + entrypath + " (" + target + " not found)"
+                        message( msg, priority='WARNING' ).send()
+                        aborted += 1
+                        continue
+                else:
+                    if target_exists:
+                        # delete the file (handled below)
+                        pass
+                    else:
+                        # target does not exist
+                        msg = "NOT DELETING " + entrypath + " (" + target + " not found)"
+                        message( msg, priority='WARNING' ).send()
+                        aborted += 1
+                        continue
+
+            elif not options.force:
+                # unforced copy or move
+                if target_exists and target_identical:
+                    print "NOT", action, entrypath, "-->", target, "(target exists)"
+                    aborted += 1
+                    continue
+                elif target_exists and not target_identical:
+                    msg = "NOT " + action + entrypath + " (" + target + " (target exists BUT DIFFERS)"
                     message( msg, priority='WARNING' ).send()
                     aborted += 1
                     continue
-
-            elif target_exists and not options.force:
-                print "NOT", action, entrypath, "-->", target, "(target exists)"
-                aborted += 1
-                continue
  
         actioned += 1
 
@@ -356,6 +430,7 @@ else:
             commandlist.append( '-r')
             commandlist.append( entrypath )
             commandlist.append( dest )
+            # script will abort with warning if the copy fails here
             execute( commandlist )
     
         elif options.move:
