@@ -17,8 +17,8 @@ usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OFFSET [DESTINATION]
 Usage: 2/ cylcutil housekeeping [options] CONFIG
 
 Cycle time based file management: delete, move, or copy, items (files or
-directories) whose cycle times (extracted from the item name) are more
-than OFFSET hours earlier than the current or given cycle time. 
+directories) with cycle times (extracted from the item name) OFFSET
+hours or more earlier than the current or given cycle time. 
 
 The CONFIG file format is one or more of lines of:
 
@@ -77,7 +77,7 @@ failure in the archiving process.
 Arguments:
   SOURCE - Path to a directory containing items to be managed.
   MATCH  - Python regular expression for matching items to manage.
-  OFFSET - Offset from current cycle time, beyond which to operate.
+  OFFSET - Offset from current cycle time at which to begin operating.
   CONFIG - A file specifying how to manage multiple source directories."""
 
 parser = OptionParser( usage )
@@ -280,14 +280,14 @@ else:
         gap = cycle_time.diff_hours( ctime, matched_ctime )
         if options.debug:
             print " + computed offset hours", gap, 
-        if gap <= offset:
+        if gap < offset:
             ignored += 1
             if options.debug:
-                print "- ignoring (younger than cutoff)"
+                print "- ignoring (< cutoff)"
             continue
         else:
             if options.debug:
-                print "- ACTIONING (older than cutoff)"
+                print "- ACTIONING (>= cutoff)"
 
         if destination:
             # destination directory may be cycle time dependent
