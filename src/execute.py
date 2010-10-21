@@ -2,7 +2,7 @@
 
 import sys, os
 
-def execute( command_list ):
+def execute( command_list, ignore_output=False ):
 
     try:
         import subprocess
@@ -21,7 +21,11 @@ def execute( command_list ):
 
     if use_subprocess:
         try:
-            retcode = subprocess.call( command_list )
+            if ignore_output:
+                retcode = subprocess.call( command_list, stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT )
+            else:
+                retcode = subprocess.call( command_list )
+
             if retcode != 0:
                 # the command returned non-zero exist status
                 print >> sys.stderr, ' '.join( command_list ), ' failed: ', retcode
@@ -30,8 +34,8 @@ def execute( command_list ):
         except OSError:
             # the command was not invoked
             print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
-            print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
-            print >> sys.stderr, " * Are all cylc scripts executable?"
+            #print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
+            #print >> sys.stderr, " * Are all cylc scripts executable?"
             sys.exit(1)
     else:
         command = ' '.join(command_list)
