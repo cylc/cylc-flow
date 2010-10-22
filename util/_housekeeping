@@ -38,12 +38,15 @@ hours or more earlier than the current or given cycle time.
 
 The CONFIG file format is one or more of lines of:
 
+VARNAME=VALUE
 # comment
 SOURCE    MATCH    OPERATION   OFFSET   [DESTINATION]
 
 Where OPERATION is one of 'copy', 'move', or 'delete', and SOURCE,
 MATCH, OFFSET, and DESTINATION are as described below for commandline
 invocation. See also the example $CYLC_DIR/util/housekeeping.conf.eg.
+Environment variables can be defined in the config file, or in cylc
+suite.rc or taskdef files when this utility is wrapped by a cylc task.
 
 The SOURCE and DESTINATION directories must be on the local filesystem,
 and may contain environment varables such as $HOME or ${HOME}.
@@ -169,6 +172,16 @@ if len( args ) == 1:
 
         # strip trailing comments
         line = re.sub( '#.*$', '', line )
+
+        # defined environment variables
+        m = re.match( '(\w+)=(.*)', line )
+        if m:
+            varname=m.group(1)
+            varvalue=m.group(2)
+            os.environ[varname] = os.path.expandvars( varvalue )
+            if options.debug:
+                print 'Defining variable: ', varname, '=', varvalue
+            continue
 
         # parse line
         tokens = line.split()

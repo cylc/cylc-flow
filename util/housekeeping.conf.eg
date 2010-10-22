@@ -3,6 +3,11 @@
 
 # SOURCE     MATCH           OPERATION   OFFSET   [DESTINATION]
 
+# NOTE: for housekeeping tasks in cylc suites you can define 
+# environment variables in the suite.rc or taskdef files.
+OUTPUT=$HOME/output
+ARCHIVE=$HOME/archive
+
 # Copy the foo netcdf files to archive.
 $OUTPUT   foo-(\d{10})\.nc   copy        6         $ARCHIVE/YYYYMM/DD
 
