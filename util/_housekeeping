@@ -107,6 +107,10 @@ parser.add_option( "--cycle-time",
         help="Cycle time, defaults to $CYCLE_TIME",
         action="store", dest="ctime" )
 
+parser.add_option( "--dry-run",
+        help="print what would be done, but don't do it.",
+        action="store_true", dest="dry_run", default=False )
+
 parser.add_option( "--force", "-f",
         help="copy or move even if the target already exists",
         action="store_true", dest="force", default=False )
@@ -182,6 +186,8 @@ if len( args ) == 1:
         commandlist = [ command ]
         if options.debug:
             commandlist.append( '--debug' )
+        if options.dry_run:
+            commandlist.append( '--dry-run' )
         if options.force:
             commandlist.append( '--force' )
         commandlist.append( '--cycle-time=' + ctime )
@@ -409,14 +415,21 @@ else:
         actioned += 1
 
         if options.delete:
+            if options.dry_run:
+                print "(dry run) WOULD DELETE ", entrypath
+                continue
+
             print "DELETING ", entrypath
             if os.path.isdir( entrypath ):
                 shutil.rmtree( entrypath )
             elif os.path.isfile( entrypath ):
                 os.unlink( entrypath )
-            continue
 
-        if options.copy:
+        elif options.copy:
+            if options.dry_run:
+                print "(dry run) WOULD COPY " + entrypath + " --> " + target
+                continue
+                
             print "COPYING " + entrypath + " --> " + target
             # NOTE: shutils.copytree() does not allow the destination
             # directory to exist beforehand; i.e. it won't add files to an
@@ -434,6 +447,10 @@ else:
             execute( commandlist )
     
         elif options.move:
+            if options.dry_run:
+                print "(dry run) WOULD MOVE " + entrypath + " --> " + target
+                continue
+
             print "MOVING " + entrypath + " --> " + target
             # shutil.move() is SAFE, docs say:
             #   Recursively move a file or directory to another location.
