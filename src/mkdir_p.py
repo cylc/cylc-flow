@@ -22,7 +22,11 @@ def mkdir_p( path, mode=None ):
         old_mode = os.umask( 0 )
 
     try:
-        os.makedirs( path, mode )
+        if mode:
+            os.makedirs( path, int(mode, 8) )
+        else:
+            os.makedirs( path )
+
     except OSError, err:
         if err.errno != errno.EEXIST:
             raise

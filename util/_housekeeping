@@ -105,6 +105,10 @@ Arguments:
 
 parser = OptionParser( usage )
 
+# WARNING: IF ADDING NEW COMMANDLINE OPTIONS TO THIS SCRIPT, BE AWARE
+# THAT THEY NEED TO BE PARSED THROUGH TO THE INNER SELF-CALL (FOR EACH
+# LINE OF A CONFIG FILE; SEE BELOW)
+
 parser.add_option( "--cycle-time",
         metavar='YYYYMMDDHH',
         help="Cycle time, defaults to $CYCLE_TIME",
@@ -129,6 +133,12 @@ parser.add_option( "--copy", "-c",
 parser.add_option( "--move", "-m",
         help="move matched items",
         action="store_true", dest="move", default=False )
+
+parser.add_option( "--umask", 
+        help="Octal umask for creating new destination directories"
+        "E.g. 0775 for drwxrwxr-x",
+        metavar='MODE',
+        action="store", dest="mode", default=None )
 
 parser.add_option( "--debug", 
         help="write out details of what was done",
@@ -203,6 +213,8 @@ if len( args ) == 1:
             commandlist.append( '--dry-run' )
         if options.force:
             commandlist.append( '--force' )
+        if options.mode:
+            commandlist.append( '--umask=' + options.mode )
         commandlist.append( '--cycle-time=' + ctime )
         commandlist.append( '--' + operation )
         commandlist.append( source )
@@ -353,7 +365,7 @@ else:
             else:
                 if options.debug:
                     print "(creating)"
-                mkdir_p( dest )
+                mkdir_p( dest, options.mode )
 
             target = os.path.join( dest, entry )
             if options.debug:
