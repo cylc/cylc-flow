@@ -84,6 +84,10 @@ Examples:
  1/ 'foo-(\d{10})' -> 'foo-2010122318.nc', 'foo-2010090806-bar.txt'
  2/ 'foo-(\d{10}).*\.nc' -> 'foo-2010122318.nc', 'foo-2010090806-bar.nc'
  3/ '(\d{2})_(\d{8}).*\.nc' -> 'foo18_20101223-nz.nc'
+ If you need to use additional parentheses for either-or matches,
+ the MUST be of the (?:...) type to avoid creating a new match group.
+ E.g.:
+ 4/ 'foo-(\d{10})\.(?:nc|txt)' -> 'foo-2010122318.nc', 'foo-2010090806-bar.txt'
 
 SAFE ARCHIVING: The [move] operation is implemented by Python's
 shutils.move() which uses 'rename' on the local disk partition and
