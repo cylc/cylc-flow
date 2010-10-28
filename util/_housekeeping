@@ -287,6 +287,10 @@ else:
                 matched_ctime = foo + bar
             elif len(foo) == 2 and len(bar) == 8:
                 matched_ctime = bar + foo
+            else:
+                raise SystemExit( "Illegal match: " + foo + ", " + bar )
+                print foo, bar
+                sys.exit(1)
  
         else:
             raise SystemExit( "Illegal regex?: " + match )
