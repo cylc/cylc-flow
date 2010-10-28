@@ -16,12 +16,19 @@
 
 import os, errno
 
-def mkdir_p( path ):
+def mkdir_p( path, mode=None ):
+    if mode:
+        # reset mode and get current value
+        old_mode = os.umask( 0 )
+
     try:
-        os.makedirs( path )
+        os.makedirs( path, mode )
     except OSError, err:
         if err.errno != errno.EEXIST:
             raise
         else:
             # OK: path already exists
             pass
+
+    if mode:
+        os.umask( old_mode )
