@@ -467,7 +467,11 @@ else:
     did = re.sub( 'YING', 'IED', action )
     did = re.sub( 'ING', 'ED', did )
 
+    extra = ''
+    if options.dry_run:
+        extra = 'dry run: would have'
+ 
     print
-    print right_justify( str(actioned), str(total) ) + "/" + str( total ), "\t" + did
-    print right_justify( str(aborted),  str(total) ) + "/" + str( total ), "\tNOT", did 
+    print right_justify( str(actioned), str(total) ) + "/" + str( total ), "\t" + extra + " " + did
+    print right_justify( str(aborted),  str(total) ) + "/" + str( total ), "\t" + extra + " NOT", did 
     print right_justify( str(ignored),  str(total) )+ "/" + str( total ), "\tnot matched"
