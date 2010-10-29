@@ -29,7 +29,7 @@ def right_justify( short, long ):
     short_re = re.sub( '.', '.', short ) + '$'
     return re.sub( short_re, short, template )
  
-usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OFFSET [DESTINATION]
+usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
 Usage: 2/ cylcutil housekeeping [options] CONFIG
 
 Cycle time based file management: delete, move, or copy, items (files or
@@ -45,8 +45,9 @@ SOURCE    MATCH    OPERATION   OFFSET   [DESTINATION]
 Where OPERATION is one of 'copy', 'move', or 'delete', and SOURCE,
 MATCH, OFFSET, and DESTINATION are as described below for commandline
 invocation. See also the example $CYLC_DIR/util/housekeeping.conf.eg.
-Environment variables can be defined in the config file, or in cylc
-suite.rc or taskdef files when this utility is wrapped by a cylc task.
+Environment variables can be defined in the config file for convenience,
+but note that you can just do the same on the commandline, or in the
+suite.rc or taskdef files for cylc tasks.
 
 The SOURCE and DESTINATION directories must be on the local filesystem,
 and may contain environment varables such as $HOME or ${HOME}.
@@ -100,8 +101,10 @@ failure in the archiving process.
 Arguments:
   SOURCE - Path to a directory containing items to be managed.
   MATCH  - Python regular expression for matching items to manage.
+  OPER   - operation: 'copy', 'move', or 'delete'.
   OFFSET - Offset from current cycle time at which to begin operating.
-  CONFIG - A file specifying how to manage multiple source directories."""
+  CONFIG - A file specifying how to manage multiple source directories.
+  DEST   - Target directory path for move or copy operations."""
 
 parser = OptionParser( usage )
 
@@ -122,19 +125,7 @@ parser.add_option( "--force", "-f",
         help="copy or move even if the target already exists",
         action="store_true", dest="force", default=False )
 
-parser.add_option( "--delete", "-d",
-        help="delete matched items",
-        action="store_true", dest="delete", default=False )
-
-parser.add_option( "--copy", "-c",
-        help="copy matched items",
-        action="store_true", dest="copy", default=False )
-
-parser.add_option( "--move", "-m",
-        help="move matched items",
-        action="store_true", dest="move", default=False )
-
-parser.add_option( "--umask", 
+parser.add_option( "--mode", 
         help="Octal umask for creating new destination directories"
         "E.g. 0775 for drwxrwxr-x",
         metavar='MODE',
@@ -146,7 +137,7 @@ parser.add_option( "--debug",
 
 ( options, args ) = parser.parse_args()
 
-if len( args ) == 0  or len( args ) > 4:
+if len(args) != 1  and len( args ) != 4 and len(args) != 5:
     parser.error( "Wrong number of arguments" ) 
 
 if options.ctime:
@@ -203,57 +194,40 @@ if len( args ) == 1:
         else:
             raise SystemExit( "illegal config line:\n  " + line )
 
-        # construct command to execute
-        command = '_housekeeping'
-        # subprocess.call() takes a list: [ command, arg1, arg2, ...]
-        commandlist = [ command ]
-        if options.debug:
-            commandlist.append( '--debug' )
-        if options.dry_run:
-            commandlist.append( '--dry-run' )
-        if options.force:
-            commandlist.append( '--force' )
-        if options.mode:
-            commandlist.append( '--umask=' + options.mode )
-        commandlist.append( '--cycle-time=' + ctime )
-        commandlist.append( '--' + operation )
-        commandlist.append( source )
-        commandlist.append( match )
-        commandlist.append( offset )
-        commandlist.append( destination )
-
-        execute( commandlist )
+        # now make a recursive call to this script. Copy sys.argv
+        # to get the command name and arguments, but remove the config
+        # file name from the list and  use slice notation get a proper
+        # copy instead of a reference (so we don't try to re-remove
+        # the config file name on the next call).
+        command = sys.argv[:]
+        command.remove( config )
+        execute( command + [ source, match, operation, offset, destination ] )
 
 else:
 
-    destination = None
+    source = args[0]
+    match = args[1]
+    operation = args[2]
+    offset_str = int( args[3])
 
-    if not options.delete and not options.move and not options.copy:
-        parser.error( "Choose 'delete', 'move', or 'copy'" )
-
-    if len( args ) == 4:
-        # DESTINATION
-        destination = args[3]
-
-    elif options.move or options.copy:
-        parser.error( "Operations 'copy' and 'move' require a destination" )
-
-    if options.copy:
+    legal_ops = [ 'copy', 'move', 'delete' ]
+    if operation not in legal_ops:
+        parser.error( "Illegal operation: " + operation )
+    if operation == 'copy':
         action = "COPYING"
-    elif options.delete:
+    elif operation == 'delete':
         action = "DELETING"
-    elif options.move:
+    elif operation == 'move':
         action = "MOVING"
 
-    # SOURCE
-    source = args[0]
+    destination = None
+    if len( args ) == 5:
+        destination = args[4]
+    elif operation == 'copy' or operation == 'move':
+        parser.error( operation + " requires a destination" )
 
-    # MATCH
-    match = args[1]
-
-    # OFFSET
     try:
-        offset = int( args[2] )
+        offset = int( offset_str )
     except ValueError:
         parser.error( "OFFSET must be an integer: " + offset )
     else:
@@ -262,7 +236,7 @@ else:
 
     print '\n***', action, match, "from", source,
     if destination:
-        if options.delete:
+        if operation == 'delete':
             print "if in", destination
         else:
             print "to", destination
@@ -396,7 +370,7 @@ else:
                     else:
                         target_identical = True
 
-            if options.delete:
+            if operation == 'delete':
                 if use_subprocess:
                     if target_exists and target_identical:
                         # delete the file (handled below)
@@ -439,7 +413,7 @@ else:
  
         actioned += 1
 
-        if options.delete:
+        if operation == 'delete':
             if options.dry_run:
                 print "(dry run) WOULD DELETE ", entrypath
                 continue
@@ -450,7 +424,7 @@ else:
             elif os.path.isfile( entrypath ):
                 os.unlink( entrypath )
 
-        elif options.copy:
+        elif operation == 'copy':
             if options.dry_run:
                 print "(dry run) WOULD COPY " + entrypath + " --> " + target
                 continue
@@ -469,9 +443,10 @@ else:
             commandlist.append( entrypath )
             commandlist.append( dest )
             # script will abort with warning if the copy fails here
+
             execute( commandlist )
     
-        elif options.move:
+        elif operation == 'move':
             if options.dry_run:
                 print "(dry run) WOULD MOVE " + entrypath + " --> " + target
                 continue
