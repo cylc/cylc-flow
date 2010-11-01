@@ -135,14 +135,29 @@ parser.add_option( "--mode",
         metavar='MODE',
         action="store", dest="mode", default=None )
 
+parser.add_option( "--verbose", 
+        help="print more information on what was done",
+        action="store_true", dest="verbose", default=False )
+
 parser.add_option( "--debug", 
-        help="write out details of what was done",
+        help="print full trace of what was done",
         action="store_true", dest="debug", default=False )
 
 ( options, args ) = parser.parse_args()
 
 if len(args) != 1  and len( args ) != 4 and len(args) != 5:
     parser.error( "Wrong number of arguments" ) 
+
+if options.debug and options.verbose:
+    parser.error( "Choose debug or verbose, not both" )
+
+verbose = False
+debug = False
+if options.debug:
+    debug = True
+    verbose = True
+elif options.verbose:
+    verbose = True
 
 if options.ctime:
     ctime = options.ctime
@@ -184,7 +199,7 @@ if len( args ) == 1:
             varname=m.group(1)
             varvalue=m.group(2)
             os.environ[varname] = os.path.expandvars( varvalue )
-            if options.debug:
+            if debug:
                 print 'Defining variable: ', varname, '=', varvalue
             continue
 
@@ -233,12 +248,12 @@ else:
     try:
         offset = int( offset_str )
     except ValueError:
-        parser.error( "OFFSET must be an integer: " + offset )
+        parser.error( "OFFSET must be an integer: " + offset_str )
     else:
         if offset < 0:
             parser.error( "OFFSET must be a positive integer" )
 
-    print '\n***', action, match, "from", source,
+    print '\n***', action, match, "from", source, ", offset", offset_str
     if destination:
         if operation == 'delete':
             print "if in", destination
@@ -252,7 +267,7 @@ else:
     if destination:
         destination = os.path.expandvars( destination )
 
-    if options.debug:
+    if debug:
         print "\nEnvironment variable interpolation:"
         print " + source dir: ", source
         if destination:
@@ -271,13 +286,13 @@ else:
         total += 1
         entrypath = os.path.join( source, entry )
 
-        if options.debug:
+        if debug:
             print "\nSource item:", entrypath
 
         m = re.search( match, entry )
         if not m:
             ignored += 1
-            if options.debug:
+            if debug:
                 print " + does not match"
             continue
 
@@ -301,25 +316,25 @@ else:
 
         if not cycle_time.is_valid( matched_ctime ):
             # match is not a valid cycle time: ignore
-            if options.debug:
+            if debug:
                 print " + extracted cycle time is NOT VALID: " + matched_ctime
             ignored += 1
             continue
         else:
-            if options.debug:
+            if debug:
                 print " + extracted cycle time: " + matched_ctime
 
         # can assume ctime is >= matched_ctime
         gap = cycle_time.diff_hours( ctime, matched_ctime )
-        if options.debug:
+        if debug:
             print " + computed offset hours", gap, 
         if gap < offset:
             ignored += 1
-            if options.debug:
+            if debug:
                 print "- ignoring (< cutoff)"
             continue
         else:
-            if options.debug:
+            if debug:
                 print "- ACTIONING (>= cutoff)"
 
         if destination:
@@ -334,7 +349,7 @@ else:
             dest = re.sub( 'DD', matched_ctime[6:8], dest )
             dest = re.sub( 'HH', matched_ctime[8:10], dest )
     
-            if options.debug:
+            if debug:
                 print " + expanded destination directory:", dest,
     
             if os.path.isfile( dest ):
@@ -342,24 +357,24 @@ else:
                 raise SystemExit( "Destination directory exists as a file: " + dest )
         
             elif os.path.isdir( dest ):
-                if options.debug:
+                if debug:
                     print " (exists)"
             else:
-                if options.debug:
+                if debug:
                     print "(creating)"
                 mkdir_p( dest, options.mode )
 
             target = os.path.join( dest, entry )
-            if options.debug:
+            if debug:
                 print " + target:", target, 
 
             if not os.path.exists( target ):
                 target_exists = False
-                if options.debug:
+                if debug:
                     print "... does not exist"
             else:
                 target_exists = True
-                if options.debug:
+                if debug:
                     print "... exists"
 
                 if operation == 'delete' and use_subprocess:
@@ -388,6 +403,7 @@ else:
                         pass
 
                     elif target_exists and not target_identical:
+                        # SEND WARNING MESSAGE
                         msg = "NOT DELETING " + entrypath + " (" + target + " DIFFERS)"
                         message( msg, priority='WARNING' ).send()
                         aborted += 1
@@ -395,6 +411,7 @@ else:
 
                     else:
                         # target does not exist
+                        # SEND WARNING MESSAGE
                         msg = "NOT DELETING " + entrypath + " (" + target + " not found)"
                         message( msg, priority='WARNING' ).send()
                         aborted += 1
@@ -405,6 +422,7 @@ else:
                         pass
                     else:
                         # target does not exist
+                        # SEND WARNING MESSAGE
                         msg = "NOT DELETING " + entrypath + " (" + target + " not found)"
                         message( msg, priority='WARNING' ).send()
                         aborted += 1
@@ -413,7 +431,8 @@ else:
             elif not options.force:
                 # unforced copy or move
                 if target_exists: # and target_identical:
-                    print "NOT", action, entrypath, "-->", target, "(target exists)"
+                    if verbose:
+                        print "NOT", action, entrypath, "-->", target, "(target exists)"
                     aborted += 1
                     continue
                 #elif target_exists and not target_identical:
@@ -429,7 +448,8 @@ else:
                 print "(dry run) WOULD DELETE ", entrypath
                 continue
 
-            print "DELETING ", entrypath
+            if verbose:
+                print "DELETING ", entrypath
             if os.path.isdir( entrypath ):
                 shutil.rmtree( entrypath )
             elif os.path.isfile( entrypath ):
@@ -440,7 +460,8 @@ else:
                 print "(dry run) WOULD COPY " + entrypath + " --> " + target
                 continue
                 
-            print "COPYING " + entrypath + " --> " + target
+            if verbose:
+                print "COPYING " + entrypath + " --> " + target
             # NOTE: shutils.copytree() does not allow the destination
             # directory to exist beforehand; i.e. it won't add files to an
             # existing directory. So for now we'll do it by executing a
@@ -462,7 +483,8 @@ else:
                 print "(dry run) WOULD MOVE " + entrypath + " --> " + target
                 continue
 
-            print "MOVING " + entrypath + " --> " + target
+            if verbose:
+                print "MOVING " + entrypath + " --> " + target
             # shutil.move() is SAFE, docs say:
             #   Recursively move a file or directory to another location.
             #   If the destination is on the current filesystem, then simply
