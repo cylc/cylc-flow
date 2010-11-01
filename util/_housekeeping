@@ -253,7 +253,7 @@ else:
         if offset < 0:
             parser.error( "OFFSET must be a positive integer" )
 
-    print '\n***', action, match, "from", source, ", offset", offset_str
+    print '\n***', action, match, "from", source + ", offset", offset_str,
     if destination:
         if operation == 'delete':
             print "if in", destination
