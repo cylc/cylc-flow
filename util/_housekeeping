@@ -227,7 +227,7 @@ else:
     source = args[0]
     match = args[1]
     operation = args[2]
-    offset_str = int( args[3])
+    offset_str = args[3]
 
     legal_ops = [ 'copy', 'move', 'delete' ]
     if operation not in legal_ops:
@@ -253,7 +253,7 @@ else:
         if offset < 0:
             parser.error( "OFFSET must be a positive integer" )
 
-    print '\n***', action, match, "from", source + ", offset", offset_str,
+    print '\n***', action, match, "from", source + ", offset", offset_str + ",",
     if destination:
         if operation == 'delete':
             print "if in", destination
