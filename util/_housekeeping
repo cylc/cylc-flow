@@ -267,9 +267,10 @@ else:
         print
 
     print '*** action this operation (y/n)?'
-    response = raw_input()
-    if response != 'y':
-        sys.exit(0)
+    if options.interactive:
+        response = raw_input()
+        if response != 'y':
+            sys.exit(0)
 
     # interpolate SIMPLE environment variables ($foo, ${foo}) into paths
     source = os.path.expandvars( source )
