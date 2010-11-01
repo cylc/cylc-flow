@@ -362,7 +362,10 @@ else:
                 if options.debug:
                     print "... exists"
 
-                if use_subprocess:
+                if operation == 'delete' and use_subprocess:
+                    # copy: abort if target exists
+                    # delete: abort if target exists AND differs
+
                     # Are the files identical?
                     # There seems to be no obvious Pythonic 'diff -s'...
                     command = 'diff'
@@ -409,15 +412,15 @@ else:
 
             elif not options.force:
                 # unforced copy or move
-                if target_exists and target_identical:
+                if target_exists: # and target_identical:
                     print "NOT", action, entrypath, "-->", target, "(target exists)"
                     aborted += 1
                     continue
-                elif target_exists and not target_identical:
-                    msg = "NOT " + action + entrypath + " (" + target + " (target exists BUT DIFFERS)"
-                    message( msg, priority='WARNING' ).send()
-                    aborted += 1
-                    continue
+                #elif target_exists and not target_identical:
+                #    msg = "NOT " + action + entrypath + " (" + target + " (target exists BUT DIFFERS)"
+                #    message( msg, priority='WARNING' ).send()
+                #    aborted += 1
+                #    continue
  
         actioned += 1
 
