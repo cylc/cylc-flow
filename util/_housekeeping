@@ -125,6 +125,10 @@ parser.add_option( "--dry-run",
         help="print what would be done, but don't do it.",
         action="store_true", dest="dry_run", default=False )
 
+parser.add_option( "--interactive", "-i",
+        help="ask whether to action or skip each config file line",
+        action="store_true", dest="interactive", default=False )
+
 parser.add_option( "--force", "-f",
         help="copy or move even if the target already exists",
         action="store_true", dest="force", default=False )
@@ -261,6 +265,11 @@ else:
             print "to", destination
     else:
         print
+
+    print '*** action this operation (y/n)?'
+    response = raw_input()
+    if response != 'y':
+        sys.exit(0)
 
     # interpolate SIMPLE environment variables ($foo, ${foo}) into paths
     source = os.path.expandvars( source )
