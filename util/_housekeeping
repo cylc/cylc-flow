@@ -156,11 +156,11 @@ parser.add_option( "--except", "-e",
         action="store", dest="excpt", default=None )
 
 parser.add_option( "--verbose", "-v",
-        help="print more information on what was done",
+        help="print every actioned operation",
         action="store_true", dest="verbose", default=False )
 
 parser.add_option( "--debug", "-d",
-        help="print full trace of what was done",
+        help="print full a trace of what was done, including filename matching",
         action="store_true", dest="debug", default=False )
 
 ( options, args ) = parser.parse_args()
