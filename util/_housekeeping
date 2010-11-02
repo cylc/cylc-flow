@@ -30,7 +30,7 @@ def right_justify( short, long ):
     return re.sub( short_re, short, template )
  
 usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
-Usage: 2/ cylcutil housekeeping [options] [--only=PATTERN] CONFIG
+Usage: 2/ cylcutil housekeeping [options] CONFIG
 
 Cycle time based file management: delete, move, or copy, items (files or
 directories) with cycle times (extracted from the item name) OFFSET
@@ -140,11 +140,16 @@ parser.add_option( "--mode",
         action="store", dest="mode", default=None )
 
 parser.add_option( "--only", "-o",
-        help="only action config file lines matching PATTERN",
-        metavar='PATTERN',
+        help="only action config file lines matching patterns P1, ...",
+        metavar='P1,P2,...',
         action="store", dest="only", default=None )
 
-parser.add_option( "--verbose", 
+parser.add_option( "--except", "-e",
+        help="only action config file lines NOT matching patterns P1, ...",
+        metavar='P1,P2,...',
+        action="store", dest="excpt", default=None )
+
+parser.add_option( "--verbose", "-v",
         help="print more information on what was done",
         action="store_true", dest="verbose", default=False )
 
@@ -223,10 +228,27 @@ if len( args ) == 1:
         else:
             raise SystemExit( "illegal config line:\n  " + line )
 
+        skip = False
+
+        if options.excpt:
+            skip = False
+            # if line matches any of the given patterns, skip it
+            for pattern in re.split( r', *| +', options.excpt ):
+                if re.search( pattern, line ):
+                    skip = True
+                    break
+
         if options.only:
-            if not re.search( options.only, line ):
-                print "SKIPPING " + line
-                continue
+            skip = True
+            # if line does not match any of the given patterns, skip it
+            for pattern in re.split( r', *| +', options.only ):
+                if re.search( pattern, line ):
+                    skip = False
+                    break
+
+        if skip:
+            print "\n*** SKIPPING " + line
+            continue
 
         # now make a recursive call to this script. Copy sys.argv
         # to get the command name and arguments, but remove the config
