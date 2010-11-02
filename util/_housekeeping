@@ -2,6 +2,7 @@
 
 import os, re, sys
 import shutil
+import datetime
 import cycle_time
 from optparse import OptionParser
 from execute import execute
@@ -85,7 +86,7 @@ Examples:
  2/ 'foo-(\d{10}).*\.nc' -> 'foo-2010122318.nc', 'foo-2010090806-bar.nc'
  3/ '(\d{2})_(\d{8}).*\.nc' -> 'foo18_20101223-nz.nc'
  If you need to use additional parentheses for either-or matches,
- the MUST be of the (?:...) type to avoid creating a new match group.
+ they MUST be of the (?:...) type to avoid creating a new match group.
  E.g.:
  4/ 'foo-(\d{10})\.(?:nc|txt)' -> 'foo-2010122318.nc', 'foo-2010090806-bar.txt'
 
@@ -153,7 +154,7 @@ parser.add_option( "--verbose", "-v",
         help="print more information on what was done",
         action="store_true", dest="verbose", default=False )
 
-parser.add_option( "--debug", 
+parser.add_option( "--debug", "-d",
         help="print full trace of what was done",
         action="store_true", dest="debug", default=False )
 
@@ -183,7 +184,8 @@ else:
 if len( args ) == 1:
     config = args[0]
 
-    print "Parsing config file", os.path.abspath( config )
+    print "START: ", datetime.datetime.now()
+    print "   Parsing config file", os.path.abspath( config )
 
     if not os.path.isfile( config ):
         parser.error( "file not found: " + config )
@@ -247,7 +249,7 @@ if len( args ) == 1:
                     break
 
         if skip:
-            print "\n*** SKIPPING " + line
+            print "\n   *** SKIPPING " + line
             continue
 
         # now make a recursive call to this script. Copy sys.argv
@@ -258,8 +260,11 @@ if len( args ) == 1:
         command = sys.argv[:]
         command.remove( config )
         execute( command + [ source, match, operation, offset, destination ] )
+    
+    print '\nFINISH: ', datetime.datetime.now()
 
 else:
+    # len(args) > 1
 
     source = args[0]
     match = args[1]
@@ -290,7 +295,7 @@ else:
         if offset < 0:
             parser.error( "OFFSET must be a positive integer" )
 
-    print '\n***', action, match, "from", source + ", offset", offset_str + ",",
+    print '\n   ***', action, match, "from", source + ", offset", offset_str + ",",
     if destination:
         if operation == 'delete':
             print "if in", destination
@@ -298,6 +303,8 @@ else:
             print "to", destination
     else:
         print
+
+    print "   |-start:  ", datetime.datetime.now()
 
     if options.interactive:
         print '*** action this operation (y/n)?'
@@ -547,7 +554,8 @@ else:
     if options.dry_run:
         extra = 'dry run: would have'
  
-    print
-    print right_justify( str(actioned), str(total) ) + "/" + str( total ), "\t" + extra + " " + did
-    print right_justify( str(aborted),  str(total) ) + "/" + str( total ), "\t" + extra + " NOT", did 
-    print right_justify( str(ignored),  str(total) )+ "/" + str( total ), "\tnot matched"
+    print '   ' + right_justify( str(actioned), str(total) ) + "/" + str( total ), "\t" + extra + " " + did
+    print '   ' + right_justify( str(aborted),  str(total) ) + "/" + str( total ), "\t" + extra + " NOT", did 
+    print '   ' + right_justify( str(ignored),  str(total) )+ "/" + str( total ), "\t not matched"
+
+    print '   |-finish: ', datetime.datetime.now()
