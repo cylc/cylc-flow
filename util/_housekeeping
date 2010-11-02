@@ -141,13 +141,18 @@ parser.add_option( "--mode",
         action="store", dest="mode", default=None )
 
 parser.add_option( "--only", "-o",
-        help="only action config file lines matching patterns P1, ...",
-        metavar='P1,P2,...',
+        help="Only action config file lines matching any member of a "
+        "comma-separated list of regular expressions. "
+        "Each regex can match the whole line or just part of it, so you can "
+        "easily single out any line from any housekeeping config file.",
+        metavar='LIST',
         action="store", dest="only", default=None )
 
 parser.add_option( "--except", "-e",
-        help="only action config file lines NOT matching patterns P1, ...",
-        metavar='P1,P2,...',
+        help="Only action config file lines NOT matching any member of a "
+        "comma-separated list of regular expressions. See also "
+        "documentation for --only, above.",
+        metavar='LIST',
         action="store", dest="excpt", default=None )
 
 parser.add_option( "--verbose", "-v",
