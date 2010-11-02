@@ -30,7 +30,7 @@ def right_justify( short, long ):
     return re.sub( short_re, short, template )
  
 usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
-Usage: 2/ cylcutil housekeeping [options] CONFIG
+Usage: 2/ cylcutil housekeeping [options] [--only=PATTERN] CONFIG
 
 Cycle time based file management: delete, move, or copy, items (files or
 directories) with cycle times (extracted from the item name) OFFSET
@@ -139,6 +139,11 @@ parser.add_option( "--mode",
         metavar='MODE',
         action="store", dest="mode", default=None )
 
+parser.add_option( "--only", "-o",
+        help="only action config file lines matching PATTERN",
+        metavar='PATTERN',
+        action="store", dest="only", default=None )
+
 parser.add_option( "--verbose", 
         help="print more information on what was done",
         action="store_true", dest="verbose", default=False )
@@ -183,6 +188,7 @@ if len( args ) == 1:
     FILE.close()
 
     for line in lines:
+
         # strip trailing newlines
         line = line.rstrip( '\n' )
 
@@ -216,6 +222,11 @@ if len( args ) == 1:
             source, match, operation, offset = tokens
         else:
             raise SystemExit( "illegal config line:\n  " + line )
+
+        if options.only:
+            if not re.search( options.only, line ):
+                print "SKIPPING " + line
+                continue
 
         # now make a recursive call to this script. Copy sys.argv
         # to get the command name and arguments, but remove the config
