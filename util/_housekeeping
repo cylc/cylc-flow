@@ -280,7 +280,6 @@ else:
     if options.interactive:
         print '*** action this operation (y/n)?'
         response = raw_input()
-        print "RESPONSE: " + response
         if response != 'y':
             sys.exit(0)
 
