@@ -186,6 +186,7 @@ if len( args ) == 1:
 
     print "START: ", datetime.datetime.now()
     print "   Parsing config file", os.path.abspath( config )
+    sys.stdout.flush()
 
     if not os.path.isfile( config ):
         parser.error( "file not found: " + config )
