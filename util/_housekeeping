@@ -501,7 +501,8 @@ else:
 
         if operation == 'delete':
             if options.dry_run:
-                print "(dry run) WOULD DELETE ", entrypath
+                if verbose:
+                    print "(dry run) WOULD DELETE ", entrypath
                 continue
 
             if verbose:
@@ -513,7 +514,8 @@ else:
 
         elif operation == 'copy':
             if options.dry_run:
-                print "(dry run) WOULD COPY " + entrypath + " --> " + target
+                if verbose:
+                    print "(dry run) WOULD COPY " + entrypath + " --> " + target
                 continue
                 
             if verbose:
@@ -536,7 +538,8 @@ else:
     
         elif operation == 'move':
             if options.dry_run:
-                print "(dry run) WOULD MOVE " + entrypath + " --> " + target
+                if verbose:
+                    print "(dry run) WOULD MOVE " + entrypath + " --> " + target
                 continue
 
             if verbose:
