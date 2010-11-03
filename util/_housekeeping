@@ -103,6 +103,19 @@ A cylc WARNING message is sent only in case of an aborted check-deletion
 due to failure to find the check file, which presumably indicates some 
 failure in the archiving process.
 
+Output options: In all cases a summary of what was done, and any warning
+messages, is printed after each batch operation.
+  --quiet   - no additional information is printed (just the summaries)
+  (default) - also print each individual action, but NOT copies or
+              moves that were aborted because the target already existed
+              (normal when copying and deleting with different offsets).
+  --verbose - also print each individual action, AND copies or moves that
+              were aborted because the target already exists.
+  --debug   - also print information on EVERY file in the source directory. 
+Aborted deletion is always a warning because this indicates that the 
+check file is either missing or differs from the source file.
+
+With --quiet, no other information is printed. By default, 
 Arguments:
   SOURCE - Path to a directory containing items to be managed.
   MATCH  - Python regular expression for matching items to manage.
@@ -155,6 +168,10 @@ parser.add_option( "--except", "-e",
         metavar='LIST',
         action="store", dest="excpt", default=None )
 
+parser.add_option( "--quiet", "-q",
+        help="print only a summary of what was done.",
+        action="store_true", dest="quiet", default=False )
+
 parser.add_option( "--verbose", "-v",
         help="print every actioned operation",
         action="store_true", dest="verbose", default=False )
@@ -171,13 +188,20 @@ if len(args) != 1  and len( args ) != 4 and len(args) != 5:
 if options.debug and options.verbose:
     parser.error( "Choose debug or verbose, not both" )
 
+default = True
+quiet = False
 verbose = False
 debug = False
 if options.debug:
+    quiet = True
+    verbose = True
     debug = True
-    verbose = True
 elif options.verbose:
+    quiet = True
     verbose = True
+elif options.quiet:
+    quiet = True
+    default = False
 
 if options.ctime:
     ctime = options.ctime
@@ -364,8 +388,6 @@ else:
                 matched_ctime = bar + foo
             else:
                 raise SystemExit( "Illegal match: " + foo + ", " + bar )
-                print foo, bar
-                sys.exit(1)
  
         else:
             raise SystemExit( "Illegal regex?: " + match )
@@ -409,7 +431,6 @@ else:
                 print " + expanded destination directory:", dest,
     
             if os.path.isfile( dest ):
-                print
                 raise SystemExit( "Destination directory exists as a file: " + dest )
         
             elif os.path.isdir( dest ):
@@ -460,6 +481,7 @@ else:
 
                     elif target_exists and not target_identical:
                         # SEND WARNING MESSAGE
+                        reason = "(target not found)"
                         msg = "NOT DELETING " + entrypath + " (" + target + " DIFFERS)"
                         message( msg, priority='WARNING' ).send()
                         aborted += 1
@@ -468,6 +490,7 @@ else:
                     else:
                         # target does not exist
                         # SEND WARNING MESSAGE
+                        reason = "(target not found)"
                         msg = "NOT DELETING " + entrypath + " (" + target + " not found)"
                         message( msg, priority='WARNING' ).send()
                         aborted += 1
@@ -501,11 +524,11 @@ else:
 
         if operation == 'delete':
             if options.dry_run:
-                if verbose:
+                if default:
                     print "(dry run) WOULD DELETE ", entrypath
                 continue
 
-            if verbose:
+            if default:
                 print "DELETING ", entrypath
             if os.path.isdir( entrypath ):
                 shutil.rmtree( entrypath )
@@ -514,11 +537,11 @@ else:
 
         elif operation == 'copy':
             if options.dry_run:
-                if verbose:
+                if default:
                     print "(dry run) WOULD COPY " + entrypath + " --> " + target
                 continue
                 
-            if verbose:
+            if default:
                 print "COPYING " + entrypath + " --> " + target
             # NOTE: shutils.copytree() does not allow the destination
             # directory to exist beforehand; i.e. it won't add files to an
@@ -538,11 +561,11 @@ else:
     
         elif operation == 'move':
             if options.dry_run:
-                if verbose:
+                if default:
                     print "(dry run) WOULD MOVE " + entrypath + " --> " + target
                 continue
 
-            if verbose:
+            if default:
                 print "MOVING " + entrypath + " --> " + target
             # shutil.move() is SAFE, docs say:
             #   Recursively move a file or directory to another location.
