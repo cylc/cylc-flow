@@ -27,7 +27,7 @@ GENERAL
 * some kind of internal queuing system as a more flexible alternative to
   the simple max runahead limit?
 
-* commandline option parsing: defaults can be set to int or flat, but 
+* commandline option parsing: defaults can be set to int or float, but 
   values read from commandline input are always strings and need to be
   converted.
 
@@ -196,7 +196,7 @@ GENERAL
   = for item in dict.keys():
   which must build a temporary list?
 
-  CHECK MY USE OF DICTIONARY ITERATION THROUGHOUT THE CODE
+  CHECK USE OF DICTIONARY ITERATION THROUGHOUT THE CODE
 
 * Record stopping time in state dump in case suite shutdown and
   restarted before all tasks reach the stop time is reached? (currently

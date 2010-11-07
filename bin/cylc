@@ -77,7 +77,7 @@ usage = \
     '  restart ..... Restart a suite from a previous state',
     '  stop ........ Shut down a running suite, or set a final cycle time',
     '  pause ....... Refrain from submitting tasks that are ready to run',
-    '  resume ...... Resume submitting tasks that are ready to run',
+    '  resume ...... Unpause a running suite, or unset the stop time',
     '  lock ........ Refuse to comply with subsequent intervention commands',
     '  unlock ...... Comply with subsequent intervention commands',
     'T-A-S-K--C-O-N-T-R-O-L',

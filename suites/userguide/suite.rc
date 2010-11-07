@@ -4,7 +4,7 @@ allow simultaneous instances = False
 maximum runahead (hours) = 24
 coldstart tasks = startup, coldstart
 job log directory =
-tasks not instantiated at startup = E,F
+;tasks not instantiated at startup = E,F
 
 [task insertion groups]
 

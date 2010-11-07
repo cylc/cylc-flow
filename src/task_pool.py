@@ -136,9 +136,13 @@ class task_pool:
             self.log.critical( "HOLD: no more tasks will run")
 
     def unset_suite_hold( self ):
-        self.log.critical( "UNHOLD: new tasks will run when ready")
-        self.suite_hold_now = False
-        self.suite_hold_ctime = None
+        if self.suite_hold_now:
+            self.log.critical( "UNHOLD: new tasks will run when ready")
+            self.suite_hold_now = False
+            self.suite_hold_ctime = None
+        if self.stop_time:
+            self.log.critical( "UNSTOP: unsetting suite stop time")
+            self.stop_time = None
 
     def will_stop_at( self ):
         return self.stop_time

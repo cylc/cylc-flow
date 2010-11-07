@@ -17,7 +17,7 @@ from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc resume [options] SUITE 
 
-Resume running a paused suite.""" )
+Resume running a paused suite, or unset an upcoming stop time.""" )
 
 (options, args) = parser.parse_args()
 
