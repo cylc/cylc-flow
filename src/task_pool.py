@@ -395,7 +395,7 @@ class task_pool:
 
     def earliest_unspawned( self ):
         all_spawned = True
-        earliest_unspawned = '0001010100'
+        earliest_unspawned = '9999887766'
         for itask in self.tasks:
             if not itask.state.has_spawned():
                 all_spawned = False
@@ -409,7 +409,7 @@ class task_pool:
     def earliest_unsatisfied( self ):
         # find the earliest unsatisfied task
         all_satisfied = True
-        earliest_unsatisfied = '0001010100'
+        earliest_unsatisfied = '9999887766'
         for itask in self.tasks:
             if not itask.prerequisites.all_satisfied():
                 all_satisfied = False
@@ -423,7 +423,7 @@ class task_pool:
     def earliest_unfinished( self ):
         # find the earliest unfinished task
         all_finished = True
-        earliest_unfinished = '0001010100'
+        earliest_unfinished = '9999887766'
         for itask in self.tasks:
             #if itask.state.is_failed():  # uncomment for earliest NON-FAILED
             #    continue
