@@ -44,6 +44,7 @@ class config:
         self.items['suite_title' ] = rc.get( 'general', 'title' )
         self.items['max_runahead_hours' ] = rc.get( 'general', 'maximum runahead (hours)' )
         self.items['task_groups' ] = rc.get_task_insertion_groups()
+        self.items['non_startup_tasks' ] = rc.get_tasks_not_instantiated_at_startup()
         self.items['coldstart_tasks' ] = rc.get_coldstart_tasks()
         self.items['joblog_dir' ] = rc.get( 'general', 'job log directory' )
 

@@ -67,7 +67,9 @@ class suiterc:
         self.config.set( 'general', 'job log directory', '' )
 
         self.config.set( 'general', 'coldstart tasks', '' )
- 
+        self.config.set( 'general', 'tasks not instantiated at startup', '' )
+        #Example: self.config.set( 'general', 'tasks not instantiated at startup', 'A,B,C,D' )
+
         self.config.add_section( 'task insertion groups' )
         #Example: self.config.set( 'task insertion groups', 'coldstart', 'A,B,C,D' )
         #Example: self.config.set( 'task insertion groups', 'foo', 'A,B,D,F' )
@@ -120,6 +122,9 @@ class suiterc:
 
     def get_global_environment( self ):
         return self.config.items( 'global environment' )
+
+    def get_tasks_not_instantiated_at_startup( self ):
+        return re.split( r', *| +', self.get('general', 'tasks not instantiated at startup'))
 
     def get_task_insertion_groups( self ):
         xgroups = {}

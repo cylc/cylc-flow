@@ -1,9 +1,6 @@
 _______
 GENERAL
 
-* allow a list of tasks (in suite.rc) that are not instantiated at
-  startup, for special failure recovery scenarios and the like.
-
 * check use of re m.group() and m.groups(): 
 
     m.group(0)  # entire match

@@ -46,8 +46,13 @@ class coldstart( task_pool ):
         task_list = list( set( task_list ) )
 
         coldstart_tasks = self.config.get( 'coldstart_tasks' )
+        non_startup_tasks = self.config.get( 'non_startup_tasks' )
+
 
         for name in task_list:
+
+            if name in non_startup_tasks:
+                continue
 
             if name in exclude:
                 continue

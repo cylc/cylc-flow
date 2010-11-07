@@ -22,16 +22,22 @@ _________________________________________
 
 [general] ;----------------------
 
-; title string describing suite
+; Title string describing suite
 title = USERGUIDE EXAMPLE SUITE
 
-; can multiple instances of this suite run at once under different names?
+; Can multiple instances of this suite run at once under different names?
 allow simultaneous instances = False
 
-; coldstart tasks (for 'cylc start --warm').
+; Coldstart tasks (for 'cylc start --warm').
 coldstart tasks = startup, foo, bar
 
-; job submission log file directory. Must be relative to the home
+; Tasks not instantiated at startup: this can be used, for example, for
+; special tasks that are designed to be inserted into the running suite
+; in certain failure recovery scenarios. 
+; See also 'cylc start --exclude'.
+tasks not instantiated at startup = foo, bar, baz
+
+; Job submission log file directory. Must be relative to the home
 ; directory so it can be used for all suite tasks regardless of task
 ; owner or remote host machine. Cylc job submission methods should
 ; be configured to use this directory where possible. The default 
@@ -42,12 +48,12 @@ job log directory = running/logs
 
 [task insertion groups] ;-------
 
-; you can insert multiple tasks at once with 'cylc insert'
+; You can insert multiple tasks at once with 'cylc insert' command.
 coldstart_modelX = foo, bar, baz
 
 [job submission] ;--------------
 
-; the 'default' method for the entire system ...
+; The default method for the entire system ...
 default = background
 
 ; ... except for tasks singled out for different methods:
