@@ -179,7 +179,7 @@ class job_submit:
         # TO DO: use [,dir=] argument and allow user to configure the
         # temporary directory. For now the default is should be ok
         # (it reads $TMPDIR, $TEMP, or $TMP)
-        self.jobfile_path = tempfile.mktemp( prefix='cylc-') 
+        self.jobfile_path = tempfile.mktemp( prefix='cylc-' + self.task_id + '-' ) 
         
         # open the job file to write
         JOBFILE = open( self.jobfile_path, 'w' )
