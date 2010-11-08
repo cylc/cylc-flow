@@ -66,6 +66,8 @@ class suiterc:
         #self.config.set( 'general', 'logging level', 'info' )
         self.config.set( 'general', 'job log directory', '' )
 
+        self.config.set( 'general', 'state dump rolling archive length', '10' )
+
         self.config.set( 'general', 'coldstart tasks', '' )
         self.config.set( 'general', 'tasks not instantiated at startup', '' )
         #Example: self.config.set( 'general', 'tasks not instantiated at startup', 'A,B,C,D' )

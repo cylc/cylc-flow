@@ -44,9 +44,6 @@ GENERAL
 * check all open( file, mode ) statements for mode 'rb' etc.  What is
   'b'? "binary"? if so, is this appropriate for cylc's usage.
 
-* rolling archive of state dump files OR atomic update of state file, so
-  that killing cylc cannot result in a corrupted state file.
-
 * wherever I've used this:
     os.makedirs( os.path.dirname( filename ) )
   check that filename is not just a bare local dir filename like foo.bar

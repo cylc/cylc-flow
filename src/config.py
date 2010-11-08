@@ -43,6 +43,7 @@ class config:
         self.items['job_submit_overrides' ] = rc.get_nondefault_job_submission()
         self.items['suite_title' ] = rc.get( 'general', 'title' )
         self.items['max_runahead_hours' ] = rc.get( 'general', 'maximum runahead (hours)' )
+        self.items['state_dump_rolling_archive_length' ] = rc.get( 'general', 'state dump rolling archive length' )
         self.items['task_groups' ] = rc.get_task_insertion_groups()
         self.items['non_startup_tasks' ] = rc.get_tasks_not_instantiated_at_startup()
         self.items['coldstart_tasks' ] = rc.get_coldstart_tasks()

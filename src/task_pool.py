@@ -16,6 +16,7 @@ import pimp_my_logger
 import logging
 import sys, os, re
 from dynamic_instantiation import get_object
+from rolling_archive import rolling_archive
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 
@@ -30,7 +31,9 @@ class task_pool:
         self.dummy_mode = dummy_mode
         self.logging_dir = logging_dir
         self.logging_level = logging_level
-        self.state_dump_file = state_dump_file
+        self.state_dump_filename = state_dump_file
+        len = int( config.get( 'state_dump_rolling_archive_length' ))
+        self.state_dump_file = rolling_archive( state_dump_file, len )
         self.exclude = exclude
         self.include = include
         self.stop_time = stop_time
@@ -373,12 +376,14 @@ class task_pool:
             return new_task
 
     def dump_state( self, new_file = False ):
-        filename = self.state_dump_file 
         if new_file:
-            filename += '.' + self.clock.dump_to_str()
+            filename = self.state_dump_filename + '.' + self.clock.dump_to_str()
+            FILE = open( filename, 'w' )
+        else:
+            filename = self.state_dump_filename 
+            FILE = self.state_dump_file.roll_open()
 
         # suite time
-        FILE = open( filename, 'w' )
         if self.dummy_mode:
             FILE.write( 'dummy time : ' + self.clock.dump_to_str() + ',' + str( self.clock.get_rate()) + '\n' )
         else:

@@ -2257,19 +2257,28 @@ arises (other prerequisites allowing).
 \label{AutomaticStateDumps}
 
 Cylc updates its configured state dump file (e.g.\
-\lstinline=$HOME/cylc-state/state=) after every pass through the task 
-processing loop.
+\lstinline=$HOME/cylc-state/state=) every time the task of a task
+changes. Previous states are maintained in a rolling archive 
+(length specified in the {\em suite.rc} file):
 
-In addition, immediately prior to any dangerous system intervention a 
-special state dump file with a unique name is created, and an alert is
-logged, e.g.:
+\begin{lstlisting}
+nwp_oper> ls .cylc/state/SUITE/
+state       # current state
+state-1     # most recent previous state
+state-2     # next most recent previous state
+...
+state-N     # oldest state dump; will be deleted at next update
+\end{lstlisting}
+
+In addition, immediately prior to any system intervention a special
+uniquely named state dump file is created and logged, e.g.:
 
 \begin{lstlisting}
 2010/03/30 14:54:29 WARNING main - pre-purge state dump: state.2010:3:30:14:54:29
 \end{lstlisting}
 
-If the suite intervention does not have the desired effect, shut the suite 
-down immediately and restart it from the pre-intervention state dump:
+If you accidentally intervene wrongly in a suite, just shut it down
+and restart from the pre-intervention state dump:
 
 \begin{lstlisting}
 cylc restart SUITE state.2010:3:30:14:54:29

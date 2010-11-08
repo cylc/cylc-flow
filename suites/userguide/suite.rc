@@ -5,6 +5,7 @@ maximum runahead (hours) = 24
 coldstart tasks = startup, coldstart
 job log directory =
 ;tasks not instantiated at startup = E,F
+state dump rolling archive length = 40 
 
 [task insertion groups]
 

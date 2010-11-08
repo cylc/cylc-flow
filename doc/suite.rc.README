@@ -1,24 +1,24 @@
-___________________________
-*** CYLC SUITE CONFIG FILES
+;___________________________
+;*** CYLC SUITE CONFIG FILES
 
-These conform to the standard Python ConfigParser module specs: 
-http://docs.python.org/library/configparser.html.
+;These files conform to the standard Python ConfigParser specs: 
+;http://docs.python.org/library/configparser.html.
 
-A default config file is generated on first use of a suite.
+;A default config file is generated on first use of a suite.
 
 ; comment
 [Section]
 item = value ; comment
 
-- COMMENTS start with ';'
-   - Trailing comments must have whitespace after the ';'
-- Multiline values are not permitted.
-- The '%' character must be doubled up: 
-     MY_TASK_ID = foo%%2010010106 becomes MY_TASK_ID=foo%2010010106
-- List values may be comma and/or space separated (cylc-specific).
+;- COMMENTS start with ';'
+;   - Trailing comments must have whitespace after the ';'
+;- Multiline values are not permitted.
+;- The '%' character must be doubled up: 
+;     MY_TASK_ID = foo%%2010010106 becomes MY_TASK_ID=foo%2010010106
+;- List values may be comma and/or space separated (cylc-specific).
 
-_________________________________________
-*** CYLC CONFIGURATION SECTIONS AND ITEMS
+;_________________________________________
+;*** CYLC CONFIGURATION SECTIONS AND ITEMS
 
 [general] ;----------------------
 
@@ -27,6 +27,12 @@ title = USERGUIDE EXAMPLE SUITE
 
 ; Can multiple instances of this suite run at once under different names?
 allow simultaneous instances = False
+
+; maximum cycle time hours between fastest and slowest tasks in the suite
+maximum runahead (hours) = 24
+
+; length of the state dump rolling archive
+state dump rolling archive length = 10
 
 ; Coldstart tasks (for 'cylc start --warm').
 coldstart tasks = startup, foo, bar
