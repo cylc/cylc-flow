@@ -41,10 +41,10 @@ def pimp_it( log, name, dir, level, dummy_mode, clock = None, run_task = False )
         raise SystemExit( 'Logging dir ' + dir + ' does not exist' )
 
     h = logging.handlers.RotatingFileHandler( logfile, 'a', max_bytes, backups )
-    # the above creates a zero-sized log file if one doesn't already exist
-    if os.path.getsize( logfile ) > 0:
-        #print ' + rotating log:', logfile
-        h.doRollover()
+    # The above creates a zero-sized log file if it doesn't already exist.
+    # Uncomment the following to get automatic roll over on startup:
+    ##if os.path.getsize( logfile ) > 0:
+    ##    h.doRollover()
 
     originator = ""
     if name == "main":
