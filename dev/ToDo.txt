@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* temporary job submission filenames should contain the suite name
+  so that automated cleanup processes can distinguish between suites.
+
 * check use of re m.group() and m.groups(): 
 
     m.group(0)  # entire match
@@ -147,7 +150,7 @@ GENERAL
 
 * %COMMAND:
     - conditional on HOUR? 
-    - allow single quotes in path or commandline
+    - SINGLE QUOTES IN PATH OR COMMANDLINE
 
 * could make $(CYCLE_TIME) implicit in messages except where reference
   to *other* cycles are required?
