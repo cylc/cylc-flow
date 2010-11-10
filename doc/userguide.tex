@@ -2936,9 +2936,9 @@ SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 \label{Single-orMulti-ThreadedPyro?}
 
 In single threaded mode Pyro's \lstinline=handleRequests()= returns
-after either a timeout has occurred or at least one request
-(i.e.\ remote method call) was handled. Using \lstinline|timeout = None| 
-allows us to process tasks {\em only} after remote method invocations
+after at least one request (i.e.\ remote method call) was
+handled, or after a timeout. Using \lstinline|timeout = None| 
+allows us to process tasks only when remote method invocations
 come in.  Further, we can detect the remote calls that actually change
 task states, and thereby drop into the task processing code only when
 necessary, which eliminates a lot of extraneous output when debugging
@@ -2956,6 +2956,11 @@ task processing are coming in on existing connections. The only way
 around this seems to be to do task processing on \lstinline=handleRequests()=
 timeouts which results in a lot of unnecessary processing when nothing
 important is happening.
+
+Addendum, we now use a timeout on \lstinline=handleRequests()= because
+contact tasks can trigger purely on the wall clock, so we delaying task
+processing when no messages are coming in may prevent these contact
+tasks from triggering.   So\dots we may want to revist Multithreading\dots
 
 \subsection{Running Pyro}
 \label{RunningPyro}
