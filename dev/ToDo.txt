@@ -308,6 +308,9 @@ GENERAL
 
 * see To Do comment in broker.negotiate() - priority low.
 
+* write a small test program to help understand exactly how Pyro works, 
+  particularly with regard to multi-threading.
+
 __________
 LOCKSERVER
   (currently no known issues)
