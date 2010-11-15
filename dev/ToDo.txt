@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* understand use of cylc and cylclockd on a subnet: do not
+  use explicit pyro_ns hostname everywhere by default? 
+
 * temporary job submission filenames should contain the suite name
   so that automated cleanup processes can distinguish between suites.
 
