@@ -11,6 +11,7 @@
 
 import os, sys
 import socket
+import datetime
 import cylc_pyro_client
 
 class message:
@@ -66,7 +67,8 @@ class message:
         return proxy
 
     def print_msg_sp( self, msg ):
-        prefix = 'cylc (' + self.mode + '): '
+        now = datetime.datetime.now().strftime( "%Y/%m/%d %H:%M:%S" ) 
+        prefix = 'cylc (' + self.mode + ' - ' + now + '): '
         if self.priority == 'NORMAL':
             print prefix + msg
         else:
@@ -74,7 +76,8 @@ class message:
 
     def print_msg( self ):
         if self.msg:
-            prefix = 'cylc (' + self.mode + '): '
+            now = datetime.datetime.now().strftime( "%Y/%m/%d %H:%M:%S" )
+            prefix = 'cylc (' + self.mode + ' - ' + now + '): '
             if self.priority == 'NORMAL':
                 print prefix + self.msg
             else:
