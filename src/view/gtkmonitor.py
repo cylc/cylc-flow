@@ -615,10 +615,10 @@ Cylc View is a real time suite monitor for Cylc.
         main_panes.add1( self.create_led_panel())
         main_panes.add2( notebook )
 
-        self.logfile = 'main'
+        self.logfile = 'log'
         cylc_log = self.logdir + '/' + self.logfile 
-        self.lvp = cylc_logviewer( 'main', self.logdir, self.logfile, self.task_list )
-        notebook.append_page( self.lvp.get_widget(), gtk.Label("Scheduler Log Files"))
+        self.lvp = cylc_logviewer( 'log', self.logdir, self.logfile, self.task_list )
+        notebook.append_page( self.lvp.get_widget(), gtk.Label("Log"))
 
         self.create_menu()
 

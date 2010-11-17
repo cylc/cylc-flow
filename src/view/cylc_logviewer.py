@@ -13,13 +13,13 @@ class cylc_logviewer( logviewer ):
         self.task_list = task_list
         logviewer.__init__( self, name, dir, file )
 
-
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
         
         combobox = gtk.combo_box_new_text()
-        combobox.append_text( 'Select Log' ) 
-        combobox.append_text( 'main' ) 
+        combobox.append_text( 'Filter' ) 
+        combobox.append_text( 'all' ) 
+        combobox.append_text( 'cylc' ) 
         for task in self.task_list:
             combobox.append_text( task )
 
@@ -35,8 +35,6 @@ class cylc_logviewer( logviewer ):
         previous = gtk.Button( "older rotation" )
         previous.connect("clicked", self.rotate_log, True )
         self.hbox.pack_end( previous, False )
-
-
 
     def switch_log( self, cb ):
         model = cb.get_model()
@@ -90,7 +88,10 @@ class cylc_logviewer( logviewer ):
         self.reset_logbuffer()
         logbuffer.delete( s, e )
         self.log_label.set_text( self.path() ) 
-        self.t = tailer( self.logview, self.path() )
+        if file != 'log':
+            self.t = tailer( self.logview, self.path(), file )
+        else:
+            self.t = tailer( self.logview, self.path() )
         ###print "Starting log viewer thread"
         self.t.start()
 

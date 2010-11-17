@@ -111,16 +111,10 @@ class task_pool:
     def create_main_log( self ):
         log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
-             log, 'main', self.logging_dir, \
+             log, self.logging_dir, \
                 self.logging_level, self.dummy_mode, self.clock )
         # log to the main log
         self.log = log
-
-    def create_task_log( self, name ):
-        log = logging.getLogger( 'main.' + name )
-        pimp_my_logger.pimp_it( \
-             log, name, self.logging_dir, \
-                self.logging_level, self.dummy_mode, self.clock )
 
     def get_tasks( self ):
         return self.tasks
@@ -773,11 +767,6 @@ class task_pool:
                 # instantiate the task proxy
                 itask = get_object( 'task_classes', name )\
                         ( c_time, 'waiting', startup=False )
-                if itask.instance_count == 1:
-                    # first task of its type, so create the log
-                    log = logging.getLogger( 'main.' + name )
-                    pimp_my_logger.pimp_it( log, name, self.logging_dir, \
-                            self.logging_level, self.dummy_mode, self.clock )
                 # the initial task cycle time can be altered during
                 # creation, so we have to create the task before
                 # checking if stop time has been reached.

@@ -3,17 +3,21 @@
 import gobject
 import threading
 import os
+import re
 import tail
 #from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
-    def __init__( self, logview, log = None ):
+    def __init__( self, logview, log, filter=None ):
         super( tailer, self).__init__()
         self.logview = logview
         self.logbuffer = logview.get_buffer()
         self.logfile = log
         self.quit = False
         self.freeze = False
+        if filter:
+            filter = '\\[' + filter + '%\d{10}\\]'
+        self.filter = filter
 
     def clear( self ):
         s,e = self.logbuffer.get_bounds()
@@ -28,6 +32,7 @@ class tailer(threading.Thread):
 
         if not os.path.exists( self.logfile ):
             #gobject.idle_add( self.warn, "File not found: " + self.logfile )
+            print "File not found: " + self.logfile
             ###print "Disconnecting from log viewer thread"
             return
 
@@ -35,8 +40,12 @@ class tailer(threading.Thread):
         while not self.quit:
             if not self.freeze:
                 line = gen.next()
-                if line: 
-                    gobject.idle_add( self.update_gui, line )
+                if line:
+                    if self.filter:
+                        if re.search( self.filter, line ):
+                            gobject.idle_add( self.update_gui, line )
+                    else:
+                        gobject.idle_add( self.update_gui, line )
         ###print "Disconnecting from log viewer thread"
  
     def update_gui( self, line ):

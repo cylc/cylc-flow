@@ -177,7 +177,7 @@ echo
 # % cylc submit -t startup%2010010106 test
 # Loading Cylc Preferences file: /home/oliverh/.cylcrc
 #
-# Cylc messages will be directed to stdout (=> the task log file).
+# Cylc messages will be directed to stdout.
 # Logging directory is /home/oliverh/.cylc/log-files/test-submit
 #
 #  > SUBMITTING TASK: /tmp/cylc-2H4HPc </dev/null 1> /home/oliverh/startup%2010010106-haDDeS.out 2> /home/oliverh/startup%2010010106-haDDeS.err &

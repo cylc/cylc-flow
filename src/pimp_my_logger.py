@@ -13,9 +13,6 @@
 import logging, logging.handlers
 import os, sys, re
 
-# format all task logs in the same way, and in dummy mode replace the
-# message timestamp with dummy clock time.
-
 # NOTE: the dummy mode dummy clock has been replaced with a general
 # clock that returns dummy time in dummy mode, so we could replace
 # the normal log time universally now... 
@@ -32,11 +29,11 @@ class LogFilter(logging.Filter):
         record.created = self.clock.get_epoch()
         return True
     
-def pimp_it( log, name, dir, level, dummy_mode, clock = None, run_task = False ):
+def pimp_it( log, dir, level, dummy_mode, clock = None, run_task = False ):
     log.setLevel( level )
     max_bytes = 1000000
     backups = 5
-    logfile = dir + '/' + name
+    logfile = dir + '/log'
     if not os.path.exists( dir ):
         raise SystemExit( 'Logging dir ' + dir + ' does not exist' )
 
@@ -46,18 +43,13 @@ def pimp_it( log, name, dir, level, dummy_mode, clock = None, run_task = False )
     ##if os.path.getsize( logfile ) > 0:
     ##    h.doRollover()
 
-    originator = ""
-    if name == "main":
-        originator = '%(name)-2s'
+    f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y/%m/%d %H:%M:%S' )
 
-    f = logging.Formatter( '%(asctime)s %(levelname)-2s ' + originator + ' - %(message)s', '%Y/%m/%d %H:%M:%S' )
-
-    if name == "main" or run_task:
-        # write warnings and worse to stderr as well as to the log
-        h2 = logging.StreamHandler(sys.stderr)
-        h2.setLevel( logging.WARNING )
-        h2.setFormatter( f )
-        log.addHandler( h2 )
+    # write warnings and worse to stderr as well as to the log
+    h2 = logging.StreamHandler(sys.stderr)
+    h2.setLevel( logging.WARNING )
+    h2.setFormatter( f )
+    log.addHandler( h2 )
 
     h.setFormatter(f)
     log.addHandler(h)

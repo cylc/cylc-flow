@@ -16,6 +16,9 @@ import os
 from lockserver import lockserver
 
 class task_lock:
+    # NOTE: THE FOLLOWING COMMENT MAY NO LONGER APPLY NOW THAT
+    # TASK-SPECIFIC LOGS ARE GONE?
+
     # ATTEMPT TO ACQUIRE YOUR LOCK AFTER SENDING THE CYLC START MESSAGE
     # so that failure to lock will be reported to the cylc task logs, as
     # well as to stdout, without causing cylc to complain that it has

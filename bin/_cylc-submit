@@ -149,10 +149,9 @@ globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 config = config( name, globalenv, logging_dir )
 config.job_submit_config()
 
-# create the task log
-log = logging.getLogger( 'main.' + task_name )
-pimp_my_logger.pimp_it( log, task_name, logging_dir, \
-        logging_lvl, False, None, True )
+# create the log
+log = logging.getLogger()
+pimp_my_logger.pimp_it( log, logging_dir, logging_lvl, False, None, True )
 
 if use_lockserver:
     # LOCATE THE PYRO NAMESERVER---------------------------------------
@@ -178,7 +177,7 @@ task = get_object( 'task_classes', task_name )( ctime, 'waiting', startup=True )
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 print
 if not options.dry_run:
-    print "Cylc messages will be directed to stdout (=> the task log file)."
+    print "Cylc messages will be directed to stdout."
     print "Logging directory is " + logging_dir
     print
 task.run_external_task( options.dry_run )

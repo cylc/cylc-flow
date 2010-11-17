@@ -39,9 +39,9 @@ class logviewer:
    
     def path( self ):
         if self.dir:
-            return self.dir + '/' + self.file
+            return self.dir + '/log'
         else:
-            return self.file
+            return 'log'
 
     def quit_w_e( self, w, e ):
         self.t.quit = True

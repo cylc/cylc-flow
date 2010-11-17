@@ -458,16 +458,6 @@ class remote_switch( Pyro.core.ObjBase ):
         # main log
         self.log.setLevel( new_level )
 
-        # task logs
-        # If this run is a restart from state dump file, the following
-        # assumes that the configured task list is the same as in the
-        # state-dump file, which should be the case.
-
-        for task in self.tasks:
-            name = 'main.' + task.name
-            log = logging.getLogger( name )
-            log.setLevel( new_level )
-
         return 'OK'
 
     def should_i_die( self, task_id ):

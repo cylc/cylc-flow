@@ -70,8 +70,6 @@ class restart( task_pool ):
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
 
-        log_created = {}
-
         mod = __import__( 'task_classes' )
 
         # parse each line and create the task it represents
@@ -101,11 +99,6 @@ class restart( task_pool ):
             if len( include ) > 0:
                 if name not in include:
                     continue
-
-            # create the task log
-            if name not in log_created.keys():
-                self.create_task_log( name )
-                log_created[ name ] = True
 
             itask = get_object( 'task_classes', name )\
                     ( c_time, state, startup=False )

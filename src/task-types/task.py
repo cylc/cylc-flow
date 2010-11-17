@@ -138,19 +138,9 @@ class task( Pyro.core.ObjBase ):
                         self.extra_scripting, self.logfiles, self.__class__.owner, self.__class__.remote_host )
 
     def log( self, priority, message ):
-        # task-specific log file
+        logger = logging.getLogger( "main" ) 
 
-        # is it better to "get" this each call as here, or to get a
-        # 'self.logger' once in __init__?
-        logger = logging.getLogger( "main." + self.name ) 
-
-        # task logs are specific to task type
-        try:
-            ( name, tag ) = (self.id).split('%')
-        except ValueError:
-            pass
-        else:
-            message = '[' + tag + '] ' + message
+        message = '[' + self.id + '] -' + message
 
         if priority == "WARNING":
             logger.warning( message )

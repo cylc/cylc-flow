@@ -61,9 +61,6 @@ class coldstart( task_pool ):
                 if name not in include:
                     continue
             
-            # create the task-specific logger
-            self.create_task_log( name )
-
             itask = get_object( 'task_classes', name )\
                     ( start_time, 'waiting', startup=True )
 
