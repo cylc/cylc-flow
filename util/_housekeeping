@@ -454,11 +454,9 @@ else:
                 if debug:
                     print "... exists"
 
-                if operation == 'delete' and use_subprocess:
-                    # copy: abort if target exists
-                    # delete: abort if target exists AND differs
+                if use_subprocess:
+                    # do target and source differ?
 
-                    # Are the files identical?
                     # There seems to be no obvious Pythonic 'diff -s'...
                     command = 'diff'
                     # subprocess.call() takes a list: [ command, arg1, arg2, ...]
@@ -507,19 +505,24 @@ else:
                         aborted += 1
                         continue
 
-            elif not options.force:
-                # unforced copy or move
-                if target_exists: # and target_identical:
-                    if verbose:
-                        print "NOT", action, entrypath, "-->", target, "(target exists)"
-                    aborted += 1
-                    continue
-                #elif target_exists and not target_identical:
-                #    msg = "NOT " + action + entrypath + " (" + target + " (target exists BUT DIFFERS)"
-                #    message( msg, priority='WARNING' ).send()
-                #    aborted += 1
-                #    continue
- 
+            else:
+                # copy or move
+                if target_exists:
+                    if target_identical:
+                        if verbose:
+                            print "NOT", action, entrypath, "-->", target, "(identical target exists)"
+                        aborted += 1
+                        continue
+                    else:
+                        if options.force:
+                            msg = "FORCED " + action + " " + entrypath + " --> " + target + " (over NON IDENTICAL existing target)"
+                            message( msg, priority='WARNING' ).send()
+                        else:
+                            msg = "NOT " + action + " " + entrypath + " --> " + target + " (NON IDENTICAL target exists)"
+                            message( msg, priority='WARNING' ).send()
+                            aborted += 1
+                            continue
+
         actioned += 1
 
         if operation == 'delete':
@@ -594,7 +597,6 @@ else:
     if options.dry_run:
         extra = 'dry run: would have'
  
-
     print '   ' + right_justify( str(actioned), str(total) ) + "/" + str( total ), "\t" + extra + " " + did
     print '   ' + right_justify( str(aborted),  str(total) ) + "/" + str( total ), "\t" + extra + " " + not_did 
     print '   ' + right_justify( str(ignored),  str(total) )+ "/" + str( total ), "\t (not matched)"
