@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+import os, re, sys
+from preferences import prefs
+from optparse import OptionParser
+
+parser = OptionParser( """cylc catlog [options] SUITE 
+Print LOCAL cylc suite log files to stdout, with optional task
+filtering. This command is merely a convenience as you don't need to
+specify the log file locations; but the same can otherwise be obtained
+easily with 'cat', 'grep', and so on.
+
+Arguments:
+  SUITE - access the cylc logs from the suite of this name.""")
+
+parser.add_option( "-t", "--task-name", 
+        help="Filter the cylc log for task type NAME",
+        metavar="NAME", action="store", default=None, dest="filter" )
+
+parser.add_option( "-r", "--rotation", 
+        help="Rotation number (to view older, rotated logs)",
+        metavar="INT", action="store", default="0", dest="rotation" )
+
+( options, args ) = parser.parse_args()
+
+if len(args) != 1:
+    parser.error( "wrong number of arguments" )
+
+name = args[0]
+
+rcfile = prefs()
+logging_dir = rcfile.get_suite_logging_dir( name ) 
+
+filename = logging_dir + '/log'
+if options.rotation != "0":
+    filename = logging_dir + "/log." + options.rotation
+
+filter = None
+if options.filter:
+    filter = re.compile( '\\[' + options.filter + '%\d{10}\\]' )
+
+# TO DO: exception handling for large files that exceed memory capacity?
+# apparently readline() one line at a time is much slower than readlines()
+try:
+    LOG = open( filename )
+except IOError:
+    raise SystemExit( "ERROR: file not found: " + filename )
+
+lines = LOG.readlines()
+LOG.close()
+
+if filter:
+    for line in lines:
+        if re.search( filter, line ):
+            print line.rstrip()
+
+else:
+    for line in lines:
+        print line.rstrip()
