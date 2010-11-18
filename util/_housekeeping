@@ -33,9 +33,9 @@ def right_justify( short, long ):
 usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
 Usage: 2/ cylcutil housekeeping [options] CONFIG
 
-Cycle time based file management: delete, move, or copy, items (files or
-directories) with cycle times (extracted from the item name) OFFSET
-hours or more earlier than the current or given cycle time. 
+Cycle time based file management: delete, move, or copy, cycle-time
+labelled files or directories with cycle times name OFFSET hours or more
+earlier than the current or given cycle time. 
 
 The CONFIG file format is one or more of lines of:
 
@@ -66,8 +66,10 @@ functionality uses Python 'subprocess' module to spawn a shell 'diff
 the file will be deleted if a file with the *same name* (but not
 necessarily identical contents) is found in DESTINATION.
 
-The [move] and [copy] operations are skipped if the item already exists 
-in DESTINATION. Use '--force' to change this default behavior.
+[move] and [copy] operations are aborted if the target item already
+exists in DESTINATION, and a warning is emitted if the existing target
+item is not identical to the source. Use '--force' to force a copy or
+move regardless of this.
 
 The [delete] operation can be used to implement a simple rolling archive
 of cycle-time labelled files or directories: just set OFFSET to the
@@ -457,11 +459,12 @@ else:
                 if use_subprocess:
                     # do target and source differ?
 
-                    # There seems to be no obvious Pythonic 'diff -s'...
+                    # There seems to be no obvious Pythonic 'diff'
                     command = 'diff'
                     # subprocess.call() takes a list: [ command, arg1, arg2, ...]
                     commandlist = [ command ]
-                    commandlist.append( '-s')
+                    # recursive diff
+                    commandlist.append( '-r')
                     commandlist.append( target )
                     commandlist.append( entrypath )
                     try:
@@ -473,13 +476,13 @@ else:
 
             if operation == 'delete':
                 if use_subprocess:
+                    # diff was taken above
                     if target_exists and target_identical:
                         # delete the file (handled below)
                         pass
 
                     elif target_exists and not target_identical:
                         # SEND WARNING MESSAGE
-                        reason = "(target not found)"
                         msg = "NOT DELETING " + entrypath + " (" + target + " DIFFERS)"
                         message( msg, priority='WARNING' ).send()
                         aborted += 1
@@ -488,12 +491,12 @@ else:
                     else:
                         # target does not exist
                         # SEND WARNING MESSAGE
-                        reason = "(target not found)"
                         msg = "NOT DELETING " + entrypath + " (" + target + " not found)"
                         message( msg, priority='WARNING' ).send()
                         aborted += 1
                         continue
                 else:
+                    # not diff available
                     if target_exists:
                         # delete the file (handled below)
                         pass
