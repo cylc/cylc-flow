@@ -3,21 +3,17 @@
 import gobject
 import threading
 import os
-import re
 import tail
 #from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
-    def __init__( self, logview, log, filter=None ):
+    def __init__( self, logview, log ):
         super( tailer, self).__init__()
         self.logview = logview
         self.logbuffer = logview.get_buffer()
         self.logfile = log
         self.quit = False
         self.freeze = False
-        if filter:
-            filter = '\\[' + filter + '%\d{10}\\]'
-        self.filter = filter
 
     def clear( self ):
         s,e = self.logbuffer.get_bounds()
@@ -41,11 +37,7 @@ class tailer(threading.Thread):
             if not self.freeze:
                 line = gen.next()
                 if line:
-                    if self.filter:
-                        if re.search( self.filter, line ):
-                            gobject.idle_add( self.update_gui, line )
-                    else:
-                        gobject.idle_add( self.update_gui, line )
+                    gobject.idle_add( self.update_gui, line )
         ###print "Disconnecting from log viewer thread"
  
     def update_gui( self, line ):

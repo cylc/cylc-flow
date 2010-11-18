@@ -1,4 +1,5 @@
-from logview import tailer
+from filtered_tailer import filtered_tailer
+from tailer import tailer
 import gtk
 import pygtk
 ####pygtk.require('2.0')
@@ -9,9 +10,12 @@ from logviewer import logviewer
 
 class cylc_logviewer( logviewer ):
  
-    def __init__( self, name, dir, file, task_list ):
+    def __init__( self, name, dir, task_list ):
         self.task_list = task_list
-        logviewer.__init__( self, name, dir, file )
+        self.main_log = 'log'
+        self.level = 0
+        self.filter = None
+        logviewer.__init__( self, name, dir, self.main_log )
 
     def create_gui_panel( self ):
         logviewer.create_gui_panel( self )
@@ -19,11 +23,10 @@ class cylc_logviewer( logviewer ):
         combobox = gtk.combo_box_new_text()
         combobox.append_text( 'Filter' ) 
         combobox.append_text( 'all' ) 
-        combobox.append_text( 'cylc' ) 
         for task in self.task_list:
             combobox.append_text( task )
 
-        combobox.connect("changed", self.switch_log )
+        combobox.connect("changed", self.filter_log )
         combobox.set_active(0)
 
         self.hbox.pack_end( combobox, False )
@@ -36,60 +39,56 @@ class cylc_logviewer( logviewer ):
         previous.connect("clicked", self.rotate_log, True )
         self.hbox.pack_end( previous, False )
 
-    def switch_log( self, cb ):
+    def filter_log( self, cb ):
         model = cb.get_model()
         index = cb.get_active()
         if index == 0:
             return False
 
         task = model[index][0]
-        self.replace_log( task )
+        if task == 'all':
+            filter = None
+        else:
+            filter = '\\[' + task + '%\d{10}\\]'
+
+        self.filter = filter
+        self.update_view()
 
         return False
 
-    def rotate_log( self, bt, go_older ):
-        cur_log = self.file
-        m = re.match( '(.*)\.(\d)$', cur_log ) 
-        if m:
-            level = int( m.groups()[1] )
-            log_base = m.groups()[0]
+    def current_log( self ):
+        if self.level == 0:
+            return self.main_log
         else:
-            level = 0
-            log_base = cur_log
+            return self.main_log + '.' + str( self.level )
 
-        warn = False
-
+    def rotate_log( self, bt, go_older ):
+        level = self.level
         if go_older:
             level += 1
         else:
             level -= 1
 
         if level < 0:
-            warning_dialog( "The newest (active) log is already displayed" ).warn()
+            warning_dialog( "The active log is already displayed" ).warn()
             return
 
-        if level == 0:
-            new_log = log_base
-        else:
-            new_log = log_base + '.' + str( level )
-
-        if new_log not in os.listdir( self.dir ):
-            print new_log
-            warning_dialog( "No older log available" ).warn()
+        if self.current_log() not in os.listdir( self.dir ):
+            warning_dialog( "No log not available" ).warn()
             return
 
-        self.replace_log( new_log )
+        self.level = level
+        self.update_view()
 
-    def replace_log( self, file ):
-        self.file = file
+    def update_view( self ):
         self.t.quit = True
         logbuffer = self.logview.get_buffer()
         s,e = logbuffer.get_bounds()
         self.reset_logbuffer()
         logbuffer.delete( s, e )
         self.log_label.set_text( self.path() ) 
-        if file != 'log':
-            self.t = tailer( self.logview, self.path(), file )
+        if self.filter:
+            self.t = filtered_tailer( self.logview, self.path(), self.filter )
         else:
             self.t = tailer( self.logview, self.path() )
         ###print "Starting log viewer thread"

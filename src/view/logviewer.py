@@ -5,8 +5,7 @@ import pygtk
 ####pygtk.require('2.0')
 import time, os, re, sys
 from warning_dialog import warning_dialog
-
-from logview import tailer
+from tailer import tailer
 
 class logviewer:
     def __init__( self, name, dir, file ):
@@ -32,17 +31,17 @@ class logviewer:
         s,e = logbuffer.get_bounds()
         logbuffer.delete( s,e )
 
+    def path( self ):
+        if self.dir:
+            return self.dir + '/' + self.file
+        else:
+            return self.file 
+
     def connect( self ):
         self.t = tailer( self.logview, self.path() )
         ####print "Starting log viewer thread for " + self.name
         self.t.start()
    
-    def path( self ):
-        if self.dir:
-            return self.dir + '/log'
-        else:
-            return 'log'
-
     def quit_w_e( self, w, e ):
         self.t.quit = True
 
