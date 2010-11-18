@@ -726,9 +726,7 @@ cylc view userguide &
 
 Cylc {\em Log Files} (Section~\ref{SuiteLogFiles}) are located 
 under \lstinline=$HOME/.cylc/logging/SUITE= (you can use
-\lstinline=cylc preferences= to change the default location). Each task
-has its own log file for task-specific events and the \lstinline=main=
-log file records all events in sequence.
+\lstinline=cylc preferences= to change the default location).
 
 You can also retrieve information from running cylc suites with the 
 \lstinline=cylc show= command:
@@ -1784,9 +1782,9 @@ See cylc's ``Distributed'' example suite, Section~\ref{Distributed}.
 \subsection{Task stdout And stderr}
 \label{TaskstdoutAndstderr}
 
-Where job stdout and stderr end up depends on the job submission
-method: normally log files in the user's home directory (or perhaps
-elsewhere if the job submission method allows this to be configured).
+Where job stdout and stderr end up depends is configurable via the
+\lstinline=suite.rc= file, but be aware that this depends on the chosen
+cylc job submission method using the chosen location.
 
 \pagebreak
 \section{Task Execution Environment}
@@ -2287,15 +2285,18 @@ cylc restart SUITE state.2010:3:30:14:54:29
 \subsection{Suite Log Files}
 \label{SuiteLogFiles}
 
-Each task has its own rotating log file for task-specific events,
-including incoming task messages, and the \lstinline=main= log file
-records all events in sequence.
+Earlier versions of cylc created a main suite log file and a
+task-specific log for every task. However, because when all logged
+events were made to percolate up to the main log the task-specific logs
+became superfluous. Instead, cylc provides facilities for filtering the
+main log for task-specific messages (or you can just use
+\lstinline=grep= for this purpose).
 
 \lstset{language=,
 basicstyle=\color{basic}\scriptsize\ttfamily,
 }
 \begin{lstlisting}
-$ tail $HOME/cylc-logs/userguide/main
+$ tail $HOME/cylc-logs/userguide/log
 2010/03/28 00:33:50 INFO main.F - [2010010312] disconnected (spent; general)
 2010/03/28 00:33:52 INFO main.C - [2010010400] storm surge fields ready for 2010010400
 2010/03/28 00:33:52 INFO main.A - [2010010412] surface wind fields ready for 2010010412
@@ -2319,8 +2320,8 @@ In dummy mode, the logged time is the dummy mode accelerated clock time, not
 real time.
 
 Existing log files are automatically rotated at start up and,
-individually, when they reach a size of 1 MB.  This maximum file 
-should be configurable, but it is currently hardwired in
+individually, when they reach a size of 10 MB.  This maximum file 
+size should be configurable, but it is currently hardwired in
 \lstinline=$CYLC_DIRsrc/pimp_my_logger.py=.
 
 \subsection{Dummy Mode} 
