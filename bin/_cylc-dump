@@ -12,9 +12,6 @@
 
 """
 Dump the current state of all suite tasks to stdout.
-
-For color terminal ASCII escape codes, see
-http://ascii-table.com/ansi-escape-sequences.php
 """
 
 import cylc_pyro_ns
