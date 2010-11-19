@@ -9,12 +9,10 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
 """
 Dump the current state of all suite tasks to stdout.
 """
 
-import cylc_pyro_ns
 from cycle_time import _rt_to_dt, is_valid
 import os, re, sys
 import Pyro.core
@@ -50,6 +48,10 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 
 ( options, args ) = parser.parse_args()
 
+host = options.host
+owner = os.environ['USER']
+suite = parser.get_suite_name()
+
 # default: display all information
 display_tasks = True
 display_global = True
@@ -59,43 +61,19 @@ if options.global_only:
 if options.tasks_only:
     display_global = False
 
-suite_name = parser.get_suite_name()
-pns_host = parser.get_pns_host()
-groupname = parser.get_groupname()
+if display_global:
+    print "suite : " + suite
 
-# get suites currently registered in the Pyro nameserver
-ns_groups = cylc_pyro_ns.ns( pns_host )
-
-#print 'SUITE INFORMATION'
-
-if ns_groups.registered( groupname ):
-    if display_global:
-        print "suite name: " + suite_name
-else:
-    SystemExit( "No " + groupname + " group registered with the Pyro nameserver" )
-
-# TO DO: BETTER EXCEPTION HANDLING FOR PYRO CONNECTIONS ETC HERE (e.g.
-# see monitor, for example) TimeoutError, ConnectionClosedError,
-# ProtocolError; and maybe use 'cylc ping' to check that the suite is
-# running first.
+found, port = port_scan.get_port( suite, owner, host )
+if not found:
+    print >> sys.stderr, "suite " + suite + " is not running"
+    sys.exit(1)
 
 # connect to remote suite state summary object
-try:
-    god = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.state_summary')
-    # timeout (sec) determines max wait for an answer from god.
-    # god._setTimeout(60)
-except Exception, x:
-    print "ERROR: Failed to connect to suite"
-    print x
-    sys.exit(1)
+god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
 
-try:
-    # get state summary, task names, cycle times
-    [glbl, states] = god.get_state_summary()
-except Exception, x:
-    print "ERROR: Failed to retrieve suite state summary"
-    print x
-    sys.exit(1)
+# get state summary, task names, cycle times
+[glbl, states] = god.get_state_summary()
 
 if display_global:
 

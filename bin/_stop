@@ -9,7 +9,6 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
 import os, sys
 import cycle_time
 import check_switch

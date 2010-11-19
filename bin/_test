@@ -110,7 +110,7 @@ sleep 5
 echo done
 
 # now check for startup errors, as just described.
-if grep '_cylc-start failed:  1' $OUT_SCHED  > /dev/null; then
+if grep '_start failed:  1' $OUT_SCHED  > /dev/null; then
     cat $OUT_SCHED
     munge 2> /dev/null # activate trap with a non-existent command
 fi

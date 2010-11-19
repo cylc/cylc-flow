@@ -46,8 +46,8 @@ echo "CONFIGURING THIS SHELL FOR $CYLC_DIR/bin/cylc"
 export CYLC_DIR  # in case not exported already
 
 # remove any previous cylc path settings 
-PATH=$($CYLC_DIR/bin/_cylc-clean-path $PATH)
-PYTHONPATH=$($CYLC_DIR/bin/_cylc-clean-path $PYTHONPATH)
+PATH=$($CYLC_DIR/bin/_clean-path $PATH)
+PYTHONPATH=$($CYLC_DIR/bin/_clean-path $PYTHONPATH)
 
 # export PATH to cylc bin
 PATH=$CYLC_DIR/bin:$CYLC_DIR/util:$PATH

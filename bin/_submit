@@ -89,7 +89,7 @@ os.environ[ 'PYTHONPATH' ] += ':' + suite_dir + '/configured'
 sys.path.append( os.path.join( suite_dir, 'configured' ))
 
 # make sure the suite is configured -----------------------------------
-execute( [ '_cylc-configure', suite_dir ] )
+execute( [ '_configure', suite_dir ] )
 
 # import suite modules now that PYTHONPATH is defined------------------ 
 from config import config

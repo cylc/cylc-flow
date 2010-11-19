@@ -334,7 +334,7 @@ class scheduler:
         sys.path.insert(0, confdir )
 
     def configure_suite( self ):
-        execute( [ '_cylc-configure', self.suite_dir ] )
+        execute( [ '_configure', self.suite_dir ] )
 
     def load_suite_config( self ):
         # TO DO: environment vars COULD GO STRAIGHT TO JOB_SUBMIT

@@ -159,7 +159,7 @@ else:
     command_options = sys.argv[2:]
 
 # construct command to execute
-command = '_cylc-' + command 
+command = '_' + command 
 # subprocess.call() takes a list: [ command, arg1, arg2, ...]
 commandlist = [ command ]
 for f in command_options:

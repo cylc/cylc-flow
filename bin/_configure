@@ -114,8 +114,8 @@ CYLC=$(which cylc)
 CYLC_DIR=${CYLC%/bin/cylc}
 
 # if the command line gets too big we'll have to use xargs:
-#    find taskdef -name '*.def' -o -name '*.py' | xargs _cylc-taskgen
-# and modify _cylc-taskgen so that it appends output to
+#    find taskdef -name '*.def' -o -name '*.py' | xargs _taskgen
+# and modify _taskgen so that it appends output to
 # task_classes.py file rather than overwriting.
 
 TASKDEFS=""
@@ -127,7 +127,7 @@ if $FORCE; then
 else
     ZIPPO=true
     for DEF in $ALL_TASKDEFS; do
-        CLSNAME=$( _cylc-get-taskname < $DEF )
+        CLSNAME=$( _get-taskname < $DEF )
         CLS=$CONFIGURED/__${CLSNAME}.py
         if [[ ! -f $CLS ]] || [[ $DEF -nt $CLS ]]; then
             ZIPPO=false
@@ -151,7 +151,7 @@ else
 fi
 
 echo "Parsing task definition files:"
-_cylc-taskgen $CONFIGURED $TASKDEFS
+_taskgen $CONFIGURED $TASKDEFS
 
 echo "Generating configured/task_classes.py"
 

@@ -11,7 +11,7 @@
 
 # Extract the task name from a cylc taskdef file.
 
-# Use as a file filter: NAME=$( _cylc-get-taskname < foo.def ).
+# Use as a file filter: NAME=$( _get-taskname < foo.def ).
 
 # Look for '%TASK' or '%FAMILY' at the start of a line, then ignore any
 # subsequent blank lines, and ignore any subsequent comment # lines
