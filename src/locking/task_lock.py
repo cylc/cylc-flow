@@ -28,7 +28,7 @@ class task_lock:
     # (a cylc message after that time will cause cylc to complain that
     # it has received a message from a task that has finished running). 
 
-    def __init__( self, task_id=None, suitename=None, pns_host=None, owner=None ):
+    def __init__( self, task_id=None, suite=None, host=None, owner=None, port=None ):
 
         self.use_lock_server = False
         if 'CYLC_USE_LOCKSERVER' in os.environ:
@@ -51,6 +51,17 @@ class task_lock:
                 print >> sys.stderr, '$TASK_ID not defined'
                 sys.exit(1)
 
+        if port:
+            self.port = port
+        else:
+            if 'CYLC_SUITE_PORT' in os.environ.keys():
+                self.port = os.environ[ 'CYLC_SUITE_PORT' ]
+            elif self.mode == 'raw':
+                self.port = 'PORT'
+            else:
+                print >> sys.stderr, '$CYLC_SUITE_PORT not defined'
+                sys.exit(1)
+
         if owner:
             self.owner = owner
         else:
@@ -62,8 +73,8 @@ class task_lock:
                 print >> sys.stderr, '$CYLC_SUITE_OWNER not defined'
                 sys.exit(1)
 
-        if suitename:
-            self.suite_name = suitename
+        if suite:
+            self.suite_name = suite
         else:
             if 'CYLC_SUITE_NAME' in os.environ.keys():
                 self.suite_name = os.environ[ 'CYLC_SUITE_NAME' ]
@@ -75,18 +86,18 @@ class task_lock:
 
         self.lockgroup = self.owner + '.' + self.suite_name
 
-        if pns_host:
-            self.pns_host = pns_host
+        if host:
+            self.host = host
         else:
-            if 'CYLC_NS_HOST' in os.environ.keys():
-                self.pns_host = os.environ[ 'CYLC_NS_HOST' ]
+            if 'CYLC_SUITE_HOST' in os.environ.keys():
+                self.host = os.environ[ 'CYLC_SUITE_HOST' ]
             elif self.mode == 'raw':
                 pass
             else:
-                # we always define the PNS Host explicitly, but could
+                # we always define the host explicitly, but could
                 # default to localhost's fully qualified domain name
-                # like this:   self.pns_host = socket.getfqdn()
-                print >> sys.stderr, '$CYLC_NS_HOST not defined'
+                # like this:   self.host = socket.getfqdn()
+                print >> sys.stderr, '$CYLC_SUITE_HOST not defined'
                 sys.exit(1)
 
     def acquire( self ):
@@ -96,7 +107,7 @@ class task_lock:
             print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
  
-        server = lockserver( self.pns_host ).get()
+        server = lockserver( self.host ).get()
         if server.acquire( self.task_id, self.lockgroup ):
             print "Acquired task lock"
             return True
@@ -111,7 +122,7 @@ class task_lock:
             print >> sys.stderr, "WARNING: you are not using the cylc lockserver." 
             return True
 
-        server = lockserver( self.pns_host ).get()
+        server = lockserver( self.host ).get()
         if server.is_locked( self.task_id, self.lockgroup ):
             if server.release( self.task_id, self.lockgroup ):
                 print "Released task lock"

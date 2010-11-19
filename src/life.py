@@ -14,6 +14,11 @@
 
 import Pyro.core
 
-class minimal( Pyro.core.ObjBase ):
-    def live( self ):
-        return True
+class ping( Pyro.core.ObjBase ):
+    def __init__( self, suite, owner ):
+        self.owner = owner
+        self.suite = suite
+        Pyro.core.ObjBase.__init__( self )
+
+    def identify( self ):
+        return ( self.suite, self.owner )

@@ -9,5 +9,5 @@ import sys, re
 
 def check( result ):
     print result
-    if not re.match( '^OK.*$', result ):
+    if not re.match( '^OK', result ):
         sys.exit(1)

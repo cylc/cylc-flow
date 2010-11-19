@@ -25,9 +25,6 @@ class NoPromptOptionParser_u( OptionParser ):
 
         usage += """
 
-If you are not the owner of the target suite, you must provide the
-owner's username so that the Pyro nameserver group can be inferred.
-
 Arguments:
    SUITE                Registered name of the target suite.""" 
 
@@ -45,9 +42,9 @@ Arguments:
                 action="store", dest="username" )
 
         self.add_option( "--host",
-                help="Pyro Nameserver host (defaults to local host).",
+                help="Cylc suite host (defaults to local host).",
                 metavar="HOST", action="store", default=socket.getfqdn(),
-                dest="pns_host" )
+                dest="host" )
 
         self.add_option( "-p", "--practice",
                 help="Target a suite running in practice mode.", 
@@ -68,8 +65,8 @@ Arguments:
         # user name 
         self.username = options.username  # see default above!
 
-        # nameserver host
-        self.pns_host = options.pns_host   # see default above!
+        # cylc suite host
+        self.host = options.host   # see default above!
 
         self.practice = options.practice  # practice mode or not
 
@@ -79,8 +76,9 @@ Arguments:
     def get_suite_name( self ):
         return self.suite_name
 
-    def get_pns_host( self ):
-        return self.pns_host
+    def get_host( self ):
+        # TO DO: GET RID OF THIS METHOD
+        return self.host
 
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE
@@ -111,10 +109,15 @@ arguments:
 
         OptionParser.__init__( self, usage )
 
+        self.add_option( "--port",
+                help="Cylc suite port.",
+                metavar="PORT", action="store", default=None,
+                dest="port" )
+
         self.add_option( "--host",
-                help="Pyro Nameserver host (defaults to local hostname).",
+                help="Cylc suite host (defaults to localhost).",
                 metavar="HOSTNAME", action="store", default=socket.getfqdn(),
-                dest="pns_host" )
+                dest="host" )
 
         self.add_option( "-p", "--practice",
                 help="Target a suite running in practice mode.", 
@@ -134,8 +137,7 @@ arguments:
         # suite name
         self.suite_name = args[0]
 
-        # nameserver host
-        self.pns_host = options.pns_host   # see default above!
+        self.host = options.host   # see default above!
 
         self.practice = options.practice  # practice mode or not
 
@@ -145,8 +147,8 @@ arguments:
     def get_suite_name( self ):
         return self.suite_name
 
-    def get_pns_host( self ):
-        return self.pns_host
+    def get_host( self ):
+        return self.host
 
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE

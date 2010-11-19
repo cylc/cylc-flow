@@ -9,11 +9,12 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import os
+import os, sys
 import check_switch
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from Pyro.errors import NamingError
+import port_scan
 
 parser = PromptOptionParser( """cylc unlock [options] SUITE 
 
@@ -27,9 +28,14 @@ from running simultaneously.""")
 
 (options, args) = parser.parse_args()
 
-if parser.prompt( 'Unlock' ):
-    host = parser.get_pns_host()
-    group = parser.get_groupname()
+owner = os.environ['USER'] 
+suite = parser.get_suite_name()
+host = options.host
+found, port = port_scan.get_port( suite, owner, host )
+if not found:
+    print >> sys.stderr, "suite " + suite + " is not running"
+    sys.exit(1)
 
-    god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
-    check_switch.check( god.unlock( os.environ['USER'] ))
+if parser.prompt( 'Unlock' ):
+    god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    check_switch.check( god.unlock( owner ))

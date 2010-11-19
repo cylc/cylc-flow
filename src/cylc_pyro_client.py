@@ -14,60 +14,35 @@ import os, sys
 import Pyro.core, Pyro.errors
 from optparse import OptionParser
 from time import sleep
-import cylc_pyro_ns
+
+def ping( host, port ):
+    proxy = Pyro.core.getProxyForURI('PYROLOC://' + host + ':' + str(port) + '/ping' )
+    return proxy.identify()
 
 class client:
-    def __init__( self, host, group ):
+    def __init__( self, suite, owner, host, port ):
+        self.suite = suite
+        self.owner = owner
         self.host = host
-        self.group = group
+        self.port = port
 
-    def ping( self ):
-        # Check the target suite is running by attempting to contact
-        # and then interact with its minimal life indicator object.
-        # If this works client commands don't need to catch exceptions?
-
-        lifeline = self.get_proxy( 'minimal' )
-
-        try:
-            result = lifeline.live()
-        except Pyro.errors.ProtocolError:
-            print 'ERROR: ' + self.group + ' is NOT RUNNING'
-            print '  But it IS registered with the Pyro Nameserver, which implies'
-            print '  that the suite has previously exited without cleaning up.'
-            print '  To clean up manually:'
-            print '     $ pyro-nsc deletegroup ' + self.group
-            ####sys.exit(1)
-            raise
-        except Exception, x:
-            # THIS SHOULD NOT BE REACHED
-            print 'ERROR: ' + self.group + ' is PROBABLY NOT RUNNING'
-            print '  But it IS registered with the Pyro Nameserver, which implies'
-            print '  that the suite has previously exited without cleaning up.'
-            print '  HOWEVER: an unexpected error occurred:', x
-            print '  Manual cleanup:'
-            print '     $ pyro-nsc deletegroup ' + self.group
-            ####sys.exit(1)
-            raise
- 
     def get_proxy( self, target ):
-        # check nameserver is running (aborts if none found)
-        cylc_pyro_ns.ns( self.host )
-
         # attempt to get a pyro proxy for the target object
-        try:
-            target = Pyro.core.getProxyForURI('PYRONAME://' + self.host + '/' + self.group + '.' + target )
-        except Pyro.errors.NamingError:
-            # THIS IMPLIES self.group IS NOT RUNNING
-            # OR NO SUCH suite OBJECT IS REGISTERED.
-            raise SystemExit( 
-                    'ERROR: failed to get a pyro proxy for ' + target + ' in ' + self.group + \
-                    '\n => suite not running, or suite object not registered with Pyro.')
-        except Exception, x:
-            # THIS SHOULD NOT BE REACHED
-            print group + ' is PROBABLY NOT running'
-            print '  (but an unexpected error occurred trying to get the pyro proxy: '
-            print x
-            sys.exit(1)
+        objname = self.owner + '.' + self.suite + '.' + target
+        #try:
+        target = Pyro.core.getProxyForURI('PYROLOC://' + self.host + ':' + str(self.port) + '/' + objname )
+        #except Pyro.errors.NamingError:
+        #    # THIS IMPLIES self.group IS NOT RUNNING
+        #    # OR NO SUCH suite OBJECT IS REGISTERED.
+        #    raise SystemExit( 
+        #            'ERROR: failed to get a pyro proxy for ' + target + ' in ' + self.group + \
+        #            '\n => suite not running?')
+        #except Exception, x:
+        #    # THIS SHOULD NOT BE REACHED
+        #    print group + ' is PROBABLY NOT running'
+        #    print '  (but an unexpected error occurred trying to get the pyro proxy: '
+        #    print x
+        #    sys.exit(1)
 
         return target
 

@@ -10,10 +10,11 @@
 #         |________________________|
 
 
-import os
+import os, sys
 import cycle_time
 import check_switch
 import cylc_pyro_client
+import port_scan
 from CylcOptionParsers import PromptOptionParser
 from Pyro.errors import NamingError
 
@@ -40,21 +41,26 @@ if len( args ) == 2:
     stop_at = True
     stop_time = args[1] 
 
-host = parser.get_pns_host()
-group = parser.get_groupname()
-user = os.environ['USER']
+host = options.host
+owner = os.environ['USER']
+suite = parser.get_suite_name()
 
-god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
+found, port = port_scan.get_port( suite, owner, host )
+if not found:
+    print >> sys.stderr, "suite " + suite + " is not running"
+    sys.exit(1)
+
+god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
 
 if stop_at:
     if not cycle_time.is_valid( stop_time ):
         parser.error( "invalid cycle time: " + stop_time )
     if parser.prompt( 'Set stop time ' + stop_time + ' for'):
-        check_switch.check( god.set_stop_time( stop_time, user ))
+        check_switch.check( god.set_stop_time( stop_time, owner ))
 
 elif options.shutdownnow:
     if parser.prompt( 'Shutdown NOW' ):
-        check_switch.check( god.shutdown_now( user ))
+        check_switch.check( god.shutdown_now( owner ))
 else:
     if parser.prompt( 'Shutdown' ):
-        check_switch.check( god.shutdown( user ))
+        check_switch.check( god.shutdown( owner ))

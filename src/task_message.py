@@ -27,8 +27,6 @@ class message:
             print >> sys.stderr, 'illegal message priority', priority
             sys.exit(1)
 
-        self.username = os.environ[ 'USER' ] 
-
         if 'CYLC_MODE' in os.environ:
             self.mode = os.environ[ 'CYLC_MODE' ] # 'scheduler' or 'submit'
         else:
@@ -42,29 +40,44 @@ class message:
             print >> sys.stderr, '$TASK_ID not defined'
             sys.exit(1)
 
-        if 'CYLC_NS_GROUP' in os.environ.keys():
-            self.groupname = os.environ[ 'CYLC_NS_GROUP' ]
+        if 'CYLC_SUITE_NAME' in os.environ.keys():
+            self.suite = os.environ[ 'CYLC_SUITE_NAME' ]
         elif self.mode == 'raw':
             pass
         else:
-            print >> sys.stderr, '$CYLC_NS_GROUP not defined'
+            print >> sys.stderr, '$CYLC_SUITE_NAME not defined'
             sys.exit(1)
 
-        if 'CYLC_NS_HOST' in os.environ.keys():
-            self.pns_host = os.environ[ 'CYLC_NS_HOST' ]
+        if 'CYLC_SUITE_OWNER' in os.environ.keys():
+            self.owner = os.environ[ 'CYLC_SUITE_OWNER' ]
         elif self.mode == 'raw':
             pass
         else:
-            # we always define the PNS Host explicitly, but could
+            print >> sys.stderr, '$CYLC_SUITE_OWNER not defined'
+            sys.exit(1)
+
+        if 'CYLC_SUITE_HOST' in os.environ.keys():
+            self.host = os.environ[ 'CYLC_SUITE_HOST' ]
+        elif self.mode == 'raw':
+            pass
+        else:
+            # we always define the host explicitly, but could
             # default to localhost's fully qualified domain name
-            # like this:   self.pns_host = socket.getfqdn()
-            print >> sys.stderr, '$CYLC_NS_GROUP not defined'
+            # like this:   self.host = socket.getfqdn()
+            print >> sys.stderr, '$CYLC_SUITE_HOST not defined'
+            sys.exit(1)
+
+        if 'CYLC_SUITE_PORT' in os.environ.keys():
+            self.port = os.environ[ 'CYLC_SUITE_PORT' ]
+        elif self.mode == 'raw':
+            pass
+        else:
+            print >> sys.stderr, '$CYLC_SUITE_PORT not defined'
             sys.exit(1)
 
     def get_proxy( self ):
         # this raises an exception on failure to connect:
-        proxy = cylc_pyro_client.client( self.pns_host, self.groupname ).get_proxy( self.task_id )
-        return proxy
+        return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( self.task_id )
 
     def print_msg_sp( self, msg ):
         now = datetime.datetime.now().strftime( "%Y/%m/%d %H:%M:%S" ) 

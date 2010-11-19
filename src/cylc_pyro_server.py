@@ -9,59 +9,15 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
+import os
+import Pyro
+import port_scan
 
-# Different cylc suites must register their Pyro objects under
-# different "group names" in the Pyro Nameserver so that they don't 
-# interfere with each other. 
+class pyro_server:
+    def __init__( self, suite, user=os.environ['USER'] ):
 
-# See the Pyro manual for nameserver hierachical naming details.
- 
-import os, re
-import Pyro.naming, Pyro.errors
-
-class pyrex:
-    def __init__( self, hostname, suitename, username=os.environ['USER'] ):
-        self.hostname = hostname
-
-        self.rootgroup = ':cylc'
-        self.usergroup = self.rootgroup + '.' + username
-        self.groupname = self.usergroup + '.' + suitename
-
-        # LOCATE THE PYRO NAMESERVER
-        try:
-            self.ns = Pyro.naming.NameServerLocator().getNS( self.hostname )
-        except Pyro.errors.NamingError:
-            raise SystemExit("Failed to find a Pyro Nameserver on " + self.hostname )
-
-        # create root group ':cylc'
-        try:
-            self.ns.createGroup( self.rootgroup )
-        except Pyro.errors.NamingError:
-            # handle only NamingError: group exists already
-            pass
-        
-        # create groupname ':cylc.username'
-        try:
-            self.ns.createGroup( self.usergroup )
-        except Pyro.errors.NamingError:
-            # handle only NamingError: group exists already
-            pass
-
-        # create full groupname ':cylc.username'
-        try:
-            self.ns.createGroup( self.groupname )
-        except Pyro.errors.NamingError:
-            # abort if any existing objects are registered in my group name
-            objs = self.ns.list( self.groupname )
-            print "\nERROR: " + self.groupname + " is already registered with Pyro (" + str( len( objs )) + " objects)."
-            for obj in objs:
-                print '  + ' + obj[0]
-            print "Either you are running suite ", suitename, "already OR its previous run"
-            print "failed to shut down cleanly, in which case you can clean up like this:"
-            print 
-            print "pyro-nsc deletegroup " + self.groupname + "   #<-------(manual cleanup)" 
-            print
-            raise SystemExit( "ABORTING NOW" )
+        self.suite = suite
+        self.owner = user
 
         # REQUIRE SINGLE THREADED PYRO (see documentation)
         Pyro.config.PYRO_MULTITHREADED = 0
@@ -69,33 +25,32 @@ class pyrex:
         # (see the Userguide "Networking Issues" section).
         Pyro.config.PYRO_DNS_URI = True
 
+        # base (lowest allowed) Pyro socket number
+        Pyro.config.PYRO_PORT = port_scan.pyro_base_port
+        # max number of sockets starting at base
+        Pyro.config.PYRO_PORT_RANGE = port_scan.pyro_port_range
+
         Pyro.core.initServer()
-
-        # CREATE A PYRO DAEMON FOR THIS SUITE
-        self.pyro_daemon = Pyro.core.Daemon()
-        self.pyro_daemon.useNameServer(self.ns)
-
-    def get_groupname( self ):
-        return self.groupname
+        self.daemon = Pyro.core.Daemon()
 
     def shutdown( self, thing ):
-        # TO DO: WHAT IS THING (T/F)
-
+        # TO DO: WHAT IS thing (T/F) ?
         print "Shutting down my Pyro daemon"
-        self.pyro_daemon.shutdown( thing )
+        self.daemon.shutdown( thing )
 
-        print "Deleting Pyro Nameserver group " + self.groupname
-        self.ns.deleteGroup( self.groupname )
-
-    def get_ns( self ): ########################################### NEEDED?
-        return self.ns
-
-    def connect( self, obj, name ):
-        reg_name = self.groupname + '.' + name
-        self.pyro_daemon.connect( obj, reg_name )
+    def connect( self, obj, name, qualified=True ):
+        if qualified:
+            qname = self.owner + '.' + self.suite + '.' + name
+        else:
+            qname = name
+        uri = self.daemon.connect( obj, qname )
 
     def disconnect( self, obj ):
-        self.pyro_daemon.disconnect( obj )
+        self.daemon.disconnect( obj )
 
     def handleRequests( self, timeout=None ):
-        self.pyro_daemon.handleRequests( timeout )
+        self.daemon.handleRequests( timeout )
+
+    def get_port( self ):
+        return self.daemon.port
+    

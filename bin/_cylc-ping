@@ -14,28 +14,15 @@ import os, sys, re
 import socket
 from optparse import OptionParser
 import Pyro.errors
-import cylc_pyro_ns
 import cylc_pyro_client
+import port_scan
 
 parser = OptionParser( """cylc ping [options] [SUITE]
     
-Check if a particular cylc suite is running, or list all running suites. 
-
-This command first attempts to get a proxy for a particular suite
-object from the Pyro Nameserver, then it attempts to call a method on
-the remote object (the former condition is necessary but not sufficient
-to show that a suite is running, because it is possible for a suite
-to abort without deregistering its Pyro Nameserver objects).
-
-If you are not the owner of the target suite, you must provide the
-owner's username so that the Pyro nameserver group can be inferred.
+Check if a SUITE is running, or list all running suites. 
 
 Arguments:
 SUITE             Name of a cylc suite to check on """ )
-
-#parser.add_option( "-e", "--error", 
-#        help="Exit with non-zero error status if SUITE  is not running.",
-#        action="store_true", default=False, dest="error" )
 
 parser.add_option( "-u", "--user",
         help="Owner of the target suite (defaults to $USER).",
@@ -43,9 +30,9 @@ parser.add_option( "-u", "--user",
         action="store", dest="username" )
 
 parser.add_option( "--host",
-        help="Pyro Nameserver host (defaults to local host name).",
+        help="Cylc suite host (defaults to localhost).",
         metavar="HOST", action="store", default=socket.getfqdn(),
-        dest="pns_host" )
+        dest="host" )
 
 parser.add_option( "-p", "--practice",
         help="Target a suite running in practice mode.", 
@@ -53,26 +40,20 @@ parser.add_option( "-p", "--practice",
 
 ( options, args ) = parser.parse_args()
 
-host = options.pns_host
-user = options.username
+host = options.host
+owner = options.username
 
 groups = []
-if len(args) == 1:
-    suitename = args[0]
-    # TO DO: groupname calc should be centralised
-    groups = [ ':cylc.' + user + '.' + suitename ]
+if len( args ) == 0:
+    print "Scanning ports for running cylc suites..."
+    port_scan.scan( host )
 
-elif len(args) == 0:
-    ns = cylc_pyro_ns.ns( host )
-    groups = ns.get_groups()
-
-else:
-    parser.error( "Too many arguments" ) 
-
-for group in groups:
-    try:
-        cylc_pyro_client.client( host, group ).ping()
-    except:
-        print group + ' is not running'
+elif len(args) == 1:
+    suite = args[0]
+    found, port = port_scan.get_port( suite, owner, host )
+    if found:
+        print "suite " + suite + " (" + owner + ") is running at port", port
     else:
-        print group + ' is running'
+        print "suite " + suite + ' is not running'
+else:
+    parser.error( "Wrong number of arguments" ) 

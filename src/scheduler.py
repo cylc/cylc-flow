@@ -25,7 +25,7 @@ import accelerated_clock
 from job_submit import job_submit
 from registration import registrations
 from suite_lock import suite_lock
-from life import minimal
+from life import ping
 from OrderedDict import OrderedDict
 
 import task     # loads task_classes
@@ -41,7 +41,7 @@ class scheduler:
         # PROVIDE IN DERIVED CLASSES:
         # self.parser = OptionParser( usage )
 
-        self.parser.set_defaults( pns_host= socket.getfqdn(),
+        self.parser.set_defaults( host= socket.getfqdn(),
                 dummy_mode=False, practice_mode=False,
                 include=None, exclude=None, debug=False,
                 clock_rate=10, clock_offset=24, dummy_run_length=20 )
@@ -67,8 +67,8 @@ class scheduler:
                 metavar="LIST", action="store", dest='include' )
 
         self.parser.add_option( "--host",
-                help="Pyro Nameserver host (defaults to local host name).",
-                metavar="HOSTNAME", action="store", dest="pns_host" )
+                help="suite host (defaults to local host name).",
+                metavar="HOSTNAME", action="store", dest="host" )
 
         self.parser.add_option( "-d", "--dummy-mode",
                 help="Replace each task with a program that masquerades "
@@ -153,13 +153,13 @@ class scheduler:
         self.username = os.environ['USER']
         self.banner[ 'suite name' ] = self.suite_name
 
-        # get Pyro nameserver hostname
-        if not self.options.pns_host:
+        # get suite hostname
+        if not self.options.host:
             # (this won't happen; defaults to local hostname)
-            self.parser.error( "Required: Pyro nameserver hostname" )
+            self.parser.error( "Required: cylc suite hostname" )
         else:
-            self.pns_host = self.options.pns_host
-            self.banner[ 'Pyro nameserver host' ] = self.pns_host
+            self.host = self.options.host
+            self.banner[ 'cylc suite host' ] = self.host
 
         # get mode of operation
         if self.options.dummy_mode and self.options.practice_mode:
@@ -303,18 +303,18 @@ class scheduler:
 
     def configure_pyro( self ):
         if self.practice:
-            # MODIFY GROUPNAME SO WE CAN RUN NEXT TO THE ORIGINAL SUITE.
+            # MODIFY SUITE NAME SO WE CAN RUN NEXT TO THE ORIGINAL SUITE.
             suitename = self.suite_name + "-practice"
         else:
             suitename = self.suite_name
 
-        self.pyro = cylc_pyro_server.pyrex( self.pns_host, suitename )
+        self.pyro = cylc_pyro_server.pyro_server( suitename )
 
-        self.banner[ 'Pyro nameserver group' ] = self.pyro.get_groupname()
+        self.banner[ 'Pyro port' ] = self.pyro.get_port()
 
     def configure_lifecheck( self ):
-        self.lifecheck = minimal()
-        self.pyro.connect( self.lifecheck, 'minimal' )
+        self.lifecheck = ping( self.suite_name, self.username )
+        self.pyro.connect( self.lifecheck, 'ping', qualified = False )
 
     def configure_environment( self ):
         # provide access to the suite scripts and source modules
@@ -337,7 +337,7 @@ class scheduler:
         execute( [ '_cylc-configure', self.suite_dir ] )
 
     def load_suite_config( self ):
-        # TO DO: PUTENV STUFF BELOW COULD GO STRAIGHT TO JOB_SUBMIT
+        # TO DO: environment vars COULD GO STRAIGHT TO JOB_SUBMIT
         # ENVIRONMENT (NOT NEEDED IN CONFIG?)
 
         # import suite-specific cylc modules now
@@ -346,8 +346,8 @@ class scheduler:
         # initial global environment
         globalenv = OrderedDict()
         globalenv[ 'CYLC_MODE' ] = 'scheduler'
-        globalenv[ 'CYLC_NS_HOST' ] =  str( self.pns_host )
-        globalenv[ 'CYLC_NS_GROUP' ] =  self.pyro.get_groupname()
+        globalenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
+        globalenv[ 'CYLC_SUITE_PORT' ] =  self.pyro.get_port()
         globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
         globalenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
         globalenv[ 'CYLC_SUITE_NAME' ] = self.suite_name
@@ -456,7 +456,7 @@ class scheduler:
                 suitename = self.suite_name
 
             # request suite access from the lock server
-            lock = suite_lock( self.pns_host, self.username,
+            lock = suite_lock( self.host, self.username,
                     suitename, self.suite_dir, 'scheduler' )
             try:
                 if not lock.request_suite_access( self.exclusive_suite_lock ):
@@ -568,7 +568,7 @@ class scheduler:
 
             if self.lock_acquired:
                 print "Releasing suite lock"
-                lock = suite_lock( self.pns_host, self.username,
+                lock = suite_lock( self.host, self.username,
                         suitename, self.suite_dir, 'scheduler' )
                 if not lock.release_suite_access():
                     print >> sys.stderr, 'failed to release suite!'
