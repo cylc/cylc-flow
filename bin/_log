@@ -14,7 +14,7 @@ import os, re, sys
 from preferences import prefs
 from optparse import OptionParser
 
-parser = OptionParser( """cylc catlog [options] SUITE 
+parser = OptionParser( """cylc log [options] SUITE 
 Print LOCAL cylc suite log files to stdout, with optional task
 filtering. This command is merely a convenience as you don't need to
 specify the log file locations; but the same can otherwise be obtained
@@ -22,6 +22,10 @@ easily with 'cat', 'grep', and so on.
 
 Arguments:
   SUITE - access the cylc logs from the suite of this name.""")
+
+parser.add_option( "-p", "--print", 
+        help="Print the suite log file location and exit.",
+        action="store_true", default=False, dest="print_location" )
 
 parser.add_option( "-t", "--task-name", 
         help="Filter the cylc log for task type NAME",
@@ -44,6 +48,10 @@ logging_dir = rcfile.get_suite_logging_dir( name )
 filename = logging_dir + '/log'
 if options.rotation != "0":
     filename = logging_dir + "/log." + options.rotation
+
+if options.print_location:
+    print filename
+    sys.exit(0)
 
 filter = None
 if options.filter:
