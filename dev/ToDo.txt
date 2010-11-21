@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* document reason for naming of pyro-connected objects
+  (owner.suite.obj): prevent accidentally interventing in the wrong
+  suite when using explicit port numbers (if we allow that).
+
 * inserting an already existing task causing cylc to shut down with 
   'error: task X has already registered its outputs' - is this the
   desired behavior?
