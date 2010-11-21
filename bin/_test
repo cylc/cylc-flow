@@ -62,7 +62,10 @@ OUT=test.out; OUT_SCHED=test-sched.out
 # cylc suite log
 LOGRC=$( cylc preferences -p | grep 'logging directory' )
 LOGDIR=${LOGRC#*= }
-LOG=$LOGDIR/test/main
+LOG=$LOGDIR/test/log
+
+# remove old test log
+rm -rf $LOG
 
 # START FROM A CLEAN SLATE
 echo ">> CLEANING OUT any remnants of previous tests ... "
@@ -191,7 +194,7 @@ echo "  $STDERR"
 echo -n "   ."
 READY=false
 while ! $READY; do
-    grep 'cylc (submit): startup%2010010106 finished' $STDOUT 2> /dev/null && READY=true
+    egrep 'cylc \(submit.*\): startup%2010010106 finished' $STDOUT 2> /dev/null && READY=true
     echo -n .
     sleep 1
 done
