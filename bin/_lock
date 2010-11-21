@@ -12,6 +12,7 @@
 import os
 import check_switch
 import cylc_pyro_client
+import port_scan
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser("""cylc lock [options] SUITE 
@@ -30,9 +31,15 @@ if len(args) != 1:
     parser.usage() 
     sys.exit(1)
 
-if parser.prompt( 'lock' ):
-    host = parser.get_pns_host()
-    group = parser.get_groupname()
+host = options.host
+owner = os.environ['USER']
+suite = parser.get_suite_name()
 
-    god = cylc_pyro_client.client( host, group ).get_proxy('remote')
-    check_switch.check( god.lock( os.environ['USER'] ))
+found, port = port_scan.get_port( suite, owner, host )
+if not found:
+    print >> sys.stderr, "suite " + suite + " is not running"
+    sys.exit(1)
+
+if parser.prompt( 'lock' ):
+    god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    check_switch.check( god.lock( owner ))

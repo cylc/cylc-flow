@@ -9,10 +9,11 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import os
+import os,sys
 import cycle_time
 import check_switch
 import cylc_pyro_client
+import port_scan
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc insert [options] SUITE ID
@@ -30,6 +31,15 @@ See also 'cylc submit', for running single tasks without a scheduler.""",
 if len(args) != 2:
     parser.error( "suite name and one Task or Group ID required" )
 
+host = options.host
+owner = os.environ['USER']
+suite = parser.get_suite_name()
+
+found, port = port_scan.get_port( suite, owner, host )
+if not found:
+    print >> sys.stderr, "suite " + suite + " is not running"
+    sys.exit(1)
+
 target = args[1]
 
 if parser.prompt( 'Insert ' + target + ' in'):
@@ -41,8 +51,5 @@ if parser.prompt( 'Insert ' + target + ' in'):
     if not cycle_time.is_valid( cycle ):
         parser.error( "invalid cycle time: " + cycle )
 
-    host = parser.get_pns_host()
-    group = parser.get_groupname()
-
-    god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
-    check_switch.check( god.insert( target,  os.environ['USER'] ))
+    god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    check_switch.check( god.insert( target,  owner ))

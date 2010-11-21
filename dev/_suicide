@@ -15,11 +15,14 @@ import socket
 from time import sleep
 from optparse import OptionParser
 import cylc_pyro_client
+import port_scan
 
 # PARSE THE COMMAND LINE-----------------------------------------------
 usage = """cylc suicide [options]
 
 THIS COMMAND IS FOR USE BY EXTERNAL TASKS.
+
+(untested for some time: may need updating)
 
 An external task program can call this to see if the cylc operator has
 told the corresponding task proxy to shut down, in which case the 
@@ -44,15 +47,14 @@ parser.add_option( "-s", "--suite",
         help="The name of the suite hosting the target task proxy object.",
         action="store", dest="suite_name" )
 
-parser.add_option( "-u", "--user",
+parser.add_option( "-o", "--owner",
         help="Owner of the target suite, defaults to $USER. Needed "
         "to infer the Pyro nameserver groupname",
-        metavar="USERNAME", action="store", dest="username" )
+        metavar="owner", action="store", dest="owner" )
 
 parser.add_option( "--host",
-        help="Hostname of the machine running the Pyro nameserver, "
-            "defaults to $CYLC_NS_HOST, then local hostname.",
-        metavar="HOSTNAME", action="store", dest="pns_host" )
+        help="Cylc suite host, defaults to $CYLC_SUITE_HOST, then localhost.",
+        metavar="HOSTNAME", action="store", dest="host" )
 
 ( options, args ) = parser.parse_args()
 
@@ -77,30 +79,34 @@ else:
             #print 'cylc message: you appear to have invoked a raw task script'
             task_id = 'NAME%TAG'
         else:
-            print 'cylc message ERROR: no task id provided!'
+            print 'ERROR: no task id provided!'
             sys.exit(1)
 
-# USER NAME------------------------------------------------------
-if options.username:
-    username = options.username
+#  CYLC SUITE OWNER ------------------------------------------------------
+if options.owner:
+    owner = options.owner
 else:
-    username = os.environ[ 'USER' ] 
+    owner = os.environ[ 'USER' ] 
 
-# NAMESERVER GROUP NAME-------------------------------------------------
+# CYLC SUITE NAME-------------------------------------------------
 if options.suite_name:
-    groupname = username + '_' + options.suite_name
-elif 'CYLC_NS_GROUP' in os.environ.keys():
-    groupname = os.environ[ 'CYLC_NS_GROUP' ]
-
-# PYRO NAMESERVER HOSTNAME---------------------------------------------
-if options.pns_host:
-    pns_host = options.pns_host
-
-elif 'CYLC_NS_HOST' in os.environ.keys():
-    pns_host = os.environ[ 'CYLC_NS_HOST' ]
-
+    suite = options.suite_name
+elif 'CYLC_SUITE_NAME' in os.environ.keys():
+    suite = os.environ[ 'CYLC_SUITE_NAME' ]
 else:
-    pns_host = socket.getfqdn()
+    if mode == 'raw':
+        suite = 'NONE'
+    else:
+        print 'ERROR: no task id provided!'
+        sys.exit(1)
+
+# CYLC SUITE HOST-------------------------------------------------------
+if options.host:
+    host = options.host
+elif 'CYLC_SUITE_HOST' in os.environ.keys():
+    host = os.environ[ 'CYLC_SUITE_HOST' ]
+else:
+    host = socket.getfqdn()
     #print 'WARNING, cylc message: no Pyro nameserver hostname provided!'
     #print 'will attempt to connect to a namerserver on local host'
  
@@ -112,12 +118,13 @@ if mode != 'scheduler':
     sys.exit(0)
 
 # CONNECT TO THE SUICIDE SUGGESTOR OBJECT-----------------------------
-try:
-    suggestor = cylc_pyro_client.client( pns_host, groupname ).get_proxy( 'remote' )
-except:
-    print "ERROR: failed to connect to the suicide suggestor"
+found, port = port_scan.get_port( suite, owner, host )
+if not found:
+    print >> sys.stderr, "suite " + suite + " is not running"
     sys.exit(1)
 
-if suggestor.should_i_die( task_id ):
-    print "SUGGESTOR SAYS DIE!"
+god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+
+if god.should_i_die( task_id ):
+    print "GOD SAYS YOUR TIME HAS COME!"
     sys.exit(1)

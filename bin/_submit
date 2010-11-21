@@ -19,7 +19,7 @@ from dynamic_instantiation import get_object
 from registration import registrations
 from execute import execute
 from job_submit import job_submit
-import cylc_pyro_ns, cycle_time, pimp_my_logger
+import cycle_time, pimp_my_logger
 from preferences import prefs
 from suite_lock import suite_lock
 
@@ -39,17 +39,12 @@ arguments:
 def commandline_parser():
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host= socket.getfqdn(), sched=False,
-            dry_run=False )
+    parser.set_defaults( sched=False, dry_run=False )
 
     parser.add_option( "-d", "--dry-run",
             help="Generate the cylc task execution file for the "
             "task and report how it would be submitted to run.",
             action="store_true", dest="dry_run" )
-
-    parser.add_option( "--host",
-            help="Pyro Nameserver host (defaults to local host name).",
-            metavar="HOSTNAME", action="store", dest="pns_host" )
 
     parser.add_option( "--scheduler",
             help="(EXPERIMENTAL) tell the task to run as a scheduler task, "
@@ -69,6 +64,8 @@ if len( args ) != 2:
 # get input args------------------------------------------------------
 name = args[0]
 task_id = args[1]
+
+host = socket.getfqdn()
 
 # find location of the suite task and config modules------------------
 reg = registrations()
@@ -104,15 +101,7 @@ except ValueError:
 if not cycle_time.is_valid( ctime ):
     parser.error( "invalid cycle time: " + ctime )
 
-# get Pyro nameserver hostname-----------------------------------------
-if not options.pns_host:
-    # (this won't happen; defaults to local hostname)
-    parser.error( "Required: Pyro nameserver hostname" )
-else:
-    pns_host = options.pns_host
-
-username = os.environ['USER']
-pyro_groupname = ':cylc.' + username + '.' + name
+owner = os.environ['USER']
 
 # load cylcrc file----------------------------------------------------
 rcfile = prefs()
@@ -124,7 +113,7 @@ if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     use_lockserver = True
     # request suite access from the lock server
     # submit does not need to call release_suite_access()
-    suite_lock = suite_lock( pns_host, username, name, suite_dir, 'submit' )
+    suite_lock = suite_lock( host, owner, name, suite_dir, 'submit' )
     try:
         if not suite_lock.request_suite_access():
             raise SystemExit( 'ERROR: failed to acquire a suite lock' )
@@ -137,12 +126,12 @@ if options.sched:
     globalenv[ 'CYLC_MODE' ] = 'scheduler'
 else:
     globalenv[ 'CYLC_MODE' ] = 'submit'
-globalenv[ 'CYLC_NS_HOST' ] = pns_host
-globalenv[ 'CYLC_NS_GROUP' ] = pyro_groupname
+globalenv[ 'CYLC_SUITE_HOST' ] = host
+globalenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
 globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
 globalenv[ 'CYLC_SUITE_DIR' ] = suite_dir
 globalenv[ 'CYLC_SUITE_NAME' ] = name
-globalenv[ 'CYLC_SUITE_OWNER' ] = username
+globalenv[ 'CYLC_SUITE_OWNER' ] = owner
 globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 
 # load suite configuration--------------------------------------------
@@ -154,9 +143,7 @@ log = logging.getLogger()
 pimp_my_logger.pimp_it( log, logging_dir, logging_lvl, False, None, True )
 
 if use_lockserver:
-    # LOCATE THE PYRO NAMESERVER---------------------------------------
-    # (required for suite locking)
-    nameserver = cylc_pyro_ns.ns( pns_host )
+    print "TO DO: LOCKSERVER WITHOUT PYRO-NS"
 
 job_submit.global_env = config.get( 'environment' )
 job_submit.joblog_dir = config.get( 'joblog_dir' )

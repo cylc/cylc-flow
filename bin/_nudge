@@ -13,22 +13,27 @@
 import os
 import check_switch
 import cylc_pyro_client
+import port_scan
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc nudge [options] SUITE 
 
 Cause the cylc task processing loop to be invoked in a running suite.
-The cylc userguide explains when you might want to use this command.
+THIS COMMAND IS NO LONGER NECESSARY - THE TASK PROCESSING LOOP IS NOW
+INVOKED ON A ONE SECOND TIMEOUT AS WELL AS ON INCOMING TASK MESSAGES.
 """ )
-
-# INVOKING THE LOOP ON A TIMEOUT WOULD BE A FAILSAFE OPTION:
-# 'cylc schedule --use-timeout'?
 
 (options, args) = parser.parse_args()
 
-if parser.prompt( 'Nudge' ):
-    host = parser.get_pns_host()
-    group = parser.get_groupname()
+host = options.host
+owner = os.environ['USER']
+suite = parser.get_suite_name()
 
-    god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
-    check_switch.check( god.nudge( os.environ['USER'] ))
+found, port = port_scan.get_port( suite, owner, host )
+if not found:
+    print >> sys.stderr, "suite " + suite + " is not running"
+    sys.exit(1)
+
+if parser.prompt( 'Nudge' ):
+    god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    check_switch.check( god.nudge( owner ))

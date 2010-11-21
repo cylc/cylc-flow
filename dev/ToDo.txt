@@ -1,6 +1,13 @@
 _______
 GENERAL
 
+* inserting an already existing task causing cylc to shut down with 
+  'error: task X has already registered its outputs' - is this the
+  desired behavior?
+
+* '--host' should not be allowed for intervention commands because
+  owner's username does not cross machine boundaries, generally.
+
 * understand use of cylc and cylclockd on a subnet: do not
   use explicit pyro_ns hostname everywhere by default? 
 
@@ -264,9 +271,6 @@ GENERAL
 * task generator should look for mispelled $(CYLCE_TIME)
 
 * is taskdef HOURS sorted for order?
-
-* optionally allow a pyro request handling (or main loop?) timeout.
-  (this is not needed now that the stalling problem is solved?)
 
 * consistent suite exit strategy: 
    -sys.exit(1), 

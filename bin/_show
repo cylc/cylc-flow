@@ -11,25 +11,25 @@
 
 import os, re, sys
 import cycle_time
+import port_scan
 import cylc_pyro_client
 from registration import registrations
 from CylcOptionParsers import NoPromptOptionParser_u
 
-def print_heading( strng ):
-        underline = re.sub( '.', '_', strng )
-        print underline
-        print strng
-
 parser = NoPromptOptionParser_u( """cylc show [options] SUITE [TASK NAME] [TASK ID]
 
-Print suite information: title and task list, task descriptions, current
-state of task prerequisites and outputs and, for contact tasks, whether
-or not the delayed start time has been reached. For a suite that is not
-running just the task list is printed.""",
+Print global or task-specific information from a running suite: title and
+task list, task descriptions, current state of task prerequisites and
+outputs and, for contact tasks, whether or not the delayed start time
+has been reached.""",
 ["""TASK NAME            Name of a suite task class - print description.
    TASK ID              ID (NAME%YYYYMMDDHH) - also print prerequisites etc."""] )
 
 (options, args) = parser.parse_args()
+
+host = options.host
+owner = options.owner
+suite = parser.get_suite_name()
 
 prnt_suite = False
 prnt_name = False
@@ -44,97 +44,68 @@ if len(args) == 2:
         name = target
     else:
         prnt_id = True
+        id = target
 else:
     prnt_suite = True
  
-suitename = parser.get_suite_name()
+running, port = port_scan.get_port( suite, owner, host )
+if not running:
+    raise SystemExit( "suite " + suite + " is not running" )
 
-host = parser.get_pns_host()
-group = parser.get_groupname()
-
-try:
-    god = cylc_pyro_client.client( host, group ).get_proxy( 'remote' )
-except:
-    suite_is_running = False
-else:
-    suite_is_running = True
+god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+title, defdir, username = god.get_suite_info()
 
 if prnt_suite:
-    # print suite information and exit
+    print suite + ' (' + owner + ') --> ' + defdir
+    print title
 
-    if suite_is_running:
-        ( title, suitedef_dir, username ) = god.get_suite_info()
-
-        print title
-        print ' * ' + username + ': ' + suitename + ' --> ' + suitedef_dir
-        print
-
-    # find location of the suite task and config modules
-    reg = registrations()
-    if reg.is_registered( suitename ):
-        suite_dir = reg.get( suitename )
-    else:
-        reg.print_all()
-        raise SystemExit( "suite " + suitename + " is not registered!" )
-    
-    # provide access to the suite source modules for THIS program---------
-    sys.path.append( os.path.join( suite_dir, 'configured' ))
-    from task_list import task_list
-
-    print 'Suite tasks:'
-    for task in task_list:
+    for task in god.get_task_list():
         print ' + ', task
-    sys.exit(0)
 
-# print task description
-info = god.get_task_info( [ name ] )
+if prnt_name or prnt_id:
+    info = god.get_task_info( [ name ] )
+    print 'Task ' + name + ' in suite ' + suite + ':' 
+    for name in info.keys():
+        for line in info[name]:
+            print '  ' + line
 
-print_heading( 'Task ' + name + ' in ' + suitename + ':' )
-for name in info.keys():
-    for line in info[name]:
-        print '  ' + line
+if prnt_id:
+    if not cycle_time.is_valid( cycle ):
+        parser.error( "invalid cycle time: " + cycle )
 
-if prnt_name:
-    sys.exit(0)
+    # PREREQUISITES AND OUTPUTS
+    result = god.get_task_requisites( [ id ] )
 
-if not cycle_time.is_valid( cycle ):
-    parser.error( "invalid cycle time: " + cycle )
+    if id not in result:
+        print "Task " + id + " not found in " + suite
+        sys.exit(1)
 
-id = target
-result = god.get_task_requisites( [ id ] )
+    for id in result.keys():
+        [ pre, out, extra_info ] = result[ id ]
 
-if id not in result:
-    print "Task " + id + " not found in " + suitename
-    sys.exit(1)
+        print id + ' prerequisites (- => not satisfied):'
+        if len( pre ) == 0:
+            print '  (None)'
+        for item in pre:
+            [ msg, state ] = item
+            if state:
+                descr = '  + '
+            else:
+                descr = '  - '
+            print descr + msg
 
-# PREREQUISTIES AND OUTPUTS
+        print id + ' outputs (- => not completed):'
+        if len( out ) == 0:
+            print '  (None)'
+        for item in out:
+            [ msg, state ] = item
+            if state:
+                descr = '  + '
+            else:
+                descr = '  - '
+            print descr + msg
 
-for id in result.keys():
-    [ pre, out, extra_info ] = result[ id ]
-
-    print_heading( id + ' prerequisites (- => not satisfied):')
-    if len( pre ) == 0:
-        print '  (None)'
-    for item in pre:
-        [ msg, state ] = item
-        if state:
-            descr = '  + '
-        else:
-            descr = '  - '
-        print descr + msg
-
-    print_heading( id + ' outputs (- => not completed):' )
-    if len( out ) == 0:
-        print '  (None)'
-    for item in out:
-        [ msg, state ] = item
-        if state:
-            descr = '  + '
-        else:
-            descr = '  - '
-        print descr + msg
-
-    if len( extra_info.keys() ) > 0:
-        print_heading( 'Other:' )
-        for item in extra_info:
-            print '  o ', item, '...', extra_info[ item ]
+        if len( extra_info.keys() ) > 0:
+            print 'Other:'
+            for item in extra_info:
+                print '  o ', item, '...', extra_info[ item ]

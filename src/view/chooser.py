@@ -6,13 +6,12 @@ import time, os, re
 import threading
 
 from gtkmonitor import monitor
-import cylc_pyro_ns
 
 class chooser_updater(threading.Thread):
 
-    def __init__(self, liststore, pns_host ):
+    def __init__(self, liststore, host ):
         self.quit = False
-        self.pns_host = pns_host
+        self.host = host
         self.liststore = liststore
         super(chooser_updater, self).__init__()
         self.choices = []
@@ -29,7 +28,7 @@ class chooser_updater(threading.Thread):
         # renew the connection each time
         # (if a single proxy is established in __init__() then Pyro 3.7 (old!) 
         # complains that sharing a proxy between threads is not allowed).
-        groups = cylc_pyro_ns.ns( self.pns_host ).get_groups()
+        groups = cylc_pyro_ns.ns( self.host ).get_groups()
         choices = []
         for group in groups:
             choices.append( group )
@@ -49,11 +48,11 @@ class chooser_updater(threading.Thread):
             self.liststore.append( [group] )
 
 class chooser:
-    def __init__(self, pns_host, imagedir ):
+    def __init__(self, host, imagedir ):
 
         gobject.threads_init()
 
-        self.pns_host = pns_host
+        self.host = host
         self.imagedir = imagedir
 
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
@@ -88,12 +87,12 @@ class chooser:
 
         self.viewer_list = []
 
-        self.updater = chooser_updater( liststore, self.pns_host )
+        self.updater = chooser_updater( liststore, self.host )
         self.updater.start()
 
     def launch_viewer( self, group ):
         root, user, suite = group.split( '.' ) 
-        tv = monitor(group, suite, self.pns_host, self.imagedir )
+        tv = monitor(group, suite, self.host, self.imagedir )
         self.viewer_list.append( tv )
 
     def delete_event( self, w, e, data=None ):

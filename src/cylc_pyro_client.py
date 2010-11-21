@@ -17,7 +17,14 @@ from time import sleep
 
 def ping( host, port ):
     proxy = Pyro.core.getProxyForURI('PYROLOC://' + host + ':' + str(port) + '/ping' )
-    return proxy.identify()
+    proxy._setTimeout(2)
+    try:
+        result = proxy.identify()
+    except Pyro.errors.TimeoutError:
+        print "timeout on port", port
+        return "Unknown", "Unknown"
+    else:
+        return result
 
 class client:
     def __init__( self, suite, owner, host, port ):

@@ -36,10 +36,10 @@ Arguments:
 
         OptionParser.__init__( self, usage )
 
-        self.add_option( "-u", "--user",
+        self.add_option( "-o", "--owner",
                 help="Owner of the target suite (defaults to $USER).",
                 metavar="USER", default=os.environ["USER"],
-                action="store", dest="username" )
+                action="store", dest="owner" )
 
         self.add_option( "--host",
                 help="Cylc suite host (defaults to local host).",
@@ -63,7 +63,7 @@ Arguments:
         self.suite_name = args[0]
 
         # user name 
-        self.username = options.username  # see default above!
+        self.owner = options.owner  # see default above!
 
         # cylc suite host
         self.host = options.host   # see default above!
@@ -82,14 +82,14 @@ Arguments:
 
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE
-        groupname = ':cylc.' + self.username + '.' + self.suite_name
+        groupname = ':cylc.' + self.owner + '.' + self.suite_name
         if self.practice:
             groupname += '-practice'
         return groupname
 
 
 class NoPromptOptionParser( OptionParser ):
-    # same, but own username
+    # same, but own owner
 
     def __init__( self, usage, extra_args=None ):
 
@@ -109,11 +109,6 @@ arguments:
 
         OptionParser.__init__( self, usage )
 
-        self.add_option( "--port",
-                help="Cylc suite port.",
-                metavar="PORT", action="store", default=None,
-                dest="port" )
-
         self.add_option( "--host",
                 help="Cylc suite host (defaults to localhost).",
                 metavar="HOSTNAME", action="store", default=socket.getfqdn(),
@@ -123,7 +118,7 @@ arguments:
                 help="Target a suite running in practice mode.", 
                 action="store_true", default=False, dest="practice" )
 
-        self.username = os.environ['USER']
+        self.owner = os.environ['USER']
 
     def parse_args( self ):
 
@@ -152,7 +147,7 @@ arguments:
 
     def get_groupname( self ):
         # TO DO: USER PYREX MODULE HERE
-        groupname = ':cylc.' + self.username + '.' + self.suite_name
+        groupname = ':cylc.' + self.owner + '.' + self.suite_name
         if self.practice:
             groupname += '-practice'
         return groupname

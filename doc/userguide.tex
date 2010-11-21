@@ -2483,10 +2483,9 @@ fixing the problem that cause the failure.
 \end{itemize}
 
 To confirm that the runahead limit is causing a stall, you can use 
-\lstinline=cylc verbosity= to set the debug logging level, then
-\lstinline=cylc nudge= to invoke the task processing loop - any task
-that is not spawning a successor only because it has exceeded the runahead
-limit will report that to the log.
+\lstinline=cylc verbosity= to set the debug logging level: any task
+that is not spawning a successor only because it has exceeded the
+runahead limit will report that to the log.
 
 
 \subsection{Failure Recovery Scenarios}

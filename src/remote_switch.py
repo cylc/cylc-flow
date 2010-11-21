@@ -313,6 +313,10 @@ class remote_switch( Pyro.core.ObjBase ):
                 self.config.get('suite_def_dir'), \
                 self.config.get('suite_username') ]
 
+    def get_task_list( self ):
+        self.warning( "REMOTE: task list requested" )
+        return self.task_list
+ 
     def get_task_info( self, task_names ):
         self.warning( "REMOTE: task info: " + ','.join(task_names ))
         info = {}

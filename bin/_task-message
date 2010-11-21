@@ -9,11 +9,6 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
-""" 
-Documentation
-"""
-
 import sys
 from optparse import OptionParser
 from task_message import message

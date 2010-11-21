@@ -17,8 +17,9 @@ For color terminal ASCII escape codes, see
 http://ascii-table.com/ansi-escape-sequences.php
 """
 
-import cylc_pyro_ns
 from cycle_time import _rt_to_dt, is_valid
+import cylc_pyro_client
+import port_scan
 import os, re, sys
 import Pyro.core
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
@@ -30,8 +31,7 @@ compress = True
 parser = NoPromptOptionParser_u( """cylc monitor [options] SUITE 
 
 A terminal-based monitor that displays the state of all tasks in the
-target suite. DEPRECATED - USE THE cylc view GUI MONITOR INSTEAD. 
-""")
+target suite in real time. See also the GUI MONITOR  'cylc view'.""")
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "
@@ -43,17 +43,14 @@ parser.add_option( "--shortnames", help="Display short task names, if defined.",
 
 ( options, args ) = parser.parse_args()
 
-suite_name = parser.get_suite_name()
-pns_host = parser.get_pns_host()
-groupname = parser.get_groupname()
+suite = parser.get_suite_name()
+host = options.host
+owner = options.owner
 
-# get suites currently registered in the Pyro nameserver
-ns_groups = cylc_pyro_ns.ns( pns_host )
-
-if ns_groups.registered( groupname ):
-    print "suite: " + suite_name
-else:
-    print "No " + groupname + " group registered with Pyro yet, waiting ..." 
+found, port = port_scan.get_port( suite, owner, host )
+if not found:
+    print >> sys.stderr, "suite " + suite + " is not running"
+    sys.exit(1)
 
 header = 'waiting submitted running done failed'
 header = '                                     '
@@ -72,7 +69,9 @@ try:
     while True:
         # connect to remote state summary object
         try: 
-            god = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.state_summary')
+            god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
+
+
             # timeout (sec) determines max wait for an answer from god.
             god._setTimeout(60)
 
@@ -230,9 +229,9 @@ try:
             blit = []
             # SUITE NAME, NUMBER OF TASKS, DUMMY MODE
             foo = header
-            bar = suite_name + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
+            bar = suite + '", ' + str( n_task_types ) + ' types, ' + str( n_tasks_all ) + ' tasks)'
             foo = re.sub( '^.{' + str(len('cylc!')) + '}', 'cylc!', foo )
-            foo = re.sub( '.{' + str(len(suite_name)) + '}$', suite_name, foo )
+            foo = re.sub( '.{' + str(len(suite)) + '}$', suite, foo )
 
             blit.append( '\033[1;37;43m' + foo + ctrl_end )
 

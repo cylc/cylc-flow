@@ -9,11 +9,6 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
-""" 
-Documentation
-"""
-
 import sys
 import cylc_mode
 from optparse import OptionParser

@@ -24,10 +24,10 @@ Check if a SUITE is running, or list all running suites.
 Arguments:
 SUITE             Name of a cylc suite to check on """ )
 
-parser.add_option( "-u", "--user",
+parser.add_option( "-o", "--owner",
         help="Owner of the target suite (defaults to $USER).",
         metavar="USER", default=os.environ["USER"],
-        action="store", dest="username" )
+        action="store", dest="owner" )
 
 parser.add_option( "--host",
         help="Cylc suite host (defaults to localhost).",
@@ -41,7 +41,7 @@ parser.add_option( "-p", "--practice",
 ( options, args ) = parser.parse_args()
 
 host = options.host
-owner = options.username
+owner = options.owner
 
 groups = []
 if len( args ) == 0:
