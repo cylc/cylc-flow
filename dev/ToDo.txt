@@ -8,9 +8,6 @@ GENERAL
 * '--host' should not be allowed for intervention commands because
   owner's username does not cross machine boundaries, generally.
 
-* understand use of cylc and cylclockd on a subnet: do not
-  use explicit pyro_ns hostname everywhere by default? 
-
 * temporary job submission filenames should contain the suite name
   so that automated cleanup processes can distinguish between suites.
 
@@ -92,7 +89,7 @@ GENERAL
 * stop (without --now) won't cause shutdown if a task family (but not
   it's members!) has just triggered.
 
-* currently, INHERITing tasks must define %OUTPUTS even if empty!
+* BUG: currently, INHERITing tasks must define %OUTPUTS even if empty!
 
 * make incremental configure handle deletion of taskdefs.
 
@@ -181,11 +178,6 @@ GENERAL
   connect error breaks the app, requiring use of 'kill'.
 
 * cylc ping hangs if cylc is killed without cleaning up: needs timeout.
-
-* long-running (almost 1 day) dummy mode oper run (started via vnc for
-  ministerial opening demo) could not be unlocked or stopped (etc.) -
-  got remote I/O Error via Pyro?  Is this related to running a suite
-  from a VNC (or similar) remote desktop that gets disconnected?
 
 * use new cylc_mode class everywhere mode test is required.
 
@@ -316,7 +308,7 @@ GENERAL
 * see To Do comment in broker.negotiate() - priority low.
 
 * write a small test program to help understand exactly how Pyro works, 
-  particularly with regard to multi-threading.
+  particularly with regard to multi-threading?
 
 __________
 LOCKSERVER
