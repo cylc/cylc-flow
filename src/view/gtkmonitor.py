@@ -370,15 +370,15 @@ Cylc View is a real time suite monitor for Cylc.
 
         if task_id not in result:
             warning_dialog( 
-                    "Task proxy " + task_id + " not found in " + self.suite_name + \
+                    "Task proxy " + task_id + " not found in " + self.suite + \
                  ".\nTasks are removed once they are no longer needed.").warn()
             return
         
-        #self.update_tb( tb, 'Task ' + task_id + ' in ' +  self.suite_name + '\n\n', [bold])
+        #self.update_tb( tb, 'Task ' + task_id + ' in ' +  self.suite + '\n\n', [bold])
         self.update_tb( tb, 'TASK ', [bold] )
         self.update_tb( tb, task_id, [bold, blue])
         self.update_tb( tb, ' in SUITE ', [bold] )
-        self.update_tb( tb, self.suite_name + '\n\n', [bold, blue])
+        self.update_tb( tb, self.suite + '\n\n', [bold, blue])
 
         [ pre, out, extra_info ] = result[ task_id ]
 
@@ -492,12 +492,10 @@ Cylc View is a real time suite monitor for Cylc.
         self.menu_bar.append( help_menu_root )
 
     def create_info_bar( self ):
-        root, user, name = self.groupname.split('.')
-
         self.label_status = gtk.Label( "status..." )
         self.label_mode = gtk.Label( "mode..." )
         self.label_time = gtk.Label( "time..." )
-        self.label_suitename = gtk.Label( name )
+        self.label_suitename = gtk.Label( self.suite )
 
         hbox = gtk.HBox()
 
@@ -540,8 +538,8 @@ Cylc View is a real time suite monitor for Cylc.
         # which probably means the cylc suite was shutdown and
         # restarted.
         try:
-            cylc_pyro_client.client( self.pns_host, self.groupname ).get_proxy( 'minimal' )
-        except:
+            cylc_pyro_client.ping( self.host, self.port )
+        except Pyro.errors.ProtocolError:
             #print "NO CONNECTION"
             self.connection_lost = True
         else:
@@ -554,7 +552,7 @@ Cylc View is a real time suite monitor for Cylc.
         return True
 
     def get_pyro( self, object ):
-        foo = cylc_pyro_client.client( self.pns_host, self.groupname )
+        foo = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port )
         bar = foo.get_proxy( object)
         return bar
  
@@ -566,7 +564,7 @@ Cylc View is a real time suite monitor for Cylc.
     #            self.get_pyro( 'minimal' )
     #        except:
     #            if not warned:
-    #                print "waiting for suite " + self.suite_name + ".",
+    #                print "waiting for suite " + self.suite + ".",
     #                warned = True
     #            else:
     #                print '.',
@@ -585,14 +583,15 @@ Cylc View is a real time suite monitor for Cylc.
         self.task_list = ss.get_config( 'task_list' )
         self.shortnames = ss.get_config( 'task_list_shortnames' )
 
-    def __init__(self, groupname, suite_name, pns_host, imagedir ):
-        self.suite_name = suite_name
-        self.groupname = groupname
-        self.pns_host = pns_host
+    def __init__(self, suite, owner, host, port, imagedir ):
+        self.suite = suite
+        self.host = host
+        self.port = port
+        self.owner = owner
         self.imagedir = imagedir
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_border_width( 5 )
-        self.window.set_title("cylc view <" + self.groupname + ">" )
+        self.window.set_title("cylc view <" + self.suite + ">" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(600, 500)
         self.window.connect("delete_event", self.delete_event)
@@ -636,7 +635,7 @@ Cylc View is a real time suite monitor for Cylc.
         self.connection_lost = False
         gobject.timeout_add( 1000, self.check_connection )
 
-        self.t = updater( self.pns_host, self.groupname, self.imagedir, 
+        self.t = updater( self.suite, self.owner, self.host, self.port, self.imagedir, 
                 self.led_treeview.get_model(),
                 self.fl_liststore, self.ttreestore, self.task_list,
                 self.label_mode, self.label_status, self.label_time )
@@ -645,9 +644,9 @@ Cylc View is a real time suite monitor for Cylc.
         self.t.start()
 
 class standalone_monitor( monitor ):
-    def __init__(self, groupname, suite_name, pns_host, imagedir ):
+    def __init__(self, suite, owner, host, port, imagedir ):
         gobject.threads_init()
-        monitor.__init__(self, groupname, suite_name, pns_host, imagedir )
+        monitor.__init__(self, suite, owner, host, port, imagedir )
  
     def delete_event(self, widget, event, data=None):
         monitor.delete_event( self, widget, event, data )
@@ -658,10 +657,10 @@ class standalone_monitor( monitor ):
         gtk.main_quit()
 
 class standalone_monitor_preload( standalone_monitor ):
-    def __init__(self, groupname, suite_name, suite_dir, logging_dir, pns_host, imagedir ):
+    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
         self.logdir = logging_dir
         self.suite_dir = suite_dir
-        standalone_monitor.__init__(self, groupname, suite_name, pns_host, imagedir )
+        standalone_monitor.__init__(self, suite, owner, host, port, imagedir )
  
     def load_task_list( self ):
         sys.path.append( os.path.join( self.suite_dir, 'configured'))

@@ -59,15 +59,18 @@ def get_col_priority( priority ):
 
 class updater(threading.Thread):
 
-    def __init__(self, pns_host, groupname, imagedir,
+    def __init__(self, suite, owner, host, port, imagedir,
             led_liststore, fl_liststore, ttreestore, task_list,
             label_mode, label_status, label_time ):
 
         super(updater, self).__init__()
 
         self.quit = False
-        self.pns_host = pns_host
-        self.groupname = groupname
+
+        self.suite = suite
+        self.owner = owner
+        self.host = host
+        self.port = port
 
         self.state_summary = {}
         self.god = None
@@ -100,7 +103,8 @@ class updater(threading.Thread):
 
     def reconnect( self ):
         try:
-            self.god = cylc_pyro_client.client( self.pns_host, self.groupname ).get_proxy( 'state_summary' )
+            self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
+
         except:
             return False
         else:
