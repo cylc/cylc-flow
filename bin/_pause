@@ -14,7 +14,6 @@ import os, sys
 import cycle_time
 import check_switch
 import cylc_pyro_client
-import port_scan
 from CylcOptionParsers import PromptOptionParser
 from Pyro.errors import NamingError
 
@@ -35,20 +34,16 @@ else:
     # parsing catches other errors
     pause_at = False
 
-host = options.host
-owner = os.environ['USER']
 suite = parser.get_suite_name()
+owner = os.environ['USER']
+host = options.host
+port = options.port
 
-found, port = port_scan.get_port( suite, owner, host )
-if not found:
-    print >> sys.stderr, "suite " + suite + " is not running"
-    sys.exit(1)
-
-god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
 
 if pause_at:
     if parser.prompt( 'Pause at ' + pause_time + ' for'):
-        check_switch.check( god.set_hold_time( pause_time, owner ))
+        check_switch.check( proxy.set_hold_time( pause_time, owner ))
 else:
     if parser.prompt( 'Pause now' ):
-        check_switch.check( god.hold( owner ))
+        check_switch.check( proxy.hold( owner ))

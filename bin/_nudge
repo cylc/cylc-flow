@@ -13,7 +13,6 @@
 import os
 import check_switch
 import cylc_pyro_client
-import port_scan
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc nudge [options] SUITE 
@@ -25,15 +24,11 @@ INVOKED ON A ONE SECOND TIMEOUT AS WELL AS ON INCOMING TASK MESSAGES.
 
 (options, args) = parser.parse_args()
 
-host = options.host
-owner = os.environ['USER']
 suite = parser.get_suite_name()
-
-found, port = port_scan.get_port( suite, owner, host )
-if not found:
-    print >> sys.stderr, "suite " + suite + " is not running"
-    sys.exit(1)
+owner = os.environ['USER']
+host = options.host
+port = options.port
 
 if parser.prompt( 'Nudge' ):
-    god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    check_switch.check( god.nudge( owner ))
+    proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    check_switch.check( proxy.nudge( owner ))

@@ -14,21 +14,7 @@ import os, sys
 import Pyro.core, Pyro.errors
 from optparse import OptionParser
 from time import sleep
-
-class port_interrogator:
-    # find which suite is running on a given port
-    def __init__( self, host, port, timeout=None ):
-        self.host = host
-        self.port = port
-        self.timeout = timeout
-
-    def interrogate( self ):
-        # get a proxy to the suite id object
-        # this raises ProtocolError if connection fails
-        self.proxy = Pyro.core.getProxyForURI('PYROLOC://' + self.host + ':' + str(self.port) + '/suite_id' )
-        self.proxy._setTimeout(self.timeout)
-        # this raises a TimeoutError if the connection times out
-        return self.proxy.id()
+from port_scan import get_port, check_port
 
 class client:
     def __init__( self, suite, owner, host, port ):
@@ -38,6 +24,19 @@ class client:
         self.port = port
 
     def get_proxy( self, target ):
+        if self.port:
+            port = self.port
+            if not check_port( self.suite, self.owner, self.host, self.port ):
+                msg = self.suite + "(" + self.owner + ") not found at " + self.host + ":" + port
+                raise Pyro.errors.NamingError( msg )
+        else:
+            print "Scanning for " + self.suite + " ..."
+            found, port = get_port( self.suite, self.owner, self.host )
+            if not found:
+                msg = self.suite + "(" + self.owner + ") not found on " + self.host 
+                raise Pyro.errors.NamingError( msg )
+
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
-        return Pyro.core.getProxyForURI('PYROLOC://' + self.host + ':' + str(self.port) + '/' + objname )
+        # the following will also raise a NamingError if the target object is not found
+        return Pyro.core.getProxyForURI('PYROLOC://' + self.host + ':' + str(port) + '/' + objname )

@@ -13,7 +13,6 @@
 import os,sys
 import check_switch
 import cylc_pyro_client
-import port_scan
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc verbosity [options] SUITE LEVEL
@@ -34,15 +33,11 @@ verbosity = args[1]
 if verbosity not in vchoices:
     parser.error( "Illegal logging level, " + verbosity )
 
-owner = os.environ['USER'] 
 suite = parser.get_suite_name()
+owner = os.environ['USER'] 
 host = options.host
-
-found, port = port_scan.get_port( suite, owner, host )
-if not found:
-    print >> sys.stderr, "suite " + suite + " is not running"
-    sys.exit(1)
+port = options.port
 
 if parser.prompt( "Set logging level to " + verbosity + " in " ):
-    god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    check_switch.check( god.set_verbosity( verbosity, owner ))
+    proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    check_switch.check( proxy.set_verbosity( verbosity, owner ))

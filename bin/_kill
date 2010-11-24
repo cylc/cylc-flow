@@ -13,7 +13,6 @@ import os, sys, re
 import cycle_time
 import check_switch
 import cylc_pyro_client
-import port_scan
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc kill [options] SUITE [TASK_ID] [CYCLE]
@@ -36,14 +35,10 @@ parser.add_option( "--no-spawn",
 if len(args) != 2:
     parser.error( "Task ID or cycle time required" )
 
-host = options.host
-owner = os.environ['USER']
 suite = parser.get_suite_name()
-
-found, port = port_scan.get_port( suite, owner, host )
-if not found:
-    print >> sys.stderr, "suite " + suite + " is not running"
-    sys.exit(1)
+owner = os.environ['USER']
+host = options.host
+port = options.port
 
 target = args[1]
 
@@ -63,18 +58,18 @@ elif re.search( '%', target ):
 else:
     parser.error( 'Input Format error? must be NAME%YYYYMMDDHH or YYYYMMDDHH' )
 
-god = cylc_pyro_client.client( suite, owner, host, port).get_proxy( 'remote' )
+proxy = cylc_pyro_client.client( suite, owner, host, port).get_proxy( 'remote' )
 
 if kill_cycle:
     if parser.prompt( 'Kill ALL tasks in ' + target + ' in' ):
         if options.no_spawn:
-            check_switch.check( god.die_cycle( target, owner ))
+            check_switch.check( proxy.die_cycle( target, owner ))
         else:
-            check_switch.check( god.spawn_and_die_cycle( target, owner ))
+            check_switch.check( proxy.spawn_and_die_cycle( target, owner ))
 
 if kill_task:
     if parser.prompt( 'Kill task ' + target + ' in'):
         if options.no_spawn:
-            check_switch.check( god.die( target, owner ))
+            check_switch.check( proxy.die( target, owner ))
         else:
-            check_switch.check( god.spawn_and_die( target, owner ))
+            check_switch.check( proxy.spawn_and_die( target, owner ))

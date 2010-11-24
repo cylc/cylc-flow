@@ -36,7 +36,7 @@ parser.add_option( "--print-ports",
 if options.print_ports:
     from cylc_pyro_server import pyro_base_port, pyro_port_range
     print "cylc port range from $CYLC_DIR/src/pyro_server.py:"
-    print pyro_base_port, '->', pyro_base_port + pyro_port_range
+    print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
 host = options.host
@@ -47,4 +47,4 @@ if len(args) != 0:
 suites = port_scan.scan( host )
 for entry in suites:
     suite, owner, port = entry
-    print suite + " (" + owner + ") " + str(port)
+    print "[" + suite + "] " + owner + "@" + host + ":" + str(port)

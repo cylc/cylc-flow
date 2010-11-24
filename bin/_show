@@ -11,7 +11,6 @@
 
 import os, re, sys
 import cycle_time
-import port_scan
 import cylc_pyro_client
 from registration import registrations
 from CylcOptionParsers import NoPromptOptionParser_u
@@ -27,9 +26,10 @@ has been reached.""",
 
 (options, args) = parser.parse_args()
 
-host = options.host
-owner = options.owner
 suite = parser.get_suite_name()
+owner = options.owner
+host = options.host
+port = options.port
 
 prnt_suite = False
 prnt_name = False
@@ -48,22 +48,18 @@ if len(args) == 2:
 else:
     prnt_suite = True
  
-running, port = port_scan.get_port( suite, owner, host )
-if not running:
-    raise SystemExit( "suite " + suite + " is not running" )
-
-god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-title, defdir, username = god.get_suite_info()
+proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+title, defdir, username = proxy.get_suite_info()
 
 if prnt_suite:
     print suite + ' (' + owner + ') --> ' + defdir
     print title
 
-    for task in god.get_task_list():
+    for task in proxy.get_task_list():
         print ' + ', task
 
 if prnt_name or prnt_id:
-    info = god.get_task_info( [ name ] )
+    info = proxy.get_task_info( [ name ] )
     print 'Task ' + name + ' in suite ' + suite + ':' 
     for name in info.keys():
         for line in info[name]:
@@ -74,7 +70,7 @@ if prnt_id:
         parser.error( "invalid cycle time: " + cycle )
 
     # PREREQUISITES AND OUTPUTS
-    result = god.get_task_requisites( [ id ] )
+    result = proxy.get_task_requisites( [ id ] )
 
     if id not in result:
         print "Task " + id + " not found in " + suite

@@ -51,7 +51,7 @@ parser.add_option( "-p", "--practice",
 if options.print_ports:
     from cylc_pyro_server import pyro_base_port, pyro_port_range
     print "cylc port range from $CYLC_DIR/src/pyro_server.py:"
-    print pyro_base_port, '->', pyro_base_port + pyro_port_range
+    print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
 if len( args ) != 1:
@@ -63,15 +63,16 @@ host = options.host
 owner = options.owner
 
 if options.port:
+    port = options.port
     if port_scan.check_port( suite, owner, host, port ):
-        print "suite " + suite + " (" + owner + ") is running on " + host + ":" + str(port)
+        print "[" + suite + "] " + owner + "@" + host + ":" + str(port)
     else:
-        print "ERROR: suite " + suite + " (" + owner + ") is not running on " + host
+        print "[" + suite + "] IS NOT RUNNING on " + host + ":" + str(port)
         sys.exit(1)
 else:
     found, port = port_scan.get_port( suite, owner, host )
     if found:
-        print "suite " + suite + " (" + owner + ") is running on " + host + ":" + str(port)
+        print "[" + suite + "] " + owner + "@" + host + ":" + str(port)
     else:
-        print "ERROR: suite " + suite + " (" + owner + ") is not running on " + host
+        print "[" + suite + "] IS NOT RUNNING on " + host
         sys.exit(1)

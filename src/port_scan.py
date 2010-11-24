@@ -10,8 +10,22 @@
 #         |________________________|
 
 import Pyro.errors
-from cylc_pyro_client import port_interrogator
 from cylc_pyro_server import pyro_base_port, pyro_port_range
+
+class port_interrogator:
+    # find which suite is running on a given port
+    def __init__( self, host, port, timeout=None ):
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+
+    def interrogate( self ):
+        # get a proxy to the suite id object
+        # this raises ProtocolError if connection fails
+        self.proxy = Pyro.core.getProxyForURI('PYROLOC://' + self.host + ':' + str(self.port) + '/suite_id' )
+        self.proxy._setTimeout(self.timeout)
+        # this raises a TimeoutError if the connection times out
+        return self.proxy.id()
 
 def get_port( suite, owner, host ):
     found = False

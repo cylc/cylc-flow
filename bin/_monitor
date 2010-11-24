@@ -19,7 +19,6 @@ http://ascii-table.com/ansi-escape-sequences.php
 
 from cycle_time import _rt_to_dt, is_valid
 import cylc_pyro_client
-import port_scan
 import os, re, sys
 import Pyro.core
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
@@ -44,13 +43,9 @@ parser.add_option( "--shortnames", help="Display short task names, if defined.",
 ( options, args ) = parser.parse_args()
 
 suite = parser.get_suite_name()
-host = options.host
 owner = options.owner
-
-found, port = port_scan.get_port( suite, owner, host )
-if not found:
-    print >> sys.stderr, "suite " + suite + " is not running"
-    sys.exit(1)
+host = options.host
+port = options.port
 
 header = 'waiting submitted running done failed'
 header = '                                     '
@@ -69,11 +64,11 @@ try:
     while True:
         # connect to remote state summary object
         try: 
-            god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
+            proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
 
 
-            # timeout (sec) determines max wait for an answer from god.
-            god._setTimeout(60)
+            # timeout (sec) determines max wait for an answer from proxy.
+            proxy._setTimeout(60)
 
         except Exception, x:
             if not alerted:
@@ -92,7 +87,7 @@ try:
 
             # get state summary, task names, cycle times
             try:
-                [glbl, states] = god.get_state_summary()
+                [glbl, states] = proxy.get_state_summary()
 
             except TimeoutError:
                 if not alerted3:

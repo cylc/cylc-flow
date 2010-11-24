@@ -15,7 +15,6 @@ Dump the current state of all suite tasks to stdout.
 
 from cycle_time import _rt_to_dt, is_valid
 import os, re, sys
-import port_scan
 import cylc_pyro_client
 import Pyro.core
 from time import sleep
@@ -50,14 +49,10 @@ parser.add_option( "-s", "--sort", help="Task states only; "
 
 ( options, args ) = parser.parse_args()
 
-host = options.host
-owner = options.owner
 suite = parser.get_suite_name()
-
-found, port = port_scan.get_port( suite, owner, host )
-if not found:
-    print >> sys.stderr, "suite " + suite + " is not running"
-    sys.exit(1)
+owner = options.owner
+host = options.host
+port = options.port
 
 # default: display all information
 display_tasks = True
@@ -72,10 +67,10 @@ if display_global:
     print "suite : " + suite
 
 # connect to remote suite state summary object
-god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
+proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
 
 # get state summary, task names, cycle times
-[glbl, states] = god.get_state_summary()
+[glbl, states] = proxy.get_state_summary()
 
 if display_global:
 

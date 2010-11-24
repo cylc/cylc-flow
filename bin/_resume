@@ -13,7 +13,6 @@
 import os
 import check_switch
 import cylc_pyro_client
-import port_scan
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc resume [options] SUITE 
@@ -22,15 +21,11 @@ Resume running a paused suite, or unset an upcoming stop time.""" )
 
 (options, args) = parser.parse_args()
 
-host = options.host
-owner = os.environ['USER']
 suite = parser.get_suite_name()
-
-found, port = port_scan.get_port( suite, owner, host )
-if not found:
-    print >> sys.stderr, "suite " + suite + " is not running"
-    sys.exit(1)
+owner = os.environ['USER']
+host = options.host
+port = options.port
 
 if parser.prompt( 'Resume' ):
-    god = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    check_switch.check( god.resume( owner ))
+    proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+    check_switch.check( proxy.resume( owner ))

@@ -46,6 +46,10 @@ Arguments:
                 metavar="HOST", action="store", default=socket.getfqdn(),
                 dest="host" )
 
+        self.add_option( "--port",
+                help="Cylc suite port (default: find suite by scanning cylc ports).",
+                metavar="INT", action="store", default=None, dest="port" )
+
         self.add_option( "-p", "--practice",
                 help="Target a suite running in practice mode.", 
                 action="store_true", default=False, dest="practice" )
@@ -89,7 +93,7 @@ Arguments:
 
 
 class NoPromptOptionParser( OptionParser ):
-    # same, but own owner
+    # same, but no owner
 
     def __init__( self, usage, extra_args=None ):
 
@@ -113,6 +117,10 @@ arguments:
                 help="Cylc suite host (defaults to localhost).",
                 metavar="HOSTNAME", action="store", default=socket.getfqdn(),
                 dest="host" )
+
+        self.add_option( "--port",
+                help="Cylc suite port (default: find suite by scanning cylc ports).",
+                metavar="INT", action="store", default=None, dest="port" )
 
         self.add_option( "-p", "--practice",
                 help="Target a suite running in practice mode.", 
@@ -151,7 +159,6 @@ arguments:
         if self.practice:
             groupname += '-practice'
         return groupname
-
 
 
 class PromptOptionParser( NoPromptOptionParser ):
