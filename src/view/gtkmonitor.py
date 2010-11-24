@@ -7,7 +7,7 @@ from stateview import updater
 from combo_logviewer import combo_logviewer
 from cylc_logviewer import cylc_logviewer
 from warning_dialog import warning_dialog
-
+import Pyro.errors
 import gobject
 import pygtk
 ####pygtk.require('2.0')
@@ -65,6 +65,30 @@ class monitor:
 
         #print "BYE from main thread"
         return False
+
+    def pause_suite( self, bt ):
+        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        god.hold( self.owner )
+
+    def resume_suite( self, bt ):
+        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        god.resume( self.owner )
+
+    def stop_suite( self, bt ):
+        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        god.shutdown( self.owner )
+
+    def stop_suite_now( self, bt ):
+        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        god.shutdown_now( self.owner )
+
+    def unlock_suite( self, bt ):
+        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        god.unlock( self.owner )
+
+    def lock_suite( self, bt ):
+        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        god.lock( self.owner )
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -365,8 +389,7 @@ Cylc View is a real time suite monitor for Cylc.
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
  
-        rem = self.get_pyro( 'remote' )
-        result = rem.get_task_requisites( [ task_id ] )
+        result = self.get_pyro( 'remote' ).get_task_requisites( [ task_id ] )
 
         if task_id not in result:
             warning_dialog( 
@@ -457,11 +480,53 @@ Cylc View is a real time suite monitor for Cylc.
     def create_menu( self ):
 
         file_menu = gtk.Menu()
-        file_menu_root = gtk.MenuItem( 'File' )
+
+        file_menu_root = gtk.MenuItem( 'Monitor' )
         file_menu_root.set_submenu( file_menu )
-        exit_item = gtk.MenuItem( 'Exit Cylc View' )
+
+        heading_none_item = gtk.MenuItem( 'No Task Names' )
+        file_menu.append( heading_none_item )
+        heading_none_item.connect( 'activate', self.no_task_headings )
+
+        heading_short_item = gtk.MenuItem( 'Short Task Names' )
+        file_menu.append( heading_short_item )
+        heading_short_item.connect( 'activate', self.short_task_headings )
+
+        heading_full_item = gtk.MenuItem( 'Full Task Names' )
+        file_menu.append( heading_full_item )
+        heading_full_item.connect( 'activate', self.full_task_headings )
+
+        exit_item = gtk.MenuItem( 'Exit' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
+
+        suite_menu = gtk.Menu()
+        suite_menu_root = gtk.MenuItem( 'Suite' )
+        suite_menu_root.set_submenu( suite_menu )
+
+        unlock_item = gtk.MenuItem( 'Unlock' )
+        suite_menu.append( unlock_item )
+        unlock_item.connect( 'activate', self.unlock_suite )
+
+        lock_item = gtk.MenuItem( 'Lock' )
+        suite_menu.append( lock_item )
+        lock_item.connect( 'activate', self.lock_suite )
+
+        pause_item = gtk.MenuItem( 'Pause' )
+        suite_menu.append( pause_item )
+        pause_item.connect( 'activate', self.pause_suite )
+
+        resume_item = gtk.MenuItem( 'Resume' )
+        suite_menu.append( resume_item )
+        resume_item.connect( 'activate', self.resume_suite )
+
+        stop_item = gtk.MenuItem( 'Stop' )
+        suite_menu.append( stop_item )
+        stop_item.connect( 'activate', self.stop_suite )
+
+        stop_now_item = gtk.MenuItem( 'Stop NOW' )
+        suite_menu.append( stop_now_item )
+        stop_now_item.connect( 'activate', self.stop_suite_now )
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( 'Help' )
@@ -469,26 +534,10 @@ Cylc View is a real time suite monitor for Cylc.
         about_item = gtk.MenuItem( 'About' )
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
-
-        view_menu = gtk.Menu()
-        view_menu_root = gtk.MenuItem( 'View' )
-        view_menu_root.set_submenu( view_menu )
-
-        heading_none_item = gtk.MenuItem( 'No Task Names' )
-        view_menu.append( heading_none_item )
-        heading_none_item.connect( 'activate', self.no_task_headings )
-
-        heading_short_item = gtk.MenuItem( 'Short Task Names' )
-        view_menu.append( heading_short_item )
-        heading_short_item.connect( 'activate', self.short_task_headings )
-
-        heading_full_item = gtk.MenuItem( 'Full Task Names' )
-        view_menu.append( heading_full_item )
-        heading_full_item.connect( 'activate', self.full_task_headings )
-       
+      
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
-        self.menu_bar.append( view_menu_root )
+        self.menu_bar.append( suite_menu_root )
         self.menu_bar.append( help_menu_root )
 
     def create_info_bar( self ):
@@ -540,10 +589,10 @@ Cylc View is a real time suite monitor for Cylc.
         try:
             cylc_pyro_client.ping( self.host, self.port )
         except Pyro.errors.ProtocolError:
-            #print "NO CONNECTION"
+            print "NO CONNECTION"
             self.connection_lost = True
         else:
-            #print "CONNECTED"
+            print "CONNECTED"
             if self.connection_lost:
                 #print "------>INITIAL RECON"
                 self.connection_lost = False
@@ -552,12 +601,10 @@ Cylc View is a real time suite monitor for Cylc.
         return True
 
     def get_pyro( self, object ):
-        foo = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port )
-        bar = foo.get_proxy( object)
-        return bar
+        return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( object)
  
     #def block_till_connected( self ):
-    #    # IS THIS STILL NEEDED (since non-task-list-preload startup disabled)?
+    #    # NO LONGER NEEDED (non-task-list-preload startup has been disabled)
     #    warned = False
     #    while True:
     #        try:
@@ -633,7 +680,7 @@ Cylc View is a real time suite monitor for Cylc.
         self.quitters = []
 
         self.connection_lost = False
-        gobject.timeout_add( 1000, self.check_connection )
+        #gobject.timeout_add( 1000, self.check_connection )
 
         self.t = updater( self.suite, self.owner, self.host, self.port, self.imagedir, 
                 self.led_treeview.get_model(),
