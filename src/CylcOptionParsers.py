@@ -47,12 +47,16 @@ Arguments:
                 dest="host" )
 
         self.add_option( "--port",
-                help="Cylc suite port (default: find suite by scanning cylc ports).",
+                help="Cylc suite port (default: scan cylc ports).",
                 metavar="INT", action="store", default=None, dest="port" )
 
         self.add_option( "-p", "--practice",
                 help="Target a suite running in practice mode.", 
                 action="store_true", default=False, dest="practice" )
+
+        self.add_option( "-f", "--force",
+                help="(No effect; for consistency with interactive commands)",
+                action="store_true", default=False, dest="force" )
 
     def parse_args( self ):
 
@@ -114,17 +118,21 @@ arguments:
         OptionParser.__init__( self, usage )
 
         self.add_option( "--host",
-                help="Cylc suite host (defaults to localhost).",
+                help="Cylc suite host (default: localhost).",
                 metavar="HOSTNAME", action="store", default=socket.getfqdn(),
                 dest="host" )
 
         self.add_option( "--port",
-                help="Cylc suite port (default: find suite by scanning cylc ports).",
+                help="Cylc suite port (default: scan cylc ports).",
                 metavar="INT", action="store", default=None, dest="port" )
 
         self.add_option( "-p", "--practice",
                 help="Target a suite running in practice mode.", 
                 action="store_true", default=False, dest="practice" )
+
+        self.add_option( "-f", "--force",
+                help="(No effect; for consistency with interactive commands)",
+                action="store_true", default=False, dest="force" )
 
         self.owner = os.environ['USER']
 
@@ -167,6 +175,7 @@ class PromptOptionParser( NoPromptOptionParser ):
 
         NoPromptOptionParser.__init__( self, usage, extra_args )
 
+        self.remove_option( "-f" )
         self.add_option( "-f", "--force",
                 help="Do not ask for confirmation before acting.",
                 action="store_true", default=False, dest="force" )
