@@ -15,16 +15,20 @@ import Pyro.core, Pyro.errors
 from optparse import OptionParser
 from time import sleep
 
-def ping( host, port ):
-    proxy = Pyro.core.getProxyForURI('PYROLOC://' + host + ':' + str(port) + '/ping' )
-    proxy._setTimeout(2)
-    try:
-        result = proxy.identify()
-    except Pyro.errors.TimeoutError:
-        print "timeout on port", port
-        return "Unknown", "Unknown"
-    else:
-        return result
+class port_interrogator:
+    # find which suite is running on a given port
+    def __init__( self, host, port, timeout=None ):
+        self.host = host
+        self.port = port
+        self.timeout = timeout
+
+    def interrogate( self ):
+        # get a proxy to the suite id object
+        # this raises ProtocolError if connection fails
+        self.proxy = Pyro.core.getProxyForURI('PYROLOC://' + self.host + ':' + str(self.port) + '/suite_id' )
+        self.proxy._setTimeout(self.timeout)
+        # this raises a TimeoutError if the connection times out
+        return self.proxy.id()
 
 class client:
     def __init__( self, suite, owner, host, port ):
@@ -34,33 +38,6 @@ class client:
         self.port = port
 
     def get_proxy( self, target ):
-        # attempt to get a pyro proxy for the target object
+        # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
-        #try:
-        target = Pyro.core.getProxyForURI('PYROLOC://' + self.host + ':' + str(self.port) + '/' + objname )
-        #except Pyro.errors.NamingError:
-        #    # THIS IMPLIES self.group IS NOT RUNNING
-        #    # OR NO SUCH suite OBJECT IS REGISTERED.
-        #    raise SystemExit( 
-        #            'ERROR: failed to get a pyro proxy for ' + target + ' in ' + self.group + \
-        #            '\n => suite not running?')
-        #except Exception, x:
-        #    # THIS SHOULD NOT BE REACHED
-        #    print group + ' is PROBABLY NOT running'
-        #    print '  (but an unexpected error occurred trying to get the pyro proxy: '
-        #    print x
-        #    sys.exit(1)
-
-        return target
-
-# NOTES-----------------------------------------------------------------------:
-# Pyro.errors.ProtocolError:
-# retry if temporary network problems prevented connection?
-
-# http://pyro.sourceforge.net/manual/10-errors.html
-# Exception: ProtocolError,
-#    Error string: connection failed
-#    Raised by: bindToURI method of PYROAdapter
-#    Description: Network problems caused the connection to fail.
-#                 Also the Pyro server may have crashed.
-#                 (presumably after connection established - hjo)
+        return Pyro.core.getProxyForURI('PYROLOC://' + self.host + ':' + str(self.port) + '/' + objname )

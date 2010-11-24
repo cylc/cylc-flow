@@ -10,20 +10,15 @@
 #         |________________________|
 
 import Pyro.errors
-import cylc_pyro_client
-
-# base (lowest allowed) Pyro socket number
-pyro_base_port = 7766   # (7766 is the Pyro default)
-
-# max number of sockets starting at base
-pyro_port_range = 100 # (100 is the Pyro default)
+from cylc_pyro_client import port_interrogator
+from cylc_pyro_server import pyro_base_port, pyro_port_range
 
 def get_port( suite, owner, host ):
     found = False
     port = 0
     for p in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         try:
-            one, two = cylc_pyro_client.ping( host, p )
+            one, two = port_interrogator( host, p ).interrogate()
         except Pyro.errors.ProtocolError:
             pass
         else:
@@ -33,11 +28,28 @@ def get_port( suite, owner, host ):
                 break
     return ( found, port )    
 
+def check_port( suite, owner, host, port ):
+    # is suite,owner running at host:port?
+    try:
+        one, two = port_interrogator( host, port ).interrogate() 
+    except Pyro.errors.ProtocolError:
+        # no cylc suite at port
+        return False
+    else:
+        if one == suite and two == owner:
+            return True
+        else:
+            return False
+ 
 def scan( host ):
+    suites = []
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         try:
-            one, two = cylc_pyro_client.ping( host, port )
+            suite, owner = port_interrogator( host, port ).interrogate()
         except Pyro.errors.ProtocolError:
+            # no suite at this port
             pass
         else:
-            print "Port " + str( port ) + ": suite " + one + ", owner " + two
+            suites.append( ( suite, owner, port ) )
+
+    return suites

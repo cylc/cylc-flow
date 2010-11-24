@@ -25,7 +25,7 @@ import accelerated_clock
 from job_submit import job_submit
 from registration import registrations
 from suite_lock import suite_lock
-from life import ping
+from suite_id import identifier
 from OrderedDict import OrderedDict
 
 import task     # loads task_classes
@@ -312,9 +312,9 @@ class scheduler:
 
         self.banner[ 'Pyro port' ] = self.pyro.get_port()
 
-    def configure_lifecheck( self ):
-        self.lifecheck = ping( self.suite_name, self.username )
-        self.pyro.connect( self.lifecheck, 'ping', qualified = False )
+    def configure_suite_id( self ):
+        self.suite_id = identifier( self.suite_name, self.username )
+        self.pyro.connect( self.suite_id, 'suite_id', qualified = False )
 
     def configure_environment( self ):
         # provide access to the suite scripts and source modules
@@ -427,7 +427,7 @@ class scheduler:
         self.load_preferences()
         self.get_suite_def_dir()
         self.configure_pyro()
-        self.configure_lifecheck()
+        self.configure_suite_id()
         self.configure_environment()
         self.configure_suite()
         self.configure_dummy_mode_clock()
@@ -557,7 +557,7 @@ class scheduler:
             self.graphfile.close()
 
         if self.pyro:
-            self.pyro.shutdown( True )
+            self.pyro.shutdown()
 
         if self.use_lockserver:
             # do this last

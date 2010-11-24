@@ -9,16 +9,21 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
+# A minimal Pyro-connected object to allow client programs to identify
+# what suite is running at a given cylc port - by suite name and owner.
 
-# a Pyro object for miminal connection to check if a suite is running
+# All *other* suite objects should be connected to Pyro via qualified 
+# names: owner.suite.object, to prevent accidental access to the wrong
+# suite. This object, however, should be connected unqualified so that 
+# that same ID method can be called on any active cylc port.
 
 import Pyro.core
 
-class ping( Pyro.core.ObjBase ):
+class identifier( Pyro.core.ObjBase ):
     def __init__( self, suite, owner ):
         self.owner = owner
         self.suite = suite
         Pyro.core.ObjBase.__init__( self )
 
-    def identify( self ):
+    def id( self ):
         return ( self.suite, self.owner )

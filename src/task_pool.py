@@ -969,12 +969,12 @@ class task_pool:
                 # registering and deregistering objects from pyro-ns (and even use of 
                 # 'pyro-nsc ping'!) caused occasional 'incompatible protocol version'
                 # errors. Fixed by restarting pyro-ns, but cause unknown thus far.
+                # PROBABLY NOT NEEDED NOW AS WE NO LONGER USE THE PYRO NAMESERVER
                 self.log.critical( task.id + ' CANNOT BE REMOVED (Pyro protocol error) ' + str( count ) + '/10' )
                 if not alerted:
                     alerted = True
                     print x
-                    self.log.critical( ' ... (a) Check your pyro installations are version compatible' )
-                    self.log.critical( ' ... (b) Restart the Pyro Nameserver' )
+                    self.log.critical( 'Check your pyro installations are version compatible' )
             else:
                 task.log( 'NORMAL', "removing from suite (" + reason + ")" )
                 task.prepare_for_death()
@@ -1002,12 +1002,12 @@ class task_pool:
                 # registering and deregistering objects from pyro-ns (and even use of 
                 # 'pyro-nsc ping'!) caused occasional 'incompatible protocol version'
                 # errors. Fixed by restarting pyro-ns, but cause unknown thus far.
+                # PROBABLY NOT NEEDED NOW AS WE NO LONGER USE THE PYRO NAMESERVER
                 self.log.critical( task.id + ' CANNOT BE INSERTED (Pyro protocol error) ' + str( count ) + '/10' )
                 if not alerted:
                     alerted = True
                     print x
-                    self.log.critical( ' ... (a) Check your pyro installations are version compatible' )
-                    self.log.critical( ' ... (b) Restart the Pyro Nameserver' )
+                    self.log.critical( 'Check your pyro installations are version compatible' )
             else:
                 task.log('NORMAL', "task proxy inserted" )
                 self.tasks.append( task )

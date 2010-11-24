@@ -1,0 +1,50 @@
+#!/usr/bin/env python
+
+#         __________________________
+#         |____C_O_P_Y_R_I_G_H_T___|
+#         |                        |
+#         |  (c) NIWA, 2008-2010   |
+#         | Contact: Hilary Oliver |
+#         |  h.oliver@niwa.co.nz   |
+#         |    +64-4-386 0461      |
+#         |________________________|
+
+
+import os, sys, re
+import socket
+from optparse import OptionParser
+import Pyro.errors
+import cylc_pyro_client
+import port_scan
+
+parser = OptionParser( """cylc scan [options]
+    
+Scan cylc ports for running suites and print to stdout:
+suite (owner) port""" )
+
+parser.add_option( "--host",
+        help="Cylc suite host (defaults to localhost).",
+        metavar="HOST", action="store", default=socket.getfqdn(),
+        dest="host" )
+
+parser.add_option( "--print-ports",
+        help="Print the range of ports that cylc is configured to use.",
+        action="store_true",default=False, dest="print_ports" )
+
+( options, args ) = parser.parse_args()
+
+if options.print_ports:
+    from cylc_pyro_server import pyro_base_port, pyro_port_range
+    print "cylc port range from $CYLC_DIR/src/pyro_server.py:"
+    print pyro_base_port, '->', pyro_base_port + pyro_port_range
+    sys.exit(0)
+
+host = options.host
+
+if len(args) != 0:
+    parser.error( "Wrong number of arguments" ) 
+
+suites = port_scan.scan( host )
+for entry in suites:
+    suite, owner, port = entry
+    print suite + " (" + owner + ") " + str(port)

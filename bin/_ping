@@ -17,15 +17,15 @@ import Pyro.errors
 import cylc_pyro_client
 import port_scan
 
-parser = OptionParser( """cylc ping [options] [SUITE]
+parser = OptionParser( """cylc ping [options] SUITE
     
-Check if a SUITE is running, or list all running suites. 
+Check that SUITE is running. 
 
 Arguments:
-SUITE             Name of a cylc suite to check on """ )
+SUITE             Target suite name.""" )
 
 parser.add_option( "-o", "--owner",
-        help="Owner of the target suite (defaults to $USER).",
+        help="Cylc suite owner (defaults to $USER).",
         metavar="USER", default=os.environ["USER"],
         action="store", dest="owner" )
 
@@ -34,26 +34,44 @@ parser.add_option( "--host",
         metavar="HOST", action="store", default=socket.getfqdn(),
         dest="host" )
 
+parser.add_option( "--port",
+        help="Cylc suite port (default: scan all cylc ports).",
+        metavar="INT", action="store", default=None, dest="port" )
+
+parser.add_option( "--print-ports",
+        help="Print the range of ports that cylc is configured to use.",
+        action="store_true",default=False, dest="print_ports" )
+
 parser.add_option( "-p", "--practice",
         help="Target a suite running in practice mode.", 
         action="store_true", default=False, dest="practice" )
 
 ( options, args ) = parser.parse_args()
 
+if options.print_ports:
+    from cylc_pyro_server import pyro_base_port, pyro_port_range
+    print "cylc port range from $CYLC_DIR/src/pyro_server.py:"
+    print pyro_base_port, '->', pyro_base_port + pyro_port_range
+    sys.exit(0)
+
+if len( args ) != 1:
+    parser.error( "Wrong number of arguments" ) 
+
+suite = args[0]
+
 host = options.host
 owner = options.owner
 
-groups = []
-if len( args ) == 0:
-    print "Scanning ports for running cylc suites..."
-    port_scan.scan( host )
-
-elif len(args) == 1:
-    suite = args[0]
+if options.port:
+    if port_scan.check_port( suite, owner, host, port ):
+        print "suite " + suite + " (" + owner + ") is running on " + host + ":" + str(port)
+    else:
+        print "ERROR: suite " + suite + " (" + owner + ") is not running on " + host
+        sys.exit(1)
+else:
     found, port = port_scan.get_port( suite, owner, host )
     if found:
-        print "suite " + suite + " (" + owner + ") is running at port", port
+        print "suite " + suite + " (" + owner + ") is running on " + host + ":" + str(port)
     else:
-        print "suite " + suite + ' is not running'
-else:
-    parser.error( "Wrong number of arguments" ) 
+        print "ERROR: suite " + suite + " (" + owner + ") is not running on " + host
+        sys.exit(1)

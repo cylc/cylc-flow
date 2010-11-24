@@ -10,8 +10,14 @@
 #         |________________________|
 
 import os
+import socket
 import Pyro
-import port_scan
+
+# base (lowest allowed) Pyro socket number
+pyro_base_port = 7766   # (7766 is the Pyro default)
+
+# max number of sockets starting at base
+pyro_port_range = 100 # (100 is the Pyro default)
 
 class pyro_server:
     def __init__( self, suite, user=os.environ['USER'] ):
@@ -26,17 +32,24 @@ class pyro_server:
         Pyro.config.PYRO_DNS_URI = True
 
         # base (lowest allowed) Pyro socket number
-        Pyro.config.PYRO_PORT = port_scan.pyro_base_port
+        Pyro.config.PYRO_PORT = pyro_base_port
         # max number of sockets starting at base
-        Pyro.config.PYRO_PORT_RANGE = port_scan.pyro_port_range
+        Pyro.config.PYRO_PORT_RANGE = pyro_port_range
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
 
-    def shutdown( self, thing ):
-        # TO DO: WHAT IS thing (T/F) ?
+    def shutdown( self ):
         print "Shutting down my Pyro daemon"
-        self.daemon.shutdown( thing )
+        # The True arg here results in objects being unregistered from
+        # pyro-ns, which cylc no longer uses:
+        self.daemon.shutdown( True )
+
+        # If a suite shuts down via 'stop --now' or # Ctrl-C, etc., 
+        # any existing client end connections will hang for a long time
+        # unless we do the following (or cylc clients set a timeout,
+        # presumably) which daemon.shutdown() does not do (why not?):
+        self.daemon.sock.shutdown( socket.SHUT_RDWR )
 
     def connect( self, obj, name, qualified=True ):
         if qualified:
