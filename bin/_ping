@@ -13,8 +13,6 @@
 import os, sys, re
 import socket
 from optparse import OptionParser
-import Pyro.errors
-import cylc_pyro_client
 import port_scan
 
 parser = OptionParser( """cylc ping [options] SUITE

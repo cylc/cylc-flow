@@ -10,9 +10,9 @@
 #         |________________________|
 
 
-import os
-import check_switch
+import os, sys
 import cylc_pyro_client
+import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc nudge [options] SUITE 
@@ -24,11 +24,24 @@ INVOKED ON A ONE SECOND TIMEOUT AS WELL AS ON INCOMING TASK MESSAGES.
 
 (options, args) = parser.parse_args()
 
+if not parser.prompt( 'Nudge' ):
+    sys.exit(0)
+
 suite = parser.get_suite_name()
 owner = os.environ['USER']
 host = options.host
 port = options.port
 
-if parser.prompt( 'Nudge' ):
+try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    check_switch.check( proxy.nudge( owner ))
+    actioned, explanation = proxy.nudge( owner )
+    print explanation
+except Pyro.errors.NamingError, x:
+    if options.debug:
+        raise
+    else:
+        print x
+        sys.exit(1)
+
+if not actioned:
+    sys.exit(1)

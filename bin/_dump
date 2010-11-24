@@ -13,11 +13,9 @@
 Dump the current state of all suite tasks to stdout.
 """
 
-from cycle_time import _rt_to_dt, is_valid
-import os, re, sys
+import os, sys
 import cylc_pyro_client
-import Pyro.core
-from time import sleep
+import Pyro.errors
 from CylcOptionParsers import NoPromptOptionParser_u
 
 parser = NoPromptOptionParser_u( """cylc dump [options] SUITE 
@@ -63,16 +61,17 @@ if options.global_only:
 if options.tasks_only:
     display_global = False
 
+# connect to remote suite state summary object
+try:
+    proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
+    # get state summary, task names, cycle times
+    [glbl, states] = proxy.get_state_summary()
+except Pyro.errors.NamingError, x:
+    print x
+    sys.exit(1)
+
 if display_global:
     print "suite : " + suite
-
-# connect to remote suite state summary object
-proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
-
-# get state summary, task names, cycle times
-[glbl, states] = proxy.get_state_summary()
-
-if display_global:
 
     dummy_mode = glbl[ 'dummy_mode' ]
     if dummy_mode:

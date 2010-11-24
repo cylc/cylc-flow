@@ -58,6 +58,10 @@ Arguments:
                 help="(No effect; for consistency with interactive commands)",
                 action="store_true", default=False, dest="force" )
 
+        self.add_option( "--debug",
+                help="Print full Python exception tracebacks",
+                action="store_true", default=False, dest="debug" )
+
     def parse_args( self ):
 
         (options, args) = OptionParser.parse_args( self )
@@ -133,6 +137,10 @@ arguments:
         self.add_option( "-f", "--force",
                 help="(No effect; for consistency with interactive commands)",
                 action="store_true", default=False, dest="force" )
+
+        self.add_option( "--debug",
+                help="Print full Python exception tracebacks",
+                action="store_true", default=False, dest="debug" )
 
         self.owner = os.environ['USER']
 

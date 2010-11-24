@@ -114,36 +114,35 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.warning( msg )
 
     def lock( self, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return reasons
-
+        if user != self.owner:
+            self.warning( "refusing remote lock request (wrong owner)" )
+            return False, "You are not the suite owner"
+        if self.locked:
+            return True, "OK (already locked)"
         self.warning( "suite locked by remote request" )
         self.locked = True
-        return "OK"
+        return True, "OK"
 
     def unlock( self, user ):
         if user != self.owner:
-            return "This suite is owned by " + self.owner
-
+            self.warning( "refusing remote unlock request (wrong owner)" )
+            return False, "You are not the suite owner"
         if not self.locked:
-            return "OK (suite already unlocked)"
-
-        else:
-            self.warning( "suite unlocked by remote request" )
-            self.locked = False
-            return "OK"
+            return True, "OK (already unlocked)"
+        self.warning( "suite unlocked by remote request" )
+        self.locked = False
+        return True, "OK"
 
 
     def nudge( self, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         # cause the task processing loop to be invoked
         self.warning( "nudging by remote request" )
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def reset_failout( self ):
             print "resetting failout on " + self.failout_id
@@ -152,10 +151,10 @@ class remote_switch( Pyro.core.ObjBase ):
     def reset_to_waiting( self, task_id, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         if not self.task_type_exists( task_id ):
-            return "No such task type: " + self.name_from_id( task_id )
+            return False, "No such task type: " + self.name_from_id( task_id )
         task_id = self.translate( task_id )
 
         # reset a task to the waiting state
@@ -166,15 +165,15 @@ class remote_switch( Pyro.core.ObjBase ):
 
         self.pool.reset_task( task_id )
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def reset_to_ready( self, task_id, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         if not self.task_type_exists( task_id ):
-            return "No such task type: " + self.name_from_id( task_id )
+            return False, "No such task type: " + self.name_from_id( task_id )
         task_id = self.translate( task_id )
 
         # reset a task to the ready state
@@ -184,35 +183,33 @@ class remote_switch( Pyro.core.ObjBase ):
 
         self.pool.reset_task_to_ready( task_id )
         self.process_tasks = True
-        return "OK"
-
+        return True, "OK"
 
     def reset_to_finished( self, task_id, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         if not self.task_type_exists( task_id ):
-            return "No such task type: " + self.name_from_id( task_id )
+            return False, "No such task type: " + self.name_from_id( task_id )
         task_id = self.translate( task_id )
 
         # reset a task to the finished state
         self.warning( "REMOTE: reset to finished: " + task_id )
         self.pool.reset_task_to_finished( task_id )
         self.process_tasks = True
-        return "OK"
-
+        return True, "OK"
 
     def insert( self, ins_id, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         ins_name = self.name_from_id( ins_id )
 
         if not self.task_type_exists( ins_name ) and \
                 ins_name not in self.config.get( 'task_groups' ):
-            return "No such task type or group: " + ins_name
+            return False, "No such task type or group: " + ins_name
 
         ins = ins_id
         if self.task_type_exists( ins_name ):
@@ -226,77 +223,80 @@ class remote_switch( Pyro.core.ObjBase ):
 
         self.pool.insertion( ins )
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def hold( self, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
+
+        if self.pool.paused():
+            return True, "OK (already paused)"
 
         self.warning( "REMOTE: suite hold" )
         self.pool.set_suite_hold()
         # process, to update state summary
         self.process_tasks = True
-        return "OK"
-
+        return True, "OK"
 
     def resume( self, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
+        if not self.pool.paused() and not self.pool.stopping():
+            return True, "OK (already resumed)"
 
         self.warning( "REMOTE: suite resume" )
         self.pool.unset_suite_hold()
         # process, to update state summary
         self.process_tasks = True
-        return "OK"
-
+        return True, "OK"
 
     def set_stop_time( self, ctime, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         self.warning( "REMOTE: set stop time" )
         self.pool.set_stop_time( ctime )
         # process, to update state summary
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def set_hold_time( self, ctime, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         self.warning( "REMOTE: set hold time" )
         self.pool.set_suite_hold( ctime )
         # process, to update state summary
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def shutdown( self, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         self.warning( "REMOTE: halt when running tasks finish" )
         self.hold( user )
         self.halt = True
         # process, to update state summary
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def shutdown_now( self, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         self.warning( "REMOTE: halt NOW" )
         self.hold( user )
         self.halt_now = True
         # process, to update state summary
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def get_config( self, item ):
         self.warning( "REMOTE: config item " + item )
@@ -375,69 +375,68 @@ class remote_switch( Pyro.core.ObjBase ):
     def purge( self, task_id, stop, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         if not self.task_type_exists( task_id ):
-            return "No such task type: " + self.name_from_id( task_id )
+            return False, "No such task type: " + self.name_from_id( task_id )
         task_id = self.translate( task_id )
 
         self.warning( "REMOTE: purge " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def die( self, task_id, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         if not self.task_type_exists( task_id ):
-            return "No such task type: " + self.name_from_id( task_id )
+            return False, "No such task type: " + self.name_from_id( task_id )
         task_id = self.translate( task_id )
 
         self.warning( "REMOTE: die: " + task_id )
         self.pool.kill( [ task_id ] )
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def die_cycle( self, cycle, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         self.warning( "REMOTE: kill cycle: " + cycle )
         self.pool.kill_cycle( cycle )
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def spawn_and_die( self, task_id, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         if not self.task_type_exists( task_id ):
-            return "No such task type: " + self.name_from_id( task_id )
+            return False, "No such task type: " + self.name_from_id( task_id )
         task_id = self.translate( task_id )
 
         self.warning( "REMOTE: spawn and die: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def spawn_and_die_cycle( self, cycle, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
-
+            return False, reasons
         self.warning( "REMOTE: spawn and die cycle: " + cycle )
         self.pool.spawn_and_die_cycle( cycle )
         self.process_tasks = True
-        return "OK"
+        return True, "OK"
 
     def set_verbosity( self, level, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
-            return reasons
+            return False, reasons
 
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
@@ -454,15 +453,12 @@ class remote_switch( Pyro.core.ObjBase ):
         elif level == 'critical':
             new_level = logging.CRITICAL
         else:
-            self.warning( "no such logging level: " + level )
-            return
+            self.warning( "Illegal logging level: " + level )
+            return False, "Illegal logging level: " + level
 
         self.config.set( 'logging_level', new_level )
-
-        # main log
         self.log.setLevel( new_level )
-
-        return 'OK'
+        return True, 'OK'
 
     def should_i_die( self, task_id ):
         if self.halt:

@@ -12,8 +12,8 @@
 
 import os
 import cycle_time
-import check_switch
 import cylc_pyro_client
+import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc reset [options] SUITE TASK_ID
@@ -62,16 +62,28 @@ except ValueError:
 if not cycle_time.is_valid( cycle ):
     parser.error( "invalid cycle time: " + cycle )
 
+if not parser.prompt( 'Reset task ' + task_id + ' in'):
+    sys.exit(0)
+
 suite = parser.get_suite_name()
 owner = os.environ['USER']
 host = options.host
 port = options.port
 
-if parser.prompt( 'Reset task ' + task_id + ' in'):
+try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
     if waiting:
-        check_switch.check( proxy.reset_to_waiting( task_id, owner ))
+        actioned, explanation = proxy.reset_to_waiting( task_id, owner )
     elif ready:
-        check_switch.check( proxy.reset_to_ready( task_id, owner ))
+        actioned, explanation = proxy.reset_to_ready( task_id, owner )
     elif options.finished:
-        check_switch.check( proxy.reset_to_finished( task_id, owner ))
+        actioned, explanation = proxy.reset_to_finished( task_id, owner )
+except Pyro.errors.NamingError, x:
+    if options.debug:
+        raise
+    else:
+        print x
+        sys.exit(1)
+
+if not actioned:
+    sys.exit(1)

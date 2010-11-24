@@ -27,13 +27,16 @@ class client:
         if self.port:
             port = self.port
             if not check_port( self.suite, self.owner, self.host, self.port ):
-                msg = self.suite + "(" + self.owner + ") not found at " + self.host + ":" + port
+                msg = self.suite + " (" + self.owner + ") not found at " + self.host + ":" + port
                 raise Pyro.errors.NamingError( msg )
         else:
-            print "Scanning for " + self.suite + " ..."
+            print "Scanning for " + self.suite + " ...",
             found, port = get_port( self.suite, self.owner, self.host )
-            if not found:
-                msg = self.suite + "(" + self.owner + ") not found on " + self.host 
+            if found:
+                print "port", port
+            else:
+                print "ERROR"
+                msg = self.suite + " (" + self.owner + ") not found on " + self.host 
                 raise Pyro.errors.NamingError( msg )
 
         # get a pyro proxy for the target object

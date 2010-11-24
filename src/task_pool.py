@@ -147,6 +147,12 @@ class task_pool:
     def paused( self ):
         return self.suite_hold_now
 
+    def stopping( self ):
+        if self.stop_time:
+            return True
+        else:
+            return False
+
     def will_pause_at( self ):
         return self.suite_hold_ctime
 

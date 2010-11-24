@@ -11,8 +11,8 @@
 
 import os,sys
 import cycle_time
-import check_switch
 import cylc_pyro_client
+import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc insert [options] SUITE ID
@@ -30,21 +30,33 @@ See also 'cylc submit', for running single tasks without a scheduler.""",
 if len(args) != 2:
     parser.error( "suite name and one Task or Group ID required" )
 
+target = args[1]
+if not parser.prompt( 'Insert ' + target + ' in'):
+    sys.exit(0)
+
 suite = parser.get_suite_name()
 owner = os.environ['USER']
 host = options.host
 port = options.port
 
-target = args[1]
+# check input
+try:
+    ( name, cycle ) = target.split('%')
+except ValueError:
+    parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
+if not cycle_time.is_valid( cycle ):
+    parser.error( "invalid cycle time: " + cycle )
 
-if parser.prompt( 'Insert ' + target + ' in'):
-    # check input
-    try:
-        ( name, cycle ) = target.split('%')
-    except ValueError:
-        parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
-    if not cycle_time.is_valid( cycle ):
-        parser.error( "invalid cycle time: " + cycle )
-
+try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    check_switch.check( proxy.insert( target,  owner ))
+    actioned, explanation = proxy.insert( target, owner )
+    print explanation
+except Pyro.errors.NamingError, x:
+    if options.debug:
+        raise
+    else:
+        print x
+        sys.exit(1)
+
+if not actioned:
+    sys.exit(1)

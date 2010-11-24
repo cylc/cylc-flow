@@ -11,8 +11,8 @@
 
 import os, sys, re
 import cycle_time
-import check_switch
 import cylc_pyro_client
+import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc kill [options] SUITE [TASK_ID] [CYCLE]
@@ -58,18 +58,31 @@ elif re.search( '%', target ):
 else:
     parser.error( 'Input Format error? must be NAME%YYYYMMDDHH or YYYYMMDDHH' )
 
-proxy = cylc_pyro_client.client( suite, owner, host, port).get_proxy( 'remote' )
+try:
+    proxy = cylc_pyro_client.client( suite, owner, host, port).get_proxy( 'remote' )
 
-if kill_cycle:
-    if parser.prompt( 'Kill ALL tasks in ' + target + ' in' ):
-        if options.no_spawn:
-            check_switch.check( proxy.die_cycle( target, owner ))
-        else:
-            check_switch.check( proxy.spawn_and_die_cycle( target, owner ))
+    if kill_cycle:
+        if parser.prompt( 'Kill ALL tasks in ' + target + ' in' ):
+            if options.no_spawn:
+                actioned, explanation = proxy.die_cycle( target, owner )
+            else:
+                actioned, explanation = proxy.spawn_and_die_cycle( target, owner )
+            print explanation
 
-if kill_task:
-    if parser.prompt( 'Kill task ' + target + ' in'):
-        if options.no_spawn:
-            check_switch.check( proxy.die( target, owner ))
-        else:
-            check_switch.check( proxy.spawn_and_die( target, owner ))
+    if kill_task:
+        if parser.prompt( 'Kill task ' + target + ' in'):
+            if options.no_spawn:
+                actioned, explanation = proxy.die( target, owner )
+            else:
+                actioned, explanation = proxy.spawn_and_die( target, owner )
+            print explanation
+
+except Pyro.errors.NamingError, x:
+    if options.debug:
+        raise
+    else:
+        print x
+        sys.exit(1)
+
+if not actioned:
+    sys.exit(1)

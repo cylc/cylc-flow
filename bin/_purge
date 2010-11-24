@@ -12,8 +12,8 @@
 
 import os
 import cycle_time
-import check_switch
 import cylc_pyro_client
+import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc purge [options] SUITE TASK_ID STOP
@@ -49,11 +49,24 @@ for cycle in [ start, stop ]:
     if not cycle_time.is_valid( cycle ):
         parser.error( "invalid cycle time: " + cycle )
 
+if not parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
+    sys.exit(0)
+    
 suite = parser.get_suite_name()
 owner = os.environ['USER']
 host = options.host
 port = options.port
 
-if parser.prompt( 'Purge from ' + target + ' to ' + stop + ' in'):
+try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    check_switch.check( proxy.purge( target, stop, owner ))
+    actioned, explanation = proxy.purge( target, stop, owner )
+    print explanation
+except Pyro.errors.NamingError, x:
+    if options.debug:
+        raise
+    else:
+        print x
+        sys.exit(1)
+
+if not actioned:
+    sys.exit(1)

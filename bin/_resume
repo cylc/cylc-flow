@@ -11,8 +11,8 @@
 
 
 import os
-import check_switch
 import cylc_pyro_client
+import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
 
 parser = PromptOptionParser( """cylc resume [options] SUITE 
@@ -21,11 +21,24 @@ Resume running a paused suite, or unset an upcoming stop time.""" )
 
 (options, args) = parser.parse_args()
 
+if not parser.prompt( 'Resume' ):
+    sys.exit(0)
+
 suite = parser.get_suite_name()
 owner = os.environ['USER']
 host = options.host
 port = options.port
 
-if parser.prompt( 'Resume' ):
+try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    check_switch.check( proxy.resume( owner ))
+    actioned, explanation = proxy.resume( owner ))
+    print explanation
+except Pyro.errors.NamingError, x:
+    if options.debug:
+        raise
+    else:
+        print x
+        sys.exit(1)
+
+if not actioned:
+    sys.exit(1)

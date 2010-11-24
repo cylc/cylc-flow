@@ -20,7 +20,6 @@ http://ascii-table.com/ansi-escape-sequences.php
 from cycle_time import _rt_to_dt, is_valid
 import cylc_pyro_client
 import os, re, sys
-import Pyro.core
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 from time import sleep
 from CylcOptionParsers import NoPromptOptionParser_u
@@ -65,7 +64,6 @@ try:
         # connect to remote state summary object
         try: 
             proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
-
 
             # timeout (sec) determines max wait for an answer from proxy.
             proxy._setTimeout(60)
