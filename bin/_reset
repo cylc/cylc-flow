@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-import os
+import os, sys
 import cycle_time
 import cylc_pyro_client
 import Pyro.errors

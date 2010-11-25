@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-import os
+import os, sys
 import cylc_pyro_client
 import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
@@ -31,7 +31,7 @@ port = options.port
 
 try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    actioned, explanation = proxy.resume( owner ))
+    actioned, explanation = proxy.resume( owner )
     print explanation
 except Pyro.errors.NamingError, x:
     if options.debug:

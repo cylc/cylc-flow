@@ -9,7 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import Pyro.errors
+import Pyro.errors, Pyro.core
 from cylc_pyro_server import pyro_base_port, pyro_port_range
 
 class port_interrogator:

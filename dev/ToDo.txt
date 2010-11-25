@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* now that we've ditched pyro-ns, only the lockserver guards against
+  starting the multiple instances of the same suite under the same name.
+
 * document reason for naming of pyro-connected objects
   (owner.suite.obj): prevent accidentally interventing in the wrong
   suite when using explicit port numbers (if we allow that).
