@@ -20,10 +20,10 @@
 import Pyro.core
 
 class identifier( Pyro.core.ObjBase ):
-    def __init__( self, suite, owner ):
+    def __init__( self, name, owner ):
         self.owner = owner
-        self.suite = suite
+        self.name = name
         Pyro.core.ObjBase.__init__( self )
 
     def id( self ):
-        return ( self.suite, self.owner )
+        return ( self.name, self.owner )

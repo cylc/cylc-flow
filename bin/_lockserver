@@ -85,14 +85,14 @@ task locks are always held by the suite owner, not the task owner."""
 
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host= socket.getfqdn(), 
+    parser.set_defaults( host=socket.getfqdn(), 
             acquire=None, release=None, suite_acquire=None,
             suite_acquire_nonex=None, suite_release=None, 
             list_all=False, get_filenames=False )
 
     parser.add_option( "--host",
-            help="Pyro nameserver host (default: to local host).",
-            metavar="HOSTNAME", action="store", dest="pns_host" )
+            help="Cylc lockserver host (default: localhost).",
+            metavar="HOSTNAME", action="store", dest="host" )
 
     parser.add_option( "--acquire-task", help="Acquire a task lock.",
             metavar="SUITE:NAME%CYCLE", action="store", dest="acquire" )
@@ -122,6 +122,9 @@ task locks are always held by the suite owner, not the task owner."""
             help="Print cylclockd PID, log, and state filenames.",
             action="store_true", dest="get_filenames" )
 
+    parser.add_option( "--port", help="lockserver port (default: scan cylc ports).",
+            metavar="INT", action="store", default=None, dest="port" )
+
     ( options, args ) = parser.parse_args()
 
     count = 0
@@ -135,42 +138,42 @@ task locks are always held by the suite owner, not the task owner."""
     if count != 1:
         parser.error( "choose one option only!" )
     
-    pns_host = options.pns_host
-
-    user = os.environ[ 'USER' ]
+    owner = os.environ[ 'USER' ]
+    host = options.host
+    port = options.port
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
     try:
         if options.acquire:
             (suite, task_id) = check_task_spec( options.acquire )
-            if not task_lock( task_id, suite, pns_host ).acquire():
+            if not task_lock( task_id, suite, owner, host, port ).acquire():
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
 
         elif options.release:
             (suite, task_id) = check_task_spec( options.release )
-            if not task_lock( task_id, suite, pns_host ).release():
+            if not task_lock( task_id, suite, owner, host, port ).release():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
 
         elif options.suite_acquire:
-            suitename = options.suite_acquire
-            suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( True ):
+            suite = options.suite_acquire
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).request_suite_access( True ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
 
         elif options.suite_acquire_nonex:
-            suitename = options.suite_acquire_nonex
-            suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).request_suite_access( False ):
+            suite = options.suite_acquire_nonex
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).request_suite_access( False ):
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
 
         elif options.suite_release:
-            suitename = options.suite_release
-            suitedir = check_suite_spec( suitename )
-            if not suite_lock( pns_host, user, suitename, suitedir, 'scheduler' ).release_suite_access():
+            suite = options.suite_release
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).release_suite_access():
                 raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
 
         elif options.list_all:
-            (task_locks, suite_ex, suite_nonex ) = lockserver( pns_host ).dump()
+            (task_locks, suite_ex, suite_nonex ) = lockserver( owner, host ).dump()
 
             print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
             for suitedir in suite_ex:
@@ -188,10 +191,10 @@ task locks are always held by the suite owner, not the task owner."""
                 print " - ", lock
 
         elif options.clear_all:
-            lockserver( pns_host ).clear( user )
+            lockserver( owner, host ).clear( owner )
 
         elif options.get_filenames:
-            pid, log, state = lockserver( pns_host ).get_filenames()
+            pid, log, state = lockserver( owner, host ).get_filenames()
 
             print "cylclockd files:"
             print "  PID ......", pid
@@ -203,18 +206,12 @@ task locks are always held by the suite owner, not the task owner."""
             raise SystemExit( "unknown cylc lockserver option" )
 
     except Pyro.errors.NamingError:
-        print "ERROR: there is no cylc lockserver registered with pyro-ns on"
-        print " ", pns_host
-        print "See 'cylclockd --help' for how to start up the lockserver."
-        sys.exit(1)
+        raise
 
     except Pyro.errors.ProtocolError, x:
         if str(x) == "connection failed":
-            print "\nERROR: we are unable to connect to cylclockd via its Pyro proxy on"
-            print " ", pns_host
-            print "This probably means the daemon suffered a hard shutdown; the current"
-            print "pyro-ns registration will need to be removed manually before restart:"
-            print "$ pyro-nsc deletegroup :cylclockd\n"
+            print "\nERROR: unable to connect to cylclockd via its Pyro proxy on ", host
+            print "This probably means the daemon suffered a hard shutdown."
             sys.exit(1)
         else:
             # unknown error

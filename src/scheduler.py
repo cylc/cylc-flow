@@ -309,12 +309,12 @@ class scheduler:
             suitename = self.suite_name
 
         self.pyro = cylc_pyro_server.pyro_server( suitename )
-
-        self.banner[ 'Pyro port' ] = self.pyro.get_port()
+        self.port = self.pyro.get_port()
+        self.banner[ 'Pyro port' ] = self.port
 
     def configure_suite_id( self ):
         self.suite_id = identifier( self.suite_name, self.username )
-        self.pyro.connect( self.suite_id, 'suite_id', qualified = False )
+        self.pyro.connect( self.suite_id, 'cylcid', qualified = False )
 
     def configure_environment( self ):
         # provide access to the suite scripts and source modules
@@ -448,7 +448,6 @@ class scheduler:
         self.config.dump()
 
     def run( self ):
-
         if self.use_lockserver:
             if self.practice:
                 suitename = self.suite_name + '-practice'
@@ -456,15 +455,12 @@ class scheduler:
                 suitename = self.suite_name
 
             # request suite access from the lock server
-            lock = suite_lock( self.host, self.username,
-                    suitename, self.suite_dir, 'scheduler' )
-            try:
-                if not lock.request_suite_access( self.exclusive_suite_lock ):
-                    raise SystemExit( 'ERROR: failed to acquire a suite lock' )
-                else:
-                    self.lock_acquired = True
-            except:
-                raise SystemExit( 'ERROR: failed connect to the cylc lockserver' )
+            # port here is the lockserver port; 'None' forces scan
+            lock = suite_lock( suitename, self.suite_dir, self.username, self.host, port=None, cylc_mode='scheduler' )
+            if lock.request_suite_access( self.exclusive_suite_lock ):
+               self.lock_acquired = True
+            else:
+               raise SystemExit( "NO SUITE LOCK" )
 
         if not self.practice:
             self.back_up_statedump_file()
@@ -568,7 +564,6 @@ class scheduler:
 
             if self.lock_acquired:
                 print "Releasing suite lock"
-                lock = suite_lock( self.host, self.username,
-                        suitename, self.suite_dir, 'scheduler' )
+                lock = suite_lock( suitename, self.suite_dir, self.username, self.host, self.port, 'scheduler' )
                 if not lock.release_suite_access():
                     print >> sys.stderr, 'failed to release suite!'

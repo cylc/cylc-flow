@@ -9,27 +9,46 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import Pyro.core, Pyro.naming, Pyro.errors
-import os,sys,socket
+# LOCKSERVER CLIENT INTERFACE
 
-# PYRO NAMESERVER GROUP AND OBJECT NAME MUST MATCH CYLCLOCKD.
-groupname = ':cylclockd'
-name = 'broker'
+import Pyro.core, Pyro.naming, Pyro.errors
+import socket
+from port_scan import get_port, check_port
 
 class lockserver:
-    def __init__( self, pns_host=None ):
-        # Pyro exceptions should be handled at a higher level, as we don't
-        # necessarily want to abort if the lockserver cannot be contacted.
-        self.server = Pyro.core.getProxyForURI('PYRONAME://' + pns_host + '/' + groupname + '.' + name)
+    def __init__( self, owner, host, port=None ):
+        self.owner = owner
+        self.host = host
+        self.port = port
+
+    def get_proxy( self ):
+        if self.port:
+            port = self.port
+            if not check_port( lockserver, self.owner, self.host, self.port ):
+                msg = "lockserver (" + self.owner + ") not found at " + self.host + ":" + port
+                raise Pyro.errors.NamingError( msg )
+        else:
+            print "Scanning for lockserver ...",
+            found, port = get_port( "lockserver", self.owner, self.host )
+            if found:
+                print "port", port
+            else:
+                print "ERROR"
+                msg = "lockserver (" + self.owner + ") not found on " + self.host 
+                raise Pyro.errors.NamingError( msg )
+
+            qualified_name = self.owner + ".lockserver"
+            uri = 'PYROLOC://' + self.host + ':' + str(port) + '/' + qualified_name
+            return Pyro.core.getProxyForURI(uri)
         
     def get( self ):
-        return self.server
+        return self.get_proxy()
 
     def dump( self ):
-        return self.server.dump()
+        return self.get_proxy().dump()
 
     def clear( self, user ):
-        return self.server.clear( user )
+        return self.get_proxy().clear( user )
 
     def get_filenames( self ):
-        return self.server.get_filenames()
+        return self.get_proxy().get_filenames()

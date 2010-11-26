@@ -13,22 +13,17 @@ import os, sys, re
 import socket, pickle
 import logging, logging.handlers
 from optparse import OptionParser
-
+from cylc_pyro_server import pyro_base_port, pyro_port_range
 import Pyro.core, Pyro.errors, Pyro.naming
 from Pyro.ext.daemonizer import Daemonizer
 from ConfigParser import SafeConfigParser
-
-# Pyro nameserver group and object name.
-# Must agree with $CYLC_DIR/src/lockserver/*.py.
-groupname = ':cylclockd'
-name = 'broker'
+from suite_id import identifier
 
 import os, sys, pwd, re
 import logging
 
 class ServerDaemon( Daemonizer ):
-    def __init__( self, pid_file, pns_host, log_file, state_file ):
-        self.pns_host = pns_host
+    def __init__( self, pid_file, log_file, state_file ):
         self.log_file = log_file
         self.state_file = state_file
         Daemonizer.__init__(self, pid_file)
@@ -45,7 +40,7 @@ class ServerDaemon( Daemonizer ):
         #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
         #server = None
         #try:
-        server = LockServer( self.pns_host, self.pid_file, self.log_file, self.state_file )
+        server = LServer( self.pid_file, self.log_file, self.state_file )
         #except Exception, x:
         #    foo.write( str(x) + "\n" )
         #else:
@@ -59,11 +54,9 @@ class ServerDaemon( Daemonizer ):
         #else:
         #    pass
 
-class LockServer:
-    def __init__( self, pns_host, pid_file, log_file, state_file ):
-        # LOCATE THE PYRO NAMESERVER-------------------------------------------
+class LServer:
+    def __init__( self, pid_file, log_file, state_file ):
         self.log_file = log_file
-        self.pns_host = pns_host
         self.pid_file = pid_file
         self.state_file = state_file
 
@@ -74,6 +67,12 @@ class LockServer:
         # UNCOMMENT THE FOLLOWING FOR LOGGING (goes to $PWD/Pyro_log)
         #Pyro.config.PYRO_STDLOGGING = True
         #Pyro.config.PYRO_TRACELEVEL = 3
+
+        # base (lowest allowed) Pyro socket number
+        Pyro.config.PYRO_PORT = pyro_base_port
+        # max number of sockets starting at base
+        Pyro.config.PYRO_PORT_RANGE = pyro_port_range
+
         Pyro.core.initServer()
 
     def start( self ):
@@ -81,53 +80,36 @@ class LockServer:
         # (single threaded prob not necessary for lockserver
         # but it doesn't matter as few connections needed)
 
-        locker = lockserver( self.pns_host, self.pid_file, self.log_file, self.state_file )
-
+        self.owner = os.environ[ 'USER' ]
         self.pyro_daemon = Pyro.core.Daemon()
-        self.pyro_daemon.useNameServer(locker.get_ns())
+        port = self.pyro_daemon.port
+        print "Listening on port", port
+        locker = lockserver( self.owner, port, self.pid_file, self.log_file, self.state_file )
+
+
+        lockserver_id = identifier( 'lockserver', self.owner )
+        self.pyro_daemon.connect( lockserver_id, 'cylcid' )
 
         #foo = open( "/home/oliverh/cylc/foo.txt", "a" )
-        try:
-            self.pyro_daemon.connect( locker, locker.get_pyro_name() )
-        except Pyro.errors.NamingError,x:
-            # foo.write( str(x) + "\n"
-            print 'Pyro Naming ERROR: ', str(x) + "\n"
-            print 'This probably means the lockserver previously suffered a hard shutdown'
-            print 'To remove the lockserver registration from the Pyro Nameserver, do this:'
-            print '% pyro-nsc deletegroup ' + groupname
-            print
-            sys.exit(1)
-            #raise
-        except Exception, x:
-            # foo.write( str(x) + "\n"
-            print 'ERROR: ', str(x) + "\n"
-            sys.exit(1)
-            #raise
- 
+
+        qualified_name = self.owner + '.lockserver'
+        self.pyro_daemon.connect( locker, qualified_name )
+
+
         while True:
             self.pyro_daemon.handleRequests()
 
 class lockserver( Pyro.core.ObjBase ):
-    def __init__( self, pns_host, pid_file, log_file, state_file, loglevel=logging.INFO ):
+    def __init__( self, owner, port, pid_file, log_file, state_file, loglevel=logging.INFO ):
         Pyro.core.ObjBase.__init__(self)
 
         # pid file is passed through to here purely so it can be
         # retrieved by user request, through 'cylc lockserver -f'.
+        self.owner = owner
+        self.port = port
         self.pid_file = pid_file
         self.log_file = log_file
         self.state_file = state_file
-
-        try:
-            self.nameserver = Pyro.naming.NameServerLocator().getNS( pns_host )
-        except Pyro.errors.NamingError:
-            raise SystemExit("Failed to find a Pyro nameserver on " + hostname )
-
-        # CREATE A UNIQUE NAMESERVER GROUPNAME FOR THE LOCK SERVER ------------
-        try:
-            self.nameserver.createGroup( groupname )
-        except Pyro.errors.NamingError:
-            # group already exists
-            pass
 
         self.configure_logging( log_file, loglevel )
 
@@ -141,6 +123,9 @@ class lockserver( Pyro.core.ObjBase ):
             self.exclusive = {}       # exclusive[ suite_dir ] = [ groupname ]
             self.inclusive = {}       # inclusive[ suite_dir ] = [ groupname, ... ]
 
+    #def identify( self ):
+    #    return 'cylc lockserver', self.owner 
+
     def dump_state( self ):
         output = open( self.state_file, 'w' )
         pickle.dump( ( self.exclusive, self.inclusive, self.locked ), output )
@@ -148,7 +133,6 @@ class lockserver( Pyro.core.ObjBase ):
 
     def load_state( self ):
         if not os.path.exists( self.state_file ):
-            # 
             print "File not found:", self.state_file
             print "(i.e. no previous state to load)"
             return False
@@ -179,13 +163,6 @@ class lockserver( Pyro.core.ObjBase ):
         f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y/%m/%d %H:%M:%S' )
         h.setFormatter(f)
         self.log.addHandler( h )
-
-
-    def get_ns( self ):
-        return self.nameserver
-
-    def get_pyro_name( self ):
-        return groupname + '.' + name
 
     def get_lock_id( self, lockgroup, task_id ):
         return lockgroup + ':' + task_id
@@ -228,7 +205,7 @@ class lockserver( Pyro.core.ObjBase ):
          return ( self.pid_file, self.log_file, self.state_file )
 
     def dump( self ):
-         self.log.info( "Return lock information") 
+         self.log.info( "Returning lock information") 
          return ( self.locked.keys(), self.exclusive, self.inclusive )
 
     def clear( self, user ):
@@ -246,6 +223,8 @@ class lockserver( Pyro.core.ObjBase ):
         for suitedir in self.inclusive.keys():
             groups = self.inclusive[ suitedir ]
             for group in groups:
+                print "+", group
+                print " ", self.get_lock_owner( group ), user
                 if self.get_lock_owner( group ) == user:
                     self.release_suite_access( suitedir, group )
 
@@ -324,6 +303,7 @@ class lockserver( Pyro.core.ObjBase ):
                         reason =  lockgroup + '-->' + suite_dir + " already in use"
                     else:
                         # granted
+                        print 'APPENDING', lockgroup
                         self.inclusive[ suite_dir ].append( lockgroup )
             else:
                 if cylc_mode == 'submit':
@@ -331,6 +311,7 @@ class lockserver( Pyro.core.ObjBase ):
                     pass
                 else:
                     # granted
+                    print 'STARTING', lockgroup
                     self.inclusive[ suite_dir ] = [ lockgroup ]
  
         if result:
@@ -390,7 +371,7 @@ class lockserver( Pyro.core.ObjBase ):
 
 if __name__ == "__main__":
 
-    usage = """Usage: cylclockd [-f CONFIG] [--host=HOST] ACTION 
+    usage = """Usage: cylclockd [-f CONFIG] ACTION 
 
 The cylc lockserver daemon brokers suite and task locks for all cylc
 suites on the network. The command line user interface for interrogating
@@ -412,18 +393,20 @@ Arguments:
               debug starts cylclockd without 'daemonizing', i.e. it won't
               detach from the terminal and stdout and stderr are not lost."""
 
+    #types = [ 'user', 'host' ]
+
     parser = OptionParser( usage )
 
-    parser.set_defaults( pns_host = socket.getfqdn(), 
-                         config = '/etc/cylc/cylclockd.conf' )
+    parser.set_defaults( config = '/etc/cylc/cylclockd.conf' )
 
-    parser.add_option( "--host",
-            help="Pyro nameserver host (default: to local host).",
-            metavar="HOSTNAME", action="store", dest="pns_host" )
-
-    parser.add_option( "-f", 
-            help="Alternative config file (default /etc/cylc/cylclockd.conf)",
+    parser.add_option( "-c", "--config-file", 
+            help="Config file (default /etc/cylc/cylclockd.conf)",
             metavar="CONFIGFILE", action="store", dest="config" )
+
+    #parser.add_option( "-t", "--type", 
+    #        help="Type of lockserver: " + ', '.join(types) + ".",
+    #        default='user', metavar=TYPE, choices=types,
+    #        action="store", dest="type" )
 
     ( options, args ) = parser.parse_args()
 
@@ -445,11 +428,12 @@ Arguments:
     pid_file   = config.get( 'main', 'pid file' )
     log_file   = config.get( 'main', 'log file' )
     state_file = config.get( 'main', 'state file' ) 
+    #type = options.type
 
     print "PID File:        ", pid_file
     print "Logging To:      ", log_file
     print "Persistent State:", state_file
+    #print "Lockserver Type: ", type
 
-    server_daemon = ServerDaemon( pid_file, options.pns_host, log_file, state_file ) 
+    server_daemon = ServerDaemon( pid_file, log_file, state_file ) 
     server_daemon.process_command_line( [ sys.argv[0] ] + args )
-

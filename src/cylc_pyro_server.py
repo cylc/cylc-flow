@@ -66,4 +66,3 @@ class pyro_server:
 
     def get_port( self ):
         return self.daemon.port
-    
