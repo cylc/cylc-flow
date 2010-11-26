@@ -520,8 +520,8 @@ release tarball.
 \subsection{Installation} 
 \label{Installation}
 
-Pyro has its own installation instructions; it installs easily into the
-standard Python modules path.
+Pyro has its own very simple installation instructions; basically, it
+installs into the standard Python module path.
 
 Cylc is designed to be installed into a normal user account: simply
 unpack the tarball, or move the repository, to the location of your
@@ -582,51 +582,6 @@ available commands, options, and operations.  {\em A Complete Working
 Example} (Section~\ref{ACompleteWorkingExample}) describes the
 userguide example suite in detail.
 
-\subsection{Starting A Pyro Nameserver}
-\label{QuickStartingAPyroNameserver}
-
-Pyro (Appendix~\ref{Pyro}) is the object oriented Python RPC framework
-that allows suite tasks to communicate with their proxy objects inside
-a cylc scheduler. First check to see if there is already a Pyro
-nameserver (\lstinline=pyro-ns=) running on your network segment:
-
-\begin{lstlisting}
-# search for a Pyro nameserver on the network
-$ pyro-nsc ping
-Locator: searching Pyro Name Server...
-Locator: retry 1
-Locator: searching Pyro Name Server...
-Locator: retry 1
-Trying host oliverh-33191VL
-Locator: contacting Pyro Name Server...
-NS is at 127.0.0.2 (oliverh-33191VL.greta.niwa.co.nz) port 9090
-NS is up and running!
-
-# search for a Pyro nameserver on a specific host
-$ pyro-nsc -h localhost ping
-Locator: contacting Pyro Name Server...
-NS is at 127.0.0.1 (localhost) port 9090
-NS is up and running!
-\end{lstlisting}
-
-If not, start one up as follows:
-
-\begin{lstlisting}
-# start a Pyro nameserver
-$ pyro-ns
-*** Pyro Name Server ***
-Name server listening on: ('0.0.0.0', 9090)
-Broadcast server listening on: ('255.255.255.255', 9090)
-URI is: PYRO://192.168.56.146:9090/c0a838921e021d8a88b563c085c323e5f4
-URI written to: /home/oliverh/Pyro_NS_URI
-Name Server started.
-\end{lstlisting}
-
-The Pyro nameserver is unfortunately not a daemon process, because it
-also has to run on platforms such as Microsoft Windows, but you can
-start it with the \lstinline=nohup= command 
-(see \lstinline=man nohup=) to effectively detach it from your terminal
-login session.
 
 \subsection{Starting The Cylc Lockserver}
 \label{QuickStartingTheCylcLockserver}
@@ -1811,10 +1766,10 @@ for all tasks:
 \begin{lstlisting}
   CYLC_MODE         # was the task invoked by a full scheduler or not?
   CYLC_DIR          # location of the cylc installation
-  CYLC_SUITE_DIR   # location of the suite definition directory
-  CYLC_SUITE_NAME  # registered name of the parent suite 
-  CYLC_NS_HOST      # host running the Pyro Nameserver
-  CYLC_NS_GROUP     # suite group name in the Pyro nameserver
+  CYLC_SUITE_DIR    # location of the suite definition directory
+  CYLC_SUITE_NAME   # registered name of the parent suite 
+  CYLC_SUITE_OWNER  # username of the account running the suite
+  CYLC_SUITE_HOST   # hostname of the machine running the suite
 \end{lstlisting}
 
 Most of these are for internal use by cylc, except in the case of remote
@@ -2543,9 +2498,8 @@ runahead limit will report that to the log.
 
 \subsubsection{Normal Shutdown}
 
-Cylc waits for any currently running tasks to finish, then
-unregisters its own objects from the Pyro nameserver before shutting
-down. There will be nothing to clean up. 
+Cylc waits for any currently running tasks to finish before shutting
+down cleanly. There will be nothing to clean up. 
 
 \subsubsection{Shutdown NOW or Controlled Abort}
 
@@ -2558,14 +2512,8 @@ orphaned processes that need to be killed manually.
 
 \subsubsection{Uncontrolled Suite Abort}
 
-If cylc is forced to abort suddenly without cleaning up after itself it
-may leave objects registered in the Pyro Nameserver. Cylc will refuse
-to start or restart the same suite while this is the case. However, it
-will prompt you to delete the offending group manually:
-
-\begin{lstlisting}
-pyro-nsc deletegroup :cylc.USER.SUITE
-\end{lstlisting}
+(To Do, check: currently no ill effects - maybe sockets (ports) remain
+tied up until they time out?).
 
 \section{A Complete Working Example}
 \label{ACompleteWorkingExample}
@@ -2782,7 +2730,7 @@ The information in this section is auto-generated during document processing.
 \label{SuiteMonitor}
 
 Cylc registers a {\em suite state summary} object, which is constantly
-updated as the suite evolves, with the Pyro nameserver. This provides a
+updated as the suite evolves, with Pyro. This provides a
 general interface for remote suite monitoring. Monitor programs can
 connect to state summary object, extract whatever information they want
 from it, and ignore the rest. A suite monitor screenshot can be seen in
@@ -2841,9 +2789,9 @@ that comes about.
 
 \section{Network Issues}
 
-Cylc, the Pyro nameserver, and each suite task, can all run on
-different hosts if necessary.  If you do have a distributed suite, in 
-any or all of these ways, be aware of the following issues: 
+Cylc can control tasks on a distributed system (multiple hosts).  If you
+do have a distributed suite, in any or all of these ways, be aware of
+the following issues: 
 
 \begin{itemize}
 
@@ -2859,24 +2807,6 @@ any or all of these ways, be aware of the following issues:
          compatibility by attempting to run one of the cylc example
          system.
         
-    \item The Pyro Nameserver must not bind on a hostname that resolves
-        to the loopback address (127.0.x.x) or it will not be accessible
-        to Pyro clients on other hosts.  \lstinline=pyro-ns= emits a
-        warning at startup if this occurs.  See the Pyro manual for how
-        to resolve this issue by changing the network configuration
-        settings on the nameserver host machine. 
-
-    \item Similarly, if the Pyro Nameserver binds on any other address
-        that is not accessible from the network. This, like the
-        aforementioned loopback problem, can be caused by entries in
-        \lstinline=/etc/hosts= the cause the machine host name to
-        resolve to a different IP address locally than it does on the
-        network. Attempting to remotely monitor such a system (via
-        \lstinline=cylc view=) will result in Pyro reporting 
-        ``Protocol Error, connection failed''; editing 
-        \lstinline=Pyro/protocol.py= to expose the lower level 
-        socket error, it will report ``No route to host''.
-
 \end{itemize}
 
 Other notes relevant to the last point above: the \lstinline=--host=
@@ -2888,9 +2818,6 @@ address that is not accessible on the network.  Short of reconfiguring
 the hosts file, you may be able to workaround these problems by:
 
 \begin{itemize}
-
-    \item force the Pyro nameserver to bind on the external IP address
-        of the host: \lstinline=pyro-ns -n 192.168.33.8=
 
     \item and, get cylc to configure the Pyro daemon 
         with \lstinline@Pyro.config.PYRO_DNS_URI = True@ 
@@ -2907,6 +2834,16 @@ the hosts file, you may be able to workaround these problems by:
 Pyro (Python Remote Objects) is a widely used open source objected
 oriented Remote Procedure Call technology, see {\em
 http://pyro.sourceforge.net}.
+
+Earlier versions of cylc used the Pyro Nameserver to handle marshalling
+of communication between client programs (tasks, commands, viewers,
+etc.) and their target suites. This worked well, but in principle it
+provided a route for one suite or user on the subnet to bring down 
+all running suites by killing the nameserver. Consequently cylc now
+uses Pyro simply as a lightweight object oriented wrapper for
+direct network socket communication between client programs and their
+target suites - all suites are thus entirely isolated from
+one another. 
 
 \subsection{Pyro Software License (MIT license)}
 \label{PyroSoftwareLicense(MITlicense)}
@@ -2961,44 +2898,6 @@ Addendum, we now use a timeout on \lstinline=handleRequests()= because
 contact tasks can trigger purely on the wall clock, so we delaying task
 processing when no messages are coming in may prevent these contact
 tasks from triggering.   So\dots we may want to revist Multithreading\dots
-
-\subsection{Running Pyro}
-\label{RunningPyro}
-
-To see if there is a Pyro nameserver running already on your network
-segment, use 
-\begin{lstlisting}
-pyro-nsc [-h host] [-p port] ping
-\end{lstlisting}
-Invoke the command without arguments to see a list of options.
-
-\lstset{language=bash}
-
-\begin{lstlisting}
-$ pyro-nsc ping
-Locator: searching Pyro Name Server...
-Locator: retry 1
-Locator: searching Pyro Name Server...
-Locator: retry 1
-Trying host oliverh-33191VL
-Locator: contacting Pyro Name Server...
-NS is at 127.0.0.2 (oliverh-33191VL.greta.niwa.co.nz) port 9090
-NS is up and running!
-
-$ pyro-nsc -h localhost ping
-Locator: contacting Pyro Name Server...
-NS is at 127.0.0.1 (localhost) port 9090
-NS is up and running!
-\end{lstlisting}
-
-To start a Pyro nameserver, use \lstinline{nohup} so that it
-will not die with your terminal session: 
-
-\begin{lstlisting}
- nohup pyro-ns &
-\end{lstlisting}
-
-For more information, see the Pyro userguide.
 
 
 %\pagebreak
