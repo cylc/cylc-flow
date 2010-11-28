@@ -24,6 +24,7 @@ import state_summary
 import accelerated_clock 
 from job_submit import job_submit
 from registration import registrations
+from lockserver import lockserver
 from suite_lock import suite_lock
 from suite_id import identifier
 from OrderedDict import OrderedDict
@@ -290,6 +291,10 @@ class scheduler:
             # no need to use the lockserver in dummy mode
             self.use_lockserver = False
 
+        if self.use_lockserver:
+            # check now that my lockserver is running
+            self.lockserver_port = lockserver( self.username, self.host ).ping()
+
     def get_suite_def_dir( self ):
         # find location of the suite task and config modules
         reg = registrations()
@@ -455,12 +460,10 @@ class scheduler:
                 suitename = self.suite_name
 
             # request suite access from the lock server
-            # port here is the lockserver port; 'None' forces scan
-            lock = suite_lock( suitename, self.suite_dir, self.username, self.host, port=None, cylc_mode='scheduler' )
-            if lock.request_suite_access( self.exclusive_suite_lock ):
+            if suite_lock( suitename, self.suite_dir, self.username, self.host, self.lockserver_port, 'scheduler' ).request_suite_access( self.exclusive_suite_lock ):
                self.lock_acquired = True
             else:
-               raise SystemExit( "NO SUITE LOCK" )
+               raise SystemExit( "Failed to acquire a suite lock" )
 
         if not self.practice:
             self.back_up_statedump_file()
@@ -564,6 +567,6 @@ class scheduler:
 
             if self.lock_acquired:
                 print "Releasing suite lock"
-                lock = suite_lock( suitename, self.suite_dir, self.username, self.host, port=None, cylc_mode='scheduler' )
+                lock = suite_lock( suitename, self.suite_dir, self.username, self.host, self.lockserver_port, 'scheduler' )
                 if not lock.release_suite_access():
                     print >> sys.stderr, 'failed to release suite!'

@@ -90,6 +90,10 @@ task locks are always held by the suite owner, not the task owner."""
             suite_acquire_nonex=None, suite_release=None, 
             list_all=False, get_filenames=False )
 
+    parser.add_option( "--ping",
+            help="Check that a lockserver is running.",
+            action="store_true", default=False, dest="ping" )
+
     parser.add_option( "--host",
             help="Cylc lockserver host (default: localhost).",
             metavar="HOSTNAME", action="store", dest="host" )
@@ -132,7 +136,7 @@ task locks are always held by the suite owner, not the task owner."""
     ( options, args ) = parser.parse_args()
 
     count = 0
-    for opt in [ options.acquire, options.release,
+    for opt in [ options.ping, options.acquire, options.release,
             options.suite_acquire, options.suite_acquire_nonex,
             options.suite_release, options.list_all, 
             options.clear_all, options.get_filenames ]:
@@ -148,7 +152,10 @@ task locks are always held by the suite owner, not the task owner."""
     os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
 
     try:
-        if options.acquire:
+        if options.ping:
+            lockserver( owner, host ).ping()
+
+        elif options.acquire:
             (suite, task_id) = check_task_spec( options.acquire )
             if not task_lock( task_id, suite, owner, host, port ).acquire():
                 raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
