@@ -564,6 +564,6 @@ class scheduler:
 
             if self.lock_acquired:
                 print "Releasing suite lock"
-                lock = suite_lock( suitename, self.suite_dir, self.username, self.host, self.port, 'scheduler' )
+                lock = suite_lock( suitename, self.suite_dir, self.username, self.host, port=None, cylc_mode='scheduler' )
                 if not lock.release_suite_access():
                     print >> sys.stderr, 'failed to release suite!'

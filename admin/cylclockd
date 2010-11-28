@@ -9,6 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
+from copy import deepcopy
 import os, sys, re
 import socket, pickle
 import logging, logging.handlers
@@ -215,16 +216,18 @@ class lockserver( Pyro.core.ObjBase ):
         # MUST USE .keys() here to avoid:
         # RuntimeError: dictionary changed size during iteration
 
+        # ALSO: the deepcopy's below are required, as it appears that
+        # foo in 'foo = bar[baz]' gets altered implicitly if bar[baz] is
+        # altered.
+
         for suitedir in self.exclusive.keys():
-            [ group ] = self.exclusive[ suitedir ]
+            [ group ] = deepcopy( self.exclusive[ suitedir ] )
             if self.get_lock_owner( group ) == user:
                 self.release_suite_access( suitedir, group )
 
         for suitedir in self.inclusive.keys():
-            groups = self.inclusive[ suitedir ]
+            groups = deepcopy( self.inclusive[ suitedir ] )
             for group in groups:
-                print "+", group
-                print " ", self.get_lock_owner( group ), user
                 if self.get_lock_owner( group ) == user:
                     self.release_suite_access( suitedir, group )
 
@@ -303,7 +306,6 @@ class lockserver( Pyro.core.ObjBase ):
                         reason =  lockgroup + '-->' + suite_dir + " already in use"
                     else:
                         # granted
-                        print 'APPENDING', lockgroup
                         self.inclusive[ suite_dir ].append( lockgroup )
             else:
                 if cylc_mode == 'submit':
@@ -311,7 +313,6 @@ class lockserver( Pyro.core.ObjBase ):
                     pass
                 else:
                     # granted
-                    print 'STARTING', lockgroup
                     self.inclusive[ suite_dir ] = [ lockgroup ]
  
         if result:
@@ -333,7 +334,6 @@ class lockserver( Pyro.core.ObjBase ):
     def release_suite_access( self, suite_dir, lockgroup ):
         # first release any task locks held by the suite
         for id in self.locked.keys():
-            print id
             print self.get_lockgroup( id ), lockgroup
             if self.get_lockgroup( id ) == lockgroup:
                 del self.locked[ id ]
