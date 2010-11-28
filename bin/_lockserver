@@ -125,6 +125,10 @@ task locks are always held by the suite owner, not the task owner."""
     parser.add_option( "--port", help="lockserver port (default: scan cylc ports).",
             metavar="INT", action="store", default=None, dest="port" )
 
+    parser.add_option( "--debug",
+            help="Print full Python exception tracebacks",
+            action="store_true", default=False, dest="debug" )
+
     ( options, args ) = parser.parse_args()
 
     count = 0
@@ -205,14 +209,8 @@ task locks are always held by the suite owner, not the task owner."""
             # should not be reached
             raise SystemExit( "unknown cylc lockserver option" )
 
-    except Pyro.errors.NamingError:
-        raise
-
-    except Pyro.errors.ProtocolError, x:
-        if str(x) == "connection failed":
-            print "\nERROR: unable to connect to cylclockd via its Pyro proxy on ", host
-            print "This probably means the daemon suffered a hard shutdown."
-            sys.exit(1)
-        else:
-            # unknown error
+    except Pyro.errors.NamingError, x:
+        if options.debug:
             raise
+        else:
+            raise SystemExit( x )
