@@ -334,7 +334,6 @@ class lockserver( Pyro.core.ObjBase ):
     def release_suite_access( self, suite_dir, lockgroup ):
         # first release any task locks held by the suite
         for id in self.locked.keys():
-            print self.get_lockgroup( id ), lockgroup
             if self.get_lockgroup( id ) == lockgroup:
                 del self.locked[ id ]
                 self.log.info( "released task lock " + id ) 
