@@ -450,6 +450,30 @@ Cylc View is a real time suite monitor for Cylc.
         self.quitters.remove( lv )
         w.destroy()
 
+    def on_popup_kill( self, b, task_id ):
+        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        actioned, explanation = proxy.spawn_and_die( task_id, self.owner )
+ 
+    def popup_control( self, b, task_id ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( task_id + ": Task Control" )
+        window.set_size_request(800, 300)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+
+        kill_button = gtk.Button( "Kill Task" )
+        kill_button.connect("clicked", self.on_popup_kill, task_id )
+
+        vbox = gtk.VBox()
+        vbox.pack_start( kill_button )
+        vbox.pack_start( sw )
+        window.add( vbox )
+        window.show_all()
+
     def popup_logview( self, task_id, logfiles ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
@@ -467,11 +491,15 @@ Cylc View is a real time suite monitor for Cylc.
         state_button = gtk.Button( "Interrogate" )
         state_button.connect("clicked", self.popup_requisites, task_id )
  
+        kill_button = gtk.Button( "Control" )
+        kill_button.connect("clicked", self.popup_control, task_id )
+
         quit_button = gtk.Button( "Close" )
         quit_button.connect("clicked", self.on_popup_quit, lv, window )
         
         lv.hbox.pack_start( quit_button )
         lv.hbox.pack_start( state_button )
+        lv.hbox.pack_start( kill_button )
 
         window.connect("delete_event", lv.quit_w_e)
         window.show_all()
