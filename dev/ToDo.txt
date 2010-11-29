@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* separate cold and warm start into distinct classes (currently warm is
+  a variation on coldstart_scheduler, which is less than transparent).
 
 * can doing task deletion and insertion while a suite is PAUSED result
   in "INSERTING A TASK

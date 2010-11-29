@@ -646,7 +646,7 @@ that will henceforth be used to target the suite via cylc commands.
 \label{QuickStartingTheSuite}
 
 \begin{lstlisting}
-cylc start userguide 2009082312
+cylc coldstart userguide 2009082312
 \end{lstlisting}
 
 %See {\em Running Cylc Suites}, Section~\ref{RunningCylcSuites}.
@@ -2103,7 +2103,7 @@ startup dependencies (in effect, the cold start tasks masquerade as a
 previous cycle).
 
 \begin{lstlisting}
-cylc start SUITE 2009101218
+cylc coldstart SUITE 2009101218
 \end{lstlisting}
 
 \subsubsection{Oneoff Coldstart Tasks}
@@ -2139,7 +2139,7 @@ finished state (i.e. with all outputs completed).  {\em The suite's cold
 start tasks must be identified as such in the suite.rc config file.} 
 
 \begin{lstlisting}
-cylc start --warm SUITE 2009101218
+cylc warmstart SUITE 2009101218
 \end{lstlisting}
 
 
@@ -2285,7 +2285,7 @@ size should be configurable, but it is currently hardwired in
 If you start a suite in dummy mode, e.g.\:
 
 \begin{lstlisting}
-cylc start --dummy-mode userguide 2009081118
+cylc coldstart --dummy-mode userguide 2009081118
 \end{lstlisting}
 
 then in place of each real task cylc will launch an external program
@@ -2304,7 +2304,7 @@ complications of running the real tasks.
 
 Dummy mode suites run on an accelerated clock so that you can test
 things very quickly. You can set the clock rate and offset with respect
-to the initial cycle time with options to the \lstinline=cylc start=
+to the initial cycle time with options to the \lstinline=cylc coldstart=
 command. An offset of 10 hours, say, means that the dummy mode clock
 starts at 10 hours prior to the suite's initial cycle time.  You can
 thus simulate the behaviour of the suite as it catches up from a delay
@@ -2342,7 +2342,7 @@ automatic pre-intervention state dumps will save you!).
 
 A less automated way to ``practice'' on a copy of an existing suite
 that starts up from the current (or previous) state of that suite, 
-\lstinline=cylc start --practice= is this:
+\lstinline=cylc coldstart --practice= is this:
 
 \begin{itemize}
     \item register your suite again under a different name. This allows
@@ -2635,7 +2635,7 @@ SCS.  Other distinguishing features of this suite are:
         fail sometimes.  Try this with:
 
         \begin{lstlisting}
-cylc start -d --fail-out=OPS1%YYYYMMDDHH ...
+cylc coldstart -d --fail-out=OPS1%YYYYMMDDHH ...
         \end{lstlisting}
 
         VAR will not be delayed, but the failed OPS task does have to be
