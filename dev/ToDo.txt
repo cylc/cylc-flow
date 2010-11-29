@@ -1,6 +1,11 @@
 _______
 GENERAL
 
+
+* can doing task deletion and insertion while a suite is PAUSED result
+  in "INSERTING A TASK
+      ERROR: A%2010081800 has already registered its outputs"
+
 * now that we've ditched pyro-ns, only the lockserver guards against
   starting the multiple instances of the same suite under the same name.
 
@@ -324,9 +329,9 @@ LOCKSERVER
 ______
 VIEWER
 
-* task control interface.
+* exception handling for the new control features.
 
-* allow to put single tasks on hold / paused. 
+* allow to put single tasks on hold / paused ?
 
 * exception handling: if user clicks on a task that has just been
   eliminated (test this with quick-cycling trivial suite).

@@ -337,32 +337,35 @@ Cylc View is a real time suite monitor for Cylc.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
-        reset_ready_item = gtk.MenuItem( task_id + ': reset to ready (trigger immediately)' )
+        reset_ready_item = gtk.MenuItem( 'Reset to ready (trigger immediately)' )
         menu.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_to_ready, task_id )
 
-        reset_waiting_item = gtk.MenuItem( task_id + ': reset to waiting (prerequisites unsatisfied)' )
+        reset_waiting_item = gtk.MenuItem( 'Reset to waiting (prerequisites unsatisfied)' )
         menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_to_waiting, task_id )
 
-        reset_finished_item = gtk.MenuItem( task_id + ': reset to finished (outputs completed)' )
+        reset_finished_item = gtk.MenuItem( 'Reset to finished (outputs completed)' )
         menu.append( reset_finished_item )
         reset_finished_item.connect( 'activate', self.reset_task_to_finished, task_id )
 
-        kill_item = gtk.MenuItem( task_id + ': remove (after spawning)' )
+        kill_item = gtk.MenuItem( 'Remove (after spawning)' )
         menu.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
 
-        kill_nospawn_item = gtk.MenuItem( task_id + ': remove (without spawning)' )
+        kill_nospawn_item = gtk.MenuItem( 'Remove (without spawning)' )
         menu.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
 
-        purge_item = gtk.MenuItem( task_id + ': purge (remove dependency tree)' )
+        purge_item = gtk.MenuItem( 'Purge (remove dependency tree)' )
         menu.append( purge_item )
         purge_item.connect( 'activate', self.popup_purge, task_id )
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
+
+        # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
+        # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
 
         return True
 
@@ -623,6 +626,55 @@ Cylc View is a real time suite monitor for Cylc.
         window.add( box )
         window.show_all()
 
+    def insert_task_popup( self, b ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Insert a task or task group" )
+        #window.set_size_request(800, 300)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+
+        vbox = gtk.VBox()
+
+        hbox = gtk.HBox()
+        label = gtk.Label( 'task name' )
+        hbox.pack_start( label, True )
+        entry_name = gtk.Entry()
+        hbox.pack_start (entry_name, True)
+        vbox.pack_start(hbox)
+
+        hbox = gtk.HBox()
+        label = gtk.Label( 'cycle time' )
+        hbox.pack_start( label, True )
+        entry_ctime = gtk.Entry()
+        entry_ctime.set_max_length(10)
+        hbox.pack_start (entry_ctime, True)
+        vbox.pack_start(hbox)
+
+        insert_button = gtk.Button( "Do it" )
+        insert_button.connect("clicked", self.insert_task, window, entry_name, entry_ctime )
+        vbox.pack_start(insert_button)
+ 
+        window.add( vbox )
+        window.show_all()
+
+    def insert_task( self, w, window, entry_name, entry_ctime ):
+        name = entry_name.get_text()
+        ctime = entry_ctime.get_text()
+        task_id = name + '%' + ctime
+        window.destroy()
+        msg = "insert " + task_id + "?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        response = prompt.run()
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        actioned, explanation = proxy.insert( task_id, self.owner )
+ 
     def popup_logview( self, task_id, logfiles ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
@@ -651,7 +703,6 @@ Cylc View is a real time suite monitor for Cylc.
 
 
     def create_menu( self ):
-
         file_menu = gtk.Menu()
 
         file_menu_root = gtk.MenuItem( 'File' )
@@ -704,6 +755,10 @@ Cylc View is a real time suite monitor for Cylc.
         stop_now_item = gtk.MenuItem( 'Stop NOW' )
         suite_menu.append( stop_now_item )
         stop_now_item.connect( 'activate', self.stop_suite_now )
+
+        insert_item = gtk.MenuItem( 'Insert' )
+        suite_menu.append( insert_item )
+        insert_item.connect( 'activate', self.insert_task_popup )
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( 'Help' )
