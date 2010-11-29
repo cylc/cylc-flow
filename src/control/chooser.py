@@ -4,6 +4,7 @@ import pygtk
 import gtk
 import time, os, re
 import threading
+from port_scan import scan_my_suites
 
 from gtkmonitor import monitor
 
@@ -25,18 +26,12 @@ class chooser_updater(threading.Thread):
             pass
     
     def choices_changed( self ):
-        # renew the connection each time
-        # (if a single proxy is established in __init__() then Pyro 3.7 (old!) 
-        # complains that sharing a proxy between threads is not allowed).
-        groups = cylc_pyro_ns.ns( self.host ).get_groups()
-        choices = []
-        for group in groups:
-            choices.append( group )
-        choices.sort()
-        if choices != self.choices:
-            self.choices = choices
+        suites = scan_my_suites( self.host )
+        if suites != self.choices:
+            self.choices = suites
             return True
-        return False
+        else:
+            return False
 
     def update_gui( self ):
         # it is expected that choices will change infrequently,
@@ -44,8 +39,8 @@ class chooser_updater(threading.Thread):
         # adjusting element-by-element.
         ##print "Updating list of available suites"
         self.liststore.clear()
-        for group in self.choices:
-            self.liststore.append( [group] )
+        for suite in self.choices:
+            self.liststore.append( [suite] )
 
 class chooser:
     def __init__(self, host, imagedir ):
@@ -68,7 +63,7 @@ class chooser:
         ts.set_mode( gtk.SELECTION_SINGLE )
         ts.set_select_function( self.get_selected_suite, liststore )
 
-        tvc = gtk.TreeViewColumn( 'Viewable Suites' )
+        tvc = gtk.TreeViewColumn( 'My Suites' )
         cr = gtk.CellRendererText()
         cr.set_property( 'cell-background', 'lightblue' )
         tvc.pack_start( cr, False )
@@ -90,9 +85,8 @@ class chooser:
         self.updater = chooser_updater( liststore, self.host )
         self.updater.start()
 
-    def launch_viewer( self, group ):
-        root, user, suite = group.split( '.' ) 
-        tv = monitor(group, suite, self.host, self.imagedir )
+    def launch_viewer( self, suite, port ):
+        tv = monitor(suite, owner, self.host, port, self.imagedir )
         self.viewer_list.append( tv )
 
     def delete_event( self, w, e, data=None ):

@@ -126,7 +126,7 @@ class monitor:
         about.set_copyright( "(c) Hilary Oliver, NIWA" )
         about.set_comments( 
 """
-Cylc View is a real time suite monitor for Cylc.
+Cylc View is a real time suite monitor and controller for Cylc.
 """ )
         about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/dew.jpg" ))

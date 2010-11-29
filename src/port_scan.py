@@ -9,6 +9,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
+import os
 import Pyro.errors, Pyro.core
 from cylc_pyro_server import pyro_base_port, pyro_port_range
 
@@ -61,7 +62,7 @@ def check_port( name, owner, host, port ):
             return False
  
 def scan( host ):
-    names = []
+    suites = []
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         try:
             name, owner = port_interrogator( host, port ).interrogate()
@@ -72,6 +73,21 @@ def scan( host ):
             # pyro server here, but it's not a cylc suite or lockserver
             pass
         else:
-            names.append( ( name, owner, port ) )
+            suites.append( ( name, owner, port ) )
+    return suites
 
-    return names
+def scan_my_suites( host ):
+    suites = []
+    for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
+        try:
+            name, owner = port_interrogator( host, port ).interrogate()
+        except Pyro.errors.ProtocolError:
+            # connection failed: no pyro server listening at this port
+            pass
+        except Pyro.errors.NamingError:
+            # pyro server here, but it's not a cylc suite or lockserver
+            pass
+        else:
+            if name != 'lockserver' and owner == os.environ['USER']:
+                suites.append( ( name, port ) )
+    return suites
