@@ -112,7 +112,7 @@ class logviewer:
         self.logview.set_editable( False )
 
         searchbox = gtk.HBox()
-        entry = gtk.Entry ()
+        entry = gtk.Entry()
         entry.connect( "activate", self.enter_clicked, self.logview )
         searchbox.pack_start (entry, True)
         b = gtk.Button ("Find Next")

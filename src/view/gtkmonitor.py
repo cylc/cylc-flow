@@ -192,7 +192,8 @@ Cylc View is a real time suite monitor for Cylc.
         treeview.set_model(tms)
         ts = treeview.get_selection()
         ts.set_mode( gtk.SELECTION_SINGLE )
-        ts.set_select_function( self.get_selected_task_from_tree, tms )
+
+        treeview.connect( 'button_press_event', self.on_treeview_button_pressed, False )
 
         headings = ['task', 'state', 'latest message' ]
         for n in range(len(headings)):
@@ -208,15 +209,20 @@ Cylc View is a real time suite monitor for Cylc.
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click headings to sort") )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        eb.add( gtk.Label( "sort on headings") )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click rows for Task Info" ))
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
+        eb.add( gtk.Label( "left click: Info" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
         hbox.pack_start( eb, True )
- 
+
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "right click: Control" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        hbox.pack_start( eb, True )
+
         bbox = gtk.HButtonBox()
         expand_button = gtk.Button( "Expand" )
         expand_button.connect( 'clicked', self.expand_all, treeview )
@@ -277,14 +283,89 @@ Cylc View is a real time suite monitor for Cylc.
         return False
 
     def get_selected_task_from_list( self, selection, treemodel ):
-        #print selection, treeview
+        print selection
+
         iter = treemodel.get_iter( selection )
         ctime = treemodel.get_value( iter, 0 )
         name = treemodel.get_value( iter, 1 )
         task_id = name + '%' + ctime
 
         self.show_log( task_id )
+
         return False
+
+    def on_treeview_button_pressed( self, treeview, event, flat=True ):
+        # the following sets selection to the position at which the
+        # right click was done (otherwise selection lags behind the
+        # right click):
+        x = int( event.x )
+        y = int( event.y )
+        time = event.time
+        pth = treeview.get_path_at_pos(x,y)
+
+        if pth is None:
+            return False
+
+        treeview.grab_focus()
+        path, col, cellx, celly = pth
+        treeview.set_cursor( path, col, 0 )
+
+        selection = treeview.get_selection()
+        treemodel, iter = selection.get_selected()
+        if flat:
+            # flat list view
+            ctime = treemodel.get_value( iter, 0 )
+            name = treemodel.get_value( iter, 1 )
+        else:
+            # expanding tree view
+            name = treemodel.get_value( iter, 0 )
+            iter2 = treemodel.iter_parent( iter )
+            try:
+                ctime = treemodel.get_value( iter2, 0 )
+            except TypeError:
+                # must have clicked on the top level ctime 
+                return
+
+        task_id = name + '%' + ctime
+
+        if event.button != 3:
+            self.show_log( task_id )
+            return False
+
+        menu = gtk.Menu()
+
+        menu_root = gtk.MenuItem( task_id )
+        menu_root.set_submenu( menu )
+
+        reset_ready_item = gtk.MenuItem( task_id + ': reset to ready (trigger immediately)' )
+        menu.append( reset_ready_item )
+        reset_ready_item.connect( 'activate', self.reset_task_to_ready, task_id )
+
+        reset_waiting_item = gtk.MenuItem( task_id + ': reset to waiting (prerequisites unsatisfied)' )
+        menu.append( reset_waiting_item )
+        reset_waiting_item.connect( 'activate', self.reset_task_to_waiting, task_id )
+
+        reset_finished_item = gtk.MenuItem( task_id + ': reset to finished (outputs completed)' )
+        menu.append( reset_finished_item )
+        reset_finished_item.connect( 'activate', self.reset_task_to_finished, task_id )
+
+        kill_item = gtk.MenuItem( task_id + ': remove (after spawning)' )
+        menu.append( kill_item )
+        kill_item.connect( 'activate', self.kill_task, task_id )
+
+        kill_nospawn_item = gtk.MenuItem( task_id + ': remove (without spawning)' )
+        menu.append( kill_nospawn_item )
+        kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
+
+        purge_item = gtk.MenuItem( task_id + ': purge (remove dependency tree)' )
+        menu.append( purge_item )
+        purge_item.connect( 'activate', self.popup_purge, task_id )
+
+        menu.show_all()
+        menu.popup( None, None, None, event.button, event.time )
+
+        return True
+
 
     def create_flatlist_panel( self ):
         self.fl_liststore = gtk.ListStore(str, str, str, str)
@@ -297,7 +378,8 @@ Cylc View is a real time suite monitor for Cylc.
 
         ts = treeview.get_selection()
         ts.set_mode( gtk.SELECTION_SINGLE )
-        ts.set_select_function( self.get_selected_task_from_list, tms )
+
+        treeview.connect( 'button_press_event', self.on_treeview_button_pressed )
 
         headings = ['cycle', 'name', 'state', 'latest message' ]
         bkgcols = ['#def', '#fff', '#fff', '#fff' ]
@@ -338,13 +420,18 @@ Cylc View is a real time suite monitor for Cylc.
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click headings to sort") )
+        eb.add( gtk.Label( "sort on headings") )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "Click rows for Task Info" ) )
+        eb.add( gtk.Label( "left click: Info" ) )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        hbox.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "right click: Control" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
         hbox.pack_start( eb, True )
 
         vbox = gtk.VBox()
@@ -450,28 +537,90 @@ Cylc View is a real time suite monitor for Cylc.
         self.quitters.remove( lv )
         w.destroy()
 
-    def on_popup_kill( self, b, task_id ):
+    def reset_task_to_ready( self, b, task_id ):
+        msg = "reset " + task_id + " to ready\n(i.e. trigger immediately)?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        response = prompt.run()
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        actioned, explanation = proxy.reset_to_ready( task_id, self.owner )
+
+    def reset_task_to_waiting( self, b, task_id ):
+        msg = "reset " + task_id + " to waiting\n(i.e. prerequisites not satisfied)?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        response = prompt.run()
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        actioned, explanation = proxy.reset_to_waiting( task_id, self.owner )
+
+    def reset_task_to_finished( self, b, task_id ):
+        msg = "reset " + task_id + " to finished\n (i.e. outputs completed)?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        response = prompt.run()
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        actioned, explanation = proxy.reset_to_finished( task_id, self.owner )
+
+    def kill_task( self, b, task_id ):
+        msg = "remove " + task_id + " (after spawning)?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        response = prompt.run()
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
         actioned, explanation = proxy.spawn_and_die( task_id, self.owner )
  
-    def popup_control( self, b, task_id ):
+    def kill_task_nospawn( self, b, task_id ):
+        msg = "remove " + task_id + " (without spawning)?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        response = prompt.run()
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        actioned, explanation = proxy.die( task_id, self.owner )
+
+    def purge_cycle_from_entry_text( self, e, w, task_id ):
+        stop = e.get_text()
+        w.destroy()
+        msg = "purge " + task_id + " through " + stop + " (inclusive)?"
+        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
+        response = prompt.run()
+        prompt.destroy()
+        if response != gtk.RESPONSE_OK:
+            return
+        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        actioned, explanation = proxy.purge( task_id, stop, self.owner )
+
+    def popup_purge( self, b, task_id ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( task_id + ": Task Control" )
-        window.set_size_request(800, 300)
+        window.set_title( "Purge " + task_id )
+        #window.set_size_request(800, 300)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
-        kill_button = gtk.Button( "Kill Task" )
-        kill_button.connect("clicked", self.on_popup_kill, task_id )
+        box = gtk.VBox()
+        label = gtk.Label( 'cycle at which to stop the purge (inclusive)' )
+        box.pack_start( label, True )
 
-        vbox = gtk.VBox()
-        vbox.pack_start( kill_button )
-        vbox.pack_start( sw )
-        window.add( vbox )
+        entry = gtk.Entry()
+        entry.set_max_length(10)
+        entry.connect( "activate", self.purge_cycle_from_entry_text, window, task_id )
+
+        box.pack_start (entry, True)
+
+        window.add( box )
         window.show_all()
 
     def popup_logview( self, task_id, logfiles ):
@@ -491,15 +640,11 @@ Cylc View is a real time suite monitor for Cylc.
         state_button = gtk.Button( "Interrogate" )
         state_button.connect("clicked", self.popup_requisites, task_id )
  
-        kill_button = gtk.Button( "Control" )
-        kill_button.connect("clicked", self.popup_control, task_id )
-
         quit_button = gtk.Button( "Close" )
         quit_button.connect("clicked", self.on_popup_quit, lv, window )
         
         lv.hbox.pack_start( quit_button )
         lv.hbox.pack_start( state_button )
-        lv.hbox.pack_start( kill_button )
 
         window.connect("delete_event", lv.quit_w_e)
         window.show_all()
@@ -509,24 +654,28 @@ Cylc View is a real time suite monitor for Cylc.
 
         file_menu = gtk.Menu()
 
-        file_menu_root = gtk.MenuItem( 'Monitor' )
+        file_menu_root = gtk.MenuItem( 'File' )
         file_menu_root.set_submenu( file_menu )
-
-        heading_none_item = gtk.MenuItem( 'No Task Names' )
-        file_menu.append( heading_none_item )
-        heading_none_item.connect( 'activate', self.no_task_headings )
-
-        heading_short_item = gtk.MenuItem( 'Short Task Names' )
-        file_menu.append( heading_short_item )
-        heading_short_item.connect( 'activate', self.short_task_headings )
-
-        heading_full_item = gtk.MenuItem( 'Full Task Names' )
-        file_menu.append( heading_full_item )
-        heading_full_item.connect( 'activate', self.full_task_headings )
 
         exit_item = gtk.MenuItem( 'Exit' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
+
+        view_menu = gtk.Menu()
+        view_menu_root = gtk.MenuItem( 'View' )
+        view_menu_root.set_submenu( view_menu )
+
+        heading_none_item = gtk.MenuItem( 'No Task Names' )
+        view_menu.append( heading_none_item )
+        heading_none_item.connect( 'activate', self.no_task_headings )
+
+        heading_short_item = gtk.MenuItem( 'Short Task Names' )
+        view_menu.append( heading_short_item )
+        heading_short_item.connect( 'activate', self.short_task_headings )
+
+        heading_full_item = gtk.MenuItem( 'Full Task Names' )
+        view_menu.append( heading_full_item )
+        heading_full_item.connect( 'activate', self.full_task_headings )
 
         suite_menu = gtk.Menu()
         suite_menu_root = gtk.MenuItem( 'Suite' )
@@ -565,6 +714,7 @@ Cylc View is a real time suite monitor for Cylc.
       
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
+        self.menu_bar.append( view_menu_root )
         self.menu_bar.append( suite_menu_root )
         self.menu_bar.append( help_menu_root )
 
@@ -680,8 +830,8 @@ Cylc View is a real time suite monitor for Cylc.
 
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
-        notebook.append_page( self.create_flatlist_panel(), gtk.Label("Filtered List") )
-        notebook.append_page( self.create_tree_panel(), gtk.Label("Expanding Tree") )
+        notebook.append_page( self.create_flatlist_panel(), gtk.Label("Filtered List View") )
+        notebook.append_page( self.create_tree_panel(), gtk.Label("Expanding Tree View") )
 
         main_panes = gtk.VPaned()
         main_panes.set_position(200)
@@ -690,7 +840,7 @@ Cylc View is a real time suite monitor for Cylc.
         main_panes.add2( notebook )
 
         self.lvp = cylc_logviewer( 'log', self.logdir, self.task_list )
-        notebook.append_page( self.lvp.get_widget(), gtk.Label("Log"))
+        notebook.append_page( self.lvp.get_widget(), gtk.Label("Cylc Log Viewer"))
 
         self.create_menu()
 
