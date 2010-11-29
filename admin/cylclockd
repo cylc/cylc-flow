@@ -382,11 +382,10 @@ is '$CYLC_DIR/admin/cylclockd.conf', but you can specify an alternative
 file on the command line (in which case all subsequent interaction with
 the daemon via the cylclockd command must also specify the same file). 
 
-If the process ID, state, and log files are not specified, in the config
-file, as absolute paths, they are assumed to be relative to your $HOME;
-the locations specified in the default config file under $HOME/.cylc/;
-thus all users can simply use the default config file unless they have
-reason not to do so.
+If the process ID, state, and log files, in the config file, are not
+specified as absolute paths, they are assumed to be relative to $HOME;
+the default config file uses '$HOME/.cylc/' so all users can simply use
+the default config file unless they have reason not to do so.
 
 The state file records currently held locks and, if it exists at
 startup, is used to initialize the lockserver (i.e. suite and task locks
