@@ -1,7 +1,13 @@
 #!/usr/bin/env python
 
 # example basictreeview.py
-
+try:
+    import subprocess
+    # see documentation in bin/cylc
+    use_subprocess = True
+except:
+    use_subprocess = False
+ 
 import pango
 from stateview import updater
 from combo_logviewer import combo_logviewer
@@ -77,6 +83,31 @@ class monitor:
     def stop_suite( self, bt ):
         god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         god.shutdown( self.owner )
+
+    def restart_suite( self, bt ):
+        command = 'cylc restart ' + self.suite + ' > /dev/null 2>&1 &'
+        if use_subprocess:
+            try:
+                print command
+                res = subprocess.call( command, shell=True )
+                if res < 0:
+                    print "command terminated by signal", res
+                    success = False
+                if res > 0:
+                    print "command failed", res
+                    success = False
+                else:
+                    # res == 0
+                    success = True
+            except OSError, e:
+                # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
+                # because subprocess.call( 'foo &' ) returns immediately
+                # and the failure occurs in the detached sub-shell.
+                print "FAILED", e
+                success = False
+        else:
+            os.system( self.command )
+            success = True
 
     def stop_suite_now( self, bt ):
         god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
@@ -755,6 +786,10 @@ Cylc View is a real time suite monitor for Cylc.
         stop_now_item = gtk.MenuItem( 'Stop NOW' )
         suite_menu.append( stop_now_item )
         stop_now_item.connect( 'activate', self.stop_suite_now )
+
+        restart_item = gtk.MenuItem( 'Restart' )
+        suite_menu.append( restart_item )
+        stop_item.connect( 'activate', self.restart_suite )
 
         insert_item = gtk.MenuItem( 'Insert' )
         suite_menu.append( insert_item )
