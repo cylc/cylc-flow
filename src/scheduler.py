@@ -150,6 +150,9 @@ class scheduler:
         #( self.options, self.args ) = self.parser.parse_args()
 
         # get suite name
+        print 'aRGS:', self.args
+        print 'options:', self.options
+
         self.suite_name = self.args[0]
         self.username = os.environ['USER']
         self.banner[ 'suite name' ] = self.suite_name

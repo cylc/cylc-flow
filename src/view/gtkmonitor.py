@@ -85,20 +85,13 @@ class monitor:
         god.shutdown( self.owner )
 
     def restart_suite( self, bt ):
-        command = 'cylc restart ' + self.suite + ' > /dev/null 2>&1 &'
         if use_subprocess:
+            command = [ 'cylc restart ' + self.suite ]
+            #command = [ 'cylc restart', self.suite ]
             try:
                 print command
-                res = subprocess.call( command, shell=True )
-                if res < 0:
-                    print "command terminated by signal", res
-                    success = False
-                if res > 0:
-                    print "command failed", res
-                    success = False
-                else:
-                    # res == 0
-                    success = True
+                res = subprocess.Popen( command, shell=True )
+                #res = subprocess.Popen( command )
             except OSError, e:
                 # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
                 # because subprocess.call( 'foo &' ) returns immediately
@@ -106,7 +99,8 @@ class monitor:
                 print "FAILED", e
                 success = False
         else:
-            os.system( self.command )
+            command = 'cylc restart ' + self.suite + ' > /dev/null 2>&1 &'
+            os.system( command )
             success = True
 
     def stop_suite_now( self, bt ):
@@ -789,7 +783,7 @@ Cylc View is a real time suite monitor for Cylc.
 
         restart_item = gtk.MenuItem( 'Restart' )
         suite_menu.append( restart_item )
-        stop_item.connect( 'activate', self.restart_suite )
+        restart_item.connect( 'activate', self.restart_suite )
 
         insert_item = gtk.MenuItem( 'Insert' )
         suite_menu.append( insert_item )

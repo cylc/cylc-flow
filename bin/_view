@@ -73,8 +73,7 @@ SUITE                  Registered name of a cylc suite""")
         found, port = port_scan.get_port( suite, owner, host )
 
         if not found:
-            print >> sys.stderr, "suite " + suite + " is not running"
-            sys.exit(1)
+            print >> sys.stderr, "WARNING: suite " + suite + " is not running"
 
         # get suite logging directory
         logging_dir = rcfile.get_suite_logging_dir( suite )
