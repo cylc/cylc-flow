@@ -475,6 +475,100 @@ Cylc View is a real time suite monitor and controller for Cylc.
         else:
             tb.insert( tb.get_end_iter(), line )
 
+
+    def userguide( self, w ):
+        window = gtk.Window()
+        #window.set_border_width( 10 )
+        window.set_title( "Cylc Control Userguide" )
+        #window.modify_bg( gtk.STATE_NORMAL, 
+        #       gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_size_request(600, 600)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
+
+        vbox = gtk.VBox()
+        quit_button = gtk.Button( "Close" )
+        quit_button.connect("clicked", lambda x: window.destroy() )
+        vbox.pack_start( sw )
+        vbox.pack_start( quit_button, False )
+
+        textview = gtk.TextView()
+        textview.set_border_width(5)
+        textview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
+        textview.set_editable( False )
+        sw.add( textview )
+        window.add( vbox )
+        tb = textview.get_buffer()
+
+        textview.set_wrap_mode( gtk.WRAP_WORD )
+
+        blue = tb.create_tag( None, foreground = "blue" )
+        red = tb.create_tag( None, foreground = "red" )
+        bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
+
+        self.update_tb( tb, "Cylc Control Help", [bold, blue] )
+
+        self.update_tb( tb, "\n\nCylc Control is a real time monitoring and "
+                "control tool for cylc suites (note that same can be achieved "
+                "via the cylc command line; see 'cylc help').")
+
+        self.update_tb( tb, "\n\nMenu: Locking > ", [bold, red] )
+        self.update_tb( tb, "The global suite lock helps guard against "
+                "accidental interference in a suite, which is a "
+                "potential danger if you have multiple suites running "
+                "at once.  A locked suite requires deliberate unlocking "
+                "before cylc will allow you to intervene "
+                "in its operation." )
+
+        self.update_tb( tb, "\n\nMenu: View > ", [bold, red] )
+        self.update_tb( tb, "This affects only the top 'light panel', "
+                "allowing you to change between full, short, and no "
+                "task names, in order to maximize either screen real "
+                "estate or information.")
+
+        self.update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
+        self.update_tb( tb, "Global suite control operations:")
+        self.update_tb( tb, "\n o Pause: ", [bold])
+        self.update_tb( tb, "Refrain from submitting tasks that are ready to run.")
+        self.update_tb( tb, "\n o Resume: ", [bold])
+        self.update_tb( tb, "Resume submitting tasks that are ready to run.")
+        self.update_tb( tb, "\n o Stop: ", [bold])
+        self.update_tb( tb, "Shut the suite down when all currently running tasks have finished." )
+        self.update_tb( tb, "\n o Stop NOW: ", [bold])
+        self.update_tb( tb, "Shut the suite down immediately (running tasks will be orphaned)." )
+        self.update_tb( tb, "\n o Insert: ", [bold])
+        self.update_tb( tb, "Insert a task or task group into a running suite." )
+
+        self.update_tb( tb, "\n\nTask View Panels, left click: Task Information > ", [bold, red] )
+        self.update_tb( tb, "This pops up a window allowing you to view:" )
+        self.update_tb( tb, "\n o the cylc job submission file for the task")
+        self.update_tb( tb, "\n o stdout and stderr live feeds from the submitted job")
+        self.update_tb( tb, "\nInterrogate Button: ", [bold])
+        self.update_tb( tb, "\n o current state of task prerequisites and outputs.")
+
+        self.update_tb( tb, "\n\nTask View Panels, right click: Task Control > ", [bold, red] )
+        self.update_tb( tb, "\n o Reset To Ready: ", [bold])
+        self.update_tb( tb, "set all of the task's prerequisites satisfied. This will "
+                "(re)trigger the task immediately, if the suite has not been paused." )
+        self.update_tb( tb, "\n o Reset To Waiting: ", [bold])
+        self.update_tb( tb, "set all of the task's prerequisites unsatisfied." )
+        self.update_tb( tb, "\n o Reset To Finished: ", [bold])
+        self.update_tb( tb, "set all of the task's outputs completed." )
+        self.update_tb( tb, "\n o Remove (after spawning): ", [bold])
+        self.update_tb( tb, "Remove the task from the suite after ensuring that it has "
+                "spawned a successor." )
+        self.update_tb( tb, "\n o Remove (without spawning): ", [bold])
+        self.update_tb( tb, "Remove the task from the suite even if it has not "
+                "yet spawned a successor (in which case it will be removed "
+                "permanently unless re-inserted)." )
+        self.update_tb( tb, "\n o Purge (remove dependency tree): ", [bold])
+        self.update_tb( tb, "Remove the task from the suite, then remove any task "
+                "that would depend on it, then remove any tasks that would depend on "
+                "those tasks, and so on, through to a given stop cycle." )
+
+        window.show_all()
+ 
     def popup_requisites( self, w, task_id ):
         window = gtk.Window()
         #window.set_border_width( 10 )
@@ -796,6 +890,11 @@ Cylc View is a real time suite monitor and controller for Cylc.
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( 'Help' )
         help_menu_root.set_submenu( help_menu )
+
+        guide_item = gtk.MenuItem( 'Userguide' )
+        help_menu.append( guide_item )
+        guide_item.connect( 'activate', self.userguide )
+ 
         about_item = gtk.MenuItem( 'About' )
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
