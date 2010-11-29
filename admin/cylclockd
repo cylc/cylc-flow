@@ -372,20 +372,26 @@ if __name__ == "__main__":
 
     usage = """Usage: cylclockd [-f CONFIG] ACTION 
 
-The cylc lockserver daemon brokers suite and task locks for all cylc
-suites on the network. The command line user interface for interrogating
-the daemon, and for manual lock management, is 'cylc lockserver'.
+The cylc lockserver daemon brokers suite and task locks for a single user.
+The command line user interface for interrogating the daemon, and for
+manual lock management, is 'cylc lockserver'.
 
-The daemon should be started at boot time, running under a special system
-user account.  At startup, it reads a config file '/etc/cylc/cylclockd.conf' that
-specifies the location of the daemon's process ID, state, and log files. 
+Cylclockd reads a config file that specifies the location of the
+daemon's process ID, state, and log files. The default config file 
+is '$CYLC_DIR/admin/cylclockd.conf', but you can specify an alternative
+file on the command line (in which case all subsequent interaction with
+the daemon via the cylclockd command must also specify the same file). 
+
+If the process ID, state, and log files are not specified, in the config
+file, as absolute paths, they are assumed to be relative to your $HOME;
+the locations specified in the default config file under $HOME/.cylc/;
+thus all users can simply use the default config file unless they have
+reason not to do so.
+
 The state file records currently held locks and, if it exists at
 startup, is used to initialize the lockserver (i.e. suite and task locks
 are not lost if the lockserver is restarted). All locking activitiy is
 recorded in the log file. 
-
-For testing cylclockd as a normal user, use the [-f] command line option
-to specify your own PID, state, and log files in your own config file.
 
 Arguments:
   ACTION   -  'start', 'stop', 'status', 'restart', or 'debug'.
@@ -396,7 +402,7 @@ Arguments:
 
     parser = OptionParser( usage )
 
-    parser.set_defaults( config = '/etc/cylc/cylclockd.conf' )
+    parser.set_defaults( config = os.environ[ 'CYLC_DIR' ] + '/admin/cylclockd.conf' )
 
     parser.add_option( "-c", "--config-file", 
             help="Config file (default /etc/cylc/cylclockd.conf)",
@@ -428,6 +434,14 @@ Arguments:
     log_file   = config.get( 'main', 'log file' )
     state_file = config.get( 'main', 'state file' ) 
     #type = options.type
+
+    home = os.environ['HOME']
+    if not os.path.isabs( pid_file ):
+        pid_file = os.path.join( home, pid_file )
+    if not os.path.isabs( log_file ):
+        log_file = os.path.join( home, log_file )
+    if not os.path.isabs( state_file ):
+        state_file = os.path.join( home, state_file )
 
     print "PID File:        ", pid_file
     print "Logging To:      ", log_file
