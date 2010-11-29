@@ -781,9 +781,9 @@ Cylc View is a real time suite monitor and controller for Cylc.
         suite_menu.append( stop_now_item )
         stop_now_item.connect( 'activate', self.stop_suite_now )
 
-        restart_item = gtk.MenuItem( 'Restart' )
-        suite_menu.append( restart_item )
-        restart_item.connect( 'activate', self.restart_suite )
+        #restart_item = gtk.MenuItem( 'Restart' )
+        #suite_menu.append( restart_item )
+        #restart_item.connect( 'activate', self.restart_suite )
 
         insert_item = gtk.MenuItem( 'Insert' )
         suite_menu.append( insert_item )
