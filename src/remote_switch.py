@@ -250,6 +250,7 @@ class remote_switch( Pyro.core.ObjBase ):
         self.pool.unset_suite_hold()
         # process, to update state summary
         self.process_tasks = True
+        self.halt = False
         return True, "OK"
 
     def set_stop_time( self, ctime, user ):
