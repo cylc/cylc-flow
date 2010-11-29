@@ -328,8 +328,11 @@ __________
 LOCKSERVER
   (currently no known issues)
 
-______
-VIEWER
+__________
+CONTROLLER
+
+* currently scans for port on every command - instead should store port
+  once found.
 
 * exception handling for the new control features.
 

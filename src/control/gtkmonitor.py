@@ -753,17 +753,21 @@ Cylc View is a real time suite monitor and controller for Cylc.
         view_menu.append( heading_full_item )
         heading_full_item.connect( 'activate', self.full_task_headings )
 
+        lock_menu = gtk.Menu()
+        lock_menu_root = gtk.MenuItem( 'Locking' )
+        lock_menu_root.set_submenu( lock_menu )
+
+        lock_item = gtk.MenuItem( 'Lock Suite' )
+        lock_menu.append( lock_item )
+        lock_item.connect( 'activate', self.lock_suite )
+
+        unlock_item = gtk.MenuItem( 'Unlock Suite' )
+        lock_menu.append( unlock_item )
+        unlock_item.connect( 'activate', self.unlock_suite )
+
         suite_menu = gtk.Menu()
         suite_menu_root = gtk.MenuItem( 'Suite' )
         suite_menu_root.set_submenu( suite_menu )
-
-        unlock_item = gtk.MenuItem( 'Unlock' )
-        suite_menu.append( unlock_item )
-        unlock_item.connect( 'activate', self.unlock_suite )
-
-        lock_item = gtk.MenuItem( 'Lock' )
-        suite_menu.append( lock_item )
-        lock_item.connect( 'activate', self.lock_suite )
 
         pause_item = gtk.MenuItem( 'Pause' )
         suite_menu.append( pause_item )
@@ -800,6 +804,7 @@ Cylc View is a real time suite monitor and controller for Cylc.
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( suite_menu_root )
+        self.menu_bar.append( lock_menu_root )
         self.menu_bar.append( help_menu_root )
 
     def create_info_bar( self ):
