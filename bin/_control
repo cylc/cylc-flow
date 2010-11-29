@@ -13,11 +13,13 @@ import socket
 
 if __name__ == "__main__":
 
-    parser = OptionParser( """cylc view [options] [SUITE]
+    parser = OptionParser( """cylc control [options] [SUITE]
 
-Display real time information about running cylc suites, including the
-current state of all tasks, scheduler log files, task stdout and stderr
-log, and task prerequisites and outputs.
+Graphical real time suite control and monitoring tool.
+
+Displays information about running cylc suites, including the current
+state of all tasks, scheduler log files, task stdout and stderr log, and
+task prerequisites and outputs.
 
 If SUITE is supplied, the task list will be loaded from the suite
 definition directory so that a monitor can be displayed before the
@@ -27,25 +29,26 @@ running suite, via Pyro.
 If SUITE is NOT supplied, you can select which suite to monitor from 
 an auto-updating list of currently running suites.
 
-Cylc monitors reconnect if their target suite is restarted. 
+Cylc control reconnects if the target suite is restarted. 
 
-SUITE                  Registered name of a cylc suite""")
+SUITE                  Registered name of the target suite.""")
 
     parser.add_option( "--host",
             help="cylc suite host (defaults to localhost).",
             metavar="HOST", action="store", default=socket.getfqdn(),
             dest="host" )
 
-    parser.add_option( "-o", "--owner",
-            help="Owner of SUITE, if you are not the owner.",
-            metavar="USERNAME", default=os.environ["USER"],
-            action="store", dest="owner" )
+    #parser.add_option( "-o", "--owner",
+    #        help="Owner of SUITE, if you are not the owner.",
+    #        metavar="USERNAME", default=os.environ["USER"],
+    #        action="store", dest="owner" )
 
     ( options, args ) = parser.parse_args()
 
     host = options.host
-    owner = options.owner
- 
+    #owner = options.owner
+    owner = os.environ["USER"]
+
     if len( args ) == 0:
         use_chooser = True
         suite = None
@@ -55,7 +58,7 @@ SUITE                  Registered name of a cylc suite""")
     else:
         parser.error( "Wrong number of arguments" )
 
-    rcfile = prefs( user=options.owner, silent=True )
+    rcfile = prefs( user=owner, silent=True )
     imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
     if use_chooser:
@@ -63,7 +66,7 @@ SUITE                  Registered name of a cylc suite""")
 
     else:
         # get suite definition directory
-        reg = registrations( options.owner )
+        reg = registrations( owner )
         if reg.is_registered( suite ):
             suite_dir = reg.get( suite )
         else:
