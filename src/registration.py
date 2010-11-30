@@ -96,6 +96,12 @@ class registrations:
     def get_all( self ):
         return self.registrations.keys()
 
+    def get_list( self ):
+        regs = []
+        for reg in self.registrations:
+            regs.append( (reg, self.registrations[ reg ]))
+        return regs
+
     def unregister( self, name ):
         if self.deny_user():
             return
