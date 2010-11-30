@@ -73,16 +73,25 @@ class monitor:
         return False
 
     def pause_suite( self, bt ):
-        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        god.hold( self.owner )
+        try:
+            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god.hold( self.owner )
+        except Pyro.errors.NamingError:
+            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
     def resume_suite( self, bt ):
-        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        god.resume( self.owner )
+        try:
+            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god.resume( self.owner )
+        except Pyro.errors.NamingError:
+            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
     def stop_suite( self, bt ):
-        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        god.shutdown( self.owner )
+        try:
+            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god.shutdown( self.owner )
+        except Pyro.errors.NamingError:
+            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
     def restart_suite( self, bt ):
         if use_subprocess:
@@ -104,16 +113,25 @@ class monitor:
             success = True
 
     def stop_suite_now( self, bt ):
-        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        god.shutdown_now( self.owner )
+        try:
+            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god.shutdown_now( self.owner )
+        except Pyro.errors.NamingError:
+            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
     def unlock_suite( self, bt ):
-        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        god.unlock( self.owner )
+        try:
+            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god.unlock( self.owner )
+        except Pyro.errors.NamingError:
+            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
     def lock_suite( self, bt ):
-        god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        god.lock( self.owner )
+        try:
+            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god.lock( self.owner )
+        except Pyro.errors.NamingError:
+            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
     def about( self, bt ):
         about = gtk.AboutDialog()
@@ -274,8 +292,11 @@ Cylc View is a real time suite monitor and controller for Cylc.
 
         view = True
         reasons = []
-
-        logfiles = states[ task_id ][ 'logfiles' ]
+        try:
+            logfiles = states[ task_id ][ 'logfiles' ]
+        except KeyError:
+            warning_dialog( task_id + 'is no longer live' ).warn()
+            return False
 
         if len(logfiles) == 0:
             view = False
