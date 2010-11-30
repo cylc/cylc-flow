@@ -552,8 +552,8 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.update_tb( tb, "\n o Restart: ", [bold])
         self.update_tb( tb, "Restart the suite from its most recent previous state.")
         self.update_tb( tb, "\n o Restart From: ", [bold])
-        self.update_tb( tb, "Restart the suite from a given state dump file "
-                "(cut-and-paste the filename from the cylc log).")
+        self.update_tb( tb, "Restart the suite from a given previous state "
+                "(you can cut-and-paste a state dump filename from the cylc log).")
     
 
         self.update_tb( tb, "\n\nMenu: Shutdown > ", [bold, red] )
@@ -575,17 +575,17 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.update_tb( tb, "\n\nTask View Panels: Mouse Menu > ", [bold, red] )
 
         self.update_tb( tb, "\n o Live Output Feed: ", [bold])
-        self.update_tb( tb, "\n view stdout and stderr, "
+        self.update_tb( tb, "View stdout and stderr, "
                 "and the job submission file, for a task." )
         self.update_tb( tb, "\n o Prerequisites and Outputs: ", [bold])
-        self.update_tb( tb, "\n view the state of a task's prerequisites and outputs.")
+        self.update_tb( tb, "View the state of a task's prerequisites and outputs.")
         self.update_tb( tb, "\n o Reset To Ready: ", [bold])
-        self.update_tb( tb, "set all of a task's prerequisites satisfied. This will "
+        self.update_tb( tb, "Set all of a task's prerequisites satisfied. This will "
                 "(re)trigger the task immediately (if the suite has not been paused)." )
         self.update_tb( tb, "\n o Reset To Waiting: ", [bold])
-        self.update_tb( tb, "set all of a task's prerequisites unsatisfied." )
+        self.update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
         self.update_tb( tb, "\n o Reset To Finished: ", [bold])
-        self.update_tb( tb, "set all of a task's outputs completed." )
+        self.update_tb( tb, "Set all of a task's outputs completed." )
         self.update_tb( tb, "\n o Remove (after spawning): ", [bold])
         self.update_tb( tb, "Remove a task from the suite after ensuring that it has "
                 "spawned a successor." )
