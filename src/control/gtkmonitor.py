@@ -144,7 +144,7 @@ class monitor:
         about.set_copyright( "(c) Hilary Oliver, NIWA" )
         about.set_comments( 
 """
-Cylc View is a real time suite monitor and controller for Cylc.
+Cylc Control is a real time suite monitor and control tool for cylc.
 """ )
         about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/dew.jpg" ))
@@ -252,18 +252,13 @@ Cylc View is a real time suite monitor and controller for Cylc.
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "sort on headings") )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
-        hbox.pack_start( eb, True )
-
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "left click: Info" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
-        hbox.pack_start( eb, True )
-
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "right click: Control" ) )
+        eb.add( gtk.Label( "click headings to sort") )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        hbox.pack_start( eb, True )
+
+        eb = gtk.EventBox()
+        eb.add( gtk.Label( "click on tasks for options" ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
         hbox.pack_start( eb, True )
 
         bbox = gtk.HButtonBox()
@@ -289,7 +284,6 @@ Cylc View is a real time suite monitor and controller for Cylc.
 
     def show_log( self, task_id ):
         [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
-
         view = True
         reasons = []
         try:
@@ -359,7 +353,7 @@ Cylc View is a real time suite monitor and controller for Cylc.
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
 
-        info_item = gtk.MenuItem( 'Live output feed' )
+        info_item = gtk.MenuItem( 'Live Output Feed' )
         menu.append( info_item )
         info_item.connect( 'activate', self.view_task_info, task_id )
 
@@ -367,15 +361,15 @@ Cylc View is a real time suite monitor and controller for Cylc.
         menu.append( info_item )
         info_item.connect( 'activate', self.popup_requisites, task_id )
 
-        reset_ready_item = gtk.MenuItem( 'Reset to ready (trigger immediately)' )
+        reset_ready_item = gtk.MenuItem( 'Reset to Ready (trigger immediately)' )
         menu.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_to_ready, task_id )
 
-        reset_waiting_item = gtk.MenuItem( 'Reset to waiting (prerequisites unsatisfied)' )
+        reset_waiting_item = gtk.MenuItem( 'Reset to Waiting (prerequisites unsatisfied)' )
         menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_to_waiting, task_id )
 
-        reset_finished_item = gtk.MenuItem( 'Reset to finished (outputs completed)' )
+        reset_finished_item = gtk.MenuItem( 'Reset to Finished (outputs completed)' )
         menu.append( reset_finished_item )
         reset_finished_item.connect( 'activate', self.reset_task_to_finished, task_id )
 
@@ -387,7 +381,7 @@ Cylc View is a real time suite monitor and controller for Cylc.
         menu.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
 
-        purge_item = gtk.MenuItem( 'Purge (remove dependency tree)' )
+        purge_item = gtk.MenuItem( 'Recursive Purge' )
         menu.append( purge_item )
         purge_item.connect( 'activate', self.popup_purge, task_id )
 
@@ -453,18 +447,13 @@ Cylc View is a real time suite monitor and controller for Cylc.
 
         hbox = gtk.HBox()
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "sort on headings") )
+        eb.add( gtk.Label( "click headings to sort") )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
-        eb.add( gtk.Label( "left click: Info" ) )
+        eb.add( gtk.Label( "click on tasks for options" ) )
         eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
-        hbox.pack_start( eb, True )
-
-        eb = gtk.EventBox()
-        eb.add( gtk.Label( "right click: Control" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) ) 
         hbox.pack_start( eb, True )
 
         vbox = gtk.VBox()
@@ -484,7 +473,7 @@ Cylc View is a real time suite monitor and controller for Cylc.
     def userguide( self, w ):
         window = gtk.Window()
         #window.set_border_width( 10 )
-        window.set_title( "Cylc Control Userguide" )
+        window.set_title( "Cylc Control Usage" )
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 600)
@@ -518,22 +507,24 @@ Cylc View is a real time suite monitor and controller for Cylc.
                 "control tool for cylc suites (note that same can be achieved "
                 "via the cylc command line; see 'cylc help').")
 
-        self.update_tb( tb, "\n\nMenu: Lock > ", [bold, red] )
-        self.update_tb( tb, "The global suite lock helps guard against "
-                "accidental interference in a suite, which is a "
-                "potential danger if you have multiple suites running "
-                "at once.  A locked suite requires deliberate unlocking "
-                "before cylc will allow you to intervene "
-                "in its operation." )
+        self.update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
+        self.update_tb( tb, "\n o Lock: ", [bold])
+        self.update_tb( tb, "Tell cylc not to comply with intervention commands." )
+        self.update_tb( tb, "\n o Unlock: ", [bold])
+        self.update_tb( tb, "Tell cylc to comply with intervention requests." )
+        self.update_tb( tb, "\n o Exit: ", [bold])
+        self.update_tb( tb, "Exit the cylc control GUI (this does not shut the suite down).")
 
         self.update_tb( tb, "\n\nMenu: View > ", [bold, red] )
-        self.update_tb( tb, "This affects only the top 'light panel', "
-                "allowing you to change between full, short, and no "
+        self.update_tb( tb, "This affects only the top 'light panel'. "
+                "You can change between full, short, and no "
                 "task names, in order to maximize either screen real "
                 "estate or information.")
 
-        self.update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
-        self.update_tb( tb, "Global suite control operations:")
+        self.update_tb( tb, "\n\nMenu: Control > ", [bold, red] )
+        self.update_tb( tb, "Suite control and task insertion. "
+                "(Also: click on tasks in the Filtered List or "
+                "Expanding Tree suite view panels).")
         self.update_tb( tb, "\n o Pause: ", [bold])
         self.update_tb( tb, "Refrain from submitting tasks that are ready to run.")
         self.update_tb( tb, "\n o Resume: ", [bold])
@@ -545,30 +536,29 @@ Cylc View is a real time suite monitor and controller for Cylc.
         self.update_tb( tb, "\n o Insert: ", [bold])
         self.update_tb( tb, "Insert a task or task group into a running suite." )
 
-        self.update_tb( tb, "\n\nTask View Panels, left click: Task Information > ", [bold, red] )
-        self.update_tb( tb, "This pops up a window allowing you to view:" )
-        self.update_tb( tb, "\n o the cylc job submission file for the task")
-        self.update_tb( tb, "\n o stdout and stderr live feeds from the submitted job")
-        self.update_tb( tb, "\nInterrogate Button: ", [bold])
-        self.update_tb( tb, "\n o current state of task prerequisites and outputs.")
+        self.update_tb( tb, "\n\nTask View Panels: Mouse Menu > ", [bold, red] )
 
-        self.update_tb( tb, "\n\nTask View Panels, right click: Task Control > ", [bold, red] )
+        self.update_tb( tb, "\n o Live Output Feed: ", [bold])
+        self.update_tb( tb, "\n view stdout and stderr, "
+                "and the job submission file, for a task." )
+        self.update_tb( tb, "\n o Prerequisites and Outputs: ", [bold])
+        self.update_tb( tb, "\n view the state of a task's prerequisites and outputs.")
         self.update_tb( tb, "\n o Reset To Ready: ", [bold])
-        self.update_tb( tb, "set all of the task's prerequisites satisfied. This will "
-                "(re)trigger the task immediately, if the suite has not been paused." )
+        self.update_tb( tb, "set all of a task's prerequisites satisfied. This will "
+                "(re)trigger the task immediately (if the suite has not been paused)." )
         self.update_tb( tb, "\n o Reset To Waiting: ", [bold])
-        self.update_tb( tb, "set all of the task's prerequisites unsatisfied." )
+        self.update_tb( tb, "set all of a task's prerequisites unsatisfied." )
         self.update_tb( tb, "\n o Reset To Finished: ", [bold])
-        self.update_tb( tb, "set all of the task's outputs completed." )
+        self.update_tb( tb, "set all of a task's outputs completed." )
         self.update_tb( tb, "\n o Remove (after spawning): ", [bold])
-        self.update_tb( tb, "Remove the task from the suite after ensuring that it has "
+        self.update_tb( tb, "Remove a task from the suite after ensuring that it has "
                 "spawned a successor." )
         self.update_tb( tb, "\n o Remove (without spawning): ", [bold])
-        self.update_tb( tb, "Remove the task from the suite even if it has not "
+        self.update_tb( tb, "Remove a task from the suite even if it has not "
                 "yet spawned a successor (in which case it will be removed "
                 "permanently unless re-inserted)." )
-        self.update_tb( tb, "\n o Purge (remove dependency tree): ", [bold])
-        self.update_tb( tb, "Remove the task from the suite, then remove any task "
+        self.update_tb( tb, "\n o Recursive Purge: ", [bold])
+        self.update_tb( tb, "Remove a task from the suite, then remove any task "
                 "that would depend on it, then remove any tasks that would depend on "
                 "those tasks, and so on, through to a given stop cycle." )
 
@@ -840,7 +830,7 @@ Cylc View is a real time suite monitor and controller for Cylc.
         file_menu.append( lock_item )
         lock_item.connect( 'activate', self.lock_suite )
 
-        exit_item = gtk.MenuItem( 'Quit' )
+        exit_item = gtk.MenuItem( 'Exit' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
@@ -892,7 +882,7 @@ Cylc View is a real time suite monitor and controller for Cylc.
         help_menu_root = gtk.MenuItem( 'Help' )
         help_menu_root.set_submenu( help_menu )
 
-        guide_item = gtk.MenuItem( 'Userguide' )
+        guide_item = gtk.MenuItem( 'Usage' )
         help_menu.append( guide_item )
         guide_item.connect( 'activate', self.userguide )
  
@@ -1004,7 +994,7 @@ Cylc View is a real time suite monitor and controller for Cylc.
         self.imagedir = imagedir
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_border_width( 5 )
-        self.window.set_title("cylc view <" + self.suite + ">" )
+        self.window.set_title("cylc control <" + self.suite + ">" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(600, 500)
         self.window.connect("delete_event", self.delete_event)

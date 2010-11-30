@@ -23,19 +23,22 @@ class client:
         self.host = host
         self.port = port
 
-    def get_proxy( self, target ):
+    def get_proxy( self, target, silent=False ):
         if self.port:
             port = self.port
             if not check_port( self.suite, self.owner, self.host, self.port ):
                 msg = self.suite + " (" + self.owner + ") not found at " + self.host + ":" + port
                 raise Pyro.errors.NamingError( msg )
         else:
-            print "Scanning for " + self.suite + " ...",
+            if not silent:
+                print "Scanning for " + self.suite + " ...",
             found, port = get_port( self.suite, self.owner, self.host )
             if found:
-                print "port", port
+                if not silent:
+                    print "port", port
             else:
-                print "ERROR"
+                if not silent:
+                    print "ERROR"
                 msg = self.suite + " (" + self.owner + ") not found on " + self.host 
                 raise Pyro.errors.NamingError( msg )
 

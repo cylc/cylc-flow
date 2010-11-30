@@ -103,8 +103,7 @@ class updater(threading.Thread):
 
     def reconnect( self ):
         try:
-            self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary' )
-
+            self.god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'state_summary', silent=True )
         except:
             return False
         else:
