@@ -266,24 +266,10 @@ Cylc View is a real time suite monitor and controller for Cylc.
 
         return vbox
 
-    def get_selected_task_from_tree( self, selection, treemodel ):
-        if len( selection ) == 1:
-            # top level, just ctime
-            return False
-
-        c_iter = treemodel.get_iter( selection )
-        name = treemodel.get_value( c_iter, 0 )
- 
-        iter = treemodel.iter_parent( c_iter )
-        ctime = treemodel.get_value( iter, 0 )
-        task_id = name + '%' + ctime
-
+    def view_task_info( self, w, task_id ):
         self.show_log( task_id )
-        return False
-
 
     def show_log( self, task_id ):
-
         [ glbl, states ] = self.get_pyro( 'state_summary').get_state_summary()
 
         view = True
@@ -304,18 +290,6 @@ Cylc View is a real time suite monitor and controller for Cylc.
             self.popup_requisites( None, task_id )
         else:
             self.popup_logview( task_id, logfiles )
-
-        return False
-
-    def get_selected_task_from_list( self, selection, treemodel ):
-        print selection
-
-        iter = treemodel.get_iter( selection )
-        ctime = treemodel.get_value( iter, 0 )
-        name = treemodel.get_value( iter, 1 )
-        task_id = name + '%' + ctime
-
-        self.show_log( task_id )
 
         return False
 
@@ -353,14 +327,24 @@ Cylc View is a real time suite monitor and controller for Cylc.
 
         task_id = name + '%' + ctime
 
-        if event.button != 3:
-            self.show_log( task_id )
-            return False
+        # HERE'S HOW TO DISPLAY MENU ONLY ON RIGHT CLICK
+        # (and show task log viewer otherwise):
+        #if event.button != 3:
+        #    self.show_log( task_id )
+        #    return False
 
         menu = gtk.Menu()
 
         menu_root = gtk.MenuItem( task_id )
         menu_root.set_submenu( menu )
+
+        info_item = gtk.MenuItem( 'Live output feed' )
+        menu.append( info_item )
+        info_item.connect( 'activate', self.view_task_info, task_id )
+
+        info_item = gtk.MenuItem( 'Prerequisites and Outputs' )
+        menu.append( info_item )
+        info_item.connect( 'activate', self.popup_requisites, task_id )
 
         reset_ready_item = gtk.MenuItem( 'Reset to ready (trigger immediately)' )
         menu.append( reset_ready_item )
@@ -513,7 +497,7 @@ Cylc View is a real time suite monitor and controller for Cylc.
                 "control tool for cylc suites (note that same can be achieved "
                 "via the cylc command line; see 'cylc help').")
 
-        self.update_tb( tb, "\n\nMenu: Locking > ", [bold, red] )
+        self.update_tb( tb, "\n\nMenu: Lock > ", [bold, red] )
         self.update_tb( tb, "The global suite lock helps guard against "
                 "accidental interference in a suite, which is a "
                 "potential danger if you have multiple suites running "
@@ -808,14 +792,14 @@ Cylc View is a real time suite monitor and controller for Cylc.
 
         window.add( lv.get_widget() )
 
-        state_button = gtk.Button( "Interrogate" )
-        state_button.connect("clicked", self.popup_requisites, task_id )
+        #state_button = gtk.Button( "Interrogate" )
+        #state_button.connect("clicked", self.popup_requisites, task_id )
  
         quit_button = gtk.Button( "Close" )
         quit_button.connect("clicked", self.on_popup_quit, lv, window )
         
         lv.hbox.pack_start( quit_button )
-        lv.hbox.pack_start( state_button )
+        #lv.hbox.pack_start( state_button )
 
         window.connect("delete_event", lv.quit_w_e)
         window.show_all()
@@ -824,10 +808,18 @@ Cylc View is a real time suite monitor and controller for Cylc.
     def create_menu( self ):
         file_menu = gtk.Menu()
 
-        file_menu_root = gtk.MenuItem( 'File' )
+        file_menu_root = gtk.MenuItem( 'Suite' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.MenuItem( 'Exit' )
+        unlock_item = gtk.MenuItem( 'Unlock' )
+        file_menu.append( unlock_item )
+        unlock_item.connect( 'activate', self.unlock_suite )
+
+        lock_item = gtk.MenuItem( 'Lock' )
+        file_menu.append( lock_item )
+        lock_item.connect( 'activate', self.lock_suite )
+
+        exit_item = gtk.MenuItem( 'Quit' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
@@ -847,20 +839,8 @@ Cylc View is a real time suite monitor and controller for Cylc.
         view_menu.append( heading_full_item )
         heading_full_item.connect( 'activate', self.full_task_headings )
 
-        lock_menu = gtk.Menu()
-        lock_menu_root = gtk.MenuItem( 'Locking' )
-        lock_menu_root.set_submenu( lock_menu )
-
-        lock_item = gtk.MenuItem( 'Lock Suite' )
-        lock_menu.append( lock_item )
-        lock_item.connect( 'activate', self.lock_suite )
-
-        unlock_item = gtk.MenuItem( 'Unlock Suite' )
-        lock_menu.append( unlock_item )
-        unlock_item.connect( 'activate', self.unlock_suite )
-
         suite_menu = gtk.Menu()
-        suite_menu_root = gtk.MenuItem( 'Suite' )
+        suite_menu_root = gtk.MenuItem( 'Control' )
         suite_menu_root.set_submenu( suite_menu )
 
         pause_item = gtk.MenuItem( 'Pause' )
@@ -903,7 +883,6 @@ Cylc View is a real time suite monitor and controller for Cylc.
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
         self.menu_bar.append( suite_menu_root )
-        self.menu_bar.append( lock_menu_root )
         self.menu_bar.append( help_menu_root )
 
     def create_info_bar( self ):

@@ -26,6 +26,7 @@ class chooser_updater(threading.Thread):
             pass
     
     def choices_changed( self ):
+        # (name, port)
         suites = scan_my_suites( self.host )
         if suites != self.choices:
             self.choices = suites
@@ -40,10 +41,13 @@ class chooser_updater(threading.Thread):
         ##print "Updating list of available suites"
         self.liststore.clear()
         for suite in self.choices:
-            self.liststore.append( [suite] )
+            name, port = suite
+            self.liststore.append( [name + ' (port ' + str(port) + ')' ] )
 
 class chooser:
     def __init__(self, host, imagedir ):
+
+        self.owner = os.environ['USER']
 
         gobject.threads_init()
 
@@ -86,7 +90,7 @@ class chooser:
         self.updater.start()
 
     def launch_viewer( self, suite, port ):
-        tv = monitor(suite, owner, self.host, port, self.imagedir )
+        tv = monitor(suite, self.owner, self.host, port, self.imagedir )
         self.viewer_list.append( tv )
 
     def delete_event( self, w, e, data=None ):
@@ -98,8 +102,9 @@ class chooser:
     def get_selected_suite( self, selection, treemodel ):
         iter = treemodel.get_iter( selection )
         suite = treemodel.get_value( iter, 0 )
-        #self.show_log( task_id )
-        self.launch_viewer( suite )
-
+        m = re.match( '(\w+) \(port (\d+)\)', suite )
+        if m:
+            name, port = m.groups()
+            self.launch_viewer( name, port )
         return False
 

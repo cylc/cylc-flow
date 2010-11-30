@@ -586,25 +586,26 @@ userguide example suite in detail.
 \subsection{Starting The Cylc Lockserver}
 \label{QuickStartingTheCylcLockserver}
 
-The cylc lockserver prevents a user from accidentally running multiple
-instances of the same suite, or the same task (at the same cycle time)
-at once, which could result in a corrupted system state (of your real
-forecasting system, that is, not cylc itself) or other problems. 
+Each cylc user should run his/her own a lockserver. The cylc lockserver
+prevents a user from accidentally running multiple instances of the same
+suite, or the same task (at the same cycle time) at once, which could
+result in a corrupted system state (of your real forecasting system,
+that is, not cylc itself) or other problems. 
 
-This is analogous to use of traditional ``lock files'', but it works 
-across a network for distributed suites wherein you may have tasks 
-that start executing on one host but finish on another.
+Cylc suite and task locks are analogous to use of traditional ``lock
+files'', but they work across a network for distributed suites, wherein
+you may have tasks that start executing on one host but finish on
+another.
 
 The lockserver consists of a {\em daemon} process
-\lstinline=$CYLC_DIR/admin/cylclockd= that runs autonomously, brokering
-locks for all cylc suites running on the network, and a command line
-user interface, \lstinline=cylc lockserver=
+\lstinline=$CYLC_DIR/admin/cylclockd= that runs autonomously and a
+command line user interface, \lstinline=cylc lockserver=
 
 The lockserver daemon can be started at any time, and left running.
 See \lstinline=$CYLC_DIR/admin/cylclockd help= for configuration
 and usage information.
 
-Alternatively, you can choose not to use the lockserver at all:
+Alternatively, you can choose not to use the lockserver:
 
 \begin{lstlisting}
 cylc preferences --use-lockserver=N
