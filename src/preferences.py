@@ -39,8 +39,6 @@ class prefs:
         self.config = {}
         self.configparser = SafeConfigParser()
 
-        self.lockserver_dir = os.path.join( self.config_dir, 'lockserver' )
-
         self.set_defaults()
 
         if os.path.exists( self.rcfile ):
@@ -61,11 +59,7 @@ class prefs:
         self.config[ 'cylc' ][ 'use lockserver' ] = 'True'
         self.config[ 'cylc' ][ 'use quick task elimination' ] = 'True'
 
-        self.config[ 'lockserver' ] = {}
-        self.config[ 'lockserver' ][ 'log file' ] = os.path.join( self.lockserver_dir, 'log' )
-        self.config[ 'lockserver' ][ 'pid file' ] = os.path.join( self.lockserver_dir, 'pid' )
-
-        self.config[ 'view' ] = {}
+        #self.config[ 'control' ] = {}
 
     def load( self ):
         self.configparser.read( self.rcfile )
@@ -89,9 +83,7 @@ class prefs:
         dirs = {}
         for dir in [ self.config_dir, 
                 self.config['cylc']['logging directory'],
-                self.config['cylc']['state dump directory'],
-                os.path.dirname( self.config[ 'lockserver' ][ 'log file' ] ),
-                os.path.dirname( self.config[ 'lockserver' ][ 'pid file' ] )]:
+                self.config['cylc']['state dump directory'] ]:
             dirs[ dir ] = True
 
         for dir in dirs:
