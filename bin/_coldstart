@@ -21,7 +21,7 @@ debug = True
 class coldstart_scheduler( scheduler ):
     def __init__( self ):
 
-        usage = """cylc start [options] SUITE CYCLE
+        usage = """cylc coldstart [options] SUITE CYCLE
 
 COLD START a suite at a given initial cycle time. Each task is
 instantiated in the 'waiting' state (i.e. prerequisites not satisfied)

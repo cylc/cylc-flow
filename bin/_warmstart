@@ -21,7 +21,7 @@ debug = True
 class coldstart_scheduler( scheduler ):
     def __init__( self ):
 
-        usage = """cylc start [options] SUITE CYCLE
+        usage = """cylc warmstart [options] SUITE CYCLE
 
 WARM START a suite at a given initial cycle time. Each task will be
 instantiated as for a cold start (above) except for oneff coldstart
