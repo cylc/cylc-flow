@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* --port= does not prevent port scan for lockserver?
+
 * separate cold and warm start into distinct classes (currently warm is
   a variation on coldstart_scheduler, which is less than transparent).
 

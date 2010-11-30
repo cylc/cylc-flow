@@ -10,7 +10,7 @@
 #         |________________________|
 
 from copy import deepcopy
-import os, sys, re
+import os, sys, pwd, re
 import socket, pickle
 import logging, logging.handlers
 from optparse import OptionParser
@@ -19,8 +19,6 @@ import Pyro.core, Pyro.errors, Pyro.naming
 from Pyro.ext.daemonizer import Daemonizer
 from ConfigParser import SafeConfigParser
 from suite_id import identifier
-
-import os, sys, pwd, re
 import logging
 
 class ServerDaemon( Daemonizer ):
@@ -95,7 +93,6 @@ class LServer:
 
         qualified_name = self.owner + '.lockserver'
         self.pyro_daemon.connect( locker, qualified_name )
-
 
         while True:
             self.pyro_daemon.handleRequests()

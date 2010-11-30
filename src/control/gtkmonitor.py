@@ -1,13 +1,6 @@
 #!/usr/bin/env python
 
-# example basictreeview.py
-try:
-    import subprocess
-    # see documentation in bin/cylc
-    use_subprocess = True
-except:
-    use_subprocess = False
- 
+import subprocess
 import pango
 from stateview import updater
 from combo_logviewer import combo_logviewer
@@ -93,24 +86,52 @@ class monitor:
         except Pyro.errors.NamingError:
             warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
+    def stop_suite_at( self, bt, window, entry_ctime ):
+        ctime = entry_ctime.get_text()
+        window.destroy()
+        try:
+            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+            god.set_stop_time( ctime, self.owner )
+        except Pyro.errors.NamingError:
+            warning_dialog( 'Error: failed to set stop time for ' + self.suite ).warn()
+
+    def coldstart_suite( self, bt, window, entry_ctime ):
+        ctime = entry_ctime.get_text()
+        window.destroy()
+        command = [ 'cylc coldstart ' + self.suite + ' ' + ctime ]
+        try:
+            subprocess.Popen( command, shell=True )
+        except OSError, e:
+            warning_dialog( 'Error: failed to start ' + self.suite ).warn()
+            success = False
+
+    def warmstart_suite( self, bt, window, entry_ctime ):
+        ctime = entry_ctime.get_text()
+        window.destroy()
+        command = [ 'cylc warmstart ' + self.suite + ' ' + ctime ]
+        try:
+            subprocess.Popen( command, shell=True )
+        except OSError, e:
+            warning_dialog( 'Error: failed to start ' + self.suite ).warn()
+            success = False
+
     def restart_suite( self, bt ):
-        if use_subprocess:
-            command = [ 'cylc restart ' + self.suite ]
-            #command = [ 'cylc restart', self.suite ]
-            try:
-                print command
-                res = subprocess.Popen( command, shell=True )
-                #res = subprocess.Popen( command )
-            except OSError, e:
-                # THIS DOES NOT CATCH BACKGROUND EXECUTION FAILURE
-                # because subprocess.call( 'foo &' ) returns immediately
-                # and the failure occurs in the detached sub-shell.
-                print "FAILED", e
-                success = False
-        else:
-            command = 'cylc restart ' + self.suite + ' > /dev/null 2>&1 &'
-            os.system( command )
-            success = True
+        command = [ 'cylc restart ' + self.suite ]
+        try:
+            subprocess.Popen( command, shell=True )
+        except OSError, e:
+            warning_dialog( 'Error: failed to restart ' + self.suite ).warn()
+            success = False
+
+    def restart_suite_from( self, bt, window, entry_statedump ):
+        statedump = entry_statedump.get_text()
+        window.destroy()
+        command = [ 'cylc restart ' + self.suite + ' ' + statedump ]
+        try:
+            subprocess.Popen( command, shell=True )
+        except OSError, e:
+            warning_dialog( 'Error: failed to restart ' + self.suite ).warn()
+            success = False
 
     def stop_suite_now( self, bt ):
         try:
@@ -473,7 +494,7 @@ Cylc Control is a real time suite monitor and control tool for cylc.
     def userguide( self, w ):
         window = gtk.Window()
         #window.set_border_width( 10 )
-        window.set_title( "Cylc Control Usage" )
+        window.set_title( "Cylc Control Quick Guide" )
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 600)
@@ -501,19 +522,21 @@ Cylc Control is a real time suite monitor and control tool for cylc.
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
-        self.update_tb( tb, "Cylc Control Help", [bold, blue] )
+        self.update_tb( tb, "Cylc Control Quick Guide", [bold, blue] )
 
         self.update_tb( tb, "\n\nCylc Control is a real time monitoring and "
                 "control tool for cylc suites (note that same can be achieved "
                 "via the cylc command line; see 'cylc help').")
 
-        self.update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
+        self.update_tb( tb, "\n\nMenu: File > ", [bold, red] )
+        self.update_tb( tb, "\n o Exit Cylc Control: ", [bold])
+        self.update_tb( tb, "Exit the GUI (this does not shut the suite down).")
+
+        self.update_tb( tb, "\n\nMenu: Locking > ", [bold, red] )
         self.update_tb( tb, "\n o Lock: ", [bold])
         self.update_tb( tb, "Tell cylc not to comply with intervention commands." )
         self.update_tb( tb, "\n o Unlock: ", [bold])
-        self.update_tb( tb, "Tell cylc to comply with intervention requests." )
-        self.update_tb( tb, "\n o Exit: ", [bold])
-        self.update_tb( tb, "Exit the cylc control GUI (this does not shut the suite down).")
+        self.update_tb( tb, "Tell cylc to comply with intervention commands." )
 
         self.update_tb( tb, "\n\nMenu: View > ", [bold, red] )
         self.update_tb( tb, "This affects only the top 'light panel'. "
@@ -521,18 +544,31 @@ Cylc Control is a real time suite monitor and control tool for cylc.
                 "task names, in order to maximize either screen real "
                 "estate or information.")
 
-        self.update_tb( tb, "\n\nMenu: Control > ", [bold, red] )
-        self.update_tb( tb, "Suite control and task insertion. "
-                "(Also: click on tasks in the Filtered List or "
-                "Expanding Tree suite view panels).")
+        self.update_tb( tb, "\n\nMenu: Startup > ", [bold, red] )
+        self.update_tb( tb, "\n o Cold Start At: ", [bold])
+        self.update_tb( tb, "Cold start the suite at a given initial cycle time.")
+        self.update_tb( tb, "\n o Warm Start At: ", [bold])
+        self.update_tb( tb, "Warm start the suite at a given cycle time.")
+        self.update_tb( tb, "\n o Restart: ", [bold])
+        self.update_tb( tb, "Restart the suite from its most recent previous state.")
+        self.update_tb( tb, "\n o Restart From: ", [bold])
+        self.update_tb( tb, "Restart the suite from a given state dump file "
+                "(cut-and-paste the filename from the cylc log).")
+    
+
+        self.update_tb( tb, "\n\nMenu: Shutdown > ", [bold, red] )
+        self.update_tb( tb, "\n o Stop: ", [bold])
+        self.update_tb( tb, "Stop the suite when all currently running tasks have finished." )
+        self.update_tb( tb, "\n o Stop At: ", [bold])
+        self.update_tb( tb, "Stop the suite at a given future cycle time." )
+        self.update_tb( tb, "\n o Stop NOW: ", [bold])
+        self.update_tb( tb, "Shut the suite down immediately (running tasks will be orphaned)." )
+
+        self.update_tb( tb, "\n\nMenu: Other > ", [bold, red] )
         self.update_tb( tb, "\n o Pause: ", [bold])
         self.update_tb( tb, "Refrain from submitting tasks that are ready to run.")
         self.update_tb( tb, "\n o Resume: ", [bold])
         self.update_tb( tb, "Resume submitting tasks that are ready to run.")
-        self.update_tb( tb, "\n o Stop: ", [bold])
-        self.update_tb( tb, "Shut the suite down when all currently running tasks have finished." )
-        self.update_tb( tb, "\n o Stop NOW: ", [bold])
-        self.update_tb( tb, "Shut the suite down immediately (running tasks will be orphaned)." )
         self.update_tb( tb, "\n o Insert: ", [bold])
         self.update_tb( tb, "Insert a task or task group into a running suite." )
 
@@ -740,6 +776,34 @@ Cylc Control is a real time suite monitor and control tool for cylc.
         window.add( box )
         window.show_all()
 
+    def ctime_entry_popup( self, b, callback, title ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( title )
+        #window.set_size_request(800, 300)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+
+        vbox = gtk.VBox()
+
+        hbox = gtk.HBox()
+        label = gtk.Label( 'Cycle Time' )
+        hbox.pack_start( label, True )
+        entry_ctime = gtk.Entry()
+        entry_ctime.set_max_length(10)
+        hbox.pack_start (entry_ctime, True)
+        vbox.pack_start(hbox)
+
+        go_button = gtk.Button( "Go" )
+        go_button.connect("clicked", callback, window, entry_ctime )
+        vbox.pack_start(go_button)
+ 
+        window.add( vbox )
+        window.show_all()
+
     def insert_task_popup( self, b ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
@@ -774,6 +838,34 @@ Cylc Control is a real time suite monitor and control tool for cylc.
  
         window.add( vbox )
         window.show_all()
+
+    def restart_suite_from_popup( self, b ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Restart Suite From [state dump]" )
+        #window.set_size_request(800, 300)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
+
+        vbox = gtk.VBox()
+
+        hbox = gtk.HBox()
+        label = gtk.Label( 'state dump' )
+        hbox.pack_start( label, True )
+        entry_name = gtk.Entry()
+        hbox.pack_start (entry_name, True)
+        vbox.pack_start(hbox)
+
+        go_button = gtk.Button( "Do it" )
+        go_button.connect("clicked", self.restart_suite_from, window, entry_name )
+        vbox.pack_start(go_button)
+ 
+        window.add( vbox )
+        window.show_all()
+
 
     def insert_task( self, w, window, entry_name, entry_ctime ):
         name = entry_name.get_text()
@@ -819,20 +911,13 @@ Cylc Control is a real time suite monitor and control tool for cylc.
     def create_menu( self ):
         file_menu = gtk.Menu()
 
-        file_menu_root = gtk.MenuItem( 'Suite' )
+        file_menu_root = gtk.MenuItem( 'File' )
         file_menu_root.set_submenu( file_menu )
 
-        unlock_item = gtk.MenuItem( 'Unlock' )
-        file_menu.append( unlock_item )
-        unlock_item.connect( 'activate', self.unlock_suite )
-
-        lock_item = gtk.MenuItem( 'Lock' )
-        file_menu.append( lock_item )
-        lock_item.connect( 'activate', self.lock_suite )
-
-        exit_item = gtk.MenuItem( 'Exit' )
+        exit_item = gtk.MenuItem( 'Exit Cylc Control' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
+
 
         view_menu = gtk.Menu()
         view_menu_root = gtk.MenuItem( 'View' )
@@ -850,39 +935,79 @@ Cylc Control is a real time suite monitor and control tool for cylc.
         view_menu.append( heading_full_item )
         heading_full_item.connect( 'activate', self.full_task_headings )
 
-        suite_menu = gtk.Menu()
-        suite_menu_root = gtk.MenuItem( 'Control' )
-        suite_menu_root.set_submenu( suite_menu )
+
+        lock_menu = gtk.Menu()
+        lock_menu_root = gtk.MenuItem( 'Locking' )
+        lock_menu_root.set_submenu( lock_menu )
+
+        unlock_item = gtk.MenuItem( 'Unlock Suite' )
+        lock_menu.append( unlock_item )
+        unlock_item.connect( 'activate', self.unlock_suite )
+
+        lock_item = gtk.MenuItem( 'Lock Suite' )
+        lock_menu.append( lock_item )
+        lock_item.connect( 'activate', self.lock_suite )
+
+
+        start_menu = gtk.Menu()
+        start_menu_root = gtk.MenuItem( 'Startup' )
+        start_menu_root.set_submenu( start_menu )
+
+        coldstart_item = gtk.MenuItem( 'Cold Start At' )
+        start_menu.append( coldstart_item )
+        coldstart_item.connect( 'activate', self.ctime_entry_popup, self.coldstart_suite, "Cold Start At" )
+
+        warmstart_item = gtk.MenuItem( 'Warm Start At' )
+        start_menu.append( warmstart_item )
+        warmstart_item.connect( 'activate', self.ctime_entry_popup, self.warmstart_suite, "Warm Start At" )
+
+        restart_item = gtk.MenuItem( 'Restart' )
+        start_menu.append( restart_item )
+        restart_item.connect( 'activate', self.restart_suite )
+
+        restart_from_item = gtk.MenuItem( 'Restart From' )
+        start_menu.append( restart_from_item )
+        restart_from_item.connect( 'activate', self.restart_suite_from_popup )
+
+        stop_menu = gtk.Menu()
+        stop_menu_root = gtk.MenuItem( 'Shutdown' )
+        stop_menu_root.set_submenu( stop_menu )
+
+        stop_item = gtk.MenuItem( 'Stop' )
+        stop_menu.append( stop_item )
+        stop_item.connect( 'activate', self.stop_suite )
+
+        stop_at_item = gtk.MenuItem( 'Stop At' )
+        stop_menu.append( stop_at_item )
+        stop_at_item.connect( 'activate', self.ctime_entry_popup, self.stop_suite_at, "Stop Suite At" )
+
+        stop_now_item = gtk.MenuItem( 'Stop NOW' )
+        stop_menu.append( stop_now_item )
+        stop_now_item.connect( 'activate', self.stop_suite_now )
+
+
+        other_menu = gtk.Menu()
+        other_menu_root = gtk.MenuItem( 'Other' )
+        other_menu_root.set_submenu( other_menu )
 
         pause_item = gtk.MenuItem( 'Pause' )
-        suite_menu.append( pause_item )
+        other_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
 
         resume_item = gtk.MenuItem( 'Resume' )
-        suite_menu.append( resume_item )
+        other_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
 
-        stop_item = gtk.MenuItem( 'Stop' )
-        suite_menu.append( stop_item )
-        stop_item.connect( 'activate', self.stop_suite )
-
-        stop_now_item = gtk.MenuItem( 'Stop NOW' )
-        suite_menu.append( stop_now_item )
-        stop_now_item.connect( 'activate', self.stop_suite_now )
-
-        #restart_item = gtk.MenuItem( 'Restart' )
-        #suite_menu.append( restart_item )
-        #restart_item.connect( 'activate', self.restart_suite )
-
-        insert_item = gtk.MenuItem( 'Insert' )
-        suite_menu.append( insert_item )
+        insert_item = gtk.MenuItem( 'Insert Task or Group' )
+        other_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
+
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( 'Help' )
         help_menu_root.set_submenu( help_menu )
 
-        guide_item = gtk.MenuItem( 'Usage' )
+        guide_item = gtk.MenuItem( 'Quick Guide' )
         help_menu.append( guide_item )
         guide_item.connect( 'activate', self.userguide )
  
@@ -890,10 +1015,14 @@ Cylc Control is a real time suite monitor and control tool for cylc.
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
       
+
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
+        self.menu_bar.append( lock_menu_root )
         self.menu_bar.append( view_menu_root )
-        self.menu_bar.append( suite_menu_root )
+        self.menu_bar.append( start_menu_root )
+        self.menu_bar.append( stop_menu_root )
+        self.menu_bar.append( other_menu_root )
         self.menu_bar.append( help_menu_root )
 
     def create_info_bar( self ):
