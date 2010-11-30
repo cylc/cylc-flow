@@ -165,7 +165,7 @@ class monitor:
         about.set_copyright( "(c) Hilary Oliver, NIWA" )
         about.set_comments( 
 """
-Cylc Control is a real time suite monitor and control tool for cylc.
+cylc gui is a real time suite control and monitoring tool for cylc.
 """ )
         about.set_website( "http://www.niwa.co.nz" )
         about.set_logo( gtk.gdk.pixbuf_new_from_file( self.imagedir + "/dew.jpg" ))
@@ -494,7 +494,7 @@ Cylc Control is a real time suite monitor and control tool for cylc.
     def userguide( self, w ):
         window = gtk.Window()
         #window.set_border_width( 10 )
-        window.set_title( "Cylc Control Quick Guide" )
+        window.set_title( "Cylc GUI Quick Guide" )
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 600)
@@ -522,11 +522,11 @@ Cylc Control is a real time suite monitor and control tool for cylc.
         red = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
-        self.update_tb( tb, "Cylc Control Quick Guide", [bold, blue] )
+        self.update_tb( tb, "Cylc GUI Quick Guide", [bold, blue] )
 
-        self.update_tb( tb, "\n\nCylc Control is a real time monitoring and "
-                "control tool for cylc suites (note that same can be achieved "
-                "via the cylc command line; see 'cylc help').")
+        self.update_tb( tb, "\n\nCylc GUI is a real time suite control and "
+                "monitoring tool for cylc (note that same functionality is "
+                "supplied by the cylc command line; see 'cylc help').")
 
         self.update_tb( tb, "\n\nMenu: File > ", [bold, red] )
         self.update_tb( tb, "\n o Exit Cylc Control: ", [bold])
@@ -914,7 +914,7 @@ Cylc Control is a real time suite monitor and control tool for cylc.
         file_menu_root = gtk.MenuItem( 'File' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.MenuItem( 'Exit Cylc Control' )
+        exit_item = gtk.MenuItem( 'Exit Cylc GUI' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
@@ -1123,7 +1123,7 @@ Cylc Control is a real time suite monitor and control tool for cylc.
         self.imagedir = imagedir
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_border_width( 5 )
-        self.window.set_title("cylc control <" + self.suite + ">" )
+        self.window.set_title("cylc gui <" + self.suite + ">" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(600, 500)
         self.window.connect("delete_event", self.delete_event)

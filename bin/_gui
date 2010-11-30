@@ -13,9 +13,9 @@ import socket
 
 if __name__ == "__main__":
 
-    parser = OptionParser( """cylc control [options] [SUITE]
+    parser = OptionParser( """cylc gui [options] [SUITE]
 
-Graphical real time suite control and monitoring tool.
+Graphical User Interface for real time suite control and monitoring.
 
 Displays information about running cylc suites, including the current
 state of all tasks, scheduler log files, task stdout and stderr log, and
@@ -29,7 +29,7 @@ running suite, via Pyro.
 If SUITE is NOT supplied, you can select which suite to monitor from 
 an auto-updating list of currently running suites.
 
-Cylc control reconnects if the target suite is restarted. 
+Cylc gui reconnects if the target suite is restarted. 
 
 SUITE                  Registered name of the target suite.""")
 
