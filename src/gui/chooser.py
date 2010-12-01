@@ -142,7 +142,7 @@ class chooser:
         suite_dir = treemodel.get_value( iter, 1 )
         state = treemodel.get_value( iter, 2 ) 
 
-        m = re.match( 'running \(port (\d+)\)', state )
+        m = re.match( 'RUNNING \(port (\d+)\)', state )
         if m:
             port = m.groups()[0]
             tv = standalone_monitor(name, self.owner, self.host, port, self.imagedir )
