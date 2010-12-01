@@ -11,11 +11,10 @@ from gtkmonitor import standalone_monitor, standalone_monitor_preload
 
 class chooser_updater(threading.Thread):
 
-    def __init__(self, owner, running_liststore, regd_liststore, host ):
+    def __init__(self, owner, regd_liststore, host ):
         self.owner = owner
         self.quit = False
         self.host = host
-        self.running_liststore = running_liststore
         self.regd_liststore = regd_liststore
         super(chooser_updater, self).__init__()
         self.running_choices = []
@@ -47,19 +46,23 @@ class chooser_updater(threading.Thread):
             return False
 
     def update_gui( self ):
-        # it is expected that choices will change infrequently,
-        # so just clear and recreate the list, rather than 
+        # it is expected that a single user will not have a huge number
+        # of suites, and registrations will change infrequently,
+        # so just clear and recreate the list rather than 
         # adjusting element-by-element.
         ##print "Updating list of available suites"
-        self.running_liststore.clear()
+        ports = {}
         for suite in self.running_choices:
             name, port = suite
-            self.running_liststore.append( [name + ' (port ' + str(port) + ')' ] )
+            ports[ name ] = port
 
         self.regd_liststore.clear()
         for reg in self.regd_choices:
             name, suite_dir = reg
-            self.regd_liststore.append( [name + ' (' + suite_dir + ')'] )
+            if name in ports:
+                self.regd_liststore.append( [name, suite_dir, 'RUNNING (port ' + str( ports[name] ) + ')'] )
+            else:
+                self.regd_liststore.append( [name, suite_dir, 'not running'] )
 
 class chooser:
     def __init__(self, host, imagedir ):
@@ -74,51 +77,56 @@ class chooser:
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_title("cylc gui" )
         window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        window.set_size_request(800, 300)
+        window.set_size_request(600, 200)
+        #window.set_size_request(400, 100)
         window.connect("delete_event", self.delete_event)
 
-        running_treeview = gtk.TreeView()
-        running_liststore = gtk.ListStore( str )
-        running_treeview.set_model(running_liststore)
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         regd_treeview = gtk.TreeView()
-        regd_liststore = gtk.ListStore( str )
+        regd_liststore = gtk.ListStore( str, str, str )
         regd_treeview.set_model(regd_liststore)
-
-        running_ts = running_treeview.get_selection()
-        running_ts.set_mode( gtk.SELECTION_SINGLE )
-        running_ts.set_select_function( self.get_selected_running_suite, running_liststore )
 
         regd_ts = regd_treeview.get_selection()
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
-        regd_ts.set_select_function( self.get_selected_regd_suite, regd_liststore )
+        regd_ts.set_select_function( self.get_selected_suite, regd_liststore )
 
-        tvc = gtk.TreeViewColumn( 'My Running Suites' )
+        tvc = gtk.TreeViewColumn( 'Name' )
         cr = gtk.CellRendererText()
         cr.set_property( 'cell-background', 'lightblue' )
         tvc.pack_start( cr, False )
         tvc.set_attributes( cr, text=0 )
-        running_treeview.append_column( tvc )
-
-        tvc = gtk.TreeViewColumn( 'My Registered Suites' )
-        cr = gtk.CellRendererText()
-        cr.set_property( 'cell-background', 'yellow' )
-        tvc.pack_start( cr, False )
-        tvc.set_attributes( cr, text=0 )
         regd_treeview.append_column( tvc )
 
-        vbox = gtk.VBox()
+        tvc = gtk.TreeViewColumn( 'Definition' )
+        cr = gtk.CellRendererText()
+        cr.set_property( 'cell-background', 'orange' )
+        tvc.pack_start( cr, False )
+        tvc.set_attributes( cr, text=1 )
+        regd_treeview.append_column( tvc )
+
+        tvc = gtk.TreeViewColumn( 'State' )
+        cr = gtk.CellRendererText()
+        cr.set_property( 'cell-background', 'red' )
+        tvc.pack_start( cr, False )
+        tvc.set_attributes( cr, text=2 )
+        regd_treeview.append_column( tvc )
+
         quit_button = gtk.Button( "Close" )
         quit_button.connect("clicked", self.delete_event, None, None )
-        vbox.pack_start( running_treeview, True )
-        vbox.pack_start( regd_treeview, True )
+
+        vbox = gtk.VBox()
+        sw.add( regd_treeview )
+        vbox.pack_start( sw, True )
         vbox.pack_start( quit_button, False )
-        window.add( vbox )
+
+        window.add(vbox)
         window.show_all()
 
         self.viewer_list = []
 
-        self.updater = chooser_updater( self.owner, running_liststore, regd_liststore, self.host )
+        self.updater = chooser_updater( self.owner, regd_liststore, self.host )
         self.updater.start()
 
     def delete_event( self, w, e, data=None ):
@@ -127,26 +135,22 @@ class chooser:
             item.click_exit( None )
         gtk.main_quit()
 
-    def get_selected_running_suite( self, selection, treemodel ):
+    def get_selected_suite( self, selection, treemodel ):
         iter = treemodel.get_iter( selection )
-        suite = treemodel.get_value( iter, 0 )
-        m = re.match( '(\w+) \(port (\d+)\)', suite )
-        if m:
-            name, port = m.groups()
-            tv = standalone_monitor(name, self.owner, self.host, port, self.imagedir )
-            self.viewer_list.append( tv )
-        return False
 
-    def get_selected_regd_suite( self, selection, treemodel ):
-        iter = treemodel.get_iter( selection )
-        suite = treemodel.get_value( iter, 0 )
-        m = re.match( '(\w+) \((.+)\)', suite )
+        name = treemodel.get_value( iter, 0 )
+        suite_dir = treemodel.get_value( iter, 1 )
+        state = treemodel.get_value( iter, 2 ) 
+
+        m = re.match( 'running \(port (\d+)\)', state )
         if m:
-            name, suite_dir = m.groups()
+            port = m.groups()[0]
+            tv = standalone_monitor(name, self.owner, self.host, port, self.imagedir )
+        else:
             port = None
             # get suite logging directory
             rcfile = prefs( user=self.owner, silent=True )
             logging_dir = rcfile.get_suite_logging_dir( name )
             tv = standalone_monitor_preload(name, self.owner, self.host, port, suite_dir, logging_dir, self.imagedir )
-            self.viewer_list.append( tv )
+        self.viewer_list.append( tv )
         return False
