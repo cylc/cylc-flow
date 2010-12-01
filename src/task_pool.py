@@ -32,8 +32,8 @@ class task_pool:
         self.logging_dir = logging_dir
         self.logging_level = logging_level
         self.state_dump_filename = state_dump_file
-        len = int( config.get( 'state_dump_rolling_archive_length' ))
-        self.state_dump_file = rolling_archive( state_dump_file, len )
+        arclen = int( config.get( 'state_dump_rolling_archive_length' ))
+        self.state_dump_file = rolling_archive( state_dump_file, arclen )
         self.exclude = exclude
         self.include = include
         self.stop_time = stop_time
