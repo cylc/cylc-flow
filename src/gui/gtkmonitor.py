@@ -532,7 +532,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.update_tb( tb, "\n o Exit Cylc Control: ", [bold])
         self.update_tb( tb, "Exit the GUI (this does not shut the suite down).")
 
-        self.update_tb( tb, "\n\nMenu: Locking > ", [bold, red] )
+        self.update_tb( tb, "\n\nMenu: Lock > ", [bold, red] )
         self.update_tb( tb, "\n o Lock: ", [bold])
         self.update_tb( tb, "Tell cylc not to comply with intervention commands." )
         self.update_tb( tb, "\n o Unlock: ", [bold])
@@ -544,7 +544,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
                 "task names, in order to maximize either screen real "
                 "estate or information.")
 
-        self.update_tb( tb, "\n\nMenu: Startup > ", [bold, red] )
+        self.update_tb( tb, "\n\nMenu: Start > ", [bold, red] )
         self.update_tb( tb, "\n o Cold Start At: ", [bold])
         self.update_tb( tb, "Cold start the suite at a given initial cycle time.")
         self.update_tb( tb, "\n o Warm Start At: ", [bold])
@@ -556,7 +556,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
                 "(you can cut-and-paste a state dump filename from the cylc log).")
     
 
-        self.update_tb( tb, "\n\nMenu: Shutdown > ", [bold, red] )
+        self.update_tb( tb, "\n\nMenu: Stop > ", [bold, red] )
         self.update_tb( tb, "\n o Stop: ", [bold])
         self.update_tb( tb, "Stop the suite when all currently running tasks have finished." )
         self.update_tb( tb, "\n o Stop At: ", [bold])
@@ -937,7 +937,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
 
         lock_menu = gtk.Menu()
-        lock_menu_root = gtk.MenuItem( 'Locking' )
+        lock_menu_root = gtk.MenuItem( 'Lock' )
         lock_menu_root.set_submenu( lock_menu )
 
         unlock_item = gtk.MenuItem( 'Unlock Suite' )
@@ -950,7 +950,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
 
         start_menu = gtk.Menu()
-        start_menu_root = gtk.MenuItem( 'Startup' )
+        start_menu_root = gtk.MenuItem( 'Start' )
         start_menu_root.set_submenu( start_menu )
 
         coldstart_item = gtk.MenuItem( 'Cold Start At' )
@@ -970,7 +970,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         restart_from_item.connect( 'activate', self.restart_suite_from_popup )
 
         stop_menu = gtk.Menu()
-        stop_menu_root = gtk.MenuItem( 'Shutdown' )
+        stop_menu_root = gtk.MenuItem( 'Stop' )
         stop_menu_root.set_submenu( stop_menu )
 
         stop_item = gtk.MenuItem( 'Stop' )

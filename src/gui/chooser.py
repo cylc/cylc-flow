@@ -74,12 +74,12 @@ class chooser:
         self.host = host
         self.imagedir = imagedir
 
-        window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        window.set_title("cylc gui" )
-        window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
-        window.set_size_request(600, 200)
-        #window.set_size_request(400, 100)
-        window.connect("delete_event", self.delete_event)
+        self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        self.window.set_title("cylc gui" )
+        self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
+        self.window.set_size_request(600, 200)
+        #self.window.set_size_request(400, 100)
+        self.window.connect("delete_event", self.delete_event)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
@@ -116,24 +116,37 @@ class chooser:
         quit_button = gtk.Button( "Close" )
         quit_button.connect("clicked", self.delete_event, None, None )
 
+        quit_all_button = gtk.Button( "Close All" )
+        quit_all_button.connect("clicked", self.delete_all_event, None, None )
+
         vbox = gtk.VBox()
         sw.add( regd_treeview )
         vbox.pack_start( sw, True )
-        vbox.pack_start( quit_button, False )
 
-        window.add(vbox)
-        window.show_all()
+        hbox = gtk.HBox()
+        hbox.pack_start( quit_button, False )
+        hbox.pack_start( quit_all_button, False )
+
+        vbox.pack_start( hbox, False )
+
+        self.window.add(vbox)
+        self.window.show_all()
 
         self.viewer_list = []
 
         self.updater = chooser_updater( self.owner, regd_liststore, self.host )
         self.updater.start()
 
-    def delete_event( self, w, e, data=None ):
+    def delete_all_event( self, w, e, data=None ):
         self.updater.quit = True
         for item in self.viewer_list:
             item.click_exit( None )
         gtk.main_quit()
+
+    def delete_event( self, w, e, data=None ):
+        self.updater.quit = True
+        self.window.destroy()
+        #gtk.main_quit()
 
     def get_selected_suite( self, selection, treemodel ):
         iter = treemodel.get_iter( selection )
