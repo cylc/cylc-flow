@@ -14,7 +14,7 @@ import re, os, sys, shutil
 import socket
 import logging
 import datetime
-
+import port_scan
 from preferences import prefs
 from execute import execute
 import cycle_time
@@ -162,6 +162,10 @@ class scheduler:
         else:
             self.host = self.options.host
             self.banner[ 'cylc suite host' ] = self.host
+
+        found, port = port_scan.get_port( self.suite_name, self.username, self.host )
+        if found and not self.options.practice_mode:
+            raise SystemExit( "ERROR: " + self.suite_name + " is already running (port " + str( port ) + ")" )
 
         # get mode of operation
         if self.options.dummy_mode and self.options.practice_mode:
