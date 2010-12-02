@@ -44,4 +44,4 @@ if len(args) != 0:
 suites = port_scan.scan( host )
 for entry in suites:
     suite, owner, port = entry
-    print "[" + suite + "] " + owner + "@" + host + ":" + str(port)
+    print suite + " [" + owner + "@" + host + ":" + str(port) + "]"
