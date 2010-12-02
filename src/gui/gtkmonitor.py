@@ -95,12 +95,21 @@ class monitor:
         except Pyro.errors.NamingError:
             warning_dialog( 'Error: failed to set stop time for ' + self.suite ).warn()
 
-    def coldstart_suite( self, bt, window, entry_ctime ):
+    def coldstart_suite( self, bt, window, entry_ctime, button_dummy_mode, stop_ctime_button, entry_stop_ctime ):
         ctime = entry_ctime.get_text()
+        dummy_mode = button_dummy_mode.get_active()
         window.destroy()
-        command = [ 'cylc coldstart ' + self.suite + ' ' + ctime ]
+        command = 'cylc coldstart'
+        if dummy_mode:
+            command += ' -d'
+
+        if stop_ctime_button.get_active():
+            stop_ctime = entry_stop_ctime.get_text()
+            command += ' --until=' + stop_ctime
+
+        command += ' ' + self.suite + ' ' + ctime
         try:
-            subprocess.Popen( command, shell=True )
+            subprocess.Popen( [command], shell=True )
         except OSError, e:
             warning_dialog( 'Error: failed to start ' + self.suite ).warn()
             success = False
@@ -752,6 +761,85 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         actioned, explanation = proxy.purge( task_id, stop, self.owner )
 
+    def greyout( self, checkbutton, widgets ):
+        if checkbutton.get_active():
+            for widget in widgets:
+                widget.set_sensitive(True)
+        else:
+            for widget in widgets:
+                widget.set_sensitive(False)
+
+
+    def coldstart_popup( self, b ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Coldstart" )
+        #window.set_size_request(800, 300)
+
+        vbox = gtk.VBox()
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Initial Cycle Time (YYYYMMDDHH)' )
+        box.pack_start( label, True )
+        ctime_entry = gtk.Entry()
+        ctime_entry.set_max_length(10)
+        box.pack_start (ctime_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Stop Time (YYYYMMDDHH)' )
+        box.pack_start( label, True )
+        stop_ctime_entry = gtk.Entry()
+        stop_ctime_entry.set_max_length(10)
+        stop_ctime_entry.set_sensitive( False )
+        box.pack_start (stop_ctime_entry, True)
+
+        stop_ctime_button = gtk.CheckButton( "Set A Stop Cycle?" )
+        stop_ctime_button.connect("toggled", self.greyout, [ stop_ctime_entry ] )
+        vbox.pack_start( stop_ctime_button ) 
+        vbox.pack_start( box )
+
+        label = gtk.Label( 'dummy clock rate (real seconds per simulated hour)' )
+        clock_rate_entry = gtk.Entry()
+        clock_rate_entry.set_max_length(3)
+        clock_rate_entry.set_text('10')
+        clock_rate_entry.set_sensitive( False )
+        box1 = gtk.HBox()
+        box1.pack_start( label, True )
+        box1.pack_start (clock_rate_entry, True)
+
+        label = gtk.Label( 'dummy clock offset (+/- hours relative to cycle time)' )
+        clock_offset_entry = gtk.Entry()
+        clock_offset_entry.set_max_length(3)
+        clock_offset_entry.set_text('24')
+        clock_offset_entry.set_sensitive( False )
+        box2 = gtk.HBox()
+        box2.pack_start( label, True )
+        box2.pack_start (clock_offset_entry, True)
+
+        dummy_mode_button = gtk.CheckButton( "Dummy Mode" )
+        dummy_mode_button.connect("toggled", self.greyout, [ clock_rate_entry, clock_offset_entry ] )
+        vbox.pack_start( dummy_mode_button ) 
+        vbox.pack_start( box2 )
+        vbox.pack_start( box1 )
+
+        cancel_button = gtk.Button( "Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        start_button = gtk.Button( "Start" )
+        start_button.connect("clicked", self.coldstart_suite, window, ctime_entry, dummy_mode_button, stop_ctime_button, stop_ctime_entry )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( start_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+
     def popup_purge( self, b, task_id ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
@@ -935,7 +1023,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         view_menu.append( heading_full_item )
         heading_full_item.connect( 'activate', self.full_task_headings )
 
-
         lock_menu = gtk.Menu()
         lock_menu_root = gtk.MenuItem( 'Lock' )
         lock_menu_root.set_submenu( lock_menu )
@@ -948,18 +1035,17 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         lock_menu.append( lock_item )
         lock_item.connect( 'activate', self.lock_suite )
 
-
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( 'Start' )
         start_menu_root.set_submenu( start_menu )
 
-        coldstart_item = gtk.MenuItem( 'Cold Start At' )
+        coldstart_item = gtk.MenuItem( 'Cold Start' )
         start_menu.append( coldstart_item )
-        coldstart_item.connect( 'activate', self.ctime_entry_popup, self.coldstart_suite, "Cold Start At" )
+        coldstart_item.connect( 'activate', self.coldstart_popup )
 
-        warmstart_item = gtk.MenuItem( 'Warm Start At' )
+        warmstart_item = gtk.MenuItem( 'Warm Start' )
         start_menu.append( warmstart_item )
-        warmstart_item.connect( 'activate', self.ctime_entry_popup, self.warmstart_suite, "Warm Start At" )
+        warmstart_item.connect( 'activate', self.ctime_entry_popup, self.warmstart_suite, "Warm Start" )
 
         restart_item = gtk.MenuItem( 'Restart' )
         start_menu.append( restart_item )
