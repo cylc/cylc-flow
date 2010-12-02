@@ -328,7 +328,8 @@ GENERAL
 
 __________
 LOCKSERVER
-  (currently no known issues)
+
+* allow for a different lockserver host? (probably not). 
 
 ___
 GUI

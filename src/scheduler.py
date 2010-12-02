@@ -42,8 +42,7 @@ class scheduler:
         # PROVIDE IN DERIVED CLASSES:
         # self.parser = OptionParser( usage )
 
-        self.parser.set_defaults( host= socket.getfqdn(),
-                dummy_mode=False, practice_mode=False,
+        self.parser.set_defaults( dummy_mode=False, practice_mode=False,
                 include=None, exclude=None, debug=False,
                 clock_rate=10, clock_offset=24, dummy_run_length=20 )
 
@@ -66,10 +65,6 @@ class scheduler:
                 "(this has the same effect as deleting all *other* tasks from "
                 "configured/task_list.py in the suite definition directory).",
                 metavar="LIST", action="store", dest='include' )
-
-        self.parser.add_option( "--host",
-                help="suite host (defaults to local host name).",
-                metavar="HOSTNAME", action="store", dest="host" )
 
         self.parser.add_option( "-d", "--dummy-mode",
                 help="Replace each task with a program that masquerades "
@@ -156,12 +151,8 @@ class scheduler:
         self.banner[ 'suite name' ] = self.suite_name
 
         # get suite hostname
-        if not self.options.host:
-            # (this won't happen; defaults to local hostname)
-            self.parser.error( "Required: cylc suite hostname" )
-        else:
-            self.host = self.options.host
-            self.banner[ 'cylc suite host' ] = self.host
+        self.host= socket.getfqdn()
+        self.banner[ 'cylc suite host' ] = self.host
 
         found, port = port_scan.get_port( self.suite_name, self.username, self.host )
         if found and not self.options.practice_mode:
@@ -297,7 +288,7 @@ class scheduler:
             self.use_lockserver = False
 
         if self.use_lockserver:
-            # check now that my lockserver is running
+            # check that a lockserver is running under my username 
             self.lockserver_port = lockserver( self.username, self.host ).ping()
 
     def get_suite_def_dir( self ):
