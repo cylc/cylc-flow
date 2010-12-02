@@ -19,7 +19,7 @@
     generates restart files for just the next cycle.
 
 %TYPE
-    tied
+    tied, dummy
 
 %HOURS
     0,6,12,18

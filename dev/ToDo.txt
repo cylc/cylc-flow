@@ -1,6 +1,20 @@
 _______
 GENERAL
 
+* allow to ignore task owners via suite.rc or command option
+
+* dummy out tasks via rc file instead of / as well as %TYPE
+
+* document how to re-run partial suite over existing data:
+    - exclude some tasks
+    - insert a new task to generate the outputs representing
+      the existing data, and/OR
+    - dummy out the tasks that generated the existing data.
+
+* configure by suite name
+
+* allow inclusion as well as exclusion of tasks in suite.rc
+
 * --port= does not prevent port scan for lockserver?
 
 * separate cold and warm start into distinct classes (currently warm is
