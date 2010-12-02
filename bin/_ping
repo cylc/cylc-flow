@@ -72,5 +72,5 @@ else:
     if found:
         print "[" + suite + "] " + owner + "@" + host + ":" + str(port)
     else:
-        print "[" + suite + "] IS NOT RUNNING on " + host
+        print "[" + suite + "] " + owner + "@" + host + " IS NOT RUNNING"
         sys.exit(1)
