@@ -33,9 +33,9 @@ def right_justify( short, long ):
 usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
 Usage: 2/ cylcutil housekeeping [options] CONFIG
 
-Cycle time based file management: delete, move, or copy, cycle-time
-labelled files or directories with cycle times name OFFSET hours or more
-earlier than the current or given cycle time. 
+Cycle based file management: delete, move, or copy, files or directories
+with a cycle time in their file or directory names that is at least
+OFFSET hours earlier than the current or given cycle time. 
 
 The CONFIG file format is one or more of lines of:
 
@@ -91,6 +91,8 @@ Examples:
  they MUST be of the (?:...) type to avoid creating a new match group.
  E.g.:
  4/ 'foo-(\d{10})\.(?:nc|txt)' -> 'foo-2010122318.nc', 'foo-2010090806-bar.txt'
+Use start and end of string markers to force exact (non-partial) matches:
+ E.g. '^foo-(\d{10})-bar.nc$' instead of 'foo-(\d{10})-bar.nc'. 
 
 SAFE ARCHIVING: The [move] operation is implemented by Python's
 shutils.move() which uses 'rename' on the local disk partition and
