@@ -15,6 +15,7 @@ import time, os, re, sys
 from CylcOptionParsers import NoPromptOptionParser_u
 import cylc_pyro_client
 from cycle_time import _rt_to_dt, is_valid
+from execute import execute
 
 class color_rotator:
     def __init__( self ):
@@ -1278,8 +1279,14 @@ class standalone_monitor_preload( standalone_monitor ):
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
         self.logdir = logging_dir
         self.suite_dir = suite_dir
-        standalone_monitor.__init__(self, suite, owner, host, port, imagedir )
+
+        # make sure the suite is configured (otherwise there will be no
+        # task list to load.
+        execute( [ '_configure', self.suite_dir ] )
  
+        standalone_monitor.__init__(self, suite, owner, host, port, imagedir )
+
+
     def load_task_list( self ):
         sys.path.append( os.path.join( self.suite_dir, 'configured'))
         try:

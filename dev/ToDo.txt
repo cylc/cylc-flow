@@ -346,8 +346,6 @@ LOCKSERVER
 ___
 GUI
 
-* chooser fails if you click on a suite that has not been configured.
-
 * currently scans for port on every command - instead should store port
   once found.
 
