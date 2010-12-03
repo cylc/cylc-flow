@@ -11,8 +11,6 @@ GENERAL
       the existing data, and/OR
     - dummy out the tasks that generated the existing data.
 
-* configure by suite name
-
 * allow inclusion as well as exclusion of tasks in suite.rc
 
 * --port= does not prevent port scan for lockserver?
