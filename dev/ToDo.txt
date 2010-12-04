@@ -1,6 +1,13 @@
 _______
 GENERAL
 
+* use passphrase authentication in the default pyro connection validator
+ (see the Pyro userguide security page).
+
+* not the PYRO_MAXCONNECTION config item, default 200 - the max number
+  of simultaneous connections to a single pyro server. TEST THIS?!
+  The default connection validator checks for this.
+
 * allow to ignore task owners via suite.rc or command option
 
 * dummy out tasks via rc file instead of / as well as %TYPE
