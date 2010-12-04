@@ -79,21 +79,30 @@ class monitor:
         except Pyro.errors.NamingError:
             warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
-    def stop_suite( self, bt ):
+    def stopsuite( self, bt, window, stop_rb, stopat_rb, stopnow_rb, stoptime_entry ):
+        stop = False
+        stopat = False
+        stopnow = False
+        if stop_rb.get_active():
+            stop = True
+        elif stopat_rb.get_active():
+            stopat = True
+            stoptime = stoptime_entry.get_text()
+        elif stopnow_rb.get_active():
+            stopnow = True
+
+        window.destroy()
+
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-            god.shutdown( self.owner )
+            if stop:
+                god.shutdown( self.owner )
+            elif stopat:
+                god.set_stop_time( stoptime, self.owner )
+            elif stopnow:
+                god.shutdown_now( self.owner )
         except Pyro.errors.NamingError:
             warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
-
-    def stop_suite_at( self, bt, window, entry_ctime ):
-        ctime = entry_ctime.get_text()
-        window.destroy()
-        try:
-            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-            god.set_stop_time( ctime, self.owner )
-        except Pyro.errors.NamingError:
-            warning_dialog( 'Error: failed to set stop time for ' + self.suite ).warn()
 
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, restart_rb,
@@ -121,19 +130,11 @@ class monitor:
         if restart_rb.get_active():
             if statedump_entry.get_text():
                 command += ' ' + statedump_entry.get_text()
-
         try:
             subprocess.Popen( [command], shell=True )
         except OSError, e:
             warning_dialog( 'Error: failed to start ' + self.suite ).warn()
             success = False
-
-    def stop_suite_now( self, bt ):
-        try:
-            god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-            god.shutdown_now( self.owner )
-        except Pyro.errors.NamingError:
-            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
     def unlock_suite( self, bt ):
         try:
@@ -185,7 +186,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         view.collapse_all()
 
     def no_task_headings( self, w ):
-        #self.led_headings = ['Cycle Time' ] + ['-'] * len( self.task_list )
         self.led_headings = ['Cycle Time' ] + [''] * len( self.task_list )
         self.reset_led_headings()
 
@@ -408,7 +408,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
 
         return True
-
 
     def create_flatlist_panel( self ):
         self.fl_liststore = gtk.ListStore(str, str, str, str)
@@ -745,6 +744,61 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         actioned, explanation = proxy.purge( task_id, stop, self.owner )
 
+
+    def stopsuite_popup( self, b ):
+        window = gtk.Window()
+        window.modify_bg( gtk.STATE_NORMAL, 
+                gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_border_width(5)
+        window.set_title( "Start " + self.suite )
+
+        vbox = gtk.VBox()
+
+        box = gtk.HBox()
+        stop_rb = gtk.RadioButton( None, "Stop" )
+        box.pack_start (stop_rb, True)
+        stopat_rb = gtk.RadioButton( stop_rb, "Stop At" )
+        box.pack_start (stopat_rb, True)
+        stopnow_rb = gtk.RadioButton( stop_rb, "Stop NOW" )
+        box.pack_start (stopnow_rb, True)
+        stop_rb.set_active(True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Stop At Cycle Time (YYYYMMDDHH)' )
+        box.pack_start( label, True )
+        stoptime_entry = gtk.Entry()
+        stoptime_entry.set_max_length(10)
+        stoptime_entry.set_sensitive(False)
+        box.pack_start (stoptime_entry, True)
+        vbox.pack_start( box )
+
+        stop_rb.connect( "toggled", self.stop_method, "stop", stoptime_entry )
+        stopat_rb.connect( "toggled", self.stop_method, "stopat", stoptime_entry )
+        stopnow_rb.connect(   "toggled", self.stop_method, "stopnow", stoptime_entry )
+
+        cancel_button = gtk.Button( "Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        start_button = gtk.Button( "Do It" )
+        start_button.connect("clicked", self.stopsuite, 
+                window, stop_rb, stopat_rb, stopnow_rb,
+                stoptime_entry )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( start_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def stop_method( self, b, meth, stoptime_entry ):
+        if meth == 'stop' or meth == 'stopnow':
+            stoptime_entry.set_sensitive( False )
+        else:
+            stoptime_entry.set_sensitive( True )
+
     def startup_method( self, b, meth, ctime_entry, statedump_entry ):
         if meth == 'cold' or meth == 'warm':
             statedump_entry.set_sensitive( False )
@@ -1039,15 +1093,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         stop_item = gtk.MenuItem( 'Stop' )
         start_menu.append( stop_item )
-        stop_item.connect( 'activate', self.stop_suite )
-
-        stop_at_item = gtk.MenuItem( 'Stop At' )
-        start_menu.append( stop_at_item )
-        stop_at_item.connect( 'activate', self.ctime_entry_popup, self.stop_suite_at, "Stop Suite At" )
-
-        stop_now_item = gtk.MenuItem( 'Stop NOW' )
-        start_menu.append( stop_now_item )
-        stop_now_item.connect( 'activate', self.stop_suite_now )
+        stop_item.connect( 'activate', self.stopsuite_popup )
 
         pause_item = gtk.MenuItem( 'Pause' )
         start_menu.append( pause_item )
@@ -1073,7 +1119,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         help_menu.append( about_item )
         about_item.connect( 'activate', self.about )
       
-
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( lock_menu_root )
