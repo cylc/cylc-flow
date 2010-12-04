@@ -59,11 +59,9 @@ class monitor:
     def delete_event(self, widget, event, data=None):
         self.lvp.quit()
         self.t.quit = True
-
         for q in self.quitters:
             #print "calling quit on ", q
             q.quit()
-
         #print "BYE from main thread"
         return False
 
@@ -1165,14 +1163,29 @@ cylc gui is a real time suite control and monitoring tool for cylc.
     #            break
     #        time.sleep(1)
 
-    def load_task_list( self ):
-        #self.block_till_connected()
-        ss = self.get_pyro( 'state_summary' )
-        self.logdir = ss.get_config( 'logging_dir' ) 
-        self.task_list = ss.get_config( 'task_list' )
-        self.shortnames = ss.get_config( 'task_list_shortnames' )
+    #def load_task_list( self ):
+    #    #self.block_till_connected()
+    #    ss = self.get_pyro( 'state_summary' )
+    #    self.logdir = ss.get_config( 'logging_dir' ) 
+    #    self.task_list = ss.get_config( 'task_list' )
+    #    self.shortnames = ss.get_config( 'task_list_shortnames' )
 
-    def __init__(self, suite, owner, host, port, imagedir ):
+    def preload_task_list( self ):
+        sys.path.append( os.path.join( self.suite_dir, 'configured'))
+        try:
+            import task_list
+        except ImportError:
+            raise SystemExit( "Error: unable to load task list (suite not configured?)" )
+        self.task_list = task_list.task_list
+        self.shortnames = task_list.task_list_shortnames
+
+    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
+        self.logdir = logging_dir
+        self.suite_dir = suite_dir
+
+        # configure to ensure there is a task list to load.
+        execute( [ '_configure', self.suite_dir ] )
+ 
         self.suite = suite
         self.host = host
         self.port = port
@@ -1188,7 +1201,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.log_colors = color_rotator()
 
         # Get list of tasks in the suite
-        self.load_task_list()
+        self.preload_task_list()
 
         self.translate_task_names( self.shortnames )
 
@@ -1233,9 +1246,13 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.t.start()
 
 class standalone_monitor( monitor ):
-    def __init__(self, suite, owner, host, port, imagedir ):
+    # For a monitor not launched by the chooser: 
+    # 1/ call gobject.threads_init() on startup
+    # 2/ call gtk.main_quit() on exit
+
+    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
         gobject.threads_init()
-        monitor.__init__(self, suite, owner, host, port, imagedir )
+        monitor.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir )
  
     def delete_event(self, widget, event, data=None):
         monitor.delete_event( self, widget, event, data )
@@ -1244,24 +1261,3 @@ class standalone_monitor( monitor ):
     def click_exit( self, foo ):
         monitor.click_exit( self, foo )
         gtk.main_quit()
-
-class standalone_monitor_preload( standalone_monitor ):
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
-        self.logdir = logging_dir
-        self.suite_dir = suite_dir
-
-        # make sure the suite is configured (otherwise there will be no
-        # task list to load.
-        execute( [ '_configure', self.suite_dir ] )
- 
-        standalone_monitor.__init__(self, suite, owner, host, port, imagedir )
-
-
-    def load_task_list( self ):
-        sys.path.append( os.path.join( self.suite_dir, 'configured'))
-        try:
-            import task_list
-        except ImportError:
-            raise SystemExit( "Error: unable to load task list (suite not configured?)" )
-        self.task_list = task_list.task_list
-        self.shortnames = task_list.task_list_shortnames

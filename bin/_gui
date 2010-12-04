@@ -7,7 +7,7 @@ from optparse import OptionParser
 from chooser import chooser
 from registration import registrations
 from preferences import prefs
-from gtkmonitor import standalone_monitor, standalone_monitor_preload
+from gtkmonitor import standalone_monitor
 
 import socket
 
@@ -80,6 +80,6 @@ SUITE                  Registered name of the target suite.""")
 
         # get suite logging directory
         logging_dir = rcfile.get_suite_logging_dir( suite )
-        app = standalone_monitor_preload( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+        app = standalone_monitor( suite, owner, host, port, suite_dir, logging_dir, imagedir )
 
     gtk.main()

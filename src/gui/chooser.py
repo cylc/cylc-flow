@@ -7,7 +7,7 @@ import threading
 from port_scan import scan_my_suites
 from registration import registrations
 from preferences import prefs
-from gtkmonitor import standalone_monitor, standalone_monitor_preload
+from gtkmonitor import monitor
 
 class chooser_updater(threading.Thread):
 
@@ -79,7 +79,7 @@ class chooser:
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(600, 200)
         #self.window.set_size_request(400, 100)
-        self.window.connect("delete_event", self.delete_event)
+        self.window.connect("delete_event", self.delete_all_event)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
@@ -113,10 +113,11 @@ class chooser:
         tvc.set_attributes( cr, text=2 )
         regd_treeview.append_column( tvc )
 
-        quit_button = gtk.Button( "Close" )
-        quit_button.connect("clicked", self.delete_event, None, None )
-
-        quit_all_button = gtk.Button( "Close All" )
+        # NOTE THAT WE CANNOT LEAVE ANY VIEWER WINDOWS OPEN WHEN WE
+        # CLOSE THE CHOOSER WINDOW because when launched by the chooser 
+        # they are all under the same gtk main loop (?) and do not
+        # call gtk_main.quit() unless launched as standalone viewers.
+        quit_all_button = gtk.Button( "Close All Windows" )
         quit_all_button.connect("clicked", self.delete_all_event, None, None )
 
         vbox = gtk.VBox()
@@ -124,7 +125,6 @@ class chooser:
         vbox.pack_start( sw, True )
 
         hbox = gtk.HBox()
-        hbox.pack_start( quit_button, False )
         hbox.pack_start( quit_all_button, False )
 
         vbox.pack_start( hbox, False )
@@ -143,11 +143,6 @@ class chooser:
             item.click_exit( None )
         gtk.main_quit()
 
-    def delete_event( self, w, e, data=None ):
-        self.updater.quit = True
-        self.window.destroy()
-        #gtk.main_quit()
-
     def get_selected_suite( self, selection, treemodel ):
         iter = treemodel.get_iter( selection )
 
@@ -156,14 +151,12 @@ class chooser:
         state = treemodel.get_value( iter, 2 ) 
 
         m = re.match( 'RUNNING \(port (\d+)\)', state )
+        port = None
         if m:
             port = m.groups()[0]
-            tv = standalone_monitor(name, self.owner, self.host, port, self.imagedir )
-        else:
-            port = None
-            # get suite logging directory
-            rcfile = prefs( user=self.owner, silent=True )
-            logging_dir = rcfile.get_suite_logging_dir( name )
-            tv = standalone_monitor_preload(name, self.owner, self.host, port, suite_dir, logging_dir, self.imagedir )
+        # get suite logging directory
+        rcfile = prefs( user=self.owner, silent=True )
+        logging_dir = rcfile.get_suite_logging_dir( name )
+        tv = monitor(name, self.owner, self.host, port, suite_dir, logging_dir, self.imagedir )
         self.viewer_list.append( tv )
         return False
