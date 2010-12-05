@@ -12,10 +12,19 @@ item = value ; comment
 
 ;- COMMENTS start with ';'
 ;   - Trailing comments must have whitespace after the ';'
-;- Multiline values: are not permitted.
 ;- The '%' character must be doubled up: 
 ;     MY_TASK_ID = foo%%2010010106 becomes MY_TASK_ID=foo%2010010106
-;- List values may be comma and/or space separated (cylc-specific).
+
+;- The Python configparser module allows for CONTINUATION LINES wherein
+;  the second and subsequent lines must be indented, but note that this
+;  yields a newline character embedded in the parsed value.
+;  Cylc handles this in the case of lists of task names, however; i.e.
+;  lists of task names may be comma and/or space separated and may be
+;  spread over multiple lines if the continuation lines are indented.
+;  E.g.:
+tasks excluded at startup = foo,
+    bar,
+    baz
 
 ;_________________________________________
 ;*** CYLC CONFIGURATION SECTIONS AND ITEMS

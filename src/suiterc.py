@@ -124,7 +124,7 @@ class suiterc:
 
     def get_coldstart_tasks( self ):
         tlist = self.get( 'general', 'coldstart tasks' )
-        return re.split( r', *| +', tlist )
+        return re.split( r',\s*|\s+', tlist )
 
     def get_global_environment( self ):
         return self.config.items( 'global environment' )
@@ -135,7 +135,7 @@ class suiterc:
         if tlist == '':
             return []
         else:
-            return re.split( r', *| +', tlist )
+            return re.split( r',\s*|\s+', tlist )
 
     def get_tasks_excluded( self ):
         tlist = self.get('general', 'tasks excluded at startup')
@@ -143,7 +143,7 @@ class suiterc:
         if tlist == '':
             return []
         else:
-            return re.split( r', *| +', tlist )
+            return re.split( r',\s*|\s+', tlist )
 
     def get_tasks_dummied_out( self ):
         tlist = self.get('general', 'tasks to dummy out')
@@ -151,12 +151,12 @@ class suiterc:
         if tlist == '':
             return []
         else:
-            return re.split( r', *| +', tlist )
+            return re.split( r',\s*|\s+', tlist )
 
     def get_task_insertion_groups( self ):
         xgroups = {}
         for (name, val) in self.config.items('task insertion groups'):
-            xgroups[ name ] = re.split( r', *| +', val )
+            xgroups[ name ] = re.split( r',\s*|\s+', val )
         return xgroups
 
     def get_default_job_submission( self ):
@@ -167,7 +167,7 @@ class suiterc:
         for (name, val) in self.config.items('job submission'):
             if name == 'default':
                 continue
-            xgroups[ name ] = re.split( r', *| +', val )
+            xgroups[ name ] = re.split( r',\s*|\s+', val )
         return xgroups
 
     def get_logging_level( self ):
