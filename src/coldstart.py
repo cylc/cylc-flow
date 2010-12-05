@@ -49,6 +49,8 @@ class coldstart( task_pool ):
         included_by_rc = self.config.get( 'included_tasks' )
         excluded_by_rc = self.config.get( 'excluded_tasks' )
 
+        dummied_out = self.config.get( 'dummied_tasks' )
+
         include_list_supplied = False
         if len( included_by_commandline ) > 0 or len( included_by_rc ) > 0:
             include_list_supplied = True
@@ -79,4 +81,6 @@ class coldstart( task_pool ):
                 del itask
  
             else:
+                if not self.dummy_mode and name in dummied_out:
+                    itask.dummy_out()
                 self.insert( itask )

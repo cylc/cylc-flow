@@ -18,8 +18,6 @@ and restart.
 
 * allow to ignore task owners via suite.rc or command option
 
-* dummy out tasks via rc file instead of / as well as %TYPE
-
 * document how to re-run partial suite over existing data:
     - exclude some tasks
     - insert a new task to generate the outputs representing

@@ -73,6 +73,8 @@ class suiterc:
         #Example: self.config.set( 'general', 'tasks excluded at startup', 'A,B,C,D' )
         self.config.set( 'general', 'tasks included at startup', '' )
         #Example: self.config.set( 'general', 'tasks included at startup', 'A,B,C,D' )
+        self.config.set( 'general', 'tasks to dummy out', '' )
+        #Example: self.config.set( 'general', 'tasks to dummy out', 'D,E,F' )
 
         self.config.add_section( 'task insertion groups' )
         #Example: self.config.set( 'task insertion groups', 'coldstart', 'A,B,C,D' )
@@ -137,6 +139,14 @@ class suiterc:
 
     def get_tasks_excluded( self ):
         tlist = self.get('general', 'tasks excluded at startup')
+        tlist.rstrip()
+        if tlist == '':
+            return []
+        else:
+            return re.split( r', *| +', tlist )
+
+    def get_tasks_dummied_out( self ):
+        tlist = self.get('general', 'tasks to dummy out')
         tlist.rstrip()
         if tlist == '':
             return []

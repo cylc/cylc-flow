@@ -47,6 +47,7 @@ class config:
         self.items['task_groups' ] = rc.get_task_insertion_groups()
         self.items['included_tasks' ] = rc.get_tasks_included()
         self.items['excluded_tasks' ] = rc.get_tasks_excluded()
+        self.items['dummied_tasks' ] = rc.get_tasks_dummied_out()
         self.items['coldstart_tasks' ] = rc.get_coldstart_tasks()
         self.items['joblog_dir' ] = rc.get( 'general', 'job log directory' )
 

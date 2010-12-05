@@ -32,6 +32,7 @@ import logging
 import Pyro.core
 from copy import deepcopy
 from dynamic_instantiation import get_object
+from collections import deque
 
 global state_changed
 #state_changed = False
@@ -57,6 +58,7 @@ state_changed = True
 class task( Pyro.core.ObjBase ):
     
     intercycle = False
+    dummy_me_out = False
 
     @classmethod
     def describe( cls ):
@@ -132,11 +134,14 @@ class task( Pyro.core.ObjBase ):
             # this is currently an error; scripting-only tasks
             # are given the command /bin/true by configure.
             raise
- 
+
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
                 ( self.id, self.external_task, self.env_vars, self.directives, 
                         self.extra_scripting, self.logfiles, self.__class__.owner, self.__class__.remote_host )
 
+        if self.__class__.dummy_me_out:
+            self.dummy_out()
+ 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" ) 
 
@@ -365,6 +370,17 @@ class task( Pyro.core.ObjBase ):
         summary[ 'logfiles' ] = self.logfiles.get_paths()
  
         return summary
+
+    def dummy_out( self ):
+        print 'DUMMYING OUT', self.name
+        # replace my external task with /bin/true
+        self.external_task =  'cylc-wrapper /bin/true'
+        self.external_tasks = deque()
+        # external task has already been given to my launcher
+        self.external_tasks.append( self.external_task ) 
+        self.launcher.task = self.external_task
+        # ensure that successors are dummied out too via __init__.
+        self.__class__.dummy_me_out = True
 
     def not_fully_satisfied( self ):
         if not self.prerequisites.all_satisfied():

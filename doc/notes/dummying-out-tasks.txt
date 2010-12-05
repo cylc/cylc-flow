@@ -1,0 +1,20 @@
+
+Dummying Out Tasks:
+
+VIA TASKDEF FILE:
+The "dummy" task type modifier is no longer implemented as an actual
+type modifier like "contact" etc. Instead, the task class generator just
+replaces the specified external task with /bin/true in the generated
+task class definition. Thus every instance created will be dummied out
+until the taskdef is modified to un-dummy it and suite is reconfigured.
+
+VIA THE SUITE RC FILE:
+In order to have the same effect as above, this is implemented as follows:
+When tasks are loaded at startup, if they appear in the suite.rc dummy list 
+the external task is replaced with /bin/true in the task instance *and* 
+a task class variable "dummy_me_out" is set so that subsequent successors
+to the instance will dummy themselves out at creation time. This works
+for cold and warm starts, and restarts, because the suite.rc dummy list
+is checked in both cases.
+
+
