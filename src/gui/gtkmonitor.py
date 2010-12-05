@@ -377,15 +377,15 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         menu.append( info_item )
         info_item.connect( 'activate', self.popup_requisites, task_id )
 
-        reset_ready_item = gtk.MenuItem( 'Reset to Ready (trigger immediately)' )
+        reset_ready_item = gtk.MenuItem( 'Reset to Ready (i.e. trigger immediately)' )
         menu.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_to_ready, task_id )
 
-        reset_waiting_item = gtk.MenuItem( 'Reset to Waiting (prerequisites unsatisfied)' )
+        reset_waiting_item = gtk.MenuItem( 'Reset to Waiting (i.e. prerequisites unsatisfied)' )
         menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_to_waiting, task_id )
 
-        reset_finished_item = gtk.MenuItem( 'Reset to Finished (outputs completed)' )
+        reset_finished_item = gtk.MenuItem( 'Reset to Finished (i.e. outputs completed)' )
         menu.append( reset_finished_item )
         reset_finished_item.connect( 'activate', self.reset_task_to_finished, task_id )
 
@@ -523,7 +523,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
                 "supplied by the cylc command line; see 'cylc help').")
 
         self.update_tb( tb, "\n\nMenu: File > ", [bold, red] )
-        self.update_tb( tb, "\n o Exit Cylc Control: ", [bold])
+        self.update_tb( tb, "\n o Exit Suite GUI: ", [bold])
         self.update_tb( tb, "Exit the GUI (this does not shut the suite down).")
 
         self.update_tb( tb, "\n\nMenu: Lock > ", [bold, red] )
@@ -538,25 +538,12 @@ cylc gui is a real time suite control and monitoring tool for cylc.
                 "task names, in order to maximize either screen real "
                 "estate or information.")
 
-        self.update_tb( tb, "\n\nMenu: Start > ", [bold, red] )
-        self.update_tb( tb, "\n o Start At: ", [bold])
-        self.update_tb( tb, "Cold or Warm Start the suite at a given initial cycle time.")
-        self.update_tb( tb, "\n o Restart: ", [bold])
-        self.update_tb( tb, "Restart the suite from its most recent previous state.")
-        self.update_tb( tb, "\n o Restart From: ", [bold])
-        self.update_tb( tb, "Restart the suite from a given previous state "
-                "(you can cut-and-paste a state dump filename from the cylc log).")
-    
-
-        self.update_tb( tb, "\n\nMenu: Stop > ", [bold, red] )
+        self.update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
+        self.update_tb( tb, "\n o Start or Restart: ", [bold])
+        self.update_tb( tb, "Cold Start, Warm Start, or Restart the suite.")
         self.update_tb( tb, "\n o Stop: ", [bold])
-        self.update_tb( tb, "Stop the suite when all currently running tasks have finished." )
-        self.update_tb( tb, "\n o Stop At: ", [bold])
-        self.update_tb( tb, "Stop the suite at a given future cycle time." )
-        self.update_tb( tb, "\n o Stop NOW: ", [bold])
-        self.update_tb( tb, "Shut the suite down immediately (running tasks will be orphaned)." )
-
-        self.update_tb( tb, "\n\nMenu: Other > ", [bold, red] )
+        self.update_tb( tb, "Shut down the suite now, or after a given cycle, or "
+                "when all currently running tasks have finished." )
         self.update_tb( tb, "\n o Pause: ", [bold])
         self.update_tb( tb, "Refrain from submitting tasks that are ready to run.")
         self.update_tb( tb, "\n o Resume: ", [bold])
@@ -780,7 +767,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        start_button = gtk.Button( "Do It" )
+        start_button = gtk.Button( "Stop Suite " + self.suite )
         start_button.connect("clicked", self.stopsuite, 
                 window, stop_rb, stopat_rb, stopnow_rb,
                 stoptime_entry )
@@ -900,7 +887,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        start_button = gtk.Button( "Start" )
+        start_button = gtk.Button( "Start Suite " + self.suite )
         start_button.connect("clicked", self.startsuite, 
                 window, coldstart_rb, warmstart_rb, restart_rb,
                 ctime_entry, stoptime_entry, 
@@ -1050,7 +1037,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         file_menu_root = gtk.MenuItem( 'File' )
         file_menu_root.set_submenu( file_menu )
 
-        exit_item = gtk.MenuItem( 'Exit Cylc GUI' )
+        exit_item = gtk.MenuItem( 'Exit ' + self.suite + ' GUI' )
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
@@ -1075,11 +1062,11 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         lock_menu_root = gtk.MenuItem( 'Lock' )
         lock_menu_root.set_submenu( lock_menu )
 
-        unlock_item = gtk.MenuItem( 'Unlock Suite' )
+        unlock_item = gtk.MenuItem( 'Unlock ' + self.suite )
         lock_menu.append( unlock_item )
         unlock_item.connect( 'activate', self.unlock_suite )
 
-        lock_item = gtk.MenuItem( 'Lock Suite' )
+        lock_item = gtk.MenuItem( 'Lock ' + self.suite )
         lock_menu.append( lock_item )
         lock_item.connect( 'activate', self.lock_suite )
 
@@ -1087,7 +1074,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         start_menu_root = gtk.MenuItem( 'Suite' )
         start_menu_root.set_submenu( start_menu )
 
-        start_item = gtk.MenuItem( 'Start' )
+        start_item = gtk.MenuItem( 'Start or Restart' )
         start_menu.append( start_item )
         start_item.connect( 'activate', self.startsuite_popup )
 
@@ -1103,7 +1090,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
 
-        insert_item = gtk.MenuItem( 'Insert Task or Group' )
+        insert_item = gtk.MenuItem( 'Insert' )
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
 
