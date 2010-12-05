@@ -1121,6 +1121,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
       
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
+        self.menu_bar.append( view_menu_root )
         self.menu_bar.append( lock_menu_root )
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
