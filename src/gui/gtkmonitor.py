@@ -852,11 +852,11 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         exin_group = option_group()
         exin_group.add_entry( 
-                'List of Tasks to Exclude (comma separated)',
+                'Tasks To Exclude At Startup (comma separated)',
                 '--exclude=',
                 )
         exin_group.add_entry( 
-                'List of Tasks to Include (comma separated)',
+                'Tasks To Include At Startup (comma separated)',
                 '--include=',
                 )
         exin_group.pack(vbox)

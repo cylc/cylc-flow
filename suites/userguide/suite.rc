@@ -4,7 +4,8 @@ allow simultaneous instances = True
 maximum runahead (hours) = 24
 coldstart tasks = startup, coldstart
 job log directory =
-;tasks not instantiated at startup = A, B, C
+tasks included at startup = A, B, C,D
+tasks excluded at startup = D,E
 state dump rolling archive length = 40 
 
 [task insertion groups]

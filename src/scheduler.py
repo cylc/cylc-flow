@@ -186,8 +186,9 @@ class scheduler:
             if not cycle_time.is_valid( self.pause_time ):
                 self.parser.error( "invalid cycle time: " + self.pause_time )
 
-        if self.options.include and self.options.exclude:
-            self.parser.error( '--include and --exclude are mutually exclusive' )
+        # These options are no longer mutually exclusive.
+        #if self.options.include and self.options.exclude:
+        #    self.parser.error( '--include and --exclude are mutually exclusive' )
 
         self.include_tasks = []
         if self.options.include:

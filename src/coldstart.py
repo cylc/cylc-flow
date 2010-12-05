@@ -30,8 +30,8 @@ class coldstart( task_pool ):
         #--
         
         start_time = self.start_time
-        exclude = self.exclude
-        include = self.include
+        excluded_by_commandline = self.exclude
+        included_by_commandline = self.include
 
         # set clock before using log (affects dummy mode only)
         self.clock.set( start_time )
@@ -46,19 +46,20 @@ class coldstart( task_pool ):
         task_list = list( set( task_list ) )
 
         coldstart_tasks = self.config.get( 'coldstart_tasks' )
-        non_startup_tasks = self.config.get( 'non_startup_tasks' )
+        included_by_rc = self.config.get( 'included_tasks' )
+        excluded_by_rc = self.config.get( 'excluded_tasks' )
 
+        include_list_supplied = False
+        if len( included_by_commandline ) > 0 or len( included_by_rc ) > 0:
+            include_list_supplied = True
+            included_tasks = included_by_commandline + included_by_rc
 
         for name in task_list:
-
-            if name in non_startup_tasks:
+            if name in excluded_by_commandline or name in excluded_by_rc:
                 continue
 
-            if name in exclude:
-                continue
-
-            if len( include ) > 0:
-                if name not in include:
+            if include_list_supplied:
+                if name not in included_tasks:
                     continue
             
             itask = get_object( 'task_classes', name )\

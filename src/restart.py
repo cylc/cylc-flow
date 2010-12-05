@@ -33,11 +33,19 @@ class restart( task_pool ):
 
         filename = self.initial_state_dump
         no_reset = self.no_reset
-        exclude = self.exclude
-        include = self.include
+        excluded_by_commandline = self.exclude
+        included_by_commandline = self.include
 
         print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
         self.log.info( 'Loading initial state from ' + filename )
+
+        included_by_rc = self.config.get( 'included_tasks' )
+        excluded_by_rc = self.config.get( 'excluded_tasks' )
+
+        include_list_supplied = False
+        if len( included_by_commandline ) > 0 or len( included_by_rc ) > 0:
+            include_list_supplied = True
+            included_tasks = included_by_commandline + included_by_rc
 
         # The state dump file format is:
         # suite time : <time>
@@ -93,11 +101,11 @@ class restart( task_pool ):
             ( id, state ) = line.split(' : ')
             ( name, c_time ) = id.split('%')
 
-            if name in exclude:
+            if name in excluded_by_commandline or name in excluded_by_rc:
                 continue
 
-            if len( include ) > 0:
-                if name not in include:
+            if include_list_supplied:
+                if name not in included_tasks:
                     continue
 
             itask = get_object( 'task_classes', name )\

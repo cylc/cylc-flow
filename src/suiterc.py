@@ -69,8 +69,10 @@ class suiterc:
         self.config.set( 'general', 'state dump rolling archive length', '10' )
 
         self.config.set( 'general', 'coldstart tasks', '' )
-        self.config.set( 'general', 'tasks not instantiated at startup', '' )
-        #Example: self.config.set( 'general', 'tasks not instantiated at startup', 'A,B,C,D' )
+        self.config.set( 'general', 'tasks excluded at startup', '' )
+        #Example: self.config.set( 'general', 'tasks excluded at startup', 'A,B,C,D' )
+        self.config.set( 'general', 'tasks included at startup', '' )
+        #Example: self.config.set( 'general', 'tasks included at startup', 'A,B,C,D' )
 
         self.config.add_section( 'task insertion groups' )
         #Example: self.config.set( 'task insertion groups', 'coldstart', 'A,B,C,D' )
@@ -125,8 +127,21 @@ class suiterc:
     def get_global_environment( self ):
         return self.config.items( 'global environment' )
 
-    def get_tasks_not_instantiated_at_startup( self ):
-        return re.split( r', *| +', self.get('general', 'tasks not instantiated at startup'))
+    def get_tasks_included( self ):
+        tlist = self.get('general', 'tasks included at startup')
+        tlist.rstrip()
+        if tlist == '':
+            return []
+        else:
+            return re.split( r', *| +', tlist )
+
+    def get_tasks_excluded( self ):
+        tlist = self.get('general', 'tasks excluded at startup')
+        tlist.rstrip()
+        if tlist == '':
+            return []
+        else:
+            return re.split( r', *| +', tlist )
 
     def get_task_insertion_groups( self ):
         xgroups = {}

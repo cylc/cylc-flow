@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* document task inclusion and exclusion, at startup, by commandline or
+suite.rc file: can be used separately or both at once, for cold, warm,
+and restart.
+
 * gui suite editor: user defines tasks, perhaps by means of drawing a
   dependency graph, and the editor creates the corresponding taskdef
   files.
@@ -21,8 +25,6 @@ GENERAL
     - insert a new task to generate the outputs representing
       the existing data, and/OR
     - dummy out the tasks that generated the existing data.
-
-* allow inclusion as well as exclusion of tasks in suite.rc
 
 * --port= does not prevent port scan for lockserver?
 

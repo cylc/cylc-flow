@@ -37,11 +37,21 @@ state dump rolling archive length = 10
 ; Coldstart tasks (for 'cylc start --warm').
 coldstart tasks = startup, foo, bar
 
-; Tasks not instantiated at startup: this can be used, for example, for
-; special tasks that are designed to be inserted into the running suite
-; in certain failure recovery scenarios. 
+; Tasks included at startup: 
+; See also 'cylc start --include'.
+tasks to include at startup = foo, bar, baz
+
+; Tasks excluded at startup:
 ; See also 'cylc start --exclude'.
-tasks not instantiated at startup = foo, bar, baz
+; this can be used, for example, for special tasks that are designed to
+; be inserted into the running suite in failure recovery scenarios. 
+tasks excluded at startup = foo, bar, baz
+
+; If task inclusion and exclusion lists are specified, only the 
+; included tasks that are not excluded will be instantiated at startup.
+
+; If task inclusion or exclusion lists are specified in the suite.rc
+; file and on the commandline, the two sets of lists will be combined.
 
 ; Job submission log file directory. Must be relative to the home
 ; directory so it can be used for all suite tasks regardless of task
