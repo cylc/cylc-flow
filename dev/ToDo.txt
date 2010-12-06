@@ -1,6 +1,19 @@
 _______
 GENERAL
 
+* at some point, do some profiling of execution time and memory use:
+    cProfile
+    hotshot
+    timeit
+  are all part of the standard library. The first (and hostshot too?)
+  generate stats files that can easily be manipulated and viewed
+  with the pstats module.  See standard Python documentation, and
+  this article:
+    http://pparkkin.info/2010/02/21/profiling-python-hotshot-timeit-and-heapy
+  For finding any memory leaks, see:
+     heapy
+  (not std lib, but explained in the above article).
+
 * the "trivial" example suite is currently broken.
 
 * --port= does not prevent port scan for lockserver?
