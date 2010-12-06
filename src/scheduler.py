@@ -528,16 +528,22 @@ class scheduler:
         self.cleanup()
 
     def process_tasks( self ):
+        # do we need to do a pass through the main task processing loop?
         answer = False
         if task.state_changed:
+            # cause one pass through the main loop
             answer = True
+            # reset task.state_changed
             task.state_changed = False
             
         if self.remote.process_tasks:
+            # cause one pass through the main loop
             answer = True
-            self.remote_process_tasks = False
+            # reset the remote control flag
+            self.remote.process_tasks = False
             
         if self.pool.waiting_contact_task_ready( self.clock.get_datetime() ):
+            # cause one pass through the main loop
             answer = True
 
         return answer

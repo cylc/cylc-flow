@@ -1,10 +1,9 @@
 _______
 GENERAL
 
-* profiling on ecox suite: restart => low CPU usage; 
-  then nudge -> CPU usage straight back up to ~50-75% (on fc-test).
-  DOES THIS MAKE SENSE (no enter task loop until nudge; but what
-  about entry to check for contact tasks triggering?)
+* --port= does not prevent port scan for lockserver?
+  check for non-essential port scanning, esp. in gui.
+  (see GUI note below)
 
 * stuff that can be done by either commandline options or suite.rc
   should be simplified to suite.rc only - and allow suite.rc editing
@@ -32,8 +31,6 @@ and restart.
     - insert a new task to generate the outputs representing
       the existing data, and/OR
     - dummy out the tasks that generated the existing data.
-
-* --port= does not prevent port scan for lockserver?
 
 * separate cold and warm start into distinct classes (currently warm is
   a variation on coldstart_scheduler, which is less than transparent).
