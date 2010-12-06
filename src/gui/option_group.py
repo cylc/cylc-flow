@@ -62,9 +62,9 @@ class controlled_option_group:
         if not self.checkbutton.get_active():
             return ''
         if self.option:
-            options = self.option
+            options = ' ' + self.option
         else:
-            options = ''
+            options = ' '
         for name in self.entries:
             (entry, label, option) = self.entries[name]
             if entry.get_text():

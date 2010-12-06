@@ -852,7 +852,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         warmstart_rb.connect( "toggled", self.startup_method, "warm", ctime_entry, statedump_entry )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ctime_entry, statedump_entry )
 
-        dmode_group = controlled_option_group( "Dummy Mode" )
+        dmode_group = controlled_option_group( "Dummy Mode", "--dummy-mode" )
         dmode_group.add_entry( 
                 'clock rate (seconds per dummy hour)',
                 '--clock-rate=',
