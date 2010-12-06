@@ -22,6 +22,7 @@ from job_submit import job_submit
 import cycle_time, pimp_my_logger
 from preferences import prefs
 from suite_lock import suite_lock
+from lockserver import lockserver
 
 usage = """cylc submit [options] SUITE TASK_ID
 
@@ -111,14 +112,12 @@ logging_lvl = rcfile.get_logging_level()
 use_lockserver = False
 if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
     use_lockserver = True
+    lockserver_port = lockserver( owner, host ).ping()
+
     # request suite access from the lock server
     # submit does not need to call release_suite_access()
-    suite_lock = suite_lock( host, owner, name, suite_dir, 'submit' )
-    try:
-        if not suite_lock.request_suite_access():
-            raise SystemExit( 'ERROR: failed to acquire a suite lock' )
-    except:
-        raise SystemExit( 'ERROR: failed connect to the cylc lockserver' )
+    if not suite_lock( name, suite_dir, owner, host, lockserver_port, 'submit' ).request_suite_access():
+        raise SystemExit( 'ERROR: failed to acquire a suite lock' )
 
 # initial global environment ----------------------------------------
 globalenv = OrderedDict()
