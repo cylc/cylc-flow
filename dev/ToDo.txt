@@ -9,9 +9,9 @@ GENERAL
 suite.rc file: can be used separately or both at once, for cold, warm,
 and restart.
 
-* gui suite editor: user defines tasks, perhaps by means of drawing a
-  dependency graph, and the editor creates the corresponding taskdef
-  files.
+* suite editor (gui?): define suite by means of a dependency graph. 
+  The corresponding taskdef files will be generated automatically.
+  Check suite consistency by analysing prerequisites and outputs.
 
 * use passphrase authentication in the default pyro connection validator
  (see the Pyro userguide security page).
