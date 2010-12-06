@@ -89,6 +89,11 @@ if __name__ == '__main__':
 
         # crank it up baby!
         server.run()
+        #   OR for profiling:
+        #import cProfile
+        #cProfile.run( 'server.run()', 'fooprof' )
+        #   and see Python docs "The Python Profilers"
+        #   for how to display the resulting stats.
 
     except Exception, x:
 
