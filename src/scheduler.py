@@ -482,6 +482,7 @@ class scheduler:
             # require renegotiation of dependencies, etc.
 
             if self.process_tasks():
+                #print "ENTERING MAIN LOOP"
                 if self.options.timing:
                     main_loop_start_time = datetime.datetime.now()
 
@@ -543,6 +544,12 @@ class scheduler:
             self.remote.process_tasks = False
             
         if self.pool.waiting_contact_task_ready( self.clock.get_datetime() ):
+            # This method actually returns True if ANY task is ready to run,
+            # not just contact tasks. However, this should not be a problem.
+            # For a contact task, this means the contact time is up AND
+            # any prerequisites are satisfied, so it can't result in
+            # multiple passes through the main loop.
+
             # cause one pass through the main loop
             answer = True
 

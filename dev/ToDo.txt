@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* the "trivial" example suite is currently broken.
+
 * --port= does not prevent port scan for lockserver?
   check for non-essential port scanning, esp. in gui.
   (see GUI note below)
@@ -352,7 +354,8 @@ LOCKSERVER
 
 GUI
 
-* guify all command line options
+* if suite configure exits due to an illegal taskdef key, it brings the
+  gui down.
 
 * gui suite editor - suite.rc and taskdef files
 

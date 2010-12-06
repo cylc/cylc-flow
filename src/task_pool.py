@@ -864,6 +864,8 @@ class task_pool:
         self.kill( die, dump_state=False )
 
     def waiting_contact_task_ready( self, current_time ):
+        # This method actually returns True if ANY task is ready to run,
+        # not just contact tasks. However, this should not be a problem.
         result = False
         for itask in self.tasks:
             #print itask.id, current_time
