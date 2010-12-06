@@ -31,8 +31,15 @@ and restart.
 * suite editor (gui?): define suite by means of a dependency graph. 
   The corresponding taskdef files will be generated automatically.
   Check suite consistency by analysing prerequisites and outputs.
-
-* use passphrase authentication in the default pyro connection validator
+  Method: define an internal taskdef data structure that can be 
+  populated by reading taskdef files, or from a pickled representation
+  on disk, and can write out taskdef files and cylc task classes.
+  Then define a dependency graph data structure that can be decomposed
+  into separate taskdef classes, or just translate a dependency graph
+  into a list of taskdefs, converting dependencies into prerequisites
+  and outputs on the way.
+ 
+*use passphrase authentication in the default pyro connection validator
  (see the Pyro userguide security page).
 
 * not the PYRO_MAXCONNECTION config item, default 200 - the max number
