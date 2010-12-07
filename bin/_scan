@@ -32,7 +32,7 @@ parser.add_option( "--print-ports",
 
 if options.print_ports:
     from cylc_pyro_server import pyro_base_port, pyro_port_range
-    print "cylc port range from $CYLC_DIR/src/pyro_server.py:"
+    print "cylc port range from $CYLC_DIR/src/cylc_pyro_server.py:"
     print pyro_base_port, '<= port <=', pyro_base_port + pyro_port_range
     sys.exit(0)
 
