@@ -40,6 +40,7 @@ and restart.
   and outputs on the way.
   STARTED: see src/taskdef.py
   CONSIDER ALSO: networkx and pygraphviz from http://networkx.lanl.gov
+  - DAG representation: store only outputs - prereqs must trigger off.
  
 *use passphrase authentication in the default pyro connection validator
  (see the Pyro userguide security page).
