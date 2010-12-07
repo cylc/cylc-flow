@@ -374,6 +374,9 @@ LOCKSERVER
 
 * allow for a different lockserver host? (probably not). 
 
+* document that when a suite releases its lock all of that suite's task
+  locks are also released (e.g. when a suite is stopped --now with 
+  tasks still running).
 
 GUI
 
