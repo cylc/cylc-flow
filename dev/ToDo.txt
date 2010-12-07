@@ -38,6 +38,7 @@ and restart.
   into separate taskdef classes, or just translate a dependency graph
   into a list of taskdefs, converting dependencies into prerequisites
   and outputs on the way.
+  STARTED: see src/taskdef.py
  
 *use passphrase authentication in the default pyro connection validator
  (see the Pyro userguide security page).
