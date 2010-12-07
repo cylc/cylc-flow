@@ -172,9 +172,9 @@
     # - Environment variables to export in the task execution environment
     # - The following variables are automatically set:
     #     $TASK_ID, $TASK_NAME, $CYCLE_TIME, 
-    #     $CYLC_SYSTEM_NAME, $CYLC_MODE, 
-    #     $CYLC_NS_HOST, $CYLC_NS_GROUP, 
-    #     $CYLC_DIR, $CYLC_SYSTEM_DIR (*)
+    #     $CYLC_SUITE_NAME, $CYLC_MODE, 
+    #     $CYLC_SUITE_HOST, $CYLC_SUITE_PORT, 
+    #     $CYLC_DIR, $CYLC_SUITE_DIR (*)
     #   The latter two are used to give the executing task access to
     #   cylc itself and to your system-specific scripts. They
     #   necessarily refer to the local cylc installation. For tasks 
