@@ -411,7 +411,7 @@ from collections import deque
             inherit_from = get_parsed( 'INHERIT' )[0]
 
         outfile = os.path.join( taskdir, '__' + task_name + '.py' )
-        modname = re.sub( '.py', '', os.path.basename( outfile ))
+        #modname = re.sub( '.py', '', os.path.basename( outfile ))
         OUT = open( outfile, 'w' )
 
         OUT.write( preamble )
