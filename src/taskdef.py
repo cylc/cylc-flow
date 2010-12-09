@@ -1,5 +1,12 @@
 #!/usr/bin/env python
 
+# NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
+#   - conditional prerequisites
+#   - task inheritance
+#   - asynch stuff, output_patterns
+#   - no longer interpolate ctime in env vars or scripting 
+#     (not needed since cylcutil?) 
+#
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
 #         |                        |
@@ -30,13 +37,17 @@ class taskdef:
     allowed_types = [ 'free', 'tied' ]
     allowed_modifiers = [ 'sequential', 'oneoff', 'dummy', 'contact', 'catchup_contact' ]
 
-    allowed_keys = [ 'LOGFILES', 'INHERIT', 'TASK', 'OWNER', 'HOURS',
+    allowed_keys = [ 'LOGFILES', 'TASK', 'OWNER', 'HOURS',
             'COMMAND', 'REMOTE_HOST', 'DIRECTIVES', 'SCRIPTING',
             'ENVIRONMENT', 'INTERCYCLE', 'PREREQUISITES',
             'COLDSTART_PREREQUISITES', 'SUICIDE_PREREQUISITES',
             'OUTPUTS', 'N_RESTART_OUTPUTS', 'TYPE', 'CONTACT_DELAY',
             'DESCRIPTION', 'OUTPUT_PATTERNS', 'FOLLOW_ON', 'FAMILY',
             'MEMBERS', 'MEMBER_OF' ]
+
+    task_init_def_args = 'c_time, initial_state, startup = False'
+    #task_inherit_super_args = 'c_time, initial_state, startup'
+    task_init_args = 'initial_state'
 
     task_class_preamble = '''
 #!/usr/bin/env python
@@ -105,8 +116,8 @@ from collections import deque
         self.suicide_prerequisites = {}        #  "
         self.coldstart_prerequisites = {}      #  "
         self.conditional_prerequisites = {}    #  "
-        self.outputs = {}                      #  "
-        self.commands = {}                     # list of commands
+        self.outputs = OrderedDict()           #  "
+        self.commands = OrderedDict()          # list of commands
         self.scripting = {}                    # list of lines
         self.environment = {}                  # OrderedDict() of var = value
         self.directives = {}                   # OrderedDict() of var = value
@@ -189,7 +200,7 @@ from collections import deque
             raise DefinitionError( 'no hours specified' )
 
         if 'contact' in self.modifiers:
-            if not self.contact_offset:
+            if len( self.contact_offset.keys() ) == 0:
                 raise DefinitionError( 'contact tasks must specify a time offset' )
 
         if self.type == 'tied' and self.n_restart_outputs == 0:
@@ -289,7 +300,7 @@ from collections import deque
                     self.host = value
 
                 elif current_key == 'HOURS':
-                    hours = re.split( r', *', value )
+                    hours = re.split( ',\s*', value )
                     self.check_set_hours( hours )
  
                 elif current_key == 'FAMILY':
@@ -324,19 +335,6 @@ from collections import deque
                         raise DefinitionError( 'N_RESTART_OUTPUTS must be integer valued' )
 
                 elif current_key == 'COMMAND':
-                    # concatenate any commandlines ending in '\'
-                    print "TO DO: COMMAND CONTINUATION LINES: see _taskgen"
-                    ###cat = ''
-                    ###if value[-1] == '\\':
-                      ###  cat += value[0:-1]
-                        ###continue
-                    ###if cat != '':
-                      ###  coms.append( cat + value )
-                        ###cat = ''
-                    ###else:
-                      ###  coms.append( value )
-                    ###for com in coms:
-                        ###self.append_to_condition_list( self.commands, condition, com ) 
                     self.append_to_condition_list( self.commands, condition, value ) 
 
                 elif current_key == 'SCRIPTING':
@@ -351,16 +349,20 @@ from collections import deque
                     self.add_to_condition_dict( self.directives, condition, evar, evalue )
 
                 elif current_key == 'PREREQUISITES':
-                    self.append_to_condition_list( self.prerequisites, condition, value )
+                    stripped = self.require_quotes( value )
+                    self.append_to_condition_list( self.prerequisites, condition, stripped )
 
                 elif current_key == 'OUTPUTS':
-                    self.append_to_condition_list( self.outputs, condition, value )
+                    stripped = self.require_quotes( value )
+                    self.append_to_condition_list( self.outputs, condition, stripped )
 
                 elif current_key == 'COLDSTART_PREREQUISITES':
-                    self.append_to_condition_list( self.coldstart_prerequisites, condition, value )
+                    stripped = self.require_quotes( value )
+                    self.append_to_condition_list( self.coldstart_prerequisites, condition, stripped )
 
                 elif current_key == 'SUICIDE_PREREQUISITES':
-                    self.append_to_condition_list( self.suicide_prerequisites, condition, value )
+                    stripped = self.require_quotes( value )
+                    self.append_to_condition_list( self.suicide_prerequisites, condition, stripped )
                     self.add_suicide_prerequisite( value )
 
                 # TO DO TO DO 
@@ -369,7 +371,28 @@ from collections import deque
                 #    self.add_conditional_prerequisite( label, message )
         
         self.check_consistency()
+        self.check_commandlines()
+        self.interpolate_conditional_list( self.prerequisites )
+        self.interpolate_conditional_list( self.suicide_prerequisites )
+        self.interpolate_conditional_list( self.coldstart_prerequisites )
+        self.interpolate_conditional_list( self.outputs )
 
+    def check_commandlines( self ):
+        # concatenate any commandlines ending in '\'
+        for condition in self.commands.keys():
+            oldc = self.commands[ condition ]
+            newc = []
+            cat = ''
+            for t in oldc:
+                if t[-1] == '\\':
+                    cat += t[0:-1]
+                    continue
+                if cat != '':
+                    newc.append( cat + t )
+                    cat = ''
+                else:
+                    newc.append( t )
+            self.commands[ condition ] = newc
 
     def write_task_class( self, dir ):
         outfile = os.path.join( dir, self.classfile )
@@ -401,7 +424,6 @@ from collections import deque
  
         if self.owner:
             OUT.write( self.indent + 'owner = \'' + self.owner + '\'\n' )
-            #elif not inherit:
         else:
             OUT.write( self.indent + 'owner = None\n' )
 
@@ -425,12 +447,10 @@ from collections import deque
             OUT.write( self.indent + 'follow_on = "' + self.follow_on_task + '"\n\n' )
 
         # class init function
-        task_init_def_args = 'c_time, initial_state, startup = False'
-        OUT.write( self.indent + 'def __init__( self, ' + task_init_def_args + ' ):\n\n' )
+        OUT.write( self.indent + 'def __init__( self, ' + self.__class__.task_init_def_args + ' ):\n\n' )
 
         self.indent_more()
 
-        ####if not inherit:
         OUT.write( self.indent + '# adjust cycle time to next valid for this task\n' )
         OUT.write( self.indent + 'self.c_time = self.nearest_c_time( c_time )\n' )
         OUT.write( self.indent + 'self.tag = self.c_time\n' )
@@ -441,11 +461,143 @@ from collections import deque
         # external task
         OUT.write( self.indent + 'self.external_tasks = deque()\n' )
 
+        for condition in self.commands:
+            for command in self.commands[ condition ]:
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.external_tasks.append( \'' + command + '\')\n' )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.external_tasks.append( \'' + command + '\')\n' )
+                        self.indent_less()
+ 
+        if 'contact' in self.modifiers:
+            for condition in self.contact_offset:
+                offset = self.contact_offset[ condition ]
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.real_time_delay = ' +  str( offset ) + '\n' )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.real_time_delay = ' + str( offset ) + '\n' )
+                        self.indent_less()
+ 
+            OUT.write( '\n' )
+
+        self.write_requisites( OUT, 'prerequisites', self.prerequisites )
+        self.write_requisites( OUT, 'suicide_prerequisites', self.suicide_prerequisites )
+        self.write_requisites( OUT, 'outputs', self.outputs )
+
+        if self.type == 'tied':
+            for condition in self.n_restart_outputs.keys():
+                n = self.n_restart_outputs[ condition ]
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.register_restart_requisites(' + str(n) +')\n' )
+                else:
+                    hours = re.split( ', *', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.register_restart_requisites(' + str( n ) + ')\n' )
+                        self.indent_less()
+ 
+        OUT.write( self.indent + 'self.outputs.register()\n\n' )
+
+        # override the above with any coldstart prerequisites
+        self.write_requisites( OUT, 'coldstart_prerequisites', self.coldstart_prerequisites )
+
+        OUT.write( '\n' + self.indent + 'self.env_vars = OrderedDict()\n' )
+        OUT.write( self.indent + "self.env_vars['TASK_NAME'] = self.name\n" )
+        OUT.write( self.indent + "self.env_vars['TASK_ID'] = self.id\n" )
+        OUT.write( self.indent + "self.env_vars['CYCLE_TIME'] = self.c_time\n" )
+       
+        for condition in self.environment.keys():
+            envdict = self.environment[ condition ]
+            for var in envdict.keys():
+                val = envdict[ var ]
+                if condition == 'any':
+                    OUT.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
+                else:
+                    hours = re.split( ', *', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
+                        self.indent_less()
+ 
+        OUT.write( '\n' + self.indent + 'self.directives = OrderedDict()\n' )
+        for condition in self.directives.keys():
+            dirdict = self.directives[ condition ]
+            for var in dirdict.keys():
+                val = dirdict[ var ]
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.directives[' + var + '] = ' + val + '\n' )
+                else:
+                    hours = re.split( ', *', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.directives[' + var + '] = ' + val + '\n' )
+                        self.indent_less()
+ 
+        OUT.write( '\n' + self.indent + 'self.extra_scripting = []\n' )
+
+        for condition in self.scripting.keys():
+            lines = self.scripting[ condition ]
+            for line in lines:
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.extra_scripting.append(' + line + ')\n' )
+                else:
+                    hours = re.split( ', *', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.extra_scripting.append(' + line + ')\n' )
+                        self.indent_less()
+ 
+        OUT.write( '\n' )
+
+        if 'catchup_contact' in self.modifiers:
+            OUT.write( self.indent + 'catchup_contact.__init__( self )\n\n' )
+ 
+            OUT.write( self.indent + task_type + '.__init__( self, ' + self.__class__.task_init_args + ' )\n\n' )
+
+        self.indent_less()
+        self.indent_less()
+
+        OUT.close()
+ 
 
 
+
+    def write_requisites( self, FILE, req_name, requisites ):
+        for condition in requisites:
+            reqs = requisites[ condition ]
+            if condition == 'any':
+                for req in reqs:
+                    FILE.write( self.indent + 'self.' + req_name + '.add(' +  req + ')\n' )
+            else:
+                hours = re.split( ',\s*', condition )
+                for hour in hours:
+                    FILE.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                    self.indent_more()
+                    FILE.write( self.indent + 'self.' + req_name + '.add(' + req + ')\n' )
+                    self.indent_less()
 
     def escape_quotes( self, strng ):
         return re.sub( '([\\\'"])', r'\\\1', strng )
+
+    def interpolate_conditional_list( self, foo ):
+        for condition in foo.keys():
+            old_values = foo[ condition ]
+            new_values = []
+            for value in old_values:
+                new_values.append( self.interpolate_cycle_times( value ) )
+            foo[condition] = new_values
 
     def interpolate_cycle_times( self, strng ):
         # interpolate $(CYCLE_TIME [+/-N]) in a string
@@ -527,3 +679,20 @@ from collections import deque
                 #return str( float(hrs)*60.0 )
                 return float(hrs)*60.0
     
+    def require_quotes( self, strng ):
+        # require enclosing double quotes, then strip them off
+    
+        # first strip any whitespace
+        str = string.strip( strng )
+
+        m = re.match( '^".*"$', str )
+        if m:
+            stripped = string.strip( str, '"' )
+        else:
+            print 'ERROR: string must be enclosed in double quotes:'
+            print strng
+            sys.exit(1)
+
+        return "'" + stripped + "'"
+
+
