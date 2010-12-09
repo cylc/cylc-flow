@@ -18,7 +18,7 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import os, re, string
+import os, sys, re, string
 from OrderedDict import OrderedDict
 
 class Error( Exception ):
@@ -88,6 +88,9 @@ from collections import deque
 '''
 
     def __init__( self ):
+        self.reset()
+
+    def reset( self ):
         self.name = None
         self.shortname = None
 
@@ -124,67 +127,80 @@ from collections import deque
         self.indent = ''
         self.indent_unit = '  '
 
-    def dump( self ):
+    def dump( self, FILE=None ):
+        if not FILE:
+            FILE=sys.stdout
+
         indent = '   '
-        print '%NAME'
-        print  indent, self.name
+        print >> FILE, '%TASK'
+        print >> FILE, indent, self.name
 
-        print '%DESCRIPTION'
+        print >> FILE, '%DESCRIPTION'
         for line in self.description:
-            print indent, line
+            print >> FILE, indent, line
 
-        print '%TYPE'
+        print >> FILE, '%HOURS'
+        hrs = str( self.hours[0] )
+        for hour in self.hours[1:]:
+            hrs = hrs + ', ' + str(hour)
+        print >> FILE, indent, hrs
+
+        print >> FILE, '%TYPE'
         types = [ self.type ] + self.modifiers
-        print indent, ', '.join( types )
+        print >> FILE, indent, ', '.join( types )
 
         if self.owner:
-            print '%OWNER'
-            print indent, self.owner
+            print >> FILE, '%OWNER'
+            print >> FILE, indent, self.owner
 
         if self.host:
-            print '%REMOTE_HOST'
-            print indent, self.host
+            print >> FILE, '%REMOTE_HOST'
+            print >> FILE, indent, self.host
 
-        self.dump_conditional_list( self.commands,      'COMMAND'       )
-        self.dump_conditional_list( self.prerequisites, 'PREREQUISITES' )
-        self.dump_conditional_list( self.outputs,       'OUTPUTS'       )
-        self.dump_conditional_dict( self.environment,   'ENVIRONMENT'   )
-        self.dump_conditional_list( self.scripting,     'SCRIPTING'     )
-        self.dump_conditional_dict( self.directives,    'DIRECTIVES'    )
+        self.dump_conditional_list( FILE, self.commands,      'COMMAND'       )
+        self.dump_conditional_list( FILE, self.prerequisites, 'PREREQUISITES', quote=True )
+        self.dump_conditional_list( FILE, self.outputs,       'OUTPUTS', quote=True       )
+        self.dump_conditional_dict( FILE, self.environment,   'ENVIRONMENT'   )
+        self.dump_conditional_list( FILE, self.scripting,     'SCRIPTING'     )
+        self.dump_conditional_dict( FILE, self.directives,    'DIRECTIVES'    )
 
-    def dump_conditional_list( self, foo, name ):
+    def dump_conditional_list( self, FILE, foo, name, quote=False ):
         # print out foo[condition] = []
         indent = '   '
-        print '%' + name
+        print >> FILE, '%' + name
         for condition in foo:
             values = foo[condition]
             if condition == 'any':
                 for value in values:
-                    print indent, value
+                    if quote:
+                        value = '"' + value + '"'
+                    print >> FILE, indent, value
             else:
-                print indent, 'if HOUR in ' + condition + ':'
+                print >> FILE, indent, 'if HOUR in ' + condition + ':'
                 if len( values ) == 0:
-                    print indent, indent, "# (none)"
+                    print >> FILE, indent, indent, "# (none)"
                 else:
                     for value in values:
-                        print indent, indent, value
+                        if quote:
+                            value = '"' + value + '"'
+                        print >> FILE, indent, indent, value
 
-    def dump_conditional_dict( self, foo, name ):
+    def dump_conditional_dict( self, FILE, foo, name ):
         # print out foo[condition][var] = value
         indent = '   '
-        print '%' + name
+        print >> FILE, '%' + name
         for condition in foo:
             vars = foo[condition].keys()
             if condition == 'any':
                 for var in vars:
-                    print '  ', '  ', foo[condition][var]
+                    print >> FILE, indent, indent, foo[condition][var]
             else:
-                print indent, 'if HOUR in ' + condition + ':'
+                print >> FILE, indent, 'if HOUR in ' + condition + ':'
                 if len( vars ) == 0:
-                    print indent, indent, "# (none)"
+                    print >> FILE, indent, indent, "# (none)"
                 else:
                     for var in vars:
-                        print indent, indent, foo[condition][var]
+                        print >> FILE, indent, indent, foo[condition][var]
 
     def check_name( self, name ):
         m = re.match( '^(\w+),\s*(\w+)$', name )
@@ -253,8 +269,8 @@ from collections import deque
         self.indent = re.sub( self.indent_unit, '',  self.indent, 1 )
 
     def load_from_taskdef_file( self, file ):
-        if self.name:
-            raise DefinitionError( "Task " + self.name + " is already defined" )
+        self.reset()
+
         DEF = open( file, 'r' )
         lines = DEF.readlines()
         DEF.close()
@@ -290,7 +306,7 @@ from collections import deque
                 current_key = string.lstrip( line, '%' )
                 # always define an 'any' key
                 if current_key not in self.__class__.allowed_keys:
-                    raise DefintionError( 'ILLEGAL KEY: ' + key )
+                    raise DefinitionError( 'ILLEGAL KEY: ' + key )
 
             else:
                 # process data associated with current key
@@ -431,11 +447,12 @@ from collections import deque
             derived_from = ','.join( self.modifiers ) + ', ' + derived_from
 
         OUT.write( 'class ' + self.name + '(' + derived_from + '):\n' )
+        self.indent_more()
 
         OUT.write( self.indent + '# AUTO-GENERATED BY CYLC\n\n' )  
  
         OUT.write( self.indent + 'name = \'' + self.name + '\'\n' )
-        #OUT.write( self.indent + 'short_name = \'' + self.short_name + '\'\n' )
+        OUT.write( self.indent + 'short_name = \'' + self.name + '\'\n' )
 
         OUT.write( self.indent + 'instance_count = 0\n\n' )
 
@@ -458,9 +475,10 @@ from collections import deque
         OUT.write( self.indent + 'job_submit_method = None\n' )
 
         OUT.write( self.indent + 'valid_hours = [' )
-        for hour in self.hours:
-            OUT.write( ', ' + str(hour) )
-        OUT.write( self.indent + ']\n\n' )
+        hrs = str( self.hours[0] )
+        for hour in self.hours[1:]:
+            hrs = hrs + ', ' + str(hour)
+        OUT.write( hrs + ']\n\n' )
 
         if self.intercycle:
             OUT.write( self.indent + 'intercycle = ' + str(self.intercycle) + '\n\n' )
@@ -510,9 +528,14 @@ from collections import deque
  
             OUT.write( '\n' )
 
-        self.write_requisites( OUT, 'prerequisites', self.prerequisites )
-        self.write_requisites( OUT, 'suicide_prerequisites', self.suicide_prerequisites )
-        self.write_requisites( OUT, 'outputs', self.outputs )
+        self.write_requisites( OUT, 'prerequisites', 'prerequisites', self.prerequisites )
+        self.write_requisites( OUT, 'suicide_prerequisites', 'prerequisites', self.suicide_prerequisites )
+
+        OUT.write( self.indent + 'self.logfiles = logfiles()\n' )
+        for lfile in self.logfiles:
+            OUT.write( self.indent + 'self.logfiles.add_path("' + lfile + '")\n' )
+
+        self.write_requisites( OUT, 'outputs', 'outputs', self.outputs )
 
         if self.type == 'tied':
             for condition in self.n_restart_outputs.keys():
@@ -530,7 +553,7 @@ from collections import deque
         OUT.write( self.indent + 'self.outputs.register()\n\n' )
 
         # override the above with any coldstart prerequisites
-        self.write_requisites( OUT, 'coldstart_prerequisites', self.coldstart_prerequisites )
+        self.write_requisites( OUT, 'coldstart_prerequisites', 'prerequisites', self.coldstart_prerequisites )
 
         OUT.write( '\n' + self.indent + 'self.env_vars = OrderedDict()\n' )
         OUT.write( self.indent + "self.env_vars['TASK_NAME'] = self.name\n" )
@@ -542,13 +565,13 @@ from collections import deque
             for var in envdict.keys():
                 val = envdict[ var ]
                 if condition == 'any':
-                    OUT.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
+                    OUT.write( self.indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
                 else:
                     hours = re.split( ', *', condition )
                     for hour in hours:
                         OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
                         self.indent_more()
-                        OUT.write( indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
+                        OUT.write( self.indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
                         self.indent_less()
  
         OUT.write( '\n' + self.indent + 'self.directives = OrderedDict()\n' )
@@ -586,7 +609,7 @@ from collections import deque
         if 'catchup_contact' in self.modifiers:
             OUT.write( self.indent + 'catchup_contact.__init__( self )\n\n' )
  
-            OUT.write( self.indent + task_type + '.__init__( self, ' + self.__class__.task_init_args + ' )\n\n' )
+        OUT.write( self.indent + self.type + '.__init__( self, ' + self.__class__.task_init_args + ' )\n\n' )
 
         self.indent_less()
         self.indent_less()
@@ -596,7 +619,9 @@ from collections import deque
 
 
 
-    def write_requisites( self, FILE, req_name, requisites ):
+    def write_requisites( self, FILE, req_name, req_type, requisites ):
+        FILE.write( self.indent + 'self.' + req_name + ' = ' + req_type + '( self.id )\n' )
+
         for condition in requisites:
             reqs = requisites[ condition ]
             if condition == 'any':
