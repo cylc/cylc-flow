@@ -2,7 +2,9 @@
 
 # NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
 #   - conditional prerequisites
+#   - short name
 #   - task inheritance
+#   - FAMILY
 #   - asynch stuff, output_patterns
 #   - no longer interpolate ctime in env vars or scripting 
 #     (not needed since cylcutil?) 
@@ -85,13 +87,9 @@ from collections import deque
 
 '''
 
-    def __init__( self, name, shortname=None ):
-        self.check_name( name )
-        self.name = name
-        # IGNORING SHORT NAME FOR NOW
-        #self.shortname = shortname
-
-        self.classfile = '__' + name + '.py'
+    def __init__( self ):
+        self.name = None
+        self.shortname = None
 
         self.type = None
         self.owner = None
@@ -110,40 +108,42 @@ from collections import deque
 
         # use dicts quantities that may be conditional on cycle hour
         # keyed on condition
-        self.n_restart_outputs = {}            # int
-        self.contact_offset = {}               # float hours
-        self.prerequisites = {}                # list of messages
-        self.suicide_prerequisites = {}        #  "
-        self.coldstart_prerequisites = {}      #  "
-        self.conditional_prerequisites = {}    #  "
-        self.outputs = OrderedDict()           #  "
-        self.commands = OrderedDict()          # list of commands
-        self.scripting = {}                    # list of lines
-        self.environment = {}                  # OrderedDict() of var = value
-        self.directives = {}                   # OrderedDict() of var = value
+        # OrderedDict keeps 'any' conditional at the top
+        self.n_restart_outputs = OrderedDict()            # int
+        self.contact_offset = OrderedDict()               # float hours
+        self.prerequisites = OrderedDict()                # list of messages
+        self.suicide_prerequisites = OrderedDict()        #  "
+        self.coldstart_prerequisites = OrderedDict()      #  "
+        self.conditional_prerequisites = OrderedDict()    #  "
+        self.outputs = OrderedDict()                      #  "
+        self.commands = OrderedDict()                     # list of commands
+        self.scripting = OrderedDict()                    # list of lines
+        self.environment = OrderedDict()                  # OrderedDict() of var = value
+        self.directives = OrderedDict()                   # OrderedDict() of var = value
 
         self.indent = ''
         self.indent_unit = '  '
 
     def dump( self ):
-        print 'NAME'
-        print  '  ', self.name
+        indent = '   '
+        print '%NAME'
+        print  indent, self.name
 
-        print 'DESCRIPTION'
+        print '%DESCRIPTION'
         for line in self.description:
-            print '  ', line
+            print indent, line
 
-        print 'TYPE'
+        print '%TYPE'
         types = [ self.type ] + self.modifiers
-        print '  ', ', '.join( types )
+        print indent, ', '.join( types )
 
         if self.owner:
-            print 'OWNER'
-            print '  ', self.owner
+            print '%OWNER'
+            print indent, self.owner
 
         if self.host:
-            print 'HOST'
-            print '  ', self.host
+            print '%REMOTE_HOST'
+            print indent, self.host
 
         self.dump_conditional_list( self.commands,      'COMMAND'       )
         self.dump_conditional_list( self.prerequisites, 'PREREQUISITES' )
@@ -154,29 +154,45 @@ from collections import deque
 
     def dump_conditional_list( self, foo, name ):
         # print out foo[condition] = []
-        print name
+        indent = '   '
+        print '%' + name
         for condition in foo:
-            print '  ', condition
             values = foo[condition]
-            if len( values ) == 0:
-                print '  ', '  ', "(none)"
-            else:
+            if condition == 'any':
                 for value in values:
-                    print '  ', '  ', value
+                    print indent, value
+            else:
+                print indent, 'if HOUR in ' + condition + ':'
+                if len( values ) == 0:
+                    print indent, indent, "# (none)"
+                else:
+                    for value in values:
+                        print indent, indent, value
 
     def dump_conditional_dict( self, foo, name ):
         # print out foo[condition][var] = value
-        print name
+        indent = '   '
+        print '%' + name
         for condition in foo:
-            print '  ', condition
             vars = foo[condition].keys()
-            if len( vars ) == 0:
-                print '  ', '  ', "(none)"
-            else:
+            if condition == 'any':
                 for var in vars:
                     print '  ', '  ', foo[condition][var]
+            else:
+                print indent, 'if HOUR in ' + condition + ':'
+                if len( vars ) == 0:
+                    print indent, indent, "# (none)"
+                else:
+                    for var in vars:
+                        print indent, indent, foo[condition][var]
 
     def check_name( self, name ):
+        m = re.match( '^(\w+),\s*(\w+)$', name )
+        if m:
+            name, shortname = m.groups()
+            if re.search( '[^\w]', shortname ):
+                raise DefinitionError( 'Task names may contain only a-z,A-Z,0-9,_' )
+
         if re.search( '[^\w]', name ):
             raise DefinitionError( 'Task names may contain only a-z,A-Z,0-9,_' )
  
@@ -237,7 +253,8 @@ from collections import deque
         self.indent = re.sub( self.indent_unit, '',  self.indent, 1 )
 
     def load_from_taskdef_file( self, file ):
-        print 'Loading', file
+        if self.name:
+            raise DefinitionError( "Task " + self.name + " is already defined" )
         DEF = open( file, 'r' )
         lines = DEF.readlines()
         DEF.close()
@@ -292,6 +309,10 @@ from collections import deque
 
                 elif current_key == 'DESCRIPTION':
                     self.description.append( line )
+
+                elif current_key == 'TASK':
+                    self.check_name( value )
+                    self.name = value
 
                 elif current_key == 'OWNER':
                     self.owner = value
@@ -395,6 +416,7 @@ from collections import deque
             self.commands[ condition ] = newc
 
     def write_task_class( self, dir ):
+        self.classfile = '__' + self.name + '.py'
         outfile = os.path.join( dir, self.classfile )
 
         # TO DO: EXCEPTION HANDLING FOR DIR NOT FOUND ...

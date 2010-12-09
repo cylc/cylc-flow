@@ -129,7 +129,8 @@ CYLC_DIR=${CYLC%/bin/cylc}
 # task_classes.py file rather than overwriting.
 
 TASKDEFS=""
-ALL_TASKDEFS=$( find $TASKDEF -name '*.def' -o -name '*.py' ) 
+#ALL_TASKDEFS=$( find $TASKDEF -name '*.def' -o -name '*.py' ) 
+ALL_TASKDEFS=$( find $TASKDEF -name '*.def' ) 
 
 if $FORCE; then
     ZIPPO=false
@@ -161,7 +162,16 @@ else
 fi
 
 echo "Parsing task definition files:"
-_taskgen $CONFIGURED $TASKDEFS
+###_taskgen $CONFIGURED $TASKDEFS
+for DEF in $TASKDEFS; do
+    echo $DEF
+    python -c "
+import taskdef
+foo = taskdef.taskdef()
+foo.load_from_taskdef_file('$DEF')
+foo.write_task_class('$CONFIGURED' )
+"
+done
 
 echo "Generating configured/task_classes.py"
 
