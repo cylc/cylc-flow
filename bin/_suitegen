@@ -20,13 +20,13 @@ for line in graph:
         if name not in names:
             names.append( name )
             task = taskdef.taskdef()
-            print "Appending", name
             tasks.append( task )
             task.name = name
             task.logfiles = []
             task.commands['any'] = [ "cylc-wrapper echo hello" ]
             task.hours = [ 0,6,12,18 ]
             task.type = 'free'
+            task.modifiers = [ 'sequential' ]
             task.outputs['any'] = [ name + " output 1 ready for $(CYCLE_TIME)" ]
 
             if count > 0:
@@ -38,7 +38,8 @@ for line in graph:
 
 for task in suite:
     print task.name
-    FILE = open( task.name + '.def', 'w' )
-    task.dump( FILE )
-    FILE.close()
+    #FILE = open( task.name + '.def', 'w' )
+    #task.dump( FILE )
+    #FILE.close()
+    task.write_task_class( 'configured' )
 
