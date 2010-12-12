@@ -76,6 +76,21 @@ class suiterc:
         self.config.set( 'general', 'tasks to dummy out', '' )
         #Example: self.config.set( 'general', 'tasks to dummy out', 'D,E,F' )
 
+        self.config.set( 'general', 'default cycles', '0,6,12,18' )
+  
+        self.config.add_section( 'graph' )
+        # label: foo -> baz
+
+        self.config.add_section( 'commands' )
+        # cylc-wrapper foo.sh --munge -f $FILE
+
+        self.config.add_section( 'task types' )
+        # foo = free, contact(1.5 hrs)
+        # bar = tied( n_restart_outputs )
+
+        # NO LONGER NECESSARY???? (dummy out if no command specified):
+        self.config.set( 'general', 'tasks to dummy out', '' )
+
         self.config.add_section( 'task insertion groups' )
         #Example: self.config.set( 'task insertion groups', 'coldstart', 'A,B,C,D' )
         #Example: self.config.set( 'task insertion groups', 'foo', 'A,B,D,F' )

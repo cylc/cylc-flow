@@ -1,5 +1,9 @@
 #!/usr/bin/env python
 
+# THIS IS THE NEW TASKDEF MODULE WITH MOST OF THE OLD TASKDEF PARSING
+# CODE PORTED OVER.  HOWEVER, I'VE DECIDED TO DO AWAY WITH TASKDEF
+# FILES.
+
 # NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
 #   - conditional prerequisites
 #   - short name
@@ -38,6 +42,14 @@ class DefinitionError( Error ):
 class taskdef:
     allowed_types = [ 'free', 'tied' ]
     allowed_modifiers = [ 'sequential', 'oneoff', 'dummy', 'contact', 'catchup_contact' ]
+
+    allowed_keys = [ 'LOGFILES', 'TASK', 'OWNER', 'HOURS',
+            'COMMAND', 'REMOTE_HOST', 'DIRECTIVES', 'SCRIPTING',
+            'ENVIRONMENT', 'INTERCYCLE', 'PREREQUISITES',
+            'COLDSTART_PREREQUISITES', 'SUICIDE_PREREQUISITES',
+            'OUTPUTS', 'N_RESTART_OUTPUTS', 'TYPE', 'CONTACT_DELAY',
+            'DESCRIPTION', 'OUTPUT_PATTERNS', 'FOLLOW_ON', 'FAMILY',
+            'MEMBERS', 'MEMBER_OF' ]
 
     task_init_def_args = 'c_time, initial_state, startup = False'
     #task_inherit_super_args = 'c_time, initial_state, startup'
@@ -79,31 +91,31 @@ from collections import deque
 
 '''
 
-    def __init__( self, name, short_name=None ):
-        self.name = name
-        if not short_name:
-            self.shortname = name 
+    def __init__( self ):
+        self.reset()
 
-        self.type = 'free'
+    def reset( self ):
+        self.name = None
+        self.shortname = 
 
-        self.modifiers = []
-
+        self.type = None
         self.owner = None
         self.host = None
 
         self.intercycle = False
         self.hours = []
         self.logfiles = []
-        self.description = ['Task description has not been completed' ]
+        self.description = []
 
         self.members = []
         self.member_of = None
         self.follow_on_task = None
 
+        self.modifiers = []
+
         # use dicts quantities that may be conditional on cycle hour
         # keyed on condition
-        # OrderedDict keeps 'any' conditional at the top if entered
-        # first
+        # OrderedDict keeps 'any' conditional at the top
         self.n_restart_outputs = OrderedDict()            # int
         self.contact_offset = OrderedDict()               # float hours
         self.prerequisites = OrderedDict()                # list of messages
@@ -111,67 +123,13 @@ from collections import deque
         self.coldstart_prerequisites = OrderedDict()      #  "
         self.conditional_prerequisites = OrderedDict()    #  "
         self.outputs = OrderedDict()                      #  "
-
         self.commands = OrderedDict()                     # list of commands
-        self.commands['any'] = ['cylc-wrapper true']      # default: dummied out
-
         self.scripting = OrderedDict()                    # list of lines
         self.environment = OrderedDict()                  # OrderedDict() of var = value
         self.directives = OrderedDict()                   # OrderedDict() of var = value
 
         self.indent = ''
         self.indent_unit = '  '
-
-    def set_type( self, t ):
-        # free
-        # tied( n_restart_outputs )
-        m = re.match( '(tied)\((\d+)\)', t )
-        if m:
-            type = m.groups()[0]
-            self.n_restart_outputs['any'] = int( m.groups()[1] )
-        else:
-            type = t
-        if type not in self.__class__.allowed_types:
-            raise DefinitionError( "Illegal task type: " + type )
-        self.type = type
-
-    def set_modifiers( self, mods = [] ):
-        # dummy, sequential, oneoff
-        # contact(offset)
-        # catchup_contact(offset)
-        # TO DO: DUMMY MODIFIER NO LONGER NECESSARY
-        for mod in mods:
-            print mod
-            m = re.match( '(contact.*)\((\d+)\)', mod )
-            if m:
-                self.contact_offset['any'] = int( m.groups()[1] )
-                modifier = m.groups()[0]
-            else:
-                modifier = mod
-
-            if modifier not in self.__class__.allowed_modifiers:
-                raise DefinitionError( "Illegal task type modifier: " + modifier )
-
-            self.modifiers.append( modifier )
-
-
-    def add_default_output( self, hour='any' ):
-        if hour not in self.outputs:
-            self.outputs[hour] = []
-        n = len( self.outputs[hour] ) + 1
-        msg = "\"Task " + self.name + " output " + str(n) + " ready for \" + self.c_time"
-        if msg in self.outputs[hour]:
-            raise DefinitionError( "Output already defined: " + msg )
-        self.outputs[hour].append( msg )
-
-    def add_default_prerequisite( self, task, hour='any', n=1 ):
-        # trigger off task's default output 1
-        if hour not in self.prerequisites:
-            self.prerequisites[hour] = []
-        msg = "\"Task " + task + " output " + str(n) + " ready for \" + self.c_time"
-        if msg in self.prerequisites[hour]:
-            raise DefinitionError( "Output already defined: " + msg )
-        self.prerequisites[hour].append( msg )
 
     def dump( self, FILE=None ):
         if not FILE:
@@ -291,6 +249,10 @@ from collections import deque
         if self.member_of and len( self.members ) > 0:
             raise DefinitionError( 'nested task families are not allowed' )
 
+    def check_key_not_conditional( self, key, condition ):
+        if condition != 'any':
+            raise DefinitionError( key + ' cannot be conditional')
+
     def append_to_condition_list( self, parameter, condition, value ):
         if condition in parameter.keys():
             parameter[condition].append( value )
@@ -309,6 +271,169 @@ from collections import deque
 
     def indent_less( self ):
         self.indent = re.sub( self.indent_unit, '',  self.indent, 1 )
+
+    def load_from_taskdef_file( self, file ):
+        self.reset()
+
+        DEF = open( file, 'r' )
+        lines = DEF.readlines()
+        DEF.close()
+
+        # PARSE THE TASKDEF FILE----------------------------
+        current_key = None
+        ###coms = []
+        for lline in lines:
+            line = string.strip( lline )
+            # skip blank lines
+            if re.match( '^\s*$', line ):
+                continue
+            # skip comment lines
+            if re.match( '^\s*#.*', line ):
+                continue
+            # detect conditionals:
+            m = re.match( '^\s*if HOUR in \s*([\d,]+)\s*:', lline )
+            if m:
+                #print '!   ', condition
+                condition = m.groups()[0]
+                continue
+ 
+            # warn of possible illegal trailing comments
+            if re.search( '#', line ):
+                print 'WARNING: possible illegal trailing comment detected:'
+                print '   --> ', line
+                print "(OK if '#' is in a string or shell variable expansion)"
+       
+            if re.match( '^\s*%.*', line ):
+                # NEW KEY IDENTIFIED
+                # default condition is 'any' (any hour)
+                condition = 'any'
+                current_key = string.lstrip( line, '%' )
+                # always define an 'any' key
+                if current_key not in self.__class__.allowed_keys:
+                    raise DefinitionError( 'ILLEGAL KEY: ' + key )
+
+            else:
+                # process data associated with current key
+                value = line
+
+                if current_key == 'TYPE':
+                    self.check_key_not_conditional( current_key, condition )
+                    typelist = re.split( r', *', value )
+                    type = typelist[0]
+                    self.check_type( type )
+                    self.type = type
+                    if len( typelist ) > 1:
+                        for modifier in typelist[1:]:
+                            self.check_modifier( modifier )
+                            self.modifiers.append( modifier )
+
+                elif current_key == 'DESCRIPTION':
+                    self.description.append( line )
+
+                elif current_key == 'TASK':
+                    self.check_name( value )
+                    self.name = value
+
+                elif current_key == 'OWNER':
+                    self.owner = value
+
+                elif current_key == 'REMOTE_HOST':
+                    self.host = value
+
+                elif current_key == 'HOURS':
+                    hours = re.split( ',\s*', value )
+                    self.check_set_hours( hours )
+ 
+                elif current_key == 'FAMILY':
+                    self.check_key_not_conditional( current_key, condition )
+                    self.member_of = value
+ 
+                elif current_key == 'MEMBERS':
+                    self.check_key_not_conditional( current_key, condition )
+                    self.members.append( value )
+
+                elif current_key == 'INTERCYCLE':
+                    self.check_key_not_conditional( current_key, condition )
+                    if value == 'True' or value == 'true':
+                        self.intercycle = True
+
+                elif current_key == 'LOGFILES':
+                    self.check_key_not_conditional( current_key, condition )
+                    self.logs.append( value )
+
+                elif current_key == 'FOLLOW_ON':
+                    self.check_key_not_conditional( current_key, condition )
+                    self.follow_on_task = value
+
+                elif current_key == 'CONTACT_DELAY':
+                    self.check_key_not_conditional( current_key, condition )
+                    self.contact_offset[ condition ] = self.time_trans( value, hours=True )
+
+                elif current_key == 'N_RESTART_OUTPUTS':
+                    try:
+                        self.n_restart_outputs[ condition ] = int( value )
+                    except ValueError:
+                        raise DefinitionError( 'N_RESTART_OUTPUTS must be integer valued' )
+
+                elif current_key == 'COMMAND':
+                    self.append_to_condition_list( self.commands, condition, value ) 
+
+                elif current_key == 'SCRIPTING':
+                    self.append_to_condition_list( self.scripting, condition, value )
+
+                elif current_key == 'ENVIRONMENT':
+                    evar, evalue = value.split( ' ', 1 )
+                    self.add_to_condition_dict( self.environment, condition, evar, evalue )
+
+                elif current_key == 'DIRECTIVES':
+                    evar, evalue = value.split( ' ', 1 )
+                    self.add_to_condition_dict( self.directives, condition, evar, evalue )
+
+                elif current_key == 'PREREQUISITES':
+                    stripped = self.require_quotes( value )
+                    self.append_to_condition_list( self.prerequisites, condition, stripped )
+
+                elif current_key == 'OUTPUTS':
+                    stripped = self.require_quotes( value )
+                    self.append_to_condition_list( self.outputs, condition, stripped )
+
+                elif current_key == 'COLDSTART_PREREQUISITES':
+                    stripped = self.require_quotes( value )
+                    self.append_to_condition_list( self.coldstart_prerequisites, condition, stripped )
+
+                elif current_key == 'SUICIDE_PREREQUISITES':
+                    stripped = self.require_quotes( value )
+                    self.append_to_condition_list( self.suicide_prerequisites, condition, stripped )
+                    self.add_suicide_prerequisite( value )
+
+                # TO DO TO DO 
+                #elif current_key == 'CONDITIONAL_PREREQUISITES':
+                #    label, message = value.split( ' ', 1 )
+                #    self.add_conditional_prerequisite( label, message )
+        
+        self.check_consistency()
+        self.check_commandlines()
+        self.interpolate_conditional_list( self.prerequisites )
+        self.interpolate_conditional_list( self.suicide_prerequisites )
+        self.interpolate_conditional_list( self.coldstart_prerequisites )
+        self.interpolate_conditional_list( self.outputs )
+
+    def check_commandlines( self ):
+        # concatenate any commandlines ending in '\'
+        for condition in self.commands.keys():
+            oldc = self.commands[ condition ]
+            newc = []
+            cat = ''
+            for t in oldc:
+                if t[-1] == '\\':
+                    cat += t[0:-1]
+                    continue
+                if cat != '':
+                    newc.append( cat + t )
+                    cat = ''
+                else:
+                    newc.append( t )
+            self.commands[ condition ] = newc
 
     def write_task_class( self, dir ):
         self.classfile = '__' + self.name + '.py'
@@ -495,6 +620,9 @@ from collections import deque
 
         OUT.close()
  
+
+
+
     def write_requisites( self, FILE, req_name, req_type, requisites ):
         FILE.write( self.indent + 'self.' + req_name + ' = ' + req_type + '( self.id )\n' )
 
@@ -521,6 +649,49 @@ from collections import deque
             for value in old_values:
                 new_values.append( self.interpolate_cycle_times( value ) )
             foo[condition] = new_values
+
+    def interpolate_cycle_times( self, strng ):
+        # interpolate $(CYCLE_TIME [+/-N]) in a string
+        # strng = 'a string'  (SINGLE QUOTES REQUIRED)
+
+        # strip leading spaces
+        strng = re.sub( "^'\s+", "'", strng )
+
+        # replace "$(CYCLE_TIME)"
+        strng = re.sub( "^'\$\(CYCLE_TIME\)'$",   "self.c_time",     strng ) # alone
+        strng = re.sub( "^'\$\(CYCLE_TIME\)",     "self.c_time + '", strng ) # start line
+        strng = re.sub( "\$\(CYCLE_TIME\)'$", "' + self.c_time"   ,  strng ) # end line
+        strng = re.sub( "\$\(CYCLE_TIME\)" , "'  + self.c_time + '", strng ) # mid line
+
+        # replace "$(CYCLE_TIME - XX )"
+        m = re.search( '\$\(\s*CYCLE_TIME\s*-\s*(\d+)\s*\)', strng )
+        if m:
+            strng = re.sub( "^'\$\(\s*CYCLE_TIME.*\)'$",   "cycle_time.decrement( self.c_time, " + m.group(1) + ")",     strng ) # alone
+            strng = re.sub( "^'\$\(\s*CYCLE_TIME.*\)",     "cycle_time.decrement( self.c_time, " + m.group(1) + ") + '", strng ) # start line
+            strng = re.sub( "\$\(\s*CYCLE_TIME.*\)'$", "' + cycle_time.decrement( self.c_time, " + m.group(1) + ")",     strng ) # mid line
+            strng = re.sub( "\$\(\s*CYCLE_TIME.*\)",   "' + cycle_time.decrement( self.c_time, " + m.group(1) + ") + '", strng ) # end line
+
+        # replace "$(CYCLE_TIME + XX )"
+        m = re.search( '\$\(\s*CYCLE_TIME\s*\+\s*(\d+)\s*\)', strng )
+        if m:
+            strng = re.sub( "^'\$\(\s*CYCLE_TIME.*\)'$",   "cycle_time.increment( self.c_time, " + m.group(1) + ")",     strng ) # alone
+            strng = re.sub( "^'\$\(\s*CYCLE_TIME.*\)",     "cycle_time.increment( self.c_time, " + m.group(1) + ") + '", strng ) # start line
+            strng = re.sub( "\$\(\s*CYCLE_TIME.*\)'$", "' + cycle_time.increment( self.c_time, " + m.group(1) + ")",     strng ) # mid line
+            strng = re.sub( "\$\(\s*CYCLE_TIME.*\)",   "' + cycle_time.increment( self.c_time, " + m.group(1) + ") + '", strng ) # end line
+
+        # now check for any environment variable $CYCLE_TIME or ${CYCLE_TIME}
+        m = re.search( '\$CYCLE_TIME', strng )
+        n = re.search( '\$\{CYCLE_TIME\}', strng )
+        if m:
+            strng = re.sub( "^'\$CYCLE_TIME",     "self.c_time + '", strng ) # start line
+            strng = re.sub( "\$CYCLE_TIME'$", "' + self.c_time"   ,  strng ) # end line
+            strng = re.sub( "\$CYCLE_TIME" , "'  + self.c_time + '", strng ) # mid line
+        if n:
+            strng = re.sub( "^'\$\{CYCLE_TIME\}",     "self.c_time + '", strng ) # start line
+            strng = re.sub( "\$\{CYCLE_TIME\}'$", "' + self.c_time"   ,  strng ) # end line
+            strng = re.sub( "\$\{CYCLE_TIME\}" , "'  + self.c_time + '", strng ) # mid line
+    
+        return strng
 
     def time_trans( self, strng, hours=False ):
         # translate a time of the form:
@@ -558,3 +729,21 @@ from collections import deque
             else:
                 #return str( float(hrs)*60.0 )
                 return float(hrs)*60.0
+    
+    def require_quotes( self, strng ):
+        # require enclosing double quotes, then strip them off
+    
+        # first strip any whitespace
+        str = string.strip( strng )
+
+        m = re.match( '^".*"$', str )
+        if m:
+            stripped = string.strip( str, '"' )
+        else:
+            print 'ERROR: string must be enclosed in double quotes:'
+            print strng
+            sys.exit(1)
+
+        return "'" + stripped + "'"
+
+

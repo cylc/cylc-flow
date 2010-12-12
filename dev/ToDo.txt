@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+suite.rc: make default command "cylc-wrapper true" so to dummy out a task
+just comment out its command in suite.rc.
+
 * at some point, do some profiling of execution time and memory use:
     cProfile
     hotshot

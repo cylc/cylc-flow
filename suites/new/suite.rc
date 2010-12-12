@@ -1,0 +1,55 @@
+
+
+[general]
+title = implementation of the main cylc userguide example suite
+default cycles = 0,6,12,18
+
+[graph]
+one:   X -> A
+two:   A -> B ->  E
+three: A -> C ->F
+four:  B -> D
+five:  C -> D
+
+[commands]
+X: cylc-wrapper X.sh
+A: cylc-wrapper A.sh
+B: cylc-wrapper B.sh
+C: cylc-wrapper C.sh
+D: cylc-wrapper D.sh
+E: cylc-wrapper E.sh
+F: cylc-wrapper F.sh
+
+[task types]
+; default = free
+A = tied(1)
+B = tied(2)
+C = tied(3)
+X = free, contact(0)
+
+[global environment]
+WORKSPACE = /tmp/$USER
+
+[task A environment]
+A_INPUT_DIR = $WORKSPACE
+A_OUTPUT_DIR = $WORKSPACE
+ 
+[task B environment]
+B_INPUT_DIR = $WORKSPACE
+B_OUTPUT_DIR = $WORKSPACE
+
+[task C environment]
+C_INPUT_DIR = $WORKSPACE
+C_OUTPUT_DIR = $WORKSPACE
+ 
+[task D environment]
+D_INPUT_DIR = $WORKSPACE
+D_OUTPUT_DIR = $WORKSPACE
+ 
+[task E environment]
+E_INPUT_DIR = $WORKSPACE
+E_OUTPUT_DIR = $WORKSPACE
+ 
+[task F environment]
+F_INPUT_DIR = $WORKSPACE
+F_OUTPUT_DIR = $WORKSPACE
