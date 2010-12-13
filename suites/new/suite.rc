@@ -12,11 +12,10 @@ output files as implied by the dependency graph)."""
 #        \     /
 #          > C -> F
 
-one   =  X -> A
-two   =  A -> B ->  E
-three =  A -> C ->F
-four  =  B -> D
-five  =  C -> D
+one   =  X -> A -> B ->  E
+two   =  A -> C ->F
+three =  B -> D
+four  =  C -> D
 
 [task defaults]
 cycles = 0,6,12,18
