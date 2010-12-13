@@ -1,6 +1,24 @@
 _______
 GENERAL
 
+* ability to reset (or otherwise operate on) all members of a family.
+
+* read-only (no-intervention) gui mode - e.g. for monitoring other
+  user's suites.
+
+* BUG: CHANGING TASK NAME (AS OPPOSED TO TASKDEF FILENAME) WITHOUT
+  DELETING CONFIGURED/ DIR RESULTS IN DUPLICATION OF TASKS (i.e.
+  the old and new tasks show up).  FIX: use filename for taskname?
+
+* implement automatic rolling dependency graph of last N (=24) hours.
+
+* task name should be taken from taskdef filename?
+
+* task family needs to be set 'failed' if all (or any?) members fail
+
+* suite.rc: make default command "cylc-wrapper true" so to dummy out a task
+just comment out its command in suite.rc.?
+
 * at some point, do some profiling of execution time and memory use:
     cProfile
     hotshot
