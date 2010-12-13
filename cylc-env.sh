@@ -50,7 +50,7 @@ PATH=$($CYLC_DIR/bin/_clean-path $PATH)
 PYTHONPATH=$($CYLC_DIR/bin/_clean-path $PYTHONPATH)
 
 # export PATH to cylc bin
-PATH=$CYLC_DIR/bin:$CYLC_DIR/util:$PATH
+PATH=$CYLC_DIR/bin:$CYLC_DIR/util:$CYLC_DIR/admin:$PATH
 
 # export PYTHONPATH to cylc core source modules
 PYTHONPATH=$CYLC_DIR/src:$CYLC_DIR/src/job-submission:$CYLC_DIR/src/task-types:$CYLC_DIR/src/locking:$CYLC_DIR/src/gui:$PYTHONPATH
