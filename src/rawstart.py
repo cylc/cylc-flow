@@ -13,7 +13,7 @@
 from dynamic_instantiation import get_object
 from task_pool import task_pool
 
-class coldstart( task_pool ):
+class rawstart( task_pool ):
     def __init__( self, config, pyro, dummy_mode, use_quick,
             logging_dir, logging_level, state_dump_file, exclude, include,
             start_time, stop_time, pause_time, graphfile ):
@@ -66,14 +66,21 @@ class coldstart( task_pool ):
             itask = get_object( 'task_classes', name )\
                     ( start_time, 'waiting', startup=True )
 
+            if name in coldstart_tasks:
+                itask.log( 'WARNING', "This is a raw start: I will self-destruct." )
+                itask.prepare_for_death()
+                del itask
+                continue
+ 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
                 # we've reached the stop time already: delete the new task 
                 itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
                 itask.prepare_for_death()
                 del itask
+                continue
  
-            else:
-                if not self.dummy_mode and name in dummied_out:
-                    itask.dummy_out()
-                self.insert( itask )
+            if not self.dummy_mode and name in dummied_out:
+                itask.dummy_out()
+
+            self.insert( itask )

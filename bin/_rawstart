@@ -13,31 +13,30 @@ import sys
 from optparse import OptionParser
 
 import cycle_time
-from warmstart import warmstart
+from rawstart import rawstart
 from scheduler import scheduler
 
 debug = True
 
-class warmstart_scheduler( scheduler ):
+class rawstart_scheduler( scheduler ):
     def __init__( self ):
 
-        usage = """cylc warmstart [options] SUITE CYCLE
+        usage = """cylc rawstart [options] SUITE CYCLE
 
-WARM START a suite at a given initial cycle time. Each task will be
-instantiated in the 'waiting' state (i.e. prerequisites not satisfied)
-at the initial cycle time, or at the next valid cycle time for the task.
+RAW START a suite at a given initial cycle time. 
 
 Cold start tasks (designated as such in the suite.rc file), whose
 purpose is to satisfy the initial "restart" prerequisites of any tied
-tasks (i.e. forecast models), will be inserted in the 'finished' state
-(i.e. outputs completed). This assumes that there was actually a
-previous cycle OR the output files associated with the non-existent
-previous cycle have been put in place manually before starting the
-suite.
+tasks (i.e. forecast models), will not be inserted into the suite. To
+get the suite running you will need to insert your coldstart tasks
+manually, or manually trigger any tied tasks (whose restart
+prerequisites would normally be satisfied by tasks in a previous cycle,
+or coldstart tasks).
 
 See also:
     cylc coldstart SUITE
-    cylc rawstart SUITE
+    cylc warmstart SUITE
+
 
 Arguments:
    SUITE                Registered name of the suite to start.
@@ -72,7 +71,7 @@ Arguments:
 
     def create_task_pool( self ):
         # initialize the server (and create main logger)
-        self.pool = warmstart( self.config, self.pyro,
+        self.pool = rawstart( self.config, self.pyro,
                 self.dummy_mode, self.use_quick_elim, self.logging_dir,
                 self.logging_level, self.state_dump_file, self.exclude_tasks,
                 self.include_tasks, self.start_time, self.stop_time,
@@ -82,7 +81,7 @@ if __name__ == '__main__':
 
     try:
         # parse the commandline and initialize the cylc server
-        server = warmstart_scheduler()
+        server = rawstart_scheduler()
     except Exception, x:
         if debug:
             raise

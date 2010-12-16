@@ -105,13 +105,15 @@ class monitor:
             warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
     def startsuite( self, bt, window, 
-            coldstart_rb, warmstart_rb, restart_rb,
+            coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
             entry_ctime, stoptime_entry, statedump_entry, optgroups ):
 
         if coldstart_rb.get_active():
             command = 'cylc coldstart'
         elif warmstart_rb.get_active():
             command = 'cylc warmstart'
+        elif rawstart_rb.get_active():
+            command = 'cylc rawstart'
         elif restart_rb.get_active():
             command = 'cylc restart'
 
@@ -539,8 +541,8 @@ cylc gui is a real time suite control and monitoring tool for cylc.
                 "estate or information.")
 
         self.update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
-        self.update_tb( tb, "\n o Start or Restart: ", [bold])
-        self.update_tb( tb, "Cold Start, Warm Start, or Restart the suite.")
+        self.update_tb( tb, "\n o Start: ", [bold])
+        self.update_tb( tb, "Cold Start, Warm Start, Raw Start, or Restart the suite.")
         self.update_tb( tb, "\n o Stop: ", [bold])
         self.update_tb( tb, "Shut down the suite now, or after a given cycle, or "
                 "when all currently running tasks have finished." )
@@ -787,7 +789,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
             stoptime_entry.set_sensitive( True )
 
     def startup_method( self, b, meth, ctime_entry, statedump_entry ):
-        if meth == 'cold' or meth == 'warm':
+        if meth == 'cold' or meth == 'warm' or meth == 'raw':
             statedump_entry.set_sensitive( False )
             ctime_entry.set_sensitive( True )
         else:
@@ -808,6 +810,8 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         box.pack_start (coldstart_rb, True)
         warmstart_rb = gtk.RadioButton( coldstart_rb, "Warm Start" )
         box.pack_start (warmstart_rb, True)
+        rawstart_rb = gtk.RadioButton( coldstart_rb, "Raw Start" )
+        box.pack_start (rawstart_rb, True)
         restart_rb = gtk.RadioButton( coldstart_rb, "Restart" )
         box.pack_start (restart_rb, True)
         coldstart_rb.set_active(True)
@@ -850,6 +854,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         coldstart_rb.connect( "toggled", self.startup_method, "cold", ctime_entry, statedump_entry )
         warmstart_rb.connect( "toggled", self.startup_method, "warm", ctime_entry, statedump_entry )
+        rawstart_rb.connect ( "toggled", self.startup_method, "raw",  ctime_entry, statedump_entry )
         restart_rb.connect(   "toggled", self.startup_method, "re",   ctime_entry, statedump_entry )
 
         dmode_group = controlled_option_group( "Dummy Mode", "--dummy-mode" )
@@ -889,7 +894,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         start_button = gtk.Button( "Start Suite " + self.suite )
         start_button.connect("clicked", self.startsuite, 
-                window, coldstart_rb, warmstart_rb, restart_rb,
+                window, coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
                 ctime_entry, stoptime_entry, 
                 statedump_entry, optgroups )
 
@@ -1074,7 +1079,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         start_menu_root = gtk.MenuItem( 'Suite' )
         start_menu_root.set_submenu( start_menu )
 
-        start_item = gtk.MenuItem( 'Start or Restart' )
+        start_item = gtk.MenuItem( 'Start' )
         start_menu.append( start_item )
         start_item.connect( 'activate', self.startsuite_popup )
 

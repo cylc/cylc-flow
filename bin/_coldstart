@@ -23,12 +23,17 @@ class coldstart_scheduler( scheduler ):
 
         usage = """cylc coldstart [options] SUITE CYCLE
 
-COLD START a suite at a given initial cycle time. Each task is
+COLD START a suite at a given initial cycle time. Each task will be
 instantiated in the 'waiting' state (i.e. prerequisites not satisfied)
 at the initial cycle time, or at the next valid cycle time for the task.
+
 There should be one or more oneoff (non-spawning) coldstart tasks to
-satisfy any initial "restart" prerequisites (e.g. for forecast models)
-and, to get the suite running, at least one task with no prerequisites.  
+satisfy the initial "restart" prerequisites of any tied tasks (i.e.
+forecast models) in the suite.
+
+See also:
+    cylc warmstart SUITE
+    cylc rawstart SUITE
 
 Arguments:
    SUITE                Registered name of the suite to start.
@@ -63,12 +68,11 @@ Arguments:
 
     def create_task_pool( self ):
         # initialize the server (and create main logger)
-        # False below indicates not a warm start
         self.pool = coldstart( self.config, self.pyro,
                 self.dummy_mode, self.use_quick_elim, self.logging_dir,
                 self.logging_level, self.state_dump_file, self.exclude_tasks,
                 self.include_tasks, self.start_time, self.stop_time,
-                self.pause_time, False, self.graphfile )
+                self.pause_time, self.graphfile )
 
 if __name__ == '__main__':
 
