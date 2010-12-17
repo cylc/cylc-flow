@@ -23,20 +23,21 @@ class rawstart_scheduler( scheduler ):
 
         usage = """cylc rawstart [options] SUITE CYCLE
 
-RAW START a suite at a given initial cycle time. 
+RAW START a suite at a given initial cycle time. This starts a suite as
+if in mid run (but without tasks of the previous cycle!). Each task
+proxy is inserted in the 'waiting' state (i.e. prerequisites not
+satisfied) at the initial cycle time, or at the next valid cycle time
+for the task, except for designated cold start tasks (see suite.rc
+documentation) which are NOT inserted. 
 
-Cold start tasks (designated as such in the suite.rc file), whose
-purpose is to satisfy the initial "restart" prerequisites of any tied
-tasks (i.e. forecast models), will not be inserted into the suite. To
-get the suite running you will need to insert your coldstart tasks
-manually, or manually trigger any tied tasks (whose restart
+To get the suite running you will need to manually insert the coldstart
+tasks, or manually trigger any forecast models (whose restart
 prerequisites would normally be satisfied by tasks in a previous cycle,
-or coldstart tasks).
+or by coldstart tasks).
 
 See also:
     cylc coldstart SUITE
     cylc warmstart SUITE
-
 
 Arguments:
    SUITE                Registered name of the suite to start.

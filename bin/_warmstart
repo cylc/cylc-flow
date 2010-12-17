@@ -23,17 +23,17 @@ class warmstart_scheduler( scheduler ):
 
         usage = """cylc warmstart [options] SUITE CYCLE
 
-WARM START a suite at a given initial cycle time. Each task will be
-instantiated in the 'waiting' state (i.e. prerequisites not satisfied)
-at the initial cycle time, or at the next valid cycle time for the task.
+WARM START a suite at a given cycle time. This assumes that the restart
+dependencies of any forecast models in the suite have already been
+satisfied, i.e. it assumes the existence of a previous cycle. This could
+mean there was literally a previous suite run, or that the relevant
+restart files have been put in place by some external means.
 
-Cold start tasks (designated as such in the suite.rc file), whose
-purpose is to satisfy the initial "restart" prerequisites of any tied
-tasks (i.e. forecast models), will be inserted in the 'finished' state
-(i.e. outputs completed). This assumes that there was actually a
-previous cycle OR the output files associated with the non-existent
-previous cycle have been put in place manually before starting the
-suite.
+Each task proxy is inserted in the 'waiting' state (i.e. prerequisites
+not satisfied) at the initial cycle time, or at the next valid cycle
+time for the task, except for designated cold start tasks (see suite.rc
+documentation) which are inserted in the 'finished' state (i.e. outputs
+completed).
 
 See also:
     cylc coldstart SUITE
