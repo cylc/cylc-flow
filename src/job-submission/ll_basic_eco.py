@@ -19,7 +19,7 @@ class ll_basic_eco( ll_basic ):
 
         # all ecoconnect tasks must be explicitly owned
         if not owner:
-            raise SystemExit( "EcoConnect tasks require an owner: " + self.task_id )
+            raise SystemExit( "EcoConnect tasks require an owner: " + task_id )
 
         # cylc should be running as ecoconnect_(devel|test|oper)
         cylc_owner = os.environ['USER']
