@@ -16,10 +16,6 @@ two   =  A -> C ->F
 three =  B -> D
 four  =  C -> D
 
-[task defaults]
-cycles = 0,6,12,18
-type = free
-
 [global environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER
 
