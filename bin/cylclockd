@@ -375,7 +375,7 @@ manual lock management, is 'cylc lockserver'.
 
 Cylclockd reads a config file that specifies the location of the
 daemon's process ID, state, and log files. The default config file 
-is '$CYLC_DIR/admin/cylclockd.conf', but you can specify an alternative
+is '$CYLC_DIR/conf/cylclockd.conf', but you can specify an alternative
 file on the command line (in which case all subsequent interaction with
 the daemon via the cylclockd command must also specify the same file). 
 
@@ -398,7 +398,7 @@ Arguments:
 
     parser = OptionParser( usage )
 
-    parser.set_defaults( config = os.environ[ 'CYLC_DIR' ] + '/admin/cylclockd.conf' )
+    parser.set_defaults( config = os.environ[ 'CYLC_DIR' ] + '/conf/cylclockd.conf' )
 
     parser.add_option( "-c", "--config-file", 
             help="Config file (default /etc/cylc/cylclockd.conf)",
