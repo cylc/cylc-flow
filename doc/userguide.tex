@@ -627,13 +627,13 @@ wrapping} mechanism (Section~\ref{TaskWrapping}) to run existing scripts
 unmodified.
 
 The complete suite definition and implementation for the ``userguide
-example suite'' is provided in \lstinline=$CYLC_DIR/suites/userguide=. 
+example suite'' is provided in \lstinline=$CYLC_DIR/examples/userguide=. 
 
 \subsection{Suite Registration}
 \label{QuickSuiteRegistration}
 
 \begin{lstlisting}
-cylc register $CYLC_DIR/suites/userguide userguide 
+cylc register $CYLC_DIR/examples/userguide userguide 
 \end{lstlisting}
 
 This associates a suite definition directory with a {\em suite name}
@@ -752,14 +752,14 @@ it is ready to run. These {\em Task Scripts} (Section~\ref{TaskScripts})
 can be located anywhere, but if you are creating a new suite you may
 wish to keep them in a central location along with the suite task
 definition files.  The packaged cylc example suites reside under
-\lstinline=$CYLC_DIR/suites=, for
+\lstinline=$CYLC_DIR/examples=, for
 example:
 
 \lstset{language=bash}
 
 \begin{lstlisting}
 # suite userguide:
-$CYLC_DIR/suites/userguide/
+$CYLC_DIR/examples/userguide/
 
    taskdef/            # TASK DEFINITION FILES, e.g.:
       A.def              # defines task A
@@ -1485,7 +1485,7 @@ export CYLC_MODE="submit"
 export CYLC_NS_HOST="oliverh-33191VL.greta.niwa.co.nz"
 export CYLC_NS_GROUP=":cylc.oliverh.foo"
 export CYLC_DIR="/home/oliverh/cylc/master"
-export CYLC_SUITE_DIR="/home/oliverh/cylc/master/suites/userguide"
+export CYLC_SUITE_DIR="/home/oliverh/cylc/master/examples/userguide"
 export CYLC_SUITE_NAME="foo"
 export CYLC_USE_LOCKSERVER="False"
 export TASK_RUN_TIME_SECONDS="10"
@@ -2524,13 +2524,13 @@ for the example suite used to illustrate the scheduling discussion in
 is located in:
 
 \begin{lstlisting}
-$CYLC_DIR/suites/userguide/
+$CYLC_DIR/examples/userguide/
 \end{lstlisting}
 
  While this is clearly not a real forecasting system, it does have the
  properties of a real system as far as scheduling is concerned.  
 
-\input{../suites/userguide/doc/README.tex}
+\input{../examples/userguide/doc/README.tex}
 
 \lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 
@@ -2612,7 +2612,7 @@ Finally, see {\em Running Tasks On A Remote Host}
 
 This example suite runs {\bf only in dummy-mode} (no task scripts
 have been implemented) and resides in
-\lstinline=$CYLC_DIR/suites/scs-demo=.
+\lstinline=$CYLC_DIR/examples/scs-demo=.
 It demonstrates how to set up a single Met Office
 UM-based forecast analysis suite that would normally be controlled by
 SCS.  Other distinguishing features of this suite are:
@@ -2647,7 +2647,7 @@ cylc coldstart -d --fail-out=OPS1%YYYYMMDDHH ...
 Here's some more information from the suite README file:
 
 \lstset{language=}
-\lstinputlisting{../suites/scs-demo/README.txt}
+\lstinputlisting{../examples/scs-demo/README.txt}
 
 %\subsubsection{Finishing It Off}
 %

@@ -56,7 +56,7 @@ if [[ ! -x bin/cylc ]]; then
 fi
 
 # TEST SUITE DIRECTORY
-SUITE_DIR=suites/TEST
+SUITE_DIR=examples/TEST
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-sched.out
 # cylc suite log
@@ -81,7 +81,7 @@ echo done
 # COPY THE USERGUIDE EXAMPLE SUITE
 echo
 echo -n ">> COPYING userguide example suite to $SUITE_DIR ... "
-cp -r suites/userguide $SUITE_DIR > $OUT 2>&1 
+cp -r examples/userguide $SUITE_DIR > $OUT 2>&1 
 echo done
 
 # REGISTER THE TEST SUITE

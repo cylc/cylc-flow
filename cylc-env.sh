@@ -38,7 +38,7 @@ if [[ ! -x $CYLC_DIR/bin/cylc ]]; then
     echo "If this is a cylc darcs repository, rather than an"
     echo "installed cylc release, you may need to do this:"
     echo " % cd $CYLC_DIR"
-    echo " % chmod +x bin/* util/* suites/*/scripts/*"
+    echo " % chmod +x bin/* util/* examples/*/scripts/*"
     return 1
 fi
 
