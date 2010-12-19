@@ -1,8 +1,10 @@
 
-description = '''Cylc userguide example suite implementation. Tasks
+title = Cylc userguide example suite implementation.
+
+description = """Cylc userguide example suite implementation. Tasks
 A.sh, B.sh, C.sh, D.sh, E.sh, F.sh, and X.sh do not know about cylc, and
 all use their own configurable input and output directories (but depend
-on each other's output files as implied by the dependency graph).'''
+on each other's output files as implied by the dependency graph)."""
 
 [dependency graph] #----------------------------------------------------
 #          > B -> E
@@ -16,50 +18,52 @@ two   =  A -> C ->F
 three =  B -> D
 four  =  C -> D
 
-[global environment] #--------------------------------------------------
+[environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER
+QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
-[task X] #--------------------------------------------------------------
-type = free, contact(0)
-commands = cylc-wrapper X.sh
- [[environment]]
-X_OUTPUT_DIR = $WORKSPACE
+[ tasks ]
+    [[X]] #------------------------------------------------------
+    type modifier list = contact,
+    command list = cylc-wrapper X.sh,
+        [[[ environment ]]]
+        X_OUTPUT_DIR = $WORKSPACE
  
-[task A] #--------------------------------------------------------------
-type = tied(2)
-commands = cylc-wrapper A.sh
-  [[environment]]
-A_INPUT_DIR = $WORKSPACE
-A_OUTPUT_DIR = $WORKSPACE
+    [[A]] #------------------------------------------------------
+    type = tied
+    command list = cylc-wrapper A.sh,
+        [[[environment]]]
+        A_INPUT_DIR = $WORKSPACE
+        A_OUTPUT_DIR = $WORKSPACE
 
-[task B] #--------------------------------------------------------------
-type = tied(2)
-commands = cylc-wrapper B.sh
-  [[environment]]
-B_INPUT_DIR = $WORKSPACE
-B_OUTPUT_DIR = $WORKSPACE
+    [[B]] #------------------------------------------------------
+    type = tied
+    command list = cylc-wrapper B.sh,
+        [[[environment]]]
+        B_INPUT_DIR = $WORKSPACE
+        B_OUTPUT_DIR = $WORKSPACE
 
-[task C] #--------------------------------------------------------------
-type = tied(2)
-commands = cylc-wrapper C.sh
-  [[environment]]
-C_INPUT_DIR = $WORKSPACE
-C_OUTPUT_DIR = $WORKSPACE
+    [[C]] #------------------------------------------------------
+    type = tied
+    command list = cylc-wrapper C.sh,
+        [[[environment]]]
+        C_INPUT_DIR = $WORKSPACE
+        C_OUTPUT_DIR = $WORKSPACE
 
-[task D] #--------------------------------------------------------------
-commands = cylc-wrapper D.sh
-[[environment]]
-D_INPUT_DIR = $WORKSPACE
-D_OUTPUT_DIR = $WORKSPACE
+    [[D]] #------------------------------------------------------
+    command list = cylc-wrapper D.sh,
+        [[[environment]]]
+        D_INPUT_DIR = $WORKSPACE
+        D_OUTPUT_DIR = $WORKSPACE
  
-[task E] #--------------------------------------------------------------
-commands = cylc-wrapper E.sh
-[[environment]]
-E_INPUT_DIR = $WORKSPACE
-E_OUTPUT_DIR = $WORKSPACE
+    [[E]] #------------------------------------------------------
+    command list = cylc-wrapper E.sh,
+        [[[environment]]]
+        E_INPUT_DIR = $WORKSPACE
+        E_OUTPUT_DIR = $WORKSPACE
  
-[task F] #--------------------------------------------------------------
-commands = cylc-wrapper F.sh
-[[environment]]
-F_INPUT_DIR = $WORKSPACE
-F_OUTPUT_DIR = $WORKSPACE
+    [[F]] #------------------------------------------------------
+    command list = cylc-wrapper F.sh,
+        [[[environment]]]
+        F_INPUT_DIR = $WORKSPACE
+        F_OUTPUT_DIR = $WORKSPACE

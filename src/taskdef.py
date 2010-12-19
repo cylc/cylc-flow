@@ -28,12 +28,11 @@ class Error( Exception ):
 class DefinitionError( Error ):
     """
     Exception raise for errors in taskdef initialization.
-    Attributes:
-        element - taskdef element causing the problem
-        message - what the problem is. 
     """
     def __init__( self, msg ):
         self.msg = msg
+    def __str__( self ):
+        return repr( self.msg )
 
 class taskdef:
     allowed_types = [ 'free', 'tied' ]
