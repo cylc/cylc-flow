@@ -1,9 +1,8 @@
-[general] #------------------------------------------------------------
-title = """Cylc userguide example suite implementation.
-Tasks A.sh, B.sh, C.sh, D.sh, E.sh, F.sh, and X.sh do
-not know about cylc, and all use their own configurable
-input and output directories (but depend on each other's
-output files as implied by the dependency graph)."""
+
+description = '''Cylc userguide example suite implementation. Tasks
+A.sh, B.sh, C.sh, D.sh, E.sh, F.sh, and X.sh do not know about cylc, and
+all use their own configurable input and output directories (but depend
+on each other's output files as implied by the dependency graph).'''
 
 [dependency graph] #----------------------------------------------------
 #          > B -> E
@@ -26,45 +25,45 @@ WORKSPACE = /tmp/$USER
 
 [task X] #--------------------------------------------------------------
 type = free, contact(0)
-commands: cylc-wrapper X.sh
+commands = cylc-wrapper X.sh
  [[environment]]
 X_OUTPUT_DIR = $WORKSPACE
  
 [task A] #--------------------------------------------------------------
 type = tied(2)
-commands: cylc-wrapper A.sh
+commands = cylc-wrapper A.sh
   [[environment]]
 A_INPUT_DIR = $WORKSPACE
 A_OUTPUT_DIR = $WORKSPACE
 
 [task B] #--------------------------------------------------------------
 type = tied(2)
-commands: cylc-wrapper B.sh
+commands = cylc-wrapper B.sh
   [[environment]]
 B_INPUT_DIR = $WORKSPACE
 B_OUTPUT_DIR = $WORKSPACE
 
 [task C] #--------------------------------------------------------------
 type = tied(2)
-commands: cylc-wrapper C.sh
+commands = cylc-wrapper C.sh
   [[environment]]
 C_INPUT_DIR = $WORKSPACE
 C_OUTPUT_DIR = $WORKSPACE
 
 [task D] #--------------------------------------------------------------
-commands: cylc-wrapper D.sh
+commands = cylc-wrapper D.sh
 [[environment]]
 D_INPUT_DIR = $WORKSPACE
 D_OUTPUT_DIR = $WORKSPACE
  
 [task E] #--------------------------------------------------------------
-commands: cylc-wrapper E.sh
+commands = cylc-wrapper E.sh
 [[environment]]
 E_INPUT_DIR = $WORKSPACE
 E_OUTPUT_DIR = $WORKSPACE
  
 [task F] #--------------------------------------------------------------
-commands: cylc-wrapper F.sh
+commands = cylc-wrapper F.sh
 [[environment]]
 F_INPUT_DIR = $WORKSPACE
 F_OUTPUT_DIR = $WORKSPACE
