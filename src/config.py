@@ -48,6 +48,7 @@ class config( ConfigObj ):
             print test
             raise SuiteConfigError, "Suite Config Validation Failed"
         
+        # check cylc-specific self consistency
         self.__check()
 
     def __check( self ):
