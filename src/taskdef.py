@@ -446,13 +446,13 @@ from collections import deque
             for var in envdict.keys():
                 val = envdict[ var ]
                 if condition == 'any':
-                    OUT.write( self.indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
+                    OUT.write( self.indent + 'self.env_vars[\"' + var + '\"] = \"' + val + '\"\n' )
                 else:
                     hours = re.split( ', *', condition )
                     for hour in hours:
                         OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
                         self.indent_more()
-                        OUT.write( self.indent + 'self.env_vars[' + var + '] = ' + val + '\n' )
+                        OUT.write( self.indent + 'self.env_vars[\"' + var + '\"] = \"' + val + '\"\n' )
                         self.indent_less()
  
         OUT.write( '\n' + self.indent + 'self.directives = OrderedDict()\n' )

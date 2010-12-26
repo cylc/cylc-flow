@@ -89,6 +89,7 @@ class config( ConfigObj ):
                     task.type = taskconfig[ 'type' ]
                     task.modifiers = taskconfig[ 'type modifier list' ]
                     task.outputs['any'] = [ "'" + name + " output 1 ready for $(CYCLE_TIME)" + "'" ]
+                    task.environment['any'] = taskconfig[ 'environment' ]
 
                     if count > 0:
                         task.prerequisites['any'] = [ "'" + tasks[count-1].name + " output 1 ready for $(CYCLE_TIME)" + "'"]

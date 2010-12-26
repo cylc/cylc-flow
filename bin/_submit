@@ -68,7 +68,7 @@ task_id = args[1]
 
 host = socket.getfqdn()
 
-# find location of the suite task and config modules------------------
+# find location of the suite-specific modules------------------------
 reg = registrations()
 if reg.is_registered( name ):
     suite_dir = reg.get( name )
@@ -134,28 +134,18 @@ globalenv[ 'CYLC_SUITE_OWNER' ] = owner
 globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 
 # load suite configuration--------------------------------------------
-config = config( name, globalenv, logging_dir )
-config.job_submit_config()
+config = config( os.path.join( suite_dir, 'suite.rc' ))
+
+# TO DO: ANY -> CONDITIONALS
+for var in config['environment']:
+    globalenv[ var ] = config['environment'][var]
 
 # create the log
 log = logging.getLogger()
 pimp_my_logger.pimp_it( log, logging_dir, logging_lvl, False, None, True )
 
-if use_lockserver:
-    print "TO DO: LOCKSERVER WITHOUT PYRO-NS"
-
-job_submit.global_env = config.get( 'environment' )
-job_submit.joblog_dir = config.get( 'joblog_dir' )
-
-jsc = config.get('job submit class')
-clsmod = __import__( 'task_classes' )
-try:
-    cls = getattr( clsmod, task_name )
-except AttributeError:
-    print "ERROR: " + task_name + " not found in " + name
-    sys.exit(1)
-
-setattr( cls, 'job_submit_method', jsc[ task_name ] )
+job_submit.global_env = globalenv
+job_submit.joblog_dir = config['job submission log directory']
 
 # intantiate the task--------------------------------------------------
 task = get_object( 'task_classes', task_name )( ctime, 'waiting', startup=True )

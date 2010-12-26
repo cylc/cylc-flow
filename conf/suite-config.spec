@@ -4,6 +4,7 @@ description = string( default="No suite description given" )
 allow multiple simultaneous suite instances = boolean( default=False )
 maximum runahead hours = integer( min=0, default=24 )
 number of state dump backups = integer( min=1, default=10 )
+job submission log directory = string( default='' )
 
 coldstart task list = string_list( default=list() )
 include task list   = string_list( default=list() )
