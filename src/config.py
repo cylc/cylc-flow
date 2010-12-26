@@ -6,7 +6,8 @@
 # according to the spec, $CYLC_DIR/conf/suite-config.spec, such as
 # cross-checking some items.
 
-import os, sys
+import taskdef
+import re, os, sys
 from validate import Validator
 from configobj import ConfigObj
 
@@ -58,4 +59,48 @@ class config( ConfigObj ):
             for modifier in self['tasks'][task]['type modifier list']:
                 if modifier not in self.__class__.allowed_modifiers:
                     raise SuiteConfigError, 'illegal type modifier for ' + task + ': ' + modifier
+
+    def get_task_name_list( self ):
+        return self['tasks'].keys()
+
+    def get_task_shortname_list( self ):
+        return self['tasks'].keys()
+
+    def generate_task_classes( self, dir ):
+        names = []
+        suite = []
+        for label in self['dependency graph']:
+            line = self['dependency graph'][label]
+
+            sequence = re.split( '\s*->\s*', line )
+            count = 0
+            tasks = []
+            for name in sequence:
+                if name not in names:
+                    if name not in self['tasks']:
+                        raise SuiteConfigError, 'task ' + name + ' not defined'
+                    taskconfig = self['tasks'][name]
+                    names.append( name )
+                    task = taskdef.taskdef( name )
+                    tasks.append( task )
+                    task.logfiles = []
+                    task.commands['any'] = taskconfig[ 'command list' ]
+                    task.hours = taskconfig[ 'valid cycles' ]
+                    task.type = taskconfig[ 'type' ]
+                    task.modifiers = taskconfig[ 'type modifier list' ]
+                    task.outputs['any'] = [ "'" + name + " output 1 ready for $(CYCLE_TIME)" + "'" ]
+
+                    if count > 0:
+                        task.prerequisites['any'] = [ "'" + tasks[count-1].name + " output 1 ready for $(CYCLE_TIME)" + "'"]
+            
+                    count += 1
+
+            suite.extend( tasks )
+        
+        for task in suite:
+            print task.name
+            #FILE = open( task.name + '.def', 'w' )
+            #task.dump( FILE )
+            #FILE.close()
+            task.write_task_class( dir )
 

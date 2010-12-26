@@ -15,25 +15,17 @@ job log directory = string( default='' )
 [ dependency graph ]
 __many__ = string
 
-
 [ task insertion groups ]
  __many__ = string_list()
 
-[ job submission ]
-default method = string( default = 'background' )
-    [[ overrides ]]
-    tasks using background = string_list( default=list() )
-    tasks using at now = string_list( default=list() )
-    tasks using ll_raw = string_list( default=list() )
-    tasks using ll_basic = string_list( default=list() )
-    tasks using ll_basic_eco = string_list( default=list() )
-    
+   
 [ environment ]
 __many__ = string
 
 [ tasks ]
 
     [[ __many__ ]]
+    job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
     type = option( free, tied, default=free )
     number of restart outputs = integer( min=1, default=1 )
     type modifier list = string_list( default=list() )

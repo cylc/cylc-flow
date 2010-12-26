@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# THIS ENTIRE MODULE MAY BE REPLACED BY DYNAMIC TASK PROXY CLASS DEFINITION
+
 # NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
 #   - conditional prerequisites
 #   - short name
@@ -42,8 +44,7 @@ class taskdef:
     #task_inherit_super_args = 'c_time, initial_state, startup'
     task_init_args = 'initial_state'
 
-    task_class_preamble = '''
-#!/usr/bin/env python
+    task_class_preamble = '''#!/usr/bin/env python
 
 #         __________________________
 #         |____C_O_P_Y_R_I_G_H_T___|
@@ -84,6 +85,8 @@ from collections import deque
             self.shortname = name 
 
         self.type = 'free'
+
+        self.job_submit_method = 'background'
 
         self.modifiers = []
 
@@ -350,7 +353,7 @@ from collections import deque
             OUT.write( self.indent + 'remote_host = None\n' )
 
         # can this be moved into task base class?
-        OUT.write( self.indent + 'job_submit_method = None\n' )
+        OUT.write( self.indent + 'job_submit_method = \'' + self.job_submit_method + '\'\n' )
 
         OUT.write( self.indent + 'valid_hours = [' )
         hrs = str( self.hours[0] )
