@@ -67,41 +67,39 @@ class config( ConfigObj ):
         return self['tasks'].keys()
 
     def generate_task_classes( self, dir ):
-        names = []
-        suite = []
+        taskdefs = {}
         for label in self['dependency graph']:
             line = self['dependency graph'][label]
 
             sequence = re.split( '\s*->\s*', line )
             count = 0
-            tasks = []
+            tasks = {}
             for name in sequence:
-                if name not in names:
+                if name not in taskdefs:
+                    # first time seen; can defined everything except for
+                    # possibly other prerequisites.
                     if name not in self['tasks']:
                         raise SuiteConfigError, 'task ' + name + ' not defined'
                     taskconfig = self['tasks'][name]
-                    names.append( name )
-                    task = taskdef.taskdef( name )
-                    tasks.append( task )
-                    task.logfiles = []
-                    task.commands['any'] = taskconfig[ 'command list' ]
-                    task.hours = taskconfig[ 'valid cycles' ]
-                    task.type = taskconfig[ 'type' ]
-                    task.modifiers = taskconfig[ 'type modifier list' ]
-                    task.outputs['any'] = [ "'" + name + " output 1 ready for $(CYCLE_TIME)" + "'" ]
-                    task.environment['any'] = taskconfig[ 'environment' ]
+                    taskd = taskdef.taskdef( name )
+                    taskd.type = taskconfig[ 'type' ]
+                    taskd.n_restart_outputs['any'] = taskconfig[ 'number of restart outputs' ]
+                    taskd.logfiles = []
+                    taskd.commands['any'] = taskconfig[ 'command list' ]
+                    taskd.hours = taskconfig[ 'valid cycles' ]
+                    taskd.type = taskconfig[ 'type' ]
+                    taskd.modifiers = taskconfig[ 'type modifier list' ]
+                    taskd.outputs['any'] = [ "'" + name + " output 1 ready for ' + self.c_time" ]
+                    taskd.environment['any'] = taskconfig[ 'environment' ]
+                    taskd.contact_offset['any'] = taskconfig[ 'contact offset hours' ]
+                    taskdefs[ name ] = taskd
 
-                    if count > 0:
-                        task.prerequisites['any'] = [ "'" + tasks[count-1].name + " output 1 ready for $(CYCLE_TIME)" + "'"]
-            
-                    count += 1
+                if count > 0:
+                    taskdefs[name].prerequisites['any'] = [ "'" + prev + " output 1 ready for ' + self.c_time"]
+                count += 1
+                prev = name
 
-            suite.extend( tasks )
-        
-        for task in suite:
-            print task.name
-            #FILE = open( task.name + '.def', 'w' )
-            #task.dump( FILE )
-            #FILE.close()
-            task.write_task_class( dir )
+        for name in taskdefs:
+            print name, taskdefs[name].type
+            taskdefs[ name ].write_task_class( dir )
 

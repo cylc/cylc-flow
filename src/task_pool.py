@@ -21,18 +21,19 @@ from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 
 class task_pool:
-    def __init__( self, config, pyro, dummy_mode, use_quick,
+    def __init__( self, config, clock, pyro, dummy_mode, use_quick,
             logging_dir, logging_level, state_dump_file, exclude,
             include, stop_time, pause_time, graphfile ):
 
         self.config = config
+        self.clock = clock
         self.use_quick = use_quick
         self.pyro = pyro
         self.dummy_mode = dummy_mode
         self.logging_dir = logging_dir
         self.logging_level = logging_level
         self.state_dump_filename = state_dump_file
-        arclen = int( config.get( 'state_dump_rolling_archive_length' ))
+        arclen = config[ 'number of state dump backups' ]
         self.state_dump_file = rolling_archive( state_dump_file, arclen )
         self.exclude = exclude
         self.include = include
@@ -40,9 +41,6 @@ class task_pool:
         self.suite_hold_ctime = pause_time
         self.suite_hold_now = False
         self.node_seen = {}
-
-        # TO DO: use self.config.get('foo') throughout
-        self.clock = config.get('clock')
 
         # initialise the dependency broker
         self.broker = broker()
@@ -52,13 +50,8 @@ class task_pool:
         # create main logger
         self.create_main_log()
 
-        # set job submit method for each task class
-        jsc = config.get( 'job submit class' )
-        clsmod = __import__( 'task_classes' )
-        for name in jsc:
-            cls = getattr( clsmod, name )
-            setattr( cls, 'job_submit_method', jsc[ name ] )
-            
+        self.task_name_list = self.config.get_task_name_list()
+
         # instantiate the initial task list and create loggers 
         # PROVIDE THIS METHOD IN DERIVED CLASSES
         self.load_tasks()
@@ -68,11 +61,11 @@ class task_pool:
         if graphfile:
             self.edge_colors = {}
             self.node_attributes = {}
-            for task in self.config.get( 'task_list' ):
-                node_attributes = self.config.get( 'node_attributes' )
+            for task in self.task_name_list:
+                node_attributes = self.config[ 'node_attributes' ]
                 if task in node_attributes:
                     self.node_attributes[ task ] = node_attributes[ task ]
-                    if self.config.get( 'use_node_color_for_edges' ):
+                    if self.config[ 'use_node_color_for_edges' ]:
                         m = re.search( 'fillcolor *= *(\w+)', self.node_attributes[ task ] )
                         n = re.search( 'color *= *(\w+)', self.node_attributes[ task ] )
                         if m:
@@ -88,7 +81,7 @@ class task_pool:
         self.members = {}
         self.middle_member = {}
         self.member_of = {}
-        for name in self.config.get('task_list'):
+        for name in self.task_name_list:
             mod = __import__( 'task_classes' )
             cls = getattr( mod, name )
             try:
@@ -263,7 +256,7 @@ class task_pool:
                     if self.graphfile:
 
                         target_id = itask.id 
-                        if not self.config.get( 'task_families_in_subgraphs' ):
+                        if not self.config[ 'task_families_in_subgraphs' ]:
                             for source_id in itask.get_resolved_dependencies():
                                 self.set_graph( source_id, target_id )
                             continue
@@ -336,7 +329,7 @@ class task_pool:
 
         for itask in self.tasks:
 
-            tdiff = cycle_time.decrement( itask.c_time, int( self.config.get('max_runahead_hours')))
+            tdiff = cycle_time.decrement( itask.c_time, self.config['maximum runahead hours'])
             if int( tdiff ) > int( oldest_c_time ):
                 # too far ahead: don't spawn this task.
                 itask.log( 'DEBUG', "delaying spawning (too far ahead)" )
@@ -390,7 +383,7 @@ class task_pool:
             FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
 
         # task class variables
-        for name in self.config.get('task_list'):
+        for name in self.task_name_list:
             mod = __import__( 'task_classes' )
             cls = getattr( mod, name )
             cls.dump_class_vars( FILE )
@@ -755,12 +748,12 @@ class task_pool:
         try:
             ( ins_name, ins_ctime ) = ins_id.split( '%' )
             print
-            if ins_name in self.config.get( 'task_list' ):
+            if ins_name in self.task_name_list:
                 print "INSERTING A TASK"
                 ids = [ ins_id ]
-            elif ins_name in ( self.config.get( 'task_groups' ) ).keys():
+            elif ins_name in ( self.config[ 'task insertion groups' ] ).keys():
                 print "INSERTING A GROUP OF TASKS"
-                tasknames = self.config.get( 'task_groups')[ins_name]
+                tasknames = self.config[ 'task insertion groups' ][ins_name]
                 ids = []
                 for name in tasknames:
                     ids.append( name + '%' + ins_ctime )

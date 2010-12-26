@@ -14,13 +14,13 @@ from dynamic_instantiation import get_object
 from task_pool import task_pool
 
 class rawstart( task_pool ):
-    def __init__( self, config, pyro, dummy_mode, use_quick,
+    def __init__( self, config, clock, pyro, dummy_mode, use_quick,
             logging_dir, logging_level, state_dump_file, exclude, include,
             start_time, stop_time, pause_time, graphfile ):
 
         self.start_time = start_time
 
-        task_pool.__init__( self, config, pyro, dummy_mode, use_quick,
+        task_pool.__init__( self, config, clock, pyro, dummy_mode, use_quick,
                 logging_dir, logging_level, state_dump_file, exclude, include,
                 stop_time, pause_time, graphfile )
 
@@ -39,16 +39,15 @@ class rawstart( task_pool ):
         self.log.info( 'Loading state from configured task list' )
         # config.task_list = [ taskname1, taskname2, ...]
 
-        task_list = self.config.get('task_list')
+        task_list = self.config.get_task_name_list()
 
         # uniquify in case of accidental duplicates (Python 2.4+)
         task_list = list( set( task_list ) )
 
-        coldstart_tasks = self.config.get( 'coldstart_tasks' )
-        included_by_rc = self.config.get( 'included_tasks' )
-        excluded_by_rc = self.config.get( 'excluded_tasks' )
-
-        dummied_out = self.config.get( 'dummied_tasks' )
+        coldstart_tasks = self.config[ 'coldstart task list' ]
+        included_by_rc  = self.config[ 'include task list'   ]
+        excluded_by_rc  = self.config[ 'exclude task list'   ]
+        dummied_out     = self.config[ 'dummy out task list' ]
 
         include_list_supplied = False
         if len( included_by_commandline ) > 0 or len( included_by_rc ) > 0:

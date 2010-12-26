@@ -124,37 +124,37 @@ from collections import deque
         self.indent = ''
         self.indent_unit = '  '
 
-    def set_type( self, t ):
-        # free
-        # tied( n_restart_outputs )
-        m = re.match( '(tied)\((\d+)\)', t )
-        if m:
-            type = m.groups()[0]
-            self.n_restart_outputs['any'] = int( m.groups()[1] )
-        else:
-            type = t
-        if type not in self.__class__.allowed_types:
-            raise DefinitionError( "Illegal task type: " + type )
-        self.type = type
+    #def set_type( self, t ):
+    #    # free
+    #    # tied( n_restart_outputs )
+    #    m = re.match( '(tied)\((\d+)\)', t )
+    #    if m:
+    #        type = m.groups()[0]
+    #        self.n_restart_outputs['any'] = int( m.groups()[1] )
+    #    else:
+    #        type = t
+    #    if type not in self.__class__.allowed_types:
+    #        raise DefinitionError( "Illegal task type: " + type )
+    #    self.type = type
 
-    def set_modifiers( self, mods = [] ):
-        # dummy, sequential, oneoff
-        # contact(offset)
-        # catchup_contact(offset)
-        # TO DO: DUMMY MODIFIER NO LONGER NECESSARY
-        for mod in mods:
-            print mod
-            m = re.match( '(contact.*)\((\d+)\)', mod )
-            if m:
-                self.contact_offset['any'] = int( m.groups()[1] )
-                modifier = m.groups()[0]
-            else:
-                modifier = mod
-
-            if modifier not in self.__class__.allowed_modifiers:
-                raise DefinitionError( "Illegal task type modifier: " + modifier )
-
-            self.modifiers.append( modifier )
+    #def set_modifiers( self, mods = [] ):
+    #    # dummy, sequential, oneoff
+    #    # contact(offset)
+    #    # catchup_contact(offset)
+    #    # TO DO: DUMMY MODIFIER NO LONGER NECESSARY
+    #    for mod in mods:
+    #        print mod
+    #        m = re.match( '(contact.*)\((\d+)\)', mod )
+    #        if m:
+    #            self.contact_offset['any'] = int( m.groups()[1] )
+    #            modifier = m.groups()[0]
+    #        else:
+    #            modifier = mod
+    # 
+    #         if modifier not in self.__class__.allowed_modifiers:
+    #             raise DefinitionError( "Illegal task type modifier: " + modifier )
+    #
+    #        self.modifiers.append( modifier )
 
 
     def add_default_output( self, hour='any' ):

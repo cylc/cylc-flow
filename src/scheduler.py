@@ -208,9 +208,9 @@ class scheduler:
         if not os.path.isabs( gf_path ):
             gf_path = os.environ['HOME'] + '/' + gf_path
         print "Opening dot graph file", gf_path
-        default_node_attributes = self.config.get( 'default_node_attributes' )
-        default_edge_attributes = self.config.get( 'default_edge_attributes' )
-        if self.config.get( 'use_node_color_for_edges' ):
+        default_node_attributes = self.config[ 'default_node_attributes' ]
+        default_edge_attributes = self.config[ 'default_edge_attributes' ]
+        if self.config[ 'use_node_color_for_edges' ]:
             m = re.search( 'fillcolor *= *(\w+)', default_node_attributes )
             if m:
                 nodecolor = m.groups()[0]
@@ -348,22 +348,22 @@ class scheduler:
         from config import config 
 
         # initial global environment
-        globalenv = OrderedDict()
-        globalenv[ 'CYLC_MODE' ] = 'scheduler'
-        globalenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
-        globalenv[ 'CYLC_SUITE_PORT' ] =  self.pyro.get_port()
-        globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
-        globalenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
-        globalenv[ 'CYLC_SUITE_NAME' ] = self.suite_name
-        globalenv[ 'CYLC_SUITE_OWNER' ] = self.username
-        globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
+        self.globalenv = OrderedDict()
+        self.globalenv[ 'CYLC_MODE' ] = 'scheduler'
+        self.globalenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
+        self.globalenv[ 'CYLC_SUITE_PORT' ] =  self.pyro.get_port()
+        self.globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+        self.globalenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
+        self.globalenv[ 'CYLC_SUITE_NAME' ] = self.suite_name
+        self.globalenv[ 'CYLC_SUITE_OWNER' ] = self.username
+        self.globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
 
-        self.config = config( self.suite_name, globalenv, self.logging_dir )
-        self.config.check_task_groups()
-        self.config.job_submit_config( self.dummy_mode )
+        # load suite configuration--------------------------------------------
+        self.config = config( os.path.join( self.suite_dir, 'suite.rc' ))
 
-        # load some command dynamic stuff into config module, for easy handling.
-        self.config.put( 'clock', self.clock )
+        ##### TO DO: self.config.check_task_groups()
+        for var in self.config['environment']:
+            self.globalenv[ var ] = self.config['environment'][var]
 
         if self.dummy_mode:
             if self.failout_task_id:
@@ -373,9 +373,9 @@ class scheduler:
             print "SETTING DUMMY TASK RUN LENGTH: " + str( self.dummy_run_length ) + " dummy clock minutes"
             dummy_seconds = self.dummy_run_length * 60
             real_seconds = dummy_seconds * self.clock_rate / 3600.0
-            self.config.put_env( 'CYLC_DUMMY_SLEEP', real_seconds )
+            self.globalenv['CYLC_DUMMY_SLEEP'] = real_seconds
 
-        self.exclusive_suite_lock = not self.config.get( 'allow_simultaneous_suite_instances' )
+        self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous suite instances' ]
 
     def back_up_statedump_file( self ):
        # back up the configured state dump (i.e. the one that will be used
@@ -412,15 +412,15 @@ class scheduler:
 
     def configure_job_submission( self ):
         job_submit.dummy_mode = self.dummy_mode
-        job_submit.global_env = self.config.get( 'environment' )
-        job_submit.joblog_dir = self.config.get( 'joblog_dir' )
+        job_submit.global_env = self.globalenv
+        job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         if self.dummy_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
 
     def configure_remote_switch( self ):
         # remote control switch
         import remote_switch
-        self.remote = remote_switch.remote_switch( self.config, self.pool, self.failout_task_id )
+        self.remote = remote_switch.remote_switch( self.config, self.clock, self.suite_dir, self.username, self.pool, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
 
     def create_task_pool( self ):
@@ -449,7 +449,7 @@ class scheduler:
         self.configure_remote_switch()
 
         self.print_banner()
-        self.config.dump()
+        #self.config.dump()
 
     def run( self ):
         if self.use_lockserver:

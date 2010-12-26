@@ -136,7 +136,6 @@ globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 # load suite configuration--------------------------------------------
 config = config( os.path.join( suite_dir, 'suite.rc' ))
 
-# TO DO: ANY -> CONDITIONALS
 for var in config['environment']:
     globalenv[ var ] = config['environment'][var]
 

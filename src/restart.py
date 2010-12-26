@@ -16,14 +16,14 @@ from dynamic_instantiation import get_object
 
 class restart( task_pool ):
 
-    def __init__( self, config, pyro, dummy_mode, use_quick,
+    def __init__( self, config, clock, pyro, dummy_mode, use_quick,
             logging_dir, logging_level, state_dump_file, exclude, include,
             initial_state_dump, no_reset, stop_time, pause_time, graphfile ):
 
         self.initial_state_dump = initial_state_dump
         self.no_reset = no_reset
 
-        task_pool.__init__( self, config, pyro, dummy_mode, use_quick,
+        task_pool.__init__( self, config, clock, pyro, dummy_mode, use_quick,
                 logging_dir, logging_level, state_dump_file, exclude, include,
                 stop_time, pause_time, graphfile )
 
@@ -39,10 +39,9 @@ class restart( task_pool ):
         print '\nLOADING INITIAL STATE FROM ' + filename + '\n'
         self.log.info( 'Loading initial state from ' + filename )
 
-        included_by_rc = self.config.get( 'included_tasks' )
-        excluded_by_rc = self.config.get( 'excluded_tasks' )
-
-        dummied_out = self.config.get( 'dummied_tasks' )
+        included_by_rc  = self.config[ 'include task list'   ]
+        excluded_by_rc  = self.config[ 'exclude task list'   ]
+        dummied_out     = self.config[ 'dummy out task list' ]
 
         include_list_supplied = False
         if len( included_by_commandline ) > 0 or len( included_by_rc ) > 0:

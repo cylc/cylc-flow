@@ -45,7 +45,7 @@ class state_summary( Pyro.core.ObjBase ):
         #self.get_summary()
 
     def get_config( self, item ):
-        return self.config.get( item )
+        return self.config[ item ]
 
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary ]

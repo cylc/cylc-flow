@@ -13,10 +13,10 @@ dependency graph)."""
 #        \     /
 #          > C -> F
 
-one   =  X -> A -> B ->  E
-two   =  A -> C ->F
-three =  B -> D
-four  =  C -> D
+label1  =  X -> A -> B ->  E
+label2  =  A -> C ->F
+label3  =  B -> D
+label4  =  C -> D
 
 [environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER
@@ -25,8 +25,10 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 [ tasks ]
     [[X]] #------------------------------------------------------
     type modifier list = contact,
+    contact offset hours = 1
     command list = cylc-wrapper X.sh,
         [[[ environment ]]]
+        X_INPUT_DIR = $WORKSPACE
         X_OUTPUT_DIR = $WORKSPACE
  
     [[A]] #------------------------------------------------------

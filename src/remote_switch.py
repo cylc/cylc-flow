@@ -20,12 +20,15 @@ class remote_switch( Pyro.core.ObjBase ):
     "class to take remote suite control requests" 
     # the task manager can take action on these when convenient.
 
-    def __init__( self, config, pool, failout_id = None ):
+    def __init__( self, config, clock, suite_dir, owner, pool, failout_id = None ):
 
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
 
         self.config = config
+        self.clock = clock
+        self.suite_dir = suite_dir
+        self.owner = owner
         self.insert_this = None
         self.failout_id = failout_id
 
@@ -68,7 +71,7 @@ class remote_switch( Pyro.core.ObjBase ):
         # create a mapping between (short and long) task names and their
         # corresponding full names.
 
-        self.task_list = self.config.get( 'task_list' )
+        self.task_list = self.config.get_task_name_list()
         self.real_name = {}
 
         clsmod = __import__( 'task_classes' )
@@ -208,7 +211,7 @@ class remote_switch( Pyro.core.ObjBase ):
         ins_name = self.name_from_id( ins_id )
 
         if not self.task_type_exists( ins_name ) and \
-                ins_name not in self.config.get( 'task_groups' ):
+                ins_name not in self.config[ 'task insertion groups' ]:
             return False, "No such task type or group: " + ins_name
 
         ins = ins_id
@@ -302,7 +305,7 @@ class remote_switch( Pyro.core.ObjBase ):
     def get_config( self, item ):
         self.warning( "REMOTE: config item " + item )
         try:
-            result = self.config.get( item )
+            result = self.config[ item ]
         except:
             self.warning( "no such config item: " + item )
         else:
@@ -310,9 +313,9 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def get_suite_info( self ):
         self.warning( "REMOTE: suite info requested" )
-        return [ self.config.get('suite_title'), \
-                self.config.get('suite_def_dir'), \
-                self.config.get('suite_username') ]
+        return [ self.config['title'], \
+                self.suite_dir, \
+                self.owner ]
 
     def get_task_list( self ):
         self.warning( "REMOTE: task list requested" )
@@ -353,8 +356,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
                 # extra info for contact tasks
                 try:
-                    clock = self.config.get('clock')
-                    extra_info[ 'delayed start time reached' ] = task.start_time_reached( clock.get_datetime() ) 
+                    extra_info[ 'delayed start time reached' ] = task.start_time_reached( self.clock.get_datetime() ) 
                 except AttributeError:
                     # not a contact task
                     pass
@@ -457,7 +459,7 @@ class remote_switch( Pyro.core.ObjBase ):
             self.warning( "Illegal logging level: " + level )
             return False, "Illegal logging level: " + level
 
-        self.config.set( 'logging_level', new_level )
+        self.config[ 'logging level' ] = new_level
         self.log.setLevel( new_level )
         return True, 'OK'
 
