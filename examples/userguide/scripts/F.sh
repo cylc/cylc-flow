@@ -1,37 +1,30 @@
 #!/bin/bash
 
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
-
-
-# CYLC USERGUIDE EXAMPLE SYSTEM Task F IMPLEMENTATION.
-
-# THIS TASK IS NOT CYLC-AWARE: USE THE CYLC TASK WRAPPING MECHANISM.
-
-# check environment
-check-env.sh || exit 1
-
-echo
-for ARG in $@; do
-    echo commandline: $ARG
-done
-echo
-
-# check prerequisites
-PRE=$CYLC_TMPDIR/storm-surge-${ANALYSIS_TIME}.nc
-if [[ ! -f $PRE ]]; then
-    # FAILURE
-    echo "file not found: $PRE"
+# CHECK INPUT AND OUTPUT DIRS ARE DEFINED
+if [[ -z $F_INPUT_DIR ]]; then
+    echo "ERROR: \$F_INPUT_DIR is not defined" >&2
+    exit 1
+fi
+if [[ -z $F_OUTPUT_DIR ]]; then
+    echo "ERROR: \$F_OUTPUT_DIR is not defined" >&2
+    exit 1
+fi
+if [[ ! -d $F_INPUT_DIR ]]; then
+    echo "ERROR: \$F_INPUT_DIR not found" >&2
     exit 1
 fi
 
-# EXECUTE THE TASK ...
-sleep $TASK_RUN_TIME_SECONDS
+# CHECK PREREQUISITES
+PRE=$F_INPUT_DIR/river-flow-${CYCLE_TIME}.nc
+if [[ ! -f $PRE ]]; then
+    echo "ERROR, file not found $PRE" >&2
+    exit 1
+fi
 
-touch $CYLC_TMPDIR/storm-surge-products-${ANALYSIS_TIME}.nc
+echo "Hello from task $TASK_NAME"
+
+# EXECUTE THE MODEL ...
+sleep 10
+
+# generate outputs
+touch $F_OUTPUT_DIR/river-flow-products-${CYCLE_TIME}.nc

@@ -1,56 +1,39 @@
 #!/bin/bash
 
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
+set -e
 
+# CHECK INPUT AND OUTPUT DIRS ARE DEFINED
+if [[ -z $C_INPUT_DIR ]]; then
+    echo "ERROR: \$C_INPUT_DIR is not defined" >&2
+    exit 1
+fi
+if [[ -z $C_OUTPUT_DIR ]]; then
+    echo "ERROR: \$C_OUTPUT_DIR is not defined" >&2
+    exit 1
+fi
+if [[ ! -d $C_INPUT_DIR ]]; then
+    echo "ERROR: \$C_INPUT_DIR not found" >&2
+    exit 1
+fi
 
-# CYLC USERGUIDE EXAMPLE SYSTEM Task C IMPLEMENTATION.
-
-# trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc task-failed "error trapped"' ERR
-
-# START MESSAGE
-cylc task-started || exit 1
-
-# check environment
-check-env.sh || exit 1
-
-# check prerequisites
-ONE=$CYLC_TMPDIR/surface-winds-${CYCLE_TIME}.nc
-TWO=$CYLC_TMPDIR/surface-pressure-${CYCLE_TIME}.nc
-THR=$CYLC_TMPDIR/${TASK_NAME}-${CYCLE_TIME}.restart
-for PRE in $ONE $TWO $THR; do
+# CHECK PREREQUISITES
+ONE=$C_INPUT_DIR/precipitation-${CYCLE_TIME}.nc
+TWO=$C_INPUT_DIR/A-${CYCLE_TIME}.restart
+for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
-        # FAILURE MESSAGE
-        cylc task-failed "file not found: $PRE"
+        echo "ERROR, file not found $PRE" >&2
         exit 1
     fi
 done
 
+echo "Hello from task $TASK_NAME"
+
 # EXECUTE THE MODEL ...
+sleep 10
+
+# generate a restart file for the next cycle
 NEXT_CYCLE=$(cylcutil cycle-time -a 6)
-NEXT_NEXT_CYCLE=$(cylcutil cycle-time -a 12)
+touch $C_OUTPUT_DIR/A-${NEXT_CYCLE}.restart
 
-# create a restart file for the next cycle
-sleep $(( TASK_RUN_TIME_SECONDS / 3 ))
-touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_CYCLE}.restart
-cylc task-message --next-restart-completed
-
-# create a restart file for the next next cycle
-sleep $(( TASK_RUN_TIME_SECONDS / 3 ))
-touch $CYLC_TMPDIR/${TASK_NAME}-${NEXT_NEXT_CYCLE}.restart
-cylc task-message --next-restart-completed
-
-# create storm surge forecast output
-sleep $(( TASK_RUN_TIME_SECONDS / 3 ))
-touch $CYLC_TMPDIR/storm-surge-${CYCLE_TIME}.nc
-cylc task-message "storm surge fields ready for $CYCLE_TIME"
-
-# SUCCESS MESSAGE
-cylc task-finished
+# generate forecast outputs
+touch $C_OUTPUT_DIR/river-flow-${CYCLE_TIME}.nc

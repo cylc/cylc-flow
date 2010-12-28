@@ -1,45 +1,99 @@
-[general]
-title = implementation of the main cylc userguide example suite
-allow simultaneous instances = True
-maximum runahead (hours) = 24
-coldstart tasks = startup, coldstart
-job log directory =
-;tasks included at startup = A,B,C,D
-;tasks excluded at startup = D,E
-;tasks to dummy out = E,F
-state dump rolling archive length = 40 
 
-[task insertion groups]
+title = main cylc userguide example suite
 
-[job submission]
-default = background
-;default = at_now
+description = """Implements the main cylc userguide example suite using
+scripts A.sh, B.sh, C.sh, D.sh, E.sh, F.sh, (and G.sh), and X.sh, which
+are not cylc-aware, all use their own configurable input and output
+directories, and depend on other's output files as in the graph."""
 
-[global environment]
-TASK_RUN_TIME_SECONDS = 10
-CYLC_TMPDIR = /tmp/$CYLC_SUITE_NAME
-FOO = ${HOME##*_}
-BAR = ${HOME%%_*}
-BAZ = ${HOME%%%%_*}
+[dependency graph] #----------------------------------------------------
+#        > B -> E
+#       /   \
+# X -> A     -> D
+#       \   /
+#        > C -> F (->G)
 
-[dependency graph defaults]
-node attributes = style=filled, fillcolor=gray, color=blue, shape=ellipse
-edge attributes = color=black, style=bold
-use node color for edges = True
+    [[ 0,6,12,18 ]]
+    label1  =  X -> A -> B ->  E
+    label2  =  A -> C -> F
+    label3  =  B -> D
+    label4  =  C -> D
+    # conditional: (B or C) -> D
 
-[dependency graph node attributes]
-contact attributes = shape=septagon, color=black
-contact nodes = X
+    label5i   = ColdABC -> A
+    label5ii  = ColdABC -> B
+    label5iii = ColdABC -> C
 
-coldstart attributes = style=unfilled, shape=box, color=black
-coldstart nodes = startup, coldstart
+    [[ 6,18 ]]
+    labelfoo = F -> G
+    # to trigger off a particular output of F:
+    #    labelfoo = F 1-> G
+    # where output 1 must be defined in [[f]] below and reported on
+    # completion by task F's implementation.
 
-red attributes = fillcolor=orange, color=invis
-yellow attributes = fillcolor=yellow, color=invis
-blue attributes = fillcolor=skyblue, color=invis
-green attributes = fillcolor=green, color=invis
+[environment] #--------------------------------------------------
+WORKSPACE = /tmp/$USER
+QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
-red nodes = A
-yellow nodes = C,F
-blue nodes = B,E
-green nodes = D
+[ tasks ]
+    [[ColdABC]] #------------------------------------------------
+    type list = coldstart,
+    command list = cylc-wrapper ColdABC.sh,
+        [[[environment]]]
+        A_OUTPUT_DIR = $WORKSPACE
+        B_OUTPUT_DIR = $WORKSPACE
+        C_OUTPUT_DIR = $WORKSPACE
+
+    [[X]] #------------------------------------------------------
+    type list = clock(offset = 1 hour), sequential,
+    command list = cylc-wrapper X.sh,
+        [[[ environment ]]]
+        X_INPUT_DIR = $WORKSPACE
+        X_OUTPUT_DIR = $WORKSPACE
+ 
+    [[A]] #------------------------------------------------------
+    type list = model(restarts = 3),
+    command list = cylc-wrapper A.sh,
+        [[[environment]]]
+        A_INPUT_DIR = $WORKSPACE
+        A_OUTPUT_DIR = $WORKSPACE
+
+    [[B]] #------------------------------------------------------
+    type list = model(restarts = 3),
+    command list = cylc-wrapper B.sh,
+        [[[environment]]]
+        B_INPUT_DIR = $WORKSPACE
+        B_OUTPUT_DIR = $WORKSPACE
+
+    [[C]] #------------------------------------------------------
+    type list = model(restarts = 3),
+    command list = cylc-wrapper C.sh,
+        [[[environment]]]
+        C_INPUT_DIR = $WORKSPACE
+        C_OUTPUT_DIR = $WORKSPACE
+
+    [[D]] #------------------------------------------------------
+    command list = cylc-wrapper D.sh,
+        [[[environment]]]
+        D_INPUT_DIR = $WORKSPACE
+        D_OUTPUT_DIR = $WORKSPACE
+ 
+    [[E]] #------------------------------------------------------
+    command list = cylc-wrapper E.sh,
+        [[[environment]]]
+        E_INPUT_DIR = $WORKSPACE
+        E_OUTPUT_DIR = $WORKSPACE
+ 
+    [[F]] #------------------------------------------------------
+    command list = cylc-wrapper F.sh,
+        #[[outputs]]
+        #1 = "foo products ready for $(CYCLE_TIME)"
+        [[[environment]]]
+        F_INPUT_DIR = $WORKSPACE
+        F_OUTPUT_DIR = $WORKSPACE
+
+    [[G]] #------------------------------------------------------
+    command list = cylc-wrapper G.sh,
+        [[[environment]]]
+        G_INPUT_DIR = $WORKSPACE
+        G_OUTPUT_DIR = $WORKSPACE

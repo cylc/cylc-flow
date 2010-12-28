@@ -53,12 +53,12 @@ class config( ConfigObj ):
         self.__check()
 
     def __check( self ):
-        for task in self['tasks']:
-
-            # check for illegal type modifiers
-            for modifier in self['tasks'][task]['type modifier list']:
-                if modifier not in self.__class__.allowed_modifiers:
-                    raise SuiteConfigError, 'illegal type modifier for ' + task + ': ' + modifier
+        pass
+        #for task in self['tasks']:
+        #    # check for illegal type modifiers
+        #    for modifier in self['tasks'][task]['type modifier list']:
+        #        if modifier not in self.__class__.allowed_modifiers:
+        #            raise SuiteConfigError, 'illegal type modifier for ' + task + ': ' + modifier
 
     def get_task_name_list( self ):
         return self['tasks'].keys()
@@ -68,38 +68,82 @@ class config( ConfigObj ):
 
     def generate_task_classes( self, dir ):
         taskdefs = {}
-        for label in self['dependency graph']:
-            line = self['dependency graph'][label]
+        for cycle_list in self['dependency graph']:
+            cycles = re.split( '\s*,\s*', cycle_list )
 
-            sequence = re.split( '\s*->\s*', line )
-            count = 0
-            tasks = {}
-            for name in sequence:
-                if name not in taskdefs:
-                    # first time seen; can defined everything except for
-                    # possibly other prerequisites.
-                    if name not in self['tasks']:
-                        raise SuiteConfigError, 'task ' + name + ' not defined'
-                    taskconfig = self['tasks'][name]
-                    taskd = taskdef.taskdef( name )
-                    taskd.type = taskconfig[ 'type' ]
-                    taskd.n_restart_outputs['any'] = taskconfig[ 'number of restart outputs' ]
-                    taskd.logfiles = []
-                    taskd.commands['any'] = taskconfig[ 'command list' ]
-                    taskd.hours = taskconfig[ 'valid cycles' ]
-                    taskd.type = taskconfig[ 'type' ]
-                    taskd.modifiers = taskconfig[ 'type modifier list' ]
-                    taskd.outputs['any'] = [ "'" + name + " output 1 ready for ' + self.c_time" ]
-                    taskd.environment['any'] = taskconfig[ 'environment' ]
-                    taskd.contact_offset['any'] = taskconfig[ 'contact offset hours' ]
-                    taskdefs[ name ] = taskd
+            for label in self['dependency graph'][ cycle_list ]:
+                line = self['dependency graph'][cycle_list][label]
 
-                if count > 0:
-                    taskdefs[name].prerequisites['any'] = [ "'" + prev + " output 1 ready for ' + self.c_time"]
-                count += 1
-                prev = name
+                sequence = re.split( '\s*->\s*', line )
+                count = 0
+                tasks = {}
+                for name in sequence:
+                    if name not in taskdefs:
+                        # first time seen; define everything except for
+                        # possible additional prerequisites.
+                        if name not in self['tasks']:
+                            raise SuiteConfigError, 'task ' + name + ' not defined'
+                        taskconfig = self['tasks'][name]
+                        taskd = taskdef.taskdef( name )
+                        for item in taskconfig[ 'type list' ]:
+                            if item == 'coldstart':
+                                taskd.modifiers.append( 'oneoff' )
+                                taskd.coldstart = True
+                                continue
+                            if item == 'free':
+                                taskd.type = 'free'
+                                continue
+                            if item == 'oneoff' or \
+                                item == 'sequential' or \
+                                item == 'dummy' or \
+                                item == 'catchup':
+                                taskd.modifiers.append( item )
+                                continue
+                            
+                            m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
+                            if m:
+                                taskd.type = 'tied'
+                                taskd.n_restart_outputs[ cycle_list ] = m.groups()[0]
+                                continue
+
+                            m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+                            if m:
+                                taskd.modifiers.append( 'contact' )
+                                taskd.contact_offset[ cycle_list ] = m.groups()[0]
+                                continue
+
+                            m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+                            if m:
+                                taskd.modifiers.append( 'catchup_contact' )
+                                taskd.contact_offset[ cycle_list ] = m.groups()[0]
+                                continue
+
+                            raise SuiteConfigError, 'illegal task type: ' + item
+
+                        taskd.logfiles = []
+                        taskd.commands[ cycle_list ] = taskconfig[ 'command list' ]
+                        taskd.environment[ cycle_list ] = taskconfig[ 'environment' ]
+
+                        taskdefs[ name ] = taskd
+
+                    for hour in cycles:
+                        if hour not in taskdefs[name].hours:
+                            taskdefs[name].hours.append( hour )
+
+                    if count > 0:
+                        if taskdefs[prev].coldstart:
+                            if cycle_list not in taskdefs[prev].outputs:
+                                taskdefs[prev].outputs[cycle_list] = []
+                            taskdefs[prev].outputs[ cycle_list ].append( "'" + name + " restart files ready for ' + self.c_time" )
+                        else:
+                            if cycle_list not in taskdefs[name].prerequisites:
+                                taskdefs[name].prerequisites[cycle_list] = []
+                            taskdefs[name].prerequisites[ cycle_list ].append( "'" + prev + "%' + self.c_time + ' finished'" )
+                    count += 1
+                    prev = name
 
         for name in taskdefs:
-            print name, taskdefs[name].type
-            taskdefs[ name ].write_task_class( dir )
+            taskdefs[name].hours.sort( key=int ) 
+            print name, taskdefs[name].type, taskdefs[name].hours
+            taskdefs[name].write_task_class( dir )
 

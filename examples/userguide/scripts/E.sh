@@ -1,40 +1,30 @@
 #!/bin/bash
 
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
-
-
-# CYLC USERGUIDE EXAMPLE SYSTEM Task E IMPLEMENTATION.
-
-# trap errors so that we need not check the success of basic operations.
-set -e; trap 'cylc task-failed "error trapped"' ERR
-
-# START MESSAGE
-cylc task-started || exit 1
-
-# check environment
-check-env.sh || exit 1
-
-# check prerequisites
-PRE=$CYLC_TMPDIR/sea-state-${CYCLE_TIME}.nc
-if [[ ! -f $PRE ]]; then
-    # FAILURE MESSAGE
-    cylc task-failed "file not found: $PRE"
+# CHECK INPUT AND OUTPUT DIRS ARE DEFINED
+if [[ -z $E_INPUT_DIR ]]; then
+    echo "ERROR: \$E_INPUT_DIR is not defined" >&2
+    exit 1
+fi
+if [[ -z $E_OUTPUT_DIR ]]; then
+    echo "ERROR: \$E_OUTPUT_DIR is not defined" >&2
+    exit 1
+fi
+if [[ ! -d $E_INPUT_DIR ]]; then
+    echo "ERROR: \$E_INPUT_DIR not found" >&2
     exit 1
 fi
 
-# EXECUTE THE TASK ...
-sleep $TASK_RUN_TIME_SECONDS
+# CHECK PREREQUISITES
+PRE=$E_INPUT_DIR/sea-state-${CYCLE_TIME}.nc
+if [[ ! -f $PRE ]]; then
+    echo "ERROR, file not found $PRE" >&2
+    exit 1
+fi
 
-# create task outputs
-touch $CYLC_TMPDIR/sea-state-products-${CYCLE_TIME}.nc
-cylc task-message "sea state products ready for $CYCLE_TIME"
+echo "Hello from task $TASK_NAME"
 
-# SUCCESS MESSAGE
-cylc task-finished
+# EXECUTE THE MODEL ...
+sleep 10
+
+# generate outputs
+touch $E_OUTPUT_DIR/sea-state.products

@@ -1,9 +1,9 @@
-
 title = string( default="No suite title given" )
 description = string( default="No suite description given" )
 allow multiple simultaneous suite instances = boolean( default=False )
 maximum runahead hours = integer( min=0, default=24 )
 number of state dump backups = integer( min=1, default=10 )
+default job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 job submission log directory = string( default='' )
 logging level = option( debug, info, warning, error, critical, default=info )
 
@@ -15,26 +15,27 @@ dummy out task list = string_list( default=list() )
 job log directory = string( default='' )
 
 [ dependency graph ]
-__many__ = string
+    [[ __many__ ]]
+    __many__ = string
 
 [ task insertion groups ]
  __many__ = string_list()
 
-   
 [ environment ]
 __many__ = string
 
+# NOTE CONFIGOBJ BUG: LIST CONSTRUCTOR FAILS IF LAST LIST ELEMENT IS
+# FOLLOWED BY A SPACE:
+#   GOOD:
+# foo = string_list( default=list('foo','bar'))
+#   BAD:
+# bar = string_list( default=list('foo','bar' ))
+
 [ tasks ]
-
     [[ __many__ ]]
-    job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
-    type = option( free, tied, default=free )
-    number of restart outputs = integer( min=1, default=1 )
-    contact offset hours = integer( default=0 )
-    type modifier list = string_list( default=list() )
-    valid cycles = int_list( default=list( 0,6,12,18 ))
+    #job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=$(default job submission method))
+    job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background)
+    type list = string_list( default=list('free'))
     command list = string_list( default=list('cylc-wrapper /bin/true'))
-
         [[[ environment ]]]
         __many__ = string
-

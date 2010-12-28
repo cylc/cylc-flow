@@ -85,6 +85,7 @@ from collections import deque
             self.shortname = name 
 
         self.type = 'free'
+        self.coldstart = False  # used in config.py
 
         self.job_submit_method = 'background'
 
@@ -115,7 +116,7 @@ from collections import deque
         self.outputs = OrderedDict()                      #  "
 
         self.commands = OrderedDict()                     # list of commands
-        self.commands['any'] = ['cylc-wrapper true']      # default: dummied out
+        self.commands['any'] = []                         # default: dummied out
 
         self.scripting = OrderedDict()                    # list of lines
         self.environment = OrderedDict()                  # OrderedDict() of var = value
@@ -510,7 +511,8 @@ from collections import deque
                 for hour in hours:
                     FILE.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
                     self.indent_more()
-                    FILE.write( self.indent + 'self.' + req_name + '.add(' + req + ')\n' )
+                    for req in reqs:
+                        FILE.write( self.indent + 'self.' + req_name + '.add(' + req + ')\n' )
                     self.indent_less()
 
     def escape_quotes( self, strng ):
