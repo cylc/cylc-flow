@@ -11,9 +11,9 @@
 
 import re
 
-from interp_env import interp_self, interp_other, interp_local, interp_local_str, replace_delayed, interp_other_str, replace_delayed_str
+from interp_env import interp_local_str, interp_other_str
 
-class logfiles:
+class logfiles( object ):
     # we need task output logs file to be mutable (i.e. not just strings) so
     # that changes to log paths in the job submit class are reflected in
     # the task class.
@@ -52,4 +52,3 @@ class logfiles:
             new_paths.append( log )
 
         self.paths = new_paths
-

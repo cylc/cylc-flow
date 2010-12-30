@@ -7,7 +7,7 @@ import time, os, re, sys
 from warning_dialog import warning_dialog
 from tailer import tailer
 
-class logviewer:
+class logviewer(object):
     def __init__( self, name, dir, file ):
         self.name = name
         self.dir = dir

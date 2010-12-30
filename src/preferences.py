@@ -15,7 +15,7 @@ from ConfigParser import SafeConfigParser
 
 # system-wide cylc settings
 
-class prefs:
+class prefs(object):
     def __init__( self, user=None, silent=False ):
 
         self.silent = silent

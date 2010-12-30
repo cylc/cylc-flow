@@ -12,7 +12,7 @@
 
 import re
 
-class nopid:
+class nopid(object):
     # NO PREVIOUS INSTANCE DEPENDENCE, FOR NON FORECAST MODELS
 
     def ready_to_spawn( self ):

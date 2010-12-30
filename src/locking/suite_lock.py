@@ -15,7 +15,7 @@ import os
 
 from lockserver import lockserver
 
-class suite_lock:
+class suite_lock(object):
     def __init__( self, suite, suite_dir, owner, host, port, cylc_mode ):
         self.host = host
         self.port = port

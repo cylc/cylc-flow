@@ -64,7 +64,7 @@ class chooser_updater(threading.Thread):
             else:
                 self.regd_liststore.append( [name, suite_dir, 'not running'] )
 
-class chooser:
+class chooser(object):
     def __init__(self, host, imagedir ):
 
         self.owner = os.environ['USER']

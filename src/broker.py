@@ -18,7 +18,7 @@ import sys
 # suite, and initialised from the outputs of all the tasks.
 # "Satisfied" => the output has been completed.
 
-class broker:
+class broker(object):
     # A broker aggregates output messages from many objects.
     # Each task registers its outputs with the suite broker, then each
     # task tries to get its prerequisites satisfied by the broker's

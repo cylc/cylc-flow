@@ -16,7 +16,7 @@ import pwd
 
 # cylc suite registration module
 
-class registrations:
+class registrations(object):
     def __init__( self, user=None ):
         if not user:
             self.readonly = False

@@ -16,7 +16,7 @@ from optparse import OptionParser
 from time import sleep
 from port_scan import get_port, check_port
 
-class client:
+class client( object ):
     def __init__( self, suite, owner, host, port ):
         self.suite = suite
         self.owner = owner

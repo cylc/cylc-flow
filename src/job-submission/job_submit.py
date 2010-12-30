@@ -53,7 +53,7 @@ try:
 except:
     use_subprocess = False
  
-class job_submit:
+class job_submit(object):
 
     # class variables to be set by the task manager
     dummy_mode = False

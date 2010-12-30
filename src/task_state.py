@@ -23,7 +23,7 @@ dump file.
 
 # TO DO: need some exception handling in here
 
-class task_state:
+class task_state(object):
 
     allowed_status = [ 'waiting', 'submitted', 'running', 'finished', 'failed' ]
     # INTERNALLY TO THIS CLASS, SPAWNED STATUS IS A STRING

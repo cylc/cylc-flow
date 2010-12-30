@@ -11,7 +11,7 @@
 
 import os
 
-class mode:
+class mode( object ):
     def __init__( self ):
 
         self.mode = 'raw'

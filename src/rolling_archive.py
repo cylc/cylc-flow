@@ -5,7 +5,7 @@
 
 import os
 
-class rolling_archive:
+class rolling_archive(object):
     def __init__( self, filename, archive_length=10 ):
         self.base_filename = filename
         self.archive_length = archive_length

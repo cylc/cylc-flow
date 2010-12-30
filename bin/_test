@@ -1,5 +1,8 @@
 #!/bin/bash
 
+echo "DISABLED: NEEDS UPDATING FOR NEW SUITE CONFIG AND ASSOCIATED CHANGES"
+exit 1
+
 set -e; trap "echo 'TEST FAILED (see output log)'" ERR
 
 #          ________________________  
@@ -104,9 +107,9 @@ fi
 # startup errors (e.g. due to lockserver denying access to the suite)
 # won't be trapped here because we run cylc in the background!
 if $dummy_mode; then
-    cylc start -d --clock-offset=36 --fail=X%2010010112 test 2010010106 >> $OUT_SCHED 2>&1 &
+    cylc coldstart -d --clock-offset=36 --fail=X%2010010112 test 2010010106 >> $OUT_SCHED 2>&1 &
 else
-    cylc start test 2010010106 >> $OUT_SCHED 2>&1 &
+    cylc coldstart test 2010010106 >> $OUT_SCHED 2>&1 &
 fi
 echo -n "   Will wait 5 seconds for startup ... "
 sleep 5

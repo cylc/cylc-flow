@@ -14,7 +14,7 @@ import sys
 import datetime
 from cycle_time import _rt_to_dt
 
-class contact:
+class contact(object):
     # A task that waits on an event in the external world, such as
     # incoming data, that occurs at some known (but approximate) time
     # interval IN HOURS relative to the task cycle time. There's no

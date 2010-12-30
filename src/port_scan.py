@@ -13,7 +13,7 @@ import os
 import Pyro.errors, Pyro.core
 from cylc_pyro_server import pyro_base_port, pyro_port_range
 
-class port_interrogator:
+class port_interrogator(object):
     # find which suite or lockserver is running on a given port
     def __init__( self, host, port, timeout=None ):
         self.host = host

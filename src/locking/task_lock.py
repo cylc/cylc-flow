@@ -15,7 +15,7 @@ import os
 
 from lockserver import lockserver
 
-class task_lock:
+class task_lock(object):
     # NOTE: THE FOLLOWING COMMENT MAY NO LONGER APPLY NOW THAT
     # TASK-SPECIFIC LOGS ARE GONE?
 

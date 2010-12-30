@@ -4,7 +4,7 @@ import gtk
 
 # TO DO: derive from option_group:
 
-class controlled_option_group:
+class controlled_option_group(object):
     def __init__( self, title, option=None ):
         self.title = title
         self.option = option
@@ -76,7 +76,7 @@ class controlled_option_group:
         return options
 
 
-class option_group:
+class option_group(object):
     def __init__( self ):
         self.entries = {}        # name -> ( entry, label, option )
         self.arg_entries = {}    # name -> ( entry, label )

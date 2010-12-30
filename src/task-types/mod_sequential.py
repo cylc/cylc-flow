@@ -10,7 +10,7 @@
 #         |________________________|
 
 
-class sequential:
+class sequential(object):
     # not "ready to spawn" unless 'finished'.
     def ready_to_spawn( self ):
         if self.state.has_spawned():

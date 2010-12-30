@@ -18,7 +18,7 @@ from cycle_time import _rt_to_dt, is_valid
 from execute import execute
 from option_group import option_group, controlled_option_group
 
-class color_rotator:
+class color_rotator(object):
     def __init__( self ):
         self.colors = [ '#ed9638', '#dbd40a', '#a7c339', '#6ab7b4' ]
         self.current_color = 0
@@ -33,7 +33,7 @@ class color_rotator:
         self.current_color = index
         return self.colors[ index ]
 
-class monitor:
+class monitor(object):
     # visibility determined by state matching active toggle buttons
     def visible_cb(self, model, iter, col ):
         # set visible if model value NOT in filter_states

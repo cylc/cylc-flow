@@ -12,7 +12,7 @@
 
 # always claim to have spawned already
 
-class oneoff:
+class oneoff(object):
 
     is_oneoff = True  # used in manager
 

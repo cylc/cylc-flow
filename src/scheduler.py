@@ -31,7 +31,7 @@ from OrderedDict import OrderedDict
 
 import task     # loads task_classes
 
-class scheduler:
+class scheduler(object):
 
     def __init__( self ):
         self.banner = {}

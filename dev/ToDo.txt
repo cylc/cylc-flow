@@ -403,7 +403,11 @@ LOCKSERVER
   locks are also released (e.g. when a suite is stopped --now with 
   tasks still running).
 
+___
 GUI
+
+* don't automatically reconfigure a suite that is already running when
+  the gui starts up.
 
 * if suite configure exits due to an illegal taskdef key, it brings the
   gui down.

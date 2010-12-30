@@ -19,7 +19,7 @@ pyro_base_port = 7766   # (7766 is the Pyro default)
 # max number of sockets starting at base
 pyro_port_range = 100 # (100 is the Pyro default)
 
-class pyro_server:
+class pyro_server( object ):
     def __init__( self, suite, user=os.environ['USER'] ):
 
         self.suite = suite

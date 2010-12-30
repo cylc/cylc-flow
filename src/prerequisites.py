@@ -17,7 +17,7 @@ import re
 # unsatisfied prerequisite becomes satisfied if it matches a satisfied
 # output message from another task (via the cylc requisite broker).
 
-class prerequisites:
+class prerequisites(object):
     def __init__( self, owner_id ):
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message 

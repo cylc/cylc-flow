@@ -12,7 +12,7 @@
 
 import re
 
-class pid:
+class pid(object):
     # PREVIOUS INSTANCE DEPENDENCE FOR FORECAST MODELS
 
     is_tied = True  # used in manager

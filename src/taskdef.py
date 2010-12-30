@@ -36,7 +36,7 @@ class DefinitionError( Error ):
     def __str__( self ):
         return repr( self.msg )
 
-class taskdef:
+class taskdef(object):
     allowed_types = [ 'free', 'tied' ]
     allowed_modifiers = [ 'sequential', 'oneoff', 'dummy', 'contact', 'catchup_contact' ]
 

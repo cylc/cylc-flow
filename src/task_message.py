@@ -14,7 +14,7 @@ import socket
 import datetime
 import cylc_pyro_client
 
-class message:
+class message(object):
     def __init__( self, msg=None, priority='NORMAL' ):
 
         self.msg = msg

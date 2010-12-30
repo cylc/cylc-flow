@@ -20,7 +20,7 @@ from rolling_archive import rolling_archive
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 
-class task_pool:
+class task_pool(object):
     def __init__( self, config, clock, pyro, dummy_mode, use_quick,
             logging_dir, logging_level, state_dump_file, exclude,
             include, stop_time, pause_time, graphfile ):

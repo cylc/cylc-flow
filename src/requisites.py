@@ -14,7 +14,7 @@
 # (postrequisites?). A collection of messages, each of which is
 # "satisfied" or not.
 
-class requisites:
+class requisites(object):
     # A collection of messages, each "satisfied" or not.
 
     def __init__( self, owner_id ):

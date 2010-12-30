@@ -15,7 +15,7 @@ import Pyro.core, Pyro.naming, Pyro.errors
 import socket
 from port_scan import get_port, check_port
 
-class lockserver:
+class lockserver(object):
     def __init__( self, owner, host, port=None ):
         self.owner = owner
         self.host = host
