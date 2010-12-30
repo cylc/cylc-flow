@@ -11,6 +11,8 @@ import re, os, sys
 from validate import Validator
 from configobj import ConfigObj
 
+# NOTE: DUMMY MODIFIER NOT NEEDED: JUST OMIT COMMAND LIST IN SUITE.RC
+
 class SuiteConfigError( Exception ):
     """
     Attributes:
