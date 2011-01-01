@@ -39,3 +39,5 @@ __many__ = string
     command list = string_list( default=list('cylc-wrapper /bin/true'))
         [[[ environment ]]]
         __many__ = string
+        [[[ outputs ]]]
+        __many__ = string

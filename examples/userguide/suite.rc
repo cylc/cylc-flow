@@ -26,11 +26,7 @@ directories, and depend on other's output files as in the graph."""
     label5iii = ColdABC -> C
 
     [[ 6,18 ]]
-    labelfoo = F -> G
-    # to trigger off a particular output of F:
-    #    labelfoo = F 1-> G
-    # where output 1 must be defined in [[f]] below and reported on
-    # completion by task F's implementation.
+    labelfoo = F(1)-> G
 
 [environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER
@@ -86,9 +82,10 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
         E_OUTPUT_DIR = $WORKSPACE
  
     [[F]] #------------------------------------------------------
-    command list = cylc-wrapper F.sh,
-        #[[outputs]]
-        #1 = "foo products ready for $(CYCLE_TIME)"
+    # not wrapped; emits a specific output.
+    command list = F.sh,
+        [[[outputs]]]
+        1 = "foo products ready for $(CYCLE_TIME)"
         [[[environment]]]
         F_INPUT_DIR = $WORKSPACE
         F_OUTPUT_DIR = $WORKSPACE

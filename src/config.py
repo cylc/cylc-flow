@@ -80,6 +80,13 @@ class config( ConfigObj ):
                 count = 0
                 tasks = {}
                 for name in sequence:
+                    m = re.match( '(\w+)\((\d+)\)', name )
+                    specific_output = False
+                    if m:
+                        specific_output = True
+                        name = m.groups()[0]
+                        output_n = m.groups()[1]
+
                     if name not in taskdefs:
                         # first time seen; define everything except for
                         # possible additional prerequisites.
@@ -133,16 +140,36 @@ class config( ConfigObj ):
                             taskdefs[name].hours.append( hour )
 
                     if count > 0:
-                        if taskdefs[prev].coldstart:
-                            if cycle_list not in taskdefs[prev].outputs:
-                                taskdefs[prev].outputs[cycle_list] = []
-                            taskdefs[prev].outputs[ cycle_list ].append( "'" + name + " restart files ready for ' + self.c_time" )
+                        if taskdefs[prev_name].coldstart:
+                            if cycle_list not in taskdefs[prev_name].outputs:
+                                taskdefs[prev_name].outputs[cycle_list] = []
+                            taskdefs[prev_name].outputs[ cycle_list ].append( "'" + name + " restart files ready for ' + self.c_time" )
                         else:
                             if cycle_list not in taskdefs[name].prerequisites:
                                 taskdefs[name].prerequisites[cycle_list] = []
-                            taskdefs[name].prerequisites[ cycle_list ].append( "'" + prev + "%' + self.c_time + ' finished'" )
+                            if prev_specific_output:
+                                # trigger off specific output of previous task
+                                if cycle_list not in taskdefs[prev_name].outputs:
+                                    taskdefs[prev_name].outputs[cycle_list] = []
+                                specout = self['tasks'][prev_name]['outputs'][output_n]
+
+                                # replace $(CYCLE_TIME +/- N)
+                                m = re.search( '\$\(\s*CYCLE_TIME\s*\+\s*(\d+)\s*\)', specout )
+                                if m:
+                                    specout = re.sub( '\$\(\s*CYCLE_TIME.*\)', '" + cycle_time.increment( self.c_time )+ "', specout )
+                                m = re.search( '\$\(\s*CYCLE_TIME\s*\-\s*(\d+)\s*\)', specout )
+                                if m:
+                                    specout = re.sub( '\$\(\s*CYCLE_TIME.*\)', '" + cycle_time.decrement( self.c_time )+ "', specout )
+                                specout = re.sub( '\$\(\s*CYCLE_TIME\s*\)', '" + self.c_time + "', specout )
+
+                                taskdefs[prev_name].outputs[  cycle_list ].append( '"' + specout + '"')
+                                taskdefs[name].prerequisites[ cycle_list ].append( '"' + specout + '"')
+                            else:
+                                # trigger off previous task finished
+                                taskdefs[name].prerequisites[ cycle_list ].append( "'" + prev_name + "%' + self.c_time + ' finished'" )
                     count += 1
-                    prev = name
+                    prev_name = name
+                    prev_specific_output = specific_output
 
         for name in taskdefs:
             taskdefs[name].hours.sort( key=int ) 
