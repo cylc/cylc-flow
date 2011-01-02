@@ -1,10 +1,23 @@
 
+################################################################
+# TO BE DOCUMENTED:
+# 1/ To dummy out a task, comment out its command list.
+# 2/ Although cylc internals allow for different outputs etc. at
+# different times this would overly complicate suite.rc files; 
+# instead use different tasks if necessary.  To change this, use
+# 'if HOUR in ...' conditionals for commands, environment, etc.,
+# in taskdef.py.
+################################################################
+
 title = main cylc userguide example suite
 
 description = """Implements the main cylc userguide example suite using
 scripts A.sh, B.sh, C.sh, D.sh, E.sh, F.sh, (and G.sh), and X.sh, which
 are not cylc-aware, all use their own configurable input and output
 directories, and depend on other's output files as in the graph."""
+
+[ families ]
+FOO = foo, bar
 
 [dependency graph] #----------------------------------------------------
 #        > B -> E
@@ -15,18 +28,18 @@ directories, and depend on other's output files as in the graph."""
 
     [[ 0,6,12,18 ]]
     label1  =  X -> A -> B ->  E
-    label2  =  A -> C -> F
+    label2  =  A -> C -> F -> FOO -> postfoo
     label3  =  B -> D
     label4  =  C -> D
-    # conditional:
-    # label99 = (B or C) -> D
+    ## conditional:
+    ## label99 = (B or C) -> D
 
     label5i   = ColdABC -> A
     label5ii  = ColdABC -> B
     label5iii = ColdABC -> C
 
     [[ 6,18 ]]
-    labelfoo = F(1)-> G
+    label6 = F(1)-> G
 
 [environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER
@@ -45,7 +58,6 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
     type list = clock(offset = 1 hour), sequential,
     command list = cylc-wrapper X.sh,
         [[[ environment ]]]
-        X_INPUT_DIR = $WORKSPACE
         X_OUTPUT_DIR = $WORKSPACE
  
     [[A]] #------------------------------------------------------
@@ -95,3 +107,8 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
         [[[environment]]]
         G_INPUT_DIR = $WORKSPACE
         G_OUTPUT_DIR = $WORKSPACE
+
+    [[foo]]
+    [[bar]]
+    [[postfoo]]
+    [[FOO]]

@@ -55,12 +55,14 @@ class config( ConfigObj ):
         self.__check()
 
     def __check( self ):
-        pass
         #for task in self['tasks']:
         #    # check for illegal type modifiers
         #    for modifier in self['tasks'][task]['type modifier list']:
         #        if modifier not in self.__class__.allowed_modifiers:
         #            raise SuiteConfigError, 'illegal type modifier for ' + task + ': ' + modifier
+
+        # check families do not define commands, etc.
+        pass
 
     def get_task_name_list( self ):
         return self['tasks'].keys()
@@ -70,6 +72,7 @@ class config( ConfigObj ):
 
     def generate_task_classes( self, dir ):
         taskdefs = {}
+
         for cycle_list in self['dependency graph']:
             cycles = re.split( '\s*,\s*', cycle_list )
 
@@ -79,9 +82,10 @@ class config( ConfigObj ):
                 sequence = re.split( '\s*->\s*', line )
                 count = 0
                 tasks = {}
+
                 for name in sequence:
-                    m = re.match( '(\w+)\((\d+)\)', name )
                     specific_output = False
+                    m = re.match( '(\w+)\((\d+)\)', name )
                     if m:
                         specific_output = True
                         name = m.groups()[0]
@@ -94,6 +98,7 @@ class config( ConfigObj ):
                             raise SuiteConfigError, 'task ' + name + ' not defined'
                         taskconfig = self['tasks'][name]
                         taskd = taskdef.taskdef( name )
+
                         for item in taskconfig[ 'type list' ]:
                             if item == 'coldstart':
                                 taskd.modifiers.append( 'oneoff' )
@@ -104,7 +109,6 @@ class config( ConfigObj ):
                                 continue
                             if item == 'oneoff' or \
                                 item == 'sequential' or \
-                                item == 'dummy' or \
                                 item == 'catchup':
                                 taskd.modifiers.append( item )
                                 continue
@@ -112,26 +116,28 @@ class config( ConfigObj ):
                             m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
                             if m:
                                 taskd.type = 'tied'
-                                taskd.n_restart_outputs[ cycle_list ] = m.groups()[0]
+                                taskd.n_restart_outputs = m.groups()[0]
                                 continue
 
                             m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
                             if m:
                                 taskd.modifiers.append( 'contact' )
-                                taskd.contact_offset[ cycle_list ] = m.groups()[0]
+                                taskd.contact_offset = m.groups()[0]
                                 continue
 
                             m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
                             if m:
                                 taskd.modifiers.append( 'catchup_contact' )
-                                taskd.contact_offset[ cycle_list ] = m.groups()[0]
+                                taskd.contact_offset = m.groups()[0]
                                 continue
 
                             raise SuiteConfigError, 'illegal task type: ' + item
 
                         taskd.logfiles = []
-                        taskd.commands[ cycle_list ] = taskconfig[ 'command list' ]
-                        taskd.environment[ cycle_list ] = taskconfig[ 'environment' ]
+                        taskd.commands = taskconfig[ 'command list' ]
+                        taskd.environment = taskconfig[ 'environment' ]
+                        #taskd.directives = taskconfig[ 'directives' ]
+                        #taskd.scripting = taskconfig[ 'scripting' ]
 
                         taskdefs[ name ] = taskd
 
@@ -171,8 +177,31 @@ class config( ConfigObj ):
                     prev_name = name
                     prev_specific_output = specific_output
 
+        members = []
+        my_family = {}
+        for name in self['families']:
+            taskdefs[name].type="family"
+            mems = self['families'][name]
+            taskdefs[name].members = mems
+            for mem in mems:
+                if mem not in members:
+                    members.append( mem )
+                    taskd = taskdef.taskdef( mem )
+                    taskd.member_of = name
+                    # take valid hours for family members 
+                    # from the family
+                    taskd.hours = taskdefs[name].hours
+                    taskd.logfiles = []
+                    taskconfig = self['tasks'][mem]
+                    taskd.commands = taskconfig[ 'command list' ]
+                    taskd.environment = taskconfig[ 'environment'  ]
+                    #taskd.directives = taskconfig[ 'directives'   ]
+                    #taskd.scripting = taskconfig[ 'scripting'    ]
+
+                    taskdefs[ mem ] = taskd
+
         for name in taskdefs:
             taskdefs[name].hours.sort( key=int ) 
-            print name, taskdefs[name].type, taskdefs[name].hours
+            print name, taskdefs[name].type, taskdefs[name].hours, taskdefs[name].commands
             taskdefs[name].write_task_class( dir )
 

@@ -27,7 +27,7 @@ class client( object ):
         if self.port:
             port = self.port
             if not check_port( self.suite, self.owner, self.host, self.port ):
-                msg = self.suite + " (" + self.owner + ") not found at " + self.host + ":" + port
+                msg = self.suite + " (" + self.owner + ") not found at " + self.host + ":" + str(port)
                 raise Pyro.errors.NamingError( msg )
         else:
             if not silent:

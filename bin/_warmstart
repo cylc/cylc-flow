@@ -68,7 +68,7 @@ Arguments:
     def load_suite_config( self ):
         scheduler.load_suite_config( self )
         # check for legal start time
-        self.config.check_start_time( self.start_time )
+        #TO DO TO DO TO DO: self.config.check_start_time( self.start_time )
 
     def create_task_pool( self ):
         # initialize the server (and create main logger)

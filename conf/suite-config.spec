@@ -14,6 +14,9 @@ dummy out task list = string_list( default=list() )
 
 job log directory = string( default='' )
 
+[ families ]
+    __many__ = string_list( default=None )
+
 [ dependency graph ]
     [[ __many__ ]]
     __many__ = string
@@ -37,7 +40,13 @@ __many__ = string
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background)
     type list = string_list( default=list('free'))
     command list = string_list( default=list('cylc-wrapper /bin/true'))
+    owner = string( default=None )
+    host = string( default=None )
         [[[ environment ]]]
         __many__ = string
-        [[[ outputs ]]]
+        [[[ directives ]]]
+        __many__ = string
+        [[[ scripting ]]]
+        __many__ = string
+          [[[ outputs ]]]
         __many__ = string

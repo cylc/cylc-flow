@@ -91,6 +91,7 @@ class task_pool(object):
             else:
                 self.members[ name ] = mems
                 mems.sort()
+                print name, mems
                 self.middle_member[ name ] = mems[ len( mems ) / 2  ]
 
             try:

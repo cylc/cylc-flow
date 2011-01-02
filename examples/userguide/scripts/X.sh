@@ -2,19 +2,13 @@
 
 set -e
 
-# CHECK INPUT AND OUTPUT DIRS ARE DEFINED
-if [[ -z $X_INPUT_DIR ]]; then
-    echo "ERROR: \$X_INPUT_DIR is not defined" >&2
-    exit 1
-fi
+# CHECK OUTPUT DIR IS DEFINED
 if [[ -z $X_OUTPUT_DIR ]]; then
     echo "ERROR: \$X_OUTPUT_DIR is not defined" >&2
     exit 1
 fi
-if [[ ! -d $X_INPUT_DIR ]]; then
-    echo "ERROR: \$X_INPUT_DIR not found" >&2
-    exit 1
-fi
+
+mkdir -p $X_OUTPUT_DIR
 
 echo "Hello from task $TASK_NAME"
 

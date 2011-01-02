@@ -1,5 +1,8 @@
 #!/usr/bin/env python
 
+# THIS VERSION OF THE FILE COPIED PRIOR TO GETTING RID OF
+# HOUR-CONDITIONALS FOR EVERYTHING EXCEPT PREREQUISITES AND OUTPUTS.
+
 # THIS ENTIRE MODULE MAY BE REPLACED BY DYNAMIC TASK PROXY CLASS DEFINITION
 
 # NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
@@ -101,22 +104,103 @@ from collections import deque
         self.member_of = None
         self.follow_on_task = None
 
-        self.n_restart_outputs = 0
-        self.contact_offset = 0
-
+        # use dicts quantities that may be conditional on cycle hour
+        # keyed on condition
+        # OrderedDict keeps 'any' conditional at the top if entered
+        # first
+        self.n_restart_outputs = OrderedDict()            # int
+        self.contact_offset = OrderedDict()               # float hours
         self.prerequisites = OrderedDict()                # list of messages
         self.suicide_prerequisites = OrderedDict()        #  "
         self.coldstart_prerequisites = OrderedDict()      #  "
         self.conditional_prerequisites = OrderedDict()    #  "
         self.outputs = OrderedDict()                      #  "
 
-        self.commands = []                       # list of commands
-        self.scripting   = []                    # list of lines
-        self.environment = OrderedDict()         # var = value
-        self.directives  = OrderedDict()         # var = value
+        self.commands = OrderedDict()                     # list of commands
+        self.commands['any'] = ['cylc-wrapper true']      # default: dummied out
+
+        self.scripting = OrderedDict()                    # list of lines
+        self.environment = OrderedDict()                  # OrderedDict() of var = value
+        self.directives = OrderedDict()                   # OrderedDict() of var = value
+
 
         self.indent = ''
         self.indent_unit = '  '
+
+    def dump( self, FILE=None ):
+        if not FILE:
+            FILE=sys.stdout
+
+        indent = '   '
+        print >> FILE, '%TASK'
+        print >> FILE, indent, self.name
+
+        print >> FILE, '%DESCRIPTION'
+        for line in self.description:
+            print >> FILE, indent, line
+
+        print >> FILE, '%HOURS'
+        hrs = str( self.hours[0] )
+        for hour in self.hours[1:]:
+            hrs = hrs + ', ' + str(hour)
+        print >> FILE, indent, hrs
+
+        print >> FILE, '%TYPE'
+        types = [ self.type ] + self.modifiers
+        print >> FILE, indent, ', '.join( types )
+
+        if self.owner:
+            print >> FILE, '%OWNER'
+            print >> FILE, indent, self.owner
+
+        if self.host:
+            print >> FILE, '%REMOTE_HOST'
+            print >> FILE, indent, self.host
+
+        self.dump_conditional_list( FILE, self.commands,      'COMMAND'       )
+        self.dump_conditional_list( FILE, self.prerequisites, 'PREREQUISITES', quote=True )
+        self.dump_conditional_list( FILE, self.outputs,       'OUTPUTS', quote=True       )
+        self.dump_conditional_dict( FILE, self.environment,   'ENVIRONMENT'   )
+        self.dump_conditional_list( FILE, self.scripting,     'SCRIPTING'     )
+        self.dump_conditional_dict( FILE, self.directives,    'DIRECTIVES'    )
+
+    def dump_conditional_list( self, FILE, foo, name, quote=False ):
+        # print out foo[condition] = []
+        indent = '   '
+        print >> FILE, '%' + name
+        for condition in foo:
+            values = foo[condition]
+            if condition == 'any':
+                for value in values:
+                    if quote:
+                        value = '"' + value + '"'
+                    print >> FILE, indent, value
+            else:
+                print >> FILE, indent, 'if HOUR in ' + condition + ':'
+                if len( values ) == 0:
+                    print >> FILE, indent, indent, "# (none)"
+                else:
+                    for value in values:
+                        if quote:
+                            value = '"' + value + '"'
+                        print >> FILE, indent, indent, value
+
+    def dump_conditional_dict( self, FILE, foo, name ):
+        # print out foo[condition][var] = value
+        indent = '   '
+        print >> FILE, '%' + name
+        for condition in foo:
+            vars = foo[condition].keys()
+            if condition == 'any':
+                for var in vars:
+                    print >> FILE, indent, indent, foo[condition][var]
+            else:
+                print >> FILE, indent, 'if HOUR in ' + condition + ':'
+                if len( vars ) == 0:
+                    print >> FILE, indent, indent, "# (none)"
+                else:
+                    for var in vars:
+                        print >> FILE, indent, indent, foo[condition][var]
 
     def check_name( self, name ):
         m = re.match( '^(\w+),\s*(\w+)$', name )
@@ -259,11 +343,32 @@ from collections import deque
         # external task
         OUT.write( self.indent + 'self.external_tasks = deque()\n' )
 
-        for command in self.commands:
-            OUT.write( self.indent + 'self.external_tasks.append( \'' + command + '\')\n' )
+        for condition in self.commands:
+            for command in self.commands[ condition ]:
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.external_tasks.append( \'' + command + '\')\n' )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.external_tasks.append( \'' + command + '\')\n' )
+                        self.indent_less()
  
         if 'contact' in self.modifiers:
-            OUT.write( self.indent + 'self.real_time_delay = ' +  str( self.contact_offset ) + '\n' )
+            for condition in self.contact_offset:
+                offset = self.contact_offset[ condition ]
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.real_time_delay = ' +  str( offset ) + '\n' )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.real_time_delay = ' + str( offset ) + '\n' )
+                        self.indent_less()
+ 
+            OUT.write( '\n' )
 
         self.write_requisites( OUT, 'prerequisites', 'prerequisites', self.prerequisites )
         self.write_requisites( OUT, 'suicide_prerequisites', 'prerequisites', self.suicide_prerequisites )
@@ -285,8 +390,18 @@ from collections import deque
         self.write_requisites( OUT, 'outputs', 'outputs', self.outputs )
 
         if self.type == 'tied':
-            OUT.write( self.indent + 'self.register_restart_requisites(' + str(self.n_restart_outputs) +')\n' )
-
+            for condition in self.n_restart_outputs.keys():
+                n = self.n_restart_outputs[ condition ]
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.register_restart_requisites(' + str(n) +')\n' )
+                else:
+                    hours = re.split( ', *', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.register_restart_requisites(' + str( n ) + ')\n' )
+                        self.indent_less()
+ 
         OUT.write( self.indent + 'self.outputs.register()\n\n' )
 
         # override the above with any coldstart prerequisites
@@ -297,20 +412,51 @@ from collections import deque
         OUT.write( self.indent + "self.env_vars['TASK_ID'] = self.id\n" )
         OUT.write( self.indent + "self.env_vars['CYCLE_TIME'] = self.c_time\n" )
        
-        for var in self.environment:
-            val = self.environment[ var ]
-            OUT.write( self.indent + 'self.env_vars[\"' + var + '\"] = \"' + val + '\"\n' )
-
+        for condition in self.environment.keys():
+            envdict = self.environment[ condition ]
+            for var in envdict.keys():
+                val = envdict[ var ]
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.env_vars[\"' + var + '\"] = \"' + val + '\"\n' )
+                else:
+                    hours = re.split( ', *', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.env_vars[\"' + var + '\"] = \"' + val + '\"\n' )
+                        self.indent_less()
+ 
         OUT.write( '\n' + self.indent + 'self.directives = OrderedDict()\n' )
-        for var in self.directives:
-            val = self.directives[ var ]
-            OUT.write( self.indent + 'self.directives[' + var + '] = ' + val + '\n' )
-
+        for condition in self.directives.keys():
+            dirdict = self.directives[ condition ]
+            for var in dirdict.keys():
+                val = dirdict[ var ]
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.directives[' + var + '] = ' + val + '\n' )
+                else:
+                    hours = re.split( ', *', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.directives[' + var + '] = ' + val + '\n' )
+                        self.indent_less()
+ 
         OUT.write( '\n' + self.indent + 'self.extra_scripting = []\n' )
 
-        lines = self.scripting
-        for line in lines:
-            OUT.write( self.indent + 'self.extra_scripting.append(' + line + ')\n' )
+        for condition in self.scripting.keys():
+            lines = self.scripting[ condition ]
+            for line in lines:
+                if condition == 'any':
+                    OUT.write( self.indent + 'self.extra_scripting.append(' + line + ')\n' )
+                else:
+                    hours = re.split( ', *', condition )
+                    for hour in hours:
+                        OUT.write( self.indent + 'if int( hour ) == ' + hour + ':\n' )
+                        self.indent_more()
+                        OUT.write( self.indent + 'self.extra_scripting.append(' + line + ')\n' )
+                        self.indent_less()
+ 
+        OUT.write( '\n' )
 
         if 'catchup_contact' in self.modifiers:
             OUT.write( self.indent + 'catchup_contact.__init__( self )\n\n' )
@@ -341,6 +487,14 @@ from collections import deque
 
     def escape_quotes( self, strng ):
         return re.sub( '([\\\'"])', r'\\\1', strng )
+
+    def interpolate_conditional_list( self, foo ):
+        for condition in foo.keys():
+            old_values = foo[ condition ]
+            new_values = []
+            for value in old_values:
+                new_values.append( self.interpolate_cycle_times( value ) )
+            foo[condition] = new_values
 
     def time_trans( self, strng, hours=False ):
         # translate a time of the form:
