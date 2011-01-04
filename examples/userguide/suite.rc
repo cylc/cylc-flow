@@ -2,19 +2,24 @@
 ################################################################
 # TO BE DOCUMENTED:
 # 1/ To dummy out a task, comment out its command list.
-# 2/ Although cylc internals allow for different outputs etc. at
-# different times this would overly complicate suite.rc files; 
-# instead use different tasks if necessary.  To change this, use
-# 'if HOUR in ...' conditionals for commands, environment, etc.,
-# in taskdef.py.
+# 2/ Although cylc internals can easily handle different task 
+# commands, environment, outputs etc., at different times, 
+# I think this would rarely be needed (however: EXAMPLE 
+# different n_restart_outputs for a model that does a short
+# forecast at 0,12 and long forecast at 6,18). To change this, 
+# use more 'if HOUR in ...' conditionals in taskdef.py, as for 
+# prerequisites via the dependency graph cycle-time lists, and some
+# interface to this in config.py (which however should be designed 
+# not to further complicate suite.rc files for general use).
 ################################################################
 
 title = main cylc userguide example suite
 
-description = """Implements the main cylc userguide example suite using
-scripts A.sh, B.sh, C.sh, D.sh, E.sh, F.sh, (and G.sh), and X.sh, which
-are not cylc-aware, all use their own configurable input and output
-directories, and depend on other's output files as in the graph."""
+description = """This suite implements the main cylc userguide example
+using scripts A.sh, B.sh, C.sh, D.sh, E.sh, F.sh, (and G.sh), and X.sh,
+which are not cylc-aware, all use their own configurable input and
+output directories, and depend on other's output files as in the
+graph."""
 
 [ families ]
 FOO = foo, bar
@@ -31,7 +36,7 @@ FOO = foo, bar
     label2  =  A -> C -> F -> FOO -> postfoo
     label3  =  B -> D
     label4  =  C -> D
-    ## conditional:
+    ## TO DO, conditional triggers:
     ## label99 = (B or C) -> D
 
     label5i   = ColdABC -> A

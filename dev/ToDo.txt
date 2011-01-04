@@ -1,8 +1,8 @@
 _______
 GENERAL
 
-* suite.rc: make default command "cylc-wrapper true" so to dummy out a task
-just comment out its command in suite.rc.?
+* hook for centralised task failure response from cylc: in particular
+  could be used to send alerts for job submit failures.
 
 * allow "coldstart" as a task insertion group for all cold start tasks.
 
