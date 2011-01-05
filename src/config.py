@@ -224,9 +224,13 @@ class config( ConfigObj ):
 
                     self.taskdefs[ mem ] = taskd
 
+        # sort hours list for each task
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
             #print name, self.taskdefs[name].type, self.taskdefs[name].modifiers
+
+        # define a task insertion group of all coldstart tasks
+        self['task insertion groups']['all coldstart tasks'] = self.coldstart_task_list
 
     def get_task_proxy( self, name, ctime, state, startup ):
         if not self.loaded:
