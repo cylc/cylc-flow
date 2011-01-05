@@ -1,21 +1,4 @@
 
-DYNAMIC GENERATION OF TASK CLASSES: PLAN A:
-
-1/ get taskdef.py to return a new dynamically generated class
-   definition, instead of write one.
-
-2/ get config.py to return a new dynamically generated module that
-   contains all of the dynamically generated task classes (how to make
-   it import the task base classes?)
-
-references:
-
-http://www.b-list.org/weblog/2007/dec/03/making-magic/
-
-http://stackoverflow.com/questions/3458671/using-built-in-type-function-to-create-a-dynamic-module
-
-http://stackoverflow.com/questions/3799545/dynamically-importing-python-module/3799609#3799609
-
 GRAPHING:
 
 xdot embedding: 

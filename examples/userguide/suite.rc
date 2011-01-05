@@ -14,6 +14,7 @@
 ################################################################
 # TO DO:
 # 1/ suicide prerequisites
+# 2/ ...
 
 title = main cylc userguide example suite
 
@@ -63,6 +64,7 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
         C_OUTPUT_DIR = $WORKSPACE
 
     [[X]] #------------------------------------------------------
+    #type list = clock(offset = 1 hour),
     type list = clock(offset = 1 hour), sequential,
     command list = cylc-wrapper X.sh,
         [[[ environment ]]]

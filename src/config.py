@@ -209,9 +209,7 @@ class config( ConfigObj ):
 
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
-            print name, self.taskdefs[name].type, self.taskdefs[name].hours, self.taskdefs[name].commands
-            print name, self.taskdefs[name].prerequisites
-            #####self.taskdefs[name].write_task_class( dir )
+            print name, self.taskdefs[name].type, self.taskdefs[name].modifiers
 
     def get_task_proxy( self, name, ctime, state, startup ):
         if not self.loaded:

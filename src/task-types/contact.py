@@ -21,14 +21,14 @@ class contact(object):
     # point in running the task earlier than this delayed start time as
     # the task would just sit in the queue waiting on the external event.
 
-    def __init__( self ):
-        # THE ASSOCIATED TASK CLASS MUST DEFINE 
-        # self.real_time_delay
-        try:
-            self.real_time_delay
-        except AttributeError:
-            print 'ERROR: contact tasks require a real time delay'
-            sys.exit(1)
+    #def __init__( self ):
+    #    # THE ASSOCIATED TASK CLASS MUST DEFINE 
+    #    # self.real_time_delay
+    #    try:
+    #        self.real_time_delay
+    #    except AttributeError:
+    #        print 'ERROR: contact tasks require a real time delay'
+    #        sys.exit(1)
 
     def get_real_time_delay( self ):
         return self.real_time_delay

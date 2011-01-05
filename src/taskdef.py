@@ -2,6 +2,7 @@
 
 # NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
 #   - time translation (for different units) not used
+#   - not using the various check_() functions below
 #   - conditional prerequisites
 #   - short name
 #   - asynch stuff, output_patterns
@@ -179,16 +180,13 @@ class taskdef(object):
                 return float(hrs)*60.0
 
     def get_task_class( self ):
-        derived_from = [self.type]
-        derived_from.extend( self.modifiers )
         base_types = []
-        for foo in derived_from:
+        for foo in self.modifiers + [self.type]:
             mod = __import__( foo )
             base_types.append( getattr( mod, foo ) )
 
         tclass = type( self.name, tuple( base_types), dict())
-        #tclass = type( self.name, (free, ), dict())
-        tclass.name = self.name  # TO DO: NOT NEEDED, USED class.__name__
+        tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.short_name = self.name  # TO DO: reimplement short name
         tclass.instance_count = 0
         tclass.description = self.description
