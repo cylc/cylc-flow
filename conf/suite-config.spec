@@ -12,7 +12,7 @@ exclude task list   = string_list( default=list() )
 
 job log directory = string( default='' )
 
-[ families ]
+[ task families ]
     __many__ = string_list( default=None )
 
 [ dependency graph ]

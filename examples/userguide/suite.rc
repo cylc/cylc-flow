@@ -5,7 +5,7 @@ description = """This suite implements the main cylc userguide example.
 (and G.sh); and "external data collection task" X.sh are not cylc-aware
 and each have their own independent input and output directories."""
 
-[ families ]
+[ task families ]
 FOO = foo, bar
 
 [dependency graph] #----------------------------------------------------
@@ -25,6 +25,8 @@ FOO = foo, bar
     labelc2 = coldstart:ColdB -> B
     labelc3 = coldstart:ColdC -> C
 
+    #labels1 = oneoff:startup -> A
+
     # TO DO, conditional triggers:
     # label99 = (B or C) -> D
 
@@ -36,23 +38,10 @@ WORKSPACE = /tmp/$USER
 QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
 [ tasks ]
-    [[ColdA]] #------------------------------------------------
-    description = "fulfils restart dependencies for model A"
-    command list = cylc-wrapper ColdA.sh,
+    [[startup]] #------------------------------------------------------
+    #command list = cylc-wrapper startup.sh,
         [[[environment]]]
-        A_OUTPUT_DIR = $WORKSPACE
-
-    [[ColdB]] #------------------------------------------------
-    description = "fulfils restart dependencies for model B"
-    command list = cylc-wrapper ColdB.sh,
-        [[[environment]]]
-        B_OUTPUT_DIR = $WORKSPACE
-
-    [[ColdC]] #------------------------------------------------
-    description = "fulfils restart dependencies for model C"
-    command list = cylc-wrapper ColdC.sh,
-        [[[environment]]]
-        C_OUTPUT_DIR = $WORKSPACE
+        SUITE_WORKSPACE = $WORKSPACE
 
     [[X]] #------------------------------------------------------
     #type list = clock(offset = 1 hour),
@@ -109,7 +98,26 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
         G_INPUT_DIR = $WORKSPACE
         G_OUTPUT_DIR = $WORKSPACE
 
-    [[foo]]
-    [[bar]]
-    [[postfoo]]
-    [[FOO]]
+    [[ColdA]] #------------------------------------------------
+    description = "fulfils restart dependencies for model A"
+    command list = cylc-wrapper ColdA.sh,
+        [[[environment]]]
+        A_OUTPUT_DIR = $WORKSPACE
+
+    [[ColdB]] #------------------------------------------------
+    description = "fulfils restart dependencies for model B"
+    command list = cylc-wrapper ColdB.sh,
+        [[[environment]]]
+        B_OUTPUT_DIR = $WORKSPACE
+
+    [[ColdC]] #------------------------------------------------
+    description = "fulfils restart dependencies for model C"
+    command list = cylc-wrapper ColdC.sh,
+        [[[environment]]]
+        C_OUTPUT_DIR = $WORKSPACE
+
+
+    [[foo]] #--------------------------------------------------
+    [[bar]] #--------------------------------------------------
+    [[postfoo]] #----------------------------------------------
+    [[FOO]] #--------------------------------------------------

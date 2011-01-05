@@ -1,7 +1,9 @@
 ################################################################
 TO BE DOCUMENTED:
-1/ To dummy out a task, comment out its command list.
-2/ Although cylc internals can easily handle different task
+
+* To dummy out a task, comment out its command list.
+
+* Although cylc internals can easily handle different task
 commands, environment, outputs etc., at different times,
 I think this would rarely be needed (however: EXAMPLE
 different n_restart_outputs for a model that does a short
@@ -10,3 +12,8 @@ use more 'if HOUR in ...' conditionals in taskdef.py, as for
 prerequisites via the dependency graph cycle-time lists, and some
 interface to this in config.py (which however should be designed
 not to further complicate suite.rc files for general use).
+
+* auto task insertion group: "all coldstart tasks"
+
+* duplicate keywords (e.g. dependency graph labels) in suite.rc
+  result in a configobj.DuplicateError.

@@ -9,7 +9,7 @@
 import taskdef
 import re, os, sys
 from validate import Validator
-from configobj import ConfigObj
+from configobj import ConfigObj, get_extra_values
 
 class SuiteConfigError( Exception ):
     """
@@ -54,6 +54,27 @@ class config( ConfigObj ):
             print test
             raise SuiteConfigError, "Suite Config Validation Failed"
         
+        # are there any keywords or sections not present in the spec?
+        found_extra = False
+        for sections, name in get_extra_values(self):
+            # this code gets the extra values themselves
+            the_section = self
+            for section in sections:
+                the_section = self[section]
+            # the_value may be a section or a value
+            the_value = the_section[name]
+            section_or_value = 'value'
+            if isinstance(the_value, dict):
+                # Sections are subclasses of dict
+                section_or_value = 'section'
+
+            section_string = ', '.join(sections) or "top level"
+            print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
+            found_extra = True
+
+        if found_extra:
+            raise SuiteConfigError, "Illegal suite.rc entry found"
+
         # check cylc-specific self consistency
         self.__check()
 
@@ -204,9 +225,9 @@ class config( ConfigObj ):
 
         members = []
         my_family = {}
-        for name in self['families']:
+        for name in self['task families']:
             self.taskdefs[name].type="family"
-            mems = self['families'][name]
+            mems = self['task families'][name]
             self.taskdefs[name].members = mems
             for mem in mems:
                 if mem not in members:
