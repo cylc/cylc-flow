@@ -20,31 +20,38 @@ FOO = foo, bar
     label2  =  A -> C -> F -> FOO -> postfoo
     label3  =  B -> D
     label4  =  C -> D
-    ## TO DO, conditional triggers:
-    ## label99 = (B or C) -> D
+    
+    labelc1 = coldstart:ColdA -> A
+    labelc2 = coldstart:ColdB -> B
+    labelc3 = coldstart:ColdC -> C
+
+    # TO DO, conditional triggers:
+    # label99 = (B or C) -> D
 
     [[ 6,18 ]]
     label6 = F(1)-> G
-
-# TO DO: [coldstart]
-# (or nested in [dependency graph]?)
-#label5i   = ColdABC -> A
-#label5ii  = ColdABC -> B
-#label5iii = ColdABC -> C
-
 
 [environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER
 QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
 [ tasks ]
-    [[ColdABC]] #------------------------------------------------
-    description = "fulfils restart dependencies for models A,B,C"
-    type list = coldstart,
-    command list = cylc-wrapper ColdABC.sh,
+    [[ColdA]] #------------------------------------------------
+    description = "fulfils restart dependencies for model A"
+    command list = cylc-wrapper ColdA.sh,
         [[[environment]]]
         A_OUTPUT_DIR = $WORKSPACE
+
+    [[ColdB]] #------------------------------------------------
+    description = "fulfils restart dependencies for model B"
+    command list = cylc-wrapper ColdB.sh,
+        [[[environment]]]
         B_OUTPUT_DIR = $WORKSPACE
+
+    [[ColdC]] #------------------------------------------------
+    description = "fulfils restart dependencies for model C"
+    command list = cylc-wrapper ColdC.sh,
+        [[[environment]]]
         C_OUTPUT_DIR = $WORKSPACE
 
     [[X]] #------------------------------------------------------

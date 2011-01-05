@@ -11,8 +11,6 @@ import re, os, sys
 from validate import Validator
 from configobj import ConfigObj
 
-# NOTE: DUMMY MODIFIER NOT NEEDED: JUST OMIT COMMAND LIST IN SUITE.RC
-
 class SuiteConfigError( Exception ):
     """
     Attributes:
@@ -26,12 +24,13 @@ class SuiteConfigError( Exception ):
 
 
 class config( ConfigObj ):
-    allowed_modifiers = ['dummy', 'contact', 'oneoff', 'sequential', 'catchup', 'catchup_contact']
+    allowed_modifiers = ['contact', 'oneoff', 'sequential', 'catchup', 'catchup_contact']
 
     def __init__( self, file=None, spec=None ):
 
         self.taskdefs = {}
         self.loaded = False
+        self.coldstart_task_list = []
 
         if file:
             self.file = file
@@ -74,6 +73,12 @@ class config( ConfigObj ):
     def get_description( self ):
         return self['description']
 
+    def get_coldstart_task_list( self ):
+        if not self.loaded:
+            self.load_taskdefs()
+            self.loaded = True
+        return self.coldstart_task_list
+
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
         # not the full tist of defined tasks (self['tasks'].keys())
@@ -104,12 +109,19 @@ class config( ConfigObj ):
                 tasks = {}
 
                 for name in sequence:
+                    # check for specific output indicator: TASK(n)
                     specific_output = False
                     m = re.match( '(\w+)\((\d+)\)', name )
                     if m:
                         specific_output = True
                         name = m.groups()[0]
                         output_n = m.groups()[1]
+                    # check for coldstart task indicator: coldstart:TASK
+                    coldstart = False
+                    m = re.match( 'coldstart:(\w+)', name )
+                    if m:
+                        coldstart = True
+                        name = m.groups()[0]
 
                     if name not in self.taskdefs:
                         # first time seen; define everything except for
@@ -119,11 +131,12 @@ class config( ConfigObj ):
                         taskconfig = self['tasks'][name]
                         taskd = taskdef.taskdef( name )
 
+                        if coldstart:
+                            self.coldstart_task_list.append( name )
+                            taskd.modifiers.append( 'oneoff' )
+                            taskd.coldstart = True
+
                         for item in taskconfig[ 'type list' ]:
-                            if item == 'coldstart':
-                                taskd.modifiers.append( 'oneoff' )
-                                taskd.coldstart = True
-                                continue
                             if item == 'free':
                                 taskd.type = 'free'
                                 continue
@@ -168,10 +181,9 @@ class config( ConfigObj ):
 
                     if count > 0:
                         if self.taskdefs[prev_name].coldstart:
-                            pass
-                            ###if cycle_list not in self.taskdefs[prev_name].outputs:
-                            ###   self.taskdefs[prev_name].outputs[cycle_list] = []
-                            ###self.taskdefs[prev_name].outputs[ cycle_list ].append( "'" + name + " restart files ready for ' + self.c_time" )
+                            if cycle_list not in self.taskdefs[prev_name].outputs:
+                                self.taskdefs[prev_name].outputs[cycle_list] = []
+                                self.taskdefs[prev_name].outputs[ cycle_list ].append( name + " restart files ready for $(CYCLE_TIME)" )
                         else:
                             if cycle_list not in self.taskdefs[name].prerequisites:
                                 self.taskdefs[name].prerequisites[cycle_list] = []

@@ -43,7 +43,7 @@ class warmstart( task_pool ):
         # uniquify in case of accidental duplicates (Python 2.4+)
         task_list = list( set( task_list ) )
 
-        coldstart_tasks = self.config[ 'coldstart task list' ]
+        coldstart_tasks = self.config.get_coldstart_task_list()
         included_by_rc  = self.config[ 'include task list'   ]
         excluded_by_rc  = self.config[ 'exclude task list'   ]
 

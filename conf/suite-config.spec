@@ -7,7 +7,6 @@ default job submission method = option( at_now, background, ll_raw, ll_basic, ll
 job submission log directory = string( default='' )
 logging level = option( debug, info, warning, error, critical, default=info )
 
-coldstart task list = string_list( default=list() )
 include task list   = string_list( default=list() )
 exclude task list   = string_list( default=list() )
 
