@@ -38,7 +38,7 @@
 # wait for the delayed start time to arrive, then it has caught up.
 
 import re
-from mod_contact import contact
+from contact import contact
 
 class catchup_contact( contact ):
 

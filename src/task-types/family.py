@@ -12,7 +12,7 @@
 
 import task
 from free import free
-from mod_sequential import sequential
+from sequential import sequential
 
 class family( sequential, free ):
 

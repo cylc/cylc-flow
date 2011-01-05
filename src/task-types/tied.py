@@ -11,7 +11,7 @@
 
 
 from cycling import cycling
-from mod_pid import pid
+from pid import pid
 
 class tied( pid, cycling ):
     # task class with previous instance dependence

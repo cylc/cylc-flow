@@ -10,7 +10,6 @@
 #         |________________________|
 
 
-from dynamic_instantiation import get_object
 from task_pool import task_pool
 
 class coldstart( task_pool ):
@@ -62,8 +61,7 @@ class coldstart( task_pool ):
                 if name not in included_tasks:
                     continue
             
-            itask = get_object( 'task_classes', name )\
-                    ( start_time, 'waiting', startup=True )
+            itask = self.config.get_task_proxy( name, start_time, 'waiting', startup=True )
 
             # check stop time in case the user has set a very quick stop
             if self.stop_time and int( itask.c_time ) > int( self.stop_time ):

@@ -11,7 +11,7 @@
 
 
 from task import task
-from mod_oneoff import oneoff
+from oneoff import oneoff
 import re
 
 class daemon( oneoff, task ):

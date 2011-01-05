@@ -10,7 +10,6 @@
 #         |________________________|
 
 import Pyro.core
-import task_classes
 import logging
 import sys, os
 
@@ -71,24 +70,18 @@ class remote_switch( Pyro.core.ObjBase ):
         # create a mapping between (short and long) task names and their
         # corresponding full names.
 
-        self.task_list = self.config.get_task_name_list()
+        task_list = self.config.get_task_name_list()
+        shortname_list = self.config.get_task_shortname_list()
+
         self.real_name = {}
 
-        clsmod = __import__( 'task_classes' )
-
-        for name in self.task_list:
-            cls = getattr( clsmod, name )
-            try:
-                short_name = cls.short_name
-            except AttributeError:
-                # this task class has no short name defined
-                self.real_name[ name ] = name
-            else:
-                if short_name in self.real_name:
-                    raise SystemExit( "duplicate short task names detected" )
-
-                self.real_name[ short_name ] = name
-                self.real_name[ name ] = name
+        # TO DO: do we need to worry about name (/shortname) clashes?
+        index = 0
+        for name in task_list:
+            shortname = shortname_list[index]
+            self.real_name[ name ] = name
+            self.real_name[ shortname ] = name
+            index += 1
 
     def task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?
@@ -319,7 +312,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
     def get_task_list( self ):
         self.warning( "REMOTE: task list requested" )
-        return self.task_list
+        return self.config.get_task_name_list()
  
     def get_task_info( self, task_names ):
         self.warning( "REMOTE: task info: " + ','.join(task_names ))

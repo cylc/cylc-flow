@@ -12,7 +12,7 @@
 #import pdb
 import sys, re
 from task import task
-from mod_nopid import nopid
+from nopid import nopid
 
 class asynchronous( nopid, task ):
     # a non-cycling task with no previous instance dependence (so it

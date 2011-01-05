@@ -17,6 +17,7 @@ import cylc_pyro_client
 from cycle_time import _rt_to_dt, is_valid
 from execute import execute
 from option_group import option_group, controlled_option_group
+from config import config
 
 class color_rotator(object):
     def __init__( self ):
@@ -1209,21 +1210,15 @@ cylc gui is a real time suite control and monitoring tool for cylc.
     #    self.shortnames = ss.get_config( 'task_list_shortnames' )
 
     def preload_task_list( self ):
-        sys.path.append( os.path.join( self.suite_dir, 'configured'))
-        try:
-            import task_list
-        except ImportError:
-            raise SystemExit( "Error: unable to load task list (suite not configured?)" )
-        self.task_list = task_list.task_list
-        self.shortnames = task_list.task_list_shortnames
+        # load suite config
+        suiterc = config( os.path.join( self.suite_dir, 'suite.rc' ))
+        self.task_list = suiterc.get_task_name_list()
+        self.shortnames = suiterc.get_task_shortname_list()
 
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
         self.logdir = logging_dir
         self.suite_dir = suite_dir
 
-        # configure to ensure there is a task list to load.
-        execute( [ '_configure', self.suite_dir ] )
- 
         self.suite = suite
         self.host = host
         self.port = port

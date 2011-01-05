@@ -69,10 +69,21 @@ class config( ConfigObj ):
         pass
 
     def get_task_name_list( self ):
-        return self['tasks'].keys()
+        # return list of task names used in the dependency diagram,
+        # not the full tist of defined tasks (self['tasks'].keys())
+        if not self.loaded:
+            self.load_taskdefs()
+            self.loaded = True
+        return self.taskdefs.keys()
 
     def get_task_shortname_list( self ):
-        return self['tasks'].keys()
+        if not self.loaded:
+            self.load_taskdefs()
+            self.loaded = True
+        shorts = []
+        for name in self.taskdefs:
+            shorts.append( self.taskdefs[ name ].shortname )
+        return shorts
 
     #def generate_task_classes( self, dir ):
     def load_taskdefs( self ):

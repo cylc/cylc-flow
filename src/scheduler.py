@@ -28,8 +28,7 @@ from lockserver import lockserver
 from suite_lock import suite_lock
 from suite_id import identifier
 from OrderedDict import OrderedDict
-
-import task     # loads task_classes
+import task
 
 class scheduler(object):
 
@@ -337,9 +336,6 @@ class scheduler(object):
         # prepend to the module search path in case this is a subsuite
         sys.path.insert(0, confdir )
 
-    def configure_suite( self ):
-        execute( [ '_configure', self.suite_dir ] )
-
     def load_suite_config( self ):
         # TO DO: environment vars COULD GO STRAIGHT TO JOB_SUBMIT
         # ENVIRONMENT (NOT NEEDED IN CONFIG?)
@@ -433,7 +429,6 @@ class scheduler(object):
         self.configure_pyro()
         self.configure_suite_id()
         self.configure_environment()
-        self.configure_suite()
         self.configure_dummy_mode_clock()
         self.load_suite_config()
         if self.options.graphfile:

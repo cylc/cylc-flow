@@ -11,7 +11,7 @@
 
 
 from cycling import cycling
-from mod_oneoff import oneoff
+from oneoff import oneoff
 import re
 
 class cycling_daemon( oneoff, cycling ):

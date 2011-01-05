@@ -17,11 +17,11 @@
 
 title = main cylc userguide example suite
 
-description = """This suite implements the main cylc userguide example
-using scripts A.sh, B.sh, C.sh, D.sh, E.sh, F.sh, (and G.sh), and X.sh,
-which are not cylc-aware, all use their own configurable input and
-output directories, and depend on other's output files as in the
-graph."""
+description = """This suite implements the main cylc userguide example.
+"Models" A.sh, B.sh, and C.sh; "post processing tasks" D.sh, E.sh, F.sh,
+(and G.sh); and "external data collection task" X.sh are not cylc-aware;
+each have their own configurable input and output directories but depend
+on each other's output files as implied by the suite dependency graph."""
 
 [ families ]
 FOO = foo, bar
@@ -41,9 +41,9 @@ FOO = foo, bar
     ## TO DO, conditional triggers:
     ## label99 = (B or C) -> D
 
-    label5i   = ColdABC -> A
-    label5ii  = ColdABC -> B
-    label5iii = ColdABC -> C
+    #label5i   = ColdABC -> A
+    #label5ii  = ColdABC -> B
+    #label5iii = ColdABC -> C
 
     [[ 6,18 ]]
     label6 = F(1)-> G

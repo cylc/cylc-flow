@@ -27,10 +27,10 @@ from cycling_daemon import cycling_daemon
 from tied import tied
 from free import free
 from family import family
-from mod_oneoff import oneoff
-from mod_sequential import sequential
-from mod_contact import contact
-from mod_catchup_contact import catchup_contact
+from oneoff import oneoff
+from sequential import sequential
+from contact import contact
+from catchup_contact import catchup_contact
 from prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites import prerequisites
 from outputs import outputs
@@ -81,10 +81,10 @@ from cycling_daemon import cycling_daemon
 from tied import tied
 from free import free
 from family import family
-from mod_oneoff import oneoff
-from mod_sequential import sequential
-from mod_contact import contact
-from mod_catchup_contact import catchup_contact
+from oneoff import oneoff
+from sequential import sequential
+from contact import contact
+from catchup_contact import catchup_contact
 from prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites import prerequisites
 from outputs import outputs
@@ -498,9 +498,9 @@ from collections import deque
             # familyfinished prerequisites
             if self.type == 'family':
                 # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
-                sself.familyfinished_prerequisites = prerequisites( self.id )
+                sself.familyfinished_prerequisites = prerequisites( sself.id )
                 for member in self.members:
-                    sself.familyfinished_prerequisites.add( member + '%' + self.c_time + ' finished' )
+                    sself.familyfinished_prerequisites.add( member + '%' + sself.c_time + ' finished' )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:

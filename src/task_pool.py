@@ -15,7 +15,6 @@ import cycle_time
 import pimp_my_logger
 import logging
 import sys, os, re
-from dynamic_instantiation import get_object
 from rolling_archive import rolling_archive
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
@@ -76,31 +75,29 @@ class task_pool(object):
                             # stick with default color 
                             pass
 
-        # determine task families and family members
-        # (used in writing out the 'dot' graph file).
-        self.members = {}
-        self.middle_member = {}
-        self.member_of = {}
-        for name in self.task_name_list:
-            mod = __import__( 'task_classes' )
-            cls = getattr( mod, name )
-            try:
-                mems = getattr( cls, 'members' ) 
-            except AttributeError:
-                pass
-            else:
-                self.members[ name ] = mems
-                mems.sort()
-                print name, mems
-                self.middle_member[ name ] = mems[ len( mems ) / 2  ]
-
-            try:
-                memof = getattr( cls, 'member_of' )
-            except AttributeError:
-                pass
-            else:
-                self.member_of[ name ] = memof
- 
+            # determine task families and family members
+            # (used in writing out the 'dot' graph file).
+            self.members = {}
+            self.middle_member = {}
+            self.member_of = {}
+            for name in self.task_name_list:
+                mod = __import__( 'task_classes' )
+                cls = getattr( mod, name )
+                try:
+                    mems = getattr( cls, 'members' ) 
+                except AttributeError:
+                    pass
+                else:
+                    self.members[ name ] = mems
+                    mems.sort()
+                    print name, mems
+                    self.middle_member[ name ] = mems[ len( mems ) / 2  ]
+                try:
+                    memof = getattr( cls, 'member_of' )
+                except AttributeError:
+                    pass
+                else:
+                    self.member_of[ name ] = memof
 
     def create_main_log( self ):
         log = logging.getLogger( 'main' )
@@ -384,11 +381,13 @@ class task_pool(object):
             FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
 
         # task class variables
-        for name in self.task_name_list:
-            mod = __import__( 'task_classes' )
-            cls = getattr( mod, name )
-            cls.dump_class_vars( FILE )
-            
+        ####for name in self.task_name_list:
+        ####    mod = __import__( 'task_classes' )
+        ####    cls = getattr( mod, name )
+        ####    cls.dump_class_vars( FILE )
+        for itask in self.tasks:
+            itask.dump_class_vars( FILE )
+             
         # task instance variables
         for itask in self.tasks:
             itask.dump_state( FILE )
@@ -764,9 +763,9 @@ class task_pool(object):
 
             for task_id in ids:
                 [ name, c_time ] = task_id.split( '%' )
-                # instantiate the task proxy
-                itask = get_object( 'task_classes', name )\
-                        ( c_time, 'waiting', startup=False )
+                # instantiate the task proxy object
+                itask = config.get_task_proxy( name, c_time, 'waiting', startup=False )
+
                 # the initial task cycle time can be altered during
                 # creation, so we have to create the task before
                 # checking if stop time has been reached.
