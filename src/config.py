@@ -68,6 +68,12 @@ class config( ConfigObj ):
         # check families do not define commands, etc.
         pass
 
+    def get_title( self ):
+        return self['title']
+
+    def get_description( self ):
+        return self['description']
+
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
         # not the full tist of defined tasks (self['tasks'].keys())
@@ -208,7 +214,7 @@ class config( ConfigObj ):
 
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
-            print name, self.taskdefs[name].type, self.taskdefs[name].modifiers
+            #print name, self.taskdefs[name].type, self.taskdefs[name].modifiers
 
     def get_task_proxy( self, name, ctime, state, startup ):
         if not self.loaded:

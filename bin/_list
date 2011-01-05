@@ -12,11 +12,16 @@
 import os, sys
 from registration import registrations
 from optparse import OptionParser
+from config import config
 
-parser = OptionParser( """cylc task-list [options] SUITE
+parser = OptionParser( """cylc list [options] SUITE
 
-Print the title and task list of a locally registered suite (which 
-need not be running - this command accesses suite source files). """ )
+Print the title, description, and task list, of a registered suite
+(which does not need to be running).""" )
+
+parser.add_option( "-a", "--all", help="print all information "
+        "(by default just the task list is printed).",
+        action="store_true", default=False, dest="print_all" )
 
 parser.add_option( "-o", "--owner", help="suite owner (default $USER).",
         metavar='USERNAME', action="store", default=os.environ['USER'], 
@@ -33,14 +38,22 @@ else:
 reg = registrations( options.owner )
 if reg.is_registered( suite ):
     suite_dir = reg.get( suite )
-    reg.print_reg( suite )
+    if options.print_all:
+        print 'REGISTRATION:'
+        reg.print_reg( suite )
 else:
     print >> sys.stderr, "ERROR: suite " + suite + " is not registered"
     reg.print_all()
     sys.exit(1)
 
-# provide access to the suite source modules for THIS program
-sys.path.append( os.path.join( suite_dir, 'configured' ))
-from task_list import task_list
-for task in task_list:
+# load suite configuration
+config = config( os.path.join( suite_dir, 'suite.rc' ))
+
+if options.print_all:
+    print 'TITLE:'
+    print config.get_title()
+    print 'DESCRIPTION:'
+    print config.get_description()
+    print 'TASK LIST:'
+for task in config.get_task_name_list():
     print ' ', task
