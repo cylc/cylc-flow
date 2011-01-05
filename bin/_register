@@ -24,6 +24,8 @@ def check_dir( dir ):
     if not os.path.exists( dir ):
         print "ERROR, dir not found: " + dir
         return False
+    else:
+        return True
 
 #----------------------------------------
 
@@ -192,18 +194,17 @@ if lst_reg:
 twatted = []
 
 if chk_reg:
-    if chk_reg:
-        count = 0
-        for name in reg.get_all():
-            count += 1
-            rdir = reg.get(name)
-            if not check_dir( rdir ):
-                post = ' ... INVALID'
-                twatted.append( name )
+    count = 0
+    for name in reg.get_all():
+        count += 1
+        rdir = reg.get(name)
+        if not check_dir( rdir ):
+            post = ' ... INVALID'
+            twatted.append( name )
 
-            else:
-                post = ' ... OK'
-            reg.print_reg( name, pre=' [' + str(count) + '] ', post=post )
+        else:
+            post = ' ... OK'
+        reg.print_reg( name, pre=' [' + str(count) + '] ', post=post )
 
 elif wpe_reg:
     twatted = reg.get_all() 
