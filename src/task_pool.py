@@ -764,7 +764,7 @@ class task_pool(object):
             for task_id in ids:
                 [ name, c_time ] = task_id.split( '%' )
                 # instantiate the task proxy object
-                itask = config.get_task_proxy( name, c_time, 'waiting', startup=False )
+                itask = self.config.get_task_proxy( name, c_time, 'waiting', startup=False )
 
                 # the initial task cycle time can be altered during
                 # creation, so we have to create the task before
