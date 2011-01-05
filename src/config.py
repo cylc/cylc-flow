@@ -195,8 +195,7 @@ class config( ConfigObj ):
                     members.append( mem )
                     taskd = taskdef.taskdef( mem )
                     taskd.member_of = name
-                    # take valid hours for family members 
-                    # from the family
+                    # take valid hours from the family
                     taskd.hours = self.taskdefs[name].hours
                     taskd.logfiles = []
                     taskconfig = self['tasks'][mem]

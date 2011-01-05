@@ -40,7 +40,6 @@ class restart( task_pool ):
 
         included_by_rc  = self.config[ 'include task list'   ]
         excluded_by_rc  = self.config[ 'exclude task list'   ]
-        dummied_out     = self.config[ 'dummy out task list' ]
 
         include_list_supplied = False
         if len( included_by_commandline ) > 0 or len( included_by_rc ) > 0:
@@ -140,8 +139,5 @@ class restart( task_pool ):
                 itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
                 itask.prepare_for_death()
                 del itask
- 
             else:
-                if not self.dummy_mode and name in dummied_out:
-                    itask.dummy_out()
                 self.insert( itask )

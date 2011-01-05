@@ -10,7 +10,6 @@ logging level = option( debug, info, warning, error, critical, default=info )
 coldstart task list = string_list( default=list() )
 include task list   = string_list( default=list() )
 exclude task list   = string_list( default=list() )
-dummy out task list = string_list( default=list() )
 
 job log directory = string( default='' )
 
