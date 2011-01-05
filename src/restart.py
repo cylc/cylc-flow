@@ -12,7 +12,6 @@
 
 from task_pool import task_pool
 import sys, os, re
-from dynamic_instantiation import get_object
 
 class restart( task_pool ):
 
@@ -109,8 +108,7 @@ class restart( task_pool ):
                 if name not in included_tasks:
                     continue
 
-            itask = get_object( 'task_classes', name )\
-                    ( c_time, state, startup=False )
+            itask = self.config.get_task_proxy( name, c_time, state, startup=False )
 
             if itask.state.is_finished():  
                 # must have satisfied prerequisites and completed outputs

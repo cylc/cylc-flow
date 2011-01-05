@@ -522,8 +522,8 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.update_tb( tb, "Cylc GUI Quick Guide", [bold, blue] )
 
         self.update_tb( tb, "\n\nCylc GUI is a real time suite control and "
-                "monitoring tool for cylc (note that same functionality is "
-                "supplied by the cylc command line; see 'cylc help').")
+                "monitoring tool for cylc. Note that same functionality is "
+                "available via the cylc command line; see 'cylc help').")
 
         self.update_tb( tb, "\n\nMenu: File > ", [bold, red] )
         self.update_tb( tb, "\n o Exit Suite GUI: ", [bold])

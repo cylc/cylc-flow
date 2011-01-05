@@ -10,7 +10,6 @@
 #         |________________________|
 
 
-from dynamic_instantiation import get_object
 from task_pool import task_pool
 
 class warmstart( task_pool ):
@@ -62,8 +61,7 @@ class warmstart( task_pool ):
                 if name not in included_tasks:
                     continue
             
-            itask = get_object( 'task_classes', name )\
-                    ( start_time, 'waiting', startup=True )
+            itask = self.config.get_task_proxy( name, start_time, 'waiting', startup=True )
 
             if name in coldstart_tasks:
                 itask.log( 'WARNING', "warm start: starting in finished state" )
