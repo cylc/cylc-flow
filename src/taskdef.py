@@ -21,6 +21,26 @@
 import os, sys, re, string
 from OrderedDict import OrderedDict
 
+from daemon import daemon
+from asynchronous import asynchronous
+from cycling_daemon import cycling_daemon
+from tied import tied
+from free import free
+from family import family
+from mod_oneoff import oneoff
+from mod_sequential import sequential
+from mod_contact import contact
+from mod_catchup_contact import catchup_contact
+from prerequisites_fuzzy import fuzzy_prerequisites
+from prerequisites import prerequisites
+from outputs import outputs
+from time import sleep
+from task_output_logs import logfiles
+import cycle_time
+import task_state
+from OrderedDict import OrderedDict
+from collections import deque
+
 class Error( Exception ):
     """base class for exceptions in this module."""
     pass
@@ -378,3 +398,174 @@ from collections import deque
             else:
                 #return str( float(hrs)*60.0 )
                 return float(hrs)*60.0
+
+    def get_task_class( self ):
+        derived_from = [self.type]
+        derived_from.extend( self.modifiers )
+        base_types = []
+        for foo in derived_from:
+            mod = __import__( foo )
+            base_types.append( getattr( mod, foo ) )
+
+        tclass = type( self.name, tuple( base_types), dict())
+        #tclass = type( self.name, (free, ), dict())
+        tclass.name = self.name  # TO DO: NOT NEEDED, USED class.__name__
+        tclass.short_name = self.name  # TO DO: reimplement short name
+        tclass.instance_count = 0
+        tclass.description = self.description
+
+        if self.owner:
+            tclass.owner = self.owner
+        else:
+            # TO DO: can we just just default None at init here?
+            tclass.owner = None
+
+        if self.host:
+            tclass.remote_host = self.host
+        else:
+            # TO DO: can we just just default None at init here?
+            tclass.remote_host = None
+
+        # TO DO: can this be moved into task base class?
+        tclass.job_submit_method = self.job_submit_method
+
+        tclass.valid_hours = self.hours
+
+        tclass.intercycle = self.intercycle
+        if self.follow_on_task:
+            # TO DO: can we just just default None at init here?
+            tclass.follow_on = self.follow_on_task
+
+        if self.type == 'family':
+            tclass.members = self.members
+
+        if self.member_of:
+            tclass.member_of = self.member_of
+
+        # class init function
+        def tclass_init( sself, c_time, initial_state, startup = False ):
+            # adjust cycle time to next valid for this task
+            sself.c_time = sself.nearest_c_time( c_time )
+            sself.tag = sself.c_time
+            sself.id = sself.name + '%' + sself.c_time
+            #### FIXME FOR ASYNCHRONOUS TASKS
+            hour = sself.c_time[8:10]
+ 
+            sself.external_tasks = deque()
+
+            for command in self.commands:
+                sself.external_tasks.append( command )
+ 
+            if 'contact' in self.modifiers:
+                sself.real_time_delay =  int( self.contact_offset )
+
+            # prerequisites
+            sself.prerequisites = prerequisites( sself.id )
+            for condition in self.prerequisites:
+                reqs = self.prerequisites[ condition ]
+                if condition == 'any':
+                    for req in reqs:
+                        # TO DO: QUOTING?
+                        sself.prerequistes.add( req )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hr in hours:
+                        if int( hour ) == hr:
+                            for req in reqs:
+                                # TO DO: QUOTING?
+                                sself.prerequisites.add( req )
+
+            # suicide prerequisites
+            sself.suicide_prerequisites = prerequisites( sself.id )
+            for condition in self.suicide_prerequisites:
+                reqs = self.suicide_prerequisites[ condition ]
+                if condition == 'any':
+                    for req in reqs:
+                        # TO DO: QUOTING?
+                        sself.suicide_prerequistes.add( req )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hr in hours:
+                        if int( hour ) == hr:
+                            for req in reqs:
+                                # TO DO: QUOTING?
+                                sself.suicide_prerequisites.add( req )
+
+            if self.member_of:
+                # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
+                sself.prerequisites.add( self.member_of + '%' + sself.c_time + ' started' )
+
+            # familyfinished prerequisites
+            if self.type == 'family':
+                # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
+                sself.familyfinished_prerequisites = prerequisites( self.id )
+                for member in self.members:
+                    sself.familyfinished_prerequisites.add( member + '%' + self.c_time + ' finished' )
+
+            sself.logfiles = logfiles()
+            for lfile in self.logfiles:
+                sself.logfiles.add_path( lfile )
+
+            # outputs
+            sself.outputs = outputs( sself.id )
+            for condition in self.outputs:
+                reqs = self.outputs[ condition ]
+                if condition == 'any':
+                    for req in reqs:
+                        # TO DO: QUOTING?
+                        sself.outputs.add( req )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hr in hours:
+                        if int( hour ) == hr:
+                            for req in reqs:
+                                # TO DO: QUOTING?
+                                sself.outputs.add( req )
+
+            if self.type == 'tied':
+                sself.register_restart_requisites( self.n_restart_outputs )
+
+            sself.outputs.register()
+
+            # override the above with any coldstart prerequisites
+            sself.coldstart_prerequisites = prerequisites( sself.id )
+            for condition in self.coldstart_prerequisites:
+                reqs = self.coldstart_prerequisites[ condition ]
+                if condition == 'any':
+                    for req in reqs:
+                        # TO DO: QUOTING?
+                        sself.coldstart_prerequistes.add( req )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hr in hours:
+                        if int( hour ) == hr:
+                            for req in reqs:
+                                # TO DO: QUOTING?
+                                sself.coldstart_prerequisites.add( req )
+
+            sself.env_vars = OrderedDict()
+            sself.env_vars['TASK_NAME'] = sself.name
+            sself.env_vars['TASK_ID'] = sself.id
+            sself.env_vars['CYCLE_TIME'] = sself.c_time
+       
+            for var in self.environment:
+                val = self.environment[ var ]
+                # TO DO: QUOTING OF VAL?
+                sself.env_vars[ var ] = val
+
+            sself.directives = OrderedDict()
+            for var in self.directives:
+                val = self.directives[ var ]
+                # TO DO: QUOTING OF VAL?
+                sself.directives[ var ] = val
+
+            sself.extra_scripting = self.scripting
+
+            if 'catchup_contact' in self.modifiers:
+                catchup_contact.__init__( sself )
+ 
+            super( sself.__class__, sself ).__init__( initial_state ) 
+
+        tclass.__init__ = tclass_init
+
+        return tclass

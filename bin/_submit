@@ -14,8 +14,8 @@ import re, os, sys, datetime, socket, logging
 from time import sleep
 from optparse import OptionParser
 from OrderedDict import OrderedDict
+from config import config
 
-from dynamic_instantiation import get_object
 from registration import registrations
 from execute import execute
 from job_submit import job_submit
@@ -26,11 +26,9 @@ from lockserver import lockserver
 
 usage = """cylc submit [options] SUITE TASK_ID
 
-Submit a single task to run as the scheduler would submit it. This can
-be used as an easy way to invoke single tasks for any reason, but it is
-particularly useful for testing external task scripts during forecast
-suite development. When the cylc messaging interface is invoked by
-standalone tasks it simply directs all messages to stdout.
+Submit a single task to run just as the scheduler would submit it. This
+can be used as an easy way to invoke single tasks for any reason, but it
+is particularly useful during suite development.
 
 arguments:
    SUITE           Registered name of the target suite.
@@ -76,23 +74,8 @@ else:
     reg.print_all()
     raise SystemExit( "suite " + name + " is not registered!" )
 
-# provide access to the suite scripts and source modules--------------
-# for external processes launched by this program.
-
-# add suite scripts to $PATH
-os.environ[ 'PATH' ] += ':' + suite_dir + '/scripts'
-# add suite Python modules to $PYTHONPATH
-os.environ[ 'PYTHONPATH' ] += ':' + suite_dir + '/configured'
-# provide access to the suite source modules for THIS program---------
-sys.path.append( os.path.join( suite_dir, 'configured' ))
-
-# make sure the suite is configured -----------------------------------
-execute( [ '_configure', suite_dir ] )
-
-# import suite modules now that PYTHONPATH is defined------------------ 
-from config import config
-import task
-import remote_switch
+# provide access to the suite bin directory
+os.environ[ 'PATH' ] += ':' + suite_dir + '/bin'
 
 # check task ----------------------------------------------------------
 try:
@@ -147,13 +130,12 @@ job_submit.global_env = globalenv
 job_submit.joblog_dir = config['job submission log directory']
 
 # intantiate the task--------------------------------------------------
-task = get_object( 'task_classes', task_name )( ctime, 'waiting', startup=True )
+task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', startup=True )
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 print
 if not options.dry_run:
-    print "Cylc messages will be directed to stdout."
-    print "Logging directory is " + logging_dir
+    print "Logging directory: " + logging_dir
     print
-task.run_external_task( options.dry_run )
+task_proxy.run_external_task( options.dry_run )
 print

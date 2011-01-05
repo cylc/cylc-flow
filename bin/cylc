@@ -21,7 +21,6 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 allowed_commands = \
     [ 
     'help',
-    'configure',
     'register',
     'coldstart', 
     'warmstart', 
@@ -73,7 +72,6 @@ usage = \
     '',
     'COMMANDS:',
     'S-Y-S-T-E-M--P-R-E-P-A-R-A-T-I-O-N',
-    '  configure ... Parse taskdef files (now automatic and incremental)',
     '  register .... Register a suite for use under a particular name',
     'S-U-I-T-E--C-O-N-T-R-O-L',
     '  coldstart ... Start at a given cycle time, with coldstart tasks waiting',

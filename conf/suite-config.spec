@@ -1,5 +1,5 @@
 title = string( default="No suite title given" )
-description = string( default="No suite description given" )
+description = string( default="No suite description supplied" )
 allow multiple simultaneous suite instances = boolean( default=False )
 maximum runahead hours = integer( min=0, default=24 )
 number of state dump backups = integer( min=1, default=10 )
@@ -36,6 +36,7 @@ __many__ = string
 
 [ tasks ]
     [[ __many__ ]]
+    description = string( default="No task description supplied" )
     #job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=$(default job submission method))
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background)
     type list = string_list( default=list('free'))

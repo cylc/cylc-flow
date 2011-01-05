@@ -12,6 +12,8 @@
 # interface to this in config.py (which however should be designed 
 # not to further complicate suite.rc files for general use).
 ################################################################
+# TO DO:
+# 1/ suicide prerequisites
 
 title = main cylc userguide example suite
 
@@ -52,6 +54,7 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
 [ tasks ]
     [[ColdABC]] #------------------------------------------------
+    description = "fulfils restart dependencies for models A,B,C"
     type list = coldstart,
     command list = cylc-wrapper ColdABC.sh,
         [[[environment]]]
