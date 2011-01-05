@@ -162,9 +162,10 @@ class config( ConfigObj ):
 
                     if count > 0:
                         if self.taskdefs[prev_name].coldstart:
-                            if cycle_list not in self.taskdefs[prev_name].outputs:
-                                self.taskdefs[prev_name].outputs[cycle_list] = []
-                            self.taskdefs[prev_name].outputs[ cycle_list ].append( "'" + name + " restart files ready for ' + self.c_time" )
+                            pass
+                            ###if cycle_list not in self.taskdefs[prev_name].outputs:
+                            ###   self.taskdefs[prev_name].outputs[cycle_list] = []
+                            ###self.taskdefs[prev_name].outputs[ cycle_list ].append( "'" + name + " restart files ready for ' + self.c_time" )
                         else:
                             if cycle_list not in self.taskdefs[name].prerequisites:
                                 self.taskdefs[name].prerequisites[cycle_list] = []
@@ -174,20 +175,11 @@ class config( ConfigObj ):
                                     self.taskdefs[prev_name].outputs[cycle_list] = []
                                 specout = self['tasks'][prev_name]['outputs'][output_n]
 
-                                # replace $(CYCLE_TIME +/- N)
-                                m = re.search( '\$\(\s*CYCLE_TIME\s*\+\s*(\d+)\s*\)', specout )
-                                if m:
-                                    specout = re.sub( '\$\(\s*CYCLE_TIME.*\)', '" + cycle_time.increment( self.c_time )+ "', specout )
-                                m = re.search( '\$\(\s*CYCLE_TIME\s*\-\s*(\d+)\s*\)', specout )
-                                if m:
-                                    specout = re.sub( '\$\(\s*CYCLE_TIME.*\)', '" + cycle_time.decrement( self.c_time )+ "', specout )
-                                specout = re.sub( '\$\(\s*CYCLE_TIME\s*\)', '" + self.c_time + "', specout )
-
-                                self.taskdefs[prev_name].outputs[  cycle_list ].append( '"' + specout + '"')
-                                self.taskdefs[name].prerequisites[ cycle_list ].append( '"' + specout + '"')
+                                self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
+                                self.taskdefs[name].prerequisites[ cycle_list ].append( specout )
                             else:
                                 # trigger off previous task finished
-                                self.taskdefs[name].prerequisites[ cycle_list ].append( "'" + prev_name + "%' + self.c_time + ' finished'" )
+                                self.taskdefs[name].prerequisites[ cycle_list ].append( prev_name + '%$(CYCLE_TIME) finished' )
                     count += 1
                     prev_name = name
                     prev_specific_output = specific_output
@@ -209,8 +201,8 @@ class config( ConfigObj ):
                     taskd.logfiles = []
                     taskconfig = self['tasks'][mem]
                     taskd.commands = taskconfig[ 'command list' ]
-                    taskd.environment = taskconfig[ 'environment'  ]
-                    #taskd.directives = taskconfig[ 'directives'   ]
+                    taskd.environment = taskconfig[ 'environment' ]
+                    #taskd.directives = taskconfig[ 'directives'  ]
                     #taskd.scripting = taskconfig[ 'scripting'    ]
 
                     self.taskdefs[ mem ] = taskd
@@ -218,6 +210,7 @@ class config( ConfigObj ):
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
             print name, self.taskdefs[name].type, self.taskdefs[name].hours, self.taskdefs[name].commands
+            print name, self.taskdefs[name].prerequisites
             #####self.taskdefs[name].write_task_class( dir )
 
     def get_task_proxy( self, name, ctime, state, startup ):
