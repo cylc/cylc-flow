@@ -80,9 +80,8 @@ class task_pool(object):
             self.members = {}
             self.middle_member = {}
             self.member_of = {}
-            for name in self.task_name_list:
-                mod = __import__( 'task_classes' )
-                cls = getattr( mod, name )
+            for task in self.tasks:
+                cls = task.__class__
                 try:
                     mems = getattr( cls, 'members' ) 
                 except AttributeError:
@@ -380,12 +379,15 @@ class task_pool(object):
         else:
             FILE.write( 'suite time : ' + self.clock.dump_to_str() + '\n' )
 
-        # task class variables
+        # FOR OLD STATIC TASK CLASS DEFS:
         ####for name in self.task_name_list:
         ####    mod = __import__( 'task_classes' )
         ####    cls = getattr( mod, name )
         ####    cls.dump_class_vars( FILE )
+
+        # FOR NEW DYNAMIC TASK CLASS DEFS:
         for itask in self.tasks:
+            # TO DO: CHECK THIS STILL WORKS 
             itask.dump_class_vars( FILE )
              
         # task instance variables
