@@ -76,7 +76,8 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
         C_OUTPUT_DIR = $WORKSPACE
 
     [[D]] #------------------------------------------------------
-    command list = cylc-wrapper D.sh,
+    #command list = cylc-wrapper D.sh,
+    command list = cylc-wrapper D-fail.sh, cylc-wrapper D.sh,
         [[[environment]]]
         D_INPUT_DIR = $WORKSPACE
         D_OUTPUT_DIR = $WORKSPACE

@@ -7,6 +7,11 @@ GENERAL
   could be used to send alerts for job submit failures.
 * consider how task timeout alerts might be incorporated into cylc? 
 
+* consolidate example suites:
+  + trivial
+  + "userguide" variant that tests damn near everything
+  + remote, nesting
+
 * TASK FAMILIES:
   + Ability to reset (or otherwise operate on) all members of a family.
   + Check effect of 'reset to waiting' on task families - need to reset
