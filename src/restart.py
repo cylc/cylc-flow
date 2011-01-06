@@ -77,8 +77,6 @@ class restart( task_pool ):
             [ time, rate ] = time_string.split( ',' )
             self.clock.reset( time, rate )
 
-        mod = __import__( 'task_classes' )
-
         # parse each line and create the task it represents
         for line in lines[1:]:
             # strip trailing newlines
@@ -88,7 +86,7 @@ class restart( task_pool ):
                 # class variables
                 [ left, right ] = line.split( ' : ' )
                 [ junk, classname ] = left.split( ' ' ) 
-                cls = getattr( mod, classname )
+                cls = self.config.get_task_class( classname )
                 pairs = right.split( ', ' )
                 for pair in pairs:
                     [ item, value ] = pair.split( '=' )
