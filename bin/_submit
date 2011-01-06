@@ -15,7 +15,7 @@ from time import sleep
 from optparse import OptionParser
 from OrderedDict import OrderedDict
 from config import config
-
+from mkdir_p import mkdir_p
 from registration import registrations
 from execute import execute
 from job_submit import job_submit
@@ -90,6 +90,7 @@ owner = os.environ['USER']
 # load cylcrc file----------------------------------------------------
 prefs = preferences()
 logging_dir = os.path.join( prefs['logging directory'], name + '-submit' ) 
+mkdir_p( logging_dir )
 
 use_lockserver = False
 if prefs[ 'use lockserver' ]:

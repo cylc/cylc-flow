@@ -28,6 +28,7 @@ from lockserver import lockserver
 from suite_lock import suite_lock
 from suite_id import identifier
 from OrderedDict import OrderedDict
+from mkdir_p import mkdir_p
 import task
 
 class scheduler(object):
@@ -277,6 +278,9 @@ class scheduler(object):
         else:
             self.logging_dir = os.path.join( self.rcfile['logging directory'],    self.suite_name ) 
             state_dump_dir   = os.path.join( self.rcfile['state dump directory'], self.suite_name )
+
+        mkdir_p( self.logging_dir )
+        mkdir_p( state_dump_dir )
 
         self.state_dump_file = os.path.join( state_dump_dir, 'state' )
 
