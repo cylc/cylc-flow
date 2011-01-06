@@ -6,7 +6,7 @@ import time, os, re
 import threading
 from port_scan import scan_my_suites
 from registration import registrations
-from preferences import prefs
+from cylcrc import preferences
 from gtkmonitor import monitor
 
 class chooser_updater(threading.Thread):
@@ -155,8 +155,7 @@ class chooser(object):
         if m:
             port = m.groups()[0]
         # get suite logging directory
-        rcfile = prefs( user=self.owner, silent=True )
-        logging_dir = rcfile.get_suite_logging_dir( name )
+        logging_dir = os.path.join( preferences()['logging directory'], name ) 
         tv = monitor(name, self.owner, self.host, port, suite_dir, logging_dir, self.imagedir )
         self.viewer_list.append( tv )
         return False
