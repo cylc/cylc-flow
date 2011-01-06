@@ -1,30 +1,31 @@
 _______
 GENERAL
 
+* in new config, is restart OK after suite.rc tasks changed?
+
 * hook for centralised task failure response from cylc: in particular
   could be used to send alerts for job submit failures.
+* consider how task timeout alerts might be incorporated into cylc? 
 
-* allow "coldstart" as a task insertion group for all cold start tasks.
-
-* ability to reset (or otherwise operate on) all members of a family.
+* TASK FAMILIES:
+  + Ability to reset (or otherwise operate on) all members of a family.
+  + Check effect of 'reset to waiting' on task families - need to reset
+    the special finished prerequisites too?
+  + Task family needs to be set 'failed' if all (or any?) members fail
+  + use with --include and --exclude?
+  + task owner should not be required with families
 
 * read-only (no-intervention) gui mode - e.g. for monitoring other
   user's suites.
 
+* check that the user-defined task names do not clash with parent class
+  or attribute names.
+
 * abstract out the common code in the cold,warm,raw start command line
   and source modules.
 
-* BUG: CHANGING TASK NAME (AS OPPOSED TO TASKDEF FILENAME) WITHOUT
-  DELETING CONFIGURED/ DIR RESULTS IN DUPLICATION OF TASKS (i.e.
-  the old and new tasks show up).  FIX: use filename for taskname?
-  ALSO, DELETING A TASKDEF DOES NOT RESULT IN DELETION UNDER THE
-  CONFIGURED DIRECTORY.
-
 * implement automatic rolling dependency graph of last N (=24) hours.
 
-* task name should be taken from taskdef filename?
-
-* task family needs to be set 'failed' if all (or any?) members fail
 
 * at some point, do some profiling of execution time and memory use:
     cProfile
@@ -53,20 +54,7 @@ GENERAL
 suite.rc file: can be used separately or both at once, for cold, warm,
 and restart.
 
-* suite editor (gui?): define suite by means of a dependency graph. 
-  The corresponding taskdef files will be generated automatically.
-  Check suite consistency by analysing prerequisites and outputs.
-  Method: define an internal taskdef data structure that can be 
-  populated by reading taskdef files, or from a pickled representation
-  on disk, and can write out taskdef files and cylc task classes.
-  Then define a dependency graph data structure that can be decomposed
-  into separate taskdef classes, or just translate a dependency graph
-  into a list of taskdefs, converting dependencies into prerequisites
-  and outputs on the way.
-  STARTED: see src/taskdef.py
-  CONSIDER ALSO: networkx and pygraphviz from http://networkx.lanl.gov
-  - DAG representation: store only outputs - prereqs must trigger off.
- 
+
 *use passphrase authentication in the default pyro connection validator
  (see the Pyro userguide security page).
 
@@ -85,18 +73,19 @@ and restart.
 * separate cold and warm start into distinct classes (currently warm is
   a variation on coldstart_scheduler, which is less than transparent).
 
+* inserting an already existing task causes cylc to shut down with 
+  'error: task X has already registered its outputs' - is this the
+  desired behavior?
+
 * can doing task deletion and insertion while a suite is PAUSED result
   in "INSERTING A TASK
       ERROR: A%2010081800 has already registered its outputs"
+(DUPLICATE; see above)
 
 * document reason for naming of pyro-connected objects
   (owner.suite.obj): prevent accidentally intervening in the wrong
   suite when using explicit port numbers (if we allow that). Also, 
   is this still required?
-
-* inserting an already existing task causing cylc to shut down with 
-  'error: task X has already registered its outputs' - is this the
-  desired behavior?
 
 * '--host' should not be allowed for intervention commands because
   owner's username does not cross machine boundaries, generally.
@@ -122,10 +111,14 @@ and restart.
   with accordingly few and many restart outputs, we must retain *both*
   previously finished short and long versions of the task when currently
   only the short one would be retained. THE CYLC TASK ELIMINATION
-  ALGORITHM MUST TASK RESTART OUTPUTS INTO ACCOUNT: Do not eliminate a
+  ALGORITHM MUST TAKE RESTART OUTPUTS INTO ACCOUNT: Do not eliminate a
   finished task if its restart outputs are still valid.
-
-* merge the config and suiterc modules?
+* DUPLICATE?: consider restart messages for split tasks that actually
+  use the same restart files: e.g. nzlam_long (06,18Z) and nzlam_short
+  (00,12Z).  Currently must combine this into one task with
+  conditionals, OR register (and report) restart messages explicitly
+  because the automatic restart messages will not have the right task
+  name.
 
 * some kind of internal queuing system as a more flexible alternative to
   the simple max runahead limit?
@@ -139,10 +132,10 @@ and restart.
   about offset? should it be in the state dump too?).
 
 * a new task type modifier that allows failed "non-critical" tasks to be
-  ignored when applying the max runahead limit.
+  ignored when applying the max runahead limit?
 
 * dot-file graph output assumes that task families are internally
-  cotemporal. Is this necessarily the case?
+  cotemporal - is this necessarily the case?
 
 * check all open( file, mode ) statements for mode 'rb' etc.  What is
   'b'? "binary"? if so, is this appropriate for cylc's usage.
@@ -161,7 +154,7 @@ and restart.
   specified in suite.rc?
 
 * allow insertion of tasks in 'spawned already' state, for oneoff runs 
-  of non-oneoff tasks.
+  of non-oneoff tasks?
 
 * purge algorithm: see TO DO in the in-method comments: ensure that ALL
   tasks whose prerequisites get satisfied in the virtual system
@@ -173,22 +166,10 @@ and restart.
 * stop (without --now) won't cause shutdown if a task family (but not
   it's members!) has just triggered.
 
-* BUG: currently, INHERITing tasks must define %OUTPUTS even if empty!
-
-* make incremental configure handle deletion of taskdefs.
-
-* duplicate task name (and short name) check should be done on
-  generated task_list.py in addition to the check within configure,
-  because the latter check is not always global now that configure is 
-  incremental.
-
 * task state at initialization: there's no point in giving initial
   state of "finished" for example, if this does not result in setting
   prerequisites and outputs satisfied and completed, respectively.
   Consolidate this task state resetting code into methods in task.py?
-
-* check effect of 'reset to waiting' on task families - need to reset
-  the special finished prerequisites too?
 
 * note that prerequisites are no longer derived from requisites. Change
   documentation in the latter class (and elsewhere?) to reflect this.
@@ -198,77 +179,32 @@ and restart.
   stop time but tasks that previously reached the stop time will not
   respawn -although this can be rectified by task insertion).
 
-* allow ',' or ', ' in "if HOUR in 0,6,12:" taskdef conditionals.
-
-* error trapping on wrapped SCRIPTING-only tasks: auto, or supply your
-  own?
-
-* if configure aborts it can leave the suite definition directory in a
-  state that appears to be configured at next run, but isn't. So, delete
-  the configured/ sub-directory in case of error, before aborting.
-
-* keep a limited number of configured backup directories.
-
-* check all example systems since recent changes.
-
-* consider automatic task-started message as first line of SCRIPTING.
+* automated error trapping on wrapped SCRIPTING-only tasks?
+* automatic task-started message as first line of SCRIPTING?
 
 * current method of setting task commands is not very robust: each new
   command in a retry list is set in jobsubmit.py "remotely" from task.py
 
 * --fail=TASKID: check that TASKID exists in the target suite.
 
-* NOTE THAT FAILURE INSIDE RES=$( foo.sh ) DOES NOT TRIGGER THE ERR TRAP!
-
-* consider getting rid of tied tasks and forcing explicit handling of
-  restart dependencies? (they're a source of some confusion, and in any
-  case explicit output messages are still required for coldstart tasks
-  that supply restart dependencies to other tasks, and in some cases
-  are not appropriate even for forecast models: e.g. UM in a DA suite
-  with sometime reconfiguration of the restart dump. (BUT NOTE: tied 
-  tasks also have special spawning behavior - after the first restart 
-  output is completed!!!! - otherwise sequential is required.)
+* In task scripts, document that failure inside RES=$( foo.sh ) does not
+  trigger the err trap!
 
 * check that the main uses for "oneoff cold start tasks" are documented.
 
-* TASK FAMILIES:
-  + --include and --exclude with task families
-  + configure should check for consistency of MEMBER and MEMBER_OF
-  + %OWNER should not be required with families (no %COMMAND).
-  + currently have to specify %HOURS, which (a) should be
-  checked for consistency with family members, or (b) should not be
-  necessary (get it from members).
+* %COMMAND: allow single quotes in path or commandline?
 
-* %COMMAND:
-    - conditional on HOUR? 
-    - SINGLE QUOTES IN PATH OR COMMANDLINE
-
-* could make $(CYCLE_TIME) implicit in messages except where reference
-  to *other* cycles are required?
-
-* allow $(CYCLE_HOUR) etc. in output and prereq messages (needed if
-  anyone insists on using actual filenames in messages). 
-
-* configure should check INHERIT targets actually exist.  At the moment
-  this causes an exception early on at run time.
-
-* make task-specific logs optional, especially for large suites.
+* allow $(CYCLE_HOUR) etc. and arithmetic in task messages (so actual 
+  filenames can be used). 
 
 * document new use of 'TaskID failed' as an output: added on the fly as
   a new output if failure occurs, then removed from the output list on
   reset.
 
-* if chooser is clicked just as target suite shuts down, failure to
-  connect error breaks the app, requiring use of 'kill'.
-
-* cylc ping hangs if cylc is killed without cleaning up: needs timeout.
-
 * use new cylc_mode class everywhere mode test is required.
 
-* submit --scheduler: task state resets to 'running' but all messages
-  are ignored.
-
-* consider how task timeout alerts might be incorporated into cylc? 
+* cylc submit --scheduler: task state resets to 'running' but all
+  messages are ignored.
 
 * extreme task elimination method - extrapolate forward in time to see
   if a finished task will ever be needed, otherwise delete?
@@ -290,44 +226,28 @@ and restart.
   unspawned, while those that didn't will carry on as if there was no
   stop time).
 
-* catch obscure errors, such as attempting to restart when one or more 
-  tasks has been commented out of the task list.
-
 * src/which.py, like the shell command, searches only for executable
   files. The ll_raw job submit classes use which to find task scripts
   that don't have a full path supplied in the taskdef; these need
   to check that which returns a result before continuing (e.g. if 
   the task script has not been set executable). 
 
-* daemon and asynchronous task: initial tests done, but will need to go
-  back, check, and complete, for new versions of cylc.
-
-* task groups defined in suite_config cause abort if any of the tasks
-  therein are not defined (e.g. if commented out of the task list!)
+* daemon and asynchronous task: initial tests done; go back, check, and
+  complete, for new versions of cylc.
 
 * parse "HH:mm" for contact delay times etc.
 
-* message command (command line usage only!!!) needs lock and practice mode?
-
-* finish off the connection exception handling in manager class.
+* message command (command line usage only!!!) lock and practice mode?
 
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned
   task to finished, which made it spawn ... is this the desired
   behaviour?)
 
-* insert may need a no-spawn option?
-
-* consider restart messages for split tasks that actually use the same 
-  restart files: e.g. nzlam_long (06,18Z) and nzlam_short (00,12Z). 
-  Currently must combine this into one task with conditionals, OR 
-  register (and report) restart messages explicitly because the
-  automatic restart messages will not have the right task name.
-
 * check that practice mode suites initialise with the same clock time
   as the original suite!
 
 * DOCUMENT or CHANGE: cotemporal peers of failed tasks are not deleted
-  automatically because they we USED TO restart with failed tasks in the 
+  automatically because we USED TO restart with failed tasks in the 
   'waiting' state (not 'ready') - thus the aforementioned peers may be
   required to satisfy the failed task's prerequisites post resetting.
 
@@ -341,12 +261,9 @@ and restart.
   (?) through the loop in order to update the summary immediately for
   monitoring.
 
-* warn about consequences of deleting a task: suite may move on so that
-  a reinserted task will not get its prerequisites satisfied.
-
-* task generator should look for mispelled $(CYLCE_TIME)
-
-* is taskdef HOURS sorted for order?
+* document this: deleting a task may allow the suite to move on to the
+  point that a reinserted task will not get its prerequisites satisfied
+  automatically.
 
 * consistent suite exit strategy: 
    -sys.exit(1), 
@@ -370,29 +287,21 @@ and restart.
   of the satisfier task as well, for each prerequisite, and also to
   choose the latest task as satisfier if more than one can do it.
 
-* the task-generator script should check that the user-defined task
-  names do not clash with parent class or attribute names.
-
 * when remote killing all waiting tasks at a ref time, check that (a)
   the suite has moved on passed that time, and (b) none of the waiting
   tasks are contact tasks whose time has not come up yet.
 
-* tasks with HOUR-conditional outputs may have trouble with the "keep
-  one finished task of each kind" procedure in kill_spent_tasks(). Best
-  to have multiple tasks instead? 
-
 * use the custom clock everywhere (it knows about dummy mode).
 
 * clean up the clock class with respect to dummy vs real time, and move
-  it into task manager?
+  it into task pool?
 
 * do we need non-interpolation of single-quoted strings in taskdef
   environment, scripting, command? (implement in job_submit.py)?
 
 * see To Do comment in broker.negotiate() - priority low.
 
-* write a small test program to help understand exactly how Pyro works, 
-  particularly with regard to multi-threading?
+* consider Pyro multi-threading again?
 
 __________
 LOCKSERVER
@@ -406,16 +315,11 @@ LOCKSERVER
 ___
 GUI
 
-* don't automatically reconfigure a suite that is already running when
-  the gui starts up.
+* don't parse suite.rc if the suite is already running (or at all?)?
 
-* if suite configure exits due to an illegal taskdef key, it brings the
-  gui down.
+* gui suite.rc editor
 
-* gui suite editor - suite.rc and taskdef files
-
-* currently scans for port on every command - instead should store port
-  once found.
+* currently scans for port on every command - should store found port.
 
 * exception handling, input check, result detection, for the new control
   features.
