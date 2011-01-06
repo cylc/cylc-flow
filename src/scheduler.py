@@ -15,7 +15,7 @@ import socket
 import logging
 import datetime
 import port_scan
-from preferences import prefs
+from cylcrc import preferences
 from execute import execute
 import cycle_time
 import cylc_pyro_server
@@ -263,25 +263,26 @@ class scheduler(object):
         self.graphfile.write( '    edge [ ' + default_edge_attributes + ' ];\n' )
 
     def load_preferences( self ):
-        self.rcfile = prefs()
+        self.rcfile = preferences()
 
-        use = self.rcfile.get( 'cylc', 'use quick task elimination') 
+        use = self.rcfile['use quick task elimination'] 
         if use == "False":
             self.use_quick_elim = False
         else:
             self.use_quick_elim = True
 
-        self.logging_dir = self.rcfile.get_suite_logging_dir( self.suite_name, self.practice ) 
-        if self.options.debug:
-            self.logging_level = logging.DEBUG
+        if self.practice:
+            self.logging_dir = os.path.join( self.rcfile['logging directory'],    self.suite_name + '-practice' ) 
+            state_dump_dir   = os.path.join( self.rcfile['state dump directory'], self.suite_name + '-practice' )
         else:
-            self.logging_level = self.rcfile.get_logging_level()
-        state_dump_dir = self.rcfile.get_suite_statedump_dir( self.suite_name , self.practice )
+            self.logging_dir = os.path.join( self.rcfile['logging directory'],    self.suite_name ) 
+            state_dump_dir   = os.path.join( self.rcfile['state dump directory'], self.suite_name )
+
         self.state_dump_file = os.path.join( state_dump_dir, 'state' )
 
         self.use_lockserver = False
         self.banner[ 'use lockserver' ] = 'False'
-        if self.rcfile.get( 'cylc', 'use lockserver' ) == 'True':
+        if self.rcfile['use lockserver']:
             self.banner[ 'use lockserver' ] = 'True'
             self.use_lockserver = True
 
@@ -356,6 +357,10 @@ class scheduler(object):
 
         # load suite configuration--------------------------------------------
         self.config = config( os.path.join( self.suite_dir, 'suite.rc' ))
+        if self.options.debug:
+            self.logging_level = logging.DEBUG
+        else:
+            self.logging_level = self.config['logging level']
 
         ##### TO DO: self.config.check_task_groups()
         for var in self.config['environment']:

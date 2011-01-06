@@ -17,9 +17,10 @@ import Pyro.errors
 
 parser = PromptOptionParser( """cylc verbosity [options] SUITE LEVEL
 
-Change the logging level of a running suite.  Note that if you choose
-'warning', for example, only warning messages and worse will be logged.
-The 'info' level is appropriate under most circumstances.""",
+Change the logging priority level of a running suite.  Only messages at
+or above the chosen priority level will be logged; for example, if you
+choose 'warning', only warning, error, and critical messages will be
+logged. The 'info' level is appropriate under most circumstances.""",
 ['LEVEL                debug, info, warning, error, or critical'] )
 
 vchoices = ['debug','info', 'warning', 'error', 'critical'] 

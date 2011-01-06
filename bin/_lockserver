@@ -14,7 +14,6 @@ import socket
 from optparse import OptionParser
 from time import sleep
 
-from preferences import prefs
 import cycle_time
 from registration import registrations
 from lockserver import lockserver
@@ -63,7 +62,7 @@ if __name__ == "__main__":
 This is the command line interface to cylclockd, the cylc lockserver
 daemon, which brokers suite and task locks for cylc suites. 
 
-Use of the cylc lockserver is optional - see 'cylc preferences --help'. 
+Use of the cylc lockserver is optional - see cylc global preferences. 
 
 TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
 running simultaneously, whether they are spawned by a cylc scheduler or

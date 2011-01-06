@@ -60,15 +60,9 @@ fi
 
 # TEST SUITE DIRECTORY
 SUITE_DIR=examples/TEST
+
 # log file for stdout and stderr
 OUT=test.out; OUT_SCHED=test-sched.out
-# cylc suite log
-LOGRC=$( cylc preferences -p | grep 'logging directory' )
-LOGDIR=${LOGRC#*= }
-LOG=$LOGDIR/test/log
-
-# remove old test log
-rm -rf $LOG
 
 # START FROM A CLEAN SLATE
 echo ">> CLEANING OUT any remnants of previous tests ... "
@@ -80,6 +74,13 @@ cylc register -g test && cylc register -d test >> $OUT 2>&1
   # remove output files
 rm -f $OUT $OUT_SCHED
 echo done
+
+# suite log
+LOGRC=$( cylc log -p test | grep 'logging directory' )
+LOGDIR=${LOGRC#*= }
+LOG=$LOGDIR/test/log
+# remove old test log
+rm -rf $LOG
 
 # COPY THE USERGUIDE EXAMPLE SUITE
 echo

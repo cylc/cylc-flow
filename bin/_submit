@@ -20,7 +20,7 @@ from registration import registrations
 from execute import execute
 from job_submit import job_submit
 import cycle_time, pimp_my_logger
-from preferences import prefs
+from cylcrc import preferences
 from suite_lock import suite_lock
 from lockserver import lockserver
 
@@ -88,12 +88,11 @@ if not cycle_time.is_valid( ctime ):
 owner = os.environ['USER']
 
 # load cylcrc file----------------------------------------------------
-rcfile = prefs()
-logging_dir = rcfile.get_suite_logging_dir( name + '-submit' ) 
-logging_lvl = rcfile.get_logging_level()
+prefs = preferences()
+logging_dir = os.path.join( prefs['logging directory'], name + '-submit' ) 
 
 use_lockserver = False
-if rcfile.get( 'cylc', 'use lockserver' ) == 'True':
+if prefs[ 'use lockserver' ]:
     use_lockserver = True
     lockserver_port = lockserver( owner, host ).ping()
 
@@ -118,6 +117,7 @@ globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 
 # load suite configuration--------------------------------------------
 config = config( os.path.join( suite_dir, 'suite.rc' ))
+logging_lvl = config['logging level']
 
 for var in config['environment']:
     globalenv[ var ] = config['environment'][var]

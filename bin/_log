@@ -11,7 +11,7 @@
 
 
 import os, re, sys
-from preferences import prefs
+from cylcrc import preferences
 from optparse import OptionParser
 
 parser = OptionParser( """cylc log [options] SUITE 
@@ -40,14 +40,12 @@ parser.add_option( "-r", "--rotation",
 if len(args) != 1:
     parser.error( "wrong number of arguments" )
 
-name = args[0]
+suite = args[0]
 
-rcfile = prefs()
-logging_dir = rcfile.get_suite_logging_dir( name ) 
-
-filename = logging_dir + '/log'
+filename = os.path.join( preferences()['logging directory'], suite, 'log' )
+ 
 if options.rotation != "0":
-    filename = logging_dir + "/log." + options.rotation
+    filename = filename + options.rotation
 
 if options.print_location:
     print filename

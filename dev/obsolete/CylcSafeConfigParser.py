@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# NOW USING CONFIGOBJ INSTEAD OF CONFIGPARSER
+
 # This subclasses ConfigParser in order to get it to use and OrderedDict
 # data structure - so that order of cylc environment variable definition
 # is preserved.

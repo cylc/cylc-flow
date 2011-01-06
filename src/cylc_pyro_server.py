@@ -40,7 +40,7 @@ class pyro_server( object ):
         self.daemon = Pyro.core.Daemon()
 
     def shutdown( self ):
-        print "Shutting down my Pyro daemon"
+        print "Pyro daemon shutdown"
         # The True arg here results in objects being unregistered from
         # pyro-ns, which cylc no longer uses:
         self.daemon.shutdown( True )

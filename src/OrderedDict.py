@@ -5,7 +5,7 @@ from UserDict import DictMixin
 
 # This works only for Python 2.4+ due to use of @classmethod decorator.
 # If Python 2.3 is required, see documentation in task.py on how to
-# avoid @classmethod (and note that cylc view will not be usable).
+# avoid @classmethod (and note that the cylc gui will not be usable).
 
 class OrderedDict(dict, DictMixin):
 
