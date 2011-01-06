@@ -376,6 +376,7 @@ class scheduler(object):
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous suite instances' ]
 
         task.task_failure_hook_script = self.config['task failure hook script']
+        task.task_submit_failure_hook_script = self.config['task submit failure hook script']
 
     def back_up_statedump_file( self ):
        # back up the configured state dump (i.e. the one that will be used

@@ -22,8 +22,10 @@ def execute( command_list, ignore_output=False ):
     if use_subprocess:
         try:
             if ignore_output:
+                # THIS BLOCKS UNTIL THE COMMAND COMPLETES
                 retcode = subprocess.call( command_list, stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT )
             else:
+                # THIS BLOCKS UNTIL THE COMMAND COMPLETES
                 retcode = subprocess.call( command_list )
 
             if retcode != 0:

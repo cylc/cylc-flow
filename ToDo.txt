@@ -1,4 +1,7 @@
 
+* execute.execute( [command]) blocks until command completes: THIS IS
+  NOT WHAT I WANT FOR TASK FAILURE HOOK SCRIPT INVOCATION.
+
 GRAPHING:
 
 xdot embedding: 

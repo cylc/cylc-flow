@@ -40,6 +40,7 @@ global state_changed
 state_changed = True
 
 task_failure_hook_script = None
+task_submit_failure_hook_script = None
 
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
@@ -191,8 +192,16 @@ class task( Pyro.core.ObjBase ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         if task_failure_hook_script:
-            self.log( 'NORMAL', 'calling failure alert hook script' )
-            execute( [task_failure_hook_script, self.name, self.c_time, reason], ignore_output=True )
+            self.log( 'WARNING', 'calling task failure hook' )
+            execute( [task_failure_hook_script, self.name, self.c_time, reason] )
+
+    def set_submit_failed( self ):
+        reason = 'job submission failed'
+        self.state.set_status( 'failed' )
+        self.log( 'CRITICAL', reason )
+        if task_submit_failure_hook_script:
+            self.log( 'WARNING', 'calling task submit failure hook' )
+            execute( [task_submit_failure_hook_script, self.name, self.c_time, reason] )
 
     def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )
@@ -200,7 +209,7 @@ class task( Pyro.core.ObjBase ):
             self.state.set_status( 'submitted' )
             self.log( 'NORMAL', "job submitted" )
         else:
-            self.set_failed( "job submission failed" )
+            self.set_submit_failed()
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):

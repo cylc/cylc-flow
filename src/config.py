@@ -199,6 +199,10 @@ class config( ConfigObj ):
                             taskconfig = self['tasks'][name]
                             taskd = taskdef.taskdef( name )
                             taskd.description = taskconfig['description']
+                            if taskconfig['job submission method'] != None:
+                                taskd.job_submit_method = taskconfig['job submission method']
+                            else:
+                                taskd.job_submit_method = self['job submission method']
 
                             if model_coldstart:
                                 self.coldstart_task_list.append( name )
