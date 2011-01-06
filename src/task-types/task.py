@@ -10,7 +10,7 @@
 #         |________________________|
 
 # This module uses the @classmethod decorator, introduced in Python 2.4.
-# To get it to work with Python 2.3 (note that cylc view will not work!)
+# To get it to work with Python 2.3 (note that cylc gui will not work!),
 # replace:
 # 
 # @classmethod
@@ -24,7 +24,7 @@
 # foo = classmethod( foo )
 
 
-# TASK BASE CLASS:
+# TASK PROXY BASE CLASS:
 
 import sys
 import task_state
@@ -131,7 +131,7 @@ class task( Pyro.core.ObjBase ):
             self.external_task = self.external_tasks.popleft()
         except IndexError:
             # this is currently an error; scripting-only tasks
-            # are given the command /bin/true by configure.
+            # default to the command /bin/true.
             raise
 
         self.launcher = get_object( 'job_submit_methods', self.job_submit_method ) \
@@ -190,7 +190,7 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def run_external_task( self, dry_run=False ):
-        self.log( 'DEBUG',  'launching external task' )
+        self.log( 'DEBUG',  'submitting task script' )
         if self.launcher.submit( dry_run ):
             self.state.set_status( 'submitted' )
             self.log( 'NORMAL', "job submitted" )
@@ -293,7 +293,7 @@ class task( Pyro.core.ObjBase ):
             else:
                 # yes, do retry.
                 if not self.launcher.dummy_mode:
-                    self.log( 'CRITICAL',  'Retrying with next %TASK' )
+                    self.log( 'CRITICAL',  'Retrying with next command' )
                     self.launcher.task = self.external_task
                     self.state.set_status( 'waiting' )
                     self.prerequisites.set_all_satisfied()
