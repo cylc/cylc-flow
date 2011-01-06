@@ -328,18 +328,11 @@ class scheduler(object):
         # provide access to the suite scripts and source modules
         # for external processes launched by this program.
 
-        # prepend suite scripts to $PATH (prepend in case this is a subsuite!)
+        # prepend suite bin to $PATH (prepend in case this is a subsuite!)
         # (NOTE this is still somewhat dangerous: if a subsuite task script
         # that should be executable but isn't has the same filename as a task in
         # the parent suite, the parent file will be found and executed).
-        os.environ['PATH'] = self.suite_dir + '/scripts:' + os.environ['PATH'] 
-        # prepend add suite Python modules to $PYTHONPATH (prepend, as above)
-        confdir = os.path.join( self.suite_dir, 'configured' )
-        os.environ['PYTHONPATH'] = confdir + ':' + os.environ['PYTHONPATH']
-
-        # provide access to the suite source modules for THIS program---------
-        # prepend to the module search path in case this is a subsuite
-        sys.path.insert(0, confdir )
+        os.environ['PATH'] = self.suite_dir + '/bin:' + os.environ['PATH'] 
 
     def load_suite_config( self ):
         # TO DO: environment vars COULD GO STRAIGHT TO JOB_SUBMIT
