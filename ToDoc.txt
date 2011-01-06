@@ -17,3 +17,8 @@ not to further complicate suite.rc files for general use).
 
 * duplicate keywords (e.g. dependency graph labels) in suite.rc
   result in a configobj.DuplicateError.
+
+* special outputs do not result in dependence on the upstream task
+  itself, just the output. Thus a oneoff task used to recover from 
+  failure of another task can generate the same output as the task
+  is emulating.

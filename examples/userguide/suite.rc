@@ -42,7 +42,6 @@ FOO = foo, bar
     label6 = F(1)-> G
     label7 = F(1)-> H
 
-
 [environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
 QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
