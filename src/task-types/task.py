@@ -62,9 +62,6 @@ class task( Pyro.core.ObjBase ):
     @classmethod
     def describe( cls ):
         return cls.description 
-        #for line in cls.description:
-        #    print line
-
 
     @classmethod
     def set_class_var( cls, item, value ):

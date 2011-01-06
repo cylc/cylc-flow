@@ -319,7 +319,7 @@ class remote_switch( Pyro.core.ObjBase ):
         info = {}
         for name in task_names:
             if self.task_type_exists( name ):
-                info[ name ] = eval( 'task_classes.' + self.real_name[ name ] + '.describe()' )
+                info[ name ] = self.config.get_task_class( name ).describe()
             else:
                 info[ name ] = ['ERROR: no such task type']
         return info

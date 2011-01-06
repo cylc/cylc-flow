@@ -64,8 +64,7 @@ try:
         info = proxy.get_task_info( [ name ] )
         print 'Task ' + name + ' in suite ' + suite + ':' 
         for name in info.keys():
-            for line in info[name]:
-                print '  ' + line
+            print ' + ', info[name]
 
     if prnt_id:
         if not cycle_time.is_valid( cycle ):

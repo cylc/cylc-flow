@@ -198,6 +198,7 @@ class config( ConfigObj ):
                                 raise SuiteConfigError, 'task ' + name + ' not defined'
                             taskconfig = self['tasks'][name]
                             taskd = taskdef.taskdef( name )
+                            taskd.description = taskconfig['description']
 
                             if model_coldstart:
                                 self.coldstart_task_list.append( name )
@@ -335,6 +336,12 @@ class config( ConfigObj ):
             self.load_taskdefs()
             self.loaded = True
         return self.taskdefs[name].get_task_class()( ctime, state, startup )
+
+    def get_task_class( self, name ):
+        if not self.loaded:
+            self.load_taskdefs()
+            self.loaded = True
+        return self.taskdefs[name].get_task_class()
 
     def get_logging_level( self ):
         # translate logging level strings into logging module parameters
