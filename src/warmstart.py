@@ -60,7 +60,8 @@ class warmstart( task_pool ):
                 if name not in included_tasks:
                     continue
             
-            itask = self.config.get_task_proxy( name, start_time, 'waiting', startup=True )
+            # startup=True only for coldstart
+            itask = self.config.get_task_proxy( name, start_time, 'waiting', startup=False )
 
             if name in coldstart_tasks:
                 itask.log( 'WARNING', "warm start: starting in finished state" )

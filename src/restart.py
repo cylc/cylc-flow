@@ -107,6 +107,7 @@ class restart( task_pool ):
                 if name not in included_tasks:
                     continue
 
+            # startup=True only for coldstart
             itask = self.config.get_task_proxy( name, c_time, state, startup=False )
 
             if itask.state.is_finished():  

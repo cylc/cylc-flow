@@ -51,7 +51,9 @@ class taskdef(object):
             self.shortname = name 
 
         self.type = 'free'
+        self.model_coldstart = False  # used in config.py
         self.coldstart = False  # used in config.py
+        self.oneoff = False  # used in config.py
 
         self.job_submit_method = 'background'
 
@@ -318,21 +320,23 @@ class taskdef(object):
 
             sself.outputs.register()
 
-            # override the above with any coldstart prerequisites
-            sself.coldstart_prerequisites = prerequisites( sself.id )
-            for condition in self.coldstart_prerequisites:
-                reqs = self.coldstart_prerequisites[ condition ]
-                if condition == 'any':
-                    for req in reqs:
-                        req = sself.interpolate_ctime( req )
-                        sself.coldstart_prerequistes.add( req )
-                else:
-                    hours = re.split( ',\s*', condition )
-                    for hr in hours:
-                        if int( hour ) == int( hr ):
-                            for req in reqs:
-                                req = sself.interpolate_ctime( req )
-                                sself.coldstart_prerequisites.add( req )
+            if startup and len( self.coldstart_prerequisites.keys()) != 0:
+                # ADD coldstart prerequisites AT STARTUP
+                # (To override existing prerequisites at startup:
+                # sself.prerequisites = prerequisites( sself.id )
+                for condition in self.coldstart_prerequisites:
+                    reqs = self.coldstart_prerequisites[ condition ]
+                    if condition == 'any':
+                        for req in reqs:
+                            req = sself.interpolate_ctime( req )
+                            sself.prerequistes.add( req )
+                    else:
+                        hours = re.split( ',\s*', condition )
+                        for hr in hours:
+                            if int( hour ) == int( hr ):
+                                for req in reqs:
+                                    req = sself.interpolate_ctime( req )
+                                    sself.prerequisites.add( req )
 
             sself.env_vars = OrderedDict()
             sself.env_vars['TASK_NAME'] = sself.name

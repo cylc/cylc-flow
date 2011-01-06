@@ -1,9 +1,14 @@
+
+# TO DO: multiple use of special outputs?
+
 title = main cylc userguide example suite
 
 description = """This suite implements the main cylc userguide example.
 "Models" A.sh, B.sh, and C.sh; "post processing tasks" D.sh, E.sh, F.sh,
 (and G.sh); and "external data collection task" X.sh are not cylc-aware
 and each have their own independent input and output directories."""
+
+exclude task list = baz,
 
 [ task families ]
 FOO = foo, bar
@@ -18,14 +23,14 @@ FOO = foo, bar
     [[ 0,6,12,18 ]]
     label1  =  X -> A -> B ->  E
     label2  =  A -> C -> F -> FOO -> postfoo
-    label3  =  B -> D
-    label4  =  C -> D
+    label3  =  B C -> D
     
-    labelc1 = coldstart:ColdA -> A
-    labelc2 = coldstart:ColdB -> B
-    labelc3 = coldstart:ColdC -> C
+    labelc1 = model_coldstart:ColdA -> A
+    labelc2 = model_coldstart:ColdB -> B
+    labelc3 = model_coldstart:ColdC -> C
 
-    #labels1 = oneoff:startup -> A
+    labelx1 = coldstart:startup -> X ColdA ColdB ColdC
+    labelx2 = F -> oneoff:baz
 
     # TO DO, conditional triggers:
     # label99 = (B or C) -> D
@@ -33,15 +38,14 @@ FOO = foo, bar
     [[ 6,18 ]]
     label6 = F(1)-> G
 
+
 [environment] #--------------------------------------------------
-WORKSPACE = /tmp/$USER
+WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
 QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
 [ tasks ]
     [[startup]] #------------------------------------------------------
-    #command list = cylc-wrapper startup.sh,
-        [[[environment]]]
-        SUITE_WORKSPACE = $WORKSPACE
+    command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[X]] #------------------------------------------------------
     #type list = clock(offset = 1 hour),
@@ -119,5 +123,6 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
     [[foo]] #--------------------------------------------------
     [[bar]] #--------------------------------------------------
+    [[baz]] #--------------------------------------------------
     [[postfoo]] #----------------------------------------------
     [[FOO]] #--------------------------------------------------

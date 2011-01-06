@@ -117,7 +117,32 @@ class config( ConfigObj ):
             shorts.append( self.taskdefs[ name ].shortname )
         return shorts
 
-    #def generate_task_classes( self, dir ):
+    def get_dependent_pairs( self, line ):
+        # 'A -> B -> C' ==> [A,B],[B,C]
+        # 'A,B -> C'    ==> [A,C],[B,C]
+        # 'A,B -> C,D'  ==> [A,C],[A,D],[B,C],[B,D]
+        # etc.
+
+        pairs = []
+        sequence = re.split( '\s*->\s*', line )
+
+        count = 0
+        for item in sequence:
+            if count == 0:
+                prev = item
+                count +=1
+                continue
+
+            items = re.split( '\s*', item )
+            prevs = re.split( '\s*', prev )
+
+            for i in items:
+                for p in prevs:
+                    pairs.append( [ p, i ] )
+
+            prev = item
+        return pairs
+
     def load_taskdefs( self ):
         for cycle_list in self['dependency graph']:
             cycles = re.split( '\s*,\s*', cycle_list )
@@ -125,103 +150,154 @@ class config( ConfigObj ):
             for label in self['dependency graph'][ cycle_list ]:
                 line = self['dependency graph'][cycle_list][label]
 
-                sequence = re.split( '\s*->\s*', line )
-                count = 0
+                pairs = self.get_dependent_pairs( line )
+                   
                 tasks = {}
 
-                for name in sequence:
-                    # check for specific output indicator: TASK(n)
-                    specific_output = False
-                    m = re.match( '(\w+)\((\d+)\)', name )
-                    if m:
-                        specific_output = True
-                        name = m.groups()[0]
-                        output_n = m.groups()[1]
-                    # check for coldstart task indicator: coldstart:TASK
-                    coldstart = False
-                    m = re.match( 'coldstart:(\w+)', name )
-                    if m:
-                        coldstart = True
-                        name = m.groups()[0]
+                # NOTE: the following was designed to handle long
+                # sequences: A->B->C->D ==> [A,B,C], but has
+                # been coopted into handling only pairs, which
+                # are the easiest way to handle grouped dependencies:
+                # A B -> C D ==> [A,C],[A,D],[B,C],[B,D].
+                # It may be possible to simplify the code a bit for pair
+                # processing only?
+                for pair in pairs:
+                    count = 0
+                    for name in pair:
+                        # check for specific output indicator: TASK(n)
+                        specific_output = False
+                        m = re.match( '(\w+)\((\d+)\)', name )
+                        if m:
+                            specific_output = True
+                            name = m.groups()[0]
+                            output_n = m.groups()[1]
+                        # check for model coldstart task indicator, model_coldstart:TASK
+                        model_coldstart = False
+                        m = re.match( 'model_coldstart:(\w+)', name )
+                        if m:
+                            model_coldstart = True
+                            name = m.groups()[0]
 
-                    if name not in self.taskdefs:
-                        # first time seen; define everything except for
-                        # possible additional prerequisites.
-                        if name not in self['tasks']:
-                            raise SuiteConfigError, 'task ' + name + ' not defined'
-                        taskconfig = self['tasks'][name]
-                        taskd = taskdef.taskdef( name )
+                        # check for coldstart task indicator: coldstart:TASK
+                        coldstart = False
+                        m = re.match( 'coldstart:(\w+)', name )
+                        if m:
+                            coldstart = True
+                            name = m.groups()[0]
 
-                        if coldstart:
-                            self.coldstart_task_list.append( name )
-                            taskd.modifiers.append( 'oneoff' )
-                            taskd.coldstart = True
+                        # check for oneoff task indicator: oneoff:TASK
+                        oneoff = False
+                        m = re.match( 'oneoff:(\w+)', name )
+                        if m:
+                            oneoff = True
+                            name = m.groups()[0]
 
-                        for item in taskconfig[ 'type list' ]:
-                            if item == 'free':
-                                taskd.type = 'free'
-                                continue
-                            if item == 'oneoff' or \
-                                item == 'sequential' or \
-                                item == 'catchup':
-                                taskd.modifiers.append( item )
-                                continue
+                        if name not in self.taskdefs:
+                            # first time seen; define everything except for
+                            # possible additional prerequisites.
+                            if name not in self['tasks']:
+                                raise SuiteConfigError, 'task ' + name + ' not defined'
+                            taskconfig = self['tasks'][name]
+                            taskd = taskdef.taskdef( name )
+
+                            if model_coldstart:
+                                self.coldstart_task_list.append( name )
+                                taskd.modifiers.append( 'oneoff' )
+                                taskd.model_coldstart = True
+
+                            if coldstart:
+                                self.coldstart_task_list.append( name )
+                                taskd.modifiers.append( 'oneoff' )
+                                taskd.coldstart = True
+
+                            if oneoff:
+                                taskd.modifiers.append( 'oneoff' )
+                                taskd.oneoff = True
+
+                            for item in taskconfig[ 'type list' ]:
+                                if item == 'free':
+                                    taskd.type = 'free'
+                                    continue
+                                if item == 'oneoff' or \
+                                    item == 'sequential' or \
+                                    item == 'catchup':
+                                    taskd.modifiers.append( item )
+                                    continue
                             
-                            m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
-                            if m:
-                                taskd.type = 'tied'
-                                taskd.n_restart_outputs = int( m.groups()[0] )
-                                continue
+                                m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
+                                if m:
+                                    taskd.type = 'tied'
+                                    taskd.n_restart_outputs = int( m.groups()[0] )
+                                    continue
 
-                            m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-                            if m:
-                                taskd.modifiers.append( 'contact' )
-                                taskd.contact_offset = m.groups()[0]
-                                continue
+                                m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+                                if m:
+                                    taskd.modifiers.append( 'contact' )
+                                    taskd.contact_offset = m.groups()[0]
+                                    continue
 
-                            m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-                            if m:
-                                taskd.modifiers.append( 'catchup_contact' )
-                                taskd.contact_offset = m.groups()[0]
-                                continue
+                                m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+                                if m:
+                                    taskd.modifiers.append( 'catchup_contact' )
+                                    taskd.contact_offset = m.groups()[0]
+                                    continue
 
-                            raise SuiteConfigError, 'illegal task type: ' + item
+                                raise SuiteConfigError, 'illegal task type: ' + item
 
-                        taskd.logfiles = []
-                        taskd.commands = taskconfig[ 'command list' ]
-                        taskd.environment = taskconfig[ 'environment' ]
-                        #taskd.directives = taskconfig[ 'directives' ]
-                        #taskd.scripting = taskconfig[ 'scripting' ]
+                            taskd.logfiles = []
+                            taskd.commands = taskconfig[ 'command list' ]
+                            taskd.environment = taskconfig[ 'environment' ]
+                            #taskd.directives = taskconfig[ 'directives' ]
+                            #taskd.scripting = taskconfig[ 'scripting' ]
 
-                        self.taskdefs[ name ] = taskd
+                            self.taskdefs[ name ] = taskd
 
-                    for hour in cycles:
-                        hr = int( hour )
-                        if hr not in self.taskdefs[name].hours:
-                            self.taskdefs[name].hours.append( hr )
+                        for hour in cycles:
+                            hr = int( hour )
+                            if hr not in self.taskdefs[name].hours:
+                                self.taskdefs[name].hours.append( hr )
 
-                    if count > 0:
-                        if self.taskdefs[prev_name].coldstart:
-                            if cycle_list not in self.taskdefs[prev_name].outputs:
-                                self.taskdefs[prev_name].outputs[cycle_list] = []
-                                self.taskdefs[prev_name].outputs[ cycle_list ].append( name + " restart files ready for $(CYCLE_TIME)" )
-                        else:
-                            if cycle_list not in self.taskdefs[name].prerequisites:
-                                self.taskdefs[name].prerequisites[cycle_list] = []
-                            if prev_specific_output:
-                                # trigger off specific output of previous task
+                        if count > 0:
+                            # MODEL COLDSTART (restart prerequisites)
+                            if self.taskdefs[prev_name].model_coldstart:
+                                #  prev task must generate my restart outputs at startup 
                                 if cycle_list not in self.taskdefs[prev_name].outputs:
                                     self.taskdefs[prev_name].outputs[cycle_list] = []
-                                specout = self['tasks'][prev_name]['outputs'][output_n]
+                                self.taskdefs[prev_name].outputs[ cycle_list ].append( name + " restart files ready for $(CYCLE_TIME)" )
 
-                                self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
-                                self.taskdefs[name].prerequisites[ cycle_list ].append( specout )
+                            # COLDSTART ONEOFF at startup
+                            elif self.taskdefs[prev_name].coldstart:
+                                #  I can depend on prev task only at startup 
+                                if cycle_list not in self.taskdefs[name].coldstart_prerequisites:
+                                    self.taskdefs[name].coldstart_prerequisites[cycle_list] = []
+                                if prev_specific_output:
+                                    # trigger off specific output of previous task
+                                    if cycle_list not in self.taskdefs[prev_name].outputs:
+                                        self.taskdefs[prev_name].outputs[cycle_list] = []
+                                    specout = self['tasks'][prev_name]['outputs'][output_n]
+                                    self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
+                                    self.taskdefs[name].coldstart_prerequisites[ cycle_list ].append( specout ) 
+                                else:
+                                    # trigger off previous task finished
+                                    self.taskdefs[name].coldstart_prerequisites[ cycle_list ].append( prev_name + "%$(CYCLE_TIME) finished" )
+                            # GENERAL
                             else:
-                                # trigger off previous task finished
-                                self.taskdefs[name].prerequisites[ cycle_list ].append( prev_name + '%$(CYCLE_TIME) finished' )
-                    count += 1
-                    prev_name = name
-                    prev_specific_output = specific_output
+                                if cycle_list not in self.taskdefs[name].prerequisites:
+                                    self.taskdefs[name].prerequisites[cycle_list] = []
+                                if prev_specific_output:
+                                    # trigger off specific output of previous task
+                                    if cycle_list not in self.taskdefs[prev_name].outputs:
+                                        self.taskdefs[prev_name].outputs[cycle_list] = []
+                                    specout = self['tasks'][prev_name]['outputs'][output_n]
+
+                                    self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
+                                    self.taskdefs[name].prerequisites[ cycle_list ].append( specout )
+                                else:
+                                    # trigger off previous task finished
+                                    self.taskdefs[name].prerequisites[ cycle_list ].append( prev_name + '%$(CYCLE_TIME) finished' )
+                        count += 1
+                        prev_name = name
+                        prev_specific_output = specific_output
 
         members = []
         my_family = {}
