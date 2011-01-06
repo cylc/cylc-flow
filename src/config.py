@@ -275,7 +275,8 @@ class config( ConfigObj ):
                                     if cycle_list not in self.taskdefs[prev_name].outputs:
                                         self.taskdefs[prev_name].outputs[cycle_list] = []
                                     specout = self['tasks'][prev_name]['outputs'][output_n]
-                                    self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
+                                    if specout not in self.taskdefs[prev_name].outputs[  cycle_list ]:
+                                        self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
                                     self.taskdefs[name].coldstart_prerequisites[ cycle_list ].append( specout ) 
                                 else:
                                     # trigger off previous task finished
@@ -290,7 +291,8 @@ class config( ConfigObj ):
                                         self.taskdefs[prev_name].outputs[cycle_list] = []
                                     specout = self['tasks'][prev_name]['outputs'][output_n]
 
-                                    self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
+                                    if specout not in self.taskdefs[prev_name].outputs[  cycle_list ]:
+                                        self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
                                     self.taskdefs[name].prerequisites[ cycle_list ].append( specout )
                                 else:
                                     # trigger off previous task finished

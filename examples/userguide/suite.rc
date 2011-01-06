@@ -1,6 +1,4 @@
 
-# TO DO: multiple use of special outputs?
-
 title = main cylc userguide example suite
 
 description = """This suite implements the main cylc userguide example.
@@ -37,6 +35,7 @@ FOO = foo, bar
 
     [[ 6,18 ]]
     label6 = F(1)-> G
+    label7 = F(1)-> H
 
 
 [environment] #--------------------------------------------------
@@ -127,3 +126,4 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
     [[baz]] #--------------------------------------------------
     [[postfoo]] #----------------------------------------------
     [[FOO]] #--------------------------------------------------
+    [[H]] #----------------------------------------------------
