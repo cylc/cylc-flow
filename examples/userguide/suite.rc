@@ -6,6 +6,8 @@ description = """This suite implements the main cylc userguide example.
 (and G.sh); and "external data collection task" X.sh are not cylc-aware
 and each have their own independent input and output directories."""
 
+task failure hook script = failure-alert.sh
+
 exclude task list = baz,
 
 [ task families ]

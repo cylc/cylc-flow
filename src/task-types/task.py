@@ -33,10 +33,13 @@ import Pyro.core
 from copy import deepcopy
 from dynamic_instantiation import get_object
 from collections import deque
+from execute import execute
 
+# TO DO: IS GLOBAL NECESSARY HERE?
 global state_changed
-#state_changed = False
 state_changed = True
+
+task_failure_hook_script = None
 
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
@@ -73,7 +76,6 @@ class task( Pyro.core.ObjBase ):
             cls.class_vars = {}
             cls.class_vars[ item ] = value
 
-
     @classmethod
     def get_class_var( cls, item ):
         # get the value of a class variable that is
@@ -95,7 +97,6 @@ class task( Pyro.core.ObjBase ):
         except AttributeError:
             # class has no class_vars defined
             pass
-
 
     def __init__( self, state ):
         # Call this AFTER derived class initialisation
@@ -186,14 +187,20 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
+    def set_failed( self, reason ):
+        self.state.set_status( 'failed' )
+        self.log( 'CRITICAL', reason )
+        if task_failure_hook_script:
+            self.log( 'NORMAL', 'calling failure alert hook script' )
+            execute( [task_failure_hook_script, self.name, self.c_time, reason], ignore_output=True )
+
     def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )
         if self.launcher.submit( dry_run ):
             self.state.set_status( 'submitted' )
             self.log( 'NORMAL', "job submitted" )
         else:
-            self.state.set_status( 'failed' )
-            self.log( 'CRITICAL', "job submission failed" )
+            self.set_failed( "job submission failed" )
 
     def set_all_internal_outputs_completed( self ):
         if self.reject_if_failed( 'set_all_internal_outputs_completed' ):
@@ -261,8 +268,7 @@ class task( Pyro.core.ObjBase ):
                 if message == self.id + ' finished':
                     # TASK HAS FINISHED
                     if not self.outputs.all_satisfied():
-                        self.log( 'CRITICAL', 'finished before all outputs were completed' )
-                        self.state.set_status( 'failed' )
+                        self.set_failed( 'finished before all outputs were completed' )
                     else:
                         print
                         print self.id + " FINISHED"
@@ -277,8 +283,8 @@ class task( Pyro.core.ObjBase ):
             # process task failure messages
 
             state_changed = True
-            self.log( 'CRITICAL',  message )
-            self.state.set_status( 'failed' )
+
+            self.set_failed( message )
 
             try:
                 # is there another task lined up for a retry?

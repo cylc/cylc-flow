@@ -6,6 +6,7 @@ number of state dump backups = integer( min=1, default=10 )
 default job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 job submission log directory = string( default='' )
 logging level = option( debug, info, warning, error, critical, default=info )
+task failure hook script = string( default=None )
 
 include task list   = string_list( default=list() )
 exclude task list   = string_list( default=list() )
