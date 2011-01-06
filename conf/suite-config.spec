@@ -25,8 +25,8 @@ job log directory = string( default='' )
 [ environment ]
 __many__ = string
 
-# NOTE CONFIGOBJ BUG: LIST CONSTRUCTOR FAILS IF LAST LIST ELEMENT IS
-# FOLLOWED BY A SPACE:
+# NOTE CONFIGOBJ or VALIDATE BUG: LIST CONSTRUCTOR FAILS IF LAST LIST
+# ELEMENT IS FOLLOWED BY A SPACE:
 #   GOOD:
 # foo = string_list( default=list('foo','bar'))
 #   BAD:

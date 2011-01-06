@@ -360,7 +360,7 @@ class scheduler(object):
         if self.options.debug:
             self.logging_level = logging.DEBUG
         else:
-            self.logging_level = self.config['logging level']
+            self.logging_level = self.config.get_logging_level()
 
         ##### TO DO: self.config.check_task_groups()
         for var in self.config['environment']:

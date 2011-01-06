@@ -7,7 +7,7 @@
 # cross-checking some items.
 
 import taskdef
-import re, os, sys
+import re, os, sys, logging
 from validate import Validator
 from configobj import ConfigObj, get_extra_values
 
@@ -336,3 +336,17 @@ class config( ConfigObj ):
             self.loaded = True
         return self.taskdefs[name].get_task_class()( ctime, state, startup )
 
+    def get_logging_level( self ):
+        # translate logging level strings into logging module parameters
+        level = self[ 'logging level' ]
+        if level == 'debug':
+            value = logging.DEBUG
+        elif level == 'info':
+            value = logging.INFO
+        elif level == 'warning':
+            value = logging.WARNING
+        elif level == 'error':
+            value = logging.ERROR
+        elif level == 'critical':
+            value = logging.CRITICAL
+        return value

@@ -117,7 +117,7 @@ globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 
 # load suite configuration--------------------------------------------
 config = config( os.path.join( suite_dir, 'suite.rc' ))
-logging_lvl = config['logging level']
+logging_lvl = config.get_logging_level()
 
 for var in config['environment']:
     globalenv[ var ] = config['environment'][var]
