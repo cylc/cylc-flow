@@ -10,27 +10,3 @@ proxy object in the running scheduler.
 
 If a task is executed manually or by \lstinline=cylc submit=, the cylc
 messaging interface just prints messages to stdout or stderr.
-
-%  o If 'cylc task-started' cannot acquire a task lock it will report
-%    failure to cylc and exit with error status. This implies another
-%    instance of the same task (NAME%CYCLE) could still be running,
-%    perhaps left over from a recent hard shutdown of the system. If so
-%    we must exit manually to avoid the ERR trap - which would otherwise
-%    call task-failed a second time and erroneously remove the lock.
-
-%# SUB-PROCESSES THAT DO NOT DETACH FROM THIS SHELL:
-%#  o MUST EXIT WITH NON-ZERO STATUS ON FAILURE
-%#    + so this script can check for success
-%#  o MUST NOT CALL cylc task-started OR -finished
-%#    + this script does that
-%#  o MAY CALL cylc task-message AND -failed (see "cylc-aware", below)
-
-%# IF THIS SCRIPT INVOKES SUB-PROCESSES THAT DETACH FROM THIS SHELL 
-%# (e.g. this script submits a job to loadleveller and then exits)
-%# the "task" is not completed by this script so the sub-process:
-%#  o MUST CALL cylc task-finished OR task-failed when it isdone.
-%
-%# CYLC-AWARE SUB-PROCESSES (which use 'cylc task-failed' on error)
-%#  o messages are logged by cylc, including the reason for a failure
-%#  o failure must be detected inline in this script or the ERR trap
-%#    will result in a second call to 'cylc task-failed'.
