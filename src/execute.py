@@ -2,6 +2,8 @@
 
 import sys, os
 
+# subprocess.call() - if shell=True, command is string, not list.
+
 def execute( command_list, ignore_output=False ):
 
     try:

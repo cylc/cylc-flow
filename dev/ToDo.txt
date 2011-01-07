@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* generate new stdout and stderr log files when a task is reset.
+
 * in new config, is restart OK after suite.rc tasks changed?
 
 * hook for centralised task failure response from cylc: in particular

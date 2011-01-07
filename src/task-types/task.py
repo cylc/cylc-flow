@@ -30,17 +30,20 @@ import sys
 import task_state
 import logging
 import Pyro.core
+import subprocess
 from copy import deepcopy
 from dynamic_instantiation import get_object
 from collections import deque
-from execute import execute
 
 # TO DO: IS GLOBAL NECESSARY HERE?
 global state_changed
 state_changed = True
 
-task_failure_hook_script = None
-task_submit_failure_hook_script = None
+task_started_hook = None
+task_finished_hook = None
+task_failed_hook = None
+task_submitted_hook = None
+task_submission_failed_hook = None
 
 # NOTE ON TASK STATE INFORMATION---------------------------------------
 
@@ -188,26 +191,59 @@ class task( Pyro.core.ObjBase ):
         else:
             return False
 
+    def set_submitted( self ):
+        self.state.set_status( 'submitted' )
+        self.log( 'NORMAL', "job submitted" )
+        if task_submitted_hook:
+            self.log( 'NORMAL', 'calling task submitted hook' )
+            command = ' '.join( [task_submitted_hook, self.name, self.c_time, 'submitted'] )
+            subprocess.call( command, shell=True )
+
+    def set_running( self ):
+        self.state.set_status( 'running' )
+        if task_started_hook:
+            self.log( 'NORMAL', 'calling task started hook' )
+            command = ' '.join( [task_started_hook, self.name, self.c_time, 'started'] )
+            subprocess.call( command, shell=True )
+
+
+    def set_finished( self ):
+        self.outputs.set_all_complete()
+        self.state.set_status( 'finished' )
+
+    def set_finished_hook( self ):
+        # (set_finished() is used by remote switch)
+        print '\n' + self.id + " FINISHED"
+        self.state.set_status( 'finished' )
+        if task_finished_hook:
+            self.log( 'NORMAL', 'calling task finished hook' )
+            command = ' '.join( [task_finished_hook, self.name, self.c_time, 'finished'] )
+            subprocess.call( command, shell=True )
+
+
     def set_failed( self, reason ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
-        if task_failure_hook_script:
-            self.log( 'WARNING', 'calling task failure hook' )
-            execute( [task_failure_hook_script, self.name, self.c_time, reason] )
+        if task_failed_hook:
+            self.log( 'WARNING', 'calling task failed hook' )
+            command = ' '.join( [task_failed_hook, self.name, self.c_time, reason] )
+            subprocess.call( command, shell=True )
+
 
     def set_submit_failed( self ):
         reason = 'job submission failed'
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
-        if task_submit_failure_hook_script:
-            self.log( 'WARNING', 'calling task submit failure hook' )
-            execute( [task_submit_failure_hook_script, self.name, self.c_time, reason] )
+        if task_submission_failed_hook:
+            self.log( 'WARNING', 'calling task submission failed hook' )
+            command = ' '.join( [task_submission_failed_hook, self.name, self.c_time, reason] )
+            subprocess.call( command, shell=True )
+
 
     def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )
         if self.launcher.submit( dry_run ):
-            self.state.set_status( 'submitted' )
-            self.log( 'NORMAL', "job submitted" )
+            self.set_submitted()
         else:
             self.set_submit_failed()
 
@@ -259,7 +295,7 @@ class task( Pyro.core.ObjBase ):
         state_changed = True
 
         if message == self.id + ' started':
-            self.state.set_status( 'running' )
+            self.set_running()
 
         if not self.state.is_running():
             # my external task should not be running!
@@ -279,9 +315,7 @@ class task( Pyro.core.ObjBase ):
                     if not self.outputs.all_satisfied():
                         self.set_failed( 'finished before all outputs were completed' )
                     else:
-                        print
-                        print self.id + " FINISHED"
-                        self.state.set_status( 'finished' )
+                        self.set_finished_hook()
                         self.launcher.cleanup()
             else:
                 # this output has already been satisfied
@@ -392,10 +426,6 @@ class task( Pyro.core.ObjBase ):
 
     def next_tag( self ):
         raise SystemExit( "OVERRIDE ME" )
-
-    def set_finished( self ):
-        self.outputs.set_all_complete()
-        self.state.set_status( 'finished' )
 
     def my_successor_still_needs_me( self, tasks ):
         # overridden in mod_pid

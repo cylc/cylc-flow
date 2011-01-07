@@ -6,8 +6,11 @@ description = """This suite implements the main cylc userguide example.
 (and G.sh); and "external data collection task" X.sh are not cylc-aware
 and each have their own independent input and output directories."""
 
-task failure hook script = failure-alert.sh
-task submit failure hook script = failure-alert.sh
+task submitted hook         = alert.sh --submitted
+task started hook           = alert.sh --started
+task finished hook          = alert.sh --finished
+task failed hook            = alert.sh --failed
+task submission failed hook = alert.sh --submit-failed
 
 #job submission method = ll_basic
 
@@ -81,6 +84,7 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
     [[D]] #------------------------------------------------------
     #command list = cylc-wrapper D.sh,
     command list = cylc-wrapper D-fail.sh, cylc-wrapper D.sh,
+    # job submission method = ll_basic
         [[[environment]]]
         D_INPUT_DIR = $WORKSPACE
         D_OUTPUT_DIR = $WORKSPACE
