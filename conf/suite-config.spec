@@ -39,6 +39,7 @@ __many__ = string
 # bar = string_list( default=list('foo','bar' ))
 
 [ tasks ]
+    # new style suite definition: dependency graph plus minimal task info
     [[ __many__ ]]
     description = string( default="No task description supplied" )
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
@@ -54,3 +55,39 @@ __many__ = string
         __many__ = string
           [[[ outputs ]]]
         __many__ = string
+
+[ taskdefs ]
+    # old style suite definition: a collection of task proxies.
+    [[ __many__ ]]
+    #intercycle = boolean( default=False )
+    description = string( default="No task description supplied" )
+    #job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
+    #type list = string_list( default=list('free'))
+    cycles = integer_list()
+    #command list = string_list( default=list('cylc-wrapper /bin/true'))
+    #host = string( default=None )
+    #owner = string( default=None )
+    #follow on task = string( default=None )
+
+    #prerequisites = string_list( default=list())
+    #outputs = string_list( default=list())
+    #coldstart prerequisites = string_list( default=list())
+    #suicide prerequisites = string_list( default=list())
+    # TO DO: conditional prerequisites
+
+    #    [[[ scripting ]]]
+    #    __many__ = string
+    # OR?
+    # scripting = string()
+
+        #[[[ ___many___ ]]] # specific cycles
+        #prerequisites = string_list( default=list())
+        #outputs = string_list( default=list())
+        #coldstart prerequisites = string_list( default=list())
+        #suicide prerequisites = string_list( default=list())
+ 
+        #[[[ environment ]]]
+        #__many__ = string
+
+        #[[[ directives ]]]
+        #__many__ = string

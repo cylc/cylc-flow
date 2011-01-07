@@ -71,8 +71,8 @@ class taskdef(object):
         self.member_of = None
         self.follow_on_task = None
 
-        self.n_restart_outputs = 0
-        self.contact_offset = 0
+        self.n_restart_outputs = None
+        self.contact_offset = None
 
         self.prerequisites = OrderedDict()                # list of messages
         self.suicide_prerequisites = OrderedDict()        #  "
@@ -84,6 +84,71 @@ class taskdef(object):
         self.scripting   = []                    # list of lines
         self.environment = OrderedDict()         # var = value
         self.directives  = OrderedDict()         # var = value
+
+    def load_oldstyle( self, name, tdef ):
+        # tdef direct from configobj [taskdefs][name] section
+        self.name = name
+        self.description = tdef['description']
+        self.job_submission_method = tdef['job submission method']
+        self.hours = tdef['cycles']
+        self.host = tdef['host']
+        self.owner = tdef['owner']
+        self.follow_on_task = tdef['follow_on_task']
+        self.intercycle = tdef['intercycle']
+
+        self.commands = tdef['command list']
+        self.environment = tdef['environment']
+        self.directives = tdef['directives']
+        self.scripting = tdef['scripting']
+
+        for item in tdef['type list']:
+            if item == 'free':
+                self.type = 'free'
+                continue
+                if item == 'oneoff' or \
+                        item == 'sequential' or \
+                        item == 'catchup':
+                        self.modifiers.append( item )
+                        continue
+                            
+                m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
+                if m:
+                    self.type = 'tied'
+                    self.n_restart_outputs = int( m.groups()[0] )
+                    continue
+
+                m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+                if m:
+                    self.modifiers.append( 'contact' )
+                    self.contact_offset = m.groups()[0]
+                    continue
+
+                m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+                if m:
+                    self.modifiers.append( 'catchup_contact' )
+                    self.contact_offset = m.groups()[0]
+                    continue
+
+                raise DefinitionError, 'illegal task type: ' + item
+
+        self.outputs['any'] = tdef['outputs']
+        for clist in tdef['outputs']:
+            self.outputs[clist] = tdef['outputs'][clist]
+
+        self.prerequisites['any'] = tdef['prerequisites']
+        for clist in tdef['prerequisites']:
+            self.prerequisites[clist] = tdef['prerequisites'][clist]
+
+        self.coldstart_prerequisites['any'] = tdef['coldstart prerequisites']
+        for clist in tdef['coldstart prerequisites']:
+            self.prerequisites[clist] = tdef['coldstart prerequisites'][clist]
+
+        # TO DO: CONDITIONAL PREREQUISITES
+
+        self.suicide_prerequisites['any'] = tdef['suicide prerequisites']
+        for clist in tdef['suicide prerequisites']:
+            self.suicide_prerequisites[clist] = tdef['suicide prerequisites'][clist]
+
 
     def check_name( self, name ):
         m = re.match( '^(\w+),\s*(\w+)$', name )

@@ -135,3 +135,11 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
     [[postfoo]] #----------------------------------------------
     [[FOO]] #--------------------------------------------------
     [[H]] #----------------------------------------------------
+
+[taskdefs]
+   [[munge]]
+   description = munge on
+   cycles = 0,6,12,18
+   # prerequisites = C%$(CYCLE_TIME) finished,
+
+

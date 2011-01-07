@@ -26,7 +26,6 @@ class config( ConfigObj ):
     allowed_modifiers = ['contact', 'oneoff', 'sequential', 'catchup', 'catchup_contact']
 
     def __init__( self, file=None, spec=None ):
-
         self.taskdefs = {}
         self.loaded = False
         self.coldstart_task_list = []
@@ -143,6 +142,10 @@ class config( ConfigObj ):
         return pairs
 
     def load_taskdefs( self ):
+
+        for name, data in self['taskdefs']:
+            taskdefs[ name ] = taskdef.taskdef( name ).load_oldstyle( data )
+
         for cycle_list in self['dependency graph']:
             cycles = re.split( '\s*,\s*', cycle_list )
 
