@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* housekeeping util: use subprocess to spawn processing of config line
+  in parallel, then wait on each subprocess before finishing.
+
 * task timeout hooks: if specified, call timeout hook after:
     1/ time since submission.
     2/ time since started.
