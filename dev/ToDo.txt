@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* task timeout hooks: if specified, call timeout hook after:
+    1/ time since submission.
+    2/ time since started.
+
 * generate new stdout and stderr log files when a task is reset.
 
 * in new config, is restart OK after suite.rc tasks changed?
