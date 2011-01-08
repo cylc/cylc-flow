@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* put roadmap into documentation.  additional item: expanding dependency
+  graph based monitor view?
+
 * use passphrase authentication in the default pyro connection validator
  (see the Pyro userguide security page).
 

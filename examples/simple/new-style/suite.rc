@@ -1,0 +1,30 @@
+title = simple three-task example suite
+
+description = """A suite containing a oneoff startup task and two
+cycling free (non-model) tasks, the first of which triggers off the
+wall clock and is constrained to be sequential."""
+
+[dependency graph]
+    [[ 0,6,12,18 ]]
+    label1  =  coldstart:housekeeping -> foo -> bar
+
+[environment]
+WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
+
+[tasks]
+    [[housekeeping]]
+    command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
+
+    [[foo]]
+    type modifier list = clock(offset = 1 hour), sequential,
+    command list = cylc-wrapper foo.sh,
+        [[[environment]]]
+        TASK_EXE_SECONDS = 8
+        FOO_OUTPUT_DIR = $WORKSPACE
+ 
+    [[bar]]
+    command list = cylc-wrapper bar.sh,
+        [[[environment]]]
+        TASK_EXE_SECONDS = 5
+        BAR_INPUT_DIR = $WORKSPACE
+        BAR_OUTPUT_DIR = $WORKSPACE
