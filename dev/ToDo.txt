@@ -1,20 +1,23 @@
 _______
 GENERAL
 
+* use passphrase authentication in the default pyro connection validator
+ (see the Pyro userguide security page).
+
+* not the PYRO_MAXCONNECTION config item, default 200 - the max number
+  of simultaneous connections to a single pyro server. TEST THIS?!
+  The default connection validator checks for this.
+
 * housekeeping util: use subprocess to spawn processing of config line
   in parallel, then wait on each subprocess before finishing.
 
-* task timeout hooks: if specified, call timeout hook after:
-    1/ time since submission.
-    2/ time since started.
+* consider task timeout alert hooks: if specified, call after:
+    1/ time since submission?
+    2/ time since started?
 
 * generate new stdout and stderr log files when a task is reset.
 
 * in new config, is restart OK after suite.rc tasks changed?
-
-* hook for centralised task failure response from cylc: in particular
-  could be used to send alerts for job submit failures.
-* consider how task timeout alerts might be incorporated into cylc? 
 
 * consolidate example suites:
   + trivial
@@ -39,7 +42,6 @@ GENERAL
   and source modules.
 
 * implement automatic rolling dependency graph of last N (=24) hours.
-
 
 * at some point, do some profiling of execution time and memory use:
     cProfile
@@ -67,16 +69,6 @@ GENERAL
 * document task inclusion and exclusion, at startup, by commandline or
 suite.rc file: can be used separately or both at once, for cold, warm,
 and restart.
-
-
-*use passphrase authentication in the default pyro connection validator
- (see the Pyro userguide security page).
-
-* not the PYRO_MAXCONNECTION config item, default 200 - the max number
-  of simultaneous connections to a single pyro server. TEST THIS?!
-  The default connection validator checks for this.
-
-* allow to ignore task owners via suite.rc or command option
 
 * document how to re-run partial suite over existing data:
     - exclude some tasks

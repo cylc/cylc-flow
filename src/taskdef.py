@@ -85,14 +85,15 @@ class taskdef(object):
         self.environment = OrderedDict()         # var = value
         self.directives  = OrderedDict()         # var = value
 
-    def load_oldstyle( self, name, tdef ):
+    def load_oldstyle( self, name, tdef, ignore_owner ):
         # tdef direct from configobj [taskdefs][name] section
         self.name = name
         self.description = tdef['description']
         self.job_submission_method = tdef['job submission method']
         self.hours = tdef['cycles']
         self.host = tdef['host']
-        self.owner = tdef['owner']
+        if not ignore_owner:
+            self.owner = tdef['owner']
         self.follow_on_task = tdef['follow on task']
         self.intercycle = tdef['intercycle']
 

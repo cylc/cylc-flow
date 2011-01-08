@@ -133,13 +133,12 @@ job_submit.joblog_dir = config['job submission log directory']
 # intantiate the task--------------------------------------------------
 task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', startup=True )
 
-print '\nPREREQUISITES:\n'
-for item in task_proxy.prerequisites.dump():
-    print item
-print '\nOUTPUTS:\n'
-for item in task_proxy.outputs.dump():
-    print item
-
+#print '\nPREREQUISITES:\n'
+#for item in task_proxy.prerequisites.dump():
+#    print item
+#print '\nOUTPUTS:\n'
+#for item in task_proxy.outputs.dump():
+#    print item
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
 print

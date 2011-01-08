@@ -146,7 +146,7 @@ class config( ConfigObj ):
 
         for name in self['taskdefs']:
             taskd = taskdef.taskdef( name )
-            taskd.load_oldstyle( name, self['taskdefs'][name] )
+            taskd.load_oldstyle( name, self['taskdefs'][name], self['ignore task owners'] )
             self.taskdefs[name] = taskd
 
         for cycle_list in self['dependency graph']:
@@ -205,6 +205,8 @@ class config( ConfigObj ):
                             taskconfig = self['tasks'][name]
                             taskd = taskdef.taskdef( name )
                             taskd.description = taskconfig['description']
+                            if not self['ignore task owners']:
+                                taskd.owner = taskconfig['owner']
                             if taskconfig['job submission method'] != None:
                                 taskd.job_submit_method = taskconfig['job submission method']
                             else:

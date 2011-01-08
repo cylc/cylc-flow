@@ -6,6 +6,7 @@ number of state dump backups = integer( min=1, default=10 )
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 job submission log directory = string( default='' )
 logging level = option( debug, info, warning, error, critical, default=info )
+ignore task owners = boolean( default=False )
 
 task submitted hook = string( default=None )
 task started hook = string( default=None )

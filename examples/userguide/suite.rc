@@ -12,6 +12,7 @@ task finished hook          = alert.sh
 task failed hook            = alert.sh
 task submission failed hook = alert.sh
 
+#ignore task owners = True
 #job submission method = ll_basic
 
 exclude task list = baz,
@@ -51,6 +52,7 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
 [ tasks ]
     [[startup]] #------------------------------------------------------
+    #owner = munge
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[X]] #------------------------------------------------------
@@ -137,6 +139,7 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
 
 [taskdefs]
     [[munge]]
+    #owner = superman
     description = testing testing testing
     cycles = 0,6,12,18
         [[[outputs]]]
