@@ -1,6 +1,11 @@
 _______
 GENERAL
 
+* register should check for suite.rc file, not just a valid path.
+
+* document suite.rc format: multiline quoted values, but no line
+  continuation for single or list values.
+
 * put roadmap into documentation.  additional item: expanding dependency
   graph based monitor view?
 
