@@ -58,36 +58,48 @@ __many__ = string
 
 [ taskdefs ]
     # old style suite definition: a collection of task proxies.
-    [[ __many__ ]]
-    #intercycle = boolean( default=False )
+    [[ __many__ ]]  # TASK NAME
     description = string( default="No task description supplied" )
-    #job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
-    #type list = string_list( default=list('free'))
-    cycles = integer_list()
-    #command list = string_list( default=list('cylc-wrapper /bin/true'))
-    #host = string( default=None )
-    #owner = string( default=None )
-    #follow on task = string( default=None )
+    type list = string_list( default=list('free'))
+    cycles = int_list()   # CYCLE TIME LIST
+    command list = string_list( default=list('cylc-wrapper /bin/true'))
+    intercycle = boolean( default=False )
+    job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
+    host = string( default=None )
+    owner = string( default=None )
+    follow on task = string( default=None )
 
-    #prerequisites = string_list( default=list())
-    #outputs = string_list( default=list())
-    #coldstart prerequisites = string_list( default=list())
-    #suicide prerequisites = string_list( default=list())
-    # TO DO: conditional prerequisites
+        [[[ environment ]]]
+        __many__ = string
+
+        [[[ directives ]]]
+        __many__ = string
+
+        [[[ prerequisites ]]]
+        ___many___ = string
+        condition = string( default=None )
+            [[[[__many__]]]]  # CYCLE TIME LIST
+            __many__ = string
+            condition = string( default=None )
+
+        [[[outputs]]]
+        ___many___ = string
+            [[[[__many__]]]]  # CYCLE TIME LIST
+            __many__ = string
+
+        [[[coldstart prerequisites]]]
+        ___many___ = string
+            [[[[__many__]]]]  # CYCLE TIME LIST
+            __many__ = string
+
+        [[[suicide prerequisites]]]
+        ___many___ = string
+            [[[[__many__]]]]  # CYCLE TIME LIST
+            __many__ = string
 
     #    [[[ scripting ]]]
     #    __many__ = string
     # OR?
     # scripting = string()
 
-        #[[[ ___many___ ]]] # specific cycles
-        #prerequisites = string_list( default=list())
-        #outputs = string_list( default=list())
-        #coldstart prerequisites = string_list( default=list())
-        #suicide prerequisites = string_list( default=list())
- 
-        #[[[ environment ]]]
-        #__many__ = string
 
-        #[[[ directives ]]]
-        #__many__ = string

@@ -142,9 +142,12 @@ class config( ConfigObj ):
         return pairs
 
     def load_taskdefs( self ):
+        #print self['taskdefs']
 
-        for name, data in self['taskdefs']:
-            taskdefs[ name ] = taskdef.taskdef( name ).load_oldstyle( data )
+        for name in self['taskdefs']:
+            taskd = taskdef.taskdef( name )
+            taskd.load_oldstyle( name, self['taskdefs'][name] )
+            self.taskdefs[name] = taskd
 
         for cycle_list in self['dependency graph']:
             cycles = re.split( '\s*,\s*', cycle_list )
@@ -270,7 +273,7 @@ class config( ConfigObj ):
                                 #  prev task must generate my restart outputs at startup 
                                 if cycle_list not in self.taskdefs[prev_name].outputs:
                                     self.taskdefs[prev_name].outputs[cycle_list] = []
-                                self.taskdefs[prev_name].outputs[ cycle_list ].append( name + " restart files ready for $(CYCLE_TIME)" )
+                                self.taskdefs[prev_name].outputs[cycle_list].append( name + " restart files ready for $(CYCLE_TIME)" )
 
                             # COLDSTART ONEOFF at startup
                             elif self.taskdefs[prev_name].coldstart:

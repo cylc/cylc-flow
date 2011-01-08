@@ -93,13 +93,15 @@ class taskdef(object):
         self.hours = tdef['cycles']
         self.host = tdef['host']
         self.owner = tdef['owner']
-        self.follow_on_task = tdef['follow_on_task']
+        self.follow_on_task = tdef['follow on task']
         self.intercycle = tdef['intercycle']
 
         self.commands = tdef['command list']
+
         self.environment = tdef['environment']
         self.directives = tdef['directives']
-        self.scripting = tdef['scripting']
+
+        #self.scripting = tdef['scripting']
 
         for item in tdef['type list']:
             if item == 'free':
@@ -131,17 +133,10 @@ class taskdef(object):
 
                 raise DefinitionError, 'illegal task type: ' + item
 
-        self.outputs['any'] = tdef['outputs']
-        for clist in tdef['outputs']:
-            self.outputs[clist] = tdef['outputs'][clist]
-
-        self.prerequisites['any'] = tdef['prerequisites']
-        for clist in tdef['prerequisites']:
-            self.prerequisites[clist] = tdef['prerequisites'][clist]
-
-        self.coldstart_prerequisites['any'] = tdef['coldstart prerequisites']
-        for clist in tdef['coldstart prerequisites']:
-            self.prerequisites[clist] = tdef['coldstart prerequisites'][clist]
+        self.load_requisites( self.prerequisites, tdef['prerequisites'], conditional=True )
+        self.load_requisites( self.outputs, tdef['outputs'] )
+        self.load_requisites( self.coldstart_prerequisites, tdef['coldstart prerequisites'] )
+        self.load_requisites( self.suicide_prerequisites, tdef['suicide prerequisites'] )
 
         # TO DO: CONDITIONAL PREREQUISITES
 
@@ -149,6 +144,26 @@ class taskdef(object):
         for clist in tdef['suicide prerequisites']:
             self.suicide_prerequisites[clist] = tdef['suicide prerequisites'][clist]
 
+    def load_requisites( self, target, source, conditional=False ):
+        for item in source:
+            if item == 'condition':
+                if not conditional:
+                    raise DefinitionError( "only prerequisites can be conditional" )
+                continue
+            if isinstance( source[item], dict ):
+                # item is a cycle list
+                if item not in target:
+                    target[item] = []
+                for pre in source[item]:
+                    if pre == 'condition':
+                        if not conditional:
+                            raise DefinitionError( "only prerequisites can be conditional" )
+                        continue
+                    target[item].append( source[item][pre] )
+            else:
+                if 'any' not in target:
+                    target['any'] = []
+                target['any'].append( source[item] )
 
     def check_name( self, name ):
         m = re.match( '^(\w+),\s*(\w+)$', name )
@@ -324,7 +339,7 @@ class taskdef(object):
                 if condition == 'any':
                     for req in reqs:
                         req = sself.interpolate_ctime( req )
-                        sself.prerequistes.add( req )
+                        sself.prerequisites.add( req )
                 else:
                     hours = re.split( ',\s*', condition )
                     for hr in hours:
@@ -340,7 +355,7 @@ class taskdef(object):
                 if condition == 'any':
                     for req in reqs:
                         req = sself.interpolate_ctime( req )
-                        sself.suicide_prerequistes.add( req )
+                        sself.suicide_prerequisites.add( req )
                 else:
                     hours = re.split( ',\s*', condition )
                     for hr in hours:
@@ -394,7 +409,7 @@ class taskdef(object):
                     if condition == 'any':
                         for req in reqs:
                             req = sself.interpolate_ctime( req )
-                            sself.prerequistes.add( req )
+                            sself.prerequisites.add( req )
                     else:
                         hours = re.split( ',\s*', condition )
                         for hr in hours:

@@ -128,7 +128,6 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
         [[[environment]]]
         C_OUTPUT_DIR = $WORKSPACE
 
-
     [[foo]] #--------------------------------------------------
     [[bar]] #--------------------------------------------------
     [[baz]] #--------------------------------------------------
@@ -137,9 +136,15 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
     [[H]] #----------------------------------------------------
 
 [taskdefs]
-   [[munge]]
-   description = munge on
-   cycles = 0,6,12,18
-   # prerequisites = C%$(CYCLE_TIME) finished,
-
-
+    [[munge]]
+    description = testing testing testing
+    cycles = 0,6,12,18
+        [[[outputs]]]
+        a = munge one products ready for $(CYCLE_TIME)
+        b = munge two products ready for $(CYCLE_TIME)
+        [[[prerequisites]]]
+        a = C%$(CYCLE_TIME) finished
+        b = D%$(CYCLE_TIME) finished
+        condition = (a or b)
+            [[[[ 6,18 ]]]]
+            c = F%$(CYCLE_TIME) finished
