@@ -18,7 +18,7 @@ if [[ $# == 1 ]]; then
     WORKSPACE=$1
 else
     echo "No workspace specified for cleaning"
-    exit 1
+    exit 0
 fi
 
 echo "Cleanup $WORKSPACE ..."

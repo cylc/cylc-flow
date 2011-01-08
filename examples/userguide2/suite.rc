@@ -1,0 +1,154 @@
+
+title = main cylc userguide example suite
+
+description = """This suite implements the main cylc userguide example.
+"Models" A.sh, B.sh, and C.sh; "post processing tasks" D.sh, E.sh, F.sh,
+(and G.sh); and "external data collection task" X.sh are not cylc-aware
+and each have their own independent input and output directories."""
+
+task submitted hook         = alert.sh
+task started hook           = alert.sh
+task finished hook          = alert.sh
+task failed hook            = alert.sh
+task submission failed hook = alert.sh
+
+#ignore task owners = True
+#job submission method = ll_basic
+
+exclude task list = baz,
+
+[ task families ]
+FOO = foo, bar
+
+[dependency graph] #----------------------------------------------------
+#        > B -> E
+#       /   \
+# X -> A     -> D
+#       \   /
+#        > C -> F -(6,18)-> G
+
+    [[ 0,6,12,18 ]]
+    label1  =  X -> A -> B ->  E
+    label2  =  A -> C -> F -> FOO -> postfoo
+    label3  =  B C -> D
+    
+    labelc1 = model_coldstart:ColdA -> A
+    labelc2 = model_coldstart:ColdB -> B
+    labelc3 = model_coldstart:ColdC -> C
+
+    labelx1 = coldstart:startup -> X ColdA ColdB ColdC
+    labelx2 = F -> oneoff:baz
+
+    # TO DO, conditional triggers:
+    # label99 = (B or C) -> D
+
+    [[ 6,18 ]]
+    label6 = F(1)-> G
+    label7 = F(1)-> H
+
+[environment] #--------------------------------------------------
+WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
+# TO DO: QUOTES NOT NECESSARY HERE? CHECK GENERATED JOB SCRIPT
+QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
+
+[ tasks ]
+    [[startup]] #------------------------------------------------------
+    #owner = munge
+    command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
+
+    [[X]] #------------------------------------------------------
+    #type list = clock(offset = 1 hour),
+    type list = clock(offset = 1 hour), sequential,
+    command list = cylc-wrapper X.sh,
+        [[[ environment ]]]
+        X_OUTPUT_DIR = $WORKSPACE
+ 
+    [[A]] #------------------------------------------------------
+    type list = model(restarts = 3),
+    command list = cylc-wrapper A.sh,
+        [[[environment]]]
+        A_INPUT_DIR = $WORKSPACE
+        A_OUTPUT_DIR = $WORKSPACE
+
+    [[B]] #------------------------------------------------------
+    type list = model(restarts = 3),
+    command list = cylc-wrapper B.sh,
+        [[[environment]]]
+        B_INPUT_DIR = $WORKSPACE
+        B_OUTPUT_DIR = $WORKSPACE
+
+    [[C]] #------------------------------------------------------
+    type list = model(restarts = 3),
+    command list = cylc-wrapper C.sh,
+        [[[environment]]]
+        C_INPUT_DIR = $WORKSPACE
+        C_OUTPUT_DIR = $WORKSPACE
+
+    [[D]] #------------------------------------------------------
+    #command list = cylc-wrapper D.sh,
+    command list = cylc-wrapper D-fail.sh, cylc-wrapper D.sh,
+    # job submission method = ll_basic
+        [[[environment]]]
+        D_INPUT_DIR = $WORKSPACE
+        D_OUTPUT_DIR = $WORKSPACE
+ 
+    [[E]] #------------------------------------------------------
+    command list = cylc-wrapper E.sh,
+        [[[environment]]]
+        E_INPUT_DIR = $WORKSPACE
+        E_OUTPUT_DIR = $WORKSPACE
+ 
+    [[F]] #------------------------------------------------------
+    # not wrapped; emits a specific output.
+    command list = F.sh,
+        [[[outputs]]]
+        1 = "foo products ready for $(CYCLE_TIME)"
+        [[[environment]]]
+        F_INPUT_DIR = $WORKSPACE
+        F_OUTPUT_DIR = $WORKSPACE
+
+    [[G]] #------------------------------------------------------
+    command list = cylc-wrapper G.sh,
+        [[[environment]]]
+        G_INPUT_DIR = $WORKSPACE
+        G_OUTPUT_DIR = $WORKSPACE
+
+    [[ColdA]] #------------------------------------------------
+    description = "fulfils restart dependencies for model A"
+    command list = cylc-wrapper ColdA.sh,
+        [[[environment]]]
+        A_OUTPUT_DIR = $WORKSPACE
+
+    [[ColdB]] #------------------------------------------------
+    description = "fulfils restart dependencies for model B"
+    command list = cylc-wrapper ColdB.sh,
+        [[[environment]]]
+        B_OUTPUT_DIR = $WORKSPACE
+
+    [[ColdC]] #------------------------------------------------
+    description = "fulfils restart dependencies for model C"
+    command list = cylc-wrapper ColdC.sh,
+        [[[environment]]]
+        C_OUTPUT_DIR = $WORKSPACE
+
+    [[foo]] #--------------------------------------------------
+    [[bar]] #--------------------------------------------------
+    [[baz]] #--------------------------------------------------
+    [[postfoo]] #----------------------------------------------
+    [[FOO]] #--------------------------------------------------
+    [[H]] #----------------------------------------------------
+
+[taskdefs]
+    [[munge]]
+    #owner = superman
+    description = testing testing testing
+    cycles = 0,6,12,18
+        [[[outputs]]]
+        a = munge one products ready for $(CYCLE_TIME)
+        b = munge two products ready for $(CYCLE_TIME)
+        [[[prerequisites]]]
+        a = C%$(CYCLE_TIME) finished
+        b = D%$(CYCLE_TIME) finished
+        condition = (a or b)
+            [[[[ 6,18 ]]]]
+            c = F%$(CYCLE_TIME) finished

@@ -1,8 +1,9 @@
 title = simple three-task example suite
 
 description = """A suite containing a oneoff startup task and two
-cycling free (non-model) tasks, the first of which triggers off the
-wall clock and is constrained to be sequential."""
+cycling free (non-model) tasks, the first of which triggers off the wall
+clock and is constrained to be sequential. The tasks, foo.sh, bar.sh,
+and clean-workspace.sh, are not cylc-aware."""
 
 [environment]
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
@@ -39,7 +40,8 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
         BAR_OUTPUT_DIR = $WORKSPACE
         TASK_EXE_SECONDS = 5
         [[[prerequisites]]]
-        #a = foo%$(CYCLE_TIME) finished
         a = external data ready for $(CYCLE_TIME)
+        # OR, to trigger of foo finished:
+        # a = foo%$(CYCLE_TIME) finished
         [[[outputs]]]
         a = products ready for $(CYCLE_TIME)

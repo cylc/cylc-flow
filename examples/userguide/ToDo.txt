@@ -2,9 +2,3 @@
 1/ mkdir -p all OUTPUT_DIRs
 2/ echo "Hello from task $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
 3/ sleep $TASK_EXE_SECONDS
-4/ exit 1 (not 0) in clean-workspace if var not defined
-5/ change startup task name to 'housekeep' - less confusing.
-6/ all example suites should allow multiple simultaneous instances?
-   (no: this is now user specific, so it may just be confusing)
-
-7/ document that [dependency graph] and [taskdefs] can be used together.

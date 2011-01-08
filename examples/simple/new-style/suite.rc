@@ -1,8 +1,9 @@
 title = simple three-task example suite
 
 description = """A suite containing a oneoff startup task and two
-cycling free (non-model) tasks, the first of which triggers off the
-wall clock and is constrained to be sequential."""
+cycling free (non-model) tasks, the first of which triggers off the wall
+clock and is constrained to be sequential. The tasks, foo.sh, bar.sh,
+and clean-workspace.sh, are not cylc-aware."""
 
 [dependency graph]
     [[ 0,6,12,18 ]]
