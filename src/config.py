@@ -226,34 +226,29 @@ class config( ConfigObj ):
                                 taskd.modifiers.append( 'oneoff' )
                                 taskd.oneoff = True
 
-                            for item in taskconfig[ 'type list' ]:
-                                if item == 'free':
-                                    taskd.type = 'free'
-                                    continue
+                            taskd.type = taskconfig[ 'type' ]
+
+                            for item in taskconfig[ 'type modifier list' ]:
                                 if item == 'oneoff' or \
                                     item == 'sequential' or \
                                     item == 'catchup':
                                     taskd.modifiers.append( item )
                                     continue
-                            
                                 m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
                                 if m:
                                     taskd.type = 'tied'
                                     taskd.n_restart_outputs = int( m.groups()[0] )
                                     continue
-
                                 m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
                                 if m:
                                     taskd.modifiers.append( 'contact' )
                                     taskd.contact_offset = m.groups()[0]
                                     continue
-
                                 m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
                                 if m:
                                     taskd.modifiers.append( 'catchup_contact' )
                                     taskd.contact_offset = m.groups()[0]
                                     continue
-
                                 raise SuiteConfigError, 'illegal task type: ' + item
 
                             taskd.logfiles = []

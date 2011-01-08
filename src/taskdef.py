@@ -104,35 +104,30 @@ class taskdef(object):
 
         #self.scripting = tdef['scripting']
 
-        for item in tdef['type list']:
-            if item == 'free':
-                self.type = 'free'
+        self.type = tdef['type']
+
+        for item in tdef['type modifier list']:
+            if item == 'oneoff' or \
+                item == 'sequential' or \
+                item == 'catchup':
+                self.modifiers.append( item )
                 continue
-                if item == 'oneoff' or \
-                        item == 'sequential' or \
-                        item == 'catchup':
-                        self.modifiers.append( item )
-                        continue
-                            
-                m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
-                if m:
-                    self.type = 'tied'
-                    self.n_restart_outputs = int( m.groups()[0] )
-                    continue
-
-                m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-                if m:
-                    self.modifiers.append( 'contact' )
-                    self.contact_offset = m.groups()[0]
-                    continue
-
-                m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-                if m:
-                    self.modifiers.append( 'catchup_contact' )
-                    self.contact_offset = m.groups()[0]
-                    continue
-
-                raise DefinitionError, 'illegal task type: ' + item
+            m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
+            if m:
+                self.type = 'tied'
+                self.n_restart_outputs = int( m.groups()[0] )
+                continue
+            m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+            if m:
+                self.modifiers.append( 'contact' )
+                self.contact_offset = m.groups()[0]
+                continue
+            m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+            if m:
+                self.modifiers.append( 'catchup_contact' )
+                self.contact_offset = m.groups()[0]
+                continue
+            raise DefinitionError, 'illegal task type: ' + item
 
         self.load_requisites( self.prerequisites, tdef['prerequisites'], conditional=True )
         self.load_requisites( self.outputs, tdef['outputs'] )

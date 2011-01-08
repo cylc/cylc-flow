@@ -44,7 +44,8 @@ __many__ = string
     [[ __many__ ]]
     description = string( default="No task description supplied" )
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
-    type list = string_list( default=list('free'))
+    type = string( default=free)
+    type modifier list = string_list( default=list())
     command list = string_list( default=list('cylc-wrapper /bin/true'))
     owner = string( default=None )
     host = string( default=None )
@@ -61,7 +62,8 @@ __many__ = string
     # old style suite definition: a collection of task proxies.
     [[ __many__ ]]  # TASK NAME
     description = string( default="No task description supplied" )
-    type list = string_list( default=list('free'))
+    type = string( default=free)
+    type modifier list = string_list( default=list())
     cycles = int_list()   # CYCLE TIME LIST
     command list = string_list( default=list('cylc-wrapper /bin/true'))
     intercycle = boolean( default=False )
