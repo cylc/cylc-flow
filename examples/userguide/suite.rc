@@ -6,11 +6,11 @@ description = """This suite implements the main cylc userguide example.
 (and G.sh); and "external data collection task" X.sh are not cylc-aware
 and each have their own independent input and output directories."""
 
-task submitted hook         = alert.sh --submitted
-task started hook           = alert.sh --started
-task finished hook          = alert.sh --finished
-task failed hook            = alert.sh --failed
-task submission failed hook = alert.sh --submit-failed
+task submitted hook         = alert.sh
+task started hook           = alert.sh
+task finished hook          = alert.sh
+task failed hook            = alert.sh
+task submission failed hook = alert.sh
 
 #job submission method = ll_basic
 

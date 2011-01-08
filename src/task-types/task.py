@@ -196,16 +196,15 @@ class task( Pyro.core.ObjBase ):
         self.log( 'NORMAL', "job submitted" )
         if task_submitted_hook:
             self.log( 'NORMAL', 'calling task submitted hook' )
-            command = ' '.join( [task_submitted_hook, self.name, self.c_time, 'submitted'] )
+            command = ' '.join( [task_submitted_hook, 'submitted', self.name, self.c_time, "'(task submitted)'"] )
             subprocess.call( command, shell=True )
 
     def set_running( self ):
         self.state.set_status( 'running' )
         if task_started_hook:
             self.log( 'NORMAL', 'calling task started hook' )
-            command = ' '.join( [task_started_hook, self.name, self.c_time, 'started'] )
+            command = ' '.join( [task_started_hook, 'started', self.name, self.c_time, "'(task running)'"] )
             subprocess.call( command, shell=True )
-
 
     def set_finished( self ):
         self.outputs.set_all_complete()
@@ -217,18 +216,16 @@ class task( Pyro.core.ObjBase ):
         self.state.set_status( 'finished' )
         if task_finished_hook:
             self.log( 'NORMAL', 'calling task finished hook' )
-            command = ' '.join( [task_finished_hook, self.name, self.c_time, 'finished'] )
+            command = ' '.join( [task_finished_hook, 'finished', self.name, self.c_time, "'(task finished)'"] )
             subprocess.call( command, shell=True )
-
 
     def set_failed( self, reason ):
         self.state.set_status( 'failed' )
         self.log( 'CRITICAL', reason )
         if task_failed_hook:
             self.log( 'WARNING', 'calling task failed hook' )
-            command = ' '.join( [task_failed_hook, self.name, self.c_time, reason] )
+            command = ' '.join( [task_failed_hook, 'failed', self.name, self.c_time, "'" + reason + "'"] )
             subprocess.call( command, shell=True )
-
 
     def set_submit_failed( self ):
         reason = 'job submission failed'
@@ -236,9 +233,8 @@ class task( Pyro.core.ObjBase ):
         self.log( 'CRITICAL', reason )
         if task_submission_failed_hook:
             self.log( 'WARNING', 'calling task submission failed hook' )
-            command = ' '.join( [task_submission_failed_hook, self.name, self.c_time, reason] )
+            command = ' '.join( [task_submission_failed_hook, 'submit_failed', self.name, self.c_time, "'" + reason + "'"] )
             subprocess.call( command, shell=True )
-
 
     def run_external_task( self, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )

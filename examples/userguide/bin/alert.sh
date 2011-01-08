@@ -1,25 +1,30 @@
 #!/bin/bash
 
-ALERT=$1
-shift
-NAME=$1
-shift
-CTIME=$1
-shift
-MESSAGE=$@
+# This is an example alert script used by the main example suite.  If
+# suite.rc is configured appropriately an alert hook will call the 
+# designated script(s) whenever a task is submitted, started, finished,
+# failed, or if task job submission fails.
 
-if [[ $ALERT != '--submitted' ]] && \
-    [[ $ALERT != '--started' ]] && \
-    [[ $ALERT != '--finished' ]] && \
-    [[ $ALERT != '--failed' ]] && \
-    [[ $ALERT != '--submit-failed' ]]; then
-    echo "alert.sh ERROR, unknown alert type: $ALERT" >&2
-    exit 1
-fi
+# Cylc supplies the following command line arguments to alert scripts:
+# <alert script> HOOK  TASK_NAME  CYCLE_TIME  MESSAGE
 
-ALERT=${ALERT#--}
+# where HOOK is either:
+#  'submitted',
+#  'started',
+#  'finished',
+#  'failed', or
+#  'submit_failed'
 
-echo "!! TASK ALERT: $NAME $ALERT for $CTIME"
-if [[ $ALERT = failed ]] || [[ $ALERT = submit-failed ]]; then
-    echo "!! Message: $MESSAGE"
-fi
+# This script simply prints an alert to stdout (i.e. cylc's stdout). But 
+# you can use alert scripts to do whatever you like - e.g. email $USER
+# if a task fails; or update a general monitoring system such as Nagios
+# according to whether a task has started, finished, or failed, ...
+
+# Put alerting script(s) in your suite bin directory.
+
+HOOK=$1
+NAME=$2
+CTIME=$3
+MESSAGE="$4"  # quotes required: message contains spaces
+
+echo "!!${HOOK}!! $NAME $CTIME $MESSAGE"
