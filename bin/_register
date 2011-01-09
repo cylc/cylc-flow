@@ -21,8 +21,9 @@ from registration import registrations
 
 #----------------------------------------
 def check_dir( dir ):
-    if not os.path.exists( dir ):
-        print "ERROR, dir not found: " + dir
+    suiterc = os.path.join( dir, 'suite.rc' )
+    if not os.path.isfile( suiterc ):
+        print "ERROR, file not found: " + suiterc
         return False
     else:
         return True
