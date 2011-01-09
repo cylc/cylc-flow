@@ -37,9 +37,9 @@ allowed_commands = \
     'rolling-archive',
     'housekeeping',
     'file-transfer',
-    'cycle-time',
+    'cycletime',
     'template',
-    'check-vars',
+    'checkvars',
     ]
 
 usage = \
@@ -59,9 +59,9 @@ usage = \
     '  rolling-archive .... (deprecated: use housekeeping)',
     '  housekeeping ....... general archiving and cleanup tool',
     '  file-transfer ...... general scp-based file transfer tool',
-    '  cycle-time ......... cycle time arithmetic',
+    '  cycletime ......... cycle time arithmetic',
     '  template ........... cycle time based filename templating',
-    '  check-vars ......... check that required variables are defined',
+    '  checkvars ......... check that required variables are defined',
     '  help ............... Print this message and exit; also [-h], [--help]',
     ]
 
