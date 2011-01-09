@@ -16,8 +16,12 @@ GENERAL
   of simultaneous connections to a single pyro server. TEST THIS?!
   The default connection validator checks for this.
 
-* housekeeping util: use subprocess to spawn processing of config line
-  in parallel, then wait on each subprocess before finishing.
+* housekeeping util needs parallel processing: see my new
+  src/multisubprocess module, and use it to process multiple files at
+  once within each housekeeping config line (which will be more
+  effective than processing config lines in parallel). May have to 
+  spawn shell commands to move and delete files as well as copy and diff,
+  rather than use shutil.mv() ...
 
 * consider task timeout alert hooks: if specified, call after:
     1/ time since submission?
