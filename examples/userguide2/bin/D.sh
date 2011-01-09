@@ -1,20 +1,10 @@
 #!/bin/bash
 
-# CHECK INPUT AND OUTPUT DIRS ARE DEFINED
-if [[ -z $D_INPUT_DIR ]]; then
-    echo "ERROR: \$D_INPUT_DIR is not defined" >&2
-    exit 1
-fi
-if [[ -z $D_OUTPUT_DIR ]]; then
-    echo "ERROR: \$D_OUTPUT_DIR is not defined" >&2
-    exit 1
-fi
-if [[ ! -d $D_INPUT_DIR ]]; then
-    echo "ERROR: \$D_INPUT_DIR not found" >&2
-    exit 1
-fi
+cylcutil checkvars  TASK_EXE_SECONDS
+cylcutil checkvars -d D_INPUT_DIR
+cylcutil checkvars -c D_OUTPUT_DIR
 
-# CHECK PREREQUISITES
+# CHECK INPUT FILES EXIST
 ONE=$D_INPUT_DIR/sea-state-${CYCLE_TIME}.nc
 TWO=$D_INPUT_DIR/river-flow-${CYCLE_TIME}.nc
 for PRE in $ONE $TWO; do
@@ -24,10 +14,9 @@ for PRE in $ONE $TWO; do
     fi
 done
 
-echo "Hello from task $TASK_NAME"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
 
-# EXECUTE THE MODEL ...
-sleep 10
+sleep $TASK_EXE_SECONDS
 
 # generate outputs
 touch $D_OUTPUT_DIR/combined.products

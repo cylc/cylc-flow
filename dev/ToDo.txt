@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* show suicide prerequisites, etc., in requisite dump.
+
 * register should check for suite.rc file, not just a valid path.
 
 * document suite.rc format: multiline quoted values, but no line

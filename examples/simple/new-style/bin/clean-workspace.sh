@@ -1,10 +1,8 @@
 #!/bin/bash
 
-set -e # exit on error
+usage="USAGE: clean-workspace.sh PATH"
 
-usage="USAGE: clean-workspace.sh [PATH]"
-
-if [[ $# != 0 ]] && [[ $# != 1 ]]; then
+if [[ $# != 1 ]]; then
     echo $usage >&2
     exit 1
 fi

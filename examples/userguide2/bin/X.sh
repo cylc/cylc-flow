@@ -1,19 +1,9 @@
 #!/bin/bash
 
-set -e
+cylcutil checkvars  TASK_EXE_SECONDS
+cylcutil checkvars -c X_OUTPUT_DIR
 
-# CHECK OUTPUT DIR IS DEFINED
-if [[ -z $X_OUTPUT_DIR ]]; then
-    echo "ERROR: \$X_OUTPUT_DIR is not defined" >&2
-    exit 1
-fi
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
+sleep $TASK_EXE_SECONDS
 
-mkdir -p $X_OUTPUT_DIR
-
-echo "Hello from task $TASK_NAME"
-
-# EXECUTE THE TASK ...
-sleep 10
-
-# "find" the external data and report it available
 touch $X_OUTPUT_DIR/obs-${CYCLE_TIME}.nc

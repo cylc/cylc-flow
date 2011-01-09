@@ -104,5 +104,3 @@ __many__ = string
     #    __many__ = string
     # OR?
     # scripting = string()
-
-

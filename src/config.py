@@ -52,6 +52,8 @@ class config( ConfigObj ):
             print test
             raise SuiteConfigError, "Suite Config Validation Failed"
         
+        # TO DO: THE FOLLOWING CODE FAILS PRIOR TO RAISING THE
+        # EXCEPTION; EXPERIMENT WITH ERRONEOUS CONFIG ENTRIES.
         # are there any keywords or sections not present in the spec?
         found_extra = False
         for sections, name in get_extra_values(self):
@@ -65,11 +67,11 @@ class config( ConfigObj ):
             if isinstance(the_value, dict):
                 # Sections are subclasses of dict
                 section_or_value = 'section'
-
+          
             section_string = ', '.join(sections) or "top level"
             print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
             found_extra = True
-
+        
         if found_extra:
             raise SuiteConfigError, "Illegal suite.rc entry found"
 

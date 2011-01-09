@@ -1,18 +1,13 @@
 #!/bin/bash
 
-set -e
+usage="USAGE: clean-workspace.sh PATH"
 
-echo "Hello from task $TASK_NAME"
-
-# EXECUTE THE TASK ...
-sleep 10
-
-usage="USAGE: clean-workspace.sh [PATH]"
-
-if [[ $# != 0 ]] && [[ $# != 1 ]]; then
+if [[ $# != 1 ]]; then
     echo $usage >&2
     exit 1
 fi
+
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
 
 if [[ $# == 1 ]]; then
     WORKSPACE=$1
@@ -21,7 +16,7 @@ else
     exit 1
 fi
 
-echo "Cleanup $WORKSPACE ..."
+echo "Cleaning $WORKSPACE ..."
 
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE

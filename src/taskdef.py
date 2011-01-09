@@ -136,10 +136,6 @@ class taskdef(object):
 
         # TO DO: CONDITIONAL PREREQUISITES
 
-        self.suicide_prerequisites['any'] = tdef['suicide prerequisites']
-        for clist in tdef['suicide prerequisites']:
-            self.suicide_prerequisites[clist] = tdef['suicide prerequisites'][clist]
-
     def load_requisites( self, target, source, conditional=False ):
         for item in source:
             if item == 'condition':

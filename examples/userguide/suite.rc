@@ -31,33 +31,38 @@ specified by the suite dependency graph."""
 
 [environment]
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
+A_RUNNING_DIR = $WORKSPACE/RunningA
+B_RUNNING_DIR = $WORKSPACE/RunningB
+C_RUNNING_DIR = $WORKSPACE/RunningC
+
+TASK_EXE_SECONDS = 5
 
 [ tasks ]
     [[housekeeping]]
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[X]]
-    type list = clock(offset = 1 hour), sequential,
+    type modifier list = clock(offset = 1 hour), sequential,
     command list = cylc-wrapper X.sh,
         [[[ environment ]]]
         X_OUTPUT_DIR = $WORKSPACE
  
     [[A]]
-    type list = model(restarts = 3),
+    type modifier list = model(restarts = 3),
     command list = cylc-wrapper A.sh,
         [[[environment]]]
         A_INPUT_DIR = $WORKSPACE
         A_OUTPUT_DIR = $WORKSPACE
 
     [[B]]
-    type list = model(restarts = 3),
+    type modifier list = model(restarts = 3),
     command list = cylc-wrapper B.sh,
         [[[environment]]]
         B_INPUT_DIR = $WORKSPACE
         B_OUTPUT_DIR = $WORKSPACE
 
     [[C]]
-    type list = model(restarts = 3),
+    type modifier list = model(restarts = 3),
     command list = cylc-wrapper C.sh,
         [[[environment]]]
         C_INPUT_DIR = $WORKSPACE
@@ -90,17 +95,11 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
     [[ColdA]]
     description = "fulfils restart dependencies for model A"
     command list = cylc-wrapper ColdA.sh,
-        [[[environment]]]
-        A_OUTPUT_DIR = $WORKSPACE
 
     [[ColdB]]
     description = "fulfils restart dependencies for model B"
     command list = cylc-wrapper ColdB.sh,
-        [[[environment]]]
-        B_OUTPUT_DIR = $WORKSPACE
 
     [[ColdC]]
     description = "fulfils restart dependencies for model C"
     command list = cylc-wrapper ColdC.sh,
-        [[[environment]]]
-        C_OUTPUT_DIR = $WORKSPACE

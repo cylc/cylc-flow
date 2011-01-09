@@ -1,24 +1,12 @@
 #!/bin/bash
 
-set -e
+cylcutil checkvars  TASK_EXE_SECONDS
+cylcutil checkvars -d A_INPUT_DIR
+cylcutil checkvars -c A_OUTPUT_DIR A_RUNNING_DIR
 
-# CHECK INPUT AND OUTPUT DIRS ARE DEFINED
-if [[ -z $A_INPUT_DIR ]]; then
-    echo "ERROR: \$A_INPUT_DIR is not defined" >&2
-    exit 1
-fi
-if [[ -z $A_OUTPUT_DIR ]]; then
-    echo "ERROR: \$A_OUTPUT_DIR is not defined" >&2
-    exit 1
-fi
-if [[ ! -d $A_INPUT_DIR ]]; then
-    echo "ERROR: \$A_INPUT_DIR not found" >&2
-    exit 1
-fi
-
-# CHECK PREREQUISITES
+# CHECK INPUT FILES EXIST
 ONE=$A_INPUT_DIR/obs-${CYCLE_TIME}.nc
-TWO=$A_INPUT_DIR/A-${CYCLE_TIME}.restart
+TWO=$A_RUNNING_DIR/A-${CYCLE_TIME}.restart
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         echo "ERROR, file not found $PRE" >&2
@@ -26,15 +14,16 @@ for PRE in $ONE $TWO; do
     fi
 done
 
-echo "Hello from task $TASK_NAME"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
+sleep $TASK_EXE_SECONDS
 
-# EXECUTE THE MODEL ...
-sleep 10
+# generate a restart file for the next three cycles
+touch $A_RUNNING_DIR/A-$(cylcutil cycletime --add=6 ).restart
+touch $A_RUNNING_DIR/A-$(cylcutil cycletime --add=12).restart
+touch $A_RUNNING_DIR/A-$(cylcutil cycletime --add=18).restart
 
-# generate a restart file for the next cycle
-NEXT_CYCLE=$(cylcutil cycle-time -a 6)
-touch $A_OUTPUT_DIR/A-${NEXT_CYCLE}.restart
-
-# generate forecast outputs
+# model outputs
 touch $A_OUTPUT_DIR/surface-winds-${CYCLE_TIME}.nc
 touch $A_OUTPUT_DIR/precipitation-${CYCLE_TIME}.nc
+
+echo "Goodbye"
