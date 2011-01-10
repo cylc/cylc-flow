@@ -389,21 +389,9 @@ class taskdef(object):
 
             if startup and len( self.coldstart_prerequisites.keys()) != 0:
                 # ADD coldstart prerequisites AT STARTUP
-                # (To override existing prerequisites at startup:
-                # sself.prerequisites = prerequisites( sself.id )
-                for condition in self.coldstart_prerequisites:
-                    reqs = self.coldstart_prerequisites[ condition ]
-                    if condition == 'any':
-                        for req in reqs:
-                            req = sself.interpolate_ctime( req )
-                            sself.prerequisites.add( req )
-                    else:
-                        hours = re.split( ',\s*', condition )
-                        for hr in hours:
-                            if int( sself.c_hour ) == int( hr ):
-                                for req in reqs:
-                                    req = sself.interpolate_ctime( req )
-                                    sself.prerequisites.add( req )
+                # (Uncomment next line to OVERRIDE existing prerequisites:)
+                #    sself.prerequisites = prerequisites( sself.id )
+                sself.add_requisites( sself.prerequisites, self.coldstart_prerequisites )
 
             sself.env_vars = OrderedDict()
             sself.env_vars['TASK_NAME'] = sself.name
