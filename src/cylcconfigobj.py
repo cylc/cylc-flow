@@ -23,8 +23,9 @@ class CylcConfigObj( ConfigObj ):
 
                 infile = self.include_files( infile )
                 infile = self.continuation_lines( infile )
-                for line in infile:
-                    print line,
+                #check:
+                #for line in infile:
+                #    print line,
                 # cylc: apparently it is not necessary to join back into a single string
             elif self.file_error:
                 # raise an error if the file doesn't exist

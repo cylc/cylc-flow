@@ -30,3 +30,8 @@ not to further complicate suite.rc files for general use).
   ('#!/usr/bin/python -u' has the same effect, but we can't pass
   options to the interpreter when invoked with:
    '#!/usr/bin/env python')
+
+* task exec environment ordering, regardless of order in suite.rc: 
+  (i) global env
+  (ii) task env
+  (iii) scripting

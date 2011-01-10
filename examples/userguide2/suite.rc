@@ -17,6 +17,7 @@ task submission timeout minutes = 0.1
 
 #ignore task owners = True
 #job submission method = ll_basic
+job submission log directory = logs
 
 exclude task list = baz,
 
@@ -70,6 +71,10 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
     [[X]] #------------------------------------------------------
     type modifier list = clock(offset = 1 hour), sequential,
     command list = cylc-wrapper X.sh,
+    scripting = """
+echo hello
+mkdir /tmp/munge
+echo bye"""
         [[[ environment ]]]
         X_OUTPUT_DIR = $WORKSPACE
  

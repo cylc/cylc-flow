@@ -21,8 +21,6 @@ task submission timeout minutes = float( default=None )
 include task list   = string_list( default=list() )
 exclude task list   = string_list( default=list() )
 
-job log directory = string( default='' )
-
 [ task families ]
     __many__ = string_list( default=None )
 
@@ -55,11 +53,11 @@ __many__ = string
     command list = string_list( default=list('cylc-wrapper /bin/true'))
     owner = string( default=None )
     host = string( default=None )
+    intercycle = boolean( default=False )
+    scripting = string( default=None )
         [[[ environment ]]]
         __many__ = string
         [[[ directives ]]]
-        __many__ = string
-        [[[ scripting ]]]
         __many__ = string
           [[[ outputs ]]]
         __many__ = string
@@ -79,7 +77,7 @@ __many__ = string
     follow on task = string( default=None )
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
-
+    scripting = string( default=None )
         [[[ environment ]]]
         __many__ = string
 
@@ -89,14 +87,10 @@ __many__ = string
         [[[ prerequisites ]]]
         ___many___ = string
         condition = string( default=None )
+
             [[[[__many__]]]]  # CYCLE TIME LIST
             __many__ = string
             condition = string( default=None )
-
-        [[[outputs]]]
-        ___many___ = string
-            [[[[__many__]]]]  # CYCLE TIME LIST
-            __many__ = string
 
         [[[coldstart prerequisites]]]
         ___many___ = string
@@ -108,7 +102,7 @@ __many__ = string
             [[[[__many__]]]]  # CYCLE TIME LIST
             __many__ = string
 
-    #    [[[ scripting ]]]
-    #    __many__ = string
-    # OR?
-    # scripting = string()
+        [[[outputs]]]
+        ___many___ = string
+            [[[[__many__]]]]  # CYCLE TIME LIST
+            __many__ = string

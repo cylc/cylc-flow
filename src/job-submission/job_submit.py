@@ -142,7 +142,7 @@ class job_submit(object):
                 # of their normal execution environment.
                 self.owner = self.cylc_owner
                 # ignore the scripting section in dummy mode
-                self.extra_scripting = []
+                self.extra_scripting = ''
 
             # The job will be submitted from the owner's home directory,
             # in case the job submission method requires that the
@@ -233,18 +233,17 @@ class job_submit(object):
     def write_extra_scripting( self, FILE ):
         # override if required
         FILE.write( "\n" )
-        FILE.write( "# SCRIPTING.\n" )
-        for line in self.extra_scripting:
-            FILE.write( line + '\n' )
+        FILE.write( "# SCRIPTING:\n" )
+        FILE.write( self.extra_scripting + '\n' )
 
     def write_cylc_scripting( self, FILE ):
         FILE.write( "\n" )
-        FILE.write( "# CONFIGURE THE ENVIRONMENT FOR CYLC.\n" )
+        FILE.write( "# CONFIGURE THE ENVIRONMENT FOR CYLC:\n" )
         FILE.write( ". $CYLC_DIR/cylc-env.sh\n" )
 
     def write_task_execute( self, FILE ):
         FILE.write( "\n" )
-        FILE.write( "# EXECUTE THE TASK.\n" )
+        FILE.write( "# EXECUTE THE TASK:\n" )
         FILE.write( self.task + "\n\n" )
 
     def submit_jobfile_local( self, dry_run  ):

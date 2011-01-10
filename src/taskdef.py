@@ -102,7 +102,7 @@ class taskdef(object):
         self.environment = tdef['environment']
         self.directives = tdef['directives']
 
-        #self.scripting = tdef['scripting']
+        self.scripting = tdef['scripting']
 
         self.type = tdef['type']
 

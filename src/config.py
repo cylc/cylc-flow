@@ -252,7 +252,7 @@ class config( CylcConfigObj ):
                             taskd.commands = taskconfig[ 'command list' ]
                             taskd.environment = taskconfig[ 'environment' ]
                             #taskd.directives = taskconfig[ 'directives' ]
-                            #taskd.scripting = taskconfig[ 'scripting' ]
+                            taskd.scripting = taskconfig[ 'scripting' ]
 
                             self.taskdefs[ name ] = taskd
 
@@ -323,7 +323,7 @@ class config( CylcConfigObj ):
                     taskd.commands = taskconfig[ 'command list' ]
                     taskd.environment = taskconfig[ 'environment' ]
                     #taskd.directives = taskconfig[ 'directives'  ]
-                    #taskd.scripting = taskconfig[ 'scripting'    ]
+                    taskd.scripting = taskconfig[ 'scripting'    ]
 
                     self.taskdefs[ mem ] = taskd
 
