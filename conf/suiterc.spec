@@ -54,7 +54,7 @@ __many__ = string
     owner = string( default=None )
     host = string( default=None )
     intercycle = boolean( default=False )
-    scripting = string( default=None )
+    scripting = string( default='' )
         [[[ environment ]]]
         __many__ = string
         [[[ directives ]]]
@@ -77,7 +77,7 @@ __many__ = string
     follow on task = string( default=None )
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
-    scripting = string( default=None )
+    scripting = string( default='' )
         [[[ environment ]]]
         __many__ = string
 
