@@ -110,15 +110,6 @@ class config( CylcConfigObj ):
             self.loaded = True
         return self.taskdefs.keys()
 
-    def get_task_shortname_list( self ):
-        if not self.loaded:
-            self.load_taskdefs()
-            self.loaded = True
-        shorts = []
-        for name in self.taskdefs:
-            shorts.append( self.taskdefs[ name ].shortname )
-        return shorts
-
     def get_dependent_pairs( self, line ):
         # 'A -> B -> C' ==> [A,B],[B,C]
         # 'A,B -> C'    ==> [A,C],[B,C]

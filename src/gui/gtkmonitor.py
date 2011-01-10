@@ -192,10 +192,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.led_headings = ['Cycle Time' ] + [''] * len( self.task_list )
         self.reset_led_headings()
 
-    def short_task_headings( self, w ):
-        self.led_headings = ['Cycle Time' ] + self.task_list_shortnames
-        self.reset_led_headings()
-
     def full_task_headings( self, w ):
         self.led_headings = ['Cycle Time' ] + self.task_list
         self.reset_led_headings()
@@ -537,9 +533,8 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         self.update_tb( tb, "\n\nMenu: View > ", [bold, red] )
         self.update_tb( tb, "This affects only the top 'light panel'. "
-                "You can change between full, short, and no "
-                "task names, in order to maximize either screen real "
-                "estate or information.")
+                "You can change turn off task name headings in order to "
+                "maximize screen real estate.")
 
         self.update_tb( tb, "\n\nMenu: Suite > ", [bold, red] )
         self.update_tb( tb, "\n o Start: ", [bold])
@@ -1056,10 +1051,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         view_menu.append( heading_none_item )
         heading_none_item.connect( 'activate', self.no_task_headings )
 
-        heading_short_item = gtk.MenuItem( 'Short Task Names' )
-        view_menu.append( heading_short_item )
-        heading_short_item.connect( 'activate', self.short_task_headings )
-
         heading_full_item = gtk.MenuItem( 'Full Task Names' )
         view_menu.append( heading_full_item )
         heading_full_item.connect( 'activate', self.full_task_headings )
@@ -1150,16 +1141,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         return hbox
 
-    def translate_task_names( self, shortnames ):
-        temp = {}
-        for t in range( len( self.task_list )):
-            temp[ self.task_list[ t ] ] = shortnames[ t ]
-
-        self.task_list.sort()
-        self.task_list_shortnames = []
-        for task in self.task_list:
-            self.task_list_shortnames.append( temp[ task ] )
- 
     def check_connection( self ):
         # called on a timeout in the gtk main loop, tell the log viewer
         # to reload if the connection has been lost and re-established,
@@ -1207,13 +1188,11 @@ cylc gui is a real time suite control and monitoring tool for cylc.
     #    ss = self.get_pyro( 'state_summary' )
     #    self.logdir = ss.get_config( 'logging_dir' ) 
     #    self.task_list = ss.get_config( 'task_list' )
-    #    self.shortnames = ss.get_config( 'task_list_shortnames' )
 
     def preload_task_list( self ):
         # load suite config
         suiterc = config( os.path.join( self.suite_dir, 'suite.rc' ))
         self.task_list = suiterc.get_task_name_list()
-        self.shortnames = suiterc.get_task_shortname_list()
 
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
         self.logdir = logging_dir
@@ -1235,9 +1214,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         # Get list of tasks in the suite
         self.preload_task_list()
-
-        self.translate_task_names( self.shortnames )
-
         notebook = gtk.Notebook()
         notebook.set_tab_pos(gtk.POS_TOP)
         notebook.append_page( self.create_flatlist_panel(), gtk.Label("Filtered List View") )
@@ -1255,7 +1231,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.create_menu()
 
         self.led_headings = None 
-        self.short_task_headings( None )
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )

@@ -36,9 +36,6 @@ parser.add_option( "-a", "--align",
         "is only useful for relatively small suites (i.e. a few tasks).",
         action="store_true", default=False, dest="align_columns" )
 
-parser.add_option( "--shortnames", help="Display short task names, if defined.",
-        action="store_true", default=False, dest="shortnames" )
-
 ( options, args ) = parser.parse_args()
 
 suite = parser.get_suite_name()
@@ -150,10 +147,7 @@ try:
 
                 if name not in seen_name.keys():
                     seen_name[ name ] = True
-                    if options.shortnames and 'short_name' in states[ task_id ]:
-                        name_list.append( states[ task_id ][ 'short_name' ] )
-                    else:
-                        name_list.append( name )
+                    name_list.append( name )
 
             n_task_types = len( name_list )
             name_list.sort()
@@ -186,11 +180,7 @@ try:
                 #    name = task_id
                 #    ctime = ''
 
-                if options.shortnames and 'short_name' in states[ task_id ]:
-                    name     =      states[ task_id ][ 'short_name' ]
-                else:
-                    name     =      states[ task_id ][ 'name' ]
-
+                name     =      states[ task_id ][ 'name' ]
                 state    =      states[ task_id ][ 'state' ]
 
                 if not states[ task_id ][ 'spawned' ]:

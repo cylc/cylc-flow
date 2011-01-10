@@ -4,7 +4,6 @@
 #   - time translation (for different units) not used
 #   - not using the various check_() functions below
 #   - conditional prerequisites
-#   - short name
 #   - asynch stuff, output_patterns
 #   - no longer interpolate ctime in env vars or scripting 
 #     (not needed since cylcutil?) 
@@ -45,11 +44,8 @@ class taskdef(object):
     allowed_types = [ 'free', 'tied' ]
     allowed_modifiers = [ 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
 
-    def __init__( self, name, short_name=None ):
+    def __init__( self, name ):
         self.name = name
-        if not short_name:
-            self.shortname = name 
-
         self.type = 'free'
         self.model_coldstart = False  # used in config.py
         self.coldstart = False  # used in config.py
@@ -162,12 +158,6 @@ class taskdef(object):
                 target['any'].append( source[item] )
 
     def check_name( self, name ):
-        m = re.match( '^(\w+),\s*(\w+)$', name )
-        if m:
-            name, shortname = m.groups()
-            if re.search( '[^\w]', shortname ):
-                raise DefinitionError( 'Task names may contain only a-z,A-Z,0-9,_' )
-
         if re.search( '[^\w]', name ):
             raise DefinitionError( 'Task names may contain only a-z,A-Z,0-9,_' )
  
@@ -267,7 +257,6 @@ class taskdef(object):
 
         tclass = type( self.name, tuple( base_types), dict())
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
-        tclass.short_name = self.name  # TO DO: reimplement short name
         tclass.instance_count = 0
         tclass.description = self.description
 

@@ -102,7 +102,6 @@ if display_tasks:
  
     for id in task_ids:
         name = states[ id ][ 'name' ]
-        short_name = states[ id ][ 'short_name' ]
         ctime = states[ id ][ 'label' ]
         state      = states[ id ][ 'state' ]
 

@@ -42,8 +42,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.locked = True
         self.owner = os.environ['USER']
 
-        self.create_name_translation_table()
-
     def is_legal( self, user ):
         legal = True
         reasons = []
@@ -66,44 +64,16 @@ class remote_switch( Pyro.core.ObjBase ):
             name = id
         return name
 
-    def create_name_translation_table( self ):
-        # create a mapping between (short and long) task names and their
-        # corresponding full names.
-
-        task_list = self.config.get_task_name_list()
-        shortname_list = self.config.get_task_shortname_list()
-
-        self.real_name = {}
-
-        # TO DO: do we need to worry about name (/shortname) clashes?
-        index = 0
-        for name in task_list:
-            shortname = shortname_list[index]
-            self.real_name[ name ] = name
-            self.real_name[ shortname ] = name
-            index += 1
-
     def task_type_exists( self, name_or_id ):
         # does a task name or id match a known task type in this suite?
         name = name_or_id
         if '%' in name_or_id:
             name, tag = name.split('%' )
         
-        if name in self.real_name:
+        if name in self.config.get_task_name_list():
             return True
         else:
             return False
-
-    def translate( self, name_or_id ):
-        # translate possibly short names into proper task names
-        # if not self.task_type_exists( name_or_id ):
-        #   return name_or_id
-
-        if '%' in name_or_id:
-            name, tag = name_or_id.split('%' )
-            return self.real_name[ name ] + '%' + tag
-        else:
-            return self.real_name[ name ]
 
     def warning( self, msg ):
         print
@@ -151,7 +121,6 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if not self.task_type_exists( task_id ):
             return False, "No such task type: " + self.name_from_id( task_id )
-        task_id = self.translate( task_id )
 
         # reset a task to the waiting state
         self.warning( "REMOTE: reset to waiting: " + task_id )
@@ -170,7 +139,6 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if not self.task_type_exists( task_id ):
             return False, "No such task type: " + self.name_from_id( task_id )
-        task_id = self.translate( task_id )
 
         # reset a task to the ready state
         self.warning( "REMOTE: reset to ready: " + task_id )
@@ -188,7 +156,6 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if not self.task_type_exists( task_id ):
             return False, "No such task type: " + self.name_from_id( task_id )
-        task_id = self.translate( task_id )
 
         # reset a task to the finished state
         self.warning( "REMOTE: reset to finished: " + task_id )
@@ -208,8 +175,6 @@ class remote_switch( Pyro.core.ObjBase ):
             return False, "No such task type or group: " + ins_name
 
         ins = ins_id
-        if self.task_type_exists( ins_name ):
-            ins = self.translate( ins_id )
 
         # insert a new task or task group into the suite
         self.warning( "REMOTE: task or group insertion: " + ins )
@@ -332,7 +297,7 @@ class remote_switch( Pyro.core.ObjBase ):
         for in_id in in_ids:
             if not self.task_type_exists( in_id ):
                 continue
-            real_id = self.translate( in_id )
+            real_id = in_id
             in_ids_real[ in_id ] = real_id
             in_ids_back[ real_id ] = in_id
 
@@ -375,7 +340,6 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if not self.task_type_exists( task_id ):
             return False, "No such task type: " + self.name_from_id( task_id )
-        task_id = self.translate( task_id )
 
         self.warning( "REMOTE: purge " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
@@ -389,7 +353,6 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if not self.task_type_exists( task_id ):
             return False, "No such task type: " + self.name_from_id( task_id )
-        task_id = self.translate( task_id )
 
         self.warning( "REMOTE: die: " + task_id )
         self.pool.kill( [ task_id ] )
@@ -413,7 +376,6 @@ class remote_switch( Pyro.core.ObjBase ):
 
         if not self.task_type_exists( task_id ):
             return False, "No such task type: " + self.name_from_id( task_id )
-        task_id = self.translate( task_id )
 
         self.warning( "REMOTE: spawn and die: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
