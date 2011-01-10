@@ -209,6 +209,8 @@ class config( ConfigObj ):
                             taskd.description = taskconfig['description']
                             if not self['ignore task owners']:
                                 taskd.owner = taskconfig['owner']
+                            taskd.execution_timeout_minutes = taskconfig['execution timeout minutes']
+                            taskd.reset_execution_timeout_on_incoming_messages = taskconfig['reset execution timeout on incoming messages']
                             if taskconfig['job submission method'] != None:
                                 taskd.job_submit_method = taskconfig['job submission method']
                             else:

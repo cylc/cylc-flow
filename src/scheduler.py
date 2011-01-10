@@ -381,6 +381,9 @@ class scheduler(object):
         task.task_failed_hook = self.config['task failed hook']
         task.task_submission_failed_hook = self.config['task submission failed hook']
 
+        task.task_timeout_hook = self.config['task timeout hook']
+        task.task_submission_timeout_minutes = self.config['task submission timeout minutes']
+
     def back_up_statedump_file( self ):
        # back up the configured state dump (i.e. the one that will be used
        # by the suite unless in practice mode, but not necessarily the
@@ -512,6 +515,8 @@ class scheduler(object):
             if self.remote.halt_now or self.remote.halt and self.pool.no_tasks_running():
                 log.critical( "ALL RUNNING TASKS FINISHED" )
                 break
+
+            self.pool.check_timeouts(self.clock.get_datetime())
 
             # REMOTE METHOD HANDLING; with no timeout and single- threaded pyro,
             # handleRequests() returns after one or more remote method

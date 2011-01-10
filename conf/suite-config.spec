@@ -14,6 +14,9 @@ task finished hook = string( default=None )
 task failed hook = string( default=None )
 task submission failed hook = string( default=None )
 
+task timeout hook = string( default=None )
+task submission timeout minutes = float( default=None )
+
 include task list   = string_list( default=list() )
 exclude task list   = string_list( default=list() )
 
@@ -45,6 +48,8 @@ __many__ = string
     description = string( default="No task description supplied" )
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
     type = string( default=free)
+    execution timeout minutes = float( default=None )
+    reset execution timeout on incoming messages = boolean( default=True )
     type modifier list = string_list( default=list())
     command list = string_list( default=list('cylc-wrapper /bin/true'))
     owner = string( default=None )
@@ -71,6 +76,8 @@ __many__ = string
     host = string( default=None )
     owner = string( default=None )
     follow on task = string( default=None )
+    execution timeout minutes = float( default=None )
+    reset execution timeout on incoming messages = boolean( default=True )
 
         [[[ environment ]]]
         __many__ = string

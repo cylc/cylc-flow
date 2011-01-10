@@ -18,6 +18,8 @@ fi
 
 echo "Cleaning $WORKSPACE ..."
 
+sleep 10
+
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
 

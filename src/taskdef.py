@@ -61,6 +61,8 @@ class taskdef(object):
 
         self.owner = None
         self.host = None
+        self.execution_timeout_minutes = None
+        self.reset_execution_timeout_on_incoming_message = False
 
         self.intercycle = False
         self.hours = []
@@ -90,6 +92,8 @@ class taskdef(object):
         self.name = name
         self.description = tdef['description']
         self.job_submission_method = tdef['job submission method']
+        self.execution_timeout_minutes = tdef['execution timeout minutes']
+        self.reset_execution_timeout_on_incoming_messages = tdef['reset execution timeout on incoming messages']
         self.hours = tdef['cycles']
         self.host = tdef['host']
         if not ignore_owner:
@@ -270,6 +274,13 @@ class taskdef(object):
         else:
             # TO DO: can we just just default None at init here?
             tclass.owner = None
+
+        if self.execution_timeout_minutes:
+            tclass.execution_timeout_minutes = self.execution_timeout_minutes
+        else:
+            tclass.execution_timeout_minutes = None
+
+        tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
 
         if self.host:
             tclass.remote_host = self.host

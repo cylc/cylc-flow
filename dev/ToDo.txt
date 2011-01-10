@@ -1,6 +1,12 @@
 _______
 GENERAL
 
+* documentation: 
+  export PYTHONUNBUFFERED=true
+  before running cylc via nohup, to prevent output buffering (results in 
+  only stderr going to nohup.out until at the last moment when the suite
+  is shut down).
+
 * show suicide prerequisites, etc., in requisite dump.
 
 * document suite.rc format: multiline quoted values, but no line
@@ -309,7 +315,9 @@ and restart.
   the suite has moved on passed that time, and (b) none of the waiting
   tasks are contact tasks whose time has not come up yet.
 
-* use the custom clock everywhere (it knows about dummy mode).
+* we need a way to make the the custom clock (accelerated in dummy mode)
+  available throughout the code, so we can easily use it anywhere
+  (task.set_execution_timer is a kludge we could avoid, for instance).
 
 * clean up the clock class with respect to dummy vs real time, and move
   it into task pool?

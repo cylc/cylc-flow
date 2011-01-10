@@ -42,7 +42,7 @@ TASK_EXE_SECONDS = 5
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[X]]
-    type modifier list = clock(offset = 1 hour), sequential,
+    type modifier list = clock(offset = 1 hour),
     command list = cylc-wrapper X.sh,
         [[[ environment ]]]
         X_OUTPUT_DIR = $WORKSPACE

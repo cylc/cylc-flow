@@ -858,6 +858,10 @@ class task_pool(object):
         # finally, purge all tasks marked as depending on the target
         self.kill( die, dump_state=False )
 
+    def check_timeouts( self, current_time ):
+        for itask in self.tasks:
+            itask.check_timeout(current_time)
+
     def waiting_contact_task_ready( self, current_time ):
         # This method actually returns True if ANY task is ready to run,
         # not just contact tasks. However, this should not be a problem.
