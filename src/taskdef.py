@@ -258,6 +258,8 @@ class taskdef(object):
                 return float(hrs)*60.0
 
     def get_task_class( self ):
+        # return a task proxy class definition, to be used for
+        # instantiating objects of this particular task class.
         base_types = []
         for foo in self.modifiers + [self.type]:
             mod = __import__( foo )
@@ -318,6 +320,25 @@ class taskdef(object):
 
         tclass.interpolate_ctime = tclass_interpolate_ctime
 
+        def tclass_add_requisites( sself, target, source ):
+            # target: requisites object
+            # source conditional taskdef requisites
+            for condition in source:
+                reqs = source[ condition ]
+                if condition == 'any':
+                    for req in reqs:
+                        req = sself.interpolate_ctime( req )
+                        target.add( req )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hr in hours:
+                        if int( sself.c_hour ) == int( hr ):
+                            for req in reqs:
+                                req = sself.interpolate_ctime( req )
+                                target.add( req )
+
+        tclass.add_requisites = tclass_add_requisites
+
         # class init function
         def tclass_init( sself, c_time, initial_state, startup = False ):
             # adjust cycle time to next valid for this task
@@ -325,7 +346,7 @@ class taskdef(object):
             sself.tag = sself.c_time
             sself.id = sself.name + '%' + sself.c_time
             #### FIXME FOR ASYNCHRONOUS TASKS
-            hour = sself.c_time[8:10]
+            sself.c_hour = sself.c_time[8:10]
  
             sself.external_tasks = deque()
 
@@ -337,35 +358,10 @@ class taskdef(object):
 
             # prerequisites
             sself.prerequisites = prerequisites( sself.id )
-            for condition in self.prerequisites:
-                reqs = self.prerequisites[ condition ]
-                if condition == 'any':
-                    for req in reqs:
-                        req = sself.interpolate_ctime( req )
-                        sself.prerequisites.add( req )
-                else:
-                    hours = re.split( ',\s*', condition )
-                    for hr in hours:
-                        if int( hour ) == int( hr ):
-                            for req in reqs:
-                                req = sself.interpolate_ctime( req )
-                                sself.prerequisites.add( req )
-
+            sself.add_requisites( sself.prerequisites, self.prerequisites )
             # suicide prerequisites
             sself.suicide_prerequisites = prerequisites( sself.id )
-            for condition in self.suicide_prerequisites:
-                reqs = self.suicide_prerequisites[ condition ]
-                if condition == 'any':
-                    for req in reqs:
-                        req = sself.interpolate_ctime( req )
-                        sself.suicide_prerequisites.add( req )
-                else:
-                    hours = re.split( ',\s*', condition )
-                    for hr in hours:
-                        if int( hour ) == int( hr ):
-                            for req in reqs:
-                                req = sself.interpolate_ctime( req )
-                                sself.suicide_prerequisites.add( req )
+            sself.add_requisites( sself.suicide_prerequisites, self.suicide_prerequisites )
 
             if self.member_of:
                 # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
@@ -384,19 +380,7 @@ class taskdef(object):
 
             # outputs
             sself.outputs = outputs( sself.id )
-            for condition in self.outputs:
-                reqs = self.outputs[ condition ]
-                if condition == 'any':
-                    for req in reqs:
-                        req = sself.interpolate_ctime( req )
-                        sself.outputs.add( req )
-                else:
-                    hours = re.split( ',\s*', condition )
-                    for hr in hours:
-                        if int( hour ) == int( hr ):
-                            for req in reqs:
-                                req = sself.interpolate_ctime( req )
-                                sself.outputs.add( req )
+            sself.add_requisites( sself.outputs, self.outputs )
 
             if self.type == 'tied':
                 sself.register_restart_requisites( self.n_restart_outputs )
@@ -416,7 +400,7 @@ class taskdef(object):
                     else:
                         hours = re.split( ',\s*', condition )
                         for hr in hours:
-                            if int( hour ) == int( hr ):
+                            if int( sself.c_hour ) == int( hr ):
                                 for req in reqs:
                                     req = sself.interpolate_ctime( req )
                                     sself.prerequisites.add( req )
