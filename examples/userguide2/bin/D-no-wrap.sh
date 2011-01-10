@@ -26,6 +26,9 @@ done
 
 echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
 
+# task task warning hook:
+cylc task-message -p WARNING "This is a warning!"
+
 sleep $TASK_EXE_SECONDS
 # OR to test task execution timeout:
 #sleep 5

@@ -379,6 +379,7 @@ class scheduler(object):
         task.task_started_hook = self.config['task started hook']
         task.task_finished_hook = self.config['task finished hook']
         task.task_failed_hook = self.config['task failed hook']
+        task.task_warning_hook = self.config['task warning hook']
         task.task_submission_failed_hook = self.config['task submission failed hook']
 
         task.task_timeout_hook = self.config['task timeout hook']

@@ -43,6 +43,7 @@ state_changed = True
 task_started_hook = None
 task_finished_hook = None
 task_failed_hook = None
+task_warning_hook = None
 task_submitted_hook = None
 task_submission_failed_hook = None
 task_timeout_hook = None
@@ -150,9 +151,7 @@ class task( Pyro.core.ObjBase ):
 
     def log( self, priority, message ):
         logger = logging.getLogger( "main" ) 
-
         message = '[' + self.id + '] -' + message
-
         if priority == "WARNING":
             logger.warning( message )
         elif priority == "NORMAL":
@@ -164,7 +163,6 @@ class task( Pyro.core.ObjBase ):
         else:
             logger.warning( 'UNKNOWN PRIORITY: ' + priority )
             logger.warning( '-> ' + message )
-
 
     def prepare_for_death( self ):
         # The task manager MUST call this immediately before deleting a
@@ -198,6 +196,11 @@ class task( Pyro.core.ObjBase ):
             return True
         else:
             return False
+
+    def call_warning_hook( self, message ):
+        self.log( 'WARNING', 'calling task warning hook' )
+        command = ' '.join( [task_warning_hook, 'warning', self.name, self.c_time, "'" + message + "'"] )
+        subprocess.call( command, shell=True )
 
     def set_submitted( self ):
         self.state.set_status( 'submitted' )
@@ -321,6 +324,9 @@ class task( Pyro.core.ObjBase ):
             return False
 
     def incoming( self, priority, message ):
+        if task_warning_hook and priority == 'WARNING':
+            self.call_warning_hook( message )
+
         if self.reject_if_failed( message ):
             return
 

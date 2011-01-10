@@ -10,7 +10,7 @@ task submitted hook         = alert.sh
 task started hook           = alert.sh
 task finished hook          = alert.sh
 task failed hook            = alert.sh
-#task warning hook           = alert.sh
+task warning hook           = alert.sh
 task submission failed hook = alert.sh
 
 task timeout hook           = timeout.sh
@@ -143,6 +143,7 @@ QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
     [[baz]] #--------------------------------------------------
     [[postfoo]] #----------------------------------------------
     [[FOO]] #--------------------------------------------------
+    [[H]]
 
 [taskdefs]
     [[slunge]]

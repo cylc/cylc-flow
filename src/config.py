@@ -3,7 +3,7 @@
 # Cylc suite-specific configuration data. The awesome ConfigObj and
 # Validate modules do almost everything we need. This just adds a 
 # method to check the few things that can't be automatically validated
-# according to the spec, $CYLC_DIR/conf/suite-config.spec, such as
+# according to the spec, $CYLC_DIR/conf/suiterc.spec, such as
 # cross-checking some items.
 
 import taskdef
@@ -38,7 +38,7 @@ class config( ConfigObj ):
         if spec:
             self.spec = spec
         else:
-            self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suite-config.spec')
+            self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         # load config
         ConfigObj.__init__( self, self.file, configspec=self.spec )

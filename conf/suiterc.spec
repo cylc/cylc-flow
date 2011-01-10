@@ -12,6 +12,7 @@ task submitted hook = string( default=None )
 task started hook = string( default=None )
 task finished hook = string( default=None )
 task failed hook = string( default=None )
+task warning hook = string( default=None )
 task submission failed hook = string( default=None )
 
 task timeout hook = string( default=None )
