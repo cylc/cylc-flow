@@ -39,7 +39,9 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt = False
         self.halt_now = False
 
-        self.locked = True
+        # start in UNLOCKED state: locking must be done deliberately so
+        # that non-operational users aren't plagued by the lock.
+        self.locked = False
         self.owner = os.environ['USER']
 
     def is_legal( self, user ):
