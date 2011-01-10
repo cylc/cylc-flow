@@ -9,7 +9,9 @@
 import taskdef
 import re, os, sys, logging
 from validate import Validator
-from configobj import ConfigObj, get_extra_values
+from configobj import get_extra_values
+from cylcconfigobj import CylcConfigObj
+
 
 class SuiteConfigError( Exception ):
     """
@@ -22,7 +24,7 @@ class SuiteConfigError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
-class config( ConfigObj ):
+class config( CylcConfigObj ):
     allowed_modifiers = ['contact', 'oneoff', 'sequential', 'catchup', 'catchup_contact']
 
     def __init__( self, file=None, spec=None ):
@@ -41,7 +43,7 @@ class config( ConfigObj ):
             self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         # load config
-        ConfigObj.__init__( self, self.file, configspec=self.spec )
+        CylcConfigObj.__init__( self, self.file, configspec=self.spec )
 
         # validate and convert to correct types
         val = Validator()

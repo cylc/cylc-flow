@@ -1,4 +1,1 @@
-
-5/ change startup task name to 'housekeep' - less confusing.
-
-7/ document that [dependency graph] and [taskdefs] can be used together.
+change startup task name to 'housekeep' - less confusing.

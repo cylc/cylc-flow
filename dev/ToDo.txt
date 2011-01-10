@@ -1,6 +1,12 @@
 _______
 GENERAL
 
+* document that oldstyle [taskdefs] and new style [tasks] + [dependency
+  graph] can be used together in the one suite.rc file.
+
+* document that continuation lines and include files are cylc-specific
+  extensions to ConfigObj.
+
 * documentation: 
   export PYTHONUNBUFFERED=true
   before running cylc via nohup, to prevent output buffering (results in 
