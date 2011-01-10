@@ -12,8 +12,8 @@ description = """This suite implements the main cylc userguide example.
 and 'external data collection task' X.sh are not cylc-aware and each
 have their own independent input and output directories, but they
 generate output (using the touch command) and read input (by requiring
-input files to be present) such that they must execute in the order
-specified by the suite dependency graph."""
+input files to be present) such that they must execute according to the
+suite dependency graph."""
 
 [dependency graph]
     [[ 0,6,12,18 ]]
@@ -30,12 +30,13 @@ specified by the suite dependency graph."""
     labelx1 = coldstart:housekeeping -> X ColdA ColdB ColdC
 
 [environment]
+TASK_EXE_SECONDS = 5
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
+# these are required by the models and their coldstart tasks:
 A_RUNNING_DIR = $WORKSPACE/RunningA
 B_RUNNING_DIR = $WORKSPACE/RunningB
 C_RUNNING_DIR = $WORKSPACE/RunningC
 
-TASK_EXE_SECONDS = 5
 
 [ tasks ]
     [[housekeeping]]

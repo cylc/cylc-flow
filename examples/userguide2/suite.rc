@@ -1,10 +1,9 @@
 
-title = main cylc userguide example suite
+title = MODIFIED cylc userguide example suite
 
-description = """This suite implements the main cylc userguide example.
-"Models" A.sh, B.sh, and C.sh; "post processing tasks" D.sh, E.sh, F.sh,
-(and G.sh); and "external data collection task" X.sh are not cylc-aware
-and each have their own independent input and output directories."""
+description = """This suite can be used for testing cylc features. See
+the unmodified userguide example suite for a clear exposition of cylc
+suite basics."""
 
 task submitted hook         = alert.sh
 task started hook           = alert.sh
