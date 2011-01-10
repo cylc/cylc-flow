@@ -247,11 +247,12 @@ class task( Pyro.core.ObjBase ):
             command = ' '.join( [task_submission_failed_hook, 'submit_failed', self.name, self.c_time, "'" + reason + "'"] )
             subprocess.call( command, shell=True )
 
-    def run_external_task( self, current_time, dry_run=False ):
+    def run_external_task( self, current_time=None, dry_run=False ):
         self.log( 'DEBUG',  'submitting task script' )
         if self.launcher.submit( dry_run ):
             self.set_submitted()
-            self.submission_start_time = current_time
+            if current_time:
+                self.submission_start_time = current_time
         else:
             self.set_submit_failed()
 

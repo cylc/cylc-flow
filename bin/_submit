@@ -141,9 +141,10 @@ task_proxy = config.get_task_proxy( task_name, ctime, 'waiting', startup=True )
 #    print item
 
 # SUBMIT THE TASK TO RUN-----------------------------------------------
-print
-if not options.dry_run:
+if options.dry_run:
+    print "DRY RUN: create task execution script, show how it would be submitted."
+else:
     print "Logging directory: " + logging_dir
     print
-task_proxy.run_external_task( options.dry_run )
+task_proxy.run_external_task( dry_run=options.dry_run )
 print
