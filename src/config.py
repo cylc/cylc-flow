@@ -195,71 +195,9 @@ class config( CylcConfigObj ):
                         if name not in self.taskdefs:
                             # first time seen; define everything except for
                             # possible additional prerequisites.
-                            if name not in self['tasks']:
-                                raise SuiteConfigError, 'task ' + name + ' not defined'
-                            taskconfig = self['tasks'][name]
-                            taskd = taskdef.taskdef( name )
-                            taskd.description = taskconfig['description']
-                            if not self['ignore task owners']:
-                                taskd.owner = taskconfig['owner']
-                            taskd.execution_timeout_minutes = taskconfig['execution timeout minutes']
-                            taskd.reset_execution_timeout_on_incoming_messages = taskconfig['reset execution timeout on incoming messages']
-                            if taskconfig['job submission method'] != None:
-                                taskd.job_submit_method = taskconfig['job submission method']
-                            else:
-                                taskd.job_submit_method = self['job submission method']
 
-                            if model_coldstart:
-                                self.coldstart_task_list.append( name )
-                                taskd.modifiers.append( 'oneoff' )
-                                taskd.model_coldstart = True
-
-                            if coldstart:
-                                self.coldstart_task_list.append( name )
-                                taskd.modifiers.append( 'oneoff' )
-                                taskd.coldstart = True
-
-                            if oneoff:
-                                taskd.modifiers.append( 'oneoff' )
-                                taskd.oneoff = True
-
-                            taskd.type = taskconfig[ 'type' ]
-
-                            for item in taskconfig[ 'type modifier list' ]:
-                                if item == 'oneoff' or \
-                                    item == 'sequential' or \
-                                    item == 'catchup':
-                                    taskd.modifiers.append( item )
-                                    continue
-                                m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
-                                if m:
-                                    taskd.type = 'tied'
-                                    taskd.n_restart_outputs = int( m.groups()[0] )
-                                    continue
-                                m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-                                if m:
-                                    taskd.modifiers.append( 'contact' )
-                                    taskd.contact_offset = m.groups()[0]
-                                    continue
-                                m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-                                if m:
-                                    taskd.modifiers.append( 'catchup_contact' )
-                                    taskd.contact_offset = m.groups()[0]
-                                    continue
-                                raise SuiteConfigError, 'illegal task type: ' + item
-
-                            taskd.logfiles = []
-                            taskd.commands = taskconfig[ 'command list' ]
-                            taskd.environment = taskconfig[ 'environment' ]
-                            #taskd.directives = taskconfig[ 'directives' ]
-                            taskd.scripting = taskconfig[ 'scripting' ]
-
-                            self.taskdefs[ name ] = taskd
-
-                        for hour in cycles:
-                            hr = int( hour )
-                            if hr not in self.taskdefs[name].hours:
-                                self.taskdefs[name].hours.append( hr )
+                            self.taskdefs[ name ] = self.get_taskdef( name, 
+                                    cycles, model_coldstart, coldstart, oneoff )
 
                         if count > 0:
                             # MODEL COLDSTART (restart prerequisites)
@@ -313,18 +251,12 @@ class config( CylcConfigObj ):
             self.taskdefs[name].members = mems
             for mem in mems:
                 if mem not in members:
-                    members.append( mem )
-                    taskd = taskdef.taskdef( mem )
-                    taskd.member_of = name
                     # take valid hours from the family
-                    taskd.hours = self.taskdefs[name].hours
-                    taskd.logfiles = []
-                    taskconfig = self['tasks'][mem]
-                    taskd.commands = taskconfig[ 'command list' ]
-                    taskd.environment = taskconfig[ 'environment' ]
-                    #taskd.directives = taskconfig[ 'directives'  ]
-                    taskd.scripting = taskconfig[ 'scripting'    ]
-
+                    cycles = self.taskdefs[name].hours
+                    members.append( mem )
+                    taskd.member_of = name
+                    # TO DO: ALLOW MORE GENERAL INTERNAL FAMILY MEMBERS?
+                    taskd = self.get_taskdef( mem, cycles, False, False, False )
                     self.taskdefs[ mem ] = taskd
 
         # sort hours list for each task
@@ -334,6 +266,73 @@ class config( CylcConfigObj ):
 
         # define a task insertion group of all coldstart tasks
         self['task insertion groups']['all coldstart tasks'] = self.coldstart_task_list
+
+    def get_taskdef( self, name, cycles, model_coldstart=False, coldstart=False, oneoff=False ):
+        if name not in self['tasks']:
+            raise SuiteConfigError, 'task ' + name + ' not defined'
+        taskconfig = self['tasks'][name]
+        taskd = taskdef.taskdef( name )
+        taskd.description = taskconfig['description']
+        if not self['ignore task owners']:
+            taskd.owner = taskconfig['owner']
+        taskd.execution_timeout_minutes = taskconfig['execution timeout minutes']
+        taskd.reset_execution_timeout_on_incoming_messages = taskconfig['reset execution timeout on incoming messages']
+        if taskconfig['job submission method'] != None:
+            taskd.job_submit_method = taskconfig['job submission method']
+        else:
+            taskd.job_submit_method = self['job submission method']
+
+        if model_coldstart:
+            self.coldstart_task_list.append( name )
+            taskd.modifiers.append( 'oneoff' )
+            taskd.model_coldstart = True
+
+        if coldstart:
+            self.coldstart_task_list.append( name )
+            taskd.modifiers.append( 'oneoff' )
+            taskd.coldstart = True
+
+        if oneoff:
+            taskd.modifiers.append( 'oneoff' )
+            taskd.oneoff = True
+
+        taskd.type = taskconfig[ 'type' ]
+
+        for item in taskconfig[ 'type modifier list' ]:
+            if item == 'oneoff' or \
+                item == 'sequential' or \
+                item == 'catchup':
+                taskd.modifiers.append( item )
+                continue
+            m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
+            if m:
+                taskd.type = 'tied'
+                taskd.n_restart_outputs = int( m.groups()[0] )
+                continue
+            m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+            if m:
+                taskd.modifiers.append( 'contact' )
+                taskd.contact_offset = m.groups()[0]
+                continue
+            m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
+            if m:
+                taskd.modifiers.append( 'catchup_contact' )
+                taskd.contact_offset = m.groups()[0]
+                continue
+            raise SuiteConfigError, 'illegal task type: ' + item
+
+        taskd.logfiles = []
+        taskd.commands = taskconfig[ 'command list' ]
+        taskd.environment = taskconfig[ 'environment' ]
+        #taskd.directives = taskconfig[ 'directives' ]
+        taskd.scripting = taskconfig[ 'scripting' ]
+
+        for hour in cycles:
+            hr = int( hour )
+            if hr not in taskd.hours:
+                taskd.hours.append( hr )
+
+        return taskd
 
     def get_task_proxy( self, name, ctime, state, startup ):
         if not self.loaded:
