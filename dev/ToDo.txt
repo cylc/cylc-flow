@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* 'cylc view' read-only gui mode - e.g. for monitoring other's suites.
+* '--host' should not be allowed for intervention commands because
+  owner's username does not cross machine boundaries, generally.
+
 * default dummy out (comment out command list) should use default
   CYLC_DUMMY_SLEEP for execution time (currently no sleep used).
 
@@ -21,9 +25,6 @@ GENERAL
 
 * show suicide prerequisites, etc., in requisite dump.
 
-* document suite.rc format: multiline quoted values, but no line
-  continuation for single or list values.
-
 * put roadmap into documentation.  additional item: expanding dependency
   graph based monitor view?
 
@@ -41,18 +42,9 @@ GENERAL
   spawn shell commands to move and delete files as well as copy and diff,
   rather than use shutil.mv() ...
 
-* consider task timeout alert hooks: if specified, call after:
-    1/ time since submission?
-    2/ time since started?
-
 * generate new stdout and stderr log files when a task is reset.
 
 * in new config, is restart OK after suite.rc tasks changed?
-
-* consolidate example suites:
-  + trivial
-  + "userguide" variant that tests damn near everything
-  + remote, nesting
 
 * TASK FAMILIES:
   + Ability to reset (or otherwise operate on) all members of a family.
@@ -61,9 +53,6 @@ GENERAL
   + Task family needs to be set 'failed' if all (or any?) members fail
   + use with --include and --exclude?
   + task owner should not be required with families
-
-* read-only (no-intervention) gui mode - e.g. for monitoring other
-  user's suites.
 
 * check that the user-defined task names do not clash with parent class
   or attribute names.
@@ -86,15 +75,9 @@ GENERAL
      heapy
   (not std lib, but explained in the above article).
 
-* the "trivial" example suite is currently broken.
-
 * --port= does not prevent port scan for lockserver?
   check for non-essential port scanning, esp. in gui.
   (see GUI note below)
-
-* stuff that can be done by either commandline options or suite.rc
-  should be simplified to suite.rc only - and allow suite.rc editing
-  via the gui.
 
 * document task inclusion and exclusion, at startup, by commandline or
 suite.rc file: can be used separately or both at once, for cold, warm,
@@ -122,9 +105,6 @@ and restart.
   (owner.suite.obj): prevent accidentally intervening in the wrong
   suite when using explicit port numbers (if we allow that). Also, 
   is this still required?
-
-* '--host' should not be allowed for intervention commands because
-  owner's username does not cross machine boundaries, generally.
 
 * temporary job submission filenames should contain the suite name
   so that automated cleanup processes can distinguish between suites.
@@ -271,9 +251,7 @@ and restart.
 * daemon and asynchronous task: initial tests done; go back, check, and
   complete, for new versions of cylc.
 
-* parse "HH:mm" for contact delay times etc.
-
-* message command (command line usage only!!!) lock and practice mode?
+* message command (command line usage only) lock and practice mode?
 
 * consider reset --no-spawn (Bernard tried to reset a waiting unspawned
   task to finished, which made it spawn ... is this the desired
@@ -353,7 +331,7 @@ LOCKSERVER
 ___
 GUI
 
-* don't parse suite.rc if the suite is already running (or at all?)?
+* don't parse suite.rc if the suite is already running?
 
 * gui suite.rc editor
 
@@ -380,8 +358,6 @@ THIS IS PROBABLY NO LONGER RELEVANT SINCE DITCHING THE PYRO NAMESERVER
   home directory locally => WHEN --host IS USED WE CANNOT LOAD PREFS (TO
   PRELOAD THE TASK LIST; HAVE TO GET IT DYNAMICALLY FROM THE RUNNING
   SUITE).  
-
-
 
 ====================================
 FUZZY PREREQUISITES (only for infrequent 'advanced' usage - e.g. hourly
