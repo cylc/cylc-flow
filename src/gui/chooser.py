@@ -4,9 +4,9 @@ import pygtk
 import gtk
 import time, os, re
 import threading
+from config import config
 from port_scan import scan_my_suites
 from registration import registrations
-from cylcrc import preferences
 from gtkmonitor import monitor
 
 class chooser_updater(threading.Thread):
@@ -155,7 +155,9 @@ class chooser(object):
         if m:
             port = m.groups()[0]
         # get suite logging directory
-        logging_dir = os.path.join( preferences()['logging directory'], name ) 
+        print name
+        logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
+
         tv = monitor(name, self.owner, self.host, port, suite_dir, logging_dir, self.imagedir )
         self.viewer_list.append( tv )
         return False

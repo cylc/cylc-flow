@@ -9,6 +9,13 @@ logging level = option( debug, info, warning, error, critical, default=info )
 ignore task owners = boolean( default=False )
 use crude safety lock = boolean( default=False )
 
+use lockserver = boolean( default=True )
+use quick task elimination = boolean( default=True )
+
+# absolute or relative to $HOME:
+top level state dump directory = string( default = 'cylc/state' )
+top level logging directory = string( default = '.cylc/logging' )
+
 task submitted hook = string( default=None )
 task started hook = string( default=None )
 task finished hook = string( default=None )

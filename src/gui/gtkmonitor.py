@@ -1194,7 +1194,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
     def preload_task_list( self ):
         # load suite config
-        suiterc = config( os.path.join( self.suite_dir, 'suite.rc' ))
+        suiterc = config( self.suite )
         self.task_list = suiterc.get_task_name_list()
         self.use_lock = suiterc['use crude safety lock']
 

@@ -11,7 +11,7 @@
 
 
 import os, re, sys
-from cylcrc import preferences
+from config import config
 from optparse import OptionParser
 
 parser = OptionParser( """cylc log [options] SUITE 
@@ -42,7 +42,7 @@ if len(args) != 1:
 
 suite = args[0]
 
-filename = os.path.join( preferences()['logging directory'], suite, 'log' )
+filename = os.path.join( config( suite )['top level logging directory'], suite, 'log' )
  
 if options.rotation != "0":
     filename = filename + options.rotation

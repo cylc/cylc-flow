@@ -4,8 +4,8 @@ import os, sys
 import port_scan
 import gtk
 from optparse import OptionParser
-from cylcrc import preferences
 from chooser import chooser
+from config import config
 from registration import registrations
 from gtkmonitor import standalone_monitor
 
@@ -78,7 +78,8 @@ SUITE                  Registered name of the target suite.""")
             print >> sys.stderr, "WARNING: suite " + suite + " is not running"
 
         # get suite logging directory
-        logging_dir = os.path.join( preferences()['logging directory'], suite )
+        logging_dir = os.path.join( config( suite )['top level logging directory'], suite )
+ 
         app = standalone_monitor( suite, owner, host, port, suite_dir, logging_dir, imagedir )
 
     gtk.main()

@@ -15,7 +15,6 @@ import socket
 import logging
 import datetime
 import port_scan
-from cylcrc import preferences
 from execute import execute
 import cycle_time
 import cylc_pyro_server
@@ -30,6 +29,8 @@ from suite_id import identifier
 from OrderedDict import OrderedDict
 from mkdir_p import mkdir_p
 import task
+from config import config 
+
 
 class scheduler(object):
 
@@ -264,20 +265,22 @@ class scheduler(object):
         self.graphfile.write( '    edge [ ' + default_edge_attributes + ' ];\n' )
 
     def load_preferences( self ):
-        self.rcfile = preferences()
-
-        use = self.rcfile['use quick task elimination'] 
+        # This method is separate from load_suite_config() because the
+        # following config items used to be stored in a global cylc
+        # preferences file; the two methods could now be combined.
+        self.config = config( self.suite_name )
+        use = self.config['use quick task elimination'] 
         if use == "False":
             self.use_quick_elim = False
         else:
             self.use_quick_elim = True
 
         if self.practice:
-            self.logging_dir = os.path.join( self.rcfile['logging directory'],    self.suite_name + '-practice' ) 
-            state_dump_dir   = os.path.join( self.rcfile['state dump directory'], self.suite_name + '-practice' )
+            self.logging_dir = os.path.join( self.config['top level logging directory'],    self.suite_name + '-practice' ) 
+            state_dump_dir   = os.path.join( self.config['top level state dump directory'], self.suite_name + '-practice' )
         else:
-            self.logging_dir = os.path.join( self.rcfile['logging directory'],    self.suite_name ) 
-            state_dump_dir   = os.path.join( self.rcfile['state dump directory'], self.suite_name )
+            self.logging_dir = os.path.join( self.config['top level logging directory'],    self.suite_name ) 
+            state_dump_dir   = os.path.join( self.config['top level state dump directory'], self.suite_name )
 
         mkdir_p( self.logging_dir )
         mkdir_p( state_dump_dir )
@@ -286,7 +289,7 @@ class scheduler(object):
 
         self.use_lockserver = False
         self.banner[ 'use lockserver' ] = 'False'
-        if self.rcfile['use lockserver']:
+        if self.config['use lockserver']:
             self.banner[ 'use lockserver' ] = 'True'
             self.use_lockserver = True
 
@@ -338,9 +341,6 @@ class scheduler(object):
         # TO DO: environment vars COULD GO STRAIGHT TO JOB_SUBMIT
         # ENVIRONMENT (NOT NEEDED IN CONFIG?)
 
-        # import suite-specific cylc modules now
-        from config import config 
-
         # initial global environment
         self.globalenv = OrderedDict()
         self.globalenv[ 'CYLC_MODE' ] = 'scheduler'
@@ -353,7 +353,6 @@ class scheduler(object):
         self.globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
 
         # load suite configuration--------------------------------------------
-        self.config = config( os.path.join( self.suite_dir, 'suite.rc' ))
         if self.options.debug:
             self.logging_level = logging.DEBUG
         else:

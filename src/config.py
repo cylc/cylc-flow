@@ -11,7 +11,7 @@ import re, os, sys, logging
 from validate import Validator
 from configobj import get_extra_values
 from cylcconfigobj import CylcConfigObj
-
+from registration import registrations
 
 class SuiteConfigError( Exception ):
     """
@@ -27,20 +27,24 @@ class SuiteConfigError( Exception ):
 class config( CylcConfigObj ):
     allowed_modifiers = ['contact', 'oneoff', 'sequential', 'catchup', 'catchup_contact']
 
-    def __init__( self, file=None, spec=None ):
+    def __init__( self, suite=None ):
         self.taskdefs = {}
         self.loaded = False
         self.coldstart_task_list = []
 
-        if file:
-            self.file = file
+        if suite:
+            reg = registrations()
+            if reg.is_registered( suite ):
+                suite_dir = reg.get( suite )
+            else:
+                reg.print_all()
+                raise SuiteConfigError, "Suite " + suite + " is not registered"
+
+            self.file = os.path.join( suite_dir, 'suite.rc' )
         else:
             self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
 
-        if spec:
-            self.spec = spec
-        else:
-            self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
+        self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         # load config
         CylcConfigObj.__init__( self, self.file, configspec=self.spec )
@@ -79,6 +83,16 @@ class config( CylcConfigObj ):
 
         # check cylc-specific self consistency
         self.__check()
+
+        # make logging and state directories relative to $HOME
+        # unless they are specified as absolute paths
+        home = os.environ['HOME']
+        logdir = self['top level logging directory']
+        if not re.match( '^/', logdir ):
+           self['top level logging directory'] = os.path.join( home, logdir )
+        statedir = self['top level state dump directory']
+        if not re.match( '^/', statedir ):
+           self['top level state dump directory'] = os.path.join( home, statedir )
 
     def __check( self ):
         #for task in self['tasks']:

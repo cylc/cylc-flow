@@ -1,6 +1,8 @@
 #!/bin/bash
 
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 echo "DISABLED: NEEDS UPDATING FOR NEW SUITE CONFIG AND ASSOCIATED CHANGES"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
 exit 1
 
 set -e; trap "echo 'TEST FAILED (see output log)'" ERR
@@ -180,14 +182,7 @@ echo done
 # RUN A SINGLE TASK
 # can be one that completes successfully or fails, it doesn't matter.
 echo
-# EXAMPLE OUTPUT FROM submit:
-# % cylc submit -t startup%2010010106 test
-# Loading Cylc Preferences file: /home/oliverh/.cylcrc
-#
-# Cylc messages will be directed to stdout.
-# Logging directory is /home/oliverh/.cylc/log-files/test-submit
-#
-#  > SUBMITTING TASK: /tmp/cylc-2H4HPc </dev/null 1> /home/oliverh/startup%2010010106-haDDeS.out 2> /home/oliverh/startup%2010010106-haDDeS.err &
+# PARSE OUTPUT FROM submit TO GET JOB LOG FILES:
 echo ">> RUN A SINGLE TASK (startup%2010010106) from the suite"
 FOO=$(cylc submit test startup%2010010106 )
 STDOUT=$( echo $FOO | sed -e 's/.*1> //' | sed -e 's/ 2>.*//' )
