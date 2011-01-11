@@ -228,7 +228,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
             cr = gtk.CellRendererPixbuf()
             cr.set_property( 'cell_background', 'black' )
             cr.set_property( 'xalign', 0 )
-            tvc = gtk.TreeViewColumn( "-"  )
+            tvc = gtk.TreeViewColumn( ""  )
             tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
             tvc.pack_end( cr, True )
             tvc.set_attributes( cr, pixbuf=n )
