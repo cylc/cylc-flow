@@ -28,16 +28,40 @@
 # logged by cylc, but must not send their own start/finished/failed or
 # registered output messages.
 
+usage() {
+    echo "USAGE: 1/ cylc-wrapper COMMAND" >&2
+    echo '       2/ cylc-wrapper --multi="COMMAND1; COMMAND2; #..."' >&2
+}
+
 # SEND THE STARTUP MESSAGE
 cylc task-started || exit 1
 
 if (( $# == 0 )); then
+    usage
     cylc task-failed "cylc-wrapper: no script to wrap"
     exit 1
 fi
 
+multiple=false
+if [[ $1 == '-m' ]]; then
+    multiple=true
+    shift
+fi 
+
 # EXECUTE THE WRAPPED TASK AND CHECK FOR SUCCESS OR FAILURE
-if $@; then 
+
+success=false
+if $multiple; then
+    if eval $@; then
+        success=true
+    fi
+else
+    if $@; then 
+        success=true
+    fi
+fi
+
+if $success; then
     # SUCCEEDED
     cylc task-message --all-outputs-completed
     cylc task-finished
