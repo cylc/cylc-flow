@@ -25,7 +25,10 @@ class logfiles( object ):
     def add_path( self, path ):
         self.paths.append( path )
 
-    def replace_path( self, pattern, path ):
+    def add_path_prepend( self, path ):
+        self.paths = [ path ] + self.paths
+
+    def replace_path( self, pattern, path, prepend=True ):
         # replace a path that matches a pattern with another path
         # (used to replace output logs when a failed task is reset)
         for item in self.paths:
@@ -34,7 +37,10 @@ class logfiles( object ):
                 self.paths.remove( item )
                 break
         # add the new path even if a match to replace wasn't found
-        self.paths.append( path )
+        if prepend:
+            self.add_path_prepend( path )
+        else:
+            self.add_path( path )
 
     def get_paths( self ):
         return self.paths

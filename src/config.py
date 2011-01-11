@@ -321,7 +321,7 @@ class config( CylcConfigObj ):
                 continue
             raise SuiteConfigError, 'illegal task type: ' + item
 
-        taskd.logfiles = []
+        taskd.logfiles = taskconfig[ 'log file list' ]
         taskd.commands = taskconfig[ 'command list' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives = taskconfig[ 'directives' ]

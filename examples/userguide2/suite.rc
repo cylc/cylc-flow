@@ -65,6 +65,7 @@ A_SHELL_PARAMETER_EXPANSION="${WORKSPACE##_.*}"
     [[startup]] #------------------------------------------------------
     #owner = munge
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
+    log file list = foo, bar, baz
         [[[directives]]]
         FOO = BAR
         MUNGE = FLUNGE

@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* default dummy out (comment out command list) should use default
+  CYLC_DUMMY_SLEEP for execution time (currently no sleep used).
+
 * consider the need for different spawning behaviour of sequential (and
   tied?) tasks - why not just depend on prev%finished?
 

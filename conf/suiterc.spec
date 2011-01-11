@@ -55,6 +55,7 @@ __many__ = string
     host = string( default=None )
     intercycle = boolean( default=False )
     scripting = string( default='' )
+    log file list = string_list( default=list())
         [[[ environment ]]]
         __many__ = string
         [[[ directives ]]]
@@ -78,6 +79,7 @@ __many__ = string
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
     scripting = string( default='' )
+    log file list = string_list( default=list())
         [[[ environment ]]]
         __many__ = string
 

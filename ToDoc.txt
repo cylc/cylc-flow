@@ -48,3 +48,6 @@ not to further complicate suite.rc files for general use).
 
 * suite.rc environment sections: shell parameter expansions 
   containing the '#' comment character must be quoted!
+
+* extra task log files can be defined using environment variables
+ (any other parameters in this category?)
