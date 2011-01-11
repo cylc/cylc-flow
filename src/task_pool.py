@@ -614,23 +614,17 @@ class task_pool(object):
         cutoff = int( earliest_unfinished )
         if int( earliest_unspawned ) < cutoff:
             cutoff = int( earliest_unspawned )
+        self.log.debug( "cleanup cutoff: " + str(cutoff) )
 
         # find candidates for deletion
         candidates = {}
         for itask in self.tasks:
-
             if not itask.done():
                 continue
-
             if itask.c_time in failed_rt.keys():
                 continue
-
-            #if not all_satisfied:
-            #    if int( itask.c_time ) >= int( earliest_unsatisfied ):
-            #        continue
-            if not all_finished:
-                if int( itask.c_time ) >= cutoff:
-                    continue
+            if int( itask.c_time ) >= cutoff:
+                continue
             
             if itask.c_time in candidates.keys():
                 candidates[ itask.c_time ].append( itask )
@@ -645,12 +639,8 @@ class task_pool(object):
         seen = {}
         spent = []
         for rt in ctimes:
-            #if not all_satisfied:
-            #    if int( rt ) >= int( earliest_unsatisfied ):
-            #        continue
-            if not all_finished:
-                if int( rt ) >= cutoff:
-                    continue
+            if int( rt ) >= cutoff:
+                continue
             
             for itask in candidates[ rt ]:
                 if hasattr( itask, 'is_oneoff' ):
@@ -668,7 +658,6 @@ class task_pool(object):
                 if name in seen.keys():
                     # already seen this guy, so he's spent
                     spent.append( itask )
-                    
                 else:
                     # first occurence
                     seen[ name ] = True
