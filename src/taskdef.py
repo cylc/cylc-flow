@@ -389,13 +389,11 @@ class taskdef(object):
        
             for var in self.environment:
                 val = self.environment[ var ]
-                # TO DO: QUOTING OF VAL?
                 sself.env_vars[ var ] = val
 
             sself.directives = OrderedDict()
             for var in self.directives:
                 val = self.directives[ var ]
-                # TO DO: QUOTING OF VAL?
                 sself.directives[ var ] = val
 
             sself.extra_scripting = self.scripting

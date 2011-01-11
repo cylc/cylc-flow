@@ -45,3 +45,6 @@ not to further complicate suite.rc files for general use).
     - if not caught up to real time: newest tasks wait finished but
       unspawned.
     - if caught up to real time: newest tasks in waiting state.
+
+* suite.rc environment sections: shell parameter expansions 
+  containing the '#' comment character must be quoted!

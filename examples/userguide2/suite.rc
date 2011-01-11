@@ -58,15 +58,16 @@ TASK_EXE_SECONDS = 10
 A_RUNNING_DIR = $WORKSPACE/RunningA
 B_RUNNING_DIR = $WORKSPACE/RunningB
 C_RUNNING_DIR = $WORKSPACE/RunningC
-
-# TO DO: QUOTES NOT NECESSARY HERE? CHECK GENERATED JOB SCRIPT
-# (WAS FOR OLD CONFIGPARSER SUITE.RC)
-QUOTED_SHELL_PARAMETER_EXPANSION='${WORKSPACE##_.*}'
+# quotes required because of the '#' character:
+A_SHELL_PARAMETER_EXPANSION="${WORKSPACE##_.*}"
 
 [ tasks ]
     [[startup]] #------------------------------------------------------
     #owner = munge
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
+        [[[directives]]]
+        FOO = BAR
+        MUNGE = FLUNGE
 
     [[X]] #------------------------------------------------------
     type modifier list = clock(offset = 1 hour), sequential,

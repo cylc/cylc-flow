@@ -324,7 +324,7 @@ class config( CylcConfigObj ):
         taskd.logfiles = []
         taskd.commands = taskconfig[ 'command list' ]
         taskd.environment = taskconfig[ 'environment' ]
-        #taskd.directives = taskconfig[ 'directives' ]
+        taskd.directives = taskconfig[ 'directives' ]
         taskd.scripting = taskconfig[ 'scripting' ]
 
         for hour in cycles:
