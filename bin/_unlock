@@ -16,13 +16,14 @@ import Pyro.errors
 
 parser = PromptOptionParser( """cylc unlock [options] SUITE 
 
-Tell a running suite to comply with subsequent intervention commands.
-The lock/unlock commands are a safety device to help guard against
-inadvertant intervention in a suite.
+Tell a running suite that is configured to used crude safety locking 
+(see suite.rc documentation) to comply with subsequent intervention
+commands. The lock/unlock commands are a safety device to help guard
+against inadvertant intervention in a suite.
 
-Note that this is unrelated to the functionality provided by the cylc
-lockserver, which prevents multiple instances of a task or suite
-from running simultaneously.""")
+This is unrelated to the functionality provided by the cylc lockserver,
+which prevents multiple instances of a task or suite from running
+simultaneously.""")
 
 (options, args) = parser.parse_args()
 

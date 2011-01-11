@@ -41,7 +41,9 @@ class remote_switch( Pyro.core.ObjBase ):
 
         # start in UNLOCKED state: locking must be done deliberately so
         # that non-operational users aren't plagued by the lock.
+        self.using_lock = self.config['use crude safety lock']
         self.locked = False
+
         self.owner = os.environ['USER']
 
     def is_legal( self, user ):
@@ -52,7 +54,7 @@ class remote_switch( Pyro.core.ObjBase ):
             self.warning( "refusing remote request (wrong owner)" )
             reasons.append( "wrong owner: " + self.owner )
 
-        if self.locked:
+        if self.using_lock and self.locked:
             legal = False
             self.warning( "refusing remote request (suite locked)" )
             reasons.append( "SUITE LOCKED" )
@@ -82,6 +84,8 @@ class remote_switch( Pyro.core.ObjBase ):
         self.log.warning( msg )
 
     def lock( self, user ):
+        if not self.using_lock:
+            return False, "This suite is not using a safety lock"
         if user != self.owner:
             self.warning( "refusing remote lock request (wrong owner)" )
             return False, "You are not the suite owner"
@@ -92,6 +96,8 @@ class remote_switch( Pyro.core.ObjBase ):
         return True, "OK"
 
     def unlock( self, user ):
+        if not self.using_lock:
+            return False, "This suite is not using a safety lock"
         if user != self.owner:
             self.warning( "refusing remote unlock request (wrong owner)" )
             return False, "You are not the suite owner"
@@ -100,7 +106,6 @@ class remote_switch( Pyro.core.ObjBase ):
         self.warning( "suite unlocked by remote request" )
         self.locked = False
         return True, "OK"
-
 
     def nudge( self, user ):
         legal, reasons = self.is_legal( user )

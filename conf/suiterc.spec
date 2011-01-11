@@ -7,6 +7,7 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 job submission log directory = string( default='' )
 logging level = option( debug, info, warning, error, critical, default=info )
 ignore task owners = boolean( default=False )
+use crude safety lock = boolean( default=False )
 
 task submitted hook = string( default=None )
 task started hook = string( default=None )

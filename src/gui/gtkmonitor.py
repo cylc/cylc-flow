@@ -526,6 +526,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.update_tb( tb, "Exit the GUI (this does not shut the suite down).")
 
         self.update_tb( tb, "\n\nMenu: Lock > ", [bold, red] )
+        self.update_tb( tb, "(only visible if the suite is configured to use crude locking)" )
         self.update_tb( tb, "\n o Lock: ", [bold])
         self.update_tb( tb, "Tell cylc not to comply with intervention commands." )
         self.update_tb( tb, "\n o Unlock: ", [bold])
@@ -1055,17 +1056,18 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         view_menu.append( heading_full_item )
         heading_full_item.connect( 'activate', self.full_task_headings )
 
-        lock_menu = gtk.Menu()
-        lock_menu_root = gtk.MenuItem( 'Lock' )
-        lock_menu_root.set_submenu( lock_menu )
+        if self.use_lock:
+            lock_menu = gtk.Menu()
+            lock_menu_root = gtk.MenuItem( 'Lock' )
+            lock_menu_root.set_submenu( lock_menu )
 
-        unlock_item = gtk.MenuItem( 'Unlock ' + self.suite )
-        lock_menu.append( unlock_item )
-        unlock_item.connect( 'activate', self.unlock_suite )
+            unlock_item = gtk.MenuItem( 'Unlock ' + self.suite )
+            lock_menu.append( unlock_item )
+            unlock_item.connect( 'activate', self.unlock_suite )
 
-        lock_item = gtk.MenuItem( 'Lock ' + self.suite )
-        lock_menu.append( lock_item )
-        lock_item.connect( 'activate', self.lock_suite )
+            lock_item = gtk.MenuItem( 'Lock ' + self.suite )
+            lock_menu.append( lock_item )
+            lock_item.connect( 'activate', self.lock_suite )
 
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( 'Suite' )
@@ -1106,7 +1108,8 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
-        self.menu_bar.append( lock_menu_root )
+        if self.use_lock:
+            self.menu_bar.append( lock_menu_root )
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
 
@@ -1193,6 +1196,7 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         # load suite config
         suiterc = config( os.path.join( self.suite_dir, 'suite.rc' ))
         self.task_list = suiterc.get_task_name_list()
+        self.use_lock = suiterc['use crude safety lock']
 
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
         self.logdir = logging_dir

@@ -15,6 +15,7 @@ task submission failed hook = alert.sh
 task timeout hook           = timeout.sh
 task submission timeout minutes = 0.1
 
+#use crude safety lock = True
 #ignore task owners = True
 #job submission method = ll_basic
 job submission log directory = logs
