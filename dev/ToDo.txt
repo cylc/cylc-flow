@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* consider the need for different spawning behaviour of sequential (and
+  tied?) tasks - why not just depend on prev%finished?
+
 * document that oldstyle [taskdefs] and new style [tasks] + [dependency
   graph] can be used together in the one suite.rc file.
 

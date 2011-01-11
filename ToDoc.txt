@@ -35,3 +35,13 @@ not to further complicate suite.rc files for general use).
   (i) global env
   (ii) task env
   (iii) scripting
+
+* changing dummy task run length:
+  1/ command line or gui (sets CYLC_DUMMY_SLEEP in global env)
+  2/ CONFIG ITEM <- to do
+  3/ single task: CYLC_DUMMY_SLEEP in task environment
+
+* suite behaviour if held up by one or more very slow tasks:
+    - if not caught up to real time: newest tasks wait finished but
+      unspawned.
+    - if caught up to real time: newest tasks in waiting state.

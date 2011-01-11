@@ -496,7 +496,6 @@ class scheduler(object):
                 self.pool.negotiate()
                 self.pool.run_tasks()
                 self.pool.cleanup()
-                # spawn after cleanup to avoid unspawned stall at max runahead.
                 self.pool.spawn()
                 self.pool.dump_state()
 
