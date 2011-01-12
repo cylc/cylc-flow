@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* TO DO: NEW CONFIG: 
+    - conditional dependencies
+    - intercycle dependencies
+
 * currently all task reset commands go through the 'remote' object,
   which all suites have, but we could get a proxy for the task proxy directly,
   in which case we'd could catch Pyro.NamingError to detect if no such
