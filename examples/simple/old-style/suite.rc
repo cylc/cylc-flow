@@ -1,4 +1,4 @@
-title = simple three-task example suite
+title = a very simple three-task example suite
 
 description = """A oneoff startup task and two cycling free (non-model)
 tasks. Task foo triggers off the wall clock, is constrained to be
