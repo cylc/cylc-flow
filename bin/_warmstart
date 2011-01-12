@@ -20,7 +20,6 @@ debug = True
 
 class warmstart_scheduler( scheduler ):
     def __init__( self ):
-
         usage = """cylc warmstart [options] SUITE CYCLE
 
 WARM START a suite at a given cycle time. This assumes that the restart

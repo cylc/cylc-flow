@@ -31,21 +31,16 @@ from mkdir_p import mkdir_p
 import task
 from config import config 
 
-
 class scheduler(object):
 
     def __init__( self ):
-        self.banner = {}
-        self.pyro = None
-        self.use_lockserver = False
-        self.lock_acquired = False
-
+            
         # PROVIDE IN DERIVED CLASSES:
-        # self.parser = OptionParser( usage )
+        # 1/ self.parser = OptionParser( usage )
+        # 2/ load_tasks()
 
         self.parser.set_defaults( dummy_mode=False, practice_mode=False,
-                include=None, exclude=None, debug=False,
-                clock_rate=10, clock_offset=24, dummy_run_length=20 )
+                include=None, exclude=None, debug=False )
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
@@ -75,27 +70,6 @@ class scheduler(object):
                 "and logging directories to avoid corrupting the original. "
                 "Failed tasks will not be reset to waiting in the clone.",
                 action="store_true", dest="practice_mode" )
-
-        self.parser.add_option( "--clock-rate", 
-                help="(DUMMY and PRACTICE modes) accelerated clock rate: RATE seconds of "
-                "real time per simulated hour (default 10).",
-                metavar="RATE", action="store", dest="clock_rate" )
-
-        self.parser.add_option( "--clock-offset", 
-                help="(DUMMY and PRACTICE modes) start the accelerated clock at HOURS "
-                "prior to the initial cycle time (default 24 hours). "
-                "This simulates catch up to real time operation.",
-                metavar="HOURS", action="store", dest="clock_offset" )
-
-        self.parser.add_option( "--fail", help=\
-                "(DUMMY MODE) get task NAME at cycle time CYCLE to report failure "
-                "and then abort. Use this to test failure and recovery scenarios.",
-                metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
-
-        self.parser.add_option( "--dummy-task-run-length", help=\
-                "(DUMMY MODE) change the length of run time, relative to the dummy "
-                "mode clock, of each running task. The default is 20 minutes.",
-                metavar="MINUTES", action="store", dest="dummy_run_length" )
 
         self.parser.add_option( "--debug", help=\
                 "Turn on the 'debug' logging level and print the Python "
@@ -439,10 +413,6 @@ class scheduler(object):
         self.remote = remote_switch.remote_switch( self.config, self.clock, self.suite_dir, self.username, self.pool, self.failout_task_id )
         self.pyro.connect( self.remote, 'remote' )
 
-    def create_task_pool( self ):
-        self.pool = None
-        # OVERRIDE IN DERIVED CLASSES
-
     def configure( self ):
         self.load_preferences()
         self.get_suite_def_dir()
@@ -457,9 +427,6 @@ class scheduler(object):
             self.graphfile = None
         self.configure_suite_state_summary()
         self.configure_job_submission()
-
-        # required before remote switch
-        self.create_task_pool()
 
         self.configure_remote_switch()
 

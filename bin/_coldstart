@@ -13,14 +13,10 @@ import sys
 from optparse import OptionParser
 
 import cycle_time
-from coldstart import coldstart
 from scheduler import scheduler
 
-debug = True
-
-class coldstart_scheduler( scheduler ):
+class coldstart( scheduler ):
     def __init__( self ):
-
         usage = """cylc coldstart [options] SUITE CYCLE
 
 COLD START a suite at a given cycle time. This starts a suite from
@@ -42,12 +38,10 @@ Arguments:
    CYCLE                Initial cycle time (YYYYMMDDHH).""" 
 
         self.parser = OptionParser( usage )
-
         scheduler.__init__( self )
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
-
         if len( self.args ) != 2:
             self.parser.error( "Please supply a suite name and initial cycle time." )
 
@@ -63,24 +57,56 @@ Arguments:
 
         print "Starting from: " + self.start_time
 
-    def load_suite_config( self ):
-        scheduler.load_suite_config( self )
-        # check for legal start time
-        # TO DO TO DO TO DO TO DO: self.config.check_start_time( self.start_time )
+    def load_tasks( self ):
+        # load initial suite state from configured tasks and start time
 
-    def create_task_pool( self ):
-        # initialize the server (and create main logger)
-        self.pool = coldstart( self.config, self.clock, self.pyro,
-                self.dummy_mode, self.use_quick_elim, self.logging_dir,
-                self.logging_level, self.state_dump_file, self.exclude_tasks,
-                self.include_tasks, self.start_time, self.stop_time,
-                self.pause_time, self.graphfile )
+        excluded_by_commandline = self.exclude
+        included_by_commandline = self.include
+
+        # set clock before using log (affects dummy mode only)
+        self.clock.set( self.start_time )
+
+        #print '\nSTARTING AT ' + self.start_time + ' FROM CONFIGURED TASK LIST\n'
+        self.log.info( 'Loading state from configured task list' )
+        # config.task_list = [ taskname1, taskname2, ...]
+
+        task_list = self.config.get_task_name_list()
+
+        # uniquify in case of accidental duplicates (Python 2.4+)
+        task_list = list( set( task_list ) )
+
+        included_by_rc  = self.config[ 'include task list'   ]
+        excluded_by_rc  = self.config[ 'exclude task list'   ]
+
+        include_list_supplied = False
+        if len( included_by_commandline ) > 0 or len( included_by_rc ) > 0:
+            include_list_supplied = True
+            included_tasks = included_by_commandline + included_by_rc
+
+        for name in task_list:
+            if name in excluded_by_commandline or name in excluded_by_rc:
+                continue
+
+            if include_list_supplied:
+                if name not in included_tasks:
+                    continue
+            
+            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=True )
+
+            # check stop time in case the user has set a very quick stop
+            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                # we've reached the stop time already: delete the new task 
+                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                itask.prepare_for_death()
+                del itask
+            else:
+                self.insert( itask )
 
 if __name__ == '__main__':
 
     try:
         # parse the commandline and initialize the cylc server
-        server = coldstart_scheduler()
+        server = coldstart()
     except Exception, x:
         if debug:
             raise
