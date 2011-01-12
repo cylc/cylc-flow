@@ -70,9 +70,9 @@ class job_submit(object):
     def use_dummy_task( self ):
         # $CYLC_DUMMY_SLEEP is set at start up
         if self.__class__.failout_id != self.task_id:
-            self.task = 'cylc-wrapper eval "sleep $CYLC_DUMMY_SLEEP; /bin/true"'
+            self.task = 'cylc-wrapper -m "echo hello from $TASK_ID; echo RUNNING IN DUMMY MODE; sleep $CYLC_DUMMY_SLEEP"'
         else: 
-            self.task = 'cylc-wrapper eval "sleep $CYLC_DUMMY_SLEEP; /bin/false"'
+            self.task = 'cylc-wrapper -m "echo hello from $TASK_ID; echo RUNNING IN DUMMY MODE; sleep $CYLC_DUMMY_SLEEP; bin/false"'
 
     def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
 

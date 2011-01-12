@@ -28,6 +28,10 @@ parser.add_option( "--print-ports",
         help="Print the range of ports that cylc is configured to use.",
         action="store_true",default=False, dest="print_ports" )
 
+parser.add_option( "--passphrase",
+        help="A secure suite access passphrase.",
+        metavar="STRING", action="store", default=None, dest="passphrase" )
+
 ( options, args ) = parser.parse_args()
 
 if options.print_ports:
@@ -37,11 +41,9 @@ if options.print_ports:
     sys.exit(0)
 
 host = options.host
+passphrase = options.passphrase
 
 if len(args) != 0:
     parser.error( "Wrong number of arguments" ) 
 
-suites = port_scan.scan( host )
-for entry in suites:
-    suite, owner, port = entry
-    print suite + " [" + owner + "@" + host + ":" + str(port) + "]"
+suites = port_scan.scan( host, passphrase=passphrase, verbose=True )

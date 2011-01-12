@@ -24,9 +24,6 @@ INVOKED ON A ONE SECOND TIMEOUT AS WELL AS ON INCOMING TASK MESSAGES.
 
 (options, args) = parser.parse_args()
 
-if not parser.prompt( 'Nudge' ):
-    sys.exit(0)
-
 suite = parser.get_suite_name()
 owner = os.environ['USER']
 host = options.host
@@ -34,14 +31,14 @@ port = options.port
 
 try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    actioned, explanation = proxy.nudge( owner )
-    print explanation
-except Pyro.errors.NamingError, x:
-    if options.debug:
-        raise
-    else:
-        print x
-        sys.exit(1)
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
 
+if not parser.prompt( 'Nudge' ):
+    sys.exit(0)
+
+actioned, explanation = proxy.nudge( owner )
+
+print explanation
 if not actioned:
     sys.exit(1)

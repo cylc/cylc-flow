@@ -10,9 +10,8 @@
 #         |________________________|
 
 import os, sys
-from registration import registrations
 from optparse import OptionParser
-from config import config
+from config import config, SuiteConfigError
 
 parser = OptionParser( """cylc list [options] SUITE
 
@@ -36,20 +35,10 @@ if len(args) != 1:
 else:
     suite = args[0]
 
-# find location of the suite task and config modules
-reg = registrations( options.owner )
-if reg.is_registered( suite ):
-    suite_dir = reg.get( suite )
-    if options.print_all:
-        print 'REGISTRATION:'
-        reg.print_reg( suite )
-else:
-    print >> sys.stderr, "ERROR: suite " + suite + " is not registered"
-    reg.print_all()
-    sys.exit(1)
-
-# load suite configuration
-config = config( os.path.join( suite_dir, 'suite.rc' ))
+try:
+    config = config( suite )
+except SuiteConfigError,x:
+    raise SystemExit(x)
 
 if options.print_all:
     print 'TITLE:'

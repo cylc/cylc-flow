@@ -12,17 +12,14 @@
 
 import os, sys
 import cylc_pyro_client
-import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
+from port_scan import SuiteIdentificationError
 
 parser = PromptOptionParser( """cylc resume [options] SUITE 
 
 Resume running a paused suite, or unset an upcoming stop time.""" )
 
 (options, args) = parser.parse_args()
-
-if not parser.prompt( 'Resume' ):
-    sys.exit(0)
 
 suite = parser.get_suite_name()
 owner = os.environ['USER']
@@ -31,14 +28,13 @@ port = options.port
 
 try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    actioned, explanation = proxy.resume( owner )
-    print explanation
-except Pyro.errors.NamingError, x:
-    if options.debug:
-        raise
-    else:
-        print x
-        sys.exit(1)
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
 
+if not parser.prompt( 'Resume' ):
+    sys.exit(0)
+
+actioned, explanation = proxy.resume( owner )
+print explanation
 if not actioned:
     sys.exit(1)

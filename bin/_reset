@@ -9,12 +9,11 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
 import os, sys
 import cycle_time
 import cylc_pyro_client
-import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
+from port_scan import SuiteIdentificationError
 
 parser = PromptOptionParser( """cylc reset [options] SUITE TASK_ID
 
@@ -59,11 +58,9 @@ try:
     (name, cycle ) = task_id.split('%')
 except ValueError:
     parser.error( "Task or Group ID must be NAME%YYYYMMDDHH")
+
 if not cycle_time.is_valid( cycle ):
     parser.error( "invalid cycle time: " + cycle )
-
-if not parser.prompt( 'Reset task ' + task_id + ' in'):
-    sys.exit(0)
 
 suite = parser.get_suite_name()
 owner = os.environ['USER']
@@ -72,18 +69,19 @@ port = options.port
 
 try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    if waiting:
-        actioned, explanation = proxy.reset_to_waiting( task_id, owner )
-    elif ready:
-        actioned, explanation = proxy.reset_to_ready( task_id, owner )
-    elif options.finished:
-        actioned, explanation = proxy.reset_to_finished( task_id, owner )
-except Pyro.errors.NamingError, x:
-    if options.debug:
-        raise
-    else:
-        print x
-        sys.exit(1)
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
 
+if not parser.prompt( 'Reset task ' + task_id + ' in'):
+    sys.exit(0)
+
+if waiting:
+    actioned, explanation = proxy.reset_to_waiting( task_id, owner )
+elif ready:
+    actioned, explanation = proxy.reset_to_ready( task_id, owner )
+elif options.finished:
+    actioned, explanation = proxy.reset_to_finished( task_id, owner )
+
+print explanation
 if not actioned:
     sys.exit(1)

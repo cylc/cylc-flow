@@ -28,7 +28,7 @@ parser = OptionParser( usage )
 if len( args ) != 0:
     print >> sys.stderr, "WARNING: ignoring task-started arguments:"
     for arg in args:
-        print sys.stderr, arg
+        print >> sys.stderr, arg
 
 message().send_started()
 

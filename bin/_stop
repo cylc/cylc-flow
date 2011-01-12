@@ -13,7 +13,7 @@ import os, sys
 import cycle_time
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
-import Pyro.errors
+from port_scan import SuiteIdentificationError
 
 parser = PromptOptionParser( """cylc stop [options] SUITE [CYCLE]
 
@@ -43,32 +43,26 @@ port = options.port
 
 try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
 
-    if stop_at:
-        if not cycle_time.is_valid( stop_time ):
-            parser.error( "invalid cycle time: " + stop_time )
-        if not parser.prompt( 'Set stop time ' + stop_time + ' for'):
-            sys.exit(0)
-        actioned, explanation = proxy.set_stop_time( stop_time, owner )
+if stop_at:
+    if not cycle_time.is_valid( stop_time ):
+        parser.error( "invalid cycle time: " + stop_time )
+    if not parser.prompt( 'Set stop time ' + stop_time + ' for'):
+        sys.exit(0)
+    actioned, explanation = proxy.set_stop_time( stop_time, owner )
 
-    elif options.shutdownnow:
-        if not parser.prompt( 'Shutdown NOW' ):
-            sys.exit(0)
-        actioned, explanation = proxy.shutdown_now( owner )
+elif options.shutdownnow:
+    if not parser.prompt( 'Shutdown NOW' ):
+        sys.exit(0)
+    actioned, explanation = proxy.shutdown_now( owner )
 
-    else:
-        if not parser.prompt( 'Shutdown' ):
-            sys.exit(0)
-        actioned, explanation = proxy.shutdown( owner )
+else:
+    if not parser.prompt( 'Shutdown' ):
+        sys.exit(0)
+    actioned, explanation = proxy.shutdown( owner )
 
-    print explanation
-
-except Pyro.errors.NamingError, x:
-    if options.debug:
-        raise
-    else:
-        print x
-        sys.exit(1)
-    
+print explanation
 if not actioned:
     sys.exit(1)

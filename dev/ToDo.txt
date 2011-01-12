@@ -1,6 +1,13 @@
 _______
 GENERAL
 
+* currently all task reset commands go through the 'remote' object,
+  which all suites have, but we could get a proxy for the task proxy directly,
+  in which case we'd could catch Pyro.NamingError to detect if no such
+  task exists in the suite.  Currently we get a sensible error if requesting
+  to reset a non-existent task type, but not for a task ID of valid type but 
+  which is not present at the requested cycle time.
+
 * Pyro config:
   + PYRO_MAXCONNECTIONS , default 200: max number
   of simultaneous connections to a single pyro server?
@@ -10,6 +17,7 @@ GENERAL
   + consider Pyro multi-threading again?
   + use passphrase authentication in the default pyro connection validator
  (see the Pyro userguide security page).
+  THESE SHOULD BE USER-SPECIFIC GLOBAL PREFERENCES?
 
 * 'cylc view' read-only gui mode - e.g. for monitoring other's suites.
 

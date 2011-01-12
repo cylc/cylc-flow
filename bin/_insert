@@ -12,8 +12,8 @@
 import os,sys
 import cycle_time
 import cylc_pyro_client
-import Pyro.errors
 from CylcOptionParsers import PromptOptionParser
+from port_scan import SuiteIdentificationError
 
 parser = PromptOptionParser( """cylc insert [options] SUITE ID
 
@@ -31,15 +31,12 @@ if len(args) != 2:
     parser.error( "suite name and one Task or Group ID required" )
 
 target = args[1]
-if not parser.prompt( 'Insert ' + target + ' in'):
-    sys.exit(0)
 
 suite = parser.get_suite_name()
 owner = os.environ['USER']
 host = options.host
 port = options.port
 
-# check input
 try:
     ( name, cycle ) = target.split('%')
 except ValueError:
@@ -49,14 +46,14 @@ if not cycle_time.is_valid( cycle ):
 
 try:
     proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
-    actioned, explanation = proxy.insert( target, owner )
-    print explanation
-except Pyro.errors.NamingError, x:
-    if options.debug:
-        raise
-    else:
-        print x
-        sys.exit(1)
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
 
+if not parser.prompt( 'Insert ' + target + ' in'):
+    sys.exit(0)
+
+actioned, explanation = proxy.insert( target, owner )
+
+print explanation
 if not actioned:
     sys.exit(1)

@@ -72,14 +72,22 @@ SUITE                  Registered name of the target suite.""")
             reg.print_all()
             raise SystemExit( "suite " + suite + " is not registered!" )
 
-        found, port = port_scan.get_port( suite, owner, host )
-
-        if not found:
-            print >> sys.stderr, "WARNING: suite " + suite + " is not running"
-
         # get suite logging directory
         logging_dir = os.path.join( config( suite )['top level logging directory'], suite )
- 
+
+        # get secure passphrase
+        try:
+            passphrase = passphrase( suite )
+        except:
+            passphrase = None
+
+        # scan for suite port
+        try:
+            port = port_scan.get_port( suite, owner, host, passphrase )
+        except:
+            port = None
+            print >> sys.stderr, "WARNING: suite " + suite + " is not running"
+
         app = standalone_monitor( suite, owner, host, port, suite_dir, logging_dir, imagedir )
 
     gtk.main()

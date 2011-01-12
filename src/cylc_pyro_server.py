@@ -12,6 +12,7 @@
 import os
 import socket
 import Pyro
+from passphrase import passphrase
 
 # base (lowest allowed) Pyro socket number
 pyro_base_port = 7766   # (7766 is the Pyro default)
@@ -20,7 +21,7 @@ pyro_base_port = 7766   # (7766 is the Pyro default)
 pyro_port_range = 100 # (100 is the Pyro default)
 
 class pyro_server( object ):
-    def __init__( self, suite, user=os.environ['USER'] ):
+    def __init__( self, suite, user=os.environ['USER'], use_passphrase=False ):
 
         self.suite = suite
         self.owner = user
@@ -38,6 +39,8 @@ class pyro_server( object ):
 
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
+        if use_passphrase:
+            self.daemon.setAllowedIdentifications( [passphrase(suite)] )
 
     def shutdown( self ):
         print "Pyro daemon shutdown"

@@ -9,11 +9,11 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
 import os, sys
 import Pyro.core, Pyro.errors
 from optparse import OptionParser
 from time import sleep
+from passphrase import passphrase
 from port_scan import get_port, check_port
 
 class client( object ):
@@ -22,28 +22,27 @@ class client( object ):
         self.owner = owner
         self.host = host
         self.port = port
+        try:
+            self.passphrase = passphrase( suite )
+        except:
+            self.passphrase = None
 
     def get_proxy( self, target, silent=False ):
+        # callers need to check for port_scan.SuiteIdentificationError:
         if self.port:
-            port = self.port
-            if not check_port( self.suite, self.owner, self.host, self.port ):
-                msg = self.suite + " (" + self.owner + ") not found at " + self.host + ":" + str(port)
-                raise Pyro.errors.NamingError( msg )
+            check_port( self.suite, self.owner, self.host, self.port, self.passphrase )
         else:
-            if not silent:
-                print "Scanning for " + self.suite + " ...",
-            found, port = get_port( self.suite, self.owner, self.host )
-            if found:
-                if not silent:
-                    print "port", port
-            else:
-                if not silent:
-                    print "ERROR"
-                msg = self.suite + " (" + self.owner + ") not found on " + self.host 
-                raise Pyro.errors.NamingError( msg )
+            self.port = get_port( self.suite, self.owner, self.host, self.passphrase )
 
         # get a pyro proxy for the target object
         objname = self.owner + '.' + self.suite + '.' + target
-        # the following will also raise a NamingError if the target object is not found
-        uri = 'PYROLOC://' + self.host + ':' + str(port) + '/' + objname 
-        return Pyro.core.getProxyForURI(uri)
+
+        uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/' + objname 
+        # callers need to check for Pyro.NamingError if target object not found:
+        proxy = Pyro.core.getProxyForURI(uri)
+
+        # set set passphrase if necessary:
+        if self.passphrase:
+            proxy._setIdentification( self.passphrase )
+
+        return proxy

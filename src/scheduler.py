@@ -154,9 +154,16 @@ class scheduler(object):
         self.host= socket.getfqdn()
         self.banner[ 'cylc suite host' ] = self.host
 
-        found, port = port_scan.get_port( self.suite_name, self.username, self.host )
-        if found and not self.options.practice_mode:
-            raise SystemExit( "ERROR: " + self.suite_name + " is already running (port " + str( port ) + ")" )
+        try:
+            port = port_scan.get_port( self.suite_name, self.username, self.host )
+        except port_scan.SuiteNotFoundError,x:
+            # Suite Not Found: good - it's not running already!
+            pass
+        else:
+            if self.options.practice_mode:
+                print "Continuing in Cylc Practice Mode"
+            else:
+                raise SystemExit( "ERROR: suite " + self.suite_name + " is already running")
 
         # get mode of operation
         if self.options.dummy_mode and self.options.practice_mode:
@@ -319,7 +326,9 @@ class scheduler(object):
         else:
             suitename = self.suite_name
 
-        self.pyro = cylc_pyro_server.pyro_server( suitename )
+        self.pyro = cylc_pyro_server.pyro_server( 
+                suitename,
+                use_passphrase=self.config['use secure passphrase'] )
         self.port = self.pyro.get_port()
         self.banner[ 'Pyro port' ] = self.port
 

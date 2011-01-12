@@ -15,6 +15,8 @@ generate output (using the touch command) and read input (by requiring
 input files to be present) such that they must execute according to the
 suite dependency graph."""
 
+use lockserver = False
+
 [dependency graph]
     [[ 0,6,12,18 ]]
     label1  =  X -> A -> B ->  E

@@ -9,10 +9,10 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-
 import os, sys, re
 import socket
 from optparse import OptionParser
+from passphrase import passphrase
 import port_scan
 
 parser = OptionParser( """cylc ping [options] SUITE
@@ -59,18 +59,21 @@ suite = args[0]
 
 host = options.host
 owner = options.owner
+try:
+    passphrase = passphrase( suite )
+except:
+    passphrase = None
 
 if options.port:
     port = options.port
-    if port_scan.check_port( suite, owner, host, port ):
-        print "[" + suite + "] " + owner + "@" + host + ":" + str(port)
-    else:
-        print "[" + suite + "] IS NOT RUNNING on " + host + ":" + str(port)
+    try:
+        port_scan.check_port( suite, owner, host, port, passphrase )
+    except port_scan.SuiteIdentificationError, x:
+        print x
         sys.exit(1)
 else:
-    found, port = port_scan.get_port( suite, owner, host )
-    if found:
-        print "[" + suite + "] " + owner + "@" + host + ":" + str(port)
-    else:
-        print "[" + suite + "] " + owner + "@" + host + " IS NOT RUNNING"
+    try:
+        port = port_scan.get_port( suite, owner, host, passphrase )
+    except port_scan.SuiteIdentificationError, x:
+        print x
         sys.exit(1)

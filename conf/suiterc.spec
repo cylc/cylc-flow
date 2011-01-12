@@ -8,6 +8,7 @@ job submission log directory = string( default='' )
 logging level = option( debug, info, warning, error, critical, default=info )
 ignore task owners = boolean( default=False )
 use crude safety lock = boolean( default=False )
+use secure passphrase = boolean( default=False )
 
 use lockserver = boolean( default=True )
 use quick task elimination = boolean( default=True )
