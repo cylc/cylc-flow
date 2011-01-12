@@ -40,7 +40,7 @@ class pyro_server( object ):
         Pyro.core.initServer()
         self.daemon = Pyro.core.Daemon()
         if use_passphrase:
-            self.daemon.setAllowedIdentifications( [passphrase(suite)] )
+            self.daemon.setAllowedIdentifications( [passphrase(suite).get()] )
 
     def shutdown( self ):
         print "Pyro daemon shutdown"

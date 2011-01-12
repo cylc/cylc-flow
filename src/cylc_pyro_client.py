@@ -13,7 +13,7 @@ import os, sys
 import Pyro.core, Pyro.errors
 from optparse import OptionParser
 from time import sleep
-from passphrase import passphrase
+from passphrase import passphrase, PassphraseNotFoundError, SecurityError
 from port_scan import get_port, check_port
 
 class client( object ):
@@ -22,10 +22,18 @@ class client( object ):
         self.owner = owner
         self.host = host
         self.port = port
+        self.passphrase = None
         try:
-            self.passphrase = passphrase( suite )
-        except:
-            self.passphrase = None
+            self.passphrase = passphrase( suite ).get()
+        except PassphraseNotFoundError:
+            # assume this means the suite requires no passphrase
+            #print "No secure passphrase found for suite " + suite
+            #print "(access will be denied if the suite requires one)."
+            pass
+        except SecurityError,x:
+            print "WARNING: There is a problem with the secure passphrase for suite " + suite + ":"
+            print x
+            print "Continuing, but access will be denied if the suite requires a passphrase."
 
     def get_proxy( self, target, silent=False ):
         # callers need to check for port_scan.SuiteIdentificationError:
