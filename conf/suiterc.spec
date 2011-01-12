@@ -30,6 +30,15 @@ task submission timeout minutes = float( default=None )
 include task list   = string_list( default=list() )
 exclude task list   = string_list( default=list() )
 
+[ dummy mode ]
+clock offset from initial cycle time in hours = integer( default=24 )
+clock rate in real seconds per dummy hour = integer( default=10 )
+# exported as $CYLC_DUMMY_SLEEP in job submission file:
+dummy task run length in seconds = integer( default=10 )
+command list = string_list( default=list( 'cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $CYLC_DUMMY_SLEEP"',))
+fail command list = string_list( default=list( 'cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $(( CYLC_DUMMY_SLEEP/2 )); /bin/false"',))
+fail task list = string_list( default=list() )
+
 [ task families ]
     __many__ = string_list( default=None )
 
@@ -43,8 +52,8 @@ exclude task list   = string_list( default=list() )
 [ environment ]
 __many__ = string
 
-# NOTE CONFIGOBJ or VALIDATE BUG: LIST CONSTRUCTOR FAILS IF LAST LIST
-# ELEMENT IS FOLLOWED BY A SPACE:
+# CONFIGOBJ or VALIDATE BUG? LIST CONSTRUCTOR FAILS IF LAST LIST ELEMENT
+# IS FOLLOWED BY A SPACE (OR DOES IT JUST NEED A TRAILING COMMA?):
 #   GOOD:
 # foo = string_list( default=list('foo','bar'))
 #   BAD:
@@ -59,7 +68,7 @@ __many__ = string
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
     type modifier list = string_list( default=list())
-    command list = string_list( default=list('cylc-wrapper /bin/true'))
+    command list = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     owner = string( default=None )
     host = string( default=None )
     intercycle = boolean( default=False )
@@ -79,7 +88,7 @@ __many__ = string
     type = string( default=free)
     type modifier list = string_list( default=list())
     cycles = int_list()   # CYCLE TIME LIST
-    command list = string_list( default=list('cylc-wrapper /bin/true'))
+    command list = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     intercycle = boolean( default=False )
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
     host = string( default=None )
