@@ -122,9 +122,9 @@ class scheduler(object):
     def print_banner( self ):
         print "_______________________________________________"
         print "_ Cylc Self Organising Adaptive Metascheduler _"
-        print "_     (c) Hilary Oliver, NIWA, 2008-2010      _"
-        print "_          cylc is pronounced 'silk'          _"
-        print "____________________C_Y_L_C____________________"
+        print "_\    (c) Hilary Oliver, NIWA, 2008-2011     /_"
+        print "__\        cylc is pronounced 'silk'        /__"
+        print "___\________________C_Y_L_C________________/___"
         print
 
         items = self.banner.keys()
