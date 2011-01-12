@@ -13,6 +13,9 @@ if [[ ! -d $BAR_INPUT_DIR ]]; then
     exit 1
 fi
 
+# execution time may be set in suite.rc
+TASK_EXE_SECONDS=${TASK_EXE_SECONDS:-10}
+
 mkdir -p $BAR_OUTPUT_DIR
 
 PRE=$BAR_INPUT_DIR/data.$CYCLE_TIME

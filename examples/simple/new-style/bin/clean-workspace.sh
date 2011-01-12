@@ -7,7 +7,12 @@ if [[ $# != 1 ]]; then
     exit 1
 fi
 
+# execution time may be set in suite.rc
+TASK_EXE_SECONDS=${TASK_EXE_SECONDS:-10}
+
 echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
+
+sleep $TASK_EXE_SECONDS
 
 if [[ $# == 1 ]]; then
     WORKSPACE=$1

@@ -1,9 +1,10 @@
-title = simple three-task example suite
+title = a very simple three-task example suite
 
-description = """A suite containing a oneoff startup task and two
-cycling free (non-model) tasks, the first of which triggers off the wall
-clock and is constrained to be sequential. The tasks, foo.sh, bar.sh,
-and clean-workspace.sh, are not cylc-aware."""
+description = """A oneoff startup task and two cycling free (non-model)
+tasks. Task foo triggers off the wall clock, is constrained to be
+sequential, and generates output required by task bar. Neither task is
+cylc-aware and they both have their own configurable input and output
+directories."""
 
 [dependency graph]
     [[ 0,6,12,18 ]]
@@ -20,12 +21,10 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
     type modifier list = clock(offset = 1 hour), sequential,
     command list = cylc-wrapper foo.sh,
         [[[environment]]]
-        TASK_EXE_SECONDS = 8
         FOO_OUTPUT_DIR = $WORKSPACE
  
     [[bar]]
     command list = cylc-wrapper bar.sh,
         [[[environment]]]
-        TASK_EXE_SECONDS = 5
         BAR_INPUT_DIR = $WORKSPACE
         BAR_OUTPUT_DIR = $WORKSPACE
