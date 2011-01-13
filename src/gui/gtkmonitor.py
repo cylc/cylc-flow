@@ -856,24 +856,6 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         dmode_group = controlled_option_group( "Dummy Mode", "--dummy-mode" )
         dmode_group.add_entry( 
-                'clock rate (seconds per dummy hour)',
-                '--clock-rate=',
-                max_chars=3,
-                default='10'
-                )
-        dmode_group.add_entry( 
-                'clock offset (+/- hours relative to cycle time)',
-                '--clock-offset=',
-                max_chars=3,
-                default='24'
-                )
-        dmode_group.add_entry( 
-                'task run length in dummy clock minutes',
-                '--dummy-task-run-length=',
-                max_chars=None,
-                default='20'
-                )
-        dmode_group.add_entry( 
                 'fail out a task (NAME%CYCLE_TIME)',
                 '--fail='
                 )
