@@ -5,12 +5,11 @@ maximum runahead hours = integer( min=0, default=24 )
 number of state dump backups = integer( min=1, default=10 )
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 job submission log directory = string( default='' )
-logging level = option( debug, info, warning, error, critical, default=info )
 ignore task owners = boolean( default=False )
 use crude safety lock = boolean( default=False )
 use secure passphrase = boolean( default=False )
 
-use lockserver = boolean( default=True )
+use lockserver = boolean( default=False )
 use quick task elimination = boolean( default=True )
 
 # absolute or relative to $HOME:
@@ -32,12 +31,10 @@ exclude task list   = string_list( default=list() )
 
 [ dummy mode ]
 clock offset from initial cycle time in hours = integer( default=24 )
-clock rate in real seconds per dummy hour = integer( default=10 )
+clock rate in seconds per dummy hour = integer( default=10 )
 # exported as $CYLC_DUMMY_SLEEP in job submission file:
 dummy task run length in seconds = integer( default=10 )
 command list = string_list( default=list( 'cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $CYLC_DUMMY_SLEEP"',))
-fail command list = string_list( default=list( 'cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $(( CYLC_DUMMY_SLEEP/2 )); /bin/false"',))
-fail task list = string_list( default=list() )
 
 [ task families ]
     __many__ = string_list( default=None )

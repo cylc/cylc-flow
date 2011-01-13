@@ -9,16 +9,13 @@
 #         |    +64-4-386 0461      |
 #         |________________________|
 
-import os, sys
+import os, sys, re
 from optparse import OptionParser
 
 import cycle_time
-from restart import restart
 from scheduler import scheduler
 
-debug = True
-
-class restart_scheduler( scheduler ):
+class restart( scheduler ):
     def __init__( self ):
         usage = """cylc restart [options] SUITE [STATE DUMP]
 
@@ -40,31 +37,44 @@ Arguments:
                         supply the file path).""" 
 
         self.parser = OptionParser( usage )
-
         self.parser.add_option( "--no-reset", 
             help="Do not automatically reset failed tasks at startup "
             "(this option is the default in practice mode).",
             action="store_true", dest="no_reset" )
-
         scheduler.__init__( self )
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
-
         self.no_reset = False
         if self.options.no_reset or self.options.practice_mode:
             self.no_reset = True
-
         self.restart_from = None
         if len( self.args ) == 2:
             self.restart_from = self.args[1]
+            if cycle_time.is_valid( self.restart_from ):
+                print "WARNING: THE SUPPLIED INITIAL RESTART DUMP FILENAME IS A"
+                print "VALID CYCLE TIME - did you mean to (cold|warm|raw)start?"
 
         scheduler.parse_commandline( self )
 
         global debug
         debug = self.options.debug
- 
-    def find_initial_state_dump_file( self ):
+
+        if self.restart_from:
+            self.banner['RESTART'] = 'From ' + self.restart_from
+        else:
+            self.banner['RESTART' ] = 'From previous state'
+
+    def load_tasks( self ):
+        # FIND THE INITIAL STATE DUMP FILE
+        if self.practice:
+            # in practice mode, we reset from the parent suite's state dump
+            state_dump_dir = re.sub( '-practice', '', self.state_dump_dir )
+            state_dump_file = re.sub( '-practice', '', self.state_dump_filename )
+        else:
+            state_dump_dir = self.state_dump_dir
+            state_dump_file = self.state_dump_filename
+
         if self.restart_from:
             # user specified the initial state dump
             path = self.restart_from
@@ -73,44 +83,120 @@ Arguments:
                 self.initial_state_dump = os.path.abspath( path )
             else:
                 # check if the named file is in the suite state dump dir
-                # (in practice mode we want the source suite state dump dir)
-                state_dump_dir = self.rcfile.get_suite_statedump_dir( self.suite_name )
- 
                 path = os.path.join( state_dump_dir, self.restart_from )
                 if not os.path.exists( path ):
                     raise SystemExit( "state dump file not found: " + self.restart_from )
                 self.initial_state_dump = os.path.abspath( path )
         else:
-            # No state dump specified, restart from the suite default file.
-            # In practice mode we want the source suite state dump
-            # file, not self.state_dump_file.
-            if self.practice:
-                state_dump_dir = self.rcfile.get_suite_statedump_dir( self.suite_name )
-                state_dump_file = os.path.join( state_dump_dir, 'state' )
-            else:
-                state_dump_file = self.state_dump_file
-
+            # No state dump file specified, restart from the default file.
             if not os.path.exists( state_dump_file ):
-                # can't restart a suite that was never cold started!
-                raise SystemExit( "restart state dump file not found: " + state_dump_file )
+                raise SystemExit( "state dump file not found: " + state_dump_file )
             self.initial_state_dump = state_dump_file
 
-        print "Restarting from: " + self.initial_state_dump
+        self.log.info( 'Restart ' + self.initial_state_dump )
 
-    def create_task_pool( self ):
-        self.find_initial_state_dump_file()
-        # initialize the server (and create main logger)
-        self.pool = restart( self.config, self.clock, self.pyro,
-                self.dummy_mode, self.use_quick_elim, self.logging_dir,
-                self.logging_level, self.state_dump_file, self.exclude_tasks,
-                self.include_tasks, self.initial_state_dump,
-                self.no_reset, self.stop_time, self.pause_time, self.graphfile )
+        # The state dump file format is:
+        # suite time : <time>
+        #   OR
+        # dummy time : <time>,rate
+        #   THEN
+        # class <classname>: item1=value1, item2=value2, ... 
+        # <task_id> : <state>
+        # <task_id> : <state>
+        #   ...
+        # The time format is defined by the clock.reset()
+        # task <state> format is defined by task_state.dump()
+
+        FILE = open( self.initial_state_dump, 'r' )
+        lines = FILE.readlines()
+        FILE.close()
+
+        # RESET THE TIME TO THE LATEST DUMPED TIME
+        # The state dump file first line is:
+        # suite time : <time>
+        #   OR
+        # dummy time : <time>,rate
+        line1 = lines[0]
+        line1 = line1.rstrip()
+        [ time_type, time_string ] = line1.split(' : ')
+        if time_type == 'dummy time':
+            if not self.dummy_mode:
+                raise SystemExit("You can't restart in real mode from a dummy mode state dump")
+            
+            [ time, rate ] = time_string.split( ',' )
+            self.clock.reset( time, rate )
+
+        # parse each line and create the task it represents
+        tasknames = {}
+        taskstates = {}
+        for line in lines[1:]:
+            # strip trailing newlines
+            line = line.rstrip( '\n' )
+
+            if re.match( '^class', line ):
+                # class variables
+                [ left, right ] = line.split( ' : ' )
+                [ junk, classname ] = left.split( ' ' ) 
+                cls = self.config.get_task_class( classname )
+                pairs = right.split( ', ' )
+                for pair in pairs:
+                    [ item, value ] = pair.split( '=' )
+                    cls.set_class_var( item, value )
+                continue
+
+            # instance variables
+            ( id, state ) = line.split(' : ')
+            ( name, c_time ) = id.split('%')
+            tasknames[name] = True
+            taskstates[id] = (name, c_time, state )
+
+        initial_task_list = tasknames.keys()
+        task_list = self.filter_initial_task_list( initial_task_list )
+
+        for id in taskstates:
+            name, c_time, state = taskstates[id]
+            if name not in task_list:
+                continue
+
+            # startup=True only for coldstart
+            itask = self.config.get_task_proxy( name, c_time, state, startup=False )
+
+            if itask.state.is_finished():  
+                # must have satisfied prerequisites and completed outputs
+                itask.log( 'NORMAL', "starting in FINISHED state" )
+                itask.prerequisites.set_all_satisfied()
+                itask.outputs.set_all_complete()
+
+            elif itask.state.is_submitted() or itask.state.is_running():  
+                # Must have satisfied prerequisites. These tasks may have
+                # finished after the suite was shut down, but as we
+                # can't know that for sure we have to re-submit them.
+                itask.log( 'NORMAL', "starting in READY state" )
+                itask.state.set_status( 'waiting' )
+                itask.prerequisites.set_all_satisfied()
+
+            elif itask.state.is_failed():
+                # Re-submit these unless the suite operator says not to. 
+                if self.no_reset:
+                    itask.log( 'WARNING', "starting in FAILED state: manual reset required" )
+                    itask.prerequisites.set_all_satisfied()
+                else:
+                    itask.log( 'NORMAL', "starting in READY state" )
+                    itask.state.set_status( 'waiting' )
+                    itask.prerequisites.set_all_satisfied()
+
+            # check stop time in case the user has set a very quick stop
+            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                # we've reached the stop time already: delete the new task 
+                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                itask.prepare_for_death()
+                del itask
+            else:
+                self.insert( itask )
 
 if __name__ == '__main__':
-
     try:
-        # parse the commandline and initialize the cylc server
-        server = restart_scheduler()
+        server = restart()
     except Exception, x:
         if debug:
             raise
@@ -118,19 +204,16 @@ if __name__ == '__main__':
             print x
             print "(use --debug to see exception traceback)"
             sys.exit(1)
-
     try:
-        # configure pyro, logging, etc., and load the suite task pool 
-        server.configure()
-
-        # crank it up baby!
         server.run()
-
+        #   For profiling:
+        #import cProfile
+        #cProfile.run( 'server.run()', 'fooprof' )
+        #   and see Python docs "The Python Profilers"
+        #   for how to display the resulting stats.
     except Exception, x:
-
         print "ERROR CAUGHT, will clean up before exit"
         server.cleanup()
-
         if debug:
             raise
         else:
@@ -138,7 +221,6 @@ if __name__ == '__main__':
             print x
             print "(use --debug to see exception traceback)"
             sys.exit(1)
-
     except:
         # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
         # TO DO: check these can actually be caught

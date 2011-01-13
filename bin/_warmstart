@@ -1,24 +1,12 @@
 #!/usr/bin/env python
 
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
-
 import sys
 from optparse import OptionParser
 
 import cycle_time
-from warmstart import warmstart
 from scheduler import scheduler
 
-debug = True
-
-class warmstart_scheduler( scheduler ):
+class warmstart( scheduler ):
     def __init__( self ):
         usage = """cylc warmstart [options] SUITE CYCLE
 
@@ -43,12 +31,10 @@ Arguments:
    CYCLE                Initial cycle time (YYYYMMDDHH).""" 
 
         self.parser = OptionParser( usage )
-
         scheduler.__init__( self )
 
     def parse_commandline( self ):
         ( self.options, self.args ) = self.parser.parse_args()
-
         if len( self.args ) != 2:
             self.parser.error( "Please supply a suite name and initial cycle time." )
 
@@ -62,26 +48,37 @@ Arguments:
         global debug
         debug = self.options.debug
 
-        print "Starting from: " + self.start_time
+        self.banner[ "WARM START" ] = self.start_time
 
-    def load_suite_config( self ):
-        scheduler.load_suite_config( self )
-        # check for legal start time
-        #TO DO TO DO TO DO: self.config.check_start_time( self.start_time )
+    def load_tasks( self ):
+        self.log.info( 'Warm Start ' + self.start_time )
 
-    def create_task_pool( self ):
-        # initialize the server (and create main logger)
-        self.pool = warmstart( self.config, self.clock, self.pyro,
-                self.dummy_mode, self.use_quick_elim, self.logging_dir,
-                self.logging_level, self.state_dump_file, self.exclude_tasks,
-                self.include_tasks, self.start_time, self.stop_time,
-                self.pause_time, self.graphfile )
+        # set clock before using log (affects dummy mode only)
+        self.clock.set( self.start_time )
+
+        task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
+        coldstart_tasks = self.config.get_coldstart_task_list()
+
+        for name in task_list:
+            # (startup=True is only for coldstart)
+            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=False )
+            if name in coldstart_tasks:
+                itask.log( 'WARNING', "warm start: starting in finished state" )
+                itask.state.set_status( 'finished' )
+                itask.prerequisites.set_all_satisfied()
+                itask.outputs.set_all_complete()
+            # check stop time in case the user has set a very quick stop
+            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                # we've reached the stop time already: delete the new task 
+                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                itask.prepare_for_death()
+                del itask
+            else:
+                self.insert( itask )
 
 if __name__ == '__main__':
-
     try:
-        # parse the commandline and initialize the cylc server
-        server = warmstart_scheduler()
+        server = warmstart()
     except Exception, x:
         if debug:
             raise
@@ -89,23 +86,15 @@ if __name__ == '__main__':
             print x
             print "(use --debug to see exception traceback)"
             sys.exit(1)
-
     try:
-        # configure pyro, logging, etc., and load the suite task pool 
-        server.configure()
-
-        # crank it up baby!
         server.run()
-        #   OR for profiling:
+        #   For profiling:
         #import cProfile
         #cProfile.run( 'server.run()', 'fooprof' )
         #   and see Python docs "The Python Profilers"
         #   for how to display the resulting stats.
-
     except Exception, x:
-
         print "ERROR CAUGHT, will clean up before exit"
-
         # this assumes no exceptions in cleanup()
         server.cleanup()
 
@@ -116,7 +105,6 @@ if __name__ == '__main__':
             print x
             print "(use --debug to see exception traceback)"
             sys.exit(1)
-
     except:
         # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
         # TO DO: check these can actually be caught

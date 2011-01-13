@@ -35,12 +35,12 @@ class config( CylcConfigObj ):
         if suite:
             reg = registrations()
             if reg.is_registered( suite ):
-                suite_dir = reg.get( suite )
+                self.dir = reg.get( suite )
             else:
                 reg.print_all()
                 raise SuiteConfigError, "Suite " + suite + " is not registered"
 
-            self.file = os.path.join( suite_dir, 'suite.rc' )
+            self.file = os.path.join( self.dir, 'suite.rc' )
         else:
             self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
 
@@ -93,6 +93,11 @@ class config( CylcConfigObj ):
         statedir = self['top level state dump directory']
         if not re.match( '^/', statedir ):
            self['top level state dump directory'] = os.path.join( home, statedir )
+
+    def get_filename( self ):
+        return self.file
+    def get_dirname( self ):
+        return self.dir
 
     def __check( self ):
         #for task in self['tasks']:
@@ -359,18 +364,3 @@ class config( CylcConfigObj ):
             self.load_taskdefs()
             self.loaded = True
         return self.taskdefs[name].get_task_class()
-
-    def get_logging_level( self ):
-        # translate logging level strings into logging module parameters
-        level = self[ 'logging level' ]
-        if level == 'debug':
-            value = logging.DEBUG
-        elif level == 'info':
-            value = logging.INFO
-        elif level == 'warning':
-            value = logging.WARNING
-        elif level == 'error':
-            value = logging.ERROR
-        elif level == 'critical':
-            value = logging.CRITICAL
-        return value
