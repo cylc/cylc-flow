@@ -52,8 +52,10 @@ FOO = foo, bar
     # label99 = (B or C) -> D
 
     [[ 6,18 ]]
-    label6 = F(1)-> G
-    label7 = F(1)-> H
+    label6 = F:1-> G
+    label7 = F:1-> H
+
+    # fully qualified: oneoff:foo(T-6):1
 
 [environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME

@@ -173,43 +173,46 @@ class config( CylcConfigObj ):
                    
                 tasks = {}
 
-                # NOTE: the following was designed to handle long
-                # sequences: A->B->C->D ==> [A,B,C], but has
-                # been coopted into handling only pairs, which
-                # are the easiest way to handle grouped dependencies:
+                # NOTE: the following code was designed to handle long
+                # sequences: A->B->C->D ==> [A,B,C], but now we
+                # process only pairs, which is the easiest way to handle
+                # grouped dependencies: 
                 # A B -> C D ==> [A,C],[A,D],[B,C],[B,D].
-                # It may be possible to simplify the code a bit for pair
-                # processing only?
+                # It may be possible to simplify a bit for pairs only?
+
                 for pair in pairs:
                     count = 0
                     for name in pair:
-                        # check for specific output indicator: TASK(n)
-                        specific_output = False
-                        m = re.match( '(\w+)\((\d+)\)', name )
-                        if m:
-                            specific_output = True
-                            name = m.groups()[0]
-                            output_n = m.groups()[1]
                         # check for model coldstart task indicator, model_coldstart:TASK
                         model_coldstart = False
-                        m = re.match( 'model_coldstart:(\w+)', name )
+                        m = re.match( '^model_coldstart:(\w+)', name )
                         if m:
                             model_coldstart = True
                             name = m.groups()[0]
 
                         # check for coldstart task indicator: coldstart:TASK
                         coldstart = False
-                        m = re.match( 'coldstart:(\w+)', name )
+                        m = re.match( '^coldstart:(\w+)', name )
                         if m:
                             coldstart = True
                             name = m.groups()[0]
 
                         # check for oneoff task indicator: oneoff:TASK
                         oneoff = False
-                        m = re.match( 'oneoff:(\w+)', name )
+                        m = re.match( '^oneoff:(\w+)', name )
                         if m:
                             oneoff = True
                             name = m.groups()[0]
+
+                        # check for specific output labels: TASK:OUTPUT
+                        # (note that we've stripped legal task type
+                        # qualifiers of the task name, just above)
+                        specific_output = False
+                        m = re.match( '(\w+):(\w+)', name )
+                        if m:
+                            specific_output = True
+                            name = m.groups()[0]
+                            output_n = m.groups()[1]
 
                         if name not in self.taskdefs:
                             # first time seen; define everything except for
