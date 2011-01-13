@@ -1,14 +1,5 @@
 #!/usr/bin/env python
 
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
-
 # This command used to check the pyro nameserver to make sure a suite
 # was not in use before deleting a registration. However, this just
 # gives a false sense of security because it won't work if the user

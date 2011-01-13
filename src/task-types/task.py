@@ -1,14 +1,5 @@
 #!/usr/bin/env python
 
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
-
 # This module uses the @classmethod decorator, introduced in Python 2.4.
 # To get it to work with Python 2.3 (note that cylc gui will not work!),
 # replace:

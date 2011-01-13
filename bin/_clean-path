@@ -1,15 +1,5 @@
 #!/bin/bash
 
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
-
-
 # Clean existing cylc paths from a supplied PATH variable.
 # This is used by cylc-env.sh to configure a shell environment
 # on-the-fly for a cylc instance different to that set up in 

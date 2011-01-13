@@ -1,14 +1,5 @@
 #!/usr/bin/pyro
 
-#         __________________________
-#         |____C_O_P_Y_R_I_G_H_T___|
-#         |                        |
-#         |  (c) NIWA, 2008-2010   |
-#         | Contact: Hilary Oliver |
-#         |  h.oliver@niwa.co.nz   |
-#         |    +64-4-386 0461      |
-#         |________________________|
-
 import os
 import Pyro.errors, Pyro.core
 from cylc_pyro_server import pyro_base_port, pyro_port_range
