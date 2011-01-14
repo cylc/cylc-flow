@@ -51,3 +51,9 @@ not to further complicate suite.rc files for general use).
 
 * extra task log files can be defined using environment variables
  (any other parameters in this category?)
+
+* intercycle dependencies: 'foo(T-6) -> bar': 
+  1/ only on left member of pairs
+  2/ only negative offsets
+  3/ ok with specific outputs: must contain '$(CYCLE_TIME)'
+

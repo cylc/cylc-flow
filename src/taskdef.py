@@ -160,12 +160,15 @@ class taskdef(object):
         if modifier not in self.__class__.allowed_modifiers:
             raise DefinitionError( 'Illegal task type modifier: ' + modifier )
 
-    def check_set_hours( self, hours ):
+    def add_hours( self, cycle_list ):
+        hours = re.split( '\s*,\s*', cycle_list )
         for hr in hours:
             hour = int( hr )
             if hour < 0 or hour > 23:
                 raise DefinitionError( 'Hour must be 0<hour<23' )
-            self.hours.append( hour )
+            if hour not in self.hours: 
+                self.hours.append( hour )
+            self.hours.sort( key=int )
 
     def check_consistency( self ):
         if len( self.hours ) == 0:
@@ -291,10 +294,10 @@ class taskdef(object):
             req = str
             m = re.search( '\$\(\s*CYCLE_TIME\s*\+\s*(\d+)\s*\)', req )
             if m:
-                req = re.sub( '\$\(\s*CYCLE_TIME.*\)', cycle_time.increment( sself.c_time ), req )
+                req = re.sub( '\$\(\s*CYCLE_TIME.*\)', cycle_time.increment( sself.c_time, m.groups()[0] ), req )
             m = re.search( '\$\(\s*CYCLE_TIME\s*\-\s*(\d+)\s*\)', req )
             if m:
-                req = re.sub( '\$\(\s*CYCLE_TIME.*\)', cycle_time.decrement( sself.c_time ), req )
+                req = re.sub( '\$\(\s*CYCLE_TIME.*\)', cycle_time.decrement( sself.c_time, m.groups()[0] ), req )
             req = re.sub( '\$\(\s*CYCLE_TIME\s*\)', sself.c_time, req )
             return req
 

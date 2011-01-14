@@ -106,14 +106,13 @@ globalenv[ 'CYLC_SUITE_NAME' ] = name
 globalenv[ 'CYLC_SUITE_OWNER' ] = owner
 globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 
-logging_lvl = config.get_logging_level()
 
 for var in config['environment']:
     globalenv[ var ] = config['environment'][var]
 
 # create the log
 log = logging.getLogger()
-pimp_my_logger.pimp_it( log, logging_dir, logging_lvl, False, None, True )
+pimp_my_logger.pimp_it( log, logging_dir, logging.INFO, False, None, True )
 
 job_submit.global_env = globalenv
 job_submit.joblog_dir = config['job submission log directory']

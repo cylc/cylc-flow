@@ -24,6 +24,56 @@ class SuiteConfigError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
+class DepGNode:
+    def __init__( self, item ):
+        # [TYPE:]NAME[(T+/-OFFSET)][:OUTPUT]
+        # where [] => optional:
+
+        # TYPE:
+        self.coldstart = False
+        self.model_coldstart = False
+        self.oneoff = False
+
+        # INTERCYCLE DEP
+        self.intercycle = False
+        self.sign = None    # '+' or '-'
+        self.offset = None  
+
+        # SPECIFIC OUTPUT
+        self.output = None
+
+        self.name = item
+
+        # INTERCYCLE
+        m = re.match( '(.*)\(\s*T\s*([+-])\s*(\d+)\s*\)(.*)', self.name )
+        if m:
+            self.intercycle = True
+            pre, self.sign, self.offset, post = m.groups()
+            self.name = pre + post
+            if self.sign == '+':
+                raise SuiteConfigError, item + ": only negative offsets allowed in dependency graph (e.g. T-6)"
+
+        # TYPE
+        m = re.match( '^model_coldstart:(\w+)', self.name )
+        if m:
+            self.model_coldstart = True
+            self.name = m.groups()[0]
+
+        m = re.match( '^coldstart:(\w+)', self.name )
+        if m:
+            self.coldstart = True
+            self.name = m.groups()[0]
+
+        m = re.match( '^oneoff:(\w+)', self.name )
+        if m:
+            self.oneoff = True
+            self.name = m.groups()[0]
+
+        # OUTPUT
+        m = re.match( '(\w+):(\w+)', self.name )
+        if m:
+            self.name, self.output = m.groups()
+
 class config( CylcConfigObj ):
     allowed_modifiers = ['contact', 'oneoff', 'sequential', 'catchup', 'catchup_contact']
 
@@ -99,6 +149,9 @@ class config( CylcConfigObj ):
     def get_dirname( self ):
         return self.dir
 
+    def prerequisite_decrement( self, msg, offset ):
+        return re.sub( "\$\(CYCLE_TIME\)", "$(CYCLE_TIME - " + offset + ")", msg )
+
     def __check( self ):
         #for task in self['tasks']:
         #    # check for illegal type modifiers
@@ -164,7 +217,6 @@ class config( CylcConfigObj ):
             self.taskdefs[name] = taskd
 
         for cycle_list in self['dependency graph']:
-            cycles = re.split( '\s*,\s*', cycle_list )
 
             for label in self['dependency graph'][ cycle_list ]:
                 line = self['dependency graph'][cycle_list][label]
@@ -181,47 +233,35 @@ class config( CylcConfigObj ):
                 # It may be possible to simplify a bit for pairs only?
 
                 for pair in pairs:
-                    count = 0
-                    for name in pair:
-                        # check for model coldstart task indicator, model_coldstart:TASK
-                        model_coldstart = False
-                        m = re.match( '^model_coldstart:(\w+)', name )
-                        if m:
-                            model_coldstart = True
-                            name = m.groups()[0]
+                    first_of_pair = True
+                    for item in pair:
+                        dgtask = DepGNode( item )
+                        name = dgtask.name
+                        model_coldstart = dgtask.model_coldstart
+                        coldstart = dgtask.coldstart
+                        oneoff = dgtask.oneoff
+                        output = dgtask.output
+                        intercycle = dgtask.intercycle
+                        sign = dgtask.sign
+                        offset = dgtask.offset
 
-                        # check for coldstart task indicator: coldstart:TASK
-                        coldstart = False
-                        m = re.match( '^coldstart:(\w+)', name )
-                        if m:
-                            coldstart = True
-                            name = m.groups()[0]
-
-                        # check for oneoff task indicator: oneoff:TASK
-                        oneoff = False
-                        m = re.match( '^oneoff:(\w+)', name )
-                        if m:
-                            oneoff = True
-                            name = m.groups()[0]
-
-                        # check for specific output labels: TASK:OUTPUT
-                        # (note that we've stripped legal task type
-                        # qualifiers of the task name, just above)
-                        specific_output = False
-                        m = re.match( '(\w+):(\w+)', name )
-                        if m:
-                            specific_output = True
-                            name = m.groups()[0]
-                            output_n = m.groups()[1]
+                        if name not in self['tasks']:
+                            raise SuiteConfigError, 'task ' + name + ' not defined'
 
                         if name not in self.taskdefs:
-                            # first time seen; define everything except for
-                            # possible additional prerequisites.
+                            self.taskdefs[ name ] = self.get_taskdef( name, model_coldstart, coldstart, oneoff )
+                        
+                        self.taskdefs[ name ].add_hours( cycle_list )
 
-                            self.taskdefs[ name ] = self.get_taskdef( name, 
-                                    cycles, model_coldstart, coldstart, oneoff )
-
-                        if count > 0:
+                        if first_of_pair:
+                            first_of_pair = False
+                            prev_name = name
+                            prev_output = output
+                            prev_intercycle = intercycle
+                            if intercycle:
+                                prev_sign = sign
+                                prev_offset = offset
+                        else:
                             # MODEL COLDSTART (restart prerequisites)
                             if self.taskdefs[prev_name].model_coldstart:
                                 #  prev task must generate my restart outputs at startup 
@@ -234,36 +274,38 @@ class config( CylcConfigObj ):
                                 #  I can depend on prev task only at startup 
                                 if cycle_list not in self.taskdefs[name].coldstart_prerequisites:
                                     self.taskdefs[name].coldstart_prerequisites[cycle_list] = []
-                                if prev_specific_output:
+                                if prev_output:
                                     # trigger off specific output of previous task
                                     if cycle_list not in self.taskdefs[prev_name].outputs:
                                         self.taskdefs[prev_name].outputs[cycle_list] = []
-                                    specout = self['tasks'][prev_name]['outputs'][output_n]
-                                    if specout not in self.taskdefs[prev_name].outputs[  cycle_list ]:
-                                        self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
-                                    self.taskdefs[name].coldstart_prerequisites[ cycle_list ].append( specout ) 
+                                    msg = self['tasks'][prev_name]['outputs'][prev_output]
+                                    if msg not in self.taskdefs[prev_name].outputs[  cycle_list ]:
+                                        self.taskdefs[prev_name].outputs[  cycle_list ].append( msg )
+                                    self.taskdefs[name].coldstart_prerequisites[ cycle_list ].append( msg ) 
                                 else:
                                     # trigger off previous task finished
                                     self.taskdefs[name].coldstart_prerequisites[ cycle_list ].append( prev_name + "%$(CYCLE_TIME) finished" )
-                            # GENERAL
                             else:
+                                # GENERAL
                                 if cycle_list not in self.taskdefs[name].prerequisites:
                                     self.taskdefs[name].prerequisites[cycle_list] = []
-                                if prev_specific_output:
+                                if prev_output:
                                     # trigger off specific output of previous task
                                     if cycle_list not in self.taskdefs[prev_name].outputs:
                                         self.taskdefs[prev_name].outputs[cycle_list] = []
-                                    specout = self['tasks'][prev_name]['outputs'][output_n]
-
-                                    if specout not in self.taskdefs[prev_name].outputs[  cycle_list ]:
-                                        self.taskdefs[prev_name].outputs[  cycle_list ].append( specout )
-                                    self.taskdefs[name].prerequisites[ cycle_list ].append( specout )
+                                    msg = self['tasks'][prev_name]['outputs'][prev_output]
+                                    if msg not in self.taskdefs[prev_name].outputs[ cycle_list ]:
+                                        self.taskdefs[prev_name].outputs[ cycle_list ].append( msg )
+                                    if prev_intercycle:
+                                        msg = self.prerequisite_decrement( msg, prev_offset )
+                                    self.taskdefs[name].prerequisites[ cycle_list ].append( msg )
+                                    print msg
                                 else:
                                     # trigger off previous task finished
-                                    self.taskdefs[name].prerequisites[ cycle_list ].append( prev_name + '%$(CYCLE_TIME) finished' )
-                        count += 1
-                        prev_name = name
-                        prev_specific_output = specific_output
+                                    msg = prev_name + "%$(CYCLE_TIME) finished" 
+                                    if prev_intercycle:
+                                        msg = self.prerequisite_decrement( msg, prev_offset )
+                                    self.taskdefs[name].prerequisites[ cycle_list ].append( msg )
 
         members = []
         my_family = {}
@@ -273,12 +315,12 @@ class config( CylcConfigObj ):
             self.taskdefs[name].members = mems
             for mem in mems:
                 if mem not in members:
-                    # take valid hours from the family
-                    cycles = self.taskdefs[name].hours
                     members.append( mem )
                     taskd.member_of = name
                     # TO DO: ALLOW MORE GENERAL INTERNAL FAMILY MEMBERS?
-                    taskd = self.get_taskdef( mem, cycles, False, False, False )
+                    taskd = self.get_taskdef( mem )
+                    # take valid hours from the family
+                    taskd.hours = self.taskdefs[name].hours
                     self.taskdefs[ mem ] = taskd
 
         # sort hours list for each task
@@ -289,7 +331,7 @@ class config( CylcConfigObj ):
         # define a task insertion group of all coldstart tasks
         self['task insertion groups']['all coldstart tasks'] = self.coldstart_task_list
 
-    def get_taskdef( self, name, cycles, model_coldstart=False, coldstart=False, oneoff=False ):
+    def get_taskdef( self, name, model_coldstart=False, coldstart=False, oneoff=False ):
         if name not in self['tasks']:
             raise SuiteConfigError, 'task ' + name + ' not defined'
         taskconfig = self['tasks'][name]
@@ -349,11 +391,6 @@ class config( CylcConfigObj ):
         taskd.directives = taskconfig[ 'directives' ]
         taskd.scripting = taskconfig[ 'scripting' ]
 
-        for hour in cycles:
-            hr = int( hour )
-            if hr not in taskd.hours:
-                taskd.hours.append( hr )
-
         return taskd
 
     def get_task_proxy( self, name, ctime, state, startup ):
@@ -367,3 +404,6 @@ class config( CylcConfigObj ):
             self.load_taskdefs()
             self.loaded = True
         return self.taskdefs[name].get_task_class()
+
+
+

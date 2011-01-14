@@ -30,15 +30,13 @@ FOO = foo, bar
 [dependency graph] #----------------------------------------------------
 #        > B -> E
 #       /   \
-# X -> A     -> D
+# X -> A     -> D  (plus various modifications...)
 #       \   /
-#        > C -> F -(6,18)-> G
-#               \
-#                > FOO -> postfoo
+#        > C -> F
 
     [[ 0,6,12,18 ]]
     label1  =  X -> A -> B ->  E
-    label2  =  A -> C -> F -> FOO -> postfoo
+    label2  =  A -> C -> F:1 -> FOO -> postfoo
     label3  =  B C -> D
     
     labelc1 = model_coldstart:ColdA -> A
@@ -52,8 +50,11 @@ FOO = foo, bar
     # label99 = (B or C) -> D
 
     [[ 6,18 ]]
-    label6 = F:1-> G
-    label7 = F:1-> H
+    label6 = E -> H
+
+    [[ 0,12 ]]
+    label7 = E(T-6)-> H
+    label8 = F(T-6):1 -> G
 
     # fully qualified: oneoff:foo(T-6):1
 
@@ -155,6 +156,7 @@ echo bye"""
     [[postfoo]] #----------------------------------------------
     [[FOO]] #--------------------------------------------------
     [[H]]
+    [[I]]
 
 [taskdefs]
     [[slunge]]

@@ -22,11 +22,11 @@ def _dt_to_rt( dt ):
 
 def increment( rt, hours ): 
         dt = _rt_to_dt( rt )
-        return _dt_to_rt( dt + datetime.timedelta( 0, 0, 0, 0, 0, hours, 0 ) )
+        return _dt_to_rt( dt + datetime.timedelta( 0, 0, 0, 0, 0, int(hours), 0 ) )
 
 def decrement( rt, hours ): 
         dt = _rt_to_dt( rt )
-        return _dt_to_rt( dt - datetime.timedelta( 0, 0, 0, 0, 0, hours, 0 ) )
+        return _dt_to_rt( dt - datetime.timedelta( 0, 0, 0, 0, 0, int(hours), 0 ) )
 
 def diff_hours( rt2, rt1 ):
     # rt2 - rt1 in hours
