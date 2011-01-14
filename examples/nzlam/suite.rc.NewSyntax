@@ -17,20 +17,20 @@ dummy task run time in seconds = 10
 
 [dependency graph]
     [[0,6,12,18]]
-    a = get_frames => make_alabc => forecast => get_outputs housekeeping
-    b = get_obstore get_bgerr => OPS
-    bb = forecast(T-6) => VAR_ConfigureLS OPS
-    c = OPS VAR_ConfigureLS => VAR_AnalysePF => VAR_monitoring forecast
+    a = get_frames => make_alabc => forecast => get_outputs & housekeeping
+    b = get_obstore & get_bgerr => OPS
+    c = forecast(T-6) => VAR_ConfigureLS & OPS
+    d = OPS & VAR_ConfigureLS => VAR_AnalysePF => VAR_monitoring & forecast
     [[0]]
-    h = forecast(T-6) => NZtoNZ_recon => forecast
-
+    e = forecast(T-6) => NZtoNZ_recon => forecast
+   
     [[0,6,12,18]]
-    e = coldstart:prepare_suite => oneoff:get_globaldump get_obstore get_bgerr get_frames
-    f = oneoff:get_globaldump => oneoff:GLtoGL_recon => oneoff:GLtoNZ_recon => model_coldstart:forecast_cold => forecast
-    g = coldstart:forecast_cold => OPS VAR_ConfigureLS
+    e = prepare_suite| =c=> get_globaldump| get_obstore & get_bgerr & get_frames
+    f = get_globaldump| => GLtoGL_recon| => GLtoNZ_recon| => forecast_cold| =mc=> forecast
+    g = forecast_cold| =c=> OPS & VAR_ConfigureLS
     [[0]]
-     i = coldstart:forecast_cold => NZtoNZ_recon
-    
+    i = forecast_cold| =c=> NZtoNZ_recon
+
 [environment]
 #__________________________
 # TOP I/O LEVEL DIRECTORIES
