@@ -5,9 +5,6 @@ job submission method = ll_basic
 use secure passphrase = True
 use lockserver = True
 
-[task insertion groups]
- nzlam_coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
-
 [task families]
     OPS = OPS_AircraftSonde, OPS_AIRS, OPS_ATOVS, OPS_GPSRO, OPS_IASI, OPS_SurfaceScatt, OPS_Satwind
 
@@ -28,14 +25,9 @@ use lockserver = True
     i = forecast_cold| =c=> NZtoNZ_recon
 
 [environment]
-include global-environment.rc
+include global-environment.rc  # or inline
 
 [tasks]
-
-[[get_globaldump]] #----------------------------------------------------
-    description = Retrieve global start dump for current cycle coldstart.
-    type modifier list = clock( offset = 3 hour ),
-    command list = cylc-wrapper get-inputs.sh --globaldump,
 
 [[get_obstore]] #-------------------------------------------------------
     description = Retrieve obstore files for current cycle.
@@ -47,12 +39,6 @@ include global-environment.rc
     command list = OPS-wrapper.sh,
     [[[environment]]]
         OPSUI_JOB_DIR = $OPS_AIRS_JOBDIR
-
-[[OPS_ATOVS]] #---------------------------------------------------------
-    description = Extract and Process ATOVS obs
-    command list = OPS-wrapper.sh,
-    [[[environment]]]
-        OPSUI_JOB_DIR = $OPS_ATOVS_JOBDIR
 
 # MORE TASKS...
 
