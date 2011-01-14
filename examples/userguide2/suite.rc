@@ -38,6 +38,9 @@ FOO = foo, bar
     label1  =  X -> A -> B ->  E
     label2  =  A -> C -> F:1 -> FOO -> postfoo
     label3  =  B C -> D
+
+    # family: internal dependencies
+    labelfam = foo -> bar
     
     labelc1 = model_coldstart:ColdA -> A
     labelc2 = model_coldstart:ColdB -> B

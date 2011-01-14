@@ -299,7 +299,6 @@ class config( CylcConfigObj ):
                                     if prev_intercycle:
                                         msg = self.prerequisite_decrement( msg, prev_offset )
                                     self.taskdefs[name].prerequisites[ cycle_list ].append( msg )
-                                    print msg
                                 else:
                                     # trigger off previous task finished
                                     msg = prev_name + "%$(CYCLE_TIME) finished" 
@@ -316,12 +315,13 @@ class config( CylcConfigObj ):
             for mem in mems:
                 if mem not in members:
                     members.append( mem )
-                    taskd.member_of = name
                     # TO DO: ALLOW MORE GENERAL INTERNAL FAMILY MEMBERS?
-                    taskd = self.get_taskdef( mem )
-                    # take valid hours from the family
-                    taskd.hours = self.taskdefs[name].hours
-                    self.taskdefs[ mem ] = taskd
+                if mem not in self.taskdefs:
+                    self.taskdefs[ mem ] = self.get_taskdef( mem )
+                self.taskdefs[mem].member_of = name
+                # take valid hours from the family
+                # (REPLACES HOURS if member appears in graph section)
+                self.taskdefs[mem].hours = self.taskdefs[name].hours
 
         # sort hours list for each task
         for name in self.taskdefs:

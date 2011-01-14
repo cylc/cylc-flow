@@ -57,3 +57,4 @@ not to further complicate suite.rc files for general use).
   2/ only negative offsets
   3/ ok with specific outputs: must contain '$(CYCLE_TIME)'
 
+* families can have internal dependencies.
