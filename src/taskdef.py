@@ -38,9 +38,6 @@ class taskdef(object):
     def __init__( self, name ):
         self.name = name
         self.type = 'free'
-        self.model_coldstart = False  # used in config.py
-        self.coldstart = False  # used in config.py
-        self.oneoff = False  # used in config.py
 
         self.job_submit_method = 'background'
 
@@ -330,6 +327,7 @@ class taskdef(object):
             sself.id = sself.name + '%' + sself.c_time
             #### FIXME FOR ASYNCHRONOUS TASKS
             sself.c_hour = sself.c_time[8:10]
+            sself.orig_c_hour = c_time[8:10]
  
             sself.external_tasks = deque()
 
@@ -337,7 +335,7 @@ class taskdef(object):
                 sself.external_tasks.append( command )
  
             if 'contact' in self.modifiers:
-                sself.real_time_delay =  int( self.contact_offset )
+                sself.real_time_delay =  float( self.contact_offset )
 
             # prerequisites
             sself.prerequisites = prerequisites( sself.id )
@@ -370,10 +368,14 @@ class taskdef(object):
 
             sself.outputs.register()
 
-            if startup and len( self.coldstart_prerequisites.keys()) != 0:
-                # ADD coldstart prerequisites AT STARTUP
-                # (Uncomment next line to OVERRIDE existing prerequisites:)
-                #    sself.prerequisites = prerequisites( sself.id )
+            if startup and \
+                    int(sself.orig_c_hour) in sself.valid_hours and \
+                        len( self.coldstart_prerequisites.keys()) != 0:
+                # OVERRIDE my registered prerequisites IF:
+                #  (a) this is a coldstart
+                #  (b) the suite start hour is a valid hour for me
+                #  (c) I have coldstart prerequsites defined
+                sself.prerequisites = prerequisites( sself.id )
                 sself.add_requisites( sself.prerequisites, self.coldstart_prerequisites )
 
             sself.env_vars = OrderedDict()

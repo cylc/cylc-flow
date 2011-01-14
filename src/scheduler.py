@@ -219,7 +219,7 @@ class scheduler(object):
 
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE
-        self.config = config( self.suite )
+        self.config = config( self.suite, dummy_mode=self.dummy_mode )
         self.suite_dir = self.config.get_dirname()
 
         # DETERMINE SUITE LOGGING AND STATE DUMP DIRECTORIES

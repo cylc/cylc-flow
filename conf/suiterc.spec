@@ -36,6 +36,7 @@ clock rate in seconds per dummy hour = integer( default=10 )
 dummy task run time in seconds = integer( default=10 )
 dummy task command      = string( default='cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP"')
 dummy task command fail = string( default='cylc-wrapper -m "echo DUMMY MODE FAILOUT $TASK_ID; /bin/false"')
+job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
 [ task families ]
     __many__ = string_list( default=None )
