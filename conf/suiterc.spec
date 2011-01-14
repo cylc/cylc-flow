@@ -33,8 +33,9 @@ exclude task list   = string_list( default=list() )
 clock offset from initial cycle time in hours = integer( default=24 )
 clock rate in seconds per dummy hour = integer( default=10 )
 # exported as $CYLC_DUMMY_SLEEP in job submission file:
-dummy task run length in seconds = integer( default=10 )
-command list = string_list( default=list( 'cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $CYLC_DUMMY_SLEEP"',))
+dummy task run time in seconds = integer( default=10 )
+dummy task command      = string( default='cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP"')
+dummy task command fail = string( default='cylc-wrapper -m "echo DUMMY MODE FAILOUT $TASK_ID; /bin/false"')
 
 [ task families ]
     __many__ = string_list( default=None )
@@ -65,7 +66,8 @@ __many__ = string
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
     type modifier list = string_list( default=list())
-    command list = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
+    # default to dummy task:
+    command list = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     owner = string( default=None )
     host = string( default=None )
     intercycle = boolean( default=False )
@@ -85,7 +87,8 @@ __many__ = string
     type = string( default=free)
     type modifier list = string_list( default=list())
     cycles = int_list()   # CYCLE TIME LIST
-    command list = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE TASK $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
+    # default to dummy task:
+    command list = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     intercycle = boolean( default=False )
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
     host = string( default=None )

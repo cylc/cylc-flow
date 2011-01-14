@@ -44,9 +44,6 @@ try:
 except:
     use_subprocess = False
  
-dummy_job_succeed = 'cylc-wrapper -m "echo $TASK_ID - DUMMY MODE; sleep $CYLC_DUMMY_SLEEP"'
-dummy_job_fail    = 'cylc-wrapper -m "echo $TASK_ID - DUMMY MODE - ABORTING BY USER REQUEST; /bin/false"'
-
 class job_submit(object):
     # class variables to be set by the task manager
     dummy_mode = False
@@ -63,9 +60,9 @@ class job_submit(object):
     def use_dummy_task( self ):
         # $CYLC_DUMMY_SLEEP is set at start up
         if self.__class__.failout_id != self.task_id:
-            self.task = dummy_job_succeed
+            self.task = self.__class__.dummy_command
         else: 
-            self.task = dummy_job_fail
+            self.task = self.__class__.dummy_command_fail
 
     def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
 
