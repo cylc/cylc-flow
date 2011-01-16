@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* config:get_coldstart_task_list() retrieves auto-defined
+  coldstart_task_list: this needs to include all oneoff tasks upstream
+  of any model coldstart (and coldstart?) task.
+
 * document that a restart early in a coldstart will not be recognized as
   a coldstart.
 
