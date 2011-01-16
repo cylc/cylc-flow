@@ -5,8 +5,6 @@ from config import config
 from optparse import OptionParser
 from collections import deque
 
-lineprefix = ''
-
 def include_files( suitedir, inf ):
     outf = []
     for line in inf:
@@ -42,11 +40,12 @@ def section_level( heading ):
     return level
 
 def print_heading( heading ):
-    space = ' '
-    indent = lineprefix
-    for i in range( 1, section_level(heading) ):
-        indent += space * 2
-    print indent + heading
+    print '>>>' + '->'.join(heading)
+    #space = ' '
+    #indent = '>>>'
+    #for i in range( 1, section_level(heading) ):
+    #    indent += space * 2
+    #print indent + heading
 
 parser = OptionParser( """cylc grep [options] PATTERN SUITE 
 
@@ -86,11 +85,13 @@ if os.path.isfile( suiterc ):
 else:
     parser.error("Suite " + suite + " config file not found: " + suiterc )
 
-sections = deque()
+sections = deque( ['(top)'] )
 
 line_count = 1
 inc_file = None
 in_include_file = False
+prev_section_key = None
+prev_file = None
 
 for line in lines:
 
@@ -125,16 +126,29 @@ for line in lines:
 
     if re.search( pattern, line ):
         # Found a pattern match.
-        for heading in sections:
-            # Print indented section headings
-            print_heading( heading )
-        # print the matching line
+
+        # Print the file name
         if in_include_file:
-            lineno = lineprefix + os.path.join( suitedir, inc_file ) + '[' + str(inc_line_count) + ']:' 
+            curr_file = os.path.join( suitedir, inc_file ) 
+            line_no = inc_line_count
         else:
-            lineno = lineprefix + suiterc + '[' + str(line_count) + ']:' 
-        print lineno
-        print line
+            curr_file = suiterc
+            line_no = line_count
+
+        if curr_file != prev_file:
+            prev_file = curr_file
+            print "\nFILE:", curr_file
+
+        # Print the nested section headings
+        section_key = '->'.join( sections )
+        if section_key != prev_section_key:
+            prev_section_key = section_key
+            #for heading in sections:
+            #    print_heading( heading )
+            print '   SECTION:', section_key
+
+        # Print the pattern match, with line number
+        print '      [' + str(line_no) + ']:', line.rstrip('\n')
 
 if not options.search_bin:
     sys.exit(0)
@@ -153,6 +167,6 @@ for file in os.listdir( bin ):
         count += 1
         if re.search( pattern, line ):
             if new_file:
-                print '\n', file
+                print '\nFILE:', file
                 new_file = False
-            print '['+str(count)+']: ' + line
+            print '   ['+str(count)+']: ' + line

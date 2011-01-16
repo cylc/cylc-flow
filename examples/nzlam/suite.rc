@@ -16,7 +16,7 @@ use secure passphrase = False
 use lockserver = False
 
 [ dummy mode ]
-dummy task run time in seconds = 10
+task run time in seconds = 10
 
 [task insertion groups]
  nzlam_coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 

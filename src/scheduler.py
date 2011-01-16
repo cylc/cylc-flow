@@ -324,14 +324,14 @@ class scheduler(object):
         self.pyro.connect( self.clock, 'clock' )
 
         self.failout_task_id = self.options.failout_task_id
-        globalenv['CYLC_DUMMY_SLEEP'] =  self.config['dummy mode']['dummy task run time in seconds']
+        globalenv['CYLC_DUMMY_SLEEP'] =  self.config['dummy mode']['task run time in seconds']
 
         # JOB SUBMISSION
         job_submit.dummy_mode = self.dummy_mode
         job_submit.global_env = globalenv
         job_submit.joblog_dir = self.config[ 'job submission log directory' ]
-        job_submit.dummy_command = self.config['dummy mode'][ 'dummy task command' ]
-        job_submit.dummy_command_fail = self.config['dummy mode'][ 'dummy task command fail' ]
+        job_submit.dummy_command = self.config['dummy mode'][ 'command' ]
+        job_submit.dummy_command_fail = self.config['dummy mode'][ 'command fail' ]
         if self.dummy_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
 

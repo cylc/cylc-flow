@@ -1,6 +1,11 @@
 _______
 GENERAL
 
+* document that a restart early in a coldstart will not be recognized as
+  a coldstart.
+
+* config should make sure logging directory exists
+
 * TO DO: NEW CONFIG: 
     - conditional dependencies
     - intercycle dependencies
