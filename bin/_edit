@@ -30,8 +30,24 @@ def include_files( suitedir, inf ):
             outf.append( line )
     return outf
 
-parser = OptionParser( """cylc edit [options] SUITE 
-Edit the suite config file for SUITE fully inlined.
+parser = OptionParser( """cylc edit SUITE 
+
+Edit a suite config file (suite.rc) with include-files automatically
+inlined between special markers. After saving your changes and exiting
+from the editor, the file will be split back into its original
+include-file structure.
+
+You must have $EDITOR defined in your shell environment. Currently the
+editing process is simply spawned in the foreground as follows:
+
+$EDITOR <inlined-include-file>
+
+Suite config include-files may be helpful in organizing large suites.
+In such cases this comand allows editing via a temporary monolithic
+config file in which it will be easier to see how suite components are
+related (e.g. for global variables that are used in multiple tasks).
+
+See also 'cylc grep PATTERN SUITE'
 
 Arguments:
   SUITE   - access the cylc logs from the suite of this name.""")

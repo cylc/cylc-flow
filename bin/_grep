@@ -49,11 +49,23 @@ def print_heading( heading ):
     print indent + heading
 
 parser = OptionParser( """cylc grep [options] PATTERN SUITE 
-Find matches to PATTERN in suite SUITE.
+
+Search for matches to PATTERN in a suite config file, which may contain 
+include-files, and, optionally, in all files in the suite bin directory.
+
+Matches are printed with their nested config file section heading and
+file line number, even when include-files are used in the config file.
+
+See also 'cylc edit'.
 
 Arguments:
-  PATTERN - a string or Python regular expression search pattern.
-  SUITE   - access the cylc logs from the suite of this name.""")
+  PATTERN - a string, or Python-style regular expression.
+  SUITE   - name of the suite to search.""")
+
+parser.add_option( "-b", "--bin", help="Search all files in the suite "
+        "bin directory as well as suite.rc (and any include-files)",
+        action="store_true", default=False, dest="search_bin" )
+
 
 ( options, args ) = parser.parse_args()
 
@@ -124,3 +136,23 @@ for line in lines:
         print lineno
         print line
 
+if not options.search_bin:
+    sys.exit(0)
+
+# search files in suite bin directory
+bin = os.path.join( suitedir, 'bin' )
+for file in os.listdir( bin ):
+    new_file = True
+    h = open( os.path.join(bin,file), 'rb')
+    contents = h.readlines()
+    h.close()
+
+    count = 0
+    for line in contents:
+        line = line.rstrip('\n')
+        count += 1
+        if re.search( pattern, line ):
+            if new_file:
+                print '\n', file
+                new_file = False
+            print '['+str(count)+']: ' + line
