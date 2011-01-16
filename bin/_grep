@@ -1,0 +1,74 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from config import config
+from optparse import OptionParser
+from collections import deque
+
+def section_level( heading ):
+    # e.g. foo => 0
+    #     [foo] => 1
+    #    [[foo]] => 2
+    m = re.match( '^(\[+)', heading )
+    if m:
+        level = len( m.groups()[0] )
+    else:
+        level = 0
+    return level
+
+def print_heading( heading ):
+    space = ' '
+    indent = ''
+    for i in range( 1, section_level(heading) ):
+        indent += space * 2
+    print indent + heading
+
+parser = OptionParser( """cylc grep [options] PATTERN SUITE 
+Find matches to PATTERN in suite SUITE.
+
+Arguments:
+  PATTERN - a string or Python regular expression search pattern.
+  SUITE   - access the cylc logs from the suite of this name.""")
+
+( options, args ) = parser.parse_args()
+
+if len(args) != 2:
+    parser.error( "wrong number of arguments" )
+
+pattern = args[0]
+suite = args[1]
+
+suiterc = config( suite ).get_filename()
+
+if os.path.isfile( suiterc ):
+    h = open( suiterc, 'rb' )
+    lines = h.readlines()
+    h.close()
+else:
+    parser.error("Suite " + suite + " config file not found: " + suiterc )
+
+sections = deque()
+
+line_count = 0
+for line in lines:
+    line_count += 1
+
+    m = re.match( '\s*(\[+\s*([\w ]+)\s*\]+)', line )
+    if m:
+        # new section heading detected
+        heading = m.groups()[0] 
+        level = section_level( heading )
+        name = m.groups()[1]
+        # unwind to the current section level
+        while len(sections) > level - 1:
+            sections.pop()
+        sections.append( heading )
+        continue
+
+    if re.search( pattern, line ):
+        # Found a pattern match.
+        for heading in sections:
+            # Print indented section headings
+            print_heading( heading )
+        # print the matching line
+        print str(line_count) + ':' + line
