@@ -16,13 +16,13 @@ def include_files( suitedir, inf ):
             inc = os.path.join( suitedir, match )
             if os.path.isfile(inc):
                 #print "Inlining", inc
-                outf.append('# ++++ INLINED INCLUDE FILE STARTS ++++ : ' + match )
+                outf.append('# ++++ INLINED INCLUDE FILE STARTS ++++ : ' + match + '\n')
                 h = open(inc, 'rb')
                 inc = h.readlines()
                 h.close()
                 # recursive inclusion
                 outf.extend( include_files( suitedir, inc ))
-                outf.append('# ++++ INLINED INCLUDE FILE ENDS ++++ : ' + match )
+                outf.append('# ++++ INLINED INCLUDE FILE ENDS ++++ : ' + match + '\n')
             else:
                 raise SystemExit( "File not found: " + inc )
         else:

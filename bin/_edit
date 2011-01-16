@@ -1,0 +1,129 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from shutil import move
+import subprocess
+from config import config
+from optparse import OptionParser
+from collections import deque
+
+def include_files( suitedir, inf ):
+    outf = []
+    for line in inf:
+        m = re.match( '\s*#include\s+([\w.]+)\s*$', line )
+        if m:
+            match = m.groups()[0]
+            inc = os.path.join( suitedir, match )
+            if os.path.isfile(inc):
+                #print "Inlining", inc
+                outf.append('# ++++ INLINED INCLUDE FILE STARTS ++++ : ' + match  + ' <----- DO NOT DELETE!\n')
+                h = open(inc, 'rb')
+                inc = h.readlines()
+                h.close()
+                # recursive inclusion
+                outf.extend( include_files( suitedir, inc ))
+                outf.append('# ++++ INLINED INCLUDE FILE ENDS ++++ : ' + match  + ' <----- DO NOT DELETE!\n')
+            else:
+                raise SystemExit( "File not found: " + inc )
+        else:
+            # no match
+            outf.append( line )
+    return outf
+
+parser = OptionParser( """cylc edit [options] SUITE 
+Edit the suite config file for SUITE fully inlined.
+
+Arguments:
+  SUITE   - access the cylc logs from the suite of this name.""")
+
+( options, args ) = parser.parse_args()
+
+if len(args) != 1:
+    parser.error( "wrong number of arguments" )
+
+suite = args[0]
+
+try:
+    editor = os.environ['EDITOR']
+except KeyError:
+    raise SystemExit( 'export $EDITOR before using this command' )
+
+suiterc = config( suite ).get_filename()
+suitedir = config( suite ).get_dirname()
+
+if os.path.isfile( suiterc ):
+    h = open( suiterc, 'rb' )
+    lines0 = h.readlines()
+    h.close()
+    # inline any include files
+    lines = include_files( suitedir, lines0 )
+else:
+    parser.error("Suite " + suite + " config file not found: " + suiterc )
+
+editfile = suiterc + '.edit.inline'
+h = open( editfile, 'wb' )
+h.writelines( lines )
+h.close()
+
+command_list = [ editor, editfile ]
+ 
+try:
+    # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+    retcode = subprocess.call( command_list )
+    if retcode != 0:
+        # the command returned non-zero exist status
+        print >> sys.stderr, ' '.join( command_list ), ' failed: ', retcode
+        sys.exit(1)
+
+except OSError:
+    # the command was not invoked
+    print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
+    #print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
+    #print >> sys.stderr, " * Are all cylc scripts executable?"
+    sys.exit(1)
+ 
+line_count = 0
+inc_file = None
+in_include_file = False
+
+h = open( editfile, 'rb' )
+lines = h.readlines()
+h.close()
+
+new_suiterc_file = suiterc + '.edit.new'
+h = open( new_suiterc_file, 'wb' )
+
+new_files = [ new_suiterc_file ]
+
+for line in lines:
+    m = re.match('^# \+\+\+\+ INLINED INCLUDE FILE STARTS \+\+\+\+ : ([\w/.]+)', line )
+    if m:
+        inc_filename = m.groups()[0]
+        inc_file = os.path.join( suitedir, m.groups()[0] ) + '.edit.new'
+        new_files.append( inc_file )
+        g = open( inc_file, 'wb' )
+        h.write( '#include ' + inc_filename + '\n')
+        in_include_file = True
+        inc_line_count = 0
+        continue
+ 
+    if not in_include_file:
+        line_count += 1
+        h.write( line )
+    else:
+        inc_line_count += 1
+        m = re.match('^# \+\+\+\+ INLINED INCLUDE FILE ENDS \+\+\+\+ : ' + inc_filename, line )
+        if m:
+            in_include_file = False
+            g.close()
+            print 'Wrote', inc_line_count, 'lines to', inc_file
+            continue
+        g.write( line )
+
+print 'Wrote', line_count, 'lines to', suiterc
+
+for src in new_files:
+    dest = re.sub( '\.edit\.new', '', src )
+    print 'renaming', src, 'to', dest
+    move( src, dest )
+
