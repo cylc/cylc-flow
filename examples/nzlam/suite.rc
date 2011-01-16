@@ -1,3 +1,12 @@
+
+    # TO DO: LOOK UP OLAF'S EMAIL, WHICH SOLVES THIS PROBLEM.
+    # VAR_ConfigureLS also depends on UM_nzlam_recon, which runs at 00
+    # UTC. Both these tasks trigger off the UM f/c, are essentially the
+    # same program (UM reconfiguration), and can (apparently) interfere
+    # in their use of temp directories. See EcoConnect JIRA ticket 195.
+    #if HOUR in 0:
+    #   "NZtoNZ_recon%$(CYCLE_TIME) finished"
+
 title = NZLAM Master Suite
 description = """NZLAM Master Suite"""
 
@@ -17,20 +26,20 @@ dummy task run time in seconds = 10
 
 [dependency graph]
     [[0,6,12,18]]
-    a = get_frames => make_alabc => forecast => get_outputs housekeeping
-    b = get_obstore get_bgerr => OPS
-    bb = forecast(T-6) => VAR_ConfigureLS OPS
-    c = OPS VAR_ConfigureLS => VAR_AnalysePF => VAR_monitoring forecast
-    [[0]]
-    h = forecast(T-6) => NZtoNZ_recon => forecast
+    a = get_frames ===> make_alabc ===> forecast ===> get_outputs & housekeeping
+    b = get_obstore & get_bgerr ===> OPS
+    c = forecast(T-6) ===> VAR_ConfigureLS & OPS
+    d = OPS & VAR_ConfigureLS ===> VAR_AnalysePF ===> VAR_monitoring & forecast
+    # COLDSTART:
+    e = prepare_suite| =c=> get_globaldump| get_obstore & get_bgerr & get_frames
+    f = get_globaldump| ===> GLtoGL_recon| ===> GLtoNZ_recon| ===> forecast_cold| =m=> forecast
+    g = forecast_cold| =c=> OPS & VAR_ConfigureLS
 
-    [[0,6,12,18]]
-    e = coldstart:prepare_suite => oneoff:get_globaldump get_obstore get_bgerr get_frames
-    f = oneoff:get_globaldump => oneoff:GLtoGL_recon => oneoff:GLtoNZ_recon => model_coldstart:forecast_cold => forecast
-    g = coldstart:forecast_cold => OPS VAR_ConfigureLS
     [[0]]
-     i = coldstart:forecast_cold => NZtoNZ_recon
-    
+    e = forecast(T-6) ===> NZtoNZ_recon ===> forecast
+    # COLDSTART:
+    i = forecast_cold| =c=> NZtoNZ_recon
+   
 [environment]
 #__________________________
 # TOP I/O LEVEL DIRECTORIES
@@ -218,18 +227,15 @@ MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
         environment = COPY_ALL
 
 [[get_outputs]] #-------------------------------------------------------
-    description = """Move forecast model output PP files from the UM
-    output directories to the suite output directory, renaming them
-    appropriately."""
+    description = Move and rename UM STASH output files.
     command list = cylc-wrapper get-outputs.sh $WARMSTART_RUNID pp0 pp1 pc pi,
 
 [[housekeeping]] #------------------------------------------------------
-    description = """Clean up output that would otherwise accumulate
-    indefinitely by rolling the running archive after at 120 hours prior
-    to cycle time."""
+    description = Roll the suite staging archive: T-120 hours
     scripting = """
-        cylcutil check-vars -d RUNNING_DIR
-        cylcutil rolling-archive $RUNNING_DIR 120"""
+cylcutil check-vars -d RUNNING_DIR
+cylcutil rolling-archive $RUNNING_DIR 120
+    """
 
 [[get_bgerr]] #----------------------------------------------------------
     description = Retrieve bgerr file for current cycle.
@@ -256,7 +262,7 @@ MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
 [[make_alabc]] #--------------------------------------------------------
     description = Convert NZLAM frames to an ALABC (boundary condition) file
     command list = cylc-wrapper make_alabc.sh --keep,
-    scripting = """. ~um_fcm/user-config/um.profile"""
+    scripting = . ~um_fcm/user-config/um.profile
     [[[directives]]]
         # serial job on fitzroy
         job_type     =  serial
@@ -268,18 +274,18 @@ MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
     type modifier list = model(restarts = 1),
     command list = UM-wrapper.sh,
     scripting = """
-    export UM_PPVARFILE=$( cylcutil template TEMPLATE_PPVAR_FILE )
-    export UM_PP7CXFILE=$( cylcutil template TEMPLATE_PP7CX_FILE )
-    export UM_DATAMDIR=$(  cylcutil template TEMPLATE_DATAM_DIR  )
-    export UM_DATAWDIR=$(  cylcutil template TEMPLATE_DATAW_DIR  )
-    export UM_ALABCFILE=$( cylcutil template TEMPLATE_ALABC_FILE )
-    export UM_VARINCFILE=$( cylcutil template TEMPLATE_VAR_INCR_FILE )
-    if [[ $( cylcutil cycle-time --hour ) == 00 ]]; then
-        export UM_STARTDUMP=$( cylcutil template -s 6 $TEMPLATE_RECONFIGURED_RESTART_DUMP )
-    else
-        export UM_STARTDUMP=$( cylcutil template -s 6 $TEMPLATE_RESTART_DUMP )
-    fi
-    export UM_LOGDIR=$( cylcutil template TEMPLATE_LOGFILE_DIR )
+export UM_PPVARFILE=$( cylcutil template TEMPLATE_PPVAR_FILE )
+export UM_PP7CXFILE=$( cylcutil template TEMPLATE_PP7CX_FILE )
+export UM_DATAMDIR=$(  cylcutil template TEMPLATE_DATAM_DIR  )
+export UM_DATAWDIR=$(  cylcutil template TEMPLATE_DATAW_DIR  )
+export UM_ALABCFILE=$( cylcutil template TEMPLATE_ALABC_FILE )
+export UM_VARINCFILE=$( cylcutil template TEMPLATE_VAR_INCR_FILE )
+if [[ $( cylcutil cycle-time --hour ) == 00 ]]; then
+    export UM_STARTDUMP=$( cylcutil template -s 6 $TEMPLATE_RECONFIGURED_RESTART_DUMP )
+else
+    export UM_STARTDUMP=$( cylcutil template -s 6 $TEMPLATE_RESTART_DUMP )
+fi
+export UM_LOGDIR=$( cylcutil template TEMPLATE_LOGFILE_DIR )
     """
     [[[environment]]]
         UMUI_JOBDIR = $WARMSTART_JOBDIR
@@ -288,9 +294,9 @@ MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
     description = Reconfigure the NZLAM model restart dump
     command list = UMrecon-wrapper.sh,
     scripting = """
-    export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_RESTART_DUMP ) 
-    export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_RECONFIGURED_RESTART_DUMP ) 
-    export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
+export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_RESTART_DUMP ) 
+export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_RECONFIGURED_RESTART_DUMP ) 
+export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
     """
     [[[environment]]]
         UMUI_JOBDIR = $NZtoNZ_RECON_JOBDIR
@@ -299,9 +305,9 @@ MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
     description = Reconfigure the cold start dump for the NZLAM
     command list = UMrecon-wrapper.sh,
     scripting = """
-    export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_GLOBAL_DUMP ) 
-    export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_RESTART_DUMP ) 
-    export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
+export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_GLOBAL_DUMP ) 
+export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_RESTART_DUMP ) 
+export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
     """
     [[[environment]]]
         UMUI_JOBDIR = $GLtoNZ_RECON_JOBDIR
@@ -310,26 +316,24 @@ MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
     description = NZLAM initial forecast from global model start dump.
     command list = UM-wrapper.sh,
     scripting = """
-    export UM_STARTDUMP=$( cylcutil template -s 6 $TEMPLATE_RESTART_DUMP )
-    export UM_PPVARFILE=$( cylcutil template -s 6 TEMPLATE_PPVAR_FILE   )
-    export UM_PP7CXFILE=$( cylcutil template -s 6 TEMPLATE_PP7CX_FILE   )
-    export UM_DATAMDIR=$(  cylcutil template -s 6 TEMPLATE_DATAM_DIR    )
-    export UM_DATAWDIR=$(  cylcutil template -s 6 TEMPLATE_DATAW_DIR    )
-    export UM_ALABCFILE=$( cylcutil template      TEMPLATE_ALABC_FILE   )
-    export UM_LOGDIR=$(    cylcutil template      TEMPLATE_LOGFILE_DIR  )
+export UM_STARTDUMP=$( cylcutil template -s 6 $TEMPLATE_RESTART_DUMP )
+export UM_PPVARFILE=$( cylcutil template -s 6 TEMPLATE_PPVAR_FILE   )
+export UM_PP7CXFILE=$( cylcutil template -s 6 TEMPLATE_PP7CX_FILE   )
+export UM_DATAMDIR=$(  cylcutil template -s 6 TEMPLATE_DATAM_DIR    )
+export UM_DATAWDIR=$(  cylcutil template -s 6 TEMPLATE_DATAW_DIR    )
+export UM_ALABCFILE=$( cylcutil template      TEMPLATE_ALABC_FILE   )
+export UM_LOGDIR=$(    cylcutil template      TEMPLATE_LOGFILE_DIR  )
     """
     [[[environment]]]
         UMUI_JOBDIR = $COLDSTART_JOBDIR
 
 [[GLtoGL_recon]] #------------------------------------------------------
-    description = """Reconfigure a reduced UM global model dump to add
-    in global ancillary fields and generate a full sized UM global
-    global start dump."""
+    description = Reconstitute a reduced UM global model dump
     command list = UMrecon-wrapper.sh,
     scripting = """
-    export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_REDUCED_GLOBAL_DUMP ) 
-    export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_GLOBAL_DUMP ) 
-    export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
+export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_REDUCED_GLOBAL_DUMP ) 
+export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_GLOBAL_DUMP ) 
+export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
     """
     [[[environment]]]
         UMUI_JOBDIR = $GLtoGL_RECON_JOBDIR
@@ -353,12 +357,5 @@ MAKEBC_NAMELIST = $CONTROL_DIR/makebc/nzlam_frames_full_L70.nl
     [[[directives]]]
         # VARUI <JOB>_init requires $LOGNAME within loadleveler
         environment = COPY_ALL
-
-    # Also depend on UM_nzlam_recon, which runs at 00 UTC. Both these
-    # tasks trigger off the UM f/c, are essentially the same program (UM
-    # reconfiguration), and can (apparently) interfere in their use of
-    # temp directories. See EcoConnect JIRA ticket 195.
-    #if HOUR in 0:
-    #   "NZtoNZ_recon%$(CYCLE_TIME) finished"
 
 [[prepare_suite]]

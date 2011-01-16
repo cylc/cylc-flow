@@ -246,6 +246,8 @@ class taskdef(object):
             mod = __import__( foo )
             base_types.append( getattr( mod, foo ) )
 
+        print self.name, base_types
+
         tclass = type( self.name, tuple( base_types), dict())
         tclass.name = self.name        # TO DO: NOT NEEDED, USED class.__name__
         tclass.instance_count = 0
