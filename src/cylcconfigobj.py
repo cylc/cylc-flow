@@ -124,7 +124,7 @@ class CylcConfigObj( ConfigObj ):
                 match = m.groups()[0]
                 inc = os.path.join( self.suite_dir, match )
                 if os.path.isfile(inc):
-                    print "Inlining", inc
+                    #print "Inlining", inc
                     h = open(inc, 'rb')
                     inc = h.readlines()
                     h.close()

@@ -5,6 +5,31 @@ from config import config
 from optparse import OptionParser
 from collections import deque
 
+lineprefix = ''
+
+def include_files( suitedir, inf ):
+    outf = []
+    for line in inf:
+        m = re.match( '\s*#include\s+([\w.]+)\s*$', line )
+        if m:
+            match = m.groups()[0]
+            inc = os.path.join( suitedir, match )
+            if os.path.isfile(inc):
+                #print "Inlining", inc
+                outf.append('# ++++ INLINED INCLUDE FILE STARTS ++++ : ' + match )
+                h = open(inc, 'rb')
+                inc = h.readlines()
+                h.close()
+                # recursive inclusion
+                outf.extend( include_files( suitedir, inc ))
+                outf.append('# ++++ INLINED INCLUDE FILE ENDS ++++ : ' + match )
+            else:
+                raise SystemExit( "File not found: " + inc )
+        else:
+            # no match
+            outf.append( line )
+    return outf
+
 def section_level( heading ):
     # e.g. foo => 0
     #     [foo] => 1
@@ -18,7 +43,7 @@ def section_level( heading ):
 
 def print_heading( heading ):
     space = ' '
-    indent = ''
+    indent = lineprefix
     for i in range( 1, section_level(heading) ):
         indent += space * 2
     print indent + heading
@@ -39,19 +64,40 @@ pattern = args[0]
 suite = args[1]
 
 suiterc = config( suite ).get_filename()
+suitedir = config( suite ).get_dirname()
 
 if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )
-    lines = h.readlines()
+    lines0 = h.readlines()
     h.close()
+    lines = include_files( suitedir, lines0 )
 else:
     parser.error("Suite " + suite + " config file not found: " + suiterc )
 
 sections = deque()
 
-line_count = 0
+line_count = 1
+inc_file = None
+in_include_file = False
+
 for line in lines:
-    line_count += 1
+
+    m = re.match('^# \+\+\+\+ INLINED INCLUDE FILE STARTS \+\+\+\+ : ([\w/.]+)', line )
+    if m:
+        inc_file = m.groups()[0]
+        in_include_file = True
+        inc_line_count = 0
+        continue
+ 
+    if not in_include_file:
+        line_count += 1
+    else:
+        inc_line_count += 1
+        m = re.match('^# \+\+\+\+ INLINED INCLUDE FILE ENDS \+\+\+\+ : ' + inc_file, line )
+        if m:
+            in_include_file = False
+            inc_file = None
+            continue
 
     m = re.match( '\s*(\[+\s*([\w ]+)\s*\]+)', line )
     if m:
@@ -71,4 +117,10 @@ for line in lines:
             # Print indented section headings
             print_heading( heading )
         # print the matching line
-        print str(line_count) + ':' + line
+        if in_include_file:
+            lineno = lineprefix + os.path.join( suitedir, inc_file ) + '[' + str(inc_line_count) + ']:' 
+        else:
+            lineno = lineprefix + suiterc + '[' + str(line_count) + ']:' 
+        print lineno
+        print line
+
