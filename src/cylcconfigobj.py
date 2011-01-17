@@ -119,7 +119,7 @@ class CylcConfigObj( ConfigObj ):
     def include_files( self, inf ):
         outf = []
         for line in inf:
-            m = re.match( '\s*#include\s+([\w.]+)\s*$', line )
+            m = re.match( '\s*#include\s+([\w/\.\-]+)\s*$', line )
             if m:
                 match = m.groups()[0]
                 inc = os.path.join( self.suite_dir, match )

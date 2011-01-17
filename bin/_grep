@@ -8,19 +8,19 @@ from collections import deque
 def include_files( suitedir, inf ):
     outf = []
     for line in inf:
-        m = re.match( '\s*#include\s+([\w.]+)\s*$', line )
+        m = re.match( '\s*#include\s+([\w/\.\-]+)\s*$', line )
         if m:
             match = m.groups()[0]
             inc = os.path.join( suitedir, match )
             if os.path.isfile(inc):
                 #print "Inlining", inc
-                outf.append('# ++++ INLINED INCLUDE FILE STARTS ++++ : ' + match + '\n')
+                outf.append('++++ START INLINED INCLUDE FILE ' + match + '\n')
                 h = open(inc, 'rb')
                 inc = h.readlines()
                 h.close()
                 # recursive inclusion
                 outf.extend( include_files( suitedir, inc ))
-                outf.append('# ++++ INLINED INCLUDE FILE ENDS ++++ : ' + match + '\n')
+                outf.append('++++ END INLINED INCLUDE FILE ' + match + '\n')
             else:
                 raise SystemExit( "File not found: " + inc )
         else:
@@ -61,10 +61,8 @@ Arguments:
   PATTERN - a string, or Python-style regular expression.
   SUITE   - name of the suite to search.""")
 
-parser.add_option( "-b", "--bin", help="Search all files in the suite "
-        "bin directory as well as suite.rc (and any include-files)",
+parser.add_option( "-x", help="Do not search in the suite bin directory",
         action="store_true", default=False, dest="search_bin" )
-
 
 ( options, args ) = parser.parse_args()
 
@@ -95,7 +93,7 @@ prev_file = None
 
 for line in lines:
 
-    m = re.match('^# \+\+\+\+ INLINED INCLUDE FILE STARTS \+\+\+\+ : ([\w/.]+)', line )
+    m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line )
     if m:
         inc_file = m.groups()[0]
         in_include_file = True
@@ -106,7 +104,7 @@ for line in lines:
         line_count += 1
     else:
         inc_line_count += 1
-        m = re.match('^# \+\+\+\+ INLINED INCLUDE FILE ENDS \+\+\+\+ : ' + inc_file, line )
+        m = re.match('^\+\+\+\+ END INLINED INCLUDE FILE ' + inc_file, line )
         if m:
             in_include_file = False
             inc_file = None

@@ -11,7 +11,7 @@ from collections import deque
 def include_files( suitedir, inf ):
     outf = []
     for line in inf:
-        m = re.match( '\s*#include\s+([\w\-\.]+)\s*$', line )
+        m = re.match( '\s*#include\s+([\w/\-\.]+)\s*$', line )
         if m:
             match = m.groups()[0]
             inc = os.path.join( suitedir, match )
@@ -53,7 +53,7 @@ This command supports suite.rc editing with inlined include-files.
 See also 'cylc grep', an include-file aware suite search command.
 
 Currently the editing process is spawned in the foreground as follows:
-  $EDITOR <inlined-include-file>
+  $EDITOR <inlined-suite.rc-file>
 so you must have $EDITOR defined in your shell environment. 
 
 Include-files are inlined between special markers. After you save
@@ -155,7 +155,7 @@ new_files = [ new_suiterc_file ]
 file_seen = {}
 skip_file = False
 for line in lines:
-    m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line )
+    m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w\/\.\-]+)', line )
     if m:
         # detected start of an included file
         inc_filename = m.groups()[0]
