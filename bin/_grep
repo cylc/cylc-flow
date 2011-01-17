@@ -156,6 +156,10 @@ if not options.search_bin:
 # search files in suite bin directory
 bin = os.path.join( suitedir, 'bin' )
 for file in os.listdir( bin ):
+    if re.match( '^\.', file):
+        # skip hidden dot-files
+        # (e.g. vim editor temporary files)
+        continue
     new_file = True
     h = open( os.path.join(bin,file), 'rb')
     contents = h.readlines()
