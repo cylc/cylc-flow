@@ -381,10 +381,7 @@ class taskdef(object):
                 sself.add_requisites( sself.prerequisites, self.coldstart_prerequisites )
 
             sself.env_vars = OrderedDict()
-            sself.env_vars['TASK_NAME'] = sself.name
-            sself.env_vars['TASK_ID'] = sself.id
-            sself.env_vars['CYCLE_TIME'] = sself.c_time
-       
+      
             for var in self.environment:
                 val = self.environment[ var ]
                 sself.env_vars[ var ] = val

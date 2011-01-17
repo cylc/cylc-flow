@@ -212,6 +212,11 @@ class job_submit(object):
         # global env: see comment in __init__() environment section
         #### self.global_env = replace_delayed( self.__class__.global_env )
 
+        FILE.write( "\n# TASK EXECUTION ENVIRONMENT task identity:\n" )
+        FILE.write( "export TASK_ID=" + self.task_id + "\n" )
+        FILE.write( "export TASK_NAME=" + self.task_name + "\n" )
+        FILE.write( "export CYCLE_TIME=" + self.cycle_time + "\n" )
+
         FILE.write( "# TASK EXECUTION ENVIRONMENT global variables:\n" )
         for var in self.global_env:
             FILE.write( "export " + var + "=\"" + str( self.global_env[var] ) + "\"\n" )
