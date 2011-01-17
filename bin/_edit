@@ -10,19 +10,19 @@ from collections import deque
 def include_files( suitedir, inf ):
     outf = []
     for line in inf:
-        m = re.match( '\s*#include\s+([\w.]+)\s*$', line )
+        m = re.match( '\s*#include\s+([\w\-\.]+)\s*$', line )
         if m:
             match = m.groups()[0]
             inc = os.path.join( suitedir, match )
             if os.path.isfile(inc):
                 #print "Inlining", inc
-                outf.append('# ++++ INLINED INCLUDE FILE STARTS ++++ : ' + match  + ' <----- DO NOT DELETE!\n')
+                outf.append('++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
                 h = open(inc, 'rb')
                 inc = h.readlines()
                 h.close()
                 # recursive inclusion
                 outf.extend( include_files( suitedir, inc ))
-                outf.append('# ++++ INLINED INCLUDE FILE ENDS ++++ : ' + match  + ' <----- DO NOT DELETE!\n')
+                outf.append('++++ END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
             else:
                 raise SystemExit( "File not found: " + inc )
         else:
@@ -111,14 +111,22 @@ h = open( new_suiterc_file, 'wb' )
 
 new_files = [ new_suiterc_file ]
 
+file_seen = {}
+skip_file = False
 for line in lines:
-    m = re.match('^# \+\+\+\+ INLINED INCLUDE FILE STARTS \+\+\+\+ : ([\w/.]+)', line )
+    m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w/\.\-]+)', line )
     if m:
+        # detected start of an included file
         inc_filename = m.groups()[0]
-        inc_file = os.path.join( suitedir, m.groups()[0] ) + '.edit.new'
-        new_files.append( inc_file )
-        g = open( inc_file, 'wb' )
+        if inc_filename in file_seen:
+            # seen this file already (multiple inclusion): skip it.
+            skip_file = True
+        file_seen[inc_filename] = True
         h.write( '#include ' + inc_filename + '\n')
+        if not skip_file:
+            inc_file = os.path.join( suitedir, m.groups()[0] ) + '.edit.new'
+            new_files.append( inc_file )
+            g = open( inc_file, 'wb' )
         in_include_file = True
         inc_line_count = 0
         continue
@@ -128,13 +136,18 @@ for line in lines:
         h.write( line )
     else:
         inc_line_count += 1
-        m = re.match('^# \+\+\+\+ INLINED INCLUDE FILE ENDS \+\+\+\+ : ' + inc_filename, line )
+        m = re.match('^\+\+\+\+ END INLINED INCLUDE FILE ' + inc_filename, line )
         if m:
             in_include_file = False
-            g.close()
-            print 'Wrote', inc_line_count, 'lines to', inc_file
+            if not skip_file:
+                g.close()
+                print 'Wrote', inc_line_count, 'lines to', inc_file
+            else:
+                print 'SKIPPED', inc_line_count, 'lines of', inc_file
+                skip_file = False
             continue
-        g.write( line )
+        if not skip_file:
+            g.write( line )
 
 print 'Wrote', line_count, 'lines to', suiterc
 
