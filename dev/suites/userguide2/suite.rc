@@ -24,7 +24,7 @@ job submission log directory = logs
 
 exclude task list = baz,
 
-[ task families ]
+[task families]
 FOO = foo, bar
 
 [dependency graph] #----------------------------------------------------
@@ -93,6 +93,7 @@ echo bye"""
         [[[environment]]]
         A_INPUT_DIR = $WORKSPACE
         A_OUTPUT_DIR = $WORKSPACE
+#include common-env.inc
 
     [[B]] #------------------------------------------------------
     type modifier list = model(restarts = 3),
@@ -100,6 +101,7 @@ echo bye"""
         [[[environment]]]
         B_INPUT_DIR = $WORKSPACE
         B_OUTPUT_DIR = $WORKSPACE
+#include common-env.inc
 
     [[C]] #------------------------------------------------------
     type modifier list = model(restarts = 3),
@@ -107,6 +109,7 @@ echo bye"""
         [[[environment]]]
         C_INPUT_DIR = $WORKSPACE
         C_OUTPUT_DIR = $WORKSPACE
+#include common-env.inc
 
     [[D]] #------------------------------------------------------
     execution timeout minutes = 0.1
