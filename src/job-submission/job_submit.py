@@ -48,7 +48,6 @@ class job_submit(object):
     # class variables to be set by the task manager
     dummy_mode = False
     failout_id = None
-    ####global_env = {}
 
     def interp_str( self, str ):
         str = interp_other_str( str, self.task_env )
@@ -188,13 +187,13 @@ class job_submit(object):
 
     def write_jobfile( self, FILE ):
         FILE.write( '#!/bin/bash\n\n' )
-        FILE.write( '# THIS IS A CYLC JOB SUBMISSION FILE FOR ' + self.task_id + '.\n' )
-        FILE.write( '# It will be submitted to run by the "' + self.__class__.__name__ + '" method.\n\n' )
+        FILE.write( '# ++++ THIS IS A CYLC JOB SUBMISSION FILE ++++\n\n' )
+        FILE.write( '# Task Identity: ' + self.task_id + '.\n' )
+        FILE.write( '# Job Submission Method: ' + self.__class__.__name__ + '\n\n' )
         self.write_directives( FILE )
         self.write_environment( FILE )
-        self.write_cylc_scripting( FILE )
         self.write_extra_scripting( FILE )
-        self.write_task_execute( FILE ) 
+        self.write_task_execute( FILE )
         FILE.write( '#EOF' )
 
     def write_directives( self, FILE ):
@@ -207,21 +206,26 @@ class job_submit(object):
     def write_environment( self, FILE ):
         # write the environment scripting to the jobfile
 
-        #for env in [ self.__class__.global_env, self.task_env ]:
+        # if the task defined $CYLC_DIR, override the global cylc_env
+        # (for tasks running on a remote host)
+        if 'CYLC_DIR' in self.task_env:
+            self.cylc_env['CYLC_DIR'] = self.task_env['CYLC_DIR']
 
-        # global env: see comment in __init__() environment section
-        #### self.global_env = replace_delayed( self.__class__.global_env )
+        FILE.write( "# CYLC ENVIRONMENT:\n" )
+        for var in self.cylc_env:
+            FILE.write( "export " + var + "=\"" + str( self.cylc_env[var] ) + "\"\n" )
+        FILE.write( "\n. $CYLC_DIR/cylc-env.sh\n" )
 
-        FILE.write( "\n# TASK EXECUTION ENVIRONMENT task identity:\n" )
+        FILE.write( "\n# TASK IDENTITY:\n" )
         FILE.write( "export TASK_ID=" + self.task_id + "\n" )
         FILE.write( "export TASK_NAME=" + self.task_name + "\n" )
         FILE.write( "export CYCLE_TIME=" + self.cycle_time + "\n" )
 
-        FILE.write( "# TASK EXECUTION ENVIRONMENT global variables:\n" )
+        FILE.write( "# SUITE GLOBAL VARIABLES:\n" )
         for var in self.global_env:
             FILE.write( "export " + var + "=\"" + str( self.global_env[var] ) + "\"\n" )
 
-        FILE.write( "\n# TASK EXECUTION ENVIRONMENT task variables:\n" )
+        FILE.write( "\n# TASK LOCAL VARIABLES:\n" )
         for var in self.task_env:
             FILE.write( "export " + var + "=\"" + str( self.task_env[var] ) + "\"\n" )
 
@@ -230,11 +234,6 @@ class job_submit(object):
         FILE.write( "\n" )
         FILE.write( "# SCRIPTING:\n" )
         FILE.write( self.extra_scripting + '\n' )
-
-    def write_cylc_scripting( self, FILE ):
-        FILE.write( "\n" )
-        FILE.write( "# CONFIGURE THE ENVIRONMENT FOR CYLC:\n" )
-        FILE.write( ". $CYLC_DIR/cylc-env.sh\n" )
 
     def write_task_execute( self, FILE ):
         FILE.write( "\n" )

@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import re, os, sys, datetime, socket, logging
 from time import sleep
 from optparse import OptionParser
@@ -92,21 +91,22 @@ if config[ 'use lockserver' ]:
     if not suite_lock( name, suite_dir, owner, host, lockserver_port, 'submit' ).request_suite_access():
         raise SystemExit( 'ERROR: failed to acquire a suite lock' )
 
-# initial global environment ----------------------------------------
-globalenv = OrderedDict()
+# CYLC EXECUTION ENVIRONMENT
+cylcenv = OrderedDict()
 if options.sched:
-    globalenv[ 'CYLC_MODE' ] = 'scheduler'
+    cylcenv[ 'CYLC_MODE' ] = 'scheduler'
 else:
-    globalenv[ 'CYLC_MODE' ] = 'submit'
-globalenv[ 'CYLC_SUITE_HOST' ] = host
-globalenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
-globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
-globalenv[ 'CYLC_SUITE_DIR' ] = suite_dir
-globalenv[ 'CYLC_SUITE_NAME' ] = name
-globalenv[ 'CYLC_SUITE_OWNER' ] = owner
-globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
+    cylcenv[ 'CYLC_MODE' ] = 'submit'
+cylcenv[ 'CYLC_SUITE_HOST' ] = host
+cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
+cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+cylcenv[ 'CYLC_SUITE_DIR' ] = suite_dir
+cylcenv[ 'CYLC_SUITE_NAME' ] = name
+cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
+cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 
-
+# USER DEFINED GLOBAL ENVIRONMENT
+globalenv = OrderedDict()
 for var in config['environment']:
     globalenv[ var ] = config['environment'][var]
 
@@ -114,7 +114,9 @@ for var in config['environment']:
 log = logging.getLogger()
 pimp_my_logger.pimp_it( log, logging_dir, logging.INFO, False, None, True )
 
+job_submit.cylc_env = cylcenv
 job_submit.global_env = globalenv
+ 
 job_submit.joblog_dir = config['job submission log directory']
 
 # intantiate the task--------------------------------------------------

@@ -381,7 +381,6 @@ class taskdef(object):
                 sself.add_requisites( sself.prerequisites, self.coldstart_prerequisites )
 
             sself.env_vars = OrderedDict()
-      
             for var in self.environment:
                 val = self.environment[ var ]
                 sself.env_vars[ var ] = val

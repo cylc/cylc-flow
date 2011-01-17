@@ -303,17 +303,19 @@ class scheduler(object):
         task.task_timeout_hook = self.config['task timeout hook']
         task.task_submission_timeout_minutes = self.config['task submission timeout minutes']
 
-        # GLOBAL TASK EXECUTION ENVIRONMENT
+        # CYLC EXECUTION ENVIRONMENT
+        cylcenv = OrderedDict()
+        cylcenv[ 'CYLC_MODE' ] = 'scheduler'
+        cylcenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
+        cylcenv[ 'CYLC_SUITE_PORT' ] =  self.pyro.get_port()
+        cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
+        cylcenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
+        cylcenv[ 'CYLC_SUITE_NAME' ] = self.suite
+        cylcenv[ 'CYLC_SUITE_OWNER' ] = self.owner
+        cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
+
+        # USER DEFINED GLOBAL ENVIRONMENT
         globalenv = OrderedDict()
-        globalenv[ 'CYLC_MODE' ] = 'scheduler'
-        globalenv[ 'CYLC_SUITE_HOST' ] =  str( self.host )
-        globalenv[ 'CYLC_SUITE_PORT' ] =  self.pyro.get_port()
-        globalenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
-        globalenv[ 'CYLC_SUITE_DIR' ] = self.suite_dir
-        globalenv[ 'CYLC_SUITE_NAME' ] = self.suite
-        globalenv[ 'CYLC_SUITE_OWNER' ] = self.owner
-        globalenv[ 'CYLC_USE_LOCKSERVER' ] = str( self.use_lockserver )
-        # PLUS USER DEFINED GLOBAL ENVIRONMENT
         for var in self.config['environment']:
             globalenv[ var ] = self.config['environment'][var]
 
@@ -324,10 +326,11 @@ class scheduler(object):
         self.pyro.connect( self.clock, 'clock' )
 
         self.failout_task_id = self.options.failout_task_id
-        globalenv['CYLC_DUMMY_SLEEP'] =  self.config['dummy mode']['task run time in seconds']
+        cylcenv['CYLC_DUMMY_SLEEP'] =  self.config['dummy mode']['task run time in seconds']
 
         # JOB SUBMISSION
         job_submit.dummy_mode = self.dummy_mode
+        job_submit.cylc_env = cylcenv
         job_submit.global_env = globalenv
         job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         job_submit.dummy_command = self.config['dummy mode'][ 'command' ]
