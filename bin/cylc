@@ -43,7 +43,6 @@ allowed_commands = \
     'task-failed',
     'lockserver',
     'verbosity',
-    'test',
     ]
 
 usage = \
@@ -63,10 +62,11 @@ usage = \
     '  cylc COMMAND --help',
     '',
     'COMMANDS:',
-    'S-U-I-T-E--P-R-E-P-A-R-A-T-I-O-N',
+    'S-U-I-T-E--R-E-G-I-S-T-R-A-T-I-O-N',
     '  register .... Manage suite name registrations',
-    '  grep     .... Print suite config sections matching a search pattern',
-    '  edit     .... Edit suite config with all include-files inlined',
+    'S-U-I-T-E--E-D-I-T-I-N-G',
+    '  grep     .... A cylc suite-definition-aware text search command',
+    '  edit     .... Edit suite config files with inlined include-files',
     'S-U-I-T-E--C-O-N-T-R-O-L',
     '  coldstart ... Start a suite at a given cycle time (including coldstart tasks)',
     '  warmstart ... Start a suite at a given cycle time (assuming a previous cycle)',
@@ -100,7 +100,6 @@ usage = \
     'M-I-S-C-E-L-L-A-N-E-O-U-S',
     '  lockserver .. Lockserver interrogation and manual lock management',
     '  verbosity ... Change the logging verbosity level in a running suite',
-    '  test ........ Run an automated test of core cylc functionality',
     '  help ........ Print this usage message and exit; also [-h], [--help]',
     ]
 
