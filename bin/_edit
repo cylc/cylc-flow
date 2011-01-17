@@ -31,24 +31,44 @@ def include_files( suitedir, inf ):
             outf.append( line )
     return outf
 
+def rename( src, dest, silent=False ):
+    if not os.path.exists( src ):
+        raise SystemExit( "File not found: " + src )
+    if not silent:
+        print 'Renaming', src, 'to', dest
+    move( src, dest )
+    return dest
+
+def rename_datetime( src, silent=False ):
+    if not os.path.exists( src ):
+        raise SystemExit( "File not found: " + src )
+    dest = src + '.' + datetime.datetime.now().isoformat()
+    rename( src, dest, silent )
+    return dest
+
+ 
 parser = OptionParser( """cylc edit SUITE 
 
-Edit a suite config file (suite.rc) with include-files automatically
-inlined between special markers. After saving your changes and exiting
-from the editor, the file will be split back into its original
-include-file structure.
+This command supports suite.rc editing with inlined include-files.
+See also 'cylc grep', an include-file aware suite search command.
 
-You must have $EDITOR defined in your shell environment. Currently the
-editing process is simply spawned in the foreground as follows:
+Currently the editing process is spawned in the foreground as follows:
+  $EDITOR <inlined-include-file>
+so you must have $EDITOR defined in your shell environment. 
 
-$EDITOR <inlined-include-file>
+Include-files are inlined between special markers. After you save
+changes and exit from your editor the file will be split back into its
+original form.
 
-Suite config include-files may be helpful in organizing large suites.
-In such cases this comand allows editing via a temporary monolithic
-config file in which it will be easier to see how suite components are
-related (e.g. for global variables that are used in multiple tasks).
+IMPORTANT: If a file is included multiple times (e.g. for environment 
+settings common to multiple tasks) edit only the first inclusion;
+subsequent inclusions will be ignored.
 
-See also 'cylc grep PATTERN SUITE'
+SAFETY: The inlined suite.rc file will be renamed as a backup after the
+edit session. The presence of a temporary inlined file that is newer
+than the suite.rc file may indicate that the last edit session was
+killed without saving changes. In that case you will be warned and told
+what to do when you next use the command. 
 
 Arguments:
   SUITE   - access the cylc logs from the suite of this name.""")
@@ -78,6 +98,26 @@ else:
     parser.error("Suite " + suite + " config file not found: " + suiterc )
 
 editfile = suiterc + '.edit.inlined'
+if os.path.isfile( editfile ):
+    print "\nWARNING: an inlined 'cylc edit' suite.rc file already exists:\n  " + editfile
+    mtime_editfile = os.stat( editfile ).st_mtime
+    mtime_suiterc  = os.stat( suiterc  ).st_mtime
+    bkp = rename_datetime( editfile, silent=True )
+    print "It has been renamed to:\n  " + bkp
+    if mtime_editfile > mtime_suiterc:
+        # ... it is newer than suite.rc
+        print "\nTHE FILE WAS MODIFIED MORE RECENTLY THAN SUITE.RC. If you are"
+        print "concerned that a 'cylc edit' session may have been killed without"
+        print "saving changes, then quit out of your editor as soon as it starts"
+        print "and compare this file with the new inlined backup."
+    else:
+        # ... it is older than suite.rc
+        print "\nThe file was modified less recently than suite.rc."
+    response = raw_input( "\nContinue (y/n)?" )
+    if response != 'y':
+        print "> ABORTING"
+        sys.exit(0)
+
 h = open( editfile, 'wb' )
 h.writelines( lines )
 h.close()
@@ -142,22 +182,20 @@ for line in lines:
             in_include_file = False
             if not skip_file:
                 g.close()
-                print 'Wrote', inc_line_count, 'lines to', inc_file
+                print ' + Wrote', inc_line_count, 'lines to', inc_file
             else:
-                print 'SKIPPED', inc_line_count, 'lines of', inc_file
+                print ' - SKIPPED', inc_line_count, 'lines of', inc_file
                 skip_file = False
             continue
         if not skip_file:
             g.write( line )
 
-print 'Wrote', line_count, 'lines to', suiterc
+print ' + Wrote', line_count, 'lines to', suiterc
 
+print ' + Renaming .edit.new files'
 for src in new_files:
     dest = re.sub( '\.edit\.new', '', src )
-    print 'renaming', src, 'to', dest
-    move( src, dest )
+    rename( src, dest, silent=True )
 
-# rename the inlined file for backup
-editfile_bkp = editfile + '.' + datetime.datetime.now().isoformat()
-print 'renaming', editfile, 'to', editfile_bkp
-move( editfile, editfile_bkp )
+bkp = rename_datetime( editfile, silent=True )
+print ' + New inlined suite.rc backup:\n   ' + bkp
