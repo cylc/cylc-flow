@@ -1,8 +1,10 @@
 _______
 GENERAL
 
-* EXPORT CYLC-ENV AS SOON AS POSSIBLE TO ALLOW USE OF CYLCUTIL IN GLOBAL
-  VARIABLES.
+* consider calling task-started from task execution script instead of
+  cylc-wrapper or task scripts: this would eliminate submitted state
+  failures, and allow error trapping on tasks with significant
+  in-suiterc scripting (and scripting-only tasks?)
 
 * config:get_coldstart_task_list() retrieves auto-defined
   coldstart_task_list: this needs to include all oneoff tasks upstream
@@ -222,9 +224,6 @@ and restart.
   restart should know about the stop time (otherwise the restart has no
   stop time but tasks that previously reached the stop time will not
   respawn -although this can be rectified by task insertion).
-
-* automated error trapping on wrapped SCRIPTING-only tasks?
-* automatic task-started message as first line of SCRIPTING?
 
 * current method of setting task commands is not very robust: each new
   command in a retry list is set in jobsubmit.py "remotely" from task.py
