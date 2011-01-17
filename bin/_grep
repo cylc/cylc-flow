@@ -49,20 +49,23 @@ def print_heading( heading ):
 
 parser = OptionParser( """cylc grep [options] PATTERN SUITE 
 
-Search for matches to PATTERN in a suite config file, which may contain 
-include-files, and, optionally, in all files in the suite bin directory.
+This is a cylc suite definition aware text search tool. It finds matches
+to PATTERN in the suite.rc file, which may contain include-files, and in
+any files in the suite bin directory.
 
-Matches are printed with their nested config file section heading and
-file line number, even when include-files are used in the config file.
+Suite config matches are printed with their source file path (include
+files) and line number, and the correct section heading hierarchy even 
+in the case of nested include-files.
 
-See also 'cylc edit'.
+See also 'cylc edit', which supports suite.rc editing with inlined
+include-files.
 
 Arguments:
   PATTERN - a string, or Python-style regular expression.
   SUITE   - name of the suite to search.""")
 
 parser.add_option( "-x", help="Do not search in the suite bin directory",
-        action="store_true", default=False, dest="search_bin" )
+        action="store_false", default=True, dest="search_bin" )
 
 ( options, args ) = parser.parse_args()
 
