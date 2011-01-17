@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* suite.rc include-files: currently cannot be nested. But can be
+  mulitply-included.
+
 * consider calling task-started from task execution script instead of
   cylc-wrapper or task scripts: this would eliminate submitted state
   failures, and allow error trapping on tasks with significant
