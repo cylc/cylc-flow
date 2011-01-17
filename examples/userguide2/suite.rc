@@ -28,38 +28,36 @@ exclude task list = baz,
 FOO = foo, bar
 
 [dependency graph] #----------------------------------------------------
-#        > B -> E
+#        > B => E
 #       /   \
-# X -> A     -> D  (plus various modifications...)
+# X => A     => D  (plus various modifications...)
 #       \   /
-#        > C -> F
+#        > C => F
 
     [[ 0,6,12,18 ]]
-    label1  =  X -> A -> B ->  E
-    label2  =  A -> C -> F:1 -> FOO -> postfoo
-    label3  =  B C -> D
+    label1  =  X ===> A ===> B ===>  E
+    label2  =  A ===> C ===> F:1 ===> FOO ===> postfoo
+    label3  =  B C ===> D
 
     # family: internal dependencies
-    labelfam = foo -> bar
+    labelfam = foo ===> bar
     
-    labelc1 = model_coldstart:ColdA -> A
-    labelc2 = model_coldstart:ColdB -> B
-    labelc3 = model_coldstart:ColdC -> C
+    labelc1 = ColdA| =m=> A
+    labelc2 = ColdB| =m=> B
+    labelc3 = ColdC| =m=> C
 
-    labelx1 = coldstart:startup -> X ColdA ColdB ColdC
-    labelx2 = F -> oneoff:baz
+    labelx1 = startup =c=> X & ColdA & ColdB & ColdC
+    labelx2 = F ===> baz|
 
     # TO DO, conditional triggers:
-    # label99 = (B or C) -> D
+    # label99 = (B or C) ===> D
 
     [[ 6,18 ]]
-    label6 = E -> H
+    label6 = E ===> H
 
     [[ 0,12 ]]
-    label7 = E(T-6)-> H
-    label8 = F(T-6):1 -> G
-
-    # fully qualified: oneoff:foo(T-6):1
+    label7 = E(T-6)===> H
+    label8 = F(T-6):1 ===> G
 
 [environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME

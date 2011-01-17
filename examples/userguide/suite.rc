@@ -1,11 +1,11 @@
 
 title = main cylc userguide example suite
 
-#        > B -> E
+#        > B => E
 #       /   \
-# X -> A     -> D
+# X => A     => D
 #       \   /
-#        > C -> F
+#        > C => F
 
 description = """This suite implements the main cylc userguide example.
 'Models' A.sh, B.sh, and C.sh; 'post processing tasks' D.sh, E.sh, F.sh;
@@ -19,17 +19,17 @@ use lockserver = False
 
 [dependency graph]
     [[ 0,6,12,18 ]]
-    label1  =  X -> A -> B ->  E
-    label2  =  A -> C -> F
-    label3  =  B C -> D
+    label1  =  X ===> A ===> B ===>  E
+    label2  =  A ===> C ===> F
+    label3  =  B & C ===> D
     
     # cold start the three models:
-    labelc1 = model_coldstart:ColdA -> A
-    labelc2 = model_coldstart:ColdB -> B
-    labelc3 = model_coldstart:ColdC -> C
+    labelc1 = ColdA| =m=> A
+    labelc2 = ColdB| =m=> B
+    labelc3 = ColdC| =m=> C
 
     # make everything depend on a special startup task
-    labelx1 = coldstart:housekeeping -> X ColdA ColdB ColdC
+    labelx1 = housekeeping| =c=> X & ColdA & ColdB & ColdC
 
 [environment]
 TASK_EXE_SECONDS = 5
