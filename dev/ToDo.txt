@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* EXPORT CYLC-ENV AS SOON AS POSSIBLE TO ALLOW USE OF CYLCUTIL IN GLOBAL
+  VARIABLES.
+
 * config:get_coldstart_task_list() retrieves auto-defined
   coldstart_task_list: this needs to include all oneoff tasks upstream
   of any model coldstart (and coldstart?) task.
