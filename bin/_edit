@@ -11,7 +11,7 @@ from registration import registrations
 def include_files( suitedir, inf ):
     outf = []
     for line in inf:
-        m = re.match( '\s*#include\s+([\w/\-\.]+)\s*$', line )
+        m = re.match( '\s*%include\s+([\w/\-\.]+)\s*$', line )
         if m:
             match = m.groups()[0]
             inc = os.path.join( suitedir, match )
@@ -178,7 +178,7 @@ for line in lines:
             # seen this file already (multiple inclusion): skip it.
             skip_file = True
         file_seen[inc_filename] = True
-        h.write( '#include ' + inc_filename + '\n')
+        h.write( '%include ' + inc_filename + '\n')
         if not skip_file:
             inc_file = os.path.join( suitedir, m.groups()[0] ) + '.edit.new'
             new_files.append( inc_file )
