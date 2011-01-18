@@ -22,6 +22,9 @@ time for the task, except for designated cold start tasks (see suite.rc
 documentation) which are inserted in the 'finished' state (i.e. outputs
 completed).
 
+IMPORTANT: To do a warmstart the 'coldstart task list' suite config item
+must be set - these tasks will be inserted in the 'finished' state.
+
 See also:
     cylc coldstart SUITE
     cylc rawstart SUITE
@@ -58,6 +61,8 @@ Arguments:
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
+        if len( coldstart_tasks ) == 0:
+            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
 
         for name in task_list:
             # (startup=True is only for coldstart)

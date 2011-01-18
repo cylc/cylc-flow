@@ -76,7 +76,6 @@ class config( CylcConfigObj ):
         self.dummy_mode = dummy_mode
         self.taskdefs = {}
         self.loaded = False
-        self.coldstart_task_list = []
 
         if suite:
             reg = registrations()
@@ -178,10 +177,15 @@ class config( CylcConfigObj ):
         return self['description']
 
     def get_coldstart_task_list( self ):
-        if not self.loaded:
-            self.load_taskdefs()
-            self.loaded = True
-        return self.coldstart_task_list
+        # TO DO: automatically determine this by parsing the dependency
+        #        graph - requires some thought.
+        ##if not self.loaded:
+        ##    self.load_taskdefs()
+        ##    self.loaded = True
+        ##return self.coldstart_task_list
+
+        # For now user must define this:
+        return self['coldstart task list']
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -321,9 +325,6 @@ class config( CylcConfigObj ):
             self.taskdefs[name].hours.sort( key=int ) 
             #print name, self.taskdefs[name].type, self.taskdefs[name].modifiers
 
-        # define a task insertion group of all coldstart tasks
-        self['task insertion groups']['all coldstart tasks'] = self.coldstart_task_list
-
     def get_taskdef( self, name, type=None, oneoff=False ):
         coldstart = False
         model_coldstart = False
@@ -352,7 +353,6 @@ class config( CylcConfigObj ):
             taskd.job_submit_method = self['job submission method']
 
         if model_coldstart or coldstart:
-            self.coldstart_task_list.append( name )
             if 'oneoff' not in taskd.modifiers:
                 taskd.modifiers.append( 'oneoff' )
 

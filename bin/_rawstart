@@ -23,6 +23,9 @@ tasks, or manually trigger any forecast models (whose restart
 prerequisites would normally be satisfied by tasks in a previous cycle,
 or by coldstart tasks).
 
+IMPORTANT: To do a rawstart the 'coldstart task list' suite config item
+must be set - these tasks will be excluded at startup.
+
 See also:
     cylc coldstart SUITE
     cylc warmstart SUITE
@@ -59,6 +62,8 @@ Arguments:
 
         task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
         coldstart_tasks = self.config.get_coldstart_task_list()
+        if len( coldstart_tasks ) == 0:
+            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
 
         for name in task_list:
             # startup=True only for coldstart

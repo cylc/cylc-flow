@@ -12,9 +12,9 @@ GENERAL
   failures, and allow error trapping on tasks with significant
   in-suiterc scripting (and scripting-only tasks?)
 
-* config:get_coldstart_task_list() retrieves auto-defined
-  coldstart_task_list: this needs to include all oneoff tasks upstream
-  of any model coldstart (and coldstart?) task.
+* 'coldstart task list' should be replaced with a list auto-determined
+  while parsing the dependency graph. [also, how's it interact with
+  the old taskdef suite definition]
 
 * document that a restart early in a coldstart will not be recognized as
   a coldstart.

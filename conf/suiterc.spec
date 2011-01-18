@@ -26,8 +26,9 @@ task submission failed hook = string( default=None )
 task timeout hook = string( default=None )
 task submission timeout minutes = float( default=None )
 
-include task list   = string_list( default=list() )
-exclude task list   = string_list( default=list() )
+include task list   = string_list( default=list())
+exclude task list   = string_list( default=list())
+coldstart task list = string_list( default=list())
 
 [ dummy mode ]
 clock offset from initial cycle time in hours = integer( default=24 )
