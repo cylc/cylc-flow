@@ -70,6 +70,12 @@ than the suite.rc file may indicate that the last edit session was
 killed without saving changes. In that case you will be warned and told
 what to do when you next use the command. 
 
+WARNING: DO NOT USE THIS COMMAND AT THE SAME TIME AS EDITING A SUITE.RC
+OR INCLUDE-FILE MANUALLY - THE CONFIG FILES WILL BE OVERWRITTEN BY THIS
+COMMAND WHEN YOU FINISH THE EDIT SESSION
+
+TO DO: check for changed files before overwriting them (see prev para).
+
 Arguments:
   SUITE   - access the cylc logs from the suite of this name.""")
 
