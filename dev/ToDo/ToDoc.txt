@@ -33,11 +33,11 @@ not to further complicate suite.rc files for general use).
    '#!/usr/bin/env python')
 
 * task exec environment, regardless of order in suite.rc: 
-  (o) TASK ID
-  (i) user global
-  (ii) user task
-  (iii) scripting
- Thus globals can use $TASK_NAME.
+  (i) CYLC environment (so can use cylcutil in globals)
+  (ii) TASK ID          (so can use TASK_NAME in globals)
+  (iii) user global
+  (iv) user task
+  (v) scripting
 
 * changing dummy task run length:
   1/ dummy mode: command line or gui (sets CYLC_DUMMY_SLEEP in global env)
