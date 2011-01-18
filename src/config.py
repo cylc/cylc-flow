@@ -363,6 +363,7 @@ class config( CylcConfigObj ):
         taskd.type = taskconfig[ 'type' ]
 
         for item in taskconfig[ 'type modifier list' ]:
+            # TO DO: oneoff not needed here anymore (using dependency graph):
             if item == 'oneoff' or item == 'sequential' or item == 'catchup':
                 if item not in taskd.modifiers:
                     taskd.modifiers.append( item )

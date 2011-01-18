@@ -13,8 +13,6 @@ prerequisites via the dependency graph cycle-time lists, and some
 interface to this in config.py (which however should be designed
 not to further complicate suite.rc files for general use).
 
-* auto task insertion group: "all coldstart tasks"
-
 * duplicate keywords (e.g. dependency graph labels) in suite.rc
   result in a configobj.DuplicateError.
 
@@ -31,14 +29,15 @@ not to further complicate suite.rc files for general use).
   options to the interpreter when invoked with:
    '#!/usr/bin/env python')
 
-* task exec environment ordering, regardless of order in suite.rc: 
-  (i) global env
-  (ii) task env
+* task exec environment, regardless of order in suite.rc: 
+  (o) TASK ID
+  (i) user global
+  (ii) user task
   (iii) scripting
+ Thus globals can use $TASK_NAME.
 
 * changing dummy task run length:
-  1/ command line or gui (sets CYLC_DUMMY_SLEEP in global env)
-  2/ CONFIG ITEM <- to do
+  1/ dummy mode: command line or gui (sets CYLC_DUMMY_SLEEP in global env)
   3/ single task: CYLC_DUMMY_SLEEP in task environment
 
 * suite behaviour if held up by one or more very slow tasks:
@@ -46,8 +45,11 @@ not to further complicate suite.rc files for general use).
       unspawned.
     - if caught up to real time: newest tasks in waiting state.
 
-* suite.rc environment sections: shell parameter expansions 
-  containing the '#' comment character must be quoted!
+* suite.rc environment sections:
+  - any valid shell expression can be used, e.g.:
+    FOO = $( some-command -option $ARGS )
+  - but NOTE shell parameter expansions containing the '#' comment
+    character must be quoted!
 
 * extra task log files can be defined using environment variables
  (any other parameters in this category?)
@@ -59,5 +61,5 @@ not to further complicate suite.rc files for general use).
 
 * families can have internal dependencies.
 
-* cold start prerequisites are only used if the initial cycle time is a
-  valid hour for the task.
+* cold start prerequisites are ignored if the initial cycle time is not 
+  a valid hour for the task (intentional: consider 00Z RCF task in nzlam).
