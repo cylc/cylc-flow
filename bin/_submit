@@ -78,6 +78,8 @@ owner = os.environ['USER']
 
 # load suite config item --------------------------------------------
 config = config( name )
+config.create_directories()
+
 logging_dir = os.path.join( config['top level logging directory'], name + '-submit' ) 
 mkdir_p( logging_dir )
 

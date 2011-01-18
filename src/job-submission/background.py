@@ -19,7 +19,7 @@ class background( job_submit ):
             out = tempfile.mktemp( 
                 prefix = self.task_id + "-",
                 suffix = ".out", 
-                dir = os.path.join( self.homedir, self.__class__.joblog_dir ))
+                dir = self.__class__.joblog_dir )
 
             err = re.sub( '\.out$', '.err', out )
 

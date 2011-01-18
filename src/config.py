@@ -8,6 +8,7 @@
 
 import taskdef
 import re, os, sys, logging
+from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values
 from cylcconfigobj import CylcConfigObj
@@ -131,13 +132,26 @@ class config( CylcConfigObj ):
 
         # make logging and state directories relative to $HOME
         # unless they are specified as absolute paths
+        self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'] )
+        self['top level state dump directory'] = self.make_dir_absolute( self['top level state dump directory'] )
+        self['job submission log directory' ] = self.make_dir_absolute( self['job submission log directory'] )
+
+    def make_dir_absolute( self, indir ):
+        # make dir relative to $HOME unless already absolute
         home = os.environ['HOME']
-        logdir = self['top level logging directory']
-        if not re.match( '^/', logdir ):
-           self['top level logging directory'] = os.path.join( home, logdir )
-        statedir = self['top level state dump directory']
-        if not re.match( '^/', statedir ):
-           self['top level state dump directory'] = os.path.join( home, statedir )
+        if not re.match( '^/', indir ):
+            outdir = os.path.join( home, indir )
+        else:
+            outdir = indir
+        return outdir
+
+    def create_directories( self ):
+        # create logging, state, and job log directories if necessary
+        for dir in [
+            self['top level logging directory'], 
+            self['top level state dump directory'],
+            self['job submission log directory'] ]: 
+            mkdir_p( dir )
 
     def get_filename( self ):
         return self.file
