@@ -6,13 +6,13 @@
 # deliberately or otherwise gives the wrong pyro nameserver host to
 # check.
 
-import os, sys, socket
+import os, re, sys, socket
 from optparse import OptionParser
 from registration import registrations
 
 #----------------------------------------
-def check_dir( dir ):
-    suiterc = os.path.join( dir, 'suite.rc' )
+def check_dir( rdir ):
+    suiterc = os.path.join( rdir, 'suite.rc' )
     if not os.path.isfile( suiterc ):
         print "ERROR, file not found: " + suiterc
         return False
@@ -103,8 +103,21 @@ if len(args) == 2:
     # + cylc register PATH SUITE
     new_reg = True
 
-    dir = os.path.abspath( args[0] )
+    rdir = args[0]
     name = args[1]
+
+    # make registered path absolute
+
+    # rdir = os.path.abspath( rdir )
+       # TEMPORORARY CHANGE FOR UKMO JOBS:
+       # On GPFS os.path.abspath() returns the full path with fileset
+       # prefix which can make filenames (for files stored under the 
+       # cylc suite directory) too long for hardwired limits in the
+       # UKMO executables, which will core dump. Use of $PWD to
+       # absolutize a relative path, on GPFS, results in a shorter
+       # path string ... so we'll do this the crude way:
+    if not re.match( '^/', rdir ):
+        rdir = os.path.join( os.environ['PWD'], rdir )
 
 elif len(args) == 1:
     # + cylc register --print SUITE
@@ -144,9 +157,9 @@ reg = registrations( options.user )
 
 #---------------------------------------
 if new_reg:
-    if not check_dir( dir ):
+    if not check_dir( rdir ):
         sys.exit(1)
-    reg.register( name, dir )
+    reg.register( name, rdir )
     reg.dump_to_file()
     sys.exit(0)
 
