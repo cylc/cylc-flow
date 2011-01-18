@@ -1,9 +1,9 @@
 #!/usr/bin/env python
 
 import os, re, sys
-from config import config
 from optparse import OptionParser
 from collections import deque
+from registration import registrations
 
 def include_files( suitedir, inf ):
     outf = []
@@ -75,8 +75,15 @@ if len(args) != 2:
 pattern = args[0]
 suite = args[1]
 
-suiterc = config( suite ).get_filename()
-suitedir = config( suite ).get_dirname()
+# find location of the suite definition directory
+reg = registrations()
+if reg.is_registered( suite ):
+    suitedir = reg.get( suite )
+else:
+    reg.print_all()
+    raise SystemExit( "suite " + suite + " is not registered!" )
+
+suiterc = os.path.join( suitedir, 'suite.rc' )
 
 if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )

@@ -1,9 +1,6 @@
 _______
 GENERAL
 
-* DON'T LOAD CONFIG() FOR GREP AND EDIT - NO NEED - USE REGISTER INSTEAD.
-  # also a clean inlined viewer for line numbers on config key error.
-
 * suite.rc include-files: currently cannot be nested. But can be
   mulitply-included.
 

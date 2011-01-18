@@ -4,7 +4,6 @@ import os, re, sys
 import datetime
 from shutil import move
 import subprocess
-from config import config
 from optparse import OptionParser
 from collections import deque
 from registration import registrations
