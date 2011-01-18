@@ -15,7 +15,7 @@ task submission failed hook = alert.sh
 task timeout hook           = timeout.sh
 task submission timeout minutes = 0.1
 use secure passphrase = True
-use lockserver = False
+use lockserver = True
 
 #use crude safety lock = True
 #ignore task owners = True

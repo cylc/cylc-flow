@@ -538,12 +538,9 @@ class scheduler(object):
 
             # incoming task messages set task.state_changed to True
             self.pyro.handleRequests(timeout=1)
-
         # END MAIN LOOP
 
-        print ""
-        print "STOPPING"
-        self.cleanup()
+        self.shutdown()
 
     def process_tasks( self ):
         # do we need to do a pass through the main task processing loop?
@@ -572,8 +569,8 @@ class scheduler(object):
 
         return answer
 
-
-    def cleanup( self ):
+    def shutdown( self ):
+        print "\nSTOPPING"
 
         # close graphfile, if it has been opened
         try:
