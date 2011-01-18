@@ -144,9 +144,8 @@ reg = registrations( options.user )
 
 #---------------------------------------
 if new_reg:
-    if not os.path.exists( dir ):
-        raise SystemExit( "ERROR, directory not found: " + dir )
-
+    if not check_dir( dir ):
+        sys.exit(1)
     reg.register( name, dir )
     reg.dump_to_file()
     sys.exit(0)
