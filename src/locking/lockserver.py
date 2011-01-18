@@ -14,23 +14,12 @@ class lockserver(object):
 
     def get_proxy( self ):
         if self.port:
-            port = self.port
-            if not check_port( "lockserver", self.owner, self.host, self.port ):
-                msg = "lockserver (" + self.owner + ") not found at " + self.host + ":" + str(port)
-                raise Pyro.errors.NamingError( msg )
+            check_port( "lockserver", self.owner, self.host, self.port )
         else:
-            print "Scanning for lockserver ...",
-            found, port = get_port( "lockserver", self.owner, self.host )
-            if found:
-                print "port", port
-            else:
-                print "ERROR"
-                msg = "lockserver (" + self.owner + ") not found on " + self.host 
-                raise Pyro.errors.NamingError( msg )
+            self.port = get_port( "lockserver", self.owner, self.host )
 
         qualified_name = self.owner + ".lockserver"
-        uri = 'PYROLOC://' + self.host + ':' + str(port) + '/' + qualified_name
-        self.port = port
+        uri = 'PYROLOC://' + self.host + ':' + str(self.port) + '/' + qualified_name
         return Pyro.core.getProxyForURI(uri)
 
     def ping( self ):
