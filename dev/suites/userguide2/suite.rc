@@ -20,7 +20,7 @@ use lockserver = False
 #use crude safety lock = True
 #ignore task owners = True
 #job submission method = ll_basic
-job submission log directory = logs
+job submission log directory = running/${CYLC_SUITE_NAME}-logs
 
 exclude task list = baz,
 

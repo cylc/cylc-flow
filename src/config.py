@@ -78,6 +78,7 @@ class config( CylcConfigObj ):
         self.loaded = False
 
         if suite:
+            self.suite = suite
             reg = registrations()
             if reg.is_registered( suite ):
                 self.dir = reg.get( suite )
@@ -87,6 +88,7 @@ class config( CylcConfigObj ):
 
             self.file = os.path.join( self.dir, 'suite.rc' )
         else:
+            self.suite = os.environ[ 'CYLC_SUITE_NAME' ]
             self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),
 
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
@@ -129,11 +131,16 @@ class config( CylcConfigObj ):
         # check cylc-specific self consistency
         self.__check()
 
+        # allow $CYLC_SUITE_NAME in job submission log directory
+        jsld = self['job submission log directory' ] 
+        jsld = re.sub( '\${CYLC_SUITE_NAME}', self.suite, jsld )
+        jsld = re.sub( '\$CYLC_SUITE_NAME', self.suite, jsld )
+
         # make logging and state directories relative to $HOME
         # unless they are specified as absolute paths
         self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'] )
         self['top level state dump directory'] = self.make_dir_absolute( self['top level state dump directory'] )
-        self['job submission log directory' ] = self.make_dir_absolute( self['job submission log directory'] )
+        self['job submission log directory' ] = self.make_dir_absolute( jsld )
 
     def make_dir_absolute( self, indir ):
         # make dir relative to $HOME unless already absolute

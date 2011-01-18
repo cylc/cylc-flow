@@ -1,6 +1,9 @@
 ################################################################
 TO BE DOCUMENTED:
 
+* ${CYLC_SUITE_NAME} or $CYLC_SUITE_NAME can be used in suite.rc
+  job submission log directory.
+
 * To dummy out a task, comment out its command list.
 
 * Although cylc internals can easily handle different task
