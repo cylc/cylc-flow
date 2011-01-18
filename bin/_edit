@@ -7,6 +7,7 @@ import subprocess
 from config import config
 from optparse import OptionParser
 from collections import deque
+from registration import registrations
 
 def include_files( suitedir, inf ):
     outf = []
@@ -49,20 +50,19 @@ def rename_datetime( src, silent=False ):
  
 parser = OptionParser( """cylc edit SUITE 
 
-This command supports suite.rc editing with inlined include-files.
-See also 'cylc grep', an include-file aware suite search command.
+Edit suite config (suite.rc) files with inlined include-files.
 
-Currently the editing process is spawned in the foreground as follows:
+The editing process is spawned in the foreground as follows:
   $EDITOR <inlined-suite.rc-file>
-so you must have $EDITOR defined in your shell environment. 
+(You must have $EDITOR defined in your shell environment). 
 
-Include-files are inlined between special markers. After you save
+Include-files will be inlined between special markers. After you save
 changes and exit from your editor the file will be split back into its
 original form.
 
-IMPORTANT: If a file is included multiple times (e.g. for environment 
-settings common to multiple tasks) edit only the first inclusion;
-subsequent inclusions will be ignored.
+IMPORTANT: If a file is included multiple times (e.g. for settings 
+common to multiple tasks) edit only the first inclusion; subsequent
+inclusions will be ignored.
 
 SAFETY: The inlined suite.rc file will be renamed as a backup after the
 edit session. The presence of a temporary inlined file that is newer
@@ -74,10 +74,13 @@ WARNING: DO NOT USE THIS COMMAND AT THE SAME TIME AS EDITING A SUITE.RC
 OR INCLUDE-FILE MANUALLY - THE CONFIG FILES WILL BE OVERWRITTEN BY THIS
 COMMAND WHEN YOU FINISH THE EDIT SESSION
 
-TO DO: check for changed files before overwriting them (see prev para).
+ACCESS VIA THE MAIN 'cylc' COMMAND INTERFACE HAS BEEN TEMPORARILY DISABLED.
+TO DO: check each file has not changed before overwriting it.
+
+See also 'cylc grep', an include-file aware suite search command.
 
 Arguments:
-  SUITE   - access the cylc logs from the suite of this name.""")
+  SUITE   - registered name of the suite.""")
 
 ( options, args ) = parser.parse_args()
 
@@ -91,8 +94,15 @@ try:
 except KeyError:
     raise SystemExit( 'export $EDITOR before using this command' )
 
-suiterc = config( suite ).get_filename()
-suitedir = config( suite ).get_dirname()
+# find location of the suite definition directory
+reg = registrations()
+if reg.is_registered( suite ):
+    suitedir = reg.get( suite )
+else:
+    reg.print_all()
+    raise SystemExit( "suite " + suite + " is not registered!" )
+
+suiterc = os.path.join( suitedir, 'suite.rc' )
 
 if os.path.isfile( suiterc ):
     h = open( suiterc, 'rb' )
@@ -101,7 +111,7 @@ if os.path.isfile( suiterc ):
     # inline any include files
     lines = include_files( suitedir, lines0 )
 else:
-    parser.error("Suite " + suite + " config file not found: " + suiterc )
+    parser.error("File not found: " + suiterc )
 
 editfile = suiterc + '.edit.inlined'
 if os.path.isfile( editfile ):

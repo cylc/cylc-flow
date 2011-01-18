@@ -55,7 +55,7 @@ task_id = args[1]
 
 host = socket.getfqdn()
 
-# find location of the suite-specific modules------------------------
+# find location of the suite definition directory --------------------
 reg = registrations()
 if reg.is_registered( name ):
     suite_dir = reg.get( name )
