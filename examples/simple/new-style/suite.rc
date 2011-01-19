@@ -8,13 +8,13 @@ directories."""
 
 [dependency graph]
     [[ 0,6,12,18 ]]
-    label1  =  coldstart:housekeeping -> foo -> bar
+    label1  =  prep| =c=> foo ===> bar
 
 [environment]
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
 
 [tasks]
-    [[housekeeping]]
+    [[prep]]
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[foo]]
