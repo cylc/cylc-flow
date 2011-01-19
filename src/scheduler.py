@@ -2,7 +2,6 @@
 
 ##### TO DO: self.config.check_task_groups() #####
 
-
 import task
 import socket
 import logging
@@ -27,7 +26,6 @@ from mkdir_p import mkdir_p
 from config import config 
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
-
 
 class scheduler(object):
     def __init__( self ):
@@ -108,64 +106,62 @@ class scheduler(object):
                 metavar="FILENAME", action="store", default=None,
                 dest="graphfile" )
 
-### RUN TIME DEPENDENCY GRAPH TEMPORARILITY DISABLED
-###   (probably replace with pygraphviz or similar)
-###
-###        self.node_seen = {}
-###        # configure graph file parameters
-###        self.graphfile = graphfile
-###        if graphfile:
-###            self.edge_colors = {}
-###            self.node_attributes = {}
-###            for task in self.task_name_list:
-###                node_attributes = self.config[ 'node_attributes' ]
-###                if task in node_attributes:
-###                    self.node_attributes[ task ] = node_attributes[ task ]
-###                    if self.config[ 'use_node_color_for_edges' ]:
-###                        m = re.search( 'fillcolor *= *(\w+)', self.node_attributes[ task ] )
-###                        n = re.search( 'color *= *(\w+)', self.node_attributes[ task ] )
-###                        if m:
-###                            self.edge_colors[ task ] = m.groups()[0]
-###                        elif n:
-###                            self.edge_colors[ task ] = n.groups()[0]
-###                        else:
-###                            # stick with default color 
-###                            pass
-###
-###            # determine task families and family members
-###            # (used in writing out the 'dot' graph file).
-###            self.members = {}
-###            self.middle_member = {}
-###            self.member_of = {}
-###            for task in self.tasks:
-###                cls = task.__class__
-###                try:
-###                    mems = getattr( cls, 'members' ) 
-###                except AttributeError:
-###                    pass
-###                else:
-###                    self.members[ name ] = mems
-###                    mems.sort()
-###                    print name, mems
-###                    self.middle_member[ name ] = mems[ len( mems ) / 2  ]
-###                try:
-###                    memof = getattr( cls, 'member_of' )
-###                except AttributeError:
-###                    pass
-###                else:
-###                    self.member_of[ name ] = memof
-
         self.parse_commandline()
-
         self.check_not_running_already()
-
         self.configure_suite()
-
+        if self.options.graphfile:
+            self.configure_graphfile()
         self.print_banner()
-
-        # LOAD TASK POOL ACCORDING TO STARTUP METHOD
-        # - PROVIDE THIS METHOD IN DERIVED CLASSES -
+        # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
         self.load_tasks()
+
+    def configure_graphfile( self ):
+        vizconfig = self.config['visualization']
+        task_labels = self.config.get_task_labels()
+        label_attributes = vizconfig['label node attributes']
+        self.node_seen = {}
+        # configure graph file parameters
+        self.edge_colors = {}
+        self.node_attributes = {}
+        for label in label_attributes:
+            attributes = label_attributes[label]
+            if label not in task_labels:
+                print "WARNING: IGNORING LABEL", label
+                continue
+            for task in task_labels[label]:
+                self.node_attributes[ task ] = attributes
+                if vizconfig[ 'use node color for edges' ]:
+                    m = re.search( 'fillcolor *= *(\w+)', self.node_attributes[ task ] )
+                    n = re.search( 'color *= *(\w+)', self.node_attributes[ task ] )
+                    if m:
+                        self.edge_colors[ task ] = m.groups()[0]
+                    elif n:
+                        self.edge_colors[ task ] = n.groups()[0]
+                    else:
+                        # stick with default color 
+                        pass
+
+        # determine task families and family members
+        self.members = {}
+        self.middle_member = {}
+        self.member_of = {}
+        for task in self.tasks:
+            cls = task.__class__
+            try:
+                mems = getattr( cls, 'members' ) 
+            except AttributeError:
+                pass
+            else:
+                self.members[ name ] = mems
+                mems.sort()
+                print name, mems
+                self.middle_member[ name ] = mems[ len( mems ) / 2  ]
+            try:
+                memof = getattr( cls, 'member_of' )
+            except AttributeError:
+                pass
+            else:
+                self.member_of[ name ] = memof
 
     def parse_commandline( self ):
         # SUITE NAME
@@ -398,13 +394,14 @@ class scheduler(object):
 
 
     def initialize_graphfile( self ):
+        vizconfig = self.config['visualization']
         gf_path = self.options.graphfile 
         if not os.path.isabs( gf_path ):
             gf_path = os.environ['HOME'] + '/' + gf_path
         print "Opening dot graph file", gf_path
-        default_node_attributes = self.config[ 'default_node_attributes' ]
-        default_edge_attributes = self.config[ 'default_edge_attributes' ]
-        if self.config[ 'use_node_color_for_edges' ]:
+        default_node_attributes = vizconfig[ 'default node attributes' ]
+        default_edge_attributes = vizconfig[ 'default edge attributes' ]
+        if vizconfig[ 'use node color for edges' ]:
             m = re.search( 'fillcolor *= *(\w+)', default_node_attributes )
             if m:
                 nodecolor = m.groups()[0]
@@ -743,9 +740,10 @@ class scheduler(object):
                 if itask.run_if_ready( current_time ):
 
                     if self.graphfile:
+                        vizconfig = self.config['visualization']
 
                         target_id = itask.id 
-                        if not self.config[ 'task_families_in_subgraphs' ]:
+                        if not vizconfig[ 'task families in subgraphs' ]:
                             for source_id in itask.get_resolved_dependencies():
                                 self.set_graph( source_id, target_id )
                             continue
@@ -1502,13 +1500,11 @@ class scheduler(object):
                 # do not retry
                 break
 
-
     def filter_initial_task_list( self, inlist ):
         included_by_rc  = self.config[ 'include task list'   ]
         excluded_by_rc  = self.config[ 'exclude task list'   ]
         included_by_cline = self.include_via_cline 
         excluded_by_cline = self.exclude_via_cline 
-
         outlist = []
 
         include_list_supplied = False

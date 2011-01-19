@@ -6,6 +6,9 @@ from optparse import OptionParser
 import cycle_time
 from scheduler import scheduler
 
+global debug
+debug = True
+
 class rawstart( scheduler ):
     def __init__( self ):
 

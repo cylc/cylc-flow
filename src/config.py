@@ -76,6 +76,7 @@ class config( CylcConfigObj ):
         self.dummy_mode = dummy_mode
         self.taskdefs = {}
         self.loaded = False
+        self.task_graph_labels = {}
 
         if suite:
             self.suite = suite
@@ -202,6 +203,22 @@ class config( CylcConfigObj ):
             self.loaded = True
         return self.taskdefs.keys()
 
+    def update_task_graph_labels( self, label, line ):
+        seen = []
+        for item in re.split( '\s*=[mc=]=>\s*', line ):
+            for task in re.split( '\s*&\s*', item ):
+                foo = re.sub( '\|$', '', task )
+                bar = re.sub( '\(\s*T.*\)', '', foo )
+                baz = re.sub( ':\w+$', '', bar )
+                seen.append( baz )
+        #print label, '::', line, '::', seen
+        #for task in seen:
+        #    self.task_graph_labels[ task ] = label
+        self.task_graph_labels[label] = seen
+
+    def get_task_labels( self ):
+        return self.task_graph_labels
+
     def get_dependent_pairs( self, line ):
         # 'A ===> B ===> C' : [A ===> B],[B ===> C]
         # 'A,B ===> C'      : [A ===> C],[B ===> C]
@@ -306,6 +323,7 @@ class config( CylcConfigObj ):
 
             for label in self['dependency graph'][ cycle_list ]:
                 line = self['dependency graph'][cycle_list][label]
+                self.update_task_graph_labels( label, line )
                 pairs = self.get_dependent_pairs( line )
                 for pair in pairs:
                     self.process_dep_pair( pair, cycle_list )

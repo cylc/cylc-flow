@@ -6,6 +6,9 @@ from optparse import OptionParser
 import cycle_time
 from scheduler import scheduler
 
+global debug
+debug = True
+
 class coldstart( scheduler ):
     def __init__( self ):
         usage = """cylc coldstart [options] SUITE CYCLE

@@ -46,6 +46,14 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     [[ __many__ ]]
     __many__ = string
 
+[visualization]
+use node color for edges = boolean( default=True )
+task families in subgraphs = boolean( default=True )
+default node attributes = string( default='style=filled, fillcolor=gray, color=blue, shape=ellipse')
+default edge attributes = string( default='color=black, style=bold')
+    [[label node attributes]]
+    __many__ = string
+
 [ task insertion groups ]
  __many__ = string_list()
 
