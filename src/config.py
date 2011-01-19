@@ -259,7 +259,11 @@ class config( CylcConfigObj ):
 
         for node in [left, right]:
             if node.name not in self['tasks']:
-                raise SuiteConfigError, 'task ' + node.name + ' not defined'
+                #raise SuiteConfigError, 'task ' + node.name + ' not defined'
+                # ALLOW DUMMY TASKS TO BE DEFINED BY GRAPH ONLY
+                # TO DO: CHECK SENSIBLE DEFAULTS ARE DEFINED FOR ALL
+                # TASKDEF PARAMETERS.
+                self.taskdefs[ node.name ] = taskdef.taskdef(node.name)
 
             if node.name not in self.taskdefs:
                 self.taskdefs[ node.name ] = self.get_taskdef( node.name, type, node.oneoff )
