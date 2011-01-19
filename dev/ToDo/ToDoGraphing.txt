@@ -10,7 +10,7 @@ xdot embedding:
 networkx:
   http://networkx.lanl.gov/index.html
 
-pygraphviz:
+pygraphviz:                               <------------!!! nice.
   http://networkx.lanl.gov/pygraphviz/
 
 pydot:

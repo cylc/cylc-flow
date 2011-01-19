@@ -7,6 +7,7 @@
 # cross-checking some items.
 
 import taskdef
+import pygraphviz
 import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
@@ -189,7 +190,6 @@ class config( CylcConfigObj ):
         #        graph - requires some thought.
         ##if not self.loaded:
         ##    self.load_taskdefs()
-        ##    self.loaded = True
         ##return self.coldstart_task_list
 
         # For now user must define this:
@@ -200,7 +200,6 @@ class config( CylcConfigObj ):
         # not the full tist of defined tasks (self['tasks'].keys())
         if not self.loaded:
             self.load_taskdefs()
-            self.loaded = True
         return self.taskdefs.keys()
 
     def update_task_graph_labels( self, label, line ):
@@ -313,6 +312,79 @@ class config( CylcConfigObj ):
                     msg = self.prerequisite_decrement( msg, left.offset )
                 self.taskdefs[right.name].prerequisites[ cycle_list ].append( msg )
 
+    def get_coldstart_graphs( self ):
+        if not self.loaded:
+            self.load_taskdefs()
+        graphs = {}
+        for cycle_list in self['dependency graph']:
+            for label in self['dependency graph'][ cycle_list ]:
+                line = self['dependency graph'][cycle_list][label]
+                pairs = self.get_dependent_pairs( line )
+                for pair in pairs:
+                    for cycle in re.split( '\s*,\s*', cycle_list ):
+                        if cycle not in graphs:
+                            graphs[cycle] = pygraphviz.AGraph(directed=True)
+                        left = pair.left.name + '(' + cycle + ')'
+                        right = pair.right.name + '(' + cycle + ')'
+                        graphs[cycle].add_edge( left, right )
+        return graphs 
+
+    def get_full_graph( self ):
+        if not self.loaded:
+            self.load_taskdefs()
+        edges = {}
+        for cycle_list in self['dependency graph']:
+            for label in self['dependency graph'][ cycle_list ]:
+                line = self['dependency graph'][cycle_list][label]
+                pairs = self.get_dependent_pairs( line )
+                for cycle in re.split( '\s*,\s*', cycle_list ):
+                    print cycle, line
+                    if int(cycle) not in edges:
+                        edges[ int(cycle) ] = []
+                    for pair in pairs:
+                        if pair not in edges[int(cycle)]:
+                            edges[ int(cycle) ].append( pair )
+
+        graph = pygraphviz.AGraph(directed=True)
+        cycles = edges.keys()
+        cycles.sort()
+        # note: need list rotation in order to coldstart start at
+        # another cycle time.
+        oneoff_done = {}
+        coldstart_done = False
+        for cycle in cycles:
+            for pair in edges[cycle]:
+                lname = pair.left.name
+                rname = pair.right.name
+                type  = pair.type
+                if 'oneoff' in self.taskdefs[ lname ].modifiers:
+                    if lname in oneoff_done:
+                        if oneoff_done[lname] != cycle:
+                            continue
+                    else:
+                        oneoff_done[lname] = cycle
+
+                if coldstart_done and self.taskdefs[ lname ].type == 'tied':
+                    # TO DO: need task-specific prev cycle:
+                    prev = self.prev_cycle( cycle, cycles )
+                    a = lname + '(' + str(prev) + ')'
+                    b = lname + '(' + str(cycle) + ')'
+                    graph.add_edge( a, b )
+
+                left = lname + '(' + str(cycle) + ')'
+                right = rname + '(' + str(cycle) + ')'
+                graph.add_edge( left, right )
+            coldstart_done = True
+        return graph
+
+    def prev_cycle( self, cycle, cycles ):
+        i = cycles.index( cycle )
+        if i == 0:
+            prev = cycles[-1]
+        else:
+            prev = cycles[i-1]
+        return prev
+
     def load_taskdefs( self ):
         for name in self['taskdefs']:
             taskd = taskdef.taskdef( name )
@@ -320,7 +392,6 @@ class config( CylcConfigObj ):
             self.taskdefs[name] = taskd
 
         for cycle_list in self['dependency graph']:
-
             for label in self['dependency graph'][ cycle_list ]:
                 line = self['dependency graph'][cycle_list][label]
                 self.update_task_graph_labels( label, line )
@@ -349,6 +420,8 @@ class config( CylcConfigObj ):
         for name in self.taskdefs:
             self.taskdefs[name].hours.sort( key=int ) 
             #print name, self.taskdefs[name].type, self.taskdefs[name].modifiers
+
+        self.loaded = True
 
     def get_taskdef( self, name, type=None, oneoff=False ):
         coldstart = False
@@ -423,11 +496,9 @@ class config( CylcConfigObj ):
     def get_task_proxy( self, name, ctime, state, startup ):
         if not self.loaded:
             self.load_taskdefs()
-            self.loaded = True
         return self.taskdefs[name].get_task_class()( ctime, state, startup )
 
     def get_task_class( self, name ):
         if not self.loaded:
             self.load_taskdefs()
-            self.loaded = True
         return self.taskdefs[name].get_task_class()
