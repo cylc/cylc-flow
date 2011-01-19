@@ -29,7 +29,7 @@ use lockserver = False
     labelc3 = ColdC| =m=> C
 
     # make everything depend on a special startup task
-    labelx1 = housekeeping| =c=> X & ColdA & ColdB & ColdC
+    labelx1 = prep| =c=> X & ColdA & ColdB & ColdC
 
 [environment]
 TASK_EXE_SECONDS = 5
@@ -41,7 +41,7 @@ C_RUNNING_DIR = $WORKSPACE/RunningC
 
 
 [ tasks ]
-    [[housekeeping]]
+    [[prep]]
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[X]]
