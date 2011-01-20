@@ -1,0 +1,98 @@
+
+    def configure_graphfile( self ):
+        vizconfig = self.config['visualization']
+        # configure graph file parameters
+
+        # determine task families and family members
+        # MAY STILL NEED THIS LATER TO DETERMINE MIDDLE FAMILY MEMBER TO
+        # POINT ARROWS AT.
+        self.members = {}
+        self.middle_member = {}
+        self.member_of = {}
+        for task in self.tasks:
+            cls = task.__class__
+            try:
+                mems = getattr( cls, 'members' ) 
+            except AttributeError:
+                pass
+            else:
+                self.members[ name ] = mems
+                mems.sort()
+                print name, mems
+                self.middle_member[ name ] = mems[ len( mems ) / 2  ]
+            try:
+                memof = getattr( cls, 'member_of' )
+            except AttributeError:
+                pass
+            else:
+                self.member_of[ name ] = memof
+
+
+
+                        vizconfig = self.config['visualization']
+
+                        target_id = itask.id 
+                        if not vizconfig[ 'task families in subgraphs' ]:
+                            for source_id in itask.get_resolved_dependencies():
+                                self.set_graph( source_id, target_id )
+                            continue
+
+                        # GRAPH TASK FAMILIES IN AN INTUITIVE WAY (boxed subgraph):
+
+                        # ASSUME a task family and its members are cotemporal
+                        target_name = itask.name
+                        ctime = itask.c_time
+                        target = target_name + '_' + ctime
+
+                        if target_name in self.members:
+                            # TARGET IS A TASK FAMILY
+                            # replace target with a boxed subgraph of
+                            # family members with no internal edges.
+                            members = self.members[ target_name ]
+                            # define the subgraph ...
+                            self.graphfile.write( '    subgraph cluster_' + target + ' {\n' )
+                            self.graphfile.write( '        graph [ fontsize=30,\n' )
+                            self.graphfile.write( '        label = "' + target_name + ' task family" ];\n' )
+
+                            for member in members:
+                                # write family members with no edges
+                                member_id = member + '%' + ctime
+                                self.set_graph( member_id )
+
+                            # close subgraph
+                            self.graphfile.write( '    };\n' )
+
+                            # ... and replace target with an edge to the middle family member
+                            repl_target_id = self.middle_member[target_name] + '%' + ctime
+
+                            for source_id in itask.get_resolved_dependencies():
+                                self.set_graph( source_id, repl_target_id, 'lhead=cluster_' + target )
+
+                        elif target_name in self.member_of:
+                            # TARGET IS A FAMILY MEMBER
+                            for source_id in itask.get_resolved_dependencies():
+
+                                (source_name, source_ctime ) = source_id.split('%')
+
+                                if source_name in self.members:
+                                    # target is a member, source is a family
+                                    pass
+                                else:
+                                    # target is a member, source is not a family, 
+                                    self.set_graph( source_id, target_id )
+
+                        else:
+                            # TARGET IS NOT A FAMILY OR A FAMILY MEMBER
+                            for source_id in itask.get_resolved_dependencies():
+
+                                source_name, source_ctime = source_id.split('%')
+                                source = source_name + '_' + source_ctime
+
+                                if source_name in self.members:
+                                    # SOURCE IS A FAMILY, REPLACE WITH MIDDLE MEMBER
+                                    repl_source_id = self.middle_member[source_name] + '%' + source_ctime
+                                    self.set_graph( repl_source_id, target_id, 'ltail=cluster_' + source )
+                                else:
+                                    self.set_graph( source_id, target_id )
+
+
