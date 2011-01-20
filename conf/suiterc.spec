@@ -39,10 +39,15 @@ command      = string( default='cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep
 command fail = string( default='cylc-wrapper -m "echo DUMMY MODE FAILOUT $TASK_ID; /bin/false"')
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
-[ task families ]
+[ dependency graph ]
+    [[ task types ]]
+    oneoff task list = string_list( default=list())
+    sequential task list = string_list( default=list())
+
+    [[ task families ]]
     __many__ = string_list( default=None )
 
-[ dependencies ]
+    # dependency graphs under cycle time lists:
     [[ __many__ ]]
     graph = string
 

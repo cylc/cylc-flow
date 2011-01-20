@@ -75,9 +75,9 @@ class config( CylcConfigObj ):
 
     def __init__( self, suite=None, dummy_mode=False ):
         self.dummy_mode = dummy_mode
+        self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
         self.loaded = False
-        self.deps = {}  # deps[ hour ] = [ [A,B], [C,D], ... ]
 
         if suite:
             self.suite = suite
@@ -189,7 +189,7 @@ class config( CylcConfigObj ):
         # TO DO: automatically determine this by parsing the dependency
         #        graph - requires some thought.
         ##if not self.loaded:
-        ##    self.load_taskdefs()
+        ##    self.load_tasks()
         ##return self.coldstart_task_list
 
         # For now user must define this:
@@ -199,44 +199,92 @@ class config( CylcConfigObj ):
         # return list of task names used in the dependency diagram,
         # not the full tist of defined tasks (self['tasks'].keys())
         if not self.loaded:
-            self.load_taskdefs()
+            self.load_tasks()
         return self.taskdefs.keys()
 
-    def get_dependent_pairs( self, line ):
-        # 'A ===> B ===> C' : [A ===> B],[B ===> C]
-        # 'A,B ===> C'      : [A ===> C],[B ===> C]
-        # 'A,B ===> C,D'    : [A ===> C],[A ===> D],[B ===> C],[B ===> D]
-        # etc.
+    def add_to_dependency_graph( self, line, hours ):
+        # Extract dependent pairs from the suite.rc textual dependency
+        # graph to use in constructing proper graphviz graphs.
 
-        pairs = []
-        # split on arrows, detecting type of dependency arrow
-        # ( ===>, =c=>, =m=> )
-        sequence = re.split( '\s*=([mc=])=>\s*', line )
+        # 'A => B => C'    : [A => B], [B => C]
+        # 'A & B => C'     : [A => C], [B => C]
+        # 'A => C & D'     : [A => C], [A => D]
+        # 'A & B => C & D' : [A => C], [A => D],[B => C],[B => D]
 
-        for i in range( 0, len(sequence)-1, 2 ):
-            left = sequence[i]
-            op = sequence[i+1]
-            right = sequence[i+2]
+        # '&' Groups aren't really "conditional expressions"; they're
+        # equivalent to adding another line:
+        #  'A & B => C'
+        # is the same as:
+        #  'A => C' and 'B => C'
 
-            if op == '=':
-                type = 'normal'
-            elif op == 'c':
-                type = 'coldstart'
-            elif op == 'm':
-                type = 'model coldstart'
-            else:
-                raise SuiteConfigError, 'Unknown dependency arrow: ' + '=' + op + '=>' 
+        # '|' (OR) is allowed. For graphing, the final member of an OR
+        # group is plotted, by default,
+        #  'A | B => C' : [B => C]
+        # but a * indicates which member to plot,
+        #  'A* | B => C'   : [A => C]
+        #  'A & B  | C => D'  : [C => D]
+        #  'A & B * | C => D'  : [A => D], [B => D]
 
-            rights = re.split( '\s*&\s*', right )
-            lefts = re.split( '\s*&\s*', left )
+        #  An 'or' on the right side is an error:
+        #  'A = > B | C'     <--- NOT ALLOWED!
 
+        # NO PARENTHESES ALLOWED FOR NOW, AS IT MAKES PARSING DIFFICULT.
+        # But all(?) such expressions that we might need can be
+        # decomposed into multiple expressions: 
+        #  'A & ( B | C ) => D'               <--- don't use this
+        # is equivalent to:
+        #  'A => D' and 'B | C => D'          <--- use this instead
+
+        # split on arrows
+
+        sequence = re.split( '\s*=>\s*', line )
+
+        # get list of pairs
+        for i in range( 0, len(sequence)-1 ):
+            lgroup = sequence[i]
+            rgroup = sequence[i+1]
+            
+            # parentheses are used for intercycle dependencies: (T-6) etc.
+            # so don't check for them as erroneous conditionals just yet.
+
+            # '|' (OR) is not allowed on the right side
+            if re.search( '\|', rgroup ):
+                raise SuiteConfigError, "OR '|' conditionals are illegal on the right: " + rgroup
+
+            # split lgroup on OR:
+            if re.search( '\|', lgroup ):
+                OR_list = re.split('\s*\|\s*', lgroup )
+                # if any one is starred, keep it and discard the rest
+                found_star = False
+                for item in OR_list:
+                    if re.search( '\*$', item ):
+                        found_star = True
+                        lgroup = re.sub( '\*$', '', item )
+                        break
+                # else keep the right-most member 
+                if not found_star:
+                    lgroup = OR_list[-1]
+
+            # now split on '&' (AND) and generate corresponding pairs
+            rights = re.split( '\s*&\s*', rgroup )
+            lefts  = re.split( '\s*&\s*', lgroup )
             for r in rights:
                 for l in lefts:
-                    pairs.append( dependency( DepGNode(l), DepGNode(r), type ))
+                    pair = [l,r]
+                    # store dependencies by hour
+                    for hour in hours:
+                        if hour not in self.edges:
+                            self.edges[hour] = []
+                        if pair not in self.edges[hour]:
+                            self.edges[hour].append( pair )
 
-        return pairs
+            # self.edges left side members can be:
+            #   foo           (task name)
+            #   foo:N         (specific output)
+            #   foo(T-DD)     (intercycle dep)
+            #   foo:N(T-DD)   (both)
 
-    def process_dep_pair( self, pair, cycle_list ):
+    def process_dep_pair( self, pair, cycle_list_string ):
         left = pair.left
         right = pair.right
         type = pair.type
@@ -252,75 +300,76 @@ class config( CylcConfigObj ):
             if node.name not in self.taskdefs:
                 self.taskdefs[ node.name ] = self.get_taskdef( node.name, type, node.oneoff )
                         
-            self.taskdefs[ node.name ].add_hours( cycle_list )
+            self.taskdefs[ node.name ].add_hours( cycle_list_string )
 
         if pair.type == 'model coldstart':
             # MODEL COLDSTART (restart prerequisites)
             #  prev task must generate my restart outputs at startup 
-            if cycle_list not in self.taskdefs[left.name].outputs:
-                self.taskdefs[left.name].outputs[cycle_list] = []
-            self.taskdefs[left.name].outputs[cycle_list].append( right.name + " restart files ready for $(CYCLE_TIME)" )
+            if cycle_list_string not in self.taskdefs[left.name].outputs:
+                self.taskdefs[left.name].outputs[cycle_list_string] = []
+            self.taskdefs[left.name].outputs[cycle_list_string].append( right.name + " restart files ready for $(CYCLE_TIME)" )
 
         elif pair.type == 'coldstart':
             # COLDSTART ONEOFF at startup
             #  I can depend on prev task only at startup 
-            if cycle_list not in self.taskdefs[right.name].coldstart_prerequisites:
-                self.taskdefs[right.name].coldstart_prerequisites[cycle_list] = []
+            if cycle_list_string not in self.taskdefs[right.name].coldstart_prerequisites:
+                self.taskdefs[right.name].coldstart_prerequisites[cycle_list_string] = []
             if left.output:
                 # trigger off specific output of previous task
-                if cycle_list not in self.taskdefs[left.name].outputs:
-                    self.taskdefs[left.name].outputs[cycle_list] = []
+                if cycle_list_string not in self.taskdefs[left.name].outputs:
+                    self.taskdefs[left.name].outputs[cycle_list_string] = []
                 msg = self['tasks'][left.name]['outputs'][left.output]
-                if msg not in self.taskdefs[left.name].outputs[  cycle_list ]:
-                    self.taskdefs[left.name].outputs[  cycle_list ].append( msg )
-                self.taskdefs[right.name].coldstart_prerequisites[ cycle_list ].append( msg ) 
+                if msg not in self.taskdefs[left.name].outputs[  cycle_list_string ]:
+                    self.taskdefs[left.name].outputs[  cycle_list_string ].append( msg )
+                self.taskdefs[right.name].coldstart_prerequisites[ cycle_list_string ].append( msg ) 
             else:
                 # trigger off previous task finished
-                self.taskdefs[right.name].coldstart_prerequisites[ cycle_list ].append( left.name + "%$(CYCLE_TIME) finished" )
+                self.taskdefs[right.name].coldstart_prerequisites[ cycle_list_string ].append( left.name + "%$(CYCLE_TIME) finished" )
         else:
             # GENERAL
-            if cycle_list not in self.taskdefs[right.name].prerequisites:
-                self.taskdefs[right.name].prerequisites[cycle_list] = []
+            if cycle_list_string not in self.taskdefs[right.name].prerequisites:
+                self.taskdefs[right.name].prerequisites[cycle_list_string] = []
             if left.output:
                 # trigger off specific output of previous task
-                if cycle_list not in self.taskdefs[left.name].outputs:
-                    self.taskdefs[left.name].outputs[cycle_list] = []
+                if cycle_list_string not in self.taskdefs[left.name].outputs:
+                    self.taskdefs[left.name].outputs[cycle_list_string] = []
                 msg = self['tasks'][left.name]['outputs'][left.output]
-                if msg not in self.taskdefs[left.name].outputs[ cycle_list ]:
-                    self.taskdefs[left.name].outputs[ cycle_list ].append( msg )
+                if msg not in self.taskdefs[left.name].outputs[ cycle_list_string ]:
+                    self.taskdefs[left.name].outputs[ cycle_list_string ].append( msg )
                 if left.intercycle:
                     self.taskdefs[left.name].intercycle = True
                     msg = self.prerequisite_decrement( msg, left.offset )
-                self.taskdefs[right.name].prerequisites[ cycle_list ].append( msg )
+                self.taskdefs[right.name].prerequisites[ cycle_list_string ].append( msg )
             else:
                 # trigger off previous task finished
                 msg = left.name + "%$(CYCLE_TIME) finished" 
                 if left.intercycle:
                     self.taskdefs[left.name].intercycle = True
                     msg = self.prerequisite_decrement( msg, left.offset )
-                self.taskdefs[right.name].prerequisites[ cycle_list ].append( msg )
+                self.taskdefs[right.name].prerequisites[ cycle_list_string ].append( msg )
 
     def get_coldstart_graphs( self ):
         if not self.loaded:
-            self.load_taskdefs()
+            self.load_tasks()
         graphs = {}
-        for hour in self.deps:
+        for hour in self.edges:
             graphs[hour] = pygraphviz.AGraph(directed=True)
-            for pair in self.deps[hour]:
-                left = pair.left.name + '(' + str(hour) + ')'
-                right = pair.right.name + '(' + str(hour) + ')'
+            for pair in self.edges[hour]:
+                left, right = pair
+                left = left + '(' + str(hour) + ')'
+                right = right + '(' + str(hour) + ')'
                 graphs[hour].add_edge( left, right )
         return graphs 
 
     #def get_full_graph( self ):
     #    if not self.loaded:
-    #        self.load_taskdefs()
+    #        self.load_tasks()
     #    edges = {}
-    #    for cycle_list in self['dependency graph']:
-    #        for label in self['dependency graph'][ cycle_list ]:
-    #            line = self['dependency graph'][cycle_list][label]
+    #    for cycle_list_string in self['dependency graph']:
+    #        for label in self['dependency graph'][ cycle_list_string ]:
+    #            line = self['dependency graph'][cycle_list_string][label]
     #            pairs = self.get_dependent_pairs( line )
-    #            for cycle in re.split( '\s*,\s*', cycle_list ):
+    #            for cycle in re.split( '\s*,\s*', cycle_list_string ):
     #                print cycle, line
     #                if int(cycle) not in edges:
     #                    edges[ int(cycle) ] = []
@@ -368,21 +417,36 @@ class config( CylcConfigObj ):
             prev = cycles[i-1]
         return prev
 
-    def load_taskdefs( self ):
+    def load_tasks( self ):
+        self.load_tasks_oldstyle()
+        self.load_tasks_newstyle()
+
+    def load_tasks_oldstyle( self ):
         # LOAD FROM OLD-STYLE TASKDEFS
         for name in self['taskdefs']:
             taskd = taskdef.taskdef( name )
             taskd.load_oldstyle( name, self['taskdefs'][name], self['ignore task owners'] )
             self.taskdefs[name] = taskd
 
+    def load_tasks_newstyle( self ):
         # LOAD FROM NEW-STYLE DEPENDENCY GRAPH
         dep_pairs = []
-        for cycle_list in self['dependencies']:
-            temp = re.split( '\s*,\s*', cycle_list )
+
+        # loop over cycle time lists
+        for section in self['dependency graph']:
+            if re.match( '[\s,\d]+', section ):
+                cycle_list_string = section
+            else:
+                continue
+
+            temp = re.split( '\s*,\s*', cycle_list_string )
+            # turn cycle_list_string into a list of integer hours
             hours = []
             for i in temp:
                 hours.append( int(i) )
-            graph = self['dependencies'][ cycle_list ]['graph']
+
+            # parse the dependency graph for this list of cycle times
+            graph = self['dependency graph'][ cycle_list_string ]['graph']
             lines = re.split( '\s*\n\s*', graph )
             for xline in lines:
                 # strip comments
@@ -393,27 +457,23 @@ class config( CylcConfigObj ):
                 # strip leading or trailing spaces
                 line = re.sub( '^\s*', '', line )
                 line = re.sub( '\s*$', '', line )
-                pairs = self.get_dependent_pairs( line )
-                for pair in pairs:
-                    if pair not in dep_pairs:
-                        dep_pairs.append( pair )
-                    # store dependencies by hour
-                    for hour in hours:
-                        if hour not in self.deps:
-                            self.deps[hour] = []
-                        if pair not in self.deps[hour]:
-                            self.deps[hour].append( pair )
 
-            # define tasks
-            for pair in dep_pairs:
-                self.process_dep_pair( pair, cycle_list )
+                # add to the graphviz dependency graph
+                self.add_to_dependency_graph( line, hours )
+
+                # add to, or modify, the list of task definitions
+                #? self.define_tasks( line, cycle_list_string )
+                #? self.define_tasks( line, hours )
+
+            #?for pair in dep_pairs:
+            #?   self.process_dep_pair( pair, cycle_list_string )
 
         # task families
         members = []
         my_family = {}
-        for name in self['task families']:
+        for name in self['dependency graph']['task families']:
             self.taskdefs[name].type="family"
-            mems = self['task families'][name]
+            mems = self['dependency graph']['task families'][name]
             self.taskdefs[name].members = mems
             for mem in mems:
                 if mem not in members:
@@ -505,10 +565,10 @@ class config( CylcConfigObj ):
 
     def get_task_proxy( self, name, ctime, state, startup ):
         if not self.loaded:
-            self.load_taskdefs()
+            self.load_tasks()
         return self.taskdefs[name].get_task_class()( ctime, state, startup )
 
     def get_task_class( self, name ):
         if not self.loaded:
-            self.load_taskdefs()
+            self.load_tasks()
         return self.taskdefs[name].get_task_class()
