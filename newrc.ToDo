@@ -1,0 +1,56 @@
+#        > B => E
+#       /   \
+# X => A     => D
+#       \   /
+#        > C => F
+
+[dependencies]
+    [[ 0,6,12,18 ]]
+        graph =  """X => A => B =>  E
+                    A => C => F
+                    B & C => D
+
+           # cold start the three models:
+                    ColdA* | A(T-6) => A
+                    ColdB* | A(T-6) => B
+                    ColdC* | C(T-6) => C
+
+           # make everything depend on a special startup task
+                    prep* =s> X & ColdA & ColdB & ColdC
+                 """
+
+# foo^ => oneoff
+# foo* => sequential
+
+#_______________________________________________________________
+# PARSING THE GRAPH
+
+* each line,
+  * split into pairs on arrows, iterate through pairs
+    - pair.left groups can have AND, OR (i.e. conditional prereq)
+    - pair.right can only have AND (i.e. all trigger off left)
+    - in an OR group, the FIRST member will be used in graphs.
+    - must allow conditional and non-conditional prereqs together.
+
+* get rid of coldstart_prerequisites - only use is a special suite
+  startup task - could just run pre-suite with 'cylc submit'.
+
+* don't need tied task and auto restart prerequisites!:
+
+___________-
+    graph = A(T-12) | A(T-6) => A* (sequential)
+
+or to allow early triggering:
+      graph = A:2(T-12) | A:1(T-6) => A* (sequential)
+    (requires conditional OR prereq can handle "X or X")
+    BETTER: just document that this is equivalent to:
+      graph = A:1(T-6)
+    so long as the extra outputs are generated!
+
+    [[A]]
+         spawn after output = 2  # !!!
+         [[[outputs]]]
+    1 = "restart files ready for $(T+6)"
+    2 = "restart files ready for $(T+12)"
+___________-
+
