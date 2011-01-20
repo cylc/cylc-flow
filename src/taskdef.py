@@ -5,9 +5,7 @@
 #   - not using the various check_() functions below
 #   - conditional prerequisites
 #   - asynch stuff, output_patterns
-#   - no longer interpolate ctime in env vars or scripting 
-#     (not needed since cylcutil?) 
-#
+ 
 import sys, re
 from OrderedDict import OrderedDict
 
@@ -117,14 +115,16 @@ class taskdef(object):
                 continue
             raise DefinitionError, 'illegal task type: ' + item
 
-        self.load_requisites( self.prerequisites, tdef['prerequisites'], conditional=True )
+        # TO DO: CONDITIONAL AND NON-CONDITIONAL TOGETHER (use AND?)
+        self.load_requisites( self.prerequisites, tdef['prerequisites'] )
+        #self.load_requisites( self.conditional_prerequisites, tdef['conditional prerequisites'], conditional=True )
         self.load_requisites( self.outputs, tdef['outputs'] )
         self.load_requisites( self.coldstart_prerequisites, tdef['coldstart prerequisites'] )
         self.load_requisites( self.suicide_prerequisites, tdef['suicide prerequisites'] )
 
-        # TO DO: CONDITIONAL PREREQUISITES
 
     def load_requisites( self, target, source, conditional=False ):
+        # TO DO: CONDITIONAL PREREQUISITES
         for item in source:
             if item == 'condition':
                 if not conditional:
