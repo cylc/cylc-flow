@@ -376,6 +376,7 @@ class config( CylcConfigObj ):
             self.taskdefs[name] = taskd
 
         # LOAD FROM NEW-STYLE DEPENDENCY GRAPH
+        dep_pairs = []
         for cycle_list in self['dependencies']:
             temp = re.split( '\s*,\s*', cycle_list )
             hours = []
@@ -393,15 +394,19 @@ class config( CylcConfigObj ):
                 line = re.sub( '^\s*', '', line )
                 line = re.sub( '\s*$', '', line )
                 pairs = self.get_dependent_pairs( line )
-                # define tasks
                 for pair in pairs:
-                    self.process_dep_pair( pair, cycle_list )
+                    if pair not in dep_pairs:
+                        dep_pairs.append( pair )
                     # store dependencies by hour
                     for hour in hours:
                         if hour not in self.deps:
                             self.deps[hour] = []
                         if pair not in self.deps[hour]:
                             self.deps[hour].append( pair )
+
+            # define tasks
+            for pair in dep_pairs:
+                self.process_dep_pair( pair, cycle_list )
 
         # task families
         members = []

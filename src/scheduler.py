@@ -378,6 +378,7 @@ class scheduler(object):
                 self.cleanup()
                 self.spawn()
                 self.dump_state()
+                self.write_graph()
 
                 self.suite_state.update( self.tasks, self.clock, \
                         self.paused(), self.will_pause_at(), \
@@ -1285,3 +1286,29 @@ class scheduler(object):
             outlist.append( name ) 
 
         return outlist
+
+    def write_graph( self ):
+        graph = pygraphviz.AGraph(directed=True)
+        for task in self.tasks:
+            graph.add_node( task.id )
+            node = graph.get_node( task.id )
+            node.attr['style'] = 'filled'
+            if task.state.is_submitted():
+                node.attr['fillcolor'] = 'orange'
+            elif task.state.is_running():
+                node.attr['fillcolor'] = 'green'
+            elif task.state.is_waiting():
+                node.attr['fillcolor'] = 'blue'
+            elif task.state.is_finished():
+                node.attr['fillcolor'] = 'gray'
+                pass
+            elif task.state.is_failed():
+                node.attr['fillcolor'] = 'red'
+
+            for id in task.get_resolved_dependencies():
+                    graph.add_edge( id, task.id )
+
+        graph.layout(prog="dot")
+        graph.write( os.path.join( self.suite_dir, self.suite + '.dot' ))
+
+
