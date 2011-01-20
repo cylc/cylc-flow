@@ -79,7 +79,7 @@ class MyDotWindow( xdot.DotWindow ):
         foo = config.config( suite )
         self.suite_file = foo.get_filename()
         bar = foo.get_coldstart_graphs()
-        dotcode = bar['0'].string()
+        dotcode = bar[0].string()
         self.set_dotcode( dotcode )
 
     def update(self):

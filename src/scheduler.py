@@ -117,29 +117,27 @@ class scheduler(object):
 
     def configure_graphfile( self ):
         vizconfig = self.config['visualization']
-        task_labels = self.config.get_task_labels()
-        label_attributes = vizconfig['label node attributes']
         self.node_seen = {}
         # configure graph file parameters
         self.edge_colors = {}
         self.node_attributes = {}
-        for label in label_attributes:
-            attributes = label_attributes[label]
-            if label not in task_labels:
-                print "WARNING: IGNORING LABEL", label
-                continue
-            for task in task_labels[label]:
-                self.node_attributes[ task ] = attributes
-                if vizconfig[ 'use node color for edges' ]:
-                    m = re.search( 'fillcolor *= *(\w+)', self.node_attributes[ task ] )
-                    n = re.search( 'color *= *(\w+)', self.node_attributes[ task ] )
-                    if m:
-                        self.edge_colors[ task ] = m.groups()[0]
-                    elif n:
-                        self.edge_colors[ task ] = n.groups()[0]
-                    else:
-                        # stick with default color 
-                        pass
+        #for label in label_attributes:
+        #    attributes = label_attributes[label]
+        #    if label not in task_labels:
+        #        print "WARNING: IGNORING LABEL", label
+        #        continue
+        #    for task in task_labels[label]:
+        #        self.node_attributes[ task ] = attributes
+        #        if vizconfig[ 'use node color for edges' ]:
+        #            m = re.search( 'fillcolor *= *(\w+)', self.node_attributes[ task ] )
+        #            n = re.search( 'color *= *(\w+)', self.node_attributes[ task ] )
+        #            if m:
+        #                self.edge_colors[ task ] = m.groups()[0]
+        #            elif n:
+        #                self.edge_colors[ task ] = n.groups()[0]
+        #            else:
+        #                # stick with default color 
+        #                pass
 
         # determine task families and family members
         self.members = {}

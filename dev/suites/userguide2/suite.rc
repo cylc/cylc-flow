@@ -27,7 +27,7 @@ exclude task list = baz,
 [task families]
 FOO = foo, bar
 
-[dependency graph] #----------------------------------------------------
+[dependencies] #----------------------------------------------------
 #        > B => E
 #       /   \
 # X => A     => D  (plus various modifications...)
@@ -35,29 +35,32 @@ FOO = foo, bar
 #        > C => F
 
     [[ 0,6,12,18 ]]
-    label1  =  X ===> A ===> B ===>  E
-    label2  =  A ===> C ===> F:1 ===> FOO ===> postfoo
-    label3  =  B & C ===> D
+        graph  = """
+        X ===> A ===> B ===>  E
+        A ===> C ===> F:1 ===> FOO ===> postfoo
+        B & C ===> D
 
     # family: internal dependencies
-    labelfam = foo ===> bar
+       foo ===> bar
     
-    labelc1 = ColdA| =m=> A
-    labelc2 = ColdB| =m=> B
-    labelc3 = ColdC| =m=> C
+    ColdA| =m=> A
+    ColdB| =m=> B
+    ColdC| =m=> C
 
-    labelx1 = startup =c=> X & ColdA & ColdB & ColdC
-    labelx2 = F ===> baz|
-
+    startup =c=> X & ColdA & ColdB & ColdC
+    F ===> baz|
+    """
     # TO DO, conditional triggers:
     # label99 = (B or C) ===> D
 
     [[ 6,18 ]]
-    label6 = E ===> H
+        graph = E ===> H
 
     [[ 0,12 ]]
-    label7 = E(T-6)===> H
-    label8 = F(T-6):1 ===> G
+        graph = """
+        E(T-6)===> H
+        F(T-6):1 ===> G
+        """
 
 [environment] #--------------------------------------------------
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME

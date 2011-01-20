@@ -77,7 +77,7 @@ class config( CylcConfigObj ):
         self.dummy_mode = dummy_mode
         self.taskdefs = {}
         self.loaded = False
-        self.task_graph_labels = {}
+        self.deps = {}  # deps[ hour ] = [ [A,B], [C,D], ... ]
 
         if suite:
             self.suite = suite
@@ -202,22 +202,6 @@ class config( CylcConfigObj ):
             self.load_taskdefs()
         return self.taskdefs.keys()
 
-    def update_task_graph_labels( self, label, line ):
-        seen = []
-        for item in re.split( '\s*=[mc=]=>\s*', line ):
-            for task in re.split( '\s*&\s*', item ):
-                foo = re.sub( '\|$', '', task )
-                bar = re.sub( '\(\s*T.*\)', '', foo )
-                baz = re.sub( ':\w+$', '', bar )
-                seen.append( baz )
-        #print label, '::', line, '::', seen
-        #for task in seen:
-        #    self.task_graph_labels[ task ] = label
-        self.task_graph_labels[label] = seen
-
-    def get_task_labels( self ):
-        return self.task_graph_labels
-
     def get_dependent_pairs( self, line ):
         # 'A ===> B ===> C' : [A ===> B],[B ===> C]
         # 'A,B ===> C'      : [A ===> C],[B ===> C]
@@ -320,66 +304,61 @@ class config( CylcConfigObj ):
         if not self.loaded:
             self.load_taskdefs()
         graphs = {}
-        for cycle_list in self['dependency graph']:
-            for label in self['dependency graph'][ cycle_list ]:
-                line = self['dependency graph'][cycle_list][label]
-                pairs = self.get_dependent_pairs( line )
-                for pair in pairs:
-                    for cycle in re.split( '\s*,\s*', cycle_list ):
-                        if cycle not in graphs:
-                            graphs[cycle] = pygraphviz.AGraph(directed=True)
-                        left = pair.left.name + '(' + cycle + ')'
-                        right = pair.right.name + '(' + cycle + ')'
-                        graphs[cycle].add_edge( left, right )
+        for hour in self.deps:
+            graphs[hour] = pygraphviz.AGraph(directed=True)
+            for pair in self.deps[hour]:
+                left = pair.left.name + '(' + str(hour) + ')'
+                right = pair.right.name + '(' + str(hour) + ')'
+                graphs[hour].add_edge( left, right )
         return graphs 
 
-    def get_full_graph( self ):
-        if not self.loaded:
-            self.load_taskdefs()
-        edges = {}
-        for cycle_list in self['dependency graph']:
-            for label in self['dependency graph'][ cycle_list ]:
-                line = self['dependency graph'][cycle_list][label]
-                pairs = self.get_dependent_pairs( line )
-                for cycle in re.split( '\s*,\s*', cycle_list ):
-                    print cycle, line
-                    if int(cycle) not in edges:
-                        edges[ int(cycle) ] = []
-                    for pair in pairs:
-                        if pair not in edges[int(cycle)]:
-                            edges[ int(cycle) ].append( pair )
-
-        graph = pygraphviz.AGraph(directed=True)
-        cycles = edges.keys()
-        cycles.sort()
-        # note: need list rotation in order to coldstart start at
-        # another cycle time.
-        oneoff_done = {}
-        coldstart_done = False
-        for cycle in cycles:
-            for pair in edges[cycle]:
-                lname = pair.left.name
-                rname = pair.right.name
-                type  = pair.type
-                if 'oneoff' in self.taskdefs[ lname ].modifiers:
-                    if lname in oneoff_done:
-                        if oneoff_done[lname] != cycle:
-                            continue
-                    else:
-                        oneoff_done[lname] = cycle
-
-                if coldstart_done and self.taskdefs[ lname ].type == 'tied':
-                    # TO DO: need task-specific prev cycle:
-                    prev = self.prev_cycle( cycle, cycles )
-                    a = lname + '(' + str(prev) + ')'
-                    b = lname + '(' + str(cycle) + ')'
-                    graph.add_edge( a, b )
-
-                left = lname + '(' + str(cycle) + ')'
-                right = rname + '(' + str(cycle) + ')'
-                graph.add_edge( left, right )
-            coldstart_done = True
-        return graph
+    #def get_full_graph( self ):
+    #    if not self.loaded:
+    #        self.load_taskdefs()
+    #    edges = {}
+    #    for cycle_list in self['dependency graph']:
+    #        for label in self['dependency graph'][ cycle_list ]:
+    #            line = self['dependency graph'][cycle_list][label]
+    #            pairs = self.get_dependent_pairs( line )
+    #            for cycle in re.split( '\s*,\s*', cycle_list ):
+    #                print cycle, line
+    #                if int(cycle) not in edges:
+    #                    edges[ int(cycle) ] = []
+    #                for pair in pairs:
+    #                    if pair not in edges[int(cycle)]:
+    #                        edges[ int(cycle) ].append( pair )
+    #
+    #    graph = pygraphviz.AGraph(directed=True)
+    #    cycles = edges.keys()
+    #    cycles.sort()
+    #    # note: need list rotation in order to coldstart start at
+    #    # another cycle time.
+    #    oneoff_done = {}
+    #    coldstart_done = False
+    #    for cycle in cycles:
+    #        for pair in edges[cycle]:
+    #            lname = pair.left.name
+    #            rname = pair.right.name
+    #            type  = pair.type
+    #            if 'oneoff' in self.taskdefs[ lname ].modifiers:
+    #                if lname in oneoff_done:
+    #                    if oneoff_done[lname] != cycle:
+    #                        continue
+    #                else:
+    #                    oneoff_done[lname] = cycle
+    #
+    #             if coldstart_done and self.taskdefs[ lname ].type == 'tied':
+    #                # TO DO: need task-specific prev cycle:
+    #               prev = self.prev_cycle( cycle, cycles )
+    #                a = lname + '(' + str(prev) + ')'
+    #                b = lname + '(' + str(cycle) + ')'
+    #                graph.add_edge( a, b )
+    #
+    #            left = lname + '(' + str(cycle) + ')'
+    #            right = rname + '(' + str(cycle) + ')'
+    #            graph.add_edge( left, right )
+    #        coldstart_done = True
+    #    return graph
 
     def prev_cycle( self, cycle, cycles ):
         i = cycles.index( cycle )
@@ -390,19 +369,41 @@ class config( CylcConfigObj ):
         return prev
 
     def load_taskdefs( self ):
+        # LOAD FROM OLD-STYLE TASKDEFS
         for name in self['taskdefs']:
             taskd = taskdef.taskdef( name )
             taskd.load_oldstyle( name, self['taskdefs'][name], self['ignore task owners'] )
             self.taskdefs[name] = taskd
 
-        for cycle_list in self['dependency graph']:
-            for label in self['dependency graph'][ cycle_list ]:
-                line = self['dependency graph'][cycle_list][label]
-                self.update_task_graph_labels( label, line )
+        # LOAD FROM NEW-STYLE DEPENDENCY GRAPH
+        for cycle_list in self['dependencies']:
+            temp = re.split( '\s*,\s*', cycle_list )
+            hours = []
+            for i in temp:
+                hours.append( int(i) )
+            graph = self['dependencies'][ cycle_list ]['graph']
+            lines = re.split( '\s*\n\s*', graph )
+            for xline in lines:
+                # strip comments
+                line = re.sub( '#.*', '', xline ) 
+                # ignore blank lines
+                if re.match( '^\s*$', line ):
+                    continue
+                # strip leading or trailing spaces
+                line = re.sub( '^\s*', '', line )
+                line = re.sub( '\s*$', '', line )
                 pairs = self.get_dependent_pairs( line )
+                # define tasks
                 for pair in pairs:
                     self.process_dep_pair( pair, cycle_list )
+                    # store dependencies by hour
+                    for hour in hours:
+                        if hour not in self.deps:
+                            self.deps[hour] = []
+                        if pair not in self.deps[hour]:
+                            self.deps[hour].append( pair )
 
+        # task families
         members = []
         my_family = {}
         for name in self['task families']:

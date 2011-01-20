@@ -6,9 +6,9 @@ sequential, and generates output required by task bar. Neither task is
 cylc-aware and they both have their own configurable input and output
 directories."""
 
-[dependency graph]
+[dependencies]
     [[ 0,6,12,18 ]]
-    label1  =  prep| =c=> foo ===> bar
+    graph  =  prep| =c=> foo ===> bar
 
 [environment]
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
