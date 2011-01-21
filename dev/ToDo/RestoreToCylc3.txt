@@ -1,11 +1,14 @@
 
 *  suicide prerequisites
 
-* 
+* conditional trigger on failed => no longer need the 'completed' message?
+  (which is set in outputs.py)
+
+* clean up prerequisites classes - put all in one module?
+* same with outputs + requisites?
 
 * NEW? (re: Trevor's mos spin up for new stations):
 
 - a cylcing task that stops at a given ctime? => foo(T)
 - pause a task
 - insert a prerequisite on the fly - e.g. trigger off foo when it reaches T
-

@@ -5,10 +5,7 @@ import re
 import sys
 from prerequisites import prerequisites
 
-# PREREQUISITES:
-# A collection of messages representing the prerequisite conditions
-# of ONE TASK. "Satisfied" => the prerequisite has been satisfied.
-# Prerequisites can interact with a broker (above) to get satisfied.
+# THIS IS USED WITH ASYNCHRONOUS TASKS (EXPERIMENTAL)
 
 class loose_prerequisites( prerequisites ):
 
