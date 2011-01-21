@@ -126,6 +126,8 @@ class monitor(object):
         for group in optgroups:
             command += group.get_options()
 
+        print command
+
         window.destroy()
 
         command += ' ' + self.suite + ' ' + ctime
@@ -861,12 +863,19 @@ cylc gui is a real time suite control and monitoring tool for cylc.
                 )
         dmode_group.pack( vbox )
         
-        dot_group = controlled_option_group( "Generate A Dependency Graph?" )
-        dot_group.add_entry( 'filename (absolute path or relative to $HOME)', 
-                '--graphfile=', max_chars=None, default=self.suite+'.dot' )
-        dot_group.pack( vbox )
+        #dot_group = controlled_option_group( "Generate A Dependency Graph?" )
+        #dot_group.add_entry( 'filename (absolute path or relative to $HOME)', 
+        #        '--graphfile=', max_chars=None, default=self.suite+'.dot' )
+        #dot_group.pack( vbox )
+        #optgroups = [ exin_group, dmode_group, dot_group ]
 
+        dot_group = controlled_option_group( "Debug Mode", "--debug" )
+        #dot_group.add_entry( 'filename (absolute path or relative to $HOME)', 
+        #        '--graphfile=', max_chars=None, default=self.suite+'.dot' )
+        dot_group.pack( vbox )
         optgroups = [ exin_group, dmode_group, dot_group ]
+
+        #optgroups = [ exin_group, dmode_group ]
 
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
