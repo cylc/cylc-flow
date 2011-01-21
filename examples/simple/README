@@ -1,6 +1,0 @@
-A simple three-task example suite defined in two different ways:
-
- 1/ new style: textual dependency graph
-
- 2/ old style: distinct task definitions with explicit prerequisites and
-    outputs (albeit now in a single suite.rc file).

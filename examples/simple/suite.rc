@@ -8,7 +8,7 @@ directories."""
 
 [dependency graph]
     [[task types]]
-    oneoff task list = prep,
+    #list of oneoff tasks = prep,
 
     [[ 0,6,12,18 ]]
     graph  =  """prep => foo => bar"""
@@ -19,15 +19,15 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
 
 [tasks]
     [[prep]]
-    command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
+    list of commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[foo]]
-    command list = cylc-wrapper foo.sh,
+    list of commands = cylc-wrapper foo.sh,
         [[[environment]]]
         FOO_OUTPUT_DIR = $WORKSPACE
  
     [[bar]]
-    command list = cylc-wrapper bar.sh,
+    list of commands = cylc-wrapper bar.sh,
         [[[environment]]]
         BAR_INPUT_DIR = $WORKSPACE
         BAR_OUTPUT_DIR = $WORKSPACE

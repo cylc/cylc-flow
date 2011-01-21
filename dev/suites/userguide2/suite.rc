@@ -36,30 +36,29 @@ FOO = foo, bar
 
     [[ 0,6,12,18 ]]
         graph  = """
-        X ===> A ===> B ===>  E
-        A ===> C ===> F:1 ===> FOO ===> postfoo
-        B & C ===> D
+        X => A => B =>  E
+        ###A => C => F:1 => FOO => postfoo
+        A => C => F => FOO => postfoo
+        B & C => D
 
     # family: internal dependencies
-       foo ===> bar
+       foo => bar
     
-    ColdA| =m=> A
-    ColdB| =m=> B
-    ColdC| =m=> C
+    ColdA | A(T-6) => A
+    ColdB | B(T-6) => B
+    ColdC | C(T-6) => C
 
-    startup =c=> X & ColdA & ColdB & ColdC
-    F ===> baz|
+    #### startup =c=> X & ColdA & ColdB & ColdC
+    F => baz
     """
-    # TO DO, conditional triggers:
-    # label99 = (B or C) ===> D
 
     [[ 6,18 ]]
-        graph = E ===> H
+        graph = E => H
 
     [[ 0,12 ]]
         graph = """
-        E(T-6)===> H
-        F(T-6):1 ===> G
+        E(T-6)=> H
+        ###F(T-6):1 => G
         """
 
 [environment] #--------------------------------------------------
@@ -74,7 +73,7 @@ A_SHELL_PARAMETER_EXPANSION="${WORKSPACE##_.*}"
 [ tasks ]
     [[startup]] #------------------------------------------------------
     #owner = munge
-    command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
+    list of commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
     log file list = foo, bar, baz
         [[[directives]]]
         FOO = BAR
@@ -82,7 +81,7 @@ A_SHELL_PARAMETER_EXPANSION="${WORKSPACE##_.*}"
 
     [[X]] #------------------------------------------------------
     type modifier list = clock(offset = 1 hour), sequential,
-    command list = cylc-wrapper X.sh,
+    list of commands = cylc-wrapper X.sh,
     scripting = """
 echo hello
 mkdir /tmp/munge
@@ -92,7 +91,7 @@ echo bye"""
  
     [[A]] #------------------------------------------------------
     type modifier list = model(restarts = 3),
-    command list = cylc-wrapper A.sh,
+    list of commands = cylc-wrapper A.sh,
         [[[environment]]]
         A_INPUT_DIR = $WORKSPACE
         A_OUTPUT_DIR = $WORKSPACE
@@ -100,7 +99,7 @@ echo bye"""
 
     [[B]] #------------------------------------------------------
     type modifier list = model(restarts = 3),
-    command list = cylc-wrapper B.sh,
+    list of commands = cylc-wrapper B.sh,
         [[[environment]]]
         B_INPUT_DIR = $WORKSPACE
         B_OUTPUT_DIR = $WORKSPACE
@@ -108,7 +107,7 @@ echo bye"""
 
     [[C]] #------------------------------------------------------
     type modifier list = model(restarts = 3),
-    command list = cylc-wrapper C.sh,
+    list of commands = cylc-wrapper C.sh,
         [[[environment]]]
         C_INPUT_DIR = $WORKSPACE
         C_OUTPUT_DIR = $WORKSPACE
@@ -117,22 +116,22 @@ echo bye"""
     [[D]] #------------------------------------------------------
     execution timeout minutes = 0.1
     #reset execution timeout on incoming messages = False
-    command list = D-no-wrap.sh,
-    #command list = cylc-wrapper D.sh,
-    #command list = cylc-wrapper D-fail.sh, cylc-wrapper D.sh,
+    list of commands = D-no-wrap.sh,
+    #list of commands = cylc-wrapper D.sh,
+    #list of commands = cylc-wrapper D-fail.sh, cylc-wrapper D.sh,
     # job submission method = ll_basic
         [[[environment]]]
         D_INPUT_DIR = $WORKSPACE
         D_OUTPUT_DIR = $WORKSPACE
  
     [[E]] #------------------------------------------------------
-    command list = cylc-wrapper E.sh,
+    list of commands = cylc-wrapper E.sh,
         [[[environment]]]
         E_INPUT_DIR = $WORKSPACE
         E_OUTPUT_DIR = $WORKSPACE
  
     [[F]] #------------------------------------------------------
-    command list = cylc-wrapper F.sh,
+    list of commands = cylc-wrapper F.sh,
         [[[outputs]]]
         1 = "foo products ready for $(CYCLE_TIME)"
         [[[environment]]]
@@ -140,22 +139,22 @@ echo bye"""
         F_OUTPUT_DIR = $WORKSPACE
 
     [[G]] #------------------------------------------------------
-    command list = cylc-wrapper G.sh,
+    list of commands = cylc-wrapper G.sh,
         [[[environment]]]
         G_INPUT_DIR = $WORKSPACE
         G_OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]] #------------------------------------------------
     description = "fulfils restart dependencies for model A"
-    command list = cylc-wrapper ColdA.sh,
+    list of commands = cylc-wrapper ColdA.sh,
 
     [[ColdB]] #------------------------------------------------
     description = "fulfils restart dependencies for model B"
-    command list = cylc-wrapper ColdB.sh,
+    list of commands = cylc-wrapper ColdB.sh,
 
     [[ColdC]] #------------------------------------------------
     description = "fulfils restart dependencies for model C"
-    command list = cylc-wrapper ColdC.sh,
+    list of commands = cylc-wrapper ColdC.sh,
 
     [[foo]] #--------------------------------------------------
     [[bar]] #--------------------------------------------------
@@ -164,26 +163,3 @@ echo bye"""
     [[FOO]] #--------------------------------------------------
     [[H]]
     [[I]]
-
-[taskdefs]
-    [[slunge]]
-    description = """a task that commits suicide if B finishes"""
-    cycles = 0,6,12,18
-        [[[ prerequisites ]]]
-        a = C%$(CYCLE_TIME) finished
-        [[[ suicide prerequisites ]]]
-        a = B%$(CYCLE_TIME) finished
-
-    [[munge]]
-    #owner = superman
-    description = testing testing testing
-    cycles = 0,6,12,18
-        [[[outputs]]]
-        a = munge one products ready for $(CYCLE_TIME)
-        b = munge two products ready for $(CYCLE_TIME)
-        [[[prerequisites]]]
-        a = C%$(CYCLE_TIME) finished
-        b = D%$(CYCLE_TIME) finished
-        condition = (a or b)
-            [[[[ 6,18 ]]]]
-            c = F%$(CYCLE_TIME) finished
