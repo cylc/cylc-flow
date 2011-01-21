@@ -174,9 +174,9 @@ class task( Pyro.core.ObjBase ):
 
     def get_resolved_dependencies( self ):
         dep = []
-        for label in self.prerequisites.satisfied_by.keys():
-            #print ' o "' + self.prerequisites.messages[ label ] + '" <--- ' + self.prerequisites.satisfied_by[ label ]
-            dep.append( self.prerequisites.satisfied_by[ label ] )
+        satby = self.prerequisites.get_satisfied_by()
+        for label in satby.keys():
+            dep.append( satby[ label ] )
         return dep
 
     def run_if_ready( self, current_time ):

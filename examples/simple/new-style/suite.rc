@@ -6,9 +6,13 @@ sequential, and generates output required by task bar. Neither task is
 cylc-aware and they both have their own configurable input and output
 directories."""
 
-[dependencies]
+[dependency graph]
+    [[task types]]
+    oneoff task list = prep,
+
     [[ 0,6,12,18 ]]
-    graph  =  prep| =c=> foo ===> bar
+    graph  =  """prep => foo => bar"""
+
 
 [environment]
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
@@ -18,7 +22,6 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[foo]]
-    type modifier list = clock(offset = 1 hour), sequential,
     command list = cylc-wrapper foo.sh,
         [[[environment]]]
         FOO_OUTPUT_DIR = $WORKSPACE

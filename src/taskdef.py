@@ -3,14 +3,17 @@
 # NOT YET IMPLEMENTED OR DOCUMENTED FROM bin/_taskgen:
 #   - time translation (for different units) not used
 #   - not using the various check_() functions below
-#   - conditional prerequisites
 #   - asynch stuff, output_patterns
+
+# ONEOFF and FOLLOWON TASKS: followon still needed but can now be
+# identified automatically from the dependency graph?
  
 import sys, re
 from OrderedDict import OrderedDict
 
 from prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites import prerequisites
+from plain_prerequisites import plain_prerequisites
 from task_output_logs import logfiles
 from collections import deque
 from outputs import outputs
@@ -30,15 +33,10 @@ class DefinitionError( Error ):
         return repr( self.msg )
 
 class taskdef(object):
-    allowed_types = [ 'free', 'tied' ]
-    allowed_modifiers = [ 'sequential', 'oneoff', 'contact', 'catchup_contact' ]
-
     def __init__( self, name ):
         self.name = name
         self.type = 'free'
-
         self.job_submit_method = 'background'
-
         self.modifiers = []
 
         self.owner = None
@@ -55,110 +53,50 @@ class taskdef(object):
         self.member_of = None
         self.follow_on_task = None
 
-        self.n_restart_outputs = None
         self.contact_offset = None
 
-        self.prerequisites = OrderedDict()                # list of messages
-        self.suicide_prerequisites = OrderedDict()        #  "
-        self.coldstart_prerequisites = OrderedDict()      #  "
-        self.conditional_prerequisites = OrderedDict()    #  "
-        self.outputs = OrderedDict()                      #  "
+        self.prerequisites = OrderedDict()             
+
+        self.suicide_prerequisites = OrderedDict()       
+
+        self.outputs = OrderedDict()                     
 
         self.commands = []                       # list of commands
         self.scripting   = []                    # list of lines
         self.environment = OrderedDict()         # var = value
         self.directives  = OrderedDict()         # var = value
 
-    def load_oldstyle( self, name, tdef, ignore_owner ):
-        # tdef direct from configobj [taskdefs][name] section
-        self.name = name
-        self.description = tdef['description']
-        self.job_submission_method = tdef['job submission method']
-        self.execution_timeout_minutes = tdef['execution timeout minutes']
-        self.reset_execution_timeout_on_incoming_messages = tdef['reset execution timeout on incoming messages']
-        self.hours = tdef['cycles']
-        self.host = tdef['host']
-        if not ignore_owner:
-            self.owner = tdef['owner']
-        self.follow_on_task = tdef['follow on task']
-        self.intercycle = tdef['intercycle']
+    def add_unconditional_prereq( self, msg, cycle_list_string ):
+        if cycle_list_string not in self.prerequisites:
+            self.plain_prerequisites[ cycle_list_string ] = []
+        self.plain_prerequisites[ cycle_list_string ].append( msg )
 
-        self.commands = tdef['command list']
-
-        self.environment = tdef['environment']
-        self.directives = tdef['directives']
-
-        self.scripting = tdef['scripting']
-
-        self.type = tdef['type']
-
-        for item in tdef['type modifier list']:
-            if item == 'oneoff' or \
-                item == 'sequential' or \
-                item == 'catchup':
-                self.modifiers.append( item )
-                continue
-            m = re.match( 'model\(\s*restarts\s*=\s*(\d+)\s*\)', item )
-            if m:
-                self.type = 'tied'
-                self.n_restart_outputs = int( m.groups()[0] )
-                continue
-            m = re.match( 'clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-            if m:
-                self.modifiers.append( 'contact' )
-                self.contact_offset = m.groups()[0]
-                continue
-            m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-            if m:
-                self.modifiers.append( 'catchup_contact' )
-                self.contact_offset = m.groups()[0]
-                continue
-            raise DefinitionError, 'illegal task type: ' + item
-
-        # TO DO: CONDITIONAL AND NON-CONDITIONAL TOGETHER (use AND?)
-        self.load_requisites( self.prerequisites, tdef['prerequisites'] )
-        #self.load_requisites( self.conditional_prerequisites, tdef['conditional prerequisites'], conditional=True )
-        self.load_requisites( self.outputs, tdef['outputs'] )
-        self.load_requisites( self.coldstart_prerequisites, tdef['coldstart prerequisites'] )
-        self.load_requisites( self.suicide_prerequisites, tdef['suicide prerequisites'] )
-
-
-    def load_requisites( self, target, source, conditional=False ):
-        # TO DO: CONDITIONAL PREREQUISITES
-        for item in source:
-            if item == 'condition':
-                if not conditional:
-                    raise DefinitionError( "only prerequisites can be conditional" )
-                continue
-            if isinstance( source[item], dict ):
-                # item is a cycle list
-                if item not in target:
-                    target[item] = []
-                for pre in source[item]:
-                    if pre == 'condition':
-                        if not conditional:
-                            raise DefinitionError( "only prerequisites can be conditional" )
-                        continue
-                    target[item].append( source[item][pre] )
-            else:
-                if 'any' not in target:
-                    target['any'] = []
-                target['any'].append( source[item] )
+    #def load_requisites( self, target, source, conditional=False ):
+    #    for item in source:
+    #        if item == 'condition':
+    #            if not conditional:
+    #                raise DefinitionError( "only prerequisites can be conditional" )
+    #            continue
+    #        if isinstance( source[item], dict ):
+    #            # item is a cycle list
+    #            if item not in target:
+    #                target[item] = []
+    #            for pre in source[item]:
+    #                if pre == 'condition':
+    #                    if not conditional:
+    #                        raise DefinitionError( "only prerequisites can be conditional" )
+    #                    continue
+    #                target[item].append( source[item][pre] )
+    #        else:
+    #            if 'any' not in target:
+    #                target['any'] = []
+    #            target['any'].append( source[item] )
 
     def check_name( self, name ):
         if re.search( '[^\w]', name ):
             raise DefinitionError( 'Task names may contain only a-z,A-Z,0-9,_' )
  
-    def check_type( self, type ): 
-        if type not in self.__class__.allowed_types:
-            raise DefinitionError( 'Illegal task type: ' + type )
-
-    def check_modifier( self, modifier ):
-        if modifier not in self.__class__.allowed_modifiers:
-            raise DefinitionError( 'Illegal task type modifier: ' + modifier )
-
-    def add_hours( self, cycle_list ):
-        hours = re.split( '\s*,\s*', cycle_list )
+    def add_hours( self, hours ):
         for hr in hours:
             hour = int( hr )
             if hour < 0 or hour > 23:
@@ -175,12 +113,9 @@ class taskdef(object):
             if len( self.contact_offset.keys() ) == 0:
                 raise DefinitionError( 'contact tasks must specify a time offset' )
 
-        if self.type == 'tied' and self.n_restart_outputs == 0:
-            raise DefinitionError( 'tied tasks must specify number of restart outputs' )
-
-        if 'oneoff' not in self.modifiers and self.intercycle:
-            if not self.follow_on_task:
-                raise DefinitionError( 'oneoff intercycle tasks must specify a follow-on task' )
+        #if 'oneoff' not in self.modifiers and self.intercycle:
+        #    if not self.follow_on_task:
+        #        raise DefinitionError( 'oneoff intercycle tasks must specify a follow-on task' )
 
         if self.member_of and len( self.members ) > 0:
             raise DefinitionError( 'nested task families are not allowed' )
@@ -302,9 +237,30 @@ class taskdef(object):
 
         tclass.interpolate_ctime = tclass_interpolate_ctime
 
+        def tclass_add_prerequisites( sself, target, source ):
+            # target: prerequisites object
+            # source: taskdef prerequisites
+            uncond = plain_prerequisites( sself.id )
+            for condition in source:
+                reqs = source[ condition ]
+                if condition == 'any':
+                    for req in reqs:
+                        req = sself.interpolate_ctime( req )
+                        uncond.add( req )
+                else:
+                    hours = re.split( ',\s*', condition )
+                    for hr in hours:
+                        if int( sself.c_hour ) == int( hr ):
+                            for req in reqs:
+                                req = sself.interpolate_ctime( req )
+                                uncond.add( req )
+            sself.prerequisites.add_requisites( uncond )
+
+        tclass.add_prerequisites = tclass_add_prerequisites
+
         def tclass_add_requisites( sself, target, source ):
             # target: requisites object
-            # source conditional taskdef requisites
+            # source taskdef requisites
             for condition in source:
                 reqs = source[ condition ]
                 if condition == 'any':
@@ -340,10 +296,11 @@ class taskdef(object):
                 sself.real_time_delay =  float( self.contact_offset )
 
             # prerequisites
-            sself.prerequisites = prerequisites( sself.id )
-            sself.add_requisites( sself.prerequisites, self.prerequisites )
-            # suicide prerequisites
-            sself.suicide_prerequisites = prerequisites( sself.id )
+
+            sself.prerequisites = prerequisites()
+            sself.add_prerequisites( sself.prerequisites, self.prerequisites )
+            # should these be conditional too:?
+            sself.suicide_prerequisites = plain_prerequisites( sself.id )
             sself.add_requisites( sself.suicide_prerequisites, self.suicide_prerequisites )
 
             if self.member_of:
@@ -365,20 +322,7 @@ class taskdef(object):
             sself.outputs = outputs( sself.id )
             sself.add_requisites( sself.outputs, self.outputs )
 
-            if self.type == 'tied':
-                sself.register_restart_requisites( self.n_restart_outputs )
-
             sself.outputs.register()
-
-            if startup and \
-                    int(sself.orig_c_hour) in sself.valid_hours and \
-                        len( self.coldstart_prerequisites.keys()) != 0:
-                # OVERRIDE my registered prerequisites IF:
-                #  (a) this is a coldstart
-                #  (b) the suite start hour is a valid hour for me
-                #  (c) I have coldstart prerequsites defined
-                sself.prerequisites = prerequisites( sself.id )
-                sself.add_requisites( sself.prerequisites, self.coldstart_prerequisites )
 
             sself.env_vars = OrderedDict()
             for var in self.environment:

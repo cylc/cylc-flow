@@ -17,19 +17,21 @@ suite dependency graph."""
 
 use lockserver = False
 
-[dependencies]
+[dependency graph]
     [[ 0,6,12,18 ]]
-        graph =  """X ===> A ===> B ===>  E
-                    A ===> C ===> F
-                    B & C ===> D
+        graph =  """X => A => B =>  E
+                    A => C => F
+                    #B & C => D
+                    B  => D
+                    C => D
     
            # cold start the three models:
-                    ColdA| =m=> A
-                    ColdB| =m=> B
-                    ColdC| =m=> C
+           #         ColdA| =m=> A
+           #         ColdB| =m=> B
+           #         ColdC| =m=> C
 
            # make everything depend on a special startup task
-                    prep| =c=> X & ColdA & ColdB & ColdC
+           #         prep| =c=> X & ColdA & ColdB & ColdC
                  """
 [environment]
 TASK_EXE_SECONDS = 5
@@ -45,27 +47,27 @@ C_RUNNING_DIR = $WORKSPACE/RunningC
     command list = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[X]]
-    type modifier list = clock(offset = 1 hour),
+    #type modifier list = clock(offset = 1 hour),
     command list = cylc-wrapper X.sh,
         [[[ environment ]]]
         X_OUTPUT_DIR = $WORKSPACE
  
     [[A]]
-    type modifier list = model(restarts = 3),
+    #type modifier list = model(restarts = 3),
     command list = cylc-wrapper A.sh,
         [[[environment]]]
         A_INPUT_DIR = $WORKSPACE
         A_OUTPUT_DIR = $WORKSPACE
 
     [[B]]
-    type modifier list = model(restarts = 3),
+    #type modifier list = model(restarts = 3),
     command list = cylc-wrapper B.sh,
         [[[environment]]]
         B_INPUT_DIR = $WORKSPACE
         B_OUTPUT_DIR = $WORKSPACE
 
     [[C]]
-    type modifier list = model(restarts = 3),
+    #type modifier list = model(restarts = 3),
     command list = cylc-wrapper C.sh,
         [[[environment]]]
         C_INPUT_DIR = $WORKSPACE
