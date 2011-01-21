@@ -54,3 +54,7 @@ or to allow early triggering:
     2 = "restart files ready for $(T+12)"
 ___________-
 
+NOTE: for a *model* you don't need intercycle dependence IF you force it
+to be sequential, EXCEPT at startup when the proper intercycle dependence
+stops it from starting up before the cold start task.  But sequential is
+of no use for e.g. UM(T-6) => OPS & VarConfigureLS.
