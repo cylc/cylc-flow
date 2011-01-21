@@ -20,6 +20,7 @@
                     ColdC | C(T-12) | C(T-6) => C
 
            # make everything depend on a special startup task
+           # THIS REQUIRES COLD START PREREQS?
                     prep => X & ColdA & ColdB & ColdC
                  """
 #_______________________________________________________________

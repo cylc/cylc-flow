@@ -14,6 +14,7 @@ from OrderedDict import OrderedDict
 from prerequisites_fuzzy import fuzzy_prerequisites
 from prerequisites import prerequisites
 from plain_prerequisites import plain_prerequisites
+from conditionals import conditional_prerequisites
 from task_output_logs import logfiles
 from collections import deque
 from outputs import outputs
@@ -55,9 +56,12 @@ class taskdef(object):
 
         self.contact_offset = None
 
-        self.prerequisites = OrderedDict()             
+        # triggers[0,6] = [ A, B:1, C(T-6), ... ]
+        self.triggers = OrderedDict()         
+        # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
+        self.cond_triggers = OrderedDict()             
 
-        self.suicide_prerequisites = OrderedDict()       
+        self.suicide_triggers = OrderedDict()       
 
         self.outputs = OrderedDict()                     
 
@@ -66,31 +70,15 @@ class taskdef(object):
         self.environment = OrderedDict()         # var = value
         self.directives  = OrderedDict()         # var = value
 
-    def add_unconditional_prereq( self, msg, cycle_list_string ):
-        if cycle_list_string not in self.prerequisites:
-            self.plain_prerequisites[ cycle_list_string ] = []
-        self.plain_prerequisites[ cycle_list_string ].append( msg )
+    def add_trigger( self, trigger, cycle_list_string ):
+        if cycle_list_string not in self.triggers:
+            self.triggers[ cycle_list_string ] = []
+        self.triggers[ cycle_list_string ].append( trigger )
 
-    #def load_requisites( self, target, source, conditional=False ):
-    #    for item in source:
-    #        if item == 'condition':
-    #            if not conditional:
-    #                raise DefinitionError( "only prerequisites can be conditional" )
-    #            continue
-    #        if isinstance( source[item], dict ):
-    #            # item is a cycle list
-    #            if item not in target:
-    #                target[item] = []
-    #            for pre in source[item]:
-    #                if pre == 'condition':
-    #                    if not conditional:
-    #                        raise DefinitionError( "only prerequisites can be conditional" )
-    #                    continue
-    #                target[item].append( source[item][pre] )
-    #        else:
-    #            if 'any' not in target:
-    #                target['any'] = []
-    #            target['any'].append( source[item] )
+    def add_conditional_trigger( self, trigger, cycle_list_string ):
+        if cycle_list_string not in self.cond_triggers:
+            self.cond_triggers[ cycle_list_string ] = []
+        self.cond_triggers[ cycle_list_string ].append( trigger )
 
     def check_name( self, name ):
         if re.search( '[^\w]', name ):
@@ -113,28 +101,8 @@ class taskdef(object):
             if len( self.contact_offset.keys() ) == 0:
                 raise DefinitionError( 'contact tasks must specify a time offset' )
 
-        #if 'oneoff' not in self.modifiers and self.intercycle:
-        #    if not self.follow_on_task:
-        #        raise DefinitionError( 'oneoff intercycle tasks must specify a follow-on task' )
-
         if self.member_of and len( self.members ) > 0:
             raise DefinitionError( 'nested task families are not allowed' )
-
-    #def append_to_condition_list( self, parameter, condition, value ):
-    #    if condition in parameter.keys():
-    #        parameter[condition].append( value )
-    #    else:
-    #        parameter[condition] = [ value ]
-
-    #def add_to_condition_dict( self, parameter, condition, var, value ):
-    #    if condition in parameter.keys():
-    #        parameter[condition][var] = value
-    #    else:
-    #        parameter[condition] = {}
-    #        parameter[condition][var] = value
-
-    #def escape_quotes( self, strng ):
-    #    return re.sub( '([\\\'"])', r'\\\1', strng )
 
     def time_trans( self, strng, hours=False ):
         # translate a time of the form:
@@ -223,40 +191,93 @@ class taskdef(object):
         if self.member_of:
             tclass.member_of = self.member_of
 
-        def tclass_interpolate_ctime( sself, str ):
-            # replace $(CYCLE_TIME +/- N)
-            req = str
-            m = re.search( '\$\(\s*CYCLE_TIME\s*\+\s*(\d+)\s*\)', req )
+        def tclass_format_trigger( sself, trigger ):
+            # INTERCYCLE?
+            m = re.match( '(\w+)\s*\(\s*T\s*([+-])\s*(\d+)\s*\)(.*)', trigger )
+            intercycle = False
             if m:
-                req = re.sub( '\$\(\s*CYCLE_TIME.*\)', cycle_time.increment( sself.c_time, m.groups()[0] ), req )
-            m = re.search( '\$\(\s*CYCLE_TIME\s*\-\s*(\d+)\s*\)', req )
+                intercycle = True
+                name, sign, offset, other = m.groups()
+                if sign == '+':
+                    raise TaskDefinitionError, item + ": only negative offsets allowed (e.g. T-6)"
+                # restore special output if any (foo:out1)
+                name = name + other
+            else:
+                name = trigger
+
+            sself.intercycle = intercycle
+
+            # SPECIAL OUTPUT?
+            specout = False
+            m = re.match( '(\w+):(\w+)', name )
             if m:
-                req = re.sub( '\$\(\s*CYCLE_TIME.*\)', cycle_time.decrement( sself.c_time, m.groups()[0] ), req )
-            req = re.sub( '\$\(\s*CYCLE_TIME\s*\)', sself.c_time, req )
-            return req
+                specout = True
+                name, output = m.groups()
 
-        tclass.interpolate_ctime = tclass_interpolate_ctime
+            if intercycle:
+                tr_out = name + '%' + cycle_time.decrement( sself.c_time, offset ) + ' finished'
+            elif specout:
+                raise TaskDefinitionError, "TO DO: SPECIAL OUTPUTS"
+            else:
+                tr_out = name + '%' + sself.c_time + ' finished'
 
-        def tclass_add_prerequisites( sself, target, source ):
-            # target: prerequisites object
-            # source: taskdef prerequisites
-            uncond = plain_prerequisites( sself.id )
-            for condition in source:
-                reqs = source[ condition ]
-                if condition == 'any':
-                    for req in reqs:
-                        req = sself.interpolate_ctime( req )
-                        uncond.add( req )
-                else:
-                    hours = re.split( ',\s*', condition )
-                    for hr in hours:
-                        if int( sself.c_hour ) == int( hr ):
-                            for req in reqs:
-                                req = sself.interpolate_ctime( req )
-                                uncond.add( req )
-            sself.prerequisites.add_requisites( uncond )
+            return [name, tr_out]
+
+        tclass.format_trigger = tclass_format_trigger
+
+        def tclass_add_prerequisites( sself ):
+            # plain triggers
+            pp = plain_prerequisites( sself.id ) 
+            for cycles in self.triggers:
+                trigs = self.triggers[ cycles ]
+                hours = re.split( ',\s*', cycles )
+                for hr in hours:
+                    if int( sself.c_hour ) == int( hr ):
+                        for trig in trigs:
+                            pp.add( sself.format_trigger( trig )[1] )
+            sself.prerequisites.add_requisites( pp )
+
+            # conditional triggers
+            for cycles in self.cond_triggers:
+                ctrigs = self.cond_triggers[ cycles ]
+                hours = re.split( ',\s*', cycles )
+                for hr in hours:
+                    if int( sself.c_hour ) == int( hr ):
+                        for ctrig in ctrigs:
+                            # individual task names
+                            cp = conditional_prerequisites( sself.id )
+                            names = re.split( '\s*[\|&]\s*', ctrig )
+                            for name in names:
+                                n, t = sself.format_trigger( name )
+                                cp.add( t, n )
+                            # strip (T-DD), :foo, off expression
+                            exp = re.sub( '\(.*?\)', '', ctrig )  # does more than one (T-DD)?
+                            exp = re.sub( ':\w+', '', exp )
+                            cp.set_condition( exp )
+                            sself.prerequisites.add_requisites( cp )
 
         tclass.add_prerequisites = tclass_add_prerequisites
+
+        # SPECIAL OUTPUTS AND INTERCYLE DEPS -taken from old config.py
+        #if left.output:
+        #    # trigger off specific output of previous task
+        #    if cycle_list_string not in self.taskdefs[left.name].outputs:
+        #        self.taskdefs[left.name].outputs[cycle_list_string] = []
+        #    msg = self['tasks'][left.name]['outputs'][left.output]
+        #    if msg not in self.taskdefs[left.name].outputs[ cycle_list_string ]:
+        #        self.taskdefs[left.name].outputs[ cycle_list_string ].append( msg )
+        #    if left.intercycle:
+        #        self.taskdefs[left.name].intercycle = True
+        #        msg = self.prerequisite_decrement( msg, left.offset )
+        #    self.taskdefs[right.name].prerequisites[ cycle_list_string ].append( msg )
+        #else:
+        #    # trigger off previous task finished
+        #    msg = left.name + "%$(CYCLE_TIME) finished" 
+        #    if left.intercycle:
+        #        self.taskdefs[left.name].intercycle = True
+        #        msg = self.prerequisite_decrement( msg, left.offset )
+        #    self.taskdefs[right.name].prerequisites[ cycle_list_string ].append( msg )
+
 
         def tclass_add_requisites( sself, target, source ):
             # target: requisites object
@@ -298,21 +319,21 @@ class taskdef(object):
             # prerequisites
 
             sself.prerequisites = prerequisites()
-            sself.add_prerequisites( sself.prerequisites, self.prerequisites )
+            sself.add_prerequisites()
             # should these be conditional too:?
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
-            sself.add_requisites( sself.suicide_prerequisites, self.suicide_prerequisites )
+            #sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
 
-            if self.member_of:
-                # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
-                sself.prerequisites.add( self.member_of + '%' + sself.c_time + ' started' )
+            #if self.member_of:
+            #    # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
+            #    sself.prerequisites.add( self.member_of + '%' + sself.c_time + ' started' )
 
-            # familyfinished prerequisites
-            if self.type == 'family':
-                # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
-                sself.familyfinished_prerequisites = prerequisites( sself.id )
-                for member in self.members:
-                    sself.familyfinished_prerequisites.add( member + '%' + sself.c_time + ' finished' )
+            ## familyfinished prerequisites
+            #if self.type == 'family':
+            #    # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
+            #    sself.familyfinished_prerequisites = prerequisites( sself.id )
+            #    for member in self.members:
+            #        sself.familyfinished_prerequisites.add( member + '%' + sself.c_time + ' finished' )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:
@@ -320,7 +341,7 @@ class taskdef(object):
 
             # outputs
             sself.outputs = outputs( sself.id )
-            sself.add_requisites( sself.outputs, self.outputs )
+            #sself.add_requisites( sself.outputs, self.outputs )
 
             sself.outputs.register()
 

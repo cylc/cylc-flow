@@ -18,10 +18,12 @@ class prerequisites(object):
         return not_satisfied
 
     def all_satisfied( self ):
-        values = []
+        result = True
         for reqs in self.container:
-            values.extend( reqs.satisfied.values() )
-        return not ( False in values ) 
+            if not reqs.all_satisfied():
+                result = False
+                break
+        return result
             
     def satisfy_me( self, outputs ):
         # can any completed outputs satisfy any of my prequisites?

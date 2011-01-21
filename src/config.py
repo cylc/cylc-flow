@@ -42,9 +42,6 @@ class DepGNode:
         # [TYPE:]NAME[(T+/-OFFSET)][:OUTPUT]
         # where [] => optional:
 
-        # TYPE:
-        self.oneoff = False
-
         # INTERCYCLE DEP
         self.intercycle = False
         self.sign = None    # '+' or '-'
@@ -63,12 +60,6 @@ class DepGNode:
             self.name = pre + post
             if self.sign == '+':
                 raise SuiteConfigError, item + ": only negative offsets allowed in dependency graph (e.g. T-6)"
-
-        # TYPE
-        m = re.match( '^(\w+)\|', self.name )
-        if m:
-            self.oneoff = True
-            self.name = m.groups()[0]
 
         # OUTPUT
         m = re.match( '(\w+):(\w+)', self.name )
@@ -171,17 +162,10 @@ class config( CylcConfigObj ):
     def get_dirname( self ):
         return self.dir
 
-    def prerequisite_decrement( self, msg, offset ):
-        return re.sub( "\$\(CYCLE_TIME\)", "$(CYCLE_TIME - " + offset + ")", msg )
+    #def prerequisite_decrement( self, msg, offset ):
+    #    return re.sub( "\$\(CYCLE_TIME\)", "$(CYCLE_TIME - " + offset + ")", msg )
 
     def __check( self ):
-        #for task in self['tasks']:
-        #    # check for illegal type modifiers
-        #    for modifier in self['tasks'][task]['type modifier list']:
-        #        if modifier not in self.__class__.allowed_modifiers:
-        #            raise SuiteConfigError, 'illegal type modifier for ' + task + ': ' + modifier
-
-        # check families do not define commands, etc.
         pass
 
     def get_title( self ):
@@ -198,7 +182,7 @@ class config( CylcConfigObj ):
         ##return self.coldstart_task_list
 
         # For now user must define this:
-        return self['coldstart task list']
+        return self['list of tasks required to coldstart the suite']
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -305,54 +289,37 @@ class config( CylcConfigObj ):
         for i in temp:
             hours.append( int(i) )
 
-        # extract left side task names
+        # extract left side task names (split on '|' or '&')
         lefts = re.split( '\s*[\|&]\s*', lcond )
 
         # initialise the task definitions
         for node in lefts + [right]:
-            # strip off any '*' character (used to indicate which member
-            # of an OR group to plot).
+            # strip off any '*' character (for plotting conditionals)
             name = re.sub( '\s*\*', '', node )
+            # strip off any special outputs
+            name = re.sub( ':.*', '', name )
+            # strip off any (T-6) etc
+            name = re.sub( '\s*\(\s*T\s*[+-]\s*\d+\s*\)', '', name )
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
             self.taskdefs[ name ].add_hours( hours )
 
-        if cycle_list_string not in self.taskdefs[right].prerequisites:
-            self.taskdefs[right].prerequisites[cycle_list_string] = []
-
-        if re.search( '[\(\)]', lcond ) or \
-                re.search( '\|', lcond ) or \
-                re.search( '\&', lcond ):
-                    raise SuiteConfigError, 'TEMPORARILY DISABLED: ' + lcond
-
-
-        # SINGLE TASK CASE
-        # trigger off previous task finished
-        left = lcond
-        msg = left + "%$(CYCLE_TIME) finished" 
-        self.taskdefs[right].prerequisites[ cycle_list_string ].append( msg )
-
-
-        # SPECIAL OUTPUTS AND INTERCYLE DEPS
-        #if left.output:
-        #    # trigger off specific output of previous task
-        #    if cycle_list_string not in self.taskdefs[left.name].outputs:
-        #        self.taskdefs[left.name].outputs[cycle_list_string] = []
-        #    msg = self['tasks'][left.name]['outputs'][left.output]
-        #    if msg not in self.taskdefs[left.name].outputs[ cycle_list_string ]:
-        #        self.taskdefs[left.name].outputs[ cycle_list_string ].append( msg )
-        #    if left.intercycle:
-        #        self.taskdefs[left.name].intercycle = True
-        #        msg = self.prerequisite_decrement( msg, left.offset )
-        #    self.taskdefs[right.name].prerequisites[ cycle_list_string ].append( msg )
-        #else:
-        #    # trigger off previous task finished
-        #    msg = left.name + "%$(CYCLE_TIME) finished" 
-        #    if left.intercycle:
-        #        self.taskdefs[left.name].intercycle = True
-        #        msg = self.prerequisite_decrement( msg, left.offset )
-        #    self.taskdefs[right.name].prerequisites[ cycle_list_string ].append( msg )
-
+        # SET TRIGGERS
+        if not re.search( '\|', lcond ):
+            # lcond is a single trigger, or and '&' only one,
+            # in which case we don't need to use conditional 
+            # prerequisites (we could, but they may be signficantly less
+            # efficient due to use of 'eval'?).
+            for left in lefts:
+                # strip off any '*' character (for plotting conditionals)
+                l = re.sub( '\s*\*', '', left )
+                self.taskdefs[right].add_trigger( l, cycle_list_string )
+        else:
+            # conditional with OR
+            # strip off any '*' character (for plotting conditionals)
+            l = re.sub( '\s*\*', '', lcond )
+            self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
+        
     def get_coldstart_graphs( self ):
         if not self.loaded:
             self.load_tasks()
@@ -479,6 +446,12 @@ class config( CylcConfigObj ):
             self.taskdefs[name].hours.sort( key=int ) 
             #print name, self.taskdefs[name].type, self.taskdefs[name].modifiers
 
+            # check that task names contain only word characters [0-9a-zA-Z_]
+            # (use of r'\b' word boundary regex in conditional prerequisites
+            # could fail if other characters are allowed).
+            if re.search( '[^\w]', name ):
+                raise SuiteConfigError, 'Illegal task name: ' + name
+
         self.loaded = True
 
     def get_taskdef( self, name, type=None, oneoff=False ):
@@ -503,10 +476,10 @@ class config( CylcConfigObj ):
             # suite default job submit method
             taskd.job_submit_method = self['job submission method']
 
-        if name in self['dependency graph']['task types']['oneoff task list']:
+        if name in self['dependency graph']['task types']['list of oneoff tasks']:
             taskd.modifiers.append( 'oneoff' )
 
-        if name in self['dependency graph']['task types']['sequential task list']:
+        if name in self['dependency graph']['task types']['list of sequential tasks']:
             taskd.modifiers.append( 'sequential' )
 
         taskd.type = 'free'
@@ -526,8 +499,8 @@ class config( CylcConfigObj ):
         #        continue
         #    raise SuiteConfigError, 'illegal task type: ' + item
 
-        taskd.logfiles    = taskconfig[ 'log file list' ]
-        taskd.commands    = taskconfig[ 'command list' ]
+        taskd.logfiles    = taskconfig[ 'list of log files' ]
+        taskd.commands    = taskconfig[ 'list of commands' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
         taskd.scripting   = taskconfig[ 'scripting' ]

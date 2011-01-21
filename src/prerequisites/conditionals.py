@@ -9,7 +9,7 @@ from prerequisites import prerequisites
 # label2 => "bar%$CYCLE_TIME finished"
 # expr   => "( [label1] or [label2] )"
 
-class conditionals(prerequisites):
+class conditional_prerequisites(prerequisites):
     def __init__( self, owner_id ):
         self.labels = {}   # labels[ message ] = label
         self.messages = {}   # messages[ label ] = message 
@@ -27,6 +27,7 @@ class conditionals(prerequisites):
 
         if message in self.labels:
             raise SystemExit( "Duplicate prerequisite: " + message )
+        print '> ', label, message
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label] = False
@@ -38,13 +39,18 @@ class conditionals(prerequisites):
                 not_satisfied.append( label )
         return not_satisfied
 
-    def set_conditional_expression( self, expr ):
+    def set_condition( self, expr ):
+        # 'foo | bar & baz'
+        # make into a python expression
         for l in self.messages:
-            expr = re.sub( '\['+l+'\]', "self.satisfied['" + l + "']", expr )
+            # must use raw string here else '\b' means 'backspace'
+            # instead of 'word boundary'
+            expr = re.sub( r'\b'+l+r'\b', "self.satisfied['" + l + "']", expr )
         self.conditional_expression = expr
 
     def all_satisfied( self ):
-        return eval( self.conditional_expression )
+        res = eval( self.conditional_expression )
+        return res
             
     def satisfy_me( self, outputs ):
         # can any completed outputs satisfy any of my prequisites?

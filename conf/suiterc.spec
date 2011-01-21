@@ -26,9 +26,9 @@ task submission failed hook = string( default=None )
 task timeout hook = string( default=None )
 task submission timeout minutes = float( default=None )
 
-include task list   = string_list( default=list())
-exclude task list   = string_list( default=list())
-coldstart task list = string_list( default=list())
+list of tasks to include at startup = string_list( default=list())
+list of tasks to exclude at startup = string_list( default=list())
+list of tasks required to coldstart the suite = string_list( default=list())
 
 [ dummy mode ]
 clock offset from initial cycle time in hours = integer( default=24 )
@@ -41,9 +41,9 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 
 [ dependency graph ]
     [[ task types ]]
-    oneoff task list = string_list( default=list())
-    sequential task list = string_list( default=list())
-    clock triggered task list = string_list( default=list())
+    list of oneoff tasks = string_list( default=list())
+    list of sequential tasks = string_list( default=list())
+    list of clock-triggered tasks = string_list( default=list())
     # TO DO: catchup_contact tasks (topnet)
 
     [[ task families ]]
@@ -80,12 +80,12 @@ __many__ = string
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
     # default to dummy task:
-    command list = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
+    list of commands = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     owner = string( default=None )
     host = string( default=None )
     intercycle = boolean( default=False )
     scripting = string( default='' )
-    log file list = string_list( default=list())
+    list of log files = string_list( default=list())
         [[[ environment ]]]
         __many__ = string
         [[[ directives ]]]
