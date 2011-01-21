@@ -7,7 +7,11 @@ import gtk.gdk
 import gobject
 from optparse import OptionParser
 
-import xdot
+try:
+    from graphing import xdot
+    from graphing import pygraphviz
+except:
+    raise SystemExit( "Graphing not available; install pygraphviz and xdot")
 
 import config
 

@@ -6,7 +6,6 @@
 # TO DO: restore SPECIAL OUTPUTS
 
 import taskdef
-import pygraphviz
 import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
@@ -15,18 +14,15 @@ from cylcconfigobj import CylcConfigObj
 from registration import registrations
 from graphnode import graphnode
 
-class SuiteConfigError( Exception ):
-    """
-    Attributes:
-        message - what the problem is. 
-        TO DO: element - config element causing the problem
-    """
-    def __init__( self, msg ):
-        self.msg = msg
-    def __str__( self ):
-        return repr(self.msg)
+try:
+    from graphing import pygraphviz
+except:
+    print "WARNING: pygraphviz is not installed; graphing disabled"
+    got_pygraphviz = False
+else:
+    got_pygraphviz = True
 
-class GraphvizError( Exception ):
+class SuiteConfigError( Exception ):
     """
     Attributes:
         message - what the problem is. 
@@ -285,9 +281,13 @@ class config( CylcConfigObj ):
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
         
     def get_coldstart_graphs( self ):
+        graphs = {}
+        if not got_pygraphviz:
+            print "config: graphing disabled, install pygraphviz"
+            return graphs
+
         if not self.loaded:
             self.load_tasks()
-        graphs = {}
         for hour in self.edges:
             graphs[hour] = pygraphviz.AGraph(directed=True)
             for pair in self.edges[hour]:
@@ -298,9 +298,12 @@ class config( CylcConfigObj ):
         return graphs 
 
     #def get_full_graph( self ):
+    #    edges = {}
+    #    if not got_pygraphviz:
+    #        print "config: graphing disabled, install pygraphviz"
+    #        return edges
     #    if not self.loaded:
     #        self.load_tasks()
-    #    edges = {}
     #    for cycle_list_string in self['dependency graph']:
     #        for label in self['dependency graph'][ cycle_list_string ]:
     #            line = self['dependency graph'][cycle_list_string][label]
