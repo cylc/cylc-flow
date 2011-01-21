@@ -1,0 +1,11 @@
+
+*  suicide prerequisites
+
+* 
+
+* NEW? (re: Trevor's mos spin up for new stations):
+
+- a cylcing task that stops at a given ctime? => foo(T)
+- pause a task
+- insert a prerequisite on the fly - e.g. trigger off foo when it reaches T
+
