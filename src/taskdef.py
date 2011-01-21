@@ -19,6 +19,7 @@ from task_output_logs import logfiles
 from collections import deque
 from outputs import outputs
 import cycle_time
+from graphnode import graphnode
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -192,36 +193,23 @@ class taskdef(object):
             tclass.member_of = self.member_of
 
         def tclass_format_trigger( sself, trigger ):
-            # INTERCYCLE?
-            m = re.match( '(\w+)\s*\(\s*T\s*([+-])\s*(\d+)\s*\)(.*)', trigger )
-            intercycle = False
-            if m:
-                intercycle = True
-                name, sign, offset, other = m.groups()
-                if sign == '+':
-                    raise TaskDefinitionError, item + ": only negative offsets allowed (e.g. T-6)"
-                # restore special output if any (foo:out1)
-                name = name + other
+            node = graphnode( trigger )
+            name = node.name
+            if node.intercycle:
+                offset = node.intercycle_offset
+                msg = name + '%' + cycle_time.decrement( sself.c_time, offset ) + ' finished'
+                if node.special_output:
+                    # trigger of the special output, intercycle
+                    raise TaskDefinitionError, "TO DO: SPECIAL OUTPUTS"
             else:
-                name = trigger
+                if node.special_output:
+                    # trigger of the special output, intercycle
+                    raise TaskDefinitionError, "TO DO: SPECIAL OUTPUTS"
+                else:
+                    # trigger off task finished
+                    msg = name + '%' + sself.c_time + ' finished'
 
-            sself.intercycle = intercycle
-
-            # SPECIAL OUTPUT?
-            specout = False
-            m = re.match( '(\w+):(\w+)', name )
-            if m:
-                specout = True
-                name, output = m.groups()
-
-            if intercycle:
-                tr_out = name + '%' + cycle_time.decrement( sself.c_time, offset ) + ' finished'
-            elif specout:
-                raise TaskDefinitionError, "TO DO: SPECIAL OUTPUTS"
-            else:
-                tr_out = name + '%' + sself.c_time + ' finished'
-
-            return [name, tr_out]
+            return [name, msg]
 
         tclass.format_trigger = tclass_format_trigger
 

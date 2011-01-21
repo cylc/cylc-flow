@@ -3,13 +3,7 @@
 # TO DO: enable loading of graph without loading taskdefs (which is not
 # needed when using 'cylc graph' for example).
 
-# TO DO: restore SPECIAL OUTPUTS and INTERCYCLE DEPENDENCIES.
-
-# Cylc suite-specific configuration data. The awesome ConfigObj and
-# Validate modules do almost everything we need. This just adds a 
-# method to check the few things that can't be automatically validated
-# according to the spec, $CYLC_DIR/conf/suiterc.spec, such as
-# cross-checking some items.
+# TO DO: restore SPECIAL OUTPUTS
 
 import taskdef
 import pygraphviz
@@ -19,12 +13,7 @@ from validate import Validator
 from configobj import get_extra_values
 from cylcconfigobj import CylcConfigObj
 from registration import registrations
-
-class dependency:
-    def __init__( self, left, right, type ):
-        self.left = left
-        self.right = right
-        self.type = type
+from graphnode import graphnode
 
 class SuiteConfigError( Exception ):
     """
@@ -37,38 +26,18 @@ class SuiteConfigError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
-class DepGNode:
-    def __init__( self, item ):
-        # [TYPE:]NAME[(T+/-OFFSET)][:OUTPUT]
-        # where [] => optional:
-
-        # INTERCYCLE DEP
-        self.intercycle = False
-        self.sign = None    # '+' or '-'
-        self.offset = None  
-
-        # SPECIFIC OUTPUT
-        self.output = None
-
-        self.name = item
-
-        # INTERCYCLE
-        m = re.match( '(.*)\(\s*T\s*([+-])\s*(\d+)\s*\)(.*)', self.name )
-        if m:
-            self.intercycle = True
-            pre, self.sign, self.offset, post = m.groups()
-            self.name = pre + post
-            if self.sign == '+':
-                raise SuiteConfigError, item + ": only negative offsets allowed in dependency graph (e.g. T-6)"
-
-        # OUTPUT
-        m = re.match( '(\w+):(\w+)', self.name )
-        if m:
-            self.name, self.output = m.groups()
+class GraphvizError( Exception ):
+    """
+    Attributes:
+        message - what the problem is. 
+        TO DO: element - config element causing the problem
+    """
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
 
 class config( CylcConfigObj ):
-    allowed_modifiers = ['contact', 'oneoff', 'sequential', 'catchup', 'catchup_contact']
-
     def __init__( self, suite=None, dummy_mode=False ):
         self.dummy_mode = dummy_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
@@ -294,12 +263,7 @@ class config( CylcConfigObj ):
 
         # initialise the task definitions
         for node in lefts + [right]:
-            # strip off any '*' character (for plotting conditionals)
-            name = re.sub( '\s*\*', '', node )
-            # strip off any special outputs
-            name = re.sub( ':.*', '', name )
-            # strip off any (T-6) etc
-            name = re.sub( '\s*\(\s*T\s*[+-]\s*\d+\s*\)', '', name )
+            name = graphnode( node ).name
             if name not in self.taskdefs:
                 self.taskdefs[ name ] = self.get_taskdef( name )
             self.taskdefs[ name ].add_hours( hours )
@@ -311,12 +275,12 @@ class config( CylcConfigObj ):
             # prerequisites (we could, but they may be signficantly less
             # efficient due to use of 'eval'?).
             for left in lefts:
-                # strip off any '*' character (for plotting conditionals)
+                # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
                 self.taskdefs[right].add_trigger( l, cycle_list_string )
         else:
             # conditional with OR
-            # strip off any '*' character (for plotting conditionals)
+            # strip off '*' plotting conditional indicator
             l = re.sub( '\s*\*', '', lcond )
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
         
@@ -390,7 +354,7 @@ class config( CylcConfigObj ):
         return prev
 
     def load_tasks( self ):
-        # LOAD FROM NEW-STYLE DEPENDENCY GRAPH
+        # LOAD FROM DEPENDENCY GRAPH
         dep_pairs = []
 
         # loop over cycle time lists
