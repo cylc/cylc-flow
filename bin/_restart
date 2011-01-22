@@ -204,7 +204,7 @@ if __name__ == '__main__':
         #   for how to display the resulting stats.
     except Exception, x:
         print "ERROR CAUGHT, will clean up before exit"
-        server.cleanup()
+        server.shutdown()
         if debug:
             raise
         else:
@@ -216,5 +216,5 @@ if __name__ == '__main__':
         # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
         # TO DO: check these can actually be caught
         print "ERROR CAUGHT; will clean up before exit"
-        server.cleanup()
+        server.shutdown()
         raise
