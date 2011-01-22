@@ -61,7 +61,8 @@ write live graph = boolean( default=False )
 live graph directory path = string( default='graphing')
 
 [visualization]
-stop graphing at (hours) = integer( default=24 )
+# hours
+when to stop updating = integer( default=24 )
 # absolute, or relative to $CYLC_SUITE_DIR for portability
 graph directory path = string( default='graphing')
 #use node color for edges = boolean( default=True )

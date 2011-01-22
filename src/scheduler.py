@@ -111,6 +111,7 @@ class scheduler(object):
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
         self.load_tasks()
+        self.initialize_graph()
 
     def parse_commandline( self ):
         # SUITE NAME
@@ -160,7 +161,6 @@ class scheduler(object):
                 print "Continuing in Cylc Practice Mode"
             else:
                 raise SystemExit( "ERROR: suite " + self.suite + " is already running")
-
 
     def configure_suite( self ):
         # LOAD SUITE CONFIG FILE
@@ -371,7 +371,6 @@ class scheduler(object):
         print "\nSTARTING\n"
 
         while True: # MAIN LOOP
-
             # PROCESS ALL TASKS whenever something has changed that might
             # require renegotiation of dependencies, etc.
 
@@ -385,9 +384,9 @@ class scheduler(object):
                 self.cleanup()
                 self.spawn()
                 self.dump_state()
-                self.write_graph()
                 if self.config['experimental']['write live graph']:
-                    self.write_live_graph()
+                    if got_pygraphviz:
+                        self.write_live_graph()
 
                 self.suite_state.update( self.tasks, self.clock, \
                         self.paused(), self.will_pause_at(), \
@@ -455,6 +454,8 @@ class scheduler(object):
 
         if self.pyro:
             self.pyro.shutdown()
+
+        self.finalize_graph()
 
         if self.use_lockserver:
             # do this last
@@ -578,7 +579,9 @@ class scheduler(object):
                         continue
 
                 current_time = self.clock.get_datetime()
-                itask.run_if_ready( current_time )
+                if itask.run_if_ready( current_time ):
+                    if not self.graph_finalized:
+                        self.update_graph( itask )
 
     def spawn( self ):
         # create new tasks foo(T+1) if foo has not got too far ahead of
@@ -587,9 +590,7 @@ class scheduler(object):
 
         # update oldest suite cycle time
         oldest_c_time = self.get_oldest_c_time()
-
         for itask in self.tasks:
-
             tdiff = cycle_time.decrement( itask.c_time, self.config['maximum runahead hours'])
             if int( tdiff ) > int( oldest_c_time ):
                 # too far ahead: don't spawn this task.
@@ -1297,9 +1298,6 @@ class scheduler(object):
         return outlist
 
     def write_live_graph( self ):
-        if not got_pygraphviz:
-            # graphing is disabled
-            return
         graph = pygraphviz.AGraph(directed=True)
         for task in self.tasks:
             graph.add_node( task.id )
@@ -1323,31 +1321,33 @@ class scheduler(object):
         graph.layout(prog="dot")
         graph.write( os.path.join( self.suite_dir, 'graphing', 'live.dot' ))
 
-    def write_graph( self ):
-        if not got_pygraphviz:
-            # graphing is disabled
+    def initialize_graph( self ):
+        self.graph_file = \
+                os.path.join( self.config['visualization']['graph directory path'], 'graph.dot' )
+        self.graph = pygraphviz.AGraph(directed=True)
+        self.graph_finalized = False
+        if not self.start_time:
+            # only do cold and warmstarts for now.
+            self.graph_finalized = True
+        self.graph_cutoff = self.config['visualization']['when to stop updating']
+
+    def finalize_graph( self ):
+        if self.graph_finalized:
             return
-        graph = pygraphviz.AGraph(directed=True)
-        for task in self.tasks:
-            graph.add_node( task.id )
-            node = graph.get_node( task.id )
-            node.attr['style'] = 'filled'
-            if task.state.is_submitted():
-                node.attr['fillcolor'] = 'orange'
-            elif task.state.is_running():
-                node.attr['fillcolor'] = 'green'
-            elif task.state.is_waiting():
-                node.attr['fillcolor'] = 'blue'
-            elif task.state.is_finished():
-                node.attr['fillcolor'] = 'gray'
-                pass
-            elif task.state.is_failed():
-                node.attr['fillcolor'] = 'red'
+        print "Finalizing graph", self.graph_file
+        self.graph.layout(prog="dot")
+        self.graph.write( self.graph_file )
+        self.graph_finalized = True
 
-            for id in task.get_resolved_dependencies():
-                    graph.add_edge( id, task.id )
-
-        graph.layout(prog="dot")
-        graph.write( os.path.join( self.suite_dir, self.suite + '.dot' ))
-
-
+    def update_graph( self, task ):
+        if self.graph_finalized:
+            return
+        # stop if all tasks are more than configured hours beyond suite start time
+        if cycle_time.diff_hours( self.get_oldest_c_time(), self.start_time ) >= self.graph_cutoff:
+            self.finalize_graph()
+            return
+        # ignore task if its  ctime more than configured hrs beyond suite start time?
+        if cycle_time.diff_hours( task.c_time, self.start_time ) >= self.graph_cutoff:
+            return
+        for id in task.get_resolved_dependencies():
+            self.graph.add_edge( id, task.id )
