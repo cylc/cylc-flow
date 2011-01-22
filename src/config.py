@@ -97,33 +97,43 @@ class config( CylcConfigObj ):
         # check cylc-specific self consistency
         self.__check()
 
+        self.process_configured_directories()
+
+    def process_configured_directories( self ):
         # allow $CYLC_SUITE_NAME in job submission log directory
         jsld = self['job submission log directory' ] 
         jsld = re.sub( '\${CYLC_SUITE_NAME}', self.suite, jsld )
         jsld = re.sub( '\$CYLC_SUITE_NAME', self.suite, jsld )
 
-        # make logging and state directories relative to $HOME
-        # unless they are specified as absolute paths
-        self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'] )
-        self['top level state dump directory'] = self.make_dir_absolute( self['top level state dump directory'] )
-        self['job submission log directory' ] = self.make_dir_absolute( jsld )
+        # Make directories relative to $HOME or $CYLC_SUITE_DIR,
+        # unless specified as absolute paths already.
+        self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'], home=True )
+        self['top level state dump directory'] = self.make_dir_absolute( self['top level state dump directory'], home=True )
+        self['job submission log directory' ] = self.make_dir_absolute( jsld, home=True )
+        self['visualization']['graph directory path'] = self.make_dir_absolute( self['visualization']['graph directory path'] )
+        self['experimental']['live graph directory path'] = self.make_dir_absolute( self['experimental']['live graph directory path'] )
 
-    def make_dir_absolute( self, indir ):
-        # make dir relative to $HOME unless already absolute
-        home = os.environ['HOME']
-        if not re.match( '^/', indir ):
-            outdir = os.path.join( home, indir )
+    def make_dir_absolute( self, indir, home=False ):
+        # make dir relative to $HOME or $CYLC_SUITE_DIR unless already absolute.
+        if re.match( '^/', indir ):
+            # already absolute
+            return indir
+        if home:
+            prefix = os.environ['HOME']
         else:
-            outdir = indir
-        return outdir
+            prefix = self.dir
+        return os.path.join( prefix, indir )
 
     def create_directories( self ):
         # create logging, state, and job log directories if necessary
         for dir in [
             self['top level logging directory'], 
             self['top level state dump directory'],
-            self['job submission log directory'] ]: 
+            self['job submission log directory'],
+            self['visualization']['graph directory path'] ]: 
             mkdir_p( dir )
+        if self['experimental']['write live graph']:
+            mkdir_p( self['experimental']['live graph directory path'] )
 
     def get_filename( self ):
         return self.file
