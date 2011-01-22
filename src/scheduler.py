@@ -111,7 +111,8 @@ class scheduler(object):
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
         self.load_tasks()
-        self.initialize_graph()
+        if got_pygraphviz:
+            self.initialize_graph()
 
     def parse_commandline( self ):
         # SUITE NAME
@@ -455,7 +456,8 @@ class scheduler(object):
         if self.pyro:
             self.pyro.shutdown()
 
-        self.finalize_graph()
+        if got_pygraphviz:
+            self.finalize_graph()
 
         if self.use_lockserver:
             # do this last
@@ -580,7 +582,7 @@ class scheduler(object):
 
                 current_time = self.clock.get_datetime()
                 if itask.run_if_ready( current_time ):
-                    if not self.graph_finalized:
+                    if got_pygraphviz and not self.graph_finalized:
                         self.update_graph( itask )
 
     def spawn( self ):
