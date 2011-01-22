@@ -8,7 +8,6 @@ import logging
 import datetime
 import port_scan
 import cycle_time
-import pygraphviz
 #import dead_letter
 import pimp_my_logger
 import accelerated_clock 
@@ -27,6 +26,14 @@ from mkdir_p import mkdir_p
 from config import config 
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
+
+try:
+    from graphing import pygraphviz
+except:
+    print "WARNING: pygraphviz is not installed; graphing disabled"
+    got_pygraphviz = False
+else:
+    got_pygraphviz = True
 
 class scheduler(object):
     def __init__( self ):
@@ -1288,6 +1295,9 @@ class scheduler(object):
         return outlist
 
     def write_graph( self ):
+        if not got_pygraphviz:
+            # graphing is disabled
+            return
         graph = pygraphviz.AGraph(directed=True)
         for task in self.tasks:
             graph.add_node( task.id )

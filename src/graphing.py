@@ -15,7 +15,7 @@ class GraphvizError( Exception ):
         return repr(self.msg)
 
 try:
-    import pygraphvizX
+    import pygraphviz
 except ImportError:
     raise GraphvizError, 'Cannot import pygraphviz.'
 

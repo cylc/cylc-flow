@@ -3,7 +3,7 @@
 import re
 
 class prerequisites(object):
-    # a container for other prerequisite types
+    """A container for other prerequisite types."""
 
     def __init__( self ):
         self.container = []
