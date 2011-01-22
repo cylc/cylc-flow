@@ -67,7 +67,7 @@ when to stop updating = integer( default=24 )
 graph directory path = string( default='graphing')
 #use node color for edges = boolean( default=True )
 #task families in subgraphs = boolean( default=True )
-#default node attributes = string( default='style=filled, fillcolor=gray, color=blue, shape=ellipse')
+default node attribute list = string_list( default=list(style=filled, fillcolor=gray, color=blue, shape=ellipse))
 #default edge attributes = string( default='color=black, style=bold')
 
 [ task insertion groups ]

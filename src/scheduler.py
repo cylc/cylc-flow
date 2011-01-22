@@ -1327,11 +1327,19 @@ class scheduler(object):
         self.graph_file = \
                 os.path.join( self.config['visualization']['graph directory path'], 'graph.dot' )
         self.graph = pygraphviz.AGraph(directed=True)
+        self.graph.graph_attr['label'] = "suite " + self.suite
+        self.graph.node_attr['shape'] = 'circle'
+        self.graph.edge_attr['color'] = 'blue'
         self.graph_finalized = False
         if not self.start_time:
             # only do cold and warmstarts for now.
             self.graph_finalized = True
         self.graph_cutoff = self.config['visualization']['when to stop updating']
+        # default node attributes
+        self.def_node_attr = {}
+        for item in self.config['visualization']['default node attribute list']:
+            attr, value = re.split( '\s*=\s*', item )
+            self.def_node_attr[ attr ] = value
 
     def finalize_graph( self ):
         if self.graph_finalized:
@@ -1352,4 +1360,16 @@ class scheduler(object):
         if cycle_time.diff_hours( task.c_time, self.start_time ) >= self.graph_cutoff:
             return
         for id in task.get_resolved_dependencies():
-            self.graph.add_edge( id, task.id )
+            l = id
+            r = task.id 
+            self.graph.add_edge( l,r )
+            nl = self.graph.get_node( l )
+            nr = self.graph.get_node( r )
+            llabel = re.sub( '%\d{8}(\d\d)', r'(\1)', l )
+            rlabel = re.sub( '%\d{8}(\d\d)', r'(\1)', r )
+            nl.attr[ 'label' ] = llabel
+            nr.attr[ 'label' ] = rlabel
+            for attr in self.def_node_attr:
+                nl.attr[ attr ] = self.def_node_attr[ attr ]
+                nr.attr[ attr ] = self.def_node_attr[ attr ]
+

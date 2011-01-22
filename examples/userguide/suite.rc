@@ -21,11 +21,13 @@ use lockserver = False
 #[experimental]
 #write live graph = True
 
-#[visualization]
+[visualization]
 #when to stop updating = 6
+default node attribute list = style = filled, fillcolor = pink, shape = ellipse
 
 [dummy mode]
-clock offset from initial cycle time in hours = 0
+#clock offset from initial cycle time in hours = 0
+task run time in seconds = 1
 
 [dependency graph]
     [[ task types ]]
@@ -62,7 +64,6 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
 A_RUNNING_DIR = $WORKSPACE/RunningA
 B_RUNNING_DIR = $WORKSPACE/RunningB
 C_RUNNING_DIR = $WORKSPACE/RunningC
-
 
 [ tasks ]
     [[prep]]
