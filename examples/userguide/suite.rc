@@ -21,8 +21,8 @@ use lockserver = False
 #[experimental]
 #write live graph = True
 
-[visualization]
-when to stop updating = 6
+#[visualization]
+#when to stop updating = 6
 
 [dummy mode]
 clock offset from initial cycle time in hours = 0
@@ -36,9 +36,8 @@ clock offset from initial cycle time in hours = 0
     [[ 0,6,12,18 ]]
         graph =  """X => A => B => E
                     A => C
-                    #C:foo => F
-                    C => F
                     B & C => D
+                    #C => F => PostF
     
             # cold start the three models:
                     ColdA* | A(T-6) => A
@@ -48,6 +47,14 @@ clock offset from initial cycle time in hours = 0
             # make everything depend on a special startup task
             prep => X & ColdA & ColdB & ColdC
                  """
+
+    [[ 0,6,18 ]]
+       graph = """C => F
+       """
+    [[ 12 ]]
+       graph = """C => chumfatty => F
+       """
+
 [environment]
 TASK_EXE_SECONDS = 5
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
@@ -125,3 +132,6 @@ C_RUNNING_DIR = $WORKSPACE/RunningC
     [[ColdC]]
     description = "fulfils restart dependencies for model C"
     list of commands = cylc-wrapper ColdC.sh,
+
+    [[chumfatty]]
+    [[PostF]]
