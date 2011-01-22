@@ -29,7 +29,8 @@ clock offset from initial cycle time in hours = 0
 
     [[ 0,6,12,18 ]]
         graph =  """X => A => B => E
-                    A => C => F
+                    A => C
+                    C:foo => F
                     B & C => D
     
             # cold start the three models:
@@ -79,6 +80,8 @@ C_RUNNING_DIR = $WORKSPACE/RunningC
         [[[environment]]]
         C_INPUT_DIR = $WORKSPACE
         C_OUTPUT_DIR = $WORKSPACE
+        [[[outputs]]]
+        foo = shit and bus tickets ready for $(CYCLE_TIME)
 
     [[D]]
     list of commands = cylc-wrapper D.sh,

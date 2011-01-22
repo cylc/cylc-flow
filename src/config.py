@@ -3,7 +3,10 @@
 # TO DO: enable loading of graph without loading taskdefs (which is not
 # needed when using 'cylc graph' for example).
 
-# TO DO: restore SPECIAL OUTPUTS
+# TO DO: complete restoration of SPECIAL OUTPUTS:
+#        check ':foo' is defined in task section
+#        check outputs do not appear on right side of pairs, OR IGNORE
+#        IF THEY DO?
 
 import taskdef
 import re, os, sys, logging
@@ -124,11 +127,9 @@ class config( CylcConfigObj ):
 
     def get_filename( self ):
         return self.file
+
     def get_dirname( self ):
         return self.dir
-
-    #def prerequisite_decrement( self, msg, offset ):
-    #    return re.sub( "\$\(CYCLE_TIME\)", "$(CYCLE_TIME - " + offset + ")", msg )
 
     def __check( self ):
         pass
@@ -462,6 +463,9 @@ class config( CylcConfigObj ):
             taskd.modifiers.append( 'sequential' )
 
         taskd.type = 'free'
+
+        for output in self['tasks'][name]['outputs']:
+            taskd.outputs[ output ] = self['tasks'][name]['outputs'][output]
 
         # TO DO: clock (contact) tasks
         #m = re.match( 'clock\(\s*offset\s*=\s*(-{0,1}[\d.]+)\s*hour\s*\)', item )

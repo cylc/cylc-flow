@@ -61,12 +61,10 @@ class taskdef(object):
         self.triggers = OrderedDict()         
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
         self.cond_triggers = OrderedDict()             
-
         self.startup_triggers = OrderedDict()
-
         self.suicide_triggers = OrderedDict()       
 
-        self.outputs = OrderedDict()                     
+        self.outputs = OrderedDict()             # out[label] = message
 
         self.commands = []                       # list of commands
         self.scripting   = []                    # list of lines
@@ -207,11 +205,13 @@ class taskdef(object):
                 msg = name + '%' + cycle_time.decrement( sself.c_time, offset ) + ' finished'
                 if node.special_output:
                     # trigger of the special output, intercycle
-                    raise TaskDefinitionError, "TO DO: SPECIAL OUTPUTS"
+                    raise TaskDefinitionError, "TO DO: INTERCYCLE SPECIAL OUTPUTS"
             else:
                 if node.special_output:
-                    # trigger of the special output, intercycle
-                    raise TaskDefinitionError, "TO DO: SPECIAL OUTPUTS"
+                    #raise TaskDefinitionError, "TO DO: SPECIAL OUTPUTS"
+                    # trigger of the special output
+                    msg = self.outputs[ node.special_output ]
+                    re.sub( '$(CYCLE_TIME', sself.c_time, msg )
                 else:
                     # trigger off task finished
                     msg = name + '%' + sself.c_time + ' finished'
