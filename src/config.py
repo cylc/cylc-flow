@@ -273,11 +273,23 @@ class config( CylcConfigObj ):
             for left in lefts:
                 # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
-                self.taskdefs[right].add_trigger( l, cycle_list_string )
+                name = graphnode( l ).name
+                if name in self['dependency graph']['task types']['list of tasks to use only at startup']:
+                    self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
+                else:
+                    self.taskdefs[right].add_trigger( l, cycle_list_string )
         else:
             # conditional with OR
             # strip off '*' plotting conditional indicator
             l = re.sub( '\s*\*', '', lcond )
+
+            # a startup task currently cannot be part of a conditional
+            # (to change this, need add_startup_conditional_trigger()
+            # similarly to above to non-conditional ... and follow
+            # through in taskdef.py).
+            for t in self['dependency graph']['task types']['list of tasks to use only at startup']:
+                if re.search( r'\b' + t + r'\b', l ):
+                    raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
         
     def get_coldstart_graphs( self ):

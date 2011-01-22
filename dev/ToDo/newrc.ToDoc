@@ -1,28 +1,3 @@
-#        > B => E
-#       /   \
-# X => A     => D
-#       \   /
-#        > C => F
-
-[dependency graph]
-    [[non-free tasks]]
-    oneoff task list = ColdA, ColdB, ColdC
-    sequential task list = A, B, C  # ( OR:  use 'spawn after output X', below).
-
-    [[ 0,6,12,18 ]]
-        graph =  """X => A => B =>  E
-                    A => C => F
-                    B & C => D
-
-           # cold start and restart dependencies for the three models:
-                    ColdA | A(T-12) | A(T-6) => A
-                    ColdB | B(T-12) | B(T-6) => B
-                    ColdC | C(T-12) | C(T-6) => C
-
-           # make everything depend on a special startup task
-           # THIS REQUIRES COLD START PREREQS?
-                    prep => X & ColdA & ColdB & ColdC
-                 """
 #_______________________________________________________________
 # PARSING THE GRAPH
 
@@ -32,9 +7,6 @@
     - pair.right can only have AND (i.e. all trigger off left)
     - in an OR group, the FIRST member will be used in graphs.
     - must allow conditional and non-conditional prereqs together.
-
-* get rid of coldstart_prerequisites - only use is a special suite
-  startup task - could just run pre-suite with 'cylc submit'.
 
 * don't need tied task and auto restart prerequisites!:
 

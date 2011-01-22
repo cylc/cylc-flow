@@ -62,6 +62,8 @@ class taskdef(object):
         # cond[6,18] = [ '(A & B)|C', 'C | D | E', ... ]
         self.cond_triggers = OrderedDict()             
 
+        self.startup_triggers = OrderedDict()
+
         self.suicide_triggers = OrderedDict()       
 
         self.outputs = OrderedDict()                     
@@ -75,6 +77,11 @@ class taskdef(object):
         if cycle_list_string not in self.triggers:
             self.triggers[ cycle_list_string ] = []
         self.triggers[ cycle_list_string ].append( trigger )
+
+    def add_startup_trigger( self, trigger, cycle_list_string ):
+        if cycle_list_string not in self.startup_triggers:
+            self.startup_triggers[ cycle_list_string ] = []
+        self.startup_triggers[ cycle_list_string ].append( trigger )
 
     def add_conditional_trigger( self, trigger, cycle_list_string ):
         if cycle_list_string not in self.cond_triggers:
@@ -213,9 +220,25 @@ class taskdef(object):
 
         tclass.format_trigger = tclass_format_trigger
 
-        def tclass_add_prerequisites( sself ):
-            # plain triggers
+        def tclass_add_prerequisites( sself, startup ):
+
             pp = plain_prerequisites( sself.id ) 
+            # if startup, use only startup prerequisites
+            # IF THERE ARE ANY
+            if startup:
+                found = False
+                for cycles in self.startup_triggers:
+                    trigs = self.startup_triggers[ cycles ]
+                    hours = re.split( ',\s*', cycles )
+                    for hr in hours:
+                        if int( sself.c_hour ) == int( hr ):
+                            for trig in trigs:
+                                found = True
+                                pp.add( sself.format_trigger( trig )[1] )
+                if found:
+                    sself.prerequisites.add_requisites( pp )
+
+            # plain triggers
             for cycles in self.triggers:
                 trigs = self.triggers[ cycles ]
                 hours = re.split( ',\s*', cycles )
@@ -307,7 +330,7 @@ class taskdef(object):
             # prerequisites
 
             sself.prerequisites = prerequisites()
-            sself.add_prerequisites()
+            sself.add_prerequisites( startup )
             # should these be conditional too:?
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
             #sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
