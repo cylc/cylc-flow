@@ -38,8 +38,56 @@ class SuiteConfigError( Exception ):
 
 class edge( object):
     def __init__( self, l, r ):
-        self.left = l
+        self.left_group = l
         self.right = r
+
+    def get_right( self, ctime ):
+        return self.right + '%' + ctime
+
+    def get_left( self, ctime, not_coldstart, startup_only ):
+        #if re.search( '\|', self.left_group ):
+        OR_list = re.split('\s*\|\s*', self.left_group )
+
+        leftover = []
+
+        for item in OR_list:
+            # strip off special outputs
+            item = re.sub( ':\w+', '', item )
+            # STRIP OFF STARS FOR NOW
+            item = re.sub( '\s*\*', '', item )
+
+            m = re.match( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', item )
+            if m: 
+                if not_coldstart:
+                    # found intercycle; return it if not a coldstart
+                    task = m.groups()[0]
+                    offset = m.groups()[1]
+                    ctime = cycle_time.decrement( ctime, offset )
+                    return task + '%' + ctime
+                else:
+                    # coldstart: ignore intercycle
+                    pass
+            leftover.append( item )
+
+        for item in leftover:
+            if not_coldstart:
+                # ignore any coldstart tasks
+                if item in startup_only:
+                    pass
+                else:
+                    # return the first valid task found (left-most in OR list)
+                    return item + '%' + ctime
+            else:
+                return item + '%' + ctime
+
+        # TO DO: ASSUMING NO STARRED INTERCYCLE TASKS
+        # TO DO: CHECK CTIME OFFSET VALID FOR THIS TASK?
+        # TO DO: ASSUMING ONLY ONE INTERCYCLE TASK
+        # TO DO: ASSUMING ONLY ONE STARRED TASK
+        # TO DO: RIGHMOST WOULD BE: OR_list[-1] + '%' + ctime
+
+        # ???
+        return None
 
 
 class config( CylcConfigObj ):
@@ -218,7 +266,6 @@ class config( CylcConfigObj ):
         # get list of pairs
         for i in range( 0, len(sequence)-1 ):
             lgroup = sequence[i]
-            lconditional = lgroup
             rgroup = sequence[i+1]
             
             # parentheses are used for intercycle dependencies: (T-6) etc.
@@ -227,20 +274,6 @@ class config( CylcConfigObj ):
             # '|' (OR) is not allowed on the right side
             if re.search( '\|', rgroup ):
                 raise SuiteConfigError, "OR '|' conditionals are illegal on the right: " + rgroup
-
-            # split lgroup on OR:
-            if re.search( '\|', lgroup ):
-                OR_list = re.split('\s*\|\s*', lgroup )
-                # if any one is starred, keep it and discard the rest
-                found_star = False
-                for item in OR_list:
-                    if re.search( '\*$', item ):
-                        found_star = True
-                        lgroup = re.sub( '\*$', '', item )
-                        break
-                # else keep the right-most member 
-                if not found_star:
-                    lgroup = OR_list[-1]
 
             # now split on '&' (AND) and generate corresponding pairs
             rights = re.split( '\s*&\s*', rgroup )
@@ -341,8 +374,6 @@ class config( CylcConfigObj ):
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
 
     def get_graph( self, start_ctime, stop, raw=False ):
-        coldstart_tasks = self.get_coldstart_task_list()
-        startup_tasks = self.get_startup_task_list()
         # check if graphing is disabled in the calling method
         hour = int( start_ctime[8:10] )
         if not self.graph_loaded:
@@ -353,14 +384,16 @@ class config( CylcConfigObj ):
         ctime = start_ctime
         i = cycles.index( hour )
         started = False
+
+        exclude_list = self.get_coldstart_task_list() + self.get_startup_task_list()
+
         while True:
             hour = cycles[i]
             for e in self.edges[hour]:
-                left, right = e.left, e.right
-                if ( raw or started ) and (left in coldstart_tasks or left in startup_tasks):
+                right = e.get_right(ctime)
+                left = e.get_left( ctime, started or raw, exclude_list )
+                if left == None:
                     continue
-                left  = left + '%' + ctime
-                right = right + '%' + ctime
                 graph.add_edge( left, right )
 
             # next cycle
