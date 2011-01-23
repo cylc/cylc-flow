@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 
-# TO DO: enable loading of graph without loading taskdefs (which is not
-# needed when using 'cylc graph' for example).
-
 # TO DO: complete restoration of SPECIAL OUTPUTS:
 #        check ':foo' is defined in task section
-#        check outputs do not appear on right side of pairs, OR IGNORE
-#        IF THEY DO?
+#        check outputs do not appear on right side of pairs, 
+#         OR IGNORE  IF THEY DO?
+
+# TO DO: CROSS-PAIR PROPERTIES - intercycle, special outputs
+#  require configuring of two taskdefs at once......  test on nzlam
 
 import taskdef
 import cycle_time
@@ -392,12 +392,12 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
 
-    def get_graph( self, start_ctime, stop, raw=False ):
+    def get_graph( self, start_ctime, stop, use_viz=True, raw=False ):
         # check if graphing is disabled in the calling method
         hour = int( start_ctime[8:10] )
         if not self.graph_loaded:
             self.load_graph()
-        graph = graphing.CGraph( self.suite, self['visualization'])
+        graph = graphing.CGraph( self.suite, self['visualization'], use_viz )
         cycles = self.edges.keys()
         cycles.sort()
         ctime = start_ctime
@@ -406,8 +406,6 @@ class config( CylcConfigObj ):
 
         exclude_list = self.get_coldstart_task_list() + self.get_startup_task_list()
 
-        #import pdb
-        #pdb.set_trace()
         while True:
             hour = cycles[i]
             for e in self.edges[hour]:

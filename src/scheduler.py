@@ -527,6 +527,17 @@ class scheduler(object):
                 oldest = itask.c_time
         return oldest
 
+    def get_newest_c_time( self ):
+        # return the cycle time of the newest task
+        newest = 1000010101
+        for itask in self.tasks:
+            # avoid daemon tasks
+            if hasattr( itask, 'daemon_task' ):
+                continue
+            if int( itask.c_time ) > int( newest ):
+                newest = itask.c_time
+        return newest
+
     def no_tasks_running( self ):
         # return True if no tasks are submitted or running
         #--
@@ -1298,25 +1309,48 @@ class scheduler(object):
         return outlist
 
     def write_live_graph( self ):
-        graph = pygraphviz.AGraph(directed=True)
+        # To do: check edges against resolved ones
+        # (adding new ones, and nodes, if necessary)
+
+        oldest = self.get_oldest_c_time()
+        newest = self.get_newest_c_time()
+        if self.start_time == None or oldest > self.start_time:
+            raw = True
+        else:
+            # (show coldstart tasks) - TO DO: actual raw start
+            raw = False
+
+        diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
+        #if diffhrs < 25:
+        #    diffhrs = 25
+        graph = self.config.get_graph( oldest, diffhrs, use_viz=False, raw=raw ) 
+
         for task in self.tasks:
-            graph.add_node( task.id )
-            node = graph.get_node( task.id )
-            node.attr['style'] = 'filled'
+            try:
+                node = graph.get_node( task.id )
+            except KeyError:
+                print 'WARNING: NOT IN GRAPH', task.id
+                continue
+
             if task.state.is_submitted():
+                node.attr['style'] = 'filled'
                 node.attr['fillcolor'] = 'orange'
             elif task.state.is_running():
+                node.attr['style'] = 'filled'
                 node.attr['fillcolor'] = 'green'
             elif task.state.is_waiting():
-                node.attr['fillcolor'] = 'blue'
+                node.attr['style'] = 'filled'
+                node.attr['fillcolor'] = 'cadetblue2'
             elif task.state.is_finished():
-                node.attr['fillcolor'] = 'gray'
+                node.attr['style'] = 'filled'
+                node.attr['fillcolor'] = 'grey'
                 pass
             elif task.state.is_failed():
+                node.attr['style'] = 'filled'
                 node.attr['fillcolor'] = 'red'
 
-            for id in task.get_resolved_dependencies():
-                    graph.add_edge( id, task.id )
+            #for id in task.get_resolved_dependencies():
+            #        graph.add_edge( id, task.id )
 
         graph.layout(prog="dot")
         graph.write( os.path.join( self.suite_dir, 'graphing', 'live.dot' ))

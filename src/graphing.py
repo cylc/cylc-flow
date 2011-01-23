@@ -29,12 +29,16 @@ class CGraph( pygraphviz.AGraph ):
     """automatically add cylc's configured graph visualization
     attributes to pygraphviz graphs."""
 
-    def __init__( self, title, vizconfig ):
+    def __init__( self, title, vizconfig, use_viz=False ):
 
         # suite.rc visualization config section
         self.vizconfig = vizconfig
+        self.use_viz = use_viz
 
         pygraphviz.AGraph.__init__( self, directed=True )
+
+        if not use_viz:
+            return
 
         # graph attributes
         # - label (suite name)
@@ -73,6 +77,9 @@ class CGraph( pygraphviz.AGraph ):
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
 
+        if not self.use_viz:
+            return
+
         for item in self.node_attr_by_taskname( l ):
             attr, value = re.split( '\s*=\s*', item )
             nl.attr[ attr ] = value
@@ -84,3 +91,4 @@ class CGraph( pygraphviz.AGraph ):
         if self.vizconfig['use node fillcolor for edges']:
             edge = self.get_edge( l, r )
             edge.attr['color'] = nl.attr['fillcolor']
+
