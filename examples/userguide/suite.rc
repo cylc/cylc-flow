@@ -31,9 +31,11 @@ write live graph = True
     post = D, E, F
 [[node attributes]]
     models = "fillcolor=green",
-    cold = "fillcolor=blue",
+    cold = "fillcolor=slateblue",
     data = "fillcolor=red",
     post = "fillcolor=yellow",
+    chumfatty = "fillcolor=orange",
+    ColdA = "fillcolor=blue",
 
 [dummy mode]
 #clock offset from initial cycle time in hours = 0
@@ -50,7 +52,7 @@ task run time in seconds = 1
                     A => C
                     #B* | C => D
                     B & C => D
-                    C => F
+                    #C => F
     
             # cold start the three models:
                     ColdA | A(T-6) => A
@@ -61,12 +63,12 @@ task run time in seconds = 1
             prep => X & ColdA & ColdB & ColdC
                  """
 
-    #[[ 0,6,18 ]]
-    #   graph = """C => F
-    #   """
-    #[[ 12 ]]
-    #  graph = """C => chumfatty => F
-    #  """
+    [[ 0,6,18 ]]
+       graph = """C => F
+       """
+    [[ 12 ]]
+      graph = """C => chumfatty => F
+      """
 
 [environment]
 TASK_EXE_SECONDS = 5

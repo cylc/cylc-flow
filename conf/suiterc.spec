@@ -74,6 +74,7 @@ list of default edge attributes = string_list( default=list('color=black'))
 [[task groups]]
     __many__ = string_list( default=list())
 [[node attributes]]
+    # item is task name or task group name
     __many__ = string_list( default=list())
 
 [ task insertion groups ]

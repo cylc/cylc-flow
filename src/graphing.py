@@ -53,10 +53,21 @@ class CGraph( pygraphviz.AGraph ):
             self.edge_attr[ attr ] = value
 
         # non-default node attributes by task name
+        # TO DO: ERROR CHECKING FOR INVALID TASK NAME
         self.task_attr = {}
-        for group in self.vizconfig['task groups']:
-            for task in self.vizconfig['task groups'][group]:
-                self.task_attr[task] = self.vizconfig['node attributes'][group]
+        #for group in self.vizconfig['task groups']:
+        #    for task in self.vizconfig['task groups'][group]:
+        #        self.task_attr[task] = self.vizconfig['node attributes'][group]
+
+        for item in self.vizconfig['node attributes']:
+            if item in self.vizconfig['task groups']:  
+                for task in self.vizconfig['task groups'][item]:
+                    self.task_attr[task] = self.vizconfig['node attributes'][item]
+            else:
+                # must be task name
+                self.task_attr[item] = self.vizconfig['node attributes'][item]
+
+
 
     def node_attr_by_taskname( self, n ):
         name = re.sub( '%.*', '', n )
