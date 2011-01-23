@@ -366,10 +366,9 @@ class config( CylcConfigObj ):
 
         # SET TRIGGERS
         if not re.search( '\|', lcond ):
-            # lcond is a single trigger, or and '&' only one,
-            # in which case we don't need to use conditional 
-            # prerequisites (we could, but they may be signficantly less
-            # efficient due to use of 'eval'?).
+            # lcond is a single trigger, or an '&'-only one, in which
+            # case we don't need to use conditional prerequisites (we
+            # could, but they may be less # efficient due to 'eval'?).
             for left in lefts:
                 # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
@@ -379,11 +378,11 @@ class config( CylcConfigObj ):
                 else:
                     self.taskdefs[right].add_trigger( l, cycle_list_string )
         else:
-            # conditional with OR
-            # strip off '*' plotting conditional indicator
+            # Conditional with OR:
+            # Strip off '*' plotting conditional indicator
             l = re.sub( '\s*\*', '', lcond )
 
-            # a startup task currently cannot be part of a conditional
+            # A startup task currently cannot be part of a conditional
             # (to change this, need add_startup_conditional_trigger()
             # similarly to above to non-conditional ... and follow
             # through in taskdef.py).
