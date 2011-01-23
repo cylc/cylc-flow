@@ -64,7 +64,8 @@ live graph directory path = string( default='graphing')
 # hours
 when to stop updating = integer( default=24 )
 # absolute, or relative to $CYLC_SUITE_DIR for portability
-graph directory path = string( default='graphing')
+run time graph directory = string( default='graphing')
+run time graph filename  = string( default='runtime.dot')
 use node fillcolor for edges = boolean( default=True )
 #task families in subgraphs = boolean( default=True )
 list of default node attributes = string_list( default=list('style=filled', 'fillcolor=grey', 'color=black', 'shape=ellipse'))

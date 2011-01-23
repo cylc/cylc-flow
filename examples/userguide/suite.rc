@@ -49,7 +49,7 @@ task run time in seconds = 1
         graph =  """X => A => B => E
                     A => C
                     B & C => D
-                    #C => F => PostF
+                    C => F
     
             # cold start the three models:
                     ColdA* | A(T-6) => A
@@ -60,12 +60,12 @@ task run time in seconds = 1
             prep => X & ColdA & ColdB & ColdC
                  """
 
-    [[ 0,6,18 ]]
-       graph = """C => F
-       """
-    [[ 12 ]]
-       graph = """C => chumfatty => F
-       """
+    #[[ 0,6,18 ]]
+    #   graph = """C => F
+    #   """
+    #[[ 12 ]]
+    #  graph = """C => chumfatty => F
+    #  """
 
 [environment]
 TASK_EXE_SECONDS = 5
@@ -145,4 +145,3 @@ C_RUNNING_DIR = $WORKSPACE/RunningC
     list of commands = cylc-wrapper ColdC.sh,
 
     [[chumfatty]]
-    [[PostF]]

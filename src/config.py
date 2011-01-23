@@ -109,7 +109,7 @@ class config( CylcConfigObj ):
         self['top level logging directory'] = self.make_dir_absolute( self['top level logging directory'], home=True )
         self['top level state dump directory'] = self.make_dir_absolute( self['top level state dump directory'], home=True )
         self['job submission log directory' ] = self.make_dir_absolute( jsld, home=True )
-        self['visualization']['graph directory path'] = self.make_dir_absolute( self['visualization']['graph directory path'] )
+        self['visualization']['run time graph directory'] = self.make_dir_absolute( self['visualization']['run time graph directory'] )
         self['experimental']['live graph directory path'] = self.make_dir_absolute( self['experimental']['live graph directory path'] )
 
     def make_dir_absolute( self, indir, home=False ):
@@ -129,7 +129,7 @@ class config( CylcConfigObj ):
             self['top level logging directory'], 
             self['top level state dump directory'],
             self['job submission log directory'],
-            self['visualization']['graph directory path'] ]: 
+            self['visualization']['run time graph directory'] ]: 
             mkdir_p( dir )
         if self['experimental']['write live graph']:
             mkdir_p( self['experimental']['live graph directory path'] )

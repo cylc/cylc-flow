@@ -9,15 +9,14 @@ from optparse import OptionParser
 
 try:
     from graphing import xdot
-    from graphing import pygraphviz
 except:
     raise SystemExit( "Graphing not available; install pygraphviz and xdot")
 
 import config
 
 class MyDotWindow( xdot.DotWindow ):
-    # override xdot to get rid of Open and Refresh
-    # and load graph from suite config
+    """Override xdot to get rid of the Open and Refresh buttons"""
+
     ui = '''
     <ui>
         <toolbar name="ToolBar">
@@ -77,32 +76,44 @@ class MyDotWindow( xdot.DotWindow ):
 
         self.show_all()
 
-    def set_suite( self, suite ):
+    def parse_graph( self, suite ):
+        # re-parse the graph
         #print 'ullo'
         self.suite = suite
-        foo = config.config( suite )
-        self.suite_file = foo.get_filename()
-        bar = foo.get_coldstart_graphs()
+        cfg = config.config( suite )
+        self.suite_file = cfg.get_filename()
+        bar = cfg.get_coldstart_graphs()
         dotcode = bar[0].string()
         self.set_dotcode( dotcode )
 
     def update(self):
+        # if suite config file has changed, re-parse the graph
         if not hasattr(self, "last_mtime"):
             self.last_mtime = None
         current_mtime = os.stat(self.suite_file).st_mtime
         if current_mtime != self.last_mtime:
             self.last_mtime = current_mtime
-            self.set_suite(self.suite)
+            self.parse_graph(self.suite)
         return True
 
-def main():
+if __name__ == '__main__':
     parser = OptionParser( """cylc graph SUITE 
 
-View a graphical suite dependency graph that updates as you 
-edit the suite.
+Plot suite dependency graphs in a pannable, zoomable viewer.
+
+By default, the graph configured in the suite config (suite.rc)
+file [dependency graph] section will be plotted. The graph will
+update automatically as you edit the suite.
+
+You can also view the run-time dependency graph for the suite, 
+which records resolved dependencies as the suite runs.
 
 Arguments:
   SUITE   - registered name of the suite.""")
+
+    parser.add_option( "-r", "--run-time", 
+        help="View the run-time graph, if one has been generated.",
+        action="store_true", default=False, dest="view_runtime" )
 
     ( options, args ) = parser.parse_args()
 
@@ -111,12 +122,26 @@ Arguments:
 
     suite = args[0]
 
+    suiterc = config.config( suite )
+ 
+    if options.view_runtime:
+        file = \
+                os.path.join( suiterc['visualization']['run time graph directory'],
+                              suiterc['visualization']['run time graph filename'] )
+        window = xdot.DotWindow()
+        try:
+            window.update( file )
+        except OSError, x:
+            print x
+            sys.exit(1)
+        window.connect( 'destroy', gtk.main_quit)
+        # checking for file changed not necessary for the run time graph:
+        # gobject.timeout_add(1000, window.update, file)
+        gtk.main()
 
-    window = MyDotWindow()
-    window.set_suite( suite )
-    window.connect( 'destroy', gtk.main_quit)
-    gobject.timeout_add(1000, window.update)
-    gtk.main()
-
-if __name__ == '__main__':
-    main()
+    else:
+        window = MyDotWindow()
+        window.parse_graph( suite )
+        window.connect( 'destroy', gtk.main_quit)
+        gobject.timeout_add(1000, window.update)
+        gtk.main()

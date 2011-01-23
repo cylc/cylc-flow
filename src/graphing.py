@@ -29,18 +29,16 @@ class CGraph( pygraphviz.AGraph ):
     """automatically add cylc's configured graph visualization
     attributes to pygraphviz graphs."""
 
-    def __init__( self, suite, vizconfig ):
+    def __init__( self, title, vizconfig ):
 
         # suite.rc visualization config section
         self.vizconfig = vizconfig
-
-        self.suite = suite
 
         pygraphviz.AGraph.__init__( self, directed=True )
 
         # graph attributes
         # - label (suite name)
-        self.graph_attr['label'] = "suite " + self.suite
+        self.graph_attr['label'] = title
         # - default node attributes
         for item in vizconfig['list of default node attributes']:
             attr, value = re.split( '\s*=\s*', item )

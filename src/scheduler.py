@@ -30,9 +30,9 @@ from Pyro.errors import NamingError, ProtocolError
 try:
     import graphing
 except:
-    got_pygraphviz = False
+    graphing_disabled = True
 else:
-    got_pygraphviz = True
+    graphing_disabled = False
 
 class scheduler(object):
     def __init__( self ):
@@ -110,7 +110,7 @@ class scheduler(object):
         self.print_banner()
         # LOAD TASK POOL ACCORDING TO STARTUP METHOD (PROVIDED IN DERIVED CLASSES) 
         self.load_tasks()
-        if got_pygraphviz:
+        if not graphing_disabled:
             self.initialize_graph()
 
     def parse_commandline( self ):
@@ -385,7 +385,7 @@ class scheduler(object):
                 self.spawn()
                 self.dump_state()
                 if self.config['experimental']['write live graph']:
-                    if got_pygraphviz:
+                    if not graphing_disabled:
                         self.write_live_graph()
 
                 self.suite_state.update( self.tasks, self.clock, \
@@ -455,7 +455,7 @@ class scheduler(object):
         if self.pyro:
             self.pyro.shutdown()
 
-        if got_pygraphviz:
+        if not graphing_disabled:
             self.finalize_graph()
 
         if self.use_lockserver:
@@ -581,7 +581,7 @@ class scheduler(object):
 
                 current_time = self.clock.get_datetime()
                 if itask.run_if_ready( current_time ):
-                    if got_pygraphviz and not self.graph_finalized:
+                    if not graphing_disabled and not self.graph_finalized:
                         self.update_graph( itask )
 
     def spawn( self ):
@@ -1322,9 +1322,11 @@ class scheduler(object):
         graph.write( os.path.join( self.suite_dir, 'graphing', 'live.dot' ))
 
     def initialize_graph( self ):
+        title = 'suite ' + self.suite + ' run-time dependency graph'
         self.graph_file = \
-                os.path.join( self.config['visualization']['graph directory path'], 'graph.dot' )
-        self.graph = graphing.CGraph( self.suite, self.config['visualization'] )
+                os.path.join( self.config['visualization']['run time graph directory'],
+                              self.config['visualization']['run time graph filename'] )
+        self.graph = graphing.CGraph( title, self.config['visualization'] )
         self.graph_finalized = False
         if not self.start_time:
             # only do cold and warmstarts for now.
