@@ -48,24 +48,25 @@ task run time in seconds = 1
     [[ 0,6,12,18 ]]
         graph =  """X => A => B => E
                     A => C
+                    #B* | C => D
                     B & C => D
-                    C => F
+                    #C => F
     
             # cold start the three models:
-                    ColdA* | A(T-6) => A
-                    ColdB* | B(T-6) => B
-                    ColdC* | C(T-6) => C
+                    ColdA | A(T-6) => A
+                    ColdB | B(T-6) => B
+                    ColdC | C(T-6) => C
 
             # make everything depend on a special startup task
             prep => X & ColdA & ColdB & ColdC
                  """
 
-    #[[ 0,6,18 ]]
-    #   graph = """C => F
-    #   """
-    #[[ 12 ]]
-    #  graph = """C => chumfatty => F
-    #  """
+    [[ 0,6,18 ]]
+       graph = """C => F
+       """
+    [[ 12 ]]
+      graph = """C => chumfatty => F
+      """
 
 [environment]
 TASK_EXE_SECONDS = 5

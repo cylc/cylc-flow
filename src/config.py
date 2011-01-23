@@ -44,51 +44,70 @@ class edge( object):
     def get_right( self, ctime ):
         return self.right + '%' + ctime
 
-    def get_left( self, ctime, not_coldstart, startup_only ):
+    def get_left( self, ctime, not_first_cycle, raw, startup_only ):
         #if re.search( '\|', self.left_group ):
         OR_list = re.split('\s*\|\s*', self.left_group )
 
-        leftover = []
+        first_cycle = not not_first_cycle
 
+        options = []
+        starred_index = -1
         for item in OR_list:
             # strip off special outputs
             item = re.sub( ':\w+', '', item )
-            # STRIP OFF STARS FOR NOW
-            item = re.sub( '\s*\*', '', item )
 
-            m = re.match( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', item )
+            starred = False
+            if re.search( '\*$', item ):
+                starred = True
+                item = re.sub( '\*$', '', item )
+
+            m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', item )
             if m: 
-                if not_coldstart:
-                    # found intercycle; return it if not a coldstart
-                    task = m.groups()[0]
-                    offset = m.groups()[1]
-                    ctime = cycle_time.decrement( ctime, offset )
-                    return task + '%' + ctime
+                if first_cycle:
+                    # ignore intercycle
+                    continue
                 else:
-                    # coldstart: ignore intercycle
-                    pass
-            leftover.append( item )
+                    # not first cycle
+                    options.append( item )
+                    if starred:
+                        starred_index = len(options)-1
+                    continue
 
-        for item in leftover:
-            if not_coldstart:
-                # ignore any coldstart tasks
-                if item in startup_only:
-                    pass
+            if item in startup_only:
+                if not first_cycle:
+                    continue
                 else:
-                    # return the first valid task found (left-most in OR list)
-                    return item + '%' + ctime
+                    # first cycle
+                    if not raw:
+                        options.append( item )
+                        if starred:
+                            starred_index = len(options)-1
+                        continue
             else:
-                return item + '%' + ctime
+                options.append( item )
+                if starred:
+                    starred_index = len(options)-1
+                continue
 
-        # TO DO: ASSUMING NO STARRED INTERCYCLE TASKS
-        # TO DO: CHECK CTIME OFFSET VALID FOR THIS TASK?
-        # TO DO: ASSUMING ONLY ONE INTERCYCLE TASK
-        # TO DO: ASSUMING ONLY ONE STARRED TASK
-        # TO DO: RIGHMOST WOULD BE: OR_list[-1] + '%' + ctime
+        if len(options) == 0:
+            return None
 
-        # ???
-        return None
+        if starred_index != -1:
+            left = options[ starred_index ]
+        else:
+            #rightmost item
+            left = options[-1]
 
+        m = re.search( '(\w+)\s*\(\s*T\s*-(\d+)\s*\)', left )
+        if m: 
+            task = m.groups()[0]
+            offset = m.groups()[1]
+            ctime = cycle_time.decrement( ctime, offset )
+            res = task + '%' + ctime
+        else:
+            res = left + '%' + ctime
+            
+        return res
 
 class config( CylcConfigObj ):
     def __init__( self, suite=None, dummy_mode=False ):
@@ -387,11 +406,13 @@ class config( CylcConfigObj ):
 
         exclude_list = self.get_coldstart_task_list() + self.get_startup_task_list()
 
+        #import pdb
+        #pdb.set_trace()
         while True:
             hour = cycles[i]
             for e in self.edges[hour]:
                 right = e.get_right(ctime)
-                left = e.get_left( ctime, started or raw, exclude_list )
+                left = e.get_left( ctime, started, raw, exclude_list )
                 if left == None:
                     continue
                 graph.add_edge( left, right )
