@@ -29,7 +29,6 @@ task submission timeout minutes = float( default=None )
 
 list of tasks to include at startup = string_list( default=list())
 list of tasks to exclude at startup = string_list( default=list())
-list of tasks required to coldstart the suite = string_list( default=list())
 
 [ dummy mode ]
 clock offset from initial cycle time in hours = integer( default=24 )
@@ -41,12 +40,13 @@ command fail = string( default='cylc-wrapper -m "echo DUMMY MODE FAILOUT $TASK_I
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
 [ dependency graph ]
-    [[ task types ]]
     list of oneoff tasks = string_list( default=list())
     list of sequential tasks = string_list( default=list())
     list of clock-triggered tasks = string_list( default=list())
     list of tasks to use only at startup = string_list( default=list())
-    # TO DO: catchup_contact tasks (topnet)
+    list of tasks required to coldstart the suite = string_list( default=list())
+
+  # TO DO: catchup_contact tasks (topnet)
 
     [[ task families ]]
     __many__ = string_list( default=None )

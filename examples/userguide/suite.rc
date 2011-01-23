@@ -40,10 +40,10 @@ use lockserver = False
 task run time in seconds = 1
 
 [dependency graph]
-    [[ task types ]]
     list of sequential tasks = A, B, C
     list of oneoff tasks = ColdA, ColdB, ColdC, prep
     list of tasks to use only at startup = prep,
+    list of tasks required to coldstart the suite = ColdA, ColdB, ColdC
 
     [[ 0,6,12,18 ]]
         graph =  """X => A => B => E

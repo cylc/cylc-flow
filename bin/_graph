@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import os
-import sys
+import os, re, sys
 import gtk
 import gtk.gdk
 import gobject
@@ -27,7 +26,12 @@ class MyDotWindow( xdot.DotWindow ):
         </toolbar>
     </ui>
     '''
-    def __init__(self):
+    def __init__(self, suite, ctime, stop_after, raw ):
+        self.suite = suite
+        self.ctime = ctime
+        self.raw = raw
+        self.stop_after = stop_after
+
         gtk.Window.__init__(self)
 
         self.graph = xdot.Graph()
@@ -76,24 +80,21 @@ class MyDotWindow( xdot.DotWindow ):
 
         self.show_all()
 
-    def parse_graph( self, suite ):
-        # re-parse the graph
+    def parse_graph( self ):
         #print 'ullo'
-        self.suite = suite
-        cfg = config.config( suite )
-        self.suite_file = cfg.get_filename()
-        bar = cfg.get_coldstart_graphs()
-        dotcode = bar[0].string()
-        self.set_dotcode( dotcode )
+        # reparse the graph
+        self.suiterc = config.config( self.suite )
+        self.suitercfile = self.suiterc.get_filename()
+        self.set_dotcode( self.suiterc.get_graph( self.ctime, self.stop_after, self.raw ).string() )
 
     def update(self):
-        # if suite config file has changed, re-parse the graph
+        # if suite config file has changed, reparse the graph
         if not hasattr(self, "last_mtime"):
             self.last_mtime = None
-        current_mtime = os.stat(self.suite_file).st_mtime
+        current_mtime = os.stat(self.suitercfile).st_mtime
         if current_mtime != self.last_mtime:
             self.last_mtime = current_mtime
-            self.parse_graph(self.suite)
+            self.parse_graph()
         return True
 
 if __name__ == '__main__':
@@ -111,8 +112,24 @@ which records resolved dependencies as the suite runs.
 Arguments:
   SUITE   - registered name of the suite.""")
 
-    parser.add_option( "-r", "--run-time", 
-        help="View the run-time graph, if one has been generated.",
+    parser.add_option( "-c", "--coldstart", 
+        help="Hour at which to plot a suite.rc coldstart graph.",
+        metavar="HH", action="store", default=None, dest="coldstart_hour" )
+
+    parser.add_option( "-r", "--rawstart", 
+        help="Hour at which to plot a suite.rc rawstart graph.",
+        metavar="HH", action="store", default=None, dest="rawstart_hour" )
+
+    parser.add_option( "-s", "--stop-after", 
+        help="Stop plotting the suite.rc graph HH hours beyond the start hour (default 6)",
+        metavar="HH", action="store", default='06', dest="stop_after" )
+
+    parser.add_option( "-f", "--filename", 
+        help="View a specific dot-language graphfile.",
+        metavar="FILE", action="store", default=None, dest="filename" )
+
+    parser.add_option( "--run-time-graph", 
+        help="Plot the suite run-time graph, if one has been generated.",
         action="store_true", default=False, dest="view_runtime" )
 
     ( options, args ) = parser.parse_args()
@@ -122,12 +139,17 @@ Arguments:
 
     suite = args[0]
 
-    suiterc = config.config( suite )
- 
+    view_file = False
     if options.view_runtime:
-        file = \
-                os.path.join( suiterc['visualization']['run time graph directory'],
+        view_file = True
+        suiterc = config.config( suite )
+        file = os.path.join( suiterc['visualization']['run time graph directory'],
                               suiterc['visualization']['run time graph filename'] )
+        if options.filename:
+            view_file = True
+            file = options.filename
+
+    if view_file:
         window = xdot.DotWindow()
         try:
             window.update( file )
@@ -140,8 +162,23 @@ Arguments:
         gtk.main()
 
     else:
-        window = MyDotWindow()
-        window.parse_graph( suite )
+        # parse and plot the suite.rc dependency graph
+        if options.coldstart_hour:
+            hour = options.coldstart_hour
+            raw = False
+        elif options.rawstart_hour:
+            hour = options.rawstart_hour
+            raw = True
+        else:
+            parser.error( "Illegal input" )
+
+        if not re.match( '\d\d', hour ):
+            parser.error( "Illegal hour value " + hour )
+
+        # fake a full cycle time
+        ctime = '29990101' + hour
+        window = MyDotWindow( suite, ctime, options.stop_after, raw )
+        window.parse_graph()
         window.connect( 'destroy', gtk.main_quit)
         gobject.timeout_add(1000, window.update)
         gtk.main()

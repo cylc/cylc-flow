@@ -9,6 +9,7 @@
 #        IF THEY DO?
 
 import taskdef
+import cycle_time
 import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
@@ -35,12 +36,19 @@ class SuiteConfigError( Exception ):
     def __str__( self ):
         return repr(self.msg)
 
+class edge( object):
+    def __init__( self, l, r ):
+        self.left = l
+        self.right = r
+
+
 class config( CylcConfigObj ):
     def __init__( self, suite=None, dummy_mode=False ):
         self.dummy_mode = dummy_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
         self.loaded = False
+        self.graph_loaded = False
 
         if suite:
             self.suite = suite
@@ -152,12 +160,11 @@ class config( CylcConfigObj ):
     def get_coldstart_task_list( self ):
         # TO DO: automatically determine this by parsing the dependency
         #        graph - requires some thought.
-        ##if not self.loaded:
-        ##    self.load_tasks()
-        ##return self.coldstart_task_list
-
         # For now user must define this:
-        return self['list of tasks required to coldstart the suite']
+        return self['dependency graph']['list of tasks required to coldstart the suite']
+
+    def get_startup_task_list( self ):
+        return self['dependency graph']['list of tasks to use only at startup']
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -166,7 +173,7 @@ class config( CylcConfigObj ):
             self.load_tasks()
         return self.taskdefs.keys()
 
-    def process_graph_line( self, line, cycle_list_string ):
+    def edges_from_graph_line( self, line, cycle_list_string ):
         # Extract dependent pairs from the suite.rc textual dependency
         # graph to use in constructing graphviz graphs.
 
@@ -239,23 +246,54 @@ class config( CylcConfigObj ):
             rights = re.split( '\s*&\s*', rgroup )
             lefts  = re.split( '\s*&\s*', lgroup )
             for r in rights:
-                # unlike graph plotting, taskdefs handle true condtional expressions.
-                self.generate_taskdefs( lconditional, r, cycle_list_string )
-
                 for l in lefts:
-                    pair = [l,r]
-                    # store dependencies by hour
+                    e = edge( l,r )
+                    # store edges by hour
                     for hour in hours:
                         if hour not in self.edges:
                             self.edges[hour] = []
-                        if pair not in self.edges[hour]:
-                            self.edges[hour].append( pair )
+                        if e not in self.edges[hour]:
+                            self.edges[hour].append( e )
 
             # self.edges left side members can be:
             #   foo           (task name)
             #   foo:N         (specific output)
             #   foo(T-DD)     (intercycle dep)
             #   foo:N(T-DD)   (both)
+
+
+    def tasks_from_graph_line( self, line, cycle_list_string ):
+        # Extract dependent pairs from the suite.rc textual dependency
+        # graph and use to defined task proxy class definitions.
+
+        # SEE DOCUMENTATION OF GRAPH LINE FORMAT ABOVE
+
+        temp = re.split( '\s*,\s*', cycle_list_string )
+        # turn cycle_list_string into a list of integer hours
+        hours = []
+        for i in temp:
+            hours.append( int(i) )
+
+        # split on arrows
+        sequence = re.split( '\s*=>\s*', line )
+
+        # get list of pairs
+        for i in range( 0, len(sequence)-1 ):
+            lgroup = sequence[i]
+            lconditional = lgroup
+            rgroup = sequence[i+1]
+            
+            # parentheses are used for intercycle dependencies: (T-6) etc.
+            # so don't check for them as erroneous conditionals just yet.
+
+            # '|' (OR) is not allowed on the right side
+            if re.search( '\|', rgroup ):
+                raise SuiteConfigError, "OR '|' conditionals are illegal on the right: " + rgroup
+
+            # now split on '&' (AND) and generate corresponding pairs
+            rights = re.split( '\s*&\s*', rgroup )
+            for r in rights:
+                self.generate_taskdefs( lconditional, r, cycle_list_string )
 
     def generate_taskdefs( self, lcond, right, cycle_list_string ):
         # get a list of integer hours from cycle_list_string
@@ -284,7 +322,7 @@ class config( CylcConfigObj ):
                 # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
                 name = graphnode( l ).name
-                if name in self['dependency graph']['task types']['list of tasks to use only at startup']:
+                if name in self['dependency graph']['list of tasks to use only at startup']:
                     self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
                 else:
                     self.taskdefs[right].add_trigger( l, cycle_list_string )
@@ -297,25 +335,48 @@ class config( CylcConfigObj ):
             # (to change this, need add_startup_conditional_trigger()
             # similarly to above to non-conditional ... and follow
             # through in taskdef.py).
-            for t in self['dependency graph']['task types']['list of tasks to use only at startup']:
+            for t in self['dependency graph']['list of tasks to use only at startup']:
                 if re.search( r'\b' + t + r'\b', l ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
-        
-    def get_coldstart_graphs( self ):
-        graphs = {}
-        if graphing_disabled:
-            return graphs
-        if not self.loaded:
-            self.load_tasks()
-        for hour in self.edges:
-            graphs[hour] = graphing.CGraph( self.suite, self['visualization'])
-            for pair in self.edges[hour]:
-                left, right = pair
-                left = left + '%2999010106'
-                right = right + '%2999010106'
-                graphs[hour].add_edge( left, right )
-        return graphs 
+
+    def get_graph( self, start_ctime, stop, raw=False ):
+        coldstart_tasks = self.get_coldstart_task_list()
+        startup_tasks = self.get_startup_task_list()
+        # check if graphing is disabled in the calling method
+        hour = int( start_ctime[8:10] )
+        if not self.graph_loaded:
+            self.load_graph()
+        graph = graphing.CGraph( self.suite, self['visualization'])
+        cycles = self.edges.keys()
+        cycles.sort()
+        ctime = start_ctime
+        i = cycles.index( hour )
+        started = False
+        while True:
+            hour = cycles[i]
+            for e in self.edges[hour]:
+                left, right = e.left, e.right
+                if ( raw or started ) and (left in coldstart_tasks or left in startup_tasks):
+                    continue
+                left  = left + '%' + ctime
+                right = right + '%' + ctime
+                graph.add_edge( left, right )
+
+            # next cycle
+            started = True
+            if i == len(cycles) - 1:
+                i = 0
+                diff = 24 - hour + cycles[0]
+            else:
+                i += 1
+                diff = cycles[i] - hour
+            ctime = cycle_time.increment( ctime, diff )
+
+            if int( cycle_time.diff_hours( ctime, start_ctime )) >= int(stop):
+                break
+                
+        return graph
 
     #def get_full_graph( self ):
     #    edges = {}
@@ -375,6 +436,42 @@ class config( CylcConfigObj ):
             prev = cycles[i-1]
         return prev
 
+    def load_graph( self ):
+        # LOAD graph edges FROM DEPENDENCY GRAPH
+        dep_pairs = []
+
+        # loop over cycle time lists
+        for section in self['dependency graph']:
+            if re.match( '[\s,\d]+', section ):
+                cycle_list_string = section
+            else:
+                continue
+
+            # get a list of integer hours from cycle_list_string
+            temp = re.split( '\s*,\s*', cycle_list_string )
+            hours = []
+            for i in temp:
+                hours.append( int(i) )
+
+            # parse the dependency graph for this list of cycle times
+            graph = self['dependency graph'][ cycle_list_string ]['graph']
+            lines = re.split( '\s*\n\s*', graph )
+            for xline in lines:
+                # strip comments
+                line = re.sub( '#.*', '', xline ) 
+                # ignore blank lines
+                if re.match( '^\s*$', line ):
+                    continue
+                # strip leading or trailing spaces
+                line = re.sub( '^\s*', '', line )
+                line = re.sub( '\s*$', '', line )
+
+                # add to the graphviz dependency graph
+                # and generate task proxy class definitions
+                self.edges_from_graph_line( line, cycle_list_string )
+
+        self.graph_loaded = True
+
     def load_tasks( self ):
         # LOAD FROM DEPENDENCY GRAPH
         dep_pairs = []
@@ -407,7 +504,7 @@ class config( CylcConfigObj ):
 
                 # add to the graphviz dependency graph
                 # and generate task proxy class definitions
-                self.process_graph_line( line, cycle_list_string )
+                self.tasks_from_graph_line( line, cycle_list_string )
 
         # task families
         members = []
@@ -462,10 +559,10 @@ class config( CylcConfigObj ):
             # suite default job submit method
             taskd.job_submit_method = self['job submission method']
 
-        if name in self['dependency graph']['task types']['list of oneoff tasks']:
+        if name in self['dependency graph']['list of oneoff tasks']:
             taskd.modifiers.append( 'oneoff' )
 
-        if name in self['dependency graph']['task types']['list of sequential tasks']:
+        if name in self['dependency graph']['list of sequential tasks']:
             taskd.modifiers.append( 'sequential' )
 
         taskd.type = 'free'
