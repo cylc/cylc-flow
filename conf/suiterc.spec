@@ -65,10 +65,15 @@ live graph directory path = string( default='graphing')
 when to stop updating = integer( default=24 )
 # absolute, or relative to $CYLC_SUITE_DIR for portability
 graph directory path = string( default='graphing')
-#use node color for edges = boolean( default=True )
+use node fillcolor for edges = boolean( default=True )
 #task families in subgraphs = boolean( default=True )
-default node attribute list = string_list( default=list(style=filled, fillcolor=gray, color=blue, shape=ellipse))
-#default edge attributes = string( default='color=black, style=bold')
+list of default node attributes = string_list( default=list('style=filled', 'fillcolor=grey', 'color=black', 'shape=ellipse'))
+list of default edge attributes = string_list( default=list('color=black'))
+
+[[task groups]]
+    __many__ = string_list( default=list())
+[[node attributes]]
+    __many__ = string_list( default=list())
 
 [ task insertion groups ]
  __many__ = string_list()

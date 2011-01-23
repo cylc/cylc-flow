@@ -18,12 +18,11 @@ from registration import registrations
 from graphnode import graphnode
 
 try:
-    from graphing import pygraphviz
+    import graphing
 except:
-    print "WARNING: pygraphviz is not installed; graphing disabled"
-    got_pygraphviz = False
+    graphing_disabled = True
 else:
-    got_pygraphviz = True
+    graphing_disabled = False
 
 class SuiteConfigError( Exception ):
     """
@@ -305,25 +304,22 @@ class config( CylcConfigObj ):
         
     def get_coldstart_graphs( self ):
         graphs = {}
-        if not got_pygraphviz:
-            print "config: graphing disabled, install pygraphviz"
+        if graphing_disabled:
             return graphs
-
         if not self.loaded:
             self.load_tasks()
         for hour in self.edges:
-            graphs[hour] = pygraphviz.AGraph(directed=True)
+            graphs[hour] = graphing.CGraph( self.suite, self['visualization'])
             for pair in self.edges[hour]:
                 left, right = pair
-                left = left + '(' + str(hour) + ')'
-                right = right + '(' + str(hour) + ')'
+                left = left + '%2999010106'
+                right = right + '%2999010106'
                 graphs[hour].add_edge( left, right )
         return graphs 
 
     #def get_full_graph( self ):
     #    edges = {}
-    #    if not got_pygraphviz:
-    #        print "config: graphing disabled, install pygraphviz"
+    #    if graphing_disabled:
     #        return edges
     #    if not self.loaded:
     #        self.load_tasks()
