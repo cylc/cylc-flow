@@ -34,8 +34,8 @@ write live graph = True
     cold = "fillcolor=slateblue",
     data = "fillcolor=red",
     post = "fillcolor=yellow",
-    chumfatty = "fillcolor=orange",
-    ColdA = "fillcolor=blue",
+#    chumfatty = "fillcolor=orange",
+#    ColdA = "fillcolor=blue",
 
 [dummy mode]
 #clock offset from initial cycle time in hours = 0
@@ -46,13 +46,14 @@ task run time in seconds = 1
     list of oneoff tasks = ColdA, ColdB, ColdC, prep
     list of tasks to use only at startup = prep,
     list of tasks required to coldstart the suite = ColdA, ColdB, ColdC
+    #NOT YET IMPLEMENTED: list of clock triggered tasks = 'X(offset=1)'
 
     [[ 0,6,12,18 ]]
         graph =  """X => A => B => E
                     A => C
-                    #B* | C => D
+                    #B | C => D
                     B & C => D
-                    #C => F
+                    C => F
     
             # cold start the three models:
                     ColdA | A(T-6) => A
@@ -62,13 +63,6 @@ task run time in seconds = 1
             # make everything depend on a special startup task
             prep => X & ColdA & ColdB & ColdC
                  """
-
-    [[ 0,6,18 ]]
-       graph = """C => F
-       """
-    [[ 12 ]]
-      graph = """C => chumfatty => F
-      """
 
 [environment]
 TASK_EXE_SECONDS = 5
@@ -83,27 +77,23 @@ C_RUNNING_DIR = $WORKSPACE/RunningC
     list of commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
     [[X]]
-    #type modifier list = clock(offset = 1 hour),
     list of commands = cylc-wrapper X.sh,
         [[[ environment ]]]
         X_OUTPUT_DIR = $WORKSPACE
  
     [[A]]
-    #type modifier list = model(restarts = 3),
     list of commands = cylc-wrapper A.sh,
         [[[environment]]]
         A_INPUT_DIR = $WORKSPACE
         A_OUTPUT_DIR = $WORKSPACE
 
     [[B]]
-    #type modifier list = model(restarts = 3),
     list of commands = cylc-wrapper B.sh,
         [[[environment]]]
         B_INPUT_DIR = $WORKSPACE
         B_OUTPUT_DIR = $WORKSPACE
 
     [[C]]
-    #type modifier list = model(restarts = 3),
     list of commands = cylc-wrapper C.sh,
         [[[environment]]]
         C_INPUT_DIR = $WORKSPACE

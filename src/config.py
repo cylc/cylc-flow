@@ -438,6 +438,8 @@ class config( CylcConfigObj ):
 
         exclude_list = self.get_coldstart_task_list() + self.get_startup_task_list()
 
+        gr_edges = []
+
         while True:
             hour = cycles[i]
             for e in self.edges[hour]:
@@ -445,7 +447,7 @@ class config( CylcConfigObj ):
                 left = e.get_left( ctime, started, raw, exclude_list )
                 if left == None:
                     continue
-                graph.add_edge( left, right )
+                gr_edges.append( (left, right) )
 
             # next cycle
             started = True
@@ -460,6 +462,14 @@ class config( CylcConfigObj ):
             if int( cycle_time.diff_hours( ctime, start_ctime )) >= int(stop):
                 break
                 
+        # sort and then add edges in the hope that edges added in the
+        # same order each time will result in the graph layout not
+        # jumping around (does it work ...?)
+        gr_edges.sort()
+        for e in gr_edges:
+            l, r = e
+            graph.add_edge( l, r )
+
         return graph
 
     def prev_cycle( self, cycle, cycles ):
