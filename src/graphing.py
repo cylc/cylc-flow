@@ -25,24 +25,50 @@ try:
 except ImportError:
     raise GraphvizError, 'xdot not available.'
 
-class CGraph( pygraphviz.AGraph ):
-    """automatically add cylc's configured graph visualization
-    attributes to pygraphviz graphs."""
 
-    def __init__( self, title, vizconfig, use_viz=False ):
+class CGraphPlain( pygraphviz.AGraph ):
+    """Directed Acyclic Graph class for cylc dependency graphs."""
 
-        # suite.rc visualization config section
-        self.vizconfig = vizconfig
-        self.use_viz = use_viz
-
+    def __init__( self, title ):
+        self.title = title
         pygraphviz.AGraph.__init__( self, directed=True )
-
-        if not use_viz:
-            return
-
         # graph attributes
         # - label (suite name)
         self.graph_attr['label'] = title
+
+    def node_attr_by_taskname( self, n ):
+        name = re.sub( '%.*', '', n )
+        if name in self.task_attr:
+            return self.task_attr[name]
+        else:
+            return []
+
+    def add_edge( self, l, r ):
+        # l and r are cylc task IDs 
+        pygraphviz.AGraph.add_edge( self, l, r )
+
+        nl = self.get_node( l )
+        nr = self.get_node( r )
+
+        llabel = re.sub( '%\d{8}(\d\d)', r'(\1)', l )
+        rlabel = re.sub( '%\d{8}(\d\d)', r'(\1)', r )
+        nl.attr[ 'label' ] = llabel
+        nr.attr[ 'label' ] = rlabel
+
+
+class CGraph( CGraphPlain ):
+    """Directed Acyclic Graph class for cylc dependency graphs.
+    This class automatically adds node and edge attributes 
+    according to the suite.rc file visualization config."""
+
+    def __init__( self, title, vizconfig ):
+
+        # suite.rc visualization config section
+        self.vizconfig = vizconfig
+
+        CGraphPlain.__init__( self, title )
+
+        # graph attributes
         # - default node attributes
         for item in vizconfig['list of default node attributes']:
             attr, value = re.split( '\s*=\s*', item )
@@ -67,15 +93,6 @@ class CGraph( pygraphviz.AGraph ):
                 # must be task name
                 self.task_attr[item] = self.vizconfig['node attributes'][item]
 
-
-
-    def node_attr_by_taskname( self, n ):
-        name = re.sub( '%.*', '', n )
-        if name in self.task_attr:
-            return self.task_attr[name]
-        else:
-            return []
-
     def add_edge( self, l, r ):
         # l and r are cylc task IDs 
         pygraphviz.AGraph.add_edge( self, l, r )
@@ -88,9 +105,6 @@ class CGraph( pygraphviz.AGraph ):
         nl.attr[ 'label' ] = llabel
         nr.attr[ 'label' ] = rlabel
 
-        if not self.use_viz:
-            return
-
         for item in self.node_attr_by_taskname( l ):
             attr, value = re.split( '\s*=\s*', item )
             nl.attr[ attr ] = value
@@ -102,4 +116,3 @@ class CGraph( pygraphviz.AGraph ):
         if self.vizconfig['use node fillcolor for edges']:
             edge = self.get_edge( l, r )
             edge.attr['color'] = nl.attr['fillcolor']
-

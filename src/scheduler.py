@@ -1323,7 +1323,7 @@ class scheduler(object):
         diffhrs = cycle_time.diff_hours( newest, oldest ) + 1
         #if diffhrs < 25:
         #    diffhrs = 25
-        graph = self.config.get_graph( oldest, diffhrs, use_viz=False, raw=raw ) 
+        graph = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
 
         for task in self.tasks:
             try:

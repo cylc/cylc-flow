@@ -85,7 +85,7 @@ class MyDotWindow( xdot.DotWindow ):
         # reparse the graph
         self.suiterc = config.config( self.suite )
         self.suitercfile = self.suiterc.get_filename()
-        self.set_dotcode( self.suiterc.get_graph( self.ctime, self.stop_after, use_viz=True, raw=self.raw ).string() )
+        self.set_dotcode( self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw ).string() )
 
     def update(self):
         # if suite config file has changed, reparse the graph

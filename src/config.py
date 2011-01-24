@@ -420,12 +420,16 @@ class config( CylcConfigObj ):
                 if lnode.intercycle:
                     self.taskdefs[lnode.name].intercycle = True
 
-    def get_graph( self, start_ctime, stop, use_viz=True, raw=False ):
+    def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         # check if graphing is disabled in the calling method
         hour = int( start_ctime[8:10] )
         if not self.graph_loaded:
             self.load_graph()
-        graph = graphing.CGraph( self.suite, self['visualization'], use_viz )
+        if colored:
+            graph = graphing.CGraph( self.suite, self['visualization'] )
+        else:
+            graph = graphing.CGraphPlain( self.suite )
+
         cycles = self.edges.keys()
         cycles.sort()
         ctime = start_ctime
