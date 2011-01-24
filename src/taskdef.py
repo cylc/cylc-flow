@@ -223,7 +223,7 @@ class taskdef(object):
         def tclass_add_prerequisites( sself, startup ):
 
             pp = plain_prerequisites( sself.id ) 
-            # if startup, use only startup prerequisites
+            # if startup, use ONLY startup prerequisites
             # IF THERE ARE ANY
             if startup:
                 found = False

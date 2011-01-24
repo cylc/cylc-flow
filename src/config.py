@@ -5,8 +5,10 @@
 #        check outputs do not appear on right side of pairs, 
 #         OR IGNORE  IF THEY DO?
 
-# TO DO: CROSS-PAIR PROPERTIES - intercycle, special outputs
-#  require configuring of two taskdefs at once......  test on nzlam
+# TO DO: contact tasks, families
+
+# TO DO: ERROR CHECKING FOR MULTIPLE DEFINITION OF THE SAME
+# PREREQUISITES, E.G. VIA TWO CYCLE-TIME SECTIONS IN THE GRAPH.
 
 import taskdef
 import cycle_time
@@ -172,6 +174,25 @@ class config( CylcConfigObj ):
         self.__check()
 
         self.process_configured_directories()
+
+    #def add_trigger( self, tdef, trigger, cycle_list_string ):
+    #    # add the given trigger to taskdef tdef
+    #    if cycle_list_string not in tdef.triggers:
+    #        tdef.triggers[ cycle_list_string ] = []
+    #    tdef.triggers[ cycle_list_string ].append( trigger )
+
+    #def add_startup_trigger( self, tdef, trigger, cycle_list_string ):
+    #    # add the given trigger to taskdef tdef
+    #    if cycle_list_string not in tdef.startup_triggers:
+    #        tdef.startup_triggers[ cycle_list_string ] = []
+    #    tdef.startup_triggers[ cycle_list_string ].append( trigger )
+
+    #def add_conditional_trigger( self, tdef, trigger, cycle_list_string ):
+    #    # add the given trigger to taskdef tdef
+    #    if cycle_list_string not in tdef.cond_triggers:
+    #        tdef.cond_triggers[ cycle_list_string ] = []
+    #    tdef.cond_triggers[ cycle_list_string ].append( trigger )
+
 
     def process_configured_directories( self ):
         # allow $CYLC_SUITE_NAME in job submission log directory
@@ -377,6 +398,9 @@ class config( CylcConfigObj ):
                     self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
                 else:
                     self.taskdefs[right].add_trigger( l, cycle_list_string )
+                    lnode = graphnode( l )
+                    if lnode.intercycle:
+                        self.taskdefs[lnode.name].intercycle = True
         else:
             # Conditional with OR:
             # Strip off '*' plotting conditional indicator
@@ -390,6 +414,11 @@ class config( CylcConfigObj ):
                 if re.search( r'\b' + t + r'\b', l ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
+            lefts = re.split( '\s*[\|&]\s*', l)
+            for left in lefts:
+                lnode = graphnode(left)
+                if lnode.intercycle:
+                    self.taskdefs[lnode.name].intercycle = True
 
     def get_graph( self, start_ctime, stop, use_viz=True, raw=False ):
         # check if graphing is disabled in the calling method
@@ -428,56 +457,6 @@ class config( CylcConfigObj ):
                 break
                 
         return graph
-
-    #def get_full_graph( self ):
-    #    edges = {}
-    #    if graphing_disabled:
-    #        return edges
-    #    if not self.loaded:
-    #        self.load_tasks()
-    #    for cycle_list_string in self['dependency graph']:
-    #        for label in self['dependency graph'][ cycle_list_string ]:
-    #            line = self['dependency graph'][cycle_list_string][label]
-    #            pairs = self.get_dependent_pairs( line )
-    #            for cycle in re.split( '\s*,\s*', cycle_list_string ):
-    #                print cycle, line
-    #                if int(cycle) not in edges:
-    #                    edges[ int(cycle) ] = []
-    #                for pair in pairs:
-    #                    if pair not in edges[int(cycle)]:
-    #                        edges[ int(cycle) ].append( pair )
-    #
-    #    graph = pygraphviz.AGraph(directed=True)
-    #    cycles = edges.keys()
-    #    cycles.sort()
-    #    # note: need list rotation in order to coldstart start at
-    #    # another cycle time.
-    #    oneoff_done = {}
-    #    coldstart_done = False
-    #    for cycle in cycles:
-    #        for pair in edges[cycle]:
-    #            lname = pair.left.name
-    #            rname = pair.right.name
-    #            type  = pair.type
-    #            if 'oneoff' in self.taskdefs[ lname ].modifiers:
-    #                if lname in oneoff_done:
-    #                    if oneoff_done[lname] != cycle:
-    #                        continue
-    #                else:
-    #                    oneoff_done[lname] = cycle
-    #
-    #             if coldstart_done and self.taskdefs[ lname ].type == 'tied':
-    #                # TO DO: need task-specific prev cycle:
-    #               prev = self.prev_cycle( cycle, cycles )
-    #                a = lname + '(' + str(prev) + ')'
-    #                b = lname + '(' + str(cycle) + ')'
-    #                graph.add_edge( a, b )
-    #
-    #            left = lname + '(' + str(cycle) + ')'
-    #            right = rname + '(' + str(cycle) + ')'
-    #            graph.add_edge( left, right )
-    #        coldstart_done = True
-    #    return graph
 
     def prev_cycle( self, cycle, cycles ):
         i = cycles.index( cycle )
