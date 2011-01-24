@@ -1,33 +1,77 @@
-title = a very simple three-task example suite
+title = a simple example suite
 
-description = """A oneoff startup task and two cycling free (non-model)
-tasks. Task foo triggers off the wall clock, is constrained to be
-sequential, and generates output required by task bar. Neither task is
-cylc-aware and they both have their own configurable input and output
-directories."""
+description = """A clock-triggered data-collection task, a warm-cycled
+model, and two post-processing tasks (one runs every second cycle).
+The real task scripts have independent I/O directories and abort if 
+their "input files" do not exist. This suite gets them all to run
+out of a common workspace area."""
+ 
+# T = 0,6,12,18 UTC:
+#                      > PostA(T)
+#                     /
+#  GetData(T) -> Model(T)
+#             /       \
+#       Model(T-6)     > (6,18 UTC only) PostB(T)
 
-[dependency graph]
-    [[task types]]
-    #list of oneoff tasks = prep,
+
+[dependencies]
+    list of suite startup tasks    = Prep,
+    #list of clock-triggered tasks = GetData(1),
+    list of sequential tasks       = Model,
+    list of suite cold start tasks = ColdModel,
 
     [[ 0,6,12,18 ]]
-    graph  =  """prep => foo => bar"""
-
+        graph  =  """Prep => GetData => Model
+                     ColdModel | Model(T-6) => Model"""
+    [[ 0,12 ]]
+        graph = "Model => PostA"
+    [[ 6,18 ]]
+        graph = "Model => PostA & PostB"
 
 [environment]
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
 
 [tasks]
-    [[prep]]
-    list of commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
+    [[Prep]]
+        list of commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
 
-    [[foo]]
-    list of commands = cylc-wrapper foo.sh,
+    [[GetData]]
+        list of commands = cylc-wrapper GetData.sh,
         [[[environment]]]
-        FOO_OUTPUT_DIR = $WORKSPACE
+            GETDATA_OUTPUT_DIR = $WORKSPACE
+
+    [[ColdModel]]
+        list of commands = cylc-wrapper Model.sh --coldstart,
+        [[[environment]]]
+            MODEL_INPUT_DIR = $WORKSPACE
+            MODEL_OUTPUT_DIR = $WORKSPACE
+
+    [[Model]]
+        list of commands = cylc-wrapper Model.sh,
+        [[[environment]]]
+            MODEL_INPUT_DIR = $WORKSPACE
+            MODEL_OUTPUT_DIR = $WORKSPACE
  
-    [[bar]]
-    list of commands = cylc-wrapper bar.sh,
+    [[PostA]]
+        list of commands = cylc-wrapper PostA.sh,
         [[[environment]]]
-        BAR_INPUT_DIR = $WORKSPACE
-        BAR_OUTPUT_DIR = $WORKSPACE
+            POSTA_INPUT_DIR = $WORKSPACE
+            POSTA_OUTPUT_DIR = $WORKSPACE
+
+    [[PostB]]
+        list of commands = cylc-wrapper PostB.sh,
+        [[[environment]]]
+            POSTB_INPUT_DIR = $WORKSPACE
+            POSTB_OUTPUT_DIR = $WORKSPACE
+
+[visualization]
+    [[ node groups ]]
+        post = PostA, PostB
+        mods = ColdModel, Model
+    [[ node attributes ]]
+        post  = "style=unfilled", "color=blue", "shape=rectangle"
+        PostB = "style=filled", "fillcolor=green",
+        mods  = "style=filled", "fillcolor=red"
+        ColdModel = "fillcolor=lightslateblue",
+        GetData = "style=filled", "fillcolor=orange", "shape=egg"
+        Prep = "shape=square", "color=blue"

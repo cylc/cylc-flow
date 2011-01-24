@@ -249,10 +249,10 @@ class config( CylcConfigObj ):
         # TO DO: automatically determine this by parsing the dependency
         #        graph - requires some thought.
         # For now user must define this:
-        return self['dependency graph']['list of tasks required to coldstart the suite']
+        return self['dependencies']['list of suite cold start tasks']
 
     def get_startup_task_list( self ):
-        return self['dependency graph']['list of tasks to use only at startup']
+        return self['dependencies']['list of suite startup tasks']
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -394,7 +394,7 @@ class config( CylcConfigObj ):
                 # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
                 name = graphnode( l ).name
-                if name in self['dependency graph']['list of tasks to use only at startup']:
+                if name in self['dependencies']['list of suite startup tasks']:
                     self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
                 else:
                     self.taskdefs[right].add_trigger( l, cycle_list_string )
@@ -410,7 +410,7 @@ class config( CylcConfigObj ):
             # (to change this, need add_startup_conditional_trigger()
             # similarly to above to non-conditional ... and follow
             # through in taskdef.py).
-            for t in self['dependency graph']['list of tasks to use only at startup']:
+            for t in self['dependencies']['list of suite startup tasks']:
                 if re.search( r'\b' + t + r'\b', l ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
@@ -485,7 +485,7 @@ class config( CylcConfigObj ):
         dep_pairs = []
 
         # loop over cycle time lists
-        for section in self['dependency graph']:
+        for section in self['dependencies']:
             if re.match( '[\s,\d]+', section ):
                 cycle_list_string = section
             else:
@@ -498,7 +498,7 @@ class config( CylcConfigObj ):
                 hours.append( int(i) )
 
             # parse the dependency graph for this list of cycle times
-            graph = self['dependency graph'][ cycle_list_string ]['graph']
+            graph = self['dependencies'][ cycle_list_string ]['graph']
             lines = re.split( '\s*\n\s*', graph )
             for xline in lines:
                 # strip comments
@@ -521,7 +521,7 @@ class config( CylcConfigObj ):
         dep_pairs = []
 
         # loop over cycle time lists
-        for section in self['dependency graph']:
+        for section in self['dependencies']:
             if re.match( '[\s,\d]+', section ):
                 cycle_list_string = section
             else:
@@ -534,7 +534,7 @@ class config( CylcConfigObj ):
                 hours.append( int(i) )
 
             # parse the dependency graph for this list of cycle times
-            graph = self['dependency graph'][ cycle_list_string ]['graph']
+            graph = self['dependencies'][ cycle_list_string ]['graph']
             lines = re.split( '\s*\n\s*', graph )
             for xline in lines:
                 # strip comments
@@ -553,9 +553,9 @@ class config( CylcConfigObj ):
         # task families
         members = []
         my_family = {}
-        for name in self['dependency graph']['task families']:
+        for name in self['dependencies']['task families']:
             self.taskdefs[name].type="family"
-            mems = self['dependency graph']['task families'][name]
+            mems = self['dependencies']['task families'][name]
             self.taskdefs[name].members = mems
             for mem in mems:
                 if mem not in members:
@@ -603,10 +603,10 @@ class config( CylcConfigObj ):
             # suite default job submit method
             taskd.job_submit_method = self['job submission method']
 
-        if name in self['dependency graph']['list of oneoff tasks']:
+        if name in self['dependencies']['list of oneoff tasks']:
             taskd.modifiers.append( 'oneoff' )
 
-        if name in self['dependency graph']['list of sequential tasks']:
+        if name in self['dependencies']['list of sequential tasks']:
             taskd.modifiers.append( 'sequential' )
 
         taskd.type = 'free'

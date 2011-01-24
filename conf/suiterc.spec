@@ -39,12 +39,12 @@ command      = string( default='cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep
 command fail = string( default='cylc-wrapper -m "echo DUMMY MODE FAILOUT $TASK_ID; /bin/false"')
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
-[ dependency graph ]
+[ dependencies ]
     list of oneoff tasks = string_list( default=list())
     list of sequential tasks = string_list( default=list())
     list of clock-triggered tasks = string_list( default=list())
-    list of tasks to use only at startup = string_list( default=list())
-    list of tasks required to coldstart the suite = string_list( default=list())
+    list of suite startup tasks = string_list( default=list())
+    list of suite cold start tasks = string_list( default=list())
 
   # TO DO: catchup_contact tasks (topnet)
 
@@ -66,12 +66,12 @@ when to stop updating = integer( default=24 )
 # absolute, or relative to $CYLC_SUITE_DIR for portability
 run time graph directory = string( default='graphing')
 run time graph filename  = string( default='runtime.dot')
-use node fillcolor for edges = boolean( default=True )
 #task families in subgraphs = boolean( default=True )
-list of default node attributes = string_list( default=list('style=filled', 'fillcolor=grey', 'color=black', 'shape=ellipse'))
+use node color for edges = boolean( default=True )
+list of default node attributes = string_list( default=list('style=unfilled', 'color=black', 'shape=ellipse'))
 list of default edge attributes = string_list( default=list('color=black'))
 
-[[task groups]]
+[[node groups]]
     __many__ = string_list( default=list())
 [[node attributes]]
     # item is task name or task group name

@@ -81,17 +81,23 @@ class CGraph( CGraphPlain ):
         # non-default node attributes by task name
         # TO DO: ERROR CHECKING FOR INVALID TASK NAME
         self.task_attr = {}
-        #for group in self.vizconfig['task groups']:
-        #    for task in self.vizconfig['task groups'][group]:
-        #        self.task_attr[task] = self.vizconfig['node attributes'][group]
 
+        print
         for item in self.vizconfig['node attributes']:
-            if item in self.vizconfig['task groups']:  
-                for task in self.vizconfig['task groups'][item]:
-                    self.task_attr[task] = self.vizconfig['node attributes'][item]
+            if item in self.vizconfig['node groups']:  
+                # item is a group of tasks
+                for task in self.vizconfig['node groups'][item]:
+                    # for each task in the group
+                    for attr in self.vizconfig['node attributes'][item]:
+                        if task not in self.task_attr:
+                            self.task_attr[task] = []
+                        self.task_attr[task].append( attr )
             else:
-                # must be task name
-                self.task_attr[item] = self.vizconfig['node attributes'][item]
+                # item must be a task name
+                for attr in self.vizconfig['node attributes'][item]:
+                    if item not in self.task_attr:
+                        self.task_attr[item] = []
+                    self.task_attr[item].append( attr )
 
     def add_edge( self, l, r ):
         # l and r are cylc task IDs 
@@ -113,6 +119,10 @@ class CGraph( CGraphPlain ):
             attr, value = re.split( '\s*=\s*', item )
             nr.attr[ attr ] = value
 
-        if self.vizconfig['use node fillcolor for edges']:
+        # TO DO: ERROR CHECK PRESENCE OF NODE COLOR ATTRIBUTES
+        if self.vizconfig['use node color for edges']:
             edge = self.get_edge( l, r )
-            edge.attr['color'] = nl.attr['fillcolor']
+            if nl.attr['style'] == 'filled':
+                edge.attr['color'] = nl.attr['fillcolor']
+            else:
+                edge.attr['color'] = nl.attr['color']
