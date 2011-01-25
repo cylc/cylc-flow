@@ -39,6 +39,14 @@ class cylc_logviewer( logviewer ):
         previous.connect("clicked", self.rotate_log, True )
         self.hbox.pack_end( previous, False )
 
+        filterbox = gtk.HBox()
+        entry = gtk.Entry()
+        entry.connect( "activate", self.custom_filter_log )
+        label = gtk.Label('Custom Filter (hit Enter)')
+        filterbox.pack_start(label, True)
+        filterbox.pack_start(entry, True)
+        self.hbox.pack_end( filterbox, False )
+
     def filter_log( self, cb ):
         model = cb.get_model()
         index = cb.get_active()
@@ -50,6 +58,19 @@ class cylc_logviewer( logviewer ):
             filter = None
         else:
             filter = '\\[' + task + '%\d{10}\\]'
+
+        self.filter = filter
+        self.update_view()
+
+        # TO DO: CHECK ALL BOOLEAN RETURN VALUES THROUGHOUT THE GUI
+        return False
+
+    def custom_filter_log( self, e ):
+        txt = e.get_text()
+        if txt == '':
+            filter = None
+        else:
+            filter = txt
 
         self.filter = filter
         self.update_view()
