@@ -112,6 +112,7 @@ class scheduler(object):
         self.load_tasks()
         if not graphing_disabled:
             self.initialize_graph()
+        self.live_graph_count = 0
 
     def parse_commandline( self ):
         # SUITE NAME
@@ -1353,7 +1354,11 @@ class scheduler(object):
             #        graph.add_edge( id, task.id )
 
         graph.layout(prog="dot")
-        graph.write( os.path.join( self.suite_dir, 'graphing', 'live.dot' ))
+        if self.config["experimental"]["live graph movie"]:
+            self.live_graph_count += 1
+            graph.write( os.path.join( self.suite_dir, 'graphing', 'live' + '-' + str( self.live_graph_count ) + '.dot' ))
+        else:
+            graph.write( os.path.join( self.suite_dir, 'graphing', 'live.dot' ))
 
     def initialize_graph( self ):
         title = 'suite ' + self.suite + ' run-time dependency graph'

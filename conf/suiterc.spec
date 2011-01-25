@@ -58,6 +58,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
 
 [experimental]
 write live graph = boolean( default=False )
+live graph movie = boolean( default=False )
+
 # absolute, or relative to $CYLC_SUITE_DIR for portability
 live graph directory path = string( default='graphing')
 
