@@ -147,24 +147,24 @@ class config( CylcConfigObj ):
             print test
             raise SuiteConfigError, "Suite Config Validation Failed"
         
-        # TO DO: THE FOLLOWING CODE FAILS PRIOR TO RAISING THE
-        # EXCEPTION; EXPERIMENT WITH ERRONEOUS CONFIG ENTRIES.
-        # are there any keywords or sections not present in the spec?
         found_extra = False
         for sections, name in get_extra_values(self):
-            # this code gets the extra values themselves
-            the_section = self
-            for section in sections:
-                the_section = self[section]
-            # the_value may be a section or a value
-            the_value = the_section[name]
-            section_or_value = 'value'
-            if isinstance(the_value, dict):
-                # Sections are subclasses of dict
-                section_or_value = 'section'
+            # TEMPORARY
+            print 'Unspec\'d item ERROR:', sections, name
+            # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
+            ### this code gets the extra values themselves
+            ##the_section = self
+            ##for section in sections:
+            ##    the_section = self[section]   #<------!!! KeyError !!!
+            ### the_value may be a section or a value
+            ##the_value = the_section[name]
+            ##section_or_value = 'value'
+            ##if isinstance(the_value, dict):
+            ##    # Sections are subclasses of dict
+            ##    section_or_value = 'section'
           
-            section_string = ', '.join(sections) or "top level"
-            print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
+            ##section_string = ', '.join(sections) or "top level"
+            ##print 'Extra entry in section: %s. Entry %r is a %s' % (section_string, name, section_or_value)
             found_extra = True
         
         if found_extra:
@@ -572,13 +572,13 @@ class config( CylcConfigObj ):
 
         # clock-triggered tasks
         for item in self['dependencies']['list of clock-triggered tasks']:
-            m = re.match( '(\w+)\s*\(\s*([\d.]+)\s*\)', item )
+            m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
             if m:
                 task, offset = m.groups()
             else:
                 raise SuiteConfigError, "Illegal clock-triggered task: " + item
             self.taskdefs[task].modifiers.append( 'contact' )
-            self.taskdefs[task].contact_offset = int( offset )
+            self.taskdefs[task].contact_offset = float( offset )
 
         self.loaded = True
 
