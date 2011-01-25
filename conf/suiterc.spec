@@ -44,8 +44,8 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     list of oneoff tasks = string_list( default=list())
     list of sequential tasks = string_list( default=list())
     list of clock-triggered tasks = string_list( default=list())
-    list of suite startup tasks = string_list( default=list())
-    list of suite cold start tasks = string_list( default=list())
+    list of startup tasks = string_list( default=list())
+    list of coldstart tasks = string_list( default=list())
 
   # TO DO: catchup_contact tasks (topnet)
 

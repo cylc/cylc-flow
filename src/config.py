@@ -249,10 +249,10 @@ class config( CylcConfigObj ):
         # TO DO: automatically determine this by parsing the dependency
         #        graph - requires some thought.
         # For now user must define this:
-        return self['dependencies']['list of suite cold start tasks']
+        return self['dependencies']['list of coldstart tasks']
 
     def get_startup_task_list( self ):
-        return self['dependencies']['list of suite startup tasks']
+        return self['dependencies']['list of startup tasks']
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -394,7 +394,7 @@ class config( CylcConfigObj ):
                 # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
                 name = graphnode( l ).name
-                if name in self['dependencies']['list of suite startup tasks']:
+                if name in self['dependencies']['list of startup tasks']:
                     self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
                 else:
                     self.taskdefs[right].add_trigger( l, cycle_list_string )
@@ -410,7 +410,7 @@ class config( CylcConfigObj ):
             # (to change this, need add_startup_conditional_trigger()
             # similarly to above to non-conditional ... and follow
             # through in taskdef.py).
-            for t in self['dependencies']['list of suite startup tasks']:
+            for t in self['dependencies']['list of startup tasks']:
                 if re.search( r'\b' + t + r'\b', l ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
@@ -603,9 +603,15 @@ class config( CylcConfigObj ):
             # suite default job submit method
             taskd.job_submit_method = self['job submission method']
 
-        if name in self['dependencies']['list of oneoff tasks']:
+
+        # SET ONEOFF TASK INDICATOR
+        #   coldstart and startup tasks are automatically oneoff
+        if name in self['dependencies']['list of oneoff tasks'] or \
+            name in self['dependencies']['list of startup tasks'] or \
+            name in self['dependencies']['list of coldstart tasks']:
             taskd.modifiers.append( 'oneoff' )
 
+        # SET SEQUENTIAL TASK INDICATOR
         if name in self['dependencies']['list of sequential tasks']:
             taskd.modifiers.append( 'sequential' )
 
