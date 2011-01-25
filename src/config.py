@@ -5,7 +5,7 @@
 #        check outputs do not appear on right side of pairs, 
 #         OR IGNORE  IF THEY DO?
 
-# TO DO: contact tasks, families
+# TO DO: families
 
 # TO DO: ERROR CHECKING FOR MULTIPLE DEFINITION OF THE SAME
 # PREREQUISITES, E.G. VIA TWO CYCLE-TIME SECTIONS IN THE GRAPH.

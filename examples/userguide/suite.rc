@@ -29,6 +29,9 @@ task run time in seconds = 1
     list of coldstart tasks        = ColdA, ColdB, ColdC
     #list of clock-triggered tasks = X(1),
 
+    [[task families]]
+    FOO = bar, baz
+
     [[ 0,6,12,18 ]]
         graph =  """X => A => B => E
                     A => C
@@ -41,6 +44,8 @@ task run time in seconds = 1
 
             prep => X & ColdA & ColdB & ColdC
                  """
+    [[ 6,18 ]]
+        graph = "F=>FOO"
 
 [environment]
 TASK_EXE_SECONDS = 5
@@ -109,6 +114,10 @@ C_RUNNING_DIR = $RUNNING/C
     [[ColdC]]
         description = "model C"
         list of commands = cylc-wrapper ColdC.sh,
+
+    [[FOO]]
+    [[bar]]
+    [[baz]]
 
 [visualization]
     list of default node attributes = "style=filled",

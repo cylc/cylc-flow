@@ -1330,8 +1330,12 @@ class scheduler(object):
             try:
                 node = graph.get_node( task.id )
             except KeyError:
-                print 'WARNING: NOT IN GRAPH', task.id
-                continue
+                if task.member_of:
+                    # OK: mmember of a family
+                    pass
+                else:
+                    print 'WARNING: NOT IN GRAPH', task.id
+                    continue
 
             if task.state.is_submitted():
                 node.attr['style'] = 'filled'

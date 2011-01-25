@@ -44,7 +44,7 @@ class taskdef(object):
         self.owner = None
         self.host = None
         self.execution_timeout_minutes = None
-        self.reset_execution_timeout_on_incoming_message = False
+        self.reset_execution_timeout_on_incoming_messages = False
 
         self.intercycle = False
         self.hours = []
@@ -328,23 +328,22 @@ class taskdef(object):
                 sself.real_time_delay =  float( self.contact_offset )
 
             # prerequisites
-
             sself.prerequisites = prerequisites()
             sself.add_prerequisites( startup )
             # should these be conditional too:?
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
             #sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
 
-            #if self.member_of:
-            #    # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
-            #    sself.prerequisites.add( self.member_of + '%' + sself.c_time + ' started' )
+            if self.member_of:
+                foo = plain_prerequisites( sself.id )
+                foo.add( self.member_of + '%' + sself.c_time + ' started' )
+                sself.prerequisites.add_requisites( foo )
 
-            ## familyfinished prerequisites
-            #if self.type == 'family':
-            #    # TO DO: AUTOMATE THIS PREREQ ADDITION FOR A FAMILY MEMBER?
-            #    sself.familyfinished_prerequisites = prerequisites( sself.id )
-            #    for member in self.members:
-            #        sself.familyfinished_prerequisites.add( member + '%' + sself.c_time + ' finished' )
+            # familyfinished prerequisites
+            if self.type == 'family':
+                sself.familyfinished_prerequisites = plain_prerequisites( sself.id )
+                for member in self.members:
+                    sself.familyfinished_prerequisites.add( member + '%' + sself.c_time + ' finished' )
 
             sself.logfiles = logfiles()
             for lfile in self.logfiles:
