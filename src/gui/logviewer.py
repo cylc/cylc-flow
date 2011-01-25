@@ -71,7 +71,7 @@ class logviewer(object):
         self.freeze_button.set_active(True)
         self.freeze_button.set_label('Reconnect')
         if not self.search_warning_done:
-            warning_dialog( "Find Next disconnects the live feed; click Reconnect when you're done" ).warn()
+            warning_dialog( "Find Prev disconnects the live feed; click Reconnect when you're done" ).warn()
             self.search_warning_done = True
 
         tb = tv.get_buffer ()
@@ -115,7 +115,7 @@ class logviewer(object):
         entry = gtk.Entry()
         entry.connect( "activate", self.enter_clicked, self.logview )
         searchbox.pack_start (entry, True)
-        b = gtk.Button ("Find Next")
+        b = gtk.Button ("Find Prev")
         b.connect_object ('clicked', self.on_find_clicked, self.logview, entry)
         searchbox.pack_start (b, False)
 
