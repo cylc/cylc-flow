@@ -20,7 +20,8 @@ class LogFilter(logging.Filter):
         record.created = self.clock.get_epoch()
         return True
     
-def pimp_it( log, dir, level, dummy_mode, clock = None, run_task = False ):
+def pimp_it( log, dir, roll_at_startup, level, dummy_mode, \
+        clock = None, run_task = False ):
     log.setLevel( level )
     max_bytes = 1000000
     backups = 5
@@ -30,9 +31,9 @@ def pimp_it( log, dir, level, dummy_mode, clock = None, run_task = False ):
 
     h = logging.handlers.RotatingFileHandler( logfile, 'a', max_bytes, backups )
     # The above creates a zero-sized log file if it doesn't already exist.
-    # Uncomment the following to get automatic roll over on startup:
-    ##if os.path.getsize( logfile ) > 0:
-    ##    h.doRollover()
+    if roll_at_startup:
+        if os.path.getsize( logfile ) > 0:
+            h.doRollover()
 
     f = logging.Formatter( '%(asctime)s %(levelname)-2s - %(message)s', '%Y/%m/%d %H:%M:%S' )
 

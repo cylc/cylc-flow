@@ -4,6 +4,7 @@ allow multiple simultaneous suite instances = boolean( default=False )
 maximum runahead hours = integer( min=0, default=24 )
 number of state dump backups = integer( min=1, default=10 )
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
+roll scheduler log at startup = boolean( default=True )
 
 ignore task owners = boolean( default=False )
 use crude safety lock = boolean( default=False )

@@ -114,7 +114,9 @@ for var in config['environment']:
 
 # create the log
 log = logging.getLogger()
-pimp_my_logger.pimp_it( log, logging_dir, logging.INFO, False, None, True )
+pimp_my_logger.pimp_it( log, logging_dir, \
+        config['roll scheduler log at startup'], \
+        logging.INFO, False, None, True )
 
 job_submit.cylc_env = cylcenv
 job_submit.global_env = globalenv

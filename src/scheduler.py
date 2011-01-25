@@ -301,7 +301,7 @@ class scheduler(object):
         # PIMP THE SUITE LOG
         self.log = logging.getLogger( 'main' )
         pimp_my_logger.pimp_it( \
-             self.log, self.logging_dir, \
+             self.log, self.logging_dir, self.config['roll scheduler log at startup'], \
                 self.logging_level, self.dummy_mode, self.clock )
 
         # STATE DUMP ROLLING ARCHIVE
