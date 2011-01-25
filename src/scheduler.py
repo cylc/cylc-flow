@@ -1326,11 +1326,13 @@ class scheduler(object):
         #    diffhrs = 25
         graph = self.config.get_graph( oldest, diffhrs, colored=False, raw=raw ) 
 
+        print
         for task in self.tasks:
+            print task.id
             try:
                 node = graph.get_node( task.id )
             except KeyError:
-                if task.member_of:
+                if hasattr( task, 'task_family' ):
                     # OK: mmember of a family
                     pass
                 else:

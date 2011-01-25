@@ -27,7 +27,7 @@ class conditional_prerequisites(prerequisites):
 
         if message in self.labels:
             raise SystemExit( "Duplicate prerequisite: " + message )
-        print '> ', label, message
+        #print '> ', label, message
         self.messages[ label ] = message
         self.labels[ message ] = label
         self.satisfied[label] = False

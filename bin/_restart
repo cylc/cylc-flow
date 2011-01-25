@@ -32,6 +32,7 @@ Arguments:
             help="Do not automatically reset failed tasks at startup "
             "(this option is the default in practice mode).",
             action="store_true", dest="no_reset" )
+        self.start_time = None  # used in scheduler.py:initialize_graph()
         scheduler.__init__( self )
 
     def parse_commandline( self ):
