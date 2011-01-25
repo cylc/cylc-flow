@@ -241,7 +241,9 @@ class config( CylcConfigObj ):
         # not the full tist of defined tasks (self['tasks'].keys())
         if not self.loaded:
             self.load_tasks()
-        return self.taskdefs.keys()
+        tasknames = self.taskdefs.keys()
+        tasknames.sort(key=str.lower)  # case-insensitive sort
+        return tasknames
 
     def edges_from_graph_line( self, line, cycle_list_string ):
         # Extract dependent pairs from the suite.rc textual dependency
