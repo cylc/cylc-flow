@@ -82,7 +82,6 @@ class CGraph( CGraphPlain ):
         # TO DO: ERROR CHECKING FOR INVALID TASK NAME
         self.task_attr = {}
 
-        print
         for item in self.vizconfig['node attributes']:
             if item in self.vizconfig['node groups']:  
                 # item is a group of tasks

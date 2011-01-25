@@ -21,7 +21,8 @@ out of a common workspace area."""
     #list of clock-triggered tasks = GetData(1),
 
     [[ 0,6,12,18 ]]
-        graph  =  """Prep => GetData => Model
+        graph  =  """Prep => GetData & ColdModel
+                     GetData => Model
                      ColdModel | Model(T-6) => Model"""
     [[ 0,12 ]]
         graph = "Model => PostA"
@@ -29,6 +30,7 @@ out of a common workspace area."""
         graph = "Model => PostA & PostB"
 
 [environment]
+TASK_EXE_SECONDS = 5
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
 RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
 
@@ -70,11 +72,14 @@ RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
 [visualization]
     [[ node groups ]]
         post = PostA, PostB
-        mods = ColdModel, Model
+        models = ColdModel, Model
     [[ node attributes ]]
         post  = "style=unfilled", "color=blue", "shape=rectangle"
-        PostB = "style=filled", "fillcolor=green",
-        mods  = "style=filled", "fillcolor=red"
-        ColdModel = "fillcolor=lightslateblue",
-        GetData = "style=filled", "fillcolor=orange", "shape=egg"
-        Prep = "shape=square", "color=blue"
+        PostB = "style=filled", "fillcolor=seagreen2",
+        models  = "style=filled", "fillcolor=red"
+        ColdModel = "fillcolor=lightblue",
+        GetData = "style=filled", "fillcolor=yellow", "shape=septagon"
+        Prep = "shape=circle", "color=red3" 
+
+[experimental]
+    write live graph = True
