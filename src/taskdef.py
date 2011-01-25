@@ -7,6 +7,10 @@
 
 # ONEOFF and FOLLOWON TASKS: followon still needed but can now be
 # identified automatically from the dependency graph?
+
+# SUICIDE PREREQUISITES
+
+# SPECIAL OUTPUT TRIGGERS: complete for T+/-HH (and in OR conditionals?).
  
 import sys, re
 from OrderedDict import OrderedDict
@@ -64,7 +68,10 @@ class taskdef(object):
         self.startup_triggers = OrderedDict()
         self.suicide_triggers = OrderedDict()       
 
-        self.outputs = OrderedDict()             # out[label] = message
+        self.special_triggers = OrderedDict()
+
+        self.outputs = []     # list of special outputs; change to OrderedDict()
+                              # if need to vary per cycle.
 
         self.commands = []                       # list of commands
         self.scripting   = []                    # list of lines
@@ -75,6 +82,11 @@ class taskdef(object):
         if cycle_list_string not in self.triggers:
             self.triggers[ cycle_list_string ] = []
         self.triggers[ cycle_list_string ].append( trigger )
+
+    def add_special_trigger( self, msg, cycle_list_string ):
+        if cycle_list_string not in self.special_triggers:
+            self.special_triggers[ cycle_list_string ] = []
+        self.special_triggers[ cycle_list_string ].append( msg )
 
     def add_startup_trigger( self, trigger, cycle_list_string ):
         if cycle_list_string not in self.startup_triggers:
@@ -200,22 +212,16 @@ class taskdef(object):
         def tclass_format_trigger( sself, trigger ):
             node = graphnode( trigger )
             name = node.name
+            if node.special_output:
+                # special output not dealt with here!
+                # TO DO: BETTER ERROR CHECKING FOR THIS SITUATION
+                raise TaskDefinitionError, 'ERROR: this code should not be reached!'
             if node.intercycle:
                 offset = node.intercycle_offset
                 msg = name + '%' + cycle_time.decrement( sself.c_time, offset ) + ' finished'
-                if node.special_output:
-                    # trigger of the special output, intercycle
-                    raise TaskDefinitionError, "TO DO: INTERCYCLE SPECIAL OUTPUTS"
             else:
-                if node.special_output:
-                    #raise TaskDefinitionError, "TO DO: SPECIAL OUTPUTS"
-                    # trigger of the special output
-                    msg = self.outputs[ node.special_output ]
-                    re.sub( '$(CYCLE_TIME', sself.c_time, msg )
-                else:
-                    # trigger off task finished
-                    msg = name + '%' + sself.c_time + ' finished'
-
+                # trigger off task finished
+                msg = name + '%' + sself.c_time + ' finished'
             return [name, msg]
 
         tclass.format_trigger = tclass_format_trigger
@@ -238,6 +244,7 @@ class taskdef(object):
                 if found:
                     sself.prerequisites.add_requisites( pp )
 
+            pp = plain_prerequisites( sself.id ) 
             # plain triggers
             for cycles in self.triggers:
                 trigs = self.triggers[ cycles ]
@@ -246,6 +253,20 @@ class taskdef(object):
                     if int( sself.c_hour ) == int( hr ):
                         for trig in trigs:
                             pp.add( sself.format_trigger( trig )[1] )
+            sself.prerequisites.add_requisites( pp )
+
+            pp = plain_prerequisites( sself.id ) 
+            # special triggers:
+            for cycles in self.special_triggers:
+                trigs = self.special_triggers[ cycles ]
+                hours = re.split( ',\s*', cycles )
+                for hr in hours:
+                    if int( sself.c_hour ) == int( hr ):
+                        for trig in trigs:
+                            # TO DO: $(CYCLE_TIME +/- HH )
+                            tr = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, trig )
+                            pp.add( tr )
+
             sself.prerequisites.add_requisites( pp )
 
             # conditional triggers
@@ -269,53 +290,12 @@ class taskdef(object):
 
         tclass.add_prerequisites = tclass_add_prerequisites
 
-        # SPECIAL OUTPUTS AND INTERCYLE DEPS -taken from old config.py
-        #if left.output:
-        #    # trigger off specific output of previous task
-        #    if cycle_list_string not in self.taskdefs[left.name].outputs:
-        #        self.taskdefs[left.name].outputs[cycle_list_string] = []
-        #    msg = self['tasks'][left.name]['outputs'][left.output]
-        #    if msg not in self.taskdefs[left.name].outputs[ cycle_list_string ]:
-        #        self.taskdefs[left.name].outputs[ cycle_list_string ].append( msg )
-        #    if left.intercycle:
-        #        self.taskdefs[left.name].intercycle = True
-        #        msg = self.prerequisite_decrement( msg, left.offset )
-        #    self.taskdefs[right.name].prerequisites[ cycle_list_string ].append( msg )
-        #else:
-        #    # trigger off previous task finished
-        #    msg = left.name + "%$(CYCLE_TIME) finished" 
-        #    if left.intercycle:
-        #        self.taskdefs[left.name].intercycle = True
-        #        msg = self.prerequisite_decrement( msg, left.offset )
-        #    self.taskdefs[right.name].prerequisites[ cycle_list_string ].append( msg )
-
-
-        def tclass_add_requisites( sself, target, source ):
-            # target: requisites object
-            # source taskdef requisites
-            for condition in source:
-                reqs = source[ condition ]
-                if condition == 'any':
-                    for req in reqs:
-                        req = sself.interpolate_ctime( req )
-                        target.add( req )
-                else:
-                    hours = re.split( ',\s*', condition )
-                    for hr in hours:
-                        if int( sself.c_hour ) == int( hr ):
-                            for req in reqs:
-                                req = sself.interpolate_ctime( req )
-                                target.add( req )
-
-        tclass.add_requisites = tclass_add_requisites
-
         # class init function
         def tclass_init( sself, c_time, initial_state, startup = False ):
             # adjust cycle time to next valid for this task
             sself.c_time = sself.nearest_c_time( c_time )
             sself.tag = sself.c_time
             sself.id = sself.name + '%' + sself.c_time
-            #### FIXME FOR ASYNCHRONOUS TASKS
             sself.c_hour = sself.c_time[8:10]
             sself.orig_c_hour = c_time[8:10]
  
@@ -330,9 +310,9 @@ class taskdef(object):
             # prerequisites
             sself.prerequisites = prerequisites()
             sself.add_prerequisites( startup )
-            # should these be conditional too:?
+            ## should these be conditional too:?
             sself.suicide_prerequisites = plain_prerequisites( sself.id )
-            #sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
+            ##sself.add_requisites( sself.suicide_prerequisites, self.suicide_triggers )
 
             if self.member_of:
                 foo = plain_prerequisites( sself.id )
@@ -351,7 +331,10 @@ class taskdef(object):
 
             # outputs
             sself.outputs = outputs( sself.id )
-            #sself.add_requisites( sself.outputs, self.outputs )
+            for output in self.outputs:
+                # TO DO: $(CYCLE_TIME +/- HH )
+                out = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, output )
+                sself.outputs.add( out )
 
             sself.outputs.register()
 

@@ -36,7 +36,7 @@ task run time in seconds = 1
         graph =  """X => A => B => E
                     A => C
                     B & C => D
-                    C => F
+                    C:foo => F
     
                     ColdA | A(T-6) => A
                     ColdB | B(T-6) => B
@@ -78,12 +78,13 @@ C_RUNNING_DIR = $RUNNING/C
             B_OUTPUT_DIR = $WORKSPACE
     [[C]]
         description = "model C - river flow forecast"
-        list of commands = cylc-wrapper C.sh,
+        #list of commands = cylc-wrapper C.sh,
+        list of commands = C-no-wrap.sh,
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
         [[[outputs]]]
-            foo = shit and bus tickets ready for $(CYCLE_TIME)
+            foo = river flow outputs done for $(CYCLE_TIME)
     [[D]]
         description = "combined post processing for models B and C"
         list of commands = cylc-wrapper D.sh,

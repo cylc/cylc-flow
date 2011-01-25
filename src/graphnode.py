@@ -4,6 +4,7 @@ import re
 
 class graphnode( object ):
     """A node in the cycle suite.rc dependency graph."""
+
     def __init__( self, node ):
         self.node_name = node
         # Get task name and properties from a graph node name.
@@ -37,7 +38,7 @@ class graphnode( object ):
         if m:
             self.special_output = True
             node, output = m.groups()
-            self.special_output = output
+            self.output = output
 
         # only name left now
         self.name = node

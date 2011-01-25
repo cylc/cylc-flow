@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 
-# TO DO: complete restoration of SPECIAL OUTPUTS:
-#        check ':foo' is defined in task section
-#        check outputs do not appear on right side of pairs, 
-#         OR IGNORE  IF THEY DO?
-
-# TO DO: families
-
-# TO DO: ERROR CHECKING FOR MULTIPLE DEFINITION OF THE SAME
-# PREREQUISITES, E.G. VIA TWO CYCLE-TIME SECTIONS IN THE GRAPH.
+# TO DO: catchup contact
+# TO DO: ERROR CHECKING:
+#        - MULTIPLE DEFINITION OF SAME PREREQUISITES, E.G. VIA TWO
+#          CYCLE-TIME SECTIONS IN THE GRAPH.
+#        - MULTIPLE LISTING OF SAME TASK IN 'list of clock-triggered
+#          tasks' etc.
+#        - SPECIAL OUTPUTS - check ':foo' is defined in task section
+#          - check outputs do not appear on right side of pairs, 
+#          - OR IGNORE  IF THEY DO?
 
 import taskdef
 import cycle_time
@@ -174,24 +174,6 @@ class config( CylcConfigObj ):
         self.__check()
 
         self.process_configured_directories()
-
-    #def add_trigger( self, tdef, trigger, cycle_list_string ):
-    #    # add the given trigger to taskdef tdef
-    #    if cycle_list_string not in tdef.triggers:
-    #        tdef.triggers[ cycle_list_string ] = []
-    #    tdef.triggers[ cycle_list_string ].append( trigger )
-
-    #def add_startup_trigger( self, tdef, trigger, cycle_list_string ):
-    #    # add the given trigger to taskdef tdef
-    #    if cycle_list_string not in tdef.startup_triggers:
-    #        tdef.startup_triggers[ cycle_list_string ] = []
-    #    tdef.startup_triggers[ cycle_list_string ].append( trigger )
-
-    #def add_conditional_trigger( self, tdef, trigger, cycle_list_string ):
-    #    # add the given trigger to taskdef tdef
-    #    if cycle_list_string not in tdef.cond_triggers:
-    #        tdef.cond_triggers[ cycle_list_string ] = []
-    #    tdef.cond_triggers[ cycle_list_string ].append( trigger )
 
 
     def process_configured_directories( self ):
@@ -390,17 +372,22 @@ class config( CylcConfigObj ):
             # lcond is a single trigger, or an '&'-only one, in which
             # case we don't need to use conditional prerequisites (we
             # could, but they may be less # efficient due to 'eval'?).
+
             for left in lefts:
                 # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
-                name = graphnode( l ).name
-                if name in self['dependencies']['list of startup tasks']:
+
+                lnode = graphnode( l )
+                if lnode.name in self['dependencies']['list of startup tasks']:
                     self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
                 else:
-                    self.taskdefs[right].add_trigger( l, cycle_list_string )
-                    lnode = graphnode( l )
                     if lnode.intercycle:
                         self.taskdefs[lnode.name].intercycle = True
+                    if lnode.special_output:
+                        output = self['tasks'][lnode.name]['outputs'][lnode.output]
+                        self.taskdefs[right].add_special_trigger( output, cycle_list_string )
+                    else:
+                        self.taskdefs[right].add_trigger( l, cycle_list_string )
         else:
             # Conditional with OR:
             # Strip off '*' plotting conditional indicator
@@ -415,7 +402,9 @@ class config( CylcConfigObj ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
             lefts = re.split( '\s*[\|&]\s*', l)
+
             for left in lefts:
+
                 lnode = graphnode(left)
                 if lnode.intercycle:
                     self.taskdefs[lnode.name].intercycle = True
@@ -626,23 +615,8 @@ class config( CylcConfigObj ):
 
         taskd.type = 'free'
 
-        for msg in self['tasks'][name]['outputs']:
-            taskd.outputs[msg] = self['tasks'][name]['outputs'][msg]
-
-        # TO DO: clock (contact) tasks
-        #m = re.match( 'clock\(\s*offset\s*=\s*(-{0,1}[\d.]+)\s*hour\s*\)', item )
-        #    if m:
-        #        if 'contact' not in taskd.modifiers:
-        #            taskd.modifiers.append( 'contact' )
-        #        taskd.contact_offset = m.groups()[0]
-        #        continue
-        #    m = re.match( 'catchup clock\(\s*offset\s*=\s*(\d+)\s*hour\s*\)', item )
-        #    if m:
-        #        if 'catchup_contact' not in taskd.modifiers.append:
-        #            taskd.modifiers.append( 'catchup_contact' )
-        #        taskd.contact_offset = m.groups()[0]
-        #        continue
-        #    raise SuiteConfigError, 'illegal task type: ' + item
+        for lbl in self['tasks'][name]['outputs']:
+            taskd.outputs.append( self['tasks'][name]['outputs'][lbl] )
 
         taskd.logfiles    = taskconfig[ 'list of log files' ]
         taskd.commands    = taskconfig[ 'list of commands' ]
