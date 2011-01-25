@@ -17,7 +17,7 @@ directories for the three warm-cycled models."""
 use lockserver = False
 
 [experimental]
-write live graph = True
+#write live graph = True
 
 [dummy mode]
 #clock offset from initial cycle time in hours = 0
