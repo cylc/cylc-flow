@@ -104,7 +104,7 @@ class taskdef(object):
             raise DefinitionError( 'no hours specified' )
 
         if 'contact' in self.modifiers:
-            if len( self.contact_offset.keys() ) == 0:
+            if self.contact_offset == None:
                 raise DefinitionError( 'contact tasks must specify a time offset' )
 
         if self.member_of and len( self.members ) > 0:

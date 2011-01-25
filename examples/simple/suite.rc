@@ -15,10 +15,10 @@ out of a common workspace area."""
 
 
 [dependencies]
-    list of startup tasks          = Prep,
-    list of coldstart tasks        = ColdModel,
-    list of sequential tasks       = Model,
-    #list of clock-triggered tasks = GetData(1),
+    list of startup tasks         = Prep,
+    list of coldstart tasks       = ColdModel,
+    list of sequential tasks      = Model,
+    list of clock-triggered tasks = GetData(1),
 
     [[ 0,6,12,18 ]]
         graph  =  """Prep => GetData & ColdModel
@@ -83,3 +83,7 @@ RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
 
 [experimental]
     write live graph = True
+
+[dummy mode]
+#    clock offset from initial cycle time in hours = 0
+

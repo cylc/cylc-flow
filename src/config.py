@@ -579,6 +579,16 @@ class config( CylcConfigObj ):
             if re.search( '[^\w]', name ):
                 raise SuiteConfigError, 'Illegal task name: ' + name
 
+        # clock-triggered tasks
+        for item in self['dependencies']['list of clock-triggered tasks']:
+            m = re.match( '(\w+)\s*\(\s*([\d.]+)\s*\)', item )
+            if m:
+                task, offset = m.groups()
+            else:
+                raise SuiteConfigError, "Illegal clock-triggered task: " + item
+            self.taskdefs[task].modifiers.append( 'contact' )
+            self.taskdefs[task].contact_offset = int( offset )
+
         self.loaded = True
 
     def get_taskdef( self, name, type=None, oneoff=False ):
@@ -603,7 +613,6 @@ class config( CylcConfigObj ):
             # suite default job submit method
             taskd.job_submit_method = self['job submission method']
 
-
         # SET ONEOFF TASK INDICATOR
         #   coldstart and startup tasks are automatically oneoff
         if name in self['dependencies']['list of oneoff tasks'] or \
@@ -617,8 +626,8 @@ class config( CylcConfigObj ):
 
         taskd.type = 'free'
 
-        for output in self['tasks'][name]['outputs']:
-            taskd.outputs[ output ] = self['tasks'][name]['outputs'][output]
+        for msg in self['tasks'][name]['outputs']:
+            taskd.outputs[msg] = self['tasks'][name]['outputs'][msg]
 
         # TO DO: clock (contact) tasks
         #m = re.match( 'clock\(\s*offset\s*=\s*(-{0,1}[\d.]+)\s*hour\s*\)', item )
