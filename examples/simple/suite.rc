@@ -15,10 +15,10 @@ out of a common workspace area."""
 
 
 [dependencies]
-    list of suite startup tasks    = Prep,
-    #list of clock-triggered tasks = GetData(1),
+    list of startup tasks          = Prep,
+    list of coldstart tasks        = ColdModel,
     list of sequential tasks       = Model,
-    list of suite cold start tasks = ColdModel,
+    #list of clock-triggered tasks = GetData(1),
 
     [[ 0,6,12,18 ]]
         graph  =  """Prep => GetData => Model
@@ -29,7 +29,8 @@ out of a common workspace area."""
         graph = "Model => PostA & PostB"
 
 [environment]
-WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
+WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
+RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
 
 [tasks]
     [[Prep]]
@@ -45,12 +46,14 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
+            MODEL_RUNNING_DIR = $RUNNING/Model
 
     [[Model]]
         list of commands = cylc-wrapper Model.sh,
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
+            MODEL_RUNNING_DIR = $RUNNING/Model
  
     [[PostA]]
         list of commands = cylc-wrapper PostA.sh,
