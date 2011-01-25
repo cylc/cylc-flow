@@ -27,7 +27,7 @@ task run time in seconds = 1
     list of startup tasks          = prep,
     list of sequential tasks       = A, B, C
     list of coldstart tasks        = ColdA, ColdB, ColdC
-    #list of clock-triggered tasks = X(1),
+    list of clock-triggered tasks  = X(1),
 
     [[task families]]
     FOO = bar, baz

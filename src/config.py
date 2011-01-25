@@ -43,7 +43,11 @@ class edge( object):
         self.left_group = l
         self.right = r
 
-    def get_right( self, ctime ):
+    def get_right( self, ctime, not_first_cycle, raw, startup_only ):
+        first_cycle = not not_first_cycle
+        if self.right in startup_only:
+            if not first_cycle or raw:
+                return None
         return self.right + '%' + ctime
 
     def get_left( self, ctime, not_first_cycle, raw, startup_only ):
@@ -434,9 +438,9 @@ class config( CylcConfigObj ):
         while True:
             hour = cycles[i]
             for e in self.edges[hour]:
-                right = e.get_right(ctime)
-                left = e.get_left( ctime, started, raw, exclude_list )
-                if left == None:
+                right = e.get_right(ctime, started, raw, exclude_list )
+                left  = e.get_left( ctime, started, raw, exclude_list )
+                if left == None or right == None:
                     continue
                 gr_edges.append( (left, right) )
 
