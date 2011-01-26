@@ -76,6 +76,8 @@ C_RUNNING_DIR = $RUNNING/C
         [[[environment]]]
             B_INPUT_DIR = $WORKSPACE
             B_OUTPUT_DIR = $WORKSPACE
+            FOO = bar
+            FOO = baz
     [[C]]
         description = "model C - river flow forecast"
         #list of commands = cylc-wrapper C.sh,
