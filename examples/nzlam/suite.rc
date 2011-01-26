@@ -1,7 +1,7 @@
 title = NZLAM 3dVAR test suite
 description = NZLAM 3dVAR test suite
 
-job submission log directory = /home/andrewsp/suite_logs/4dvar
+job submission log directory = suite-logs/$CYLC_SUITE_NAME
 job submission method = ll_basic
 use lockserver = True
 use secure passphrase = False
@@ -35,20 +35,13 @@ use secure passphrase = False
     graph = "forecast_cold | forecast(T-6) => NZtoNZ_recon => forecast"
  
 [environment]
-    ##%include inc/vars/global.rc
+    #(REMOVED)
 
 [tasks]
-    ##%include inc/tasks/ops.rc
-    ##%include inc/tasks/var.rc
-    ##%include inc/tasks/get-data.rc
-    ##%include inc/tasks/preproc.rc
-    ##%include inc/tasks/um.rc
-    ##%include inc/tasks/postproc.rc
-    ###%include inc/tasks/housekeeping.rc
+    #(REMOVED)
 
 [visualization]
     default node attributes = "style=filled"
-    #default edge attributes = "style=bold"
     #use node color for edges = False
     [[node groups]]
 	    coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
