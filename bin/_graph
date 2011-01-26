@@ -100,56 +100,54 @@ class MyDotWindow( xdot.DotWindow ):
         return True
 
 if __name__ == '__main__':
-    parser = OptionParser( """cylc graph SUITE 
+    parser = OptionParser( """1/ cylc graph [options] SUITE START [STOP]
+     Plot the configured (suite.rc) dependency graph for SUITE.
+       2/ cylc graph -r,--runtime SUITE
+     Plot the run-time dependency graph for SUITE (if one has been generated).
+       3/ cylc graph -f,--file FILE
+     Plot the specified dot-language graph file.
 
-Plot suite dependency graphs in a pannable, zoomable viewer.
-
-By default, the graph configured in the suite config (suite.rc)
-file [dependency graph] section will be plotted. The graph will
-update automatically as you edit the suite.
-
-You can also view the run-time dependency graph for the suite, 
-which records resolved dependencies as the suite runs.
+This command plots suite dependency graphs in a pannable, zoomable viewer.
+For the configured (suite.rc) graph, the viewer updates automatically
+when the suite.rc file is saved during editing. By default the full 
+graph from coldstart is plotted; you can omit suite coldstart tasks
+with the '--rawstart' option.
 
 Arguments:
-  SUITE   - registered name of the suite.""")
+  SUITE   - Registered name of the suite.
+  START   - Hour (HH) at which to start plotting.
+  STOP    - Hours beyond START at which to stop plotting (default 6).
+  """)
+    parser.add_option( "--rawstart", 
+        help="Plot the raw start graph instead of cold start.",
+        action="store_true", default=False, dest="rawstart" )
 
-    parser.add_option( "-c", "--coldstart", 
-        help="Hour at which to plot a suite.rc coldstart graph.",
-        metavar="HH", action="store", default=None, dest="coldstart_hour" )
-
-    parser.add_option( "-r", "--rawstart", 
-        help="Hour at which to plot a suite.rc rawstart graph.",
-        metavar="HH", action="store", default=None, dest="rawstart_hour" )
-
-    parser.add_option( "-s", "--stop-after", 
-        help="Stop plotting the suite.rc graph HH hours beyond the start hour (default 6)",
-        metavar="HH", action="store", default='06', dest="stop_after" )
-
-    parser.add_option( "-f", "--filename", 
+    parser.add_option( "-f", "--file", 
         help="View a specific dot-language graphfile.",
         metavar="FILE", action="store", default=None, dest="filename" )
 
-    parser.add_option( "--run-time-graph", 
+    parser.add_option( "-r", "--runtime", 
         help="Plot the suite run-time graph, if one has been generated.",
         action="store_true", default=False, dest="view_runtime" )
 
     ( options, args ) = parser.parse_args()
 
-    if len(args) != 1:
-        parser.error( "wrong number of arguments" )
-
-    suite = args[0]
-
     view_file = False
     if options.view_runtime:
+        if len(args) != 1:
+            parser.error( 'run-time graphing requires one argument (SUITE)' )
+            sys.exit(1)
         view_file = True
+        suite = args[0]
         suiterc = config.config( suite )
         file = os.path.join( suiterc['visualization']['run time graph directory'],
                               suiterc['visualization']['run time graph filename'] )
-        if options.filename:
-            view_file = True
-            file = options.filename
+    if options.filename:
+        if len(args) != 0:
+            parser.error( 'file graphing arguments: \'-f FILE\' or \'--file=FILE\'' )
+            sys.exit(1)
+        view_file = True
+        file = options.filename
 
     if view_file:
         window = xdot.DotWindow()
@@ -165,21 +163,39 @@ Arguments:
 
     else:
         # parse and plot the suite.rc dependency graph
-        if options.coldstart_hour:
-            hour = options.coldstart_hour
-            raw = False
-        elif options.rawstart_hour:
-            hour = options.rawstart_hour
-            raw = True
-        else:
-            parser.error( "Illegal input" )
+        if len(args) < 2 or len(args) > 3:
+            parser.error( "suite.rc graphing requires args SUITE START [STOP]" )
 
-        if not re.match( '\d\d', hour ):
-            parser.error( "Illegal hour value " + hour )
+        suite = args[0]
+        hour = args[1]
+        if len(args) == 3:
+            stop = args[2]
+        else:
+            stop = 6
+
+        try:
+            int(hour)
+        except ValueError:
+            parser.error( "Illegal START hour (HH): " + hour )
+
+        try:
+            int(stop)
+        except ValueError:
+            parser.error( "Illegal STOP hours: " + stop )
+
+        raw = False
+        if options.rawstart:
+            raw = True
+
+        # pad hour if necessary:
+        if len( hour ) == 1:
+            hour = '0' + hour
+        elif len( hour ) > 2:
+            parser.error( "Illegal START hour (HH): " + hour )
 
         # fake a full cycle time
         ctime = '29990101' + hour
-        window = MyDotWindow( suite, ctime, options.stop_after, raw )
+        window = MyDotWindow( suite, ctime, stop, raw )
         window.parse_graph()
         window.connect( 'destroy', gtk.main_quit)
         gobject.timeout_add(1000, window.update)
