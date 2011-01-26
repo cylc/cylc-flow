@@ -1,8 +1,8 @@
-title = NZLAM 3dVAR test suite
-description = NZLAM 3dVAR test suite
+title = NZLAM 3DVAR forecast-analysis suite
+description = NZLAM 3DVAR forecast-analysis suite
 
-job submission log directory = suite-logs/$CYLC_SUITE_NAME
-job submission method = ll_basic
+job submission log directory = suite-logs/nzlam
+job submission method = ll_basic # loadleveler
 use lockserver = True
 use secure passphrase = False
 
@@ -10,15 +10,14 @@ use secure passphrase = False
     sequential tasks = forecast
     coldstart tasks = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
     clock-triggered tasks = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
-    # frames clock: we use frames from previous UKMO global run, ready ~2.25 hours before cycle time.
+    # (we use frames from previous UKMO global forecast, ready ~2.25 hours before cycle time)
  
 [task families]
     OPS = OPS_AircraftSonde, OPS_AIRS, OPS_ATOVS, OPS_GPSRO, OPS_IASI, OPS_SurfaceScatt, OPS_Satwind
 
 [dependencies]
     [[0,6,12,18]]
-    graph = \
-    """
+    graph = """
         get_frames => make_alabc => forecast_cold & forecast
         forecast_cold | forecast(T-6) => VAR_ConfigureLS & OPS
         forecast => get_outputs & housekeeping
@@ -26,7 +25,7 @@ use secure passphrase = False
         get_obstore & get_bgerr => OPS
         OPS & VAR_ConfigureLS => VAR_AnalysePF => VAR_monitoring & forecast
         get_globaldump => GLtoGL_recon => GLtoNZ_recon => forecast_cold
-    """
+            """
 
     [[6,12,18]]
     graph = "forecast_cold | forecast(T-6) => forecast"
