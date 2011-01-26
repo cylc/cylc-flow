@@ -6,15 +6,16 @@ job submission method = ll_basic
 use lockserver = True
 use secure passphrase = False
 
-[dependencies]
+[special tasks]
     sequential tasks = forecast
     coldstart tasks = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
     clock-triggered tasks = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
     # frames clock: we use frames from previous UKMO global run, ready ~2.25 hours before cycle time.
  
-    [[task families]]
+[task families]
     OPS = OPS_AircraftSonde, OPS_AIRS, OPS_ATOVS, OPS_GPSRO, OPS_IASI, OPS_SurfaceScatt, OPS_Satwind
 
+[dependencies]
     [[0,6,12,18]]
     graph = \
     """
@@ -45,13 +46,10 @@ use secure passphrase = False
     ##%include inc/tasks/postproc.rc
     ###%include inc/tasks/housekeeping.rc
 
-    [[VAR_monitoring]]
-        # (task currently dummied out)
-
 [visualization]
     default node attributes = "style=filled"
     #default edge attributes = "style=bold"
-    use node color for edges = False
+    #use node color for edges = False
     [[node groups]]
 	    coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
 	    var       = VAR_ConfigureLS, VAR_AnalysePF
@@ -62,7 +60,7 @@ use secure passphrase = False
     [[node attributes]]
         coldstart = "fillcolor=lightblue"
         var       = "fillcolor=pink", "shape=rectangle"
-        ops       = "fillcolor=yellow", "shape=rectangle"
+        ops       = "fillcolor=yellow", "shape=circle"
         um        = "shape=septagon"
         forecast  = "fillcolor=orchid"
 	    pre       = "style=unfilled", "color=blue"

@@ -235,10 +235,10 @@ class config( CylcConfigObj ):
         # TO DO: automatically determine this by parsing the dependency
         #        graph - requires some thought.
         # For now user must define this:
-        return self['dependencies']['coldstart tasks']
+        return self['special tasks']['coldstart tasks']
 
     def get_startup_task_list( self ):
-        return self['dependencies']['startup tasks']
+        return self['special tasks']['startup tasks']
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -384,7 +384,7 @@ class config( CylcConfigObj ):
                 l = re.sub( '\s*\*', '', left )
 
                 lnode = graphnode( l )
-                if lnode.name in self['dependencies']['startup tasks']:
+                if lnode.name in self['special tasks']['startup tasks']:
                     self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
                 else:
                     if lnode.intercycle:
@@ -403,7 +403,7 @@ class config( CylcConfigObj ):
             # (to change this, need add_startup_conditional_trigger()
             # similarly to above to non-conditional ... and follow
             # through in taskdef.py).
-            for t in self['dependencies']['startup tasks']:
+            for t in self['special tasks']['startup tasks']:
                 if re.search( r'\b' + t + r'\b', l ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
@@ -484,7 +484,7 @@ class config( CylcConfigObj ):
             if re.match( '[\s,\d]+', section ):
                 cycle_list_string = section
             else:
-                continue
+                raise SuiteConfigError, 'Illegal Section: [dependencies]['+section+']'
 
             # get a list of integer hours from cycle_list_string
             temp = re.split( '\s*,\s*', cycle_list_string )
@@ -548,9 +548,9 @@ class config( CylcConfigObj ):
         # task families
         members = []
         my_family = {}
-        for name in self['dependencies']['task families']:
+        for name in self['task families']:
             self.taskdefs[name].type="family"
-            mems = self['dependencies']['task families'][name]
+            mems = self['task families'][name]
             self.taskdefs[name].members = mems
             for mem in mems:
                 if mem not in members:
@@ -575,7 +575,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, 'Illegal task name: ' + name
 
         # clock-triggered tasks
-        for item in self['dependencies']['clock-triggered tasks']:
+        for item in self['special tasks']['clock-triggered tasks']:
             m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
             if m:
                 task, offset = m.groups()
@@ -610,13 +610,13 @@ class config( CylcConfigObj ):
 
         # SET ONEOFF TASK INDICATOR
         #   coldstart and startup tasks are automatically oneoff
-        if name in self['dependencies']['oneoff tasks'] or \
-            name in self['dependencies']['startup tasks'] or \
-            name in self['dependencies']['coldstart tasks']:
+        if name in self['special tasks']['oneoff tasks'] or \
+            name in self['special tasks']['startup tasks'] or \
+            name in self['special tasks']['coldstart tasks']:
             taskd.modifiers.append( 'oneoff' )
 
         # SET SEQUENTIAL TASK INDICATOR
-        if name in self['dependencies']['sequential tasks']:
+        if name in self['special tasks']['sequential tasks']:
             taskd.modifiers.append( 'sequential' )
 
         taskd.type = 'free'

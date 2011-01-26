@@ -40,18 +40,17 @@ command      = string( default='cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep
 command fail = string( default='cylc-wrapper -m "echo DUMMY MODE FAILOUT $TASK_ID; /bin/false"')
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
-[ dependencies ]
+[ special tasks ]
+    startup tasks = force_list( default=list())
+    coldstart tasks = force_list( default=list())
     oneoff tasks = force_list( default=list())
     sequential tasks = force_list( default=list())
     clock-triggered tasks = force_list( default=list())
-    startup tasks = force_list( default=list())
-    coldstart tasks = force_list( default=list())
 
-  # TO DO: catchup_contact tasks (topnet)
-
-    [[ task families ]]
+[ task families ]
     __many__ = force_list( default=None )
 
+[ dependencies ]
     # dependency graphs under cycle time lists:
     [[ __many__ ]]
     graph = string

@@ -1,6 +1,9 @@
 ################################################################
 TO BE DOCUMENTED:
 
+* catch invalid regular expression (e.g. unbalanced paren) in custom
+  filter.
+
 * ${CYLC_SUITE_NAME} or $CYLC_SUITE_NAME can be used in suite.rc
   job submission log directory.
 

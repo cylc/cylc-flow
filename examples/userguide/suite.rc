@@ -23,15 +23,16 @@ use lockserver = False
 #clock offset from initial cycle time in hours = 0
 task run time in seconds = 1
 
-[dependencies]
+[special tasks]
     startup tasks          = prep
     sequential tasks       = A, B, C
     coldstart tasks        = ColdA, ColdB, ColdC
     clock-triggered tasks  = X(1)
 
-    [[task families]]
+[task families]
     FOO = bar, baz
 
+[dependencies]
     [[ 0,6,12,18 ]]
         graph =  """X => A => B => E
                     A => C

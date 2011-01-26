@@ -13,13 +13,16 @@ out of a common workspace area."""
 #             /       \
 #       Model(T-6)     > (6,18 UTC only) PostB(T)
 
-
-[dependencies]
+[special tasks]
     startup tasks         = Prep
     coldstart tasks       = ColdModel
     sequential tasks      = Model
     clock-triggered tasks = GetData(1)
 
+[task families]
+    # none
+
+[dependencies]
     [[ 0,6,12,18 ]]
         graph  =  """Prep => GetData & ColdModel
                      GetData => Model
