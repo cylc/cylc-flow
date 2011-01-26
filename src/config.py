@@ -625,7 +625,7 @@ class config( CylcConfigObj ):
             taskd.outputs.append( self['tasks'][name]['outputs'][lbl] )
 
         taskd.logfiles    = taskconfig[ 'extra log files' ]
-        taskd.commands    = taskconfig[ 'commands' ]
+        taskd.commands    = taskconfig[ 'command' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
         taskd.scripting   = taskconfig[ 'scripting' ]
