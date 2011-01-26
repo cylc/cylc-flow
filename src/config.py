@@ -4,8 +4,6 @@
 # TO DO: ERROR CHECKING:
 #        - MULTIPLE DEFINITION OF SAME PREREQUISITES, E.G. VIA TWO
 #          CYCLE-TIME SECTIONS IN THE GRAPH.
-#        - MULTIPLE LISTING OF SAME TASK IN 'list of clock-triggered
-#          tasks' etc.
 #        - SPECIAL OUTPUTS - check ':foo' is defined in task section
 #          - check outputs do not appear on right side of pairs, 
 #          - OR IGNORE  IF THEY DO?
@@ -179,6 +177,37 @@ class config( CylcConfigObj ):
 
         self.process_configured_directories()
 
+        # parse clock-triggered tasks
+        self.clock_offsets = {}
+        for item in self['special tasks']['clock-triggered']:
+            m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
+            if m:
+                task, offset = m.groups()
+                try:
+                    self.clock_offsets[ task ] = float( offset )
+                except ValueError:
+                    raise SuiteConfigError, "Illegal clock-trigger offset: " + offset
+            else:
+                raise SuiteConfigError, "Illegal clock-triggered task spec: " + item
+
+    def check_tasks( self ):
+        # call after all tasks are defined, to check for undefined
+        # tasks and tasks that are defined but not used.
+        for name in self.taskdefs:
+            if name not in self['tasks']:
+                print >> sys.stderr, 'WARNING: task ' + name + ' is defined by graph only.'
+        for name in self['tasks']:
+            if name not in self.taskdefs:
+                print >> sys.stderr, 'WARNING: task ' + name + ' is defined but not used.'
+        # warn if listed special tasks are not defined
+        for type in self['special tasks']:
+            for name in self['special tasks'][type]:
+                if type == 'clock-triggered':
+                    name = re.sub('\(.*\)','',name)
+                if name not in self['tasks']:
+                    # No [tasks][[name]] section
+                    if name not in self.taskdefs and name not in self['tasks']:
+                        print >> sys.stderr, 'WARNING: ' + type + ' task ' + name + ' is not defined.'
 
     def process_configured_directories( self ):
         # allow $CYLC_SUITE_NAME in job submission log directory
@@ -574,16 +603,7 @@ class config( CylcConfigObj ):
             if re.search( '[^\w]', name ):
                 raise SuiteConfigError, 'Illegal task name: ' + name
 
-        # clock-triggered tasks
-        for item in self['special tasks']['clock-triggered']:
-            m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
-            if m:
-                task, offset = m.groups()
-            else:
-                raise SuiteConfigError, "Illegal clock-triggered task: " + item
-            self.taskdefs[task].modifiers.append( 'contact' )
-            self.taskdefs[task].contact_offset = float( offset )
-
+        self.check_tasks()
         self.loaded = True
 
     def get_taskdef( self, name, type=None, oneoff=False ):
@@ -619,7 +639,13 @@ class config( CylcConfigObj ):
         if name in self['special tasks']['sequential']:
             taskd.modifiers.append( 'sequential' )
 
+        # ONLY USING FREE TASK FOR NOW (MODELS MUST BE SEQUENTIAL)
         taskd.type = 'free'
+
+        # SET CLOCK-TRIGGERED TASKS
+        if name in self.clock_offsets:
+            taskd.modifiers.append( 'contact' )
+            taskd.contact_offset = self.clock_offsets[name]
 
         for lbl in self['tasks'][name]['outputs']:
             taskd.outputs.append( self['tasks'][name]['outputs'][lbl] )

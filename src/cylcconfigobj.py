@@ -301,7 +301,7 @@ class CylcConfigObj( ConfigObj ):
                     # CYLC CHANGE START: ALLOW DUPLICATE KEYWORDS TO OVERRIDE
                     # PREVIOUS VALUES IN 'environment'SECTIONS.
                     if sect_name == 'environment':
-                        print 'suite.rc: variable override in \'[environment]\', line ' + str(cur_index)
+                        print 'WARNING: variable override (' + key + '), suite.rc line ' + str(cur_index)
                     else:
                         self._handle_error(
                                 'Duplicate keyword name at line %s.',

@@ -34,7 +34,8 @@ task run time in seconds = 1
 
 [dependencies]
     [[ 0,6,12,18 ]]
-        graph =  """X => A => B => E
+        graph =  """
+                    X => A => B => E
                     A => C
                     B & C => D
                     C:foo => F
@@ -43,10 +44,10 @@ task run time in seconds = 1
                     ColdB | B(T-6) => B
                     ColdC | C(T-6) => C
 
-            prep => X & ColdA & ColdB & ColdC
+                    prep => X & ColdA & ColdB & ColdC
                  """
     [[ 6,18 ]]
-        graph = "F=>FOO"
+        graph =    "F=>FOO"
 
 [environment]
 TASK_EXE_SECONDS = 5
@@ -122,6 +123,9 @@ C_RUNNING_DIR = $RUNNING/C
     [[FOO]]
     [[bar]]
     [[baz]]
+
+    [[wazza]]
+        # trigger a "task is defined but not used" warning.
 
 [visualization]
     default node attributes = "style=filled"
