@@ -21,12 +21,13 @@ def check_dir( rdir ):
 
 #----------------------------------------
 
-parser = OptionParser( usage = """cylc register [options] [PATH] [SUITE]
+parser = OptionParser( usage = """cylc register [options] [SUITE] [PATH] 
 
 Create and manage cylc suite registrations, which associate a suite name
 with a suite definition directory (stored in $HOME/.cylc/registrations).
 
 1/ Create a new registration:
+     $ cylc register SUITE PATH, or 
      $ cylc register PATH SUITE
 
 2/ Print, retrieve or delete an existing registration:
@@ -103,19 +104,26 @@ if len(args) == 2:
     # + cylc register PATH SUITE
     new_reg = True
 
-    rdir = args[0]
-    name = args[1]
+    arg0 = args[0]
+    arg1 = args[1]
+
+    if os.path.isdir( arg0 ) and not re.match( '\/', arg1 ):
+        rdir = arg0
+        name = arg1
+    elif os.path.isdir( arg1 ) and not re.match( '\/', arg0 ): 
+        rdir = arg1
+        name = arg0
+    else:
+        raise SystemExit( 'Unable to determine SUITE and PATH from your argument list!' )
 
     # make registered path absolute
-
     # rdir = os.path.abspath( rdir )
-       # TEMPORORARY CHANGE FOR UKMO JOBS:
        # On GPFS os.path.abspath() returns the full path with fileset
        # prefix which can make filenames (for files stored under the 
        # cylc suite directory) too long for hardwired limits in the
        # UKMO executables, which will core dump. Use of $PWD to
        # absolutize a relative path, on GPFS, results in a shorter
-       # path string ... so we'll do this the crude way:
+       # path string ... so we'll do this the crude way for now:
     if not re.match( '^/', rdir ):
         rdir = os.path.join( os.environ['PWD'], rdir )
 
