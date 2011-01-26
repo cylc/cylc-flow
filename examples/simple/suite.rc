@@ -14,10 +14,10 @@ out of a common workspace area."""
 #       Model(T-6)     > (6,18 UTC only) PostB(T)
 
 [special tasks]
-    startup tasks         = Prep
-    coldstart tasks       = ColdModel
-    sequential tasks      = Model
-    clock-triggered tasks = GetData(1)
+    startup         = Prep
+    coldstart       = ColdModel
+    sequential      = Model
+    clock-triggered = GetData(1)
 
 [task families]
     # none
@@ -39,35 +39,35 @@ RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
 
 [tasks]
     [[Prep]]
-        commands = cylc-wrapper clean-workspace.sh $WORKSPACE
+        command = cylc-wrapper clean-workspace.sh $WORKSPACE
 
     [[GetData]]
-        commands = cylc-wrapper GetData.sh
+        command = cylc-wrapper GetData.sh
         [[[environment]]]
             GETDATA_OUTPUT_DIR = $WORKSPACE
 
     [[ColdModel]]
-        commands = cylc-wrapper Model.sh --coldstart
+        command = cylc-wrapper Model.sh --coldstart
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $RUNNING/Model
 
     [[Model]]
-        commands = cylc-wrapper Model.sh
+        command = cylc-wrapper Model.sh
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $RUNNING/Model
  
     [[PostA]]
-        commands = cylc-wrapper PostA.sh
+        command = cylc-wrapper PostA.sh
         [[[environment]]]
             POSTA_INPUT_DIR = $WORKSPACE
             POSTA_OUTPUT_DIR = $WORKSPACE
 
     [[PostB]]
-        commands = cylc-wrapper PostB.sh
+        command = cylc-wrapper PostB.sh
         [[[environment]]]
             POSTB_INPUT_DIR = $WORKSPACE
             POSTB_OUTPUT_DIR = $WORKSPACE

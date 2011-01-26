@@ -24,10 +24,10 @@ use lockserver = False
 task run time in seconds = 1
 
 [special tasks]
-    startup tasks          = prep
-    sequential tasks       = A, B, C
-    coldstart tasks        = ColdA, ColdB, ColdC
-    clock-triggered tasks  = X(1)
+    startup          = prep
+    sequential       = A, B, C
+    coldstart        = ColdA, ColdB, ColdC
+    clock-triggered  = X(1)
 
 [task families]
     FOO = bar, baz
@@ -59,21 +59,21 @@ C_RUNNING_DIR = $RUNNING/C
 
 [ tasks ]
     [[prep]]
-        commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
+        command = cylc-wrapper clean-workspace.sh $WORKSPACE
     [[X]]
         description = "retrieve real time data for model A"
-        commands = cylc-wrapper X.sh,
+        command = cylc-wrapper X.sh
         [[[ environment ]]]
             X_OUTPUT_DIR = $WORKSPACE
     [[A]]
         description = "model A - weather forecast"
-        commands = cylc-wrapper A.sh,
+        command = cylc-wrapper A.sh
         [[[environment]]]
             A_INPUT_DIR = $WORKSPACE
             A_OUTPUT_DIR = $WORKSPACE
     [[B]]
         description = "model B - sea state forecast"
-        commands = cylc-wrapper B.sh,
+        command = cylc-wrapper B.sh
         [[[environment]]]
             B_INPUT_DIR = $WORKSPACE
             B_OUTPUT_DIR = $WORKSPACE
@@ -81,8 +81,8 @@ C_RUNNING_DIR = $RUNNING/C
             FOO = baz  # (2nd value overrides 1st)
     [[C]]
         description = "model C - river flow forecast"
-        #commands = cylc-wrapper C.sh,
-        commands = C-no-wrap.sh,
+        #command = cylc-wrapper C.sh
+        command = C-no-wrap.sh
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
@@ -90,34 +90,34 @@ C_RUNNING_DIR = $RUNNING/C
             foo = river flow outputs done for $(CYCLE_TIME)
     [[D]]
         description = "combined post processing for models B and C"
-        commands = cylc-wrapper D.sh,
+        command = cylc-wrapper D.sh
         [[[environment]]]
             D_INPUT_DIR = $WORKSPACE
             D_OUTPUT_DIR = $WORKSPACE
     [[E]]
         description = "post processing for model B"
-        commands = cylc-wrapper E.sh,
+        command = cylc-wrapper E.sh
         [[[environment]]]
             E_INPUT_DIR = $WORKSPACE
             E_OUTPUT_DIR = $WORKSPACE
     [[F]]
         description = "post processing for model F"
-        commands = cylc-wrapper F.sh,
+        command = cylc-wrapper F.sh
         [[[environment]]]
             F_INPUT_DIR = $WORKSPACE
             F_OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]]
         description = "cold start model A"
-        commands = cylc-wrapper ColdA.sh,
+        command = cylc-wrapper ColdA.sh
 
     [[ColdB]]
         description = "model B"
-        commands = cylc-wrapper ColdB.sh,
+        command = cylc-wrapper ColdB.sh
 
     [[ColdC]]
         description = "model C"
-        commands = cylc-wrapper ColdC.sh,
+        command = cylc-wrapper ColdC.sh
 
     [[FOO]]
     [[bar]]
@@ -132,12 +132,12 @@ C_RUNNING_DIR = $RUNNING/C
         data   = X
     [[node attributes]]
         models = "shape=septagon"
-        post   = "style=unfilled", "shape=rectangle",
-        cold   = "shape=egg", "fillcolor=slateblue",
-        data   = "shape=square", "fillcolor=lawngreen",
+        post   = "style=unfilled", "shape=rectangle"
+        cold   = "shape=egg", "fillcolor=slateblue"
+        data   = "shape=square", "fillcolor=lawngreen"
         A      = "fillcolor=red"
         C      = "fillcolor=orange"
         B      = "fillcolor=orangered"
-        D      = "style=bold", "color=green4",
-        E      = "style=bold", "color=blue",
-        F      = "style=bold", "color=red",
+        D      = "style=bold", "color=green4"
+        E      = "style=bold", "color=blue"
+        F      = "style=bold", "color=red"

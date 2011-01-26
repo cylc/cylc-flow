@@ -7,9 +7,9 @@ use lockserver = True
 use secure passphrase = False
 
 [special tasks]
-    sequential tasks = forecast
-    coldstart tasks = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
-    clock-triggered tasks = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
+    sequential = forecast
+    coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
+    clock-triggered = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
     # (we use frames from previous UKMO global forecast, ready ~2.25 hours before cycle time)
  
 [task families]

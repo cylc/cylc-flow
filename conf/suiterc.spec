@@ -41,11 +41,11 @@ command fail = string( default='cylc-wrapper -m "echo DUMMY MODE FAILOUT $TASK_I
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
 [ special tasks ]
-    startup tasks = force_list( default=list())
-    coldstart tasks = force_list( default=list())
-    oneoff tasks = force_list( default=list())
-    sequential tasks = force_list( default=list())
-    clock-triggered tasks = force_list( default=list())
+    startup = force_list( default=list())
+    coldstart = force_list( default=list())
+    oneoff = force_list( default=list())
+    sequential = force_list( default=list())
+    clock-triggered = force_list( default=list())
 
 [ task families ]
     __many__ = force_list( default=None )

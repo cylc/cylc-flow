@@ -235,10 +235,10 @@ class config( CylcConfigObj ):
         # TO DO: automatically determine this by parsing the dependency
         #        graph - requires some thought.
         # For now user must define this:
-        return self['special tasks']['coldstart tasks']
+        return self['special tasks']['coldstart']
 
     def get_startup_task_list( self ):
-        return self['special tasks']['startup tasks']
+        return self['special tasks']['startup']
 
     def get_task_name_list( self ):
         # return list of task names used in the dependency diagram,
@@ -384,7 +384,7 @@ class config( CylcConfigObj ):
                 l = re.sub( '\s*\*', '', left )
 
                 lnode = graphnode( l )
-                if lnode.name in self['special tasks']['startup tasks']:
+                if lnode.name in self['special tasks']['startup']:
                     self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
                 else:
                     if lnode.intercycle:
@@ -403,7 +403,7 @@ class config( CylcConfigObj ):
             # (to change this, need add_startup_conditional_trigger()
             # similarly to above to non-conditional ... and follow
             # through in taskdef.py).
-            for t in self['special tasks']['startup tasks']:
+            for t in self['special tasks']['startup']:
                 if re.search( r'\b' + t + r'\b', l ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
             self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
@@ -575,7 +575,7 @@ class config( CylcConfigObj ):
                 raise SuiteConfigError, 'Illegal task name: ' + name
 
         # clock-triggered tasks
-        for item in self['special tasks']['clock-triggered tasks']:
+        for item in self['special tasks']['clock-triggered']:
             m = re.match( '(\w+)\s*\(\s*([-+]*\s*[\d.]+)\s*\)', item )
             if m:
                 task, offset = m.groups()
@@ -610,13 +610,13 @@ class config( CylcConfigObj ):
 
         # SET ONEOFF TASK INDICATOR
         #   coldstart and startup tasks are automatically oneoff
-        if name in self['special tasks']['oneoff tasks'] or \
-            name in self['special tasks']['startup tasks'] or \
-            name in self['special tasks']['coldstart tasks']:
+        if name in self['special tasks']['oneoff'] or \
+            name in self['special tasks']['startup'] or \
+            name in self['special tasks']['coldstart']:
             taskd.modifiers.append( 'oneoff' )
 
         # SET SEQUENTIAL TASK INDICATOR
-        if name in self['special tasks']['sequential tasks']:
+        if name in self['special tasks']['sequential']:
             taskd.modifiers.append( 'sequential' )
 
         taskd.type = 'free'
