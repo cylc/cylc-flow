@@ -7,9 +7,9 @@ use lockserver = True
 use secure passphrase = False
 
 [dependencies]
-    list of sequential tasks = forecast,
-    list of coldstart tasks = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
-    list of clock-triggered tasks = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
+    sequential tasks = forecast
+    coldstart tasks = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
+    clock-triggered tasks = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
     # frames clock: we use frames from previous UKMO global run, ready ~2.25 hours before cycle time.
  
     [[task families]]
@@ -34,37 +34,37 @@ use secure passphrase = False
     graph = "forecast_cold | forecast(T-6) => NZtoNZ_recon => forecast"
  
 [environment]
-    #%include inc/vars/global.rc
+    ##%include inc/vars/global.rc
 
 [tasks]
-    #%include inc/tasks/ops.rc
-    #%include inc/tasks/var.rc
-    #%include inc/tasks/get-data.rc
-    #%include inc/tasks/preproc.rc
-    #%include inc/tasks/um.rc
-    #%include inc/tasks/postproc.rc
-    #%include inc/tasks/housekeeping.rc
+    ##%include inc/tasks/ops.rc
+    ##%include inc/tasks/var.rc
+    ##%include inc/tasks/get-data.rc
+    ##%include inc/tasks/preproc.rc
+    ##%include inc/tasks/um.rc
+    ##%include inc/tasks/postproc.rc
+    ###%include inc/tasks/housekeeping.rc
 
     [[VAR_monitoring]]
         # (task currently dummied out)
 
 [visualization]
-    list of default node attributes = "style=filled",
-    #list of default edge attributes = "style=bold",
+    default node attributes = "style=filled"
+    #default edge attributes = "style=bold"
     use node color for edges = False
     [[node groups]]
 	    coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
 	    var       = VAR_ConfigureLS, VAR_AnalysePF
-	    ops       = OPS,
+	    ops       = OPS
         um        = forecast_cold, forecast
         pre       = get_frames, make_alabc, get_bgerr, get_obstore
 	    post      = get_outputs, nc_conv_met, VAR_monitoring
     [[node attributes]]
-        coldstart = "fillcolor=lightblue",
+        coldstart = "fillcolor=lightblue"
         var       = "fillcolor=pink", "shape=rectangle"
         ops       = "fillcolor=yellow", "shape=rectangle"
-        um        = "shape=septagon",
-        forecast  = "fillcolor=orchid",
+        um        = "shape=septagon"
+        forecast  = "fillcolor=orchid"
 	    pre       = "style=unfilled", "color=blue"
  	    post      = "style=unfilled", "color=red"
         NZtoNZ_recon = "shape=septagon", "fillcolor=seagreen2"

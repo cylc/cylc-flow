@@ -3,13 +3,11 @@ from configobj import ConfigObj, ConfigObjError, Section
 import os, re
 
 class CylcConfigObj( ConfigObj ):
-
-    # 1/ OVERRIDE _load() to provide:
-    # (i) continuation lines
-    # (ii) include files
-
-    # 2/ OVERRIDE parse() to allow duplicate entries in suite.rc
-    # [environment] sections (last entry overrides previous).
+    """ This class overrides the _load() and parse() menthods of ConfigObj in 
+    order to provide: continuation lines and include files (_load) and to 
+    allow duplicate keywords (variable overriding) in cylc config
+    [environment] sections (parse). The class methods involved here are
+    quite long but the cylc code changes in them are quite small."""
 
     def _load(self, infile, configspec):
         if isinstance(infile, basestring):

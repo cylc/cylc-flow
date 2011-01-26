@@ -1289,8 +1289,8 @@ class scheduler(object):
                 break
 
     def filter_initial_task_list( self, inlist ):
-        included_by_rc  = self.config[ 'list of tasks to include at startup'   ]
-        excluded_by_rc  = self.config[ 'list of tasks to exclude at startup'   ]
+        included_by_rc  = self.config[ 'tasks to include at startup'   ]
+        excluded_by_rc  = self.config[ 'tasks to exclude at startup'   ]
         included_by_cline = self.include_via_cline 
         excluded_by_cline = self.exclude_via_cline 
         outlist = []

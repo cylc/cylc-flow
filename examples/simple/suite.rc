@@ -15,10 +15,10 @@ out of a common workspace area."""
 
 
 [dependencies]
-    list of startup tasks         = Prep,
-    list of coldstart tasks       = ColdModel,
-    list of sequential tasks      = Model,
-    list of clock-triggered tasks = GetData(1),
+    startup tasks         = Prep
+    coldstart tasks       = ColdModel
+    sequential tasks      = Model
+    clock-triggered tasks = GetData(1)
 
     [[ 0,6,12,18 ]]
         graph  =  """Prep => GetData & ColdModel
@@ -36,35 +36,35 @@ RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
 
 [tasks]
     [[Prep]]
-        list of commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
+        commands = cylc-wrapper clean-workspace.sh $WORKSPACE
 
     [[GetData]]
-        list of commands = cylc-wrapper GetData.sh,
+        commands = cylc-wrapper GetData.sh
         [[[environment]]]
             GETDATA_OUTPUT_DIR = $WORKSPACE
 
     [[ColdModel]]
-        list of commands = cylc-wrapper Model.sh --coldstart,
+        commands = cylc-wrapper Model.sh --coldstart
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $RUNNING/Model
 
     [[Model]]
-        list of commands = cylc-wrapper Model.sh,
+        commands = cylc-wrapper Model.sh
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $RUNNING/Model
  
     [[PostA]]
-        list of commands = cylc-wrapper PostA.sh,
+        commands = cylc-wrapper PostA.sh
         [[[environment]]]
             POSTA_INPUT_DIR = $WORKSPACE
             POSTA_OUTPUT_DIR = $WORKSPACE
 
     [[PostB]]
-        list of commands = cylc-wrapper PostB.sh,
+        commands = cylc-wrapper PostB.sh
         [[[environment]]]
             POSTB_INPUT_DIR = $WORKSPACE
             POSTB_OUTPUT_DIR = $WORKSPACE
@@ -75,9 +75,9 @@ RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
         models = ColdModel, Model
     [[ node attributes ]]
         post  = "style=unfilled", "color=blue", "shape=rectangle"
-        PostB = "style=filled", "fillcolor=seagreen2",
+        PostB = "style=filled", "fillcolor=seagreen2"
         models  = "style=filled", "fillcolor=red"
-        ColdModel = "fillcolor=lightblue",
+        ColdModel = "fillcolor=lightblue"
         GetData = "style=filled", "fillcolor=yellow", "shape=septagon"
         Prep = "shape=circle", "color=red3" 
 

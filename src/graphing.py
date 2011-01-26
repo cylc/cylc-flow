@@ -70,11 +70,11 @@ class CGraph( CGraphPlain ):
 
         # graph attributes
         # - default node attributes
-        for item in vizconfig['list of default node attributes']:
+        for item in vizconfig['default node attributes']:
             attr, value = re.split( '\s*=\s*', item )
             self.node_attr[ attr ] = value
         # - default edge attributes
-        for item in vizconfig['list of default edge attributes']:
+        for item in vizconfig['default edge attributes']:
             attr, value = re.split( '\s*=\s*', item )
             self.edge_attr[ attr ] = value
 

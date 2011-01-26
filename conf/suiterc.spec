@@ -28,8 +28,8 @@ task submission failed hook = string( default=None )
 task timeout hook = string( default=None )
 task submission timeout minutes = float( default=None )
 
-list of tasks to include at startup = string_list( default=list())
-list of tasks to exclude at startup = string_list( default=list())
+tasks to include at startup = force_list( default=list())
+tasks to exclude at startup = force_list( default=list())
 
 [ dummy mode ]
 clock offset from initial cycle time in hours = integer( default=24 )
@@ -41,16 +41,16 @@ command fail = string( default='cylc-wrapper -m "echo DUMMY MODE FAILOUT $TASK_I
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
 [ dependencies ]
-    list of oneoff tasks = string_list( default=list())
-    list of sequential tasks = string_list( default=list())
-    list of clock-triggered tasks = string_list( default=list())
-    list of startup tasks = string_list( default=list())
-    list of coldstart tasks = string_list( default=list())
+    oneoff tasks = force_list( default=list())
+    sequential tasks = force_list( default=list())
+    clock-triggered tasks = force_list( default=list())
+    startup tasks = force_list( default=list())
+    coldstart tasks = force_list( default=list())
 
   # TO DO: catchup_contact tasks (topnet)
 
     [[ task families ]]
-    __many__ = string_list( default=None )
+    __many__ = force_list( default=None )
 
     # dependency graphs under cycle time lists:
     [[ __many__ ]]
@@ -71,17 +71,17 @@ run time graph directory = string( default='graphing')
 run time graph filename  = string( default='runtime.dot')
 #task families in subgraphs = boolean( default=True )
 use node color for edges = boolean( default=True )
-list of default node attributes = string_list( default=list('style=unfilled', 'color=black', 'shape=ellipse'))
-list of default edge attributes = string_list( default=list('color=black'))
+default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=ellipse'))
+default edge attributes = force_list( default=list('color=black'))
 
 [[node groups]]
-    __many__ = string_list( default=list())
+    __many__ = force_list( default=list())
 [[node attributes]]
     # item is task name or task group name
-    __many__ = string_list( default=list())
+    __many__ = force_list( default=list())
 
 [ task insertion groups ]
- __many__ = string_list()
+ __many__ = force_list()
 
 [ environment ]
 __many__ = string
@@ -101,12 +101,12 @@ __many__ = string
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
     # default to dummy task:
-    list of commands = string_list( default=list( cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
+    commands = force_list( default=list( cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     owner = string( default=None )
     host = string( default=None )
     intercycle = boolean( default=False )
     scripting = string( default='' )
-    list of log files = string_list( default=list())
+    extra log files = force_list( default=list())
         [[[ environment ]]]
         __many__ = string
         [[[ directives ]]]

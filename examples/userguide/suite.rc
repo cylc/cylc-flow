@@ -24,10 +24,10 @@ use lockserver = False
 task run time in seconds = 1
 
 [dependencies]
-    list of startup tasks          = prep,
-    list of sequential tasks       = A, B, C
-    list of coldstart tasks        = ColdA, ColdB, ColdC
-    list of clock-triggered tasks  = X(1),
+    startup tasks          = prep
+    sequential tasks       = A, B, C
+    coldstart tasks        = ColdA, ColdB, ColdC
+    clock-triggered tasks  = X(1)
 
     [[task families]]
     FOO = bar, baz
@@ -58,30 +58,30 @@ C_RUNNING_DIR = $RUNNING/C
 
 [ tasks ]
     [[prep]]
-        list of commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
+        commands = cylc-wrapper clean-workspace.sh $WORKSPACE,
     [[X]]
         description = "retrieve real time data for model A"
-        list of commands = cylc-wrapper X.sh,
+        commands = cylc-wrapper X.sh,
         [[[ environment ]]]
             X_OUTPUT_DIR = $WORKSPACE
     [[A]]
         description = "model A - weather forecast"
-        list of commands = cylc-wrapper A.sh,
+        commands = cylc-wrapper A.sh,
         [[[environment]]]
             A_INPUT_DIR = $WORKSPACE
             A_OUTPUT_DIR = $WORKSPACE
     [[B]]
         description = "model B - sea state forecast"
-        list of commands = cylc-wrapper B.sh,
+        commands = cylc-wrapper B.sh,
         [[[environment]]]
             B_INPUT_DIR = $WORKSPACE
             B_OUTPUT_DIR = $WORKSPACE
             FOO = bar
-            FOO = baz
+            FOO = baz  # (2nd value overrides 1st)
     [[C]]
         description = "model C - river flow forecast"
-        #list of commands = cylc-wrapper C.sh,
-        list of commands = C-no-wrap.sh,
+        #commands = cylc-wrapper C.sh,
+        commands = C-no-wrap.sh,
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
@@ -89,54 +89,54 @@ C_RUNNING_DIR = $RUNNING/C
             foo = river flow outputs done for $(CYCLE_TIME)
     [[D]]
         description = "combined post processing for models B and C"
-        list of commands = cylc-wrapper D.sh,
+        commands = cylc-wrapper D.sh,
         [[[environment]]]
             D_INPUT_DIR = $WORKSPACE
             D_OUTPUT_DIR = $WORKSPACE
     [[E]]
         description = "post processing for model B"
-        list of commands = cylc-wrapper E.sh,
+        commands = cylc-wrapper E.sh,
         [[[environment]]]
             E_INPUT_DIR = $WORKSPACE
             E_OUTPUT_DIR = $WORKSPACE
     [[F]]
         description = "post processing for model F"
-        list of commands = cylc-wrapper F.sh,
+        commands = cylc-wrapper F.sh,
         [[[environment]]]
             F_INPUT_DIR = $WORKSPACE
             F_OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]]
         description = "cold start model A"
-        list of commands = cylc-wrapper ColdA.sh,
+        commands = cylc-wrapper ColdA.sh,
 
     [[ColdB]]
         description = "model B"
-        list of commands = cylc-wrapper ColdB.sh,
+        commands = cylc-wrapper ColdB.sh,
 
     [[ColdC]]
         description = "model C"
-        list of commands = cylc-wrapper ColdC.sh,
+        commands = cylc-wrapper ColdC.sh,
 
     [[FOO]]
     [[bar]]
     [[baz]]
 
 [visualization]
-    list of default node attributes = "style=filled",
+    default node attributes = "style=filled"
     [[node groups]]
         models = A, B, C
         cold   = ColdA, ColdB, ColdC
         post   = D, E, F
-        data   = X,
+        data   = X
     [[node attributes]]
-        models = "shape=septagon",
+        models = "shape=septagon"
         post   = "style=unfilled", "shape=rectangle",
         cold   = "shape=egg", "fillcolor=slateblue",
         data   = "shape=square", "fillcolor=lawngreen",
-        A      = "fillcolor=red",
-        C      = "fillcolor=orange",
-        B      = "fillcolor=orangered",
+        A      = "fillcolor=red"
+        C      = "fillcolor=orange"
+        B      = "fillcolor=orangered"
         D      = "style=bold", "color=green4",
         E      = "style=bold", "color=blue",
         F      = "style=bold", "color=red",
