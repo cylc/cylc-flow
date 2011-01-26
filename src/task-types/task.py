@@ -127,8 +127,8 @@ class task( Pyro.core.ObjBase ):
             # is there a task command lined up?
             self.external_task = self.external_tasks.popleft()
         except IndexError:
-            # this is currently an error; scripting-only tasks
-            # default to the command /bin/true.
+            # this is currently an error; even scripting-only tasks
+            # default to the dummy task command (/bin/true).
             raise
 
         self.submission_start_time = None
