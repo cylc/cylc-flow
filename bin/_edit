@@ -51,6 +51,9 @@ parser = OptionParser( """cylc edit SUITE
 
 Edit suite config (suite.rc) files with inlined include-files.
 
+ACCESS TO THIS COMMAND VIA THE MAIN cylc INTERFACE HAS BEEN TEMPORARILY
+DISABLED; FOR REASONS, SEE WARNINGS BELOW.
+
 The editing process is spawned in the foreground as follows:
   $EDITOR <inlined-suite.rc-file>
 (You must have $EDITOR defined in your shell environment). 
@@ -73,7 +76,8 @@ WARNING: DO NOT USE THIS COMMAND AT THE SAME TIME AS EDITING A SUITE.RC
 OR INCLUDE-FILE MANUALLY - THE CONFIG FILES WILL BE OVERWRITTEN BY THIS
 COMMAND WHEN YOU FINISH THE EDIT SESSION
 
-ACCESS VIA THE MAIN 'cylc' COMMAND INTERFACE HAS BEEN TEMPORARILY DISABLED.
+WARNING: DOES NOT CURRENTLY HANDLED NESTED INCLUDE-FILES.
+
 TO DO: check each file has not changed before overwriting it.
 
 See also 'cylc grep', an include-file aware suite search command.
