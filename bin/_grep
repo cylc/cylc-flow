@@ -50,8 +50,13 @@ def print_heading( heading ):
 parser = OptionParser( """cylc grep [options] PATTERN SUITE 
 
 This is a cylc suite definition aware text search tool. It finds matches
-to PATTERN in the suite.rc file, which may contain include-files, and in
+to PATTERN in the suite.rc file, and any contained include-files, and in
 any files in the suite bin directory.
+
+Note that the order of commandline arguments conforms to normal grep usage
+('grep PATTERN FILE') not normal cylc command usage ('command SUITE ARGS').
+However, if the second argument is not found to be a registered suite, an
+attempt will be made to action the command with the arguments reversed.
 
 Suite config matches are printed with their source file path (include
 files) and line number, and the correct section heading hierarchy even 
@@ -72,17 +77,26 @@ parser.add_option( "-x", help="Do not search in the suite bin directory",
 if len(args) != 2:
     parser.error( "wrong number of arguments" )
 
-pattern = args[0]
-suite = args[1]
+#pattern = args[0]
+#suite = args[1]
+arg0 = args[0]
+arg1 = args[1]
 
 # find location of the suite definition directory
 reg = registrations()
-if reg.is_registered( suite ):
-    suitedir = reg.get( suite )
+if reg.is_registered( arg1 ):
+    # cylc grep PATTERN SUITE
+    suite = arg1
+    pattern = arg0
+elif reg.is_registered( arg0 ):
+    # cylc grep SUITE PATTERN
+    suite = arg0
+    pattern = arg1
 else:
     reg.print_all()
-    raise SystemExit( "suite " + suite + " is not registered!" )
+    raise SystemExit( "Suite not registered!" )
 
+suitedir = reg.get( suite )
 suiterc = os.path.join( suitedir, 'suite.rc' )
 
 if os.path.isfile( suiterc ):
@@ -163,6 +177,10 @@ if not options.search_bin:
 
 # search files in suite bin directory
 bin = os.path.join( suitedir, 'bin' )
+if not os.path.isdir( bin ):
+    print "\nSuite " + suite + " has no bin directory"
+    sys.exit(0)
+
 for file in os.listdir( bin ):
     if re.match( '^\.', file):
         # skip hidden dot-files
