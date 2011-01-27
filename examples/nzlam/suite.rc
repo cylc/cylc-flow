@@ -10,7 +10,6 @@ use secure passphrase = False
     sequential = forecast
     coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
     clock-triggered = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
-    # (we use frames from previous UKMO global forecast, ready ~2.25 hours before cycle time)
  
 [task families]
     OPS = OPS_AircraftSonde, OPS_AIRS, OPS_ATOVS, OPS_GPSRO, OPS_IASI, OPS_SurfaceScatt, OPS_Satwind
@@ -53,11 +52,11 @@ use secure passphrase = False
 	    post      = get_outputs, nc_conv_met, VAR_monitoring
     [[node attributes]]
         coldstart = "fillcolor=dodgerblue"
-        var       = "fillcolor=crimson", "shape=rectangle"
-        ops       = "fillcolor=red4", "shape=circle"
-        ops_mem   = "fillcolor=red4", "shape=ellipse"
+        var       = "fillcolor=mediumorchid2", "shape=rectangle"
+        ops       = "fillcolor=yellow2", "shape=circle"
+        ops_mem   = "fillcolor=yellow", "shape=ellipse"
         um        = "shape=septagon" 
-        forecast  = "fillcolor=orchid"
+        forecast  = "fillcolor=crimson"
 	    pre       = "style=unfilled", "color=blue"
  	    post      = "style=unfilled", "color=red"
         NZtoNZ_recon = "shape=septagon", "fillcolor=seagreen2"

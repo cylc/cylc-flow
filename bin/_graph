@@ -27,7 +27,9 @@ class MyDotWindow( xdot.DotWindow ):
         </toolbar>
     </ui>
     '''
-    def __init__(self, suite, ctime, stop_after, raw ):
+    def __init__(self, suite, ctime, stop_after, raw, outfile=None ):
+        self.outfile = outfile
+        self.disable_output_image = False
         self.suite = suite
         self.ctime = ctime
         self.raw = raw
@@ -87,8 +89,13 @@ class MyDotWindow( xdot.DotWindow ):
         self.suiterc = config.config( self.suite )
         self.suitercfile = self.suiterc.get_filename()
         graph = self.suiterc.get_graph( self.ctime, self.stop_after, raw=self.raw )
-        graph.write( 'foo.dot' )
         self.set_dotcode( graph.string() )
+        if self.outfile and not self.disable_output_image:
+            try:
+                graph.draw( self.outfile, prog='dot' )
+            except IOError, x:
+                print x
+                self.disable_output_image = True
 
     def update(self):
         # if suite config file has changed, reparse the graph
@@ -141,6 +148,14 @@ Arguments:
     parser.add_option( "-r", "--runtime", 
         help="Plot the suite run-time graph, if one has been generated.",
         action="store_true", default=False, dest="view_runtime" )
+
+    parser.add_option( "-o", "--output", 
+        help="Write out an image file (format determined by file extension) "
+        "and update it (overwrite) whenever the graph changes while you edit "
+        "the suite. Available image formats depend on your graphviz build, but "
+        "may include: png, svg, jpg, gif, ps, ...; to see what's available "
+        "specify a non-existent format and read the resulting error message.",
+        metavar="FILE", action="store", default=None, dest="outputfile" )
 
     ( options, args ) = parser.parse_args()
 
@@ -207,7 +222,7 @@ Arguments:
 
         # fake a full cycle time
         ctime = '29990101' + hour
-        window = MyDotWindow( suite, ctime, stop, raw )
+        window = MyDotWindow( suite, ctime, stop, raw, options.outputfile )
         window.parse_graph()
         window.connect( 'destroy', gtk.main_quit)
         gobject.timeout_add(1000, window.update)
