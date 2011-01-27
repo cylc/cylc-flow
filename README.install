@@ -1,0 +1,11 @@
+Cylc requires Python 2.4 or later, for:
+    * pygtk (gui)
+    * the subprocess module
+
+Python 2.4 was released in November 2004.
+
+For Python 2.3:
+   * subprocess could be replaced with the older os.system.
+   * it would not be possible to use the cylc GTK gui, but
+     the older 'cylc monitor' command and 'cylc dump' etc.
+     may be sufficient.

@@ -284,6 +284,13 @@ parser.add_option( "--debug", "-d",
         help="print full a trace of what was done, including matching",
         action="store_true", dest="debug", default=False )
 
+parser.add_option( "--batch-size", "-b",
+        help="Do parallel processing of matched files in batches "
+        "of this size. Parallel processes are spawned for each "
+        "batch member, then we wait on all members finishing before "
+        "processing the next batch.",
+        metavar='INT', action="store", dest="batch_size", default=None )
+
 ( options, args ) = parser.parse_args()
 
 if len(args) != 1  and len( args ) != 4 and len(args) != 5:
@@ -313,6 +320,13 @@ elif 'CYCLE_TIME' in os.environ:
     ctime = os.environ[ 'CYCLE_TIME' ]
 else:
     parser.error( "Use --cycle-time or define $CYCLE_TIME" )
+
+batch_size = 1
+if options.batch_size:
+    try:
+        batch_size = int( options.batch_size )
+    except ValueError:
+        parser.error( "Batch size must be integer: " + options.batch_size
 
 if len( args ) == 1:
     config = args[0]
