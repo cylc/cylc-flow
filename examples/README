@@ -1,3 +1,4 @@
-This directory contains example cylc suites. External suites should be
-maintained in their own repositories, tagged for compatibility with
-particular cylc versions.
+This directory contains the example suites packaged with cylc.
+
+User's should maintain their own suites in revision control repositories
+with suite versions tagged for compatibility with particular cylc versions.
