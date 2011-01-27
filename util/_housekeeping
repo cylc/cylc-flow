@@ -24,12 +24,110 @@ except:
     print "+++++++++++++++++++++++++++++++++++++++++++++++"
     print
 
-
 def right_justify( short, long ):
     template = re.sub( '.', ' ', long )
     short_re = re.sub( '.', '.', short ) + '$'
     return re.sub( short_re, short, template )
- 
+
+def check_by_ctime( matched_ctime, ctime ):
+    if not cycle_time.is_valid( matched_ctime ):
+        # match is not a valid cycle time: ignore
+        if debug:
+            print " + extracted cycle time is NOT VALID: " + matched_ctime
+        #ignored += 1
+        return False
+    else:
+        if debug:
+            print " + extracted cycle time: " + matched_ctime
+
+    # can assume ctime is >= matched_ctime
+    gap = cycle_time.diff_hours( ctime, matched_ctime )
+    if debug:
+        print " + computed offset hours", gap, 
+    if gap < offset:
+        #ignored += 1
+        if debug:
+            print "- ignoring (< cutoff)"
+        return False
+    else:
+        if debug:
+            print "- ACTIONING (>= cutoff)"
+        return True
+
+def get_matches( source, match, ctime, dt_source ):
+    matched = []
+
+    # DATETIME IN MATCH
+    if not dt_source:
+        if not os.path.isdir( source ):
+            raise SystemExit( "Source directory not found: " + source )
+        for entry in os.listdir( source ):
+            entrypath = os.path.join( source, entry )
+            if debug:
+                print "\nSource item:", entrypath
+
+            m = re.search( match, entry )
+            if not m:
+                #ignored += 1
+                if debug:
+                    print " + does not match"
+                continue
+
+            mgrps = m.groups()
+            if len(mgrps) == 1:
+                matched_ctime = mgrps[0]
+            elif len(mgrps) == 2:
+                foo, bar = mgrps
+                if len(foo) == 8 and len(bar) == 2:
+                    matched_ctime = foo + bar
+                elif len(foo) == 2 and len(bar) == 8:
+                    matched_ctime = bar + foo
+                else:
+                    raise SystemExit( "Illegal match: " + foo + ", " + bar )
+            else:
+                raise SystemExit( "Illegal regex?: " + match )
+
+            if check_by_ctime( matched_ctime, ctime ):
+                matched.append( entrypath )
+
+        return matched
+
+    # DATETIME IN SOURCE PATH
+    # source = foo/(\d{10})/bar/baz => foo, bar/baz
+    pre, ctpattern, post = re.split( '/*(\(\\\d\{10\}\))/*', source )
+    if not os.path.isdir( pre ):
+        raise SystemExit( "Source directory not found: " + source )
+
+    for entry in os.listdir( pre ):
+        m = re.search( ctpattern, entry )
+        # we know this does match
+        mgrps = m.groups()
+        #if len(mgrps) == 1:
+        matched_ctime = mgrps[0]
+        #elif len(mgrps) == 2:
+        #    foo, bar = mgrps
+        #    if len(foo) == 8 and len(bar) == 2:
+        #        matched_ctime = foo + bar
+        #    elif len(foo) == 2 and len(bar) == 8:
+        #        matched_ctime = bar + foo
+        #    else:
+        #        raise SystemExit( "Illegal match: " + foo + ", " + bar )
+        #else:
+        #    raise SystemExit( "Illegal regex?: " + match )
+
+        if check_by_ctime( matched_ctime, ctime ):
+            # path matched and passed time check
+
+            path = os.path.join( pre, matched_ctime, post )
+            if os.path.isdir( path ):
+                for entry in os.listdir( path ):
+                    print entry, match
+                    if re.search( match, entry ):
+                        matched.append( os.path.join( path, entry ))
+
+    return matched
+
+
 usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
 Usage: 2/ cylcutil housekeeping [options] CONFIG
 
@@ -359,67 +457,23 @@ else:
         if destination:
             print " + destination:", destination
 
-    # check source exists
-    if not os.path.isdir( source ):
-        raise SystemExit( "Source directory not found: " + source )
+    # does source or match contain the datetime string?
+    if re.search( '\(\\\d\{10\}\)', source ):
+        dt_source = True
+    elif re.match( '\(\\\d\{10\}\)', match ) or \
+            re.search( '\(\\\d\{8\}\)', match ) and \
+            re.search( '\(\\\d\{2\}\)', match ):
+        dt_source = False
+    else:
+        raise SystemExit( "No cycle-time match in SOURCE or MATCH" )
 
-    ignored = 0
+    #ignored = 0
     aborted = 0
     total = 0
     actioned = 0
 
-    for entry in os.listdir( source ):
+    for entrypath in get_matches( source, match, ctime, dt_source ):
         total += 1
-        entrypath = os.path.join( source, entry )
-
-        if debug:
-            print "\nSource item:", entrypath
-
-        m = re.search( match, entry )
-        if not m:
-            ignored += 1
-            if debug:
-                print " + does not match"
-            continue
-
-        mgrps = m.groups()
-        if len(mgrps) == 1:
-            matched_ctime = mgrps[0]
-
-        elif len(mgrps) == 2:
-            foo, bar = mgrps
-            if len(foo) == 8 and len(bar) == 2:
-                matched_ctime = foo + bar
-            elif len(foo) == 2 and len(bar) == 8:
-                matched_ctime = bar + foo
-            else:
-                raise SystemExit( "Illegal match: " + foo + ", " + bar )
- 
-        else:
-            raise SystemExit( "Illegal regex?: " + match )
-
-        if not cycle_time.is_valid( matched_ctime ):
-            # match is not a valid cycle time: ignore
-            if debug:
-                print " + extracted cycle time is NOT VALID: " + matched_ctime
-            ignored += 1
-            continue
-        else:
-            if debug:
-                print " + extracted cycle time: " + matched_ctime
-
-        # can assume ctime is >= matched_ctime
-        gap = cycle_time.diff_hours( ctime, matched_ctime )
-        if debug:
-            print " + computed offset hours", gap, 
-        if gap < offset:
-            ignored += 1
-            if debug:
-                print "- ignoring (< cutoff)"
-            continue
-        else:
-            if debug:
-                print "- ACTIONING (>= cutoff)"
 
         if destination:
             # destination directory may be cycle time dependent
@@ -447,7 +501,7 @@ else:
                     print "(creating)"
                 mkdir_p( dest, options.mode )
 
-            target = os.path.join( dest, entry )
+            target = os.path.join( dest, os.path.basename( entry ) )
             if debug:
                 print " + target:", target, 
 
@@ -606,6 +660,6 @@ else:
  
     print '   ' + right_justify( str(actioned), str(total) ) + "/" + str( total ), "\t" + extra + " " + did
     print '   ' + right_justify( str(aborted),  str(total) ) + "/" + str( total ), "\t" + extra + " " + not_did 
-    print '   ' + right_justify( str(ignored),  str(total) )+ "/" + str( total ), "\t (not matched)"
+    #print '   ' + right_justify( str(ignored),  str(total) )+ "/" + str( total ), "\t (not matched)"
 
     print '   |-finish: ', datetime.datetime.now()
