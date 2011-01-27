@@ -33,15 +33,19 @@ def right_justify( short, long ):
 usage = """1/ cylcutil housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
 Usage: 2/ cylcutil housekeeping [options] CONFIG
 
-Cycle based file management: delete, move, or copy, files or directories
-with a cycle time in their file or directory names that is at least
+Cycle-time based file management: delete, move, or copy files or
+directories whose names contain a cycle time that is at least
 OFFSET hours earlier than the current or given cycle time. 
 
 The CONFIG file format is one or more of lines of:
-
+#------------
 VARNAME=VALUE
 # comment
 SOURCE    MATCH    OPERATION   OFFSET   [DESTINATION]
+#------------
+
+TO DO: PARALLEL PROCESSING OF OPERATIONS ON MATCHED FILES WITHIN A
+SINGLE CONFIG LINE, USING PYTHON'S SUBPROCESS MONITORING CAPABILITY.
 
 Where OPERATION is one of 'copy', 'move', or 'delete', and SOURCE,
 MATCH, OFFSET, and DESTINATION are as described below for commandline
@@ -134,7 +138,7 @@ parser = OptionParser( usage )
 # THAT THEY NEED TO BE PARSED THROUGH TO THE INNER SELF-CALL (FOR EACH
 # LINE OF A CONFIG FILE; SEE BELOW)
 
-parser.add_option( "--cycle-time",
+parser.add_option( "-c", "--cycle-time",
         metavar='YYYYMMDDHH',
         help="Cycle time, defaults to $CYCLE_TIME",
         action="store", dest="ctime" )
@@ -143,11 +147,11 @@ parser.add_option( "--dry-run",
         help="print what would be done, but don't do it.",
         action="store_true", dest="dry_run", default=False )
 
-parser.add_option( "--interactive", "-i",
+parser.add_option( "-i", "--interactive",
         help="ask whether to action or skip each config file line",
         action="store_true", dest="interactive", default=False )
 
-parser.add_option( "--force", "-f",
+parser.add_option( "-f", "--force",
         help="copy or move even if the target already exists",
         action="store_true", dest="force", default=False )
 
@@ -159,18 +163,16 @@ parser.add_option( "--mode",
 
 parser.add_option( "--only", "-o",
         help="Only action config file lines matching any member of a "
-        "comma-separated list of regular expressions. "
-        "Each regex can match the whole line or just part of it, so you can "
-        "easily single out any line from any housekeeping config file.",
-        metavar='LIST',
-        action="store", dest="only", default=None )
+        "comma-separated list of regular expressions. Each regex can "
+        "match a whole line or just part of it, so you can easily "
+        "single out any line from any housekeeping config file.",
+        metavar='LIST', action="store", dest="only", default=None )
 
 parser.add_option( "--except", "-e",
         help="Only action config file lines NOT matching any member of a "
         "comma-separated list of regular expressions. See also "
-        "documentation for --only, above.",
-        metavar='LIST',
-        action="store", dest="excpt", default=None )
+        "documentation for --only.",
+        metavar='LIST', action="store", dest="excpt", default=None )
 
 parser.add_option( "--quiet", "-q",
         help="print only a summary of what was done.",
@@ -181,7 +183,7 @@ parser.add_option( "--verbose", "-v",
         action="store_true", dest="verbose", default=False )
 
 parser.add_option( "--debug", "-d",
-        help="print full a trace of what was done, including filename matching",
+        help="print full a trace of what was done, including matching",
         action="store_true", dest="debug", default=False )
 
 ( options, args ) = parser.parse_args()
