@@ -31,6 +31,7 @@ task run time in seconds = 1
 
 [task families]
     FOO = bar, baz
+    BAR = war, waz
 
 [dependencies]
     [[ 0,6,12,18 ]]
@@ -47,7 +48,9 @@ task run time in seconds = 1
                     prep => X & ColdA & ColdB & ColdC
                  """
     [[ 6,18 ]]
-        graph =    "F=>FOO"
+        graph = """
+                   F=>FOO => BAR
+                   bar => baz"""
 
 [environment]
 TASK_EXE_SECONDS = 5

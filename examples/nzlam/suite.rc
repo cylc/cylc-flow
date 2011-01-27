@@ -41,19 +41,22 @@ use secure passphrase = False
 
 [visualization]
     default node attributes = "style=filled"
+    #show family members = True
     #use node color for edges = False
     [[node groups]]
 	    coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
 	    var       = VAR_ConfigureLS, VAR_AnalysePF
 	    ops       = OPS
+	    ops_mem   = OPS_AircraftSonde, OPS_AIRS, OPS_ATOVS, OPS_GPSRO, OPS_IASI, OPS_SurfaceScatt, OPS_Satwind
         um        = forecast_cold, forecast
         pre       = get_frames, make_alabc, get_bgerr, get_obstore
 	    post      = get_outputs, nc_conv_met, VAR_monitoring
     [[node attributes]]
-        coldstart = "fillcolor=lightblue"
-        var       = "fillcolor=pink", "shape=rectangle"
-        ops       = "fillcolor=yellow", "shape=circle"
-        um        = "shape=septagon"
+        coldstart = "fillcolor=dodgerblue"
+        var       = "fillcolor=crimson", "shape=rectangle"
+        ops       = "fillcolor=red4", "shape=circle"
+        ops_mem   = "fillcolor=red4", "shape=ellipse"
+        um        = "shape=septagon" 
         forecast  = "fillcolor=orchid"
 	    pre       = "style=unfilled", "color=blue"
  	    post      = "style=unfilled", "color=red"

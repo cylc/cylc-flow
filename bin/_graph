@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import os, re, sys
+from time import sleep
 import gtk
 import gtk.gdk
 import gobject
@@ -93,7 +94,17 @@ class MyDotWindow( xdot.DotWindow ):
         # if suite config file has changed, reparse the graph
         if not hasattr(self, "last_mtime"):
             self.last_mtime = None
-        current_mtime = os.stat(self.suitercfile).st_mtime
+
+        while True:
+            try:
+                current_mtime = os.stat(self.suitercfile).st_mtime
+            except OSError:
+                # this happens occasionally when the file is being edited ... 
+                print "Failed to get suite.rc file modification time, trying again in 1 second"
+                sleep(1)
+            else:
+                break
+
         if current_mtime != self.last_mtime:
             self.last_mtime = current_mtime
             self.parse_graph()
@@ -108,17 +119,18 @@ if __name__ == '__main__':
      Plot the specified dot-language graph file.
 
 This command plots suite dependency graphs in a pannable, zoomable viewer.
-For the configured (suite.rc) graph, the viewer updates automatically
+
+For the suite.rc dependency graph, the viewer updates automatically
 when the suite.rc file is saved during editing. By default the full 
 graph from coldstart is plotted; you can omit suite coldstart tasks
-with the '--rawstart' option.
+with the '--warmstart' option. 
 
 Arguments:
   SUITE   - Registered name of the suite.
   START   - Hour (HH) at which to start plotting.
   STOP    - Hours beyond START at which to stop plotting (default 6).
   """)
-    parser.add_option( "--rawstart", 
+    parser.add_option( "--warmstart", 
         help="Plot the raw start graph instead of cold start.",
         action="store_true", default=False, dest="rawstart" )
 

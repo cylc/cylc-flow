@@ -190,6 +190,14 @@ class config( CylcConfigObj ):
             else:
                 raise SuiteConfigError, "Illegal clock-triggered task spec: " + item
 
+        # parse families
+        self.member_of = {}
+        self.members = {}
+        for fam in self['task families']:
+            self.members[ fam ] = self['task families'][fam]
+            for task in self['task families'][fam]:
+                self.member_of[ task ] = fam
+
     def check_tasks( self ):
         # call after all tasks are defined, to check for undefined
         # tasks and tasks that are defined but not used.
@@ -439,7 +447,6 @@ class config( CylcConfigObj ):
             lefts = re.split( '\s*[\|&]\s*', l)
 
             for left in lefts:
-
                 lnode = graphnode(left)
                 if lnode.intercycle:
                     self.taskdefs[lnode.name].intercycle = True
@@ -471,7 +478,32 @@ class config( CylcConfigObj ):
                 left  = e.get_left( ctime, started, raw, exclude_list )
                 if left == None or right == None:
                     continue
-                gr_edges.append( (left, right) )
+
+                if self['visualization']['show family members']:
+                    lname, lctime = re.split( '%', left )
+                    rname, rctime = re.split( '%', right )
+                    if lname in self.members and rname in self.members:
+                        # both families
+                        for lmem in self.members[lname]:
+                            for rmem in self.members[rname]:
+                                lmemid = lmem + '%' + lctime
+                                rmemid = rmem + '%' + rctime
+                                gr_edges.append( (lmemid, rmemid ) )
+                    elif lname in self.members:
+                        # left family
+                        for mem in self.members[lname]:
+                            memid = mem + '%' + lctime
+                            gr_edges.append( (memid, right ) )
+                    elif rname in self.members:
+                        # right family
+                        for mem in self.members[rname]:
+                            memid = mem + '%' + rctime
+                            gr_edges.append( (left, memid ) )
+                    else:
+                        # no families
+                        gr_edges.append( (left, right) )
+                else:
+                    gr_edges.append( (left, right) )
 
             # next cycle
             started = True

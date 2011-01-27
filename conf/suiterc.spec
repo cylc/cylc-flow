@@ -68,7 +68,8 @@ when to stop updating = integer( default=24 )
 # absolute, or relative to $CYLC_SUITE_DIR for portability
 run time graph directory = string( default='graphing')
 run time graph filename  = string( default='runtime.dot')
-#task families in subgraphs = boolean( default=True )
+# TO DO: USE SUB-GRAPH FOR FAMILY MEMBERS
+show family members = boolean( default=False )
 use node color for edges = boolean( default=True )
 default node attributes = force_list( default=list('style=unfilled', 'color=black', 'shape=ellipse'))
 default edge attributes = force_list( default=list('color=black'))
