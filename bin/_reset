@@ -5,6 +5,7 @@ import cycle_time
 import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
+from CylcError import CylcError
 
 parser = PromptOptionParser( """cylc reset [options] SUITE TASK_ID
 
@@ -29,19 +30,12 @@ if len(args) != 2:
 if options.waiting and options.finished:
     parser.error( "Specify waiting, finished, or neither (ready)" )
 
-ready = True
-waiting = False
-finished = False
-
 if options.waiting:
-    ready = False
-    waiting = True
-    finished = False
-
-if options.finished:
-    ready = False
-    waiting = False
-    finished = True
+    state = 'waiting'
+elif options.finished:
+    state = 'finished'
+else:
+    state = 'ready'
 
 task_id = args[1]
 
@@ -66,13 +60,10 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Reset task ' + task_id + ' in'):
     sys.exit(0)
 
-if waiting:
-    actioned, explanation = proxy.reset_to_waiting( task_id, owner )
-elif ready:
-    actioned, explanation = proxy.reset_to_ready( task_id, owner )
-elif options.finished:
-    actioned, explanation = proxy.reset_to_finished( task_id, owner )
+result = proxy.reset_task_state( task_id, state )
 
-print explanation
-if not actioned:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)

@@ -5,7 +5,7 @@ import pango
 from stateview import updater
 from combo_logviewer import combo_logviewer
 from cylc_logviewer import cylc_logviewer
-from warning_dialog import warning_dialog
+from warning_dialog import warning_dialog, info_dialog
 import Pyro.errors
 import gobject
 import pygtk
@@ -380,15 +380,15 @@ cylc gui is a real time suite control and monitoring tool for cylc.
 
         reset_ready_item = gtk.MenuItem( 'Reset to Ready (i.e. trigger immediately)' )
         menu.append( reset_ready_item )
-        reset_ready_item.connect( 'activate', self.reset_task_to_ready, task_id )
+        reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
 
         reset_waiting_item = gtk.MenuItem( 'Reset to Waiting (i.e. prerequisites unsatisfied)' )
         menu.append( reset_waiting_item )
-        reset_waiting_item.connect( 'activate', self.reset_task_to_waiting, task_id )
+        reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
 
         reset_finished_item = gtk.MenuItem( 'Reset to Finished (i.e. outputs completed)' )
         menu.append( reset_finished_item )
-        reset_finished_item.connect( 'activate', self.reset_task_to_finished, task_id )
+        reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
 
         kill_item = gtk.MenuItem( 'Remove (after spawning)' )
         menu.append( kill_item )
@@ -670,35 +670,19 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         self.quitters.remove( lv )
         w.destroy()
 
-    def reset_task_to_ready( self, b, task_id ):
-        msg = "reset " + task_id + " to ready\n(i.e. trigger immediately)?"
+    def reset_task_state( self, b, task_id, state ):
+        msg = "reset " + task_id + " to " + state +"?"
         prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
         response = prompt.run()
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
-        actioned, explanation = proxy.reset_to_ready( task_id, self.owner )
-
-    def reset_task_to_waiting( self, b, task_id ):
-        msg = "reset " + task_id + " to waiting\n(i.e. prerequisites not satisfied)?"
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
-        response = prompt.run()
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
-            return
-        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
-        actioned, explanation = proxy.reset_to_waiting( task_id, self.owner )
-
-    def reset_task_to_finished( self, b, task_id ):
-        msg = "reset " + task_id + " to finished\n (i.e. outputs completed)?"
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
-        response = prompt.run()
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
-            return
-        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
-        actioned, explanation = proxy.reset_to_finished( task_id, self.owner )
+        result = proxy.reset_task_state( task_id, state )
+        if result.success:
+            info_dialog( result.reason ).inform()
+        else:
+            warning_dialog( result.reason ).warn()
 
     def kill_task( self, b, task_id ):
         msg = "remove " + task_id + " (after spawning)?"

@@ -27,6 +27,8 @@ from config import config
 from broker import broker
 from Pyro.errors import NamingError, ProtocolError
 
+from CylcError import TaskNotFoundError, TaskStateError
+
 try:
     import graphing
 except:
@@ -944,72 +946,45 @@ class scheduler(object):
         for itask in spent:
             self.trash( itask, 'general' )
 
+    def reset_task_state( self, task_id, state ):
 
-    def reset_task( self, task_id ):
-        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
+        if state not in [ 'ready', 'waiting', 'finished' ]:
+            raise TaskStateError, 'Illegal reset state: ' + state
+
         found = False
         for itask in self.tasks:
             if itask.id == task_id:
                 found = True
                 break
 
-        if found:
-            itask.log( 'WARNING', "resetting to waiting state" )
+        if not found:
+            raise TaskNotFoundError, "Task not present in suite: " + task_id
+
+        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
+        itask.log( 'WARNING', "resetting to " + state + " state" )
+
+        if state == 'ready':
+            # waiting and all prerequisites satisified.
+            itask.state.set_status( 'waiting' )
+            itask.prerequisites.set_all_satisfied()
+            itask.outputs.set_all_incomplete()
+        elif state == 'waiting':
+            # waiting and all prerequisites UNsatisified.
             itask.state.set_status( 'waiting' )
             itask.prerequisites.set_all_unsatisfied()
             itask.outputs.set_all_incomplete()
-            try:
-                # remove the tasks's "failed" output
-                itask.outputs.remove( task_id + ' failed' )
-            except:
-                # task had no "failed" output
-                pass
-        else:
-            self.log.warning( "task to reset not found: " + task_id )
-
-    def reset_task_to_ready( self, task_id ):
-        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
-        found = False
-        for itask in self.tasks:
-            if itask.id == task_id:
-                found = True
-                break
-
-        if found:
-            itask.log( 'WARNING', "resetting to ready state" )
-            itask.state.set_status( 'waiting' )
-            itask.prerequisites.set_all_satisfied()
-            itask.outputs.set_all_incomplete()
-            try:
-                # remove the tasks's "failed" output
-                itask.outputs.remove( task_id + ' failed' )
-            except:
-                # task had no "failed" output
-                pass
-        else:
-            self.log.warning( "task to reset not found: " + task_id )
-
-    def reset_task_to_finished( self, task_id ):
-        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
-        found = False
-        for itask in self.tasks:
-            if itask.id == task_id:
-                found = True
-                break
-
-        if found:
-            itask.log( 'WARNING', "resetting to finished state" )
+        elif state == 'finished':
+            # all prerequisites satisified and all outputs complete
             itask.state.set_status( 'finished' )
             itask.prerequisites.set_all_satisfied()
             itask.outputs.set_all_complete()
-            try:
-                # remove the tasks's "failed" output
-                itask.outputs.remove( task_id + ' failed' )
-            except:
-                # task had no "failed" output
-                pass
-        else:
-            self.log.warning( "task to reset not found: " + task_id )
+
+        try:
+            # remove the tasks's "failed" output
+            itask.outputs.remove( task_id + ' failed' )
+        except:
+            # the task had no "failed" output
+            pass
 
     def insertion( self, ins_id ):
         # for remote insertion of a new task, or task group

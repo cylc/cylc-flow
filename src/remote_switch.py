@@ -3,8 +3,14 @@
 import Pyro.core
 import logging
 import sys, os
-
+from CylcError import TaskNotFoundError, TaskStateError
 from job_submit import job_submit
+
+class result:
+    def __init__( self, success, reason="Action succeeded", value=None ):
+        self.success = success
+        self.reason = reason
+        self.value = value
 
 class remote_switch( Pyro.core.ObjBase ):
     "class to take remote suite control requests" 
@@ -36,6 +42,13 @@ class remote_switch( Pyro.core.ObjBase ):
         self.locked = False
 
         self.owner = os.environ['USER']
+
+    def is_locked( self ):
+        if self.using_lock and self.locked:
+            self.warning( "Refusing remote request (suite locked)" )
+            return True
+        else:
+            return False
 
     def is_legal( self, user ):
         legal = True
@@ -112,54 +125,27 @@ class remote_switch( Pyro.core.ObjBase ):
             print "resetting failout on " + self.failout_id
             job_submit.failout_id = None
 
-    def reset_to_waiting( self, task_id, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
-        if not self.task_type_exists( task_id ):
-            return False, "No such task type: " + self.name_from_id( task_id )
-
-        # reset a task to the waiting state
-        self.warning( "REMOTE: reset to waiting: " + task_id )
-
+    def reset_task_state( self, task_id, state ):
+        if self.is_locked():
+            return result( False, "Suite Locked" )
         if task_id == self.failout_id:
             self.reset_failout()
-
-        self.pool.reset_task( task_id )
-        self.process_tasks = True
-        return True, "OK"
-
-    def reset_to_ready( self, task_id, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
-        if not self.task_type_exists( task_id ):
-            return False, "No such task type: " + self.name_from_id( task_id )
-
-        # reset a task to the ready state
-        self.warning( "REMOTE: reset to ready: " + task_id )
-        if task_id == self.failout_id:
-            self.reset_failout()
-
-        self.pool.reset_task_to_ready( task_id )
-        self.process_tasks = True
-        return True, "OK"
-
-    def reset_to_finished( self, task_id, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
-        if not self.task_type_exists( task_id ):
-            return False, "No such task type: " + self.name_from_id( task_id )
-
-        # reset a task to the finished state
-        self.warning( "REMOTE: reset to finished: " + task_id )
-        self.pool.reset_task_to_finished( task_id )
-        self.process_tasks = True
-        return True, "OK"
+        try:
+            self.pool.reset_task_state( task_id, state )
+        except TaskStateError, x:
+            self.warning( 'Refused remote reset: task state error' )
+            return result( False, x.__str__() )
+        except TaskNotFoundError, x:
+            self.warning( 'Refused remote reset: task not found' )
+            return result( False, x.__str__() )
+        except:
+            # do not let a remote request bring the suite down for any reason
+            self.warning( 'Remote reset failed: unidentified error' )
+            return result( False, "Action failed" )
+        else:
+            # report success
+            self.process_tasks = True
+            return result( True )
 
     def insert( self, ins_id, user ):
         legal, reasons = self.is_legal( user )
