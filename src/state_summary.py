@@ -5,7 +5,7 @@ import Pyro.core
 import logging
 
 class state_summary( Pyro.core.ObjBase ):
-    "class to supply suite state summary to external monitoring programs"
+    """supply suite state summary and config information to remote cylc clients."""
 
     def __init__( self, config, dummy_mode ):
         Pyro.core.ObjBase.__init__(self)
@@ -34,9 +34,6 @@ class state_summary( Pyro.core.ObjBase ):
            
         # update deprecated old-style summary (DELETE WHEN NO LONGER NEEDED)
         #self.get_summary()
-
-    def get_config( self, item ):
-        return self.config[ item ]
 
     def get_state_summary( self ):
         return [ self.global_summary, self.task_summary ]

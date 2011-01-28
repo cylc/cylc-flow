@@ -947,21 +947,21 @@ class scheduler(object):
             self.trash( itask, 'general' )
 
     def reset_task_state( self, task_id, state ):
-
         if state not in [ 'ready', 'waiting', 'finished' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
-
+        # find the task to reset
         found = False
         for itask in self.tasks:
             if itask.id == task_id:
                 found = True
                 break
-
         if not found:
             raise TaskNotFoundError, "Task not present in suite: " + task_id
 
-        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
         itask.log( 'WARNING', "resetting to " + state + " state" )
+
+        # dump state
+        self.log.warning( 'pre-reset state dump: ' + self.dump_state( new_file = True ))
 
         if state == 'ready':
             # waiting and all prerequisites satisified.
@@ -979,8 +979,8 @@ class scheduler(object):
             itask.prerequisites.set_all_satisfied()
             itask.outputs.set_all_complete()
 
+        # remove the tasks's "failed" output
         try:
-            # remove the tasks's "failed" output
             itask.outputs.remove( task_id + ' failed' )
         except:
             # the task had no "failed" output

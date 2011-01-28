@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+# TO DO: ALL REMOTE METHODS TO RETURN RESPONSE AS reset_task_state() DOES.
+
 import Pyro.core
 import logging
 import sys, os
@@ -243,15 +245,6 @@ class remote_switch( Pyro.core.ObjBase ):
         # process, to update state summary
         self.process_tasks = True
         return True, "OK"
-
-    def get_config( self, item ):
-        self.warning( "REMOTE: config item " + item )
-        try:
-            result = self.config[ item ]
-        except:
-            self.warning( "no such config item: " + item )
-        else:
-            return result
 
     def get_suite_info( self ):
         self.warning( "REMOTE: suite info requested" )

@@ -1147,34 +1147,11 @@ cylc gui is a real time suite control and monitoring tool for cylc.
     def get_pyro( self, object ):
         return cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( object)
  
-    #def block_till_connected( self ):
-    #    # NO LONGER NEEDED (non-task-list-preload startup has been disabled)
-    #    warned = False
-    #    while True:
-    #        try:
-    #            self.get_pyro( 'minimal' )
-    #        except:
-    #            if not warned:
-    #                print "waiting for suite " + self.suite + ".",
-    #                warned = True
-    #            else:
-    #                print '.',
-    #                sys.stdout.flush()
-    #        else:
-    #            print '.'
-    #            sys.stdout.flush()
-    #            time.sleep(1) # wait for suite to start
-    #            break
-    #        time.sleep(1)
-
-    #def load_task_list( self ):
-    #    #self.block_till_connected()
-    #    ss = self.get_pyro( 'state_summary' )
-    #    self.logdir = ss.get_config( 'logging_dir' ) 
-    #    self.task_list = ss.get_config( 'task_list' )
-
     def preload_task_list( self ):
-        # load suite config
+        # Load task list from suite config.
+        ### TO DO: For suites that are already running, or for dynamically
+        ### updating the viewed task list, we can retrieve the task list
+        ### (etc.) from the suite's remote state summary object.
         suiterc = config( self.suite )
         self.task_list = suiterc.get_task_name_list()
         self.use_lock = suiterc['use crude safety lock']
