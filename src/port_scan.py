@@ -50,8 +50,12 @@ class port_interrogator(object):
 def portid( host, port ):
     return host + ":" + str(port)
 
-def suiteid( name, owner, host, port ):
-    return "[" + name + "] " + owner + "@" + portid( host,port)
+def suiteid( name, owner, host, port=None ):
+    if port != None:
+        res = "[" + name + "] " + owner + "@" + portid( host,port)
+    else:
+        res = "[" + name + "] " + owner + "@" + host
+    return res
 
 def get_port( name, owner, host, passphrase=None ):
     # Scan ports until a particular suite is found.
@@ -73,8 +77,7 @@ def get_port( name, owner, host, passphrase=None ):
             if one == name and two == owner:
                 print suiteid( name, owner, host, port )
                 return port
-
-    raise SuiteNotFoundError, "ERROR: Suite not found at " + host
+    raise SuiteNotFoundError, "ERROR: suite not found: " + suiteid( name, owner, host )
 
 def check_port( name, owner, host, port, passphrase=None ):
     # is name,owner running at host:port?

@@ -6,6 +6,7 @@ from stateview import updater
 from combo_logviewer import combo_logviewer
 from cylc_logviewer import cylc_logviewer
 from warning_dialog import warning_dialog, info_dialog
+from port_scan import SuiteIdentificationError
 import Pyro.errors
 import gobject
 import pygtk
@@ -677,7 +678,12 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         prompt.destroy()
         if response != gtk.RESPONSE_OK:
             return
-        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        try:
+            proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
+        except SuiteIdentificationError, x:
+            # the suite was probably shut down by another process
+            warning_dialog( x.__str__() ).warn()
+            return
         result = proxy.reset_task_state( task_id, state )
         if result.success:
             info_dialog( result.reason ).inform()
