@@ -76,7 +76,7 @@ class taskdef(object):
         # default to dummy task for tasks in dependency graph but not in
         # [tasks] section.
         self.commands = ['cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP"'] # list of commands
-        self.scripting   = []                    # list of lines
+        self.scripting   = ''                    # list of lines
         self.environment = OrderedDict()         # var = value
         self.directives  = OrderedDict()         # var = value
 
