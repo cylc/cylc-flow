@@ -144,7 +144,7 @@ C_RUNNING_DIR = $RUNNING/C
         data   = "shape=square", "fillcolor=lawngreen"
         A      = "fillcolor=red"
         C      = "fillcolor=orange"
-        B      = "fillcolor=orangered"
+        B      = "fillcolor=magenta3"
         D      = "style=bold", "color=green4"
         E      = "style=bold", "color=blue"
         F      = "style=bold", "color=red"

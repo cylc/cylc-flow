@@ -8,6 +8,11 @@
 #          - check outputs do not appear on right side of pairs, 
 #          - OR IGNORE  IF THEY DO?
 
+# IMPORTANT NOTE: configobj.reload() apparently does not revalidate
+# (list-forcing is not done, for example, on single value lists with
+# no trailing comma) ... so to reparse the file  we have to instantiate
+# a new config object.
+
 import taskdef
 import cycle_time
 import re, os, sys, logging
