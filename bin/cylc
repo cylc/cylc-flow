@@ -94,7 +94,7 @@ usage = \
     '  list ........ Print the task list from a registered suite', 
     '  ping ........ Check that a named suite is running',
     '  scan ........ Scan cylc ports for running suites',
-    '  log ......... Print cylc logs to stdout, with optional task filtering',
+    '  log ......... Print or view suite logs, with optional filtering',
     '  monitor ..... Terminal based suite monitor',
     'T-A-S-K--I-N-T-E-R-F-A-C-E',
     '  task-started ... Acquire a lock from the lockserver, and report started',
