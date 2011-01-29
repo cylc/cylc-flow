@@ -201,15 +201,12 @@ class remote_switch( Pyro.core.ObjBase ):
         return True, "OK"
 
     def set_stop_time( self, ctime, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
-        self.warning( "REMOTE: set stop time" )
+        if self.is_locked():
+            return result( False, "Suite Locked" )
         self.pool.set_stop_time( ctime )
         # process, to update state summary
         self.process_tasks = True
-        return True, "OK"
+        return result( True, "The suite will shutdown when all tasks have passed " + ctime )
 
     def set_hold_time( self, ctime, user ):
         legal, reasons = self.is_legal( user )
@@ -223,28 +220,24 @@ class remote_switch( Pyro.core.ObjBase ):
         return True, "OK"
 
     def shutdown( self, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
-        self.warning( "REMOTE: halt when running tasks finish" )
+        if self.is_locked():
+            return result( False, "Suite Locked" )
         self.hold( user )
         self.halt = True
         # process, to update state summary
         self.process_tasks = True
-        return True, "OK"
+        return result( True, \
+                "The suite will shut down after all currently running tasks have finished" )
 
     def shutdown_now( self, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
-        self.warning( "REMOTE: halt NOW" )
+        if self.is_locked():
+            return result( False, "Suite Locked" )
         self.hold( user )
         self.halt_now = True
         # process, to update state summary
         self.process_tasks = True
-        return True, "OK"
+        return result( True, \
+                "The suite will shut down immediately" )
 
     def get_suite_info( self ):
         self.warning( "REMOTE: suite info requested" )

@@ -132,6 +132,7 @@ C_RUNNING_DIR = $RUNNING/C
 
 [visualization]
     default node attributes = "style=filled"
+    show family members = True
     [[node groups]]
         models = A, B, C
         cold   = ColdA, ColdB, ColdC

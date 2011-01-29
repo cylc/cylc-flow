@@ -98,13 +98,18 @@ class monitor(object):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
             if stop:
-                god.shutdown( self.owner )
+                result = god.shutdown( self.owner )
             elif stopat:
-                god.set_stop_time( stoptime, self.owner )
+                result = god.set_stop_time( stoptime, self.owner )
             elif stopnow:
-                god.shutdown_now( self.owner )
+                result = god.shutdown_now( self.owner )
         except Pyro.errors.NamingError:
             warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
+        else:
+            if result.success:
+                info_dialog( result.reason ).inform()
+            else:
+                warning_dialog( result.reason ).warn()
 
     def startsuite( self, bt, window, 
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
