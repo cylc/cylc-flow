@@ -987,49 +987,59 @@ class scheduler(object):
             pass
 
     def insertion( self, ins_id ):
+        #import pdb
+        #pdb.set_trace()
+
         # for remote insertion of a new task, or task group
-        self.log.warning( 'pre-insertion state dump: ' + self.dump_state( new_file = True ))
-        try:
-            ( ins_name, ins_ctime ) = ins_id.split( '%' )
-            print
-            if ins_name in self.task_name_list:
-                print "INSERTING A TASK"
-                ids = [ ins_id ]
-            elif ins_name in ( self.config[ 'task insertion groups' ] ).keys():
-                print "INSERTING A GROUP OF TASKS"
-                tasknames = self.config[ 'task insertion groups' ][ins_name]
-                ids = []
-                for name in tasknames:
+        ( ins_name, ins_ctime ) = ins_id.split( '%' )
+
+        if ins_name in self.task_name_list:
+            self.log.info( "Servicing task insertion request" )
+            ids = [ ins_id ]
+        elif ins_name in ( self.config[ 'task insertion groups' ] ):
+            self.log.info( "Servicing group insertion request" )
+            ids = []
+            for name in self.config[ 'task insertion groups' ][ins_name]:
+                if name not in self.task_name_list:
+                    self.log.warning( 'Insertion group member', name, 'is not defined: cannot insert.')
+                else:
                     ids.append( name + '%' + ins_ctime )
+        else:
+            self.log.warning( '(insertion) No such task or group: ' + task_id )
+            raise TaskNotFoundError, "No such task or group: " + task_id
+
+        rejected = []
+        inserted = []
+        to_insert = []
+        for task_id in ids:
+            rject = False
+            [ name, c_time ] = task_id.split( '%' )
+            # Instantiate the task proxy object
+            itask = self.config.get_task_proxy( name, c_time, 'waiting', startup=False )
+            # The task cycle time can be altered during task initialization
+            # so we have to create the task before checking if the task
+            # already exists in the system or the stop time has been reached.
+            for task in self.tasks:
+                if itask.id == task.id:
+                    # task already in the suite
+                    rject = True
+                    break
+            if not rject and self.stop_time:
+                if int( itask.c_time ) > int( self.stop_time ):
+                    itask.log( 'WARNING', " STOPPING at " + self.stop_time )
+                    rject = True
+            if rject:
+                rejected.append( itask.id )
+                itask.prepare_for_death()
+                del itask
             else:
-                # THIS WILL BE CAUGHT BY THE TRY BLOCK
-                raise SystemExit("no such task or group")
-
-            for task_id in ids:
-                [ name, c_time ] = task_id.split( '%' )
-                # instantiate the task proxy object
-                itask = self.config.get_task_proxy( name, c_time, 'waiting', startup=False )
-
-                # the initial task cycle time can be altered during
-                # creation, so we have to create the task before
-                # checking if stop time has been reached.
-                skip = False
-                if self.stop_time:
-                    if int( itask.c_time ) > int( self.stop_time ):
-                        itask.log( 'WARNING', " STOPPING at " + self.stop_time )
-                        itask.prepare_for_death()
-                        del itask
-                        skip = True
-                if not skip:
-                    self.insert( itask )
-
-        #except NamingError, e:
-        except Exception, e:
-            # A failed remote insertion should not bring the suite down
-            # under any circumstances (e.g. requests to insert undefined
-            # tasks).
-            print 'INSERTION FAILED:', e
-            print 
+                inserted.append( itask.id )
+                to_insert.append(itask)
+        if len( to_insert ) > 0:
+            self.log.warning( 'pre-insertion state dump: ' + self.dump_state( new_file = True ))
+            for task in to_insert:
+                self.insert( task )
+        return ( inserted, rejected )
 
     def purge( self, id, stop ):
         # Remove an entire dependancy tree rooted on the target task,

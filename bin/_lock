@@ -37,8 +37,10 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Lock' ):
     sys.exit(0)
 
-actioned, explanation = proxy.lock( owner )
+result = proxy.lock()
 
-print explanation
-if not actioned:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)

@@ -1,8 +1,12 @@
 _______
 GENERAL
 
-* suite.rc include-files: currently cannot be nested. But can be
-  mulitply-included.
+* document insertion danger: if you insert task A(T+N) ahead of A(T),
+  the suite will shut down if A(T) catches up with A(T+N): 'task has 
+  already registered its outputs'
+
+* suite.rc include-files: can be nested and mulitply-included, but the
+  edit command can't handle nesting yet.
 
 * consider calling task-started from task execution script instead of
   cylc-wrapper or task scripts: this would eliminate submitted state

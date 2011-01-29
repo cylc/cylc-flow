@@ -19,10 +19,10 @@ class remote_switch( Pyro.core.ObjBase ):
     # the task manager can take action on these when convenient.
 
     def __init__( self, config, clock, suite_dir, owner, pool, failout_id = None ):
-
         self.log = logging.getLogger( "main" )
         Pyro.core.ObjBase.__init__(self)
 
+        self.owner = os.environ['USER']
         self.config = config
         self.clock = clock
         self.suite_dir = suite_dir
@@ -31,63 +31,15 @@ class remote_switch( Pyro.core.ObjBase ):
         self.failout_id = failout_id
 
         self.tasks = pool.get_tasks()
-
         self.pool = pool
 
         self.process_tasks = False
         self.halt = False
         self.halt_now = False
 
-        # start in UNLOCKED state: locking must be done deliberately so
-        # that non-operational users aren't plagued by the lock.
+        # if using the suite lock start in the LOCKED state.
         self.using_lock = self.config['use crude safety lock']
-        self.locked = False
-
-        self.owner = os.environ['USER']
-
-    def is_locked( self ):
-        if self.using_lock and self.locked:
-            self.warning( "Refusing remote request (suite locked)" )
-            return True
-        else:
-            return False
-
-    def is_legal( self, user ):
-        legal = True
-        reasons = []
-        if user != self.owner:
-            legal = False
-            self.warning( "refusing remote request (wrong owner)" )
-            reasons.append( "wrong owner: " + self.owner )
-
-        if self.using_lock and self.locked:
-            legal = False
-            self.warning( "refusing remote request (suite locked)" )
-            reasons.append( "SUITE LOCKED" )
-
-        return ( legal, ', '.join( reasons ) )
-
-    def name_from_id( self, id ):
-        if '%' in id:
-            name, tag = id.split('%')
-        else:
-            name = id
-        return name
-
-    def task_type_exists( self, name_or_id ):
-        # does a task name or id match a known task type in this suite?
-        name = name_or_id
-        if '%' in name_or_id:
-            name, tag = name.split('%' )
-        
-        if name in self.config.get_task_name_list():
-            return True
-        else:
-            return False
-
-    def warning( self, msg ):
-        print
-        self.log.warning( msg )
+        self.locked = True
 
     def lock( self ):
         if not self.using_lock:
@@ -105,67 +57,81 @@ class remote_switch( Pyro.core.ObjBase ):
         self.locked = False
         return result( True, "the suite has been unlocked" )
 
-    def nudge( self, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
+    def nudge( self ):
+        if self._suite_is_locked():
+            return result( False, "Suite Locked" )
         # cause the task processing loop to be invoked
-        self.warning( "nudging by remote request" )
+        self._warning( "servicing remote nudge request" )
+        # just set the "process tasks" indicator
         self.process_tasks = True
-        return True, "OK"
-
-    def reset_failout( self ):
-            print "resetting failout on " + self.failout_id
-            job_submit.failout_id = None
+        return result( True )
 
     def reset_task_state( self, task_id, state ):
-        if self.is_locked():
+        if self._suite_is_locked():
             return result( False, "Suite Locked" )
         if task_id == self.failout_id:
-            self.reset_failout()
+            self._reset_failout()
         try:
             self.pool.reset_task_state( task_id, state )
         except TaskStateError, x:
-            self.warning( 'Refused remote reset: task state error' )
+            self._warning( 'Refused remote reset: task state error' )
             return result( False, x.__str__() )
         except TaskNotFoundError, x:
-            self.warning( 'Refused remote reset: task not found' )
+            self._warning( 'Refused remote reset: task not found' )
             return result( False, x.__str__() )
-        except:
+        except Exception, x:
             # do not let a remote request bring the suite down for any reason
-            self.warning( 'Remote reset failed: unidentified error' )
-            return result( False, "Action failed" )
+            self._warning( 'Remote reset failed: ' + x.__str__() )
+            return result( False, "Action failed: "  + x.__str__() )
         else:
             # report success
             self.process_tasks = True
             return result( True )
 
-    def insert( self, ins_id, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
-        ins_name = self.name_from_id( ins_id )
-
-        if not self.task_type_exists( ins_name ) and \
+    def insert( self, ins_id ):
+        if self._suite_is_locked():
+            return result( False, "Suite Locked" )
+        ins_name = self._name_from_id( ins_id )
+        if not self._task_type_exists( ins_name ) and \
                 ins_name not in self.config[ 'task insertion groups' ]:
-            return False, "No such task type or group: " + ins_name
-
+            return result( False, "No such task type or group: " + ins_name )
         ins = ins_id
-
         # insert a new task or task group into the suite
-        self.warning( "REMOTE: task or group insertion: " + ins )
         if ins == self.failout_id:
             # TO DO: DOES EQUALITY TEST FAIL IF INS IS A GROUP?
-            self.reset_failout()
-
-        self.pool.insertion( ins )
-        self.process_tasks = True
-        return True, "OK"
+            self._reset_failout()
+        try:
+            inserted, rejected = self.pool.insertion( ins )
+        except Exception, x:
+            self._warning( 'Remote insert failed: ' + x.__str__() )
+            return result( False, "Action failed: "  + x.__str__() )
+        n_inserted = len(inserted)
+        n_rejected = len(rejected)
+        if n_inserted == 0:
+            msg = "No tasks inserted"
+            if n_rejected != 0:
+                msg += '\nRejected tasks:'
+                for t in rejected:
+                    msg += '\n  ' + t
+            return result( True, msg )
+        elif n_rejected != 0:
+            self.process_tasks = True
+            msg = 'Inserted tasks:' 
+            for t in inserted:
+                msg += '\n  ' + t
+            msg += '\nRejected tasks:'
+            for t in rejected:
+                msg += '\n  ' + t
+            return result( True, msg )
+        elif n_rejected == 0:
+            self.process_tasks = True
+            msg = 'Inserted tasks:' 
+            for t in inserted:
+                msg += '\n  ' + t
+            return result( True, msg )
 
     def hold( self ):
-        if self.is_locked():
+        if self._suite_is_locked():
             return result( False, "Suite Locked" )
         if self.pool.paused():
             return result( True, "(the suite is already paused)" )
@@ -176,7 +142,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "Tasks that are ready to run will not be submitted" )
 
     def resume( self ):
-        if self.is_locked():
+        if self._suite_is_locked():
             return result( False, "Suite Locked" )
         if not self.pool.paused() and not self.pool.stopping():
             return result( True, "(the suite is not paused)" )
@@ -187,7 +153,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "Tasks will be submitted when they are ready to run" )
 
     def set_stop_time( self, ctime ):
-        if self.is_locked():
+        if self._suite_is_locked():
             return result( False, "Suite Locked" )
         self.pool.set_stop_time( ctime )
         # process, to update state summary
@@ -195,7 +161,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "The suite will shutdown when all tasks have passed " + ctime )
 
     def set_hold_time( self, ctime ):
-        if self.is_locked():
+        if self._suite_is_locked():
             return result( False, "Suite Locked" )
         self.pool.set_suite_hold( ctime )
         # process, to update state summary
@@ -203,52 +169,50 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "The suite will pause when all tasks have passed " + ctime )
 
     def shutdown( self ):
-        if self.is_locked():
+        if self._suite_is_locked():
             return result( False, "Suite Locked" )
         self.hold()
         self.halt = True
         # process, to update state summary
         self.process_tasks = True
         return result( True, \
-                "The suite will shut down after all currently running tasks have finished" )
+                "The suite will shut down after currently running tasks have finished" )
 
     def shutdown_now( self ):
-        if self.is_locked():
+        if self._suite_is_locked():
             return result( False, "Suite Locked" )
         self.hold()
         self.halt_now = True
         # process, to update state summary
         self.process_tasks = True
-        return result( True, \
-                "The suite will shut down immediately" )
+        return result( True, "The suite will shut down immediately" )
 
     def get_suite_info( self ):
-        self.warning( "REMOTE: suite info requested" )
+        self._warning( "servicing remote suite info request" )
         return [ self.config['title'], \
                 self.suite_dir, \
                 self.owner ]
 
     def get_task_list( self ):
-        self.warning( "REMOTE: task list requested" )
+        self._warning( "servicing remote task list request" )
         return self.config.get_task_name_list()
  
     def get_task_info( self, task_names ):
-        self.warning( "REMOTE: task info: " + ','.join(task_names ))
+        self._warning( "servicing remote task info request" )
         info = {}
         for name in task_names:
-            if self.task_type_exists( name ):
+            if self._task_type_exists( name ):
                 info[ name ] = self.config.get_task_class( name ).describe()
             else:
                 info[ name ] = ['ERROR: no such task type']
         return info
 
     def get_task_requisites( self, in_ids ):
-        self.warning( "REMOTE: task requisite dump request")
-
+        self._warning( "servicing remote task requisite request")
         in_ids_real = {}
         in_ids_back = {}
         for in_id in in_ids:
-            if not self.task_type_exists( in_id ):
+            if not self._task_type_exists( in_id ):
                 continue
             real_id = in_id
             in_ids_real[ in_id ] = real_id
@@ -259,42 +223,36 @@ class remote_switch( Pyro.core.ObjBase ):
         for task in self.tasks:
             # loop through the suite task list
             id = task.id
-
             if id in in_ids_back:
-
                 found = True
                 extra_info = {}
-
                 # extra info for contact tasks
                 try:
                     extra_info[ 'delayed start time reached' ] = task.start_time_reached( self.clock.get_datetime() ) 
                 except AttributeError:
                     # not a contact task
                     pass
-
                 # extra info for catchup_contact tasks
                 try:
                     extra_info[ task.__class__.name + ' caught up' ] = task.__class__.get_class_var( 'caughtup' )
                 except:
                     # not a catchup_contact task
                     pass
-
                 dump[ in_ids_back[ id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
-
         if not found:
-            self.warning( 'No tasks found to dump' )
- 
-        return dump
+            self._warning( '(no tasks found to dump' )
+        else:
+            return dump
     
     def purge( self, task_id, stop, user ):
         legal, reasons = self.is_legal( user )
         if not legal:
             return False, reasons
 
-        if not self.task_type_exists( task_id ):
-            return False, "No such task type: " + self.name_from_id( task_id )
+        if not self._task_type_exists( task_id ):
+            return False, "No such task type: " + self._name_from_id( task_id )
 
-        self.warning( "REMOTE: purge " + task_id + ' to ' + stop )
+        self._warning( "REMOTE: purge " + task_id + ' to ' + stop )
         self.pool.purge( task_id, stop )
         self.process_tasks = True
         return True, "OK"
@@ -304,10 +262,10 @@ class remote_switch( Pyro.core.ObjBase ):
         if not legal:
             return False, reasons
 
-        if not self.task_type_exists( task_id ):
-            return False, "No such task type: " + self.name_from_id( task_id )
+        if not self._task_type_exists( task_id ):
+            return False, "No such task type: " + self._name_from_id( task_id )
 
-        self.warning( "REMOTE: die: " + task_id )
+        self._warning( "REMOTE: die: " + task_id )
         self.pool.kill( [ task_id ] )
         self.process_tasks = True
         return True, "OK"
@@ -317,7 +275,7 @@ class remote_switch( Pyro.core.ObjBase ):
         if not legal:
             return False, reasons
 
-        self.warning( "REMOTE: kill cycle: " + cycle )
+        self._warning( "REMOTE: kill cycle: " + cycle )
         self.pool.kill_cycle( cycle )
         self.process_tasks = True
         return True, "OK"
@@ -327,10 +285,10 @@ class remote_switch( Pyro.core.ObjBase ):
         if not legal:
             return False, reasons
 
-        if not self.task_type_exists( task_id ):
-            return False, "No such task type: " + self.name_from_id( task_id )
+        if not self._task_type_exists( task_id ):
+            return False, "No such task type: " + self._name_from_id( task_id )
 
-        self.warning( "REMOTE: spawn and die: " + task_id )
+        self._warning( "REMOTE: spawn and die: " + task_id )
         self.pool.spawn_and_die( [ task_id ] )
         self.process_tasks = True
         return True, "OK"
@@ -339,7 +297,7 @@ class remote_switch( Pyro.core.ObjBase ):
         legal, reasons = self.is_legal( user )
         if not legal:
             return False, reasons
-        self.warning( "REMOTE: spawn and die cycle: " + cycle )
+        self._warning( "REMOTE: spawn and die cycle: " + cycle )
         self.pool.spawn_and_die_cycle( cycle )
         self.process_tasks = True
         return True, "OK"
@@ -351,7 +309,7 @@ class remote_switch( Pyro.core.ObjBase ):
 
         # change the verbosity of all the logs:
         #   debug, info, warning, error, critical
-        self.warning( "REMOTE: set verbosity " + level )
+        self._warning( "REMOTE: set verbosity " + level )
         
         if level == 'debug':
             new_level = logging.DEBUG
@@ -364,7 +322,7 @@ class remote_switch( Pyro.core.ObjBase ):
         elif level == 'critical':
             new_level = logging.CRITICAL
         else:
-            self.warning( "Illegal logging level: " + level )
+            self._warning( "Illegal logging level: " + level )
             return False, "Illegal logging level: " + level
 
         self.config[ 'logging level' ] = new_level
@@ -374,3 +332,40 @@ class remote_switch( Pyro.core.ObjBase ):
     def should_i_die( self, task_id ):
         if self.halt:
             return True
+
+    # INTERNAL USE METHODS FOLLOW:--------------------------------------
+
+    def _task_type_exists( self, name_or_id ):
+        # does a task name or id match a known task type in this suite?
+        name = name_or_id
+        if '%' in name_or_id:
+            name, tag = name.split('%' )
+        
+        if name in self.config.get_task_name_list():
+            return True
+        else:
+            return False
+
+    def _suite_is_locked( self ):
+        if self.using_lock and self.locked:
+            self._warning( "Refusing remote request (suite locked)" )
+            return True
+        else:
+            return False
+
+    def _name_from_id( self, id ):
+        if '%' in id:
+            name, tag = id.split('%')
+        else:
+            name = id
+        return name
+
+    def _warning( self, msg ):
+        print
+        self.log.warning( msg )
+
+    def _reset_failout( self ):
+            print "resetting failout on " + self.failout_id
+            job_submit.failout_id = None
+
+

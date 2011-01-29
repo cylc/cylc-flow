@@ -177,9 +177,6 @@ class config( CylcConfigObj ):
         if found_extra:
             raise SuiteConfigError, "Illegal suite.rc entry found"
 
-        # check cylc-specific self consistency
-        self.__check()
-
         self.process_configured_directories()
 
         # parse clock-triggered tasks
@@ -203,15 +200,21 @@ class config( CylcConfigObj ):
             for task in self['task families'][fam]:
                 self.member_of[ task ] = fam
 
-    def check_tasks( self ):
-        # call after all tasks are defined, to check for undefined
-        # tasks and tasks that are defined but not used.
+    def __check_tasks( self ):
+        # Call after all tasks are defined.
+        # Note: 
+        #   (a) self['tasks'][name] 
+        #       contains the task definition sections of the suite.rc file.
+        #   (b) self.taskdefs[name]
+        #       contains tasks that will be used, defined by the graph.
+        # Tasks (a) may be defined but not used (e.g. commented out of the graph)
+        # Tasks (b) may not be defined in (a), in which case they are dummied out.
         for name in self.taskdefs:
             if name not in self['tasks']:
-                print >> sys.stderr, 'WARNING: task ' + name + ' is defined by graph only.'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined by graph only.'
         for name in self['tasks']:
             if name not in self.taskdefs:
-                print >> sys.stderr, 'WARNING: task ' + name + ' is defined but not used.'
+                print >> sys.stderr, 'WARNING: task "' + name + '" is defined but not used.'
         # warn if listed special tasks are not defined
         for type in self['special tasks']:
             for name in self['special tasks'][type]:
@@ -220,7 +223,19 @@ class config( CylcConfigObj ):
                 if name not in self['tasks']:
                     # No [tasks][[name]] section
                     if name not in self.taskdefs and name not in self['tasks']:
-                        print >> sys.stderr, 'WARNING: ' + type + ' task ' + name + ' is not defined.'
+                        print >> sys.stderr, 'WARNING: ' + type + ' task "' + name + '" is not defined.'
+
+        # check task insertion groups contain valid tasks
+        for group in self['task insertion groups']:
+            for name in self['task insertion groups'][group]:
+                if name not in self['tasks'] and name not in self.taskdefs:
+                    # This is not an error because it could be caused by
+                    # temporary commenting out of a task in the graph,
+                    # and it won't cause catastrophic failure of the
+                    # insert command.
+                    print >> sys.stderr, 'WARNING: task "' + name + '" of insertion group "' + group + '" is not defined.'
+
+        # TO DO: check listed family members in the same way
 
     def process_configured_directories( self ):
         # allow $CYLC_SUITE_NAME in job submission log directory
@@ -263,9 +278,6 @@ class config( CylcConfigObj ):
 
     def get_dirname( self ):
         return self.dir
-
-    def __check( self ):
-        pass
 
     def get_title( self ):
         return self['title']
@@ -640,7 +652,7 @@ class config( CylcConfigObj ):
             if re.search( '[^\w]', name ):
                 raise SuiteConfigError, 'Illegal task name: ' + name
 
-        self.check_tasks()
+        self.__check_tasks()
         self.loaded = True
 
     def get_taskdef( self, name, type=None, oneoff=False ):

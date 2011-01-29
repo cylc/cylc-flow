@@ -27,8 +27,10 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Nudge' ):
     sys.exit(0)
 
-actioned, explanation = proxy.nudge( owner )
+result = proxy.nudge()
 
-print explanation
-if not actioned:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)

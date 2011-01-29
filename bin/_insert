@@ -43,8 +43,10 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Insert ' + target + ' in'):
     sys.exit(0)
 
-actioned, explanation = proxy.insert( target, owner )
+result = proxy.insert( target )
 
-print explanation
-if not actioned:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)

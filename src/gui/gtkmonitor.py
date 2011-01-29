@@ -972,42 +972,54 @@ cylc gui is a real time suite control and monitoring tool for cylc.
         vbox = gtk.VBox()
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'task name' )
+        label = gtk.Label( 'Task or Insertion Group name' )
         hbox.pack_start( label, True )
         entry_name = gtk.Entry()
         hbox.pack_start (entry_name, True)
         vbox.pack_start(hbox)
 
         hbox = gtk.HBox()
-        label = gtk.Label( 'cycle time' )
+        label = gtk.Label( 'Cycle Time' )
         hbox.pack_start( label, True )
         entry_ctime = gtk.Entry()
         entry_ctime.set_max_length(10)
         hbox.pack_start (entry_ctime, True)
         vbox.pack_start(hbox)
 
-        insert_button = gtk.Button( "Do it" )
+        hbox = gtk.HBox()
+        insert_button = gtk.Button( "Insert" )
         insert_button.connect("clicked", self.insert_task, window, entry_name, entry_ctime )
-        vbox.pack_start(insert_button)
- 
+        cancel_button = gtk.Button( "Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+        hbox.pack_start(cancel_button)
+        hbox.pack_start(insert_button)
+        vbox.pack_start( hbox )
+
         window.add( vbox )
         window.show_all()
-
 
     def insert_task( self, w, window, entry_name, entry_ctime ):
         name = entry_name.get_text()
         ctime = entry_ctime.get_text()
-        task_id = name + '%' + ctime
-        window.destroy()
-        msg = "insert " + task_id + "?"
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
-        response = prompt.run()
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
+        if not is_valid( ctime ):
+            warning_dialog( "Cycle time not valid: " + ctime).warn()
             return
+        if name == '':
+            warning_dialog( "Enter task or group name" ).warn()
+            return
+        window.destroy()
+        task_id = name + '%' + ctime
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-        actioned, explanation = proxy.insert( task_id, self.owner )
- 
+        try:
+            result = proxy.insert( task_id )
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+        else:
+            if result.success:
+                info_dialog( result.reason ).inform()
+            else:
+                warning_dialog( result.reason ).warn()
+
     def popup_logview( self, task_id, logfiles ):
         window = gtk.Window()
         window.modify_bg( gtk.STATE_NORMAL, 
