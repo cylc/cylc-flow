@@ -70,16 +70,26 @@ class monitor(object):
     def pause_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-            god.hold( self.owner )
-        except Pyro.errors.NamingError:
-            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
+            result = god.hold()
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+        else:
+            if result.success:
+                info_dialog( result.reason ).inform()
+            else:
+                warning_dialog( result.reason ).warn()
 
     def resume_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-            god.resume( self.owner )
-        except Pyro.errors.NamingError:
-            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
+            result = god.resume()
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
+        else:
+            if result.success:
+                info_dialog( result.reason ).inform()
+            else:
+                warning_dialog( result.reason ).warn()
 
     def stopsuite( self, bt, window, stop_rb, stopat_rb, stopnow_rb, stoptime_entry ):
         stop = False
@@ -90,6 +100,12 @@ class monitor(object):
         elif stopat_rb.get_active():
             stopat = True
             stoptime = stoptime_entry.get_text()
+            if stoptime == '':
+                warning_dialog( "No stop time entered" ).warn()
+                return
+            if not is_valid( stoptime ):
+                warning_dialog( "Invalid stop time: " + stoptime ).warn()
+                return
         elif stopnow_rb.get_active():
             stopnow = True
 
@@ -98,13 +114,13 @@ class monitor(object):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
             if stop:
-                result = god.shutdown( self.owner )
+                result = god.shutdown()
             elif stopat:
-                result = god.set_stop_time( stoptime, self.owner )
+                result = god.set_stop_time( stoptime )
             elif stopnow:
-                result = god.shutdown_now( self.owner )
-        except Pyro.errors.NamingError:
-            warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
+                result = god.shutdown_now()
+        except SuiteIdentificationError, x:
+            warning_dialog( x.__str__() ).warn()
         else:
             if result.success:
                 info_dialog( result.reason ).inform()

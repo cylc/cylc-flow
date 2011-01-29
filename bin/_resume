@@ -25,7 +25,10 @@ except SuiteIdentificationError, x:
 if not parser.prompt( 'Resume' ):
     sys.exit(0)
 
-actioned, explanation = proxy.resume( owner )
-print explanation
-if not actioned:
+result = proxy.resume()
+
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)

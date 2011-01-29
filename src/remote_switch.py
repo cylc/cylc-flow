@@ -89,29 +89,21 @@ class remote_switch( Pyro.core.ObjBase ):
         print
         self.log.warning( msg )
 
-    def lock( self, user ):
+    def lock( self ):
         if not self.using_lock:
-            return False, "This suite is not using a safety lock"
-        if user != self.owner:
-            self.warning( "refusing remote lock request (wrong owner)" )
-            return False, "You are not the suite owner"
+            return result( False, "This suite is not using a safety lock" )
         if self.locked:
-            return True, "OK (already locked)"
-        self.warning( "suite locked by remote request" )
+            return result( True, "(the suite is already locked)" )
         self.locked = True
-        return True, "OK"
+        return result( True, "the suite has been locked" )
 
-    def unlock( self, user ):
+    def unlock( self ):
         if not self.using_lock:
-            return False, "This suite is not using a safety lock"
-        if user != self.owner:
-            self.warning( "refusing remote unlock request (wrong owner)" )
-            return False, "You are not the suite owner"
+            return result( False, "This suite is not using a safety lock" )
         if not self.locked:
-            return True, "OK (already unlocked)"
-        self.warning( "suite unlocked by remote request" )
+            return result( True, "(the suite is not locked)" )
         self.locked = False
-        return True, "OK"
+        return result( True, "the suite has been unlocked" )
 
     def nudge( self, user ):
         legal, reasons = self.is_legal( user )
@@ -172,35 +164,29 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return True, "OK"
 
-    def hold( self, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
+    def hold( self ):
+        if self.is_locked():
+            return result( False, "Suite Locked" )
         if self.pool.paused():
-            return True, "OK (already paused)"
+            return result( True, "(the suite is already paused)" )
 
-        self.warning( "REMOTE: suite hold" )
         self.pool.set_suite_hold()
         # process, to update state summary
         self.process_tasks = True
-        return True, "OK"
+        return result( True, "Tasks that are ready to run will not be submitted" )
 
-    def resume( self, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
+    def resume( self ):
+        if self.is_locked():
+            return result( False, "Suite Locked" )
         if not self.pool.paused() and not self.pool.stopping():
-            return True, "OK (already resumed)"
-
-        self.warning( "REMOTE: suite resume" )
+            return result( True, "(the suite is not paused)" )
         self.pool.unset_suite_hold()
         # process, to update state summary
         self.process_tasks = True
         self.halt = False
-        return True, "OK"
+        return result( True, "Tasks will be submitted when they are ready to run" )
 
-    def set_stop_time( self, ctime, user ):
+    def set_stop_time( self, ctime ):
         if self.is_locked():
             return result( False, "Suite Locked" )
         self.pool.set_stop_time( ctime )
@@ -208,31 +194,28 @@ class remote_switch( Pyro.core.ObjBase ):
         self.process_tasks = True
         return result( True, "The suite will shutdown when all tasks have passed " + ctime )
 
-    def set_hold_time( self, ctime, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
-            return False, reasons
-
-        self.warning( "REMOTE: set hold time" )
+    def set_hold_time( self, ctime ):
+        if self.is_locked():
+            return result( False, "Suite Locked" )
         self.pool.set_suite_hold( ctime )
         # process, to update state summary
         self.process_tasks = True
-        return True, "OK"
+        return result( True, "The suite will pause when all tasks have passed " + ctime )
 
-    def shutdown( self, user ):
+    def shutdown( self ):
         if self.is_locked():
             return result( False, "Suite Locked" )
-        self.hold( user )
+        self.hold()
         self.halt = True
         # process, to update state summary
         self.process_tasks = True
         return result( True, \
                 "The suite will shut down after all currently running tasks have finished" )
 
-    def shutdown_now( self, user ):
+    def shutdown_now( self ):
         if self.is_locked():
             return result( False, "Suite Locked" )
-        self.hold( user )
+        self.hold()
         self.halt_now = True
         # process, to update state summary
         self.process_tasks = True

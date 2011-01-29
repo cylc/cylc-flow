@@ -42,17 +42,17 @@ if stop_at:
         parser.error( "invalid cycle time: " + stop_time )
     if not parser.prompt( 'Set stop time ' + stop_time + ' for'):
         sys.exit(0)
-    result = proxy.set_stop_time( stop_time, owner )
+    result = proxy.set_stop_time( stop_time )
 
 elif options.shutdownnow:
     if not parser.prompt( 'Shut down NOW' ):
         sys.exit(0)
-    result = proxy.shutdown_now( owner )
+    result = proxy.shutdown_now()
 
 else:
     if not parser.prompt( 'Shut down' ):
         sys.exit(0)
-    result = proxy.shutdown( owner )
+    result = proxy.shutdown()
 
 if result.success:
     print result.reason

@@ -36,12 +36,14 @@ except SuiteIdentificationError, x:
 if pause_at:
     if not parser.prompt( 'Pause at ' + pause_time + ' for'):
         sys.exit(0)
-    actioned, explanation = proxy.set_hold_time( pause_time, owner )
+    result = proxy.set_hold_time( pause_time )
 else:
     if not parser.prompt( 'Pause now' ):
         sys.exit(0)
-    actioned, explanation = proxy.hold( owner )
+    result = proxy.hold()
 
-print explanation
-if not actioned:
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
     sys.exit(1)
