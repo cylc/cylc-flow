@@ -3,12 +3,14 @@
 import os, re, sys
 from config import config
 from optparse import OptionParser
+from shutil import copy
+import tempfile
+import subprocess
 
 parser = OptionParser( """cylc log [options] SUITE 
-Print LOCAL cylc suite log files to stdout, with optional task
-filtering. This command is merely a convenience as you don't need to
-specify the log file locations; but the same can otherwise be obtained
-easily with 'cat', 'grep', and so on.
+Print, or view in $EDITOR, local suite log files, with optional
+filtering. This command is a convenience: you don't need to
+know the log file location on disk.
 
 Arguments:
   SUITE - access the cylc logs from the suite of this name.""")
@@ -17,13 +19,23 @@ parser.add_option( "-p", "--print",
         help="Print the suite log file location and exit.",
         action="store_true", default=False, dest="print_location" )
 
-parser.add_option( "-t", "--task-name", 
-        help="Filter the cylc log for task type NAME",
-        metavar="NAME", action="store", default=None, dest="filter" )
+parser.add_option( "-t", "--task", 
+        help="Filter the log for messages from a specific task",
+        metavar="TASK", action="store", default=None, dest="taskfilter" )
+
+parser.add_option( "-f", "--filter", 
+        help="Filter the log using a Python-style regular expression "
+        "e.g. '\[(foo|bar).*(started|finished)'",
+        metavar="RE", action="store", default=None, dest="regexfilter" )
 
 parser.add_option( "-r", "--rotation", 
         help="Rotation number (to view older, rotated logs)",
         metavar="INT", action="store", default="0", dest="rotation" )
+
+parser.add_option( "-e", "--edit",
+        help="View a temporary copy of the (filtered) log file in $EDITOR "
+        "instead of printing it to stdout.",
+        action="store_true", default=False, dest="edit" )
 
 ( options, args ) = parser.parse_args()
 
@@ -42,8 +54,10 @@ if options.print_location:
     sys.exit(0)
 
 filter = None
-if options.filter:
+if options.taskfilter:
     filter = re.compile( '\\[' + options.filter + '%\d{10}\\]' )
+elif options.regexfilter:
+    filter = re.compile( options.regexfilter )
 
 # TO DO: exception handling for large files that exceed memory capacity?
 # apparently readline() one line at a time is much slower than readlines()
@@ -56,10 +70,45 @@ lines = LOG.readlines()
 LOG.close()
 
 if filter:
+    filtered = []
     for line in lines:
         if re.search( filter, line ):
-            print line.rstrip()
-
+            filtered.append(line)
 else:
-    for line in lines:
+    filtered = lines
+
+if not options.edit:
+    for line in filtered:
         print line.rstrip()
+    sys.exit(0)
+
+try:
+    editor = os.environ['EDITOR']
+except KeyError:
+    raise SystemExit( 'export $EDITOR before using this command' )
+
+try:
+    tmpdir = os.environ['TMPDIR']
+except KeyError:
+    raise SystemExit( 'export $TMPDIR before using this command' )
+
+tmpfile = tempfile.mktemp( suffix = ".tmp", prefix = suite+'-log', dir = tmpdir )
+tmp = open( tmpfile, 'wb' )
+tmp.writelines( filtered )
+tmp.close()
+
+command_list = [ editor, tmpfile ]
+try:
+    # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+    retcode = subprocess.call( command_list )
+    if retcode != 0:
+        # the command returned non-zero exist status
+        print >> sys.stderr, ' '.join( command_list ), ' failed: ', retcode
+        sys.exit(1)
+
+except OSError:
+    # the command was not invoked
+    print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
+    #print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
+    #print >> sys.stderr, " * Are all cylc scripts executable?"
+    sys.exit(1)
