@@ -10,18 +10,11 @@ title = cylc userguide example suite
 description = """Models A.sh, B.sh, and C.sh; post processing tasks'
 D.sh, E.sh, F.sh; and data collection task X.sh. The tasks are not
 cylc-aware, have their own I/O directories, and abort if their 
-required input files are not present. The suite configures them
-all to use a common workspace for I/O, except for private running
-directories for the three warm-cycled models."""
+required input files are not present. This suite configures them
+all to use a common I/O workspace, except for private running
+directories for the restart files of the warm-cycled models."""
 
-use lockserver = False
-
-[experimental]
-#write live graph = True
-
-[dummy mode]
-#clock offset from initial cycle time in hours = 0
-task run time in seconds = 1
+use lockserver = True
 
 [special tasks]
     startup          = prep
@@ -29,17 +22,12 @@ task run time in seconds = 1
     coldstart        = ColdA, ColdB, ColdC
     clock-triggered  = X(1)
 
-[task families]
-    FOO = bar, baz
-    BAR = war, waz
-
 [dependencies]
     [[ 0,6,12,18 ]]
         graph =  """
                     X => A => B => E
-                    A => C
+                    A => C => F
                     B & C => D
-                    C:foo => F
     
                     ColdA | A(T-6) => A
                     ColdB | B(T-6) => B
@@ -47,22 +35,18 @@ task run time in seconds = 1
 
                     prep => X & ColdA & ColdB & ColdC
                  """
-    [[ 6,18 ]]
-        graph = """
-                   F=>FOO => BAR
-                   bar => baz"""
-
 [environment]
-TASK_EXE_SECONDS = 5
-WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
-RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
-# each of these is used by ModelA and ColdA etc.:
-A_RUNNING_DIR = $RUNNING/A
-B_RUNNING_DIR = $RUNNING/B
-C_RUNNING_DIR = $RUNNING/C
+    TASK_EXE_SECONDS = 5
+    WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
+    RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
+    # each of these is used by ModelA and ColdA etc.:
+    A_RUNNING_DIR = $RUNNING/A
+    B_RUNNING_DIR = $RUNNING/B
+    C_RUNNING_DIR = $RUNNING/C
 
 [ tasks ]
     [[prep]]
+        description = "clean out the suite workspace for a new run"
         command = cylc-wrapper clean-workspace.sh $WORKSPACE
     [[X]]
         description = "retrieve real time data for model A"
@@ -85,13 +69,10 @@ C_RUNNING_DIR = $RUNNING/C
             FOO = baz  # (2nd value overrides 1st)
     [[C]]
         description = "model C - river flow forecast"
-        #command = cylc-wrapper C.sh
-        command = C-no-wrap.sh
+        command = cylc-wrapper C.sh
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
-        [[[outputs]]]
-            foo = river flow outputs done for $(CYCLE_TIME)
     [[D]]
         description = "combined post processing for models B and C"
         command = cylc-wrapper D.sh
@@ -122,13 +103,6 @@ C_RUNNING_DIR = $RUNNING/C
     [[ColdC]]
         description = "model C"
         command = cylc-wrapper ColdC.sh
-
-    [[FOO]]
-    [[bar]]
-    [[baz]]
-
-    [[wazza]]
-        # trigger a "task is defined but not used" warning.
 
 [visualization]
     default node attributes = "style=filled"
