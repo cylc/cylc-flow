@@ -8,6 +8,7 @@ if [[ $# != 1 ]]; then
 fi
 
 echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
+sleep $TASK_EXE_SECONDS
 
 if [[ $# == 1 ]]; then
     WORKSPACE=$1
@@ -17,8 +18,6 @@ else
 fi
 
 echo "Cleaning $WORKSPACE ..."
-
-sleep 10
 
 rm -rf $WORKSPACE
 mkdir -p $WORKSPACE
