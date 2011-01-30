@@ -19,7 +19,7 @@ import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values
-from cylcconfigobj import CylcConfigObj
+from cylcconfigobj import CylcConfigObj, ConfigObjError
 from registration import registrations
 from graphnode import graphnode
 
@@ -143,7 +143,11 @@ class config( CylcConfigObj ):
         self.spec = os.path.join( os.environ[ 'CYLC_DIR' ], 'conf', 'suiterc.spec')
 
         # load config
-        CylcConfigObj.__init__( self, self.file, configspec=self.spec )
+        try:
+            CylcConfigObj.__init__( self, self.file, configspec=self.spec )
+        except ConfigObjError, x:
+            print x
+            sys.exit(1)
 
         # validate and convert to correct types
         val = Validator()
@@ -703,7 +707,7 @@ class config( CylcConfigObj ):
         taskd.commands    = taskconfig[ 'command' ]
         taskd.environment = taskconfig[ 'environment' ]
         taskd.directives  = taskconfig[ 'directives' ]
-        taskd.scripting   = taskconfig[ 'scripting' ]
+        taskd.scripting   = taskconfig[ 'scripting' ]['script']
 
         return taskd
 

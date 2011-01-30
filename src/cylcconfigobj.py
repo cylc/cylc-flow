@@ -1,6 +1,7 @@
 
-from configobj import ConfigObj, ConfigObjError, Section
 import os, re
+from configobj import ConfigObj, Section, \
+        ConfigObjError, NestingError, ParseError, DuplicateError, UnreprError, UnknownType
 
 class CylcConfigObj( ConfigObj ):
     """ This class overrides the _load() and parse() menthods of ConfigObj in 

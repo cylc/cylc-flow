@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -ex
+set -e
 
 usage() {
     echo "USAGE, $0 [--coldstart]" >&2

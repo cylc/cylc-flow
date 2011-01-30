@@ -75,19 +75,21 @@ C_RUNNING_DIR = $RUNNING/C
 # quotes required because of the '#' character:
 A_SHELL_PARAMETER_EXPANSION="${WORKSPACE##_.*}"
 
-
 [ tasks ]
     [[prep]]
         command = cylc-wrapper clean-workspace.sh $WORKSPACE
     [[X]]
         description = "retrieve real time data for model A"
         command = cylc-wrapper X.sh
-        scripting = """
-    echo hello
-    mkdir /tmp/munge
-    echo bye"""
         [[[ environment ]]]
             X_OUTPUT_DIR = $WORKSPACE
+        [[[ scripting ]]]
+            script = \
+"""
+echo hello
+mkdir /tmp/munge
+echo bye
+"""
     [[A]]
         description = "model A - weather forecast"
         command = cylc-wrapper A.sh

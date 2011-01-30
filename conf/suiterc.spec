@@ -105,10 +105,13 @@ __many__ = string
     owner = string( default=None )
     host = string( default=None )
     intercycle = boolean( default=False )
-    scripting = string( default='' )
     extra log files = force_list( default=list())
         [[[ environment ]]]
         __many__ = string
+        [[[ scripting ]]]
+        # this could be a multiline string at [[task]] level, but that
+        # may be confusing as it is executed after [[[environment]]].
+        script = string( default='' )
         [[[ directives ]]]
         __many__ = string
           [[[ outputs ]]]
