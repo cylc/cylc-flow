@@ -186,7 +186,7 @@ class job_submit(object):
             return self.submit_jobfile_local( dry_run )
 
     def write_jobfile( self, FILE ):
-        FILE.write( '#!/bin/bash\n\n' )
+        FILE.write( '#!' + self.__class__.shell + '\n\n' )
         FILE.write( '# ++++ THIS IS A CYLC JOB SUBMISSION FILE ++++\n\n' )
         FILE.write( '# Task Identity: ' + self.task_id + '.\n' )
         FILE.write( '# Job Submission Method: ' + self.__class__.__name__ + '\n\n' )

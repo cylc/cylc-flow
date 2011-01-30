@@ -11,6 +11,8 @@ description = """This suite is used for testing cylc features. See
 the unmodified userguide example for a clear exposition of basic
 functionality."""
 
+#job submission shell = /usr/bin/ksh
+
 use lockserver = True
 use secure passphrase = True
 

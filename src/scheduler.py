@@ -282,6 +282,7 @@ class scheduler(object):
         job_submit.dummy_mode = self.dummy_mode
         job_submit.cylc_env = cylcenv
         job_submit.global_env = globalenv
+        job_submit.shell = self.config['job submission shell']
         job_submit.joblog_dir = self.config[ 'job submission log directory' ]
         job_submit.dummy_command = self.config['dummy mode'][ 'command' ]
         job_submit.dummy_command_fail = self.config['dummy mode'][ 'command fail' ]

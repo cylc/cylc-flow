@@ -4,6 +4,10 @@ allow multiple simultaneous suite instances = boolean( default=False )
 maximum runahead hours = integer( min=0, default=24 )
 number of state dump backups = integer( min=1, default=10 )
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
+# The chosen job submission shell affects the suite.rc environment and
+# scripting sections; to allow Csh we'd just need to alter the hardwired
+# exports for TASK_NAME, CYCLE_TIME, etc. appropriately.
+job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh, default=/bin/bash )
 roll scheduler log at startup = boolean( default=True )
 
 ignore task owners = boolean( default=False )
