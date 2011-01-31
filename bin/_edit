@@ -2,88 +2,140 @@
 
 import os, re, sys
 import datetime
-from shutil import move
+import tempfile
+from shutil import copy
 import subprocess
 from optparse import OptionParser
 from collections import deque
 from registration import registrations
 
-def include_files( suitedir, inf ):
+included = []
+modtimes = {}
+backups = {}
+newfiles = []
+
+def cleanup( suitedir ):
+    print 'CLEANUP REQUESTED, deleting:'
+    for root, dirs, files in os.walk( suitedir ):
+        for file in files:
+            if re.search( '\.EDIT\..*$', file ):
+                print ' + ' + re.sub( suitedir + '/', '', file )
+                os.unlink( os.path.join( root, file ))
+
+def include_files( inf ):
+    # using globals here for commonality across recursive calls:
+    global suitedir
+    global included
+    global modtimes
     outf = []
     for line in inf:
         m = re.match( '\s*%include\s+([\w/\-\.]+)\s*$', line )
         if m:
             match = m.groups()[0]
             inc = os.path.join( suitedir, match )
-            if os.path.isfile(inc):
-                #print "Inlining", inc
-                outf.append('++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
-                h = open(inc, 'rb')
-                inc = h.readlines()
-                h.close()
-                # recursive inclusion
-                outf.extend( include_files( suitedir, inc ))
-                outf.append('++++ END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
+            if inc not in included:
+                # new include file detected
+                # back up the original
+                included.append(inc)
+                backup( inc )
+                # store original modtime
+                modtimes[inc] = os.stat( inc ).st_mtime
+                if os.path.isfile(inc):
+                    #print " + inlining", inc
+                    outf.append('++++ START INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
+                    h = open(inc, 'rb')
+                    inc = h.readlines()
+                    h.close()
+                    # recursive inclusion
+                    outf.extend( include_files( inc ))
+                    outf.append('------ END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
+                else:
+                    raise SystemExit( "File not found: " + inc )
             else:
-                raise SystemExit( "File not found: " + inc )
+                outf.append(line)
         else:
             # no match
-            outf.append( line )
+            outf.append(line)
     return outf
 
-def rename( src, dest, silent=False ):
-    if not os.path.exists( src ):
-        raise SystemExit( "File not found: " + src )
-    if not silent:
-        print 'Renaming', src, 'to', dest
-    move( src, dest )
-    return dest
+def split_file( lines, file ):
+    global suitedir
+    global modtimes
+    global newfiles
 
-def rename_datetime( src, silent=False ):
-    if not os.path.exists( src ):
-        raise SystemExit( "File not found: " + src )
-    dest = src + '.' + datetime.datetime.now().isoformat()
-    rename( src, dest, silent )
-    return dest
+    # check mod time on the target file
+    mtime = os.stat( file ).st_mtime
+    if mtime != modtimes[file]:
+        # oops - original file has changed on disk since we started editing
+        f = re.sub( suitedir + '/', '', file )
+        file = file + '.EDIT.NEW.' + datetime.datetime.now().isoformat()
+        #print ' !!! WARNING: ' + f + ' CHANGED ON DISK, I\'LL CREATE A NEW FILE INSTEAD OF OVERWRITING IT:'
+        #print '     ---> ', file
+    newfiles.append(file)
 
- 
+    inclines = []
+    fnew = open( file, 'wb' )
+    match_on = False
+    for line in lines:
+        if not match_on:
+            m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w\/\.\-]+)', line )
+            if m:
+                match_on = True
+                inc_filename = m.groups()[0]
+                inc_file = os.path.join( suitedir, m.groups()[0] )
+                fnew.write( '%include ' + inc_filename + '\n')
+            else:
+                fnew.write(line)
+        else:
+            # match on
+            m = re.match('^\-\-\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
+            if m:
+                match_on = False
+                split_file( inclines, inc_file )
+            else:
+                inclines.append(line)
+
+def backup(src):
+    if not os.path.exists(src):
+        raise SystemExit( "File not found: " + src )
+    bkp = src + '.EDIT.' + datetime.datetime.now().isoformat()
+    global backups
+    copy( src, bkp )
+    backups[ src ] = bkp
+
 parser = OptionParser( """cylc edit SUITE 
 
-Edit suite config (suite.rc) files with inlined include-files.
+Edit suite config (suite.rc) files with include-files inlined between
+special markers. After editing, the inlined file will be split up again.
+This command can be used for quick global suite editing when parameters
+of interest spans several include-files. 
 
-ACCESS TO THIS COMMAND VIA THE MAIN cylc INTERFACE HAS BEEN TEMPORARILY
-DISABLED; FOR REASONS, SEE WARNINGS BELOW.
+Include-files can be multiply-included and even nested. Only the first
+inclusion of a multiply-included file will be inlined.
+
+If any of the original files are found to have changed while the inlined
+file is being edited, you will be warned on exiting the editor and the
+affected files will be written to safe backup copies instead of
+overwriting the originals.
 
 The editing process is spawned in the foreground as follows:
-  $EDITOR <inlined-suite.rc-file>
-(You must have $EDITOR defined in your shell environment). 
+  $EDITOR <inlined-suite.rc-file in $TMPDIR>
+(You must have $EDITOR and $TMPDIR defined in your shell environment). 
 
-Include-files will be inlined between special markers. After you save
-changes and exit from your editor the file will be split back into its
-original form.
+WARNING: THIS COMMAND IS POTENTIALLY DANGEROUS. It is recommended that
+you always manage your suite definition with a revision control system.
+This makes is very easy to check after using 'cylc edit' that the 
+changes are as you expect, and to back out in case of disaster.
 
-IMPORTANT: If a file is included multiple times (e.g. for settings 
-common to multiple tasks) edit only the first inclusion; subsequent
-inclusions will be ignored.
-
-SAFETY: The inlined suite.rc file will be renamed as a backup after the
-edit session. The presence of a temporary inlined file that is newer
-than the suite.rc file may indicate that the last edit session was
-killed without saving changes. In that case you will be warned and told
-what to do when you next use the command. 
-
-WARNING: DO NOT USE THIS COMMAND AT THE SAME TIME AS EDITING A SUITE.RC
-OR INCLUDE-FILE MANUALLY - THE CONFIG FILES WILL BE OVERWRITTEN BY THIS
-COMMAND WHEN YOU FINISH THE EDIT SESSION
-
-WARNING: DOES NOT CURRENTLY HANDLED NESTED INCLUDE-FILES.
-
-TO DO: check each file has not changed before overwriting it.
-
-See also 'cylc grep', an include-file aware suite search command.
+See also 'cylc search' and 'cylc inline'.
 
 Arguments:
   SUITE   - registered name of the suite.""")
+
+parser.add_option( "--cleanup", "-c", 
+        help="Remove all backup files left by previous 'cylc edit' sessions "
+        "then exit. WARNING: check that the backups are not needed first!",
+        action="store_true", default=False, dest="cleanup" )
 
 ( options, args ) = parser.parse_args()
 
@@ -97,7 +149,13 @@ try:
 except KeyError:
     raise SystemExit( 'export $EDITOR before using this command' )
 
+try:
+    tmpdir = os.environ['TMPDIR']
+except KeyError:
+    raise SystemExit( 'export $TMPDIR before using this command' )
+
 # find location of the suite definition directory
+global suitedir
 reg = registrations()
 if reg.is_registered( suite ):
     suitedir = reg.get( suite )
@@ -105,42 +163,40 @@ else:
     reg.print_all()
     raise SystemExit( "suite " + suite + " is not registered!" )
 
+if options.cleanup:
+    cleanup( suitedir )
+    sys.exit(0)
+
 suiterc = os.path.join( suitedir, 'suite.rc' )
 
+# read the suite.rc file
 if os.path.isfile( suiterc ):
+    # back up the original
+    backup( suiterc )
+    # record original modtime
+    modtimes[suiterc] = os.stat( suiterc ).st_mtime
+    # read the file
     h = open( suiterc, 'rb' )
     lines0 = h.readlines()
     h.close()
     # inline any include files
-    lines = include_files( suitedir, lines0 )
+    lines = include_files( lines0 )
 else:
     parser.error("File not found: " + suiterc )
 
-editfile = suiterc + '.edit.inlined'
-if os.path.isfile( editfile ):
-    print "\nWARNING: an inlined 'cylc edit' suite.rc file already exists:\n  " + editfile
-    mtime_editfile = os.stat( editfile ).st_mtime
-    mtime_suiterc  = os.stat( suiterc  ).st_mtime
-    bkp = rename_datetime( editfile, silent=True )
-    print "It has been renamed to:\n  " + bkp
-    if mtime_editfile > mtime_suiterc:
-        # ... it is newer than suite.rc
-        print "\nTHE FILE WAS MODIFIED MORE RECENTLY THAN SUITE.RC. If you are"
-        print "concerned that a 'cylc edit' session may have been killed without"
-        print "saving changes, then quit out of your editor as soon as it starts"
-        print "and compare this file with the new inlined backup."
-    else:
-        # ... it is older than suite.rc
-        print "\nThe file was modified less recently than suite.rc."
-    response = raw_input( "\nContinue (y/n)?" )
-    if response != 'y':
-        print "> ABORTING"
-        sys.exit(0)
-
+# write the inlined suite.rc to a temporary file
+editfile = tempfile.mktemp( suffix = ".rc", prefix = suite + '.', dir = tmpdir )
 h = open( editfile, 'wb' )
 h.writelines( lines )
 h.close()
 
+print 'PRE-EDIT BACKUPS:'
+for file in backups:
+    src = re.sub( suitedir + '/', '', file )
+    dst = re.sub( suitedir + '/', '', backups[file] )
+    print ' + ' + src + ' ---> ' + dst
+
+# edit the temporary inlined file
 command_list = [ editor, editfile ]
 try:
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
@@ -149,71 +205,27 @@ try:
         # the command returned non-zero exist status
         print >> sys.stderr, ' '.join( command_list ), ' failed: ', retcode
         sys.exit(1)
-
 except OSError:
     # the command was not invoked
     print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
-    #print >> sys.stderr, ' * Have you sourced $CYLC_DIR/cylc-env.sh?'
-    #print >> sys.stderr, " * Are all cylc scripts executable?"
     sys.exit(1)
  
-line_count = 0
-inc_file = None
-in_include_file = False
+# !!!EDITING FINISHED!!!
 
+# read in the edited inlined file
 h = open( editfile, 'rb' )
 lines = h.readlines()
 h.close()
 
-new_suiterc_file = suiterc + '.edit.new'
-h = open( new_suiterc_file, 'wb' )
+# split it back into suite.rc plus include-files
+split_file( lines, suiterc )
 
-new_files = [ new_suiterc_file ]
-
-file_seen = {}
-skip_file = False
-for line in lines:
-    m = re.match('^\+\+\+\+ START INLINED INCLUDE FILE ([\w\/\.\-]+)', line )
-    if m:
-        # detected start of an included file
-        inc_filename = m.groups()[0]
-        if inc_filename in file_seen:
-            # seen this file already (multiple inclusion): skip it.
-            skip_file = True
-        file_seen[inc_filename] = True
-        h.write( '%include ' + inc_filename + '\n')
-        if not skip_file:
-            inc_file = os.path.join( suitedir, m.groups()[0] ) + '.edit.new'
-            new_files.append( inc_file )
-            g = open( inc_file, 'wb' )
-        in_include_file = True
-        inc_line_count = 0
-        continue
- 
-    if not in_include_file:
-        line_count += 1
-        h.write( line )
+print 'POST-EDIT FILES WRITTEN:'
+for file in newfiles:
+    f = re.sub( suitedir + '/', '', file )
+    if re.search( '\.EDIT\.NEW\.', f ):
+        print ' + ' + f + ' (!!! WARNING: original changed on disk !!!)'
     else:
-        inc_line_count += 1
-        m = re.match('^\+\+\+\+ END INLINED INCLUDE FILE ' + inc_filename, line )
-        if m:
-            in_include_file = False
-            if not skip_file:
-                g.close()
-                print ' + Wrote', inc_line_count, 'lines to', inc_file
-            else:
-                print ' - SKIPPED', inc_line_count, 'lines of', inc_file
-                skip_file = False
-            continue
-        if not skip_file:
-            g.write( line )
+        print ' + ' + f 
 
-print ' + Wrote', line_count, 'lines to', suiterc
-
-print ' + Renaming .edit.new files'
-for src in new_files:
-    dest = re.sub( '\.edit\.new', '', src )
-    rename( src, dest, silent=True )
-
-bkp = rename_datetime( editfile, silent=True )
-print ' + New inlined suite.rc backup:\n   ' + bkp
+# DONE
