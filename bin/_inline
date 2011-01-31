@@ -10,7 +10,12 @@ from registration import registrations
 
 done = []
 
-def include_files( suitedir, inf, single=False ):
+def include_files( suitedir, inf, single=False, label=False, level=None ):
+    if level == None:
+        level = ''
+    else:
+        level += '>'
+
     global done
     outf = []
     for line in inf:
@@ -23,29 +28,30 @@ def include_files( suitedir, inf, single=False ):
                     done.append(inc)
                 if os.path.isfile(inc):
                     print " + inlining", inc
-                    if single:
+                    if single or label:
                         outf.append('++++ START INLINED INCLUDE FILE ' + match + '\n' )
                     h = open(inc, 'rb')
                     inc = h.readlines()
                     h.close()
                     # recursive inclusion
-                    outf.extend( include_files( suitedir, inc, single ))
-                    if single:
+                    outf.extend( include_files( suitedir, inc, single, label, level ))
+                    if single or label:
                         outf.append('------ END INLINED INCLUDE FILE ' + match + '\n' )
                 else:
                     raise SystemExit( "File not found: " + inc )
             else:
-                outf.append(line)
+                outf.append(level + line)
         else:
             # no match
-            outf.append(line)
+            outf.append(level + line)
     return outf
 
 parser = OptionParser( """cylc inline SUITE 
 
 View a temporary copy of a suite config (suite.rc) file in your $EDITOR
-with include-files inlined (this is how the config file parser sees the
-file so it can be useful in tracking errors reported by the parser).
+with include-files inlined and marked in the left margin. The cylc
+config file parser sees the file inlined so this is useful, if you use
+include-files, in tracking errors reported by the parser).
 
 The editing process is spawned in the foreground as follows:
   $EDITOR <temporary inlined file in $TMPDIR>
@@ -56,10 +62,14 @@ See also 'cylc search' and 'cylc edit'.
 Arguments:
   SUITE   - registered name of the suite.""")
 
+parser.add_option( "--label", "-l", 
+        help="Label inclusion boundaries with the include-file name"
+        "(line numbers will no longer correspond to those reported by the parser).",
+        action="store_true", default=False, dest="label" )
+
 parser.add_option( "--single", "-s", 
-        help="Inline just the first instance of any multiply-included files, "
-        "mark the inclusion, and leave subsequent %include commands alone "
-        "(line numbers will not correspond to those reported by the parser).",
+        help="Inline and label just the first instance of any multiply-included file "
+        "(line numbers will no longer correspond to those reported by the parser).",
         action="store_true", default=False, dest="single" )
 
 ( options, args ) = parser.parse_args()
@@ -94,7 +104,7 @@ if os.path.isfile( suiterc ):
     lines0 = h.readlines()
     h.close()
     # inline any include files
-    lines = include_files( suitedir, lines0, options.single )
+    lines = include_files( suitedir, lines0, options.single, options.label )
 else:
     parser.error("Suite " + suite + " config file not found: " + suiterc )
 
