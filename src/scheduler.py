@@ -204,6 +204,21 @@ class scheduler(object):
                 self.parser.error( "invalid cycle time: " + self.pause_time )
             self.banner[ 'Pausing at' ] = self.pause_time
 
+        # USE LOCKSERVER?
+        self.use_lockserver = self.config['use lockserver']
+        if self.dummy_mode:
+            # no need for lockserver in dummy mode
+            self.use_lockserver = False
+
+        if self.use_lockserver:
+            # check that user is running a lockserver
+            # DO THIS BEFORE CONFIGURING PYRO FOR THE SUITE
+            # (else scan etc. will hang on the partially started suite).
+            try:
+                self.lockserver_port = lockserver( self.owner, self.host ).ping()
+            except port_scan.SuiteNotFoundError, x:
+                raise SystemExit( 'Lockserver not found; try \'cylclockd status\'')
+ 
         # CONFIGURE SUITE PYRO SERVER
         if self.practice:
             # modify suite name so we can run next to the original suite.
@@ -230,17 +245,7 @@ class scheduler(object):
         # USE QUICK TASK ELIMINATION?
         self.use_quick = self.config['use quick task elimination'] 
 
-        # USE LOCKSERVER?
-        self.use_lockserver = self.config['use lockserver']
-        if self.dummy_mode:
-            # no need for lockserver in dummy mode
-            self.use_lockserver = False
-
-        if self.use_lockserver:
-            # check that user is running a lockserver
-            self.lockserver_port = lockserver( self.owner, self.host ).ping()
-
-        # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
+       # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous suite instances' ]
 
         # TASK EVENT HOOKS
