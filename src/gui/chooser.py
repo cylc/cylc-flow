@@ -57,13 +57,16 @@ class chooser_updater(threading.Thread):
             ports[ name ] = port
 
         self.regd_liststore.clear()
-        for reg in self.regd_choices:
+        choices = self.regd_choices
+        # sort list of registered suites alphabetically
+        choices.sort()
+        for reg in choices:
             name, suite_dir = reg
             suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
             if name in ports:
-                self.regd_liststore.append( [name, suite_dir, 'RUNNING (port ' + str( ports[name] ) + ')', 'green' ] )
+                self.regd_liststore.append( [name, '#88ccff', 'RUNNING (port ' + str( ports[name] ) + ')', '#5599bb', suite_dir, '#88ccff' ] )
             else:
-                self.regd_liststore.append( [name, suite_dir, 'not running', 'red' ] )
+                self.regd_liststore.append( [name, 'white', 'not running', 'lightgrey', suite_dir, 'white' ] )
 
 class chooser(object):
     def __init__(self, host, imagedir ):
@@ -76,7 +79,7 @@ class chooser(object):
         self.imagedir = imagedir
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("cylc gui" )
+        self.window.set_title("cylc control" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(600, 200)
         #self.window.set_size_request(400, 100)
@@ -86,7 +89,7 @@ class chooser(object):
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         regd_treeview = gtk.TreeView()
-        regd_liststore = gtk.ListStore( str, str, str, str )
+        regd_liststore = gtk.ListStore( str, str, str, str, str, str, )
         regd_treeview.set_model(regd_liststore)
 
         # Start updating the liststore now, as we need values in it
@@ -100,23 +103,17 @@ class chooser(object):
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
         regd_ts.set_select_function( self.get_selected_suite, regd_liststore )
 
-        tvc = gtk.TreeViewColumn( 'Name' )
         cr = gtk.CellRendererText()
-        cr.set_property( 'cell-background', 'lightblue2' )
-        tvc.pack_start( cr, False )
-        tvc.set_attributes( cr, text=0 )
-        regd_treeview.append_column( tvc )
-
-        tvc = gtk.TreeViewColumn( 'Suite Definition Directory' )
-        cr = gtk.CellRendererText()
-        #cr.set_property( 'cell-background', 'lightblue2' )
-        tvc.pack_start( cr, False )
-        tvc.set_attributes( cr, text=1 )
+        tvc = gtk.TreeViewColumn( 'Name', cr, text=0, background=1 )
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'State', cr, text=2, background=3 ) # use background color stored in col 3
         regd_treeview.append_column( tvc ) 
+
+        cr = gtk.CellRendererText()
+        tvc = gtk.TreeViewColumn( 'Suite Definition Directory', cr, text=4, background=5 )
+        regd_treeview.append_column( tvc )
 
         # NOTE THAT WE CANNOT LEAVE ANY VIEWER WINDOWS OPEN WHEN WE
         # CLOSE THE CHOOSER WINDOW because when launched by the chooser 
