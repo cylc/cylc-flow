@@ -13,23 +13,18 @@ import socket
 
 if __name__ == "__main__":
 
-    parser = OptionParser( """cylc gui [options] [SUITE]
+    parser = OptionParser( """cylc control [options] [SUITE]
 
 Graphical User Interface for real time suite control and monitoring.
 
-Displays information about running cylc suites, including the current
-state of all tasks, scheduler log files, task stdout and stderr log, and
-task prerequisites and outputs.
+If SUITE is supplied the GUI will connect to the specified suite if 
+it is already running; otherwise you can start the suite from the GUI
+if you like. 
 
-If SUITE is supplied, the task list will be loaded from the suite
-definition directory so that a monitor can be displayed before the
-suite starts up (normally the task list is acquired dynamically from a
-running suite, via Pyro.
+If SUITE is NOT supplied, a top level suite chooser window appears
+to allow you to choose from among your registered suites.
 
-If SUITE is NOT supplied, you can select which suite to monitor from 
-an auto-updating list of currently running suites.
-
-Cylc gui reconnects if the target suite is restarted. 
+Cylc control reconnects if the target suite is restarted. 
 
 SUITE                  Registered name of the target suite.""")
 
@@ -38,15 +33,9 @@ SUITE                  Registered name of the target suite.""")
             metavar="HOST", action="store", default=socket.getfqdn(),
             dest="host" )
 
-    #parser.add_option( "-o", "--owner",
-    #        help="Owner of SUITE, if you are not the owner.",
-    #        metavar="USERNAME", default=os.environ["USER"],
-    #        action="store", dest="owner" )
-
     ( options, args ) = parser.parse_args()
 
     host = options.host
-    #owner = options.owner
     owner = os.environ["USER"]
 
     if len( args ) == 0:
