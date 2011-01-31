@@ -67,7 +67,7 @@ usage = \
     'S-U-I-T-E--R-E-G-I-S-T-R-A-T-I-O-N',
     '  register .... Add, view, and manage suite name registrations',
     'S-U-I-T-E--E-D-I-T-I-N-G',
-    '  search   .... A cylc suite-definition-aware text search command',
+    '  search   .... A cylc-suite-aware text search tool',
     '  graph    .... A suite dependency graph viewer that updates as you edit',
     '  inline   .... View suite config files with include-files inlined',
     #'  edit     .... Edit suite config files with inlined include-files',
