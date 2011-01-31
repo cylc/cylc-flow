@@ -6,6 +6,7 @@ from optparse import OptionParser
 from time import sleep
 
 import cycle_time
+from port_scan import SuiteNotFoundError
 from registration import registrations
 from lockserver import lockserver
 from task_lock import task_lock
@@ -119,9 +120,9 @@ task locks are always held by the suite owner, not the task owner."""
     parser.add_option( "--port", help="lockserver port (default: scan cylc ports).",
             metavar="INT", action="store", default=None, dest="port" )
 
-    parser.add_option( "--debug",
-            help="Print full Python exception tracebacks",
-            action="store_true", default=False, dest="debug" )
+    #parser.add_option( "--debug",
+    #        help="Print full Python exception tracebacks",
+    #        action="store_true", default=False, dest="debug" )
 
     ( options, args ) = parser.parse_args()
 
@@ -206,8 +207,8 @@ task locks are always held by the suite owner, not the task owner."""
             # should not be reached
             raise SystemExit( "unknown cylc lockserver option" )
 
-    except Pyro.errors.NamingError, x:
-        if options.debug:
-            raise
-        else:
-            raise SystemExit( x )
+    except SuiteNotFoundError, x:
+        #if options.debug:
+        #    raise
+        #else:
+        raise SystemExit( 'Lockserver not found; try \'cylclockd status\'.' )
