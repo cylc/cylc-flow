@@ -9,9 +9,9 @@ set -e; trap 'cylc task-failed "error trapped"' ERR
 cylc task-started || exit 1
 
 # the err trap gets failures here:
-cylcutil checkvars  TASK_EXE_SECONDS
-cylcutil checkvars -d D_INPUT_DIR
-cylcutil checkvars -c D_OUTPUT_DIR
+cute checkvars  TASK_EXE_SECONDS
+cute checkvars -d D_INPUT_DIR
+cute checkvars -c D_OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
 ONE=$D_INPUT_DIR/sea-state-${CYCLE_TIME}.nc

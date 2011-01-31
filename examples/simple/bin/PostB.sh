@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cylcutil checkvars  TASK_EXE_SECONDS
-cylcutil checkvars -d POSTB_INPUT_DIR
-cylcutil checkvars -c POSTB_OUTPUT_DIR
+cute checkvars  TASK_EXE_SECONDS
+cute checkvars -d POSTB_INPUT_DIR
+cute checkvars -c POSTB_OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
 PRE=$POSTB_INPUT_DIR/precipitation-${CYCLE_TIME}.nc

@@ -25,35 +25,35 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 allowed_commands = \
     [ 
     'help',
-    'rolling-archive',
+    'cycletime',
+    'checkvars',
+    'template',
     'housekeeping',
     'file-transfer',
-    'cycletime',
-    'template',
-    'checkvars',
+    'rolling-archive',
     ]
 
 usage = \
     [ 
-    'USAGE: cylcutil [options] COMMAND [command-options] ',
+    'USAGE: cute [options] COMMAND [command-options] ',
     '',
-    'Utility programs for use by cylc task scripts',
+    'The cylc utility commands, for use in cylc suites.',
     '',
     'options:',
     ' -v, --version  Print the cylc release version tag and exit.',
     ' -h, --help     Print this usage message and exit.',
     '',
     'command-options:',
-    '  cylcutil COMMAND --help',
+    '  cute COMMAND --help',
     '',
     'COMMANDS:',
-    '  rolling-archive .... (deprecated: use housekeeping)',
-    '  housekeeping ....... general archiving and cleanup tool',
-    '  file-transfer ...... general scp-based file transfer tool',
-    '  cycletime ......... cycle time arithmetic',
-    '  template ........... cycle time based filename templating',
-    '  checkvars ......... check that required variables are defined',
+    '  cycletime .......... Cycle time arithmetic',
+    '  checkvars .......... Check required environment variables',
+    '  template ........... Cycle time based filename templating',
+    '  housekeeping ....... General archiving and cleanup tool',
+    '  file-transfer ...... General scp-based file transfer tool',
     '  help ............... Print this message and exit; also [-h], [--help]',
+    '  rolling-archive .... (deprecated: use housekeeping)',
     ]
 
 def print_usage():
@@ -90,8 +90,8 @@ if sys.argv[1] == 'commands':
 # first argument must be COMMAND
 command = sys.argv[1]
 if command not in allowed_commands:
-    print "ERROR, illegal cylcutil command: " + command
-    print "Use 'cylcutil --help' to see legal commands"
+    print "ERROR, illegal cute command: " + command
+    print "Use 'cute --help' to see legal commands"
     sys.exit(1)
 
 if command == 'help': 

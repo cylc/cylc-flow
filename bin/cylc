@@ -54,7 +54,7 @@ usage = \
     'This is the commandline interface to the cylc self-organising adaptive',
     'multicycling forecast systems metascheduler. Cylc is pronounced \'silk\'.',
     '',
-    'See also: cylcutil --help',
+    'See also the cylc utility commands: cute --help',
     '',
     'options:',
     ' -v, --version  Print the release version tag and exit.',

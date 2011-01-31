@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cylcutil checkvars  TASK_EXE_SECONDS
-cylcutil checkvars -d E_INPUT_DIR
-cylcutil checkvars -c E_OUTPUT_DIR
+cute checkvars  TASK_EXE_SECONDS
+cute checkvars -d E_INPUT_DIR
+cute checkvars -c E_OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
 PRE=$F_INPUT_DIR/river-flow-${CYCLE_TIME}.nc

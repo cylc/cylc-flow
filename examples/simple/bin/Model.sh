@@ -6,9 +6,9 @@ usage() {
     echo "USAGE, $0 [--coldstart]" >&2
 }
 
-cylcutil checkvars  TASK_EXE_SECONDS
-cylcutil checkvars -d MODEL_INPUT_DIR
-cylcutil checkvars -c MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
+cute checkvars  TASK_EXE_SECONDS
+cute checkvars -d MODEL_INPUT_DIR
+cute checkvars -c MODEL_OUTPUT_DIR MODEL_RUNNING_DIR
 
 # CHECK COMMANDLINE
 if [[ $# > 1 ]]; then
@@ -46,9 +46,9 @@ for PRE in $ONE $TWO; do
 done
 
 # generate a restart file for the next three cycles
-touch $MODEL_RUNNING_DIR/A-$(cylcutil cycletime --add=6 ).restart
-touch $MODEL_RUNNING_DIR/A-$(cylcutil cycletime --add=12).restart
-touch $MODEL_RUNNING_DIR/A-$(cylcutil cycletime --add=18).restart
+touch $MODEL_RUNNING_DIR/A-$(cute cycletime --add=6 ).restart
+touch $MODEL_RUNNING_DIR/A-$(cute cycletime --add=12).restart
+touch $MODEL_RUNNING_DIR/A-$(cute cycletime --add=18).restart
 
 # model outputs
 touch $MODEL_OUTPUT_DIR/surface-winds-${CYCLE_TIME}.nc

@@ -4,7 +4,7 @@ import os, sys, re
 import cycle_time
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cylcutil cycletime [options] [CYCLE]
+parser = OptionParser( usage = """cute cycletime [options] [CYCLE]
 
 Cycle time arithmetic with optional transformation of the result via a
 template string. Can be used by task scripts to calculate offsets from
@@ -12,12 +12,12 @@ the current cycle time, or to access cycle time-dependent file naming
 conventions encoded in variables defined in the suite config file.
 The result is printed to stdout. 
 
-   $ cylcutil cycletime -s 6 2010082318 #....explicit cycle time offset
+   $ cute cycletime -s 6 2010082318 #....explicit cycle time offset
   2010082312
 
    $ export CYCLE_TIME=2010082318 # (as from task execution environment)
 
-   $ cylcutil cycletime -s 6 #...............offset from current cycle
+   $ cute cycletime -s 6 #...............offset from current cycle
   2010082312
 
 Arguments:

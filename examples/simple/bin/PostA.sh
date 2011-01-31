@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cylcutil checkvars  TASK_EXE_SECONDS
-cylcutil checkvars -d POSTA_INPUT_DIR
-cylcutil checkvars -c POSTA_OUTPUT_DIR
+cute checkvars  TASK_EXE_SECONDS
+cute checkvars -d POSTA_INPUT_DIR
+cute checkvars -c POSTA_OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
 PRE=$POSTA_INPUT_DIR/surface-winds-${CYCLE_TIME}.nc

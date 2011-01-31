@@ -4,9 +4,9 @@ set -e; trap 'cylc task-failed "error trapped"' ERR
 
 cylc task-started
 
-cylcutil checkvars  TASK_EXE_SECONDS
-cylcutil checkvars -d C_INPUT_DIR
-cylcutil checkvars -c C_OUTPUT_DIR C_RUNNING_DIR
+cute checkvars  TASK_EXE_SECONDS
+cute checkvars -d C_INPUT_DIR
+cute checkvars -c C_OUTPUT_DIR C_RUNNING_DIR
 
 # CHECK INPUT FILES EXIST
 ONE=$C_INPUT_DIR/precipitation-${CYCLE_TIME}.nc
@@ -23,9 +23,9 @@ echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
 sleep $TASK_EXE_SECONDS
 
 # generate a restart file for the next three cycles
-touch $C_RUNNING_DIR/C-$(cylcutil cycletime --add=6 ).restart
-touch $C_RUNNING_DIR/C-$(cylcutil cycletime --add=12).restart
-touch $C_RUNNING_DIR/C-$(cylcutil cycletime --add=18).restart
+touch $C_RUNNING_DIR/C-$(cute cycletime --add=6 ).restart
+touch $C_RUNNING_DIR/C-$(cute cycletime --add=12).restart
+touch $C_RUNNING_DIR/C-$(cute cycletime --add=18).restart
 
 # model outputs
 touch $C_OUTPUT_DIR/river-flow-${CYCLE_TIME}.nc
