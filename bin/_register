@@ -126,6 +126,8 @@ if len(args) == 2:
        # path string ... so we'll do this the crude way for now:
     if not re.match( '^/', rdir ):
         rdir = os.path.join( os.environ['PWD'], rdir )
+    # remove trailing '/'
+    rdir = rdir.rstrip( '/' )
 
 elif len(args) == 1:
     # + cylc register --print SUITE
