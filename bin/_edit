@@ -103,38 +103,46 @@ def backup(src):
     copy( src, bkp )
     backups[ src ] = bkp
 
-parser = OptionParser( """cylc edit SUITE 
+parser = OptionParser( """1/ cylc edit SUITE 
+       2/ cylc edit -c,--cleanup SUITE
+       3/ cylc edit -i,--inline SUITE
 
-Edit suite config (suite.rc) files with include-files inlined between
-special markers. After editing, the inlined file will be split up again.
-This command can be used for quick global suite editing when parameters
-of interest spans several include-files. 
+1/ Change to the suite definition directory and execute '$EDITOR suite.rc'.
+This is merely a convenience so that you don't have to remember or
+change to the suite definition location.
 
-Include-files can be multiply-included and even nested. Only the first
-inclusion of a multiply-included file will be inlined.
+2/ Remove backup files left by previous inlined edit sessions.
+
+3/ Edit suite config (suite.rc) files with include-files inlined between
+special markers, and, after editing split the file up again. This can be
+used for quick global suite editing when parameters of interest span
+several include-files. Include-files can be nested or multiply-included
+(in which case only the first inclusion will be inlined).
 
 If any of the original files are found to have changed while the inlined
 file is being edited, you will be warned on exiting the editor and the
 affected files will be written to safe backup copies instead of
-overwriting the originals.
+overwriting the originals.  WARNING: this safety measure notwithstanding
+it is recommended that you manage suite definitions with a revision
+control system so that (a) you can easily check that new changes are as
+you expect, and (b) you can easily back out in case of disaster.
 
 The editing process is spawned in the foreground as follows:
-  $EDITOR <inlined-suite.rc-file in $TMPDIR>
+  (usage 1/): $EDITOR suite.rc
+  (usage 3/): $EDITOR <inlined-suite.rc-file in $TMPDIR>
 (You must have $EDITOR and $TMPDIR defined in your shell environment). 
-
-WARNING: THIS COMMAND IS POTENTIALLY DANGEROUS. It is recommended that
-you always manage your suite definition with a revision control system.
-This makes is very easy to check after using 'cylc edit' that the 
-changes are as you expect, and to back out in case of disaster.
 
 See also 'cylc search' and 'cylc inline'.
 
 Arguments:
   SUITE   - registered name of the suite.""")
 
+parser.add_option( "--inline", "-i", 
+        help="Edit with include-files inlined as described above.",
+        action="store_true", default=False, dest="inline" )
+
 parser.add_option( "--cleanup", "-c", 
-        help="Remove all backup files left by previous 'cylc edit' sessions "
-        "then exit. WARNING: check that the backups are not needed first!",
+        help="Remove backup files left by previous inlined edit sessions.",
         action="store_true", default=False, dest="cleanup" )
 
 ( options, args ) = parser.parse_args()
@@ -149,11 +157,6 @@ try:
 except KeyError:
     raise SystemExit( 'export $EDITOR before using this command' )
 
-try:
-    tmpdir = os.environ['TMPDIR']
-except KeyError:
-    raise SystemExit( 'export $TMPDIR before using this command' )
-
 # find location of the suite definition directory
 global suitedir
 reg = registrations()
@@ -164,10 +167,50 @@ else:
     raise SystemExit( "suite " + suite + " is not registered!" )
 
 if options.cleanup:
+    # remove backup files left by inlined editing sessions
     cleanup( suitedir )
     sys.exit(0)
 
 suiterc = os.path.join( suitedir, 'suite.rc' )
+
+if not options.inline:
+    # plain old editing.
+    # move to suite def dir
+    try:
+        os.chdir( suitedir )
+    except OSError, x:
+        print x
+        sys.exit(1)
+
+    # edit the suite.rc file
+    if not os.path.isfile( suiterc ):
+        print 'ERROR, file not found: ', suiterc
+        sys.exit(1)
+ 
+    command_list = [ editor, suiterc ]
+    command = ' '.join( command_list )
+    try:
+        # THIS BLOCKS UNTIL THE COMMAND COMPLETES
+        retcode = subprocess.call( command_list )
+        if retcode != 0:
+            # the command returned non-zero exist status
+            print >> sys.stderr, command, 'failed: ', retcode
+            sys.exit(1)
+    except OSError:
+        # the command was not invoked
+        print >> sys.stderr, 'ERROR: unable to execute', command
+        sys.exit(1)
+ 
+    # !!!EDITING FINISHED!!!
+    sys.exit(0)
+
+# INLINED EDITING
+
+try:
+    tmpdir = os.environ['TMPDIR']
+except KeyError:
+    raise SystemExit( 'export $TMPDIR before using this command' )
+
 
 # read the suite.rc file
 if os.path.isfile( suiterc ):
@@ -198,16 +241,17 @@ for file in backups:
 
 # edit the temporary inlined file
 command_list = [ editor, editfile ]
+command = ' '.join( command_list )
 try:
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
     retcode = subprocess.call( command_list )
     if retcode != 0:
         # the command returned non-zero exist status
-        print >> sys.stderr, ' '.join( command_list ), ' failed: ', retcode
+        print >> sys.stderr, command, 'failed:', retcode
         sys.exit(1)
 except OSError:
     # the command was not invoked
-    print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
+    print >> sys.stderr, 'ERROR: unable to execute ', command
     sys.exit(1)
  
 # !!!EDITING FINISHED!!!
