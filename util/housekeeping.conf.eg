@@ -1,5 +1,5 @@
-# THIS IS AN EXAMPLE CONFIG FOR 'cylcutil housekeeping' 
-# For documentation, see 'cylcutil housekeeping --help'.
+# THIS IS AN EXAMPLE CONFIG FOR 'cute housekeeping' 
+# For documentation, see 'cute housekeeping --help'.
 
 # SOURCE     MATCH           OPERATION   OFFSET   [DESTINATION]
 

@@ -65,8 +65,6 @@ use lockserver = True
         [[[environment]]]
             B_INPUT_DIR = $WORKSPACE
             B_OUTPUT_DIR = $WORKSPACE
-            FOO = bar
-            FOO = baz  # (2nd value overrides 1st)
     [[C]]
         description = "model C - river flow forecast"
         command = cylc-wrapper C.sh

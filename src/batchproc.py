@@ -34,6 +34,7 @@ class batchproc:
         proc = []
         for item in self.items:
             #print 'spawning', item 
+            print item.execute()
             proc.append( Popen( item.execute(), shell=self.shell ))
         for p in proc:
             # This blocks until p finishes:

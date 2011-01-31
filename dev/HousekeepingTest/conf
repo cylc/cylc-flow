@@ -1,0 +1,8 @@
+
+SOURCE=$CYLC_DIR/dev/HousekeepingTest/SRC
+ARCHIVE=$CYLC_DIR/dev/HousekeepingTest/ARC
+
+#______________________________________________________________________
+# source     match               operation     offset     [destination]
+
+$SOURCE      foo-(\d{10}).nc     copy          24        $ARCHIVE
