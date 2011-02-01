@@ -113,18 +113,20 @@ h = open( inlined, 'wb' )
 h.writelines( lines )
 h.close()
 
-command_list = [ editor, inlined ]
- 
+# in case $EDITOR has options, e.g. 'emacs -nw':
+command_list = re.split( ' ', editor )
+command_list.append( inlined )
+command = ' '.join( command_list )
 try:
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
     retcode = subprocess.call( command_list )
     if retcode != 0:
         # the command returned non-zero exist status
-        print >> sys.stderr, ' '.join( command_list ), ' failed: ', retcode
+        print >> sys.stderr, command, ' failed:', retcode
         sys.exit(1)
 except OSError:
     # the command was not invoked
-    print >> sys.stderr, 'ERROR: unable to execute ', ' '.join(command_list)
+    print >> sys.stderr, 'ERROR: unable to execute:', command
     sys.exit(1)
  
 #print '\nRemoving temporary inlined file.'

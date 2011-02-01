@@ -187,18 +187,20 @@ if not options.inline:
         print 'ERROR, file not found: ', suiterc
         sys.exit(1)
  
-    command_list = [ editor, suiterc ]
+    # in case $EDITOR has options, e.g. 'emacs -nw':
+    command_list = re.split( ' ', editor )
+    command_list.append( suiterc )
     command = ' '.join( command_list )
     try:
         # THIS BLOCKS UNTIL THE COMMAND COMPLETES
         retcode = subprocess.call( command_list )
         if retcode != 0:
             # the command returned non-zero exist status
-            print >> sys.stderr, command, 'failed: ', retcode
+            print >> sys.stderr, command, 'failed:', retcode
             sys.exit(1)
     except OSError:
         # the command was not invoked
-        print >> sys.stderr, 'ERROR: unable to execute', command
+        print >> sys.stderr, 'ERROR: unable to execute:', command
         sys.exit(1)
  
     # !!!EDITING FINISHED!!!
@@ -239,8 +241,9 @@ for file in backups:
     dst = re.sub( suitedir + '/', '', backups[file] )
     print ' + ' + src + ' ---> ' + dst
 
-# edit the temporary inlined file
-command_list = [ editor, editfile ]
+# in case $EDITOR has options, e.g. 'emacs -nw':
+command_list = re.split( ' ', editor )
+command_list.append( editfile )
 command = ' '.join( command_list )
 try:
     # THIS BLOCKS UNTIL THE COMMAND COMPLETES
@@ -251,7 +254,7 @@ try:
         sys.exit(1)
 except OSError:
     # the command was not invoked
-    print >> sys.stderr, 'ERROR: unable to execute ', command
+    print >> sys.stderr, 'ERROR: unable to execute:', command
     sys.exit(1)
  
 # !!!EDITING FINISHED!!!
