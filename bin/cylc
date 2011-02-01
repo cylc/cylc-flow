@@ -25,7 +25,9 @@ locking_commands = \
     [
     'cylclockd',
     'lockserver',
-    ]
+    'lock',
+    'unlock',
+     ]
 
 utility_commands = \
     [ 
@@ -41,7 +43,6 @@ preparation_commands = \
     [
     'register',
     'cylclockd',
-    'lockserver',
     ]
     #preparation_commands.sort()
 
@@ -180,9 +181,13 @@ information_help = "Cylc commands for interrogating registered or running suites
 core_help = "The core cylc command set for preparing and running suites."
 other_help = "Commands outside of the cylc core command set for users."
 locking_help = \
-"""Cylc commands pertaining to suite and task locking in a potentially
-distributed environment - preventing accidental execution of multiple
-instances of the same suite or task at the same time."""
+"""Cylc commands pertaining to: 
+  (a) suite and task locking in a potentially distributed environment,
+i.e. preventing accidental execution of multiple instances of the same
+suite or task at the same time, and,
+  (b) the simple 'lock' and 'unlock' commands which are entirely unrelated
+to the lockserver (they're a crude safety mechanism to prevent accidental
+intervention in an important suite)."""
 messaging_help = \
 """The cylc task messaging interface. Running tasks must use these commands
 to communicate with their parent suite (cylc instance). However, most tasks
@@ -207,8 +212,8 @@ comsum[ 'restart'   ] = 'Restart a suite from a previous state'
 comsum[ 'stop'      ] = 'Shut down a running suite (now or later)'
 comsum[ 'pause'     ] = 'Pause a running suite (stop submitting ready tasks)'
 comsum[ 'resume'    ] = 'Unpause a running suite (resume submitting tasks)'
-comsum[ 'lock'      ] = 'Stop complying with intervention commands'
-comsum[ 'unlock'    ] = 'Resume complying with intervention commands'
+comsum[ 'lock'      ] = 'Tell a suite to ignore subsequent commands'
+comsum[ 'unlock'    ] = 'Tell a suite to action subsequent commands'
 comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
 comsum[ 'reset'     ] = 'Force a task to change state (manual triggering!)'
 comsum[ 'kill'      ] = 'Remove tasks from a running suite'
