@@ -212,11 +212,17 @@ A real time suite control and monitoring tool for cylc.
     def collapse_all( self, widget, view ):
         view.collapse_all()
 
-    def no_task_headings( self, w ):
+    def toggle_headings( self, w ):
+        if w.get_active():
+            self.no_task_headings()
+        else:
+            self.full_task_headings()
+
+    def no_task_headings( self ):
         self.led_headings = ['Cycle Time' ] + [''] * len( self.task_list )
         self.reset_led_headings()
 
-    def full_task_headings( self, w ):
+    def full_task_headings( self ):
         self.led_headings = ['Cycle Time' ] + self.task_list
         self.reset_led_headings()
 
@@ -225,7 +231,7 @@ A real time suite control and monitoring tool for cylc.
         for n in range( 1,1+len( self.task_list) ):
             heading = self.led_headings[n]
             # underscores treated as underlines markup?
-            #heading = re.sub( '_', ' ', heading )
+            heading = re.sub( '_', '\_', heading )
             tvcs[n].set_title( heading )
 
     def create_led_panel( self ):
@@ -263,7 +269,6 @@ A real time suite control and monitoring tool for cylc.
 
         self.led_treeview = treeview
         sw.add( treeview )
-
         return sw
     
     def create_tree_panel( self ):
@@ -1075,19 +1080,6 @@ A real time suite control and monitoring tool for cylc.
         exit_item.connect( 'activate', self.click_exit )
         file_menu.append( exit_item )
 
-
-        view_menu = gtk.Menu()
-        view_menu_root = gtk.MenuItem( 'View' )
-        view_menu_root.set_submenu( view_menu )
-
-        heading_none_item = gtk.MenuItem( 'No Task Names' )
-        view_menu.append( heading_none_item )
-        heading_none_item.connect( 'activate', self.no_task_headings )
-
-        heading_full_item = gtk.MenuItem( 'Full Task Names' )
-        view_menu.append( heading_full_item )
-        heading_full_item.connect( 'activate', self.full_task_headings )
-
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( 'Suite' )
         start_menu_root.set_submenu( start_menu )
@@ -1148,7 +1140,6 @@ A real time suite control and monitoring tool for cylc.
       
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
-        self.menu_bar.append( view_menu_root )
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
 
@@ -1254,11 +1245,18 @@ A real time suite control and monitoring tool for cylc.
 
         self.create_menu()
 
+        view_button = gtk.ToggleButton( "Toggle Task Names" )
+        view_button.connect( 'toggled', self.toggle_headings )
+    
         self.led_headings = None 
+        self.full_task_headings()
 
         bigbox = gtk.VBox()
         bigbox.pack_start( self.menu_bar, False )
-        bigbox.pack_start( self.create_info_bar(), False )
+        hbox = gtk.HBox()
+        hbox.pack_start( self.create_info_bar(), True )
+        hbox.pack_start( view_button, False )
+        bigbox.pack_start( hbox, False )
         bigbox.pack_start( main_panes, True )
         self.window.add( bigbox )
 
