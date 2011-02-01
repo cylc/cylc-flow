@@ -245,8 +245,7 @@ class remote_switch( Pyro.core.ObjBase ):
             return dump
     
     def purge( self, task_id, stop, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
+        if self._suite_is_blocked():
             return False, reasons
 
         if not self._task_type_exists( task_id ):
@@ -258,8 +257,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return True, "OK"
 
     def die( self, task_id, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
+        if self._suite_is_blocked():
             return False, reasons
 
         if not self._task_type_exists( task_id ):
@@ -271,8 +269,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return True, "OK"
 
     def die_cycle( self, cycle, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
+        if self._suite_is_blocked():
             return False, reasons
 
         self._warning( "REMOTE: kill cycle: " + cycle )
@@ -281,8 +278,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return True, "OK"
 
     def spawn_and_die( self, task_id, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
+        if self._suite_is_blocked():
             return False, reasons
 
         if not self._task_type_exists( task_id ):
@@ -294,8 +290,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return True, "OK"
 
     def spawn_and_die_cycle( self, cycle, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
+        if self._suite_is_blocked():
             return False, reasons
         self._warning( "REMOTE: spawn and die cycle: " + cycle )
         self.pool.spawn_and_die_cycle( cycle )
@@ -303,8 +298,7 @@ class remote_switch( Pyro.core.ObjBase ):
         return True, "OK"
 
     def set_verbosity( self, level, user ):
-        legal, reasons = self.is_legal( user )
-        if not legal:
+        if self._suite_is_blocked():
             return False, reasons
 
         # change the verbosity of all the logs:

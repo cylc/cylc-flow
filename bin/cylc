@@ -21,6 +21,27 @@ categories = \
      'security',
      ]
 
+core_commands = \
+    [
+    'register',
+    'control',
+    'coldstart',
+    'warmstart',
+    'restart',
+    'pause',
+    'resume',
+    'stop',
+    'insert',
+    'remove',
+    'purge',
+    'submit',
+    'ping',
+    'scan',
+    'list',
+    'dump',
+    'show',
+    ]
+
 locking_commands = \
     [
     'cylclockd',
@@ -63,7 +84,7 @@ run_commands = \
     'stop',
     'insert',
     'reset',
-    'kill',
+    'remove',
     'purge',
     'block',
     'unblock',
@@ -100,38 +121,24 @@ for command in prep_commands + run_commands + info_commands + locking_commands +
             allcom[ command ] = True
 commands_commands = allcom.keys()
 
-# ... same for suite-related commands
-corecom = OrderedDict()
-for command in prep_commands + run_commands + info_commands: 
-            corecom[ command ] = True
-core_commands = corecom.keys()
-core_commands.remove( 'monitor' )
-core_commands.remove( 'inline' )
-core_commands.remove( 'view' )
-core_commands.remove( 'block' )
-core_commands.remove( 'unblock' )
-core_commands.remove( 'verbosity' )
-core_commands.remove( 'rawstart' )
-
 other_commands = commands_commands[:]
 for command in core_commands:
     other_commands.remove( command )
 
-usage = """This is the cylc metascheduler commandline interface.
+usage = """
+This is the cylc metascheduler commandline interface.
 
-Command usage:
+Command Usage:
     $ cylc COMMAND [options] SUITE [arguments]
-
-Command-specific help:
     $ cylc COMMAND --help
 
-Commands by category:
+COMMANDs by category:
     $ cylc help CATEGORY
- Main categories:
+  Main categories:
     core ....... essential commands
     other ...... other commands
     commands ... all of the above
- Finer graining: 
+  Finer graining: 
     prep ....... suite preparation and editing
     run ........ running and controlling suites
     info ....... getting information from suites
@@ -143,7 +150,7 @@ Commands by category:
 Cylc release version:
     $ cylc -v,--version
 
-This help page:
+Main help (this page):
     $ cylc help,-h,-help,--help,?,-?
     """
 
@@ -205,7 +212,7 @@ comsum = {}
 comsum[ 'register'  ] = 'Manage suite registrations (name -> definition dir)'
 comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
 comsum[ 'search'    ] = 'An intelligent search tool for cylc suites'
-comsum[ 'graph'     ] = 'View a updating dependency graph as you edit a suite'
+comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
 comsum[ 'inline'    ] = 'View suite.rc files with include-files inlined'
 comsum[ 'edit'      ] = 'Edit suite.rc files with include-files inlined'
 comsum[ 'coldstart' ] = 'Cold start a suite at a given cycle time'
@@ -219,7 +226,7 @@ comsum[ 'block'     ] = 'Do not comply with subsequent intervention commands'
 comsum[ 'unblock'   ] = 'Do comply with subsequent intervention commands'
 comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
 comsum[ 'reset'     ] = 'Force a task to change state (manual triggering!)'
-comsum[ 'kill'      ] = 'Remove tasks from a running suite'
+comsum[ 'remove'    ] = 'Remove tasks from a running suite'
 comsum[ 'purge'     ] = 'Remove a full dependency tree from a running suite'
 comsum[ 'submit'    ] = 'Submit a single task exactly as the suite would'
 comsum[ 'control'   ] = 'Suite control and monitoring GUI'
@@ -285,7 +292,7 @@ if cathelp:
     print eval (cat + '_help')
     print general_usage
     print
-    print 'COMMAND:'
+    print 'COMMANDs:'
     output = []
     commands = eval( cat + '_commands')
     longest = len(commands[0])
