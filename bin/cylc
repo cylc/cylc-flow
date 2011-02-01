@@ -118,6 +118,9 @@ core_commands.remove( 'inline' )
 core_commands.remove( 'view' )
 core_commands.remove( 'cylclockd' )
 core_commands.remove( 'lockserver' )
+core_commands.remove( 'lock' )
+core_commands.remove( 'unlock' )
+core_commands.remove( 'verbosity' )
 
 other_commands = all_commands[:]
 for command in core_commands:
