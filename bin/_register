@@ -39,24 +39,25 @@ with a suite definition directory (stored in $HOME/.cylc/registrations).
 4/ Delete all registrations, or just those that are no longer valid:
      $ cylc register [--wipe] [--check]
 
-Registered names are used to target particular suites with cylc
-commands. They are also used in logging and state dump directory
-paths, allowing multiple suites to run at once without interference.
+Suite names are used by cylc commands to target the right suites. They
+are also used in suite logging and state dump directory paths, allowing
+multiple suites to run at once without interference.
 
 Real and dummy mode instances of a suite can be run simultaneously
 under different names (but see 'cylc restart --practice-mode' which
 automates this without requiring a new registration).
 
-The registered name is also exported into the execution environment of
-all suite tasks as $CYLC_SUITE_NAME. If all tasks use this in all I/O
-paths you can run multiple simultaneous real mode instances of the same
-suite under different names (e.g. over different time periods). The cylc
-lockserver, via a suite.rc setting, does not allow this. The cylc
-userguide example suite can do this, however. 
+The suite name is exported into the task execution environment as
+$CYLC_SUITE_NAME. If all tasks use this in their I/O paths you can run
+multiple instances of the exact same suite under different names at the
+same time (e.g. over different case study periods). The cylc lockserver
+does not allow this unless you set,
+  SUITE.RC: allow multiple simultaneous suite instances = True
+The cylc userguide example suite can do this. 
 
-Deletion of a suite registration does not delete the suite. If you
-delete a running suite's registration you will not be able to access it
-with cylc commands unless you re-register it under the same name.
+If you accidentally delete a running suite's name registration you will
+not be able to access it with cylc commands unless you re-register it
+under the same name.
 
 Arguments:
   PATH            Path to a cylc suite definition directory.
