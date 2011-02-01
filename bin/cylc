@@ -16,7 +16,7 @@ categories = \
      'info',
      'util',
      'task',
-     'all',
+     'commands',
      'locking',
      'security',
      ]
@@ -98,7 +98,7 @@ allcom = OrderedDict()
 for command in prep_commands + run_commands + info_commands + locking_commands + \
         security_commands + task_commands + util_commands:
             allcom[ command ] = True
-all_commands = allcom.keys()
+commands_commands = allcom.keys()
 
 # ... same for suite-related commands
 corecom = OrderedDict()
@@ -113,7 +113,7 @@ core_commands.remove( 'unblock' )
 core_commands.remove( 'verbosity' )
 core_commands.remove( 'rawstart' )
 
-other_commands = all_commands[:]
+other_commands = commands_commands[:]
 for command in core_commands:
     other_commands.remove( command )
 
@@ -130,7 +130,7 @@ Commands by category:
  Main categories:
     core ....... essential commands
     other ...... other commands
-    all ........ the complete command set
+    commands ... all of the above
  Finer graining: 
     prep ....... suite preparation and editing
     run ........ running and controlling suites
@@ -179,15 +179,15 @@ Cylc commands allow only the suite owner to intervene in a running suite.
 Suite blocking guards against inadvertent intervention in your own suites.
  + SUITE.RC: use suite blocking = True
 
-A secure passphrase will prevent other users from accessing your suite
-even if they hack the cylc command source code to subvert the owner-only
-restriction.
+A secure passphrase prevents other users from accessing your suite even
+if they hack command source code to subvert the owner-only restriction.
  + SUITE.RC: use secure passphrase = True
+
 The passphrase must be stored in $HOME/.cylc/security/[SUITE_NAME] with
 private file permissions, or cylc will refuse to run the suite. If your
-suite has tasks that run on a remote host or under another username,
-those accounts must hold the passphrase too. The passphrase is never
-transferred across the network; a secure md5 checksum is exchanged."""
+suite contains tasks that run on a remote host or under another
+username, those accounts must also hold the passphrase. The passphrase
+is never sent across the network; a secure md5 checksum is exchanged."""
 
 locking_help = """
 CATEGORY:locking - the cylc lockserver daemon and its user interface."""
@@ -198,7 +198,7 @@ CATEGORY:task - task wrapping and messaging"""
 util_help = """
 CATEGORY:util - utility commands designed for use with cylc."""
 
-all_help = "The complete cylc command set."
+commands_help = "The complete cylc command set."
 
 # command summaries
 comsum = {}
@@ -215,8 +215,8 @@ comsum[ 'restart'   ] = 'Restart a suite from a previous state'
 comsum[ 'stop'      ] = 'Shut down a running suite (now or later)'
 comsum[ 'pause'     ] = 'Pause a running suite (stop submitting ready tasks)'
 comsum[ 'resume'    ] = 'Unpause a running suite (resume submitting tasks)'
-comsum[ 'block'     ] = 'Tell a suite to ignore subsequent interventions'
-comsum[ 'unblock'   ] = 'Tell a suite to action subsequent interventions'
+comsum[ 'block'     ] = 'Do not comply with subsequent intervention commands'
+comsum[ 'unblock'   ] = 'Do comply with subsequent intervention commands'
 comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
 comsum[ 'reset'     ] = 'Force a task to change state (manual triggering!)'
 comsum[ 'kill'      ] = 'Remove tasks from a running suite'
@@ -308,7 +308,7 @@ if cathelp:
 arglist = sys.argv[1:]
 if len(arglist) == 2:
     # catch reversed usage: 'cylc help COMMAND'
-    if arglist[0] == 'help' and arglist[1] in all_commands:
+    if arglist[0] == 'help' and arglist[1] in commands_commands:
         arglist[0] = arglist[1]
         arglist[1] = '--help'
 
@@ -317,7 +317,7 @@ options = []
 if len(arglist) > 1:
     options = arglist[1:]
 
-if command not in all_commands:
+if command not in commands_commands:
     print "ERROR, illegal cylc command: " + command
     print >> sys.stderr, usage
     sys.exit(1)
