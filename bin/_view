@@ -13,9 +13,9 @@ import socket
 
 if __name__ == "__main__":
 
-    parser = OptionParser( """cylc control [options] [SUITE]
+    parser = OptionParser( """cylc view [options] [SUITE]
 
-A real time suite control and monitoring GUI.
+This is a read-only version of the 'cylc control' GUI.
 
 If SUITE is specified the GUI will connect to the specified suite if 
 it is already running; otherwise you can start the suite from the GUI.
@@ -23,11 +23,11 @@ it is already running; otherwise you can start the suite from the GUI.
 If SUITE is NOT specified, a top level suite chooser window appears
 to allow you to choose from among your registered suites.
 
-Cylc control reconnects if the target suite is restarted. 
+Cylc view reconnects if the target suite is restarted. 
 
 See also:
-    cylc view
-(a read-only version of the control GUI)
+    cylc control
+(which has suite control functionality enabled)
 
 SUITE                  Registered name of the target suite.""")
 
@@ -53,7 +53,7 @@ SUITE                  Registered name of the target suite.""")
     imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
     if use_chooser:
-        app = chooser( host, imagedir )
+        app = chooser( host, imagedir, readonly=True )
 
     else:
         # get suite definition directory
@@ -80,6 +80,6 @@ SUITE                  Registered name of the target suite.""")
             port = None
             print >> sys.stderr, "WARNING: suite " + suite + " is not running"
 
-        app = standalone_monitor( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+        app = standalone_monitor( suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=True )
 
     gtk.main()

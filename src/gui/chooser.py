@@ -69,9 +69,10 @@ class chooser_updater(threading.Thread):
                 self.regd_liststore.append( [name, 'white', 'not running', 'lightgrey', suite_dir, 'white' ] )
 
 class chooser(object):
-    def __init__(self, host, imagedir ):
+    def __init__(self, host, imagedir, readonly=False ):
 
         self.owner = os.environ['USER']
+        self.readonly = readonly
 
         gobject.threads_init()
 
@@ -79,7 +80,10 @@ class chooser(object):
         self.imagedir = imagedir
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_title("cylc control" )
+        if self.readonly:
+            self.window.set_title("cylc view (READONLY)" )
+        else:
+            self.window.set_title("cylc control" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(600, 200)
         #self.window.set_size_request(400, 100)
@@ -157,6 +161,6 @@ class chooser(object):
         # get suite logging directory
         logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
 
-        tv = monitor(name, self.owner, self.host, port, suite_dir, logging_dir, self.imagedir )
+        tv = monitor(name, self.owner, self.host, port, suite_dir, logging_dir, self.imagedir, self.readonly )
         self.viewer_list.append( tv )
         return False

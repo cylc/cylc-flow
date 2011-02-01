@@ -403,26 +403,38 @@ A real time suite control and monitoring tool for cylc.
         reset_ready_item = gtk.MenuItem( 'Reset to Ready (i.e. trigger immediately)' )
         menu.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
+        if self.readonly:
+            reset_ready_item.set_sensitive(False)
 
         reset_waiting_item = gtk.MenuItem( 'Reset to Waiting (i.e. prerequisites unsatisfied)' )
         menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
+        if self.readonly:
+            reset_waiting_item.set_sensitive(False)
 
         reset_finished_item = gtk.MenuItem( 'Reset to Finished (i.e. outputs completed)' )
         menu.append( reset_finished_item )
         reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
+        if self.readonly:
+            reset_finished_item.set_sensitive(False)
 
         kill_item = gtk.MenuItem( 'Remove (after spawning)' )
         menu.append( kill_item )
         kill_item.connect( 'activate', self.kill_task, task_id )
+        if self.readonly:
+            kill_item.set_sensitive(False)
 
         kill_nospawn_item = gtk.MenuItem( 'Remove (without spawning)' )
         menu.append( kill_nospawn_item )
         kill_nospawn_item.connect( 'activate', self.kill_task_nospawn, task_id )
+        if self.readonly:
+            kill_nospawn_item.set_sensitive(False)
 
         purge_item = gtk.MenuItem( 'Recursive Purge' )
         menu.append( purge_item )
         purge_item.connect( 'activate', self.popup_purge, task_id )
+        if self.readonly:
+            purge_item.set_sensitive(False)
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
@@ -511,7 +523,10 @@ A real time suite control and monitoring tool for cylc.
     def userguide( self, w ):
         window = gtk.Window()
         #window.set_border_width( 10 )
-        window.set_title( "Cylc Control Quick Guide" )
+        if self.readonly:
+            window.set_title( "Cylc View Quick Guide" )
+        else:
+            window.set_title( "Cylc Control Quick Guide" )
         #window.modify_bg( gtk.STATE_NORMAL, 
         #       gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_size_request(600, 600)
@@ -536,8 +551,13 @@ A real time suite control and monitoring tool for cylc.
         textview.set_wrap_mode( gtk.WRAP_WORD )
 
         blue = tb.create_tag( None, foreground = "blue" )
-        red = tb.create_tag( None, foreground = "red" )
+        red = tb.create_tag( None, foreground = "darkgreen" )
+        alert = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
+
+        self.update_tb( tb, "\n\nThis is 'cylc view', the read-only "
+                "version of the 'cylc control' GUI: all of the suite control "
+                "functionality documented below has been disabled.'\n\n", [bold, alert] )
 
         self.update_tb( tb, "Cylc Control Quick Guide", [bold, blue] )
 
@@ -1078,10 +1098,14 @@ A real time suite control and monitoring tool for cylc.
             unlock_item = gtk.MenuItem( 'Unlock ' + self.suite )
             lock_menu.append( unlock_item )
             unlock_item.connect( 'activate', self.unlock_suite )
+            if self.readonly:
+                unlock_item.set_sensitive(False)
 
             lock_item = gtk.MenuItem( 'Lock ' + self.suite )
             lock_menu.append( lock_item )
             lock_item.connect( 'activate', self.lock_suite )
+            if self.readonly:
+                lock_item.set_sensitive(False)
 
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( 'Suite' )
@@ -1090,22 +1114,32 @@ A real time suite control and monitoring tool for cylc.
         start_item = gtk.MenuItem( 'Start' )
         start_menu.append( start_item )
         start_item.connect( 'activate', self.startsuite_popup )
+        if self.readonly:
+            start_item.set_sensitive(False)
 
         stop_item = gtk.MenuItem( 'Stop' )
         start_menu.append( stop_item )
         stop_item.connect( 'activate', self.stopsuite_popup )
+        if self.readonly:
+            stop_item.set_sensitive(False)
 
         pause_item = gtk.MenuItem( 'Pause' )
         start_menu.append( pause_item )
         pause_item.connect( 'activate', self.pause_suite )
+        if self.readonly:
+            pause_item.set_sensitive(False)
 
         resume_item = gtk.MenuItem( 'Resume' )
         start_menu.append( resume_item )
         resume_item.connect( 'activate', self.resume_suite )
+        if self.readonly:
+            resume_item.set_sensitive(False)
 
         insert_item = gtk.MenuItem( 'Insert' )
         start_menu.append( insert_item )
         insert_item.connect( 'activate', self.insert_task_popup )
+        if self.readonly:
+            insert_item.set_sensitive(False)
 
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( 'Help' )
@@ -1189,7 +1223,8 @@ A real time suite control and monitoring tool for cylc.
         self.task_list = suiterc.get_task_name_list()
         self.use_lock = suiterc['use crude safety lock']
 
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
+    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
+        self.readonly = readonly
         self.logdir = logging_dir
         self.suite_dir = suite_dir
 
@@ -1200,7 +1235,10 @@ A real time suite control and monitoring tool for cylc.
         self.imagedir = imagedir
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         #self.window.set_border_width( 5 )
-        self.window.set_title("cylc control <" + self.suite + ">" )
+        if self.readonly:
+            self.window.set_title("cylc view <" + self.suite + "> (READONLY)" )
+        else:
+            self.window.set_title("cylc control <" + self.suite + ">" )
         self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(600, 500)
         self.window.connect("delete_event", self.delete_event)
@@ -1253,9 +1291,9 @@ class standalone_monitor( monitor ):
     # 1/ call gobject.threads_init() on startup
     # 2/ call gtk.main_quit() on exit
 
-    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir ):
+    def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
         gobject.threads_init()
-        monitor.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir )
+        monitor.__init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly )
  
     def delete_event(self, widget, event, data=None):
         monitor.delete_event( self, widget, event, data )
