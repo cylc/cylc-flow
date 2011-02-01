@@ -32,7 +32,6 @@ files)."""
 [environment]
 TASK_EXE_SECONDS = 5
 WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
-RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
 
 [tasks]
     [[Prep]]
@@ -48,14 +47,14 @@ RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
-            MODEL_RUNNING_DIR = $RUNNING/Model
+            MODEL_RUNNING_DIR = $WORKSPACE/Model
 
     [[Model]]
         command = cylc wrap Model.sh
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
-            MODEL_RUNNING_DIR = $RUNNING/Model
+            MODEL_RUNNING_DIR = $WORKSPACE/Model
  
     [[PostA]]
         command = cylc wrap PostA.sh
