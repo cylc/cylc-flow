@@ -79,10 +79,10 @@ A_SHELL_PARAMETER_EXPANSION="${WORKSPACE##_.*}"
 
 [ tasks ]
     [[prep]]
-        command = cylc-wrapper clean-workspace.sh $WORKSPACE
+        command = cylc wrap clean-workspace.sh $WORKSPACE
     [[X]]
         description = "retrieve real time data for model A"
-        command = cylc-wrapper X.sh
+        command = cylc wrap X.sh
         [[[ environment ]]]
             X_OUTPUT_DIR = $WORKSPACE
         [[[ scripting ]]]
@@ -94,7 +94,7 @@ echo bye
 """
     [[A]]
         description = "model A - weather forecast"
-        command = cylc-wrapper A.sh
+        command = cylc wrap A.sh
         [[[environment]]]
             A_INPUT_DIR = $WORKSPACE
             A_OUTPUT_DIR = $WORKSPACE
@@ -102,7 +102,7 @@ echo bye
 
     [[B]]
         description = "model B - sea state forecast"
-        command = cylc-wrapper B.sh
+        command = cylc wrap B.sh
         [[[environment]]]
             B_INPUT_DIR = $WORKSPACE
             B_OUTPUT_DIR = $WORKSPACE
@@ -112,7 +112,7 @@ echo bye
 
     [[C]]
         description = "model C - river flow forecast"
-        #command = cylc-wrapper C.sh
+        #command = cylc wrap C.sh
         command = C-no-wrap.sh
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
@@ -122,9 +122,9 @@ echo bye
             foo = river flow outputs done for $(CYCLE_TIME)
     [[D]]
         description = "combined post processing for models B and C"
-        command = cylc-wrapper D.sh
+        command = cylc wrap D.sh
         #command = D-no-wrap.sh
-        #command = cylc-wrapper D-fail.sh, cylc-wrapper D.sh,
+        #command = cylc wrap D-fail.sh, cylc wrap D.sh,
         execution timeout minutes = 0.1
         #reset execution timeout on incoming messages = False
         # job submission method = ll_basic
@@ -133,28 +133,28 @@ echo bye
             D_OUTPUT_DIR = $WORKSPACE
     [[E]]
         description = "post processing for model B"
-        command = cylc-wrapper E.sh
+        command = cylc wrap E.sh
         [[[environment]]]
             E_INPUT_DIR = $WORKSPACE
             E_OUTPUT_DIR = $WORKSPACE
     [[F]]
         description = "post processing for model F"
-        command = cylc-wrapper F.sh
+        command = cylc wrap F.sh
         [[[environment]]]
             F_INPUT_DIR = $WORKSPACE
             F_OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]]
         description = "cold start model A"
-        command = cylc-wrapper ColdA.sh
+        command = cylc wrap ColdA.sh
 
     [[ColdB]]
         description = "model B"
-        command = cylc-wrapper ColdB.sh
+        command = cylc wrap ColdB.sh
 
     [[ColdC]]
         description = "model C"
-        command = cylc-wrapper ColdC.sh
+        command = cylc wrap ColdC.sh
 
     [[FOO]]
     [[bar]]

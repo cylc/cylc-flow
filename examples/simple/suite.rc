@@ -36,35 +36,35 @@ RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
 
 [tasks]
     [[Prep]]
-        command = cylc-wrapper clean-workspace.sh $WORKSPACE
+        command = cylc wrap clean-workspace.sh $WORKSPACE
 
     [[GetData]]
-        command = cylc-wrapper GetData.sh
+        command = cylc wrap GetData.sh
         [[[environment]]]
             GETDATA_OUTPUT_DIR = $WORKSPACE
 
     [[ColdModel]]
-        command = cylc-wrapper Model.sh --coldstart
+        command = cylc wrap Model.sh --coldstart
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $RUNNING/Model
 
     [[Model]]
-        command = cylc-wrapper Model.sh
+        command = cylc wrap Model.sh
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $RUNNING/Model
  
     [[PostA]]
-        command = cylc-wrapper PostA.sh
+        command = cylc wrap PostA.sh
         [[[environment]]]
             POSTA_INPUT_DIR = $WORKSPACE
             POSTA_OUTPUT_DIR = $WORKSPACE
 
     [[PostB]]
-        command = cylc-wrapper PostB.sh
+        command = cylc wrap PostB.sh
         [[[environment]]]
             POSTB_INPUT_DIR = $WORKSPACE
             POSTB_OUTPUT_DIR = $WORKSPACE

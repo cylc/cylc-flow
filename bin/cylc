@@ -92,7 +92,7 @@ information_commands = \
 
 messaging_commands = \
     [
-            #'cylc-wrapper',
+    'wrap',
     'task-started',
     'task-message',
     'task-finished',
@@ -185,7 +185,7 @@ instances of the same suite or task at the same time."""
 messaging_help = \
 """The cylc task messaging interface. Running tasks must use these commands
 to communicate with their parent suite (cylc instance). However, most tasks
-can be wrapped (see cylc-wrapper --help) and these do this automatically.""" 
+can be wrapped (see cylc wrap --help) and these do this automatically.""" 
 utility_help = \
 """Cylc utility commands. Cylc suites do not have to use these programs,
 but they are designed to work with cylc and you may find them useful."""

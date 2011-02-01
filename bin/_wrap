@@ -1,6 +1,5 @@
 #!/bin/bash
 
-
 # Cylc task wrapper script.
 
 # Allows cylc to control existing tasks that have not been modified to
@@ -20,16 +19,33 @@
 # registered output messages.
 
 usage() {
-    echo "USAGE: 1/ cylc-wrapper COMMAND" >&2
-    echo '       2/ cylc-wrapper --multi="COMMAND1; COMMAND2; #..."' >&2
+    echo "The cylc task wrapper reports a task started, executes it, and"
+    echo "then reports success (and completion of all outputs) or failure"
+    echo "to cylc according to the returned exit status. This allows cylc"
+    echo "to run most existing non-cylc-aware tasks without modification."
+    echo "Any monolithic task, or any task that is followed through to"
+    echo "completion by a single control script, can be wrapped so long"
+    echo "as the controlling process returns standard exit codes upon"
+    echo "success or failure. A task whose initial process detaches and"
+    echo "returns immediately after spawning other processes to complete"
+    echo "the processing job cannot be wrapped - it must be modified "
+    echo "slightly to do its own cylc messaging."
+    echo ""
+    echo "USAGE: 1/ cylc wrap COMMAND ARGS" >&2
+    echo '       2/ cylc wrap --multi="COM1 ARGS1; COM2 ARGS; #..."' >&2
 }
+
+if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
+    usage
+    exit 0
+fi
 
 # SEND THE STARTUP MESSAGE
 cylc task-started || exit 1
 
 if (( $# == 0 )); then
     usage
-    cylc task-failed "cylc-wrapper: no script to wrap"
+    cylc task-failed "cylc wrap: no task to wrap"
     exit 1
 fi
 
