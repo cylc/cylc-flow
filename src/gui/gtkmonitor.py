@@ -163,17 +163,17 @@ class monitor(object):
             warning_dialog( 'Error: failed to start ' + self.suite ).warn()
             success = False
 
-    def unlock_suite( self, bt ):
+    def unblock_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-            god.unlock( self.owner )
+            god.unblock()
         except Pyro.errors.NamingError:
             warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
-    def lock_suite( self, bt ):
+    def block_suite( self, bt ):
         try:
             god = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
-            god.lock( self.owner )
+            god.block()
         except Pyro.errors.NamingError:
             warning_dialog( 'Error: suite ' + self.suite + ' is not running' ).warn()
 
@@ -555,7 +555,8 @@ A real time suite control and monitoring tool for cylc.
         alert = tb.create_tag( None, foreground = "red" )
         bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
-        self.update_tb( tb, "\n\nThis is 'cylc view', the read-only "
+        if self.readonly:
+            self.update_tb( tb, "\n\nThis is 'cylc view', the read-only "
                 "version of the 'cylc control' GUI: all of the suite control "
                 "functionality documented below has been disabled.'\n\n", [bold, alert] )
 
@@ -568,13 +569,6 @@ A real time suite control and monitoring tool for cylc.
         self.update_tb( tb, "\n\nMenu: File > ", [bold, red] )
         self.update_tb( tb, "\n o Exit Suite GUI: ", [bold])
         self.update_tb( tb, "Exit the GUI (this does not shut the suite down).")
-
-        self.update_tb( tb, "\n\nMenu: Lock > ", [bold, red] )
-        self.update_tb( tb, "(only visible if the suite is configured to use crude locking)" )
-        self.update_tb( tb, "\n o Lock: ", [bold])
-        self.update_tb( tb, "Tell cylc not to comply with intervention commands." )
-        self.update_tb( tb, "\n o Unlock: ", [bold])
-        self.update_tb( tb, "Tell cylc to comply with intervention commands." )
 
         self.update_tb( tb, "\n\nMenu: View > ", [bold, red] )
         self.update_tb( tb, "This affects only the top 'light panel'. "
@@ -593,6 +587,10 @@ A real time suite control and monitoring tool for cylc.
         self.update_tb( tb, "Resume submitting tasks that are ready to run.")
         self.update_tb( tb, "\n o Insert: ", [bold])
         self.update_tb( tb, "Insert a task or task group into a running suite." )
+        self.update_tb( tb, "\n o Block (if suite is configured to use blocking): ", [bold])
+        self.update_tb( tb, "Tell cylc not to comply with subsequent intervention commands." )
+        self.update_tb( tb, "\n o Unblock (if suite is configured to use blocking): ", [bold])
+        self.update_tb( tb, "Tell cylc to comply with subsequent intervention commands." )
 
         self.update_tb( tb, "\n\nTask View Panels: Mouse Menu > ", [bold, red] )
 
@@ -1090,23 +1088,6 @@ A real time suite control and monitoring tool for cylc.
         view_menu.append( heading_full_item )
         heading_full_item.connect( 'activate', self.full_task_headings )
 
-        if self.use_lock:
-            lock_menu = gtk.Menu()
-            lock_menu_root = gtk.MenuItem( 'Lock' )
-            lock_menu_root.set_submenu( lock_menu )
-
-            unlock_item = gtk.MenuItem( 'Unlock ' + self.suite )
-            lock_menu.append( unlock_item )
-            unlock_item.connect( 'activate', self.unlock_suite )
-            if self.readonly:
-                unlock_item.set_sensitive(False)
-
-            lock_item = gtk.MenuItem( 'Lock ' + self.suite )
-            lock_menu.append( lock_item )
-            lock_item.connect( 'activate', self.lock_suite )
-            if self.readonly:
-                lock_item.set_sensitive(False)
-
         start_menu = gtk.Menu()
         start_menu_root = gtk.MenuItem( 'Suite' )
         start_menu_root.set_submenu( start_menu )
@@ -1141,6 +1122,18 @@ A real time suite control and monitoring tool for cylc.
         if self.readonly:
             insert_item.set_sensitive(False)
 
+        block_item = gtk.MenuItem( 'Block' )
+        start_menu.append( block_item )
+        block_item.connect( 'activate', self.block_suite )
+        if self.readonly or not self.use_block:
+            block_item.set_sensitive(False)
+
+        unblock_item = gtk.MenuItem( 'Unblock' )
+        start_menu.append( unblock_item )
+        unblock_item.connect( 'activate', self.unblock_suite )
+        if self.readonly or not self.use_block:
+            unblock_item.set_sensitive(False)
+
         help_menu = gtk.Menu()
         help_menu_root = gtk.MenuItem( 'Help' )
         help_menu_root.set_submenu( help_menu )
@@ -1156,8 +1149,6 @@ A real time suite control and monitoring tool for cylc.
         self.menu_bar = gtk.MenuBar()
         self.menu_bar.append( file_menu_root )
         self.menu_bar.append( view_menu_root )
-        if self.use_lock:
-            self.menu_bar.append( lock_menu_root )
         self.menu_bar.append( start_menu_root )
         self.menu_bar.append( help_menu_root )
 
@@ -1221,7 +1212,7 @@ A real time suite control and monitoring tool for cylc.
         ### (etc.) from the suite's remote state summary object.
         suiterc = config( self.suite )
         self.task_list = suiterc.get_task_name_list()
-        self.use_lock = suiterc['use crude safety lock']
+        self.use_block = suiterc['use suite blocking']
 
     def __init__(self, suite, owner, host, port, suite_dir, logging_dir, imagedir, readonly=False ):
         self.readonly = readonly

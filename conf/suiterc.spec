@@ -11,7 +11,7 @@ job submission shell = option( /bin/bash, /usr/bin/bash, /bin/ksh, /usr/bin/ksh,
 roll scheduler log at startup = boolean( default=True )
 
 ignore task owners = boolean( default=False )
-use crude safety lock = boolean( default=False )
+use suite blocking = boolean( default=False )
 use secure passphrase = boolean( default=False )
 
 use lockserver = boolean( default=False )

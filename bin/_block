@@ -1,0 +1,48 @@
+#!/usr/bin/env python
+
+import os, sys
+import cylc_pyro_client
+from CylcOptionParsers import PromptOptionParser
+from port_scan import SuiteIdentificationError
+
+parser = PromptOptionParser("""cylc block [options] SUITE 
+
+Tell a running suite, that is explicitly configured to use blocking, not
+to comply with subsequent intervention commands. The block/unblock
+commands are a simple safety device intended to guard against
+inadvertent interventions (accidentally stopping the wrong suite, say,
+when you are running multiple suites at the same time).
+
+(These commands are 'block/unblock' rather than 'lock/unlock' in order
+to distinguish them from the functionality of the cylc lockserver
+commands, to which they are unrelated).
+
+See also:
+    cylc help security""")
+
+(options, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.usage() 
+    sys.exit(1)
+
+suite = parser.get_suite_name()
+owner = os.environ['USER']
+host = options.host
+port = options.port
+
+try:
+    proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'remote' )
+except SuiteIdentificationError, x:
+    raise SystemExit(x)
+
+if not parser.prompt( 'Block' ):
+    sys.exit(0)
+
+result = proxy.block()
+
+if result.success:
+    print result.reason
+else:
+    print 'ERROR:', result.reason
+    sys.exit(1)

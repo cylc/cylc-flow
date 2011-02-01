@@ -24,8 +24,8 @@ lock_commands = \
     [
     'cylclockd',
     'lockserver',
-    'lock',
-    'unlock',
+    'block',
+    'unblock',
      ]
 
 util_commands = \
@@ -60,8 +60,8 @@ run_commands = \
     'reset',
     'kill',
     'purge',
-    'lock',
-    'unlock',
+    'block',
+    'unblock',
     'verbosity',
     'submit',
     ]
@@ -105,8 +105,8 @@ core_commands.remove( 'monitor' )
 core_commands.remove( 'inline' )
 core_commands.remove( 'view' )
 core_commands.remove( 'lockserver' )
-core_commands.remove( 'lock' )
-core_commands.remove( 'unlock' )
+core_commands.remove( 'block' )
+core_commands.remove( 'unblock' )
 core_commands.remove( 'verbosity' )
 core_commands.remove( 'rawstart' )
 
@@ -194,8 +194,8 @@ comsum[ 'restart'   ] = 'Restart a suite from a previous state'
 comsum[ 'stop'      ] = 'Shut down a running suite (now or later)'
 comsum[ 'pause'     ] = 'Pause a running suite (stop submitting ready tasks)'
 comsum[ 'resume'    ] = 'Unpause a running suite (resume submitting tasks)'
-comsum[ 'lock'      ] = 'Tell a suite to ignore subsequent commands'
-comsum[ 'unlock'    ] = 'Tell a suite to action subsequent commands'
+comsum[ 'block'     ] = 'Tell a suite to ignore subsequent commands'
+comsum[ 'unblock'   ] = 'Tell a suite to action subsequent commands'
 comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
 comsum[ 'reset'     ] = 'Force a task to change state (manual triggering!)'
 comsum[ 'kill'      ] = 'Remove tasks from a running suite'
@@ -248,11 +248,20 @@ if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     sys.exit(0)
 
 # category help
+cathelp = False
 if sys.argv[1] == 'help' and sys.argv[2] in categories:
-    for cat in categories:
-        if cat == sys.argv[2]:
-            print eval (cat + '_help')
-            break
+    # cylc help CATEGORY
+    cathelp = True
+    cat = sys.argv[2]
+if sys.argv[1] in categories and \
+        ( sys.argv[2] == 'help' or sys.argv[2] == '--help' ):
+    # cylc CATEGORY help
+    # cylc CATEGORY --help
+    cathelp = True
+    cat = sys.argv[1]
+
+if cathelp:
+    print eval (cat + '_help')
     print general_usage
     print
     print 'COMMAND:'

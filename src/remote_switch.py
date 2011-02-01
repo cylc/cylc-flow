@@ -37,29 +37,29 @@ class remote_switch( Pyro.core.ObjBase ):
         self.halt = False
         self.halt_now = False
 
-        # if using the suite lock start in the LOCKED state.
-        self.using_lock = self.config['use crude safety lock']
-        self.locked = True
+        # if using the suite block start in the BLOCKED state.
+        self.using_block = self.config['use suite blocking']
+        self.blocked = True
 
-    def lock( self ):
-        if not self.using_lock:
-            return result( False, "This suite is not using a safety lock" )
-        if self.locked:
-            return result( True, "(the suite is already locked)" )
-        self.locked = True
-        return result( True, "the suite has been locked" )
+    def block( self ):
+        if not self.using_block:
+            return result( False, "This suite is not using blocking" )
+        if self.blocked:
+            return result( True, "(the suite is already blocked)" )
+        self.blocked = True
+        return result( True, "the suite has been blocked" )
 
-    def unlock( self ):
-        if not self.using_lock:
-            return result( False, "This suite is not using a safety lock" )
-        if not self.locked:
-            return result( True, "(the suite is not locked)" )
-        self.locked = False
-        return result( True, "the suite has been unlocked" )
+    def unblock( self ):
+        if not self.using_block:
+            return result( False, "This suite is not using a safety block" )
+        if not self.blocked:
+            return result( True, "(the suite is not blocked)" )
+        self.blocked = False
+        return result( True, "the suite has been unblocked" )
 
     def nudge( self ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         # cause the task processing loop to be invoked
         self._warning( "servicing remote nudge request" )
         # just set the "process tasks" indicator
@@ -67,8 +67,8 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True )
 
     def reset_task_state( self, task_id, state ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         if task_id == self.failout_id:
             self._reset_failout()
         try:
@@ -89,8 +89,8 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( True )
 
     def insert( self, ins_id ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         ins_name = self._name_from_id( ins_id )
         if not self._task_type_exists( ins_name ) and \
                 ins_name not in self.config[ 'task insertion groups' ]:
@@ -131,8 +131,8 @@ class remote_switch( Pyro.core.ObjBase ):
             return result( True, msg )
 
     def hold( self ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         if self.pool.paused():
             return result( True, "(the suite is already paused)" )
 
@@ -142,8 +142,8 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "Tasks that are ready to run will not be submitted" )
 
     def resume( self ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         if not self.pool.paused() and not self.pool.stopping():
             return result( True, "(the suite is not paused)" )
         self.pool.unset_suite_hold()
@@ -153,24 +153,24 @@ class remote_switch( Pyro.core.ObjBase ):
         return result( True, "Tasks will be submitted when they are ready to run" )
 
     def set_stop_time( self, ctime ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         self.pool.set_stop_time( ctime )
         # process, to update state summary
         self.process_tasks = True
         return result( True, "The suite will shutdown when all tasks have passed " + ctime )
 
     def set_hold_time( self, ctime ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         self.pool.set_suite_hold( ctime )
         # process, to update state summary
         self.process_tasks = True
         return result( True, "The suite will pause when all tasks have passed " + ctime )
 
     def shutdown( self ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         self.hold()
         self.halt = True
         # process, to update state summary
@@ -179,8 +179,8 @@ class remote_switch( Pyro.core.ObjBase ):
                 "The suite will shut down after currently running tasks have finished" )
 
     def shutdown_now( self ):
-        if self._suite_is_locked():
-            return result( False, "Suite Locked" )
+        if self._suite_is_blocked():
+            return result( False, "Suite Blocked" )
         self.hold()
         self.halt_now = True
         # process, to update state summary
@@ -346,9 +346,9 @@ class remote_switch( Pyro.core.ObjBase ):
         else:
             return False
 
-    def _suite_is_locked( self ):
-        if self.using_lock and self.locked:
-            self._warning( "Refusing remote request (suite locked)" )
+    def _suite_is_blocked( self ):
+        if self.using_block and self.blocked:
+            self._warning( "Refusing remote request (suite blocked)" )
             return True
         else:
             return False
