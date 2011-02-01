@@ -4,18 +4,18 @@ import os, sys, re
 import cycle_time
 from optparse import OptionParser
 
-parser = OptionParser( usage = """cute cycletime [options] [CYCLE]
+parser = OptionParser( usage = """cylc cycletime [options] [CYCLE]
 
 Perform arithmetic operations on cycle times and print the results to 
 sdtout. Examples:
 
    # offset from explicit cycle time:
-   $ cute cycletime -s 6 2010082318
+   $ cylc cycletime -s 6 2010082318
   2010082312
 
    # offset from $CYCLE_TIME:
    $ export CYCLE_TIME=2010082318  # or task execution environment
-   $ cute cycletime -s 6 
+   $ cylc cycletime -s 6 
   2010082312
 
 Arguments:

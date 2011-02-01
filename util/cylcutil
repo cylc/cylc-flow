@@ -35,16 +35,19 @@ allowed_commands = \
 
 usage = \
     [ 
-    'USAGE: cute [options] COMMAND [command-options] ',
+    'USAGE: cylcutil [options] COMMAND [command-options] ',
     '',
     'The cylc utility commands, for use in cylc suites.',
+    '',
+    'THIS COMMAND INTERFACE IS DEPRECATED. CYLC UTILITIES',
+    'ARE NOW ACCESSED THROUGH THE MAIN COMMAND INTERFACE.',
     '',
     'options:',
     ' -v, --version  Print the cylc release version tag and exit.',
     ' -h, --help     Print this usage message and exit.',
     '',
     'command-options:',
-    '  cute COMMAND --help',
+    '  cylc COMMAND --help',
     '',
     'COMMANDS:',
     '  cycletime .......... Cycle time arithmetic',
@@ -90,8 +93,8 @@ if sys.argv[1] == 'commands':
 # first argument must be COMMAND
 command = sys.argv[1]
 if command not in allowed_commands:
-    print "ERROR, illegal cute command: " + command
-    print "Use 'cute --help' to see legal commands"
+    print "ERROR, illegal cylc command: " + command
+    print "Use 'cylc --help' to see legal commands"
     sys.exit(1)
 
 if command == 'help': 

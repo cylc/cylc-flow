@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cute checkvars  TASK_EXE_SECONDS
-cute checkvars -d E_INPUT_DIR
-cute checkvars -c E_OUTPUT_DIR
+cylc checkvars  TASK_EXE_SECONDS
+cylc checkvars -d E_INPUT_DIR
+cylc checkvars -c E_OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
 PRE=$E_INPUT_DIR/sea-state-${CYCLE_TIME}.nc

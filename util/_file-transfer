@@ -35,7 +35,7 @@ set -e
 # some cases; imagine a tar archive of many compressed files).
 
 if [[ $@ = '--help' ]]; then
-    echo "USAGE cute file-transfer"
+    echo "USAGE cylc file-transfer"
     echo ""
     echo "General file transfer utility for cylc suites, using scp."
     echo ""

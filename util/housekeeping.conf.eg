@@ -1,5 +1,5 @@
-# THIS IS AN EXAMPLE CONFIG FOR 'cute housekeeping' 
-# For documentation, see 'cute housekeeping --help'.
+# THIS IS AN EXAMPLE CONFIG FOR 'cylc housekeeping' 
+# For documentation, see 'cylc housekeeping --help'.
 
 # SOURCE     MATCH           OPERATION   OFFSET   [DESTINATION]
 

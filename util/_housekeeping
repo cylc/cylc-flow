@@ -5,8 +5,8 @@ import datetime
 from optparse import OptionParser
 from housekeeping import config_file, config_line
 
-usage = """1/ cute housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
-Usage: 2/ cute housekeeping [options] CONFIG
+usage = """1/ cylc housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
+Usage: 2/ cylc housekeeping [options] CONFIG
 
 Cycle-time based file management: delete, move, or copy files or
 directories whose names contain a cycle time that is at least

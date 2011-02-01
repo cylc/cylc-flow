@@ -4,7 +4,7 @@ import os, sys
 from optparse import OptionParser
 from mkdir_p import mkdir_p
 
-parser = OptionParser( usage = """cute checkvars [options] VARNAMES
+parser = OptionParser( usage = """cylc checkvars [options] VARNAMES
 
 Check that each member of a list of environment variables is defined,
 and then optionally check their values according to the chosen
@@ -63,9 +63,9 @@ varnames = args
 
 failed = False
 if options.warnonly:
-    ALERT = 'cute checkvars: WARNING,'
+    ALERT = 'cylc checkvars: WARNING,'
 else:
-    ALERT = 'cute checkvars: ERROR,'
+    ALERT = 'cylc checkvars: ERROR,'
 
 for varname in varnames:
     if varname in os.environ:
@@ -143,8 +143,8 @@ for varname in varnames:
 
 if failed:
     if options.warnonly:
-        print >> sys.stderr, 'cute checkvars: WARNINGS detected, exit 0'
+        print >> sys.stderr, 'cylc checkvars: WARNINGS detected, exit 0'
         sys.exit(0)
     else:
-        print >> sys.stderr, 'cute checkvars: ERRORS detected, ABORTING'
+        print >> sys.stderr, 'cylc checkvars: ERRORS detected, ABORTING'
         sys.exit(1)

@@ -1,159 +1,315 @@
 #!/usr/bin/env python
 
-
-import os
-import sys
-
+from OrderedDict import OrderedDict
+import os, re, sys
 from execute import execute
 
 # auto-replace with version tag at build/install:
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
-allowed_commands = \
+categories = \
+        [
+        'core',
+        'other',
+        'preparation',
+        'editing',
+        'running',
+        'information',
+        'locking',
+        'utility',
+        'messaging',
+        'all',
+        ]
+
+locking_commands = \
+    [
+    'cylclockd',
+    'lockserver',
+    ]
+
+utility_commands = \
     [ 
-    'help',
+    'cycletime',
+    'checkvars',
+    'template',
+    'housekeeping',
+    'file-transfer',
+    ]
+    #utility_commands.sort()
+
+preparation_commands = \
+    [
     'register',
-    'search',
+    'cylclockd',
+    'lockserver',
+    ]
+    #preparation_commands.sort()
+
+editing_commands = \
+    [
     'graph',
+    'search',
     'edit',
     'inline',
+    ]
+    #editing_commands.sort()
+
+running_commands = \
+    [
+    'control',
     'coldstart', 
     'warmstart', 
     'rawstart', 
     'restart',
-    'stop',
     'pause',
     'resume',
-    'lock',
-    'unlock',
+    'stop',
     'insert',
     'reset',
     'kill',
     'purge',
+    'lock',
+    'unlock',
+    'verbosity',
     'submit',
-    'control',
-    'dump',
-    'show',
-    'list',
+    ]
+    #running_commands.sort()
+
+information_commands = \
+    [
     'ping',
     'scan',
+    'list',
+    'graph',
+    'dump',
+    'show',
     'log',
+    'view',
     'monitor',
+    'lockserver',
+    ]
+    #information_commands.sort()
+
+messaging_commands = \
+    [
+            #'cylc-wrapper',
     'task-started',
     'task-message',
     'task-finished',
     'task-failed',
-    'lockserver',
-    'verbosity',
     ]
+    #messaging_commands.sort()
 
-usage = \
-    [ 
-    'USAGE: cylc [options] COMMAND [command-options] ',
-    '',
-    'This is the commandline interface to the cylc self-organising adaptive',
-    'multicycling forecast systems metascheduler. Cylc is pronounced \'silk\'.',
-    '',
-    'See also the cylc utility commands: cute --help',
-    '',
-    'options:',
-    ' -v, --version  Print the release version tag and exit.',
-    ' -h, --help     Print this usage message and exit.',
-    '',
-    'command-options:',
-    '  cylc COMMAND --help',
-    '',
-    'COMMANDS:',
-    'S-U-I-T-E--R-E-G-I-S-T-R-A-T-I-O-N',
-    '  register .... Manage your suite registrations (name -> definition dir)',
-    'S-U-I-T-E--E-D-I-T-I-N-G',
-    '  search   .... A cylc-suite-aware text search tool',
-    '  graph    .... A suite dependency graph viewer that updates as you edit',
-    '  inline   .... View suite config files with inlined include-files',
-    '  edit     .... Edit suite config files with inlined include-files',
-    'S-U-I-T-E--C-O-N-T-R-O-L',
-    '  coldstart ... Start a suite at a given cycle time, including coldstart tasks',
-    '  warmstart ... Start a suite at a given cycle time, assuming a previous cycle',
-    '  rawstart  ... Start a suite at a given cycle time, excluding coldstart tasks',
-    '  restart ..... Restart a suite from its most recent, or any, previous state',
-    '  stop ........ Shut down a running suite, or set a final cycle time',
-    '  pause ....... Refrain from submitting tasks that are ready to run',
-    '  resume ...... Resume submitting tasks that are ready, or unset the stop time',
-    '  lock ........ Refuse to comply with subsequent intervention commands',
-    '  unlock ...... Comply with subsequent intervention commands',
-    'T-A-S-K--C-O-N-T-R-O-L',
-    '  insert ...... Insert a task or task group into a running suite',
-    '  reset ....... Force a task to change state (e.g. for manual triggering)',
-    '  kill ........ Remove tasks from a running suite, once or permanently',
-    '  purge ....... Remove an entire dependency tree rooted on a single task',
-    '  submit ...... Submit a single task to run just as it would in the suite',
-    'I-N-T-E-R-R-O-G-A-T-I-O-N',
-    '  control ..... Graphical User Interface for suite control and monitoring',
-    '  dump ........ Print the current state of all suite tasks to stdout',
-    '  show ........ Retrieve information from a running suite',
-    '  list ........ Print the task list from a registered suite', 
-    '  ping ........ Check that a named suite is running',
-    '  scan ........ Scan cylc ports for running suites',
-    '  log ......... Print or view suite logs, with optional filtering',
-    '  monitor ..... Terminal based suite monitor',
-    'T-A-S-K--I-N-T-E-R-F-A-C-E',
-    '  task-started ... Acquire a lock from the lockserver, and report started',
-    '  task-message ... Report completion of outputs, and other messages',
-    '  task-finished... Release lock to the lockserver, and report finished',
-    '  task-failed .... Release lock to the lockserver, and report failure',
-    'M-I-S-C-E-L-L-A-N-E-O-U-S',
-    '  lockserver .. Lockserver interrogation and manual lock management',
-    '  verbosity ... Change the logging verbosity level in a running suite',
-    '  help ........ Print this usage message and exit; also [-h], [--help]',
-    ]
+# uniquify the command list (some may reside in multiple categories)
+allcom = OrderedDict()
+for command in preparation_commands + editing_commands + running_commands + \
+        information_commands + messaging_commands + utility_commands:
+            allcom[ command ] = True
+all_commands = allcom.keys()
 
-def print_usage():
-    for line in usage:
-        print line
+# ... same for suite-related commands
+corecom = OrderedDict()
+for command in preparation_commands + editing_commands + \
+        running_commands + information_commands:
+            corecom[ command ] = True
+core_commands = corecom.keys()
+core_commands.remove( 'monitor' )
+core_commands.remove( 'inline' )
+core_commands.remove( 'view' )
+core_commands.remove( 'cylclockd' )
+core_commands.remove( 'lockserver' )
 
+other_commands = all_commands[:]
+for command in core_commands:
+    other_commands.remove( command )
+
+# BANNER NOT USED:
+banner = """
+  _________________________________________________
+  __ Cylc Self Organising Adaptive Metascheduler __
+  __\    (c) Hilary Oliver, NIWA, 2008-2011     /__
+  ___\        cylc is pronounced 'silk'        /___
+  ____\________________C_Y_L_C________________/____
+"""
+
+# top level help
+usage = """This is the cylc metascheduler commandline interface.
+
+Command usage:
+    $ cylc COMMAND [options] SUITE [arguments]
+
+Command-specific help:
+    $ cylc COMMAND --help
+
+Command summaries by overlapping category:
+    $ cylc core        help  # the core command set for users
+    $ cylc other       help  # all non-core commands
+    $ cylc preparation help  # preparation for running a suite
+    $ cylc editing     help  # suite editing commands 
+    $ cylc running     help  # starting and controlling suites
+    $ cylc information help  # interrogating suites
+    $ cylc locking     help  # suite and task locking
+    $ cylc utility     help  # utility commands
+    $ cylc messaging   help  # (task messaging)
+    $ cylc all         help  # all of the above
+
+Cylc release version:
+    $ cylc -v,--version
+
+This help page:
+    $ cylc help,-h,-help,--help,?,-?
+    """
+
+if len(sys.argv) == 1:
+    print usage
+    sys.exit(1)
+
+general_usage = """USAGE: cylc COMMAND [options] SUITE [arguments]
+       cylc COMMAND --help
+       cylc help"""
+
+# category help
+preparation_help = "Cylc commands for preparing a suite for use."
+editing_help = "Cylc commands to help with the suite editing process."
+running_help = "Cylc commands for running and controlling suites."
+information_help = "Cylc commands for interrogating registered or running suites."
+core_help = "The core cylc command set for preparing and running suites."
+other_help = "Commands outside of the cylc core command set for users."
+locking_help = \
+"""Cylc commands pertaining to suite and task locking in a potentially
+distributed environment - preventing accidental execution of multiple
+instances of the same suite or task at the same time."""
+messaging_help = \
+"""The cylc task messaging interface. Running tasks must use these commands
+to communicate with their parent suite (cylc instance). However, most tasks
+can be wrapped (see cylc-wrapper --help) and these do this automatically.""" 
+utility_help = \
+"""Cylc utility commands. Cylc suites do not have to use these programs,
+but they are designed to work with cylc and you may find them useful."""
+all_help = "The complete cylc command set."
+
+# command summaries
+comsum = {}
+comsum[ 'register'  ] = 'Manage your suite registrations (name -> definition dir)'
+comsum[ 'cylclockd' ] = 'The lockserver daemon (task locking in distributed suites)'
+comsum[ 'search'    ] = 'An intelligent search tool for cylc suite definitions'
+comsum[ 'graph'     ] = 'A suite dependency graph viewer that updates as you edit'
+comsum[ 'inline'    ] = 'View suite config files, optionally with inlined include-files'
+comsum[ 'edit'      ] = 'Edit suite config files, optionally with inlined include-files'
+comsum[ 'coldstart' ] = 'Start a suite at a given cycle time, including coldstart tasks'
+comsum[ 'warmstart' ] = 'Start a suite at a given cycle time, assuming a previous cycle'
+comsum[ 'rawstart'  ] = 'Start a suite at a given cycle time, excluding coldstart tasks'
+comsum[ 'restart'   ] = 'Restart a suite from its most recent, or any, previous state'
+comsum[ 'stop'      ] = 'Shut down a running suite, or set a final cycle time'
+comsum[ 'pause'     ] = 'Refrain from submitting tasks that are ready to run'
+comsum[ 'resume'    ] = 'Resume submitting tasks that are ready, or unset the stop time'
+comsum[ 'lock'      ] = 'Refuse to comply with subsequent intervention commands'
+comsum[ 'unlock'    ] = 'Comply with subsequent intervention commands'
+comsum[ 'insert'    ] = 'Insert a task or task group into a running suite'
+comsum[ 'reset'     ] = 'Force a task to change state (e.g. for manual triggering)'
+comsum[ 'kill'      ] = 'Remove tasks from a running suite, once or permanently'
+comsum[ 'purge'     ] = 'Remove an entire dependency tree rooted on a single task'
+comsum[ 'submit'    ] = 'Submit a single task to run just as it would in the suite'
+comsum[ 'control'   ] = 'Graphical User Interface for suite control and monitoring'
+comsum[ 'view'      ] = 'A read-only instance of the \'cylc control\' GUI'
+comsum[ 'dump'      ] = 'Print the state of tasks in a running suite to stdout'
+comsum[ 'show'      ] = 'Retrieve information from a running suite'
+comsum[ 'list'      ] = 'Parse a suite\'s config file and print its task list'
+comsum[ 'ping'      ] = 'Check that a suite is running'
+comsum[ 'scan'      ] = 'Scan cylc ports for running suites'
+comsum[ 'log'       ] = 'Print or view suite logs, with optional filtering'
+comsum[ 'monitor'   ] = 'An in-terminal suite monitor (deprecated)'
+comsum[ 'lockserver'] = 'Lockserver interrogation and manual lock management'
+comsum[ 'verbosity' ] = 'Change the logging verbosity level in a running suite'
+comsum[ 'help'      ] = 'Print this usage message and exit; also [-h], [--help]'
+comsum[ 'cycletime' ] = 'Cycle time arithmetic'
+comsum[ 'checkvars' ] = 'Check required environment variables'
+comsum[ 'template'  ] = 'Cycle time offset based filename templating'
+comsum[ 'housekeeping' ] = 'Archiving and cleanup on cycle time offsets'
+comsum[ 'file-transfer'] = 'An scp-based file transfer tool'
+comsum[ 'task-started' ] = 'Acquire a lock from the lockserver, and report started'
+comsum[ 'task-message' ] = 'Report completion of outputs, and other messages'
+comsum[ 'task-finished'] = 'Release lock to the lockserver, and report finished'
+comsum[ 'task-failed'  ] = 'Release lock to the lockserver, and report failure'
+ 
 # check that the cylc core modules are accessible
 try:
-    import requisites
+    import scheduler
 except:
     print >> sys.stderr, "ERROR: the cylc core modules are not accessible to Python"
-    print >> sys.stderr, "Source $CYLC_DIR/cylc-env.sh in your command shell." 
+    print >> sys.stderr, "SOLUTION: source $CYLC_DIR/cylc-env.sh in your shell." 
     sys.exit(1)
 
-if len( sys.argv ) < 2:
-    # COMMAND must be supplied
-    print_usage()
-    sys.exit(1)
-
-if sys.argv[1] == '-h' or sys.argv[1] == '--help':
-    print_usage()
+if sys.argv[1] == '-h' or \
+        sys.argv[1] == '--help' or \
+        sys.argv[1] == '-help' or \
+        sys.argv[1] == 'help' or \
+        sys.argv[1] == '?' or \
+        sys.argv[1] == '-?':
+    print usage
     sys.exit(0)
 
 if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     print cylc_version
     sys.exit(0)
 
-# SECRET COMMAND USED IN AUTO DOCUMENT PROCESSING
-if sys.argv[1] == 'commands':
-    for command in allowed_commands:
-        print command
+if len( sys.argv ) < 3:
+    print 'ERROR: wrong number of arguments'
+    print usage
+    sys.exit(1)
+
+# check for category help
+arg1 = sys.argv[1]
+arg2 = sys.argv[2]
+if arg1 in categories:
+    if arg2 != '--help' and arg2 != 'help':
+        print >> sys.stderr, 'ERROR, illegal option:', arg2
+        sys.exit(1)
+    for cat in categories:
+        if cat == arg1:
+            print eval (cat + '_help')
+            break
+    print
+    print general_usage
+    print
+    print 'COMMAND:'
+    output = []
+    commands = eval( cat + '_commands')
+    longest = len(commands[0])
+    for command in commands:
+        if len( command )> longest:
+            longest = len( command )
+    count = 0
+    pad = False
+    if len(commands) > 10:
+        pad = True
+    for command in commands:
+        count += 1
+        if pad and count < 10:
+            digit = ' ' + str(count)
+        else:
+            digit = str(count)
+        print ' ' + digit + '/', command, '.'*(longest-len(command)) + '...', comsum[command]
     sys.exit(0)
 
 # first argument must be COMMAND
-command = sys.argv[1]
-if command not in allowed_commands:
-    print "ERROR, illegal cylc command: " + command
-    print "Use 'cylc --help' to see legal commands"
-    sys.exit(1)
 
-if command == 'help': 
-    print_usage()
-    sys.exit(0)
+command = arg1
+if command not in all_commands:
+    print "ERROR, illegal cylc command: " + command
+    print usage
+    sys.exit(1)
 
 # remaining arguments must be command options
 if len( sys.argv ) == 1:
     command_options = []
 else:
-    command_options = sys.argv[2:]
+    if sys.argv[2] == 'help':
+        command_options = ['--help']
+    else:
+        command_options = [ sys.argv[2]]
+    if len(sys.argv) > 3:
+        command_options += sys.argv[2:]
 
 # construct command to execute
 command = '_' + command 

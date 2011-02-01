@@ -1,8 +1,8 @@
 #!/bin/bash
 
-cute checkvars  TASK_EXE_SECONDS
-cute checkvars -d B_INPUT_DIR
-cute checkvars -c B_OUTPUT_DIR B_RUNNING_DIR
+cylc checkvars  TASK_EXE_SECONDS
+cylc checkvars -d B_INPUT_DIR
+cylc checkvars -c B_OUTPUT_DIR B_RUNNING_DIR
 
 # CHECK INPUT FILES EXIST
 ONE=$B_INPUT_DIR/surface-winds-${CYCLE_TIME}.nc
@@ -19,9 +19,9 @@ echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
 sleep $TASK_EXE_SECONDS
 
 # generate a restart file for the next three cycles
-touch $B_RUNNING_DIR/B-$(cute cycletime --add=6 ).restart
-touch $B_RUNNING_DIR/B-$(cute cycletime --add=12).restart
-touch $B_RUNNING_DIR/B-$(cute cycletime --add=18).restart
+touch $B_RUNNING_DIR/B-$(cylc cycletime --add=6 ).restart
+touch $B_RUNNING_DIR/B-$(cylc cycletime --add=12).restart
+touch $B_RUNNING_DIR/B-$(cylc cycletime --add=18).restart
 
 # model outputs
 touch $B_OUTPUT_DIR/sea-state-${CYCLE_TIME}.nc
