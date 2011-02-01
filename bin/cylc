@@ -14,16 +14,21 @@ categories = \
      'prep',
      'run',
      'info',
-     'lock',
      'util',
      'task',
      'all',
+     'locking',
+     'security',
      ]
 
-lock_commands = \
+locking_commands = \
     [
     'cylclockd',
     'lockserver',
+    ]
+
+security_commands = \
+    [
     'block',
     'unblock',
      ]
@@ -77,7 +82,6 @@ info_commands = \
     'log',
     'view',
     'monitor',
-    'lockserver',
     ]
 
 task_commands = \
@@ -91,8 +95,8 @@ task_commands = \
 
 # uniquify the command list (some may reside in multiple categories)
 allcom = OrderedDict()
-for command in prep_commands + run_commands + info_commands + \
-        task_commands + util_commands:
+for command in prep_commands + run_commands + info_commands + locking_commands + \
+        security_commands + task_commands + util_commands:
             allcom[ command ] = True
 all_commands = allcom.keys()
 
@@ -104,7 +108,6 @@ core_commands = corecom.keys()
 core_commands.remove( 'monitor' )
 core_commands.remove( 'inline' )
 core_commands.remove( 'view' )
-core_commands.remove( 'lockserver' )
 core_commands.remove( 'block' )
 core_commands.remove( 'unblock' )
 core_commands.remove( 'verbosity' )
@@ -124,18 +127,18 @@ Command-specific help:
 
 Commands by category:
     $ cylc help CATEGORY
-
-  Main categories:
-    core ...... essential commands
-    other ..... other commands
-    all ....... the complete command set
-  Finer categories: 
+ Main categories:
+    core ....... essential commands
+    other ...... other commands
+    all ........ the complete command set
+ Finer graining: 
     prep ....... suite preparation and editing
     run ........ running and controlling suites
     info ....... getting information from suites
-    lock ....... suite and task locking
-    util ....... utility commands
     task ....... task wrapping and messaging
+    locking .... suite and task locking
+    security ... suite security
+    util ....... utility commands
 
 Cylc release version:
     $ cylc -v,--version
@@ -163,13 +166,31 @@ info_help = """
 CATEGORY:info - getting information from registered or running suites."""
 
 core_help = """
-CATEGORY:core - essential commands set for preparing and running suites."""
+CATEGORY:core - essential commands for preparing and running suites."""
 
 other_help = """
 CATEGORY:other - commands not in CATEGORY:core."""
 
-lock_help = """
-CATEGORY:lock - the cylc lockserver, and operator suite locking."""
+security_help = """
+CATEGORY:security - owner-only access, blocking, and secure passphrases.
+
+Cylc commands allow only the suite owner to intervene in a running suite.
+
+Suite blocking guards against inadvertent intervention in your own suites.
+ + SUITE.RC: use suite blocking = True
+
+A secure passphrase will prevent other users from accessing your suite
+even if they hack the cylc command source code to subvert the owner-only
+restriction.
+ + SUITE.RC: use secure passphrase = True
+The passphrase must be stored in $HOME/.cylc/security/[SUITE_NAME] with
+private file permissions, or cylc will refuse to run the suite. If your
+suite has tasks that run on a remote host or under another username,
+those accounts must hold the passphrase too. The passphrase is never
+transferred across the network; a secure md5 checksum is exchanged."""
+
+locking_help = """
+CATEGORY:locking - the cylc lockserver daemon and its user interface."""
 
 task_help = """
 CATEGORY:task - task wrapping and messaging""" 
@@ -182,7 +203,7 @@ all_help = "The complete cylc command set."
 # command summaries
 comsum = {}
 comsum[ 'register'  ] = 'Manage suite registrations (name -> definition dir)'
-comsum[ 'cylclockd' ] = 'The cylc lockserver daemon (suite and task locking)'
+comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
 comsum[ 'search'    ] = 'An intelligent search tool for cylc suites'
 comsum[ 'graph'     ] = 'View a updating dependency graph as you edit a suite'
 comsum[ 'inline'    ] = 'View suite.rc files with include-files inlined'
@@ -194,8 +215,8 @@ comsum[ 'restart'   ] = 'Restart a suite from a previous state'
 comsum[ 'stop'      ] = 'Shut down a running suite (now or later)'
 comsum[ 'pause'     ] = 'Pause a running suite (stop submitting ready tasks)'
 comsum[ 'resume'    ] = 'Unpause a running suite (resume submitting tasks)'
-comsum[ 'block'     ] = 'Tell a suite to ignore subsequent commands'
-comsum[ 'unblock'   ] = 'Tell a suite to action subsequent commands'
+comsum[ 'block'     ] = 'Tell a suite to ignore subsequent interventions'
+comsum[ 'unblock'   ] = 'Tell a suite to action subsequent interventions'
 comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
 comsum[ 'reset'     ] = 'Force a task to change state (manual triggering!)'
 comsum[ 'kill'      ] = 'Remove tasks from a running suite'
@@ -210,10 +231,10 @@ comsum[ 'ping'      ] = 'Check that a named suite is running'
 comsum[ 'scan'      ] = 'Scan cylc ports for running suites'
 comsum[ 'log'       ] = 'Print or view suite logs, with filtering'
 comsum[ 'monitor'   ] = 'An in-terminal suite monitor (deprecated)'
-comsum[ 'lockserver'] = 'Lockserver interrogation and management'
+comsum[ 'lockserver'] = 'Lockserver interrogation and lock management'
 comsum[ 'verbosity' ] = 'Change a suite\'s logging verbosity level'
 comsum[ 'cycletime' ] = 'Cycle time arithmetic'
-comsum[ 'checkvars' ] = 'Check required environment variables en masse'
+comsum[ 'checkvars' ] = 'Process required environment variables en masse'
 comsum[ 'template'  ] = 'Cycle time based filename templating'
 comsum[ 'housekeeping' ] = 'Cycle time based parallel archiving and cleanup'
 comsum[ 'file-transfer'] = 'An scp-based file transfer tool'
