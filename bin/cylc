@@ -16,7 +16,7 @@ categories = \
      'info',
      'util',
      'task',
-     'commands',
+     'all',
      'locking',
      'security',
      ]
@@ -28,6 +28,7 @@ core_commands = \
     'graph',
     'search',
     'control',
+    'submit',
     'coldstart',
     'warmstart',
     'restart',
@@ -37,7 +38,6 @@ core_commands = \
     'insert',
     'remove',
     'purge',
-    'submit',
     'ping',
     'scan',
     'list',
@@ -117,37 +117,39 @@ task_commands = \
     'task-failed',
     ]
 
-# uniquify the command list (some may reside in multiple categories)
+# uniquify the 'all commands' list (some may reside in multiple categories)
 allcom = OrderedDict()
 for command in prep_commands + run_commands + info_commands + locking_commands + \
-        security_commands + task_commands + util_commands:
+        security_commands + task_commands:
             allcom[ command ] = True
-commands_commands = allcom.keys()
+all_commands = allcom.keys()
 
-other_commands = commands_commands[:]
+other_commands = all_commands[:]
 for command in core_commands:
     other_commands.remove( command )
 
+general_usage = """
+USAGE: cylc help
+       cylc help CATEGORY
+       cylc COMMAND --help
+       cylc COMMAND [options] SUITE [arguments]"""
+
 usage = """
 This is the cylc metascheduler commandline interface.
+""" + general_usage + """
 
-Command Usage:
-    $ cylc COMMAND [options] SUITE [arguments]
-    $ cylc COMMAND --help
-
-COMMANDs by category:
-    $ cylc help CATEGORY
-  Main categories:
+  Main suite command CATEGORIES:
     core ....... essential commands
     other ...... other commands
-    commands ... all of the above
-  Finer graining: 
+    all ........ all commands
+  Finer-grained categories: 
     prep ....... suite preparation and editing
     run ........ running and controlling suites
     info ....... getting information from suites
     task ....... task wrapping and messaging
     locking .... suite and task locking
     security ... suite security
+  Other:
     util ....... utility commands
 
 Cylc release version:
@@ -160,11 +162,6 @@ Main help (this page):
 if len(sys.argv) == 1:
     print >> sys.stderr, usage
     sys.exit(1)
-
-general_usage = """
-USAGE: cylc COMMAND [options] SUITE [arguments]
-       cylc COMMAND --help
-       cylc help"""
 
 prep_help = """
 CATEGORY:prep - suite preparation and editing."""
@@ -208,7 +205,7 @@ CATEGORY:task - task wrapping and messaging"""
 util_help = """
 CATEGORY:util - utility commands designed for use with cylc."""
 
-commands_help = "The complete cylc command set."
+all_help = "The complete cylc command set."
 
 # command summaries
 comsum = {}
@@ -235,7 +232,7 @@ comsum[ 'submit'    ] = 'Submit a single task exactly as the suite would'
 comsum[ 'control'   ] = 'Suite control and monitoring GUI'
 comsum[ 'view'      ] = 'Suite monitoring GUI (control functions disabled)'
 comsum[ 'dump'      ] = 'Print the state of each task in a running suite'
-comsum[ 'show'      ] = 'Retrieve various information from a running suite'
+comsum[ 'show'      ] = 'Retrieve information from a running suite'
 comsum[ 'list'      ] = 'Print a suite\'s configured task list'
 comsum[ 'ping'      ] = 'Check that a named suite is running'
 comsum[ 'scan'      ] = 'Scan cylc ports for running suites'
@@ -318,7 +315,7 @@ if cathelp:
 arglist = sys.argv[1:]
 if len(arglist) == 2:
     # catch reversed usage: 'cylc help COMMAND'
-    if arglist[0] == 'help' and arglist[1] in commands_commands:
+    if arglist[0] == 'help' and arglist[1] in all_commands:
         arglist[0] = arglist[1]
         arglist[1] = '--help'
 
@@ -327,7 +324,7 @@ options = []
 if len(arglist) > 1:
     options = arglist[1:]
 
-if command not in commands_commands:
+if command not in all_commands:
     print "ERROR, illegal cylc command: " + command
     print >> sys.stderr, usage
     sys.exit(1)
