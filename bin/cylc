@@ -24,6 +24,9 @@ categories = \
 core_commands = \
     [
     'register',
+    'edit',
+    'graph',
+    'search',
     'control',
     'coldstart',
     'warmstart',
