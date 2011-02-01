@@ -324,7 +324,7 @@ options = []
 if len(arglist) > 1:
     options = arglist[1:]
 
-if command not in all_commands:
+if command not in all_commands + util_commands:
     print "ERROR, illegal cylc command: " + command
     print >> sys.stderr, usage
     sys.exit(1)
