@@ -161,7 +161,7 @@ This help page:
     """
 
 if len(sys.argv) == 1:
-    print usage
+    print >> sys.stderr, usage
     sys.exit(1)
 
 general_usage = """USAGE: cylc COMMAND [options] SUITE [arguments]
@@ -253,18 +253,29 @@ if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     print cylc_version
     sys.exit(0)
 
-if len( sys.argv ) < 3:
+abort = False
+if len( sys.argv ) == 2:
+    if sys.argv[1] != 'control' and \
+            sys.argv[1] != 'view' and \
+            sys.argv[1][0:5] != 'task-':
+        abort = True
+elif len( sys.argv ) < 3:
     print 'ERROR: wrong number of arguments'
-    print usage
+    abort = True
+
+if abort:
+    print >> sys.stderr, usage
     sys.exit(1)
 
 # check for category help
 arg1 = sys.argv[1]
-arg2 = sys.argv[2]
 if arg1 in categories:
-    if arg2 != '--help' and arg2 != 'help':
-        print >> sys.stderr, 'ERROR, illegal option:', arg2
-        sys.exit(1)
+
+    if len(sys.argv) == 3:
+        arg2 = sys.argv[2]
+        if arg2 != '--help' and arg2 != 'help':
+            print >> sys.stderr, 'ERROR, illegal option:', arg2
+            sys.exit(1)
     for cat in categories:
         if cat == arg1:
             print eval (cat + '_help')
@@ -295,21 +306,20 @@ if arg1 in categories:
 # first argument must be COMMAND
 
 command = arg1
+command_options = []
 if command not in all_commands:
     print "ERROR, illegal cylc command: " + command
-    print usage
+    print >> sys.stderr, usage
     sys.exit(1)
 
 # remaining arguments must be command options
-if len( sys.argv ) == 1:
-    command_options = []
-else:
+if len( sys.argv ) == 3:
     if sys.argv[2] == 'help':
         command_options = ['--help']
     else:
         command_options = [ sys.argv[2]]
-    if len(sys.argv) > 3:
-        command_options += sys.argv[2:]
+elif len(sys.argv) > 3:
+    command_options += sys.argv[2:]
 
 # construct command to execute
 command = '_' + command 
