@@ -8,20 +8,19 @@ from execute import execute
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 categories = \
-        [
-        'core',
-        'other',
-        'preparation',
-        'editing',
-        'running',
-        'information',
-        'locking',
-        'utility',
-        'messaging',
-        'all',
-        ]
+     [
+     'core',
+     'other',
+     'prep',
+     'run',
+     'info',
+     'lock',
+     'util',
+     'task',
+     'all',
+     ]
 
-locking_commands = \
+lock_commands = \
     [
     'cylclockd',
     'lockserver',
@@ -29,7 +28,7 @@ locking_commands = \
     'unlock',
      ]
 
-utility_commands = \
+util_commands = \
     [ 
     'cycletime',
     'checkvars',
@@ -37,25 +36,17 @@ utility_commands = \
     'housekeeping',
     'file-transfer',
     ]
-    #utility_commands.sort()
 
-preparation_commands = \
+prep_commands = \
     [
     'register',
-    'cylclockd',
-    ]
-    #preparation_commands.sort()
-
-editing_commands = \
-    [
+    'edit',
     'graph',
     'search',
-    'edit',
     'inline',
     ]
-    #editing_commands.sort()
 
-running_commands = \
+run_commands = \
     [
     'control',
     'coldstart', 
@@ -74,9 +65,8 @@ running_commands = \
     'verbosity',
     'submit',
     ]
-    #running_commands.sort()
 
-information_commands = \
+info_commands = \
     [
     'ping',
     'scan',
@@ -89,9 +79,8 @@ information_commands = \
     'monitor',
     'lockserver',
     ]
-    #information_commands.sort()
 
-messaging_commands = \
+task_commands = \
     [
     'wrap',
     'task-started',
@@ -99,25 +88,22 @@ messaging_commands = \
     'task-finished',
     'task-failed',
     ]
-    #messaging_commands.sort()
 
 # uniquify the command list (some may reside in multiple categories)
 allcom = OrderedDict()
-for command in preparation_commands + editing_commands + running_commands + \
-        information_commands + messaging_commands + utility_commands:
+for command in prep_commands + run_commands + info_commands + \
+        task_commands + util_commands:
             allcom[ command ] = True
 all_commands = allcom.keys()
 
 # ... same for suite-related commands
 corecom = OrderedDict()
-for command in preparation_commands + editing_commands + \
-        running_commands + information_commands:
+for command in prep_commands + run_commands + info_commands: 
             corecom[ command ] = True
 core_commands = corecom.keys()
 core_commands.remove( 'monitor' )
 core_commands.remove( 'inline' )
 core_commands.remove( 'view' )
-core_commands.remove( 'cylclockd' )
 core_commands.remove( 'lockserver' )
 core_commands.remove( 'lock' )
 core_commands.remove( 'unlock' )
@@ -128,16 +114,6 @@ other_commands = all_commands[:]
 for command in core_commands:
     other_commands.remove( command )
 
-# BANNER NOT USED:
-banner = """
-  _________________________________________________
-  __ Cylc Self Organising Adaptive Metascheduler __
-  __\    (c) Hilary Oliver, NIWA, 2008-2011     /__
-  ___\        cylc is pronounced 'silk'        /___
-  ____\________________C_Y_L_C________________/____
-"""
-
-# top level help
 usage = """This is the cylc metascheduler commandline interface.
 
 Command usage:
@@ -146,17 +122,20 @@ Command usage:
 Command-specific help:
     $ cylc COMMAND --help
 
-Command summaries by overlapping category:
-    $ cylc core        help  # the core command set for users
-    $ cylc other       help  # all non-core commands
-    $ cylc preparation help  # preparation for running a suite
-    $ cylc editing     help  # suite editing commands 
-    $ cylc running     help  # starting and controlling suites
-    $ cylc information help  # interrogating suites
-    $ cylc locking     help  # suite and task locking
-    $ cylc utility     help  # utility commands
-    $ cylc messaging   help  # (task messaging)
-    $ cylc all         help  # all of the above
+Commands by category:
+    $ cylc help CATEGORY
+
+  Main categories:
+    core ...... essential commands
+    other ..... other commands
+    all ....... the complete command set
+  Finer categories: 
+    prep ....... suite preparation and editing
+    run ........ running and controlling suites
+    info ....... getting information from suites
+    lock ....... suite and task locking
+    util ....... utility commands
+    task ....... task wrapping and messaging
 
 Cylc release version:
     $ cylc -v,--version
@@ -169,32 +148,35 @@ if len(sys.argv) == 1:
     print >> sys.stderr, usage
     sys.exit(1)
 
-general_usage = """USAGE: cylc COMMAND [options] SUITE [arguments]
+general_usage = """
+USAGE: cylc COMMAND [options] SUITE [arguments]
        cylc COMMAND --help
        cylc help"""
 
-# category help
-preparation_help = "Cylc commands for preparing a suite for use."
-editing_help = "Cylc commands to help with the suite editing process."
-running_help = "Cylc commands for running and controlling suites."
-information_help = "Cylc commands for interrogating registered or running suites."
-core_help = "The core cylc command set for preparing and running suites."
-other_help = "Commands outside of the cylc core command set for users."
-locking_help = \
-"""Cylc commands pertaining to: 
-  (a) suite and task locking in a potentially distributed environment,
-i.e. preventing accidental execution of multiple instances of the same
-suite or task at the same time, and,
-  (b) the simple 'lock' and 'unlock' commands which are entirely unrelated
-to the lockserver (they're a crude safety mechanism to prevent accidental
-intervention in an important suite)."""
-messaging_help = \
-"""The cylc task messaging interface. Running tasks must use these commands
-to communicate with their parent suite (cylc instance). However, most tasks
-can be wrapped (see cylc wrap --help) and these do this automatically.""" 
-utility_help = \
-"""Cylc utility commands. Cylc suites do not have to use these programs,
-but they are designed to work with cylc and you may find them useful."""
+prep_help = """
+CATEGORY:prep - suite preparation and editing."""
+
+run_help  = """
+CATEGORY:run - running and controlling suites."""
+
+info_help = """
+CATEGORY:info - getting information from registered or running suites."""
+
+core_help = """
+CATEGORY:core - essential commands set for preparing and running suites."""
+
+other_help = """
+CATEGORY:other - commands not in CATEGORY:core."""
+
+lock_help = """
+CATEGORY:lock - the cylc lockserver, and operator suite locking."""
+
+task_help = """
+CATEGORY:task - task wrapping and messaging""" 
+
+util_help = """
+CATEGORY:util - utility commands designed for use with cylc."""
+
 all_help = "The complete cylc command set."
 
 # command summaries
@@ -249,47 +231,28 @@ except:
     print >> sys.stderr, "SOLUTION: source $CYLC_DIR/cylc-env.sh in your shell." 
     sys.exit(1)
 
-if sys.argv[1] == '-h' or \
+# main help
+if len( sys.argv ) == 2 and \
+        (sys.argv[1] == '-h' or \
         sys.argv[1] == '--help' or \
         sys.argv[1] == '-help' or \
         sys.argv[1] == 'help' or \
         sys.argv[1] == '?' or \
-        sys.argv[1] == '-?':
+        sys.argv[1] == '-?'):
     print usage
     sys.exit(0)
 
+# cylc release version
 if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     print cylc_version
     sys.exit(0)
 
-abort = False
-if len( sys.argv ) == 2:
-    if sys.argv[1] != 'control' and \
-            sys.argv[1] != 'view' and \
-            sys.argv[1][0:5] != 'task-':
-        abort = True
-elif len( sys.argv ) < 3:
-    print 'ERROR: wrong number of arguments'
-    abort = True
-
-if abort:
-    print >> sys.stderr, usage
-    sys.exit(1)
-
-# check for category help
-arg1 = sys.argv[1]
-if arg1 in categories:
-
-    if len(sys.argv) == 3:
-        arg2 = sys.argv[2]
-        if arg2 != '--help' and arg2 != 'help':
-            print >> sys.stderr, 'ERROR, illegal option:', arg2
-            sys.exit(1)
+# category help
+if sys.argv[1] == 'help' and sys.argv[2] in categories:
     for cat in categories:
-        if cat == arg1:
+        if cat == sys.argv[2]:
             print eval (cat + '_help')
             break
-    print
     print general_usage
     print
     print 'COMMAND:'
@@ -312,29 +275,33 @@ if arg1 in categories:
         print ' ' + digit + '/', command, '.'*(longest-len(command)) + '...', comsum[command]
     sys.exit(0)
 
-# first argument must be COMMAND
+arglist = sys.argv[1:]
+if len(arglist) == 2:
+    # catch reversed usage: 'cylc help COMMAND'
+    if arglist[0] == 'help' and arglist[1] in all_commands:
+        arglist[0] = arglist[1]
+        arglist[1] = '--help'
 
-command = arg1
-command_options = []
+command = arglist[0]
+options = []
+if len(arglist) > 1:
+    options = arglist[1:]
+
 if command not in all_commands:
     print "ERROR, illegal cylc command: " + command
     print >> sys.stderr, usage
     sys.exit(1)
 
-# remaining arguments must be command options
-if len( sys.argv ) == 3:
-    if sys.argv[2] == 'help':
-        command_options = ['--help']
-    else:
-        command_options = [ sys.argv[2]]
-elif len(sys.argv) > 3:
-    command_options += sys.argv[2:]
+try:
+    if options[0] == 'help':
+        # catch 'cylc COMMAND help'
+        options[0] = '--help'
+except IndexError:
+    pass
 
 # construct command to execute
 command = '_' + command 
-# subprocess.call() takes a list: [ command, arg1, arg2, ...]
 commandlist = [ command ]
-for f in command_options:
+for f in options:
     commandlist.append( f )
-
 execute( commandlist )
