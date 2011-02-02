@@ -117,6 +117,9 @@ task_commands = \
     'task-failed',
     ]
 
+altnames = {}
+altnames['grep'] = 'search'
+
 # uniquify the 'all commands' list (some may reside in multiple categories)
 allcom = OrderedDict()
 for command in prep_commands + run_commands + info_commands + locking_commands + \
@@ -211,7 +214,7 @@ all_help = "The complete cylc command set."
 comsum = {}
 comsum[ 'register'  ] = 'Manage suite registrations (name -> definition dir)'
 comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
-comsum[ 'search'    ] = 'An intelligent search tool for cylc suites'
+comsum[ 'search'    ] = '[grep] An intelligent search tool for cylc suites'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
 comsum[ 'inline'    ] = 'View suite.rc files with include-files inlined'
 comsum[ 'edit'      ] = 'Edit a suite config file, optionally inlined'
@@ -321,6 +324,9 @@ command = arglist[0]
 options = []
 if len(arglist) > 1:
     options = arglist[1:]
+
+if command in altnames:
+    command = altnames[command]
 
 if command not in all_commands + util_commands:
     print "ERROR, illegal cylc command: " + command
