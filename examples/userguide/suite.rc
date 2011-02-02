@@ -47,7 +47,7 @@ use lockserver = True
 [ tasks ]
     [[prep]]
         description = "clean out the suite workspace for a new run"
-        command = cylc wrap clean-workspace.sh $WORKSPACE
+        command = "cylc wrap clean-workspace.sh $WORKSPACE"
     [[X]]
         description = "retrieve real time data for model A"
         command = cylc wrap X.sh
@@ -55,52 +55,52 @@ use lockserver = True
             X_OUTPUT_DIR = $WORKSPACE
     [[A]]
         description = "model A - weather forecast"
-        command = cylc wrap A.sh
+        command = "cylc wrap A.sh"
         [[[environment]]]
             A_INPUT_DIR = $WORKSPACE
             A_OUTPUT_DIR = $WORKSPACE
     [[B]]
         description = "model B - sea state forecast"
-        command = cylc wrap B.sh
+        command = "cylc wrap B.sh"
         [[[environment]]]
             B_INPUT_DIR = $WORKSPACE
             B_OUTPUT_DIR = $WORKSPACE
     [[C]]
         description = "model C - river flow forecast"
-        command = cylc wrap C.sh
+        command = "cylc wrap C.sh"
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
     [[D]]
         description = "combined post processing for models B and C"
-        command = cylc wrap D.sh
+        command = "cylc wrap D.sh"
         [[[environment]]]
             D_INPUT_DIR = $WORKSPACE
             D_OUTPUT_DIR = $WORKSPACE
     [[E]]
         description = "post processing for model B"
-        command = cylc wrap E.sh
+        command = "cylc wrap E.sh"
         [[[environment]]]
             E_INPUT_DIR = $WORKSPACE
             E_OUTPUT_DIR = $WORKSPACE
     [[F]]
         description = "post processing for model F"
-        command = cylc wrap F.sh
+        command = "cylc wrap F.sh"
         [[[environment]]]
             F_INPUT_DIR = $WORKSPACE
             F_OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]]
         description = "cold start model A"
-        command = cylc wrap ColdA.sh
+        command = "cylc wrap ColdA.sh"
 
     [[ColdB]]
         description = "model B"
-        command = cylc wrap ColdB.sh
+        command = "cylc wrap ColdB.sh"
 
     [[ColdC]]
         description = "model C"
-        command = cylc wrap ColdC.sh
+        command = "cylc wrap ColdC.sh"
 
 [visualization]
     default node attributes = "style=filled"
