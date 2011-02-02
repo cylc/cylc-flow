@@ -1,5 +1,8 @@
 #!/bin/bash
 
+ARCHIVE=$CYLC_DIR/dev/HousekeepingTest/ARC
+rm -rf $ARCHIVE
+
 TOPDIR=$CYLC_DIR/dev/HousekeepingTest/SRC
 rm -r $TOPDIR
 mkdir -p $TOPDIR

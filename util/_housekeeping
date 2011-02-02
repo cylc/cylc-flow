@@ -9,8 +9,8 @@ usage = """1/ cylc housekeeping [options] SOURCE MATCH OPER OFFSET [DEST]
 Usage: 2/ cylc housekeeping [options] CONFIG
 
 Cycle-time based file management: delete, move, or copy files or
-directories whose names contain a cycle time that is at least
-OFFSET hours earlier than the current or given cycle time. 
+directories whose names contain a cycle time that is MORE THAN
+OFFSET hours earlier than the current (or given) cycle time. 
 
 The CONFIG file format is one or more of lines of:
 #------------
@@ -87,7 +87,6 @@ messages, is printed after actioning each config line.
               (normal when copying and deleting with different offsets).
   --verbose - also print each individual action, AND copies or moves that
               were aborted because the target already exists.
-  --debug   - also print information on EVERY file in the source directory. 
 Aborted deletion is always a warning because this indicates that the 
 check file is either missing or differs from the source file.
 
@@ -106,7 +105,7 @@ parser = OptionParser( usage )
 # THAT THEY NEED TO BE PARSED THROUGH TO THE INNER SELF-CALL (FOR EACH
 # LINE OF A CONFIG FILE; SEE BELOW)
 
-parser.add_option( "-c", "--cycle-time",
+parser.add_option( "--cycle-time",
         metavar='YYYYMMDDHH',
         help="Cycle time, defaults to $CYCLE_TIME",
         action="store", dest="ctime" )
@@ -150,9 +149,9 @@ parser.add_option( "--verbose", "-v",
         help="print every actioned operation",
         action="store_true", dest="verbose", default=False )
 
-parser.add_option( "--debug", "-d",
-        help="print full a trace of what was done, including matching",
-        action="store_true", dest="debug", default=False )
+parser.add_option( "--cheapdiff", "-c",
+        help="Assume source and target files of the same size are identical",
+        action="store_true", dest="cheap", default=False )
 
 parser.add_option( "--batch-size", "-b",
         help="Do parallel processing of matched files in batches "
@@ -166,18 +165,10 @@ parser.add_option( "--batch-size", "-b",
 if len(args) != 1  and len( args ) != 4 and len(args) != 5:
     parser.error( "Wrong number of arguments" ) 
 
-if options.debug and options.verbose:
-    parser.error( "Choose debug or verbose, not both" )
-
 default = True
 quiet = False
 verbose = False
-debug = False
-if options.debug:
-    quiet = True
-    verbose = True
-    debug = True
-elif options.verbose:
+if options.verbose:
     quiet = True
     verbose = True
 elif options.quiet:
@@ -205,7 +196,7 @@ if len(args) == 0 or len(args) > 5:
 
 if len(args) == 1:
     file = args[0]
-    config_file( file, ctime, debug=debug ).action()
+    config_file( file, ctime, verbose=verbose, cheap=options.cheap ).action( batchsize )
 
 else:
     source = args[0]
@@ -216,6 +207,6 @@ else:
     if len(args) == 5:
         destn = args[4]
 
-    config_line( source, match, opern, ctime, offset, destn, debug=debug ).action()
+    config_line( source, match, opern, ctime, offset, destn, verbose=verbose, cheap=options.cheap ).action( batchsize )
     
 print '\nFINISH: ', datetime.datetime.now()

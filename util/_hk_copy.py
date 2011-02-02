@@ -1,17 +1,20 @@
 #!/usr/bin/env python
 
-from hkdiff import diff
 from housekeeping import HousekeepingError, NonIdenticalTargetError
-import subprocess
 from mkdir_p import mkdir_p
+from hkdiff import diff
+import subprocess
 import os, sys
 
 class hk_copy:
     """
-        Copy source (file or dir) to target if the target does not already exist.
-        If target does exist, do nothing, or warn if it is not identical to source.
+        Copy a source item (file or directory) into a target directory.
+         + Copy only if the target item does not already exist.
+         + Do not copy if the target item already exists.
+         + Warn if the target item exists but differs from the source.
     """
-    def __init__( self, src, tdir, verbose=False ):
+    def __init__( self, src, tdir, verbose=False, cheap=False ):
+        self.cheap = cheap
         self.verbose = verbose
         self.src = src
         self.tdir = tdir
@@ -29,20 +32,22 @@ class hk_copy:
         # construct target
         self.target = os.path.join( tdir, os.path.basename(src))
 
-        print "\nCopy"
-        print " + source: ", src
-        print " + target: ", self.target
-
     def execute( self ):
+        print "Copy:"
+        print " + source: " + self.src
+        print " + target: " + self.target
+
         if os.path.exists( self.target ):
             # target already exists, check if identical
             try:
-                diff( self.src, self.target, verbose=self.verbose ).execute()
+                diff( self.src, self.target, verbose=self.verbose, cheap=self.cheap ).execute()
             except NonIdenticalTargetError, x:
-                print 'WARNING: target exists and differs from source!'
+                print 'NOT COPYING: target exists'
+                print >> sys.stderr, 'WARNING: target differs from source!'
+                return
             else:
                 # target is identical, job done.
-                print "(identical target exists already)"
+                print "NOT COPYING: target exists"
                 return
 
         # target does not exist yet; OK to copy.
@@ -61,7 +66,9 @@ class hk_copy:
             # command failed
             raise OperationFailedError, 'ERROR: Copy failed!'
         else:
-            print "Succeeded"
+            print "SUCCEEDED"
+
+        return
                 
 if __name__ == "__main__":
     usage = "USAGE: " + sys.argv[0] + " SRC DIR [-v]"
@@ -81,7 +88,4 @@ if __name__ == "__main__":
             print usage
             sys.exit(1)
  
-    try:
-        hk_copy( src, tdir, verbose ).execute()
-    except NonIdenticalTargetError, x:
-        print x
+    hk_copy( src, tdir, verbose ).execute()

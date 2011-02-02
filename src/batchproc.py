@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 
-import sys
-from subprocess import Popen
+import sys, re
+import subprocess
+
+# Instead of p.wait() below, We could use p.poll() which returns None
+# until process p finishes, after which it returns p's exit status; this
+# would allow print out of exactly when each process finishes. Same
+# result in the end though, in terms of whole batch wait.
 
 class batchproc:
     """ Batch process items that return a subprocess-style command list
@@ -12,39 +17,52 @@ class batchproc:
         Users should do a final call to process() to handle any final
         items in an incomplete batch."""
 
-    def __init__( self, size=1, verbose=False, shell=False ):
+    def __init__( self, size=1, shell=False ):
         self.batchno = 0
         self.items = []
         self.size = int(size)
         self.shell = shell
-        self.verbose = verbose
-        if verbose:
-            print "Initializing batch processing, batch size", size
+        print "\n  Initializing parallel batch processing, batch size", size
 
     def add_or_process( self, item ):
+        n_actioned = 0
         self.items.append( item )
         if len( self.items ) >= self.size:
-            self.batchno += 1
-            self.process()
+            n_actioned = self.process()
             self.items = []
+        return n_actioned
 
     def process( self ):
-        if self.verbose:
-            print "Process Batch No.", self.batchno
+        if len( self.items ) == 0:
+            return 0
+        self.batchno += 1
+        print "  Batch No.", self.batchno
         proc = []
+        count = 0
+        n_succeeded = 0
         for item in self.items:
+            # SPAWN BATCH MEMBER PROCESSES IN PARALLEL
             #print 'spawning', item 
-            print item.execute()
-            proc.append( Popen( item.execute(), shell=self.shell ))
+            #print item.execute()
+            proc.append( subprocess.Popen( item.execute(), shell=self.shell, \
+                    stdout=subprocess.PIPE, stderr=subprocess.PIPE ))
         for p in proc:
-            # This blocks until p finishes:
-            p.wait()
-            # We could use p.poll() instead (returns None until 
-            # p finishes, then the exit status); this would allow
-            # print out of exactly when each process finishes. 
-            # Same result in the end though, for whole batch wait.
+            # WAIT FOR ALL PROCESSES TO FINISH
+            count += 1
+            p.wait()   # blocks until p finishes
+            stdout, stderr = p.communicate()
+            if stdout != '':
+                print '    Batch', self.batchno, 'member', count, 'stdout:'
+                for line in re.split( r'\n', stdout ):
+                    print '   ', line
+                    if re.search( 'SUCCEEDED', line ):
+                        n_succeeded += 1
+            if stderr != '':
+                print '    Batch', self.batchno, 'member', count, 'stderr:'
+                for line in re.split( r'\n', stderr ):
+                    print '   ', line
 
-
+        return n_succeeded
 
 #========= test code follows: ========>
 

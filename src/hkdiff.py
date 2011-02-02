@@ -6,14 +6,16 @@ from housekeeping import NonIdenticalTargetError
 
 class diff:
     """
-        Raise a NonIdenticalTarget Error if soure and target (files or
-        directories) differ.
+        Difference source and target items (files or directories) and
+        raise a NonIdenticalTarget Error if they differ.
+        If initialized with 'cheap=True' just compare file sizes.
     """
-    def __init__( self, source, target, verbose=False ):
+    def __init__( self, source, target, verbose=False, cheap=False ):
         # Calling code should confirm source and target exist.
         self.source = source
         self.target = target
         self.verbose = verbose
+        self.cheap = cheap
         self.indent = '   '
 
         if verbose:
@@ -22,6 +24,30 @@ class diff:
             print self.indent + " + target: " + target
 
     def execute( self ):
+        if os.path.isfile( self.source ):
+            if self.size_differs():
+                # size differs => files differ
+                if self.verbose:
+                    print self.indent + "Source and target differ in size"
+                raise NonIdenticalTargetError, 'WARNING: source and target differ in size'
+ 
+            else:
+                # size same, file may differ
+                if self.verbose:
+                    print self.indent + "Source and target are identical in size"
+                if self.cheap:
+                    # assume files identical if size same
+                    return
+                else:
+                    # same size but caller wants real diff to be sure
+                    pass
+        else:
+            # directories: have to do a real diff
+            pass
+
+        self.real_diff()
+
+    def real_diff( self ):
         # There seems to be no Pythonic 'diff' ...
         # subprocess.call() takes a list: [ command, arg1, arg2, ...]
         # recursive diff
@@ -32,12 +58,25 @@ class diff:
         # and raises OSError if the command cannot be invoked.
         retcode = subprocess.call( command_list, stdout=open('/dev/null', 'w'), stderr=subprocess.STDOUT )
         if retcode != 0:
+            if self.verbose:
+                print self.indent + "Source and target differ"
             raise NonIdenticalTargetError, 'WARNING: source and target differ'
         else:
             if self.verbose:
                 print self.indent + "Source and target are identical"
 
+    def size_differs( self ):
+        size_src = os.stat( self.source ).st_size
+        size_dst = os.stat( self.target ).st_size
+        if size_src != size_dst:
+            return True
+        else:
+            return False
+
 if __name__ == "__main__":
+
+    #cheap = False
+    cheap = True
 
     usage = "USAGE: " + sys.argv[0] + " SRC CHK [-v]"
 
@@ -56,4 +95,4 @@ if __name__ == "__main__":
             print usage
             sys.exit(1)
     
-    diff( src, chk, verbose ).execute()
+    diff( src, chk, verbose, cheap ).execute()

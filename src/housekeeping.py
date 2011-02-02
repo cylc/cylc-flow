@@ -21,20 +21,23 @@ class NonIdenticalTargetError( HousekeepingError ):
 class OperationFailedError( HousekeepingError ):
     pass
 
-
 class config_line:
     """
-        Process a single cylc housekeeping config line.
+        Process a single cylc housekeeping config line. Matched items
+        are batched and members of each batch are processed in parallel
+        (in the sense of parallel unix processes). One batch must finish
+        before the next is processed.
     """
     legal_ops = [ 'copy', 'move', 'delete' ]
-    def __init__( self, source, match, oper, ctime, offset, dest=None, debug=False ):
+    def __init__( self, source, match, oper, ctime, offset, dest=None, verbose=False, cheap=False ):
         self.source = source
         self.match = match
         self.ctime = ctime
         self.offset = offset
         self.opern = oper 
         self.destn = dest
-        self.debug = debug
+        self.verbose = verbose
+        self.cheap = cheap
 
         # interpolate SIMPLE environment variables ($foo, ${foo}) into paths
         self.source = os.path.expandvars( self.source )
@@ -70,26 +73,45 @@ class config_line:
         if self.opern not in self.__class__.legal_ops:
             raise HousekeepingError, "Illegal operation: " + self.opern
 
-    def action( self ):
-        batch = batchproc( 3, verbose=True )
+    def action( self, batchsize ):
+        src_entries = 0
+        matched = 0
+        not_matched = 0
+        total = 0
+        actioned = 0
+        print "________________________________________________________________________"
+        print "SOURCE:", self.source
+        if self.destn:
+            print "TARGET:", self.destn
+        print "MATCH :", self.match
+        print "ACTION:", self.opern
+        print "CUTOFF:", self.ctime, '-', self.offset, '=', cycle_time.decrement( self.ctime, self.offset )
+        batch = batchproc( batchsize )
         for entry in os.listdir( self.source ):
+            src_entries += 1
             entrypath = os.path.join( self.source, entry )
-            item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset, self.destn, self.debug )
+            item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset, self.destn, self.verbose, self.cheap )
             if not item.matches():
+                not_matched += 1
                 continue
-            batch.add_or_process( item )
-        batch.process()
+            matched += 1
+            item.interpolate_destination()
+            actioned += batch.add_or_process( item )
+        actioned += batch.process()
+ 
+        print 'MATCHED :', str(matched) + '/' + str(src_entries)
+        print 'ACTIONED:', str(actioned) + '/' + str(matched)
 
 class config_file:
     """
         Process a cylc housekeeping config file, line by line.
     """
-    def __init__( self, file, ctime, excpt=None, only=None, debug=False):
+    def __init__( self, file, ctime, excpt=None, only=None, verbose=False, cheap=False):
         self.lines = []
         if not os.path.isfile( file ):
             raise HousekeepingError, "file not found: " + file 
 
-        print "   Parsing config file", os.path.abspath( file )
+        print "Parsing housekeeping config file", os.path.abspath( file )
         sys.stdout.flush()
 
         FILE = open( file, 'r' )
@@ -114,7 +136,7 @@ class config_file:
                 varname=m.group(1)
                 varvalue=m.group(2)
                 os.environ[varname] = os.path.expandvars( varvalue )
-                if debug:
+                if verbose:
                     print 'Defining variable: ', varname, '=', varvalue
                 continue
 
@@ -148,50 +170,52 @@ class config_file:
                 print "\n   *** SKIPPING " + line
                 continue
 
-            self.lines.append( config_line( source, match, operation, ctime, offset, destination, debug=debug ))
+            self.lines.append( config_line( source, match, operation, ctime, offset, destination, verbose=verbose, cheap=cheap ))
 
-    def action( self ):
+    def action( self, batchsize ):
         for item in self.lines:
-            item.action()
+            item.action( batchsize )
 
 class hkitem:
     """
-        Handling processing of a single source directory entry
+        Handle processing of a single source directory entry
     """
-    def __init__( self, path, pattern, operation, ctime, offset, destn, debug=False ):
+    def __init__( self, path, pattern, operation, ctime, offset, destn, verbose=False, cheap=False ):
         # Assumes the validity of pattern has already been checked
         self.operation = operation
-        self.debug=debug
         self.path = path
         self.pattern = pattern
         self.ctime = ctime
         self.offset = offset
         self.destn = destn
+        self.matched_ctime = None
+        self.verbose = verbose
+        self.cheap = cheap
 
     def matches( self ):
-        if self.debug:
+        if self.verbose:
             print "\nSource item:", self.path
 
         # does path match pattern
         m = re.search( self.pattern, self.path )
         if not m:
-            if self.debug:
+            if self.verbose:
                 print " + does not match"
             return False
 
-        if self.debug:
+        if self.verbose:
             print " + MATCH"
 
         # extract cycle time from path
         mgrps = m.groups()
         if len(mgrps) == 1:
-            matched_ctime = mgrps[0]
+            self.matched_ctime = mgrps[0]
         elif len(mgrps) == 2:
             foo, bar = mgrps
             if len(foo) == 8 and len(bar) == 2:
-                matched_ctime = foo + bar
+                self.matched_ctime = foo + bar
             elif len(foo) == 2 and len(bar) == 8:
-                matched_ctime = bar + foo
+                self.matched_ctime = bar + foo
             else:
                 print "WARNING: Housekeeping match problem:"
                 print " + path: "+ self.path
@@ -206,26 +230,43 @@ class hkitem:
             return False
 
         # check validity of extracted cycle time
-        if not cycle_time.is_valid( matched_ctime ):
-            if self.debug:
-                print " + extracted cycle time is NOT VALID: " + matched_ctime
+        if not cycle_time.is_valid( self.matched_ctime ):
+            if self.verbose:
+                print " + extracted cycle time is NOT VALID: " + self.matched_ctime
             return False
         else:
-            if self.debug:
-                print " + extracted cycle time: " + matched_ctime
+            if self.verbose:
+                print " + extracted cycle time: " + self.matched_ctime
 
-        # assume ctime is >= matched_ctime
-        gap = cycle_time.diff_hours( self.ctime, matched_ctime )
-        if self.debug:
-            print " + computed offset hours", gap, 
-        if gap > self.offset:
-            if self.debug:
-                print "- (doesn't make the cutoff)"
+        # assume ctime is >= self.matched_ctime
+        gap = cycle_time.diff_hours( self.ctime, self.matched_ctime )
+        if self.verbose:
+            print " + computed offset hours", gap,
+        if int(gap) < int(self.offset):
+            if self.verbose:
+                print "- ignoring (does not make the cutoff)"
             return False
-        else:
-            if self.debug:
-                print "- ACTIONABLE (makes the cutoff)"
-            return True
+        
+        if self.verbose:
+            print "- ACTIONABLE (does make the cutoff)"
+        return True
+
+    def interpolate_destination( self ):
+        # Interpolate cycle time components into destination if necessary.
+        if self.destn:
+            # destination directory may be cycle time dependent
+            dest = self.destn
+            dest = re.sub( 'YYYYMMDDHH', self.matched_ctime, dest )
+            dest = re.sub( 'YYYYMMDD', self.matched_ctime[0:8], dest )
+            dest = re.sub( 'YYYYMM', self.matched_ctime[0:6], dest )
+            dest = re.sub( 'MMDD', self.matched_ctime[4:8], dest )
+            dest = re.sub( 'YYYY', self.matched_ctime[0:4], dest )
+            dest = re.sub( 'MM', self.matched_ctime[8:10], dest )
+            dest = re.sub( 'DD', self.matched_ctime[6:8], dest )
+            dest = re.sub( 'HH', self.matched_ctime[8:10], dest )
+            if self.verbose and dest != self.destn:
+                print " + expanded destination directory:\n  ", dest
+            self.destn = dest
 
     def execute( self ):
         if self.operation == 'copy':
@@ -234,4 +275,12 @@ class hkitem:
             compath = os.path.join( os.environ['CYLC_DIR'], 'util', '_hk_move.py' ) 
         elif self.operation == 'delete':
             compath = os.path.join( os.environ['CYLC_DIR'], 'util', '_hk_delete.py' ) 
-        return [ compath, self.path, self.destn ]
+
+        commandlist = [compath]
+        # TO DO: ADD OPTION PARSER TO THE _HK COMMANDS, for -c and -v
+        #if self.verbose:
+        #    commandlist.append( '-v' )
+        #if self.cheap:
+        #    commandlist.append( '-c' )
+
+        return commandlist + [ self.path, self.destn ]
