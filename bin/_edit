@@ -135,7 +135,7 @@ The editing process is spawned in the foreground as follows:
 See also 'cylc search' and 'cylc inline'.
 
 Arguments:
-  SUITE   - registered name of the suite.""")
+  SUITE   - registered name of the target suite.""")
 
 parser.add_option( "--inline", "-i", 
         help="Edit with include-files inlined as described above.",

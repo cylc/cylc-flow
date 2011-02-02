@@ -17,12 +17,15 @@ class batchproc:
         Users should do a final call to process() to handle any final
         items in an incomplete batch."""
 
-    def __init__( self, size=1, shell=False ):
+    def __init__( self, size=1, shell=False, verbose=False ):
+        self.verbose = verbose
         self.batchno = 0
         self.items = []
         self.size = int(size)
         self.shell = shell
-        print "\n  Initializing parallel batch processing, batch size", size
+        print
+        print "  Initializing parallel batch processing, batch size", size
+        print
 
     def add_or_process( self, item ):
         n_actioned = 0
@@ -36,7 +39,8 @@ class batchproc:
         if len( self.items ) == 0:
             return 0
         self.batchno += 1
-        print "  Batch No.", self.batchno
+        if self.verbose:
+            print "  Batch No.", self.batchno
         proc = []
         count = 0
         n_succeeded = 0
@@ -51,13 +55,19 @@ class batchproc:
             count += 1
             p.wait()   # blocks until p finishes
             stdout, stderr = p.communicate()
+            error_reported = False
+            if stderr != '':
+                error_reported = True
+                print '  ERROR reported in Batch', self.batchno, 'member', count
             if stdout != '':
-                print '    Batch', self.batchno, 'member', count, 'stdout:'
+                if self.verbose or error_reported:
+                    print '    Batch', self.batchno, 'member', count, 'stdout:'
                 for line in re.split( r'\n', stdout ):
-                    print '   ', line
+                    if self.verbose or error_reported:
+                        print '   ', line
                     if re.search( 'SUCCEEDED', line ):
                         n_succeeded += 1
-            if stderr != '':
+            if error_reported:
                 print '    Batch', self.batchno, 'member', count, 'stderr:'
                 for line in re.split( r'\n', stderr ):
                     print '   ', line

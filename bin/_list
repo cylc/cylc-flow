@@ -9,7 +9,10 @@ parser = OptionParser( """cylc list [options] SUITE
 Print the title, description, and task list, of a registered suite
 (which does not need to be running). This command parses the 
 suite.rc config file, which allows you to check the file's validity
-without running the suite.""" )
+without running the suite.
+
+Arguments:
+   SUITE    - registered name of the target suite""")
 
 parser.add_option( "-a", "--all", help="print all information "
         "(by default just the task list is printed).",

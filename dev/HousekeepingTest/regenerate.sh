@@ -4,7 +4,7 @@ ARCHIVE=$CYLC_DIR/dev/HousekeepingTest/ARC
 rm -rf $ARCHIVE
 
 TOPDIR=$CYLC_DIR/dev/HousekeepingTest/SRC
-rm -r $TOPDIR
+rm -rf $TOPDIR
 mkdir -p $TOPDIR
 
 START=2010080806

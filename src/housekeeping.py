@@ -29,7 +29,8 @@ class config_line:
         before the next is processed.
     """
     legal_ops = [ 'copy', 'move', 'delete' ]
-    def __init__( self, source, match, oper, ctime, offset, dest=None, verbose=False, cheap=False ):
+    def __init__( self, source, match, oper, ctime, offset, dest=None, 
+            verbose=False, debug=False, mode=None, cheap=False ):
         self.source = source
         self.match = match
         self.ctime = ctime
@@ -37,7 +38,9 @@ class config_line:
         self.opern = oper 
         self.destn = dest
         self.verbose = verbose
+        self.debug = debug
         self.cheap = cheap
+        self.mode = mode
 
         # interpolate SIMPLE environment variables ($foo, ${foo}) into paths
         self.source = os.path.expandvars( self.source )
@@ -86,11 +89,12 @@ class config_line:
         print "MATCH :", self.match
         print "ACTION:", self.opern
         print "CUTOFF:", self.ctime, '-', self.offset, '=', cycle_time.decrement( self.ctime, self.offset )
-        batch = batchproc( batchsize )
+        batch = batchproc( batchsize, verbose=self.verbose )
         for entry in os.listdir( self.source ):
             src_entries += 1
             entrypath = os.path.join( self.source, entry )
-            item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset, self.destn, self.verbose, self.cheap )
+            item = hkitem( entrypath, self.match, self.opern, self.ctime, self.offset, 
+                    self.destn, self.mode, self.debug, self.cheap )
             if not item.matches():
                 not_matched += 1
                 continue
@@ -106,7 +110,8 @@ class config_file:
     """
         Process a cylc housekeeping config file, line by line.
     """
-    def __init__( self, file, ctime, excpt=None, only=None, verbose=False, cheap=False):
+    def __init__( self, file, ctime, only=None, excpt=None, 
+            verbose=False, debug=False, mode=None, cheap=False):
         self.lines = []
         if not os.path.isfile( file ):
             raise HousekeepingError, "file not found: " + file 
@@ -170,7 +175,9 @@ class config_file:
                 print "\n   *** SKIPPING " + line
                 continue
 
-            self.lines.append( config_line( source, match, operation, ctime, offset, destination, verbose=verbose, cheap=cheap ))
+            self.lines.append( config_line( source, match, operation, 
+                ctime, offset, destination, 
+                verbose=verbose, debug=debug, mode=mode, cheap=cheap ))
 
     def action( self, batchsize ):
         for item in self.lines:
@@ -180,7 +187,7 @@ class hkitem:
     """
         Handle processing of a single source directory entry
     """
-    def __init__( self, path, pattern, operation, ctime, offset, destn, verbose=False, cheap=False ):
+    def __init__( self, path, pattern, operation, ctime, offset, destn, mode=None, debug=False, cheap=False ):
         # Assumes the validity of pattern has already been checked
         self.operation = operation
         self.path = path
@@ -189,21 +196,22 @@ class hkitem:
         self.offset = offset
         self.destn = destn
         self.matched_ctime = None
-        self.verbose = verbose
+        self.debug = debug
         self.cheap = cheap
+        self.mode = mode
 
     def matches( self ):
-        if self.verbose:
+        if self.debug:
             print "\nSource item:", self.path
 
         # does path match pattern
         m = re.search( self.pattern, self.path )
         if not m:
-            if self.verbose:
+            if self.debug:
                 print " + does not match"
             return False
 
-        if self.verbose:
+        if self.debug:
             print " + MATCH"
 
         # extract cycle time from path
@@ -231,23 +239,23 @@ class hkitem:
 
         # check validity of extracted cycle time
         if not cycle_time.is_valid( self.matched_ctime ):
-            if self.verbose:
+            if self.debug:
                 print " + extracted cycle time is NOT VALID: " + self.matched_ctime
             return False
         else:
-            if self.verbose:
+            if self.debug:
                 print " + extracted cycle time: " + self.matched_ctime
 
         # assume ctime is >= self.matched_ctime
         gap = cycle_time.diff_hours( self.ctime, self.matched_ctime )
-        if self.verbose:
+        if self.debug:
             print " + computed offset hours", gap,
         if int(gap) < int(self.offset):
-            if self.verbose:
+            if self.debug:
                 print "- ignoring (does not make the cutoff)"
             return False
         
-        if self.verbose:
+        if self.debug:
             print "- ACTIONABLE (does make the cutoff)"
         return True
 
@@ -264,23 +272,20 @@ class hkitem:
             dest = re.sub( 'MM', self.matched_ctime[8:10], dest )
             dest = re.sub( 'DD', self.matched_ctime[6:8], dest )
             dest = re.sub( 'HH', self.matched_ctime[8:10], dest )
-            if self.verbose and dest != self.destn:
+            if self.debug and dest != self.destn:
                 print " + expanded destination directory:\n  ", dest
             self.destn = dest
 
     def execute( self ):
-        if self.operation == 'copy':
-            compath = os.path.join( os.environ['CYLC_DIR'], 'util', '_hk_copy.py' ) 
-        elif self.operation == 'move':
-            compath = os.path.join( os.environ['CYLC_DIR'], 'util', '_hk_move.py' ) 
-        elif self.operation == 'delete':
-            compath = os.path.join( os.environ['CYLC_DIR'], 'util', '_hk_delete.py' ) 
+        # construct the command to execute
+        command = os.path.join( os.environ['CYLC_DIR'], 'util', '__hk_' + self.operation ) 
+        # ... as a list, for the subprocess module
+        comlist = [ command ]
 
-        commandlist = [compath]
-        # TO DO: ADD OPTION PARSER TO THE _HK COMMANDS, for -c and -v
-        #if self.verbose:
-        #    commandlist.append( '-v' )
-        #if self.cheap:
-        #    commandlist.append( '-c' )
+        if self.mode and self.operation != 'delete':
+            comlist.append( '--mode=' + self.mode )
 
-        return commandlist + [ self.path, self.destn ]
+        if self.cheap:
+            comlist.append( '-c' )
+
+        return comlist + [ self.path, self.destn ]
