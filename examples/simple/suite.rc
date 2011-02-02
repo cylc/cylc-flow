@@ -29,7 +29,7 @@ files)."""
                      ColdModel | Model(T-6) => Model
                   """
     [[ 6,18 ]]
-        graph = "Model => PostA & PostB"
+        graph = "Model => PostB"
 
 [environment]
 TASK_EXE_SECONDS = 5
@@ -37,35 +37,35 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
 
 [tasks]
     [[Prep]]
-        command = "cylc wrap clean-workspace.sh $WORKSPACE"
+        command = cylc wrap clean-workspace.sh $WORKSPACE
 
     [[GetData]]
-        command = "cylc wrap GetData.sh"
+        command = cylc wrap GetData.sh
         [[[environment]]]
             GETDATA_OUTPUT_DIR = $WORKSPACE
 
     [[ColdModel]]
-        command = "cylc wrap Model.sh --coldstart"
+        command = cylc wrap Model.sh --coldstart
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $WORKSPACE/Model
 
     [[Model]]
-        "command = cylc wrap Model.sh"
+        command = cylc wrap Model.sh
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
             MODEL_OUTPUT_DIR = $WORKSPACE
             MODEL_RUNNING_DIR = $WORKSPACE/Model
  
     [[PostA]]
-        "command = cylc wrap PostA.sh"
+        command = cylc wrap PostA.sh
         [[[environment]]]
             POSTA_INPUT_DIR = $WORKSPACE
             POSTA_OUTPUT_DIR = $WORKSPACE
 
     [[PostB]]
-        "command = cylc wrap PostB.sh"
+        command = cylc wrap PostB.sh
         [[[environment]]]
             POSTB_INPUT_DIR = $WORKSPACE
             POSTB_OUTPUT_DIR = $WORKSPACE
