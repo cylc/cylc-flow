@@ -1,3 +1,6 @@
+# A real NWP forecast analysis suite with the guts stripped out of it.
+# Included by way of example - you can still run it in dummy mode.
+
 title = NZLAM 3DVAR forecast-analysis suite
 description = NZLAM 3DVAR forecast-analysis suite
 
