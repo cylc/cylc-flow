@@ -36,11 +36,7 @@ use lockserver = True
 [environment]
     TASK_EXE_SECONDS = 5
     WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
-    RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
-    # each of these is used by ModelA and ColdA etc.:
-    A_RUNNING_DIR = $RUNNING/A
-    B_RUNNING_DIR = $RUNNING/B
-    C_RUNNING_DIR = $RUNNING/C
+    RUNNING   = $WORKSPACE/running
 
 [tasks]
     [[prep]]
@@ -50,56 +46,65 @@ use lockserver = True
         description = retrieve real time data for model A
         command = cylc wrap X.sh
         [[[environment]]]
-            X_OUTPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
     [[A]]
         description = model A - weather forecast
         command = cylc wrap A.sh
         [[[environment]]]
-            A_INPUT_DIR = $WORKSPACE
-            A_OUTPUT_DIR = $WORKSPACE
-    [[B]]
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+            RUNNING_DIR = $RUNNING/A
+     [[B]]
         description = model B - sea state forecast
         command = cylc wrap B.sh
         [[[environment]]]
-            B_INPUT_DIR = $WORKSPACE
-            B_OUTPUT_DIR = $WORKSPACE
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+            RUNNING_DIR = $RUNNING/B
     [[C]]
         description = model C - river flow forecast
         command = cylc wrap C.sh
         [[[environment]]]
-            C_INPUT_DIR = $WORKSPACE
-            C_OUTPUT_DIR = $WORKSPACE
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
+            RUNNING_DIR = $RUNNING/C
     [[D]]
         description = combined post processing for models B and C
         command = cylc wrap D.sh
         [[[environment]]]
-            D_INPUT_DIR = $WORKSPACE
-            D_OUTPUT_DIR = $WORKSPACE
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
     [[E]]
         description = post processing for model B
         command = cylc wrap E.sh
         [[[environment]]]
-            E_INPUT_DIR = $WORKSPACE
-            E_OUTPUT_DIR = $WORKSPACE
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
     [[F]]
         description = post processing for model F
         command = cylc wrap F.sh
         [[[environment]]]
-            F_INPUT_DIR = $WORKSPACE
-            F_OUTPUT_DIR = $WORKSPACE
+            INPUT_DIR = $WORKSPACE
+            OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]]
         description = cold start model A
         command = cylc wrap ColdA.sh
-
+        [[[environment]]]
+            RUNNING_DIR = $RUNNING/A
+ 
     [[ColdB]]
         description = model B
         command = cylc wrap ColdB.sh
-
+        [[[environment]]]
+            RUNNING_DIR = $RUNNING/B
+ 
     [[ColdC]]
         description = model C
         command = cylc wrap ColdC.sh
-
+        [[[environment]]]
+            RUNNING_DIR = $RUNNING/C
+ 
 [visualization]
     default node attributes = "style=filled"
     show family members = True

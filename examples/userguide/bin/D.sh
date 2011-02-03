@@ -1,12 +1,12 @@
 #!/bin/bash
 
 cylc checkvars  TASK_EXE_SECONDS
-cylc checkvars -d D_INPUT_DIR
-cylc checkvars -c D_OUTPUT_DIR
+cylc checkvars -d INPUT_DIR
+cylc checkvars -c OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
-ONE=$D_INPUT_DIR/sea-state-${CYCLE_TIME}.nc
-TWO=$D_INPUT_DIR/river-flow-${CYCLE_TIME}.nc
+ONE=$INPUT_DIR/sea-state-${CYCLE_TIME}.nc
+TWO=$INPUT_DIR/river-flow-${CYCLE_TIME}.nc
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
         echo "ERROR, file not found $PRE" >&2
@@ -19,4 +19,4 @@ echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
 sleep $TASK_EXE_SECONDS
 
 # generate outputs
-touch $D_OUTPUT_DIR/combined.products
+touch $OUTPUT_DIR/combined.products

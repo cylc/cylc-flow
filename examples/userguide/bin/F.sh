@@ -1,8 +1,8 @@
 #!/bin/bash
 
 cylc checkvars  TASK_EXE_SECONDS
-cylc checkvars -d E_INPUT_DIR
-cylc checkvars -c E_OUTPUT_DIR
+cylc checkvars -d INPUT_DIR
+cylc checkvars -c OUTPUT_DIR
 
 # CHECK INPUT FILES EXIST
 PRE=$F_INPUT_DIR/river-flow-${CYCLE_TIME}.nc
@@ -11,7 +11,7 @@ if [[ ! -f $PRE ]]; then
     exit 1
 fi
 
-echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITE_NAME"
+echo "Hello from $TASK_NAME at $CYCLE_TIME in $CYLC_SUITNAME"
 sleep $TASK_EXE_SECONDS
 
 # generate outputs
