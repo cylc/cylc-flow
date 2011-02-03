@@ -43,7 +43,7 @@ hi def link cylcInclude Statement
 
 
 hi Normal ctermfg=DarkGrey guifg=#444444
-hi Function ctermfg=DarkRed guifg=#0000aa term=bold cterm=bold gui=bold
+hi Function ctermfg=DarkRed guifg=#aa00aa term=bold cterm=bold gui=bold
 hi Comment ctermfg=LightBlue guifg=#ff4422 term=bold cterm=bold gui=bold 
 hi String ctermfg=DarkGreen guifg=#126412
 hi Special term=Underline cterm=Underline gui=Underline ctermfg=DarkGrey guifg=#4444aa

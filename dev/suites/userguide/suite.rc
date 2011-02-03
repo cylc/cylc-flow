@@ -67,15 +67,15 @@ task run time in seconds = 1
                    bar => baz"""
 
 [environment]
-TASK_EXE_SECONDS = 5
-WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
-RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
-# each of these is used by ModelA and ColdA etc.:
-A_RUNNING_DIR = $RUNNING/A
-B_RUNNING_DIR = $RUNNING/B
-C_RUNNING_DIR = $RUNNING/C
-# quotes required because of the '#' character:
-A_SHELL_PARAMETER_EXPANSION="${WORKSPACE##_.*}"
+    TASK_EXE_SECONDS = 5
+    WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
+    RUNNING   = /tmp/$USER/$CYLC_SUITE_NAME/running
+    # each of these is used by ModelA and ColdA etc.:
+    A_RUNNING_DIR = $RUNNING/A
+    B_RUNNING_DIR = $RUNNING/B
+    C_RUNNING_DIR = $RUNNING/C
+    # quotes required because of the '#' character:
+    A_SHELL_PARAMETER_EXPANSION="${WORKSPACE##_.*}"
 
 [ tasks ]
     [[prep]]
