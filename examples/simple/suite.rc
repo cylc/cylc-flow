@@ -1,12 +1,11 @@
 title = a simple example suite
 
-description = """A clock-triggered data-collection task, a warm-cycled
-model, and two post-processing tasks, one of which only runs every
-second cycle. The tasks are not cylc-aware, have independently
-configured I/O directories, and abort if their input files do not exist.
-This suite gets them all to run out of a common I/O workspace (although
-the warm-cycled model uses a private running directory for its restart
-files)."""
+description = """A clock-triggered data-gathering task, a warm-cycled
+model, and two post-processing tasks (one runs every second cycle). The
+tasks are not cylc-aware, have independently configured I/O directories,
+and abort if their input files do not exist. This suite gets them all
+to run out of a common I/O workspace (although the warm-cycled model
+uses a private running directory for its restart files)."""
  
 # T = 0,6,12,18 UTC:
 #                      > PostA(T)
@@ -23,11 +22,9 @@ files)."""
 
 [dependencies]
     [[ 0,6,12,18 ]]
-        graph  =  """
-                     Prep => GetData & ColdModel
+        graph  =  """Prep => GetData & ColdModel
                      GetData => Model => PostA
-                     ColdModel | Model(T-6) => Model
-                  """
+                     ColdModel | Model(T-6) => Model"""
     [[ 6,18 ]]
         graph = "Model => PostB"
 
@@ -81,9 +78,3 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
         ColdModel = "fillcolor=lightblue"
         GetData = "style=filled", "fillcolor=yellow", "shape=septagon"
         Prep = "shape=circle", "color=red3" 
-
-[experimental]
-#    write live graph = True
-
-[dummy mode]
-#    clock offset from initial cycle time in hours = 0
