@@ -14,7 +14,7 @@ def include_files( suitedir, inf, single=False, label=False, level=None ):
     if level == None:
         level = ''
     else:
-        level += '>'
+        level += '!'
 
     global done
     outf = []
@@ -36,7 +36,7 @@ def include_files( suitedir, inf, single=False, label=False, level=None ):
                     # recursive inclusion
                     outf.extend( include_files( suitedir, inc, single, label, level ))
                     if single or label:
-                        outf.append('------ END INLINED INCLUDE FILE ' + match + '\n' )
+                        outf.append('---- END INLINED INCLUDE FILE ' + match + '\n' )
                 else:
                     raise SystemExit( "File not found: " + inc )
             else:

@@ -48,7 +48,7 @@ def include_files( inf ):
                     h.close()
                     # recursive inclusion
                     outf.extend( include_files( inc ))
-                    outf.append('------ END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
+                    outf.append('---- END INLINED INCLUDE FILE ' + match  + ' (DO NOT DELETE THIS LINE!)\n')
                 else:
                     raise SystemExit( "File not found: " + inc )
             else:
@@ -88,7 +88,7 @@ def split_file( lines, file ):
                 fnew.write(line)
         else:
             # match on
-            m = re.match('^\-\-\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
+            m = re.match('^\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
             if m:
                 match_on = False
                 split_file( inclines, inc_file )
