@@ -10,11 +10,12 @@
 "augroup END
 
 
-syn keyword cylcKeyword foo
+" syncing from start of file is best, but may be slow for large files:
+syn sync fromstart
 
-syn match cylcSection '\[.*\]'
-syn match cylcSection '\[\[.*\]\]'
-syn match cylcSection '\[\[\[.*\]\]\]'
+syn match cylcSectionA '\[.*\]'
+syn match cylcSectionB '\[\[.*\]\]'
+syn match cylcSectionC '\[\[\[.*\]\]\]'
 
 syn region myFold start='\_^ *\[\[\[\(\w\| \)' end='\ze\_^ *\[\{1,3}\(\w\| \)' transparent fold
 syn region myFold start='\_^ *\[\[\(\w\| \)' end='\ze\_^ *\[\{1,2}\(\w\| \)' transparent fold
@@ -33,8 +34,8 @@ syn region cylcString start=+'+ end=+'+ skip=+\\'+
 syn region cylcString start=+"""+ end=+"""+ 
 syn region cylcString start=+'''+ end=+'''+
 
+" TO DO: replace the following with cylc-specific groups as for cylcSectionA,B,C:
 hi def link cylcInlineMarker Statement
-hi def link cylcSection Function
 hi def link cylcComment Comment
 hi def link cylcString String
 hi def link cylcItem Special
@@ -43,7 +44,11 @@ hi def link cylcInclude Statement
 
 
 hi Normal ctermfg=DarkGrey guifg=#444444
-hi Function ctermfg=DarkRed guifg=#aa00aa term=bold cterm=bold gui=bold
+
+hi cylcSectionC ctermfg=DarkRed guifg=#550044 term=bold cterm=bold gui=bold
+hi cylcSectionB ctermfg=DarkRed guifg=#9900aa term=bold cterm=bold gui=bold
+hi cylcSectionA ctermfg=DarkRed guifg=#ff00ee term=bold cterm=bold gui=bold
+
 hi Comment ctermfg=LightBlue guifg=#ff4422 term=bold cterm=bold gui=bold 
 hi String ctermfg=DarkGreen guifg=#126412
 hi Special term=Underline cterm=Underline gui=Underline ctermfg=DarkGrey guifg=#4444aa
