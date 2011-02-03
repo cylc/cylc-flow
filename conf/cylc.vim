@@ -16,9 +16,16 @@ syn match cylcSection '\[.*\]'
 syn match cylcSection '\[\[.*\]\]'
 syn match cylcSection '\[\[\[.*\]\]\]'
 
+syn region myFold start='\_^ *\[\[\[\(\w\| \)' end='\ze\_^ *\[\{1,3}\(\w\| \)' transparent fold
+syn region myFold start='\_^ *\[\[\(\w\| \)' end='\ze\_^ *\[\{1,2}\(\w\| \)' transparent fold
+syn region myFold start='\_^ *\[\(\w\| \)' end='\_^ *\ze\[\(\w\| \)' transparent fold
+set foldmethod=syntax
+
+syn match cylcInlineMarker '\_^!\{1,}'
 syn match cylcItem ' *\zs\(\w\| \|\-\)*\>\ze *='
 
 syn match cylcInclude '%include *\(\w\|\-\|\/\|\.\)*'
+syn match cylcInline '.*\(START INLINED\|END INLINED\).*'
 
 syn match cylcComment excludenl '#.*'
 syn region cylcString start=+"+ end=+"+ skip=+\\"+ 
@@ -26,10 +33,12 @@ syn region cylcString start=+'+ end=+'+ skip=+\\'+
 syn region cylcString start=+"""+ end=+"""+ 
 syn region cylcString start=+'''+ end=+'''+
 
+hi def link cylcInlineMarker Statement
 hi def link cylcSection Function
 hi def link cylcComment Comment
 hi def link cylcString String
 hi def link cylcItem Special
+hi def link cylcInline Statement
 hi def link cylcInclude Statement
 
 
