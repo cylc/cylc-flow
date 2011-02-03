@@ -130,6 +130,11 @@ if len(args) == 2:
     # remove trailing '/'
     rdir = rdir.rstrip( '/' )
 
+    # also strip / off name in case of registering same name as dir 
+    # whilst sitting one level up from the suite dir itself, using
+    # tab completion, and getting the args the wrong way around.
+    name = name.rstrip( '/' )
+
 elif len(args) == 1:
     # + cylc register --print SUITE
     # + cylc register --get SUITE
