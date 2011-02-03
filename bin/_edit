@@ -130,7 +130,12 @@ you expect, and (b) you can easily back out in case of disaster.
 The editing process is spawned in the foreground as follows:
   (usage 1/): $EDITOR suite.rc
   (usage 3/): $EDITOR <inlined-suite.rc-file in $TMPDIR>
-(You must have $EDITOR and $TMPDIR defined in your shell environment). 
+
+The $EDITOR and $TMPDIR variables must be defined. Tested with:
+   export EDITOR=vim
+   export EDITOR='gvim -f'  # -f: do not detach from parent shell!!
+   export EDITOR=emacs
+   export EDITOR='emacs -nw'
 
 See also 'cylc search' and 'cylc inline'.
 

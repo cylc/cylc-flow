@@ -1,7 +1,14 @@
 " Simple syntax highlighting for cylc suite definition files.
-" Put this file in $HOME/.vim/syntax/.
-
 " Author: Hilary Oliver, 2011
+
+" Put this file in $HOME/.vim/syntax/ directory.
+
+" And put the following in .vimrc file, for file type recognition:
+
+"augroup filetype
+"  au! BufRead,BufnewFile *.rc   set filetype=cylc
+"augroup END
+
 
 syn keyword cylcKeyword foo
 

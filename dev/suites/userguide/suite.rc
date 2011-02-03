@@ -98,7 +98,7 @@ echo bye
         [[[environment]]]
             A_INPUT_DIR = $WORKSPACE
             A_OUTPUT_DIR = $WORKSPACE
-%include common/common-env.inc
+%include common/common-env.rc
 
     [[B]]
         description = "model B - sea state forecast"
@@ -108,7 +108,7 @@ echo bye
             B_OUTPUT_DIR = $WORKSPACE
             FOO = bar
             FOO = baz  # (2nd value overrides 1st)
-%include common/common-env.inc
+%include common/common-env.rc
 
     [[C]]
         description = "model C - river flow forecast"
@@ -117,7 +117,7 @@ echo bye
         [[[environment]]]
             C_INPUT_DIR = $WORKSPACE
             C_OUTPUT_DIR = $WORKSPACE
-%include common/common-env.inc
+%include common/common-env.rc
         [[[outputs]]]
             foo = river flow outputs done for $(CYCLE_TIME)
     [[D]]
