@@ -1,0 +1,26 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    nzlam_ncl, nzl_ncl
+
+%DESCRIPTION
+    NZLAM ncl postprocessing.
+
+%TYPE
+    free
+
+%OWNER
+    nwp
+
+%HOURS
+    6,18
+
+%COMMAND
+    ${HOME}/bin/nzlam_12_generate_eps
+
+%PREREQUISITES
+     "MET NC files ready for ${CYCLE_TIME}"
+
+%OUTPUTS
+    # default only

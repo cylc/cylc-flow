@@ -1,0 +1,22 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    streamq_housekeeping, stq_hk
+
+%DESCRIPTION
+    Archiving and cleanup for the Streamq observation file.
+
+%OWNER
+    data
+
+%TYPE
+    free
+
+%HOURS
+    6,18
+
+%PREREQUISITES
+    "STREAMQ file ready for ${CYCLE_TIME}"
+
+%COMMAND
+    cylc-wrapper cylcutil housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/streamq_housekeeping.conf

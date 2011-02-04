@@ -1,0 +1,36 @@
+#!/bin/bash
+# Temporary script to download data from Pa for testing EcoConnect on fc-test
+# Verify if UK MetOffice data files ihave been downloaded.
+# trap errors so that we need not check the success of basic operations.
+set -e; trap 'cylc message --failed' ERR
+# START MESSAGE
+cylc message --started
+# Check the number of arguments
+if [ "$#" -ne 2 ]; then
+        # FATAL ERROR
+	MSG="There needs to be 2 arguments present."
+        cylc message -p CRITICAL $MSG 
+        cylc message --failed
+        echo "`date -u +%Y%m%d%H%M%Z` CYCLE_TIME:${CYCLE_TIME} $MSG"
+        exit 1
+fi
+# Set parameters
+FILE_DIR=$1
+FILE_NAME=$2
+FILE_LOC="$FILE_DIR/*$FILE_NAME"
+REF_TIME=$CYCLE_TIME
+# Run loop until file is found
+while true; do
+   if [ `ls $FILE_LOC` ]; then
+                echo "`date -u +%Y%m%d%H%M%Z` CYCLE_TIME:${CYCLE_TIME} Found ukmet file $FILE_NAME in $FILE_DIR, will send message to cylc"
+		# Sleep 5 minutes to make sure has been fully copied over
+		sleep 300
+                cylc message "file $FILE_NAME ready"
+                # SUCCESS MESSAGE
+                cylc message --succeeded
+                break
+	fi
+# Trying every minute
+        echo "`date -u +%Y%m%d%H%M%Z` CYCLE_TIME:${CYCLE_TIME} Trying again to check for $FILE_NAME file in $FILE_DIR, be back in 1 minute"
+	sleep 60
+done

@@ -1,0 +1,16 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    OPS_IASI
+
+%DESCRIPTION
+    OPS Extract and Process IASI observations
+
+%INHERIT
+    OPS_AircraftSonde
+
+%ENVIRONMENT
+    OPSUI_JOB_DIR     $OPS_IASI_JOBDIR
+
+%OUTPUTS
+    # None

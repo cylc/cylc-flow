@@ -1,0 +1,32 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+%TASK
+    sls_globalwind_copy, sgwc
+
+%DESCRIPTION
+    Copy the converted SLS wind file to the required directory. 
+
+%TYPE
+    free
+
+%OWNER
+    wave 
+
+%HOURS
+    0
+
+%ENVIRONMENT
+    SYS     ${USER##*_}
+    SRCE_FILENAME sls_${CYCLE_TIME}_utc_global_sfcwind.nc
+    SRCE_LOC   /${SYS}/ecoconnect/ecoconnect_${SYS}/output
+    DEST_FILENAME   sls_${CYCLE_TIME}_utc_global_sfcwind.nc
+    DEST_LOC    /${SYS}/ecoconnect/wave_${SYS}/input/globalwave_120
+
+%SCRIPTING
+cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
+
+%PREREQUISITES
+    "SLS GLOBALWIND file available for ${CYCLE_TIME}"
+
+%OUTPUTS
+    "SLS GLOBALWIND file ready for ${CYCLE_TIME}"

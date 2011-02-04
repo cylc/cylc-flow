@@ -1,0 +1,22 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    globalwave_housekeeping, gw_hk
+
+%DESCRIPTION
+    Archiving and cleanup for the globalwave sub-system.
+
+%OWNER
+    wave
+
+%TYPE
+    free
+
+%HOURS
+    0
+
+%PREREQUISITES
+    "globalwave_products%$(CYCLE_TIME) finished"
+
+%COMMAND
+    cylc-wrapper cylcutil housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/globalwave_housekeeping.conf

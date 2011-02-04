@@ -1,0 +1,30 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    topnet_products, top_pro
+
+%DESCRIPTION
+    TopNet forecast product generation.
+
+%TYPE
+    free
+
+%OWNER
+    hydrology
+
+%HOURS
+    6,18
+
+%COMMAND
+    convert_ingest.sh
+
+%ENVIRONMENT
+    PRODUCT_DIR   ${HOME}/running/topnet/product
+    SERVICE     topnet_products
+
+%PREREQUISITES
+    "topnet_ncl%${CYCLE_TIME} finished"
+
+%OUTPUTS
+    # NONE

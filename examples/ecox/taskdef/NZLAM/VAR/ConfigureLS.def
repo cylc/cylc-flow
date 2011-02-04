@@ -1,0 +1,39 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    VAR_ConfigureLS, vcls
+
+%DESCRIPTION
+    VAR Reconfiguration
+
+%OWNER
+    nwp
+
+%TYPE
+    free
+
+%HOURS
+    0,6,12,18
+
+%COMMAND
+    VAR-wrapper.sh
+
+%ENVIRONMENT
+    VARUI_JOB_DIR    $VAR_CONFIGURELS_JOBDIR
+
+%DIRECTIVES
+    # VARUI <JOB>_init requires $LOGNAME within loadleveler
+    environment COPY_ALL
+
+%PREREQUISITES
+    "VAR LS background file ready for $(CYCLE_TIME)"
+
+    # Also depend on UM_nzlam_recon, which runs at 00 UTC. Both these
+    # tasks trigger off the UM f/c, are essentially the same program (UM
+    # reconfiguration), and can (apparently) interfere in their use of
+    # temp directories. See EcoConnect JIRA ticket 195.
+    if HOUR in 0:
+       "UM_nzlam_recon%$(CYCLE_TIME) finished"
+
+%OUTPUTS
+    "Reconfigured VAR LS background file ready for $(CYCLE_TIME)"

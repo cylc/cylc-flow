@@ -1,0 +1,36 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+%TASK
+    ext_check_globalice_ukmet, e_cgi_uk
+
+%DESCRIPTION
+    Check if the Global ice file for the current cycle is available for download. 
+
+%TYPE
+    free, contact
+
+%CONTACT_DELAY
+    4.30 hr
+
+%OWNER
+    ecoconnect 
+
+%HOURS
+    0
+%ENVIRONMENT
+    SRCE    ftpops.metoffice.gov.uk
+    SRCE_LOC    ~/
+    DEST_LOC    ${HOME}/output
+    FILENAME ${CYCLE_TIME}_ice_checksum.txt
+    SRCE_USER   niwa
+    SERVICE ext_check_globalice_ukmet
+    TIMEOUT 60
+
+%COMMAND
+    cylc-wrapper file_check_ftp.sh
+
+%PREREQUISITES
+    # NONE
+
+%OUTPUTS
+    "GLOBALICE file available for download for ${CYCLE_TIME}"

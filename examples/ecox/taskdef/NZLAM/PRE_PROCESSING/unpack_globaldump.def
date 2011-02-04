@@ -1,0 +1,27 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    unpack_globaldump, un_gd
+
+%DESCRIPTION
+    Check reduced global UM coldstart dump for current cycle, unpack if necessary.
+
+%OWNER
+    nwp
+
+%TYPE
+    free, oneoff
+
+%HOURS
+    0,6,12,18
+
+%COMMAND
+    cylc-wrapper check-nzlam-inputs.sh --globaldump
+
+%PREREQUISITES
+    # this refers to the global model generating cycle
+    "UM global $(CYCLE_TIME -6) start dump downloaded"
+
+%OUTPUTS
+    # this refers to cycle at which we are cold starting
+    "UM global $(CYCLE_TIME -6) start dump ready"

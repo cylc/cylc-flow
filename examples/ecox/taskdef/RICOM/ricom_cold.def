@@ -1,0 +1,27 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    ricom_cold, ri_c
+
+%DESCRIPTION
+    Oneoff dummy task to supply initial RiCOM restart prerequisites.
+    The real restart file(s) are assumed to have been provided
+    by an initial external spinup experiment.
+    Ricom will fail if it runs out of restart files (4 available) but capture the failure and automatically do a cold start. 
+    One week spinup is required before the output is considered usable. 
+
+%TYPE
+    free, dummy, oneoff
+
+%OWNER
+    sea_level
+
+%HOURS
+    6,18
+
+%PREREQUISITES
+    # NONE
+
+%OUTPUTS
+    "ricom restart files ready for ${CYCLE_TIME}"

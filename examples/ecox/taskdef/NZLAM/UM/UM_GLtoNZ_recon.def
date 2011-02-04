@@ -1,0 +1,31 @@
+%TASK
+    UM_GLtoNZ_recon, um_g2nz
+
+%DESCRIPTION
+    Reconfigure the cold start dump for the NZLAM
+
+%TYPE
+    free, oneoff
+
+%OWNER
+    nwp
+
+%HOURS
+    0,6,12,18 
+
+%COMMAND
+    UMrecon-wrapper.sh
+
+%ENVIRONMENT
+    UMUI_JOBDIR   $GLtoNZ_RECON_JOBDIR
+
+%SCRIPTING
+    export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_GLOBAL_DUMP ) 
+    export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_RESTART_DUMP ) 
+    export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
+
+%PREREQUISITES
+    "Expanded UM global $(CYCLE_TIME - 6) start dump ready"
+
+%OUTPUTS
+    "Reconfigured NZLAM cold start dump ready for $(CYCLE_TIME)"

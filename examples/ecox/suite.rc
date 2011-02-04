@@ -1,0 +1,948 @@
+title = EcoConnect Operational Cylc Suite
+maximum runahead hours = 72
+job submission log directory = running/logs
+number of state dump backups = 100
+
+job submission method = ll_basic_eco
+
+roll scheduler log at startup = True
+
+ignore task owners = True
+use suite blocking = False
+use secure passphrase = False
+use lockserver = False
+
+
+[task insertion groups]
+nzlam_coldstart_with_download = ext_check_dump_ukmet, ext_get_dump_ukmet, unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ_recon, UM_nzlam_coldstart
+nzlam_coldstart_without_download = unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ_recon, UM_nzlam_coldstart
+
+[special tasks]
+    sequential = nzlam, topnet, ricom, nztide, mos_nzlam_coeffs, \
+        mos_nzlam_apply, ext_get_clidbdata, \
+        mos_nzlam_vp_5day, mos_nzlam_vp_curr, UM_nzlam, nzlam_products, \
+        cycle_check, cycle_check_transfer, ext_create_streamflow, \
+        ext_get_globalwind_ukmet, ext_get_sst_ukmet, ext_get_globalice_ukmet, \
+        ext_get_frames_ukmet, ext_get_bgerr_ukmet, ext_get_obstore_ukmet, \
+        globalwave
+
+    clock-triggered =  ext_get_clidbdata(2.0), ext_create_streamflow(3.0), \
+        ecan_rain_obs(2.0), ext_check_bgerr_ukmet(3.15), \
+        ext_check_obstore_ukmet(3.15), ext_check_sst_ukmet(3.5), \
+        ext_check_frames_ukmet(-2.25),  ext_check_dump_ukmet(-1.25), \
+        ext_check_globalice_ukmet(4.3), ext_check_globalwind_ukmet(4.3)
+
+    coldstart = ext_check_dump_ukmet, ext_get_dump_ukmet, \
+        unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ_recon, \
+        UM_nzlam_coldstart, globalwave_cold, topnet_cold, ricom_cold, \
+        nzwave_cold
+
+[task families]
+    OPS = OPS_AircraftSonde, OPS_SurfaceScatt, OPS_AIRS, OPS_ATOVS, \
+            OPS_GPSRO, OPS_IASI, OPS_Satwind
+
+[dependencies]
+    # TO DO: SORT OUT DOWNSTREAM MODEL COLD START TIMES
+    [[0,6,12,18]]
+        graph = """
+   ext_check_dump_ukmet => ext_get_dump_ukmet => unpack_globaldump
+   ext_check_frames_ukmet => ext_get_frames_ukmet => unpack_frames => make_alabc
+   ext_check_bgerr_ukmet => ext_get_bgerr_ukmet => unpack_bgerr
+   ext_check_obstore_ukmet => ext_get_obstore_ukmet => unpack_obstores
+
+   unpack_bgerr & unpack_obstores => OPS
+   unpack_globaldump => UM_GLtoGL_recon => UM_GLtoNZ_recon => UM_nzlam_coldstart
+   make_alabc => UM_nzlam_coldstart & UM_nzlam
+   UM_nzlam_coldstart | UM_nzlam(T-6) => VAR_ConfigureLS & OPS
+   OPS & VAR_ConfigureLS => VAR_AnalysePF => VAR_monitoring & UM_nzlam
+   UM_nzlam => get_outputs => nzlam_conv_met & nzlam_conv_tn & nzlam_conv_sls & nzlam_conv_escape
+
+   nzlam_conv_sls => nzwave"""
+    [[6,12,18]]
+        graph = "UM_nzlam_coldstart | UM_nzlam(T-6) => UM_nzlam"
+
+    [[6,18]]
+        graph = """nzlam_conv_met => nzlam_ncl => nzlam_products => nzlam_housekeeping
+
+    nzwave => nzwave_ncl => nzwave_products => nzwave_housekeeping
+    nzwave => nztide => nztide_ncl => nztide_products => nztide_housekeeping
+    nzlam_conv_sls => ricom => ricom_ncl => ricom_products => ricom_housekeeping
+    nzlam_conv_tn => tn_llclean
+
+    ext_create_streamflow => ext_get_streamq => streamq_housekeeping
+    tn_llclean & ext_get_streamq => topnet => topnet_ncl => topnet_products
+    ecan_rain_obs & topnet_products => topnet_housekeeping
+
+    ext_get_clidbdata => mos_nzlam_coeffs
+    mos_nzlam_coeffs & nzlam_conv_met =>  mos_nzlam_apply => nzlam_products
+    mos_nzlam_vp_curr => mos_nzlam_vp_5day => mos_housekeeping
+
+    nzwave_cold | nzwave(T-6) | nzwave(T-12) | nzwave(T-18) | nzwave(T-24) | nzwave(T-30) | nzwave(T-36) | nzwave(T-42) | nzwave(T-48) => nzwave 
+    ricom_cold | ricom(T-6) | ricom(T-12) | ricom(T-18) | ricom(T-24) => ricom
+    topnet_cold | topnet(T-6) | topnet(T-12) => topnet
+
+    UM_nzlam => ukmodata_housekeeping
+    """
+
+    [[0,12]]
+        graph = """nzwave_cold | nzwave(T-6) => nzwave"""
+
+    [[0]]
+        graph = """ 
+                 UM_nzlam_coldstart | UM_nzlam(T-6) => UM_NZtoNZ_recon => UM_nzlam
+            
+ext_check_globalice_ukmet => ext_get_globalice_ukmet => globalnwp_conv_ice => sls_globalice_copy
+ext_check_globalwind_ukmet => ext_get_globalwind_ukmet => globalnwp_conv_wind => sls_globalwind_copy
+globalnwp_conv_wind => globalnwp_ncl => globalnwp_products => globalnwp_housekeeping
+sls_globalwind_copy & sls_globalice_copy => globalwave => globalwave_ncl => globalwave_products => globalwave_housekeeping
+
+# huh? does globawave have restart files?
+globalwave(T-6) | globalwave(T-12) | globalwave(T-18) | globalwave(T-24) | globalwave(T-30) | globalwave(T-36) => globalwave
+"""
+
+    [[6]]
+        # 0 or 6?
+        graph = """ext_check_sst_ukmet => ext_get_sst_ukmet"""
+
+[environment]
+    SYS = ${USER##*_}
+    ARCHIVE = /$SYS/archive/ecoconnect
+
+%include inc/env/nzlam-globals.rc
+
+[tasks]
+    [[nzwave_ncl]]
+        description = "NZWave ncl postprocessing, creates eps and XML files"
+        owner = wave
+        command = ${HOME}/bin/scripts/vis_nzwave_fc
+
+    [[nzwave_products]]
+        description = """NZWave forecast product generation. Use
+create_images script to create the PNG areal map files and upload to
+Mintaka and Zope."""
+        owner = wave
+        command = convert_ingest.sh
+        [[[environment]]]
+            PRODUCT_DIR   = ${HOME}/running/nzwave_12/product
+            SERVICE     = nzwave_products
+
+    [[nzwave_housekeeping]]
+        description = """Archiving and cleanup for the nzwave sub-system."""
+        owner = wave
+        command = cylc wrap cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nzwave_housekeeping.conf
+
+    [[nzwave_cold]]
+        description = """Oneoff DUMMY TASK to supply initial NZWave restart
+prerequisites. The real restart file(s) are assumed to have been
+provided by an initial external spinup experiment. NZWave will
+automatically cold start if it runs out of restart files (8
+avaialble)."""
+        owner = wave
+
+    [[nzwave]]
+        description = "The NZWAVE model"
+        owner = wave
+        command = ${HOME}/bin/scripts/run_nzwave_12
+
+    [[globalnwp_products]]
+        description = """Global surface wind and pressure forecast product
+generation. Use create_images script to create the PNG areal map files
+and upload to Mintaka and Zope."""
+        owner = nwp
+        command = convert_ingest.sh
+        [[[environment]]]
+            PRODUCT_DIR  = ${HOME}/running/global/product
+            SERVICE     = globalnwp_products
+
+    [[globalnwp_housekeeping]]
+        description = "Archiving and cleanup for the globalnwp sub-system."
+        owner = nwp
+        command = cylc wrap cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/globalnwp_housekeeping.conf
+
+    [[globalnwp_ncl]]
+        description = "Global surface wind and pressure ncl postprocessing."
+        owner = nwp
+        command = cylc wrap run_vis_mslp.sh
+        [[[environment]]]
+            SRCE_DIR    = /${SYS}/ecoconnect/ecoconnect_${SYS}/output
+            SRCE_FILENAME   = sls_${CYCLE_TIME}_utc_global_sfcwind.nc
+
+    [[globalwave_cold]]
+        description = """Oneoff dummy task to supply initial GlobalWave
+restart prerequisites. The real restart file(s) are assumed to have been
+provided by an initial external spinup experiment. Globalwave will
+automatically cold start if it runs out of restart files (6
+available)."""
+        owner = wave
+
+    [[globalwave_housekeeping]]
+        description = "Archiving and cleanup for the globalwave sub-system."
+        owner = wave
+        command = cylc wrap cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/globalwave_housekeeping.conf
+
+    [[globalwave_products]]
+        description = """GlobalWave forecast product generation. Use
+create_images script to create the PNG areal map files and upload to
+Mintaka and Zope."""
+        owner = wave
+        command = convert_ingest.sh 
+        [[[environment]]]
+            PRODUCT_DIR   = ${HOME}/running/globalwave_120/product
+            SERVICE     = globalwave_products
+
+    [[globalwave]]
+        description = "The globalwave model."
+        owner = wave
+        command = ${HOME}/bin/scripts/run_globalwave_120_only
+
+    [[globalwave_ncl]]
+        description = """GlobalWave ncl postprocessing.
+    Creates eps and XML files for the GlobalWave model outputs."""
+        owner = wave
+        command = ${HOME}/bin/scripts/vis_global_fc
+
+    [[nztide_housekeeping]]
+        description = "Archiving and cleanup for the NZTIDE sub-system."
+        owner = sea_level
+        command = cylc wrap cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nztide_housekeeping.conf
+
+    [[nztide_products]]
+        description = """NZTIDE forecast product generation.  Uses the
+create_images script to create the PNG areal map files, and uploads to
+Mintaka and Zope."""
+        owner = sea_level
+        command = convert_ingest.sh
+        [[[environment]]]
+            PRODUCT_DIR   = ${HOME}/running/nztide_12/product
+            SERVICE     = nztide_products
+
+    [[nztide_ncl]]
+        description = "nztide ncl postprocessing"
+        owner = sea_level
+        command = ${HOME}/bin/scripts/vis_nztide_fc 
+
+    [[nztide]]
+        description = """The NZTIDE model. Has artificial dependence on
+nzwave_12, for synchronous product generation. Not defined as a forecast
+model because it does not have any restart outputs."""
+        owner = sea_level
+        command = ${HOME}/bin/scripts/run_nztide_fc $CYCLE_TIME
+
+    [[ricom_ncl]]
+        description = "ricom ncl postprocessing"
+        owner = sea_level
+        command = ${HOME}/bin/run_ricom_scripts/vis_ricom
+
+    [[ricom_products]]
+        description = """RiCOM forecast product generation. Uses the
+create_images script to create the PNG areal map files, and uploads to
+Mintaka and Zope."""
+        owner = sea_level
+        command = convert_ingest.sh
+        [[[environment]]]
+            PRODUCT_DIR   = ${HOME}/running/ricom-nzl/product
+            SERVICE     = ricom_products
+
+    [[ricom_cold]]
+        description = """Oneoff dummy task to supply initial RiCOM restart
+prerequisites. The real restart file(s) are assumed to have been
+provided by an initial external spinup experiment.  Ricom will fail if
+it runs out of restart files (4 available) but capture the failure and
+automatically do a cold start. One week spinup is required before the
+output is considered usable."""
+        owner = sea_level
+
+    [[ricom]]
+        description = "The RiCOM storm surge model"
+        owner = sea_level
+        command = ${HOME}/bin/run_ricom_scripts/run_ricom-nzl 
+
+    [[ricom_housekeeping]]
+        description = "Archiving and cleanup for the ricom sub-system."
+        owner = sea_level
+        command = cylc wrap "cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ricom_housekeeping.conf"
+
+    [[mos_housekeeping]]
+        description = "Archiving and cleanup for the mos sub-system."
+        owner = nwp
+        command = cylc wrap "cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/mos_housekeeping.conf"
+
+    [[mos_nzlam_coeffs]]
+        description = "Generate NZLAM mos coefficients."
+        owner = nwp
+        command = /${SYS}/ecoconnect/mos_${SYS}/bin/generate_nzlam_mos_coeff.sh
+
+    [[mos_nzlam_apply]]
+        description = "Apply MOS correction to NZLAM forecasts."
+        owner = nwp
+        command = /${SYS}/ecoconnect/mos_${SYS}/bin/apply_nzlam_mos.sh
+
+    [[ext_get_clidbdata]]
+        description = "Retrieve data from clidb"
+        owner = nwp
+        command = /${SYS}/ecoconnect/mos_${SYS}/bin/get_clidb_data.sh
+
+    [[mos_nzlam_vp_5day]]
+        description = "mos verification and plotting for last 5 days of NZLAM forecasts."
+        owner = nwp
+        command = /${SYS}/ecoconnect/mos_${SYS}/bin/verify_mos.sh
+        [[[environment]]]
+            REFERENCE_TIME = $(CYCLE_TIME - 120)
+
+    [[mos_nzlam_vp_curr]]
+        description = "mos verification and plotting for the current NZLAM forecast."
+        owner = nwp
+        command = /${SYS}/ecoconnect/mos_${SYS}/bin/verify_mos.sh
+        [[[environment]]]
+            REFERENCE_TIME = ${CYCLE_TIME}
+
+    [[jobsubmission_housekeeping]]
+        description = "cleanup temporary cylc job submission files."
+        owner = ecoconnect
+        # keep temporary job submission files for one week
+        command = cylc wrap "cylc housekeeping --dry-run /tmp 'cylc-.*(\d{10})-.{6}' delete 168"
+
+    [[UM_nzlam_recon]]
+        description = "Reconfigure the NZLAM model restart dump"
+        owner = nwp
+        command = UMrecon-wrapper.sh
+        scripting = """
+export UMRECON_INPUTDUMP=$( cylc template -s 6 TEMPLATE_RESTART_DUMP ) 
+export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_RECONFIGURED_RESTART_DUMP ) 
+export UMRECON_LOGDIR=$( cylc template  TEMPLATE_LOGFILE_DIR )"""
+        [[[environment]]]
+            UMUI_JOBDIR   = $NZtoNZ_RECON_JOBDIR
+
+    [[UM_GLtoNZ_recon]]
+        description = "Reconfigure the cold start dump for the NZLAM"
+        owner = nwp
+        command = UMrecon-wrapper.sh
+        scripting = """
+export UMRECON_INPUTDUMP=$(  cylc template -s 6 TEMPLATE_GLOBAL_DUMP ) 
+export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_RESTART_DUMP ) 
+export UMRECON_LOGDIR=$(     cylc template      TEMPLATE_LOGFILE_DIR )"""
+        [[[environment]]]
+            UMUI_JOBDIR   = $GLtoNZ_RECON_JOBDIR
+
+    [[UM_nzlam]]
+        description = "NZLAM warm cycle forecast"
+        owner = nwp
+        command = UM-wrapper.sh
+        scripting = """
+export UM_PPVARFILE=$( cylc template TEMPLATE_PPVAR_FILE )
+export UM_PP7CXFILE=$( cylc template TEMPLATE_PP7CX_FILE )
+export UM_DATAMDIR=$(  cylc template TEMPLATE_DATAM_DIR  )
+export UM_DATAWDIR=$(  cylc template TEMPLATE_DATAW_DIR  )
+export UM_ALABCFILE=$( cylc template TEMPLATE_ALABC_FILE )
+export UM_VARINCFILE=$( cylc template TEMPLATE_VAR_INCR_FILE )
+if [[ $( cylc cycle-time --hour ) == 00 ]]; then
+    export UM_STARTDUMP=$( cylc template -s 6 $TEMPLATE_RECONFIGURED_RESTART_DUMP )
+else
+    export UM_STARTDUMP=$( cylc template -s 6 $TEMPLATE_RESTART_DUMP )
+fi
+export UM_LOGDIR=$( cylc template TEMPLATE_LOGFILE_DIR )"""
+         [[[environment]]]
+            UMUI_JOBDIR   = $WARMSTART_JOBDIR
+ 
+    [[UM_GLtoGL_recon]]
+        description = """Reconfigure a reduced UM global model dump to add
+in global ancillary fields and generate a full sized UM global global
+start dump."""
+        owner = nwp
+        command = UMrecon-wrapper.sh
+        scripting = """
+export UMRECON_INPUTDUMP=$(  cylc template -s 6 TEMPLATE_REDUCED_GLOBAL_DUMP ) 
+export UMRECON_OUTPUTDUMP=$( cylc template -s 6 TEMPLATE_GLOBAL_DUMP ) 
+export UMRECON_LOGDIR=$(     cylc template      TEMPLATE_LOGFILE_DIR )"""
+        [[[environment]]]
+            UMUI_JOBDIR   = $GLtoGL_RECON_JOBDIR
+
+    [[UM_nzlam_coldstart]]
+        description = NZLAM initial forecast from global model start dump.
+        owner = nwp
+        command = UM-wrapper.sh
+        scripting = """
+export UM_STARTDUMP=$( cylc template -s 6 $TEMPLATE_RESTART_DUMP )
+export UM_PPVARFILE=$( cylc template -s 6 TEMPLATE_PPVAR_FILE   )
+export UM_PP7CXFILE=$( cylc template -s 6 TEMPLATE_PP7CX_FILE   )
+export UM_DATAMDIR=$(  cylc template -s 6 TEMPLATE_DATAM_DIR    )
+export UM_DATAWDIR=$(  cylc template -s 6 TEMPLATE_DATAW_DIR    )
+export UM_ALABCFILE=$( cylc template      TEMPLATE_ALABC_FILE   )
+export UM_LOGDIR=$(    cylc template      TEMPLATE_LOGFILE_DIR  )"""
+        [[[environment]]]
+            UMUI_JOBDIR   = $COLDSTART_JOBDIR
+
+    [[OPS]]
+        description = "Task family of OPS Extract and Process tasks"
+        owner = nwp
+
+    [[OPS_Satwind]]
+        description = "OPS Extract and Process Satwind observations"
+        [[[environment]]]
+            OPSUI_JOB_DIR     = $OPS_SATWIND_JOBDIR
+
+    [[OPS_ATOVS]]
+        description = "OPS Extract and Process ATOVS observations"
+        [[[environment]]]
+            OPSUI_JOB_DIR     = $OPS_ATOVS_JOBDIR
+
+    [[OPS_IASI]]
+        description = "OPS Extract and Process IASI observations"
+        [[[environment]]]
+            OPSUI_JOB_DIR     = $OPS_IASI_JOBDIR
+
+    [[OPS_SurfaceScatt]]
+        description = "OPS Extract and Process Surface and Scatterometer observations"
+        [[[environment]]]
+            OPSUI_JOB_DIR     = $OPS_SURFACESCATT_JOBDIR
+
+    [[OPS_GPSRO]]
+        description = "OPS Extract and Process GPSRO observations"
+        [[[environment]]]
+            OPSUI_JOB_DIR     = $OPS_GPSRO_JOBDIR
+
+    [[OPS_AIRS]]
+        description = "OPS Extract and Process AIRS observations"
+        [[[environment]]]
+            OPSUI_JOB_DIR     = $OPS_AIRS_JOBDIR
+
+    [[OPS_AircraftSonde]]
+        description = "OPS Extract and Process Aircraft and Sonde observations"
+        owner = nwp
+        command = OPS-wrapper.sh
+        [[[environment]]]
+            OPSUI_JOB_DIR     = $OPS_AIRCRAFTSONDE_JOBDIR
+        [[[directives]]]
+            # OPSUI <JOB>_init requires $LOGNAME within loadleveler
+            environment = COPY_ALL
+
+    [[VAR_AnalysePF]]
+        description = "VAR Analysis"
+        owner = nwp
+        command = VAR-wrapper.sh
+        [[[environment]]]
+            VARUI_JOB_DIR    = $VAR_ANALYSEPF_JOBDIR
+        [[[directives]]]
+            # VARUI <JOB>_init requires $LOGNAME within loadleveler
+            environment = COPY_ALL
+
+    [[VAR_ConfigureLS]]
+        description = "VAR Reconfiguration"
+        owner = nwp
+        command = VAR-wrapper.sh
+        [[[environment]]]
+            VARUI_JOB_DIR    = $VAR_CONFIGURELS_JOBDIR
+        [[[directives]]]
+            # VARUI <JOB>_init requires $LOGNAME within loadleveler
+            environment = COPY_ALL
+
+    [[nzlam_products]]
+    # nzlam_products need not be sequential in principle, but the
+    # product ingest gets overloaded when multiple cycles run at once in
+    # catchup operation. 
+        description = "NZLAM forecast product generation."
+        owner = nwp
+        command = convert_ingest.sh
+        [[[environment]]]
+            PRODUCT_DIR   = ${HOME}/running/nzlam_12/product
+            SERVICE     = nzlam_products
+
+    [[get_um_output]]
+        description = """Move NZLAM forecast output from the UM output
+directories to the suite output directory, renaming them appropriately."""
+        owner = nwp
+        command = cylc wrap get-um-output.sh $WARMSTART_RUNID pp0 pp1 pc pi
+
+    [[nzlam_conv_met]]
+        description = "Converts the NZLAM UM met file to NetCDF format."
+        owner = nwp
+        command = cylc wrap um_conv_nc.sh
+        [[[environment]]]
+            FILEIN  = met_${CYCLE_TIME}_utc_nzlam_12_*.um
+            FILEIN_LOC  = ${HOME}/output/nzlam_12
+            FILEOUT = met_${CYCLE_TIME}_utc_nzlam_12_*.nc
+            FILEOUT_LOC = ${HOME}/output/nzlam_12
+            FILEATT = attribute_met_nzlam-12.txt
+            FILEATT_LOC = /${SYS}/ecoconnect/nwp_${SYS}/control/nzlam_12/netcdf-attr
+            MULTIFILE   = 1
+            GUNZIP  = 0
+            UM2NC_O = met_ 
+            UM2NC_P = _nzlam_12
+            UM2NC_CT    = ${CYCLE_TIME}
+            OPTIONS = -f -t -i -c
+            FIELDS  = 23 24 33 409 3209 3210 3236 3245 3248 3281 3282 3283 4201 4203 5201 5205 5215 5216 5226 6203 8223 9203 9204 9205 9216 15229 15242 15243 15244 16202 16203 16222 16256
+            SERVICE = nzlam_conv_met
+    
+    [[tn_llclean]]
+    # ONLY REQUIRED UNTIL WE CHANGE THE UM STASH GRID CUTOUT DEFINITION.
+        description = "Clean NetCDF tn file."
+        owner = nwp
+        command = cylc wrap llclean.sh 
+        [[[environment]]]
+            FILEIN  = tn_${CYCLE_TIME}_utc_nzlam_12.nc
+            FILEIN_LOC  = ${HOME}/output/nzlam_12
+            FILEOUT = tn_${CYCLE_TIME}_utc_nzlam_12.nc
+            FILEOUT_LOC = ${HOME}/output/nzlam_12
+            SERVICE = tn_llclean
+
+    [[nzlam_housekeeping]]
+        description = "Archiving and cleanup for the NZLAM sub-system."
+        owner = nwp
+        command = cylc wrap "cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nzlam_housekeeping.conf"
+
+    [[nzlam_conv_sls]]
+        description = "Converts the NZLAM UM met file to NetCDF format."
+        owner = nwp
+        command = cylc wrap um_conv_nc.sh
+        [[[environment]]]
+            FILEIN  = sls_${CYCLE_TIME}_utc_nzlam_12.um
+            FILEIN_LOC  = ${HOME}/output/nzlam_12
+            FILEOUT = sls_${CYCLE_TIME}_utc_nzlam_12.nc
+            FILEOUT_LOC = ${HOME}/output/nzlam_12
+            FILEATT = attribute_sls_nzlam-12.txt
+            FILEATT_LOC = /${SYS}/ecoconnect/nwp_${SYS}/control/nzlam_12/netcdf-attr
+            MULTIFILE = 0
+            GUNZIP  = 0
+            UM2NC_O = sls_
+            UM2NC_P = _nzlam_12
+            UM2NC_CT    = ${CYCLE_TIME}
+            OPTIONS = -f -t -i -c
+            FIELDS  = All
+            SERVICE = nzlam_conv_sls 
+    
+    [[nzlam_conv_tn]]
+        description = "Converts the NZLAM UM TN file to NetCDF format."
+        owner = nwp
+        command = cylc wrap um_conv_nc.sh
+        [[[environment]]]
+            FILEIN  = tn_${CYCLE_TIME}_utc_nzlam_12.um
+            FILEIN_LOC  = ${HOME}/output/nzlam_12
+            FILEOUT = tn_${CYCLE_TIME}_utc_nzlam_12.nc
+            FILEOUT_LOC = ${HOME}/output/nzlam_12
+            FILEATT = attribute_tn_nzlam-12.txt
+            FILEATT_LOC = /${SYS}/ecoconnect/nwp_${SYS}/control/nzlam_12/netcdf-attr
+            MULTIFILE   = 0
+            GUNZIP  = 0
+            UM2NC_O = tn_
+            UM2NC_P = _nzlam_12
+            UM2NC_CT    = ${CYCLE_TIME}
+            OPTIONS = -f -t -i -c
+            FIELDS  = 33 409 1235 2207 3236 3209 3210 3245 5226
+            SERVICE = nzlam_conv_tn
+
+    [[nzlam_conv_escape]]
+        description = "Converts the NZLAM UM Energy Scape file to NetCDF format."
+        owner = nwp
+        command = cylc wrap um_conv_nc.sh
+        [[[environment]]]
+            FILEIN  = escape_${CYCLE_TIME}_utc_nzlam_12*.um
+            FILEIN_LOC  = ${HOME}/output/nzlam_12
+            FILEOUT = escape_${CYCLE_TIME}_utc_nzlam_12*.nc
+            FILEOUT_LOC = ${HOME}/output/nzlam_12
+            FILEATT = attribute_escape_nzlam-12.txt
+            FILEATT_LOC = /${SYS}/ecoconnect/nwp_${SYS}/control/nzlam_12/netcdf-attr
+            MULTIFILE = 1
+            GUNZIP  = 0
+            UM2NC_O = escape_
+            UM2NC_P = _nzlam_12
+            UM2NC_CT    = ${CYCLE_TIME}
+            OPTIONS = -f -t -i -c
+            FIELDS  = All 
+            SERVICE = nzlam_conv_escape
+       
+    [[nzlam_ncl]]
+        description = "NZLAM ncl postprocessing."
+        owner = nwp
+        command = ${HOME}/bin/nzlam_12_generate_eps
+
+    [[make_alabc]]
+        description = "Convert NZLAM frames to an ALABC (boundary condition) file"
+        owner = nwp
+        command = cylc wrap make_alabc.sh --keep
+        scripting = """
+# This is required for access to the standard makebc executable in
+# the UM installation. UM jobs at NIWA, on the other hand, require
+# this in $HOME/.profile, which gets sourced inside the secondary
+# loadleveler submit.
+. ~um_fcm/user-config/um.profile"""
+        [[[directives]]]
+            # serial job on fitzroy
+            job_type    = serial
+            class       = serial
+            cluster_list = AIX-LL-Cluster1
+
+    [[unpack_bgerr]]
+        description = "Check bgerr file for current cycle, unpack if necessary."
+        owner = nwp
+        command = cylc wrap check-nzlam-inputs.sh --bgerr
+
+    [[unpack_frames]]
+        description = "Check frames files for the current cycle, unpack if necessary."
+        owner = nwp
+        command = cylc wrap check-nzlam-inputs.sh --frames
+
+    [[unpack_globaldump]]
+        description = "Check reduced global UM coldstart dump for current cycle, unpack if necessary."
+        owner = nwp
+        command = cylc wrap check-nzlam-inputs.sh --globaldump
+
+    [[unpack_obstores]]
+        description = "Check obstore files for current cycle, unpack if necessary."
+        owner = nwp
+        command = cylc wrap check-nzlam-inputs.sh --obstore
+
+    [[cycle_check]]
+        description = "Get statistics about all the task for a cycle."
+        owner = ecoconnect
+        command = cylc wrap cycle_check.sh
+        [[[environment]]]
+        	MAIN_LOG_FILE = log*
+        	MAIN_LOG_DIR = ${HOME}/.cylc/logging/ecoconnect
+        	TASK_LIST_FILE = task_list.csv
+        	TASK_LIST_DIR = ${HOME}/suites/ecoconnect/oper/scripts
+        	OUTPUT_FILE = task_stats_${CYCLE_TIME}.csv
+        	OUTPUT_DIR = ${HOME}/output/stats
+
+    [[cycle_check_transfer]]
+        description = "Transfer statistics file to web server."
+        owner = ecoconnect
+        command = cylc wrap _file-transfer
+        [[[environment]]]
+        	SRCE = ${HOME}/output/stats/task_stats_${CYCLE_TIME}.csv ${HOME}/output/stats/task_stats_${CYCLE_TIME}.csv
+        	DEST = ecoconnect_oper@pa:/oper/ecoconnect_oper/public_html/eco_check/stats/task_stats_latest.csv ecoconnect_oper@pa:/oper/ecoconnect_oper/public_html/eco_check/stats/task_stats_${CYCLE_TIME}.csv
+        	RECOPY = true true
+                                
+    [[ext_create_streamflow]]
+        description = "Create streamflow data on Tideda server."
+        owner = data
+        command = create_streamflow.sh
+
+    [[topnet_products]]
+        description = "TopNet forecast product generation."
+        owner = hydrology
+        command = convert_ingest.sh
+        [[[environment]]]
+            PRODUCT_DIR   = ${HOME}/running/topnet/product
+            SERVICE     = topnet_products
+
+    [[ecan_rain_obs]]
+        description = "Create rain observation NetCDF file for Topnet."
+        owner = hydrology
+        command = cylc wrap $HOME/bin/ecan/ecan_rain2netcdf.sh
+        [[[environment]]]
+            OUT_DIR = ${HOME}/input/topnet
+            START_DATE  = $(CYCLE_TIME - 48)
+            FILEOUT = topnet_rain_clidb_${START_DATE}_${CYCLE_TIME}_utc.nc
+            RUN_DIR  = ${HOME}/bin/ecan
+            NHH = 48
+            SERVICE = ecan_rain_obs
+
+    [[topnet]]
+        description = "The TopNet model"
+        owner = hydrology
+        command = ${HOME}/bin/run_topnet.sh
+
+    [[topnet_ncl]]
+        description = "TopNet ncl postprocessing"
+        owner = hydrology
+        command = ${HOME}/bin/vis_topnet
+
+    [[topnet_housekeeping]]
+        description = "Archiving and cleanup for the TopNet sub-system."
+        owner = hydrology
+        command = cylc wrap cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/topnet_housekeeping.conf
+
+    [[ext_get_streamq]]
+        description = "Get the streamq file from TDServer, so Topnet can run."
+        owner = data
+        command = cylc wrap file_transfer_ftp.sh
+        [[[environment]]]
+            SRCE    = tdserver2008.niwa.co.nz
+            SRCE_LOC    = ~/
+            DEST_LOC    = ${HOME}/output/td2cf
+            FILENAME    = streamobs_${CYCLE_TIME}_utc_ods_nz.nc
+            SRCE_USER   = Topnet
+            SERVICE = ext_get_streamq
+            KEEP    = 0
+            FAST    = 0
+            FILEOUT = streamq_${CYCLE_TIME}_utc_ods_nz.nc
+            TIMEOUT = 45
+            CHECKSUM    = 0
+            CHECKFILE   = None
+
+    [[topnet_cold]]
+        description = """Oneoff dummy task to supply initial TopNet restart
+prerequisites. The real restart file(s) are assumed to have been
+provided by an initial TopNet spinup experiment.  Topnet has 2 restart
+files. Topnet will run automatically in cold start but results will be
+useless.  Topnet needs at least 2 weeks of spinup."""
+        owner = hydrology
+
+    [[streamq_housekeeping]]
+        description = "Archiving and cleanup for the Streamq observation file."
+        owner = data
+        command = cylc wrap "cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/streamq_housekeeping.conf"
+
+    [[sls_globalwind_copy]]
+        description = "Copy the converted SLS wind file to the required directory."
+        owner = wave 
+        scripting = cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
+        [[[environment]]]
+            SRCE_FILENAME = sls_${CYCLE_TIME}_utc_global_sfcwind.nc
+            SRCE_LOC   = /${SYS}/ecoconnect/ecoconnect_${SYS}/output
+            DEST_FILENAME   = sls_${CYCLE_TIME}_utc_global_sfcwind.nc
+            DEST_LOC    = /${SYS}/ecoconnect/wave_${SYS}/input/globalwave_120
+
+    [[ext_check_bgerr_ukmet]]
+        description = "Check if the UK MetOffice bgerr file is available for download"
+        owner = ecoconnect
+        command = cylc wrap file_check_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-check-ukmet.rc
+            FILENAME    = ${CYCLE_TIME}_bgerr_checksum.txt
+            SERVICE = ext_check_bgerr_ukmet
+    
+    [[ext_check_obstore_ukmet]]
+        description = """Check if UK MetOffice obstore data for the current
+cycle is available for download."""
+        owner = ecoconnect 
+        command = cylc wrap file_check_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-check-ukmet.rc
+            FILENAME    = ${CYCLE_TIME}_obstore_checksum.txt  
+            SERVICE = ext_check_obstore_ukmet
+
+    [[ext_check_sst_ukmet]]
+        description = "Check if the UK MetOffice sst file is available for download"
+        owner = ecoconnect
+        command = cylc wrap file_check_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-check-ukmet.rc
+            FILENAME    = sst.${CYCLE_TIME}.anc.gz
+            SERVICE = ext_check_sst_ukmet
+            TIMEOUT = 120
+    
+    [[ext_check_frames_ukmet]]
+        description = """Check if the UK MetOffice Frame checksum file is
+available on their ftp site"""
+        owner = ecoconnect
+        command = cylc wrap file_check_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-check-ukmet.rc
+            PREV_CYCLE_TIME  = $( cylc cycle-time -s 6 )
+            FILENAME   = ${PREV_CYCLE_TIME}_frames_checksum.txt
+            SERVICE = ext_check_frames_ukmet
+            TIMEOUT = 90
+
+    [[sls_globalice_copy]]
+        description = "Copy the converted SLS ice file to the required directory."
+        owner = wave 
+        scripting = cp ${SRCE_LOC}/${SRCE_FILENAME} ${DEST_LOC}/${DEST_FILENAME} 
+        [[[environment]]]
+            SRCE_FILENAME = sls_${CYCLE_TIME}_utc_global_seaice.nc
+            SRCE_LOC   = /${SYS}/ecoconnect/ecoconnect_${SYS}/output
+            DEST_FILENAME   = sls_${CYCLE_TIME}_utc_global_seaice.nc
+            DEST_LOC    = /${SYS}/ecoconnect/wave_${SYS}/input/globalwave_120
+
+    [[ext_get_globalwind_ukmet]]
+        description = "Get the UK MetOffice globalwind file"
+        owner = ecoconnect
+        command = cylc wrap file_transfer_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-get-ukmet.rc
+            FILENAME    = qwqg${HH}.${CYCLE_TIME}.10mwind.gz
+            SERVICE = ext_get_globalwind_ukmet
+            FILEOUT = qwqg${HH}_${CYCLE_TIME}_10mwind.gz
+            CHECKFILE   = ${CYCLE_TIME}_10mwind_checksum.txt
+
+    [[ext_get_sst_ukmet]]
+        description = "Get the UK MetOffice sst file"
+        owner = ecoconnect
+        command = cylc wrap file_transfer_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-get-ukmet.rc
+            FILENAME    = sst.${CYCLE_TIME}.anc.gz 
+            SERVICE = ext_get_sst_ukmet
+            FILEOUT = sst.${CYCLE_TIME}.anc.gz
+            CHECKSUM = 0
+            CHECKFILE = None
+                                
+    [[globalnwp_conv_wind]]
+        description = "Converts the UM global 10m wind file to netcdf format."
+        owner = ecoconnect
+        command = cylc wrap um_conv_nc.sh
+        [[[environment]]]
+            HH      = ${CYCLE_TIME:8:2}
+            FILEIN = qwqg${HH}_${CYCLE_TIME}_10mwind.gz 
+            FILEIN_LOC  = ${HOME}/output
+            FILEOUT = sls_${CYCLE_TIME}_utc_global_sfcwind.nc
+            FILEOUT_LOC = ${HOME}/output
+            FILEATT = attribute_sls_global.txt
+            FILEATT_LOC = /${SYS}/ecoconnect/wave_${SYS}/control/globalwave_120
+            MULTIFILE = 0
+            GUNZIP  = 1
+            UM2NC_O = sls_
+            UM2NC_P = _global_sfcwind
+            UM2NC_CT    = ${CYCLE_TIME}
+            OPTIONS = -f -t -i
+            FIELDS  = All
+            SERVICE = globalnwp_conv_wind
+
+    [[ext_check_dump_ukmet]]
+        description = "Check if the UK MetOffice T+3 dump file is available for download"
+        owner = ecoconnect
+        command = cylc wrap file_check_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-check-ukmet.rc
+            PREV_CYCLE_TIME  = $( cylc cycle-time -s 6 )
+            HH  = ${PREV_CYCLE_TIME:8:2}
+            FILENAME  = qwqg${HH}.reduced.${PREV_CYCLE_TIME}.T+3.gz  
+            SERVICE = ext_check_dump_ukmet
+   
+    [[ext_check_globalice_ukmet]]
+        description = """Check if the Global ice file for the current cycle
+is available for download."""
+        owner = ecoconnect 
+        command = cylc wrap file_check_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-check-ukmet.rc
+            FILENAME = ${CYCLE_TIME}_ice_checksum.txt
+            SERVICE = ext_check_globalice_ukmet
+
+    [[ext_check_globalwind_ukmet]]
+        description = """Check if the Global wind file for the current cycle
+is available for download."""
+        owner = ecoconnect 
+        command = cylc wrap file_check_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-check-ukmet.rc
+            FILENAME    = ${CYCLE_TIME}_10mwind_checksum.txt
+            SERVICE = ext_check_globalwind_ukmet
+
+    [[ext_get_globalice_ukmet]]
+        description = "Get the UK MetOffice globalice file"
+        owner = ecoconnect
+        command = cylc wrap file_transfer_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-get-ukmet.rc
+            FILENAME    = qwgl.daily.${CYCLE_TIME}.ice.gz
+            SERVICE = ext_get_globalice_ukmet
+            FILEOUT = qwgl_daily_${CYCLE_TIME}_ice.gz
+            CHECKFILE   = ${CYCLE_TIME}_ice_checksum.txt 
+                               
+    [[ext_get_frames_ukmet]]
+        description = "Get the UK MetOffice Frame files"
+        owner = ecoconnect
+        command = cylc wrap file_transfer_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-get-ukmet.rc
+            PREV_CYCLE_TIME   = $( cylc cycle-time -s 6 )
+            YMD = ${PREV_CYCLE_TIME:0:8}
+            FILENAME    = ${YMD}_frame_qg${HH}_niwa_*.gz
+            SERVICE     = ext_get_frames_ukmet
+            FAST    = 3
+            FILEOUT     = ${YMD}_frame_qg${HH}_niwa_*.gz
+            TIMEOUT = 5
+            CHECKFILE   = ${PREV_CYCLE_TIME}_frames_checksum.txt
+
+    [[ukmodata_housekeeping]]
+        description = "Archiving and cleanup for the UKMO data."
+        owner = ecoconnect
+        command = cylc wrap cylc housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ukmodata_housekeeping.conf
+
+    [[globalnwp_conv_ice]]
+        description = "Converts the UM global sea ice file to netcdf format."
+        owner = ecoconnect
+        command = cylc wrap um_conv_nc.sh
+        [[[environment]]]
+            FILEIN  = qwgl_daily_${CYCLE_TIME}_ice.gz
+            FILEIN_LOC  = ${HOME}/output
+            FILEOUT = sls_${CYCLE_TIME}_utc_global_seaice.nc
+            FILEOUT_LOC = ${HOME}/output
+            FILEATT = attribute_sls_global.txt
+            FILEATT_LOC = /${SYS}/ecoconnect/wave_${SYS}/control/globalwave_120
+            MULTIFILE = 0
+            GUNZIP  = 1
+            UM2NC_O = sls_
+            UM2NC_P = _global_seaice
+            UM2NC_CT = $(CYCLE_TIME - 18)
+            OPTIONS = -f -t -i
+            FIELDS  = All
+            SERVICE = globalnwp_conv_ice
+
+    [[ext_get_bgerr_ukmet]]
+        description = "Get the UK MetOffice bgerr file"
+        owner = ecoconnect
+        command = cylc wrap file_transfer_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-get-ukmet.rc
+            FILENAME    = qwq3${HH}.${CYCLE_TIME}.bgerr.gz
+            SERVICE     = ext_get_bgerr_ukmet
+            FILEOUT = qwq3${HH}_${CYCLE_TIME}_bgerr.gz
+            CHECKFILE   = ${CYCLE_TIME}_bgerr_checksum.txt
+                               
+    [[ext_get_dump_ukmet]]
+        description = """Get the UK MetOffice T+3 dump file. This task is
+only used during an initial coldstart, and thereafter should be inserted
+when needed."""  
+        owner = ecoconnect
+        command = cylc wrap file_transfer_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-get-ukmet.rc
+            PREV_CYCLE_TIME   = $( cylc cycle-time -s 6 )
+            FILENAME    = qwqg${HH}.reduced.${PREV_CYCLE_TIME}.T+3.gz
+            SERVICE     = ext_get_dump_ukmet
+            FILEOUT = $FILENAME
+            CHECKSUM    = 0
+            CHECKFILE   = None
+                               
+    [[ext_get_obstore_ukmet]]
+        description = "Get the UK MetOffice obstore file"
+        owner = ecoconnect
+        command = cylc wrap file_transfer_ftp.sh
+        [[[environment]]]
+%include inc/env/ftp-get-ukmet.rc
+            FILENAME    = qwq3${HH}.${CYCLE_TIME}.obstore.tar.gz
+            SERVICE = ext_get_obstore_ukmet
+            FILEOUT = qwq3${HH}_${CYCLE_TIME}_obstore.tar.gz
+            CHECKFILE   = ${CYCLE_TIME}_obstore_checksum.txt
+
+[visualization]
+    [[node groups]]
+        g_ukmet = ext_check_frames_ukmet, ext_check_bgerr_ukmet, ext_check_obstore_ukmet, ext_check_dump_ukmet, ext_check_sst_ukmet, ext_check_globalice_ukmet, ext_check_globalwind_ukmet, \
+            ext_get_frames_ukmet, ext_get_bgerr_ukmet, ext_get_obstore_ukmet, ext_get_dump_ukmet, ext_get_sst_ukmet, ext_get_globalice_ukmet, ext_get_globalwind_ukmet 
+        g_frames = ext_check_frames_ukmet, ext_get_frames_ukmet, unpack_frames, make_alabc
+        g_mos = ext_get_clidbdata, mos_nzlam_coeffs, mos_nzlam_apply, mos_nzlam_vp_5day, mos_nzlam_vp_curr, mos_housekeeping
+        g_topnet = ecan_rain_obs, ext_create_streamflow, ext_create_streamq, ext_get_streamq, streamq_housekeeping, tn_llclean, topnet, topnet_ncl, topnet_products, topnet_housekeeping
+        g_ricom = ricom, ricom_ncl, ricom_products, ricom_housekeeping
+        g_nztide = nztide, nztide_ncl, nztide_products, nztide_housekeeping
+        g_nzwave = nzwave, nzwave_ncl, nzwave_products, nzwave_housekeeping
+        g_gwave = globalnwp_conv_ice, sls_globalice_copy, globalwave, globalwave_ncl, globalwave_products, globalwave_housekeeping
+        g_nwp = globalnwp_conv_wind, sls_globalwind_copy, globalnwp_ncl, globalnwp_products, globalnwp_housekeeping
+        g_nzlam = UM_nzlam, get_outputs, nzlam_conv_met, nzlam_conv_sls, nzlam_conv_tn, nzlam_conv_escape, nzlam_ncl, nzlam_products, nzlam_housekeeping, ukmodata_housekeeping
+        g_cold = ext_check_dump_ukmet, ext_get_dump_ukmet, \
+            unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ_recon, \
+            UM_nzlam_coldstart, globalwave_cold, topnet_cold, ricom_cold, \
+            nzwave_cold
+        g_var = VAR_ConfigureLS, VAR_AnalysePF, VAR_monitoring
+        g_opsinput = unpack_obstores, unpack_bgerr
+
+    [[node attributes]]
+        #g_cold   = "shape=egg", "style=filled", "fillcolor=slateblue"
+        g_cold   = "shape=egg", "color=blue", "style=bold"
+        g_ukmet = "shape=rect", "style=filled", "fillcolor=grey", "color=red"
+        g_mos = "style=filled", "fillcolor=Magenta2"
+        g_frames = "style=filled", "fillcolor=DeepPink3"
+        g_nzlam = "style=filled", "fillcolor=DarkSeagreen"
+        g_topnet = "style=filled", "fillcolor=green"
+        g_ricom = "style=filled", "fillcolor=DarkGreen"
+        g_nztide = "style=filled", "fillcolor=Yellow3"
+        g_nzwave = "style=filled", "fillcolor=yellow"
+        g_gwave = "style=filled", "fillcolor=yellow4"
+        g_nwp = "style=filled", "fillcolor=orange"
+        OPS = "style=filled", "fillcolor=LightPink", "shape=circle"
+        g_opsinput = "style=filled", "fillcolor=LightPink"
+        g_var = "style=filled", "fillcolor=Salmon"
+        UM_nzlam = "shape=septagon", "fillcolor=Red"
+        UM_NZtoNZ_recon = "style=filled", "fillcolor=FireBrick"
+        UM_nzlam_coldstart = "shape=septagon"

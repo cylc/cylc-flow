@@ -1,0 +1,35 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    ext_get_clidbdata, e_gcdb
+
+%DESCRIPTION
+    Retrieve data from clidb
+ 
+%TYPE
+    free, sequential, contact
+
+%CONTACT_DELAY
+    2.0 hr
+    
+%OWNER
+    nwp
+
+%HOURS
+    6,18
+
+%ENVIRONMENT
+    SYS     ${USER##*_}
+
+%COMMAND
+    /${SYS}/ecoconnect/mos_${SYS}/bin/get_clidb_data.sh
+
+%COLDSTART_PREREQUISITES
+    # None
+
+%PREREQUISITES
+    # None
+
+%OUTPUTS
+    # default only

@@ -1,0 +1,32 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    ricom_products, ri_pro
+
+%DESCRIPTION
+    RiCOM forecast product generation.
+    Uses the create_images script to create the PNG areal map files, and
+    uploads to Mintaka and Zope.
+
+%TYPE
+    free
+
+%OWNER
+    sea_level
+
+%HOURS
+    6,18
+
+%ENVIRONMENT
+    PRODUCT_DIR   ${HOME}/running/ricom-nzl/product
+    SERVICE     ricom_products
+
+%COMMAND
+    convert_ingest.sh
+
+%PREREQUISITES
+    "ricom_ncl%${CYCLE_TIME} finished"
+
+%OUTPUTS
+    # default only

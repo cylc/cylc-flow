@@ -1,0 +1,29 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    mos_nzlam_coeffs, m_cff
+
+%DESCRIPTION
+    Generate NZLAM mos coefficients.
+ 
+%TYPE
+    free, sequential
+
+%OWNER
+    nwp
+
+%HOURS
+    6,18
+    
+%ENVIRONMENT
+    SYS     ${USER##*_}
+    
+%COMMAND
+    /${SYS}/ecoconnect/mos_${SYS}/bin/generate_nzlam_mos_coeff.sh
+
+%PREREQUISITES
+    "ext_get_clidbdata%${CYCLE_TIME} finished"
+
+%OUTPUTS
+    # defaults only

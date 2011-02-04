@@ -1,0 +1,33 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    get_um_output, g_um_out
+
+%DESCRIPTION
+    Move NZLAM forecast output from the UM output directories to the
+    suite output directory, renaming them appropriately.
+
+%OWNER
+    nwp
+
+%TYPE
+    free
+
+%HOURS
+    0,6,12,18
+
+%PREREQUISITES
+    "NZLAM forecast fieldsfiles ready for $(CYCLE_TIME)"
+
+%OUTPUTS
+    # pp0
+    "TN UM file ready for $(CYCLE_TIME)"
+    # pp1
+    "SLS UM file ready for $(CYCLE_TIME)"
+    # pc000-048
+    "MET UM files ready for $(CYCLE_TIME)"
+    # pi000-048
+    "ESCAPE UM files ready for $(CYCLE_TIME)"
+
+%COMMAND
+    cylc-wrapper get-um-output.sh $WARMSTART_RUNID pp0 pp1 pc pi

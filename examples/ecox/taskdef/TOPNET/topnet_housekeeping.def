@@ -1,0 +1,23 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    topnet_housekeeping, top_hk
+
+%DESCRIPTION
+    Archiving and cleanup for the TopNet sub-system.
+
+%OWNER
+    hydrology
+
+%TYPE
+    free
+
+%HOURS
+    6,18
+
+%PREREQUISITES
+    "topnet_products%$(CYCLE_TIME) finished"
+    "ecan_rain_obs%$(CYCLE_TIME) finished"
+
+%COMMAND
+    cylc-wrapper cylcutil housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/topnet_housekeeping.conf

@@ -1,0 +1,22 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    nzlam_housekeeping, nzlm_hk
+
+%DESCRIPTION
+    Archiving and cleanup for the NZLAM sub-system.
+
+%OWNER
+    nwp
+
+%TYPE
+    free
+
+%HOURS
+    6,18
+
+%PREREQUISITES
+    "nzlam_products%$(CYCLE_TIME) finished"
+
+%COMMAND
+    cylc-wrapper cylcutil housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/nzlam_housekeeping.conf

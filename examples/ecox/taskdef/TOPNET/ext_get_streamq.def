@@ -1,0 +1,39 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+%TASK
+    ext_get_streamq, e_g_strq
+
+%DESCRIPTION
+    Get the streamq file from TDServer, so Topnet can run. 
+
+%TYPE
+    free
+
+%OWNER
+    data
+
+%HOURS
+    6,18
+
+%ENVIRONMENT
+    SRCE    tdserver2008.niwa.co.nz
+    SRCE_LOC    ~/
+    DEST_LOC    ${HOME}/output/td2cf
+    FILENAME    streamobs_${CYCLE_TIME}_utc_ods_nz.nc
+    SRCE_USER   Topnet
+    SERVICE ext_get_streamq
+    KEEP    0
+    FAST    0
+    FILEOUT streamq_${CYCLE_TIME}_utc_ods_nz.nc
+    TIMEOUT 45
+    CHECKSUM    0
+    CHECKFILE   None
+
+%COMMAND
+    cylc-wrapper file_transfer_ftp.sh
+
+%PREREQUISITES
+    "STREAMOBS file available for download for ${CYCLE_TIME}"
+
+%OUTPUTS
+    "STREAMQ file ready for ${CYCLE_TIME}"

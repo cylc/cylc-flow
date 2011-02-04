@@ -1,0 +1,29 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    ext_create_streamflow, e_c_sfl
+
+%DESCRIPTION
+    Create streamflow data on Tideda server.
+ 
+%TYPE
+    free, sequential, contact 
+
+%CONTACT_DELAY
+    3.00 hr
+
+%OWNER
+    data
+
+%HOURS
+    6,18
+    
+%COMMAND
+    create_streamflow.sh
+
+%PREREQUISITES
+    # None
+
+%OUTPUTS
+     "STREAMOBS file available for download for ${CYCLE_TIME}"

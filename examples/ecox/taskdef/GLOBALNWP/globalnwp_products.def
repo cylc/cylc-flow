@@ -1,0 +1,32 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    globalnwp_products, g_pr
+
+%DESCRIPTION
+    Global surface wind and pressure forecast product generation.
+    Use create_images script to create the PNG areal map files and
+    upload to Mintaka and Zope.
+
+%TYPE
+    free
+
+%OWNER
+    nwp
+
+%HOURS
+    0
+
+%ENVIRONMENT
+    PRODUCT_DIR  ${HOME}/running/global/product
+    SERVICE     globalnwp_products
+
+%COMMAND
+    convert_ingest.sh
+
+%PREREQUISITES
+    "globalnwp_ncl%${CYCLE_TIME} finished"
+
+%OUTPUTS
+    # default only

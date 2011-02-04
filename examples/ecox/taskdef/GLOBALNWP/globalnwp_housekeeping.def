@@ -1,0 +1,22 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    globalnwp_housekeeping, g_hk
+
+%DESCRIPTION
+    Archiving and cleanup for the globalnwp sub-system.
+
+%OWNER
+    nwp
+
+%TYPE
+    free
+
+%HOURS
+    0
+
+%PREREQUISITES
+    "globalnwp_products%$(CYCLE_TIME) finished"
+
+%COMMAND
+    cylc-wrapper cylcutil housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/globalnwp_housekeeping.conf

@@ -1,0 +1,16 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    OPS_GPSRO
+
+%DESCRIPTION
+    OPS Extract and Process GPSRO observations
+
+%INHERIT
+    OPS_AircraftSonde
+
+%ENVIRONMENT
+    OPSUI_JOB_DIR     $OPS_GPSRO_JOBDIR
+
+%OUTPUTS
+    # None

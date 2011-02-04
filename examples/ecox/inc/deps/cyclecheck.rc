@@ -1,0 +1,22 @@
+
+# TO DO: The following cannot be correct: figure out which cycles the
+# final check task runs in before putting the task back in the suite.
+# Consider also just triggering it off end-of-chain tasks rather than
+# every single task.
+
+[[6,18]]
+graph = """
+nzlam_ncl & nzlam_products & nzlam_housekeeping & nztide & nztide_ncl & nztide_products & nztide_housekeeping & nzwave & nzwave_ncl & nzwave_products & nzwave_housekeeping & ricom & ricom_ncl & ricom_products & ricom_housekeeping & ext_create_streamflow & ext_get_streamq & topnet & topnet_ncl & topnet_products & topnet_housekeeping & ext_get_clidbdata & mos_nzlam_coeffs & mos_nzlam_apply & mos_nzlam_vp_curr & mos_nzlam_vp_5day & mos_housekeeping & ecan_rain_obs => cycle_check => cycle_check_transfer
+cycle_check => jobsubmission_housekeeping
+cycle_check => cycle_check_transfer => ukmodata_housekeeping
+        """ 
+
+[[0,6,12,18]]
+    graph = """
+   ext_check_obstore_ukmet & ext_check_bgerr_ukmet & ext_check_frames_ukmet & ext_get_obstore_ukmet & ext_get_bgerr_ukmet & ext_get_frames_ukmet & unpack_obstores & unpack_bgerr & unpack_frames & OPS & VAR_ConfigureLS & make_alabc & VAR_AnalysePF & UM_nzlam & get_um_output & nzlam_conv_met & nzlam_conv_sls & nzlam_conv_tn & nzlam_conv_escape => cycle_check => cycle_check_transfer
+   """
+
+[[0]]
+    graph = """
+    ext_check_globalice_ukmet & ext_get_globalice_ukmet & ext_check_globalwind_ukmet & ext_get_globalwind_ukmet & globalnwp_conv_ice & globalnwp_conv_wind & sls_globalice_copy &  sls_globalwind_copy & globalnwp_ncl & globalnwp_products & globalnwp_housekeeping & globalwave & globalwave_ncl & globalwave_products & globalwave_housekeeping => cycle_check => cycle_check_transfer
+    """

@@ -1,0 +1,28 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    nztide, ti
+
+%DESCRIPTION
+    The NZTIDE model. Has artificial dependence on nzwave_12, for
+    synchronous product generation. Not defined as a forecast model
+    because it does not have any restart outputs.
+
+%TYPE
+    free, sequential
+
+%OWNER
+    sea_level
+
+%HOURS
+    6,18
+
+%COMMAND
+    ${HOME}/bin/scripts/run_nztide_fc $CYCLE_TIME
+
+%PREREQUISITES
+    "nzwave%${CYCLE_TIME} finished"
+
+%OUTPUTS
+#    default

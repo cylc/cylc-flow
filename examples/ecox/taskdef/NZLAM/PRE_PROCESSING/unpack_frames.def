@@ -1,0 +1,25 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    unpack_frames, un_fr
+
+%DESCRIPTION
+    Check frames files for the current cycle, unpack if necessary.
+
+%OWNER
+    nwp
+
+%TYPE
+    free
+
+%HOURS
+    0,6,12,18
+
+%COMMAND
+    cylc-wrapper check-nzlam-inputs.sh --frames
+
+%PREREQUISITES
+    "UM global $(CYCLE_TIME - 6) frame files ready"
+
+%OUTPUTS
+    "NZLAM boundary frames ready for $(CYCLE_TIME)"

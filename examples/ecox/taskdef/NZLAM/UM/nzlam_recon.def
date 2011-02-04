@@ -1,0 +1,33 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    UM_nzlam_recon, nzlr
+
+%DESCRIPTION
+    Reconfigure the NZLAM model restart dump
+
+%OWNER
+    nwp
+
+%TYPE
+    free
+
+%HOURS
+   0 
+
+%COMMAND
+    UMrecon-wrapper.sh
+
+%ENVIRONMENT
+    UMUI_JOBDIR   $NZtoNZ_RECON_JOBDIR
+
+%SCRIPTING
+    export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_RESTART_DUMP ) 
+    export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_RECONFIGURED_RESTART_DUMP ) 
+    export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
+
+%PREREQUISITES
+    "NZLAM restart dump ready for $(CYCLE_TIME)"
+
+%OUTPUTS
+    "Reconfigured NZLAM restart dump ready for $(CYCLE_TIME)"

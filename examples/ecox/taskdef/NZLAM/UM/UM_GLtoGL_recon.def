@@ -1,0 +1,34 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    UM_GLtoGL_recon, um_g2g
+
+%DESCRIPTION
+    Reconfigure a reduced UM global model dump to add in global ancillary
+    fields and generate a full sized UM global global start dump.
+
+%TYPE
+    free, oneoff
+
+%OWNER
+    nwp
+
+%HOURS
+   0,6,12,18 
+
+%COMMAND
+    UMrecon-wrapper.sh
+
+%ENVIRONMENT
+    UMUI_JOBDIR   $GLtoGL_RECON_JOBDIR
+
+%SCRIPTING
+    export UMRECON_INPUTDUMP=$(  cylcutil template -s 6 TEMPLATE_REDUCED_GLOBAL_DUMP ) 
+    export UMRECON_OUTPUTDUMP=$( cylcutil template -s 6 TEMPLATE_GLOBAL_DUMP ) 
+    export UMRECON_LOGDIR=$(     cylcutil template      TEMPLATE_LOGFILE_DIR )
+
+%PREREQUISITES
+    "UM global $(CYCLE_TIME - 6) start dump ready"
+
+%OUTPUTS
+    "Expanded UM global $(CYCLE_TIME - 6) start dump ready"

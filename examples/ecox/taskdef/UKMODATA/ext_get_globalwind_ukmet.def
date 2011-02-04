@@ -1,0 +1,40 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+%TASK
+    ext_get_globalwind_ukmet, e_g_gw_uk
+
+%DESCRIPTION
+    Get the UK MetOffice globalwind file
+
+%TYPE
+    free, sequential
+
+%OWNER
+    ecoconnect
+
+%HOURS
+    0
+
+%ENVIRONMENT
+    HH  ${CYCLE_TIME:8:2}
+    SRCE    ftpops.metoffice.gov.uk
+    SRCE_LOC    ~/
+    DEST_LOC    ${HOME}/output
+    FILENAME    qwqg${HH}.${CYCLE_TIME}.10mwind.gz
+    SRCE_USER   niwa
+    SERVICE ext_get_globalwind_ukmet
+    KEEP    1
+    FAST    1
+    FILEOUT qwqg${HH}_${CYCLE_TIME}_10mwind.gz
+    TIMEOUT 45
+    CHECKSUM    1
+    CHECKFILE   ${CYCLE_TIME}_10mwind_checksum.txt
+
+%COMMAND
+    cylc-wrapper file_transfer_ftp.sh
+
+%PREREQUISITES
+     "GLOBALWIND file available for download for ${CYCLE_TIME}"
+
+%OUTPUTS
+    "GLOBALWIND file ready for ${CYCLE_TIME}"

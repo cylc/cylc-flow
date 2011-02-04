@@ -1,0 +1,23 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    jobsubmission_housekeeping, js_hk
+
+%DESCRIPTION
+    cleanup temporary cylc job submission files.
+
+%OWNER
+    ecoconnect
+
+%TYPE
+    free
+
+%HOURS
+    0,6,12,18
+
+%PREREQUISITES
+    "cycle_check%$(CYCLE_TIME) finished"
+
+%COMMAND
+    # keep temporary job submission files for one week
+    cylc-wrapper cylcutil housekeeping --dry-run /tmp "cylc-.*(\d{10})-.{6}" delete 168

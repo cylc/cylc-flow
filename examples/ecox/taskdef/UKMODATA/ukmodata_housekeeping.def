@@ -1,0 +1,22 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    ukmodata_housekeeping, uk_hk
+
+%DESCRIPTION
+    Archiving and cleanup for the UKMO data.
+
+%OWNER
+    ecoconnect
+
+%TYPE
+    free
+
+%HOURS
+    0,6,12,18
+
+%PREREQUISITES
+    "UM_nzlam%$(CYCLE_TIME) finished"
+
+%COMMAND
+    cylc-wrapper cylcutil housekeeping --mode=0775 /$SYS/ecoconnect/ecoconnect_$SYS/control/housekeeping/ukmodata_housekeeping.conf

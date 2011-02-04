@@ -1,0 +1,40 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+
+%TASK
+    ext_check_dump_ukmet, e_c_d_uk
+
+%DESCRIPTION
+    Check if the UK MetOffice T+3 dump file is available for download
+
+%TYPE
+    free, contact, oneoff
+
+%CONTACT_DELAY
+    -1.25 hr
+
+%OWNER
+    ecoconnect
+
+%HOURS
+    0,6,12,18
+
+%ENVIRONMENT
+    PREV_CYCLE_TIME  $( cylcutil cycle-time -s 6 )
+    HH  ${PREV_CYCLE_TIME:8:2}
+    SRCE    ftpops.metoffice.gov.uk
+    SRCE_LOC    ~/
+    DEST_LOC    ${HOME}/output
+    FILENAME  qwqg${HH}.reduced.${PREV_CYCLE_TIME}.T+3.gz  
+    SRCE_USER   niwa
+    SERVICE ext_check_dump_ukmet
+    TIMEOUT 60
+    
+%COMMAND
+    cylc-wrapper file_check_ftp.sh
+    
+%PREREQUISITES
+    # NONE 
+
+%OUTPUTS
+    "UM global $(CYCLE_TIME -6) start dump file available for download"

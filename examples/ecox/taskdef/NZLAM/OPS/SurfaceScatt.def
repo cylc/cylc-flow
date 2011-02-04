@@ -1,0 +1,16 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    OPS_SurfaceScatt, OPS_SS
+
+%DESCRIPTION
+    OPS Extract and Process Surface and Scatterometer observations
+
+%INHERIT
+    OPS_AircraftSonde
+
+%ENVIRONMENT
+    OPSUI_JOB_DIR     $OPS_SURFACESCATT_JOBDIR
+
+%OUTPUTS
+    # None

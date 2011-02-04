@@ -1,0 +1,42 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+%TASK
+    globalnwp_conv_ice, g_ci
+
+%DESCRIPTION
+    Converts the UM global sea ice file to netcdf format.
+
+%TYPE
+    free
+
+%OWNER
+   ecoconnect
+
+%HOURS
+    0
+
+%ENVIRONMENT
+    SYS     ${USER##*_}
+    FILEIN  qwgl_daily_${CYCLE_TIME}_ice.gz
+    FILEIN_LOC  ${HOME}/output
+    FILEOUT sls_${CYCLE_TIME}_utc_global_seaice.nc
+    FILEOUT_LOC ${HOME}/output
+    FILEATT attribute_sls_global.txt
+    FILEATT_LOC /${SYS}/ecoconnect/wave_${SYS}/control/globalwave_120
+    MULTIFILE 0
+    GUNZIP  1
+    UM2NC_O sls_
+    UM2NC_P _global_seaice
+    UM2NC_CT $(CYCLE_TIME - 18)
+    OPTIONS -f -t -i
+    FIELDS  All
+    SERVICE globalnwp_conv_ice
+
+%COMMAND
+    cylc-wrapper um_conv_nc.sh
+
+%PREREQUISITES
+    "GLOBALICE file ready for ${CYCLE_TIME}"
+
+%OUTPUTS
+    "SLS GLOBALICE file available for ${CYCLE_TIME}"

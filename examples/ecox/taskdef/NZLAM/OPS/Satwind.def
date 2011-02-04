@@ -1,0 +1,16 @@
+# THIS IS A CYLC TASK DEFINITION FILE
+
+%TASK
+    OPS_Satwind, OPS_Sw
+
+%DESCRIPTION
+    OPS Extract and Process Satwind observations
+
+%INHERIT
+    OPS_AircraftSonde
+
+%ENVIRONMENT
+    OPSUI_JOB_DIR     $OPS_SATWIND_JOBDIR
+
+%OUTPUTS
+    # None

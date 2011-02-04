@@ -1,0 +1,26 @@
+# THIS IS A CYLC TASK CLASS DEFINITION FILE
+
+
+%TASK
+    globalwave_cold, gw_c
+
+%DESCRIPTION
+    Oneoff dummy task to supply initial GlobalWave restart prerequisites.
+    The real restart file(s) are assumed to have been provided by an
+    initial external spinup experiment.
+    Globalwave will automatically cold start if it runs out of restart files (6 available).
+
+%TYPE
+    free, oneoff, dummy
+
+%OWNER
+    wave
+
+%HOURS
+    0
+
+%PREREQUISITES
+    # NONE
+
+%OUTPUTS
+    "globalwave restart files ready for ${CYCLE_TIME}"
