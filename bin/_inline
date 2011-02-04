@@ -10,11 +10,12 @@ from registration import registrations
 
 done = []
 
-def include_files( suitedir, inf, single=False, label=False, level=None ):
+def include_files( suitedir, inf, mark=False, single=False, label=False, level=None ):
     if level == None:
         level = ''
     else:
-        level += '!'
+        if mark:
+            level += '!'
 
     global done
     outf = []
@@ -34,7 +35,7 @@ def include_files( suitedir, inf, single=False, label=False, level=None ):
                     inc = h.readlines()
                     h.close()
                     # recursive inclusion
-                    outf.extend( include_files( suitedir, inc, single, label, level ))
+                    outf.extend( include_files( suitedir, inc, mark, single, label, level ))
                     if single or label:
                         outf.append('---- END INLINED INCLUDE FILE ' + match + '\n' )
                 else:
@@ -49,9 +50,9 @@ def include_files( suitedir, inf, single=False, label=False, level=None ):
 parser = OptionParser( """cylc inline SUITE 
 
 View a temporary copy of a suite config (suite.rc) file in your $EDITOR
-with include-files inlined and marked in the left margin. The cylc
-config file parser sees the file inlined so this is useful, if you use
-include-files, in tracking errors reported by the parser).
+with include-files inlined and optionally marked in the left margin. The
+cylc config file parser sees the file inlined so this is useful, if you
+use include-files, in tracking errors reported by the parser).
 
 The editing process is spawned in the foreground as follows:
   $EDITOR <temporary inlined file in $TMPDIR>
@@ -61,6 +62,11 @@ See also 'cylc search' and 'cylc edit'.
 
 Arguments:
   SUITE   - registered name of the suite.""")
+
+parser.add_option( "--mark", "-m", 
+        help="Mark inclusions in the left margin. (line numbers will "
+        "still correspond to those reported by the parser).",
+        action="store_true", default=False, dest="mark" )
 
 parser.add_option( "--label", "-l", 
         help="Label inclusion boundaries with the include-file name"
@@ -104,7 +110,7 @@ if os.path.isfile( suiterc ):
     lines0 = h.readlines()
     h.close()
     # inline any include files
-    lines = include_files( suitedir, lines0, options.single, options.label )
+    lines = include_files( suitedir, lines0, options.mark, options.single, options.label )
 else:
     parser.error("Suite " + suite + " config file not found: " + suiterc )
 
