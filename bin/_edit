@@ -143,7 +143,7 @@ The $EDITOR and $TMPDIR variables must be defined. Tested with:
    export EDITOR=emacs
    export EDITOR='emacs -nw'
 
-See also 'cylc search' and 'cylc inline'.
+See also 'cylc search' and 'cylc read'.
 
 Arguments:
   SUITE   - registered name of the target suite.""")

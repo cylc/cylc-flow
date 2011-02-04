@@ -119,6 +119,13 @@ h = open( inlined, 'wb' )
 h.writelines( lines )
 h.close()
 
+# set the file to be read only
+os.chmod( inlined, 0444 )
+
+# capture the temp file's mod time in case the user edits it
+# and overrides the readonly mode.
+modtime1 = os.stat( inlined ).st_mtime
+ 
 # in case $EDITOR has options, e.g. 'emacs -nw':
 command_list = re.split( ' ', editor )
 command_list.append( inlined )
@@ -135,5 +142,13 @@ except OSError:
     print >> sys.stderr, 'ERROR: unable to execute:', command
     sys.exit(1)
  
-#print '\nRemoving temporary inlined file.'
-#os.unlink( inlined )
+# did the user edit the file
+modtime2 = os.stat( inlined ).st_mtime
+
+if modtime2 > modtime1:
+    print
+    print >> sys.stderr, 'WARNING: YOU HAVE EDITED THE TEMPORARY READ-ONLY SUITE.RC COPY, IF'
+    print >> sys.stderr, 'YOU WANT TO RETAIN THE CHANGES, EXTRACT THEM FROM THE FILE HERE:'
+    print >> sys.stderr, inlined
+    print >> sys.stderr, 'In future, to *edit* a suite use \'cylc edit\', not \'cylc read\'.'
+    print
