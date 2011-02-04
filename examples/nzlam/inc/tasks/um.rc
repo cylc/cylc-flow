@@ -1,0 +1,78 @@
+[[NZtoNZ_recon]] #------------------------------------------------------
+    description = Reconfigure the NZLAM model restart dump
+    command = UMRCF-wrapper.sh
+    [[[environment]]]
+        UMUI_JOBDIR = $CYLC_SUITE_DIR/jobdirs/um/xabgc
+        AINITIAL    = $RESTARTDUMP
+        ASTART      = $RCF_RESTARTDUMP
+        UM_DATAM    = $DATAM_DIR
+        UM_DATAW    = $DATAW_DIR
+        MY_OUTPUT   = $LOG_DIR
+ 
+[[GLtoNZ_recon]] #------------------------------------------------------
+    description = Reconfigure the cold start dump for the NZLAM
+    command = UMRCF-wrapper.sh
+    [[[environment]]]
+        UMUI_JOBDIR = $CYLC_SUITE_DIR/jobdirs/um/xabgb
+        AINITIAL    = $GLOBAL_DUMP
+        ASTART      = $RESTARTDUMP
+        UM_DATAM    = $DATAM_DIR
+        UM_DATAW    = $DATAW_DIR
+        MY_OUTPUT   = $LOG_DIR
+
+[[GLtoGL_recon]] #------------------------------------------------------
+    description = Reconstitute a reduced UM global model dump
+    command = UMRCF-wrapper.sh
+    [[[environment]]]
+        UMUI_JOBDIR = $CYLC_SUITE_DIR/jobdirs/um/xabga
+        AINITIAL    = $REDUCED_GLOBAL_DUMP
+        ASTART      = $GLOBAL_DUMP
+        UM_DATAM    = $DATAM_DIR
+        UM_DATAW    = $DATAW_DIR
+        MY_OUTPUT   = $LOG_DIR
+
+[[forecast_cold]] #-----------------------------------------------------
+    # NOTE: in this suite the cold and warmstart forecast both run from 
+    # the same start dump (namely the file created by the GLtoNZ_recon
+    # task, which is named to look as if it can from the warmstart f/c)
+    description = NZLAM initial forecast from global model start dump.
+    command = UM-wrapper.sh
+    [[[environment]]]
+        UMUI_JOBDIR  = $CYLC_SUITE_DIR/jobdirs/um/$COLDSTART_RUNID
+        ASTART    = $RESTARTDUMP
+        PPVAR     = $PREVIOUS_PPVAR_FILE
+        PP7       = $PREVIOUS_PP7CX_FILE
+        UM_DATAM  = $PREVIOUS_DATAM_DIR
+        UM_DATAW  = $PREVIOUS_DATAW_DIR
+        ALABCIN1  = $ALABC_FILE
+        MY_OUTPUT = $LOG_DIR
+
+        UM_WRAPPER_OPTIONAL_REPLACEMENTS = LOADMODULE
+        LOADMODULE = $CYLC_SUITE_DIR/build/um/xabgz/xabgz.exe
+
+[[forecast]] #----------------------------------------------------------
+    # NOTE: in this suite the cold and warmstart forecast both run from 
+    # the same start dump (namely the file created by the GLtoNZ_recon
+    # task, which is named to look as if it can from the warmstart f/c)
+    description = warm cycle forecast
+    command = UM-wrapper.sh
+    [[[scripting]]]
+        script = """
+if [[ $( cylc cycletime --hour ) == 00 ]]; then
+    export ASTART=$RCF_RESTARTDUMP
+else
+    export ASTART=$RESTARTDUMP
+fi"""
+
+    [[[environment]]]
+        UMUI_JOBDIR   = $CYLC_SUITE_DIR/jobdirs/um/$WARMSTART_RUNID
+        PP7       = $PP7CX_FILE
+        PPVAR     = $PPVAR_FILE
+        ALABCIN1  = $ALABC_FILE
+        UM_DATAM  = $DATAM_DIR
+        UM_DATAW  = $DATAW_DIR
+        MY_OUTPUT = $LOG_DIR
+
+        UM_WRAPPER_OPTIONAL_REPLACEMENTS = LOADMODULE IAU_inc
+        LOADMODULE = $CYLC_SUITE_DIR/build/um/xabgz/xabgz.exe
+        IAU_inc   = $VAR_INCR_FILE

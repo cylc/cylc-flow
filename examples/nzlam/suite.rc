@@ -1,25 +1,22 @@
-# A real NWP forecast analysis suite with the guts stripped out of it.
-# Included by way of example - you can still run it in dummy mode.
+title = NZLAM 3DVAR Suite
+description = NZLAM 3DVAR Suite
 
-title = NZLAM 3DVAR forecast-analysis suite
-description = NZLAM 3DVAR forecast-analysis suite
-
-job submission log directory = suite-logs/nzlam
-job submission method = ll_basic # loadleveler
+job submission log directory = running/logs/nzlam
+job submission method = ll_basic
 use lockserver = True
-use secure passphrase = False
 
 [special tasks]
     sequential = forecast
     coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
     clock-triggered = get_globaldump(3), get_obstore(3), get_bgerr(3), get_frames(-2.25) 
+    # frames clock: we use frames from previous UKMO global run, ready ~2.25 hours before cycle time.
  
 [task families]
     OPS = OPS_AircraftSonde, OPS_AIRS, OPS_ATOVS, OPS_GPSRO, OPS_IASI, OPS_SurfaceScatt, OPS_Satwind
 
 [dependencies]
     [[0,6,12,18]]
-    graph = """
+        graph = """
         get_frames => make_alabc => forecast_cold & forecast
         forecast_cold | forecast(T-6) => VAR_ConfigureLS & OPS
         forecast => get_outputs & housekeeping
@@ -27,39 +24,41 @@ use secure passphrase = False
         get_obstore & get_bgerr => OPS
         OPS & VAR_ConfigureLS => VAR_AnalysePF => VAR_monitoring & forecast
         get_globaldump => GLtoGL_recon => GLtoNZ_recon => forecast_cold
-            """
-
+        """
     [[6,12,18]]
-    graph = "forecast_cold | forecast(T-6) => forecast"
- 
+        graph = "forecast_cold | forecast(T-6) => forecast"
     [[0]]
-    graph = "forecast_cold | forecast(T-6) => NZtoNZ_recon => forecast"
+        graph = "forecast_cold | forecast(T-6) => NZtoNZ_recon => forecast"
  
 [environment]
-    #(REMOVED)
+%include inc/vars/global.rc
 
 [tasks]
-    #(REMOVED)
+%include inc/tasks/ops.rc
+%include inc/tasks/var.rc
+%include inc/tasks/get-data.rc
+%include inc/tasks/preproc.rc
+%include inc/tasks/um.rc
+%include inc/tasks/postproc.rc
+%include inc/tasks/housekeeping.rc
 
 [visualization]
     default node attributes = "style=filled"
-    #show family members = True
+    #default edge attributes = "style=bold"
     #use node color for edges = False
     [[node groups]]
 	    coldstart = get_globaldump, GLtoGL_recon, GLtoNZ_recon, forecast_cold 
 	    var       = VAR_ConfigureLS, VAR_AnalysePF
 	    ops       = OPS
-	    ops_mem   = OPS_AircraftSonde, OPS_AIRS, OPS_ATOVS, OPS_GPSRO, OPS_IASI, OPS_SurfaceScatt, OPS_Satwind
         um        = forecast_cold, forecast
         pre       = get_frames, make_alabc, get_bgerr, get_obstore
 	    post      = get_outputs, nc_conv_met, VAR_monitoring
     [[node attributes]]
-        coldstart = "fillcolor=dodgerblue"
-        var       = "fillcolor=mediumorchid2", "shape=rectangle"
-        ops       = "fillcolor=yellow2", "shape=circle"
-        ops_mem   = "fillcolor=yellow", "shape=ellipse"
-        um        = "shape=septagon" 
-        forecast  = "fillcolor=crimson"
+        coldstart = "fillcolor=lightblue"
+        var       = "fillcolor=pink", "shape=rectangle"
+        ops       = "fillcolor=yellow", "shape=circle"
+        um        = "shape=septagon"
+        forecast  = "fillcolor=orchid"
 	    pre       = "style=unfilled", "color=blue"
  	    post      = "style=unfilled", "color=red"
         NZtoNZ_recon = "shape=septagon", "fillcolor=seagreen2"

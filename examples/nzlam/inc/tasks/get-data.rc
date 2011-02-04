@@ -1,0 +1,17 @@
+[[get_globaldump]] #----------------------------------------------------
+    description = Retrieve global start dump for current cycle coldstart.
+    command = cylc wrap get-inputs.sh --globaldump
+    [[[environment]]]
+        GLOBALDUMP = $REDUCED_GLOBAL_DUMP
+
+[[get_obstore]] #-------------------------------------------------------
+    description = Retrieve obstore files for current cycle.
+    command = cylc wrap get-inputs.sh --obstore
+
+[[get_bgerr]] #----------------------------------------------------------
+    description = Retrieve bgerr file for current cycle.
+    command = cylc wrap get-inputs.sh --bgerr
+
+[[get_frames]] #--------------------------------------------------------
+    description = Retrieve frames files for the current cycle.
+    command = cylc wrap get-inputs.sh --frames

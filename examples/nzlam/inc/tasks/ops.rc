@@ -1,0 +1,67 @@
+[[OPS]] #---------------------------------------------------------------
+    # OPS task family
+    # In member task [[[directives]]]:
+    #  + OPS, VAR <JOB>_init require $LOGNAME in loadleveler => COPY_ALL
+
+[[OPS_AIRS]] #----------------------------------------------------------
+    description = Extract and Process AIRS obs
+    command = OPS-wrapper.sh
+    [[[environment]]]
+        OPSUI_JOB_DIR = $CYLC_SUITE_DIR/jobdirs/ops/oaamb
+%include inc/vars/ops.rc
+    [[[directives]]]
+        environment = COPY_ALL
+
+[[OPS_ATOVS]] #---------------------------------------------------------
+    description = Extract and Process ATOVS obs
+    command = OPS-wrapper.sh
+    [[[environment]]]
+        OPSUI_JOB_DIR = $CYLC_SUITE_DIR/jobdirs/ops/oaamc
+%include inc/vars/ops.rc
+    [[[directives]]]
+        environment = COPY_ALL
+
+[[OPS_AircraftSonde]] #-------------------------------------------------
+    description = Extract and Process Aircraft and Sonde obs
+    command = OPS-wrapper.sh
+    [[[environment]]]
+        OPSUI_JOB_DIR = $CYLC_SUITE_DIR/jobdirs/ops/oaama
+%include inc/vars/ops.rc
+    [[[directives]]]
+        environment = COPY_ALL
+
+[[OPS_GPSRO]] #---------------------------------------------------------
+    description = Extract and Process GPSRO obs
+    command = OPS-wrapper.sh
+    [[[environment]]]
+        OPSUI_JOB_DIR = $CYLC_SUITE_DIR/jobdirs/ops/oaamd
+%include inc/vars/ops.rc
+    [[[directives]]]
+        environment = COPY_ALL
+
+[[OPS_IASI]] #----------------------------------------------------------
+    description = Extract and Process IASI obs
+    command = OPS-wrapper.sh
+    [[[environment]]]
+        OPSUI_JOB_DIR = $CYLC_SUITE_DIR/jobdirs/ops/oaame
+%include inc/vars/ops.rc
+    [[[directives]]]
+        environment = COPY_ALL
+
+[[OPS_Satwind]] #-------------------------------------------------------
+    description = Extract and Process Satwind obs
+    command = OPS-wrapper.sh
+    [[[environment]]]
+        OPSUI_JOB_DIR = $CYLC_SUITE_DIR/jobdirs/ops/oaamf
+%include inc/vars/ops.rc
+    [[[directives]]]
+        environment = COPY_ALL
+
+[[OPS_SurfaceScatt]] #--------------------------------------------------
+    description = Extract and Process Surface and Scatterometer obs
+    command = OPS-wrapper.sh
+    [[[environment]]]
+        OPSUI_JOB_DIR = $CYLC_SUITE_DIR/jobdirs/ops/oaamg
+%include inc/vars/ops.rc
+    [[[directives]]]
+        environment = COPY_ALL

@@ -1,0 +1,57 @@
+# UM main forecast RUNID
+WARMSTART_RUNID  = xabge
+COLDSTART_RUNID  = xabgd
+
+# Running dir rolling archive length (hours)
+RUNNING_ARCHIVE_LEN = 72
+
+#-- top level directories
+INPUT_DIR   = /oper/admin/um_fcm/suites/nzlam/test-data/suite
+OUTPUT_DIR  = /oper/admin/um_fcm/suites/nzlam/test-output/suite
+RUNNING_DIR = $HOME/running/$CYLC_SUITE_NAME
+
+#-- external input files
+REDUCED_GLOBAL_DUMP = $(cylc template -s 6 $INPUT_DIR/qwqgHH.reduced.YYYYMMDDHH.T+3 )
+FRAMES_FILE_PREFIX  = $(cylc template -s 6 $INPUT_DIR/YYYYMMDD_frame_qgHH_niwa )
+        GLOBAL_DUMP = $(cylc template -s 6 $INPUT_DIR/qwqgHH.YYYYMMDDHH.T+3 )
+         BGERR_FILE = $(cylc template      $INPUT_DIR/qwq3HH_YYYYMMDDHH_bgerr )
+        OBSTORE_DIR = $(cylc template      $INPUT_DIR/qwq3HH.YYYYMMDDHH.obstore )
+    OBSTORE_DIR_TGZ = $(cylc template      $INPUT_DIR/qwq3HH_YYYYMMDDHH_obstore.tar.gz )
+
+#-- output files and directories
+         __CYCLE_OUTPUT_DIR = $(cylc template      $RUNNING_DIR/YYYYMMDDHH )
+__PREVIOUS_CYCLE_OUTPUT_DIR = $(cylc template -s 6 $RUNNING_DIR/YYYYMMDDHH )
+
+         STAGING_DIR = $__CYCLE_OUTPUT_DIR/staging
+             LOG_DIR = $__CYCLE_OUTPUT_DIR/logs
+           STATS_DIR = $__CYCLE_OUTPUT_DIR/stats
+         LISTING_DIR = $__CYCLE_OUTPUT_DIR/listings
+PREVIOUS_STAGING_DIR = $__PREVIOUS_CYCLE_OUTPUT_DIR/staging
+
+         DATAM_DIR = $STAGING_DIR/datam
+         DATAW_DIR = $STAGING_DIR/dataw
+PREVIOUS_DATAM_DIR = $PREVIOUS_STAGING_DIR/datam
+PREVIOUS_DATAW_DIR = $PREVIOUS_STAGING_DIR/dataw
+
+#-- suite intermediate files
+         PP7CX_FILE = $STAGING_DIR/cxback/pp7cx.um
+PREVIOUS_PP7CX_FILE = $PREVIOUS_STAGING_DIR/cxback/pp7cx.um
+         LSBACK_DIR = $STAGING_DIR/lsback
+PREVIOUS_LSBACK_DIR = $PREVIOUS_STAGING_DIR/lsback
+         PPVAR_FILE = $LSBACK_DIR/ppvar.um
+PREVIOUS_PPVAR_FILE = $PREVIOUS_LSBACK_DIR/ppvar.um
+          VAROB_DIR = $STAGING_DIR/varob
+          VARCX_DIR = $STAGING_DIR/varcx
+         LSDUMP_DIR = $STAGING_DIR/lsdumps
+         ALABC_FILE = $STAGING_DIR/nzlam.alabc
+      VAR_INCR_FILE = $STAGING_DIR/var-incr.um
+        RESTARTDUMP = $PREVIOUS_DATAM_DIR/${WARMSTART_RUNID}a_da003
+    RCF_RESTARTDUMP = $PREVIOUS_DATAM_DIR/${WARMSTART_RUNID}a_da003.recon
+
+#-- control directories
+CONTROL_DIR = $CYLC_SUITE_DIR/control
+CTRL = $CONTROL_DIR/PS24_NAE_controlfiles
+# used by OPS and VAR tasks:
+SONDECOEFFS_DIR  = $CTRL/OPS/control/Sonde_coeffs/my/L70/v2
+RTTOV7COEFFS_DIR = $CTRL/Data/RTTOV7_coeffs/default/v18
+SATRADCOEFFS_DIR = $CTRL/Data/SatRad_coeffs/my/v35
