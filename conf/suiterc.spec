@@ -104,6 +104,7 @@ __many__ = string
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
+    scripting = string( default='' )
     # default to dummy task:
     command = force_list( default=list( cylc wrap -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP",))
     owner = string( default=None )
@@ -112,10 +113,6 @@ __many__ = string
     extra log files = force_list( default=list())
         [[[ environment ]]]
         __many__ = string
-        [[[ scripting ]]]
-        # this could be a multiline string at [[task]] level, but that
-        # may be confusing as it is executed after [[[environment]]].
-        script = string( default='' )
         [[[ directives ]]]
         __many__ = string
           [[[ outputs ]]]

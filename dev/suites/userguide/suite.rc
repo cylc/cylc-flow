@@ -85,8 +85,7 @@ task run time in seconds = 1
         command = cylc wrap X.sh
         [[[ environment ]]]
             X_OUTPUT_DIR = $WORKSPACE
-        [[[ scripting ]]]
-            script = \
+        scripting = \
 """
 echo hello
 mkdir /tmp/munge
