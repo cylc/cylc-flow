@@ -114,8 +114,8 @@ parser = OptionParser( """1/ cylc edit SUITE
        3/ cylc edit -i,--inline SUITE
 
 1/ Change to the suite definition directory and execute '$EDITOR suite.rc'.
-This is merely a convenience so that you don't have to remember or
-change to the suite definition location.
+This is merely a convenience so that you can edit the suite without
+having to remember or move to the suite definition location.
 
 2/ Remove backup files left by previous inlined edit sessions.
 
@@ -132,6 +132,9 @@ overwriting the originals.  WARNING: this safety measure notwithstanding
 it is recommended that you manage suite definitions with a revision
 control system so that (a) you can easily check that new changes are as
 you expect, and (b) you can easily back out in case of disaster.
+
+NOTE: in the inlined edit mode you must save and exit the editor
+before your changes are applied to the actual suite config files!
 
 The editing process is spawned in the foreground as follows:
   (usage 1/): $EDITOR suite.rc

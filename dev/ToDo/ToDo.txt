@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* DOCUMENT: cylc.rc: BARE STRINGS ARE OK ONLY IF THEY DON'T CONTAIN
+  COMMAS, which makes them look like lists to the configobj validator.
+
 * document insertion danger: if you insert task A(T+N) ahead of A(T),
   the suite will shut down if A(T) catches up with A(T+N): 'task has 
   already registered its outputs'
