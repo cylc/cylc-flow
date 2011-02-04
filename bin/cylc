@@ -72,7 +72,7 @@ prep_commands = \
     'edit',
     'graph',
     'search',
-    'read',
+    'inline',
     ]
 
 run_commands = \
@@ -216,7 +216,7 @@ comsum[ 'register'  ] = 'Manage suite registrations (name -> definition dir)'
 comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
 comsum[ 'search'    ] = '[grep] An intelligent search tool for cylc suites'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
-comsum[ 'read'      ] = 'View suite.rc files with include-files inlined'
+comsum[ 'inline'    ] = 'View suite.rc files with include-files inlined'
 comsum[ 'edit'      ] = 'Edit a suite config file, optionally inlined'
 comsum[ 'coldstart' ] = 'Cold start a suite at a given cycle time'
 comsum[ 'warmstart' ] = 'Warm start a suite at a given cycle time'

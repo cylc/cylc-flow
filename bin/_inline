@@ -62,17 +62,17 @@ def include_files( suitedir, inf, mark=False, single=False, label=False, level=N
             outf.append(level + line)
     return outf
 
-parser = OptionParser( """cylc read [options] SUITE 
+parser = OptionParser( """cylc inline [options] SUITE 
 
-View a temporary read-only copy of a suite config (suite.rc) file in
-your $EDITOR exactly as the config file parser sees it: with
-include-files inlined and continuation lines joined. This is useful in
-following up on config file parsing errors (correct line numbers).
-If you just want a convenient read-only suite config viewer and 
-aren't concerned about line numbers the command options allow you to
-choose exactly what is done to the file. 
+View a temporary copy of a suite config (suite.rc) file in your $EDITOR
+exactly as the config file parser sees it: with include-files inlined
+and continuation lines joined. This can be used to trace errors by line
+number, or as a quick global view of a suite that uses include-files.  
 
-The editing process is spawned in the foreground as follows:
+If you want to edit the suite, in inlined form or not, or to view it
+without inlined include-files, use the 'cylc edit' command.
+
+The viewer process is spawned in the foreground as follows:
   $EDITOR <temporary inlined file in $TMPDIR>
 (You must have $EDITOR and $TMDPIR defined in your shell environment). 
 
@@ -91,19 +91,15 @@ parser.add_option( "--label", "-l",
         "(line numbers will not correspond to those reported by the parser).",
         action="store_true", default=False, dest="label" )
 
-parser.add_option( "--noinline", "-x",
-        help="Do not inline include-files (line numbers will "
-        "not correspond to those reported by the parser).",
-        action="store_true", default=False, dest="noinline" )
-
 parser.add_option( "--nojoin", "-n", 
         help="Do not join continuation lines (line numbers will "
         "not correspond to those reported by the parser).",
         action="store_true", default=False, dest="nojoin" )
 
 parser.add_option( "--single", "-s", 
-        help="Inline and label just the first instance of any multiply-included file "
-        "(line numbers will not correspond to those reported by the parser).",
+        help="Inline and label just the first instance of any "
+        "multiply-included file (line numbers will not correspond to "
+        "those reported by the parser).",
         action="store_true", default=False, dest="single" )
 
 ( options, args ) = parser.parse_args()
@@ -140,9 +136,8 @@ h = open( suiterc, 'rb' )
 lines = h.readlines()
 h.close()
 
-if not options.noinline:
-    # inline any include files
-    lines = include_files( suitedir, lines, options.mark, options.single, options.label )
+# inline any include files
+lines = include_files( suitedir, lines, options.mark, options.single, options.label )
 
 if not options.nojoin:
     # join any continuation lines
@@ -184,5 +179,5 @@ if modtime2 > modtime1:
     print >> sys.stderr, 'WARNING: YOU HAVE EDITED THE TEMPORARY READ-ONLY SUITE.RC COPY, IF'
     print >> sys.stderr, 'YOU WANT TO RETAIN THE CHANGES, EXTRACT THEM FROM THE FILE HERE:'
     print >> sys.stderr, inlined
-    print >> sys.stderr, 'In future, to *edit* a suite use \'cylc edit\', not \'cylc read\'.'
+    print >> sys.stderr, 'In future, to *edit* a suite use \'cylc edit\', not \'cylc inline\'.'
     print
