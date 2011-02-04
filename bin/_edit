@@ -58,7 +58,12 @@ def include_files( inf ):
             outf.append(line)
     return outf
 
-def split_file( lines, file ):
+def split_file( lines, file, level=None ):
+    if level == None:
+        level = ''
+    else:
+        level += ' > '
+
     global suitedir
     global modtimes
     global newfiles
@@ -69,8 +74,6 @@ def split_file( lines, file ):
         # oops - original file has changed on disk since we started editing
         f = re.sub( suitedir + '/', '', file )
         file = file + '.EDIT.NEW.' + datetime.datetime.now().isoformat()
-        #print ' !!! WARNING: ' + f + ' CHANGED ON DISK, I\'LL CREATE A NEW FILE INSTEAD OF OVERWRITING IT:'
-        #print '     ---> ', file
     newfiles.append(file)
 
     inclines = []
@@ -87,11 +90,14 @@ def split_file( lines, file ):
             else:
                 fnew.write(line)
         else:
-            # match on
+            # match on, go to end of the 'on' include-file
             m = re.match('^\-\-\-\- END INLINED INCLUDE FILE ' + inc_filename, line )
             if m:
                 match_on = False
-                split_file( inclines, inc_file )
+                # now split this lot, in case of nested inclusions
+                split_file( inclines, inc_file, level )
+                # now empty the inclines list ready for the next inclusion in this file
+                inclines = []
             else:
                 inclines.append(line)
 
@@ -269,9 +275,11 @@ h = open( editfile, 'rb' )
 lines = h.readlines()
 h.close()
 
-# split it back into suite.rc plus include-files
+# split it back into separate files
 split_file( lines, suiterc )
 
+
+print '(edited:', editfile, ')'
 print 'POST-EDIT FILES WRITTEN:'
 for file in newfiles:
     f = re.sub( suitedir + '/', '', file )
