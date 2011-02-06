@@ -28,15 +28,19 @@ syn match cylcItem ' *\zs\(\w\| \|\-\)*\>\ze *='
 syn match cylcInclude '%include *\(\w\|\-\|\/\|\.\)*'
 syn match cylcInline '.*\(START INLINED\|END INLINED\).*'
 
-syn match cylcComment excludenl '#.*'
+syntax keyword ToDo TODO ToDo contained
+syn match cylcComment excludenl '#.*' contains=ToDo
+syn match cylcCommentInString '#.*[^"']' contained contains=ToDo
+
 syn region cylcString start=+"+ end=+"+ skip=+\\"+ 
 syn region cylcString start=+'+ end=+'+ skip=+\\'+ 
-syn region cylcString start=+"""+ end=+"""+ 
-syn region cylcString start=+'''+ end=+'''+
+syn region cylcString start=+"""+ end=+"""+ contains=cylcCommentInString keepend
+syn region cylcString start=+'''+ end=+'''+ contains=cylcCommentInString keepend
 
 " TO DO: replace the following with cylc-specific groups as for cylcSectionA,B,C:
-hi def link cylcInlineMarker Statement
+hi def link cylcCommentInString Comment
 hi def link cylcComment Comment
+hi def link cylcInlineMarker Statement
 hi def link cylcString String
 hi def link cylcItem Special
 hi def link cylcInline Statement
@@ -50,6 +54,7 @@ hi cylcSectionB ctermfg=DarkRed guifg=#9900aa term=bold cterm=bold gui=bold
 hi cylcSectionA ctermfg=DarkRed guifg=#ff00ee term=bold cterm=bold gui=bold
 
 hi Comment ctermfg=LightBlue guifg=#ff4422 term=bold cterm=bold gui=bold 
+hi cylcCommentInString ctermfg=LightBlue guifg=#ff8844 term=bold cterm=bold gui=bold 
 hi String ctermfg=DarkGreen guifg=#126412
 hi Special term=Underline cterm=Underline gui=Underline ctermfg=DarkGrey guifg=#4444aa
 hi Statement ctermbg=Yellow guibg=#bcff84 guifg=#222222
