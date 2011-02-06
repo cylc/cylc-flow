@@ -1,6 +1,9 @@
 _______
 GENERAL
 
+* inlined suite.rc: avoid comments ending in line continuation marker
+  (2D textual dependency graph in comments at start of e.g. suite.rc)
+
 * DOCUMENT: cylc.rc: BARE STRINGS ARE OK ONLY IF THEY DON'T CONTAIN
   COMMAS, which makes them look like lists to the configobj validator.
 

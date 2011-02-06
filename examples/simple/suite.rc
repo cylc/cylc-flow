@@ -9,9 +9,9 @@ uses a private running directory for its restart files)."""
  
 # T = 0,6,12,18 UTC:
 #                      > PostA(T)
-#                     /
+#                     /    
 #  GetData(T) -> Model(T)
-#             /       \
+#             /       \    
 #       Model(T-6)     > [6,18 UTC only] PostB(T)
 
 [special tasks]

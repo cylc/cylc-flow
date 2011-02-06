@@ -1,9 +1,9 @@
 title = cylc userguide example suite
 
 #        B(T-6)-> B -> E   
-#                / \
+#                / \   
 #  X & A(T-6)-> A   -> D 
-#                \ /
+#                \ /    
 #        C(T-6)-> C -> F 
 #       
 
