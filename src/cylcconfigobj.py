@@ -196,6 +196,7 @@ class CylcConfigObj( ConfigObj ):
                     self.indent_type = indent
                 cur_depth = sect_open.count('[')
                 if cur_depth != sect_close.count(']'):
+                    print 'ERROR:', line
                     self._handle_error("Cannot compute the section depth at line %s.",
                                        NestingError, infile, cur_index)
                     continue
@@ -206,6 +207,7 @@ class CylcConfigObj( ConfigObj ):
                         parent = self._match_depth(this_section,
                                                    cur_depth).parent
                     except SyntaxError:
+                        print 'ERROR:', line
                         self._handle_error("Cannot compute nesting level at line %s.",
                                            NestingError, infile, cur_index)
                         continue
@@ -216,11 +218,13 @@ class CylcConfigObj( ConfigObj ):
                     # the new section is a child the current section
                     parent = this_section
                 else:
+                    print 'ERROR:', line
                     self._handle_error("Section too nested at line %s.",
                                        NestingError, infile, cur_index)
                     
                 sect_name = self._unquote(sect_name)
                 if sect_name in parent:
+                    print 'ERROR:', line
                     self._handle_error('Duplicate section name at line %s.',
                                        DuplicateError, infile, cur_index)
                     continue
@@ -242,6 +246,7 @@ class CylcConfigObj( ConfigObj ):
             if mat is None:
                 # it neither matched as a keyword
                 # or a section marker
+                print 'ERROR:', line
                 self._handle_error(
                     'Invalid line at line "%s".',
                     ParseError, infile, cur_index)
@@ -257,6 +262,7 @@ class CylcConfigObj( ConfigObj ):
                         value, comment, cur_index = self._multiline(
                             value, infile, cur_index, maxline)
                     except SyntaxError:
+                        print 'ERROR:', line
                         self._handle_error(
                             'Parse error in value at line %s.',
                             ParseError, infile, cur_index)
@@ -271,6 +277,7 @@ class CylcConfigObj( ConfigObj ):
                                     msg = 'Unknown name or type in value at line %s.'
                                 else:
                                     msg = 'Parse error in value at line %s.'
+                                print 'ERROR:', line
                                 self._handle_error(msg, UnreprError, infile,
                                     cur_index)
                                 continue
@@ -284,6 +291,7 @@ class CylcConfigObj( ConfigObj ):
                                 msg = 'Unknown name or type in value at line %s.'
                             else:
                                 msg = 'Parse error in value at line %s.'
+                            print 'ERROR:', line
                             self._handle_error(msg, UnreprError, infile,
                                 cur_index)
                             continue
@@ -292,6 +300,7 @@ class CylcConfigObj( ConfigObj ):
                         try:
                             (value, comment) = self._handle_value(value)
                         except SyntaxError:
+                            print 'ERROR:', line
                             self._handle_error(
                                 'Parse error in value at line %s.',
                                 ParseError, infile, cur_index)
@@ -301,13 +310,18 @@ class CylcConfigObj( ConfigObj ):
                 if key in this_section:
                     # CYLC CHANGE START: ALLOW DUPLICATE KEYWORDS TO OVERRIDE
                     # PREVIOUS VALUES IN 'environment'SECTIONS.
-                    if sect_name == 'environment':
-                        print 'WARNING: variable override (' + key + '), suite.rc line ' + str(cur_index)
-                    else:
-                        self._handle_error(
-                                'Duplicate keyword name at line %s.',
-                                DuplicateError, infile, cur_index)
-                        continue
+                    try:
+                        if sect_name == 'environment':
+                            print 'WARNING: variable override (' + key + '), suite.rc line ' + str(cur_index)
+                            continue
+                    except UnboundLocalError:
+                        # not in a section yet, pass on to handle error
+                        pass
+                    print 'ERROR:', line
+                    self._handle_error(
+                            'Duplicate keyword name at line %s.',
+                            DuplicateError, infile, cur_index)
+                    continue
                     # CYLC change END
                 # add the key.
                 # we set unrepr because if we have got this far we will never

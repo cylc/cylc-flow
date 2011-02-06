@@ -123,8 +123,7 @@ nzlam_coldstart_without_download = unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ
     sls_globalwind_copy & sls_globalice_copy => globalwave => globalwave_ncl => globalwave_products => globalwave_housekeeping
 
     # Global wave cold start # ToDo: does globawave have restart files?
-    globalwave(T-6) | globalwave(T-12) | globalwave(T-18) | globalwave(T-24) | globalwave(T-30) | globalwave(T-36) => globalwave
-    """
+    globalwave(T-6) | globalwave(T-12) | globalwave(T-18) | globalwave(T-24) | globalwave(T-30) | globalwave(T-36) => globalwave"""
 
     [[6]]
         # ToDo: 0 or 6?

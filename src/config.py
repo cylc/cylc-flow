@@ -18,7 +18,7 @@ import cycle_time
 import re, os, sys, logging
 from mkdir_p import mkdir_p
 from validate import Validator
-from configobj import get_extra_values
+from configobj import get_extra_values, flatten_errors
 from cylcconfigobj import CylcConfigObj, ConfigObjError
 from registration import registrations
 from graphnode import graphnode
@@ -151,17 +151,28 @@ class config( CylcConfigObj ):
 
         # validate and convert to correct types
         val = Validator()
-        test = self.validate( val )
+        test = self.validate( val, preserve_errors=True )
         if test != True:
-            # TO DO: elucidate which items failed
-            # (easy - see ConfigObj and Validate documentation)
-            print test
+            # Validation failed
+            failed_items = flatten_errors( self, test )
+            for item in failed_items:
+                sections, key, result = item
+                for sec in sections:
+                    print sec, '::',
+                print key
+                if result == False:
+                    print "Required item missing."
+                else:
+                    print result
+ 
             raise SuiteConfigError, "Suite Config Validation Failed"
         
         found_extra = False
         for sections, name in get_extra_values(self):
             # TEMPORARY
-            print 'Unspec\'d item ERROR:', sections, name
+            for sec in sections:
+                print sec, '::',
+            print name
             # !!! TO DO: THE FOLLOWING FROM CONFIGOBJ DOC SECTION 15.1 FAILS 
             ### this code gets the extra values themselves
             ##the_section = self
@@ -179,7 +190,7 @@ class config( CylcConfigObj ):
             found_extra = True
         
         if found_extra:
-            raise SuiteConfigError, "Illegal suite.rc entry found"
+            raise SuiteConfigError, "Illegal suite.rc entry(s) found"
 
         self.process_configured_directories()
 

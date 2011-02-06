@@ -66,8 +66,10 @@ parser = OptionParser( """cylc inline [options] SUITE
 
 View a temporary copy of a suite config (suite.rc) file in your $EDITOR
 exactly as the config file parser sees it: with include-files inlined
-and continuation lines joined. This can be used to trace errors by line
-number, or as a quick global view of a suite that uses include-files.  
+and continuation lines joined. This can be used to  quick global view of
+a suite that uses include-files, or to trace parsing errors by line
+number (suite.rc validation is informative enough, however, that you
+will probably not need to do this).
 
 If you want to edit the suite, in inlined form or not, or to view it
 without inlined include-files, use the 'cylc edit' command.

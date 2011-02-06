@@ -54,7 +54,7 @@ use lockserver = True
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
             RUNNING_DIR = $RUNNING/A
-     [[B]]
+    [[B]]
         description = model B - sea state forecast
         command = cylc wrap B.sh
         [[[environment]]]
