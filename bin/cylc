@@ -256,7 +256,7 @@ comsum[ 'task-failed'  ] = 'Release task lock and report failure'
  
 # check that the cylc core modules are accessible
 try:
-    import scheduler
+    import cylc
 except:
     print >> sys.stderr, "ERROR: the cylc core modules are not accessible to Python"
     print >> sys.stderr, "SOLUTION: source $CYLC_DIR/cylc-env.sh in your shell." 
