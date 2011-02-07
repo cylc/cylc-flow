@@ -121,24 +121,24 @@ class MyDotWindow( xdot.DotWindow ):
 if __name__ == '__main__':
     parser = OptionParser( """1/ cylc graph [options] SUITE START [STOP]
      Plot the configured (suite.rc) dependency graph for SUITE.
-       2/ cylc graph -r,--runtime SUITE
-     Plot the run-time dependency graph for SUITE (if one has been generated).
-       3/ cylc graph -f,--file FILE
+       2/ cylc graph [options] -r,--runtime SUITE
+     Plot the run-time dependency graph for SUITE, if one has been generated.
+       3/ cylc graph [options] -f,--file FILE
      Plot the specified dot-language graph file.
 
-This command plots suite dependency graphs in a pannable, zoomable viewer.
+Plot cylc dependency graphs in a pannable, zoomable viewer.
 
-For the suite.rc dependency graph, the viewer updates automatically
+For the configured (suite.rc) graph, the viewer updates automatically
 when the suite.rc file is saved during editing. By default the full 
 graph from coldstart is plotted; you can omit suite coldstart tasks
-with the '--warmstart' option. 
+with the '-w,--warmstart' option. 
 
 Arguments:
   SUITE   - Registered name of the suite.
   START   - Hour (HH) at which to start plotting.
   STOP    - Hours beyond START at which to stop plotting (default 6).
   """)
-    parser.add_option( "--warmstart", 
+    parser.add_option( "-w", "--warmstart", 
         help="Plot the raw start graph instead of cold start.",
         action="store_true", default=False, dest="rawstart" )
 
@@ -147,15 +147,17 @@ Arguments:
         metavar="FILE", action="store", default=None, dest="filename" )
 
     parser.add_option( "-r", "--runtime", 
-        help="Plot the suite run-time graph, if one has been generated.",
+        help="Plot the suite run-time graph, if one has been generated "
+        "($CYLC_SUITE_DIR/graphing/runtime.dot).",
         action="store_true", default=False, dest="view_runtime" )
 
     parser.add_option( "-o", "--output", 
-        help="Write out an image file (format determined by file extension) "
-        "and update it (overwrite) whenever the graph changes while you edit "
-        "the suite. Available image formats depend on your graphviz build, but "
-        "may include: png, svg, jpg, gif, ps, ...; to see what's available "
-        "specify a non-existent format and read the resulting error message.",
+        help="Write an image file with format determined by file extension. "
+        "The image will be rewritten automatically, for the configured "
+        "(suite.rc) graph as you edit the suite. Available formats may "
+        "include png, svg, jpg, gif, ps, ..., depending on your graphviz "
+        "build; to see what's available specify a non-existent format "
+        "and read the resulting error message.",
         metavar="FILE", action="store", default=None, dest="outputfile" )
 
     ( options, args ) = parser.parse_args()
