@@ -1,6 +1,7 @@
 _______
 GENERAL
 
+
 * inlined suite.rc: avoid comments ending in line continuation marker
   (2D textual dependency graph in comments at start of e.g. suite.rc)
 
@@ -11,30 +12,21 @@ GENERAL
   the suite will shut down if A(T) catches up with A(T+N): 'task has 
   already registered its outputs'
 
-* suite.rc include-files: can be nested and mulitply-included, but the
-  edit command can't handle nesting yet.
-
 * consider calling task-started from task execution script instead of
   cylc-wrapper or task scripts: this would eliminate submitted state
   failures, and allow error trapping on tasks with significant
   in-suiterc scripting (and scripting-only tasks?)
 
-* 'coldstart task list' should be replaced with a list auto-determined
-  while parsing the dependency graph. [also, how's it interact with
-  the old taskdef suite definition]
+* 'coldstart tasks' could be replaced with a list auto-determined
+  by parsing the dependency graph?
 
-* document that a restart early in a coldstart will not be recognized as
-  a coldstart.
-
-* TO DO: NEW CONFIG: 
-    - conditional dependencies
+* document that restarting early on in a coldstart will not be
+  recognized as a coldstart.
 
 * currently all task reset commands go through the 'remote' object,
   which all suites have, but we could get a proxy for the task proxy directly,
   in which case we'd could catch Pyro.NamingError to detect if no such
-  task exists in the suite.  Currently we get a sensible error if requesting
-  to reset a non-existent task type, but not for a task ID of valid type but 
-  which is not present at the requested cycle time.
+  task exists in the suite. 
 
 * Pyro config:
   + PYRO_MAXCONNECTIONS , default 200: max number
@@ -47,44 +39,30 @@ GENERAL
  (see the Pyro userguide security page).
   THESE SHOULD BE USER-SPECIFIC GLOBAL PREFERENCES?
 
-* 'cylc view' read-only gui mode - e.g. for monitoring other's suites.
+* allow single tasks to be paused ?
 
 * '--host' should not be allowed for intervention commands because
   owner's username does not cross machine boundaries, generally.
 
-* default dummy out (comment out command list) should use default
-  CYLC_DUMMY_SLEEP for execution time (currently no sleep used).
-
 * consider the need for different spawning behaviour of sequential (and
   tied?) tasks - why not just depend on prev%finished?
 
-* document that oldstyle [taskdefs] and new style [tasks] + [dependency
-  graph] can be used together in the one suite.rc file.
-
-* document that continuation lines and include files are cylc-specific
+* document that continuation lines and include-files are cylc-specific
   extensions to ConfigObj.
 
-* documentation: 
-  export PYTHONUNBUFFERED=true
+* DOCUMENT: export PYTHONUNBUFFERED=true
   before running cylc via nohup, to prevent output buffering (results in 
   only stderr going to nohup.out until at the last moment when the suite
   is shut down).
 
-* show suicide prerequisites, etc., in requisite dump.
+* show conditional and suicide prerequisites in requisite dumps.
 
-* put roadmap into documentation.  additional item: expanding dependency
-  graph based monitor view?
+* put roadmap into documentation. 
 
-* housekeeping util needs parallel processing: see my new
-  src/multisubprocess module, and use it to process multiple files at
-  once within each housekeeping config line (which will be more
-  effective than processing config lines in parallel). May have to 
-  spawn shell commands to move and delete files as well as copy and diff,
-  rather than use shutil.mv() ...
+* generate new stdout and stderr log files when a task is reset (done?).
 
-* generate new stdout and stderr log files when a task is reset.
-
-* in new config, is restart OK after suite.rc tasks changed?
+* in the new config format, what happens if we restart after suite.rc
+  tasks changed?
 
 * TASK FAMILIES:
   + Ability to reset (or otherwise operate on) all members of a family.
@@ -94,13 +72,8 @@ GENERAL
   + use with --include and --exclude?
   + task owner should not be required with families
 
-* check that the user-defined task names do not clash with parent class
-  or attribute names.
-
-* abstract out the common code in the cold,warm,raw start command line
-  and source modules.
-
-* implement automatic rolling dependency graph of last N (=24) hours.
+* IMPORTANT: check that the user-defined task names do not clash with
+  parent class or attribute names.
 
 * at some point, do some profiling of execution time and memory use:
     cProfile
@@ -129,13 +102,9 @@ and restart.
       the existing data, and/OR
     - dummy out the tasks that generated the existing data.
 
-* separate cold and warm start into distinct classes (currently warm is
-  a variation on coldstart_scheduler, which is less than transparent).
-
 * inserting an already existing task causes cylc to shut down with 
   'error: task X has already registered its outputs' - is this the
-  desired behavior?
-
+  desired behavior? (FIXED?)
 * can doing task deletion and insertion while a suite is PAUSED result
   in "INSERTING A TASK
       ERROR: A%2010081800 has already registered its outputs"
@@ -191,10 +160,9 @@ and restart.
   ignored when applying the max runahead limit?
 
 * dot-file graph output assumes that task families are internally
-  cotemporal - is this necessarily the case?
+  cotemporal - is this necessarily the case? (is this still true?)
 
-* check all open( file, mode ) statements for mode 'rb' etc.  What is
-  'b'? "binary"? if so, is this appropriate for cylc's usage.
+* check all open( file, mode ) statements for mode 'rb' etc. 
 
 * wherever I've used this:
     os.makedirs( os.path.dirname( filename ) )
@@ -204,7 +172,7 @@ and restart.
   files in $PWD without specifying the full path.
 
 * example system implementations should always use $USER in temp dir
-  paths, to avoid interference between users.
+  paths, to avoid interference between users. (done?)
 
 * allow default loadleveler directives for ll_basic etc., to be
   specified in suite.rc?
@@ -235,20 +203,13 @@ and restart.
   stop time but tasks that previously reached the stop time will not
   respawn -although this can be rectified by task insertion).
 
-* current method of setting task commands is not very robust: each new
+* current method of setting task commands is not very transparent: each new
   command in a retry list is set in jobsubmit.py "remotely" from task.py
 
 * --fail=TASKID: check that TASKID exists in the target suite.
 
 * In task scripts, document that failure inside RES=$( foo.sh ) does not
   trigger the err trap!
-
-* check that the main uses for "oneoff cold start tasks" are documented.
-
-* %COMMAND: allow single quotes in path or commandline?
-
-* allow $(CYCLE_HOUR) etc. and arithmetic in task messages (so actual 
-  filenames can be used). 
 
 * document new use of 'TaskID failed' as an output: added on the fly as
   a new output if failure occurs, then removed from the output list on
@@ -354,6 +315,8 @@ and restart.
 
 * see To Do comment in broker.negotiate() - priority low.
 
+* execute.execute( [command]) blocks until command completes: THIS MAY
+  NOT BE GOOD FOR TASK FAILURE HOOK SCRIPT INVOCATION?
 
 __________
 LOCKSERVER
@@ -367,16 +330,14 @@ LOCKSERVER
 ___
 GUI
 
+* chooser fails if an invalid registration is click on.
+
+* use top level exception handling to prevent any failure that 
+  leave zombie threads running? 
+
 * don't parse suite.rc if the suite is already running?
 
-* gui suite.rc editor
-
 * currently scans for port on every command - should store found port.
-
-* exception handling, input check, result detection, for the new control
-  features.
-
-* allow to put single tasks on hold / paused ?
 
 * access to task stdout and stderr for remote tasks? In fact, more
   generally, current we assume the viewer is running locally.

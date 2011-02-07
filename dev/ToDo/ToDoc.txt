@@ -63,7 +63,7 @@ not to further complicate suite.rc files for general use).
 * intercycle dependencies: 'foo(T-6) -> bar': 
   1/ only on left member of pairs
   2/ only negative offsets
-  3/ ok with specific outputs: must contain '$(CYCLE_TIME)'
+  3/ with specific outputs: the output message must contain '$(CYCLE_TIME)'
 
 * families can have internal dependencies.
 

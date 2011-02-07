@@ -43,6 +43,7 @@ nzlam_coldstart_without_download = unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ
 
 [dependencies]
     # ToDo: SORT OUT DOWNSTREAM MODEL COLD START TIMES
+    # ToDo: ecan_rain_obs trigger is wrong below
     [[0,6,12,18]]
         graph = """
     # retrieve and unpack external input data

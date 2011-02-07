@@ -1,16 +1,13 @@
 
-* execute.execute( [command]) blocks until command completes: THIS IS
-  NOT WHAT I WANT FOR TASK FAILURE HOOK SCRIPT INVOCATION.
-
 GRAPHING:
 
-xdot embedding: 
+xdot embedding:                                  <--- USED in cylc
  http://code.google.com/p/jrfonseca/wiki/XDot
 
 networkx:
   http://networkx.lanl.gov/index.html
 
-pygraphviz:                               <------------!!! nice.
+pygraphviz:                                      <--- USED in cylc
   http://networkx.lanl.gov/pygraphviz/
 
 pydot:

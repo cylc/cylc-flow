@@ -60,6 +60,7 @@ job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_e
     graph = string
 
 [experimental]
+# suite monitoring via dependency graph
 write live graph = boolean( default=False )
 live graph movie = boolean( default=False )
 
@@ -67,7 +68,7 @@ live graph movie = boolean( default=False )
 live graph directory path = string( default='graphing')
 
 [visualization]
-# hours
+# hours after which to stop plotting the run time graph
 when to stop updating = integer( default=24 )
 # absolute, or relative to $CYLC_SUITE_DIR for portability
 run time graph directory = string( default='graphing')
