@@ -17,18 +17,26 @@ use lockserver = True
 [dependencies]
     [[0,6,12,18]]
         graph = """
-        get_frames => make_alabc => forecast_cold & forecast
-        forecast_cold | forecast(T-6) => VAR_ConfigureLS & OPS
-        forecast => get_outputs & housekeeping
-	    get_outputs => nc_conv_met
-        get_obstore & get_bgerr => OPS
-        OPS & VAR_ConfigureLS => VAR_AnalysePF => VAR_monitoring & forecast
+        # cold start from reduced global dump
         get_globaldump => GLtoGL_recon => GLtoNZ_recon => forecast_cold
-        """
+        # UM forecast needs LBC ...
+        get_frames => make_alabc => forecast_cold & forecast
+        # ... and analysis increments from VAR
+        OPS & VAR_ConfigureLS => VAR_AnalysePF => forecast & VAR_monitoring
+        # NZLAM post processing 
+        forecast => get_outputs => nc_conv_met & housekeeping
+        # OPS needs bgerr and obstores
+        get_obstore & get_bgerr => OPS
+        # OPS and VAR need backgrounds from previous forecast, or coldstart
+        forecast_cold | forecast(T-6) => VAR_ConfigureLS & OPS"""
     [[6,12,18]]
-        graph = "forecast_cold | forecast(T-6) => forecast"
+        graph = """
+        # trigger forecast of previous forecast, or cold start
+        forecast_cold | forecast(T-6) => forecast"""
     [[0]]
-        graph = "forecast_cold | forecast(T-6) => NZtoNZ_recon => forecast"
+        graph = """
+        # at 0 UTC reconfigure the start dump
+        forecast_cold | forecast(T-6) => NZtoNZ_recon => forecast"""
  
 [environment]
 %include inc/vars/global.rc
