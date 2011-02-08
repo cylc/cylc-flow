@@ -34,17 +34,17 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
 
 [tasks]
     [[Prep]]
-        description = prepare the suite workspace for a new run
+        description = "prepare the suite workspace for a new run"
         command = cylc wrap clean-workspace.sh $WORKSPACE
 
     [[GetData]]
-        description = retrieve data for the current cycle time
+        description = "retrieve data for the current cycle time"
         command = cylc wrap GetData.sh
         [[[environment]]]
             GETDATA_OUTPUT_DIR = $WORKSPACE
 
     [[ColdModel]]
-        description = cold start the forecast model
+        description = "cold start the forecast model"
         command = cylc wrap Model.sh --coldstart
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
@@ -52,7 +52,7 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
             MODEL_RUNNING_DIR = $WORKSPACE/Model
 
     [[Model]]
-        description = the forecast model
+        description = "the forecast model"
         command = cylc wrap Model.sh
         [[[environment]]]
             MODEL_INPUT_DIR = $WORKSPACE
@@ -60,14 +60,14 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
             MODEL_RUNNING_DIR = $WORKSPACE/Model
  
     [[PostA]]
-        description = post processing for model, every cycle
+        description = "post processing for model, every cycle"
         command = cylc wrap PostA.sh
         [[[environment]]]
             POSTA_INPUT_DIR = $WORKSPACE
             POSTA_OUTPUT_DIR = $WORKSPACE
 
     [[PostB]]
-        description = post processing for model, 6,18 UTC only
+        description = "post processing for model, 6,18 UTC only"
         command = cylc wrap PostB.sh
         [[[environment]]]
             POSTB_INPUT_DIR = $WORKSPACE

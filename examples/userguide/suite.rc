@@ -40,67 +40,67 @@ use lockserver = True
 
 [tasks]
     [[prep]]
-        description = clean out the suite workspace for a new run
+        description = "clean out the suite workspace for a new run"
         command = cylc wrap clean-workspace.sh $WORKSPACE
     [[X]]
-        description = retrieve real time data for model A
+        description = "retrieve real time data for model A"
         command = cylc wrap X.sh
         [[[environment]]]
             OUTPUT_DIR = $WORKSPACE
     [[A]]
-        description = model A - weather forecast
+        description = "model A - weather forecast"
         command = cylc wrap A.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
             RUNNING_DIR = $RUNNING/A
     [[B]]
-        description = model B - sea state forecast
+        description = "model B - sea state forecast"
         command = cylc wrap B.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
             RUNNING_DIR = $RUNNING/B
     [[C]]
-        description = model C - river flow forecast
+        description = "model C - river flow forecast"
         command = cylc wrap C.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
             RUNNING_DIR = $RUNNING/C
     [[D]]
-        description = combined post processing for models B and C
+        description = "combined post processing for models B and C"
         command = cylc wrap D.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
     [[E]]
-        description = post processing for model B
+        description = "post processing for model B"
         command = cylc wrap E.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
     [[F]]
-        description = post processing for model F
+        description = "post processing for model F"
         command = cylc wrap F.sh
         [[[environment]]]
             INPUT_DIR = $WORKSPACE
             OUTPUT_DIR = $WORKSPACE
 
     [[ColdA]]
-        description = cold start model A
+        description = "cold start model A"
         command = cylc wrap ColdA.sh
         [[[environment]]]
             RUNNING_DIR = $RUNNING/A
  
     [[ColdB]]
-        description = model B
+        description = "model B"
         command = cylc wrap ColdB.sh
         [[[environment]]]
             RUNNING_DIR = $RUNNING/B
  
     [[ColdC]]
-        description = model C
+        description = "model C"
         command = cylc wrap ColdC.sh
         [[[environment]]]
             RUNNING_DIR = $RUNNING/C
