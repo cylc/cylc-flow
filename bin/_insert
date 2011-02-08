@@ -9,7 +9,7 @@ from port_scan import SuiteIdentificationError
 parser = PromptOptionParser( """cylc insert [options] SUITE ID
 
 Insert a single task or a task group into a running suite. Task groups must be
-defined in the suite config file located in the suite definition directory.
+defined in the suite config (suite.rc) file.
 
 Inserted tasks will spawn successors as normal, unless they are 'oneoff' tasks.
 See also 'cylc submit', for running single tasks without a scheduler.""",

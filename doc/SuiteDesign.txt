@@ -23,17 +23,19 @@ at the top level, or in sub-directories as you like.
 documentation sub-directory); these will be ignored by cylc,
 but can be version-controlled with the suite definition.
 
-> TASK SCRIPTS
+> WHAT GETS RUN WHEN A TASK'S PREREQUISITES ARE READY?
 
-A task usually refers to a script that is invoked when the
-task is ready to run (i.e. when its prerequisites are satisfied).
-However, simple tasks may be entirely scripted in the suite.rc file,
+Most tasks, when ready to run, will run a command line specified 
+in the suite.rc file, after configuring the task execution environment,
+also as specified in the sutie.rc file. The command line may run a
+script or executable located in the suite bin directory, or elsewhere,
+but simple tasks may be entirely scripted in the suite.rc file,
 and multiple tasks with similar functionality can call the same task
 script with different input parameters.
 
-Task scripts may reside in the suite 'bin' sub-directory, which is
-automatically accessible to the suite (i.e. you don't need to supply the
-full file path) or they may be external to the suite definition.
+Scripts or executables in the suite 'bin' directory is automatically
+accessible to the suite (i.e. you don't need to supply the full file
+path).
 
 ___________________________________
 PROVIDING INPUT PARAMETERS TO TASKS

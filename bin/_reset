@@ -9,9 +9,12 @@ from CylcError import CylcError
 
 parser = PromptOptionParser( """cylc reset [options] SUITE TASK_ID
 
-Reset a task to the 'ready' state (all prerequisites satisfied) thereby
-causing it to trigger immediately, or optionally to the 'waiting' or
-'finished' states.""",
+By default this command resets a task's state to 'ready' (i.e. all
+prerequisites satisfied) which will cause it to trigger immediately
+(unless the suite has been paused).
+
+It can also reset a task to 'waiting' (i.e. prerequisites not yet
+satisfied) or 'finished' (i.e. outputs completed).""",
 [ 'TASK_ID              Identity of the task to reset (NAME%YYYYMMDDHH).'] )
 
 parser.add_option( "--waiting", 

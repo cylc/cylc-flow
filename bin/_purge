@@ -9,16 +9,20 @@ from port_scan import SuiteIdentificationError
 
 parser = PromptOptionParser( """cylc purge [options] SUITE TASK_ID STOP
 
-Remove an entire tree of dependent tasks, rooted on a given task, from a
-running suite. The root task will be forced to spawn and die, and then
-force every task that depends on it, and then every task that depends on
-them, and so on until the given stop cycle time.
+Remove an entire tree of dependent tasks from a running suite. The root
+task will be forced to spawn and die, then so will every task that
+depends on it, then every task that depends on those, and so on until
+the specified stop cycle time.
 
-WARNING: THIS COMMAND IS DANGEROUS, but you can use an instant practice
-mode clone (see 'cylc restart --help') to test your planned intervention,
-or in case of disaster simply restart the suite from the automatic
-pre-purge state dump (the filename will be logged by cylc before
-actioning the purge.)""",
+WARNING: THIS COMMAND IS DANGEROUS, but in case of disaster you can
+simply restart the suite from the automatic pre-purge state dump (the
+filename will be logged by cylc before the purge is actioned.)
+
+Note that the immediate downstream dependents of the root task will only
+be detected if they exist at the time the purge is done. If you purge
+before all such tasks have been spawned by their upstream predecessors,
+those tasks will have to be cleaned up later with \lstinline=cylc
+remove""",
 ["TASK_ID              Task at which to start the purge (NAME%YYYYMMDDHH).",
  "STOP                 Cycle (inclusive!) at which to stop (YYYYMMDDHH)"] )
 
