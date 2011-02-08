@@ -488,8 +488,8 @@ therein are entirely hidden from the user.
 Cylc commands are self-documenting. Section~\ref{CommandReference}
 contains the complete {\em Command Reference}. 
 
-%\lstset{language=usage}
-%\lstinputlisting{command-usage/help.txt}
+\lstset{language=usage}
+\lstinputlisting{command-usage/help.txt}
 
 \pagebreak
 \section{Installation And Testing} 
@@ -502,8 +502,10 @@ contains the complete {\em Command Reference}.
     \item Unix or Linux
     \item Python
     \item Pyro (Python Remote Objects)
-    \item graphviz
 \end{itemize}
+
+Cylc has been tested with Python~2.6, and Pyro~3.9 and 3.10,
+but it should work with any recent version of Python~2 and Pyro~3.
 
 \subsection{Getting Cylc} 
 \label{GettingCylc}
@@ -523,7 +525,8 @@ installs into the standard Python module path.
 
 Cylc is designed to be installed into a normal user account: simply
 unpack the tarball, or move the repository, to the location of your
-choice. There is no ``build'' step.
+choice (typically \lstinline=$HOME/cylc=). There is no ``build'' step
+required.
 
 \subsection{Environment} 
 \label{Environment}
@@ -548,6 +551,7 @@ Or put the following in your (sh-style) login script:
 export CYLC_DIR=$HOME/cylc  # (the install location)
 . $CYLC_DIR/cylc-env.sh
 \end{lstlisting}
+
 
 \subsection{Testing} 
 \label{Testing}
@@ -582,36 +586,45 @@ userguide example suite in detail.
 \subsection{Starting The Cylc Lockserver}
 \label{QuickStartingTheCylcLockserver}
 
-Each cylc user should run his own lockserver. The cylc lockserver
+Each cylc user should run his/her own a lockserver. The cylc lockserver
 prevents a user from accidentally running multiple instances of the same
 suite, or the same task (at the same cycle time) at once, which could
 result in a corrupted system state (of your real forecasting system,
 that is, not cylc itself) or other problems. 
 
 Cylc suite and task locks are analogous to use of traditional ``lock
-files'' but they work across a network for distributed suites, wherein
-you may have tasks that start executing on one host and finish on
+files'', but they work across a network for distributed suites, wherein
+you may have tasks that start executing on one host but finish on
 another.
 
 The lockserver consists of a {\em daemon} process
-\lstinline=$CYLC_DIR/bin/cylclockd= and a
+\lstinline=$CYLC_DIR/conf/cylclockd= that runs autonomously and a
 command line user interface, \lstinline=cylc lockserver=
 
 The lockserver daemon can be started at any time, and left running.
-See \lstinline=cylclockd help= for configuration and usage information.
+See \lstinline=$CYLC_DIR/conf/cylclockd help= for configuration
+and usage information.
 
 Alternatively, you can choose not to use the lockserver:
 
 \begin{lstlisting}
-# SUITE.RC:
-use lockserver = False
+cylc preferences --use-lockserver=N
 \end{lstlisting}
+
 
 \subsection{Defining A Suite} 
 \label{QuickDefiningASuite}
 
-A cylc suite is defined by a single \lstinline=suite.rc= config file
-(Section~\ref{SuiteDefinition})).
+A cylc suite is defined by a set of simple {\em task definition files}
+that describe the properties of each task that are relevant from a
+scheduling perspective (see {\em Suite Definition},
+Section~\ref{SuiteDefinition}); in particular, for cylc, the
+prerequisites and outputs of each task.
+
+In addition, a few cylc commands must be inserted into the scripts that
+execute the suite tasks, or otherwise you can use cylc's {\em task
+wrapping} mechanism (Section~\ref{TaskWrapping}) to run existing scripts
+unmodified.
 
 The complete suite definition and implementation for the ``userguide
 example suite'' is provided in \lstinline=$CYLC_DIR/examples/userguide=. 
@@ -656,16 +669,45 @@ the different instances will not interfere.
     \label{fig-monitor} 
 \end{figure} 
 
-{\em cylc control} is a real time monitoring and suite control GUI
-(the same results can be achieved via the commandline interface).
+{\em cylc gui} provides real time monitor and suite control 
+(the same can be achieved via the cylc commandline interface).
+
+{\bf NOTE: 'cylc view' has since evolved into 'cylc gui' which has 
+complete suite control functionality as well as monitoring.}
 
 \begin{lstlisting}
-# to choose from among your registered suites:
-$ cylc control &
-# or, to control a particular suite:
-$ cylc control userguide &
+cylc gui userguide &
 \end{lstlisting}
 
+Cylc {\em Log Files} (Section~\ref{SuiteLogFiles}) are located 
+under \lstinline=$HOME/.cylc/logging/SUITE= (you can use
+\lstinline=cylc preferences= to change the default location).
+
+You can also retrieve information from running cylc suites with the 
+\lstinline=cylc show= command:
+
+\lstset{language=}
+\begin{lstlisting}
+% cylc show userguide X%2010010112
+_______________________________
+Task X%2010010112 in userguide:
+ + => prerequisite satisfied, or output completed
+ - => prerequisite NOT satisfied, or output NOT completed
+______________
+Prerequisites:
+(None)
+________
+Outputs:
+ + X%2010010112 completed
+ + X%2010010112 finished
+ + X%2010010112 started
+ + obs data ready for 2010010112
+______
+Other:
+delayed start time reached ... True
+\end{lstlisting}
+
+\lstset{language=bash}
 \subsection{Shutdown And Restart}
 \label{QuickShutdownAndRestart}
 
@@ -673,8 +715,13 @@ $ cylc control userguide &
 
 Before shutting a suite down - or indeed using any of the other cylc
 commands that can change the state of a running suite but are not 
-covered in this Quick Start Guide (reset, insert, remove, purge, pause,
-etc.).
+covered in this Quick Start Guide (reset, kill, purge, pause, etc.) -
+you need to {\em unlock} the suite:
+
+\begin{lstlisting}
+cylc unlock userguide
+cylc stop userguide
+\end{lstlisting}
 
 You can restart a suite from its most recent previous state:
 
@@ -743,8 +790,8 @@ particular versions of cylc.
 
 A suite can contain a small number of large, internally complex tasks;
 a large number of small, simple tasks; or anything in between. However,
-cylc can easily handle a large number of tasks so there are advantages
-fine-graining a suite:
+cylc can easily handle large task numbers, and is entirely self
+organising, so there are advantages fine-graining a suite:
 
 \begin{itemize}
     \item a more modular and transparent suite.
@@ -759,6 +806,10 @@ fine-graining a suite:
         tasks.
 
 \end{itemize}
+
+
+
+
 
 \subsection{Suite Task Guidelines} 
 \label{SuiteTaskGuidelines}
@@ -821,14 +872,14 @@ trapped by the shell and handled with an automatic message. The
 userguide example task script listings of
 Section~\ref{ACompleteWorkingExample} show how to do this.
 
-\subsubsection{Clock-triggered Tasks Must Wait On Data}
+\subsubsection{Contact Tasks Must Wait On Data}
 
 Most tasks in a cylc suite know their own cycle time, but they don't
 know or care what the wall clock time is.  They just run when their
 prerequisites are satisfied, i.e.\  when other tasks say their input
 files (usually) are ready for use. The only connection between cylc
-suites and the real world are the {\em clock-triggered tasks} (see {\em
-Task Types}, Section~\ref{TaskTypes} for more on this) which in addition to
+suites and the real world are the {\em contact tasks} (see {\em Task
+Types}, Section~\ref{TaskTypes} for more on this) which in addition to
 their other prerequisites, if any, wait on a particular wall clock time
 relative to their cycle time before running.  For example, a weather
 model that assimilates real time observations should have an associated
@@ -846,6 +897,7 @@ the real contact task should have a wait loop in it: once running it
 should check for the existence of the expected data immediately. If the
 data isn't there the task must keep checking until it shows up, and only then
 report its output completed to cylc. 
+
 
 \subsection{Incremental Suite Construction} 
 \label{IncrementalSuiteConstruction}
@@ -876,10 +928,23 @@ Cylc's scheduling algorithm matches one task's completed outputs with
 another's unsatisfied prerequisites
 (Section~\ref{TheCylcSchedulingAlgorithm}).  
 
-Internally, these prerequisites (which must be satisfied before the task
-can run) and outputs (that must be be completed as the task runs) take
-the form of {\em literal text strings - messages that running tasks 
-send to their proxy objects inside the scheduler}.
+Each task definition file must specify a list of prerequisites that have
+to be satisfied before the task can run, and a list of outputs that will
+be completed as the task runs. {\em These are just literal text
+strings - messages that running tasks must send to their proxy objects,
+inside the cylc scheduler, whenever they complete a registered output}.
+
+In earlier versions of cylc an estimated run time for the task, and an
+estimated completion time for each task output, had to be supplied in
+the task definition, allowing very accurate simulation of each task
+in cylc's dummy mode.  However, this added some complexity to the task
+definition process, and because of inevitable variation in real task
+effective run times due to resource contention it probably gives no
+great benefit over the current simpler scheme: all dummy tasks are
+assigned the same run time and their outputs reported in regular
+intervals over that time - this is still a complete test of suite
+meta-scheduling (i.e.\ tasks triggering as soon as their dependencies
+are satisfied). 
 
 \begin{itemize}
     \item A task proxy considers a registered output ``completed''
@@ -1762,7 +1827,7 @@ to just the one task, e.g.:
     FOOBAR           foo bar
     ANALYSIS_TIME    $CYCLE_TIME
     OUTPUT_FILE      foo-${TASK_NAME}-${CYCLE_TIME}.nc
-    NEXT_CYCLE       $(cylc cycletime --add=6)
+    NEXT_CYCLE       $(cylcutil cycle-time --add=6)
 \end{lstlisting}
 
 \lstset{language=bash}
@@ -1790,7 +1855,7 @@ external scripts, execute cylc utilities, and so on.
 
 \begin{lstlisting}
 %SCRIPTING
-    export NEXT_CYCLE=$( cylc cycletime --add=6 )
+    export NEXT_CYCLE=$( cylcutil cycle-time --add=6 )
     . $HOME/env-setup.sh
 \end{lstlisting}
 
@@ -1852,7 +1917,7 @@ To do this in cylc, you can either:
         them from the environment).
 \end{itemize}
 
-Cylc has a generic file transfer script, \lstinline=cylc file-transfer=. 
+Cylc has a generic file transfer script, \lstinline=cylcutil file-transfer=. 
 It is used be the {\em distributed} example suite ({\em Other Working
 Examples}, Section~\ref{OtherWorkingExamples}).
 
@@ -1880,6 +1945,146 @@ system.
 %automatically pass on changes to the external input / output config of
 %the system.
 
+
+
+\pagebreak
+\section{Suite Config Files}
+\label{SuiteConfigFiles}
+
+An initial customizable config file, \lstinline=suite.rc=, is
+written to the suite definition directory by 
+\lstinline=cylc configure= the first time a suite is configured (note that
+you no longer have to do this manually - the {\em submit, start} and 
+{\em restart} commands now automatically reconfigure the suite if any 
+taskdef files have changed).
+{\em The config file has 
+recently changed format: until it is fully documented in the userguide,
+please refer to the \lstinline=suite.rc.README= file below (which is
+also written to the suite definition directory).}
+
+%\lstset{language=Python}
+%\begin{lstlisting}
+%self.items['item'] = value
+%\end{lstlisting}
+%
+%\subsection{Configurable Items}
+%\label{ConfigurableItems}
+%
+%\begin{itemize} 
+%    \item {\bf simultaneous suites control:} for certain suites, cylc
+%        can run multiple suite instances at once under different names
+%        (see \lstinline=cylc register --help=). The example suites
+%        can do this. 
+%         \begin{lstlisting}
+%self.items[ 'allow_simultaneous_suite_instances' ] = False
+%         \end{lstlisting}
+%  
+%    \item {\bf task list}: this refers to a list of suite task names
+%        that resides in another autogenerated file,
+%        \lstinline=task_list.py=. Each task in the list will be
+%        instantiated at suite startup, unless explicitly excluded by
+%        commandline options. For testing and debugging, however, you
+%        can also turn off specific tasks by commenting them out
+%        of the task list.
+%        
+%        \begin{lstlisting}
+%# suite task list
+%self.items['task_list'] = task_list   # SEE task_list.py
+%self.items['task_list_shortnames'] = task_list_shortnames   # SEE task_list.py
+%        \end{lstlisting}
+%
+%    \item {\bf task groups}: you can group several related tasks under a
+%        single name in order to insert them all at once into the running
+%        suite. For example, you could define a group to hold all the
+%        tasks needed to cold start a particular model.
+%
+%        \begin{lstlisting}
+%self.items['task_groups']['cold_start_foo'] = [ 'bar', 'baz', ...]
+%        \end{lstlisting}
+%
+%    \item {\bf job submit method}: the default job submission method 
+%        for the suite.
+%
+%        \begin{lstlisting}
+%self.items['job_submit_method'] = 'background'
+%        \end{lstlisting}
+%
+%        To override the default method for task `foo' use:
+%
+%        \begin{lstlisting}
+%self.items['job_submit_overrides']['foo'] = 'll_basic'
+%        \end{lstlisting}
+%
+%        See {\em Job Submission} (Section~\ref{JobSubmission}) for
+%        available methods, and information on how to add new methods.
+%
+%    \item {\bf environment variables}: You can export variables into the 
+%        environment of all external tasks that the suite runs. Note that
+%        this can also be done, via task definition files, on a per-task
+%        basis.
+%
+%        \begin{lstlisting}
+%self.items['environment'][ 'VARNAME1' ] = 'value1'
+%        \end{lstlisting}
+%
+%    \item {\bf maximum runahead time} - this is a global constraint that
+%        limits how far the fastest task can get ahead of the slowest, 24
+%        hours by default.
+%        
+%        \begin{lstlisting}
+%config['max_runahead_hours'] = 24
+%        \end{lstlisting}
+%
+%
+%    \item {\bf suite title} and {\bf information}: 
+%
+%        \begin{lstlisting}
+%self.items['suite_title'] = 'Suite X'
+%self.items['suite_info'] = info
+%        \end{lstlisting}
+%        where `info' is now imported from a separate file, 
+%        \lstinline=suite_info.py= in the suite definition directory.
+%        This is intended to be descriptive information about the suite,
+%        perhaps details the user needs to know in order to run it (see
+%        for example the information given for the {\em userguide}
+%        example suite).
+%
+%    \item {\bf restricted startup hours:} setting this will cause 
+%        the suite to abort with an error message if you attempt to
+%        start it for any cycle time with an hour value that is not in a given
+%        list of hours (e.g. 6 or 18Z). This is useful if your suite 
+%        can only start at certain cycles because of external constraints
+%        such as availability of model start dumps.
+%        
+%    \begin{lstlisting}
+%self.items['legal_startup_hours'] = [ 6, 18 ]
+%# for a single value you must still enclose in list brackets: [ 6 ] 
+%    \end{lstlisting}
+%
+%\end{itemize}
+%
+
+%\pagebreak
+
+\subsection{suite.rc}
+\label{ExampleConfigFile}
+
+This is the suite config file for the userguide example suite: 
+
+\lstset{ language=bash }
+{
+\lstinputlisting{suite.rc}
+}
+
+
+\subsection{suite.rc.README}
+
+\lstset{ language=bash}
+{
+\lstinputlisting{suite.rc.README}
+}
+
+\lstset{language=bash}
 
 
 \pagebreak
@@ -2313,23 +2518,144 @@ tied up until they time out?).
 \section{A Complete Working Example}
 \label{ACompleteWorkingExample}
 
-This section contains the complete implementation of the example suite
-used to illustrate the scheduling discussion in {\em How Cylc Works}
-(Section~\ref{HowCylcWorks}). The example suite is located in:
+This section contains complete taskdef and task implementation listings
+for the example suite used to illustrate the scheduling discussion in
+{\em How Cylc Works} (Section~\ref{HowCylcWorks}). The example suite
+is located in:
 
 \begin{lstlisting}
 $CYLC_DIR/examples/userguide/
 \end{lstlisting}
 
- While clearly not a real forecasting system, it does have the
+ While this is clearly not a real forecasting system, it does have the
  properties of a real system as far as scheduling is concerned.  
 
-%\input{../examples/userguide/doc/README.tex}
+\input{../examples/userguide/doc/README.tex}
 
-%\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
+\lstset{ basicstyle=\color{basic}\scriptsize\ttfamily }
 
-%\pagebreak
-%\input{example-suite.tex}
+\pagebreak
+\input{example-suite.tex}
+
+\pagebreak
+\section{Other Working Examples}
+\label{OtherWorkingExamples}
+
+\subsection{Nested}
+
+In this example suite, {\em task C} from the userguide suite has been
+replaced by a task called {\em userguide}, behind which is an entire
+sub-suite (the userguide example suite) running a single cycle under
+its own scheduler.
+
+To run this, configure and register both the userguide and nested
+suites. Then start two suite monitors, one to follow each suite,
+before starting the scheduler on the nested suite. You should see that 
+whenever a new `userguide' task runs in the nested suite, a separate
+instance of the entire userguide example suite will start up and run
+for a single cycle. When the subsuite finishes and exits, the
+corresponding task in the main system will drop into the finished state.
+
+This example is included because it rather nicely illustrates the power
+and flexibility of cylc. That said, there is probably no need to do this
+in a real forecasting system - you could just include the sub-suite
+tasks in the main suite, as a task family if you insist that they
+trigger as a unit.
+
+\subsection{Distributed}
+\label{Distributed}
+
+In this example suite, a ``forecast model'' executes on a remote
+platform while ``model input data collection'' and ``model
+postprocessing'' tasks execute locally. Additional tasks transfer model
+input to , and retrieve model output from, the remote machine. The
+forecast model restart outputs reside permanently on the remote machine.
+The file transfer tasks also illustrate use of a generic task script:
+the script \lstinline=$CYLC_DIR/scripts/file_transfer.sh= is called by
+two distinct tasks with task-specific input provided through environment
+variables defined in the task definition files.  (Note that the suite
+could be arranged so as to avoid needing any file transfer tasks, by
+having the main tasks know where to get their input and/or put their
+output; see the discussion in {\em Handling Real Dependencies},
+Section~\ref{HandlingRealDependencies}).
+
+Unlike the other example suites, this one will not quite work ``out of
+the box''; it has to be customized to use a particular remote host on
+your network. You will need to:
+
+\begin{itemize}
+
+    \item customize environment variables that refer to the remote 
+        host and remote username, and the location of the remote 
+        cylc installation and suite definition directory, in the suite
+        config file. 
+
+    \item configure passwordless ssh access to the remote machine,
+        via the remote username if necessary.
+
+    \item install Pyro, if necessary, on the remote host.
+
+    \item install cylc on the remote host.
+
+    \item install the ``forecast model'' tasks on the remote host.
+
+\end{itemize}
+
+Because the distributed example suite is part of cylc the last two
+items above can be achieved by simply installing cylc on the remote
+machine. 
+
+Finally, see {\em Running Tasks On A Remote Host}
+(Section~\ref{RunningTasksOnARemoteHost} ) for more on how this works.
+
+\subsection{SCS Demo}
+
+This example suite runs {\bf only in dummy-mode} (no task scripts
+have been implemented) and resides in
+\lstinline=$CYLC_DIR/examples/scs-demo=.
+It demonstrates how to set up a single Met Office
+UM-based forecast analysis suite that would normally be controlled by
+SCS.  Other distinguishing features of this suite are:
+
+\begin{itemize}
+
+    \item restricted start time (see the suite config file) - cold start at 06Z only
+
+    \item not all tasks run in all cycles - see arch, g\_lbc, post2
+
+    \item intercycle dependence other than forecast model restart 
+        dependencies - g\_lbc outputs are used by two subsequent UM\_nz
+        tasks.
+
+    \item UM\_nz behaves differently in different cycles - 00,12Z short
+        forecast, 06,18Z long forecast.
+
+    \item the VAR task depends on the OPS tasks {\em completing} - i.e.\
+        succeeding OR failing, because obs processing is expected to
+        fail sometimes.  Try this with:
+
+        \begin{lstlisting}
+cylc coldstart -d --fail-out=OPS1%YYYYMMDDHH ...
+        \end{lstlisting}
+
+        VAR will not be delayed, but the failed OPS task does have to be
+        killed or it will eventually stall the suite at the runahead
+        limit.
+        
+\end{itemize}
+
+Here's some more information from the suite README file:
+
+\lstset{language=}
+\lstinputlisting{../examples/scs-demo/README.txt}
+
+%\subsubsection{Finishing It Off}
+%
+%Configure the OPS, VAR, and UM tasks as standalone jobs via their
+%respective UIs, then perform some minor surgery the resulting
+%job scripts so that they take \lstinline=$CYCLE_TIME= from the
+%environment, and add cylc messaging to report startup, finish, failure,
+%and completed outputs.
 
 \pagebreak
 \section{Command Reference}
@@ -2347,6 +2673,20 @@ some cases.
 \input{commands.tex}
 \pagebreak
 
+\section{Utility Command Reference}
+\label{UtilityCommandReference}
+
+The information in this section is auto-generated from
+the current command set during document processing, using  
+\lstinline=cylcutil COMMAND --help=. 
+%Command self-documentation, however, is intended as a minimalist
+%on-the-fly usage reminder so additional information is appended in
+%some cases.
+ \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
+\lstset{language=usage}
+\input{commands-util.tex}
+\pagebreak
+
 \section{Lockserver Daemon Command Reference}
 \label{LockserverDaemonCommandReference}
 
@@ -2357,6 +2697,20 @@ The information in this section is auto-generated during document processing.
 \input{commands-cylclockd.tex}
 \pagebreak
 
+
+\section{Annotated Task Definition Reference}
+
+\subsection{Task Definition}
+\label{AnnotatedTaskDefinitionReferenceFile}
+\lstset{language=cylctaskdef}
+\lstinputlisting{../templates/taskdef/task.def}
+\lstset{language=}
+
+\subsection{Task Family Definition}
+\label{AnnotatedTaskFamilyDefinitionReferenceFile}
+\lstset{language=cylctaskdef}
+\lstinputlisting{../templates/taskdef/family.def}
+\lstset{language=}
 
 
 \pagebreak

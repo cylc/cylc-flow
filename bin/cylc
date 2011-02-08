@@ -47,7 +47,7 @@ core_commands = \
 
 locking_commands = \
     [
-    'cylclockd',
+    #'cylclockd',
     'lockserver',
     ]
 
@@ -120,7 +120,7 @@ task_commands = \
 altnames = {}
 altnames['grep'] = 'search'
 altnames['start'] = 'coldstart'
-altnames['control'] = 'gui'
+altnames['gui'] = 'control'
 
 # uniquify the 'all commands' list (some may reside in multiple categories)
 allcom = OrderedDict()
@@ -276,6 +276,18 @@ if len( sys.argv ) == 2 and \
 # cylc release version
 if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     print cylc_version
+    sys.exit(0)
+
+# secret command list used by documentation generation script
+if len(sys.argv) == 2 and sys.argv[1] == 'commands':
+    for command in all_commands:
+        print command
+    sys.exit(0)
+
+# secret category list used by documentation generation script
+if len(sys.argv) == 2 and sys.argv[1] == 'categories':
+    for category in categories:
+        print category
     sys.exit(0)
 
 # category help

@@ -2,12 +2,12 @@
 
 set -e
 
-# generate pdf documentation from cylc LaTeX source
+# Generates pdf documentation from cylc LaTeX source.
 
 usage() {
 	echo "USAGE: [-f] $0"
     echo ' -f, force re-conversion of eps figures to PDF'
-    echo "Run this script in the top level of your cylc repository"
+    echo "Run this script from \$CYLC_DIR"
 }
 
 [[ $# > 1 ]] && {
@@ -16,7 +16,7 @@ usage() {
 }
 
 if [[ ! -f bin/cylc ]]; then
-    echo "Run this script in the top level of your cylc repository"
+    echo "Run this script from \$CYLC_DIR"
     exit 1
 fi
 
@@ -30,100 +30,50 @@ if [[ $# == 1 ]]; then
     fi
 fi
 
-# GENERATE USERGUIDE SUITE EXAMPLE CHAPTER CONTENTS -----------------
-OUT=doc/example-suite.tex
-rm -f $OUT
-
-DIR=suites/userguide
-
-for PDEF in $DIR/taskdef/*.def; do 
-
-    DEF=$( basename $PDEF ) 
-    NAME=${DEF%.def}
-    SCR=${NAME}.sh
-
-    echo "\subsection{$NAME}" >> $OUT
-    echo "\label{task$NAME}" >> $OUT
-    echo "\subsubsection{$NAME Definition}" >> $OUT
-    echo "\lstset{language=cylctaskdef}" >> $OUT
-    echo "\lstinputlisting{../$DIR/taskdef/$DEF}" >> $OUT
-    #echo "\pagebreak" >> $OUT
-    echo "\subsubsection{$NAME Implementation}" >> $OUT
-    echo "\lstset{language=bash}" >> $OUT
-    echo "\lstinputlisting{../$DIR/scripts/$SCR}" >> $OUT
-    #echo "\pagebreak" >> $OUT
-    echo "" >> $OUT
-done
-
-echo "\subsection{Utility Scripts}" >> $OUT
-echo "\label{utility}" >> $OUT
-echo "\subsubsection{check-env.sh}" >> $OUT
-echo "\lstset{language=bash}" >> $OUT
-echo "\lstinputlisting{../$DIR/scripts/check-env.sh}" >> $OUT
-echo #"\pagebreak" >> $OUT
-echo "" >> $OUT
-
-#-----------------------------------------------------------------------
-
-
 # GENERATE COMMAND REFERENCE CHAPTER CONTENTS -----------------------
 rm -rf doc/command-usage; mkdir -p doc/command-usage
 rm -f doc/commands.tex
 
+cylc help >> doc/command-usage/help.txt
+# append to a latex file for inclusion in the userguide
+echo "\subsection{help}" >> doc/commands.tex
+echo "\label{help}" >> doc/commands.tex
+echo "\lstinputlisting{command-usage/help.txt}" >> doc/commands.tex
+#echo "\pagebreak" >> doc/commands.tex
+
+for CAT in $(cylc categories); do 
+    echo "o $CAT"
+    # direct command help into a txt file
+    cylc $CAT help >> doc/command-usage/$CAT.txt
+    # append to a latex file for inclusion in the userguide
+    echo "\subsection{$CAT}" >> doc/commands.tex
+    echo "\label{$CAT}" >> doc/commands.tex
+    echo "\lstinputlisting{command-usage/$CAT.txt}" >> doc/commands.tex
+    #echo "\pagebreak" >> doc/commands.tex
+done
+
 for COMMAND in $(cylc commands); do 
+    echo "+ $COMMAND"
     # direct command help into a txt file
     cylc $COMMAND --help > doc/command-usage/$COMMAND.txt
     # append to a latex file for inclusion in the userguide
     echo "\subsection{$COMMAND}" >> doc/commands.tex
     echo "\label{$COMMAND}" >> doc/commands.tex
-    [[ -f doc/pre-command/$COMMAND.tex ]] && \
-        echo "\input{pre-command/$COMMAND.tex}" >> doc/commands.tex
     echo "\lstinputlisting{command-usage/$COMMAND.txt}" >> doc/commands.tex
-    [[ -f doc/post-command/$COMMAND.tex ]] && \
-        echo "\input{post-command/$COMMAND.tex}" >> doc/commands.tex
     #echo "\pagebreak" >> doc/commands.tex
-done
-
-rm -rf doc/command-util-usage; mkdir -p doc/command-util-usage
-rm -f doc/commands-util.tex
-
-for COMMAND in $(cylcutil commands); do 
-    # direct command help into a txt file
-    cylcutil $COMMAND --help >> doc/command-util-usage/$COMMAND.txt
-    # append to a latex file for inclusion in the userguide
-    echo "\subsection{$COMMAND}" >> doc/commands-util.tex
-    echo "\label{$COMMAND}" >> doc/commands-util.tex
-    #[[ -f doc/pre-command/$COMMAND.tex ]] && \
-    #    echo "\input{pre-command/$COMMAND.tex}" >> doc/commands-util.tex
-    echo "\lstinputlisting{command-util-usage/$COMMAND.txt}" >> doc/commands-util.tex
-    #[[ -f doc/post-command/$COMMAND.tex ]] && \
-    #    echo "\input{post-command/$COMMAND.tex}" >> doc/commands-util.tex
-    #echo "\pagebreak" >> doc/commands-util.tex
 done
 
 rm -rf doc/command-cylclockd-usage; mkdir -p doc/command-cylclockd-usage
 rm -f doc/commands-cylclockd.tex
 
 # direct command help into a txt file
-admin/cylclockd --help >> doc/command-cylclockd-usage/cylclockd.txt
+cylclockd --help >> doc/command-cylclockd-usage/cylclockd.txt
 # append to a latex file for inclusion in the userguide
 echo "\subsection{cylclockd}" >> doc/commands-cylclockd.tex
 echo "\label{cylclockd}" >> doc/commands-cylclockd.tex
-#[[ -f doc/pre-command/cylclockd.tex ]] && \
-#    echo "\input{pre-command/cylclockd.tex}" >> doc/commands-util.tex
 echo "\lstinputlisting{command-cylclockd-usage/cylclockd.txt}" >> doc/commands-cylclockd.tex
-#[[ -f doc/post-command/cylclockd.tex ]] && \
-#    echo "\input{post-command/cylclockd.tex}" >> doc/commands-cylclockd.tex
-#echo "\pagebreak" >> doc/commands-cylclockd.tex
 
 #-----------------------------------------------------------------------
-
-#Comment-stripped taskdef files:
-#perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
-#    sys/examples/userguide-1/suite_config.py > doc/suite_config.py.stripped
-#perl -e 'while (<>) { if ( ! m/^\s*#/ && ! m/^\s*$/ ) { print }}' < \
-#    sys/templates/full-template.def > doc/full-template.def.stripped
-
 
 cd doc
 
