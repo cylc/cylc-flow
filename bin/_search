@@ -48,7 +48,8 @@ def print_heading( heading ):
     #print indent + heading
 
 parser = OptionParser( """cylc search [options] PATTERN SUITE 
-       cylc grep [options] PATTERN SUITE 
+
+Alternative command name: grep
 
 Find matches to PATTERN in the suite.rc file, and any contained
 include-files, and in any files in the suite bin directory. For the
