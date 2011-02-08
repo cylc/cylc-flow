@@ -10,8 +10,8 @@ parser = NoPromptOptionParser_u( """cylc show [options] SUITE [TASK NAME] [TASK 
 
 Print global or task-specific information from a running suite: title and
 task list, task descriptions, current state of task prerequisites and
-outputs and, for contact tasks, whether or not the delayed start time
-has been reached.""",
+outputs and, for clock-triggered tasks, whether or not their delayed
+start time has been reached.""",
 ["""TASK NAME            Name of a suite task class - print description.
    TASK ID              ID (NAME%YYYYMMDDHH) - also print prerequisites etc."""] )
 

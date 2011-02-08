@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 
+# A catchup-aware clock-triggered task.
 
-# CATCHUP AWARE CONTACT TASK
-
-# Some "advanced" tasks may need different behaviour according to
-# whether a contact task that they depende on has "caught up" to real
+# For (rare!) tasks that need different behaviour according to whether
+# a clock-triggered task that they depend on has caught up to real
 # time operation or not. 
 
-# This is a contact task that uses a dumpable task class variable to
+# This is a clock-triggered task that uses a dumpable task class
+# variable to
 # record whether or not it has 'caught up' yet.  The class starts off in
 # a 'catching up' state, and once 'caught up' stays that way even if
 # task instances get behind again (but emits a warning in that case).
@@ -23,23 +23,24 @@
 # result in a 12 hour fuzzy prerequisites window that would cause TopNet
 # to wait on the next NZLAM instead of running immediately.
 
-# HOW TO DETERMINE CATCHUP STATUS: A contact task is still catching up
-# if it is ready to run as soon as its prerequisites are satisfied (i.e.
-# its delayed start time has already passed at that time). If it has to
-# wait for the delayed start time to arrive, then it has caught up.
+# HOW TO DETERMINE CATCHUP STATUS: A clock-triggered task is still
+# catching up if it is ready to run as soon as its prerequisites are
+# satisfied (i.e. its delayed start time has already passed at that
+# time). If it has to wait for the delayed start time to arrive then it
+# has caught up already.
 
 import re
-from contact import contact
+from clocktriggered import clocktriggered
 
-class catchup_contact( contact ):
+class catchup_clocktriggered( clocktriggered ):
 
     def __init__( self ):
         # each instance only determines once if it has caught up yet.
         self.catchup_status_determined = False
 
         # THE ASSOCIATED TASK CLASS MUST DEFINE 
-        # self.real_time_delay, for contact:
-        contact.__init__( self )
+        # self.real_time_delay, for clocktriggered:
+        clocktriggered.__init__( self )
 
     def ready_to_run( self, current_time ):
         # ready IF waiting AND all prerequisites satisfied AND if my

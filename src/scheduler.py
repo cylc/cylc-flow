@@ -420,7 +420,7 @@ class scheduler(object):
             # handleRequests() returns after one or more remote method
             # invocations are processed (these are not just task messages, hence
             # the use of the state_changed variable above).
-            # HOWEVER, we now need to check if contact tasks are ready
+            # HOWEVER, we now need to check if clock-triggered tasks are ready
             # to trigger according on wall clock time, so we also need a
             # timeout to handle this when nothing else is happening.
             #--
@@ -446,11 +446,11 @@ class scheduler(object):
             # reset the remote control flag
             self.remote.process_tasks = False
             
-        if self.waiting_contact_task_ready( self.clock.get_datetime() ):
+        if self.waiting_clocktriggered_task_ready( self.clock.get_datetime() ):
             # This method actually returns True if ANY task is ready to run,
-            # not just contact tasks. However, this should not be a problem.
-            # For a contact task, this means the contact time is up AND
-            # any prerequisites are satisfied, so it can't result in
+            # not just clock-triggered tasks (but this should not matter).
+            # For a clock-triggered task, this means its time offset is
+            # up AND prerequisites are satisfied, so it can't result in
             # multiple passes through the main loop.
 
             # cause one pass through the main loop
@@ -1120,9 +1120,9 @@ class scheduler(object):
         for itask in self.tasks:
             itask.check_timeout(current_time)
 
-    def waiting_contact_task_ready( self, current_time ):
+    def waiting_clocktriggered_task_ready( self, current_time ):
         # This method actually returns True if ANY task is ready to run,
-        # not just contact tasks. However, this should not be a problem.
+        # not just clocktriggered tasks. However, this should not be a problem.
         result = False
         for itask in self.tasks:
             #print itask.id, current_time

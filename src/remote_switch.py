@@ -226,17 +226,17 @@ class remote_switch( Pyro.core.ObjBase ):
             if id in in_ids_back:
                 found = True
                 extra_info = {}
-                # extra info for contact tasks
+                # extra info for clocktriggered tasks
                 try:
                     extra_info[ 'delayed start time reached' ] = task.start_time_reached( self.clock.get_datetime() ) 
                 except AttributeError:
-                    # not a contact task
+                    # not a clocktriggered task
                     pass
-                # extra info for catchup_contact tasks
+                # extra info for catchup_clocktriggered tasks
                 try:
                     extra_info[ task.__class__.name + ' caught up' ] = task.__class__.get_class_var( 'caughtup' )
                 except:
-                    # not a catchup_contact task
+                    # not a catchup_clocktriggered task
                     pass
                 dump[ in_ids_back[ id ] ] = [ task.prerequisites.dump(), task.outputs.dump(), extra_info ]
         if not found:

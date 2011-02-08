@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-# TO DO: catchup contact
+# TO DO: catchup_clocktriggered
 # TO DO: ERROR CHECKING:
 #        - MULTIPLE DEFINITION OF SAME PREREQUISITES, E.G. VIA TWO
 #          CYCLE-TIME SECTIONS IN THE GRAPH.
@@ -708,8 +708,8 @@ class config( CylcConfigObj ):
 
         # SET CLOCK-TRIGGERED TASKS
         if name in self.clock_offsets:
-            taskd.modifiers.append( 'contact' )
-            taskd.contact_offset = self.clock_offsets[name]
+            taskd.modifiers.append( 'clocktriggered' )
+            taskd.clocktriggered_offset = self.clock_offsets[name]
 
         for lbl in self['tasks'][name]['outputs']:
             taskd.outputs.append( self['tasks'][name]['outputs'][lbl] )

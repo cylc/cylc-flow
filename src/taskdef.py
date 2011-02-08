@@ -59,7 +59,7 @@ class taskdef(object):
         self.member_of = None
         self.follow_on_task = None
 
-        self.contact_offset = None
+        self.clocktriggered_offset = None
 
         # triggers[0,6] = [ A, B:1, C(T-6), ... ]
         self.triggers = OrderedDict()         
@@ -117,9 +117,9 @@ class taskdef(object):
         if len( self.hours ) == 0:
             raise DefinitionError( 'no hours specified' )
 
-        if 'contact' in self.modifiers:
-            if self.contact_offset == None:
-                raise DefinitionError( 'contact tasks must specify a time offset' )
+        if 'clocktriggered' in self.modifiers:
+            if self.clocktriggered_offset == None:
+                raise DefinitionError( 'clock-triggered tasks must specify a time offset' )
 
         if self.member_of and len( self.members ) > 0:
             raise DefinitionError( 'nested task families are not allowed' )
@@ -306,8 +306,8 @@ class taskdef(object):
             for command in self.commands:
                 sself.external_tasks.append( command )
  
-            if 'contact' in self.modifiers:
-                sself.real_time_delay =  float( self.contact_offset )
+            if 'clocktriggered' in self.modifiers:
+                sself.real_time_delay =  float( self.clocktriggered_offset )
 
             # prerequisites
             sself.prerequisites = prerequisites()
@@ -352,8 +352,8 @@ class taskdef(object):
 
             sself.extra_scripting = self.scripting
 
-            if 'catchup_contact' in self.modifiers:
-                catchup_contact.__init__( sself )
+            if 'catchup_clocktriggered' in self.modifiers:
+                catchup_clocktriggered.__init__( sself )
  
             super( sself.__class__, sself ).__init__( initial_state ) 
 

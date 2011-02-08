@@ -19,9 +19,9 @@ class nopid(object):
 
         # Note that tasks with no previous instance dependence and  NO
         # PREREQUISITES will all "go off at once" out to the runahead
-        # limit (unless they are contact tasks whose time isn't up yet).
-        # These can be constrained with the sequential attribute if that
-        # is preferred. 
+        # limit (unless they are clock-triggered tasks whose time isn't
+        # up yet). These can be constrained with the sequential
+        # attribute if that is preferred. 
  
         if self.has_spawned():
             # already spawned

@@ -301,7 +301,7 @@ and restart.
 
 * when remote killing all waiting tasks at a ref time, check that (a)
   the suite has moved on passed that time, and (b) none of the waiting
-  tasks are contact tasks whose time has not come up yet.
+  tasks are clock-triggered tasks whose time has not come up yet.
 
 * we need a way to make the the custom clock (accelerated in dummy mode)
   available throughout the code, so we can easily use it anywhere
