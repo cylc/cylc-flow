@@ -4,9 +4,10 @@
 # TO DO: ERROR CHECKING:
 #        - MULTIPLE DEFINITION OF SAME PREREQUISITES, E.G. VIA TWO
 #          CYCLE-TIME SECTIONS IN THE GRAPH.
-#        - SPECIAL OUTPUTS - check ':foo' is defined in task section
+#        - SPECIAL OUTPUTS foo:out1
 #          - check outputs do not appear on right side of pairs, 
-#          - OR IGNORE  IF THEY DO?
+#          - document: use foo(T-6):out1, not foo:out1 with $(T-6) in
+#          the output message - so the graph will plot correctly.
 
 # IMPORTANT NOTE: configobj.reload() apparently does not revalidate
 # (list-forcing is not done, for example, on single value lists with
@@ -462,7 +463,12 @@ class config( CylcConfigObj ):
                         try:
                             output = self['tasks'][lnode.name]['outputs'][lnode.output]
                         except KeyError:
-                            raise SuiteConfigError, "Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
+                            if lnode.output == 'fail':
+                                trigger = lnode.name + '%$(CYCLE_TIME) failed'
+                                self.taskdefs[right].add_special_trigger( trigger, cycle_list_string )
+                                continue
+                            else:
+                                raise SuiteConfigError, "Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
                         self.taskdefs[right].add_special_trigger( output, cycle_list_string )
                     else:
                         self.taskdefs[right].add_trigger( l, cycle_list_string )

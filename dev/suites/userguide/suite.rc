@@ -55,6 +55,10 @@ task run time in seconds = 1
                     B & C => D
                     C:foo => F
                     F:fail => G
+                    # Not working yet:
+                    #C(T-6):foo => F
+                    #F(T-6):fail => G
+                    #? F | F:fail => G
     
                     ColdA | A(T-6) => A
                     ColdB | B(T-6) => B
