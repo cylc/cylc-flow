@@ -5,7 +5,7 @@
 
 class oneoff(object):
 
-    is_oneoff = True  # used in manager
+    is_oneoff = True
 
     def ready_to_spawn( self ):
         self.state.set_spawned()

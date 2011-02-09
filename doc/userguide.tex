@@ -105,67 +105,61 @@ For Complex Forecasting Systems \linebreak
 \subsection{Scheduling Forecast Systems} 
 \label{SchedulingForecastSystems}
 
-Environmental forecasting systems generate forecast products at regular
-intervals using potentially large sets of scientific models and
+Environmental forecasting systems generate forecast products from a
+potentially large group of interdependent scientific models and
 associated data processing tasks. They are constrained by availability
-of external driving data, typically real time observations and/or model
-data from an external forecasting system, which one or more tasks depend
-on, and these drive other ``downstream'' tasks, and so on. The
-dependency diagram for a single forecast cycle in such a system 
-is a {\em Directed Acyclic Graph} as shown in Figure~\ref{fig-dep-one}
-(a {\em forecast cycle} is comprised
-of tasks with a common {\em cycle time}, namely the nominal analysis
-time or start time of the forecast models in the group). Normal real
-time operation necessarily consists of a series of distinct forecast
-cycles that are each initiated, after a gap in processing, by arrival of
-new external driving data.
+of external driving data: typically one or more tasks will wait on real
+time observations and/or model data from an external system, and these
+will drive other downstream tasks, and so on. The dependency diagram for
+a single forecast cycle in such a system is a {\em Directed Acyclic
+Graph} as shown in Figure~\ref{fig-dep-one} (in our terminology, a {\em
+forecast cycle} is comprised of all tasks with a common {\em cycle
+time}, which is the nominal analysis time or start time of the forecast
+models in the group). In real time operation processing will consist of
+a series of distinct forecast cycles that are each initiated, after a
+gap, by arrival of the new cycle's external driving data.
 
-From a job scheduling perspective task execution order must be carefully
-controlled in order to avoid dependency violations. Ideally, each task
-should be queued for execution at the instant its last prerequisite is
-satisfied; this is the best that can be done even if queued tasks are
-not able to execute immediately because of resource contention.
-
+From a job scheduling perspective task execution order in such a system
+must be carefully controlled in order to avoid dependency violations.
+Ideally, each task should be queued for execution at the instant its
+last prerequisite is satisfied; this is the best that can be done even
+if queued tasks are not able to execute immediately because of resource
+contention.
 
 \subsection{EcoConnect} 
 \label{EcoConnect}
 
-This work was motivated by the EcoConnect Forecasting System at NIWA
-(National Institute of Water and Atmospheric Research, New Zealand). As
-of 2009, EcoConnect takes real time atmospheric and stream flow
-observations, and operational global weather forecasts from the Met
-Office (UK), and uses these to drive global sea state and regional data
-assimilating weather models, which in turn drive regional sea state,
-storm surge, and catchment river models, plus tide prediction, and a
-large number of associated data collection, quality control,
-preprocessing, postprocessing, product generation, and archiving
-tasks.\footnote{Future plans for EcoConnect include additional
-deterministic regional weather forecasts and a statistical ensemble.}
-The global sea state forecast runs once daily.  The regional weather
-forecast runs four times daily but it supplies surface winds and
-pressure to several downstream models that run only twice daily, and
-precipitation accumulations to catchment river models that run on an
-hourly cycle assimilating real time stream flow observations and using
-the most recent available regional weather forecast.  EcoConnect runs on
-heterogenous distributed hardware, including a massively parallel
-supercomputer and several Linux servers. 
+Cylc was developed for the EcoConnect Forecasting System at NIWA
+(National Institute of Water and Atmospheric Research, New Zealand).
+EcoConnect takes real time atmospheric and stream flow observations, and
+operational global weather forecasts from the Met Office (UK), and uses
+these to drive global sea state and regional data assimilating weather
+models, which in turn drive regional sea state, storm surge, and
+catchment river models, plus tide prediction, and a large number of
+associated data collection, quality control, preprocessing,
+postprocessing, product generation, and archiving tasks.\footnote{Future
+plans for EcoConnect include additional deterministic regional weather
+forecasts and a statistical ensemble.} The global sea state forecast
+runs once daily. The regional weather forecast runs four times daily but
+it supplies surface winds and pressure to several downstream models that
+run only twice daily, and precipitation accumulations to catchment river
+models that run on an hourly cycle assimilating real time stream flow
+observations and using the most recent available regional weather
+forecast.  EcoConnect runs on heterogenous distributed hardware,
+including a massively parallel supercomputer and several Linux servers. 
 
 \subsection{Intracycle Dependencies} 
 \label{IntracycleDependencies}
 
-Because real time operation consists of a series of distinct forecast
-cycles, it is natural to consider dependencies that occur between tasks
-within a single forecast cycle. A sea state forecast, for example, might
-depend on surface wind fields generated by a weather forecast over the
-same forecast range, and a postprocessing task clearly cannot run before
-its input data has been generated. Figure~\ref{fig-dep-one} shows the
-dependency diagram for a single forecast cycle of a simple example
-suite of three forecast models ({\em a, b,} and {\em c}) and
-three post processing or product generation tasks ({\em d, e} and {\em
-f}).  A scheduler capable of handling this must manage, within a single
-forecast cycle, multiple parallel streams of execution that branch when
-one task generates output for several downstream tasks, and merge when
-one task takes input from several upstream tasks. 
+Most inter-task dependencies exist within a single forecast cycle.
+Figure~\ref{fig-dep-one} shows the dependency diagram for a single
+forecast cycle of a simple example suite of three forecast models ({\em
+a, b,} and {\em c}) and three post processing or product generation
+tasks ({\em d, e} and {\em f}). A scheduler capable of handling this
+must manage, within a single forecast cycle, multiple parallel streams
+of execution that branch when one task generates output for several
+downstream tasks, and merge when one task takes input from several
+upstream tasks. 
 
 \begin{figure}
     \begin{center}
@@ -199,7 +193,8 @@ execution times represented by the horizontal extent of the task bars.
 There is a time gap between cycles as the suite waits on new external
 driving data.  Each task in the example suite happens to trigger off
 upstream tasks {\em finishing}, rather than off any intermediate output
-or event; this is merely a simplification that makes for clearer diagrams.
+or event; this is merely a simplification that makes for clearer
+diagrams.
 
 \begin{figure}
     \begin{center}
@@ -236,20 +231,19 @@ or event; this is merely a simplification that makes for clearer diagrams.
 Now the question arises, what happens if the external driving data for
 upcoming cycles is available in advance, as it would be after a
 significant delay in operations, or when running a historical case
-study?  The forecast model {\em a} depends only on the external data
-and, implicitly at this stage of the discussion, on its own previous
-instance for a model ``background state''. Thus, as alluded to in
+study?  While the forecast model {\em a} appears to depend only on the
+external data {\em x} at this stage of the discussion, in fact it also
+depends on its own previous instance for a model {em background state}
+used in initializing the new forecast. Thus, as alluded to in
 Figure~\ref{fig-dep-two-linked}, task {\em a} could in principle start
 immediately its predecessor has finished.  Figure~\ref{fig-overlap}
 shows, however, that starting a whole new cycle at this point is
 dangerous - it results in dependency violations in half of the tasks in
-the simple example suite. In fact the situation is even worse than this
-- what if task {\em b} in the first cycle is delayed for any reason {\em
-after} the second cycle has been launched? Clearly we must consider
-handling intercycle dependencies explicitly in order to solve this
-problem, or else agree never to start the next cycle early, as
-is illustrated in Figure~\ref{fig-job-no-overlap}.
-
+the example suite. In fact the situation is even worse than this
+- imagine that task {\em b} in the first cycle is delayed for any reason
+{\em after} the second cycle has been launched? Clearly we must consider
+handling intercycle dependencies explicitly or else agree not to start
+the next cycle early, as is illustrated in Figure~\ref{fig-job-no-overlap}.
 
 \subsection{Intercycle Dependencies} 
 \label{IntercycleDependencies}
@@ -481,15 +475,6 @@ therein are entirely hidden from the user.
 %by anyone). 
 
 
-
-\pagebreak
-\section{The Cylc Command Set}
-
-Cylc commands are self-documenting. Section~\ref{CommandReference}
-contains the complete {\em Command Reference}. 
-
-%\lstset{language=usage}
-%\lstinputlisting{command-usage/help.txt}
 
 \pagebreak
 \section{Installation And Testing} 
@@ -2335,12 +2320,8 @@ $CYLC_DIR/examples/userguide/
 \section{Command Reference}
 \label{CommandReference}
 
-The information in this section is auto-generated from
-the current command set during document processing, using  
-\lstinline=cylc COMMAND --help=. 
-Command self-documentation, however, is intended as a minimalist
-on-the-fly usage reminder so additional information is appended in
-some cases.
+This section is auto-generated from the self-documenting command set
+during processing of the userguide source. 
   
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 \lstset{language=usage}
