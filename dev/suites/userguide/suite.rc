@@ -14,7 +14,7 @@ functionality."""
 #job submission shell = /usr/bin/ksh
 
 use lockserver = True
-use secure passphrase = True
+use secure passphrase = False
 
 task submitted hook         = alert.sh
 task started hook           = alert.sh
@@ -54,6 +54,7 @@ task run time in seconds = 1
                     A => C
                     B & C => D
                     C:foo => F
+                    F:fail => G
     
                     ColdA | A(T-6) => A
                     ColdB | B(T-6) => B

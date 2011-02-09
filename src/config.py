@@ -459,7 +459,10 @@ class config( CylcConfigObj ):
                     if lnode.intercycle:
                         self.taskdefs[lnode.name].intercycle = True
                     if lnode.special_output:
-                        output = self['tasks'][lnode.name]['outputs'][lnode.output]
+                        try:
+                            output = self['tasks'][lnode.name]['outputs'][lnode.output]
+                        except KeyError:
+                            raise SuiteConfigError, "Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
                         self.taskdefs[right].add_special_trigger( output, cycle_list_string )
                     else:
                         self.taskdefs[right].add_trigger( l, cycle_list_string )
