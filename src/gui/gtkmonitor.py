@@ -851,7 +851,7 @@ A real time suite control and monitoring tool for cylc.
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Initial Cycle Time (YYYYMMDDHH)' )
+        label = gtk.Label( 'Start (YYYYMMDDHH)' )
         box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(10)
@@ -859,31 +859,20 @@ A real time suite control and monitoring tool for cylc.
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Initial State (default: most recent;\nelse give a state dump filename)' )
-        box.pack_start( label, True )
-        statedump_entry = gtk.Entry()
-        statedump_entry.set_sensitive( False )
-        box.pack_start (statedump_entry, True)
-        vbox.pack_start(box)
-
-        box = gtk.HBox()
-        label = gtk.Label( 'Optional Stop Cycle Time (YYYYMMDDHH)' )
+        label = gtk.Label( 'Stop Cycle (optional)' )
         box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
         box.pack_start (stoptime_entry, True)
         vbox.pack_start( box )
 
-        exin_group = option_group()
-        exin_group.add_entry( 
-                'Tasks To Exclude At Startup (comma separated)',
-                '--exclude=',
-                )
-        exin_group.add_entry( 
-                'Tasks To Include At Startup (comma separated)',
-                '--include=',
-                )
-        exin_group.pack(vbox)
+        box = gtk.HBox()
+        label = gtk.Label( 'State Dump (optional)' )
+        box.pack_start( label, True )
+        statedump_entry = gtk.Entry()
+        statedump_entry.set_sensitive( False )
+        box.pack_start (statedump_entry, True)
+        vbox.pack_start(box)
 
         coldstart_rb.connect( "toggled", self.startup_method, "cold", ctime_entry, statedump_entry )
         warmstart_rb.connect( "toggled", self.startup_method, "warm", ctime_entry, statedump_entry )
@@ -897,19 +886,11 @@ A real time suite control and monitoring tool for cylc.
                 )
         dmode_group.pack( vbox )
         
-        #dot_group = controlled_option_group( "Generate A Dependency Graph?" )
-        #dot_group.add_entry( 'filename (absolute path or relative to $HOME)', 
-        #        '--graphfile=', max_chars=None, default=self.suite+'.dot' )
-        #dot_group.pack( vbox )
-        #optgroups = [ exin_group, dmode_group, dot_group ]
-
         dot_group = controlled_option_group( "Debug Mode", "--debug" )
         #dot_group.add_entry( 'filename (absolute path or relative to $HOME)', 
         #        '--graphfile=', max_chars=None, default=self.suite+'.dot' )
         dot_group.pack( vbox )
-        optgroups = [ exin_group, dmode_group, dot_group ]
-
-        #optgroups = [ exin_group, dmode_group ]
+        optgroups = [ dmode_group, dot_group ]
 
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )

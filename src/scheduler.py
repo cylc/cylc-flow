@@ -58,8 +58,7 @@ class scheduler(object):
         self.broker = broker()
 
         # COMMANDLINE OPTIONS
-        self.parser.set_defaults( dummy_mode=False, practice_mode=False,
-                include=None, exclude=None, debug=False )
+        self.parser.set_defaults( dummy_mode=False, practice_mode=False, debug=False )
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
@@ -68,16 +67,6 @@ class scheduler(object):
         self.parser.add_option( "--pause",
                 help="Refrain from running tasks AFTER this cycle time.",
                 metavar="CYCLE", action="store", dest="pause_time" )
-
-        self.parser.add_option( "--exclude",
-                help="Comma-separated list of tasks to exclude at startup "
-                "(this can also be done via the suite.rc file).",
-                metavar="LIST", action="store", dest='exclude' )
-
-        self.parser.add_option( "--include",
-                help="Comma-separated list of tasks to include at startup "
-                "(all other tasks will be excluded).",
-                metavar="LIST", action="store", dest='include' )
 
         self.parser.add_option( "-d", "--dummy-mode",
                 help="Run the suite in simulation mode: each task is replaced "
@@ -141,16 +130,6 @@ class scheduler(object):
             self.logging_level = logging.DEBUG
         else:
             self.logging_level = logging.INFO
-
-        # LIST OF TASKS TO INCLUDE AT STARTUP (EXCLUDING OTHERS)
-        self.include_via_cline = []
-        if self.options.include:
-            self.include_via_cline = self.options.include.split(',')
-
-        # LIST OF TASKS TO EXCLUDE AT STARTUP
-        self.exclude_via_cline = []
-        if self.options.exclude:
-            self.exclude_via_cline = self.options.exclude.split(',')
 
     def check_not_running_already( self ):
         # CHECK SUITE IS NOT ALREADY RUNNING (unless practice mode)
@@ -1282,20 +1261,12 @@ class scheduler(object):
     def filter_initial_task_list( self, inlist ):
         included_by_rc  = self.config[ 'tasks to include at startup'   ]
         excluded_by_rc  = self.config[ 'tasks to exclude at startup'   ]
-        included_by_cline = self.include_via_cline 
-        excluded_by_cline = self.exclude_via_cline 
         outlist = []
-
-        include_list_supplied = False
-        if len( included_by_cline ) > 0 or len( included_by_rc ) > 0:
-            include_list_supplied = True
-            included_tasks = included_by_cline + included_by_rc
-
         for name in inlist:
-            if name in excluded_by_cline or name in excluded_by_rc:
+            if name in excluded_by_rc:
                 continue
-            if include_list_supplied:
-                if name not in included_tasks:
+            if len( included_by_rc ) > 0:
+                if name not in included_by_rc:
                     continue
             outlist.append( name ) 
         return outlist
