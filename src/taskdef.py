@@ -70,7 +70,7 @@ class taskdef(object):
 
         # default to dummy task for tasks in dependency graph but not in
         # [tasks] section.
-        self.commands = ['cylc-wrapper -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP"'] # list of commands
+        self.commands = ['cylc wrap -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP"'] # list of commands
         self.scripting   = ''                    # list of lines
         self.environment = OrderedDict()         # var = value
         self.directives  = OrderedDict()         # var = value
@@ -80,15 +80,17 @@ class taskdef(object):
             self.triggers[ cycle_list_string ] = []
         self.triggers[ cycle_list_string ].append( msg )
 
-    def add_startup_trigger( self, trigger, cycle_list_string ):
+    def add_startup_trigger( self, msg, cycle_list_string ):
         if cycle_list_string not in self.startup_triggers:
             self.startup_triggers[ cycle_list_string ] = []
-        self.startup_triggers[ cycle_list_string ].append( trigger )
+        self.startup_triggers[ cycle_list_string ].append( msg )
 
-    def add_conditional_trigger( self, trigger, cycle_list_string ):
+    def add_conditional_trigger( self, triggers, exp, cycle_list_string ):
+        # triggers[label] = trigger
+        # expression relates the labels
         if cycle_list_string not in self.cond_triggers:
             self.cond_triggers[ cycle_list_string ] = []
-        self.cond_triggers[ cycle_list_string ].append( trigger )
+        self.cond_triggers[ cycle_list_string ].append( [ triggers, exp ] )
 
     def check_name( self, name ):
         if re.search( '[^\w]', name ):
@@ -201,17 +203,16 @@ class taskdef(object):
         if self.member_of:
             tclass.member_of = self.member_of
 
-        def tclass_format_trigger( sself, trigger ):
-            # TO DO: REPLACE CYCLE_TIME +/- n 
-            if node.intercycle:
-                offset = node.intercycle_offset
-                msg = name + '%' + cycle_time.decrement( sself.c_time, offset ) + ' finished'
+        def tclass_format_prerequisites( sself, preq ):
+            m = re.search( '\$\(CYCLE_TIME\s*\-\s*(\d+)\)', preq )
+            if m:
+                offset = m.groups()[0]
+                ctime = cycle_time.decrement( sself.c_time, offset )
+                preq = re.sub( '\$\(CYCLE_TIME\s*\-\s*\d+\)', ctime, preq )
             else:
-                # trigger off task finished
-                msg = name + '%' + sself.c_time + ' finished'
-            return [name, msg]
-
-        tclass.format_trigger = tclass_format_trigger
+                preq = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, preq )
+            return preq
+        tclass.format_prerequisites = tclass_format_prerequisites 
 
         def tclass_add_prerequisites( sself, startup ):
 
@@ -227,7 +228,7 @@ class taskdef(object):
                         if int( sself.c_hour ) == int( hr ):
                             for trig in trigs:
                                 found = True
-                                pp.add( sself.format_trigger( trig )[1] )
+                                pp.add( sself.format_prerequisites( trig ))
                 if found:
                     sself.prerequisites.add_requisites( pp )
 
@@ -238,28 +239,21 @@ class taskdef(object):
                 for hr in hours:
                     if int( sself.c_hour ) == int( hr ):
                         for trig in trigs:
-                            # TO DO: $(CYCLE_TIME +/- HH )
-                            tr = re.sub( '\$\(CYCLE_TIME\)', sself.c_time, trig )
-                            pp.add( tr )
+                            pp.add( sself.format_prerequisites( trig ))
 
             sself.prerequisites.add_requisites( pp )
 
             # conditional triggers
             for cycles in self.cond_triggers:
-                ctrigs = self.cond_triggers[ cycles ]
-                hours = re.split( ',\s*', cycles )
-                for hr in hours:
-                    if int( sself.c_hour ) == int( hr ):
-                        for ctrig in ctrigs:
-                            # individual task names
+                for ctrig in self.cond_triggers[ cycles ]:
+                    triggers, exp =  ctrig
+                    hours = re.split( ',\s*', cycles )
+                    for hr in hours:
+                        if int( sself.c_hour ) == int( hr ):
                             cp = conditional_prerequisites( sself.id )
-                            names = re.split( '\s*[\|&]\s*', ctrig )
-                            for name in names:
-                                n, t = sself.format_trigger( name )
-                                cp.add( t, n )
-                            # strip (T-DD), :foo, off expression
-                            exp = re.sub( '\(.*?\)', '', ctrig )  # does more than one (T-DD)?
-                            exp = re.sub( ':\w+', '', exp )
+                            for label in triggers:
+                                trig = triggers[label]
+                                cp.add( sself.format_prerequisites( trig ), label )
                             cp.set_condition( exp )
                             sself.prerequisites.add_requisites( cp )
 

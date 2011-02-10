@@ -41,11 +41,14 @@ class conditional_prerequisites(prerequisites):
 
     def set_condition( self, expr ):
         # 'foo | bar & baz'
+        # 'foo:fail | foo'
+        # 'foo(T-6):out1 | baz'
+
         # make into a python expression
-        for l in self.messages:
-            # must use raw string here else '\b' means 'backspace'
-            # instead of 'word boundary'
-            expr = re.sub( r'\b'+l+r'\b', "self.satisfied['" + l + "']", expr )
+        for label in self.messages:
+            # match label start and end on on word boundary
+            expr = re.sub( r'\b' + label + r'\b', 'self.satisfied[\'' + label + '\']', expr )
+
         self.conditional_expression = expr
 
     def all_satisfied( self ):

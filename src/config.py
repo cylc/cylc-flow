@@ -216,21 +216,23 @@ class config( CylcConfigObj ):
             for task in self['task families'][fam]:
                 self.member_of[ task ] = fam
 
-    def get_trigger( self, task_name, output_name=None, offset=None ):
+    def set_trigger( self, task_name, output_name=None, offset=None ):
         if output_name:
             try:
-                output = self['tasks'][task_name]['outputs'][output_name]
+                trigger = self['tasks'][task_name]['outputs'][output_name]
             except KeyError:
                 if output_name == 'fail':
-                    output = task_name + '%$(CYCLE_TIME) failed'
+                    trigger = task_name + '%$(CYCLE_TIME) failed'
                 else:
                     raise SuiteConfigError, "Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
         else:
-            output = task_name + '%$(CYCLE_TIME) finished'
+            trigger = task_name + '%$(CYCLE_TIME) finished'
+
         # now adjust for time offset
         if offset:
-            output = re.sub( 'CYCLE_TIME', 'CYCLE_TIME - ' + str(offset), output )
-        return output
+            trigger = re.sub( 'CYCLE_TIME', 'CYCLE_TIME - ' + str(offset), trigger )
+
+        return trigger
 
     def __check_tasks( self ):
         # Call after all tasks are defined.
@@ -471,14 +473,14 @@ class config( CylcConfigObj ):
                 lnode = graphnode( l )
 
                 if lnode.name in self['special tasks']['startup']:
-                    self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
+                    trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
+                    self.taskdefs[right].add_startup_trigger( trigger, cycle_list_string )
+                else:
+                    if lnode.intercycle:
+                        self.taskdefs[lnode.name].intercycle = True
 
-                if lnode.intercycle:
-                    self.taskdefs[lnode.name].intercycle = True
-
-                trigger = self.get_trigger( lnode.name, lnode.output, lnode.offset )
-
-                self.taskdefs[right].add_trigger( trigger, cycle_list_string )
+                    trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
+                    self.taskdefs[right].add_trigger( trigger, cycle_list_string )
         else:
             # Conditional with OR:
             # Strip off '*' plotting conditional indicator
@@ -491,13 +493,34 @@ class config( CylcConfigObj ):
             for t in self['special tasks']['startup']:
                 if re.search( r'\b' + t + r'\b', l ):
                     raise SuiteConfigError, 'ERROR: startup task in conditional: ' + t
-            self.taskdefs[right].add_conditional_trigger( l, cycle_list_string )
-            lefts = re.split( '\s*[\|&]\s*', l)
 
+            ctrig = {}
+
+            lefts = re.split( '\s*[\|&]\s*', l)
             for left in lefts:
                 lnode = graphnode(left)
                 if lnode.intercycle:
                     self.taskdefs[lnode.name].intercycle = True
+                trigger = self.set_trigger( lnode.name, lnode.output, lnode.offset )
+                # use fully qualified name for the expression label
+                # (task name is not unique, e.g.: "F | F:fail => G")
+
+                label = re.sub( '\(', '_', left )
+                label = re.sub( '\)', '_', label )
+                label = re.sub( '\-', '_', label )
+                label = re.sub( '\:', '_', label )
+
+                ctrig[label] = trigger
+
+            # l itself is the conditional expression, but replace some
+            # chars for later use in regular  expressions.
+
+            label = re.sub( '\(', '_', l )
+            label = re.sub( '\)', '_', label )
+            label = re.sub( '\-', '_', label )
+            label = re.sub( '\:', '_', label )
+
+            self.taskdefs[right].add_conditional_trigger( ctrig, label, cycle_list_string )
 
     def get_graph( self, start_ctime, stop, colored=True, raw=False ):
         # check if graphing is disabled in the calling method

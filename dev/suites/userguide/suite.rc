@@ -30,6 +30,8 @@ task submission timeout minutes = 0.1
 #job submission method = ll_basic
 job submission log directory = running/${CYLC_SUITE_NAME}-logs
 
+#tasks to include at startup = prep, X, ColdA, A
+
 [experimental]
 #write live graph = True
 
@@ -53,12 +55,12 @@ task run time in seconds = 1
                     X => A => B => E
                     A => C
                     B & C => D
-                    C:foo => F
-                    F:fail => G
-                    # Not working yet:
+                    # The following all work:
+                    #C:foo => F
                     #C(T-6):foo => F
+                    #F:fail => G
+                    #F | F:fail => G
                     #F(T-6):fail => G
-                    #? F | F:fail => G
     
                     ColdA | A(T-6) => A
                     ColdB | B(T-6) => B
