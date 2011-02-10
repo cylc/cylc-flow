@@ -107,11 +107,7 @@ class message(object):
             if self.mode == 'scheduler':
                 self.get_proxy().incoming( self.priority, self.msg )
 
-    def send_completed( self ):
-        self.send_sp( self.task_id + ' completed' )
-
     def send_finished( self ):
-        self.send_completed()
         self.send_sp( self.task_id + ' finished' )
 
     def send_started( self ):
@@ -121,8 +117,6 @@ class message(object):
         self.priority = 'CRITICAL'
         # send reason for failure
         self.send()
-        # send completed
-        self.send_completed()
         # send failed
         self.send_sp( self.task_id + ' failed' )
 

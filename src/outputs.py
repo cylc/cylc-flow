@@ -41,10 +41,6 @@ class outputs( requisites ):
         message = self.owner_id + ' started'
         self.satisfied[ message ] = False
         self.ordered.insert(0, message )
-
-        # and 'completed' for dependant tasks that don't care about
-        # success or failure of this task, only completion
-        self.add( self.owner_id + ' completed' )
         self.add( self.owner_id + ' finished' )
 
     def get_ordered( self ):
