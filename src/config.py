@@ -216,6 +216,22 @@ class config( CylcConfigObj ):
             for task in self['task families'][fam]:
                 self.member_of[ task ] = fam
 
+    def get_trigger( self, task_name, output_name=None, offset=None ):
+        if output_name:
+            try:
+                output = self['tasks'][task_name]['outputs'][output_name]
+            except KeyError:
+                if output_name == 'fail':
+                    output = task_name + '%$(CYCLE_TIME) failed'
+                else:
+                    raise SuiteConfigError, "Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
+        else:
+            output = task_name + '%$(CYCLE_TIME) finished'
+        # now adjust for time offset
+        if offset:
+            output = re.sub( 'CYCLE_TIME', 'CYCLE_TIME - ' + str(offset), output )
+        return output
+
     def __check_tasks( self ):
         # Call after all tasks are defined.
         # Note: 
@@ -447,31 +463,22 @@ class config( CylcConfigObj ):
         if not re.search( '\|', lcond ):
             # lcond is a single trigger, or an '&'-only one, in which
             # case we don't need to use conditional prerequisites (we
-            # could, but they may be less # efficient due to 'eval'?).
+            # could, but they may be less efficient due to 'eval'?).
 
             for left in lefts:
                 # strip off '*' plotting conditional indicator
                 l = re.sub( '\s*\*', '', left )
-
                 lnode = graphnode( l )
+
                 if lnode.name in self['special tasks']['startup']:
                     self.taskdefs[right].add_startup_trigger( l, cycle_list_string )
-                else:
-                    if lnode.intercycle:
-                        self.taskdefs[lnode.name].intercycle = True
-                    if lnode.special_output:
-                        try:
-                            output = self['tasks'][lnode.name]['outputs'][lnode.output]
-                        except KeyError:
-                            if lnode.output == 'fail':
-                                trigger = lnode.name + '%$(CYCLE_TIME) failed'
-                                self.taskdefs[right].add_special_trigger( trigger, cycle_list_string )
-                                continue
-                            else:
-                                raise SuiteConfigError, "Task '" + lnode.name + "' does not define output '" + lnode.output  + "'"
-                        self.taskdefs[right].add_special_trigger( output, cycle_list_string )
-                    else:
-                        self.taskdefs[right].add_trigger( l, cycle_list_string )
+
+                if lnode.intercycle:
+                    self.taskdefs[lnode.name].intercycle = True
+
+                trigger = self.get_trigger( lnode.name, lnode.output, lnode.offset )
+
+                self.taskdefs[right].add_trigger( trigger, cycle_list_string )
         else:
             # Conditional with OR:
             # Strip off '*' plotting conditional indicator

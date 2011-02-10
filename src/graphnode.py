@@ -18,7 +18,9 @@ class graphnode( object ):
         # Defaults:
         self.intercycle = False
         self.special_output = False
+
         self.offset = None
+        self.output = None
 
         # strip '*' indicators - only used for graphing
         # foo:m1(T-6)* -> foo:m1(T-6)

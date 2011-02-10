@@ -10,8 +10,6 @@
 
 # SUICIDE PREREQUISITES
 
-# SPECIAL OUTPUT TRIGGERS: complete for T+/-HH (and in OR conditionals?).
- 
 import sys, re
 from OrderedDict import OrderedDict
 
@@ -23,7 +21,6 @@ from task_output_logs import logfiles
 from collections import deque
 from outputs import outputs
 import cycle_time
-from graphnode import graphnode
 
 class Error( Exception ):
     """base class for exceptions in this module."""
@@ -68,8 +65,6 @@ class taskdef(object):
         self.startup_triggers = OrderedDict()
         self.suicide_triggers = OrderedDict()       
 
-        self.special_triggers = OrderedDict()
-
         self.outputs = []     # list of special outputs; change to OrderedDict()
                               # if need to vary per cycle.
 
@@ -80,15 +75,10 @@ class taskdef(object):
         self.environment = OrderedDict()         # var = value
         self.directives  = OrderedDict()         # var = value
 
-    def add_trigger( self, trigger, cycle_list_string ):
+    def add_trigger( self, msg, cycle_list_string ):
         if cycle_list_string not in self.triggers:
             self.triggers[ cycle_list_string ] = []
-        self.triggers[ cycle_list_string ].append( trigger )
-
-    def add_special_trigger( self, msg, cycle_list_string ):
-        if cycle_list_string not in self.special_triggers:
-            self.special_triggers[ cycle_list_string ] = []
-        self.special_triggers[ cycle_list_string ].append( msg )
+        self.triggers[ cycle_list_string ].append( msg )
 
     def add_startup_trigger( self, trigger, cycle_list_string ):
         if cycle_list_string not in self.startup_triggers:
@@ -212,12 +202,7 @@ class taskdef(object):
             tclass.member_of = self.member_of
 
         def tclass_format_trigger( sself, trigger ):
-            node = graphnode( trigger )
-            name = node.name
-            if node.special_output:
-                # special output not dealt with here!
-                # TO DO: BETTER ERROR CHECKING FOR THIS SITUATION
-                raise TaskDefinitionError, 'ERROR: this code should not be reached!'
+            # TO DO: REPLACE CYCLE_TIME +/- n 
             if node.intercycle:
                 offset = node.intercycle_offset
                 msg = name + '%' + cycle_time.decrement( sself.c_time, offset ) + ' finished'
@@ -247,20 +232,8 @@ class taskdef(object):
                     sself.prerequisites.add_requisites( pp )
 
             pp = plain_prerequisites( sself.id ) 
-            # plain triggers
             for cycles in self.triggers:
                 trigs = self.triggers[ cycles ]
-                hours = re.split( ',\s*', cycles )
-                for hr in hours:
-                    if int( sself.c_hour ) == int( hr ):
-                        for trig in trigs:
-                            pp.add( sself.format_trigger( trig )[1] )
-            sself.prerequisites.add_requisites( pp )
-
-            pp = plain_prerequisites( sself.id ) 
-            # special triggers:
-            for cycles in self.special_triggers:
-                trigs = self.special_triggers[ cycles ]
                 hours = re.split( ',\s*', cycles )
                 for hr in hours:
                     if int( sself.c_hour ) == int( hr ):
