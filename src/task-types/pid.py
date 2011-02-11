@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-
 import re
 
 class pid(object):
@@ -13,27 +12,13 @@ class pid(object):
     # prerequisites and outputs, and overrides
     # free.ready_to_spawn() appropriately.
 
-    def register_restart_requisites( self, n_restart_outputs ):
-        # call after parent init, so that self.c_time is defined!
-
-        msg = self.name + ' restart files ready for '
-        self.prerequisites.add(  msg + self.c_time )
-
-        rt = self.c_time
-        for n in range( n_restart_outputs ):
-            next_rt = self.next_c_time( rt )
-            self.outputs.add( msg + next_rt )
-            rt = next_rt
-
     def set_next_restart_completed( self ):
         if self.reject_if_failed( 'set_next_restart_completed' ):
             return
- 
         restart_messages = []
         for message in self.outputs.satisfied.keys():
             if re.search( 'restart files ready for', message ):
                 restart_messages.append( message )
-
         restart_messages.sort()
         for message in restart_messages:
             if not self.outputs.is_satisfied( message ):
@@ -41,11 +26,9 @@ class pid(object):
                 # that's the next one, quit now.
                 break
 
-
     def set_all_restarts_completed( self ):
         if self.reject_if_failed( 'set_all_restarts_completed' ):
             return
-
         # convenience for external tasks that don't report restart
         # outputs one at a time.
         self.log( 'WARNING', 'setting ALL restart outputs completed' )
@@ -54,7 +37,6 @@ class pid(object):
                 if not self.outputs.is_satisfied( message ):
                     self.incoming( 'NORMAL', message )
  
-
     def ready_to_spawn( self ):
         # Never spawn a waiting task of this type because the
         # successor's restart prerequisites could get satisfied by the
@@ -62,35 +44,26 @@ class pid(object):
         # thereby start too soon (we want this to happen ONLY if the
         # previous task fails and is subsequently made to spawn and 
         # die by the suite operator).
-
         if self.has_spawned():
             # already spawned
             return False
-
         if self.state.is_waiting() or self.state.is_submitted():
             return False
-
         if self.state.is_finished():
             # always spawn a finished task
             return True
-
         ready = False
-
         if self.state.is_running() or self.state.is_failed(): 
-            # failed tasks are running before they fail, so will already
+            # Failed tasks are running before they fail, so will already
             # have spawned, or not, according to whether they fail
             # before or after completing their restart outputs.
-
-            # ready only if all restart outputs are completed
-            # as explained above
-
+            # Ready only if all restart outputs are completed
             ready = True
             for message in self.outputs.satisfied.keys():
                 if re.search( 'restart files ready for', message ) and \
                         not self.outputs.satisfied[ message ]:
                     ready = False
                     break
-
         return ready
 
     def my_successor_still_needs_me( self, tasks ):
