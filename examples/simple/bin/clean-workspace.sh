@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 usage="USAGE: clean-workspace.sh PATH"
 
 if [[ $# != 1 ]]; then

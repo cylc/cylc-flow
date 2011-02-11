@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 cylc checkvars  TASK_EXE_SECONDS
 cylc checkvars -d POSTA_INPUT_DIR
 cylc checkvars -c POSTA_OUTPUT_DIR

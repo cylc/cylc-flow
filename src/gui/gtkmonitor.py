@@ -1306,7 +1306,7 @@ A real time suite control and monitoring tool for cylc.
 
         self.create_menu()
 
-        view_button = gtk.ToggleButton( "Toggle Task Names" )
+        view_button = gtk.ToggleButton( "Task Names" )
         view_button.connect( 'toggled', self.toggle_headings )
     
         self.led_headings = None 
