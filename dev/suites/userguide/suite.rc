@@ -55,8 +55,9 @@ task run time in seconds = 1
                     X => A => B => E
                     A => C
                     B & C => D
-                    # The following all work:
-                    #C:foo => F
+                    C:foo => F
+
+                    # The following variations work:
                     #C(T-6):foo => F
                     #F:fail => G
                     #F | F:fail => G

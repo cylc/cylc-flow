@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 cylc checkvars  TASK_EXE_SECONDS
 cylc checkvars -d INPUT_DIR
 cylc checkvars -c OUTPUT_DIR RUNNING_DIR

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -e
+
 # CHECK INPUT AND OUTPUT DIRS ARE DEFINED
 if [[ -z $D_INPUT_DIR ]]; then
     echo "ERROR: \$D_INPUT_DIR is not defined" >&2
