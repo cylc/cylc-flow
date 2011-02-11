@@ -597,6 +597,63 @@ A real time suite control and monitoring tool for cylc.
 
         window.show_all()
  
+    def stop_guide( self, w ):
+        window = gtk.Window()
+        #window.set_border_width( 10 )
+        window.set_title( "Stopping A Suite" )
+        #window.modify_bg( gtk.STATE_NORMAL, 
+        #       gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_size_request(600, 600)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
+
+        vbox = gtk.VBox()
+        quit_button = gtk.Button( "Close" )
+        quit_button.connect("clicked", lambda x: window.destroy() )
+        vbox.pack_start( sw )
+        vbox.pack_start( quit_button, False )
+
+        textview = gtk.TextView()
+        textview.set_border_width(5)
+        textview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
+        textview.set_editable( False )
+        sw.add( textview )
+        window.add( vbox )
+        tb = textview.get_buffer()
+
+        textview.set_wrap_mode( gtk.WRAP_WORD )
+
+        blue = tb.create_tag( None, foreground = "blue" )
+        red = tb.create_tag( None, foreground = "darkblue" )
+        red2 = tb.create_tag( None, foreground = "darkgreen" )
+        alert = tb.create_tag( None, foreground = "red" )
+        bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
+
+        self.update_tb( tb, "Help: Stopping A Suite", [bold, blue] )
+
+        self.update_tb( tb, "\n\n o Stop", [bold, red] )
+        self.update_tb( tb, "\nThe suite will not submit any new tasks to run, and will "
+                "shut down as soon as all currently submitted or running "
+                "tasks have finished. The final state dump file will "
+                "reflect what actually happened "
+                "in the external world.")
+
+        self.update_tb( tb, "\n\n o Stop At (YYYYMMDDHH)", [bold, red] )
+        self.update_tb( tb, "\nStop the suite once all tasks have passed "
+                "the specified cycle time and finished running.  The "
+                "final state dump file will reflect what actually happened "
+                "in the external world.")
+
+        self.update_tb( tb, "\n\n o Stop NOW", [bold, red] )
+        self.update_tb( tb, "\nStop the suite immediately. "
+                "The final state dump will reflect the state of the "
+                "suite at shut down; it will not know about any "
+                "already-running tasks that run to completion after "
+                "the suite shuts down.")
+
+        window.show_all()
+
 
     def userguide( self, w ):
         window = gtk.Window()
@@ -880,9 +937,13 @@ A real time suite control and monitoring tool for cylc.
                 window, stop_rb, stopat_rb, stopnow_rb,
                 stoptime_entry )
 
+        help_button = gtk.Button( "Help" )
+        help_button.connect("clicked", self.stop_guide )
+
         hbox = gtk.HBox()
         hbox.pack_start( cancel_button, False )
         hbox.pack_start( stop_button, False )
+        hbox.pack_start( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
