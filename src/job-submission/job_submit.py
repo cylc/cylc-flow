@@ -35,6 +35,7 @@ import pwd
 import re, os, sys
 import tempfile, stat
 import cycle_time
+from dummy import dummy_command, dummy_command_fail
 from interp_env import interp_self, interp_other, interp_local, interp_local_str, replace_delayed, interp_other_str, replace_delayed_str
 
 try:
@@ -59,9 +60,9 @@ class job_submit(object):
     def use_dummy_task( self ):
         # $CYLC_DUMMY_SLEEP is set at start up
         if self.__class__.failout_id != self.task_id:
-            self.task = self.__class__.dummy_command
+            self.task = dummy_command
         else: 
-            self.task = self.__class__.dummy_command_fail
+            self.task = dummy_command_fail
 
     def __init__( self, task_id, ext_task, task_env, dirs, extra, logs, owner, host ): 
 

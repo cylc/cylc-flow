@@ -845,7 +845,7 @@ A real time suite control and monitoring tool for cylc.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Start " + self.suite )
+        window.set_title( "Stop Suite '" + self.suite + "'")
 
         vbox = gtk.VBox()
 
@@ -860,7 +860,7 @@ A real time suite control and monitoring tool for cylc.
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Stop At Cycle Time (YYYYMMDDHH)' )
+        label = gtk.Label( 'Stop At (YYYYMMDDHH)' )
         box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
@@ -875,14 +875,14 @@ A real time suite control and monitoring tool for cylc.
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        start_button = gtk.Button( "Stop Suite " + self.suite )
-        start_button.connect("clicked", self.stopsuite, 
+        stop_button = gtk.Button( "Stop" )
+        stop_button.connect("clicked", self.stopsuite, 
                 window, stop_rb, stopat_rb, stopnow_rb,
                 stoptime_entry )
 
         hbox = gtk.HBox()
         hbox.pack_start( cancel_button, False )
-        hbox.pack_start( start_button, False )
+        hbox.pack_start( stop_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )

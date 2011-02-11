@@ -40,8 +40,6 @@ clock offset from initial cycle time in hours = integer( default=24 )
 clock rate in seconds per dummy hour = integer( default=10 )
 # exported as $CYLC_DUMMY_SLEEP in job submission file:
 task run time in seconds = integer( default=10 )
-command      = string( default='cylc wrap -m "echo DUMMY MODE $TASK_ID; sleep $CYLC_DUMMY_SLEEP"')
-command fail = string( default='cylc wrap -m "echo DUMMY MODE FAILOUT $TASK_ID; /bin/false"')
 job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=background )
 
 [ special tasks ]

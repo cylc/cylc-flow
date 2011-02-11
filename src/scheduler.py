@@ -268,8 +268,6 @@ class scheduler(object):
         job_submit.global_env = globalenv
         job_submit.shell = self.config['job submission shell']
         job_submit.joblog_dir = self.config[ 'job submission log directory' ]
-        job_submit.dummy_command = self.config['dummy mode'][ 'command' ]
-        job_submit.dummy_command_fail = self.config['dummy mode'][ 'command fail' ]
         if self.dummy_mode and self.failout_task_id:
             job_submit.failout_id = self.failout_task_id
 
