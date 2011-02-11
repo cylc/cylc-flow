@@ -524,6 +524,79 @@ A real time suite control and monitoring tool for cylc.
         else:
             tb.insert( tb.get_end_iter(), line )
 
+    def start_guide( self, w ):
+        window = gtk.Window()
+        #window.set_border_width( 10 )
+        window.set_title( "Starting A Suite" )
+        #window.modify_bg( gtk.STATE_NORMAL, 
+        #       gtk.gdk.color_parse( self.log_colors.get_color()))
+        window.set_size_request(600, 600)
+
+        sw = gtk.ScrolledWindow()
+        sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
+
+        vbox = gtk.VBox()
+        quit_button = gtk.Button( "Close" )
+        quit_button.connect("clicked", lambda x: window.destroy() )
+        vbox.pack_start( sw )
+        vbox.pack_start( quit_button, False )
+
+        textview = gtk.TextView()
+        textview.set_border_width(5)
+        textview.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#fff" ))
+        textview.set_editable( False )
+        sw.add( textview )
+        window.add( vbox )
+        tb = textview.get_buffer()
+
+        textview.set_wrap_mode( gtk.WRAP_WORD )
+
+        blue = tb.create_tag( None, foreground = "blue" )
+        red = tb.create_tag( None, foreground = "darkblue" )
+        red2 = tb.create_tag( None, foreground = "darkgreen" )
+        alert = tb.create_tag( None, foreground = "red" )
+        bold = tb.create_tag( None, weight = pango.WEIGHT_BOLD )
+
+        self.update_tb( tb, "Help: Starting A Suite", [bold, blue] )
+
+        self.update_tb( tb, "\n\n o Start (YYYYMMDDHH)", [bold, red] )
+        self.update_tb( tb, " - Cold, Warm, and Raw start.", [bold, red2])
+        self.update_tb( tb, "\nInitial cycle time.")
+
+        self.update_tb( tb, "\n\n o Stop (YYYYMMDDHH)", [bold, red] )
+        self.update_tb( tb, " - OPTIONAL.", [bold,red2])
+        self.update_tb( tb, "\nFinal cycle time.")
+
+        self.update_tb( tb, "\n\n o Initial State (FILE)", [bold, red] )
+        self.update_tb( tb, " - Restart only.\n", [bold,red2] )
+        self.update_tb( tb, "The state dump file from which to load the initial suite state. " )
+        self.update_tb( tb, "The default file, " )
+        self.update_tb( tb, "<suite-state-dump-dir>/state", [bold] )
+        self.update_tb( tb, ", records "
+                "the most recent previous state. However, prior to "
+                "actioning any intervention, cylc dumps a "
+                "special state file and logs its name; to restart from "
+                "one of these files just cut-and-paste the filename from the "
+                "suite's cylc log. The suite's configured state dump directory "
+                "is assumed, unless you specify an absolute path.")
+
+        self.update_tb( tb, "\n\n o Dummy Mode", [bold, red] )
+        self.update_tb( tb, " - OPTIONAL.", [bold,red2])
+        self.update_tb( tb, "\nDummy mode simulates a suite by replacing "
+                "each real task with a small program that simply reports the "
+                "task's registered outputs completed and then returns success. "
+                "You can configure aspects of dummy mode scheduling in your "
+                "suite.rc file, for example the accelerated clock rate, and the "
+                "initial clock offset from the initial cycle time (this allows "
+                "you to simulate catch up to real time operation after a delay).")
+
+        self.update_tb( tb, "\n    + Fail Task (NAME%YYYYMMDDHH)", [bold, red] )
+        self.update_tb( tb, " - OPTIONAL, dummy mode only.", [bold,red2])
+        self.update_tb( tb, "\n   Get a task to fail in order "
+                "to test the effect on the suite." )
+
+        window.show_all()
+ 
 
     def userguide( self, w ):
         window = gtk.Window()
@@ -834,7 +907,7 @@ A real time suite control and monitoring tool for cylc.
         window.modify_bg( gtk.STATE_NORMAL, 
                 gtk.gdk.color_parse( self.log_colors.get_color()))
         window.set_border_width(5)
-        window.set_title( "Start " + self.suite )
+        window.set_title( "Start Suite '" + self.suite + "'")
 
         vbox = gtk.VBox()
 
@@ -855,21 +928,24 @@ A real time suite control and monitoring tool for cylc.
         box.pack_start( label, True )
         ctime_entry = gtk.Entry()
         ctime_entry.set_max_length(10)
+        #ctime_entry.set_width_chars(10)
         box.pack_start (ctime_entry, True)
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'Stop Cycle (optional)' )
+        label = gtk.Label( 'Stop (YYYYMMDDHH)' )
         box.pack_start( label, True )
         stoptime_entry = gtk.Entry()
         stoptime_entry.set_max_length(10)
+        #stoptime_entry.set_width_chars(10)
         box.pack_start (stoptime_entry, True)
         vbox.pack_start( box )
 
         box = gtk.HBox()
-        label = gtk.Label( 'State Dump (optional)' )
+        label = gtk.Label( 'Initial State (FILE)' )
         box.pack_start( label, True )
         statedump_entry = gtk.Entry()
+        statedump_entry.set_text( 'state' )
         statedump_entry.set_sensitive( False )
         box.pack_start (statedump_entry, True)
         vbox.pack_start(box)
@@ -881,7 +957,7 @@ A real time suite control and monitoring tool for cylc.
 
         dmode_group = controlled_option_group( "Dummy Mode", "--dummy-mode" )
         dmode_group.add_entry( 
-                'fail out a task (NAME%CYCLE_TIME)',
+                'Fail Task (NAME%YYYYMMDDHH)',
                 '--fail='
                 )
         dmode_group.pack( vbox )
@@ -895,15 +971,19 @@ A real time suite control and monitoring tool for cylc.
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        start_button = gtk.Button( "Start Suite " + self.suite )
+        start_button = gtk.Button( "Start" )
         start_button.connect("clicked", self.startsuite, 
                 window, coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
                 ctime_entry, stoptime_entry, 
                 statedump_entry, optgroups )
 
+        help_button = gtk.Button( "Help" )
+        help_button.connect("clicked", self.start_guide )
+
         hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
         hbox.pack_start( start_button, False )
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( help_button, False )
         vbox.pack_start( hbox )
 
         window.add( vbox )
