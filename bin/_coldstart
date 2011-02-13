@@ -13,8 +13,6 @@ class coldstart( scheduler ):
     def __init__( self ):
         usage = """cylc coldstart [options] SUITE CYCLE
 
-Alternative command name: start
-
 COLD START a suite at a given cycle time. This starts a suite from
 scratch, i.e. without assuming a previous cycle to satisfy the restart
 dependencies of any forecast models in the suite. There should be one or

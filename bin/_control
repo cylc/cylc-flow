@@ -15,8 +15,6 @@ if __name__ == "__main__":
 
     parser = OptionParser( """cylc control [options] [SUITE]
 
-Alternative command name: gui
-
 A real time suite control and monitoring GUI.
 
 If SUITE is not specified a list of your registered suites will be

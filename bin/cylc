@@ -4,6 +4,35 @@ from OrderedDict import OrderedDict
 import os, re, sys
 from execute import execute
 
+class CommandError( Exception ):
+    """
+    Attributes:
+        message - what the problem is. 
+    """
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
+
+class CommandNotFoundError( CommandError ):
+    pass
+
+class CommandNotUniqueError( CommandError ):
+    pass
+
+def find_command( abbrev, commands, title ):
+    # allow any unique abbreviation to cylc categories and commands
+    matches = []
+    for com in commands:
+        if re.match( '^' + abbrev + '.*', com ):
+            matches.append( com )
+    if len( matches ) == 0:
+        raise CommandNotFoundError, title + ' not found: ' + abbrev
+    elif len( matches ) > 1:
+        raise CommandNotUniqueError, title + ' not unique: ' + abbrev + ' -> ' + ', '.join( matches )
+    else:
+        return matches[0]
+
 # auto-replace with version tag at build/install:
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
@@ -11,11 +40,13 @@ categories = \
      [
      'core',
      'other',
-     'prep',
-     'run',
-     'info',
-     'util',
-     'task',
+     'preparation',
+     'starting',
+     'stopping',
+     'running',
+     'information',
+     'utilities',
+     'tasks',
      'all',
      'locking',
      'security',
@@ -27,7 +58,7 @@ core_commands = \
     'edit',
     'validate',
     'graph',
-    'search',
+    'grep',
     'submit',
     'control',
     'coldstart',
@@ -58,7 +89,7 @@ security_commands = \
     'unblock',
      ]
 
-util_commands = \
+utilities_commands = \
     [ 
     'cycletime',
     'checkvars',
@@ -67,17 +98,32 @@ util_commands = \
     'file-transfer',
     ]
 
-prep_commands = \
+preparation_commands = \
     [
     'register',
     'edit',
     'validate',
     'graph',
-    'search',
+    'grep',
     'inline',
     ]
 
-run_commands = \
+starting_commands = \
+    [
+    'control',
+    'coldstart', 
+    'warmstart', 
+    'rawstart', 
+    'restart',
+    ]
+
+stopping_commands = \
+    [
+    'control',
+    'stop',
+    ]
+
+running_commands = \
     [
     'control',
     'coldstart', 
@@ -97,7 +143,7 @@ run_commands = \
     'submit',
     ]
 
-info_commands = \
+information_commands = \
     [
     'ping',
     'scan',
@@ -110,24 +156,20 @@ info_commands = \
     'monitor',
     ]
 
-task_commands = \
+tasks_commands = \
     [
     'wrap',
+    'submit',
     'task-started',
     'task-message',
     'task-finished',
     'task-failed',
     ]
 
-altnames = {}
-altnames['grep'] = 'search'
-altnames['start'] = 'coldstart'
-altnames['gui'] = 'control'
-
 # uniquify the 'all commands' list (some may reside in multiple categories)
 allcom = OrderedDict()
-for command in prep_commands + run_commands + info_commands + locking_commands + \
-        security_commands + task_commands:
+for command in preparation_commands + running_commands + information_commands + locking_commands + \
+        security_commands + tasks_commands:
             allcom[ command ] = True
 all_commands = allcom.keys()
 
@@ -136,28 +178,33 @@ for command in core_commands:
     other_commands.remove( command )
 
 general_usage = """
-USAGE: cylc help
-       cylc help CATEGORY
-       cylc COMMAND --help
-       cylc COMMAND [options] SUITE [arguments]"""
+USAGE: cylc help                                # top level help
+       cylc help CATEGORY                       # commands by category
+       cylc COMMAND --help                      # command-specific help
+       cylc COMMAND [options] SUITE [arguments] # command usage syntax"""
 
 usage = """
 This is the cylc metascheduler commandline interface.
 """ + general_usage + """
 
-  Main suite command CATEGORIES:
-    core ....... essential commands
-    other ...... other commands
-    all ........ all commands
-  Finer-grained categories: 
-    prep ....... suite preparation and editing
-    run ........ running and controlling suites
-    info ....... getting information from suites
-    task ....... task wrapping and messaging
-    locking .... suite and task locking
-    security ... suite security
-  Other:
-    util ....... utility commands
+You can use any unique abbreviation for a COMMAND or CATEGORY, e.g.:
+ $ cylc help prep[aration]
+
+ + Main CATEGORIES:
+    core .......... essential commands for preparing and running suites
+    other ......... additional commands not in the core category
+    all ........... core + other commands (not the 'utilities' category)
+ + Finer-grained categories: 
+    preparation ... suite preparation and editing
+    running ....... running and controlling suites
+    starting ...... commands for starting a cylc suite
+    stopping ...... commands for stopping a cylc suite
+    information ... getting information about suites
+    tasks ......... task wrapping and the task messaging interface
+    locking ....... suite and task locking by the cylc lockserver daemon
+    security ...... suite security
+ + Other categories:
+    utilities ..... some useful commands designed for use in cylc suites
 
 Cylc release version:
     $ cylc -v,--version
@@ -170,14 +217,20 @@ if len(sys.argv) == 1:
     print >> sys.stderr, usage
     sys.exit(1)
 
-prep_help = """
-CATEGORY:prep - suite preparation and editing."""
+preparation_help = """
+CATEGORY:preparation - commands for suite preparation and editing."""
 
-run_help  = """
-CATEGORY:run - running and controlling suites."""
+starting_help  = """
+CATEGORY:starting - commands for starting cylc suites."""
 
-info_help = """
-CATEGORY:info - getting information from registered or running suites."""
+stopping_help  = """
+CATEGORY:stopping - commands for stopping cylc suites."""
+
+rrunning_help  = """
+CATEGORY:running - commands for running and controlling suites."""
+
+information_help = """
+CATEGORY:information - commands for getting information about running suites."""
 
 core_help = """
 CATEGORY:core - essential commands for preparing and running suites."""
@@ -206,23 +259,24 @@ is never sent across the network; a secure md5 checksum is exchanged."""
 locking_help = """
 CATEGORY:locking - the cylc lockserver daemon and its user interface."""
 
-task_help = """
-CATEGORY:task - task wrapping and messaging""" 
+tasks_help = """
+CATEGORY:tasks - task wrapping and the task messaging interface.""" 
 
-util_help = """
-CATEGORY:util - utility commands designed for use with cylc."""
+utilities_help = """
+CATEGORY:utilities - utility commands designed for use with cylc."""
 
-all_help = "The complete cylc command set."
+all_help = "The complete cylc command set, sans utilities."
 
 # command summaries
 comsum = {}
 comsum[ 'register'  ] = 'Manage suite registrations (name -> definition dir)'
 comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
-comsum[ 'search'    ] = '[grep] An intelligent search tool for cylc suites'
+comsum[ 'grep'      ] = 'An intelligent search tool for cylc suites'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
+comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'inline'    ] = 'View suite.rc files with include-files inlined'
 comsum[ 'edit'      ] = 'Edit a suite config file, optionally inlined'
-comsum[ 'coldstart' ] = '[start] Cold start a suite at a given cycle time'
+comsum[ 'coldstart' ] = 'Cold start a suite at a given cycle time'
 comsum[ 'warmstart' ] = 'Warm start a suite at a given cycle time'
 comsum[ 'rawstart'  ] = 'Raw start a suite at a given cycle time'
 comsum[ 'restart'   ] = 'Restart a suite from a previous state'
@@ -236,7 +290,7 @@ comsum[ 'reset'     ] = 'Force a task to change state (manual triggering!)'
 comsum[ 'remove'    ] = 'Remove tasks from a running suite'
 comsum[ 'purge'     ] = 'Remove a full dependency tree from a running suite'
 comsum[ 'submit'    ] = 'Submit a single task exactly as its suite would'
-comsum[ 'control'   ] = 'Suite control and monitoring GUI'
+comsum[ 'control'   ] = 'The cylc suite control and monitoring GUI'
 comsum[ 'view'      ] = 'Suite monitoring GUI (control functions disabled)'
 comsum[ 'dump'      ] = 'Print the state of each task in a running suite'
 comsum[ 'show'      ] = 'Retrieve information from a running suite'
@@ -270,7 +324,9 @@ except:
 if len( sys.argv ) == 2 and \
         (sys.argv[1] == '-h' or \
         sys.argv[1] == '--help' or \
+        sys.argv[1] == '--hlep' or \
         sys.argv[1] == 'help' or \
+        sys.argv[1] == 'hlep' or \
         sys.argv[1] == '?'):
     print usage
     sys.exit(0)
@@ -292,20 +348,12 @@ if len(sys.argv) == 2 and sys.argv[1] == 'categories':
         print category
     sys.exit(0)
 
-# category help
-cathelp = False
-if sys.argv[1] == 'help' and sys.argv[2] in categories:
+if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
     # cylc help CATEGORY
-    cathelp = True
-    cat = sys.argv[2]
-if sys.argv[1] in categories and \
-        ( sys.argv[2] == 'help' or sys.argv[2] == '--help' ):
-    # cylc CATEGORY help
-    # cylc CATEGORY --help
-    cathelp = True
-    cat = sys.argv[1]
-
-if cathelp:
+    try:
+        cat = find_command( sys.argv[2], categories, 'CATEGORY' )
+    except CommandError, x:
+        raise SystemExit(x)
     print eval (cat + '_help')
     print general_usage
     print
@@ -329,28 +377,19 @@ if cathelp:
         print ' ' + digit + '/', command, '.'*(longest-len(command)) + '...', comsum[command]
     sys.exit(0)
 
+# cylc COMMAND ARGS
 arglist = sys.argv[1:]
-if len(arglist) == 2:
-    # catch reversed usage: 'cylc help COMMAND'
-    if arglist[0] == 'help' and arglist[1] in all_commands:
-        arglist[0] = arglist[1]
-        arglist[1] = '--help'
+try:
+    command = find_command( arglist[0], all_commands + utilities_commands, 'COMMAND' )
+except CommandError, x:
+    raise SystemExit(x)
 
-command = arglist[0]
 options = []
 if len(arglist) > 1:
     options = arglist[1:]
 
-if command in altnames:
-    command = altnames[command]
-
-if command not in all_commands + util_commands:
-    print "ERROR, illegal cylc command: " + command
-    print >> sys.stderr, usage
-    sys.exit(1)
-
 try:
-    if options[0] == 'help':
+    if options[0] == 'help' or options[0] == 'hlep':
         # catch 'cylc COMMAND help'
         options[0] = '--help'
 except IndexError:
