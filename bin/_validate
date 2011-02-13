@@ -1,0 +1,46 @@
+#!/usr/bin/env python
+
+import os, sys
+from optparse import OptionParser
+from config import config, SuiteConfigError
+
+parser = OptionParser( """cylc validate [options] SUITE
+
+Parse and validate a suite config (suite.rc) file. This checks that
+entries in the file conform to $CYLC_DIR/conf/suiterc.spec, and that no
+error occurs when the suite's task proxy classes are defined and loaded.
+
+IF THE SUITE.RC FILE USES INCLUDE-FILES: line numbers reported with 
+validation errors will be wrong because the parser sees an inlined
+version of the file. You can use 'cylc inline SUITE' to trace errors to
+the correct source line, although the extra information reported by the
+validator should be sufficient to make this unnecessary.
+
+Arguments:
+   SUITE    - registered name of the target suite""")
+
+parser.add_option( "-d", "--debug", help="print the full "
+        "exception traceback in case of a validation error.",
+        action="store_true", default=False, dest="debug" )
+
+#parser.add_option( "-o", "--owner", help="suite owner (default $USER).",
+#        metavar='USERNAME', action="store", default=os.environ['USER'], 
+#        dest="owner" )
+
+(options, args) = parser.parse_args()
+
+if len(args) != 1:
+    parser.error( "Wrong number or arguments" )
+else:
+    suite = args[0]
+
+try:
+    config = config( suite )
+    config.load_tasks()
+except SuiteConfigError,x:
+    if options.debug:
+        raise
+    else:
+        raise SystemExit(x)
+else:
+    print "Suite " + suite + " validates OK."

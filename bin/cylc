@@ -25,6 +25,7 @@ core_commands = \
     [
     'register',
     'edit',
+    'validate',
     'graph',
     'search',
     'submit',
@@ -70,6 +71,7 @@ prep_commands = \
     [
     'register',
     'edit',
+    'validate',
     'graph',
     'search',
     'inline',

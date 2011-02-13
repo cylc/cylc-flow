@@ -6,21 +6,24 @@ from config import config, SuiteConfigError
 
 parser = OptionParser( """cylc list [options] SUITE
 
-Print the title, description, and task list, of a registered suite
-(which does not need to be running). This command parses the 
-suite.rc config file, which allows you to check the file's validity
-without running the suite.
+Print the task list and, optionally, the title and description, of a
+registered suite.
 
 Arguments:
-   SUITE    - registered name of the target suite""")
+   SUITE    - name of the target suite""")
 
 parser.add_option( "-a", "--all", help="print all information "
         "(by default just the task list is printed).",
         action="store_true", default=False, dest="print_all" )
 
-parser.add_option( "-o", "--owner", help="suite owner (default $USER).",
-        metavar='USERNAME', action="store", default=os.environ['USER'], 
-        dest="owner" )
+parser.add_option( "-d", "--debug", help="print the full "
+        "exception traceback in case of a validation error.",
+        action="store_true", default=False, dest="debug" )
+
+#
+#parser.add_option( "-o", "--owner", help="suite owner (default $USER).",
+#        metavar='USERNAME', action="store", default=os.environ['USER'], 
+#        dest="owner" )
 
 (options, args) = parser.parse_args()
 
@@ -31,9 +34,11 @@ else:
 
 try:
     config = config( suite )
-    config.load_tasks()
 except SuiteConfigError,x:
-    raise SystemExit(x)
+    if options.debug:
+        raise
+    else:
+        raise SystemExit(x)
 
 if options.print_all:
     print 'TITLE:'

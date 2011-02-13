@@ -25,6 +25,12 @@ not satisfied) at the initial cycle time, or at the next valid cycle
 time for the task, including designated cold start tasks (see suite.rc
 documentation).
 
+WARNING: when you start an important suite use the 'nohup' command to
+detach the suite from its parent shell, to prevent it being killed when
+you log out. Also, when using nohup, 
+    export PYTHONUNBUFFERED=true
+so that cylc stdout will be written to nohup.out as the suite runs.
+
 See also:
     cylc warmstart SUITE
     cylc rawstart SUITE

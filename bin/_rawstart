@@ -29,6 +29,12 @@ or by coldstart tasks).
 IMPORTANT: To do a rawstart the 'coldstart task list' suite config item
 must be set - these tasks will be excluded at startup.
 
+WARNING: when you start an important suite use the 'nohup' command to
+detach the suite from its parent shell, to prevent it being killed when
+you log out. Also, when using nohup, 
+    export PYTHONUNBUFFERED=true
+so that cylc stdout will be written to nohup.out as the suite runs.
+
 See also:
     cylc coldstart SUITE
     cylc warmstart SUITE

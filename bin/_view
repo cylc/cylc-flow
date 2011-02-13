@@ -15,15 +15,13 @@ if __name__ == "__main__":
 
     parser = OptionParser( """cylc view [options] [SUITE]
 
-This is a read-only version of the 'cylc control' GUI.
+Launch a read-only version of the 'cylc control' GUI.
 
-If SUITE is specified the GUI will connect to the specified suite if 
-it is already running; otherwise you can start the suite from the GUI.
-
-If SUITE is NOT specified, a top level suite chooser window appears
-to allow you to choose from among your registered suites.
-
-Cylc view reconnects if the target suite is restarted. 
+If SUITE is not specified a list of your registered suites will be
+presented to choose from. If the chosen suite is already running the
+viewer will connect to it. To start a suite that is not already running,
+see 'cylc control', or the commandline (see 'cylc help). Cylc view
+reconnects if the target suite is restarted. 
 
 See also:
     cylc control

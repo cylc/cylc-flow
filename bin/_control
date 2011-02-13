@@ -19,13 +19,17 @@ Alternative command name: gui
 
 A real time suite control and monitoring GUI.
 
-If SUITE is specified the GUI will connect to the specified suite if 
-it is already running; otherwise you can start the suite from the GUI.
+If SUITE is not specified a list of your registered suites will be
+presented to choose from. If the chosen suite is already running the
+GUI will connect to it; otherwise you can start the suite from within
+the GUI or via the commandline (see 'cylc help'). Cylc control
+reconnects if the target suite is restarted. 
 
-If SUITE is NOT specified, a top level suite chooser window appears
-to allow you to choose from among your registered suites.
-
-Cylc control reconnects if the target suite is restarted. 
+WARNING: when you start an important suite use the 'nohup' command to
+detach the suite from its parent shell, to prevent it being killed when
+you log out. Also, when using nohup, 
+    export PYTHONUNBUFFERED=true
+so that cylc stdout will be written to nohup.out as the suite runs.
 
 See also:
     cylc view
