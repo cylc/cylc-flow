@@ -18,7 +18,7 @@ was a previous cycle (after which the suite was presumably shut down) or
 that any files required from previous cycles have been put in place by
 external means. For a suite with no intercycle dependencies (=> no warm
 cycled forecast models) there is no distinction between the cold, warm,
-and raw startup methods.
+and raw start methods.
 
 Startup is as for a cold start, except that designated cold start tasks
 are inserted in the 'finished' state (i.e. outputs completed). The cold
