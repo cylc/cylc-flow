@@ -66,10 +66,10 @@ parser = OptionParser( """cylc inline [options] SUITE
 
 View a temporary copy of a suite config (suite.rc) file in your $EDITOR
 exactly as the config file parser sees it: with include-files inlined
-and continuation lines joined. This can be used to  quick global view of
-a suite that uses include-files, or to trace parsing errors by line
-number (suite.rc validation is informative enough, however, that you
-will probably not need to do this).
+and continuation lines joined. This can be used to get a quick global
+view of a suite that uses include-files, or to trace parsing errors by
+line number (suite validation is sufficiently informative, however, that
+you should not need to do this).
 
 If you want to edit the suite, in inlined form or not, or to view it
 without inlined include-files, use the 'cylc edit' command.
@@ -78,18 +78,21 @@ The viewer process is spawned in the foreground as follows:
   $EDITOR <temporary inlined file in $TMPDIR>
 (You must have $EDITOR and $TMDPIR defined in your shell environment). 
 
-See also 'cylc search' and 'cylc edit'.
+See also:
+    cylc grep
+    cylc edit
+    cylc validate
 
 Arguments:
   SUITE   - registered name of the suite.""")
 
 parser.add_option( "--mark", "-m", 
-        help="Mark inclusions in the left margin. (line numbers will "
+        help="Mark inclusions in the left margin (line numbers will "
         "still correspond to those reported by the parser).",
         action="store_true", default=False, dest="mark" )
 
 parser.add_option( "--label", "-l", 
-        help="Label file inclusion boundaries with the include-file name"
+        help="Label file inclusion boundaries with the file name "
         "(line numbers will not correspond to those reported by the parser).",
         action="store_true", default=False, dest="label" )
 

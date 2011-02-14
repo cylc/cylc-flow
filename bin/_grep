@@ -61,7 +61,9 @@ attempt will be made to action the command with the arguments reversed.
 
 For case insenstive matching use '(?i)PATTERN'.
 
-See also 'cylc read' and 'cylc edit'.
+See also: 
+  cylc edit
+  cylc inline 
 
 Arguments:
   PATTERN - or Python-style regular expression or a raw string.

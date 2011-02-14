@@ -38,12 +38,12 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 categories = \
      [
-     'core',
-     'other',
      'preparation',
-     'starting',
-     'stopping',
-     'running',
+     'discovery',
+     'startup',
+     'interaction',
+     'shutdown',
+     'monitoring',
      'information',
      'utilities',
      'tasks',
@@ -51,31 +51,6 @@ categories = \
      'locking',
      'security',
      ]
-
-core_commands = \
-    [
-    'register',
-    'edit',
-    'validate',
-    'graph',
-    'grep',
-    'submit',
-    'control',
-    'coldstart',
-    'warmstart',
-    'restart',
-    'pause',
-    'resume',
-    'stop',
-    'insert',
-    'remove',
-    'purge',
-    'ping',
-    'scan',
-    'list',
-    'dump',
-    'show',
-    ]
 
 locking_commands = \
     [
@@ -103,12 +78,13 @@ preparation_commands = \
     'register',
     'edit',
     'validate',
+    'list',
     'graph',
     'grep',
     'inline',
     ]
 
-starting_commands = \
+startup_commands = \
     [
     'control',
     'coldstart', 
@@ -117,38 +93,49 @@ starting_commands = \
     'restart',
     ]
 
-stopping_commands = \
+shutdown_commands = \
     [
     'control',
     'stop',
     ]
 
-running_commands = \
+discovery_commands = \
+    [
+    'scan',
+    'ping',
+    ]
+
+monitoring_commands = \
     [
     'control',
-    'coldstart', 
-    'warmstart', 
-    'rawstart', 
-    'restart',
-    'pause',
-    'resume',
-    'stop',
-    'insert',
+    'view',
+    'dump',
+    'monitor',
+    'ping',
+    'scan',
+    ]
+
+interaction_commands = \
+    [
+    'control',
     'reset',
+    'insert',
     'remove',
     'purge',
+    'pause',
+    'resume',
     'block',
     'unblock',
     'verbosity',
-    'submit',
     ]
 
 information_commands = \
     [
+    'control',
     'ping',
     'scan',
     'list',
-    'graph',
+    #    'graph',
     'dump',
     'show',
     'log',
@@ -168,75 +155,81 @@ tasks_commands = \
 
 # uniquify the 'all commands' list (some may reside in multiple categories)
 allcom = OrderedDict()
-for command in preparation_commands + running_commands + information_commands + locking_commands + \
-        security_commands + tasks_commands:
+for command in preparation_commands + startup_commands + \
+                shutdown_commands + interaction_commands + \
+                monitoring_commands + information_commands + \
+                locking_commands + security_commands + \
+                tasks_commands:
             allcom[ command ] = True
 all_commands = allcom.keys()
 
-other_commands = all_commands[:]
-for command in core_commands:
-    other_commands.remove( command )
-
 general_usage = """
-USAGE: cylc help                                # top level help
-       cylc help CATEGORY                       # commands by category
-       cylc COMMAND --help                      # command-specific help
-       cylc COMMAND [options] SUITE [arguments] # command usage syntax"""
+USAGE:
+  cylc help                            # top level help
+  cylc help CATEGORY                   # commands by category
+  cylc COMMAND --help                  # command-specific help
+  cylc COMMAND [options] SUITE [args]  # command usage syntax"""
+
+cat_usage = """
+USAGE: cylc COMMAND --help"""
 
 usage = """
-This is the cylc metascheduler commandline interface.
+This is the cylc forecast suite metascheduler commandline interface.
 """ + general_usage + """
 
 You can use any unique abbreviation for a COMMAND or CATEGORY, e.g.:
- $ cylc help prep[aration]
+  $ cylc help prep[aration]
 
- + Main CATEGORIES:
-    core .......... essential commands for preparing and running suites
-    other ......... additional commands not in the core category
-    all ........... core + other commands (not the 'utilities' category)
- + Finer-grained categories: 
-    preparation ... suite preparation and editing
-    running ....... running and controlling suites
-    starting ...... commands for starting a cylc suite
-    stopping ...... commands for stopping a cylc suite
-    information ... getting information about suites
-    tasks ......... task wrapping and the task messaging interface
-    locking ....... suite and task locking by the cylc lockserver daemon
-    security ...... suite security
- + Other categories:
-    utilities ..... some useful commands designed for use in cylc suites
+The cylc commandline philosophy is that each command should perform a
+single function and its purpose should be self-evident; consequently
+the command set is quite large, but it should be easy to understand.
+
+Command CATEGORIES:
+  all ........... all core cylc commands (sans utilities)
+  preparation ... suite preparation and editing
+  discovery ..... finding what suites are running
+  startup ....... starting a suite running
+  shutdown ...... stopping a running suite
+  interaction ... interacting with a running suite
+  monitoring .... monitoring a running suite
+  information ... getting task-specific information on a suite
+  tasks ......... single-task submit, wrapping, and messaging
+  locking ....... suite and task locking by the cylc lockserver daemon
+  security ...... suite access, temporary blocking and secure passphrases
+
+  utilities ..... some useful commands designed for use in cylc suites
 
 Cylc release version:
-    $ cylc -v,--version
+  $ cylc -v,--version
 
 Main help (this page):
-    $ cylc help,-h,--help,?
-    """
+  $ cylc help,-h,--help,?
+"""
 
 if len(sys.argv) == 1:
     print >> sys.stderr, usage
     sys.exit(1)
 
+discovery_help = """
+CATEGORY:discovery - finding out what suites are running."""
+
 preparation_help = """
-CATEGORY:preparation - commands for suite preparation and editing."""
+CATEGORY:preparation - suite preparation and editing."""
 
-starting_help  = """
-CATEGORY:starting - commands for starting cylc suites."""
+startup_help  = """
+CATEGORY:startup - starting suites."""
 
-stopping_help  = """
-CATEGORY:stopping - commands for stopping cylc suites."""
+shutdown_help  = """
+CATEGORY:shutdown - stopping suites."""
 
-rrunning_help  = """
-CATEGORY:running - commands for running and controlling suites."""
+monitoring_help  = """
+CATEGORY:monitoring - monitoring running suites."""
+
+interaction_help  = """
+CATEGORY:interaction - interacting with running suites."""
 
 information_help = """
-CATEGORY:information - commands for getting information about running suites."""
-
-core_help = """
-CATEGORY:core - essential commands for preparing and running suites."""
-
-other_help = """
-CATEGORY:other - commands not in CATEGORY:core."""
+CATEGORY:information - getting information about running suites."""
 
 security_help = """
 CATEGORY:security - owner-only access, blocking, and secure passphrases.
@@ -260,7 +253,7 @@ locking_help = """
 CATEGORY:locking - the cylc lockserver daemon and its user interface."""
 
 tasks_help = """
-CATEGORY:tasks - task wrapping and the task messaging interface.""" 
+CATEGORY:tasks - single-task submit, wrapping, and task messaging.""" 
 
 utilities_help = """
 CATEGORY:utilities - utility commands designed for use with cylc."""
@@ -289,14 +282,14 @@ comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
 comsum[ 'reset'     ] = 'Force a task to change state (manual triggering!)'
 comsum[ 'remove'    ] = 'Remove tasks from a running suite'
 comsum[ 'purge'     ] = 'Remove a full dependency tree from a running suite'
-comsum[ 'submit'    ] = 'Submit a single task exactly as its suite would'
+comsum[ 'submit'    ] = 'Run a single task outside of its suite'
 comsum[ 'control'   ] = 'The cylc suite control and monitoring GUI'
 comsum[ 'view'      ] = 'Suite monitoring GUI (control functions disabled)'
 comsum[ 'dump'      ] = 'Print the state of each task in a running suite'
-comsum[ 'show'      ] = 'Retrieve information from a running suite'
+comsum[ 'show'      ] = 'Retrieve task-specific information from a running suite'
 comsum[ 'list'      ] = 'Print a suite\'s configured task list'
 comsum[ 'ping'      ] = 'Check that a named suite is running'
-comsum[ 'scan'      ] = 'Scan cylc ports for running suites'
+comsum[ 'scan'      ] = 'Scan a host for running cylc suites'
 comsum[ 'log'       ] = 'Print or view suite logs, with filtering'
 comsum[ 'monitor'   ] = 'An in-terminal suite monitor (deprecated)'
 comsum[ 'lockserver'] = 'Lockserver interrogation and lock management'
@@ -306,7 +299,7 @@ comsum[ 'checkvars' ] = 'Process required environment variables en masse'
 comsum[ 'template'  ] = 'Cycle time based filename templating'
 comsum[ 'housekeeping' ] = 'Cycle time based parallel archiving and cleanup'
 comsum[ 'file-transfer'] = 'An scp-based file transfer tool'
-comsum[ 'wrap'         ] = 'A wrapper for running non-cylc-aware tasks'
+comsum[ 'wrap'         ] = 'Run a task that has no cylc messaging added'
 comsum[ 'task-started' ] = 'Acquire a task lock and report started'
 comsum[ 'task-message' ] = 'Report completion of outputs, etc.'
 comsum[ 'task-finished'] = 'Release task lock and report finished'
@@ -336,13 +329,15 @@ if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     print cylc_version
     sys.exit(0)
 
-# secret command list used by documentation generation script
+# secret command lists used by documentation generation script
 if len(sys.argv) == 2 and sys.argv[1] == 'commands':
     for command in all_commands:
         print command
     sys.exit(0)
-
-# secret category list used by documentation generation script
+if len(sys.argv) == 2 and sys.argv[1] == 'utilities':
+    for command in utilities_commands:
+        print command
+    sys.exit(0)
 if len(sys.argv) == 2 and sys.argv[1] == 'categories':
     for category in categories:
         print category
@@ -355,7 +350,7 @@ if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
     except CommandError, x:
         raise SystemExit(x)
     print eval (cat + '_help')
-    print general_usage
+    print cat_usage
     print
     print 'COMMANDs:'
     output = []
@@ -366,7 +361,7 @@ if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
             longest = len( command )
     count = 0
     pad = False
-    if len(commands) > 10:
+    if len(commands) > 9:
         pad = True
     for command in commands:
         count += 1

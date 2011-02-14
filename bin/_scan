@@ -16,7 +16,7 @@ parser.add_option( "--host",
         dest="host" )
 
 parser.add_option( "--print-ports",
-        help="Print the range of ports that cylc is configured to use.",
+        help="Print cylc's configured port range.",
         action="store_true",default=False, dest="print_ports" )
 
 parser.add_option( "--passphrase",

@@ -41,12 +41,12 @@ echo "\label{help}" >> doc/commands.tex
 echo "\lstinputlisting{command-usage/help.txt}" >> doc/commands.tex
 #echo "\pagebreak" >> doc/commands.tex
 
-echo "\subsection{Categories}" >> doc/commands.tex
+echo "\subsection{Command Categories}" >> doc/commands.tex
 
 for CAT in $(cylc categories); do 
     echo "o $CAT"
     # direct command help into a txt file
-    cylc $CAT help >> doc/command-usage/$CAT.txt
+    cylc help $CAT >> doc/command-usage/$CAT.txt
     # append to a latex file for inclusion in the userguide
     echo "\subsubsection{$CAT}" >> doc/commands.tex
     echo "\label{$CAT}" >> doc/commands.tex
@@ -54,10 +54,21 @@ for CAT in $(cylc categories); do
     #echo "\pagebreak" >> doc/commands.tex
 done
 
-echo "\subsection{Commands}" >> doc/commands.tex
-
+echo "\subsection{Suite Commands}" >> doc/commands.tex
 for COMMAND in $(cylc commands); do 
     echo "+ $COMMAND"
+    # direct command help into a txt file
+    cylc $COMMAND --help > doc/command-usage/$COMMAND.txt
+    # append to a latex file for inclusion in the userguide
+    echo "\subsubsection{$COMMAND}" >> doc/commands.tex
+    echo "\label{$COMMAND}" >> doc/commands.tex
+    echo "\lstinputlisting{command-usage/$COMMAND.txt}" >> doc/commands.tex
+    #echo "\pagebreak" >> doc/commands.tex
+done
+
+echo "\subsection{Utility Commands}" >> doc/commands.tex
+for COMMAND in $(cylc utilities); do 
+    echo "- $COMMAND"
     # direct command help into a txt file
     cylc $COMMAND --help > doc/command-usage/$COMMAND.txt
     # append to a latex file for inclusion in the userguide

@@ -19,7 +19,8 @@ compress = True
 parser = NoPromptOptionParser_u( """cylc monitor [options] SUITE 
 
 A terminal-based monitor that displays the state of all tasks in the
-target suite in real time. See also the GUI MONITOR  'cylc view'.""")
+target suite in real time, effective for small suites. See also
+'cylc dump', and the GUI programs 'cylc view' and 'cylc control'.""")
 
 parser.add_option( "-a", "--align", 
         help="Align columns by task name. This option "

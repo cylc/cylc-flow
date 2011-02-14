@@ -6,18 +6,17 @@ from config import config, SuiteConfigError
 
 parser = OptionParser( """cylc list [options] SUITE
 
-Print the task list and, optionally, the title and description, of a
-registered suite.
+Print the configured task list of a registered suite.
 
 Arguments:
    SUITE    - name of the target suite""")
 
-parser.add_option( "-a", "--all", help="print all information "
-        "(by default just the task list is printed).",
-        action="store_true", default=False, dest="print_all" )
+parser.add_option( "-a", "--all", help="also print the suite title "
+        "and description.", action="store_true", 
+        default=False, dest="print_all" )
 
-parser.add_option( "-d", "--debug", help="print the full "
-        "exception traceback in case of a validation error.",
+parser.add_option( "-d", "--debug", help="print the "
+        "exception traceback for validation errors.",
         action="store_true", default=False, dest="debug" )
 
 #

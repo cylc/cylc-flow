@@ -19,8 +19,8 @@ validator should be sufficient to make this unnecessary.
 Arguments:
    SUITE    - registered name of the target suite""")
 
-parser.add_option( "-d", "--debug", help="print the full "
-        "exception traceback in case of a validation error.",
+parser.add_option( "-d", "--debug", help="print the "
+        "exception traceback for validation errors.",
         action="store_true", default=False, dest="debug" )
 
 #parser.add_option( "-o", "--owner", help="suite owner (default $USER).",

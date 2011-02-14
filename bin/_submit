@@ -15,9 +15,9 @@ from lockserver import lockserver
 
 usage = """cylc submit [options] SUITE TASK_ID
 
-Submit a single task to run just as the scheduler would submit it. This
-can be used as an easy way to invoke single tasks for any reason, but it
-is particularly useful during suite development.
+Run a single task outside of its suite, exactly as it would be run from
+within the suite. This can be used as an easy way to run single tasks
+for any reason, but it is particularly useful during suite development.
 
 arguments:
    SUITE           Registered name of the target suite.

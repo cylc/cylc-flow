@@ -85,9 +85,8 @@ class scheduler(object):
                 metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
 
         self.parser.add_option( "--debug", help=\
-                "Turn on the 'debug' logging level and print the Python "
-                "source traceback for unhandled exceptions (otherwise "
-                "just the error message will be printed).",
+                "Use the 'debug' logging level and print the full"
+                "traceback for unhandled exceptions.",
                 action="store_true", dest="debug" )
 
         self.parser.add_option( "--timing", help=\

@@ -65,27 +65,28 @@ string=[b]{"},
 sensitive=false,
 morecomment=[l]{Usage:},
 morecomment=[l]{USAGE:},
+morecomment=[l]{usage:},
+morecomment=[l]{CATEGORY:},
+morecomment=[l]{COMMANDs:},
 morecomment=[l]{Arguments:},
 morecomment=[l]{Options:},
-morecomment=[l]{Commands:},
-morecomment=[l]{usage:},
 morecomment=[l]{arguments:},
 morecomment=[l]{command-options:},
 morecomment=[l]{COMMANDS:},
 morecomment=[l]{options:},
-morecomment=[l]{\#}
+%morecomment=[l]{\#},
+numbers=none,
 }
 
 \title{Cylc \linebreak 
 A Self-Organising Optimal Adaptive Metascheduler \linebreak 
-For Complex Forecasting Systems \linebreak 
+For Complex Forecasting Suites \linebreak 
 {\em \small Version THIS IS NOT A VERSIONED RELEASE} \linebreak
 {\small Copyright (c) NIWA, 2008-2010} }
 
 \author{Hilary Oliver}
 
 \begin{document}
-
 
 \maketitle
 
@@ -102,10 +103,10 @@ For Complex Forecasting Systems \linebreak
 \section{How Cylc Works} 
 \label{HowCylcWorks}
 
-\subsection{Scheduling Forecast Systems} 
-\label{SchedulingForecastSystems}
+\subsection{Scheduling Forecast Suites} 
+\label{SchedulingForecastSuites}
 
-Environmental forecasting systems generate forecast products from a
+Environmental forecasting suites generate forecast products from a
 potentially large group of interdependent scientific models and
 associated data processing tasks. They are constrained by availability
 of external driving data: typically one or more tasks will wait on real
@@ -263,7 +264,7 @@ problem for our simple example suite assuming the minimal likely
 intercycle dependence: the forecast models ($a$, $b$, and $c$) each
 depend on their own previous instances.
 
-For this reason, and because we tend to imagine that forecasting systems
+For this reason, and because we tend to imagine that forecasting suites
 always run in distinct cycles, existing schedulers (as far as the author
 is aware!) ignore intercycle dependencies and therefore {\em require} a
 series of distinct cycles at all times. While this does not affect
@@ -1230,7 +1231,7 @@ automatically be wrapped so that no explicit cylc messaging is required.
 If your suite has several tasks that do essentially the same thing with
 minor variations, they can all invoke the same external script with 
 any task-specific input parameters provided via environment variables
-specified in the Task Definition Files. Forecasting systems commonly
+specified in the Task Definition Files. Forecasting suites commonly
 have to move files around a lot (e.g. from the output directory of one
 task to the input directory of another). Cylc therefore has a generic
 file transfer script for this purpose,
@@ -2320,8 +2321,7 @@ $CYLC_DIR/examples/userguide/
 \section{Command Reference}
 \label{CommandReference}
 
-This section is auto-generated from the self-documenting command set
-during processing of the userguide source. 
+%This section is auto-generated from the self-documenting command set.
   
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 \lstset{language=usage}
@@ -2331,7 +2331,8 @@ during processing of the userguide source.
 \section{Lockserver Daemon Command Reference}
 \label{LockserverDaemonCommandReference}
 
-The information in this section is auto-generated during document processing.
+%The information in this section is auto-generated during document
+%processing.
 
 \lstset{ basicstyle=\color{basic}\footnotesize\ttfamily }
 \lstset{language=usage}
