@@ -205,7 +205,7 @@ if lst_reg:
     sys.exit(0)
 
 #----------------------------------------
-twatted = []
+marked = []
 
 if chk_reg:
     count = 0
@@ -214,28 +214,28 @@ if chk_reg:
         rdir = reg.get(name)
         if not check_dir( rdir ):
             post = ' ... INVALID'
-            twatted.append( name )
+            marked.append( name )
 
         else:
             post = ' ... OK'
         reg.print_reg( name, pre=' [' + str(count) + '] ', post=post )
 
 elif wpe_reg:
-    twatted = reg.get_all() 
+    marked = reg.get_all() 
 
 elif del_reg:
-    twatted = [ args[0] ] 
+    marked = [ args[0] ] 
 
-if len(twatted) == 0:
+if len(marked) == 0:
     print "No suites to unregister"
     sys.exit(0)
 
 count = 0
-print "Unregistering " + str( len(twatted) ) + " suites:"
-for twat in twatted:
+print "Unregistering " + str( len(marked) ) + " suites:"
+for mark in marked:
     count += 1
-    print ' [' + str( count ) + '] ' + twat
-    reg.unregister( twat )
+    print ' [' + str( count ) + '] ' + mark
+    reg.unregister( mark )
 
 # record registration changes
 reg.dump_to_file()
