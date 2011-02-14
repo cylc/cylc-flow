@@ -12,36 +12,32 @@ debug = True
 class rawstart( scheduler ):
     def __init__( self ):
 
-        usage = """cylc rawstart [options] SUITE CYCLE
+        usage = """cylc rawstart [options] SUITE YYYYMMDDHH
 
-RAW START a suite at a given initial cycle time. This starts a suite as
-if in mid run (but without tasks of the previous cycle!). Each task
-proxy is inserted in the 'waiting' state (i.e. prerequisites not
-satisfied) at the initial cycle time, or at the next valid cycle time
-for the task, except for designated cold start tasks (see suite.rc
-documentation) which are NOT inserted. 
+RAW START a suite at a specified cycle time. This starts the suite as if
+in mid run, so any tasks that depend on previous cycles will have to be
+triggered manually. For a suite with no intercycle dependencies (=> no
+warm cycled forecast models) there is no distinction between the cold,
+warm, and raw startup methods.
 
-To get the suite running you will need to manually insert the coldstart
-tasks, or manually trigger any forecast models (whose restart
-prerequisites would normally be satisfied by tasks in a previous cycle,
-or by coldstart tasks).
-
-IMPORTANT: To do a rawstart the 'coldstart task list' suite config item
-must be set - these tasks will be excluded at startup.
-
-WARNING: when you start an important suite use the 'nohup' command to
-detach the suite from its parent shell, to prevent it being killed when
-you log out. Also, when using nohup, 
-    export PYTHONUNBUFFERED=true
-so that cylc stdout will be written to nohup.out as the suite runs.
+Startup is as for a cold start, except that designated cold start tasks
+are excluded from the suite. The cold start task list must be defined in
+the suite config file:
+  SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
+ 
+NOTE: to prevent a suite being killed when you log out: 
+    export PYTHONUNBUFFERED=true   #(*)
+    nohup cylc warmstart SUITE YYYYMMDDHH
+(*) Python stdout buffering can result in no output until shutdown.
 
 See also:
-    cylc coldstart SUITE
-    cylc warmstart SUITE
+    cylc coldstart
+    cylc warmstart
+    cylc restart
 
 Arguments:
    SUITE                Registered name of the suite to start.
-   CYCLE                Initial cycle time (YYYYMMDDHH).""" 
+   YYYYMMDDHH           Initial cycle time.""" 
 
         self.parser = OptionParser( usage )
         scheduler.__init__( self )

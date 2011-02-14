@@ -11,36 +11,33 @@ debug = True
 
 class warmstart( scheduler ):
     def __init__( self ):
-        usage = """cylc warmstart [options] SUITE CYCLE
+        usage = """cylc warmstart [options] SUITE YYYYMMDDHH
 
-WARM START a suite at a given cycle time. This assumes that the restart
-dependencies of any forecast models in the suite have already been
-satisfied, i.e. it assumes the existence of a previous cycle. This could
-mean there was literally a previous suite run, or that the relevant
-restart files have been put in place by some external means.
+WARM START a suite at a specified cycle time. This assumes that there
+was a previous cycle (after which the suite was presumably shut down) or
+that any files required from previous cycles have been put in place by
+external means. For a suite with no intercycle dependencies (=> no warm
+cycled forecast models) there is no distinction between the cold, warm,
+and raw startup methods.
 
-Each task proxy is inserted in the 'waiting' state (i.e. prerequisites
-not satisfied) at the initial cycle time, or at the next valid cycle
-time for the task, except for designated cold start tasks (see suite.rc
-documentation) which are inserted in the 'finished' state (i.e. outputs
-completed).
-
-IMPORTANT: To do a warmstart the 'coldstart task list' suite config item
-must be set - these tasks will be inserted in the 'finished' state.
-
-WARNING: when you start an important suite use the 'nohup' command to
-detach the suite from its parent shell, to prevent it being killed when
-you log out. Also, when using nohup, 
-    export PYTHONUNBUFFERED=true
-so that cylc stdout will be written to nohup.out as the suite runs.
+Startup is as for a cold start, except that designated cold start tasks
+are inserted in the 'finished' state (i.e. outputs completed). The cold
+start task list must be defined in the suite config file:
+  SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
+  
+NOTE: to prevent a suite being killed when you log out: 
+    export PYTHONUNBUFFERED=true   #(*)
+    nohup cylc warmstart SUITE YYYYMMDDHH
+(*) Python stdout buffering can result in no output until shutdown.
 
 See also:
-    cylc coldstart SUITE
-    cylc rawstart SUITE
+    cylc coldstart
+    cylc rawstart
+    cylc restart
 
 Arguments:
    SUITE                Registered name of the suite to start.
-   CYCLE                Initial cycle time (YYYYMMDDHH).""" 
+   YYYYMMDDHH           Initial cycle time.""" 
 
         self.parser = OptionParser( usage )
         scheduler.__init__( self )

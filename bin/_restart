@@ -8,7 +8,7 @@ from scheduler import scheduler
 
 class restart( scheduler ):
     def __init__( self ):
-        usage = """cylc restart [options] SUITE [STATE DUMP]
+        usage = """cylc restart [options] SUITE [FILE]
 
 Restart a cylc suite from a previous state. Tasks in the 'submitted',
 'running', or 'failed' states will immediately be resubmitted at
@@ -21,9 +21,19 @@ state dump, and logs its filename, before actioning any intervention
 command, and you can choose to restart from one of these (just
 cut-and-paste the filename from the log to the commandline).
 
+NOTE: to prevent a suite being killed when you log out: 
+    export PYTHONUNBUFFERED=true   #(*)
+    nohup cylc warmstart SUITE YYYYMMDDHH
+(*) Python stdout buffering can result in no output until shutdown.
+
+See also:
+    cylc coldstart
+    cylc warmstart
+    cylc rawstart
+
 Arguments:
    SUITE                Registered name of the suite to restart.
-   [STATE DUMP]         Optional non-default state dump file (assumed to
+   [FILE]               Optional non-default state dump file (assumed to
                         be in the suite state dump directory unless you
                         supply the file path).""" 
 
