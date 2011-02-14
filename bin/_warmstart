@@ -14,11 +14,11 @@ class warmstart( scheduler ):
         usage = """cylc warmstart [options] SUITE YYYYMMDDHH
 
 WARM START a suite at a specified cycle time. This assumes that there
-was a previous cycle (after which the suite was presumably shut down) or
-that any files required from previous cycles have been put in place by
-external means. For a suite with no intercycle dependencies (=> no warm
-cycled forecast models) there is no distinction between the cold, warm,
-and raw start methods.
+was a previous cycle (from a previous suite run - in which case a
+restart may be more appropriate) or that files required from previous
+cycles have been put in place by some other means. For a suite with no
+intercycle dependencies (=> no warm cycled forecast models) there is no
+distinction between the cold, warm, and raw start methods.
 
 Startup is as for a cold start, except that designated cold start tasks
 are inserted in the 'finished' state (i.e. outputs completed). The cold

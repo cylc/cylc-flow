@@ -13,16 +13,16 @@ class coldstart( scheduler ):
     def __init__( self ):
         usage = """cylc coldstart [options] SUITE YYYYMMDDHHH
 
-COLD START a suite from scratch at a specified cycle time. There should
-be one or more oneoff cold start tasks to satisfy any tasks that
-normally depend on outputs from a previous cycle (principally the
-restart dependencies of warm cycled forecast models). Cold start
-tasks can run real processes (e.g. to generate the initial restart
-dependencies of a forecast model) or, with no task command defined, just
-act as a dummy proxy for some external process that must occur before
-the suite is started (e.g. a spinup run). For a suite with no intercycle
-dependencies there is no distinction between the cold, warm, and raw
-start methods.
+COLD START a suite at a specified cycle time. To get the suite up and
+running there should a oneoff cold start task for every task that
+normally depends on outputs from a previous cycle (principally the
+restart dependencies of warm cycled forecast models). Cold start tasks
+can run real processes (e.g. a special forecast to generate the initial
+restart files for a warm cycled model) or, with no task command defined,
+just act as a dummy proxy for some external process that has to occur
+before the suite is started (e.g.  a spinup experiment of some kind).
+For a suite with no intercycle dependencies there is no distinction
+between the cold, warm, and raw start methods.
 
 Each task proxy is inserted in the 'waiting' state (i.e. prerequisites
 not satisfied) at the initial cycle time, or at the next valid cycle

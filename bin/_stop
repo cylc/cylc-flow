@@ -6,18 +6,22 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc stop [options] SUITE [CYCLE]
+parser = PromptOptionParser( """cylc stop [options] SUITE [YYYYMMDDHH]
 
-Shut a suite down as soon as all currently running tasks have finished,
-or after each task has passed a specified cycle time and finished, or
-immediately (WARNING: see '--now' below).""",
-[ """[CYCLE]              Shut down after all tasks have passed this
-                        cycle time (YYYYMMDDHH)""" ] )
+Shut a suite down:
+ 1/ When all currently running tasks have finished (default), or
+ 2/ After each task has passed a specified cycle time [YYYYMMDDHH], or
+ 3/ Immediately [--now].
+
+WARNING: If you use [--now] any tasks that complete after the shutdown
+(errors will occur until they try to contact the parent suite to report
+completion etc.) will still be listed as "running" in the suite state
+dump file and will thus be resubmitted, by default, if the suite is
+restarted.""", 
+[ """YYYYMMDDHH           Future cycle time after which to stop.""" ] )
 
 parser.add_option( "--now", 
-        help="Shut down immediately. Tasks that are still "
-        "running will be unable to 'phone home'; these "
-        "will be re-submitted (by default) if the suite is restarted.",
+        help="Shut down immediately; see WARNING above.",
         action="store_true", default=False, dest="shutdownnow" )
 
 (options, args) = parser.parse_args()
