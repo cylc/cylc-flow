@@ -62,11 +62,11 @@ class scheduler(object):
 
         self.parser.add_option( "--until", 
                 help="Shut down after all tasks have PASSED this cycle time.",
-                metavar="CYCLE", action="store", dest="stop_time" )
+                metavar="YYYYMMDDHH", action="store", dest="stop_time" )
 
         self.parser.add_option( "--pause",
                 help="Refrain from running tasks AFTER this cycle time.",
-                metavar="CYCLE", action="store", dest="pause_time" )
+                metavar="YYYYMMDDHH", action="store", dest="pause_time" )
 
         self.parser.add_option( "-d", "--dummy-mode",
                 help="Run the suite in simulation mode: each task is replaced "
@@ -79,14 +79,12 @@ class scheduler(object):
                 "Failed tasks will not be reset to waiting in the clone.",
                 action="store_true", dest="practice_mode" )
 
-        self.parser.add_option( "--failout", help=\
-                "(DUMMY MODE) get task NAME at cycle time CYCLE to report failure "
-                "and then abort. Use this to test failure and recovery scenarios.",
-                metavar="NAME%CYCLE", action="store", dest="failout_task_id" )
+        self.parser.add_option( "--fail", help=\
+                "(DUMMY MODE) get the specified task to report failure and then abort.",
+                metavar="NAME%YYYYMMDDHH", action="store", dest="failout_task_id" )
 
         self.parser.add_option( "--debug", help=\
-                "Use the 'debug' logging level and print the full"
-                "traceback for unhandled exceptions.",
+                "Use the 'debug' logging level and print the full traceback for exceptions.",
                 action="store_true", dest="debug" )
 
         self.parser.add_option( "--timing", help=\
