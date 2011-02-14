@@ -25,6 +25,7 @@ parser = OptionParser( usage = """cylc register [options] [SUITE] [PATH]
 
 Create and manage cylc suite registrations, which associate a suite name
 with a suite definition directory (stored in $HOME/.cylc/registrations).
+Cylc commands target a particular suite using its registered name.
 
 1/ Create a new registration:
      $ cylc register SUITE PATH, or 
@@ -39,25 +40,18 @@ with a suite definition directory (stored in $HOME/.cylc/registrations).
 4/ Delete all registrations, or just those that are no longer valid:
      $ cylc register [--wipe] [--check]
 
-Suite names are used by cylc commands to target the right suites. They
-are also used in suite logging and state dump directory paths, allowing
-multiple suites to run at once without interference.
+A suite's name is available to its tasks as $CYLC_SUITE_NAME. If all
+suite I/O directories include the suite name, then multiple instances of
+the same suite (not just copies of it) can run at the same time under
+different names. The cylc lockserver will allow this if you set:
+  SUITE.RC: allow multiple simultaneous suite instances = True
+
+If you accidentally delete the registration of a running suite, just
+register it again under the same name. 
 
 Real and dummy mode instances of a suite can be run simultaneously
 under different names (but see 'cylc restart --practice-mode' which
 automates this without requiring a new registration).
-
-The suite name is exported into the task execution environment as
-$CYLC_SUITE_NAME. If all tasks use this in their I/O paths you can run
-multiple instances of the exact same suite under different names at the
-same time (e.g. over different case study periods). The cylc lockserver
-does not allow this unless you set,
-  SUITE.RC: allow multiple simultaneous suite instances = True
-The cylc userguide example suite can do this. 
-
-If you accidentally delete a running suite's name registration you will
-not be able to access it with cylc commands unless you re-register it
-under the same name.
 
 Arguments:
   PATH            Path to a cylc suite definition directory.

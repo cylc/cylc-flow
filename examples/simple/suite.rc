@@ -83,4 +83,4 @@ WORKSPACE = /tmp/$USER/$CYLC_SUITE_NAME/common
         models  = "style=filled", "fillcolor=red"
         ColdModel = "fillcolor=lightblue"
         GetData = "style=filled", "fillcolor=yellow", "shape=septagon"
-        Prep = "shape=circle", "color=red3" 
+        Prep = "shape=square", "style=bold", "color=red3" 

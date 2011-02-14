@@ -928,7 +928,7 @@ class scheduler(object):
             self.trash( itask, 'general' )
 
     def reset_task_state( self, task_id, state ):
-        if state not in [ 'ready', 'waiting', 'finished' ]:
+        if state not in [ 'ready', 'waiting', 'finished', 'failed' ]:
             raise TaskStateError, 'Illegal reset state: ' + state
         # find the task to reset
         found = False
@@ -959,13 +959,19 @@ class scheduler(object):
             itask.state.set_status( 'finished' )
             itask.prerequisites.set_all_satisfied()
             itask.outputs.set_all_complete()
+        elif state == 'failed':
+            # all prerequisites satisified and no outputs complete
+            itask.state.set_status( 'failed' )
+            itask.prerequisites.set_all_satisfied()
+            itask.outputs.set_all_incomplete()
 
-        # remove the tasks's "failed" output
-        try:
-            itask.outputs.remove( task_id + ' failed' )
-        except:
-            # the task had no "failed" output
-            pass
+        if state != 'failed':
+            try:
+                # remove the tasks's "failed" output
+                itask.outputs.remove( task_id + ' failed' )
+            except:
+                # the task had no "failed" output
+                pass
 
     def insertion( self, ins_id ):
         #import pdb

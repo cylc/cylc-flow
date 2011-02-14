@@ -104,6 +104,7 @@ discovery_commands = \
     [
     'scan',
     'ping',
+    'control',
     ]
 
 monitoring_commands = \
@@ -119,7 +120,7 @@ monitoring_commands = \
 interaction_commands = \
     [
     'control',
-    'reset',
+    'trigger',
     'insert',
     'remove',
     'purge',
@@ -128,6 +129,7 @@ interaction_commands = \
     'block',
     'unblock',
     'verbosity',
+    'reset',
     ]
 
 information_commands = \
@@ -166,26 +168,24 @@ all_commands = allcom.keys()
 
 general_usage = """
 USAGE:
-  cylc help                            # top level help
+  cylc help,--help,-h,?                # top level help page
+  cylc -v,--version                    # cylc release version
   cylc help CATEGORY                   # commands by category
-  cylc COMMAND --help                  # command-specific help
+  cylc COMMAND help,--help             # command-specific help
   cylc COMMAND [options] SUITE [args]  # command usage syntax"""
 
 cat_usage = """
-USAGE: cylc COMMAND --help"""
+USAGE: cylc COMMAND help,--help
+       cylc help"""
 
-usage = """
-This is the cylc forecast suite metascheduler commandline interface.
+usage = """This is the cylc metascheduler commandline interface.
 """ + general_usage + """
 
 You can use any unique abbreviation for a COMMAND or CATEGORY, e.g.:
-  $ cylc help prep[aration]
+  $ cylc help prep .............. (category: preparation)
+  $ cylc reg foo /path/to/foo ... (command: register) 
 
-The cylc commandline philosophy is that each command should perform a
-single function and its purpose should be self-evident; consequently
-the command set is quite large, but it should be easy to understand.
-
-Command CATEGORIES:
+Overlapping Command CATEGORIES:
   all ........... all core cylc commands (sans utilities)
   preparation ... suite preparation and editing
   discovery ..... finding what suites are running
@@ -195,45 +195,31 @@ Command CATEGORIES:
   monitoring .... monitoring a running suite
   information ... getting task-specific information on a suite
   tasks ......... single-task submit, wrapping, and messaging
-  locking ....... suite and task locking by the cylc lockserver daemon
+  locking ....... suite and task locking by the cylc lockserver
   security ...... access, locking, blocking and secure passphrases
 
-  utilities ..... some useful commands designed for use in cylc suites
-
-Cylc release version:
-  $ cylc -v,--version
-
-Main help (this page):
-  $ cylc help,-h,--help,?
+  utilities ..... some useful programs intended for use in suites
 """
 
 if len(sys.argv) == 1:
     print >> sys.stderr, usage
     sys.exit(1)
 
-discovery_help = """
-CATEGORY:discovery - finding out what suites are running."""
+discovery_help = """CATEGORY:discovery - finding out what suites are running."""
 
-preparation_help = """
-CATEGORY:preparation - suite preparation and editing."""
+preparation_help = """CATEGORY:preparation - suite preparation and editing."""
 
-startup_help  = """
-CATEGORY:startup - starting suites."""
+startup_help  = """CATEGORY:startup - starting suites."""
 
-shutdown_help  = """
-CATEGORY:shutdown - stopping suites."""
+shutdown_help  = """CATEGORY:shutdown - stopping suites."""
 
-monitoring_help  = """
-CATEGORY:monitoring - monitoring running suites."""
+monitoring_help  = """CATEGORY:monitoring - monitoring running suites."""
 
-interaction_help  = """
-CATEGORY:interaction - interacting with running suites."""
+interaction_help  = """CATEGORY:interaction - interacting with running suites."""
 
-information_help = """
-CATEGORY:information - getting information about running suites."""
+information_help = """CATEGORY:information - getting information about running suites."""
 
-security_help = """
-CATEGORY:security - owner-only access, locking, blocking, secure passphrases.
+security_help = """CATEGORY:security - owner-only access, locking, blocking, secure passphrases.
 
 Cylc commands allow only the suite owner to intervene in a running suite.
 
@@ -255,14 +241,11 @@ suite contains tasks that run on a remote host or under another
 username, those accounts must also hold the passphrase. The passphrase
 is never sent across the network; a secure md5 checksum is exchanged."""
 
-locking_help = """
-CATEGORY:locking - the cylc lockserver daemon and its user interface."""
+locking_help = """CATEGORY:locking - the cylc lockserver daemon and its user interface."""
 
-tasks_help = """
-CATEGORY:tasks - single-task submit, wrapping, and task messaging.""" 
+tasks_help = """CATEGORY:tasks - single-task submit, wrapping, and task messaging.""" 
 
-utilities_help = """
-CATEGORY:utilities - utility commands designed for use with cylc."""
+utilities_help = """CATEGORY:utilities - utility commands designed for use with cylc."""
 
 all_help = "The complete cylc command set, sans utilities."
 
@@ -285,7 +268,8 @@ comsum[ 'resume'    ] = 'Unpause a running suite (resume submitting tasks)'
 comsum[ 'block'     ] = 'Do not comply with subsequent intervention commands'
 comsum[ 'unblock'   ] = 'Comply with subsequent intervention commands'
 comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
-comsum[ 'reset'     ] = 'Force a task to change state (manual triggering!)'
+comsum[ 'trigger'   ] = 'Manually trigger a task'
+comsum[ 'reset'     ] = 'Force a task to waiting, ready, or finished state'
 comsum[ 'remove'    ] = 'Remove tasks from a running suite'
 comsum[ 'purge'     ] = 'Remove a full dependency tree from a running suite'
 comsum[ 'submit'    ] = 'Run a single task outside of its suite'

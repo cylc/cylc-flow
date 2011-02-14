@@ -50,7 +50,7 @@ Arguments:
                 action="store_true", default=False, dest="force" )
 
         self.add_option( "--debug",
-                help="Print full Python exception tracebacks",
+                help="Turn on exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
     
     def parse_args( self ):
@@ -98,7 +98,7 @@ class NoPromptOptionParser( OptionParser ):
 
         usage += """
 
-You must be the owner of the target suite in order to use this command.
+You must be the owner of the target suite to use this command.
 
 arguments:
    SUITE                Registered name of the target suite.""" 
@@ -130,7 +130,7 @@ arguments:
                 action="store_true", default=False, dest="force" )
 
         self.add_option( "--debug",
-                help="Print full Python exception tracebacks",
+                help="Turn on exception tracebacks.",
                 action="store_true", default=False, dest="debug" )
 
         self.owner = os.environ['USER']
