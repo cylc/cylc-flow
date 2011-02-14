@@ -60,6 +60,7 @@ locking_commands = \
 
 security_commands = \
     [
+    'lockserver',
     'block',
     'unblock',
      ]
@@ -195,7 +196,7 @@ Command CATEGORIES:
   information ... getting task-specific information on a suite
   tasks ......... single-task submit, wrapping, and messaging
   locking ....... suite and task locking by the cylc lockserver daemon
-  security ...... suite access, temporary blocking and secure passphrases
+  security ...... access, locking, blocking and secure passphrases
 
   utilities ..... some useful commands designed for use in cylc suites
 
@@ -232,9 +233,14 @@ information_help = """
 CATEGORY:information - getting information about running suites."""
 
 security_help = """
-CATEGORY:security - owner-only access, blocking, and secure passphrases.
+CATEGORY:security - owner-only access, locking, blocking, secure passphrases.
 
 Cylc commands allow only the suite owner to intervene in a running suite.
+
+Using the cylc lockserver prevents accidental simultaneous runs of the
+exact same suite (unless the suite allows it) even if it is registered
+under several names, or of the same task at the same cycle time, by
+suite or single task submit.
 
 Suite blocking guards against inadvertent intervention in your own suites.
  + SUITE.RC: use suite blocking = True
