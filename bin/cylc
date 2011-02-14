@@ -38,17 +38,17 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 categories = \
      [
+     'all',
      'preparation',
      'discovery',
-     'startup',
-     'shutdown',
+     'starting',
+     'stopping',
+     'intervention',
+     'interrogation',
      'monitoring',
-     'interaction',
-     'information',
      'tasks',
      'locking',
      'security',
-     'all',
      'utilities',
      ]
 
@@ -79,22 +79,22 @@ preparation_commands = \
     'register',
     'edit',
     'validate',
-    'list',
     'graph',
     'grep',
     'inline',
     ]
 
-startup_commands = \
+starting_commands = \
     [
     'control',
     'coldstart', 
     'warmstart', 
     'rawstart', 
     'restart',
+    'submit',
     ]
 
-shutdown_commands = \
+stopping_commands = \
     [
     'control',
     'stop',
@@ -111,13 +111,13 @@ monitoring_commands = \
     [
     'control',
     'view',
+    'tmon',
     'dump',
-    'monitor',
-    'ping',
-    'scan',
+    # 'ping',
+    # 'scan',
     ]
 
-interaction_commands = \
+intervention_commands = \
     [
     'control',
     'trigger',
@@ -128,43 +128,32 @@ interaction_commands = \
     'resume',
     'block',
     'unblock',
-    'verbosity',
     'reset',
     ]
 
-information_commands = \
+interrogation_commands = \
     [
     'control',
     'ping',
     'scan',
     'list',
-    #    'graph',
     'dump',
     'show',
     'log',
     'view',
-    'monitor',
+    'tmon',
+    'verbosity',
     ]
 
 tasks_commands = \
     [
-    'wrap',
     'submit',
+    'wrap',
     'task-started',
     'task-message',
     'task-finished',
     'task-failed',
     ]
-
-# uniquify the 'all commands' list (some may reside in multiple categories)
-allcom = OrderedDict()
-for command in preparation_commands + startup_commands + \
-                shutdown_commands + interaction_commands + \
-                monitoring_commands + information_commands + \
-                locking_commands + security_commands + \
-                tasks_commands:
-            allcom[ command ] = True
-all_commands = allcom.keys()
 
 general_usage = """
 USAGE:
@@ -186,19 +175,18 @@ You can use any unique abbreviation for a COMMAND or CATEGORY, e.g.:
   $ cylc reg foo /path/to/foo ... (command: register) 
 
 Overlapping Command CATEGORIES:
-  all ........... all core cylc commands (sans utilities)
+  all ........... core commands (sans utilities and task interface)
   preparation ... suite preparation and editing
   discovery ..... finding what suites are running
-  startup ....... starting a suite running
-  shutdown ...... stopping a running suite
-  interaction ... interacting with a running suite
+  starting ...... starting a suite or running a single task
+  stopping ...... stopping a running suite
+  intervention .. interacting with a running suite
+  interrogation . getting information from running suites
   monitoring .... monitoring a running suite
-  information ... getting task-specific information on a suite
-  tasks ......... single-task submit, wrapping, and messaging
   locking ....... suite and task locking by the cylc lockserver
   security ...... access, locking, blocking and secure passphrases
-
-  utilities ..... some useful programs intended for use in suites
+  tasks ......... single-task submit, wrapping, and messaging
+  utilities ..... extra programs intended for use in suites
 """
 
 if len(sys.argv) == 1:
@@ -209,15 +197,15 @@ discovery_help = """CATEGORY:discovery - finding out what suites are running."""
 
 preparation_help = """CATEGORY:preparation - suite preparation and editing."""
 
-startup_help  = """CATEGORY:startup - starting suites."""
+starting_help  = """CATEGORY:starting - starting suites."""
 
-shutdown_help  = """CATEGORY:shutdown - stopping suites."""
+stopping_help  = """CATEGORY:stopping - stopping suites."""
 
 monitoring_help  = """CATEGORY:monitoring - monitoring running suites."""
 
-interaction_help  = """CATEGORY:interaction - interacting with running suites."""
+intervention_help  = """CATEGORY:intervention - interacting with running suites."""
 
-information_help = """CATEGORY:information - getting information about running suites."""
+interrogation_help = """CATEGORY:interrogation - getting information from running suites."""
 
 security_help = """CATEGORY:security - owner-only access, locking, blocking, secure passphrases.
 
@@ -247,7 +235,7 @@ tasks_help = """CATEGORY:tasks - single-task submit, wrapping, and task messagin
 
 utilities_help = """CATEGORY:utilities - utility commands designed for use with cylc."""
 
-all_help = "The complete cylc command set, sans utilities."
+all_help = "The complete cylc command set, sans utilities and task interface."
 
 # command summaries
 comsum = {}
@@ -276,12 +264,12 @@ comsum[ 'submit'    ] = 'Run a single task outside of its suite'
 comsum[ 'control'   ] = 'The cylc suite control and monitoring GUI'
 comsum[ 'view'      ] = 'Suite monitoring GUI (control functions disabled)'
 comsum[ 'dump'      ] = 'Print the state of each task in a running suite'
-comsum[ 'show'      ] = 'Retrieve task-specific information from a running suite'
+comsum[ 'show'      ] = 'Show information on a task in a running suite'
 comsum[ 'list'      ] = 'Print a suite\'s configured task list'
 comsum[ 'ping'      ] = 'Check that a named suite is running'
 comsum[ 'scan'      ] = 'Scan a host for running cylc suites'
 comsum[ 'log'       ] = 'Print or view suite logs, with filtering'
-comsum[ 'monitor'   ] = 'An in-terminal suite monitor (deprecated)'
+comsum[ 'tmon'      ] = 'A terminal-based suite monitor (deprecated)'
 comsum[ 'lockserver'] = 'Lockserver interrogation and lock management'
 comsum[ 'verbosity' ] = 'Change a suite\'s logging verbosity level'
 comsum[ 'cycletime' ] = 'Cycle time arithmetic'
@@ -319,9 +307,17 @@ if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     print cylc_version
     sys.exit(0)
 
+# uniquify the 'all commands' list (some may be in multiple categories)
+allcom = OrderedDict()
+for command in preparation_commands + starting_commands \
+        + stopping_commands + intervention_commands + interrogation_commands + \
+        monitoring_commands + locking_commands + security_commands + discovery_commands:
+            allcom[ command ] = True
+all_commands = allcom.keys()
+
 # secret command lists used by documentation generation script
 if len(sys.argv) == 2 and sys.argv[1] == 'commands':
-    for command in all_commands:
+    for command in all_commands + tasks_commands:
         print command
     sys.exit(0)
 if len(sys.argv) == 2 and sys.argv[1] == 'utilities':
@@ -365,7 +361,7 @@ if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
 # cylc COMMAND ARGS
 arglist = sys.argv[1:]
 try:
-    command = find_command( arglist[0], all_commands + utilities_commands, 'COMMAND' )
+    command = find_command( arglist[0], all_commands + utilities_commands + tasks_commands, 'COMMAND' )
 except CommandError, x:
     raise SystemExit(x)
 
