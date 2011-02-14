@@ -69,8 +69,9 @@ class scheduler(object):
                 metavar="YYYYMMDDHH", action="store", dest="pause_time" )
 
         self.parser.add_option( "-d", "--dummy-mode",
-                help="Run the suite in simulation mode: each task is replaced "
-                "by 'cylc-wrapper bin/true', and the wall clock is accelerated.",
+                help="Use dummy tasks that masquerade as the real thing, "
+                "and accelerate the wall clock: get the scheduling right "
+                "without having to run the real suite tasks.",
                 action="store_true", dest="dummy_mode" )
 
         self.parser.add_option( "-p", "--practice-mode",
