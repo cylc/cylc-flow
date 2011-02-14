@@ -333,7 +333,7 @@ A real time suite control and monitoring tool for cylc.
         try:
             logfiles = states[ task_id ][ 'logfiles' ]
         except KeyError:
-            warning_dialog( task_id + 'is no longer live' ).warn()
+            warning_dialog( task_id + ' is no longer live' ).warn()
             return False
 
         if len(logfiles) == 0:
@@ -405,23 +405,29 @@ A real time suite control and monitoring tool for cylc.
         menu.append( info_item )
         info_item.connect( 'activate', self.popup_requisites, task_id )
 
-        reset_ready_item = gtk.MenuItem( 'Reset to Ready (i.e. trigger immediately)' )
+        reset_ready_item = gtk.MenuItem( 'Trigger Immediately' )
         menu.append( reset_ready_item )
         reset_ready_item.connect( 'activate', self.reset_task_state, task_id, 'ready' )
         if self.readonly:
             reset_ready_item.set_sensitive(False)
 
-        reset_waiting_item = gtk.MenuItem( 'Reset to Waiting (i.e. prerequisites unsatisfied)' )
+        reset_waiting_item = gtk.MenuItem( 'Reset to Waiting' )
         menu.append( reset_waiting_item )
         reset_waiting_item.connect( 'activate', self.reset_task_state, task_id, 'waiting' )
         if self.readonly:
             reset_waiting_item.set_sensitive(False)
 
-        reset_finished_item = gtk.MenuItem( 'Reset to Finished (i.e. outputs completed)' )
+        reset_finished_item = gtk.MenuItem( 'Reset to Finished' )
         menu.append( reset_finished_item )
         reset_finished_item.connect( 'activate', self.reset_task_state, task_id, 'finished' )
         if self.readonly:
             reset_finished_item.set_sensitive(False)
+
+        reset_failed_item = gtk.MenuItem( 'Reset to Failed' )
+        menu.append( reset_failed_item )
+        reset_failed_item.connect( 'activate', self.reset_task_state, task_id, 'failed' )
+        if self.readonly:
+            reset_failed_item.set_sensitive(False)
 
         kill_item = gtk.MenuItem( 'Remove (after spawning)' )
         menu.append( kill_item )
@@ -633,27 +639,21 @@ A real time suite control and monitoring tool for cylc.
         self.update_tb( tb, "Help: Stopping A Suite", [bold, blue] )
 
         self.update_tb( tb, "\n\n o Stop", [bold, red] )
-        self.update_tb( tb, "\nThe suite will not submit any new tasks to run, and will "
-                "shut down as soon as all currently submitted or running "
-                "tasks have finished. The final state dump file will "
-                "reflect what actually happened "
-                "in the external world.")
+        self.update_tb( tb, "\nDo not submit any new tasks to run, and "
+                "shut down as soon as currently running tasks have finished." )
 
         self.update_tb( tb, "\n\n o Stop At (YYYYMMDDHH)", [bold, red] )
         self.update_tb( tb, "\nStop the suite once all tasks have passed "
-                "the specified cycle time and finished running.  The "
-                "final state dump file will reflect what actually happened "
-                "in the external world.")
+                "the cycle time YYYYMMDDHH." )
 
         self.update_tb( tb, "\n\n o Stop NOW", [bold, red] )
-        self.update_tb( tb, "\nStop the suite immediately. "
-                "The final state dump will reflect the state of the "
-                "suite at shut down; it will not know about any "
-                "already-running tasks that run to completion after "
-                "the suite shuts down.")
+        self.update_tb( tb, "\nStop the suite immediately, regardless of "
+                "tasks still running. WARNING: The final state dump file will "
+                "reflect the state of the suite at shutdown; any tasks that "
+                "run to completion post shutdown will thus be resubmitted, "
+                "by default, if the suite is restarted.")
 
         window.show_all()
-
 
     def userguide( self, w ):
         window = gtk.Window()
@@ -734,13 +734,16 @@ A real time suite control and monitoring tool for cylc.
                 "and the job submission file, for a task." )
         self.update_tb( tb, "\n o Prerequisites and Outputs: ", [bold])
         self.update_tb( tb, "View the state of a task's prerequisites and outputs.")
-        self.update_tb( tb, "\n o Reset To Ready: ", [bold])
-        self.update_tb( tb, "Set all of a task's prerequisites satisfied. This will "
-                "(re)trigger the task immediately (if the suite has not been paused)." )
+        self.update_tb( tb, "\n o Trigger Immediately: ", [bold])
+        self.update_tb( tb, "Reset the task to the 'ready' state (all prerequisites "
+                "satisfied). This will (re)trigger the task immediately if the suite "
+                "has not been paused (in which case it will trigger on resuming)." )
         self.update_tb( tb, "\n o Reset To Waiting: ", [bold])
         self.update_tb( tb, "Set all of a task's prerequisites unsatisfied." )
         self.update_tb( tb, "\n o Reset To Finished: ", [bold])
         self.update_tb( tb, "Set all of a task's outputs completed." )
+        self.update_tb( tb, "\n o Reset To Failed: ", [bold])
+        self.update_tb( tb, "Put the task in the 'failed' state." )
         self.update_tb( tb, "\n o Remove (after spawning): ", [bold])
         self.update_tb( tb, "Remove a task from the suite after ensuring that it has "
                 "spawned a successor." )
@@ -884,18 +887,17 @@ A real time suite control and monitoring tool for cylc.
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port).get_proxy( 'remote' )
         actioned, explanation = proxy.die( task_id, self.owner )
 
-    def purge_cycle_from_entry_text( self, e, w, task_id ):
+    def purge_cycle_entry( self, e, w, task_id ):
         stop = e.get_text()
         w.destroy()
-        msg = "purge " + task_id + " through " + stop + " (inclusive)?"
-        prompt = gtk.MessageDialog( None, gtk.DIALOG_MODAL, gtk.MESSAGE_QUESTION, gtk.BUTTONS_OK_CANCEL, msg )
-        response = prompt.run()
-        prompt.destroy()
-        if response != gtk.RESPONSE_OK:
-            return
         proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
         actioned, explanation = proxy.purge( task_id, stop, self.owner )
 
+    def purge_cycle_button( self, b, e, w, task_id ):
+        stop = e.get_text()
+        w.destroy()
+        proxy = cylc_pyro_client.client( self.suite, self.owner, self.host, self.port ).get_proxy( 'remote' )
+        actioned, explanation = proxy.purge( task_id, stop, self.owner )
 
     def stopsuite_popup( self, b ):
         window = gtk.Window()
@@ -1062,17 +1064,34 @@ A real time suite control and monitoring tool for cylc.
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
-        box = gtk.VBox()
-        label = gtk.Label( 'cycle at which to stop the purge (inclusive)' )
-        box.pack_start( label, True )
+        vbox = gtk.VBox()
+        label = gtk.Label( 'stop cycle (inclusive)' )
 
         entry = gtk.Entry()
         entry.set_max_length(10)
-        entry.connect( "activate", self.purge_cycle_from_entry_text, window, task_id )
+        entry.connect( "activate", self.purge_cycle_entry, window, task_id )
 
-        box.pack_start (entry, True)
+        hbox = gtk.HBox()
+        hbox.pack_start( label, True )
+        hbox.pack_start (entry, True)
+        vbox.pack_start( hbox )
 
-        window.add( box )
+        cancel_button = gtk.Button( "Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        start_button = gtk.Button( "Purge" )
+        start_button.connect("clicked", self.purge_cycle_button, entry, window, task_id )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, True )
+        hbox.pack_start(start_button, True)
+        vbox.pack_start( hbox )
+
+        # TO DO:
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.purge_guide )
+
+        window.add( vbox )
         window.show_all()
 
     def ctime_entry_popup( self, b, callback, title ):

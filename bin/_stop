@@ -8,16 +8,15 @@ from port_scan import SuiteIdentificationError
 
 parser = PromptOptionParser( """cylc stop [options] SUITE [YYYYMMDDHH]
 
-Shut a suite down:
- 1/ When all currently running tasks have finished (default), or
- 2/ After each task has passed a specified cycle time [YYYYMMDDHH], or
- 3/ Immediately [--now].
+1/ Do not submit any more tasks to run, and shut down as soon as all
+   tasks that are currently running have finished (this is the default).
 
-WARNING: If you use [--now] any tasks that complete after the shutdown
-(errors will occur until they try to contact the parent suite to report
-completion etc.) will still be listed as "running" in the suite state
-dump file and will thus be resubmitted, by default, if the suite is
-restarted.""", 
+2/ Shut down after all tasks have passed the cycle time YYYYMMDDHH.
+
+3/ [--now] shut down immediately, regardless of tasks still running.
+   WARNING: the final state dump file will reflect the state of the
+   suite at shutdown; any tasks that run to completion post shutdown
+   will thus be resubmitted, by default, if the suite is restarted.""", 
 [ """YYYYMMDDHH           Future cycle time after which to stop.""" ] )
 
 parser.add_option( "--now", 
