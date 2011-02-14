@@ -30,13 +30,14 @@ time for the task, including designated cold start tasks:
   SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
 
 NOTE: to prevent a suite being killed when you log out: 
-    export PYTHONUNBUFFERED=true   #(*)
-    nohup cylc warmstart SUITE YYYYMMDDHH
-(*) Python stdout buffering can result in no output until shutdown.
+  $ export PYTHONUNBUFFERED=true   # (*)
+  $ nohup cylc warmstart SUITE YYYYMMDDHH
+(*) with nohup, stdout buffering can result in no output until shutdown.
 
 See also:
     cylc warmstart
     cylc rawstart
+    cylc restart
 
 Arguments:
    SUITE                Registered name of the suite to start.
