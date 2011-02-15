@@ -7,7 +7,7 @@ from shutil import copy
 import subprocess
 from optparse import OptionParser
 from collections import deque
-from registration import registrations
+from registration import registrations, RegistrationError
 
 included = []
 modtimes = {}
@@ -177,11 +177,10 @@ except KeyError:
 # find location of the suite definition directory
 global suitedir
 reg = registrations()
-if reg.is_registered( suite ):
+try:
     suitedir = reg.get( suite )
-else:
-    reg.print_all()
-    raise SystemExit( "suite " + suite + " is not registered!" )
+except RegistrationError,x:
+    raise SystemExit(x)
 
 if options.cleanup:
     # remove backup files left by inlined editing sessions

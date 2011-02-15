@@ -1,25 +1,9 @@
 #!/usr/bin/env python
 
-# This command used to check the pyro nameserver to make sure a suite
-# was not in use before deleting a registration. However, this just
-# gives a false sense of security because it won't work if the user
-# deliberately or otherwise gives the wrong pyro nameserver host to
-# check.
-
 import os, re, sys, socket
 from optparse import OptionParser
-from registration import registrations
-
-#----------------------------------------
-def check_dir( rdir ):
-    suiterc = os.path.join( rdir, 'suite.rc' )
-    if not os.path.isfile( suiterc ):
-        print "ERROR, file not found: " + suiterc
-        return False
-    else:
-        return True
-
-#----------------------------------------
+from registration import registrations, RegistrationError
+from config import config, SuiteConfigError
 
 parser = OptionParser( usage = """cylc register [options] [SUITE] [PATH] 
 
@@ -38,7 +22,7 @@ Cylc commands target a particular suite using its registered name.
      $ cylc register --list
 
 4/ Delete all registrations, or just those that are no longer valid:
-     $ cylc register [--wipe] [--check]
+     $ cylc register [--wipe] [--clean]
 
 A suite's name is available to its tasks as $CYLC_SUITE_NAME. If all
 suite I/O directories include the suite name, then multiple instances of
@@ -55,7 +39,7 @@ automates this without requiring a new registration).
 
 Arguments:
   PATH            Path to a cylc suite definition directory.
-  SUITE           Suite name.""" )
+  SUITE           Suite CLASS:NAME or NAME.""" )
 
 parser.add_option( "-g", "--get",
         help="Get the suite definition directory for SUITE.",
@@ -69,17 +53,13 @@ parser.add_option( "-l", "--list",
         help="List all of your suite registrations.",
         action="store_true", default=False, dest="listall" )
 
-parser.add_option( "-u", "--user",
-        help="Read another user's suite registrations.", 
-        metavar="USER", action="store", default=None, dest="user" )
-
 parser.add_option( "-d", "--delete",
         help="Delete the registration with name SUITE.",
         action="store_true", default=False, dest="delete" )
 
-parser.add_option( "-c", "--check",
+parser.add_option( "-c", "--clean",
         help="Delete any registrations that are not valid.",
-        action="store_true", default=False, dest="check" )
+        action="store_true", default=False, dest="clean" )
 
 parser.add_option( "-w", "--wipe",
         help="Delete all of your suite registrations.",
@@ -96,20 +76,27 @@ chk_reg = False
 wpe_reg = False
 
 if len(args) == 2:
-    # + cylc register PATH SUITE
+    # + cylc SUITE PATH
     new_reg = True
+    suite = args[0]
+    rdir = args[1]
+    if not os.path.isdir( rdir ):
+        print "Second argument is not a valid directory: " + rdir
+        print "Trying reversed arguments..."
+        suite = args[1]
+        rdir = args[0]
+    if not os.path.isdir( rdir ):
+        raise SystemExit( 'ERROR: Suite definition PATH not valid' )
 
-    arg0 = args[0]
-    arg1 = args[1]
-
-    if os.path.isdir( arg0 ) and not re.match( '\/', arg1 ):
-        rdir = arg0
-        name = arg1
-    elif os.path.isdir( arg1 ) and not re.match( '\/', arg0 ): 
-        rdir = arg1
-        name = arg0
-    else:
-        raise SystemExit( 'Unable to determine SUITE and PATH from your argument list!' )
+    # remove trailing '/'
+    rdir = rdir.rstrip( '/' )
+    # remove leading './'
+    #rdir = re.sub( '^\.\/', '', rdir )
+    rdir = rdir.lstrip('\./')
+    # also strip / off name in case of registering same name as dir 
+    # whilst sitting one level up from the suite dir itself, using
+    # tab completion, and getting the args the wrong way around.
+    suite = suite.rstrip( '/' )
 
     # make registered path absolute
     # rdir = os.path.abspath( rdir )
@@ -121,19 +108,12 @@ if len(args) == 2:
        # path string ... so we'll do this the crude way for now:
     if not re.match( '^/', rdir ):
         rdir = os.path.join( os.environ['PWD'], rdir )
-    # remove trailing '/'
-    rdir = rdir.rstrip( '/' )
-
-    # also strip / off name in case of registering same name as dir 
-    # whilst sitting one level up from the suite dir itself, using
-    # tab completion, and getting the args the wrong way around.
-    name = name.rstrip( '/' )
 
 elif len(args) == 1:
     # + cylc register --print SUITE
     # + cylc register --get SUITE
     # + cylc register --delete SUITE
-    name = args[0]
+    suite = args[0]
     if options.prnt:
         prt_reg = True
     elif options.get:
@@ -141,13 +121,13 @@ elif len(args) == 1:
     elif options.delete:
         del_reg = True
     else:
-        parser.error( "Please specify what to do with '" + name + "'" )
+        parser.error( "Please specify what to do with '" + suite + "'" )
 
 elif len(args) == 0:
-    # + cylc register --check
+    # + cylc register --clean
     # + cylc register --wipe
     # + cylc register --list
-    if options.check:
+    if options.clean:
         chk_reg = True
     elif options.wipe:
         wpe_reg = True
@@ -162,80 +142,66 @@ else:
 if [ new_reg, prt_reg, get_reg, del_reg, lst_reg, chk_reg, wpe_reg ].count( True ) != 1:
     parser.error( "Choose one option only" )
 
-# load registration file
-reg = registrations( options.user )
+reg = registrations()
 
 #---------------------------------------
 if new_reg:
-    if not check_dir( rdir ):
-        sys.exit(1)
-    reg.register( name, rdir )
-    reg.dump_to_file()
-    sys.exit(0)
+    # get suite title from config file
+    try:
+        config = config( path=rdir )
+    except SuiteConfigError,x:
+        raise SystemExit(x)
+    else:
+        descr = config['title']
 
-if options.user:
-    if options.user != os.environ[ 'USER' ]:
-        if del_reg or chk_reg or wpe_reg:
-            parser.error( "You cannot delete, wipe, or check another user's registrations" )
+    try:
+        reg.register( suite, rdir, descr )
+    except RegistrationError, x:
+        raise SystemExit(x)
+    reg.dump_to_file()
+    print suite + ' --> ' + rdir + ' [' + descr + ']'
+    sys.exit(0)
 
 #---------------------------------------
 if prt_reg:
-    # print the registration and exit
-    if reg.is_registered( name ):
-        reg.print_reg( name )
-        sys.exit(0)
-    else:
-        print >> sys.stderr, name + " is not registered"
-        sys.exit(1)
+    try:
+        dir,descr = reg.get( suite )
+    except RegistrationError, x:
+        raise SystemExit(x)
+    print suite + ' --> ' + dir + ' [' + descr + ']'
+    sys.exit(0)
 
 #---------------------------------------
 if get_reg:
-    # print the registered suite definition directory and exit
-    if reg.is_registered( name ):
-        print reg.get( name )
-        sys.exit(0)
-    else:
-        print >> sys.stderr, name + " is not registered"
-        sys.exit(1)
+    try:
+        dir, descr = reg.get( suite )
+    except RegistrationError, x:
+        raise SystemExit(x)
+    print dir
+    sys.exit(0)
 
 #---------------------------------------
 if lst_reg:
-    # print all registrations and exit
     reg.print_all()
     sys.exit(0)
 
 #----------------------------------------
-marked = []
-
-if chk_reg:
-    count = 0
-    for name in reg.get_all():
-        count += 1
-        rdir = reg.get(name)
-        if not check_dir( rdir ):
-            post = ' ... INVALID'
-            marked.append( name )
-
-        else:
-            post = ' ... OK'
-        reg.print_reg( name, pre=' [' + str(count) + '] ', post=post )
-
-elif wpe_reg:
-    marked = reg.get_all() 
-
-elif del_reg:
-    marked = [ args[0] ] 
-
-if len(marked) == 0:
-    print "No suites to unregister"
+if wpe_reg:
+    reg.unregister_all()
+    reg.dump_to_file()
     sys.exit(0)
 
-count = 0
-print "Unregistering " + str( len(marked) ) + " suites:"
-for mark in marked:
-    count += 1
-    print ' [' + str( count ) + '] ' + mark
-    reg.unregister( mark )
-
-# record registration changes
-reg.dump_to_file()
+#----------------------------------------
+if del_reg:
+    try:
+        reg.unregister(suite)
+    except RegistrationError, x:
+        raise SystemExit(x)
+    reg.dump_to_file()
+    sys.exit(0)
+ 
+#----------------------------------------
+if chk_reg:
+    reg.clean()
+    reg.dump_to_file()
+    sys.exit(0)

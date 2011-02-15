@@ -6,7 +6,7 @@ import time, os, re
 import threading
 from config import config
 from port_scan import scan_my_suites
-from registration import registrations
+from registration import registrations, RegistrationError
 from gtkmonitor import monitor
 
 class chooser_updater(threading.Thread):
@@ -38,7 +38,7 @@ class chooser_updater(threading.Thread):
             return False
 
     def regd_choices_changed( self ):
-        regs = registrations( self.owner ).get_list() 
+        regs = registrations().get_list() 
         if regs != self.regd_choices:
             self.regd_choices = regs
             return True
@@ -58,15 +58,13 @@ class chooser_updater(threading.Thread):
 
         self.regd_liststore.clear()
         choices = self.regd_choices
-        # sort list of registered suites alphabetically
-        choices.sort()
         for reg in choices:
-            name, suite_dir = reg
+            name, suite_dir, descr = reg
             suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
             if name in ports:
-                self.regd_liststore.append( [name, '#88ccff', 'RUNNING (port ' + str( ports[name] ) + ')', '#5599bb', suite_dir, '#88ccff' ] )
+                self.regd_liststore.append( [name, '#88ccff', 'RUNNING (port ' + str( ports[name] ) + ')', '#5599bb', suite_dir, '#88ccff', descr, '#5599bb' ] )
             else:
-                self.regd_liststore.append( [name, 'white', 'not running', 'lightgrey', suite_dir, 'white' ] )
+                self.regd_liststore.append( [name, 'white', 'not running', 'lightgrey', suite_dir, 'white', descr, 'lightgrey' ] )
 
 class chooser(object):
     def __init__(self, host, imagedir, readonly=False ):
@@ -93,7 +91,8 @@ class chooser(object):
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         regd_treeview = gtk.TreeView()
-        regd_liststore = gtk.ListStore( str, str, str, str, str, str, )
+        # suite, state, title, colors...
+        regd_liststore = gtk.ListStore( str, str, str, str, str, str, str, str, )
         regd_treeview.set_model(regd_liststore)
 
         # Start updating the liststore now, as we need values in it
@@ -108,7 +107,7 @@ class chooser(object):
         regd_ts.set_select_function( self.get_selected_suite, regd_liststore )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Name', cr, text=0, background=1 )
+        tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, background=1 )
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
@@ -116,7 +115,11 @@ class chooser(object):
         regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Suite Definition Directory', cr, text=4, background=5 )
+        tvc = gtk.TreeViewColumn( 'Definition', cr, text=4, background=5 )
+        regd_treeview.append_column( tvc )
+
+        cr = gtk.CellRendererText()
+        tvc = gtk.TreeViewColumn( 'Title', cr, text=6, background=7 )
         regd_treeview.append_column( tvc )
 
         # NOTE THAT WE CANNOT LEAVE ANY VIEWER WINDOWS OPEN WHEN WE

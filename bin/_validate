@@ -23,10 +23,6 @@ parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",
         action="store_true", default=False, dest="debug" )
 
-#parser.add_option( "-o", "--owner", help="suite owner (default $USER).",
-#        metavar='USERNAME', action="store", default=os.environ['USER'], 
-#        dest="owner" )
-
 (options, args) = parser.parse_args()
 
 if len(args) != 1:

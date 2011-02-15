@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from optparse import OptionParser
 from collections import deque
-from registration import registrations
+from registration import registrations, RegistrationError
 
 done = []
 
@@ -126,11 +126,10 @@ except KeyError:
 
 # find location of the suite definition directory
 reg = registrations()
-if reg.is_registered( suite ):
+try:
     suitedir = reg.get( suite )
-else:
-    reg.print_all()
-    raise SystemExit( "suite " + suite + " is not registered!" )
+except RegistrationError,x:
+    raise SystemExit(x)
 
 suiterc = os.path.join( suitedir, 'suite.rc' )
 

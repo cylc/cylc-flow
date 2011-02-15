@@ -6,7 +6,7 @@ from optparse import OptionParser
 from OrderedDict import OrderedDict
 from config import config
 from mkdir_p import mkdir_p
-from registration import registrations
+from registration import registrations, RegistrationError
 from execute import execute
 from job_submit import job_submit
 import cycle_time, pimp_my_logger
@@ -57,11 +57,10 @@ host = socket.getfqdn()
 
 # find location of the suite definition directory --------------------
 reg = registrations()
-if reg.is_registered( name ):
+try:
     suite_dir = reg.get( name )
-else:
-    reg.print_all()
-    raise SystemExit( "suite " + name + " is not registered!" )
+except RegistrationError,x:
+    raise SystemExit(x)
 
 # provide access to the suite bin directory
 os.environ[ 'PATH' ] += ':' + suite_dir + '/bin'

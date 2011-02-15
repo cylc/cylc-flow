@@ -21,7 +21,7 @@ from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values, flatten_errors
 from cylcconfigobj import CylcConfigObj, ConfigObjError
-from registration import registrations
+from registration import registrations, RegistrationError
 from graphnode import graphnode
 
 try:
@@ -120,7 +120,7 @@ class edge( object):
         return res
 
 class config( CylcConfigObj ):
-    def __init__( self, suite=None, dummy_mode=False ):
+    def __init__( self, suite=None, dummy_mode=False, path=None ):
         self.dummy_mode = dummy_mode
         self.edges = {} # edges[ hour ] = [ [A,B], [C,D], ... ]
         self.taskdefs = {}
@@ -130,13 +130,17 @@ class config( CylcConfigObj ):
         if suite:
             self.suite = suite
             reg = registrations()
-            if reg.is_registered( suite ):
-                self.dir = reg.get( suite )
-            else:
-                reg.print_all()
-                raise SuiteConfigError, "Suite " + suite + " is not registered"
-
+            try:
+                self.dir, descr = reg.get( suite )
+            except RegistrationError, x:
+                raise SystemExit(x)
             self.file = os.path.join( self.dir, 'suite.rc' )
+        elif path:
+            # allow load by path so that suite title can be parsed for
+            # new suite registrations.
+            self.suite = '(unknown)'
+            self.dir = path
+            self.file = os.path.join( path, 'suite.rc' )
         else:
             self.suite = os.environ[ 'CYLC_SUITE_NAME' ]
             self.file = os.path.join( os.environ[ 'CYLC_SUITE_DIR' ], 'suite.rc' ),

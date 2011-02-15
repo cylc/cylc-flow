@@ -6,7 +6,6 @@ import gtk
 import gtk.gdk
 import gobject
 from optparse import OptionParser
-from registration import registrations
 
 try:
     from graphing import xdot
@@ -202,12 +201,7 @@ Arguments:
             parser.error( "suite.rc graphing requires args SUITE START [STOP]" )
 
         suite = args[0]
-        reg = registrations()
-        if not reg.is_registered( suite ):
-            reg.print_all()
-            print >> sys.stderr, "ERROR: Suite " + suite + " is not registered"
-            sys.exit(1)
- 
+
         hour = args[1]
         if len(args) == 3:
             stop = args[2]

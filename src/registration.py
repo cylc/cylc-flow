@@ -1,158 +1,195 @@
 #!/usr/bin/env python
 
-
 import pickle
 import os, sys, re
 import pwd
 
-# cylc suite registration module
+# cylc local suite registration
+
+class RegistrationError( Exception ):
+    """
+    Attributes:
+        message - what the problem is. 
+    """
+    def __init__( self, msg ):
+        self.msg = msg
+    def __str__( self ):
+        return repr(self.msg)
+
+class RegistrationTakenError( RegistrationError ):
+    def __init__( self, suite ):
+        self.msg = "ERROR: Another suite is registered as " + suite
+
+class SuiteNotRegisteredError( RegistrationError ):
+    def __init__( self, suite ):
+        self.msg = "ERROR: There is no suite registered as " + suite
+
+class RegistrationNotValidError( RegistrationError ):
+    pass
 
 class registrations(object):
-    def __init__( self, user=None ):
-        if not user:
-            self.readonly = False
-            home = os.environ['HOME']
-        elif user == os.environ['USER']:
-            self.readonly = False
-            home = os.environ['HOME']
-        else:
-            # attempt to read another user's suite registration
-            self.readonly = True
-            try:
-                home = pwd.getpwnam( user )[5]
-            except KeyError, x:
-                #raise SystemExit(x)
-                raise SystemExit('ERROR, user not found: ' + user )
-
+    """
+    A simple database of local (user-specific) suite registrations.
+    """
+    def __init__( self, file=None ):
         # filename used to store suite registrations
-        file = os.path.join( home, '.cylc', 'registrations' )
-        self.filename = file
-
-        # use a dict to make sure names are unique
-        self.registrations = {}
-
+        dir = os.path.join( os.environ['HOME'], '.cylc' )
         # make sure the registration directory exists
-        if not self.readonly and not os.path.exists( os.path.dirname( file )):
+        if not os.path.exists( dir ):
             try:
-                os.makedirs( os.path.dirname( file ))
+                os.makedirs( dir )
             except Exception,x:
                 print "ERROR: unable to create the cylc registration directory"
                 print x
                 sys.exit(1)
 
+        if file:
+            # use for testing
+            self.file = file
         else:
-            self.load_from_file()
+            self.file = os.path.join( dir, 'registrations' )
+
+        self.items = {}  # items[category][name] = dir
+        self.load_from_file()
+
+    def split( self, suite ):
+        m = re.match( '(\w+):(\w+)', suite )
+        if m:
+            category, name = m.groups()
+        elif re.match( '\w+', suite ):
+            category = 'default'
+            name = suite
+        else:
+            raise RegistrationError, 'Illegal suite name: ' + suite
+        return ( category, name )
 
     def load_from_file( self ):
-        #print "Loading your cylc suite registrations"
-        if not os.path.exists( self.filename ):
+        if not os.path.exists( self.file ):
             # no suites registered yet, so the file does not exist
             return
-
-        input = open( self.filename, 'rb' )
-        self.registrations = pickle.load( input )
+        input = open( self.file, 'rb' )
+        self.items = pickle.load( input )
         input.close()
 
-    def deny_user( self ):
-        if self.readonly:
-            print "WARNING: you cannot write to another user's registration file"
-            return True
-        else:
-            return False
-        
     def dump_to_file( self ):
-        if self.deny_user():
-            return
-
-        output = open( self.filename, 'w' )
-        pickle.dump( self.registrations, output )
+        output = open( self.file, 'w' )
+        pickle.dump( self.items, output )
         output.close()
 
-    def count( self ):
-        return len( self.registrations.keys() )
-
-    def is_registered( self, name ):
-        if name in self.registrations.keys():
-            return True
+    def register( self, suite, dir, description='(no description supplied)' ):
+        category, name = self.split( suite )
+        try:
+            regdir = self.items[category][name]
+        except KeyError:
+            # not registered, do it below.
+            pass
         else:
-            return False
+            if regdir == dir:
+                # this suite is already registered
+                pass
+            else:
+                # another suite is already registered under this category|name
+                raise RegistrationTakenError( suite )
+        # register the suite
+        if category not in self.items:
+            self.items[category] = {}
+        self.items[category][name] = (dir, description)
 
-    def get( self, name ):
-        # return suite directory registered under name
-        if self.is_registered( name ):
-            return self.registrations[ name ]
+    def unregister( self, suite ):
+        category, name = self.split( suite )
+        # check the registration exists:
+        dir,descr = self.get( suite )
+        # delete it
+        del self.items[category][name]
+        # delete the category if it is empty
+        if len( self.items[category] ) == 0:
+            del self.items[category]
+
+    def unregister_all( self, silent=False ):
+        if not silent:
+            self.print_all( prefix='DELETING: ' )
+        self.items = {}
+
+    def get( self, suite ):
+        category, name = self.split( suite )
+        # return suite directory
+        try:
+            reg = self.items[category][name]
+        except KeyError:
+            raise SuiteNotRegisteredError( suite )
         else:
-            return None
-
-    def get_all( self ):
-        return self.registrations.keys()
+            return reg
 
     def get_list( self ):
+        # return list of [ suite, dir, descr ]
         regs = []
-        for reg in self.registrations:
-            regs.append( (reg, self.registrations[ reg ]))
+        categories = self.items.keys()
+        categories.sort()
+        for category in categories:
+            names = self.items[category].keys()
+            names.sort()
+            for name in names:
+                suite = category + ':' + name
+                dir,descr = self.items[category][name]
+                regs.append( [suite, dir, descr] )
         return regs
 
-    def unregister( self, name ):
-        if self.deny_user():
-            return
+    def clean( self ):
+        # delete any invalid registrations
+        categories = self.items.keys()
+        categories.sort()
+        for category in categories:
+            print 'Class:', category
+            names = self.items[category].keys()
+            names.sort()
+            for name in names:
+                suite = category + ':' + name
+                dir,descr = self.items[category][name] 
+                try:
+                    self.check_valid( suite )
+                except RegistrationNotValidError, x:
+                    print ' (DELETING) ' + name + ' --> ' + dir, '(' + str(x) + ')'
+                    self.unregister(suite)
+                else:
+                    print ' (OK) ' + name + ' --> ' + dir
 
-        if self.is_registered( name ):
-            print 'Unregistering ',
-            self.print_reg( name )
-            del self.registrations[ name ]
-        else:
-            print 'Name ' + name + ' is not registered'
- 
-    def register( self, name, dir ):
-        if self.deny_user():
-            return
+    def check_valid( self, suite ):
+        category, name = self.split( suite )
+        # raise an exception if the registration is not valid
+        dir,descr = self.get( suite )
+        if not os.path.isdir( dir ):
+            raise RegistrationNotValidError, 'Directory not found: ' + dir
+        file = os.path.join( dir, 'suite.rc' )
+        if not os.path.isfile( file ): 
+            raise RegistrationNotValidError, 'File not found: ' + file
+        # OK
 
-        if self.is_registered( name ):
-            if dir == self.registrations[ name ]:
-                print name + " is already registered:"
-                self.print_reg( name )
-                return True
-
-            else:
-                print "ERROR, " + name + " is already registered:"
-                self.print_reg( name )
-                return False
-
-        print "New:",
-        self.registrations[ name ] = dir
-        self.print_reg( name )
-        return True
-
-    def print_reg( self, name, pre='', post='' ):
-        if name not in self.registrations.keys():
-            print "ERROR, name not registered: " + name
-            return False
-        else:
-            print pre + name + ' --> ' + self.registrations[ name ] + post
-            return True
-
-    def print_all( self ):
-        print 'Number of registrations:', self.count()
-        count = 0
-        for name in self.registrations.keys():
-            count +=1
-            self.print_reg( name, pre=' [' + str(count) + '] ' )
-
+    def print_all( self, prefix=''):
+        categories = self.items.keys()
+        categories.sort()
+        for category in categories:
+            print 'Class:', category
+            names = self.items[category].keys()
+            names.sort()
+            for name in names:
+                dir,descr = self.items[category][name] 
+                print '  ' + prefix + name + ' --> ' + dir + ' [' + descr + ']'
 
 if __name__ == '__main__':
-    # module test code
-
+    # unit test
     reg = registrations( 'REGISTRATIONS' )
-
-    reg.register( 'foo', 'suites/userguide' )
-    reg.register( 'bar', 'suites/userguide' )
-    reg.register( 'bar', 'suites/userguidex' )
-
-    reg.print_all()
+    reg.unregister_all( silent=True )
+    try:
+        reg.register( 'foo', 'suites/userguide',      'the quick'    ) # new
+        reg.register( 'ONE:bar', 'suites/userguide',  'brown fox'    ) # new
+        reg.register( 'TWO:bar', 'suites/userguidex', 'jumped over'  ) # new
+        reg.register( 'TWO:baz', 'suites/userguidex' ) # new
+        reg.register( 'TWO:baz', 'suites/userguidex' ) # OK repeat
+        reg.register( 'TWO:baz', 'suites/userguidexx') # BAD repeat
+    except RegistrationError,x:
+        print x
     reg.dump_to_file()
 
-    print
     reg2 = registrations( 'REGISTRATIONS' )
     reg2.load_from_file()
     reg2.print_all()

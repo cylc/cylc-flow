@@ -7,7 +7,7 @@ from time import sleep
 
 import cycle_time
 from port_scan import SuiteNotFoundError
-from registration import registrations
+from registration import registrations, RegistrationError
 from lockserver import lockserver
 from task_lock import task_lock
 from suite_lock import suite_lock
@@ -21,11 +21,10 @@ def print_heading( heading ):
 
 def check_suite_spec( name ):
     reg = registrations()
-    if reg.is_registered( name ):
+    try:
         suite_dir = reg.get( name )
-    else:
-        reg.print_all()
-        raise SystemExit( "suite " + name + " is not registered!" )
+    except RegistrationError,x:
+        raise SystemExit(x)
     return suite_dir
 
 def check_task_spec( task_spec ):
