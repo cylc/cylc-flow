@@ -18,7 +18,7 @@ use lockserver = boolean( default=False )
 use quick task elimination = boolean( default=True )
 
 # absolute, or relative to $HOME:
-top level state dump directory = string( default = 'cylc/state' )
+top level state dump directory = string( default = '.cylc/state' )
 top level logging directory = string( default = '.cylc/logging' )
 job submission log directory = string( default='' )
 
