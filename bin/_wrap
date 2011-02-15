@@ -26,16 +26,30 @@ usage() {
 
 usage2() {
     echo 
-    echo "The cylc task wrapper allows cylc to run most existing tasks"
-    echo "without any cylc-specific modification. It reports (to the "
-    echo "parent cylc instance) the task started, executes it, and"
-    echo "then reports success (and completion of all outputs) or failure"
-    echo "according to the task's exit status. Any task that is followed"
-    echo "through to completion by a single control process can be wrapped"
-    echo "so long as it returns standard exit codes on success or failure."
+    echo "The cylc task wrapper allows you to use existing non-cylc-aware"
+    echo "scripts or programs as cylc tasks without any modification (see"
+    echo "below for applicability). The majority, if not all, of the tasks"
+    echo "in a typical cylc suite will be wrapped."
+    echo 
+    echo "The wrapper reports the task started to the parent cylc instance,"
+    echo "then executes the wrapped script or program, and finally reports"
+    echo "success (and completion of all outputs) or failure, according to"
+    echo "the job exit status."
+    echo
+    echo "APPLICABILITY: Any task that:"
+    echo " (a) consists of, or is followed through to completion by, a"
+    echo "single process, and:"
+    echo " (b) returns standard exit codes on success (0) or failure (not 0)."
+    echo "can be wrapped."
+    echo 
     echo "A task whose initial process detaches and returns immediately"
     echo "after spawning other processes to complete the job cannot be"
-    echo "wrapped - it must be modified slightly to add cylc messaging."
+    echo "wrapped - the job scripts of such a task must be modified to add"
+    echo "a few cylc messaging calls (see the cylc userguide for more info)."
+    echo
+    echo "Note that addition of messaging calls is also required if you"
+    echo "want something to trigger off an internal output before the"
+    echo "task is finished." 
 }
 
 if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then

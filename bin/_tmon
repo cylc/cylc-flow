@@ -16,7 +16,7 @@ from CylcOptionParsers import NoPromptOptionParser_u
 
 compress = True
 
-parser = NoPromptOptionParser_u( """cylc monitor [options] SUITE 
+parser = NoPromptOptionParser_u( """cylc tmon [options] SUITE 
 
 A terminal-based monitor that displays the state of all tasks in the
 target suite in real time, effective for small suites. See also

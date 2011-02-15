@@ -20,7 +20,7 @@ class CommandNotFoundError( CommandError ):
 class CommandNotUniqueError( CommandError ):
     pass
 
-def find_command( abbrev, commands, title ):
+def match_command( abbrev, commands, title ):
     # allow any unique abbreviation to cylc categories and commands
     matches = []
     for com in commands:
@@ -33,12 +33,52 @@ def find_command( abbrev, commands, title ):
     else:
         return matches[0]
 
+def pretty_print( incom, choose = None, indent=True, numbered=False ):
+    # pretty print commands or categories from a dict:
+    # (com[item] = description)
+    if choose != None:
+        if len(choose) == 0:
+            print " (none)"
+            return
+    com = OrderedDict()
+    for item in incom:
+        if choose:
+            if item not in choose:
+                continue
+        com[ item ] = incom[ item ]
+
+    if indent:
+        spacer = ' '
+    else:
+        spacer = ''
+
+    items = com.keys()
+
+    longest = len(items[0])
+    for item in items:
+        if len( item )> longest:
+            longest = len( item )
+    count = 0
+    pad = False
+    if len(items) > 9:
+        pad = True
+    for item in items:
+        print spacer,
+        if numbered:
+            count += 1
+            if pad and count < 10:
+                digit = ' ' + str(count)
+            else:
+                digit = str(count)
+            print digit + '/', 
+        print item, '.'*(longest-len(item)) + '...', com[item]
+
 # auto-replace with version tag at build/install:
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 categories = \
      [
-     'all',
+     'core',
      'preparation',
      'discovery',
      'starting',
@@ -46,11 +86,14 @@ categories = \
      'intervention',
      'interrogation',
      'monitoring',
-     'tasks',
+     'task',
      'locking',
      'security',
+     'alerting',
      'utilities',
      ]
+
+alerting_commands = []
 
 locking_commands = \
     [
@@ -145,9 +188,8 @@ interrogation_commands = \
     'verbosity',
     ]
 
-tasks_commands = \
+task_commands = \
     [
-    'submit',
     'wrap',
     'task-started',
     'task-message',
@@ -163,9 +205,25 @@ USAGE:
   cylc COMMAND help,--help             # command-specific help
   cylc COMMAND [options] SUITE [args]  # command usage syntax"""
 
-cat_usage = """
+command_usage = """
 USAGE: cylc COMMAND help,--help
        cylc help"""
+
+# category summaries
+catsum = OrderedDict()
+catsum['core'         ] = "everything but utilities and task interface."
+catsum['preparation'  ] = "suite preparation and editing."
+catsum['discovery'    ] = "finding what suites are running."
+catsum['starting'     ] = "starting a suite or running a single task."
+catsum['stopping'     ] = "shutting down a running suite."
+catsum['intervention' ] = "interacting with a running suite."
+catsum['interrogation'] = "getting information from running suites."
+catsum['monitoring'   ] = "monitoring a running suite."
+catsum['locking'      ] = "suite and task locking by the cylc lockserver."
+catsum['security'     ] = "access, locking, blocking, and passphrases."
+catsum['alerting'     ] = "centralized task failure and timeout hooks."
+catsum['task'         ] = "task wrapping and the messaging interface."
+catsum['utilities'    ] = "extra programs intended for use in suites."
 
 usage = """This is the cylc metascheduler commandline interface.
 """ + general_usage + """
@@ -174,114 +232,96 @@ You can use any unique abbreviation for a COMMAND or CATEGORY, e.g.:
   $ cylc help prep .............. (category: preparation)
   $ cylc reg foo /path/to/foo ... (command: register) 
 
-Overlapping Command CATEGORIES:
-  all ........... core commands (sans utilities and task interface)
-  preparation ... suite preparation and editing
-  discovery ..... finding what suites are running
-  starting ...... starting a suite or running a single task
-  stopping ...... stopping a running suite
-  intervention .. interacting with a running suite
-  interrogation . getting information from running suites
-  monitoring .... monitoring a running suite
-  locking ....... suite and task locking by the cylc lockserver
-  security ...... access, locking, blocking and secure passphrases
-  tasks ......... single-task submit, wrapping, and messaging
-  utilities ..... extra programs intended for use in suites
-"""
+Overlapping Command CATEGORIES and help topics:"""
 
 if len(sys.argv) == 1:
-    print >> sys.stderr, usage
+    print usage
+    pretty_print( catsum )
     sys.exit(1)
 
-discovery_help = """CATEGORY:discovery - finding out what suites are running."""
-
-preparation_help = """CATEGORY:preparation - suite preparation and editing."""
-
-starting_help  = """CATEGORY:starting - starting suites."""
-
-stopping_help  = """CATEGORY:stopping - stopping suites."""
-
-monitoring_help  = """CATEGORY:monitoring - monitoring running suites."""
-
-intervention_help  = """CATEGORY:intervention - interacting with running suites."""
-
-interrogation_help = """CATEGORY:interrogation - getting information from running suites."""
-
-security_help = """CATEGORY:security - owner-only access, locking, blocking, secure passphrases.
-
+category_help = {}
+category_help[ 'security' ] = """
 Cylc commands allow only the suite owner to intervene in a running suite.
 
-Using the cylc lockserver prevents accidental simultaneous runs of the
-exact same suite (unless the suite allows it) even if it is registered
-under several names, or of the same task at the same cycle time, by
-suite or single task submit.
+The cylc lockserver prevents accidental simultaneous runs of the same
+suite (unless the suite allows it) even if it is registered under
+several names, or of the same task at the same cycle time (even by
+single task submit).
 
-Suite blocking guards against inadvertent intervention in your own suites.
+Suite blocking guards against inadvertent intervention in your own suites,
+but it can be annoying so it is disabled by default. To turn blocking on:
  + SUITE.RC: use suite blocking = True
 
 A secure passphrase prevents other users from accessing your suite even
 if they hack command source code to subvert the owner-only restriction.
  + SUITE.RC: use secure passphrase = True
-
 The passphrase must be stored in $HOME/.cylc/security/[SUITE_NAME] with
 private file permissions, or cylc will refuse to run the suite. If your
 suite contains tasks that run on a remote host or under another
 username, those accounts must also hold the passphrase. The passphrase
 is never sent across the network; a secure md5 checksum is exchanged."""
 
-locking_help = """CATEGORY:locking - the cylc lockserver daemon and its user interface."""
+category_help[ 'alerting' ] = """
+You can have cylc call a designated alert script on the following events:
+ + a task is submitted
+ + a task fails to submit
+ + a task times out in job submission
+ + a task starts running
+ + a task finishes successfully
+ + a task fails to finish successfully
+ + a task times out in execution.
 
-tasks_help = """CATEGORY:tasks - single-task submit, wrapping, and task messaging.""" 
-
-utilities_help = """CATEGORY:utilities - utility commands designed for use with cylc."""
-
-all_help = "The complete cylc command set, sans utilities and task interface."
+Alert scripts can be configured for the suite as a whole and/or on a per
+task basis. This can be used to send an email or an SMS to operation
+support staff, update task status in a dedicated monitoring system such
+as Nagios, or whatever you like. See suite config (suite.rc)
+documentation for configuration details."""
 
 # command summaries
-comsum = {}
+comsum = OrderedDict()
 comsum[ 'register'  ] = 'Manage suite registrations (name -> definition dir)'
-comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
-comsum[ 'grep'      ] = 'An intelligent search tool for cylc suites'
-comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
-comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
-comsum[ 'inline'    ] = 'View suite.rc files with include-files inlined'
 comsum[ 'edit'      ] = 'Edit a suite config file, optionally inlined'
+comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
+comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
+comsum[ 'grep'      ] = 'An intelligent search tool for cylc suites'
+comsum[ 'inline'    ] = 'View suite.rc files with include-files inlined'
+comsum[ 'control'   ] = 'The cylc suite control and monitoring GUI'
 comsum[ 'coldstart' ] = 'Cold start a suite at a given cycle time'
 comsum[ 'warmstart' ] = 'Warm start a suite at a given cycle time'
 comsum[ 'rawstart'  ] = 'Raw start a suite at a given cycle time'
 comsum[ 'restart'   ] = 'Restart a suite from a previous state'
 comsum[ 'stop'      ] = 'Shut down a running suite (now or later)'
+comsum[ 'trigger'   ] = 'Manually trigger a task in a running suite'
+comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
+comsum[ 'remove'    ] = 'Remove a task from a running suite'
+comsum[ 'purge'     ] = 'Remove a full dependency tree from a running suite'
 comsum[ 'pause'     ] = 'Pause a running suite (stop submitting tasks)'
 comsum[ 'resume'    ] = 'Unpause a running suite (resume submitting tasks)'
+comsum[ 'reset'     ] = 'Force a task to waiting, ready, or finished state'
 comsum[ 'block'     ] = 'Do not comply with subsequent intervention commands'
 comsum[ 'unblock'   ] = 'Comply with subsequent intervention commands'
-comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
-comsum[ 'trigger'   ] = 'Manually trigger a task'
-comsum[ 'reset'     ] = 'Force a task to waiting, ready, or finished state'
-comsum[ 'remove'    ] = 'Remove tasks from a running suite'
-comsum[ 'purge'     ] = 'Remove a full dependency tree from a running suite'
-comsum[ 'submit'    ] = 'Run a single task outside of its suite'
-comsum[ 'control'   ] = 'The cylc suite control and monitoring GUI'
 comsum[ 'view'      ] = 'Suite monitoring GUI (control functions disabled)'
 comsum[ 'dump'      ] = 'Print the state of each task in a running suite'
-comsum[ 'show'      ] = 'Show information on a task in a running suite'
+comsum[ 'show'      ] = 'Print task-specific information (prerequisites...)'
 comsum[ 'list'      ] = 'Print a suite\'s configured task list'
 comsum[ 'ping'      ] = 'Check that a named suite is running'
 comsum[ 'scan'      ] = 'Scan a host for running cylc suites'
 comsum[ 'log'       ] = 'Print or view suite logs, with filtering'
 comsum[ 'tmon'      ] = 'A terminal-based suite monitor (deprecated)'
+comsum[ 'submit'    ] = 'Run a single task just as its parent suite would'
 comsum[ 'lockserver'] = 'Lockserver interrogation and lock management'
 comsum[ 'verbosity' ] = 'Change a suite\'s logging verbosity level'
+comsum[ 'wrap'         ] = 'Use an existing script or program as a cylc task'
+comsum[ 'task-started' ] = 'Acquire a task lock and report started'
+comsum[ 'task-message' ] = 'Report completion of outputs, etc.'
+comsum[ 'task-finished'] = 'Release task lock and report finished'
+comsum[ 'task-failed'  ] = 'Release task lock and report failure'
+comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
 comsum[ 'cycletime' ] = 'Cycle time arithmetic'
 comsum[ 'checkvars' ] = 'Process required environment variables en masse'
 comsum[ 'template'  ] = 'Cycle time based filename templating'
 comsum[ 'housekeeping' ] = 'Cycle time based parallel archiving and cleanup'
 comsum[ 'file-transfer'] = 'An scp-based file transfer tool'
-comsum[ 'wrap'         ] = 'Run a task that has no cylc messaging added'
-comsum[ 'task-started' ] = 'Acquire a task lock and report started'
-comsum[ 'task-message' ] = 'Report completion of outputs, etc.'
-comsum[ 'task-finished'] = 'Release task lock and report finished'
-comsum[ 'task-failed'  ] = 'Release task lock and report failure'
  
 # check that the cylc core modules are accessible
 try:
@@ -300,6 +340,7 @@ if len( sys.argv ) == 2 and \
         sys.argv[1] == 'hlep' or \
         sys.argv[1] == '?'):
     print usage
+    pretty_print( catsum )
     sys.exit(0)
 
 # cylc release version
@@ -307,17 +348,18 @@ if sys.argv[1] == '-v' or sys.argv[1] == '--version':
     print cylc_version
     sys.exit(0)
 
-# uniquify the 'all commands' list (some may be in multiple categories)
-allcom = OrderedDict()
-for command in preparation_commands + starting_commands \
-        + stopping_commands + intervention_commands + interrogation_commands + \
-        monitoring_commands + locking_commands + security_commands + discovery_commands:
-            allcom[ command ] = True
-all_commands = allcom.keys()
+# uniquify the 'core commands' list (some may be in multiple categories)
+corecom = OrderedDict()
+for command in preparation_commands + starting_commands + stopping_commands + \
+        intervention_commands + interrogation_commands + monitoring_commands + \
+        locking_commands + security_commands + discovery_commands:
+            if command not in corecom:
+                corecom[ command ] = True
+core_commands = corecom.keys()
 
 # secret command lists used by documentation generation script
 if len(sys.argv) == 2 and sys.argv[1] == 'commands':
-    for command in all_commands + tasks_commands:
+    for command in core_commands + task_commands:
         print command
     sys.exit(0)
 if len(sys.argv) == 2 and sys.argv[1] == 'utilities':
@@ -332,36 +374,23 @@ if len(sys.argv) == 2 and sys.argv[1] == 'categories':
 if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
     # cylc help CATEGORY
     try:
-        cat = find_command( sys.argv[2], categories, 'CATEGORY' )
+        cat = match_command( sys.argv[2], categories, 'CATEGORY' )
     except CommandError, x:
         raise SystemExit(x)
-    print eval (cat + '_help')
-    print cat_usage
+    print 'CATEGORY:' + cat + ' - ' + catsum[ cat ]
+    print command_usage
+    if cat in category_help:
+        print category_help[cat]
     print
     print 'COMMANDs:'
-    output = []
     commands = eval( cat + '_commands')
-    longest = len(commands[0])
-    for command in commands:
-        if len( command )> longest:
-            longest = len( command )
-    count = 0
-    pad = False
-    if len(commands) > 9:
-        pad = True
-    for command in commands:
-        count += 1
-        if pad and count < 10:
-            digit = ' ' + str(count)
-        else:
-            digit = str(count)
-        print ' ' + digit + '/', command, '.'*(longest-len(command)) + '...', comsum[command]
+    pretty_print( comsum, commands )
     sys.exit(0)
 
 # cylc COMMAND ARGS
 arglist = sys.argv[1:]
 try:
-    command = find_command( arglist[0], all_commands + utilities_commands + tasks_commands, 'COMMAND' )
+    command = match_command( arglist[0], core_commands + utilities_commands + task_commands, 'COMMAND' )
 except CommandError, x:
     raise SystemExit(x)
 
