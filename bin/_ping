@@ -51,20 +51,20 @@ suite = args[0]
 host = options.host
 owner = options.owner
 try:
-    passphrase = passphrase( suite )
+    passphrase = passphrase( suite ).get()
 except:
     passphrase = None
 
 if options.port:
     port = options.port
     try:
-        port_scan.check_port( suite, owner, host, port, passphrase )
+        port_scan.check_port( suite, owner, host, port, passphrase=passphrase )
     except port_scan.SuiteIdentificationError, x:
         print x
         sys.exit(1)
 else:
     try:
-        port = port_scan.get_port( suite, owner, host, passphrase )
+        port = port_scan.get_port( suite, owner, host, passphrase=passphrase )
     except port_scan.SuiteIdentificationError, x:
         print x
         sys.exit(1)
