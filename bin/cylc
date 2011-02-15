@@ -378,13 +378,15 @@ if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
     except CommandError, x:
         raise SystemExit(x)
     print 'CATEGORY:' + cat + ' - ' + catsum[ cat ]
-    print command_usage
+    commands = eval( cat + '_commands')
+    if len( commands ) != 0: 
+        print command_usage
     if cat in category_help:
         print category_help[cat]
-    print
-    print 'COMMANDs:'
-    commands = eval( cat + '_commands')
-    pretty_print( comsum, commands )
+    if len( commands ) != 0:
+        print
+        print 'COMMANDs:'
+        pretty_print( comsum, commands )
     sys.exit(0)
 
 # cylc COMMAND ARGS
