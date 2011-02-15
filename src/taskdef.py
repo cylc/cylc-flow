@@ -45,8 +45,17 @@ class taskdef(object):
 
         self.owner = None
         self.host = None
+
         self.execution_timeout_minutes = None
         self.reset_execution_timeout_on_incoming_messages = False
+        self.reset_execution_timeout_on_incoming_messages = None
+        self.task_submitted_hook = None
+        self.task_started_hook = None
+        self.task_finished_hook = None
+        self.task_failed_hook = None
+        self.task_warning_hook = None
+        self.task_submission_failed_hook = None
+        self.task_timeout_hook = None
 
         self.intercycle = False
         self.hours = []
@@ -179,7 +188,29 @@ class taskdef(object):
         else:
             tclass.execution_timeout_minutes = None
 
-        tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
+        if self.reset_execution_timeout_on_incoming_messages:
+            tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
+
+        if self.task_submitted_hook:
+            tclass.task_submitted_hook = self.task_submitted_hook
+
+        if self.task_started_hook:
+            tclass.task_started_hook = self.task_started_hook
+
+        if self.task_finished_hook:
+            tclass.task_finished_hook = self.task_finished_hook
+
+        if self.task_failed_hook:
+            tclass.task_failed_hook = self.task_failed_hook
+
+        if self.task_warning_hook:
+            tclass.task_warning_hook = self.task_warning_hook
+
+        if self.task_submission_failed_hook:
+            tclass.task_submission_failed_hook = self.task_submission_failed_hook
+
+        if self.task_timeout_hook:
+            tclass.task_timeout_hook = self.task_timeout_hook
 
         if self.host:
             tclass.remote_host = self.host

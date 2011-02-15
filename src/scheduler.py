@@ -225,15 +225,15 @@ class scheduler(object):
        # ALLOW MULTIPLE SIMULTANEOUS INSTANCES?
         self.exclusive_suite_lock = not self.config[ 'allow multiple simultaneous suite instances' ]
 
-        # TASK EVENT HOOKS
-        task.task_submitted_hook = self.config['task submitted hook']
-        task.task_started_hook = self.config['task started hook']
-        task.task_finished_hook = self.config['task finished hook']
-        task.task_failed_hook = self.config['task failed hook']
-        task.task_warning_hook = self.config['task warning hook']
-        task.task_submission_failed_hook = self.config['task submission failed hook']
-        task.task_timeout_hook = self.config['task timeout hook']
-        task.task_submission_timeout_minutes = self.config['task submission timeout minutes']
+        # TASK EVENT HOOKS (may be overridden per task)
+        task.task.task_submitted_hook = self.config['task submitted hook']
+        task.task.task_started_hook = self.config['task started hook']
+        task.task.task_finished_hook = self.config['task finished hook']
+        task.task.task_failed_hook = self.config['task failed hook']
+        task.task.task_warning_hook = self.config['task warning hook']
+        task.task.task_submission_failed_hook = self.config['task submission failed hook']
+        task.task.task_timeout_hook = self.config['task timeout hook']
+        task.task.task_submission_timeout_minutes = self.config['task submission timeout minutes']
 
         # CYLC EXECUTION ENVIRONMENT
         cylcenv = OrderedDict()

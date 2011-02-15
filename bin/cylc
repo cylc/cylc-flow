@@ -262,7 +262,7 @@ username, those accounts must also hold the passphrase. The passphrase
 is never sent across the network; a secure md5 checksum is exchanged."""
 
 category_help[ 'alerting' ] = """
-You can have cylc call a designated alert script on the following events:
+Cylc can call a designated alert script on any of the following events:
  + a task is submitted
  + a task fails to submit
  + a task times out in job submission

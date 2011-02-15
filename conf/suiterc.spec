@@ -28,7 +28,6 @@ task finished hook = string( default=None )
 task failed hook = string( default=None )
 task warning hook = string( default=None )
 task submission failed hook = string( default=None )
-
 task timeout hook = string( default=None )
 task submission timeout minutes = float( default=None )
 
@@ -101,6 +100,14 @@ __many__ = string
     [[ __many__ ]]
     description = string( default="No task description supplied" )
     job submission method = option( at_now, background, ll_raw, ll_basic, ll_basic_eco, default=None)
+    task submitted hook = string( default=None )
+    task started hook = string( default=None )
+    task finished hook = string( default=None )
+    task failed hook = string( default=None )
+    task warning hook = string( default=None )
+    task submission failed hook = string( default=None )
+    task timeout hook = string( default=None )
+    task submission timeout minutes = float( default=None )
     execution timeout minutes = float( default=None )
     reset execution timeout on incoming messages = boolean( default=True )
     scripting = string( default='' )
