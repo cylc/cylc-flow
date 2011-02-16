@@ -2,7 +2,6 @@
 
 import pickle
 import os, sys, re
-import pwd
 
 # cylc local suite registration
 
@@ -17,12 +16,16 @@ class RegistrationError( Exception ):
         return repr(self.msg)
 
 class RegistrationTakenError( RegistrationError ):
-    def __init__( self, suite ):
+    def __init__( self, suite, owner=None ):
         self.msg = "ERROR: Another suite is registered as " + suite
+        if owner:
+            self.msg += ' (' + owner + ')'
 
 class SuiteNotRegisteredError( RegistrationError ):
-    def __init__( self, suite ):
+    def __init__( self, suite, owner=None ):
         self.msg = "ERROR: There is no suite registered as " + suite
+        if owner:
+            self.msg += ' (' + owner + ')'
 
 class RegistrationNotValidError( RegistrationError ):
     pass
@@ -31,9 +34,22 @@ class registrations(object):
     """
     A simple database of local (user-specific) suite registrations.
     """
-    def __init__( self, file=None ):
-        # filename used to store suite registrations
-        dir = os.path.join( os.environ['HOME'], '.cylc' )
+    def __init__( self, file=None, centraldb=False ):
+        self.centraldb = centraldb
+        self.user = os.environ['USER']
+        if file:
+            # use for testing
+            self.file = file
+            dir = os.path.dirname( file )
+        else:
+            # filename used to store suite registrations
+            if centraldb:
+                dir = os.path.join( os.environ['CYLC_DIR'], 'jdb' )
+                self.file = os.path.join( dir, 'db' )
+            else:
+                dir = os.path.join( os.environ['HOME'], '.cylc' )
+                self.file = os.path.join( dir, 'registrations' )
+
         # make sure the registration directory exists
         if not os.path.exists( dir ):
             try:
@@ -43,25 +59,26 @@ class registrations(object):
                 print x
                 sys.exit(1)
 
-        if file:
-            # use for testing
-            self.file = file
-        else:
-            self.file = os.path.join( dir, 'registrations' )
-
-        self.items = {}  # items[category][name] = dir
+        self.items = {}  # items[owner][category][name] = (dir,description)
         self.load_from_file()
 
     def split( self, suite ):
-        m = re.match( '(\w+):(\w+)', suite )
+        m = re.match( '^(\w+):(\w+):(\w+)$', suite )
         if m:
-            category, name = m.groups()
-        elif re.match( '\w+', suite ):
-            category = 'default'
-            name = suite
+            owner, category, name = m.groups()
         else:
-            raise RegistrationError, 'Illegal suite name: ' + suite
-        return ( category, name )
+            m = re.match( '^(\w+):(\w+)$', suite )
+            if m:
+                category, name = m.groups()
+                owner = self.user
+            else:
+                if re.match( '^\w+$', suite ):
+                    category = 'default'
+                    name = suite
+                    owner = self.user
+                else:
+                    raise RegistrationError, 'Illegal suite name: ' + suite
+        return ( owner, category, name )
 
     def load_from_file( self ):
         if not os.path.exists( self.file ):
@@ -77,9 +94,11 @@ class registrations(object):
         output.close()
 
     def register( self, suite, dir, description='(no description supplied)' ):
-        category, name = self.split( suite )
+        owner, category, name = self.split( suite )
+        if owner != self.user:
+            raise RegistrationError, 'You cannot register as another user'
         try:
-            regdir = self.items[category][name]
+            regdir, descr = self.items[owner][category][name]
         except KeyError:
             # not registered, do it below.
             pass
@@ -91,60 +110,78 @@ class registrations(object):
                 # another suite is already registered under this category|name
                 raise RegistrationTakenError( suite )
         # register the suite
-        if category not in self.items:
-            self.items[category] = {}
-        self.items[category][name] = (dir, description)
+        if owner not in self.items:
+            self.items[owner] = {}
+        if category not in self.items[owner]:
+            self.items[owner][category] = {}
+        self.items[owner][category][name] = (dir, description)
 
     def unregister( self, suite ):
-        category, name = self.split( suite )
+        owner, category, name = self.split( suite )
+        if owner != self.user:
+            raise RegistrationError, 'You cannot unregister as another user'
         # check the registration exists:
         dir,descr = self.get( suite )
         # delete it
-        del self.items[category][name]
+        del self.items[owner][category][name]
         # delete the category if it is empty
-        if len( self.items[category] ) == 0:
-            del self.items[category]
-
+        if len( self.items[owner][category].keys() ) == 0:
+            del self.items[owner][category]
+        # delete the user slot if it is empty
+        if len( self.items[owner].keys() ) == 0:
+            del self.items[owner]
+ 
     def unregister_all( self, silent=False ):
+        if self.centraldb:
+            raise RegistrationError, 'Illegal operation for central job database'
         if not silent:
             self.print_all( prefix='DELETING: ' )
         self.items = {}
 
-    def get( self, suite ):
-        category, name = self.split( suite )
-        # return suite directory
+    def get( self, suite, owner=None ):
+        owner, category, name = self.split( suite )
         try:
-            reg = self.items[category][name]
+            reg = self.items[owner][category][name]
         except KeyError:
-            raise SuiteNotRegisteredError( suite )
+            raise SuiteNotRegisteredError( suite, owner )
         else:
             return reg
 
-    def get_list( self ):
+    def get_list( self, ownerfilt=[], categoryfilt=[] ):
         # return list of [ suite, dir, descr ]
         regs = []
-        categories = self.items.keys()
-        categories.sort()
-        for category in categories:
-            names = self.items[category].keys()
-            names.sort()
-            for name in names:
-                suite = category + ':' + name
-                dir,descr = self.items[category][name]
-                regs.append( [suite, dir, descr] )
+
+        owners = self.items.keys()
+        owners.sort()
+        for owner in owners:
+            if len(ownerfilt) > 0:
+                if owner not in ownerfilt:
+                    continue
+            categories = self.items[owner].keys()
+            categories.sort()
+            for category in categories:
+                if len(categoryfilt) > 0:
+                    if category not in categoryfilt:
+                        continue
+                names = self.items[owner][category].keys()
+                names.sort()
+                for name in names:
+                    suite = owner + ':' + category + ':' + name
+                    dir,descr = self.items[owner][category][name]
+                    regs.append( [suite, dir, descr] )
         return regs
 
     def clean( self ):
-        # delete any invalid registrations
-        categories = self.items.keys()
+        # delete any invalid registrations owned by you
+        categories = self.items[self.user].keys()
         categories.sort()
         for category in categories:
             print 'Class:', category
-            names = self.items[category].keys()
+            names = self.items[self.user][category].keys()
             names.sort()
             for name in names:
                 suite = category + ':' + name
-                dir,descr = self.items[category][name] 
+                dir,descr = self.items[self.user][category][name] 
                 try:
                     self.check_valid( suite )
                 except RegistrationNotValidError, x:
@@ -154,7 +191,7 @@ class registrations(object):
                     print ' (OK) ' + name + ' --> ' + dir
 
     def check_valid( self, suite ):
-        category, name = self.split( suite )
+        owner, category, name = self.split( suite )
         # raise an exception if the registration is not valid
         dir,descr = self.get( suite )
         if not os.path.isdir( dir ):
@@ -164,16 +201,25 @@ class registrations(object):
             raise RegistrationNotValidError, 'File not found: ' + file
         # OK
 
-    def print_all( self, prefix=''):
-        categories = self.items.keys()
-        categories.sort()
-        for category in categories:
-            print 'Class:', category
-            names = self.items[category].keys()
-            names.sort()
-            for name in names:
-                dir,descr = self.items[category][name] 
-                print '  ' + prefix + name + ' --> ' + dir + ' [' + descr + ']'
+    def print_all( self, prefix='', ownerfilt=[], categoryfilt=[] ):
+        owners = self.items.keys()
+        owners.sort()
+        for owner in owners:
+            if len(ownerfilt) > 0:
+                if owner not in ownerfilt:
+                    continue
+            categories = self.items[owner].keys()
+            categories.sort()
+            for category in categories:
+                if len(categoryfilt) > 0:
+                    if category not in categoryfilt:
+                        continue
+                print 'Class:', category
+                names = self.items[owner][category].keys()
+                names.sort()
+                for name in names:
+                    dir,descr = self.items[owner][category][name] 
+                    print '  ' + prefix + name + ' --> ' + dir + ' [' + descr + ']'
 
 if __name__ == '__main__':
     # unit test
