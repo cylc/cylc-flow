@@ -221,8 +221,8 @@ USAGE: cylc COMMAND help,--help
 topsum = OrderedDict()
 topsum['core'         ] = "everything but utilities and task interface."
 topsum['registration' ] = "local and central suite registration."
-topsum['editing'      ] = "suite editing tools."
-topsum['discovery'    ] = "finding what suites are running."
+topsum['editing'      ] = "tools to help with building and editing suites."
+topsum['discovery'    ] = "finding out which suites are running."
 topsum['starting'     ] = "starting a suite or running a single task."
 topsum['stopping'     ] = "shutting down a running suite."
 topsum['intervention' ] = "interacting with a running suite."
@@ -292,11 +292,11 @@ comsum[ 'register'  ] = 'Manage local suite registrations'
 comsum[ 'centraldb' ] = 'Manage central job database suite registrations'
 comsum[ 'export'    ] = 'Export suites to the central job database'
 comsum[ 'import'    ] = 'Import suites from the central job database'
-comsum[ 'edit'      ] = 'Edit a suite config file, optionally inlined'
+comsum[ 'edit'      ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
 comsum[ 'grep'      ] = 'An intelligent search tool for cylc suites'
-comsum[ 'inline'    ] = 'View suite.rc files with include-files inlined'
+comsum[ 'inline'    ] = 'View suite.rc files in $EDITOR, include-files inlined'
 comsum[ 'control'   ] = 'The cylc suite control and monitoring GUI'
 comsum[ 'coldstart' ] = 'Cold start a suite at a given cycle time'
 comsum[ 'warmstart' ] = 'Warm start a suite at a given cycle time'
@@ -330,9 +330,9 @@ comsum[ 'task-finished'] = 'Release task lock and report finished'
 comsum[ 'task-failed'  ] = 'Release task lock and report failure'
 comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
 comsum[ 'cycletime' ] = 'Cycle time arithmetic'
-comsum[ 'checkvars' ] = 'Process required environment variables en masse'
-comsum[ 'template'  ] = 'Cycle time based filename templating'
-comsum[ 'housekeeping' ] = 'Cycle time based parallel archiving and cleanup'
+comsum[ 'checkvars' ] = 'Check required environment variables en masse'
+comsum[ 'template'  ] = 'Powerful cycle time offset filename templating'
+comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'file-transfer'] = 'An scp-based file transfer tool'
  
 # check that the cylc core modules are accessible
