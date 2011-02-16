@@ -2,7 +2,7 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import registrations, RegistrationError
+from registration import localdb centraldb, RegistrationError
 
 parser = OptionParser( usage = """cylc export [options] [arguments]
 
@@ -26,8 +26,8 @@ parser.add_option( "-g", "--group",
 if len(args) != 1:
     parser.error('Wrong number of arguments')
 
-local = registrations()
-central = registrations(centraldb=True) 
+local = localdb()
+central = centraldb() 
 
 if options.group:
     group = args[0]

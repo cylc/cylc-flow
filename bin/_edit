@@ -7,7 +7,7 @@ from shutil import copy
 import subprocess
 from optparse import OptionParser
 from collections import deque
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 
 included = []
 modtimes = {}
@@ -176,7 +176,7 @@ except KeyError:
 
 # find location of the suite definition directory
 global suitedir
-reg = registrations()
+reg = localdb()
 try:
     suitedir, descr = reg.get( suite )
 except RegistrationError,x:

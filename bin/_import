@@ -3,7 +3,7 @@
 import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
-from registration import registrations, RegistrationError
+from registration import localdb, centraldb, RegistrationError
 
 parser = OptionParser( usage = """cylc import [options] FILTER [DEST]
 
@@ -45,8 +45,8 @@ if len(args) == 2:
     if os.path.exists( dest ):
         raise SystemExit( 'ERROR, directory already exists: ' + dest )
 
-local = registrations()
-central = registrations(centraldb=True) 
+local = localdb()
+central = centraldb() 
 
 # retrieve central registration
 try:

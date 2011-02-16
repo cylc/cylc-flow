@@ -6,7 +6,7 @@ import subprocess
 import tempfile
 from optparse import OptionParser
 from collections import deque
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 
 done = []
 
@@ -125,7 +125,7 @@ except KeyError:
     raise SystemExit( 'export $TMPDIR before using this command' )
 
 # find location of the suite definition directory
-reg = registrations()
+reg = localdb()
 try:
     suitedir,descr = reg.get( suite )
 except RegistrationError,x:

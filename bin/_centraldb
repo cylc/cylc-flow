@@ -2,7 +2,7 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import registrations, RegistrationError
+from registration import centraldb, RegistrationError
 
 parser = OptionParser( usage = """cylc centraldb [options] [FILTER]
 
@@ -24,7 +24,7 @@ parser.add_option( "-v", "--verbose",
 
 ( options, args ) = parser.parse_args()
 
-central = registrations(centraldb=True) 
+central = centraldb() 
 
 if options.wipe:
     central.unregister_all()

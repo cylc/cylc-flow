@@ -7,7 +7,7 @@ from time import sleep
 
 import cycle_time
 from port_scan import SuiteNotFoundError
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 from lockserver import lockserver
 from task_lock import task_lock
 from suite_lock import suite_lock
@@ -20,7 +20,7 @@ def print_heading( heading ):
         print heading
 
 def check_suite_spec( name ):
-    reg = registrations()
+    reg = localdb()
     try:
         suite_dir, descr = reg.get( name )
     except RegistrationError,x:

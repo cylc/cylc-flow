@@ -6,7 +6,7 @@ from optparse import OptionParser
 from OrderedDict import OrderedDict
 from config import config
 from mkdir_p import mkdir_p
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 from execute import execute
 from job_submit import job_submit
 import cycle_time, pimp_my_logger
@@ -56,7 +56,7 @@ task_id = args[1]
 host = socket.getfqdn()
 
 # find location of the suite definition directory --------------------
-reg = registrations()
+reg = localdb()
 try:
     suite_dir,descr = reg.get( name )
 except RegistrationError,x:

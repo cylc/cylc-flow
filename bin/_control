@@ -6,7 +6,7 @@ import gtk
 from optparse import OptionParser
 from chooser import chooser
 from config import config
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 from gtkmonitor import standalone_monitor
 
 import socket
@@ -61,7 +61,7 @@ SUITE                  Registered name of the target suite.""")
 
     else:
         # get suite definition directory
-        reg = registrations()
+        reg = localdb()
         try:
             suite_dir, descr = reg.get( suite )
         except RegistrationError, x:

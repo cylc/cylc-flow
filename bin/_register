@@ -2,7 +2,7 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 from config import config, SuiteConfigError
 
 parser = OptionParser( usage = """cylc register [options] [ARGS]
@@ -158,7 +158,7 @@ else:
 if [ new_reg, prt_reg, get_reg, del_reg, del_grp, lst_reg, chk_reg, wpe_reg ].count( True ) != 1:
     parser.error( "Choose one option only" )
 
-reg = registrations()
+reg = localdb()
 
 #---------------------------------------
 if new_reg:

@@ -21,7 +21,7 @@ from mkdir_p import mkdir_p
 from validate import Validator
 from configobj import get_extra_values, flatten_errors
 from cylcconfigobj import CylcConfigObj, ConfigObjError
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 from graphnode import graphnode
 
 try:
@@ -129,7 +129,7 @@ class config( CylcConfigObj ):
 
         if suite:
             self.suite = suite
-            reg = registrations()
+            reg = localdb()
             try:
                 self.dir, descr = reg.get( suite )
             except RegistrationError, x:

@@ -313,7 +313,7 @@ class CylcConfigObj( ConfigObj ):
                     envoverride = False
                     try:
                         if sect_name == 'environment':
-                            print 'WARNING: variable override (' + key + '), suite.rc line ' + str(cur_index)
+                            print 'WARNING: $' + key + ' redefined (line ' + str(cur_index) + ')'
                             envoverride = True
                     except UnboundLocalError:
                         # not in a section yet, pass on to handle error

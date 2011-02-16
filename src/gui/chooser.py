@@ -6,7 +6,7 @@ import time, os, re
 import threading
 from config import config
 from port_scan import scan_my_suites
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 from gtkmonitor import monitor
 
 class chooser_updater(threading.Thread):
@@ -38,7 +38,7 @@ class chooser_updater(threading.Thread):
             return False
 
     def regd_choices_changed( self ):
-        regs = registrations().get_list() 
+        regs = localdb().get_list() 
         if regs != self.regd_choices:
             self.regd_choices = regs
             return True

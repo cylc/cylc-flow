@@ -14,7 +14,7 @@ functionality."""
 #job submission shell = /usr/bin/ksh
 
 use lockserver = True
-use secure passphrase = False
+use secure passphrase = True
 
 task submitted hook         = alert.sh
 task started hook           = alert.sh
