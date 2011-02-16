@@ -47,8 +47,7 @@ class taskdef(object):
         self.host = None
 
         self.execution_timeout_minutes = None
-        self.reset_execution_timeout_on_incoming_messages = False
-        self.reset_execution_timeout_on_incoming_messages = None
+        self.reset_execution_timeout_on_incoming_messages = True
         self.task_submitted_hook = None
         self.task_started_hook = None
         self.task_finished_hook = None
@@ -188,8 +187,7 @@ class taskdef(object):
         else:
             tclass.execution_timeout_minutes = None
 
-        if self.reset_execution_timeout_on_incoming_messages:
-            tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
+        tclass.reset_execution_timeout_on_incoming_messages = self.reset_execution_timeout_on_incoming_messages
 
         if self.task_submitted_hook:
             tclass.task_submitted_hook = self.task_submitted_hook
