@@ -115,11 +115,11 @@ class chooser(object):
         regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Definition', cr, text=4, background=5 )
+        tvc = gtk.TreeViewColumn( 'Title', cr, text=6, background=5 )
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Title', cr, text=6, background=7 )
+        tvc = gtk.TreeViewColumn( 'Definition', cr, text=4, background=7 )
         regd_treeview.append_column( tvc )
 
         # NOTE THAT WE CANNOT LEAVE ANY VIEWER WINDOWS OPEN WHEN WE
