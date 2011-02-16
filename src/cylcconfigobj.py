@@ -310,18 +310,20 @@ class CylcConfigObj( ConfigObj ):
                 if key in this_section:
                     # CYLC CHANGE START: ALLOW DUPLICATE KEYWORDS TO OVERRIDE
                     # PREVIOUS VALUES IN 'environment'SECTIONS.
+                    envoverride = False
                     try:
                         if sect_name == 'environment':
                             print 'WARNING: variable override (' + key + '), suite.rc line ' + str(cur_index)
-                            continue
+                            envoverride = True
                     except UnboundLocalError:
                         # not in a section yet, pass on to handle error
                         pass
-                    print 'ERROR:', line
-                    self._handle_error(
-                            'Duplicate keyword name at line %s.',
-                            DuplicateError, infile, cur_index)
-                    continue
+                    if not envoverride:
+                        print 'ERROR:', line
+                        self._handle_error(
+                                'Duplicate keyword name at line %s.',
+                                DuplicateError, infile, cur_index)
+                        continue
                     # CYLC change END
                 # add the key.
                 # we set unrepr because if we have got this far we will never
