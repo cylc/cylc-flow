@@ -100,7 +100,7 @@ else:
     suite = arg1
     pattern = arg0
 
-suitedir = reg.get( suite )
+suitedir, descr = reg.get( suite )
 suiterc = os.path.join( suitedir, 'suite.rc' )
 
 if os.path.isfile( suiterc ):

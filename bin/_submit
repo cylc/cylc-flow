@@ -58,7 +58,7 @@ host = socket.getfqdn()
 # find location of the suite definition directory --------------------
 reg = registrations()
 try:
-    suite_dir = reg.get( name )
+    suite_dir,descr = reg.get( name )
 except RegistrationError,x:
     raise SystemExit(x)
 

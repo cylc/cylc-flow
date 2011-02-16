@@ -178,7 +178,7 @@ except KeyError:
 global suitedir
 reg = registrations()
 try:
-    suitedir = reg.get( suite )
+    suitedir, descr = reg.get( suite )
 except RegistrationError,x:
     raise SystemExit(x)
 

@@ -57,7 +57,7 @@ SUITE                  Registered name of the target suite.""")
         # get suite definition directory
         reg = registrations()
         try:
-            suite_dir = reg.get( suite )
+            suite_dir,descr = reg.get( suite )
         except RegistrationError, x:
             raise SystemExit( x )
 
