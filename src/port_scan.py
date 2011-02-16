@@ -118,6 +118,7 @@ def scan( host, passphrase=None, verbose=True ):
     return suites
 
 def scan_my_suites( host ):
+    # return a list of my suites running on host
     suites = []
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         try:

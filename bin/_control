@@ -3,6 +3,7 @@
 import os, sys
 import port_scan
 import gtk
+from passphrase import passphrase
 from optparse import OptionParser
 from chooser import chooser
 from config import config
@@ -72,7 +73,7 @@ SUITE                  Registered name of the target suite.""")
 
         # get secure passphrase
         try:
-            passphrase = passphrase( suite )
+            passphrase = passphrase( suite ).get()
         except:
             passphrase = None
 

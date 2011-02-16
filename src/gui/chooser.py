@@ -29,7 +29,7 @@ class chooser_updater(threading.Thread):
             pass
     
     def running_choices_changed( self ):
-        # (name, port)
+        # (name, owner, port)
         suites = scan_my_suites( self.host )
         if suites != self.running_choices:
             self.running_choices = suites
