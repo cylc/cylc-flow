@@ -79,7 +79,8 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 topics = \
      [
      'core',
-     'preparation',
+     'registration',
+     'editing',
      'discovery',
      'starting',
      'stopping',
@@ -117,9 +118,16 @@ utilities_commands = \
     'file-transfer',
     ]
 
-preparation_commands = \
+registration_commands = \
     [
     'register',
+    'centraldb',
+    'import',
+    'export',
+    ]
+
+editing_commands = \
+    [
     'edit',
     'validate',
     'graph',
@@ -212,7 +220,8 @@ USAGE: cylc COMMAND help,--help
 # topic summaries
 topsum = OrderedDict()
 topsum['core'         ] = "everything but utilities and task interface."
-topsum['preparation'  ] = "suite preparation and editing."
+topsum['registration' ] = "local and central suite registration."
+topsum['editing'      ] = "suite editing tools."
 topsum['discovery'    ] = "finding what suites are running."
 topsum['starting'     ] = "starting a suite or running a single task."
 topsum['stopping'     ] = "shutting down a running suite."
@@ -229,7 +238,7 @@ usage = """This is the cylc metascheduler commandline interface.
 """ + general_usage + """
 
 You can use any unique abbreviation for a COMMAND or TOPIC, e.g.:
-  $ cylc help prep .............. (topic: preparation)
+  $ cylc help mon ............... (topic: monitoring)
   $ cylc reg foo /path/to/foo ... (command: register) 
 
 Help TOPICS (which include lists of relevant COMMANDS):"""
@@ -279,7 +288,10 @@ documentation for configuration details."""
 
 # command summaries
 comsum = OrderedDict()
-comsum[ 'register'  ] = 'Manage suite registrations (name -> definition dir)'
+comsum[ 'register'  ] = 'Manage local suite registrations'
+comsum[ 'centraldb' ] = 'Manage central job database suite registrations'
+comsum[ 'export'    ] = 'Export suites to the central job database'
+comsum[ 'import'    ] = 'Import suites from the central job database'
 comsum[ 'edit'      ] = 'Edit a suite config file, optionally inlined'
 comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
@@ -350,7 +362,7 @@ if sys.argv[1] == '-v' or sys.argv[1] == '--version':
 
 # uniquify the 'core commands' list (some may be in multiple topics)
 corecom = OrderedDict()
-for command in preparation_commands + starting_commands + stopping_commands + \
+for command in registration_commands + editing_commands + starting_commands + stopping_commands + \
         intervention_commands + interrogation_commands + monitoring_commands + \
         locking_commands + security_commands + discovery_commands:
             if command not in corecom:

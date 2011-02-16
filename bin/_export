@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from optparse import OptionParser
+from registration import registrations, RegistrationError
+
+parser = OptionParser( usage = """cylc export [options] [arguments]
+
+Export registered suites to the central job database, making them
+available to others.
+
+Arguments:
+    SUITE      GROUP:NAME - export suite NAME from group GROUP
+               NAME - export suite NAME from group 'default'
+    GROUP      Export all suites in registration group GROUP
+""" )
+
+parser.add_option( "-g", "--group",
+        help="export a whole GROUP.",
+        action="store_true", default=False, dest="group" )
+
+( options, args ) = parser.parse_args()
+
+if len(args) != 1:
+    parser.error('Wrong number of arguments')
+
+local = registrations()
+central = registrations(centraldb=True) 
+
+if options.group:
+    group = args[0]
+    suites = local.get_list( just_suite=True, categoryfilt=[group] )
+    if len( suites ) == 0:
+        raise SystemExit( "ERROR, No such group: " + group )
+
+else:
+    groups = []
+    suites = [ args[0] ]
+
+for suite in suites:
+    # retrieve local registration
+    try:
+        dir,descr = local.get( suite )
+    except RegistrationError, x:
+        raise SystemExit(x)
+
+    # export to central
+    try:
+        central.register( suite, dir, descr )
+    except RegistrationError, x:
+        raise SystemExit(x)
+
+central.dump_to_file()

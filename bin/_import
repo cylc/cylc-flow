@@ -1,0 +1,78 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from shutil import copytree
+from optparse import OptionParser
+from registration import registrations, RegistrationError
+
+parser = OptionParser( usage = """cylc import [options] FILTER [DEST]
+
+Import suites from the central cylc job database.
+
+Arguments:
+    FILTER     group:name|group|name
+    DEST       destination directory: if given, copy the suite.
+""" )
+
+parser.add_option( "-a", "--as", metavar='SUITE',
+        help="Import as group:name.",
+        action="store", default=None, dest="import_as" )
+
+( options, args ) = parser.parse_args()
+
+if len(args) == 0 or len(args) > 2:
+    parser.error('Wrong number of arguments')
+
+suite = args[0]
+copysuite = False
+if len(args) == 2:
+    dest = args[1]
+    copysuite = True
+
+    # make destination path absolute
+    # dest = os.path.abspath( dest )
+       # On GPFS os.path.abspath() returns the full path with fileset
+       # prefix which can make filenames (for files stored under the 
+       # cylc suite directory) too long for hardwired limits in the
+       # UKMO executables, which will core dump. Use of $PWD to
+       # absolutize a relative path, on GPFS, results in a shorter
+       # path string ... so we'll do this the crude way for now:
+    if not re.match( '^/', dest ):
+        dest = os.path.join( os.environ['PWD'], dest )
+
+    if os.path.exists( dest ):
+        raise SystemExit( 'ERROR, directory already exists: ' + dest )
+
+local = registrations()
+central = registrations(centraldb=True) 
+
+# retrieve central registration
+try:
+    dir,descr = central.get( suite )
+except RegistrationError, x:
+    raise SystemExit(x)
+
+if options.import_as:
+    suite = options.import_as
+else:
+    m = re.match( '^(\w+):(\w+):(\w+)$', suite )
+    if m:
+        group, name = m.groups()[1:]
+        suite = group + ':' + name
+
+if copysuite:
+    dir = dest
+
+# register locally
+try:
+    local.register( suite, dir, descr )
+    local.dump_to_file()
+except RegistrationError, x:
+    raise SystemExit(x)
+
+if copysuite:
+    # do this only if registration succeeds
+    print 'Copying the suite definition'
+    copytree( dir, dest )
+
+local.print_reg( suite )

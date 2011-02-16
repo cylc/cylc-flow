@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import os, re, sys, socket
+import os, re, sys
 from optparse import OptionParser
 from registration import registrations, RegistrationError
 from config import config, SuiteConfigError
@@ -72,6 +72,10 @@ parser.add_option( "-c", "--clean",
 parser.add_option( "-w", "--wipe",
         help="Delete all of your suite registrations.",
         action="store_true", default=False, dest="wipe" )
+
+parser.add_option( "-v", "--verbose",
+        help="Verbose registration listings.",
+        action="store_true", default=False, dest="verbose" )
 
 ( options, args ) = parser.parse_args()
 
@@ -177,10 +181,9 @@ if new_reg:
 #---------------------------------------
 if prt_reg:
     try:
-        dir,descr = reg.get( suite )
+        reg.print_reg( suite )
     except RegistrationError, x:
         raise SystemExit(x)
-    print suite + ' --> ' + dir + ' [' + descr + ']'
     sys.exit(0)
 
 #---------------------------------------
@@ -194,7 +197,7 @@ if get_reg:
 
 #---------------------------------------
 if lst_reg:
-    reg.print_all()
+    reg.print_all( verbose=options.verbose )
     sys.exit(0)
 
 #----------------------------------------

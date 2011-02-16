@@ -1,0 +1,32 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from optparse import OptionParser
+from registration import registrations, RegistrationError
+
+parser = OptionParser( usage = """cylc centraldb [options] [FILTER]
+
+View and manage central job database registrations.
+
+Arguments:
+    FILTER     owner:group:name|group:name|group|name
+""" )
+
+parser.add_option( "-w", "--wipe",
+        help="Delete all of your central registrations.",
+        action="store_true", default=False, dest="wipe" )
+
+parser.add_option( "-v", "--verbose",
+        help="Verbose registration listings.",
+        action="store_true", default=False, dest="verbose" )
+
+( options, args ) = parser.parse_args()
+
+central = registrations(centraldb=True) 
+
+if options.wipe:
+    central.unregister_all()
+    central.dump_to_file()
+    sys.exit(0)
+
+central.print_all( verbose=options.verbose )

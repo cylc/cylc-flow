@@ -51,7 +51,7 @@ class registrations(object):
             # filename used to store suite registrations
             if centraldb:
                 dir = os.path.join( os.environ['CYLC_DIR'], 'jdb' )
-                self.file = os.path.join( dir, 'db' )
+                self.file = os.path.join( dir, 'registrations' )
             else:
                 dir = os.path.join( os.environ['HOME'], '.cylc' )
                 self.file = os.path.join( dir, 'registrations' )
@@ -145,11 +145,10 @@ class registrations(object):
             del self.items[owner]
  
     def unregister_all( self, silent=False ):
-        if self.centraldb:
-            raise RegistrationError, 'Illegal operation for central job database'
-        if not silent:
-            self.print_all( prefix='DELETING: ' )
-        self.items = {}
+        my_suites = self.get_list( just_suite=True, ownerfilt=[self.user] )
+        for suite in my_suites:
+            self.print_reg( suite )
+            self.unregister( suite )
 
     def get( self, suite, owner=None ):
         owner, category, name = self.split( suite )
@@ -160,10 +159,9 @@ class registrations(object):
         else:
             return reg
 
-    def get_list( self, ownerfilt=[], categoryfilt=[] ):
+    def get_list( self, just_suite=False, ownerfilt=[], categoryfilt=[] ):
         # return list of [ suite, dir, descr ]
         regs = []
-
         owners = self.items.keys()
         owners.sort()
         for owner in owners:
@@ -181,7 +179,10 @@ class registrations(object):
                 for name in names:
                     suite = owner + ':' + category + ':' + name
                     dir,descr = self.items[owner][category][name]
-                    regs.append( [suite, dir, descr] )
+                    if just_suite:
+                        regs.append( suite )
+                    else:
+                        regs.append( [suite, dir, descr] )
         return regs
 
     def clean( self ):
@@ -189,7 +190,7 @@ class registrations(object):
         categories = self.items[self.user].keys()
         categories.sort()
         for category in categories:
-            print 'Class:', category
+            print 'Group', category + ':'
             names = self.items[self.user][category].keys()
             names.sort()
             for name in names:
@@ -214,25 +215,39 @@ class registrations(object):
             raise RegistrationNotValidError, 'File not found: ' + file
         # OK
 
-    def print_all( self, prefix='', ownerfilt=[], categoryfilt=[] ):
+    def print_reg( self, suite, verbose=False ):
+        # check the registration exists:
+        dir,descr = self.get( suite )
+        if not verbose:
+            print suite + ' --> ' + dir + ' [' + descr + ']'
+        else:
+            owner, category, name = self.split( suite )
+            print '     NAME ' + name + ' --> ' + dir + ' [' + descr + ']'
+
+    def print_all( self, ownerfilt=[], categoryfilt=[], verbose=False ):
         owners = self.items.keys()
         owners.sort()
         for owner in owners:
             if len(ownerfilt) > 0:
                 if owner not in ownerfilt:
                     continue
+            if verbose:
+                print 'OWNER', owner + ':'
             categories = self.items[owner].keys()
             categories.sort()
             for category in categories:
                 if len(categoryfilt) > 0:
                     if category not in categoryfilt:
                         continue
-                print 'Class:', category
+                if verbose:
+                    print '  GROUP', category + ':'
                 names = self.items[owner][category].keys()
                 names.sort()
                 for name in names:
-                    dir,descr = self.items[owner][category][name] 
-                    print '  ' + prefix + name + ' --> ' + dir + ' [' + descr + ']'
+                    #dir,descr = self.items[owner][category][name] 
+                    #print '    ' + name + ' --> ' + dir + ' [' + descr + ']'
+                    suite = owner + ':' + category + ':' + name
+                    self.print_reg( suite, verbose )
 
 if __name__ == '__main__':
     # unit test
