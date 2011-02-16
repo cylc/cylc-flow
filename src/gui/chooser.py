@@ -64,7 +64,7 @@ class chooser_updater(threading.Thread):
             if name in ports:
                 self.regd_liststore.append( [name, '#88ccff', 'RUNNING (port ' + str( ports[name] ) + ')', '#5599bb', suite_dir, '#88ccff', descr, '#5599bb' ] )
             else:
-                self.regd_liststore.append( [name, 'white', 'not running', 'lightgrey', suite_dir, 'white', descr, 'lightgrey' ] )
+                self.regd_liststore.append( [name, 'white', 'dormant', 'lightgrey', suite_dir, 'white', descr, 'lightgrey' ] )
 
 class chooser(object):
     def __init__(self, host, imagedir, readonly=False ):
