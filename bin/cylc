@@ -289,9 +289,9 @@ documentation for configuration details."""
 # command summaries
 comsum = OrderedDict()
 comsum[ 'register'  ] = 'Manage local suite registrations'
-comsum[ 'centraldb' ] = 'Manage central job database suite registrations'
-comsum[ 'export'    ] = 'Export suites to the central job database'
-comsum[ 'import'    ] = 'Import suites from the central job database'
+comsum[ 'centraldb' ] = 'Manage central suite database registrations'
+comsum[ 'export'    ] = 'Export suites to the central suite database'
+comsum[ 'import'    ] = 'Import suites from the central suite database'
 comsum[ 'edit'      ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'

@@ -8,6 +8,8 @@ parser = OptionParser( usage = """cylc centraldb [options] [FILTER]
 
 View and manage central job database registrations.
 
+WARNING: THIS IS A NEW FEATURE, DOCUMENTATION INCOMPLETE.
+
 Arguments:
     FILTER     owner:group:name|group:name|group|name
 """ )

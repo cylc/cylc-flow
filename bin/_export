@@ -9,6 +9,8 @@ parser = OptionParser( usage = """cylc export [options] [arguments]
 Export registered suites to the central job database, making them
 available to others.
 
+WARNING: THIS IS A NEW FEATURE, DOCUMENTATION INCOMPLETE.
+
 Arguments:
     SUITE      GROUP:NAME - export suite NAME from group GROUP
                NAME - export suite NAME from group 'default'

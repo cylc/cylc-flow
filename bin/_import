@@ -7,7 +7,9 @@ from registration import registrations, RegistrationError
 
 parser = OptionParser( usage = """cylc import [options] FILTER [DEST]
 
-Import suites from the central cylc job database.
+Import suites from the central suite database.
+
+WARNING: THIS IS A NEW FEATURE, DOCUMENTATION INCOMPLETE.
 
 Arguments:
     FILTER     group:name|group|name
