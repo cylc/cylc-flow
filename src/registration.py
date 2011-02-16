@@ -23,7 +23,13 @@ class RegistrationTakenError( RegistrationError ):
 
 class SuiteNotRegisteredError( RegistrationError ):
     def __init__( self, suite, owner=None ):
-        self.msg = "ERROR: There is no suite registered as " + suite
+        self.msg = "ERROR: Suite not found " + suite
+        if owner:
+            self.msg += ' (' + owner + ')'
+
+class CategoryNotFoundError( RegistrationError ):
+    def __init__( self, category, owner=None ):
+        self.msg = "ERROR: Category not found " + category
         if owner:
             self.msg += ' (' + owner + ')'
 
@@ -115,6 +121,13 @@ class registrations(object):
         if category not in self.items[owner]:
             self.items[owner][category] = {}
         self.items[owner][category][name] = (dir, description)
+
+    def unregister_group( self, category ):
+        owner = self.user
+        try:
+            del self.items[owner][category]
+        except KeyError:
+            raise CategoryNotFoundError( category, owner )
 
     def unregister( self, suite ):
         owner, category, name = self.split( suite )

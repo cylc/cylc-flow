@@ -5,14 +5,14 @@ from optparse import OptionParser
 from registration import registrations, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc register [options] [SUITE] [PATH] 
+parser = OptionParser( usage = """cylc register [options] [ARGS]
 
 Create and manage cylc suite registrations, which associate a suite name
 with a suite definition directory (stored in $HOME/.cylc/registrations).
 Cylc commands target a particular suite using its registered name.
 
 1/ Create a new registration:
-     $ cylc register SUITE PATH, or 
+     $ cylc register SUITE PATH
      $ cylc register PATH SUITE
 
 2/ Print, retrieve or delete an existing registration:
@@ -23,6 +23,9 @@ Cylc commands target a particular suite using its registered name.
 
 4/ Delete all registrations, or just those that are no longer valid:
      $ cylc register [--wipe] [--clean]
+
+5/ Delete a whole registration group:
+     $ cylc register --delete-group GROUP 
 
 A suite's name is available to its tasks as $CYLC_SUITE_NAME. If all
 suite I/O directories include the suite name, then multiple instances of
@@ -39,7 +42,8 @@ automates this without requiring a new registration).
 
 Arguments:
   PATH            Path to a cylc suite definition directory.
-  SUITE           Suite CLASS:NAME or NAME.""" )
+  SUITE           Suite GROUP:NAME or NAME.
+  GROUP           Registration group""" )
 
 parser.add_option( "-g", "--get",
         help="Get the suite definition directory for SUITE.",
@@ -57,6 +61,10 @@ parser.add_option( "-d", "--delete",
         help="Delete the registration with name SUITE.",
         action="store_true", default=False, dest="delete" )
 
+parser.add_option( "--delete-group",
+        help="Delete an entire registration group.",
+        action="store_true", default=False, dest="deletegroup" )
+
 parser.add_option( "-c", "--clean",
         help="Delete any registrations that are not valid.",
         action="store_true", default=False, dest="clean" )
@@ -71,6 +79,7 @@ new_reg = False
 prt_reg = False
 get_reg = False
 del_reg = False
+del_grp = False
 lst_reg = False
 chk_reg = False
 wpe_reg = False
@@ -120,6 +129,9 @@ elif len(args) == 1:
         get_reg = True
     elif options.delete:
         del_reg = True
+    elif options.deletegroup:
+        del_grp = True
+        group = suite
     else:
         parser.error( "Please specify what to do with '" + suite + "'" )
 
@@ -139,7 +151,7 @@ elif len(args) == 0:
 else:
     parser.error( "Wrong number of arguments")
 
-if [ new_reg, prt_reg, get_reg, del_reg, lst_reg, chk_reg, wpe_reg ].count( True ) != 1:
+if [ new_reg, prt_reg, get_reg, del_reg, del_grp, lst_reg, chk_reg, wpe_reg ].count( True ) != 1:
     parser.error( "Choose one option only" )
 
 reg = registrations()
@@ -195,6 +207,15 @@ if wpe_reg:
 if del_reg:
     try:
         reg.unregister(suite)
+    except RegistrationError, x:
+        raise SystemExit(x)
+    reg.dump_to_file()
+    sys.exit(0)
+
+ #----------------------------------------
+if del_grp:
+    try:
+        reg.unregister_group(group)
     except RegistrationError, x:
         raise SystemExit(x)
     reg.dump_to_file()
