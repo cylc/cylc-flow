@@ -57,6 +57,8 @@ class scheduler(object):
         # DEPENDENCY BROKER
         self.broker = broker()
 
+        self.lock_acquired = False
+
         # COMMANDLINE OPTIONS
         self.parser.set_defaults( dummy_mode=False, practice_mode=False, debug=False )
 
