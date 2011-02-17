@@ -1,5 +1,7 @@
 #!/usr/bin/pyro
 
+from registration import localdb
+from passphrase import passphrase as pphrase
 import os
 import Pyro.errors, Pyro.core
 from cylc_pyro_server import pyro_base_port, pyro_port_range
@@ -114,22 +116,33 @@ def scan( host, passphrase=None, verbose=True ):
                 print suiteid( name, owner, host, port )
             # found a cylc suite or lock server
             suites.append( ( name, owner, port ) )
-
     return suites
 
 def scan_my_suites( host ):
     # return a list of my suites running on host
+    reg = localdb()
     suites = []
-    for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
+    for reg_suite in reg.get_list( just_suite=True ):
+        # loop through all my registered suites
         try:
-            name, owner = port_interrogator( host, port ).interrogate()
-        except Pyro.errors.ProtocolError:
-            # connection failed: no pyro server listening at this port
-            pass
-        except Pyro.errors.NamingError:
-            # pyro server here, but it's not a cylc suite or lockserver
-            pass
-        else:
-            if name != 'lockserver' and owner == os.environ['USER']:
-                suites.append( ( name, port ) )
+            # in case one is using a secure passphrase
+            passphrase = pphrase( reg_suite ).get()
+        except Exception, x:
+            passphrase = None
+
+        for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
+            # loop through cylc ports
+            try:
+                name, owner = port_interrogator( host, port, passphrase=passphrase ).interrogate()
+            except Pyro.errors.ProtocolError:
+                # connection failed: no pyro server listening at this port
+                pass
+            except Pyro.errors.NamingError:
+                # pyro server here, but it's not a cylc suite or lockserver
+                pass
+            else:
+                # found a suite
+                if name == reg_suite and owner == os.environ['USER']:
+                    # found this registered suite
+                    suites.append( ( name, port ) )
     return suites

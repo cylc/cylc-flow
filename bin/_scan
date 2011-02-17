@@ -8,7 +8,12 @@ import port_scan
 
 parser = OptionParser( """cylc scan [options]
     
-Scan cylc ports for running suites.""" )
+Scan cylc ports for running suites and lockservers. 
+
+If you are running any secure suites they will not be recognized in the 
+general scan (the port will return Connection Denied) unless you 
+supply the passphrase on the commandline or scan only for your 
+own registered suites (--mine)""" )
 
 parser.add_option( "--host",
         help="Cylc suite host (defaults to localhost).",
@@ -19,9 +24,14 @@ parser.add_option( "--print-ports",
         help="Print cylc's configured port range.",
         action="store_true",default=False, dest="print_ports" )
 
-parser.add_option( "--passphrase",
+parser.add_option( "-p","--passphrase",
         help="A secure suite access passphrase.",
         metavar="STRING", action="store", default=None, dest="passphrase" )
+
+parser.add_option( "-m","--mine",
+        help="Scan only for my registered suites. Secure suites will "
+        "be recognized in this case.", 
+        action="store_true", default=False, dest="mine" )
 
 ( options, args ) = parser.parse_args()
 
@@ -37,4 +47,10 @@ passphrase = options.passphrase
 if len(args) != 0:
     parser.error( "Wrong number of arguments" ) 
 
-suites = port_scan.scan( host, passphrase=passphrase, verbose=True )
+if options.mine:
+    suites = port_scan.scan_my_suites( host )
+    for suite in suites:
+        name, port = suite
+        print port_scan.suiteid( name, os.environ['USER'], host, port )
+else:
+    suites = port_scan.scan( host, passphrase=passphrase, verbose=True )

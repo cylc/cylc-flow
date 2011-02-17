@@ -1,9 +1,8 @@
 _______
 GENERAL
 
-* gui chooser (and scan) for suites using secure passphrase: can port
-  scan return suite name without requiring the passphrase, so that
-  clients can check for passphrase for deeper access?
+* Document: if a suite is restarted on a new port the gui still
+  reconnects.
 
 * inlined suite.rc: avoid comments ending in line continuation marker
   (2D textual dependency graph in comments at start of e.g. suite.rc)
