@@ -131,7 +131,7 @@ nzlam_coldstart_without_download = unpack_globaldump, UM_GLtoGL_recon, UM_GLtoNZ
         graph = """ext_check_sst_ukmet => ext_get_sst_ukmet"""
 
 [environment]
-    SYS = ${USER##*_}
+    SYS = "${USER##*_}"
     ARCHIVE = /$SYS/archive/ecoconnect
 
 %include inc/env/nzlam-globals.rc
