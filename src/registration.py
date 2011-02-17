@@ -218,9 +218,9 @@ class regdb(object):
         owner, group, name = regsplit( suite ).get()
         dir,descr = self.get( suite )
         if not verbose:
-            print self.suiteid( owner,group,name ) + ' --> ' + dir + ' [' + descr + ']'
+            print self.suiteid( owner,group,name ) + ' [[' + descr + ']] ' + dir 
         else:
-            print '     NAME ' + name + ' --> ' + dir + ' [' + descr + ']'
+            print '     NAME ' + name + ' [[' + descr + ']] ' + dir 
 
     def print_all( self, ownerfilt=[], groupfilt=[], verbose=False ):
         owners = self.items.keys()
