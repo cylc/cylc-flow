@@ -1,0 +1,215 @@
+#!/usr/bin/env python
+
+import os, sys, re
+import socket
+from optparse import OptionParser
+from time import sleep
+
+import cycle_time
+from port_scan import SuiteNotFoundError
+from registration import localdb, RegistrationError
+from lockserver import lockserver
+from task_lock import task_lock
+from suite_lock import suite_lock
+
+import Pyro.core, Pyro.errors
+
+def print_heading( heading ):
+        line = re.sub( '.', '_', heading )
+        print line
+        print heading
+
+def check_suite_spec( name ):
+    reg = localdb()
+    try:
+        suite_dir, descr = reg.get( name )
+    except RegistrationError,x:
+        raise SystemExit(x)
+    return suite_dir
+
+def check_task_spec( task_spec ):
+    try:
+        (suite, task_id) = task_spec.split( ':' )
+    except:
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
+        
+    check_suite_spec( suite )
+
+    try:
+        (name, cycle) = task_id.split( '%' )
+    except ValueError:
+        raise SystemExit( task_spec + " - Please specify SUITE:TASK_NAME%CYCLE_TIME" )
+ 
+    if not cycle_time.is_valid( cycle ):
+        raise SystemExit( "Invalid cycle time: " + cycle )
+
+    return ( suite, task_id )
+
+
+if __name__ == "__main__":
+
+    usage = """cylc lockclient [options]
+
+This is the command line interface to the cylc lockserver daemon, which
+brokers suite and task locks for cylc suites. 
+
+Use of the cylc lockserver is optional - see suite config documentation.
+
+TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
+running simultaneously, whether they are spawned by a cylc scheduler or
+by 'cylc submit'. Traditional lock files cannot easily be used by cylc
+because it is possible for an external task that consists of multiple
+components to start and finish executing on different host machines.
+
+SUITE LOCKS prevent multiple instances of entire cylc suites from
+running simultaneously, even under different registered names (unless
+the suite config file states that suite is capable of doing this!).
+
+Manual lock acquisition is mainly for testing purposes, but manual
+release may be required to remove stale locks left after a suite or task
+exits without releasing its locks.
+
+Locks held by the lockserver persist across shutdown/restart, and can
+only be released by the suite owner. In multiple user (task owner)
+suites, task locks are always held by the suite owner, not the task
+owner."""
+
+    parser = OptionParser( usage )
+
+    parser.set_defaults( host=socket.getfqdn(), 
+            acquire=None, release=None, suite_acquire=None,
+            suite_acquire_nonex=None, suite_release=None, 
+            list_all=False, get_filenames=False )
+
+    parser.add_option( "--ping",
+            help="Check that a lockserver is running.",
+            action="store_true", default=False, dest="ping" )
+
+    parser.add_option( "--host",
+            help="Cylc lockserver host (default: localhost).",
+            metavar="HOSTNAME", action="store", dest="host" )
+
+    parser.add_option( "--acquire-task", help="Acquire a task lock.",
+            metavar="SUITE:NAME%CYCLE", action="store", dest="acquire" )
+
+    parser.add_option( "--release-task", help="Release a task lock.",
+            metavar="SUITE:NAME%CYCLE", action="store", dest="release" )
+
+    parser.add_option( "--acquire-suite", help="Acquire an exclusive suite lock.",
+            metavar="SUITE", action="store", dest="suite_acquire" )
+
+    parser.add_option( "--acquire-suite-nonex", help="Acquire a non-exclusive suite lock.",
+            metavar="SUITE", action="store", dest="suite_acquire_nonex" )
+
+    parser.add_option( "--release-suite", help="Release a suite and associated task locks",
+            metavar="SUITE", action="store", dest="suite_release" )
+
+    parser.add_option( "-p", "--print", help="Print all locks.",
+            action="store_true", dest="list_all" )
+
+    parser.add_option( "-l", "--list", help="List all locks (same as -p).",
+            action="store_true", dest="list_all" )
+
+    parser.add_option( "-c", "--clear", help="Release all locks owned by you.",
+            action="store_true", dest="clear_all" )
+
+    parser.add_option( "-f", "--filenames", 
+            help="Print lockserver PID, log, and state filenames.",
+            action="store_true", dest="get_filenames" )
+
+    parser.add_option( "--port", help="lockserver port (default: scan cylc ports).",
+            metavar="INT", action="store", default=None, dest="port" )
+
+    #parser.add_option( "--debug",
+    #        help="Print full Python exception tracebacks",
+    #        action="store_true", default=False, dest="debug" )
+
+    ( options, args ) = parser.parse_args()
+
+    count = 0
+    for opt in [ options.ping, options.acquire, options.release,
+            options.suite_acquire, options.suite_acquire_nonex,
+            options.suite_release, options.list_all, 
+            options.clear_all, options.get_filenames ]:
+        if opt:
+            count += 1
+
+    if count != 1:
+        parser.error( "choose one option only!" )
+    
+    owner = os.environ[ 'USER' ]
+    host = options.host
+    port = options.port
+    os.environ[ 'CYLC_USE_LOCKSERVER' ] = 'True'
+
+    try:
+        if options.ping:
+            lockserver( owner, host ).ping()
+
+        elif options.acquire:
+            (suite, task_id) = check_task_spec( options.acquire )
+            if not task_lock( task_id, suite, owner, host, port ).acquire():
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.acquire )
+
+        elif options.release:
+            (suite, task_id) = check_task_spec( options.release )
+            if not task_lock( task_id, suite, owner, host, port ).release():
+                raise SystemExit( "ERROR: Failed to release a lock for " + options.release )
+
+        elif options.suite_acquire:
+            suite = options.suite_acquire
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).request_suite_access( True ):
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire )
+
+        elif options.suite_acquire_nonex:
+            suite = options.suite_acquire_nonex
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).request_suite_access( False ):
+                raise SystemExit( "ERROR: Failed to acquire a lock for " + options.suite_acquire_nonex )
+
+        elif options.suite_release:
+            suite = options.suite_release
+            suitedir = check_suite_spec( suite )
+            if not suite_lock( suite, suitedir, owner, host, port, 'scheduler' ).release_suite_access():
+                raise SystemExit( "ERROR: Failed to release a lock for " + options.suite_release )
+
+        elif options.list_all:
+            (task_locks, suite_ex, suite_nonex ) = lockserver( owner, host ).dump()
+
+            print_heading( str( len( suite_ex ) ) + " exclusive suite locks" )
+            for suitedir in suite_ex:
+                [ group ] = suite_ex[ suitedir ]
+                print " - ", group, '-->', suitedir
+
+            print_heading( str( len( suite_nonex ) ) + " non-exclusive suite locks" )
+            for suitedir in suite_nonex:
+                groups = suite_nonex[ suitedir ]
+                for group in groups:
+                    print " - ", group, '-->', suitedir
+
+            print_heading( str( len( task_locks ) ) + " task locks" )
+            for lock in task_locks:
+                print " - ", lock
+
+        elif options.clear_all:
+            lockserver( owner, host ).clear( owner )
+
+        elif options.get_filenames:
+            pid, log, state = lockserver( owner, host ).get_filenames()
+
+            print "lockserver files:"
+            print "  PID ......", pid
+            print "  log ......", log
+            print "  state ....", state
+
+        else:
+            # this should not be reached
+            parser.error( "Commandline parsing error!" )
+            #raise SystemExit( "unknown cylc lockserver option" )
+
+    except SuiteNotFoundError, x:
+        #if options.debug:
+        #    raise
+        #else:
+        raise SystemExit( 'Lockserver not found; try \'lockserver status\'.' )

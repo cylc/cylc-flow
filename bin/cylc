@@ -98,13 +98,15 @@ alerting_commands = []
 
 locking_commands = \
     [
-    #'cylclockd',
     'lockserver',
+    'lockclient',
     ]
 
 security_commands = \
     [
     'lockserver',
+    'lockclient',
+    'locking',
     'block',
     'unblock',
      ]
@@ -328,10 +330,11 @@ comsum[ 'task-started' ] = 'Acquire a task lock and report started'
 comsum[ 'task-message' ] = 'Report completion of outputs, etc.'
 comsum[ 'task-finished'] = 'Release task lock and report finished'
 comsum[ 'task-failed'  ] = 'Release task lock and report failure'
-comsum[ 'cylclockd' ] = 'The cylc lockserver daemon'
-comsum[ 'cycletime' ] = 'Cycle time arithmetic'
-comsum[ 'checkvars' ] = 'Check required environment variables en masse'
-comsum[ 'template'  ] = 'Powerful cycle time offset filename templating'
+comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
+comsum[ 'lockclient' ] = 'manual suite and task lock management'
+comsum[ 'cycletime'  ] = 'Cycle time arithmetic'
+comsum[ 'checkvars'  ] = 'Check required environment variables en masse'
+comsum[ 'template'   ] = 'Powerful cycle time offset filename templating'
 comsum[ 'housekeeping' ] = 'Parallel archiving and cleanup on cycle time offsets'
 comsum[ 'file-transfer'] = 'An scp-based file transfer tool'
  
