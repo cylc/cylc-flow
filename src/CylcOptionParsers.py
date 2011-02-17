@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 
-
 # Custom derived option parsers, with standard options, for cylc commands.
 
 # TO DO: CLEAN UP OR REDESIGN THESE CLASSES.
 
 import os
+import re
 import socket
 from optparse import OptionParser
 
@@ -77,7 +77,15 @@ Arguments:
 
 
     def get_suite_name( self ):
-        return self.suite_name
+        # handle default registration group
+        suite = self.suite_name
+        if re.match( '^(\w+):(\w+)', suite ):
+            # group:name
+            pass
+        elif re.match( '^(\w+)', suite ): 
+            # default group
+            suite = 'default:' + suite
+        return suite
 
     def get_host( self ):
         # TO DO: GET RID OF THIS METHOD
