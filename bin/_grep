@@ -3,7 +3,7 @@
 import os, re, sys
 from optparse import OptionParser
 from collections import deque
-from registration import registrations, RegistrationError
+from registration import localdb, RegistrationError
 
 def include_files( suitedir, inf ):
     outf = []
@@ -81,7 +81,7 @@ arg0 = args[0]
 arg1 = args[1]
 
 # find location of the suite definition directory
-reg = registrations()
+reg = localdb()
 try:
     reg.get( arg1 )
 except RegistrationError,x:
