@@ -2,7 +2,7 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import localdb centraldb, RegistrationError
+from registration import localdb, centraldb, RegistrationError
 
 parser = OptionParser( usage = """cylc export [options] [arguments]
 
@@ -31,15 +31,14 @@ central = centraldb()
 
 if options.group:
     group = args[0]
-    suites = local.get_list( just_suite=True, categoryfilt=[group] )
+    suites = local.get_list( categoryfilt=[group] )
     if len( suites ) == 0:
         raise SystemExit( "ERROR, No such group: " + group )
-
 else:
     groups = []
-    suites = [ args[0] ]
+    suites = [ (args[0], 'junk', 'junk') ]
 
-for suite in suites:
+for suite, dir, descr in suites:
     # retrieve local registration
     try:
         dir,descr = local.get( suite )

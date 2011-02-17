@@ -36,6 +36,41 @@ class groupNotFoundError( RegistrationError ):
 class RegistrationNotValidError( RegistrationError ):
     pass
 
+class regsplit( object ):
+    def __init__( self, suite ):
+        user = os.environ['USER']
+        # suite can be:
+        # 1/ owner:group:name
+        # 2/ group:name (owner is $USER)
+        # 3/ name (owner is $USER, group is 'default')
+        m = re.match( '^(\w+):(\w+):(\w+)$', suite )
+        if m:
+            owner, group, name = m.groups()
+        else:
+            m = re.match( '^(\w+):(\w+)$', suite )
+            if m:
+                group, name = m.groups()
+                owner = user
+            else:
+                if re.match( '^\w+$', suite ):
+                    group = 'default'
+                    name = suite
+                    owner = user
+                else:
+                    raise RegistrationError, 'Illegal suite name: ' + suite
+        self.owner = owner
+        self.group = group
+        self.name = name
+
+    def get( self ):
+        return self.owner, self.group, self.name
+    def get_full( self ):
+        return self.owner + ':' + self.group + ':' + self.name
+    def get_partial( self ):
+        return self.group + ':' + self.name
+    def get_name( self ):
+        return self.name
+
 class regdb(object):
     """
     A simple suite registration database.
@@ -47,27 +82,6 @@ class regdb(object):
      2/ suite_name():
        + to munge the fully qualified suite name (owner:group:name)
     """
-
-    def split( self, suite ):
-        m = re.match( '^(\w+):(\w+):(\w+)$', suite )
-        if m:
-            # fully qualified: owner, group, name
-            owner, group, name = m.groups()
-        else:
-            m = re.match( '^(\w+):(\w+)$', suite )
-            # partially qualified: group, name
-            if m:
-                group, name = m.groups()
-                owner = self.user
-            else:
-                if re.match( '^\w+$', suite ):
-                    # unqualified: name in 'default' group
-                    group = 'default'
-                    name = suite
-                    owner = self.user
-                else:
-                    raise RegistrationError, 'Illegal suite name: ' + suite
-        return ( owner, group, name )
 
     def load_from_file( self ):
         if not os.path.exists( self.file ):
@@ -83,7 +97,7 @@ class regdb(object):
         output.close()
 
     def register( self, suite, dir, description='(no description supplied)' ):
-        owner, group, name = self.split( suite )
+        owner, group, name = regsplit( suite ).get()
         if owner != self.user:
             raise RegistrationError, 'You cannot register as another user'
         try:
@@ -107,7 +121,7 @@ class regdb(object):
         self.items[owner][group][name] = (dir, description)
 
     def unregister( self, suite ):
-        owner, group, name = self.split( suite )
+        owner, group, name = regsplit(suite).get()
         if owner != self.user:
             raise RegistrationError, 'You cannot unregister as another user'
         # check the registration exists:
@@ -122,8 +136,8 @@ class regdb(object):
             del self.items[owner]
  
     def unregister_all( self, silent=False ):
-        my_suites = self.get_list( just_suite=True, ownerfilt=[self.user] )
-        for suite in my_suites:
+        my_suites = self.get_list( ownerfilt=[self.user] )
+        for suite, dir, descr in my_suites:
             self.print_reg( suite )
             self.unregister( suite )
 
@@ -136,19 +150,18 @@ class regdb(object):
             raise groupNotFoundError( group, owner )
 
     def get( self, suite, owner=None ):
-        owner, group, name = self.split( suite )
+        # return suite definition directory
+        owner, group, name = regsplit( suite ).get()
         try:
-            dir = self.items[owner][group][name]
+            dir, descr = self.items[owner][group][name]
         except KeyError:
             raise SuiteNotRegisteredError( suite, owner )
         else:
-            return dir
+            return ( dir, descr )
 
-    def get_list( self, just_suite=False, ownerfilt=[], groupfilt=[] ):
-        # return filtered list of:
-        #  1/ [ suite, dir, descr ],
-        # or
-        #  2/ [ suite ]
+    def get_list( self, ownerfilt=[], groupfilt=[] ):
+        # return filtered list of tuples:
+        # [( suite, dir, descr ), ...]
         regs = []
         owners = self.items.keys()
         owners.sort()
@@ -167,10 +180,7 @@ class regdb(object):
                 for name in names:
                     suite = owner + ':' + group + ':' + name
                     dir,descr = self.items[owner][group][name]
-                    if just_suite:
-                        regs.append( self.suite_name( suite ) )
-                    else:
-                        regs.append( [ self.suite_name( suite ), dir, descr] )
+                    regs.append( (self.suite_name(suite), dir, descr) )
         return regs
 
     def clean( self ):
@@ -193,7 +203,7 @@ class regdb(object):
                     print ' (OK) ' + name + ' --> ' + dir
 
     def check_valid( self, suite ):
-        owner, group, name = self.split( suite )
+        owner, group, name = regsplit( suite ).get()
         # raise an exception if the registration is not valid
         dir,descr = self.get( suite )
         if not os.path.isdir( dir ):
@@ -205,11 +215,12 @@ class regdb(object):
 
     def print_reg( self, suite, verbose=False ):
         # check the registration exists:
+        suite = regsplit( suite ).get_full()
         dir,descr = self.get( suite )
         if not verbose:
             print self.suite_name( suite ) + ' --> ' + dir + ' [' + descr + ']'
         else:
-            owner, group, name = self.split( suite )
+            owner, group, name = regsplit( suite ).get()
             print '     NAME ' + name + ' --> ' + dir + ' [' + descr + ']'
 
     def print_all( self, ownerfilt=[], groupfilt=[], verbose=False ):

@@ -122,7 +122,7 @@ def scan_my_suites( host ):
     # return a list of my suites running on host
     reg = localdb()
     suites = []
-    for reg_suite in reg.get_list( just_suite=True ):
+    for reg_suite, dir, descr in reg.get_list():
         # loop through all my registered suites
         try:
             # in case one is using a secure passphrase

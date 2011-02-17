@@ -63,11 +63,13 @@ else:
         suite = group + ':' + name
 
 if copysuite:
-    dir = dest
+    newdir = dest
+else:
+    newdir = dir
 
 # register locally
 try:
-    local.register( suite, dir, descr )
+    local.register( suite, newdir, descr )
     local.dump_to_file()
 except RegistrationError, x:
     raise SystemExit(x)
