@@ -31,8 +31,7 @@ you log out. Also, when using nohup,
 so that cylc stdout will be written to nohup.out as the suite runs.
 
 See also:
-    cylc view
-(a read-only version of the control GUI)
+    cylc view - a read-only version of the control GUI
 
 SUITE                  Registered name of the target suite.""")
 

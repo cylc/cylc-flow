@@ -248,8 +248,9 @@ class regdb(object):
 class localdb( regdb ):
     """
     Local (user-specific) suite registration database.
-    Strips owner off registrations 'owner:group:name' 
-    (not needed for local - single user - use).
+    Internally, registration uses 'owner:group:name' 
+    as for the central suite database, but for local
+    single-user use, owner and default group are stripped off.
     """
     def __init__( self, file=None ):
         self.user = os.environ['USER']
@@ -276,7 +277,10 @@ class localdb( regdb ):
 
     def suiteid( self, owner, group, name ):
         # for local use, the user does not need the suite owner prefix
-        return group + ':' + name
+        if group == 'default':
+            return name
+        else:
+            return group + ':' + name
 
     def print_all( self, ownerfilt=[], groupfilt=[], verbose=False ):
         # for local use, don't need to print the owner name
