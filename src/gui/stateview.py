@@ -107,7 +107,7 @@ class updater(threading.Thread):
         except:
             return False
         else:
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ))
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#2f2' ))
             self.status = "connected"
             self.label_status.set_text( self.status )
             return True

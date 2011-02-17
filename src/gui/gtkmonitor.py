@@ -22,7 +22,8 @@ from config import config
 
 class color_rotator(object):
     def __init__( self ):
-        self.colors = [ '#ed9638', '#dbd40a', '#a7c339', '#6ab7b4' ]
+        #self.colors = [ '#ed9638', '#dbd40a', '#a7c339', '#6ab7b4' ]
+        self.colors = [ '#ff8787', '#a4ffb3', '#e0a4ff', '#fff8a4' ]
         self.current_color = 0
  
     def get_color( self ):
@@ -240,13 +241,14 @@ A real time suite control and monitoring tool for cylc.
         treeview = gtk.TreeView( liststore )
         treeview.get_selection().set_mode( gtk.SELECTION_NONE )
 
-        # set background color of the entire treeview
-        treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
+        # this is how to set background color of the entire treeview to black
+        # (but we're not using a black background anymore)
+        #treeview.modify_base( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#000' ) ) 
 
         tvc = gtk.TreeViewColumn( 'Cycle Time' )
         for i in range(10):
             cr = gtk.CellRendererPixbuf()
-            cr.set_property( 'cell-background', 'black' )
+            #cr.set_property( 'cell-background', 'black' )
             tvc.pack_start( cr, False )
             tvc.set_attributes( cr, pixbuf=i )
         treeview.append_column( tvc )
@@ -256,7 +258,7 @@ A real time suite control and monitoring tool for cylc.
 
         for n in range( 10, 10+len( self.task_list )):
             cr = gtk.CellRendererPixbuf()
-            cr.set_property( 'cell_background', 'black' )
+            #cr.set_property( 'cell_background', 'black' )
             cr.set_property( 'xalign', 0 )
             tvc = gtk.TreeViewColumn( ""  )
             tvc.set_min_width( lamp_width )  # WIDTH OF LED PIXBUFS
@@ -297,12 +299,14 @@ A real time suite control and monitoring tool for cylc.
         hbox = gtk.HBox()
         eb = gtk.EventBox()
         eb.add( gtk.Label( "click headings to sort") )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88bbee' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( gtk.Label( "click on tasks for options" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88ccff' ) ) 
         hbox.pack_start( eb, True )
 
         bbox = gtk.HButtonBox()
@@ -509,12 +513,14 @@ A real time suite control and monitoring tool for cylc.
         hbox = gtk.HBox()
         eb = gtk.EventBox()
         eb.add( gtk.Label( "click headings to sort") )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88ccff' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( gtk.Label( "click on tasks for options" ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88bbee' ) ) 
         hbox.pack_start( eb, True )
 
         vbox = gtk.VBox()
@@ -1294,23 +1300,27 @@ A real time suite control and monitoring tool for cylc.
 
         eb = gtk.EventBox()
         eb.add( self.label_suitename )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ed9638' ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88bbee' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( self.label_mode )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88ccff' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( self.label_status )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) )
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#a7c339' ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88bbee' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
         eb.add( self.label_time )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#6ab7b4' ) ) 
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fa87a4' ) ) 
+        #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fa87a4' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88ccff' ) ) 
         hbox.pack_start( eb, True )
 
         return hbox
@@ -1377,7 +1387,7 @@ A real time suite control and monitoring tool for cylc.
 
         main_panes = gtk.VPaned()
         main_panes.set_position(200)
-        main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
+        #main_panes.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#d91212' ))
         main_panes.add1( self.create_led_panel())
         main_panes.add2( notebook )
 
