@@ -43,6 +43,13 @@ if len(args) != 1:
     parser.error( "wrong number of arguments" )
 
 suite = args[0]
+# hand default registration group
+# (in this case, if supplied, strip it off).
+m = re.match( '^(\w+):(\w+)$', suite )
+if m:
+    group, name = m.groups()
+    if group == 'default':
+        suite = name
 
 filename = os.path.join( config( suite )['top level logging directory'], suite, 'log' )
  

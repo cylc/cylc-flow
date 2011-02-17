@@ -196,7 +196,7 @@ class scheduler(object):
             try:
                 self.lockserver_port = lockserver( self.owner, self.host ).ping()
             except port_scan.SuiteNotFoundError, x:
-                raise SystemExit( 'Lockserver not found; try \'cylclockd status\'')
+                raise SystemExit( 'Lockserver not found; try \'cylc lockserver status\'')
  
         # CONFIGURE SUITE PYRO SERVER
         if self.practice:
