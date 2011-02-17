@@ -6,13 +6,16 @@ from registration import centraldb, RegistrationError
 
 parser = OptionParser( usage = """cylc centraldb [options] [FILTER]
 
-View and manage central job database registrations.
+View or delete central suite database registrations, with filtering
+by suite owner and registration group. By default every entry in the
+database will be printed.
 
-WARNING: THIS IS A NEW FEATURE, DOCUMENTATION INCOMPLETE.
+See also:
+    cylc export
+    cylc import
 
 Arguments:
-    FILTER     owner:group:name|group:name|group|name
-""" )
+    FILTER     OWNER or OWNER:GROUP""" )
 
 parser.add_option( "-w", "--wipe",
         help="Delete all of your central registrations.",
@@ -24,6 +27,9 @@ parser.add_option( "-v", "--verbose",
 
 ( options, args ) = parser.parse_args()
 
+if len(args) > 1:
+    parser.error( "Wrong number of arguments" )
+
 central = centraldb() 
 
 if options.wipe:
@@ -31,4 +37,19 @@ if options.wipe:
     central.dump_to_file()
     sys.exit(0)
 
-central.print_all( verbose=options.verbose )
+groupfilt = []
+ownerfilt = []
+
+if len(args) == 1:
+    filter = args[0]
+    m = re.match( '^(\w+):(\w+)', filter )
+    if m:
+        owner, group = m.groups()
+        ownerfilt.append( owner )
+        groupfilt.append( group )
+    else:
+        owner = filter
+        ownerfilt.append( owner )
+
+central.print_all( ownerfilt=ownerfilt, groupfilt=groupfilt, verbose=options.verbose )
+

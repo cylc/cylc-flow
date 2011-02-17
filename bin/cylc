@@ -236,6 +236,7 @@ topsum['task'         ] = "task wrapping and the messaging interface."
 topsum['utilities'    ] = "extra programs intended for use in suites."
 
 usage = """This is the cylc metascheduler commandline interface.
+Release version: """ + cylc_version + """
 """ + general_usage + """
 
 You can use any unique abbreviation for a COMMAND or TOPIC, e.g.:
