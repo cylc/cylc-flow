@@ -275,7 +275,10 @@ class localdb( regdb ):
     def print_all( self, ownerfilt=[], groupfilt=[], verbose=False ):
         # for local use, don't need to print the owner name
         owners = self.items.keys()
-        if len(owners) != 1:
+        if len(owners) == 0:
+            # nothing registered
+            return
+        if len(owners) > 1:
             # THIS SHOULD NOT HAPPEN
             raise RegistrationError, 'ERROR: multiple owners in local registration db!'
         if owners[0] != self.user:
