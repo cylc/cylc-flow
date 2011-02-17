@@ -47,6 +47,15 @@ if len( args ) != 1:
     parser.error( "Wrong number of arguments" ) 
 
 suite = args[0]
+# hand default registration group
+if re.match( '^(\w+):(\w+)$', suite ):
+    # group:name
+    pass
+elif re.match( '^(\w+)$', suite ):
+    # default group
+    suite = 'default:' + suite
+else:
+    parser.error( 'Illegal suite name:', suite )
 
 host = options.host
 owner = options.owner
