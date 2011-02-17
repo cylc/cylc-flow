@@ -79,7 +79,7 @@ class regdb(object):
        + the database file path
        + and initial call to load_from_file().
     And:
-     2/ suite_name():
+     2/ suiteid():
        + to munge the fully qualified suite name (owner:group:name)
     """
 
@@ -178,9 +178,8 @@ class regdb(object):
                 names = self.items[owner][group].keys()
                 names.sort()
                 for name in names:
-                    suite = owner + ':' + group + ':' + name
                     dir,descr = self.items[owner][group][name]
-                    regs.append( (self.suite_name(suite), dir, descr) )
+                    regs.append( (self.suiteid(owner,group,name), dir, descr) )
         return regs
 
     def clean( self ):
@@ -216,11 +215,11 @@ class regdb(object):
     def print_reg( self, suite, verbose=False ):
         # check the registration exists:
         suite = regsplit( suite ).get_full()
+        owner, group, name = regsplit( suite ).get()
         dir,descr = self.get( suite )
         if not verbose:
-            print self.suite_name( suite ) + ' --> ' + dir + ' [' + descr + ']'
+            print self.suiteid( owner,group,name ) + ' --> ' + dir + ' [' + descr + ']'
         else:
-            owner, group, name = regsplit( suite ).get()
             print '     NAME ' + name + ' --> ' + dir + ' [' + descr + ']'
 
     def print_all( self, ownerfilt=[], groupfilt=[], verbose=False ):
@@ -246,10 +245,11 @@ class regdb(object):
                     suite = owner + ':' + group + ':' + name
                     self.print_reg( suite, verbose )
 
-
 class localdb( regdb ):
     """
     Local (user-specific) suite registration database.
+    Strips owner off registrations 'owner:group:name' 
+    (not needed for local - single user - use).
     """
     def __init__( self, file=None ):
         self.user = os.environ['USER']
@@ -274,14 +274,9 @@ class localdb( regdb ):
         self.items = {}  # items[owner][group][name] = (dir,description)
         self.load_from_file()
 
-    def suite_name( self, fullyqualified ):
+    def suiteid( self, owner, group, name ):
         # for local use, the user does not need the suite owner prefix
-        m = re.match( '^(\w+):(\w+:\w+)$', fullyqualified )
-        if m:
-            owner, suite = m.groups()
-        else:
-            raise RegistrationError, 'Illegal fully qualified suite name: ' + fullyqualified
-        return suite
+        return group + ':' + name
 
     def print_all( self, ownerfilt=[], groupfilt=[], verbose=False ):
         # for local use, don't need to print the owner name
@@ -338,8 +333,8 @@ class centraldb( regdb ):
         self.items = {}  # items[owner][group][name] = (dir,description)
         self.load_from_file()
 
-    def suite_name( self, fullyqualified ):
-        return fullyqualified
+    def suiteid( self, owner, group, name ):
+        return owner + ':' + group + ':' + name
 
 if __name__ == '__main__':
     # unit test
