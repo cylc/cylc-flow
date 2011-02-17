@@ -306,7 +306,7 @@ A real time suite control and monitoring tool for cylc.
         eb = gtk.EventBox()
         eb.add( gtk.Label( "click on tasks for options" ) )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88ccff' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbddff' ) ) 
         hbox.pack_start( eb, True )
 
         bbox = gtk.HButtonBox()
@@ -514,7 +514,7 @@ A real time suite control and monitoring tool for cylc.
         eb = gtk.EventBox()
         eb.add( gtk.Label( "click headings to sort") )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) ) 
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88ccff' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbddff' ) ) 
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
@@ -1307,7 +1307,7 @@ A real time suite control and monitoring tool for cylc.
         eb = gtk.EventBox()
         eb.add( self.label_mode )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#dbd40a' ) )
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88ccff' ) )
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbddff' ) )
         hbox.pack_start( eb, True )
 
         eb = gtk.EventBox()
@@ -1320,7 +1320,7 @@ A real time suite control and monitoring tool for cylc.
         eb.add( self.label_time )
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#6ab7b4' ) ) 
         #eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#fa87a4' ) ) 
-        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#88ccff' ) ) 
+        eb.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#bbddff' ) ) 
         hbox.pack_start( eb, True )
 
         return hbox
