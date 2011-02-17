@@ -107,7 +107,7 @@ class updater(threading.Thread):
         except:
             return False
         else:
-            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#2f2' ))
+            self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#19ae0a' ))
             self.status = "connected"
             self.label_status.set_text( self.status )
             return True
@@ -117,7 +117,7 @@ class updater(threading.Thread):
         self.ttreestore.clear()
         self.fl_liststore.clear()
         self.status = "NO CONNECTION"
-        self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#f42' ))
+        self.label_status.get_parent().modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( '#ff1a45' ))
         self.label_status.set_text( self.status )
         # GTK IDLE FUNCTIONS MUST RETURN FALSE OR WILL BE CALLED MULTIPLE TIMES
         self.reconnect()
