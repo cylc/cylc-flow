@@ -106,7 +106,6 @@ security_commands = \
     [
     'lockserver',
     'lockclient',
-    'locking',
     'block',
     'unblock',
      ]
@@ -291,9 +290,9 @@ documentation for configuration details."""
 # command summaries
 comsum = OrderedDict()
 comsum[ 'register'  ] = 'Manage local suite registrations'
-comsum[ 'centraldb' ] = 'Manage central suite database registrations'
 comsum[ 'export'    ] = 'Export suites to the central suite database'
 comsum[ 'import'    ] = 'Import suites from the central suite database'
+comsum[ 'centraldb' ] = 'View or delete central database registrations'
 comsum[ 'edit'      ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
@@ -310,7 +309,7 @@ comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
 comsum[ 'remove'    ] = 'Remove a task from a running suite'
 comsum[ 'purge'     ] = 'Remove a full dependency tree from a running suite'
 comsum[ 'pause'     ] = 'Pause a running suite (stop submitting tasks)'
-comsum[ 'resume'    ] = 'Unpause a running suite (resume submitting tasks)'
+comsum[ 'resume'    ] = 'Resume submitting tasks in a paused suite'
 comsum[ 'reset'     ] = 'Force a task to waiting, ready, or finished state'
 comsum[ 'block'     ] = 'Do not comply with subsequent intervention commands'
 comsum[ 'unblock'   ] = 'Comply with subsequent intervention commands'
@@ -331,7 +330,7 @@ comsum[ 'task-message' ] = 'Report completion of outputs, etc.'
 comsum[ 'task-finished'] = 'Release task lock and report finished'
 comsum[ 'task-failed'  ] = 'Release task lock and report failure'
 comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
-comsum[ 'lockclient' ] = 'manual suite and task lock management'
+comsum[ 'lockclient' ] = 'Manual suite and task lock management'
 comsum[ 'cycletime'  ] = 'Cycle time arithmetic'
 comsum[ 'checkvars'  ] = 'Check required environment variables en masse'
 comsum[ 'template'   ] = 'Powerful cycle time offset filename templating'
@@ -391,20 +390,24 @@ if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
     try:
         top = match_command( sys.argv[2], topics, 'TOPIC' )
     except CommandError, x:
-        #raise SystemExit(x)
-        print x
+        # TOPIC not found, try matching COMMAND
         try:
             command = match_command( sys.argv[2], core_commands + utilities_commands + task_commands, 'COMMAND' )
-        except CommandError, x:
-            raise SystemExit(x)
+        except CommandError, y:
+            # COMMAND not found either
+            print x
+            raise SystemExit(y)
         else:
-            print 'Did you mean command?...\n'
+            # found COMMAND
+            print x
+            print 'Did you mean COMMAND?...\n'
             # construct command to execute
             command = '_' + command 
             commandlist = [ command ]
             execute( commandlist )
             sys.exit(0)
     else:
+        # found TOPIC
         print 'TOPIC:' + top + ' - ' + topsum[ top ]
         commands = eval( top + '_commands')
         if len( commands ) != 0: 
@@ -422,7 +425,40 @@ arglist = sys.argv[1:]
 try:
     command = match_command( arglist[0], core_commands + utilities_commands + task_commands, 'COMMAND' )
 except CommandError, x:
-    raise SystemExit(x)
+    # COMMAND not found
+    try:
+        if arglist[1] == 'help' or \
+                arglist[1] == '--help' or \
+                arglist[1] == 'hlep' or \
+                arglist[1] == '--hlep':
+            # if 2nd arg is 'help', try matching TOPIC
+            try:
+                top = match_command( arglist[0], topics, 'TOPIC' )
+            except CommandError, y:
+                # TOPIC not found either
+                print x
+                raise SystemExit(y)
+            else:
+                # TOPIC found
+                print x
+                print 'Did you mean TOPIC?...\n'
+                print 'TOPIC:' + top + ' - ' + topsum[ top ]
+                commands = eval( top + '_commands')
+                if len( commands ) != 0: 
+                    print command_usage
+                if top in topic_help:
+                    print topic_help[top]
+                if len( commands ) != 0:
+                    print
+                    print 'COMMANDs:'
+                    pretty_print( comsum, commands )
+                sys.exit(0)
+    except IndexError:
+        # len( arglist ) only 1
+        raise SystemExit(x)
+else:
+    # COMMAND found, carry on and execut the command
+    pass
 
 options = []
 if len(arglist) > 1:
@@ -430,7 +466,7 @@ if len(arglist) > 1:
 
 try:
     if options[0] == 'help' or options[0] == 'hlep':
-        # catch 'cylc COMMAND help'
+        # catch 'cylc COMMAND help' (should be --help)
         options[0] = '--help'
 except IndexError:
     pass

@@ -89,15 +89,12 @@ class cylc_logviewer( logviewer ):
             level += 1
         else:
             level -= 1
-
         if level < 0:
             warning_dialog( "The active log is already displayed" ).warn()
             return
-
         if self.current_log() not in os.listdir( self.dir ):
-            warning_dialog( "No log not available" ).warn()
+            warning_dialog( "Newer log not available" ).warn()
             return
-
         self.level = level
         self.update_view()
 
