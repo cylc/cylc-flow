@@ -388,18 +388,31 @@ if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
     try:
         top = match_command( sys.argv[2], topics, 'TOPIC' )
     except CommandError, x:
-        raise SystemExit(x)
-    print 'TOPIC:' + top + ' - ' + topsum[ top ]
-    commands = eval( top + '_commands')
-    if len( commands ) != 0: 
-        print command_usage
-    if top in topic_help:
-        print topic_help[top]
-    if len( commands ) != 0:
-        print
-        print 'COMMANDs:'
-        pretty_print( comsum, commands )
-    sys.exit(0)
+        #raise SystemExit(x)
+        print x
+        try:
+            command = match_command( sys.argv[2], core_commands + utilities_commands + task_commands, 'COMMAND' )
+        except CommandError, x:
+            raise SystemExit(x)
+        else:
+            print 'Did you mean command?...\n'
+            # construct command to execute
+            command = '_' + command 
+            commandlist = [ command ]
+            execute( commandlist )
+            sys.exit(0)
+    else:
+        print 'TOPIC:' + top + ' - ' + topsum[ top ]
+        commands = eval( top + '_commands')
+        if len( commands ) != 0: 
+            print command_usage
+        if top in topic_help:
+            print topic_help[top]
+        if len( commands ) != 0:
+            print
+            print 'COMMANDs:'
+            pretty_print( comsum, commands )
+        sys.exit(0)
 
 # cylc COMMAND ARGS
 arglist = sys.argv[1:]
