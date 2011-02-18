@@ -159,7 +159,10 @@ class regdb(object):
     def unregister( self, suite, verbose=False ):
         owner, group, name = regsplit(suite).get()
         if owner != self.user:
-            raise RegistrationError, 'You cannot unregister as another user'
+            #raise RegistrationError, 'You cannot unregister as another user'
+            self.print_reg( suite )
+            print "(can't unregister, wrong suite owner)"
+            return
         self.print_reg(suite, prefix='DELETING', verbose=verbose )
         # delete it
         del self.items[owner][group][name]
@@ -187,9 +190,7 @@ class regdb(object):
         for suite, dir, descr in my_suites:
             self.unregister( suite, verbose=verbose )
 
-    def unregister_multi( self, 
-            ownerfilt=[], groupfilt=[], namefilt=None, 
-            verbose=False, invalid=False ):
+    def unregister_multi( self, ownerfilt=[], groupfilt=[], namefilt=None, verbose=False, invalid=False ):
         changed = False
         owners = self.items.keys()
         owners.sort()
@@ -290,9 +291,9 @@ class regdb(object):
         owner, group, name = regsplit( suite ).get()
         dir,descr = self.get( suite )
         if not verbose:
-            print prefix, self.suiteid( owner,group,name ) + ' ...[' + descr + ']... ' + dir 
+            print prefix, self.suiteid( owner,group,name ) + '    |' + descr + '|    ' + dir 
         else:
-            print prefix, '     NAME ' + name + ' ...[' + descr + ']... ' + dir 
+            print prefix, '     NAME ' + name + '    |' + descr + '|    ' + dir 
 
     def print_multi( self, ownerfilt=[], groupfilt=[], namefilt=None, verbose=False ):
         owners = self.items.keys()
@@ -411,7 +412,7 @@ class centraldb( regdb ):
             dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            dir = os.path.join( os.environ['CYLC_DIR'], 'jdb' )
+            dir = os.path.join( os.environ['CYLC_DIR'], 'cdb' )
             self.file = os.path.join( dir, 'registrations' )
 
         # create initial database directory if necessary

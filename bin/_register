@@ -81,15 +81,14 @@ if len(args) == 2:
     # remove trailing '/'
     rdir = rdir.rstrip( '/' )
     # remove leading './'
-    #rdir = re.sub( '^\.\/', '', rdir )
-    rdir = rdir.lstrip('\./')
+    rdir = re.sub( '^\.\/', '', rdir )
     # also strip / off name in case of registering same name as dir 
     # whilst sitting one level up from the suite dir itself, using
     # tab completion, and getting the args the wrong way around.
     suite = suite.rstrip( '/' )
 
     # make registered path absolute # see NOTE:ABSPATH above
-    if not re.match( '^/', rdir ):
+    if not re.search( '^/', rdir ):
         rdir = os.path.join( os.environ['PWD'], rdir )
 
     # get suite title from config file

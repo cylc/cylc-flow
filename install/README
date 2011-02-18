@@ -1,4 +1,6 @@
-Cylc requires Python 2.4 or later, for:
+TO DO: COMPLETE THIS BEFORE THE FIRST CYLC-3 RELEASE
+
+cylc requires Python 2.4 or later, for:
     * pygtk (gui)
     * the subprocess module
 
