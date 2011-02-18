@@ -6,13 +6,14 @@ import time, os, re
 import threading
 from config import config
 from port_scan import scan_my_suites
-from registration import localdb, RegistrationError
+from registration import localdb, centraldb, RegistrationError
 from gtkmonitor import monitor
 from color_rotator import rotator
 
 class chooser_updater(threading.Thread):
-
-    def __init__(self, owner, regd_liststore, host ):
+    def __init__(self, owner, regd_liststore, db, is_cdb, host ):
+        self.db = db
+        self.is_cdb = is_cdb
         self.owner = owner
         self.quit = False
         self.host = host
@@ -41,7 +42,7 @@ class chooser_updater(threading.Thread):
             return False
 
     def regd_choices_changed( self ):
-        regs = localdb().get_list() 
+        regs = self.db.get_list() 
         if regs != self.regd_choices:
             self.regd_choices = regs
             return True
@@ -68,14 +69,16 @@ class chooser_updater(threading.Thread):
             red = self.state_line_colors.get_color()
             name, suite_dir, descr = reg
             suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
-            if name in ports:
-                self.regd_liststore.append( [name, grn, 'port ' + str(ports[name]), '#19ae0a', suite_dir, grn, descr, grn ] )
+            if self.is_cdb:
+                self.regd_liststore.append( [name, col, '(cdb)', red, suite_dir, col, descr, col ] )
             else:
-                self.regd_liststore.append( [name, col, 'dormant', red, suite_dir, col, descr, col ] )
+                if name in ports:
+                    self.regd_liststore.append( [name, grn, 'port ' + str(ports[name]), '#19ae0a', suite_dir, grn, descr, grn ] )
+                else:
+                    self.regd_liststore.append( [name, col, 'dormant', red, suite_dir, col, descr, col ] )
 
 class chooser(object):
     def __init__(self, host, imagedir, readonly=False ):
-
         self.owner = os.environ['USER']
         self.readonly = readonly
 
@@ -99,19 +102,18 @@ class chooser(object):
 
         regd_treeview = gtk.TreeView()
         # suite, state, title, colors...
-        regd_liststore = gtk.ListStore( str, str, str, str, str, str, str, str, )
-        regd_treeview.set_model(regd_liststore)
+        self.regd_liststore = gtk.ListStore( str, str, str, str, str, str, str, str, )
+        regd_treeview.set_model(self.regd_liststore)
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
         # end of __init___() but it doesn't really matter.
-        self.updater = chooser_updater( self.owner, regd_liststore, self.host )
-        self.updater.update_liststore()
-        self.updater.start()
+        self.cdb = False # start with local reg db
+        self.start_updater()
 
         regd_ts = regd_treeview.get_selection()
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
-        regd_ts.set_select_function( self.get_selected_suite, regd_liststore )
+        regd_ts.set_select_function( self.get_selected_suite, self.regd_liststore )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, background=1 )
@@ -136,12 +138,16 @@ class chooser(object):
         quit_all_button = gtk.Button( "Close All Windows" )
         quit_all_button.connect("clicked", self.delete_all_event, None, None )
 
+        db_button = gtk.Button( "Local/Central DB" )
+        db_button.connect("clicked", self.switchdb, None, None )
+
         vbox = gtk.VBox()
         sw.add( regd_treeview )
         vbox.pack_start( sw, True )
 
         hbox = gtk.HBox()
         hbox.pack_start( quit_all_button, False )
+        hbox.pack_start( db_button, False )
 
         vbox.pack_start( hbox, False )
 
@@ -150,6 +156,20 @@ class chooser(object):
 
         self.viewer_list = []
 
+    def start_updater(self):
+        if self.cdb:
+            db = centraldb()
+        else:
+            db = localdb()
+        self.updater = chooser_updater( self.owner, self.regd_liststore, db, self.cdb, self.host )
+        self.updater.update_liststore()
+        self.updater.start()
+
+    def switchdb( self, w, e, data=None ):
+        self.cdb = not self.cdb
+        self.updater.quit = True
+        self.start_updater()
+
     def delete_all_event( self, w, e, data=None ):
         self.updater.quit = True
         for item in self.viewer_list:
@@ -157,6 +177,9 @@ class chooser(object):
         gtk.main_quit()
 
     def get_selected_suite( self, selection, treemodel ):
+        if self.cdb:
+            return
+
         iter = treemodel.get_iter( selection )
 
         name = treemodel.get_value( iter, 0 )
