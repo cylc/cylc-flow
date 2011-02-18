@@ -19,22 +19,7 @@ from cycle_time import _rt_to_dt, is_valid
 from execute import execute
 from option_group import option_group, controlled_option_group
 from config import config
-
-class color_rotator(object):
-    def __init__( self ):
-        #self.colors = [ '#ed9638', '#dbd40a', '#a7c339', '#6ab7b4' ]
-        self.colors = [ '#ff8787', '#a4ffb3', '#e0a4ff', '#fff8a4' ]
-        self.current_color = 0
- 
-    def get_color( self ):
-        index = self.current_color
-        if index == len( self.colors ) - 1:
-            index = 0
-        else:
-            index += 1
-
-        self.current_color = index
-        return self.colors[ index ]
+from color_rotator import rotator
 
 class monitor(object):
     # visibility determined by state matching active toggle buttons
@@ -1376,7 +1361,7 @@ A real time suite control and monitoring tool for cylc.
         self.window.set_size_request(600, 500)
         self.window.connect("delete_event", self.delete_event)
 
-        self.log_colors = color_rotator()
+        self.log_colors = rotator()
 
         # Get list of tasks in the suite
         self.preload_task_list()

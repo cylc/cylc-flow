@@ -8,6 +8,7 @@ from config import config
 from port_scan import scan_my_suites
 from registration import localdb, RegistrationError
 from gtkmonitor import monitor
+from color_rotator import rotator
 
 class chooser_updater(threading.Thread):
 
@@ -19,6 +20,8 @@ class chooser_updater(threading.Thread):
         super(chooser_updater, self).__init__()
         self.running_choices = []
         self.regd_choices = []
+        self.line_colors = rotator([ '#ccc', '#aaa' ])
+        self.state_line_colors = rotator([ '#fcc', '#faa' ])
     
     def run( self ):
         while not self.quit:
@@ -59,12 +62,16 @@ class chooser_updater(threading.Thread):
         self.regd_liststore.clear()
         choices = self.regd_choices
         for reg in choices:
+            col = self.line_colors.get_color()
+            grn = '#2f2'
+            #red = '#ff1a45'
+            red = self.state_line_colors.get_color()
             name, suite_dir, descr = reg
             suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
             if name in ports:
-                self.regd_liststore.append( [name, '#8be', 'RUNNING (port ' + str( ports[name] ) + ')', '#19ae0a', suite_dir, '#8be', descr, '#8be' ] )
+                self.regd_liststore.append( [name, grn, 'port ' + str(ports[name]), '#19ae0a', suite_dir, grn, descr, grn ] )
             else:
-                self.regd_liststore.append( [name, '#bdf', 'dormant', '#ff1a45', suite_dir, '#bdf', descr, '#bdf' ] )
+                self.regd_liststore.append( [name, col, 'dormant', red, suite_dir, col, descr, col ] )
 
 class chooser(object):
     def __init__(self, host, imagedir, readonly=False ):
