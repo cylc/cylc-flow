@@ -250,6 +250,9 @@ class regdb(object):
         regs = []
         owners = self.items.keys()
         owners.sort()
+        #print ownerfilt
+        #print groupfilt
+        #print namefilt
         for owner in owners:
             if len(ownerfilt) > 0:
                 if owner not in ownerfilt:

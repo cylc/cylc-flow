@@ -11,7 +11,10 @@ from gtkmonitor import monitor
 from color_rotator import rotator
 
 class chooser_updater(threading.Thread):
-    def __init__(self, owner, regd_liststore, db, is_cdb, host ):
+    def __init__(self, owner, regd_liststore, db, is_cdb, host, ownerfilt=[], groupfilt=[], namefilt=None ):
+        self.ownerfilt = ownerfilt
+        self.groupfilt = groupfilt
+        self.namefilt = namefilt
         self.db = db
         self.is_cdb = is_cdb
         self.owner = owner
@@ -42,7 +45,7 @@ class chooser_updater(threading.Thread):
             return False
 
     def regd_choices_changed( self ):
-        regs = self.db.get_list() 
+        regs = self.db.get_list( self.ownerfilt, self.groupfilt, self.namefilt ) 
         if regs != self.regd_choices:
             self.regd_choices = regs
             return True
@@ -79,6 +82,8 @@ class chooser_updater(threading.Thread):
 
 class chooser(object):
     def __init__(self, host, imagedir, readonly=False ):
+        self.updater = None
+        self.filter_window = None
         self.owner = os.environ['USER']
         self.readonly = readonly
 
@@ -141,6 +146,9 @@ class chooser(object):
         db_button = gtk.Button( "Local/Central DB" )
         db_button.connect("clicked", self.switchdb, None, None )
 
+        filter_button = gtk.Button( "Filter" )
+        filter_button.connect("clicked", self.filter_popup, None, None )
+
         vbox = gtk.VBox()
         sw.add( regd_treeview )
         vbox.pack_start( sw, True )
@@ -148,6 +156,7 @@ class chooser(object):
         hbox = gtk.HBox()
         hbox.pack_start( quit_all_button, False )
         hbox.pack_start( db_button, False )
+        hbox.pack_start( filter_button, False )
 
         vbox.pack_start( hbox, False )
 
@@ -156,18 +165,87 @@ class chooser(object):
 
         self.viewer_list = []
 
-    def start_updater(self):
+    def start_updater(self, ownerfilt=[], groupfilt=[], namefilt=None):
         if self.cdb:
             db = centraldb()
         else:
             db = localdb()
-        self.updater = chooser_updater( self.owner, self.regd_liststore, db, self.cdb, self.host )
+        if self.updater:
+            self.updater.quit = True # does this take effect?
+        self.updater = chooser_updater( self.owner, self.regd_liststore, db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
         self.updater.update_liststore()
         self.updater.start()
 
+    def filter(self, w, owner_e, group_e, name_e ):
+        ownerfilt = [ owner_e.get_text() ]
+        groupfilt = [ group_e.get_text() ]
+        namefilt = name_e.get_text()
+        self.start_updater( ownerfilt, groupfilt, namefilt )
+
+    def filter_reset(self, w, owner_e, group_e, name_e ):
+        if self.cdb:
+            owner_e.set_text('')
+        group_e.set_text('')
+        name_e.set_text('')
+        self.start_updater()
+
+    def filter_popup(self, w, e, data=None):
+        self.filter_window = gtk.Window()
+        self.filter_window.set_border_width(5)
+        self.filter_window.set_title( "Filter Suite Registration Database" )
+
+        vbox = gtk.VBox()
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Owner' )
+        box.pack_start( label, True )
+        owner_entry = gtk.Entry()
+        if not self.cdb:
+            owner_entry.set_text( self.owner )
+            owner_entry.set_sensitive( False )
+        box.pack_start (owner_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Group' )
+        box.pack_start( label, True )
+        group_entry = gtk.Entry()
+        box.pack_start (group_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Name' )
+        box.pack_start( label, True )
+        name_entry = gtk.Entry()
+        box.pack_start (name_entry, True)
+        vbox.pack_start(box)
+
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: self.filter_window.destroy() )
+
+        apply_button = gtk.Button( "Apply" )
+        apply_button.connect("clicked", self.filter, owner_entry, group_entry, name_entry )
+
+        reset_button = gtk.Button( "Reset" )
+        reset_button.connect("clicked", self.filter_reset, owner_entry, group_entry, name_entry )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.filter_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( apply_button, False )
+        hbox.pack_start( reset_button, False )
+        hbox.pack_start( cancel_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        self.filter_window.add( vbox )
+        self.filter_window.show_all()
+
     def switchdb( self, w, e, data=None ):
+        if self.filter_window:
+            self.filter_window.destroy()
         self.cdb = not self.cdb
-        self.updater.quit = True
         self.start_updater()
 
     def delete_all_event( self, w, e, data=None ):
