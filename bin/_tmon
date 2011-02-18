@@ -9,6 +9,7 @@ http://ascii-table.com/ansi-escape-sequences.php
 
 from cycle_time import _rt_to_dt, is_valid
 import cylc_pyro_client
+from port_scan import SuiteIdentificationError
 import os, re, sys
 from Pyro.errors import PyroError,NamingError,ProtocolError,TimeoutError,ConnectionClosedError
 from time import sleep
@@ -39,9 +40,9 @@ header = '                                     '
 ctrl_end = "\033[0m"
 key = "\033[1;35mwaiting\033[0m \033[1;37;40msubmitted\033[0m \033[1;37;42mrunning\033[0m done \033[1;37;41mfailed" + ctrl_end 
 
-print
-print "here we go ..."
-sleep(2)
+#print
+#print "here we go ..."
+#sleep(2)
 
 alerted = False
 alerted2 = False
@@ -53,10 +54,8 @@ try:
         try: 
             proxy = cylc_pyro_client.client( suite, owner, host, port ).get_proxy( 'state_summary' )
 
-            # timeout (sec) determines max wait for an answer from proxy.
-            proxy._setTimeout(60)
-
-        except Exception, x:
+        except SuiteIdentificationError, x:
+            raise
             if not alerted:
                 print "\n\033[1;37;41mfailed to connect" + ctrl_end 
                 print x
@@ -65,6 +64,9 @@ try:
             # if no connection, try again to connect
             sleep(1)
             continue
+        else:
+            # timeout (sec) determines max wait for an answer from proxy.
+            proxy._setTimeout(60)
 
         alerted = False
 

@@ -4,6 +4,7 @@ import os, sys, re
 import socket
 from optparse import OptionParser
 from passphrase import passphrase
+from registration import unqualify, RegistrationError
 import port_scan
 
 parser = OptionParser( """cylc ping [options] SUITE
@@ -46,16 +47,10 @@ if options.print_ports:
 if len( args ) != 1:
     parser.error( "Wrong number of arguments" ) 
 
-suite = args[0]
-# hand default registration group
-if re.match( '^(\w+):(\w+)$', suite ):
-    # group:name
-    pass
-elif re.match( '^(\w+)$', suite ):
-    # default group
-    suite = 'default:' + suite
-else:
-    parser.error( 'Illegal suite name:', suite )
+try:
+    suite = unqualify(args[0])
+except RegistrationError, x:
+    raise SystemExit(x)
 
 host = options.host
 owner = options.owner

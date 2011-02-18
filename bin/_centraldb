@@ -4,25 +4,43 @@ import os, re, sys
 from optparse import OptionParser
 from registration import centraldb, RegistrationError
 
-parser = OptionParser( usage = """cylc centraldb [options] [FILTER]
+parser = OptionParser( usage = """cylc centraldb [options] [arguments]
 
 View or delete central suite database registrations, with filtering
 by suite owner and registration group. By default every entry in the
-database will be printed.
+database will be printed. You must specify the suite owner even for 
+your own suites in the central database.
+
+1/ Print registered suites:
+     $ cylc cen [all]              # 'all' is optional
+     $ cylc cen OWNER              # all of OWNER's suites
+     $ cylc cen OWNER:GROUP        # one group of suites
+     $ cylc cen OWNER:GROUP:NAME   # just one suite
+
+2/ Unregister YOUR suites in the central database:
+     $ cylc cen -d,--del all          # 'all'
+     $ cylc cen -d,--del GROUP:       # one group
+     $ cylc cen -d,--del GROUP:NAME   # one suite
+
+3/ Housekeeping: delete ANY suites whose definition directory or
+   suite.rc file is missing:
+     $ cylc cen -c,--clean
 
 See also:
-    cylc export
-    cylc import
+    cylc export - export suites to the central database
+    cylc import - import suites from the central database
+    cylc register - manage local suite registrations""" )
 
-Arguments:
-    FILTER     OWNER or OWNER:GROUP""" )
+parser.add_option( "-d", "--del",
+        help="Delete registrations.",
+        action="store_true", default=False, dest="unregister" )
 
-parser.add_option( "-w", "--wipe",
-        help="Delete all of your central registrations.",
-        action="store_true", default=False, dest="wipe" )
+parser.add_option( "-c", "--clean",
+        help="Delete any registrations that are not valid.",
+        action="store_true", default=False, dest="clean" )
 
 parser.add_option( "-v", "--verbose",
-        help="Verbose registration listings.",
+        help="Turn on verbose output.",
         action="store_true", default=False, dest="verbose" )
 
 ( options, args ) = parser.parse_args()
@@ -32,24 +50,47 @@ if len(args) > 1:
 
 central = centraldb() 
 
-if options.wipe:
-    central.unregister_all()
-    central.dump_to_file()
+if options.clean:
+    if len(args) != 0:
+        parser.error( "Wrong number of arguments for -c,--clean" )
+    if central.clean_all():
+        central.dump_to_file()
     sys.exit(0)
 
+if len(args) == 0 and not options.unregister:
+    args.append('all')
+
+if len(args) != 1:
+    parser.error( "Commandline error" )
+
+# print or delete
 groupfilt = []
 ownerfilt = []
-
-if len(args) == 1:
-    filter = args[0]
-    m = re.match( '^(\w+):(\w+)', filter )
+name = None
+filter = args[0]
+if filter != 'all':
+    m = re.match( '^(\w+):(\w+):(\w+)$', filter )
     if m:
-        owner, group = m.groups()
+        owner, group, name = m.groups()
         ownerfilt.append( owner )
         groupfilt.append( group )
     else:
-        owner = filter
-        ownerfilt.append( owner )
+        m = re.match( '^(\w+):(\w+)$', filter )
+        if m:
+            owner, group = m.groups()
+            ownerfilt.append( owner )
+            groupfilt.append( group )
+        elif re.match( '^(\w+)$', filter ):
+            owner = filter
+            ownerfilt.append( owner )
+        else:
+            raise SystemExit( 'Illegal registration filter: ' + filter )
 
-central.print_all( ownerfilt=ownerfilt, groupfilt=groupfilt, verbose=options.verbose )
+if options.unregister:
+    if central.unregister_multi( ownerfilt=ownerfilt, groupfilt=groupfilt, 
+            namefilt=name, verbose=options.verbose ):
+        central.dump_to_file()
+else:
+    central.print_multi( ownerfilt=ownerfilt, groupfilt=groupfilt, 
+            namefilt=name, verbose=options.verbose )
 

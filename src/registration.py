@@ -22,10 +22,8 @@ class RegistrationTakenError( RegistrationError ):
             self.msg += ' (' + owner + ')'
 
 class SuiteNotRegisteredError( RegistrationError ):
-    def __init__( self, suite, owner=None ):
+    def __init__( self, suite ):
         self.msg = "ERROR: Suite not found " + suite
-        if owner:
-            self.msg += ' (' + owner + ')'
 
 class groupNotFoundError( RegistrationError ):
     def __init__( self, group, owner=None ):
@@ -35,6 +33,42 @@ class groupNotFoundError( RegistrationError ):
 
 class RegistrationNotValidError( RegistrationError ):
     pass
+
+def qualify( suite, withowner=False ):
+    # restore the group name to suites in the 'default' group.
+    if re.match( '^(\w+):(\w+):(\w+)$', suite ):
+        # owner:group:name
+        pass
+    elif re.match( '^(\w+):(\w+)$', suite ):
+        # group:name
+        if withowner:
+            suite = os.environ['USER'] + ':' + suite
+    elif re.match( '^(\w+)$', suite ): 
+        # default group
+        suite = 'default:' + suite
+        if withowner:
+            suite = os.environ['USER'] + ':' + suite
+    else:
+        raise RegistrationError, 'Illegal suite name: ' + suite
+    return suite
+
+def unqualify( suite ):
+    # strip the owner from all suites,
+    # and the group from suites in the 'default' group.
+    m = re.match( '^(\w+):(\w+):(\w+)$', suite )
+    if m:
+        owner, group, name = m.groups()
+        suite = group + ':' + name
+    m = re.match( '^(\w+):(\w+)$', suite )
+    if m:
+        group, name = m.groups()
+        if group == 'default':
+            suite = name
+    elif re.match( '^(\w+)$', suite ): 
+        pass
+    else:
+        raise RegistrationError, 'Illegal suite name: ' + suite
+    return suite
 
 class regsplit( object ):
     def __init__( self, suite ):
@@ -75,14 +109,13 @@ class regdb(object):
     """
     A simple suite registration database.
     Derived classes must provide:
-     1/ __init__():
+     1/ __init__:
        + the database file path
        + and initial call to load_from_file().
     And:
      2/ suiteid():
        + to munge the fully qualified suite name (owner:group:name)
     """
-
     def load_from_file( self ):
         if not os.path.exists( self.file ):
             # this implies no suites have been registered
@@ -108,6 +141,7 @@ class regdb(object):
         else:
             if regdir == dir:
                 # OK, this suite is already registered
+                self.print_reg( suite, prefix='(ALREADY REGISTERED)' )
                 return
             else:
                 # ERROR, another suite is already using this registration
@@ -120,12 +154,13 @@ class regdb(object):
             self.items[owner][group] = {}
         self.items[owner][group][name] = (dir, description)
 
-    def unregister( self, suite ):
+        self.print_reg( suite, prefix='REGISTERING' )
+
+    def unregister( self, suite, verbose=False ):
         owner, group, name = regsplit(suite).get()
         if owner != self.user:
             raise RegistrationError, 'You cannot unregister as another user'
-        # check the registration exists:
-        dir,descr = self.get( suite )
+        self.print_reg(suite, prefix='DELETING', verbose=verbose )
         # delete it
         del self.items[owner][group][name]
         # delete the group if it is empty
@@ -134,20 +169,69 @@ class regdb(object):
         # delete the user slot if it is empty
         if len( self.items[owner].keys() ) == 0:
             del self.items[owner]
+    
+    def unregister_all_fast( self ):
+        print 'DELETING ALL REGISTRATIONS!'
+        self.items = {}
  
-    def unregister_all( self, silent=False ):
-        my_suites = self.get_list( ownerfilt=[self.user] )
-        for suite, dir, descr in my_suites:
-            self.print_reg( suite )
-            self.unregister( suite )
-
-    def unregister_group( self, group ):
-        # ToDo: change this to print each unreg as above
+    def unregister_group_fast( self, group ):
+        print 'DELETING registration group ', group
         owner = self.user
         try:
             del self.items[owner][group]
         except KeyError:
-            raise groupNotFoundError( group, owner )
+            raise groupNotFoundError( group, owner ) 
+
+    def unregister_all( self, verbose=False ):
+        my_suites = self.get_list( ownerfilt=[self.user] )
+        for suite, dir, descr in my_suites:
+            self.unregister( suite, verbose=verbose )
+
+    def unregister_multi( self, 
+            ownerfilt=[], groupfilt=[], namefilt=None, 
+            verbose=False, invalid=False ):
+        changed = False
+        owners = self.items.keys()
+        owners.sort()
+        owner_done = {}
+        group_done = {}
+        for owner in owners:
+            owner_done[owner] = False
+            if len(ownerfilt) > 0:
+                if owner not in ownerfilt:
+                    continue
+            groups = self.items[owner].keys()
+            groups.sort()
+            for group in groups:
+                group_done[group] = False
+                if len(groupfilt) > 0:
+                    if group not in groupfilt:
+                        continue
+                names = self.items[owner][group].keys()
+                names.sort()
+                for name in names:
+                    if namefilt:
+                        if namefilt != name:
+                            continue
+                    if verbose:
+                        if not owner_done[owner]:
+                            print 'OWNER', owner + ':'
+                            owner_done[owner] = True
+                        if not group_done[group]:
+                            print '  GROUP', group + ':'
+                            group_done[group] = True
+                    suite = owner + ':' + group + ':' + name
+                    if invalid:
+                        # unregister only if not valid
+                        try:
+                            self.check_valid( suite )
+                        except RegistrationNotValidError, x:
+                            print x
+                        else:
+                            continue
+                    self.unregister( suite, verbose )
+                    changed = True
+        return changed
 
     def get( self, suite, owner=None ):
         # return suite definition directory
@@ -155,11 +239,11 @@ class regdb(object):
         try:
             dir, descr = self.items[owner][group][name]
         except KeyError:
-            raise SuiteNotRegisteredError( suite, owner )
+            raise SuiteNotRegisteredError( suite )
         else:
             return ( dir, descr )
 
-    def get_list( self, ownerfilt=[], groupfilt=[] ):
+    def get_list( self, ownerfilt=[], groupfilt=[], namefilt=None ):
         # return filtered list of tuples:
         # [( suite, dir, descr ), ...]
         regs = []
@@ -178,28 +262,16 @@ class regdb(object):
                 names = self.items[owner][group].keys()
                 names.sort()
                 for name in names:
+                    if namefilt:
+                        if name != namefilt:
+                            continue
                     dir,descr = self.items[owner][group][name]
                     regs.append( (self.suiteid(owner,group,name), dir, descr) )
         return regs
 
-    def clean( self ):
-        # delete any invalid registrations owned by you
-        groups = self.items[self.user].keys()
-        groups.sort()
-        for group in groups:
-            print 'Group', group + ':'
-            names = self.items[self.user][group].keys()
-            names.sort()
-            for name in names:
-                suite = group + ':' + name
-                dir,descr = self.items[self.user][group][name] 
-                try:
-                    self.check_valid( suite )
-                except RegistrationNotValidError, x:
-                    print ' (DELETING) ' + name + ' --> ' + dir, '(' + str(x) + ')'
-                    self.unregister(suite)
-                else:
-                    print ' (OK) ' + name + ' --> ' + dir
+    def clean_all( self ):
+        # delete ANY invalid registrations owned by anyone
+        return self.unregister_multi( invalid=True )
 
     def check_valid( self, suite ):
         owner, group, name = regsplit( suite ).get()
@@ -212,38 +284,48 @@ class regdb(object):
             raise RegistrationNotValidError, 'File not found: ' + file
         # OK
 
-    def print_reg( self, suite, verbose=False ):
+    def print_reg( self, suite, prefix='', verbose=False ):
         # check the registration exists:
         suite = regsplit( suite ).get_full()
         owner, group, name = regsplit( suite ).get()
         dir,descr = self.get( suite )
         if not verbose:
-            print self.suiteid( owner,group,name ) + ' [[' + descr + ']] ' + dir 
+            print prefix, self.suiteid( owner,group,name ) + ' ...[' + descr + ']... ' + dir 
         else:
-            print '     NAME ' + name + ' [[' + descr + ']] ' + dir 
+            print prefix, '     NAME ' + name + ' ...[' + descr + ']... ' + dir 
 
-    def print_all( self, ownerfilt=[], groupfilt=[], verbose=False ):
+    def print_multi( self, ownerfilt=[], groupfilt=[], namefilt=None, verbose=False ):
         owners = self.items.keys()
         owners.sort()
+        owner_done = {}
+        group_done = {}
         for owner in owners:
+            owner_done[owner] = False
             if len(ownerfilt) > 0:
                 if owner not in ownerfilt:
                     continue
-            if verbose:
-                print 'OWNER', owner + ':'
             groups = self.items[owner].keys()
             groups.sort()
             for group in groups:
+                group_done[group] = False
                 if len(groupfilt) > 0:
                     if group not in groupfilt:
                         continue
-                if verbose:
-                    print '  GROUP', group + ':'
                 names = self.items[owner][group].keys()
                 names.sort()
                 for name in names:
+                    if namefilt:
+                        if namefilt != name:
+                            continue
                     suite = owner + ':' + group + ':' + name
-                    self.print_reg( suite, verbose )
+                    if verbose:
+                        if not owner_done[owner]:
+                            print 'OWNER', owner + ':'
+                            owner_done[owner] = True
+                        if not group_done[group]:
+                            print '  GROUP', group + ':'
+                            group_done[group] = True
+                    self.print_reg( suite, verbose=verbose )
 
 class localdb( regdb ):
     """
@@ -282,9 +364,10 @@ class localdb( regdb ):
         else:
             return group + ':' + name
 
-    def print_all( self, ownerfilt=[], groupfilt=[], verbose=False ):
+    def print_multi( self, ownerfilt=[], groupfilt=[], namefilt=None, verbose=False ):
         # for local use, don't need to print the owner name
         owners = self.items.keys()
+        group_done = {}
         if len(owners) == 0:
             # nothing registered
             return
@@ -299,16 +382,22 @@ class localdb( regdb ):
         groups = self.items[owner].keys()
         groups.sort()
         for group in groups:
+            group_done[group] = False
             if len(groupfilt) > 0:
                 if group not in groupfilt:
                     continue
-            if verbose:
-                print 'GROUP', group + ':'
             names = self.items[owner][group].keys()
             names.sort()
             for name in names:
+                if namefilt:
+                    if namefilt != name:
+                        continue
                 suite = owner + ':' + group + ':' + name
-                self.print_reg( suite, verbose )
+                if verbose:
+                    if not group_done[group]:
+                        print '  GROUP', group + ':'
+                        group_done[group] = True
+                self.print_reg( suite, verbose=verbose )
 
 class centraldb( regdb ):
     """
@@ -343,7 +432,7 @@ class centraldb( regdb ):
 if __name__ == '__main__':
     # unit test
     reg = localdb( os.path.join( os.environ['CYLC_DIR'], 'REGISTRATIONS'))
-    reg.unregister_all( silent=True )
+    reg.unregister_multi()
     try:
         reg.register( 'foo', 'suites/userguide',      'the quick'    ) # new
         reg.register( 'ONE:bar', 'suites/userguide',  'brown fox'    ) # new
@@ -357,4 +446,4 @@ if __name__ == '__main__':
 
     reg2 = localdb( os.path.join( os.environ['CYLC_DIR'], 'REGISTRATIONS'))
     reg2.load_from_file()
-    reg2.print_all()
+    reg2.print_multi()

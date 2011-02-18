@@ -64,6 +64,7 @@ def get_port( name, owner, host, passphrase=None ):
     # - Ignore ports at which no suite is found.
     # - Print denied connections (secure passphrase required).
     # - Print non-cylc pyro servers found
+    # registration group required even for default group
     found = False
     for port in range( pyro_base_port, pyro_base_port + pyro_port_range ):
         try:
@@ -71,11 +72,13 @@ def get_port( name, owner, host, passphrase=None ):
         except Pyro.errors.ConnectionDeniedError:
             print "Connection Denied at " + portid( host, port )
         except Pyro.errors.ProtocolError:
-            pass
             #print "No Suite Found at " + portid( host, port )
+            pass
         except Pyro.errors.NamingError:
             print "Non-cylc pyro server found at " + portid( host, port )
         else:
+            #print one, two
+            #print name, owner
             if one == name and two == owner:
                 print suiteid( name, owner, host, port )
                 return port

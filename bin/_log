@@ -6,7 +6,8 @@ from optparse import OptionParser
 from shutil import copy
 import tempfile
 import subprocess
-
+from registration import unqualify, RegistrationError
+ 
 parser = OptionParser( """cylc log [options] SUITE 
 Print, or view in $EDITOR, local suite log files, with optional
 filtering. This command is a convenience: you don't need to
@@ -42,14 +43,10 @@ parser.add_option( "-e", "--edit",
 if len(args) != 1:
     parser.error( "wrong number of arguments" )
 
-suite = args[0]
-# hand default registration group
-# (in this case, if supplied, strip it off).
-m = re.match( '^(\w+):(\w+)$', suite )
-if m:
-    group, name = m.groups()
-    if group == 'default':
-        suite = name
+try:
+    suite = unqualify(args[0])
+except RegistrationError, x:
+    raise SystemExit(x)
 
 filename = os.path.join( config( suite )['top level logging directory'], suite, 'log' )
  

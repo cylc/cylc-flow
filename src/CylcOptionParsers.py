@@ -8,6 +8,7 @@ import os
 import re
 import socket
 from optparse import OptionParser
+from registration import unqualify
 
 #class NoPromptOptionParser( OptionParser ):
 class NoPromptOptionParser_u( OptionParser ):
@@ -54,7 +55,6 @@ Arguments:
                 action="store_true", default=False, dest="debug" )
     
     def parse_args( self ):
-
         (options, args) = OptionParser.parse_args( self )
 
         if len( args ) == 0:
@@ -63,7 +63,10 @@ Arguments:
             self.error( "Too many arguments" )
 
         # suite name
-        self.suite_name = args[0]
+        try:
+            self.suite_name = unqualify(args[0])
+        except RegistrationError,x:
+            raise SystemExit(x)
 
         # user name 
         self.owner = options.owner  # see default above!
@@ -75,17 +78,8 @@ Arguments:
 
         return ( options, args )
 
-
     def get_suite_name( self ):
-        # handle default registration group
-        suite = self.suite_name
-        if re.match( '^(\w+):(\w+)', suite ):
-            # group:name
-            pass
-        elif re.match( '^(\w+)', suite ): 
-            # default group
-            suite = 'default:' + suite
-        return suite
+       return self.suite_name
 
     def get_host( self ):
         # TO DO: GET RID OF THIS METHOD
@@ -116,7 +110,6 @@ arguments:
             for arg in extra_args:
                 usage += '\n   ' + arg
                 self.n_args += 1
-
 
         OptionParser.__init__( self, usage )
 
@@ -153,14 +146,16 @@ arguments:
             self.error( "Too many arguments" )
 
         # suite name
-        self.suite_name = args[0]
+        try:
+            self.suite_name = unqualify(args[0])
+        except RegistrationError,x:
+            raise SystemExit(x)
 
         self.host = options.host   # see default above!
 
         self.practice = options.practice  # practice mode or not
 
         return ( options, args )
-
 
     def get_suite_name( self ):
         return self.suite_name

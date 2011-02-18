@@ -6,7 +6,7 @@ from optparse import OptionParser
 from OrderedDict import OrderedDict
 from config import config
 from mkdir_p import mkdir_p
-from registration import localdb, RegistrationError
+from registration import localdb, unqualify, RegistrationError
 from execute import execute
 from job_submit import job_submit
 import cycle_time, pimp_my_logger
@@ -15,9 +15,16 @@ from lockserver import lockserver
 
 usage = """cylc submit [options] SUITE TASK_ID
 
-Run a single task outside of its suite, exactly as it would be run from
-within the suite. This can be used as an easy way to run single tasks
+Submit a single task to run exactly as it would be run from within its 
+parent suite. This can be used as an easy way to run single tasks
 for any reason, but it is particularly useful during suite development.
+
+If the parent suite is running at the same time and it has acquired an
+exclusive suite lock (which means you cannot running multiple instances
+of the suite at once under different registrations) then the lockserver
+will let you 'submit' a task from the suite only under the same
+registration, and only if the exact same task (NAME%CYCLE_TIME) is not
+running at the same time in the suite. 
 
 arguments:
    SUITE           Registered name of the target suite.
@@ -50,7 +57,11 @@ if len( args ) != 2:
     parser.error( "suite name and task ID required." )
 
 # get input args------------------------------------------------------
-name = args[0]
+try:
+    suite = unqualify(args[0])
+except RegistrationError, x:
+    raise SystemExit(x)
+
 task_id = args[1]
 
 host = socket.getfqdn()
@@ -58,7 +69,7 @@ host = socket.getfqdn()
 # find location of the suite definition directory --------------------
 reg = localdb()
 try:
-    suite_dir,descr = reg.get( name )
+    suite_dir,descr = reg.get( suite )
 except RegistrationError,x:
     raise SystemExit(x)
 
@@ -76,10 +87,10 @@ if not cycle_time.is_valid( ctime ):
 owner = os.environ['USER']
 
 # load suite config item --------------------------------------------
-config = config( name )
+config = config( suite )
 config.create_directories()
 # modify logging dir for single task submit so as not to alter suite logs
-logging_dir = os.path.join( config['top level logging directory'], name + '-submit' ) 
+logging_dir = os.path.join( config['top level logging directory'], suite + '-submit' ) 
 mkdir_p( logging_dir )
 
 use_lockserver = False
@@ -87,9 +98,11 @@ if config[ 'use lockserver' ]:
     use_lockserver = True
     lockserver_port = lockserver( owner, host ).ping()
 
-    # request suite access from the lock server
-    # submit does not need to call release_suite_access()
-    if not suite_lock( name, suite_dir, owner, host, lockserver_port, 'submit' ).request_suite_access():
+    # Request suite access from the lock server. If the task's parent
+    # suite has an exclusive lock, we can use submit only via the
+    # same suite registration. submit does not need to call
+    # release_suite_access()
+    if not suite_lock( suite, suite_dir, owner, host, lockserver_port, 'submit' ).request_suite_access():
         raise SystemExit( 'ERROR: failed to acquire a suite lock' )
 
 # CYLC EXECUTION ENVIRONMENT
@@ -102,7 +115,7 @@ cylcenv[ 'CYLC_SUITE_HOST' ] = host
 cylcenv[ 'CYLC_SUITE_PORT' ] = 'NONE'
 cylcenv[ 'CYLC_DIR' ] = os.environ[ 'CYLC_DIR' ]
 cylcenv[ 'CYLC_SUITE_DIR' ] = suite_dir
-cylcenv[ 'CYLC_SUITE_NAME' ] = name
+cylcenv[ 'CYLC_SUITE_NAME' ] = suite
 cylcenv[ 'CYLC_SUITE_OWNER' ] = owner
 cylcenv[ 'CYLC_USE_LOCKSERVER' ] = str( use_lockserver )
 

@@ -2,24 +2,20 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import localdb, centraldb, RegistrationError
+from registration import localdb, centraldb, unqualify, RegistrationError
 
 parser = OptionParser( usage = """cylc export [options] [arguments]
 
-Export registered suites to the central job database, making them
-available to others.
+Export suites to the central suite database for use by others.
 
-WARNING: THIS IS A NEW FEATURE, DOCUMENTATION INCOMPLETE.
+    $ cylc exp NAME        # suite NAME from 'default' group
+    $ cylc exp GROUP:NAME  # suite GROUP:NAME
+    $ cylc exp GROUP:      # (NOTE COLON) all suites in GROUP
 
-Arguments:
-    SUITE      GROUP:NAME - export suite NAME from group GROUP
-               NAME - export suite NAME from group 'default'
-    GROUP      Export all suites in registration group GROUP
-""" )
-
-parser.add_option( "-g", "--group",
-        help="export a whole GROUP.",
-        action="store_true", default=False, dest="group" )
+See also:
+    cylc centraldb - view and unregister central suite registrations
+    cylc import    - import suites from the central suite database
+    cylc register  - manage your local suite registrations""" )
 
 ( options, args ) = parser.parse_args()
 
@@ -29,14 +25,31 @@ if len(args) != 1:
 local = localdb()
 central = centraldb() 
 
-if options.group:
-    group = args[0]
-    suites = local.get_list( categoryfilt=[group] )
-    if len( suites ) == 0:
-        raise SystemExit( "ERROR, No such group: " + group )
+suite = args[0]
+groupfilt = []
+ownerfilt = []
+namefilt = None
+
+m = re.match( '^(\w+):$', suite )
+if m:
+    # 'group:'
+    group = m.groups()[0]
+    groupfilt.append( group )
 else:
-    groups = []
-    suites = [ (args[0], 'junk', 'junk') ]
+    filter = unqualify(suite)
+    m = re.match( '^(\w+):(\w+)$', filter )
+    if m:
+        group, name = m.groups()
+        groupfilt.append( group )
+        namefilt = name
+    elif re.match( '^(\w+)$', filter ):
+        namefilt = filter
+    else:
+        raise SystemExit( 'Illegal registration filter: ' + filter )
+
+suites = local.get_list( groupfilt=groupfilt, namefilt=namefilt )
+if len( suites ) == 0:
+    raise SystemExit( "ERROR, No matching suites to export" )
 
 for suite, dir, descr in suites:
     # retrieve local registration

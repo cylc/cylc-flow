@@ -1,6 +1,11 @@
 _______
 GENERAL
 
+* locking code could be simplified or cleaned up a bit now that
+  the lockserver is user-specific?
+
+* click on a task and tell suite to pause upon completion thereof.
+
 * Document: if a suite is restarted on a new port the gui still
   reconnects.
 

@@ -2,100 +2,77 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import localdb, RegistrationError
+from registration import localdb, unqualify, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc register [options] [ARGS]
+# NOTE:ABSPATH (see below)
+#   rdir = os.path.abspath( rdir )
+# On GPFS os.path.abspath() returns the full path with fileset
+# prefix which can make filenames (for files stored under the 
+# cylc suite directory) too long for hardwired limits in the
+# UM, which then core dumps. Manual use of $PWD to absolutize a relative
+# path, on GPFS, results in a shorter string ... so I use this for now.
 
-Create and manage cylc suite registrations, which associate a suite name
-with a suite definition directory (stored in $HOME/.cylc/registrations).
-Cylc commands target a particular suite using its registered name.
+parser = OptionParser( usage = """cylc register [options] [arguments]
 
-1/ Create a new registration:
-     $ cylc register SUITE PATH
-     $ cylc register PATH SUITE
+Manage cylc suite registrations, which associate a suite name with a
+suite definition directory (stored in $HOME/.cylc/registrations). Cylc
+commands target a particular suite using its registered name.
 
-2/ Print, retrieve or delete an existing registration:
-     $ cylc register '[--print] [--get] [--delete] SUITE
-
-3/ List all of your registrations:
-     $ cylc register --list
-
-4/ Delete all registrations, or just those that are no longer valid:
-     $ cylc register [--wipe] [--clean]
-
-5/ Delete a whole registration group:
-     $ cylc register --delete-group GROUP 
-
-A suite's name is available to its tasks as $CYLC_SUITE_NAME. If all
-suite I/O directories include the suite name, then multiple instances of
-the same suite (not just copies of it) can run at the same time under
-different names. The cylc lockserver will allow this if you set:
-  SUITE.RC: allow multiple simultaneous suite instances = True
-
+Deleting a registration does not delete the suite definition directory!
 If you accidentally delete the registration of a running suite, just
-register it again under the same name. 
+reregister it under the same name to regain access to the suite. 
 
-Real and dummy mode instances of a suite can be run simultaneously
-under different names (but see 'cylc restart --practice-mode' which
-automates this without requiring a new registration).
+1/ Create a new suite registration (two arguments)
+     $ cylc reg SUITE PATH
+   where SUITE is GROUP:NAME or NAME (in the 'default' group)
+   and PATH is a cylc suite definition location.
 
-Arguments:
-  PATH            Path to a cylc suite definition directory.
-  SUITE           Suite GROUP:NAME or NAME.
-  GROUP           Registration group""" )
+2/ Print registered suites (a single argument):
+     $ cylc reg [all]        # 'all' is optional
+     $ cylc reg GROUP:       # a whole group (NOTE COLON!)
+     $ cylc reg GROUP:NAME   # one suite in GROUP
+     $ cylc reg NAME         # one suite, 'default' group
 
-parser.add_option( "-g", "--get",
-        help="Get the suite definition directory for SUITE.",
-        action="store_true", default=False, dest="get" )
+3/ Unregister suites:
+     $ cylc reg -d,--del all      # 'all' NOT optional
+     $ cylc reg -d,--del GROUP:       # as 2/ above
+     $ cylc reg -d,--del GROUP:NAME   # ditto
+     $ cylc reg -d,--del NAME         # ditto
 
-parser.add_option( "-p", "--print",
-        help="Print the registration of SUITE.",
-        action="store_true", default=False, dest="prnt" )
+4/ Clean up any invalid registrations (missing directory or suite.rc)
+     $ cylc reg -c,--clean""" )
 
-parser.add_option( "-l", "--list",
-        help="List all of your suite registrations.",
-        action="store_true", default=False, dest="listall" )
-
-parser.add_option( "-d", "--delete",
-        help="Delete the registration with name SUITE.",
-        action="store_true", default=False, dest="delete" )
-
-parser.add_option( "--delete-group",
-        help="Delete an entire registration group.",
-        action="store_true", default=False, dest="deletegroup" )
+parser.add_option( "-d", "--del",
+        help="Delete registrations.",
+        action="store_true", default=False, dest="unregister" )
 
 parser.add_option( "-c", "--clean",
         help="Delete any registrations that are not valid.",
         action="store_true", default=False, dest="clean" )
 
-parser.add_option( "-w", "--wipe",
-        help="Delete all of your suite registrations.",
-        action="store_true", default=False, dest="wipe" )
-
 parser.add_option( "-v", "--verbose",
-        help="Verbose registration listings.",
+        help="Turn on verbose output.",
         action="store_true", default=False, dest="verbose" )
 
 ( options, args ) = parser.parse_args()
 
-new_reg = False
-prt_reg = False
-get_reg = False
-del_reg = False
-del_grp = False
-lst_reg = False
-chk_reg = False
-wpe_reg = False
+reg = localdb()
+
+if len(args) == 0 and not options.clean and not options.unregister:
+    # print all
+    args.append( 'all' )
 
 if len(args) == 2:
-    # + cylc SUITE PATH
-    new_reg = True
+    # NEW REGISTRATION
+
+    # + cylc register SUITE PATH
     suite = args[0]
     rdir = args[1]
     if not os.path.isdir( rdir ):
         print "Second argument is not a valid directory: " + rdir
         print "Trying reversed arguments..."
+        # + cylc register PATH SUITE 
         suite = args[1]
         rdir = args[0]
     if not os.path.isdir( rdir ):
@@ -111,57 +88,10 @@ if len(args) == 2:
     # tab completion, and getting the args the wrong way around.
     suite = suite.rstrip( '/' )
 
-    # make registered path absolute
-    # rdir = os.path.abspath( rdir )
-       # On GPFS os.path.abspath() returns the full path with fileset
-       # prefix which can make filenames (for files stored under the 
-       # cylc suite directory) too long for hardwired limits in the
-       # UKMO executables, which will core dump. Use of $PWD to
-       # absolutize a relative path, on GPFS, results in a shorter
-       # path string ... so we'll do this the crude way for now:
+    # make registered path absolute # see NOTE:ABSPATH above
     if not re.match( '^/', rdir ):
         rdir = os.path.join( os.environ['PWD'], rdir )
 
-elif len(args) == 1:
-    # + cylc register --print SUITE
-    # + cylc register --get SUITE
-    # + cylc register --delete SUITE
-    suite = args[0]
-    if options.prnt:
-        prt_reg = True
-    elif options.get:
-        get_reg = True
-    elif options.delete:
-        del_reg = True
-    elif options.deletegroup:
-        del_grp = True
-        group = suite
-    else:
-        parser.error( "Please specify what to do with '" + suite + "'" )
-
-elif len(args) == 0:
-    # + cylc register --clean
-    # + cylc register --wipe
-    # + cylc register --list
-    if options.clean:
-        chk_reg = True
-    elif options.wipe:
-        wpe_reg = True
-    elif options.listall:
-        lst_reg = True
-    else:
-        parser.print_usage()
-        sys.exit(0)
-else:
-    parser.error( "Wrong number of arguments")
-
-if [ new_reg, prt_reg, get_reg, del_reg, del_grp, lst_reg, chk_reg, wpe_reg ].count( True ) != 1:
-    parser.error( "Choose one option only" )
-
-reg = localdb()
-
-#---------------------------------------
-if new_reg:
     # get suite title from config file
     try:
         config = config( path=rdir )
@@ -171,61 +101,61 @@ if new_reg:
         descr = config['title']
 
     try:
-        reg.register( suite, rdir, descr )
+        reg.register( suite, rdir, descr, verbose=options.verbose )
     except RegistrationError, x:
         raise SystemExit(x)
     reg.dump_to_file()
-    print suite + ' --> ' + rdir + ' [' + descr + ']'
+    reg.print_reg( suite )
     sys.exit(0)
 
-#---------------------------------------
-if prt_reg:
-    try:
-        reg.print_reg( suite )
-    except RegistrationError, x:
-        raise SystemExit(x)
-    sys.exit(0)
+elif len(args) == 1:
+    # + cylc register SUITE                # print
+    # + cylc register --unregister SUITE   # delete
+    suite = args[0]
 
-#---------------------------------------
-if get_reg:
-    try:
-        dir, descr = reg.get( suite )
-    except RegistrationError, x:
-        raise SystemExit(x)
-    print dir
-    sys.exit(0)
+    groupfilt = []
+    ownerfilt = []
+    namefilt = None
 
-#---------------------------------------
-if lst_reg:
-    reg.print_all( verbose=options.verbose )
-    sys.exit(0)
+    if suite != 'all':
+        m = re.match( '^(\w+):$', suite )
+        if m:
+            # 'group:'
+            group = m.groups()[0]
+            groupfilt.append( group )
+        else:
+            filter = unqualify(suite)
+            m = re.match( '^(\w+):(\w+)$', filter )
+            if m:
+                group, name = m.groups()
+                groupfilt.append( group )
+                namefilt = name
+            elif re.match( '^(\w+)$', filter ):
+                namefilt = filter
+            else:
+                raise SystemExit( 'Illegal registration filter: ' + filter )
 
-#----------------------------------------
-if wpe_reg:
-    reg.unregister_all()
-    reg.dump_to_file()
-    sys.exit(0)
+    # NOTE: for simplicity this uses filtering of all registrations even
+    # when actioning a single group or a single name. The registration 
+    # module contains more efficient direct access calls for these
+    # cases, but it's unlikely to matter: a single user will not have a 
+    # massive registration database.
+    if options.unregister:
+        reg.unregister_multi( ownerfilt=ownerfilt, groupfilt=groupfilt, 
+                namefilt=namefilt, verbose=options.verbose )
+        reg.dump_to_file()
 
-#----------------------------------------
-if del_reg:
-    try:
-        reg.unregister(suite)
-    except RegistrationError, x:
-        raise SystemExit(x)
-    reg.dump_to_file()
-    sys.exit(0)
+    else:
+        reg.print_multi( ownerfilt=ownerfilt, groupfilt=groupfilt, 
+                namefilt=namefilt, verbose=options.verbose )
 
- #----------------------------------------
-if del_grp:
-    try:
-        reg.unregister_group(group)
-    except RegistrationError, x:
-        raise SystemExit(x)
-    reg.dump_to_file()
-    sys.exit(0)
- 
-#----------------------------------------
-if chk_reg:
-    reg.clean()
-    reg.dump_to_file()
-    sys.exit(0)
+elif len(args) == 0:
+    if options.clean:
+        reg.clean_all()
+        reg.dump_to_file()
+
+    else:
+        parser.error( "Commandline error")
+        sys.exit(1)
+else:
+    parser.error( "Wrong number of arguments" )

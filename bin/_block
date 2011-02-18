@@ -22,10 +22,6 @@ See also:
 
 (options, args) = parser.parse_args()
 
-if len(args) != 1:
-    parser.usage() 
-    sys.exit(1)
-
 suite = parser.get_suite_name()
 owner = os.environ['USER']
 host = options.host
