@@ -6,10 +6,7 @@ from registration import centraldb, RegistrationError
 
 parser = OptionParser( usage = """cylc centraldb [options] [arguments]
 
-View or delete central suite database registrations, with filtering
-by suite owner and registration group. By default every entry in the
-database will be printed. You must specify the suite owner even for 
-your own suites in the central database.
+View or delete central suite database registrations. 
 
 1/ Print registered suites:
      $ cylc cen [all]              # 'all' is optional
@@ -22,13 +19,13 @@ your own suites in the central database.
      $ cylc cen -d,--del GROUP:       # one group
      $ cylc cen -d,--del GROUP:NAME   # one suite
 
-3/ Housekeeping: delete ANY suites whose definition directory or
-   suite.rc file is missing:
+3/ Housekeeping: delete registrations that refer to a missing suite
+definition directory or have a missing suite.rc file:
      $ cylc cen -c,--clean
 
 See also:
-    cylc export - export suites to the central database
-    cylc import - import suites from the central database
+    cylc export   - export suites to the central database
+    cylc import   - import suites from the central database
     cylc register - manage local suite registrations""" )
 
 parser.add_option( "-d", "--del",
