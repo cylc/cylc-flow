@@ -101,7 +101,7 @@ if len(args) == 2:
         descr = config['title']
 
     try:
-        reg.register( suite, rdir, descr, verbose=options.verbose )
+        reg.register( suite, rdir, descr )
     except RegistrationError, x:
         raise SystemExit(x)
     reg.dump_to_file()
