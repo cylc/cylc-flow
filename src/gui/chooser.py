@@ -10,6 +10,7 @@ from registration import localdb, centraldb, RegistrationError
 from gtkmonitor import monitor
 from color_rotator import rotator
 from warning_dialog import warning_dialog, info_dialog
+from subprocess import call
 
 class chooser_updater(threading.Thread):
     def __init__(self, owner, regd_liststore, db, is_cdb, host, 
@@ -113,6 +114,7 @@ class chooser(object):
         # suite, state, title, colors...
         self.regd_liststore = gtk.ListStore( str, str, str, str, str, str, str, str, )
         regd_treeview.set_model(self.regd_liststore)
+        regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
         self.db_button = gtk.Button( "Switch to Central DB" )
         self.db_button.connect("clicked", self.switchdb, None, None )
@@ -125,14 +127,14 @@ class chooser(object):
 
         regd_ts = regd_treeview.get_selection()
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
-        regd_ts.set_select_function( self.get_selected_suite, self.regd_liststore )
 
         cr = gtk.CellRendererText()
         tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, background=1 )
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'State', cr, text=2, background=3 ) # use background color stored in col 3
+        # use text from col 2, background color stored in col 3:
+        tvc = gtk.TreeViewColumn( 'State', cr, text=2, background=3 )
         regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
@@ -143,8 +145,8 @@ class chooser(object):
         tvc = gtk.TreeViewColumn( 'Definition', cr, text=4, background=7 )
         regd_treeview.append_column( tvc )
 
-        # NOTE THAT WE CANNOT LEAVE ANY VIEWER WINDOWS OPEN WHEN WE
-        # CLOSE THE CHOOSER WINDOW because when launched by the chooser 
+        # NOTE THAT WE CANNOT LEAVE ANY SUITE CONTROL WINDOWS OPEN WHEN
+        # WE CLOSE THE CHOOSER WINDOW: when launched by the chooser 
         # they are all under the same gtk main loop (?) and do not
         # call gtk_main.quit() unless launched as standalone viewers.
         quit_all_button = gtk.Button( "Close All Windows" )
@@ -268,24 +270,94 @@ class chooser(object):
             item.click_exit( None )
         gtk.main_quit()
 
-    def get_selected_suite( self, selection, treemodel ):
-        if self.cdb:
-            return
 
-        iter = treemodel.get_iter( selection )
-
-        name = treemodel.get_value( iter, 0 )
-        suite_dir = treemodel.get_value( iter, 1 )
-        state = treemodel.get_value( iter, 2 ) 
+    def on_suite_select( self, treeview, event ):
+        # the following sets selection to the position at which the
+        # right click was done (otherwise selection lags behind the
+        # right click):
+        x = int( event.x )
+        y = int( event.y )
+        time = event.time
+        pth = treeview.get_path_at_pos(x,y)
+        if pth is None:
+            return False
+        treeview.grab_focus()
+        path, col, cellx, celly = pth
+        treeview.set_cursor( path, col, 0 )
+        selection = treeview.get_selection()
+        model, iter = selection.get_selected()
+        name = model.get_value( iter, 0 )
+        suite_dir = model.get_value( iter, 1 )
+        state = model.get_value( iter, 2 ) 
 
         m = re.match( 'RUNNING \(port (\d+)\)', state )
         port = None
         if m:
             port = m.groups()[0]
 
+        # HERE'S HOW TO DISPLAY MENU ONLY ON RIGHT CLICK
+        # (and show task log viewer otherwise):
+        #if event.button != 3:
+        #    self.show_log( task_id )
+        #    return False
+
+        menu = gtk.Menu()
+
+        menu_root = gtk.MenuItem( name )
+        menu_root.set_submenu( menu )
+
+        # make an insensitive item to display selected suite name
+        # so that we can turn the ugly selection off already
+        title_item = gtk.MenuItem( name )
+        menu.append( title_item )
+        title_item.set_sensitive(False)
+        selection.unselect_iter( iter )
+
+        graph_item = gtk.MenuItem( 'Graph' )
+        menu.append( graph_item )
+        graph_item.connect( 'activate', self.graph_suite, name )
+        if self.cdb:
+            # TO DO: all graphing of cdb suites
+            graph_item.set_sensitive(False)
+
+        con_item = gtk.MenuItem( 'Suite Controller' )
+        menu.append( con_item )
+        con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
+        if self.cdb:
+            con_item.set_sensitive(False)
+
+        menu.show_all()
+        menu.popup( None, None, None, event.button, event.time )
+        # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
+        # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
+        return True
+
+    def graph_suite( self, w, reg ):
+        try:
+            from graphing import xdot
+        except:
+            warning_dialog( "Graphing not available; install pygraphviz and xdot").warn()
+            return False
+
+        # fake a full cycle time
+        hour = '00'
+        stop = '06'
+        raw = False
+        #ctime = '29990101' + hour
+        #window = MyDotWindow( reg, ctime, stop, raw, None )
+        #window.parse_graph()
+        #?window.show_all()
+
+        # TO DO 1/ use no-shell non-blocking launch here:
+        # TO DO 2/ instead of external process make part of chooser app?
+        # Would have to launch in own thread as xdot is interactive?
+        call( 'cylc graph ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
+
+    def launch_controller( self, w, name, port, suite_dir ):
         # get suite logging directory
         logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
 
-        tv = monitor(name, self.owner, self.host, port, suite_dir, logging_dir, self.imagedir, self.readonly )
+        tv = monitor(name, self.owner, self.host, port, suite_dir,
+            logging_dir, self.imagedir, self.readonly )
         self.viewer_list.append( tv )
         return False
