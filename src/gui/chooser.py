@@ -149,7 +149,7 @@ class chooser(object):
         # WE CLOSE THE CHOOSER WINDOW: when launched by the chooser 
         # they are all under the same gtk main loop (?) and do not
         # call gtk_main.quit() unless launched as standalone viewers.
-        quit_all_button = gtk.Button( "Close All Windows" )
+        quit_all_button = gtk.Button( "Quit" )
         quit_all_button.connect("clicked", self.delete_all_event, None, None )
 
         filter_button = gtk.Button( "Filter" )
@@ -320,11 +320,35 @@ class chooser(object):
             # TO DO: all graphing of cdb suites
             graph_item.set_sensitive(False)
 
-        con_item = gtk.MenuItem( 'Suite Controller' )
-        menu.append( con_item )
-        con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
         if self.cdb:
-            con_item.set_sensitive(False)
+            # TO DO:
+            imp_item = gtk.MenuItem( 'Import' )
+            menu.append( imp_item )
+            #imp_item.connect( 'activate', self.import_suite, name )
+            # TEMP:
+            imp_item.set_sensitive(False)
+        else:
+            #if state == 'dormant':
+            #    title = 'Start'
+            #else:
+            #    title = 'Connect'
+            title = 'Control'
+            con_item = gtk.MenuItem( title )
+            menu.append( con_item )
+            con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
+
+            # TO DO:
+            view_item = gtk.MenuItem( 'View' )
+            menu.append( view_item )
+            #view_item.connect( 'activate', self.launch_controller, name, port, suite_dir, readonly=True )
+            view_item.set_sensitive(False)
+
+            # TO DO:
+            exp_item = gtk.MenuItem( 'Export' )
+            menu.append( exp_item )
+            #exp_item.connect( 'activate', self.export_suite, name )
+            # TEMP:
+            exp_item.set_sensitive(False)
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
@@ -336,7 +360,7 @@ class chooser(object):
         try:
             from graphing import xdot
         except:
-            warning_dialog( "Graphing not available; install pygraphviz and xdot").warn()
+            warning_dialog( "Graphing is not available;\nplease install graphviz\nand pygraphviz.").warn()
             return False
 
         # fake a full cycle time
@@ -351,6 +375,7 @@ class chooser(object):
         # TO DO 1/ use no-shell non-blocking launch here:
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
+        # Probably not necessary ... same goes for controller actually?
         call( 'cylc graph ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
 
     def launch_controller( self, w, name, port, suite_dir ):
