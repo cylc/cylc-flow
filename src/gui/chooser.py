@@ -110,6 +110,9 @@ class chooser(object):
         self.regd_liststore = gtk.ListStore( str, str, str, str, str, str, str, str, )
         regd_treeview.set_model(self.regd_liststore)
 
+        self.db_button = gtk.Button( "Switch to Central DB" )
+        self.db_button.connect("clicked", self.switchdb, None, None )
+
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
         # end of __init___() but it doesn't really matter.
@@ -143,9 +146,6 @@ class chooser(object):
         quit_all_button = gtk.Button( "Close All Windows" )
         quit_all_button.connect("clicked", self.delete_all_event, None, None )
 
-        db_button = gtk.Button( "Local/Central DB" )
-        db_button.connect("clicked", self.switchdb, None, None )
-
         filter_button = gtk.Button( "Filter" )
         filter_button.connect("clicked", self.filter_popup, None, None )
 
@@ -155,7 +155,7 @@ class chooser(object):
 
         hbox = gtk.HBox()
         hbox.pack_start( quit_all_button, False )
-        hbox.pack_start( db_button, False )
+        hbox.pack_start( self.db_button, False )
         hbox.pack_start( filter_button, False )
 
         vbox.pack_start( hbox, False )
@@ -168,11 +168,14 @@ class chooser(object):
     def start_updater(self, ownerfilt=[], groupfilt=[], namefilt=None):
         if self.cdb:
             db = centraldb()
+            self.db_button.set_label( "Switch to Local DB" )
         else:
             db = localdb()
+            self.db_button.set_label( "Switch to Central DB" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        self.updater = chooser_updater( self.owner, self.regd_liststore, db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
+        self.updater = chooser_updater( self.owner, self.regd_liststore, 
+                db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
         self.updater.update_liststore()
         self.updater.start()
 
