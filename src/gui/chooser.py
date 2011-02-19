@@ -382,7 +382,12 @@ class chooser(object):
         # get suite logging directory
         logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
 
-        tv = monitor(name, self.owner, self.host, port, suite_dir,
-            logging_dir, self.imagedir, self.readonly )
-        self.viewer_list.append( tv )
-        return False
+        # TO LAUNCH A CONTROL GUI AS PART OF THIS APP:
+        #tv = monitor(name, self.owner, self.host, port, suite_dir,
+        #    logging_dir, self.imagedir, self.readonly )
+        #self.viewer_list.append( tv )
+        #return False
+
+        call( 'gcylc ' + name  + ' &', shell=True )
+
+
