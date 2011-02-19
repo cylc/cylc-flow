@@ -320,6 +320,13 @@ class chooser(object):
             # TO DO: all graphing of cdb suites
             graph_item.set_sensitive(False)
 
+        edit_item = gtk.MenuItem( 'Edit' )
+        menu.append( edit_item )
+        edit_item.connect( 'activate', self.edit_suite, name )
+        if self.cdb:
+            # TO DO: all editing of cdb suites
+            edit_item.set_sensitive(False)
+
         if self.cdb:
             # TO DO:
             imp_item = gtk.MenuItem( 'Import' )
@@ -372,11 +379,16 @@ class chooser(object):
         #window.parse_graph()
         #?window.show_all()
 
-        # TO DO 1/ use no-shell non-blocking launch here:
+        # TO DO 1/ use non-shell non-blocking launch here?
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
         call( 'cylc graph ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
+
+    def edit_suite( self, w, reg ):
+        # TO DO: launch from a controlling thread to monitor editor
+        # exit and allow inline editing etc.
+        call( 'cylc edit ' + reg + ' &', shell=True )
 
     def launch_controller( self, w, name, port, suite_dir ):
         # get suite logging directory
