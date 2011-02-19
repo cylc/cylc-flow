@@ -25,6 +25,7 @@ class chooser_updater(threading.Thread):
         self.running_choices = []
         self.regd_choices = []
         self.line_colors = rotator([ '#ccc', '#aaa' ])
+        self.line_colors_cdb = rotator([ '#cfc', '#ada' ])
         self.state_line_colors = rotator([ '#fcc', '#faa' ])
     
     def run( self ):
@@ -67,13 +68,14 @@ class chooser_updater(threading.Thread):
         choices = self.regd_choices
         for reg in choices:
             col = self.line_colors.get_color()
+            col_cdb = self.line_colors_cdb.get_color()
             grn = '#2f2'
             #red = '#ff1a45'
             red = self.state_line_colors.get_color()
             name, suite_dir, descr = reg
             suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
             if self.is_cdb:
-                self.regd_liststore.append( [name, col, '(cdb)', red, suite_dir, col, descr, col ] )
+                self.regd_liststore.append( [name, col_cdb, '(cdb)', col_cdb, suite_dir, col_cdb, descr, col_cdb ] )
             else:
                 if name in ports:
                     self.regd_liststore.append( [name, grn, 'port ' + str(ports[name]), '#19ae0a', suite_dir, grn, descr, grn ] )
