@@ -8,29 +8,52 @@ parser = OptionParser( usage = """cylc centraldb [options] [arguments]
 
 View or delete central suite database registrations. 
 
-1/ Print registered suites:
-     $ cylc cen [all]              # 'all' is optional
-     $ cylc cen OWNER              # all of OWNER's suites
-     $ cylc cen OWNER:GROUP        # one group of suites
-     $ cylc cen OWNER:GROUP:NAME   # just one suite
+1/ Print registrations:
+     $ cylc cen -p                      # print all
+     $ cylc cen -p [FILTER options]     # print some
 
-2/ Unregister YOUR suites in the central database:
-     $ cylc cen -d,--del all          # 'all'
-     $ cylc cen -d,--del GROUP:       # one group
-     $ cylc cen -d,--del GROUP:NAME   # one suite
+2/ Delete registrations (confirmation required):   
+     $ cylc cen -d                      # delete all
+     $ cylc cen -d [FILTER options]     # delete some
+   (but note that you can only delete your own registrations)
 
-3/ Housekeeping: delete registrations that refer to a missing suite
-definition directory or have a missing suite.rc file:
+3/ Clean up invalid registrations: (missing directory or suite.rc):
      $ cylc cen -c,--clean
+
+FILTERING: 
+  (a) The filter patterns are Regular Expressions, not shell globs, so
+the general wildcard is '.*' (match zero or more of anything), NOT '*'.
+  (b) For our purposes there is an implicit wildcard at the end of each
+pattern ('foo' is the same as 'foo.*'); use the string end marker to
+stop this ('foo$' matches only literal 'foo').
+  (c) Omission of an item filter is taken to mean "match any of item".
+  (d) to single out entries in the default group you have to specify
+  the group name explicitly (-g default).
 
 See also:
     cylc export   - export suites to the central database
     cylc import   - import suites from the central database
     cylc register - manage local suite registrations""" )
 
-parser.add_option( "-d", "--del",
+parser.add_option( "-p", "--print",
         help="Delete registrations.",
-        action="store_true", default=False, dest="unregister" )
+        action="store_true", default=False, dest="rprint" )
+
+parser.add_option( "-d", "--delete",
+        help="Delete registrations.",
+        action="store_true", default=False, dest="delete" )
+
+parser.add_option( "-o", "--owner",
+        help="Owner filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="ownerfilt" )
+
+parser.add_option( "-g", "--group",
+        help="Group filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="groupfilt" )
+
+parser.add_option( "-n", "--name",
+        help="Name filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="namefilt" )
 
 parser.add_option( "-c", "--clean",
         help="Delete any registrations that are not valid.",
@@ -42,52 +65,56 @@ parser.add_option( "-v", "--verbose",
 
 ( options, args ) = parser.parse_args()
 
-if len(args) > 1:
-    parser.error( "Wrong number of arguments" )
+if len(args) != 0:
+    parser.error( "Commandline error")
 
-central = centraldb() 
+if not options.rprint and not options.delete and not options.clean:
+    parser.error( "Commandline error")
+
+reg = centraldb() 
 
 if options.clean:
-    if len(args) != 0:
-        parser.error( "Wrong number of arguments for -c,--clean" )
-    if central.clean_all():
-        central.dump_to_file()
+    if reg.clean_all():
+        reg.dump_to_file()
     sys.exit(0)
 
-if len(args) == 0 and not options.unregister:
-    args.append('all')
+# check for valid regular expressions:
+for filt in options.ownerfilt, options.groupfilt, options.namefilt:
+    if filt:
+        try:
+            re.compile( filt )
+        except:
+            raise SystemExit( 'Bad expression: ' + filt )
 
-if len(args) != 1:
-    parser.error( "Commandline error" )
-
-# print or delete
-groupfilt = []
-ownerfilt = []
-name = None
-filter = args[0]
-if filter != 'all':
-    m = re.match( '^(\w+):(\w+):(\w+)$', filter )
-    if m:
-        owner, group, name = m.groups()
-        ownerfilt.append( owner )
-        groupfilt.append( group )
+if options.delete:
+    user = os.environ['USER']
+    if options.ownerfilt:
+        if options.ownerfilt != user:
+            raise SystemExit( "You cannot delete registrations owned by " + options.ownerfilt )
     else:
-        m = re.match( '^(\w+):(\w+)$', filter )
-        if m:
-            owner, group = m.groups()
-            ownerfilt.append( owner )
-            groupfilt.append( group )
-        elif re.match( '^(\w+)$', filter ):
-            owner = filter
-            ownerfilt.append( owner )
+        print "Setting owner filter to " + user
+        ownerfilt = user
+    if not options.namefilt and not options.groupfilt:
+        response = raw_input( "!! Do you really want to delete ALL of your registrations (y/n)?" )
+        if response != 'y':
+            sys.exit(0)
+    else:
+        print "!! The following registrations will be deleted:"
+        n = reg.print_multi( ownerfilt=ownerfilt,
+                groupfilt=options.groupfilt, namefilt=options.namefilt,
+                verbose=options.verbose )
+        if n == 0:
+            print "(None matched)"
+            sys.exit(0)
         else:
-            raise SystemExit( 'Illegal registration filter: ' + filter )
-
-if options.unregister:
-    if central.unregister_multi( ownerfilt=ownerfilt, groupfilt=groupfilt, 
-            namefilt=name, verbose=options.verbose ):
-        central.dump_to_file()
-else:
-    central.print_multi( ownerfilt=ownerfilt, groupfilt=groupfilt, 
-            namefilt=name, verbose=options.verbose )
-
+            response = raw_input( "!! Continue (y/n)? " )
+            if response != 'y':
+                sys.exit(0)
+    reg.unregister_multi( ownerfilt=options.ownerfilt,
+            groupfilt=options.groupfilt, namefilt=options.namefilt,
+            verbose=options.verbose )
+    reg.dump_to_file()
+elif options.rprint:
+    reg.print_multi( ownerfilt=options.ownerfilt,
+            groupfilt=options.groupfilt, namefilt=options.namefilt,
+            verbose=options.verbose )

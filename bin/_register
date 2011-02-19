@@ -15,37 +15,63 @@ from config import config, SuiteConfigError
 
 parser = OptionParser( usage = """cylc register [options] [arguments]
 
-Manage cylc suite registrations, which associate a suite name with a
+Create and cylc suite registrations, which associate a suite name with a
 suite definition directory (stored in $HOME/.cylc/registrations). Cylc
 commands target a particular suite using its registered name.
 
-Deleting a registration does not delete the suite definition directory!
-If you accidentally delete the registration of a running suite, just
-reregister it under the same name to regain access to the suite. 
+NOTE: deleting a suite registration does not delete the suite itself!
 
-1/ Create a new suite registration (two arguments)
+1/ Create a new suite registration:
      $ cylc reg SUITE PATH
-   where SUITE is GROUP:NAME or NAME (in the 'default' group)
-   and PATH is a cylc suite definition location.
 
-2/ Print registered suites (a single argument):
-     $ cylc reg [all]        # 'all' is optional
-     $ cylc reg GROUP:       # a whole group (NOTE COLON!)
-     $ cylc reg GROUP:NAME   # one suite in GROUP
-     $ cylc reg NAME         # one suite, 'default' group
+Arguments:
+     SUITE  -  GROUP:NAME or NAME (in the 'default' group)
+     PATH   -  A cylc suite definition directory location.
 
-3/ Unregister suites:
-     $ cylc reg -d,--del all      # 'all' NOT optional
-     $ cylc reg -d,--del GROUP:       # as 2/ above
-     $ cylc reg -d,--del GROUP:NAME   # ditto
-     $ cylc reg -d,--del NAME         # ditto
+2/ Print registrations:
+     $ cylc reg -p                      # print all
+     $ cylc reg -p [FILTER options]     # print some
 
-4/ Clean up any invalid registrations (missing directory or suite.rc)
-     $ cylc reg -c,--clean""" )
+3/ Delete registrations (confirmation required):   
+     $ cylc reg -d                      # delete all
+     $ cylc reg -d [FILTER options]     # delete some
 
-parser.add_option( "-d", "--del",
+4/ Clean up invalid registrations: (missing directory or suite.rc):
+     $ cylc reg -c,--clean
+     
+FILTERING: 
+  (a) The filter patterns are Regular Expressions, not shell globs, so
+the general wildcard is '.*' (match zero or more of anything), NOT '*'.
+  (b) For our purposes there is an implicit wildcard at the end of each
+pattern ('foo' is the same as 'foo.*'); use the string end marker to
+stop this ('foo$' matches only literal 'foo').
+  (c) Omission of an item filter is taken to mean "match any of item".
+  (d) to single out entries in the default group you have to specify
+  the group name explicitly (-g default).
+
+If you accidentally delete the registration of a running suite, just
+reregister it under the same name to regain access to the suite.
+
+See also:
+    cylc centraldb - view and delete central suite registrations
+    cylc export    - export suites to the central suite database
+    cylc import    - import suites from the central suite database""" )
+
+parser.add_option( "-p", "--print",
         help="Delete registrations.",
-        action="store_true", default=False, dest="unregister" )
+        action="store_true", default=False, dest="rprint" )
+
+parser.add_option( "-d", "--delete",
+        help="Delete registrations.",
+        action="store_true", default=False, dest="delete" )
+
+parser.add_option( "-g", "--group",
+        help="Group filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="groupfilt" )
+
+parser.add_option( "-n", "--name",
+        help="Name filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="namefilt" )
 
 parser.add_option( "-c", "--clean",
         help="Delete any registrations that are not valid.",
@@ -58,10 +84,6 @@ parser.add_option( "-v", "--verbose",
 ( options, args ) = parser.parse_args()
 
 reg = localdb()
-
-if len(args) == 0 and not options.clean and not options.unregister:
-    # print all
-    args.append( 'all' )
 
 if len(args) == 2:
     # NEW REGISTRATION
@@ -98,7 +120,6 @@ if len(args) == 2:
         raise SystemExit(x)
     else:
         descr = config['title']
-
     try:
         reg.register( suite, rdir, descr )
     except RegistrationError, x:
@@ -107,54 +128,47 @@ if len(args) == 2:
     reg.print_reg( suite )
     sys.exit(0)
 
-elif len(args) == 1:
-    # + cylc register SUITE                # print
-    # + cylc register --unregister SUITE   # delete
-    suite = args[0]
+if len(args) != 0:
+    parser.error( "Commandline error")
 
-    groupfilt = []
-    ownerfilt = []
-    namefilt = None
+if not options.rprint and not options.delete and not options.clean:
+    parser.error( "Commandline error")
 
-    if suite != 'all':
-        m = re.match( '^(\w+):$', suite )
-        if m:
-            # 'group:'
-            group = m.groups()[0]
-            groupfilt.append( group )
+if options.clean:
+    if reg.clean_all():
+        reg.dump_to_file()
+    sys.exit(0)
+
+# check for valid regular expressions:
+for filt in options.groupfilt, options.namefilt:
+    if filt:
+        try:
+            re.compile( filt )
+        except:
+            raise SystemExit( 'Bad expression: ' + filt )
+
+if options.delete:
+    if not options.namefilt and not options.groupfilt:
+        response = raw_input( "!! Do you really want to delete ALL of your registrations (y/n)?" )
+        if response != 'y':
+            sys.exit(0)
+    else:
+        print "!! The following registrations will be deleted:"
+        n = reg.print_multi( ownerfilt=None,
+                groupfilt=options.groupfilt, namefilt=options.namefilt,
+                verbose=options.verbose )
+        if n == 0:
+            print "(None matched)"
+            sys.exit(0)
         else:
-            filter = unqualify(suite)
-            m = re.match( '^(\w+):(\w+)$', filter )
-            if m:
-                group, name = m.groups()
-                groupfilt.append( group )
-                namefilt = name
-            elif re.match( '^(\w+)$', filter ):
-                namefilt = filter
-            else:
-                raise SystemExit( 'Illegal registration filter: ' + filter )
-
-    # NOTE: for simplicity this uses filtering of all registrations even
-    # when actioning a single group or a single name. The registration 
-    # module contains more efficient direct access calls for these
-    # cases, but it's unlikely to matter: a single user will not have a 
-    # massive registration database.
-    if options.unregister:
-        reg.unregister_multi( ownerfilt=ownerfilt, groupfilt=groupfilt, 
-                namefilt=namefilt, verbose=options.verbose )
-        reg.dump_to_file()
-
-    else:
-        reg.print_multi( ownerfilt=ownerfilt, groupfilt=groupfilt, 
-                namefilt=namefilt, verbose=options.verbose )
-
-elif len(args) == 0:
-    if options.clean:
-        reg.clean_all()
-        reg.dump_to_file()
-
-    else:
-        parser.error( "Commandline error")
-        sys.exit(1)
-else:
-    parser.error( "Wrong number of arguments" )
+            response = raw_input( "!! Continue (y/n)? " )
+            if response != 'y':
+                sys.exit(0)
+    reg.unregister_multi( ownerfilt=None,
+            groupfilt=options.groupfilt, namefilt=options.namefilt,
+            verbose=options.verbose )
+    reg.dump_to_file()
+elif options.rprint:
+    reg.print_multi( ownerfilt=None,
+            groupfilt=options.groupfilt, namefilt=options.namefilt,
+            verbose=options.verbose )

@@ -186,11 +186,12 @@ class regdb(object):
             raise groupNotFoundError( group, owner ) 
 
     def unregister_all( self, verbose=False ):
-        my_suites = self.get_list( ownerfilt=[self.user] )
+        my_suites = self.get_list( ownerfilt=self.user )
         for suite, dir, descr in my_suites:
             self.unregister( suite, verbose=verbose )
 
-    def unregister_multi( self, ownerfilt=[], groupfilt=[], namefilt=None, verbose=False, invalid=False ):
+    def unregister_multi( self, ownerfilt=None, groupfilt=None,
+            namefilt=None, verbose=False, invalid=False ):
         changed = False
         owners = self.items.keys()
         owners.sort()
@@ -198,21 +199,21 @@ class regdb(object):
         group_done = {}
         for owner in owners:
             owner_done[owner] = False
-            if len(ownerfilt) > 0:
-                if owner not in ownerfilt:
+            if ownerfilt:
+                if not re.match( ownerfilt, owner):
                     continue
             groups = self.items[owner].keys()
             groups.sort()
             for group in groups:
                 group_done[group] = False
-                if len(groupfilt) > 0:
-                    if group not in groupfilt:
+                if groupfilt:
+                    if not re.match( groupfilt, group):
                         continue
                 names = self.items[owner][group].keys()
                 names.sort()
                 for name in names:
                     if namefilt:
-                        if namefilt != name:
+                        if not re.match( namefilt, name):
                             continue
                     if verbose:
                         if not owner_done[owner]:
@@ -244,7 +245,7 @@ class regdb(object):
         else:
             return ( dir, descr )
 
-    def get_list( self, ownerfilt=[], groupfilt=[], namefilt=None ):
+    def get_list( self, ownerfilt=None, groupfilt=None, namefilt=None ):
         # return filtered list of tuples:
         # [( suite, dir, descr ), ...]
         regs = []
@@ -254,20 +255,20 @@ class regdb(object):
         #print groupfilt
         #print namefilt
         for owner in owners:
-            if len(ownerfilt) > 0:
-                if owner not in ownerfilt:
+            if ownerfilt:
+                if not re.match( ownerfilt, owner ):
                     continue
             groups = self.items[owner].keys()
             groups.sort()
             for group in groups:
-                if len(groupfilt) > 0:
-                    if group not in groupfilt:
+                if groupfilt:
+                    if not re.match( groupfilt, group ):
                         continue
                 names = self.items[owner][group].keys()
                 names.sort()
                 for name in names:
                     if namefilt:
-                        if name != namefilt:
+                        if not re.match( namefilt, name ):
                             continue
                     dir,descr = self.items[owner][group][name]
                     regs.append( (self.suiteid(owner,group,name), dir, descr) )
@@ -298,28 +299,29 @@ class regdb(object):
         else:
             print prefix, '     NAME ' + name + '    |' + descr + '|    ' + dir 
 
-    def print_multi( self, ownerfilt=[], groupfilt=[], namefilt=None, verbose=False ):
+    def print_multi( self, ownerfilt=None, groupfilt=None, namefilt=None, verbose=False ):
         owners = self.items.keys()
         owners.sort()
         owner_done = {}
         group_done = {}
+        count = 0
         for owner in owners:
             owner_done[owner] = False
-            if len(ownerfilt) > 0:
-                if owner not in ownerfilt:
+            if ownerfilt:
+                if not re.match( ownerfilt, owner):
                     continue
             groups = self.items[owner].keys()
             groups.sort()
             for group in groups:
                 group_done[group] = False
-                if len(groupfilt) > 0:
-                    if group not in groupfilt:
+                if groupfilt:
+                    if not re.match( groupfilt, group):
                         continue
                 names = self.items[owner][group].keys()
                 names.sort()
                 for name in names:
                     if namefilt:
-                        if namefilt != name:
+                        if not re.match( namefilt, name):
                             continue
                     suite = owner + ':' + group + ':' + name
                     if verbose:
@@ -330,6 +332,8 @@ class regdb(object):
                             print '  GROUP', group + ':'
                             group_done[group] = True
                     self.print_reg( suite, verbose=verbose )
+                    count += 1
+        return count
 
 class localdb( regdb ):
     """
@@ -368,10 +372,11 @@ class localdb( regdb ):
         else:
             return group + ':' + name
 
-    def print_multi( self, ownerfilt=[], groupfilt=[], namefilt=None, verbose=False ):
+    def print_multi( self, ownerfilt=None, groupfilt=None, namefilt=None, verbose=False ):
         # for local use, don't need to print the owner name
         owners = self.items.keys()
         group_done = {}
+        count = 0
         if len(owners) == 0:
             # nothing registered
             return
@@ -387,14 +392,14 @@ class localdb( regdb ):
         groups.sort()
         for group in groups:
             group_done[group] = False
-            if len(groupfilt) > 0:
-                if group not in groupfilt:
+            if groupfilt:
+                if not re.match( groupfilt, group ):
                     continue
             names = self.items[owner][group].keys()
             names.sort()
             for name in names:
                 if namefilt:
-                    if namefilt != name:
+                    if not re.match( namefilt, name):
                         continue
                 suite = owner + ':' + group + ':' + name
                 if verbose:
@@ -402,6 +407,8 @@ class localdb( regdb ):
                         print '  GROUP', group + ':'
                         group_done[group] = True
                 self.print_reg( suite, verbose=verbose )
+                count += 1
+        return count
 
 class centraldb( regdb ):
     """

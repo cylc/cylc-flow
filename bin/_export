@@ -4,50 +4,40 @@ import os, re, sys
 from optparse import OptionParser
 from registration import localdb, centraldb, unqualify, RegistrationError
 
-parser = OptionParser( usage = """cylc export [options] [arguments]
+parser = OptionParser( usage = """cylc export [FILTER options]
 
-Export suites to the central suite database for use by others.
-
-    $ cylc exp NAME        # suite NAME from 'default' group
-    $ cylc exp GROUP:NAME  # suite GROUP:NAME
-    $ cylc exp GROUP:      # (NOTE COLON) all suites in GROUP
+Export your registered suites to the central suite database.
 
 See also:
-    cylc centraldb - view and unregister central suite registrations
+    cylc centraldb - view and delete central suite registrations
     cylc import    - import suites from the central suite database
     cylc register  - manage your local suite registrations""" )
 
+parser.add_option( "-g", "--group",
+        help="Group filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="groupfilt" )
+
+parser.add_option( "-n", "--name",
+        help="Name filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="namefilt" )
+
 ( options, args ) = parser.parse_args()
 
-if len(args) != 1:
-    parser.error('Wrong number of arguments')
+if len(args) != 0:
+    parser.error('Commandline error')
 
 local = localdb()
 central = centraldb() 
 
-suite = args[0]
-groupfilt = []
-ownerfilt = []
-namefilt = None
+# check for valid regular expressions:
+for filt in options.groupfilt, options.namefilt:
+    if filt:
+        try:
+            re.compile( filt )
+        except:
+            raise SystemExit( 'Bad expression: ' + filt )
 
-m = re.match( '^(\w+):$', suite )
-if m:
-    # 'group:'
-    group = m.groups()[0]
-    groupfilt.append( group )
-else:
-    filter = unqualify(suite)
-    m = re.match( '^(\w+):(\w+)$', filter )
-    if m:
-        group, name = m.groups()
-        groupfilt.append( group )
-        namefilt = name
-    elif re.match( '^(\w+)$', filter ):
-        namefilt = filter
-    else:
-        raise SystemExit( 'Illegal registration filter: ' + filter )
-
-suites = local.get_list( groupfilt=groupfilt, namefilt=namefilt )
+suites = local.get_list( groupfilt=options.groupfilt, namefilt=options.namefilt )
 if len( suites ) == 0:
     raise SystemExit( "ERROR, No matching suites to export" )
 

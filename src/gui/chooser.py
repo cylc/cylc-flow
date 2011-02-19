@@ -9,9 +9,11 @@ from port_scan import scan_my_suites
 from registration import localdb, centraldb, RegistrationError
 from gtkmonitor import monitor
 from color_rotator import rotator
+from warning_dialog import warning_dialog, info_dialog
 
 class chooser_updater(threading.Thread):
-    def __init__(self, owner, regd_liststore, db, is_cdb, host, ownerfilt=[], groupfilt=[], namefilt=None ):
+    def __init__(self, owner, regd_liststore, db, is_cdb, host, 
+            ownerfilt=None, groupfilt=None, namefilt=None ):
         self.ownerfilt = ownerfilt
         self.groupfilt = groupfilt
         self.namefilt = namefilt
@@ -167,7 +169,7 @@ class chooser(object):
 
         self.viewer_list = []
 
-    def start_updater(self, ownerfilt=[], groupfilt=[], namefilt=None):
+    def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
             db = centraldb()
             self.db_button.set_label( "Switch to Local DB" )
@@ -182,9 +184,16 @@ class chooser(object):
         self.updater.start()
 
     def filter(self, w, owner_e, group_e, name_e ):
-        ownerfilt = [ owner_e.get_text() ]
-        groupfilt = [ group_e.get_text() ]
+        ownerfilt = owner_e.get_text()
+        groupfilt = group_e.get_text()
         namefilt = name_e.get_text()
+        for filt in ownerfilt, groupfilt, namefilt:
+            try:
+                re.compile( filt )
+            except:
+                warning_dialog( "Bad Expression: " + filt ).warn()
+                self.filter_reset( w, owner_e, group_e, name_e )
+                return
         self.start_updater( ownerfilt, groupfilt, namefilt )
 
     def filter_reset(self, w, owner_e, group_e, name_e ):
@@ -197,7 +206,7 @@ class chooser(object):
     def filter_popup(self, w, e, data=None):
         self.filter_window = gtk.Window()
         self.filter_window.set_border_width(5)
-        self.filter_window.set_title( "Filter Suite Registration Database" )
+        self.filter_window.set_title( "DB Filter" )
 
         vbox = gtk.VBox()
 
