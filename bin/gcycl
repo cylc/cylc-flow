@@ -1,0 +1,5 @@
+#!/bin/bash
+
+# catch a common commandline typo: gcylc -> gcycl
+
+gcylc $@

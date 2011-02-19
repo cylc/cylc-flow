@@ -28,7 +28,7 @@ class tailer(threading.Thread):
 
         if not os.path.exists( self.logfile ):
             #gobject.idle_add( self.warn, "File not found: " + self.logfile )
-            print "File not found: " + self.logfile
+            #print "File not found: " + self.logfile
             ###print "Disconnecting from log viewer thread"
             return
 

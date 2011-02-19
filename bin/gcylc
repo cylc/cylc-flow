@@ -1,0 +1,81 @@
+#!/usr/bin/env python
+
+import os, sys
+import port_scan
+import gtk
+from passphrase import passphrase
+from optparse import OptionParser
+from chooser import chooser
+from config import config
+from registration import localdb, RegistrationError
+from gtkmonitor import standalone_monitor
+
+import socket
+
+parser = OptionParser( """gcylc [SUITE]
+
+This is the cylc graphical user interface.
+See also 'cylc', the commandline interface.
+
+If the SUITE argument is supplied you will get a direct control app for
+the specified suite, bypassing the suite registration database chooser.
+
+WARNING: start important suites with:
+    $ export PYTHONUNBUFFERED=true  # (*)
+    $ nohup gcylc [options] [SUITE] &
+The 'nohup' command detaches from the parent shell so that the suite
+won't be killed when you log out. (*) when using nohup, python stdout
+buffering prevents cylc stdout from appearing in nohup.out until the
+suite exits.
+
+[SUITE]                  Registered name of a suite to run.""")
+
+#parser.add_option( "--host",
+#        help="cylc suite host (defaults to localhost).",
+#        metavar="HOST", action="store", default=socket.getfqdn(),
+#        dest="host" )
+
+( options, args ) = parser.parse_args()
+
+if len(args) != 0 and len(args) != 1:
+    parser.error( "Wrong number of arguments" )
+
+imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
+
+#host = options.host
+host = socket.getfqdn()
+owner = os.environ["USER"]
+
+if len( args ) == 0:
+    app = chooser( host, imagedir )
+    gtk.main()
+    sys.exit(0)
+
+suite = args[0]
+
+# get suite definition directory
+reg = localdb()
+try:
+    suite_dir, descr = reg.get( suite )
+except RegistrationError, x:
+    raise SystemExit( x )
+
+# get suite logging directory
+logging_dir = os.path.join( config( suite )['top level logging directory'], suite )
+
+# get secure passphrase
+try:
+    passphrase = passphrase( suite ).get()
+except:
+    passphrase = None
+
+# scan for suite port
+try:
+    port = port_scan.get_port( suite, owner, host, passphrase )
+except:
+    port = None
+    print >> sys.stderr, "Suite " + suite + " is not running"
+
+app = standalone_monitor( suite, owner, host, port, suite_dir, logging_dir, imagedir )
+gtk.main()
+

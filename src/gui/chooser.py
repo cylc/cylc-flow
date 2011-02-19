@@ -116,7 +116,7 @@ class chooser(object):
         regd_treeview.set_model(self.regd_liststore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
-        self.db_button = gtk.Button( "Switch to Central DB" )
+        self.db_button = gtk.Button( "Central DB" )
         self.db_button.connect("clicked", self.switchdb, None, None )
 
         # Start updating the liststore now, as we need values in it
@@ -149,7 +149,7 @@ class chooser(object):
         # WE CLOSE THE CHOOSER WINDOW: when launched by the chooser 
         # they are all under the same gtk main loop (?) and do not
         # call gtk_main.quit() unless launched as standalone viewers.
-        quit_all_button = gtk.Button( "Quit" )
+        quit_all_button = gtk.Button( " Quit " )
         quit_all_button.connect("clicked", self.delete_all_event, None, None )
 
         filter_button = gtk.Button( "Filter" )
@@ -174,10 +174,10 @@ class chooser(object):
     def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
             db = centraldb()
-            self.db_button.set_label( "Switch to Local DB" )
+            self.db_button.set_label( "Local DB" )
         else:
             db = localdb()
-            self.db_button.set_label( "Switch to Central DB" )
+            self.db_button.set_label( "Central DB" )
         if self.updater:
             self.updater.quit = True # does this take effect?
         self.updater = chooser_updater( self.owner, self.regd_liststore, 

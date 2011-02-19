@@ -79,6 +79,7 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 topics = \
      [
      'core',
+     'gui',
      'registration',
      'editing',
      'discovery',
@@ -95,6 +96,7 @@ topics = \
      ]
 
 alerting_commands = []
+gui_commands = []
 
 locking_commands = \
     [
@@ -138,7 +140,6 @@ editing_commands = \
 
 starting_commands = \
     [
-    'control',
     'coldstart', 
     'warmstart', 
     'rawstart', 
@@ -148,7 +149,6 @@ starting_commands = \
 
 stopping_commands = \
     [
-    'control',
     'stop',
     ]
 
@@ -156,22 +156,18 @@ discovery_commands = \
     [
     'scan',
     'ping',
-    'control',
     ]
 
 monitoring_commands = \
     [
-    'control',
-    'view',
     'tmon',
     'dump',
-    # 'ping',
-    # 'scan',
+    'ping',
+    'scan',
     ]
 
 intervention_commands = \
     [
-    'control',
     'trigger',
     'insert',
     'remove',
@@ -185,14 +181,12 @@ intervention_commands = \
 
 interrogation_commands = \
     [
-    'control',
     'ping',
     'scan',
     'list',
     'dump',
     'show',
     'log',
-    'view',
     'tmon',
     'verbosity',
     ]
@@ -220,6 +214,7 @@ USAGE: cylc COMMAND help,--help
 
 # topic summaries
 topsum = OrderedDict()
+topsum['gui'          ] = "the cylc graphical user interface."
 topsum['core'         ] = "everything but utilities and the task interface."
 topsum['registration' ] = "local and central suite registration."
 topsum['editing'      ] = "tools to help with building and editing suites."
@@ -236,6 +231,8 @@ topsum['task'         ] = "task wrapping and the messaging interface."
 topsum['utilities'    ] = "extra programs intended for use in suites."
 
 usage = """This is the cylc metascheduler commandline interface.
+See also gcylc, the graphical user interface.
+
 Release version: """ + cylc_version + """
 """ + general_usage + """
 
@@ -271,6 +268,12 @@ private file permissions, or cylc will refuse to run the suite. If your
 suite contains tasks that run on a remote host or under another
 username, those accounts must also hold the passphrase. The passphrase
 is never sent across the network; a secure md5 checksum is exchanged."""
+
+topic_help[ 'gui' ] = """
+The cylc Graphical User Interface is 'gcylc'. It starts an app from
+which you can manage suite registrations and choose which suites to
+edit, graph, or run, etc., or direct suite control apps for particular
+suites.  For help, see the GUI 'help' menu items and buttons."""
 
 topic_help[ 'alerting' ] = """
 Cylc can call a designated alert script on any of the following events:
@@ -316,7 +319,6 @@ comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
 comsum[ 'grep'      ] = 'An intelligent search tool for cylc suites'
 comsum[ 'inline'    ] = 'View suite.rc files in $EDITOR, include-files inlined'
-comsum[ 'control'   ] = 'The cylc suite control and monitoring GUI'
 comsum[ 'coldstart' ] = 'Cold start a suite at a given cycle time'
 comsum[ 'warmstart' ] = 'Warm start a suite at a given cycle time'
 comsum[ 'rawstart'  ] = 'Raw start a suite at a given cycle time'
@@ -331,7 +333,6 @@ comsum[ 'resume'    ] = 'Resume submitting tasks in a paused suite'
 comsum[ 'reset'     ] = 'Force a task to waiting, ready, or finished state'
 comsum[ 'block'     ] = 'Do not comply with subsequent intervention commands'
 comsum[ 'unblock'   ] = 'Comply with subsequent intervention commands'
-comsum[ 'view'      ] = 'Suite monitoring GUI (control functions disabled)'
 comsum[ 'dump'      ] = 'Print the state of each task in a running suite'
 comsum[ 'show'      ] = 'Print task-specific information (prerequisites...)'
 comsum[ 'list'      ] = 'Print a suite\'s configured task list'
