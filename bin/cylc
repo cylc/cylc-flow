@@ -422,7 +422,7 @@ if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
             print 'Did you mean COMMAND?...\n'
             # construct command to execute
             command = '_' + command 
-            commandlist = [ command ]
+            commandlist = [ command, '--help' ]
             execute( commandlist )
             sys.exit(0)
     else:
