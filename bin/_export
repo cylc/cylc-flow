@@ -37,10 +37,17 @@ for filt in options.groupfilt, options.namefilt:
         except:
             raise SystemExit( 'Bad expression: ' + filt )
 
+local.load_from_file()
 suites = local.get_list( groupfilt=options.groupfilt, namefilt=options.namefilt )
 if len( suites ) == 0:
     raise SystemExit( "ERROR, No matching suites to export" )
 
+try:
+    central.lock()
+except RegistrationError, x:
+    raise SystemExit(x)
+central.load_from_file()
+ 
 for suite, dir, descr in suites:
     # retrieve local registration
     try:
@@ -49,9 +56,13 @@ for suite, dir, descr in suites:
         raise SystemExit(x)
 
     # export to central
+
     try:
         central.register( suite, dir, descr )
     except RegistrationError, x:
         raise SystemExit(x)
 
 central.dump_to_file()
+central.unlock()
+
+

@@ -71,11 +71,16 @@ if len(args) != 0:
 if not options.rprint and not options.delete and not options.clean:
     parser.error( "Commandline error")
 
-reg = centraldb() 
-
 if options.clean:
+    reg = centraldb() 
+    try:
+        reg.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    reg.load_from_file()
     if reg.clean_all():
         reg.dump_to_file()
+    reg.unlock()
     sys.exit(0)
 
 # check for valid regular expressions:
@@ -94,27 +99,23 @@ if options.delete:
     else:
         print "Setting owner filter to " + user
         ownerfilt = user
-    if not options.namefilt and not options.groupfilt:
-        response = raw_input( "!! Do you really want to delete ALL of your registrations (y/n)?" )
-        if response != 'y':
-            sys.exit(0)
-    else:
-        print "!! The following registrations will be deleted:"
-        n = reg.print_multi( ownerfilt=ownerfilt,
-                groupfilt=options.groupfilt, namefilt=options.namefilt,
-                verbose=options.verbose )
-        if n == 0:
-            print "(None matched)"
-            sys.exit(0)
-        else:
-            response = raw_input( "!! Continue (y/n)? " )
-            if response != 'y':
-                sys.exit(0)
+
+    reg = centraldb()
+    try:
+        reg.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    reg.load_from_file()
+ 
     reg.unregister_multi( ownerfilt=options.ownerfilt,
             groupfilt=options.groupfilt, namefilt=options.namefilt,
             verbose=options.verbose )
     reg.dump_to_file()
+    reg.unlock()
+
 elif options.rprint:
+    reg = centraldb()
+    reg.load_from_file()
     reg.print_multi( ownerfilt=options.ownerfilt,
             groupfilt=options.groupfilt, namefilt=options.namefilt,
             verbose=options.verbose )

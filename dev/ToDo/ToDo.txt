@@ -1,6 +1,10 @@
 _______
 GENERAL
 
+* suite db locking: document, and provide info via command response, 
+  what to do in the unlikely event that a lock is in place when a
+  transaction is attempted.
+
 * locking code could be simplified or cleaned up a bit now that
   the lockserver is user-specific?
 

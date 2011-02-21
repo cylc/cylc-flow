@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 import pickle
+import datetime
 import os, sys, re
+# from time import sleep # use to testing locking
 
 # local and central suite registration
 
@@ -32,6 +34,9 @@ class groupNotFoundError( RegistrationError ):
             self.msg += ' (' + owner + ')'
 
 class RegistrationNotValidError( RegistrationError ):
+    pass
+
+class DatabaseLockedError( RegistrationError ):
     pass
 
 def qualify( suite, withowner=False ):
@@ -110,13 +115,48 @@ class regdb(object):
     A simple suite registration database.
     Derived classes must provide:
      1/ __init__:
-       + the database file path
-       + and initial call to load_from_file().
+       + the database self.dir and self.file (full path)
+       + call base class init
     And:
      2/ suiteid():
        + to munge the fully qualified suite name (owner:group:name)
     """
+    def __init__( self ):
+        self.items = {}  # items[owner][group][name] = (dir,description)
+        # create initial database directory if necessary
+        if not os.path.exists( self.dir ):
+            try:
+                os.makedirs( self.dir )
+            except Exception,x:
+                print "ERROR: failed to create directory:", self.dir
+                print x
+                sys.exit(1)
+        self.user = os.environ['USER']
+        self.mtime_at_load = None
+        self.lockfile = os.path.join( self.dir, 'lock' )
+
+    def lock( self ):
+        if os.path.exists( self.lockfile ):
+            print self.lockfile
+            raise DatabaseLockedError, 'Database is currently locked'
+        lockfile = open( self.lockfile, 'wb' )
+        lockfile.write( self.user + '\n' )
+        lockfile.write( str(datetime.datetime.now()))
+        lockfile.close()
+
+    def unlock( self ):
+        os.unlink( self.lockfile )
+
+    def changed_on_disk( self ):
+        # use to detect ONE change in database since we read it,
+        # while we have read-only access.
+        if os.stat( self.file ).st_mtime != self.mtime_at_load:
+            return True
+        else:
+            return False
+        
     def load_from_file( self ):
+        self.mtime_at_load = os.stat(self.file).st_mtime
         if not os.path.exists( self.file ):
             # this implies no suites have been registered
             return
@@ -130,6 +170,7 @@ class regdb(object):
         output.close()
 
     def register( self, suite, dir, description='(no description supplied)' ):
+        # sleep(20)
         owner, group, name = regsplit( suite ).get()
         if owner != self.user:
             raise RegistrationError, 'You cannot register as another user'
@@ -153,10 +194,10 @@ class regdb(object):
         if group not in self.items[owner]:
             self.items[owner][group] = {}
         self.items[owner][group][name] = (dir, description)
-
-        self.print_reg( suite, prefix='REGISTERING' )
+        self.print_reg( suite, prefix='REGISTERED' )
 
     def unregister( self, suite, verbose=False ):
+        # LOCKING HANDLED BY CALLERS
         owner, group, name = regsplit(suite).get()
         if owner != self.user:
             #raise RegistrationError, 'You cannot unregister as another user'
@@ -343,27 +384,15 @@ class localdb( regdb ):
     single-user use, owner and default group are stripped off.
     """
     def __init__( self, file=None ):
-        self.user = os.environ['USER']
         if file:
             # use for testing
             self.file = file
-            dir = os.path.dirname( file )
+            self.dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            dir = os.path.join( os.environ['HOME'], '.cylc' )
-            self.file = os.path.join( dir, 'registrations' )
-
-        # create initial database directory if necessary
-        if not os.path.exists( dir ):
-            try:
-                os.makedirs( dir )
-            except Exception,x:
-                print "ERROR: failed to create directory:", dir
-                print x
-                sys.exit(1)
-
-        self.items = {}  # items[owner][group][name] = (dir,description)
-        self.load_from_file()
+            self.dir = os.path.join( os.environ['HOME'], '.cylc', 'LocalReg' )
+            self.file = os.path.join( self.dir, 'db' )
+        regdb.__init__(self)
 
     def suiteid( self, owner, group, name ):
         # for local use, the user does not need the suite owner prefix
@@ -415,27 +444,15 @@ class centraldb( regdb ):
     Central registration database for sharing suites between users.
     """
     def __init__( self, file=None ):
-        self.user = os.environ['USER']
         if file:
             # use for testing
             self.file = file
-            dir = os.path.dirname( file )
+            self.dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            dir = os.path.join( os.environ['CYLC_DIR'], 'cdb' )
-            self.file = os.path.join( dir, 'registrations' )
-
-        # create initial database directory if necessary
-        if not os.path.exists( dir ):
-            try:
-                os.makedirs( dir )
-            except Exception,x:
-                print "ERROR: failed to create directory:", dir
-                print x
-                sys.exit(1)
-
-        self.items = {}  # items[owner][group][name] = (dir,description)
-        self.load_from_file()
+            self.dir = os.path.join( os.environ['CYLC_DIR'], 'CentralReg' )
+            self.file = os.path.join( self.dir, 'db' )
+        regdb.__init__(self)
 
     def suiteid( self, owner, group, name ):
         return owner + ':' + group + ':' + name

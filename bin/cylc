@@ -304,9 +304,15 @@ organized into groups, for example:
 Suite names without a group prefix are implicitly in the 'default' group.
 
 Registered suites can also be exported to, or imported from, the central
-suite database, to enable easy sharing of suites between users. The
-central database is currently local to the cylc host machine; it may be
-extended to server suites across a network in the future."""
+suite database, to enable easy sharing of suites between users.
+
+Access to the central database is currently local to the cylc host
+machine; the database is read anew each time it is accessed, and any
+transactions that change it acquire a database lock that prevents any
+other non-readonly access for the very short time between data load and
+unload. In the future we may use database server akin to the cylc
+lockserver that can serve suites across the network and will not require
+locking."""
 
 # command summaries
 comsum = OrderedDict()

@@ -96,6 +96,7 @@ if len(args) == 2:
 
 local = localdb()
 central = centraldb() 
+central.load_from_file()
 
 # retrieve central registrations
 try:
@@ -138,6 +139,12 @@ for item in centralsuites:
 
     suite = group + ':' + name
     # register locally
+    try:
+        local.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    local.load_from_file()
+ 
     try:
         local.register( suite, newdir, cdescr )
     except RegistrationError, x:

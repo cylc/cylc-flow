@@ -26,10 +26,13 @@ class chooser_updater(threading.Thread):
         self.regd_liststore = regd_liststore
         super(chooser_updater, self).__init__()
         self.running_choices = []
-        self.regd_choices = []
         self.line_colors = rotator([ '#ccc', '#aaa' ])
         self.line_colors_cdb = rotator([ '#cfc', '#ada' ])
         self.state_line_colors = rotator([ '#fcc', '#faa' ])
+
+        self.db.load_from_file()
+        self.regd_choices = []
+        self.regd_choices = self.db.get_list( self.ownerfilt, self.groupfilt, self.namefilt ) 
     
     def run( self ):
         while not self.quit:
@@ -49,6 +52,9 @@ class chooser_updater(threading.Thread):
             return False
 
     def regd_choices_changed( self ):
+        if not self.db.changed_on_disk():
+            return False
+        self.db.load_from_file()
         regs = self.db.get_list( self.ownerfilt, self.groupfilt, self.namefilt ) 
         if regs != self.regd_choices:
             self.regd_choices = regs
@@ -102,9 +108,8 @@ class chooser(object):
             self.window.set_title("cylc view (READONLY)" )
         else:
             self.window.set_title("cylc control" )
-        self.window.modify_bg( gtk.STATE_NORMAL, gtk.gdk.color_parse( "#ddd" ))
         self.window.set_size_request(600, 200)
-        #self.window.set_size_request(400, 100)
+        self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
 
         sw = gtk.ScrolledWindow()
@@ -353,15 +358,35 @@ class chooser(object):
             # TO DO:
             exp_item = gtk.MenuItem( 'Export' )
             menu.append( exp_item )
-            #exp_item.connect( 'activate', self.export_suite, name )
-            # TEMP:
-            exp_item.set_sensitive(False)
+            exp_item.connect( 'activate', self.export_suite, name )
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
         # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
+
+    def export_suite( self, w, reg ):
+        local = localdb()
+        local.load_from_file()
+        try:
+            dir,descr = local.get( reg )
+        except RegistrationError, x:
+            warning_dialog( x ).warn()
+            return False
+        central = centraldb() 
+        try:
+            central.lock()
+        except RegistrationError, x:
+            raise SystemExit(x)
+        central.load_from_file()
+        try:
+            central.register( reg, dir, descr )
+        except RegistrationError, x:
+            warning_dialog( x ).warn()
+            return False
+        central.unlock()
+        central.dump_to_file()
 
     def graph_suite( self, w, reg ):
         try:
