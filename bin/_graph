@@ -13,9 +13,7 @@ try:
 except:
     raise SystemExit( "Graphing is not available; please install graphviz and pygraphviz.")
 
-
-if __name__ == '__main__':
-    parser = OptionParser( """1/ cylc graph [options] SUITE START [STOP]
+parser = OptionParser( """1/ cylc graph [options] SUITE START [STOP]
      Plot the configured (suite.rc) dependency graph for SUITE.
        2/ cylc graph [options] -r,--runtime SUITE
      Plot the run-time dependency graph for SUITE, if one has been generated.
@@ -34,101 +32,105 @@ Arguments:
   START   - Hour (HH) at which to start plotting.
   STOP    - Hours beyond START at which to stop plotting (default 6).
   """)
-    parser.add_option( "-w", "--warmstart", 
-        help="Plot the raw start graph instead of cold start.",
-        action="store_true", default=False, dest="rawstart" )
+parser.add_option( "-w", "--warmstart", 
+    help="Plot the raw start graph instead of cold start.",
+    action="store_true", default=False, dest="rawstart" )
 
-    parser.add_option( "-f", "--file", 
-        help="View a specific dot-language graphfile.",
-        metavar="FILE", action="store", default=None, dest="filename" )
+parser.add_option( "-f", "--file", 
+    help="View a specific dot-language graphfile.",
+    metavar="FILE", action="store", default=None, dest="filename" )
 
-    parser.add_option( "-r", "--runtime", 
-        help="Plot the suite run-time graph, if one has been generated "
-        "($CYLC_SUITE_DIR/graphing/runtime.dot).",
-        action="store_true", default=False, dest="view_runtime" )
+parser.add_option( "-r", "--runtime", 
+    help="Plot the suite run-time graph, if one has been generated "
+    "($CYLC_SUITE_DIR/graphing/runtime.dot).",
+    action="store_true", default=False, dest="view_runtime" )
 
-    parser.add_option( "-o", "--output", 
-        help="Write an image file with format determined by file extension. "
-        "The image will be rewritten automatically, for the configured "
-        "(suite.rc) graph as you edit the suite. Available formats may "
-        "include png, svg, jpg, gif, ps, ..., depending on your graphviz "
-        "build; to see what's available specify a non-existent format "
-        "and read the resulting error message.",
-        metavar="FILE", action="store", default=None, dest="outputfile" )
+parser.add_option( "-c", "--centraldb", 
+    help="Access the central suite database, rather than the local.",
+    action="store_true", default=False, dest="central" )
 
-    ( options, args ) = parser.parse_args()
+parser.add_option( "-o", "--output", 
+    help="Write an image file with format determined by file extension. "
+    "The image will be rewritten automatically, for the configured "
+    "(suite.rc) graph as you edit the suite. Available formats may "
+    "include png, svg, jpg, gif, ps, ..., depending on your graphviz "
+    "build; to see what's available specify a non-existent format "
+    "and read the resulting error message.",
+    metavar="FILE", action="store", default=None, dest="outputfile" )
 
-    view_file = False
-    if options.view_runtime:
-        if len(args) != 1:
-            parser.error( 'run-time graphing requires one argument (SUITE)' )
-            sys.exit(1)
-        view_file = True
+( options, args ) = parser.parse_args()
 
-        suite = args[0]
-        try:
-            suiterc = config.config( suite )
-        except config.SuiteConfigError, x:
-            print x
-            sys.exit(1)
-        file = os.path.join( suiterc['visualization']['run time graph directory'],
-                              suiterc['visualization']['run time graph filename'] )
-    if options.filename:
-        if len(args) != 0:
-            parser.error( 'file graphing arguments: \'-f FILE\' or \'--file=FILE\'' )
-            sys.exit(1)
-        view_file = True
-        file = options.filename
+view_file = False
+if options.view_runtime:
+    if len(args) != 1:
+        parser.error( 'run-time graphing requires one argument (SUITE)' )
+        sys.exit(1)
+    view_file = True
 
-    if view_file:
-        window = xdot.DotWindow()
-        try:
-            window.update( file )
-        except OSError, x:
-            print x
-            sys.exit(1)
-        window.connect( 'destroy', gtk.main_quit)
-        # checking for file changed not necessary for the run time graph:
-        # gobject.timeout_add(1000, window.update, file)
-        gtk.main()
+    suite = args[0]
+    try:
+        suiterc = config.config( suite )
+    except config.SuiteConfigError, x:
+        print x
+        sys.exit(1)
+    file = os.path.join( suiterc['visualization']['run time graph directory'],
+                          suiterc['visualization']['run time graph filename'] )
+if options.filename:
+    if len(args) != 0:
+        parser.error( 'file graphing arguments: \'-f FILE\' or \'--file=FILE\'' )
+        sys.exit(1)
+    view_file = True
+    file = options.filename
 
-    else:
-        # parse and plot the suite.rc dependency graph
-        if len(args) < 2 or len(args) > 3:
-            parser.error( "suite.rc graphing requires args SUITE START [STOP]" )
+if view_file:
+    window = xdot.DotWindow()
+    try:
+        window.update( file )
+    except OSError, x:
+        print x
+        sys.exit(1)
+    window.connect( 'destroy', gtk.main_quit)
+    # checking for file changed not necessary for the run time graph:
+    # gobject.timeout_add(1000, window.update, file)
+    gtk.main()
+    sys.exit(0)
 
-        suite = args[0]
+# parse and plot the suite.rc dependency graph
+if len(args) < 2 or len(args) > 3:
+    parser.error( "suite.rc graphing requires args SUITE START [STOP]" )
 
-        hour = args[1]
-        if len(args) == 3:
-            stop = args[2]
-        else:
-            stop = 6
+suite = args[0]
 
-        try:
-            int(hour)
-        except ValueError:
-            parser.error( "Illegal START hour (HH): " + hour )
+hour = args[1]
+if len(args) == 3:
+    stop = args[2]
+else:
+    stop = 6
 
-        try:
-            int(stop)
-        except ValueError:
-            parser.error( "Illegal STOP hours: " + stop )
+try:
+    int(hour)
+except ValueError:
+    parser.error( "Illegal START hour (HH): " + hour )
 
-        raw = False
-        if options.rawstart:
-            raw = True
+try:
+    int(stop)
+except ValueError:
+    parser.error( "Illegal STOP hours: " + stop )
 
-        # pad hour if necessary:
-        if len( hour ) == 1:
-            hour = '0' + hour
-        elif len( hour ) > 2:
-            parser.error( "Illegal START hour (HH): " + hour )
+raw = False
+if options.rawstart:
+    raw = True
 
-        # fake a full cycle time
-        ctime = '29990101' + hour
-        window = MyDotWindow( suite, ctime, stop, raw, options.outputfile )
-        window.parse_graph()
-        window.connect( 'destroy', gtk.main_quit)
-        gobject.timeout_add(1000, window.update)
-        gtk.main()
+# pad hour if necessary:
+if len( hour ) == 1:
+    hour = '0' + hour
+elif len( hour ) > 2:
+    parser.error( "Illegal START hour (HH): " + hour )
+
+# fake a full cycle time
+ctime = '29990101' + hour
+window = MyDotWindow( suite, ctime, stop, raw, options.outputfile, options.central )
+window.parse_graph()
+window.connect( 'destroy', gtk.main_quit)
+gobject.timeout_add(1000, window.update)
+gtk.main()

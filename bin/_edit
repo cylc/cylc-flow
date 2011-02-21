@@ -7,7 +7,7 @@ from shutil import copy
 import subprocess
 from optparse import OptionParser
 from collections import deque
-from registration import localdb, RegistrationError
+from registration import localdb, centraldb, RegistrationError
 
 included = []
 modtimes = {}
@@ -109,9 +109,9 @@ def backup(src):
     copy( src, bkp )
     backups[ src ] = bkp
 
-parser = OptionParser( """1/ cylc edit SUITE 
-       2/ cylc edit -c,--cleanup SUITE
-       3/ cylc edit -i,--inline SUITE
+parser = OptionParser( """1/ cylc edit [-c] SUITE 
+       2/ cylc edit [-c] --cleanup SUITE
+       3/ cylc edit [-c] -i,--inline SUITE
 
 1/ Change to the suite definition directory and execute '$EDITOR suite.rc'.
 This is merely a convenience so that you can edit the suite without
@@ -158,7 +158,11 @@ parser.add_option( "--inline", "-i",
         help="Edit with include-files inlined as described above.",
         action="store_true", default=False, dest="inline" )
 
-parser.add_option( "--cleanup", "-c", 
+parser.add_option( "-c","--centraldb",
+        help="Edit a suite from the central database.",
+        action="store_true", default=False, dest="central" )
+
+parser.add_option( "--cleanup",
         help="Remove backup files left by previous inlined edit sessions.",
         action="store_true", default=False, dest="cleanup" )
 
@@ -176,7 +180,12 @@ except KeyError:
 
 # find location of the suite definition directory
 global suitedir
-reg = localdb()
+if options.central:
+    reg = centraldb()
+else:
+    reg = localdb()
+reg.load_from_file()
+
 try:
     suitedir, descr = reg.get( suite )
 except RegistrationError,x:

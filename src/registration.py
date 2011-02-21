@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import pickle
-import datetime
+import datetime, time
 import os, sys, re
 # from time import sleep # use to testing locking
 
@@ -156,9 +156,11 @@ class regdb(object):
             return False
         
     def load_from_file( self ):
-        self.mtime_at_load = os.stat(self.file).st_mtime
-        if not os.path.exists( self.file ):
-            # this implies no suites have been registered
+        try:
+            self.mtime_at_load = os.stat(self.file).st_mtime
+        except OSError:
+            # no file: no suites registered  yet
+            self.mtime_at_load = time.time()
             return
         input = open( self.file, 'rb' )
         self.items = pickle.load( input )
