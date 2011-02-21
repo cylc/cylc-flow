@@ -123,6 +123,7 @@ class chooser(object):
 
         self.db_button = gtk.Button( "Central DB" )
         self.db_button.connect("clicked", self.switchdb, None, None )
+        self.main_label = gtk.Label( "Local Suite Registration Database" )
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
@@ -161,6 +162,10 @@ class chooser(object):
         filter_button.connect("clicked", self.filter_popup, None, None )
 
         vbox = gtk.VBox()
+        hbox = gtk.HBox()
+        hbox.pack_start( self.main_label )
+        vbox.pack_start( hbox, False )
+
         sw.add( regd_treeview )
         vbox.pack_start( sw, True )
 
@@ -180,9 +185,11 @@ class chooser(object):
         if self.cdb:
             db = centraldb()
             self.db_button.set_label( "Local DB" )
+            self.main_label.set_text( "Central Suite Registration Database" )
         else:
             db = localdb()
             self.db_button.set_label( "Central DB" )
+            self.main_label.set_text( "Local Suite Registration Database" )
         if self.updater:
             self.updater.quit = True # does this take effect?
         self.updater = chooser_updater( self.owner, self.regd_liststore, 
