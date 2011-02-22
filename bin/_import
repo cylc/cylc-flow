@@ -13,15 +13,13 @@ from registration import localdb, centraldb, regsplit, RegistrationError
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
-parser = OptionParser( usage = """cylc import [options] [arguments]
+parser = OptionParser( usage = """cylc import [FILTER options] [DEST]
 
-Import suites from the central suite database: copy their suite definition
-directories and register them locally.
+Import suites from the central suite database to your local suite 
+registration database, and optionally copy their suite definitions.
 
-    $ cylc imp [options] OWNER:GROUP:NAME  [DEST] # a single suite
-    $ cylc imp [options] OWNER:GROUP       [DEST] # a group of suites
-
-Where DEST is a local destination directory; imported suites will be
+Arguments:
+    DEST  -  local destination directory; imported suites will be
 copied to sub-directories of DEST which must not exist yet. If DEST is
 not specified the remote location will be registered as the suite
 definition directory. This is allowed because some suites, such as the
@@ -37,6 +35,18 @@ See also:
     cylc export    - export suites to the central suite database
     cylc register  - manage your local suite registrations""" )
 
+parser.add_option( "-o", "--owner",
+        help="Owner filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="ownerfilt" )
+
+parser.add_option( "-g", "--group",
+        help="Group filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="groupfilt" )
+
+parser.add_option( "-n", "--name",
+        help="Name filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="namefilt" )
+
 parser.add_option( "-a", "--as", metavar='SUITE',
         help="import a single suite as local GROUP:NAME or NAME "
         "(in the 'default' group)",
@@ -49,44 +59,33 @@ parser.add_option( "-t", "--to", metavar='GROUP',
 
 ( options, args ) = parser.parse_args()
 
-if len(args) == 0 or len(args) > 2:
+if len(args) > 1:
     parser.error('Wrong number of arguments')
 
 if options.import_as and options.import_to:
     parser.error( 'Choose ONE of --as, --to' )
 
-filter = args[0]
-groupfilt = []
-ownerfilt = []
-namefilt = None
+# check for valid regular expressions:
+for filt in options.ownerfilt, options.groupfilt, options.namefilt:
+    if filt:
+        try:
+            re.compile( filt )
+        except:
+            raise SystemExit( 'Bad expression: ' + filt )
+
+#import pdb
+#pdb.set_trace()
 
 importsingle = False
 importgroup = False
 
-m = re.match( '^(\w+):(\w+):(\w+)$', filter )
-if m:
-    owner, group, name = m.groups()
-    ownerfilt.append( owner )
-    groupfilt.append( group )
-    namefilt = name
-    importsingle = True
-else:
-    m = re.match( '^(\w+):(\w+)$', filter )
-    if m:
-        owner, group = m.groups()
-        ownerfilt.append(owner)
-        groupfilt.append(group)
-        importgroup = True
-    else:
-        raise SystemExit( 'Illegal central registration filter: ' + filter )
-
-if options.import_as and not namefilt:
+if options.import_as and not options.namefilt:
     parser.error( '-a,--as can only be used when importing a single suite' )
     suite = options.import_as
 
 gotdest = False
-if len(args) == 2:
-    dest = args[1]
+if len(args) == 1:
+    dest = args[0]
     gotdest = True
     # make registered path absolute # see NOTE:ABSPATH above
     if not re.match( '^/', dest ):
@@ -100,7 +99,8 @@ central.load_from_file()
 
 # retrieve central registrations
 try:
-    centralsuites = central.get_list( ownerfilt, groupfilt, namefilt )
+    centralsuites = central.get_list( ownerfilt=options.ownerfilt,
+            groupfilt=options.groupfilt, namefilt=options.namefilt )
 except RegistrationError, x:
     raise SystemExit(x)
 
@@ -108,8 +108,7 @@ if options.import_as and len(centralsuites) != 1:
     # should not happen!
     raise SystemExit( 'ERROR: got more than one suite for a single suite match' )
 
-for item in centralsuites:
-    csuite, cdir, cdescr = item
+for csuite, cdir, cdescr in centralsuites:
     cowner, cgroup, cname = regsplit( csuite ).get()
     if options.import_as:
         m = re.match( '^(\w+):(\w+)$', options.import_as )
@@ -150,6 +149,7 @@ for item in centralsuites:
     except RegistrationError, x:
         raise SystemExit(x)
     local.dump_to_file()
+    local.unlock()
 
     if gotdest:
         # do this only if registration succeeds
