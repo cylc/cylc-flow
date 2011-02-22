@@ -4,7 +4,7 @@ import pygtk
 import gtk
 import time, os, re
 import threading
-from config import config
+from config import config, SuiteConfigError
 from port_scan import scan_my_suites
 from registration import localdb, centraldb, RegistrationError
 from gtkmonitor import monitor
@@ -333,6 +333,14 @@ class chooser(object):
         menu.append( edit_item )
         edit_item.connect( 'activate', self.edit_suite, name )
 
+        edit_item = gtk.MenuItem( 'Edit Inlined' )
+        menu.append( edit_item )
+        edit_item.connect( 'activate', self.edit_suite, name, True )
+
+        edit_item = gtk.MenuItem( 'View Inlined' )
+        menu.append( edit_item )
+        edit_item.connect( 'activate', self.inline_suite_popup, name )
+
         if self.cdb:
             imp_item = gtk.MenuItem( 'Import' )
             menu.append( imp_item )
@@ -346,6 +354,10 @@ class chooser(object):
             con_item = gtk.MenuItem( title )
             menu.append( con_item )
             con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
+
+            val_item = gtk.MenuItem( 'Validate' )
+            menu.append( val_item )
+            val_item.connect( 'activate', self.validate_suite, name )
 
             exp_item = gtk.MenuItem( 'Export' )
             menu.append( exp_item )
@@ -428,13 +440,85 @@ class chooser(object):
         else:
             call( 'cylc graph ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
 
-    def edit_suite( self, w, reg ):
-        # TO DO: launch from a controlling thread to monitor editor
-        # exit and allow inline editing etc.
-        if self.cdb:
-            call( 'cylc edit -c ' + reg + ' &', shell=True )
+    def inline_suite_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Inline Viewing Options for '" + reg + "'")
+
+        vbox = gtk.VBox()
+        box = gtk.HBox()
+
+        # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
+        default_rb = gtk.RadioButton( None, "Unmarked" )
+        default_rb.set_active(True)
+        mark_rb = gtk.RadioButton( default_rb, "Marked" )
+        label_rb = gtk.RadioButton( default_rb, "Labeled" )
+        nojoin_rb = gtk.RadioButton( default_rb, "Unjoined" )
+        single_rb = gtk.RadioButton( default_rb, "Singled" )
+        
+        box.pack_start (default_rb, True)
+        box.pack_start (mark_rb, True)
+        box.pack_start (label_rb, True)
+        box.pack_start (nojoin_rb, True)
+        box.pack_start (single_rb, True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+        ok_button = gtk.Button( "View" )
+        ok_button.connect("clicked", self.inline_suite, reg,
+                default_rb, mark_rb, label_rb, nojoin_rb, single_rb  )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def edit_suite( self, w, reg, inlined=False ):
+        if inlined:
+            extra = '-i '
         else:
-            call( 'cylc edit ' + reg + ' &', shell=True )
+            extra = ''
+        if self.cdb:
+            extra += '-c '
+        call( 'capture "cylc edit ' + extra + ' ' + reg + '" &', shell=True  )
+        return False
+
+    def inline_suite( self, w, reg, defrb, markrb, lblrb, nojrb, sngrb ):
+        if self.cdb:
+            extra += '-c '
+        else:
+            extra = ''
+        if markrb.get_active():
+            extra += ' -m'
+        if nojrb.get_active():
+            extra += ' -n'
+        if lblrb.get_active():
+            extra += ' -l'
+        if sngrb.get_active():
+            extra += ' -s'
+        print 'capture "cylc inline ' + extra + ' ' + reg + '" &'
+        call( 'capture "cylc inline ' + extra + ' ' + reg + '" &', shell=True  )
+        return False
+
+    def validate_suite( self, w, name ):
+        try:
+            conf = config( name )
+            conf.load_tasks()
+        except SuiteConfigError,x:
+            warning_dialog( str(x) ).warn()
+            return False
+        except:
+            raise
+        else:
+            info_dialog( "Suite " + name + " validates OK." ).inform()
 
     def launch_controller( self, w, name, port, suite_dir ):
         # get suite logging directory

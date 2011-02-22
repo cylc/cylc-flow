@@ -55,6 +55,7 @@ suite = args[0]
 
 # get suite definition directory
 reg = localdb()
+reg.load_from_file()
 try:
     suite_dir, descr = reg.get( suite )
 except RegistrationError, x:

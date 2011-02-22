@@ -246,9 +246,8 @@ class CylcConfigObj( ConfigObj ):
             if mat is None:
                 # it neither matched as a keyword
                 # or a section marker
-                print 'ERROR:', line
                 self._handle_error(
-                    'Invalid line at line "%s".',
+                        'Invalid line at line "%s":' + '\n' + line,
                     ParseError, infile, cur_index)
             else:
                 # is a keyword value

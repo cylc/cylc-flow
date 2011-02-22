@@ -155,8 +155,7 @@ class config( CylcConfigObj ):
         try:
             CylcConfigObj.__init__( self, self.file, configspec=self.spec )
         except ConfigObjError, x:
-            print x
-            sys.exit(1)
+            raise SuiteConfigError, x
 
         # validate and convert to correct types
         val = Validator()
