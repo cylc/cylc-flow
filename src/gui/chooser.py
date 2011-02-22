@@ -328,41 +328,25 @@ class chooser(object):
         graph_item = gtk.MenuItem( 'Graph' )
         menu.append( graph_item )
         graph_item.connect( 'activate', self.graph_suite, name )
-        if self.cdb:
-            # TO DO: all graphing of cdb suites
-            graph_item.set_sensitive(False)
 
         edit_item = gtk.MenuItem( 'Edit' )
         menu.append( edit_item )
         edit_item.connect( 'activate', self.edit_suite, name )
-        if self.cdb:
-            # TO DO: all editing of cdb suites
-            edit_item.set_sensitive(False)
 
         if self.cdb:
-            # TO DO:
             imp_item = gtk.MenuItem( 'Import' )
             menu.append( imp_item )
-            #imp_item.connect( 'activate', self.import_suite, name )
-            # TEMP:
-            imp_item.set_sensitive(False)
+            imp_item.connect( 'activate', self.import_suite, name )
         else:
-            #if state == 'dormant':
-            #    title = 'Start'
-            #else:
-            #    title = 'Connect'
+            if state == 'dormant':
+                title = 'Start'
+            else:
+                title = 'Connect'
             title = 'Control'
             con_item = gtk.MenuItem( title )
             menu.append( con_item )
             con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
 
-            # TO DO:
-            view_item = gtk.MenuItem( 'View' )
-            menu.append( view_item )
-            #view_item.connect( 'activate', self.launch_controller, name, port, suite_dir, readonly=True )
-            view_item.set_sensitive(False)
-
-            # TO DO:
             exp_item = gtk.MenuItem( 'Export' )
             menu.append( exp_item )
             exp_item.connect( 'activate', self.export_suite, name )
@@ -373,24 +357,48 @@ class chooser(object):
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
 
+    def import_suite( self, w, reg ):
+        central = centraldb()
+        central.load_from_file()
+        try:
+            dir,descr = central.get( reg )
+        except RegistrationError, x:
+            warning_dialog( str(x) ).warn()
+            return False
+        local = localdb() 
+        try:
+            local.lock()
+        except RegistrationError, x:
+            warning_dialog( str(x) ).warn()
+            return False
+        local.load_from_file()
+        try:
+            local.register( reg, dir, descr )
+        except RegistrationError, x:
+            warning_dialog( str(x) ).warn()
+            return False
+        local.unlock()
+        local.dump_to_file()
+
     def export_suite( self, w, reg ):
         local = localdb()
         local.load_from_file()
         try:
             dir,descr = local.get( reg )
         except RegistrationError, x:
-            warning_dialog( x ).warn()
+            warning_dialog( str(x) ).warn()
             return False
         central = centraldb() 
         try:
             central.lock()
         except RegistrationError, x:
-            raise SystemExit(x)
+            warning_dialog( str(x) ).warn()
+            return False
         central.load_from_file()
         try:
             central.register( reg, dir, descr )
         except RegistrationError, x:
-            warning_dialog( x ).warn()
+            warning_dialog( str(x) ).warn()
             return False
         central.unlock()
         central.dump_to_file()
@@ -415,12 +423,18 @@ class chooser(object):
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
-        call( 'cylc graph ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
+        if self.cdb:
+            call( 'cylc graph -c ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
+        else:
+            call( 'cylc graph ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
 
     def edit_suite( self, w, reg ):
         # TO DO: launch from a controlling thread to monitor editor
         # exit and allow inline editing etc.
-        call( 'cylc edit ' + reg + ' &', shell=True )
+        if self.cdb:
+            call( 'cylc edit -c ' + reg + ' &', shell=True )
+        else:
+            call( 'cylc edit ' + reg + ' &', shell=True )
 
     def launch_controller( self, w, name, port, suite_dir ):
         # get suite logging directory
