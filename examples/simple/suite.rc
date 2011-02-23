@@ -1,5 +1,7 @@
 title = a simple example suite
 
+title = munge
+
 description = """A clock-triggered data-gathering task, a warm-cycled
 model, and two post-processing tasks (one runs every second cycle). The
 tasks are not cylc-aware, have independently configured I/O directories,

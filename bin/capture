@@ -12,13 +12,18 @@ stderr to display in a dialog. Examples:
 """
 
 class info(object):
-    def __init__( self, message ):
+    def __init__( self, stdout, stderr, command ):
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        self.window.set_size_request(200, 200)
+        #self.window.set_size_request(200, 200)
         self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.quit)
         vbox = gtk.VBox()
-        label = gtk.Label( message )
+        msg = command
+        if stdout != '':
+            msg += '\n\nstdout:\n' + stdout
+        if stderr != '':
+            msg += '\n\nstderr:\n' + stderr
+        label = gtk.Label( msg )
         vbox.pack_start(label)
         ok_button = gtk.Button( "OK" )
         ok_button.connect("clicked", self.quit, None, None )
@@ -31,14 +36,11 @@ class info(object):
 
 if __name__ == '__main__':
     command_list = sys.argv[1:]
+    command = ' '.join( command_list )
     p = subprocess.Popen( command_list,
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True )
     p.wait()
     stdout, stderr = p.communicate()
-    if stderr != '':
-        info( stderr )
+    if stdout != '' or stderr != '':
+        info( stdout, stderr, command )
         gtk.main()
-    if stdout != '':
-        info( stdout )
-        gtk.main()
-

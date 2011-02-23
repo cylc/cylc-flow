@@ -105,9 +105,9 @@ class chooser(object):
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         if self.readonly:
-            self.window.set_title("cylc view (READONLY)" )
+            self.window.set_title("_view (READONLY)" )
         else:
-            self.window.set_title("cylc control" )
+            self.window.set_title("_control" )
         self.window.set_size_request(600, 200)
         self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
@@ -318,12 +318,16 @@ class chooser(object):
         menu_root = gtk.MenuItem( name )
         menu_root.set_submenu( menu )
 
-        # make an insensitive item to display selected suite name
-        # so that we can turn the ugly selection off already
-        title_item = gtk.MenuItem( name )
-        menu.append( title_item )
-        title_item.set_sensitive(False)
-        selection.unselect_iter( iter )
+        ## make an insensitive item to display selected suite name
+        ## so that we can turn the ugly selection off already
+        #title_item = gtk.MenuItem( name )
+        #menu.append( title_item )
+        #title_item.set_sensitive(False)
+        #selection.unselect_iter( iter )
+
+        val_item = gtk.MenuItem( 'Validate' )
+        menu.append( val_item )
+        val_item.connect( 'activate', self.validate_suite, name )
 
         graph_item = gtk.MenuItem( 'Graph' )
         menu.append( graph_item )
@@ -354,10 +358,6 @@ class chooser(object):
             con_item = gtk.MenuItem( title )
             menu.append( con_item )
             con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
-
-            val_item = gtk.MenuItem( 'Validate' )
-            menu.append( val_item )
-            val_item.connect( 'activate', self.validate_suite, name )
 
             exp_item = gtk.MenuItem( 'Export' )
             menu.append( exp_item )
@@ -436,9 +436,9 @@ class chooser(object):
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
         if self.cdb:
-            call( 'cylc graph -c ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
+            call( 'capture "_graph -c ' + reg + ' ' + hour + ' ' + stop + '" &', shell=True )
         else:
-            call( 'cylc graph ' + reg + ' ' + hour + ' ' + stop + ' &', shell=True )
+            call( 'capture "_graph ' + reg + ' ' + hour + ' ' + stop + '" &', shell=True )
 
     def inline_suite_popup( self, w, reg ):
         window = gtk.Window()
@@ -449,25 +449,22 @@ class chooser(object):
         box = gtk.HBox()
 
         # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
-        default_rb = gtk.RadioButton( None, "Unmarked" )
-        default_rb.set_active(True)
-        mark_rb = gtk.RadioButton( default_rb, "Marked" )
-        label_rb = gtk.RadioButton( default_rb, "Labeled" )
-        nojoin_rb = gtk.RadioButton( default_rb, "Unjoined" )
-        single_rb = gtk.RadioButton( default_rb, "Singled" )
+        mark_cb = gtk.CheckButton( "Marked" )
+        label_cb = gtk.CheckButton( "Labeled" )
+        nojoin_cb = gtk.CheckButton( "Unjoined" )
+        single_cb = gtk.CheckButton( "Singled" )
         
-        box.pack_start (default_rb, True)
-        box.pack_start (mark_rb, True)
-        box.pack_start (label_rb, True)
-        box.pack_start (nojoin_rb, True)
-        box.pack_start (single_rb, True)
+        box.pack_start (mark_cb, True)
+        box.pack_start (label_cb, True)
+        box.pack_start (nojoin_cb, True)
+        box.pack_start (single_cb, True)
         vbox.pack_start( box )
 
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "View" )
         ok_button.connect("clicked", self.inline_suite, reg,
-                default_rb, mark_rb, label_rb, nojoin_rb, single_rb  )
+                mark_cb, label_cb, nojoin_cb, single_cb  )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -488,48 +485,48 @@ class chooser(object):
             extra = ''
         if self.cdb:
             extra += '-c '
-        call( 'capture "cylc edit ' + extra + ' ' + reg + '" &', shell=True  )
+        call( 'capture "_edit ' + extra + ' ' + reg + '" &', shell=True  )
         return False
 
-    def inline_suite( self, w, reg, defrb, markrb, lblrb, nojrb, sngrb ):
+    def inline_suite( self, w, reg, markcb, lblcb, nojcb, sngcb ):
+        extra = ''
         if self.cdb:
             extra += '-c '
-        else:
-            extra = ''
-        if markrb.get_active():
+        if markcb.get_active():
             extra += ' -m'
-        if nojrb.get_active():
+        if nojcb.get_active():
             extra += ' -n'
-        if lblrb.get_active():
+        if lblcb.get_active():
             extra += ' -l'
-        if sngrb.get_active():
+        if sngcb.get_active():
             extra += ' -s'
-        print 'capture "cylc inline ' + extra + ' ' + reg + '" &'
-        call( 'capture "cylc inline ' + extra + ' ' + reg + '" &', shell=True  )
+        call( 'capture "_inline ' + extra + ' ' + reg + '" &', shell=True  )
         return False
 
     def validate_suite( self, w, name ):
-        try:
-            conf = config( name )
-            conf.load_tasks()
-        except SuiteConfigError,x:
-            warning_dialog( str(x) ).warn()
-            return False
-        except:
-            raise
-        else:
-            info_dialog( "Suite " + name + " validates OK." ).inform()
+        # the following requires gui capture of stdout and stderr somehow:
+        #try:
+        #    conf = config( name )
+        #    conf.load_tasks()
+        #except SuiteConfigError,x:
+        #    warning_dialog( str(x) ).warn()
+        #    return False
+        #except:
+        #    raise
+        #else:
+        #    info_dialog( "Suite " + name + " validates OK." ).inform()
+
+        # for now, launch external process:
+        call( 'capture "_validate ' + name  + '" &', shell=True )
 
     def launch_controller( self, w, name, port, suite_dir ):
         # get suite logging directory
-        logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
-
+        # logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
         # TO LAUNCH A CONTROL GUI AS PART OF THIS APP:
         #tv = monitor(name, self.owner, self.host, port, suite_dir,
         #    logging_dir, self.imagedir, self.readonly )
         #self.viewer_list.append( tv )
         #return False
-
-        call( 'gcylc ' + name  + ' &', shell=True )
+        call( 'capture "gcylc ' + name  + '" &', shell=True )
 
 
