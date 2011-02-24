@@ -124,7 +124,7 @@ utilities_commands = \
 registration_commands = \
     [
     'register',
-    'centraldb',
+    'central',
     'import',
     'export',
     ]
@@ -316,10 +316,11 @@ locking."""
 
 # command summaries
 comsum = OrderedDict()
-comsum[ 'register'  ] = 'Create, view, and delete suite registrations'
-comsum[ 'export'    ] = 'Export suites to the central suite database'
-comsum[ 'import'    ] = 'Import suites from the central suite database'
-comsum[ 'centraldb' ] = 'View or delete central database registrations'
+comsum[ 'register'  ] = 'Manage local suite registrations'
+comsum[ 'export'    ] = 'Export suites to the central database'
+comsum[ 'import'    ] = 'Import suites from the central database'
+comsum[ 'copy'      ] = 'Copy a suite or group of suites.'
+comsum[ 'central'   ] = 'Manage central database registrations'
 comsum[ 'edit'      ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'

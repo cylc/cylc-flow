@@ -76,9 +76,6 @@ for filt in options.ownerfilt, options.groupfilt, options.namefilt:
 #import pdb
 #pdb.set_trace()
 
-importsingle = False
-importgroup = False
-
 if options.import_as and not options.namefilt:
     parser.error( '-a,--as can only be used when importing a single suite' )
     suite = options.import_as
