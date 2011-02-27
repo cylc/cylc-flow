@@ -150,7 +150,13 @@ class regdb(object):
     def changed_on_disk( self ):
         # use to detect ONE change in database since we read it,
         # while we have read-only access.
-        if os.stat( self.file ).st_mtime != self.mtime_at_load:
+        try:
+            st_mtime = os.stat( self.file ).st_mtime 
+        except OSError:
+            # file not found => no suites registered.
+            return False
+
+        if st_mtime != self.mtime_at_load:
             return True
         else:
             return False
