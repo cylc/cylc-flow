@@ -6,7 +6,7 @@ from optparse import OptionParser
 from task_message import message
 from task_lock import task_lock
 
-usage = """cylc task-started [options]
+usage = """cylc started [options]
 
 This is part of the cylc external task interface.
 
@@ -17,9 +17,7 @@ parser = OptionParser( usage )
 ( options, args ) = parser.parse_args()
 
 if len( args ) != 0:
-    print >> sys.stderr, "WARNING: ignoring task-started arguments:"
-    for arg in args:
-        print >> sys.stderr, arg
+    parser.error( "Wrong number of arguments" )
 
 message().send_started()
 

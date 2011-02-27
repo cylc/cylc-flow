@@ -6,7 +6,7 @@ import cylc_pyro_client
 from CylcOptionParsers import NoPromptOptionParser_u
 from port_scan import SuiteIdentificationError
 
-parser = NoPromptOptionParser_u( """cylc show [options] SUITE [TASK NAME] [TASK ID]
+parser = NoPromptOptionParser_u( """cylc control show [options] SUITE [TASK NAME] [TASK ID]
 
 Print global or task-specific information from a running suite: title and
 task list, task descriptions, current state of task prerequisites and

@@ -6,7 +6,7 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc stop [options] SUITE [YYYYMMDDHH]
+parser = PromptOptionParser( """cylc control stop [options] SUITE [YYYYMMDDHH]
 
 1/ Do not submit any more tasks to run, and shut down as soon as all
    tasks that are currently running have finished (this is the default).

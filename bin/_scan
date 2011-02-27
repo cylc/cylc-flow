@@ -6,7 +6,7 @@ import socket
 from optparse import OptionParser
 import port_scan
 
-parser = OptionParser( """cylc scan [options]
+parser = OptionParser( """cylc control scan [options]
     
 Scan cylc ports for running suites and lockservers. 
 

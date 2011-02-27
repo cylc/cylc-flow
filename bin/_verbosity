@@ -5,7 +5,7 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc verbosity [options] SUITE LEVEL
+parser = PromptOptionParser( """cylc control verbosity [options] SUITE LEVEL
 
 Change the logging priority level of a running suite.  Only messages at
 or above the chosen priority level will be logged; for example, if you

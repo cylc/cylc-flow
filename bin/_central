@@ -4,21 +4,21 @@ import os, re, sys
 from optparse import OptionParser
 from registration import centraldb, RegistrationError
 
-parser = OptionParser( usage = """cylc central [options] [arguments]
+parser = OptionParser( usage = """cylc preparation central [options] [arguments]
 
 View or delete central suite database registrations. 
 
 1/ Print registrations:
-     $ cylc cen -p                      # print all
-     $ cylc cen -p [FILTER options]     # print some
+     $ cylc prep cen -p                      # print all
+     $ cylc prep cen -p [FILTER options]     # print some
 
 2/ Delete registrations (confirmation required):   
-     $ cylc cen -d                      # delete all
-     $ cylc cen -d [FILTER options]     # delete some
+     $ cylc prep cen -d                      # delete all
+     $ cylc prep cen -d [FILTER options]     # delete some
    (but note that you can only delete your own registrations)
 
 3/ Clean up invalid registrations: (missing directory or suite.rc):
-     $ cylc cen -c,--clean
+     $ cylc prep cen -c,--clean
 
 FILTERING: 
   (a) The filter patterns are Regular Expressions, not shell globs, so
@@ -31,9 +31,9 @@ stop this ('foo$' matches only literal 'foo').
   the group name explicitly (-g default).
 
 See also:
-    cylc export   - export suites to the central database
-    cylc import   - import suites from the central database
-    cylc register - manage local suite registrations""" )
+    cylc prep export   - export suites to the central database
+    cylc prep import   - import suites from the central database
+    cylc prep register - manage local suite registrations""" )
 
 parser.add_option( "-p", "--print",
         help="Delete registrations.",

@@ -5,7 +5,7 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc unblock [options] SUITE 
+parser = PromptOptionParser( """cylc control unblock [options] SUITE 
 
 Tell a running suite, that is explicitly configured to use blocking, to
 comply with subsequent intervention commands. The block/unblock commands
@@ -15,10 +15,7 @@ running multiple suites at the same time).
 
 (These commands are 'block/unblock' rather than 'lock/unlock' in order
 to distinguish them from the functionality of the cylc lockserver
-commands, to which they are unrelated).
-
-See also:
-    cylc help security""")
+commands, to which they are unrelated).""")
 
 (options, args) = parser.parse_args()
 

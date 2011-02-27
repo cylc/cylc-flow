@@ -13,11 +13,11 @@ try:
 except:
     raise SystemExit( "Graphing is not available; please install graphviz and pygraphviz.")
 
-parser = OptionParser( """1/ cylc graph [options] SUITE START [STOP]
+parser = OptionParser( """1/ cylc prep graph [options] SUITE START [STOP]
      Plot the configured (suite.rc) dependency graph for SUITE.
-       2/ cylc graph [options] -r,--runtime SUITE
+       2/ cylc prep graph [options] -r,--runtime SUITE
      Plot the run-time dependency graph for SUITE, if one has been generated.
-       3/ cylc graph [options] -f,--file FILE
+       3/ cylc prep graph [options] -f,--file FILE
      Plot the specified dot-language graph file.
 
 Plot cylc dependency graphs in a pannable, zoomable viewer.

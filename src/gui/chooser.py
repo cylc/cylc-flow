@@ -331,7 +331,7 @@ class chooser(object):
 
         graph_item = gtk.MenuItem( 'Graph' )
         menu.append( graph_item )
-        graph_item.connect( 'activate', self.graph_suite, name )
+        graph_item.connect( 'activate', self.graph_suite_popup, name )
 
         edit_item = gtk.MenuItem( 'Edit' )
         menu.append( edit_item )
@@ -415,12 +415,50 @@ class chooser(object):
         central.unlock()
         central.dump_to_file()
 
-    def graph_suite( self, w, reg ):
+    def graph_suite_popup( self, w, reg ):
         try:
             from graphing import xdot
         except:
             warning_dialog( "Graphing is not available;\nplease install graphviz\nand pygraphviz.").warn()
             return False
+
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Suite Graph Options for '" + reg + "'")
+
+        vbox = gtk.VBox()
+        box = gtk.HBox()
+
+        # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
+        warm_cb = gtk.CheckButton( "Warm Start" )
+        runtime_cb = gtk.CheckButton( "Runtime Graph" )
+        
+        outputfile_entry = gtk.Entry()
+        if not self.cdb:
+            owner_entry.set_sensitive( False )
+        box.pack_start (owner_entry, True)
+ 
+        box.pack_start (warm_cb, True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+        ok_button = gtk.Button( "View" )
+        ok_button.connect("clicked", self.inline_suite, reg,
+                mark_cb, label_cb, nojoin_cb, single_cb  )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
 
         # fake a full cycle time
         hour = '00'
@@ -448,7 +486,6 @@ class chooser(object):
         vbox = gtk.VBox()
         box = gtk.HBox()
 
-        # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
         mark_cb = gtk.CheckButton( "Marked" )
         label_cb = gtk.CheckButton( "Labeled" )
         nojoin_cb = gtk.CheckButton( "Unjoined" )

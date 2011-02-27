@@ -20,6 +20,17 @@ class CommandNotFoundError( CommandError ):
 class CommandNotUniqueError( CommandError ):
     pass
 
+def is_help( str ):
+    if str == '-h' or \
+        str == '--help' or \
+        str == '--hlep' or \
+        str == 'help' or \
+        str == 'hlep' or \
+        str == '?':
+        return True
+    else:
+        return False
+
 def match_command( abbrev, commands, title ):
     # allow any unique abbreviation to cylc topics and commands
     matches = []
@@ -76,98 +87,23 @@ def pretty_print( incom, choose = None, indent=True, numbered=False ):
 # auto-replace with version tag at build/install:
 cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
-topics = \
-     [
-     'core',
-     'gui',
-     'registration',
-     'editing',
-     'discovery',
-     'starting',
-     'stopping',
-     'intervention',
-     'interrogation',
-     'monitoring',
-     'task',
-     'locking',
-     'security',
-     'alerting',
-     'utilities',
-     ]
-
-alerting_commands = []
-gui_commands = []
-
-locking_commands = \
+categories = \
     [
-    'lockserver',
-    'lockclient',
+    'database',
+    'preparation',
+    'discover',
+    'control',
+    'utility',
+    'task',
     ]
 
-security_commands = \
+control_commands = \
     [
-    'lockserver',
-    'lockclient',
-    'block',
-    'unblock',
-     ]
-
-utilities_commands = \
-    [ 
-    'cycletime',
-    'checkvars',
-    'template',
-    'housekeeping',
-    'file-transfer',
-    ]
-
-registration_commands = \
-    [
-    'register',
-    'central',
-    'import',
-    'export',
-    ]
-
-editing_commands = \
-    [
-    'edit',
-    'validate',
-    'graph',
-    'grep',
-    'inline',
-    ]
-
-starting_commands = \
-    [
-    'coldstart', 
-    'warmstart', 
-    'rawstart', 
+    'coldstart',
+    'warmstart',
+    'rawstart',
     'restart',
-    'submit',
-    ]
-
-stopping_commands = \
-    [
     'stop',
-    ]
-
-discovery_commands = \
-    [
-    'scan',
-    'ping',
-    ]
-
-monitoring_commands = \
-    [
-    'tmon',
-    'dump',
-    'ping',
-    'scan',
-    ]
-
-intervention_commands = \
-    [
     'trigger',
     'insert',
     'remove',
@@ -177,142 +113,120 @@ intervention_commands = \
     'block',
     'unblock',
     'reset',
-    ]
-
-interrogation_commands = \
-    [
-    'ping',
-    'scan',
-    'list',
     'dump',
     'show',
+    'list',
     'log',
     'tmon',
+    'lockserver',
+    'lockclient',
     'verbosity',
+    ]
+ 
+utility_commands = \
+    [ 
+    'cycletime',
+    'checkvars',
+    'template',
+    'housekeeping',
+    'file-transfer',
+    ]
+
+database_commands = \
+    [
+    'register',
+    'import',
+    'export',
+    'print',
+    'copy',
+    'delete',
+    'central',
+    ]
+
+preparation_commands = \
+    [
+    'edit',
+    'inline',
+    'graph',
+    'grep',
+    'validate',
+    'list',
+    ]
+
+discover_commands = \
+    [
+    'scan',
+    'ping',
     ]
 
 task_commands = \
     [
     'wrap',
-    'task-started',
-    'task-message',
-    'task-finished',
-    'task-failed',
+    'started',
+    'message',
+    'finished',
+    'failed',
     ]
+
+
+# all commands; uniquify in case any appear in multiple categories:
+allcoms = OrderedDict()
+for command in database_commands + preparation_commands + \
+    control_commands + discover_commands + utility_commands + task_commands:
+    if command not in allcoms:
+        allcoms[ command ] = True
+all_commands = allcoms.keys()
 
 general_usage = """
 USAGE:
-  cylc help,--help,-h,?                # this help page
-  cylc -v,--version                    # cylc release version
-  cylc help TOPIC                      # quick help by topic
-  cylc COMMAND help,--help             # command-specific help
-  cylc COMMAND [options] SUITE [args]  # command usage syntax"""
+  cylc help,--help,-h,?                           # this help page
+  cylc -v,--version                               # release version
+  cylc help CATEGORY                              # help by category
+  cylc [CATEGORY] COMMAND help,--help             # command-specific help
+  cylc [CATEGORY] COMMAND [options] SUITE [args]  # command usage syntax"""
 
 command_usage = """
-USAGE: cylc COMMAND help,--help
+USAGE: cylc CATEGORY COMMAND help,--help
        cylc help"""
 
 # topic summaries
-topsum = OrderedDict()
-topsum['gui'          ] = "the cylc graphical user interface."
-topsum['core'         ] = "everything but utilities and the task interface."
-topsum['registration' ] = "local and central suite registration."
-topsum['editing'      ] = "tools to help with building and editing suites."
-topsum['discovery'    ] = "finding out which suites are running."
-topsum['starting'     ] = "starting a suite or running a single task."
-topsum['stopping'     ] = "shutting down a running suite."
-topsum['intervention' ] = "interacting with a running suite."
-topsum['interrogation'] = "getting information from running suites."
-topsum['monitoring'   ] = "monitoring a running suite."
-topsum['locking'      ] = "suite and task locking by the cylc lockserver."
-topsum['security'     ] = "access, locking, blocking, and passphrases."
-topsum['alerting'     ] = "centralized task failure and timeout hooks."
-topsum['task'         ] = "task wrapping and the messaging interface."
-topsum['utilities'    ] = "extra programs intended for use in suites."
+catsum = OrderedDict()
+catsum['database'    ] = "manage local and central suite registrations."
+catsum['preparation' ] = "editing, searching, and graphing suites."
+catsum['discover'    ] = "finding out what suites are running."
+catsum['control'     ] = "starting, stopping, and controlling cylc suites."
+catsum['task'        ] = "single-task submission, task wrapping, and messaging."
+catsum['utility'     ] = "cycle time arithmetic, filename templating, etc."
 
-usage = """This is the cylc metascheduler commandline interface.
-See also gcylc, the graphical user interface.
+usage = """
+This is the command line interface to cylc ('silk'), a metascheduler for
+complex forecasting suites; the graphical interface is gcylc.
 
-Release version: """ + cylc_version + """
+Cylc can schedule tasks optimally, according to the suite dependency
+graph, with maximum functional parallelism and without any artificial
+grouping by forecast cycle, in real time or catchup operation (the
+former emerges seamlessly from the latter as a cylc suite runs).
+
+Version: """ + cylc_version + """
 """ + general_usage + """
 
-You can use any unique abbreviation for a COMMAND or TOPIC, e.g.:
-  $ cylc help mon ............... (topic: monitoring)
-  $ cylc reg foo /path/to/foo ... (command: register) 
+The cylc command set is quite large because it encompasses a wide range
+of functionality, and it is intended that each suite operation should be
+accessed via a distinct and obvious command. However, the command set is
+self-documenting and organised into categories that are meant to convey
+the realm of applicability of member commands. Categories can be used in 
+command invocation as well, but can be omitted if you like. You can use
+any unique abbreviation for a COMMAND or CATEGORY: 
+  $ cylc help prep .......... (category: preparation)
+  $ cylc da reg [ARGS] ...... (category: database; command: register) 
+  $ cylc reg [ARGS] ......... (category: database; command: register) 
 
-Help TOPICS (which include lists of relevant COMMANDS):"""
+Command CATEGORIES (which include lists of relevant COMMANDS):"""
 
 if len(sys.argv) == 1:
     print usage
-    pretty_print( topsum )
+    pretty_print( catsum )
     sys.exit(1)
-
-topic_help = {}
-topic_help[ 'security' ] = """
-Cylc commands allow only the suite owner to intervene in a running suite.
-
-The cylc lockserver prevents accidental simultaneous runs of the same
-suite (unless the suite allows it) even if it is registered under
-several names, or of the same task at the same cycle time (even by
-single task submit).
-
-Suite blocking guards against inadvertent intervention in your own suites,
-but it can be annoying so it is disabled by default. To turn blocking on:
- + SUITE.RC: use suite blocking = True
-
-A secure passphrase prevents other users from accessing your suite even
-if they hack command source code to subvert the owner-only restriction.
- + SUITE.RC: use secure passphrase = True
-The passphrase must be stored in $HOME/.cylc/security/[SUITE_NAME] with
-private file permissions, or cylc will refuse to run the suite. If your
-suite contains tasks that run on a remote host or under another
-username, those accounts must also hold the passphrase. The passphrase
-is never sent across the network; a secure md5 checksum is exchanged."""
-
-topic_help[ 'gui' ] = """
-The cylc Graphical User Interface is 'gcylc'. It starts an app from
-which you can manage suite registrations and choose which suites to
-edit, graph, or run, etc., or direct suite control apps for particular
-suites.  For help, see the GUI 'help' menu items and buttons."""
-
-topic_help[ 'alerting' ] = """
-Cylc can call a designated alert script on any of the following events:
- + a task is submitted
- + a task fails to submit
- + a task times out in job submission
- + a task starts running
- + a task finishes successfully
- + a task fails to finish successfully
- + a task times out in execution.
-
-Alert scripts can be configured for the suite as a whole and/or on a per
-task basis. This can be used to send an email or an SMS to operation
-support staff, update task status in a dedicated monitoring system such
-as Nagios, or whatever you like. See suite config (suite.rc)
-documentation for configuration details."""
-
-topic_help['registration'] = """
-A cylc suite must be registered in your local (user-specific)
-registration database before you can use it. This associates a name
-with the suite definition directory so that you can target the suite by
-name when you run it and so on. In addition, suite names can be
-organized into groups, for example:
-    foo
-    nwp:oper1
-    nwp:oper2
-    test:a
-Suite names without a group prefix are implicitly in the 'default' group.
-
-Registered suites can also be exported to, or imported from, the central
-suite database, to enable easy sharing of suites between users.
-
-Access to the central database is currently local to the cylc host
-machine; the database is read anew each time it is accessed, and any
-transactions that change it acquire a database lock that prevents any
-other non-readonly access for the very short time between data load and
-unload. In the future we may use database server akin to the cylc
-lockserver that can serve suites across the network and will not require
-locking."""
 
 # command summaries
 comsum = OrderedDict()
@@ -351,10 +265,10 @@ comsum[ 'submit'    ] = 'Run a single task just as its parent suite would'
 comsum[ 'lockserver'] = 'Lockserver interrogation and lock management'
 comsum[ 'verbosity' ] = 'Change a suite\'s logging verbosity level'
 comsum[ 'wrap'         ] = 'Use an existing script or program as a cylc task'
-comsum[ 'task-started' ] = 'Acquire a task lock and report started'
-comsum[ 'task-message' ] = 'Report completion of outputs, etc.'
-comsum[ 'task-finished'] = 'Release task lock and report finished'
-comsum[ 'task-failed'  ] = 'Release task lock and report failure'
+comsum[ 'started' ] = 'Acquire a task lock and report started'
+comsum[ 'message' ] = 'Report completion of outputs, etc.'
+comsum[ 'finished'] = 'Release task lock and report finished'
+comsum[ 'failed'  ] = 'Release task lock and report failure'
 comsum[ 'lockserver' ] = 'The cylc lockserver daemon'
 comsum[ 'lockclient' ] = 'Manual suite and task lock management'
 comsum[ 'cycletime'  ] = 'Cycle time arithmetic'
@@ -372,134 +286,81 @@ except:
     sys.exit(1)
 
 # main help
-if len( sys.argv ) == 2 and \
-        (sys.argv[1] == '-h' or \
-        sys.argv[1] == '--help' or \
-        sys.argv[1] == '--hlep' or \
-        sys.argv[1] == 'help' or \
-        sys.argv[1] == 'hlep' or \
-        sys.argv[1] == '?'):
+if len( sys.argv ) == 2 and is_help( sys.argv[1] ):
     print usage
-    pretty_print( topsum )
+    pretty_print( catsum )
     sys.exit(0)
 
 # cylc release version
-if sys.argv[1] == '-v' or sys.argv[1] == '--version':
+if len( sys.argv ) == 2 and \
+        ( sys.argv[1] == '-v' or sys.argv[1] == '--version' ):
     print cylc_version
     sys.exit(0)
 
-# uniquify the 'core commands' list (some may be in multiple topics)
-corecom = OrderedDict()
-for command in registration_commands + editing_commands + starting_commands + stopping_commands + \
-        intervention_commands + interrogation_commands + monitoring_commands + \
-        locking_commands + security_commands + discovery_commands:
-            if command not in corecom:
-                corecom[ command ] = True
-core_commands = corecom.keys()
-
-# secret command lists used by documentation generation script
-if len(sys.argv) == 2 and sys.argv[1] == 'commands':
-    for command in core_commands + task_commands:
-        print command
-    sys.exit(0)
-if len(sys.argv) == 2 and sys.argv[1] == 'utilities':
-    for command in utilities_commands:
-        print command
-    sys.exit(0)
-if len(sys.argv) == 2 and sys.argv[1] == 'topics':
-    for topic in topics:
-        print topic
-    sys.exit(0)
-
-if sys.argv[1] == 'help' or sys.argv[1] == 'hlep':
-    # cylc help TOPIC
-    try:
-        top = match_command( sys.argv[2], topics, 'TOPIC' )
-    except CommandError, x:
-        # TOPIC not found, try matching COMMAND
-        try:
-            command = match_command( sys.argv[2], core_commands + utilities_commands + task_commands, 'COMMAND' )
-        except CommandError, y:
-            # COMMAND not found either
-            print x
-            raise SystemExit(y)
-        else:
-            # found COMMAND
-            print x
-            print 'Did you mean COMMAND?...\n'
-            # construct command to execute
-            command = '_' + command 
-            commandlist = [ command, '--help' ]
-            execute( commandlist )
-            sys.exit(0)
+if len( sys.argv ) == 3 and \
+        ( is_help( sys.argv[1] ) or is_help( sys.argv[2] )):
+    # cylc CATEGORY help
+    # cylc help CATEGORY
+    if is_help( sys.argv[1] ):
+        category = sys.argv[2]
     else:
-        # found TOPIC
-        print 'TOPIC:' + top + ' - ' + topsum[ top ]
-        commands = eval( top + '_commands')
-        if top in topic_help:
-            print topic_help[top]
-        if len( commands ) != 0: 
-            print command_usage
-        if len( commands ) != 0:
-            print
-            print 'COMMANDs:'
-            pretty_print( comsum, commands )
+        category = sys.argv[1]
+    try:
+        category = match_command( category, categories, 'CATEGORY' )
+    #except CommandNotUniqueError, x:
+    #    raise SystemExit(x)
+    except CommandError, x:
+        print x
+        # carry on in case the user omitted the category
+        ##print 'Available categories (cylc help):'
+        ##print categories
+        ##sys.exit(1)
+
+    else:
+        print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
+        print 
+        commands = eval( category + '_commands')
+        pretty_print( comsum, choose=commands )
         sys.exit(0)
 
-# cylc COMMAND ARGS
-arglist = sys.argv[1:]
+# cylc [CATEGORY] COMMAND ARGS
+arglist = []
 try:
-    command = match_command( arglist[0], core_commands + utilities_commands + task_commands, 'COMMAND' )
-except CommandError, x:
-    # COMMAND not found
+    category = match_command( sys.argv[1], categories, 'CATEGORY' )
+except CommandError, y:
+    # carry on in case the user omitted the category
+    ##print 'Available categories (cylc help):'
+    ##print categories
+    ##sys.exit(1)
     try:
-        if arglist[1] == 'help' or \
-                arglist[1] == '--help' or \
-                arglist[1] == 'hlep' or \
-                arglist[1] == '--hlep':
-            # if 2nd arg is 'help', try matching TOPIC
-            try:
-                top = match_command( arglist[0], topics, 'TOPIC' )
-            except CommandError, y:
-                # TOPIC not found either
-                print x
-                raise SystemExit(y)
-            else:
-                # TOPIC found
-                print x
-                print 'Did you mean TOPIC?...\n'
-                print 'TOPIC:' + top + ' - ' + topsum[ top ]
-                commands = eval( top + '_commands')
-                if len( commands ) != 0: 
-                    print command_usage
-                if top in topic_help:
-                    print topic_help[top]
-                if len( commands ) != 0:
-                    print
-                    print 'COMMANDs:'
-                    pretty_print( comsum, commands )
-                sys.exit(0)
-    except IndexError:
-        # len( arglist ) only 1
-        raise SystemExit(x)
+        command = match_command( sys.argv[1], all_commands, ' COMMAND' )
+    except CommandError, x:
+        print y
+        print x
+        sys.exit(1)
+    else:
+        if len(sys.argv) > 2:
+            arglist = sys.argv[2:]
 else:
-    # COMMAND found, carry on and execut the command
-    pass
+    commands = eval( category + '_commands')
+    try:
+        command = match_command( sys.argv[2], commands, category + ' COMMAND' )
+    except CommandError, y:
+        print y
+        print 'Available commands in category ' + category + ':'
+        print commands
+        sys.exit(1)
+    else:
+        if len(sys.argv) > 3:
+            arglist = sys.argv[3:]
 
-options = []
-if len(arglist) > 1:
-    options = arglist[1:]
-
-try:
-    if options[0] == 'help' or options[0] == 'hlep':
-        # catch 'cylc COMMAND help' (should be --help)
-        options[0] = '--help'
-except IndexError:
-    pass
+if len(arglist) > 0 and is_help( arglist[0] ):
+        # commands only take '--help'; extend this to help,-h,...
+        arglist[0] = '--help'
 
 # construct command to execute
 command = '_' + command 
 commandlist = [ command ]
-for f in options:
+for f in arglist:
     commandlist.append( f )
 execute( commandlist )

@@ -48,7 +48,7 @@ def check_task_spec( task_spec ):
 
 if __name__ == "__main__":
 
-    usage = """cylc lockclient [options]
+    usage = """cylc control lockclient [options]
 
 This is the command line interface to the cylc lockserver daemon, which
 brokers suite and task locks for cylc suites. 
@@ -57,7 +57,7 @@ Use of the cylc lockserver is optional - see suite config documentation.
 
 TASK LOCKS prevent multiple instances of the same task (NAME%CYCLE) from
 running simultaneously, whether they are spawned by a cylc scheduler or
-by 'cylc submit'. Traditional lock files cannot easily be used by cylc
+by 'cylc task submit'. Traditional lock files cannot easily be used by cylc
 because it is possible for an external task that consists of multiple
 components to start and finish executing on different host machines.
 

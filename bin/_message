@@ -45,8 +45,7 @@ elif options.all_outputs_completed:
     sys.exit(0)
 
 elif len( args ) == 0:
-    print >> sys.stderr, "ERROR: no message supplied"
-    sys.exit(1)
+    parser.error( "No task message supplied" )
 
 else:
     msg = ' '.join( args )

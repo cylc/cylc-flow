@@ -12,7 +12,7 @@ debug = True
 class rawstart( scheduler ):
     def __init__( self ):
 
-        usage = """cylc rawstart [options] SUITE YYYYMMDDHH
+        usage = """cylc control rawstart [options] SUITE YYYYMMDDHH
 
 RAW START a suite at a specified cycle time. This starts the suite as if
 in mid run - any tasks that depend on previous cycles will have to be
@@ -27,13 +27,13 @@ the suite config file:
  
 NOTE: to prevent a suite being killed when you log out: 
   $ export PYTHONUNBUFFERED=true   # (*)
-  $ nohup cylc warmstart SUITE YYYYMMDDHH
+  $ nohup cylc con warmstart SUITE YYYYMMDDHH
 (*) with nohup, stdout buffering can result in no output until shutdown.
 
 See also:
-    cylc coldstart
-    cylc warmstart
-    cylc restart
+    cylc con coldstart
+    cylc con warmstart
+    cylc con restart
 
 Arguments:
    SUITE                Registered name of the suite to start.

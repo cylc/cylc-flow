@@ -4,7 +4,7 @@ import os, sys
 from optparse import OptionParser
 from config import config, SuiteConfigError
 
-parser = OptionParser( """cylc validate [options] SUITE
+parser = OptionParser( """cylc preparation validate [options] SUITE
 
 Parse and validate a suite config (suite.rc) file. This checks that
 entries in the file conform to $CYLC_DIR/conf/suiterc.spec, and that no
@@ -12,7 +12,7 @@ error occurs when the suite's task proxy classes are defined and loaded.
 
 IF THE SUITE.RC FILE USES INCLUDE-FILES: line numbers reported with 
 validation errors will be wrong because the parser sees an inlined
-version of the file. You can use 'cylc inline SUITE' to trace errors to
+version of the file. You can use 'cylc prep inline SUITE' to trace errors to
 the correct source line, although the extra information reported by the
 validator should be sufficient to make this unnecessary.
 

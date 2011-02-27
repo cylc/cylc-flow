@@ -4,14 +4,14 @@ import os, re, sys
 from optparse import OptionParser
 from registration import localdb, centraldb, unqualify, RegistrationError
 
-parser = OptionParser( usage = """cylc export [FILTER options]
+parser = OptionParser( usage = """cylc registration export [FILTER options]
 
 Export your registered suites to the central suite database.
 
 See also:
-    cylc centraldb - view and delete central suite registrations
-    cylc import    - import suites from the central suite database
-    cylc register  - manage your local suite registrations""" )
+    cylc reg centraldb - view and delete central suite registrations
+    cylc reg import    - import suites from the central suite database
+    cylc reg register  - manage your local suite registrations""" )
 
 parser.add_option( "-g", "--group",
         help="Group filter Regular Expression.",

@@ -20,8 +20,8 @@
 
 usage() {
     echo ""
-    echo "USAGE: 1/ cylc wrap COMMAND ARGS"
-    echo '       2/ cylc wrap --multi="COM1 ARGS1; COM2 ARGS; ..."'
+    echo "USAGE: 1/ cylc task wrap COMMAND ARGS"
+    echo '       2/ cylc task wrap --multi="COM1 ARGS1; COM2 ARGS; ..."'
 }
 
 usage2() {
@@ -59,11 +59,11 @@ if [[ $1 == '-h' ]] || [[ $1 == '--help' ]]; then
 fi
 
 # SEND THE STARTUP MESSAGE
-cylc task-started || exit 1
+cylc task started || exit 1
 
 if (( $# == 0 )); then
     usage
-    cylc task-failed "cylc wrap: no task to wrap"
+    cylc task failed "cylc task wrap: no task to wrap"
     exit 1
 fi
 
@@ -88,9 +88,9 @@ fi
 
 if $success; then
     # SUCCEEDED
-    cylc task-message --all-outputs-completed
-    cylc task-finished
+    cylc task message --all-outputs-completed
+    cylc task finished
 else
     # FAILED
-    cylc task-failed 
+    cylc task failed 
 fi

@@ -11,7 +11,7 @@ debug = True
 
 class coldstart( scheduler ):
     def __init__( self ):
-        usage = """cylc coldstart [options] SUITE YYYYMMDDHHH
+        usage = """cylc control coldstart [options] SUITE YYYYMMDDHHH
 
 COLD START a suite at a specified cycle time. To get the suite up and
 running there should a oneoff cold start task for every task that
@@ -31,13 +31,13 @@ time for the task, including designated cold start tasks:
 
 NOTE: to prevent a suite being killed when you log out: 
   $ export PYTHONUNBUFFERED=true   # (*)
-  $ nohup cylc warmstart SUITE YYYYMMDDHH
+  $ nohup cylc control warmstart SUITE YYYYMMDDHH
 (*) with nohup, stdout buffering can result in no output until shutdown.
 
 See also:
-    cylc warmstart
-    cylc rawstart
-    cylc restart
+    cylc control warmstart
+    cylc control rawstart
+    cylc control restart
 
 Arguments:
    SUITE                Registered name of the suite to start.

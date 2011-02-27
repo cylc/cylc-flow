@@ -6,13 +6,13 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc insert [options] SUITE ID
+parser = PromptOptionParser( """cylc control insert [options] SUITE ID
 
 Insert a single task or a task group into a running suite. Task groups must be
 defined in the suite config (suite.rc) file.
 
 Inserted tasks will spawn successors as normal, unless they are 'oneoff' tasks.
-See also 'cylc submit', for running single tasks without a scheduler.""",
+See also 'cylc task submit', for running single tasks without a scheduler.""",
 [ 'ID                   Identity of a task or group to insert (NAME%YYYYMMDDHH)']
 )
 

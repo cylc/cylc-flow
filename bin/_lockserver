@@ -93,7 +93,7 @@ class lockserver( Pyro.core.ObjBase ):
         Pyro.core.ObjBase.__init__(self)
 
         # pid file is passed through to here purely so it can be
-        # retrieved by user request, through 'cylc lockclient -f'.
+        # retrieved by user request, through 'cylc con lockclient -f'.
         self.owner = owner
         self.port = port
         self.pid_file = pid_file
@@ -217,7 +217,7 @@ class lockserver( Pyro.core.ObjBase ):
                     self.release_suite_access( suitedir, group )
 
         # release task locks with no associated suite lock
-        # (acquired manually, or through 'cylc submit').
+        # (acquired manually, or through 'cylc task submit').
         for lock in self.locked.keys():
             ( group, id ) = lock.split( ':' )
             if self.get_lock_owner( group ) == user:
@@ -358,7 +358,7 @@ if __name__ == "__main__":
     cylcdir = os.environ[ 'CYLC_DIR' ]
     configfile =  os.path.join( cylcdir, 'conf/lockserver.conf' )
 
-    usage = """Usage: cylc lockserver [-f CONFIG] ACTION 
+    usage = """Usage: cylc control lockserver [-f CONFIG] ACTION 
 
 The cylc lockserver daemon brokers suite and task locks for a single
 user.  The command line user interface for interrogating the daemon, and

@@ -6,10 +6,10 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc remove [options] SUITE [TASK_ID] [CYCLE]
+parser = PromptOptionParser( """cylc control remove [options] SUITE [TASK_ID] [CYCLE]
 
 Remove a task, or all tasks with a given cycle time, from a running
-suite. See also 'cylc purge'.
+suite. See also 'cylc control purge'.
 
 The target task will be forced to a spawn successor, if it has
 not done so already, before being removed, unless you specify the

@@ -11,7 +11,7 @@ debug = True
 
 class warmstart( scheduler ):
     def __init__( self ):
-        usage = """cylc warmstart [options] SUITE YYYYMMDDHH
+        usage = """cylc control warmstart [options] SUITE YYYYMMDDHH
 
 WARM START a suite at a specified cycle time. This assumes that there
 was a previous cycle (from a previous suite run - in which case a
@@ -27,13 +27,13 @@ start task list must be defined in the suite config file:
   
 NOTE: to prevent a suite being killed when you log out: 
   $  export PYTHONUNBUFFERED=true   # (*)
-  $  nohup cylc warmstart SUITE YYYYMMDDHH
+  $  nohup cylc con warmstart SUITE YYYYMMDDHH
 (*) with nohup, stdout buffering can result in no output until shutdown.
 
 See also:
-    cylc coldstart
-    cylc rawstart
-    cylc restart
+    cylc con coldstart
+    cylc con rawstart
+    cylc con restart
 
 Arguments:
    SUITE                Registered name of the suite to start.

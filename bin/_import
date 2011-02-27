@@ -13,7 +13,7 @@ from registration import localdb, centraldb, regsplit, RegistrationError
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
-parser = OptionParser( usage = """cylc import [FILTER options] [DEST]
+parser = OptionParser( usage = """cylc registration import [FILTER options] [DEST]
 
 Import suites from the central suite database to your local suite 
 registration database, and optionally copy their suite definitions.
@@ -31,9 +31,9 @@ By default the central GROUPS and NAMES will be retained, but you can
 use '-a,--as' or '-t,--to' to change this.
 
 See also:
-    cylc centraldb - view and unregister central suite registrations
-    cylc export    - export suites to the central suite database
-    cylc register  - manage your local suite registrations""" )
+    cylc reg centraldb - view and unregister central suite registrations
+    cylc reg export    - export suites to the central suite database
+    cylc reg register  - manage your local suite registrations""" )
 
 parser.add_option( "-o", "--owner",
         help="Owner filter Regular Expression.",

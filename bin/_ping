@@ -7,7 +7,7 @@ from passphrase import passphrase
 from registration import unqualify, RegistrationError
 import port_scan
 
-parser = OptionParser( """cylc ping [options] SUITE
+parser = OptionParser( """cylc control ping [options] SUITE
     
 Check that SUITE is running. 
 

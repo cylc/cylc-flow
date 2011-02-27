@@ -7,16 +7,16 @@ from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 from CylcError import CylcError
 
-parser = PromptOptionParser( """cylc trigger [options] SUITE TASK
+parser = PromptOptionParser( """cylc control trigger [options] SUITE TASK
 
 Force a task to trigger immediately (unless the suite is paused, 
 in which case it will trigger when normal operation is resumed).
 This is just a special case of the 'reset' command.
 
 See also:
-   cylc reset
-   cylc pause
-   cylc resume""",
+   cylc con reset
+   cylc con pause
+   cylc con resume""",
 [ 'TASK              NAME%YYYYMMDDHH - the task to trigger.'] )
 
 (options, args) = parser.parse_args()

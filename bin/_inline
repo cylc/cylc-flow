@@ -62,7 +62,7 @@ def include_files( suitedir, inf, mark=False, single=False, label=False, level=N
             outf.append(level + line)
     return outf
 
-parser = OptionParser( """cylc inline [options] SUITE 
+parser = OptionParser( """cylc preparation inline [options] SUITE 
 
 View a temporary copy of a suite config (suite.rc) file in your $EDITOR
 exactly as the config file parser sees it: with include-files inlined
@@ -72,16 +72,16 @@ line number (suite validation is sufficiently informative, however, that
 you should not need to do this).
 
 If you want to edit the suite, in inlined form or not, or to view it
-without inlined include-files, use the 'cylc edit' command.
+without inlined include-files, use the 'cylc prep edit' command.
 
 The viewer process is spawned in the foreground as follows:
   $EDITOR <temporary inlined file in $TMPDIR>
 (You must have $EDITOR and $TMDPIR defined in your shell environment). 
 
 See also:
-    cylc grep
-    cylc edit
-    cylc validate
+    cylc prep grep
+    cylc prep edit
+    cylc prep validate
 
 Arguments:
   SUITE   - registered name of the suite.""")
@@ -192,5 +192,5 @@ if modtime2 > modtime1:
     print >> sys.stderr, 'WARNING: YOU HAVE EDITED THE TEMPORARY READ-ONLY SUITE.RC COPY, IF'
     print >> sys.stderr, 'YOU WANT TO RETAIN THE CHANGES, EXTRACT THEM FROM THE FILE HERE:'
     print >> sys.stderr, inlined
-    print >> sys.stderr, 'In future, to *edit* a suite use \'cylc edit\', not \'cylc inline\'.'
+    print >> sys.stderr, 'In future, to *edit* a suite use \'cylc prep edit\', not \'cylc prep inline\'.'
     print

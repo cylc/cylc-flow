@@ -9,22 +9,22 @@ import cylc_pyro_client
 from CylcOptionParsers import NoPromptOptionParser_u
 from port_scan import SuiteIdentificationError
 
-parser = NoPromptOptionParser_u( """cylc dump [options] SUITE 
+parser = NoPromptOptionParser_u( """cylc control dump [options] SUITE 
 
 Print suite and task state information to stdout. All available
 information is printed by default. Output is designed to be
-grep-friendly. For small suites 'watch cylc dump SUITE' is an 
+grep-friendly. For small suites 'watch cylc con dump SUITE' is an 
 effective non-gui real time monitor.
 
 For more information about a specific task, such as the current 
-state of each registered prerequisite and output, see 'cylc show'.
+state of each registered prerequisite and output, see 'cylc con show'.
 
 Examples:
  Display the state of all running tasks, sorted by cycle time:
- % cylc dump -ts SUITE | grep running
+ % cylc con dump -ts SUITE | grep running
 
  Display the state of all tasks in a particular cycle:
- % cylc dump -t SUITE | grep 2010082406""")
+ % cylc con dump -t SUITE | grep 2010082406""")
 
 parser.add_option( "-g", "--global", help="Global information only.",
         action="store_true", default=False, dest="global_only" )

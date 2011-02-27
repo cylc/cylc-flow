@@ -17,9 +17,7 @@ parser = OptionParser( usage )
 ( options, args ) = parser.parse_args()
 
 if len( args ) != 0:
-    print >> sys.stderr, "WARNING: ignoring task-finished arguments:"
-    for arg in args:
-        print sys.stderr, arg
+    parser.error( "Wrong number of arguments" )
 
 if not cylc_mode.mode().is_raw():
     try:

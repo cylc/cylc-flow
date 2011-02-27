@@ -1,8 +1,8 @@
 #!/bin/bash
 
-set -e; trap 'cylc task-failed "error trapped"' ERR
+set -e; trap 'cylc failed "error trapped"' ERR
 
-cylc task-started
+cylc started
 
 cylc checkvars  TASK_EXE_SECONDS
 cylc checkvars -d INPUT_DIR
@@ -13,7 +13,7 @@ ONE=$INPUT_DIR/precipitation-${CYCLE_TIME}.nc
 TWO=$RUNNING_DIR/C-${CYCLE_TIME}.restart
 for PRE in $ONE $TWO; do
     if [[ ! -f $PRE ]]; then
-        cylc task-failed "ERROR, file not found $PRE"
+        cylc failed "ERROR, file not found $PRE"
         exit 1
     fi
 done
@@ -30,10 +30,10 @@ touch $RUNNING_DIR/C-$(cylc cycletime --add=18).restart
 # model outputs
 touch $OUTPUT_DIR/river-flow-${CYCLE_TIME}.nc
 
-cylc task-message "river flow outputs done for $CYCLE_TIME"
+cylc message "river flow outputs done for $CYCLE_TIME"
 
 sleep $TASK_EXE_SECONDS
 
 echo "Goodbye"
 
-cylc task-finished
+cylc finished

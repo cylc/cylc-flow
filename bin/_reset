@@ -7,7 +7,7 @@ from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 from CylcError import CylcError
 
-parser = PromptOptionParser( """cylc reset [options] SUITE TASK
+parser = PromptOptionParser( """cylc control reset [options] SUITE TASK
 
 Force a task's state to:
  1/ 'ready' ...... all prerequisites satisfied (default) 
@@ -20,9 +20,9 @@ the suite is paused, in which case the task will trigger when normal
 operation is resumed.
 
 See also:
-   cylc trigger
-   cylc pause
-   cylc resume""",
+   cylc control trigger
+   cylc control pause
+   cylc control resume""",
 [ 'TASK              NAME%YYYYMMDDHH - the task to reset.'] )
 
 parser.add_option( "--waiting", 

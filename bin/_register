@@ -13,7 +13,7 @@ from config import config, SuiteConfigError
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
-parser = OptionParser( usage = """cylc register [options] [arguments]
+parser = OptionParser( usage = """cylc register create [options] [arguments]
 
 Create and cylc suite registrations, which associate a suite name with a
 suite definition directory (stored in $HOME/.cylc/registrations). Cylc
@@ -22,7 +22,7 @@ commands target a particular suite using its registered name.
 NOTE: deleting a suite registration does not delete the suite itself!
 
 1/ Create a new suite registration:
-     $ cylc reg SUITE PATH
+     $ cylc reg cre SUITE PATH
 
 Arguments:
      SUITE  -  GROUP:NAME or NAME (in the 'default' group)
