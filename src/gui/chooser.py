@@ -335,13 +335,9 @@ class chooser(object):
 
         edit_item = gtk.MenuItem( 'Edit' )
         menu.append( edit_item )
-        edit_item.connect( 'activate', self.edit_suite, name )
+        edit_item.connect( 'activate', self.edit_suite_popup, name )
 
-        edit_item = gtk.MenuItem( 'Edit Inlined' )
-        menu.append( edit_item )
-        edit_item.connect( 'activate', self.edit_suite, name, True )
-
-        edit_item = gtk.MenuItem( 'View Inlined' )
+        edit_item = gtk.MenuItem( 'Inline' )
         menu.append( edit_item )
         edit_item.connect( 'activate', self.inline_suite_popup, name )
 
@@ -496,7 +492,7 @@ class chooser(object):
     def inline_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Inline Viewing Options for '" + reg + "'")
+        window.set_title( "Inlining Options for '" + reg + "'")
 
         vbox = gtk.VBox()
         box = gtk.HBox()
@@ -514,7 +510,7 @@ class chooser(object):
 
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
-        ok_button = gtk.Button( "View" )
+        ok_button = gtk.Button( "Launch Editor" )
         ok_button.connect("clicked", self.inline_suite, reg,
                 mark_cb, label_cb, nojoin_cb, single_cb  )
 
@@ -530,7 +526,37 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def edit_suite( self, w, reg, inlined=False ):
+    def edit_suite_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Suite Editing Options for '" + reg + "'")
+
+        vbox = gtk.VBox()
+        box = gtk.HBox()
+
+        inlined_cb = gtk.CheckButton( "Inlined" )
+        box.pack_start (inlined_cb, True)
+        vbox.pack_start( box )
+
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+        ok_button = gtk.Button( "Launch Editor" )
+        ok_button.connect("clicked", self.edit_suite, reg, inlined_cb  )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def edit_suite( self, w, reg, inlined_cb ):
+        inlined = inlined_cb.get_active()
         if inlined:
             extra = '-i '
         else:
