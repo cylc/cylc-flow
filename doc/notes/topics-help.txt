@@ -1,0 +1,68 @@
+topic_help = {}
+topic_help[ 'security' ] = """
+Cylc commands allow only the suite owner to intervene in a running suite.
+
+The cylc lockserver prevents accidental simultaneous runs of the same
+suite (unless the suite allows it) even if it is registered under
+several names, or of the same task at the same cycle time (even by
+single task submit).
+
+Suite blocking guards against inadvertent intervention in your own suites,
+but it can be annoying so it is disabled by default. To turn blocking on:
+ + SUITE.RC: use suite blocking = True
+
+A secure passphrase prevents other users from accessing your suite even
+if they hack command source code to subvert the owner-only restriction.
+ + SUITE.RC: use secure passphrase = True
+The passphrase must be stored in $HOME/.cylc/security/[SUITE_NAME] with
+private file permissions, or cylc will refuse to run the suite. If your
+suite contains tasks that run on a remote host or under another
+username, those accounts must also hold the passphrase. The passphrase
+is never sent across the network; a secure md5 checksum is exchanged."""
+
+topic_help[ 'gui' ] = """
+The cylc Graphical User Interface is 'gcylc'. It starts an app from
+which you can manage suite registrations and choose which suites to
+edit, graph, or run, etc., or direct suite control apps for particular
+suites.  For help, see the GUI 'help' menu items and buttons."""
+
+topic_help[ 'alerting' ] = """
+Cylc can call a designated alert script on any of the following events:
+ + a task is submitted
+ + a task fails to submit
+ + a task times out in job submission
+ + a task starts running
+ + a task finishes successfully
+ + a task fails to finish successfully
+ + a task times out in execution.
+
+Alert scripts can be configured for the suite as a whole and/or on a per
+task basis. This can be used to send an email or an SMS to operation
+support staff, update task status in a dedicated monitoring system such
+as Nagios, or whatever you like. See suite config (suite.rc)
+documentation for configuration details."""
+
+topic_help['registration'] = """
+A cylc suite must be registered in your local (user-specific)
+registration database before you can use it. This associates a name
+with the suite definition directory so that you can target the suite by
+name when you run it and so on. In addition, suite names can be
+organized into groups, for example:
+    foo
+    nwp:oper1
+    nwp:oper2
+    test:a
+Suite names without a group prefix are implicitly in the 'default' group.
+
+Registered suites can also be exported to, or imported from, the central
+suite database, to enable easy sharing of suites between users.
+
+Access to the central database is currently local to the cylc host
+machine; the database is read anew each time it is accessed, and any
+transactions that change it acquire a database lock that prevents any
+other non-readonly access for the very short time between data load and
+unload. In the future we may use database server akin to the cylc
+lockserver that can serve suites across the network and will not require
+locking."""
+
+

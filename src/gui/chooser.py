@@ -435,8 +435,8 @@ class chooser(object):
         
         outputfile_entry = gtk.Entry()
         if not self.cdb:
-            owner_entry.set_sensitive( False )
-        box.pack_start (owner_entry, True)
+            outputfile_entry.set_sensitive( False )
+        box.pack_start (outputfile_entry, True)
  
         box.pack_start (warm_cb, True)
         vbox.pack_start( box )
