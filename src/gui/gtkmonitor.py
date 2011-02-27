@@ -117,14 +117,18 @@ class monitor(object):
             coldstart_rb, warmstart_rb, rawstart_rb, restart_rb,
             entry_ctime, stoptime_entry, statedump_entry, optgroups ):
 
+        command = 'cylc control start'
+        options = ''
         if coldstart_rb.get_active():
-            command = 'cylc coldstart'
+            pass
         elif warmstart_rb.get_active():
-            command = 'cylc warmstart'
+            options += ' -w'
         elif rawstart_rb.get_active():
-            command = 'cylc rawstart'
+            options += ' -r'
         elif restart_rb.get_active():
-            command = 'cylc restart'
+            command = 'cylc control restart'
+
+        command += ' ' + options + ' '
 
         if stoptime_entry.get_text():
             command += ' --until=' + stoptime_entry.get_text()
@@ -133,13 +137,9 @@ class monitor(object):
 
         for group in optgroups:
             command += group.get_options()
-
-        print command
-
         window.destroy()
 
         command += ' ' + self.suite + ' ' + ctime
-
         if restart_rb.get_active():
             if statedump_entry.get_text():
                 command += ' ' + statedump_entry.get_text()
