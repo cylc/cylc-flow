@@ -423,31 +423,40 @@ class chooser(object):
         window.set_title( "Suite Graph Options for '" + reg + "'")
 
         vbox = gtk.VBox()
-        box = gtk.HBox()
 
         # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
         warm_cb = gtk.CheckButton( "Warm Start" )
         #runtime_cb = gtk.CheckButton( "Runtime Graph" )
-        box.pack_start (warm_cb, True)
+        vbox.pack_start (warm_cb, True)
 
+        label = gtk.Label("Output File" )
         outputfile_entry = gtk.Entry()
-        box.pack_start (outputfile_entry, True)
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(outputfile_entry, True) 
+        vbox.pack_start( hbox )
  
+        label = gtk.Label("Start Hour" )
         start_entry = gtk.Entry()
         start_entry.set_text( '0' )
-        box.pack_start (start_entry, True)
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(start_entry, True) 
+        vbox.pack_start(hbox)
 
+        label = gtk.Label("Stop Hour" )
         stop_entry = gtk.Entry()
         stop_entry.set_text( '6' )
-        box.pack_start (stop_entry, True)
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(stop_entry, True) 
+        vbox.pack_start (hbox, True)
   
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "Graph" )
         ok_button.connect("clicked", self.graph_suite, reg,
                 warm_cb, outputfile_entry, start_entry, stop_entry )
-
-        vbox.pack_start( box )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
