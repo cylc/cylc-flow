@@ -23,7 +23,7 @@ echo
 echo " + Exporting examples suites to the central database"
 # Export the example suites to the central database.
 # This will create the new database file.
-cylc export cylc:
+cylc export -g cylc
 
 echo
 echo " + Setting central database permissions"
