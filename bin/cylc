@@ -183,10 +183,6 @@ USAGE:
   cylc [CATEGORY] COMMAND help,--help             # command-specific help
   cylc [CATEGORY] COMMAND [options] SUITE [args]  # command usage syntax"""
 
-command_usage = """
-USAGE: cylc [CATEGORY] COMMAND help,--help
-       cylc help"""
-
 # topic summaries
 catsum = OrderedDict()
 catsum['database'    ] = "manage local and central suite registrations."
@@ -196,28 +192,24 @@ catsum['control'     ] = "running, controlling, and monitoring suites."
 catsum['task'        ] = "single-task submission, task wrapping, and messaging."
 catsum['utility'     ] = "cycle time arithmetic, filename templating, etc."
 
-usage = """
-This is the command line interface to cylc ('silk'), a metascheduler for
-complex forecasting suites; the graphical interface is gcylc.
+# was in help doc:
+##Cylc suites are not artificially grouped by forecast cycle; tasks from
+##multiple cycles run at once, during catchup operation, to the maximum
+##extent allowed by the suite dependency graph.
 
-Cylc can schedule tasks optimally, according to the suite dependency
-graph, with maximum functional parallelism and without any artificial
-grouping by forecast cycle, in real time or catchup operation (the
-former emerges seamlessly from the latter as a cylc suite runs).
+usage = """
+This is the command line interface to the cylc ('silk') forecast suite
+metascheduler. ***The cylc graphical user interface is gcylc***.
 
 Version: """ + cylc_version + """
 """ + general_usage + """
 
-The cylc command set is quite large because it encompasses a wide range
-of functionality, and it is intended that each suite operation should be
-accessed via a distinct and obvious command. However, the command set is
-self-documenting and organised into categories that are meant to convey
-the realm of applicability of member commands. Categories can be used in 
-command invocation as well, but can be omitted if you like. You can use
-any unique abbreviation for a COMMAND or CATEGORY: 
-  $ cylc help prep .......... (category: preparation)
-  $ cylc da reg [ARGS] ...... (category: database; command: register) 
-  $ cylc reg [ARGS] ......... (category: database; command: register) 
+The cylc command set is organised into categories to help elucidate
+available functionality. Categories can optionally be omitted in command
+invocation. Any unique abbreviation can be used for a COMMAND or CATEGORY: 
+  $ cylc help prep ............ (category: preparation)
+  $ cylc [datab] reg [ARGS] ... (category: database; command: register) 
+  $ cylc reg [ARGS] ........... (category: database; command: register) 
 
 Command CATEGORIES (which include lists of relevant COMMANDS):"""
 
@@ -314,7 +306,10 @@ if len( sys.argv ) == 3 and \
 
     else:
         print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
-        print 
+        print
+        print 'USAGE: cylc [' + category + '] COMMAND help,--help'
+        print 'You can abbreviate "' + category + '" and COMMAND; "' + category + '" may be omitted.'
+        print
         print 'COMMANDS:'
         commands = eval( category + '_commands')
         pretty_print( comsum, choose=commands )
