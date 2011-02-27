@@ -431,21 +431,27 @@ class chooser(object):
 
         # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
         warm_cb = gtk.CheckButton( "Warm Start" )
-        runtime_cb = gtk.CheckButton( "Runtime Graph" )
-        
+        #runtime_cb = gtk.CheckButton( "Runtime Graph" )
+        box.pack_start (warm_cb, True)
+
         outputfile_entry = gtk.Entry()
-        if not self.cdb:
-            outputfile_entry.set_sensitive( False )
         box.pack_start (outputfile_entry, True)
  
-        box.pack_start (warm_cb, True)
-        vbox.pack_start( box )
+        start_entry = gtk.Entry()
+        start_entry.set_text( '0' )
+        box.pack_start (start_entry, True)
 
+        stop_entry = gtk.Entry()
+        stop_entry.set_text( '6' )
+        box.pack_start (stop_entry, True)
+  
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
-        ok_button = gtk.Button( "View" )
-        ok_button.connect("clicked", self.inline_suite, reg,
-                mark_cb, label_cb, nojoin_cb, single_cb  )
+        ok_button = gtk.Button( "Graph" )
+        ok_button.connect("clicked", self.graph_suite, reg,
+                warm_cb, outputfile_entry, start_entry, stop_entry )
+
+        vbox.pack_start( box )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -459,24 +465,33 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
+    def graph_suite( self, w, reg, warm_cb, outputfile_entry, start_entry, stop_entry ):
+        start = start_entry.get_text()
+        stop = stop_entry.get_text()
+        for h in start, stop:
+            try:
+                int(h)
+            except:
+                warning_dialog( "Hour must convert to integer: " + h ).warn()
+                return False
 
-        # fake a full cycle time
-        hour = '00'
-        stop = '06'
-        raw = False
-        #ctime = '29990101' + hour
-        #window = MyDotWindow( reg, ctime, stop, raw, None )
-        #window.parse_graph()
-        #?window.show_all()
+        options = ''
+
+        ofile = outputfile_entry.get_text()
+        if ofile != '':
+            options += ' -o ' + ofile
+
+        if warm_cb.get_active():
+            options += ' -w '
+
+        if self.cdb:
+            options += ' -c '
 
         # TO DO 1/ use non-shell non-blocking launch here?
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
-        if self.cdb:
-            call( 'capture "_graph -c ' + reg + ' ' + hour + ' ' + stop + '" &', shell=True )
-        else:
-            call( 'capture "_graph ' + reg + ' ' + hour + ' ' + stop + '" &', shell=True )
+        call( 'capture "_graph ' + options + ' ' + reg + ' ' + start + ' ' + stop + '" &', shell=True )
 
     def inline_suite_popup( self, w, reg ):
         window = gtk.Window()
