@@ -99,11 +99,9 @@ categories = \
 
 control_commands = \
     [
-    'coldstart',
-    'warmstart',
-    'rawstart',
-    'restart',
+    'start',
     'stop',
+    'restart',
     'trigger',
     'insert',
     'remove',
@@ -194,7 +192,7 @@ catsum = OrderedDict()
 catsum['database'    ] = "manage local and central suite registrations."
 catsum['preparation' ] = "editing, searching, and graphing suites."
 catsum['discover'    ] = "finding out what suites are running."
-catsum['control'     ] = "starting, stopping, and controlling cylc suites."
+catsum['control'     ] = "running, controlling, and monitoring suites."
 catsum['task'        ] = "single-task submission, task wrapping, and messaging."
 catsum['utility'     ] = "cycle time arithmetic, filename templating, etc."
 
@@ -240,11 +238,9 @@ comsum[ 'validate'  ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'graph'     ] = 'A dependency graph viewer that updates as you edit'
 comsum[ 'grep'      ] = 'An intelligent search tool for cylc suites'
 comsum[ 'inline'    ] = 'View suite.rc files in $EDITOR, include-files inlined'
-comsum[ 'coldstart' ] = 'Cold start a suite at a given cycle time'
-comsum[ 'warmstart' ] = 'Warm start a suite at a given cycle time'
-comsum[ 'rawstart'  ] = 'Raw start a suite at a given cycle time'
-comsum[ 'restart'   ] = 'Restart a suite from a previous state'
+comsum[ 'start'     ] = 'Cold, warm, or raw start a suite at a given cycle time'
 comsum[ 'stop'      ] = 'Shut down a running suite (now or later)'
+comsum[ 'restart'   ] = 'Restart a suite from a previous state'
 comsum[ 'trigger'   ] = 'Manually trigger a task in a running suite'
 comsum[ 'insert'    ] = 'Insert a task or group into a running suite'
 comsum[ 'remove'    ] = 'Remove a task from a running suite'
@@ -260,7 +256,7 @@ comsum[ 'list'      ] = 'Print a suite\'s configured task list'
 comsum[ 'ping'      ] = 'Check that a named suite is running'
 comsum[ 'scan'      ] = 'Scan a host for running cylc suites'
 comsum[ 'log'       ] = 'Print or view suite logs, with filtering'
-comsum[ 'tmon'      ] = 'A terminal-based suite monitor (deprecated)'
+comsum[ 'tmon'      ] = 'An in-terminal suite monitor (deprecated, see gcylc)'
 comsum[ 'submit'    ] = 'Run a single task just as its parent suite would'
 comsum[ 'lockserver'] = 'Lockserver interrogation and lock management'
 comsum[ 'verbosity' ] = 'Change a suite\'s logging verbosity level'

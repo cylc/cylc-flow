@@ -1,0 +1,212 @@
+#!/usr/bin/env python
+
+import sys
+from optparse import OptionParser
+
+import cycle_time
+from scheduler import scheduler
+
+global debug
+debug = True
+
+class start( scheduler ):
+    def __init__( self ):
+        usage = """cylc [control] start [options] SUITE YYYYMMDDHHH
+
+COLD (default), WARM, or RAW START a suite at a specified cycle time.
+
+COLDSTART:
+    To get the suite up and running there should a oneoff cold start
+task for every task that normally depends on outputs from a previous
+cycle (principally the restart dependencies of warm cycled forecast
+models).  Cold start tasks can run real processes (e.g. a special
+forecast to generate the initial restart files for a warm cycled model)
+or, with no task command defined, just act as a dummy proxy for some
+external process that has to occur before the suite is started (e.g. a
+spinup experiment of some kind).  For a suite with no intercycle
+dependencies there is no distinction between the cold, warm, and raw
+start methods.  Each task proxy is inserted in the 'waiting' state (i.e.
+prerequisites not satisfied) at the initial cycle time, or at the next
+valid cycle time for the task, including designated cold start tasks:
+  SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
+
+WARMSTART:
+    This assumes that there was a previous cycle (from a previous suite
+run - in which case a restart may be more appropriate) or that files
+required from previous cycles have been put in place by some other
+means. For a suite with no intercycle dependencies (=> no warm cycled
+forecast models) there is no distinction between the cold, warm, and raw
+start methods. Startup is as for a cold start, except that designated
+cold start tasks are inserted in the 'finished' state (i.e. outputs
+completed). The cold start task list must be defined in the suite config
+file:
+  SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
+
+RAWSTART:
+    This starts the suite as if in mid run - any tasks that depend on
+previous cycles will have to be triggered manually. For a suite with no
+intercycle dependencies (=> no warm cycled forecast models) there is no
+distinction between the cold, warm, and raw start methods. Startup is as
+for a cold start, except that designated cold start tasks are excluded
+from the suite. The cold start task list must be defined in the suite
+config file:
+  SUITE.RC: [special tasks] -> coldstart = task1, task2, ...
+ 
+NOTE: to prevent a suite being killed when you log out: 
+  $ export PYTHONUNBUFFERED=true   # (*)
+  $ nohup cylc control warmstart SUITE YYYYMMDDHH
+(*) with nohup, stdout buffering can result in no output until shutdown.
+
+See also:
+    cylc [control] restart
+    cylc [control] stop
+
+Arguments:
+   SUITE                Registered name of the suite to start.
+   YYYYMMDDHH           Initial cycle time.""" 
+
+        self.parser = OptionParser( usage )
+
+        self.parser.add_option( "-w", "--warm", help="Warm start the suite",
+        action="store_true", default=False, dest="warm" )
+
+        self.parser.add_option( "-r", "--raw", help="Raw start the suite",
+        action="store_true", default=False, dest="raw" )
+
+        scheduler.__init__( self )
+
+    def parse_commandline( self ):
+        ( self.options, self.args ) = self.parser.parse_args()
+        if len( self.args ) != 2:
+            self.parser.error( "Please supply a suite name and initial cycle time." )
+
+        if cycle_time.is_valid( self.args[1] ):
+            self.start_time = self.args[1]
+        else:
+            self.parser.error( "Invalid cycle time: " + self.args[1])
+
+        scheduler.parse_commandline( self )
+
+        global debug
+        debug = self.options.debug
+
+        if self.options.warm:
+            self.banner[ "WARM START" ] = self.start_time
+            self.load_tasks = self.load_tasks_warm
+        elif self.options.raw:
+            self.banner[ "RAW START" ] = self.start_time
+            self.load_tasks = self.load_tasks_raw
+        else:
+            self.banner[ "COLD START" ] = self.start_time
+            self.load_tasks = self.load_tasks_cold
+
+    def load_tasks_cold( self ):
+        self.log.info( 'Cold Start ' + self.start_time )
+
+        # set clock before using log (affects dummy mode only)
+        self.clock.set( self.start_time )
+
+        task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
+    
+        for name in task_list:
+            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=True )
+            # check stop time in case the user has set a very quick stop
+            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                # we've reached the stop time already: delete the new task 
+                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                itask.prepare_for_death()
+                del itask
+            else:
+                self.insert( itask )
+
+    def load_tasks_warm( self ):
+        self.log.info( 'Warm Start ' + self.start_time )
+
+        # set clock before using log (affects dummy mode only)
+        self.clock.set( self.start_time )
+
+        task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
+        coldstart_tasks = self.config.get_coldstart_task_list()
+        if len( coldstart_tasks ) == 0:
+            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
+
+        for name in task_list:
+            # (startup=True is only for coldstart)
+            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=False )
+            if name in coldstart_tasks:
+                itask.log( 'WARNING', "warm start: starting in finished state" )
+                itask.state.set_status( 'finished' )
+                itask.prerequisites.set_all_satisfied()
+                itask.outputs.set_all_complete()
+            # check stop time in case the user has set a very quick stop
+            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                # we've reached the stop time already: delete the new task 
+                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                itask.prepare_for_death()
+                del itask
+            else:
+                self.insert( itask )
+
+    def load_tasks_raw( self ):
+        self.log.info( 'Raw Start ' + self.start_time )
+        
+        # set clock before using log (affects dummy mode only)
+        self.clock.set( self.start_time )
+
+        task_list = self.filter_initial_task_list( self.config.get_task_name_list() )
+        coldstart_tasks = self.config.get_coldstart_task_list()
+        if len( coldstart_tasks ) == 0:
+            self.log.warning( "THIS SUITE HAS NOT DEFINED THE 'coldstart task list' CONFIG ITEM" )
+
+        for name in task_list:
+            # startup=True only for coldstart
+            itask = self.config.get_task_proxy( name, self.start_time, 'waiting', startup=False )
+            if name in coldstart_tasks:
+                itask.log( 'WARNING', "This is a raw start: I will self-destruct." )
+                itask.prepare_for_death()
+                del itask
+                continue
+            # check stop time in case the user has set a very quick stop
+            if self.stop_time and int( itask.c_time ) > int( self.stop_time ):
+                # we've reached the stop time already: delete the new task 
+                itask.log( 'WARNING', "STOPPING at configured stop time " + self.stop_time )
+                itask.prepare_for_death()
+                del itask
+                continue
+            self.insert( itask )
+
+if __name__ == '__main__':
+    try:
+        server = start()
+    except Exception, x:
+        if debug:
+            raise
+        else:
+            print x
+            print "(use --debug to see exception traceback)"
+            sys.exit(1)
+    try:
+        server.run()
+        #   For profiling:
+        #import cProfile
+        #cProfile.run( 'server.run()', 'fooprof' )
+        #   and see Python docs "The Python Profilers"
+        #   for how to display the resulting stats.
+    except Exception, x:
+        print "ERROR CAUGHT, will clean up before exit"
+        # this assumes no exceptions in shutdown()
+        server.shutdown()
+
+        if debug:
+            raise
+        else:
+            print "THE ERROR WAS:"
+            print x
+            print "(use --debug to see exception traceback)"
+            sys.exit(1)
+    except:
+        # catch 'sys.exit(1)' and 'raise SystemExit("foo")'
+        # TO DO: check these can actually be caught
+        print "ERROR CAUGHT; will clean up before exit"
+        server.shutdown()
+        raise
