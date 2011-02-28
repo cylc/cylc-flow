@@ -124,6 +124,7 @@ def scan( host, passphrase=None, verbose=True ):
 def scan_my_suites( host ):
     # return a list of my suites running on host
     reg = localdb()
+    reg.load_from_file()
     suites = []
     for reg_suite, dir, descr in reg.get_list():
         # loop through all my registered suites
