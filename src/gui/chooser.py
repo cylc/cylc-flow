@@ -309,6 +309,7 @@ class chooser(object):
         name = model.get_value( iter, 0 )
         suite_dir = model.get_value( iter, 1 )
         state = model.get_value( iter, 2 ) 
+        descr = model.get_value( iter, 6 )
 
         m = re.match( 'RUNNING \(port (\d+)\)', state )
         port = None
@@ -356,7 +357,7 @@ class chooser(object):
 
             exp_item = gtk.MenuItem( 'Export' )
             menu.append( exp_item )
-            exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir )
+            exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir, descr )
 
         del_item = gtk.MenuItem( 'Delete' )
         menu.append( del_item )
@@ -398,34 +399,22 @@ class chooser(object):
         local.unlock()
         local.dump_to_file()
 
-    def export_suite_popup( self, w, name, dir ):
-        #local = localdb()
-        #local.load_from_file()
-        #try:
-        #    dir,descr = local.get( reg )
-        #except RegistrationError, x:
-        #    warning_dialog( str(x) ).warn()
-        #    return False
-
+    def export_suite_popup( self, w, reg, dir, descr ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Export '" + name + "' to central database")
+        window.set_title( "Export '" + reg + "' to central database")
 
         vbox = gtk.VBox()
-        box = gtk.HBox()
-        label = gtk.Label( 'Owner' )
-        box.pack_start( label, True )
-        owner_entry = gtk.Entry()
-        if not self.cdb:
-            owner_entry.set_text( self.owner )
-            owner_entry.set_sensitive( False )
-        box.pack_start (owner_entry, True)
-        vbox.pack_start( box )
+        label = gtk.Label( 'Export ' + reg + ' as:' )
+
+        owner = self.owner
+        group, name = re.split( ':', reg )
 
         box = gtk.HBox()
         label = gtk.Label( 'Group' )
         box.pack_start( label, True )
         group_entry = gtk.Entry()
+        group_entry.set_text( group )
         box.pack_start (group_entry, True)
         vbox.pack_start( box )
 
@@ -433,8 +422,41 @@ class chooser(object):
         label = gtk.Label( 'Name' )
         box.pack_start( label, True )
         name_entry = gtk.Entry()
+        name_entry.set_text( name )
         box.pack_start (name_entry, True)
         vbox.pack_start(box)
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Description' )
+        box.pack_start( label, True )
+        descr_entry = gtk.Entry()
+        descr_entry.set_text( descr )
+        box.pack_start (descr_entry, True)
+        vbox.pack_start(box)
+
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "Export" )
+        ok_button.connect("clicked", self.export_suite, dir, group_entry, name_entry, descr_entry )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def export_suite( self, w, dir, group_entry, name_entry, descr_entry ):
+        group = group_entry.get_text()
+        name  = name_entry.get_text()
+        descr = descr_entry.get_text()
+        reg = self.owner + ':' + group + ':' + name
 
         central = centraldb() 
         try:
@@ -472,6 +494,7 @@ class chooser(object):
  
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
+
         ok_button = gtk.Button( "Search" )
         ok_button.connect("clicked", self.search_suite, reg, nobin_cb, pattern_entry )
 
@@ -695,7 +718,7 @@ class chooser(object):
         #else:
         #    info_dialog( "Suite " + name + " validates OK." ).inform()
 
-        # for now, launch external process:
+        # for now, launch external process via the cylc capture command:
         options = ''
         if self.cdb:
             options += ' -c '
