@@ -133,6 +133,7 @@ class config( CylcConfigObj ):
                 reg = centraldb()
             else:
                 reg = localdb()
+
             try:
                 reg.load_from_file()
                 self.dir, descr = reg.get( suite )

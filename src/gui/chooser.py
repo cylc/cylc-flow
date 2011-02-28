@@ -105,9 +105,9 @@ class chooser(object):
 
         self.window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         if self.readonly:
-            self.window.set_title("_view (READONLY)" )
+            self.window.set_title("Registered Suites (READONLY)" )
         else:
-            self.window.set_title("_control" )
+            self.window.set_title("Registered Suites" )
         self.window.set_size_request(600, 200)
         self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
@@ -696,7 +696,10 @@ class chooser(object):
         #    info_dialog( "Suite " + name + " validates OK." ).inform()
 
         # for now, launch external process:
-        call( 'capture "_validate ' + name  + '" &', shell=True )
+        options = ''
+        if self.cdb:
+            options += ' -c '
+        call( 'capture "_validate ' + options + name  + '" &', shell=True )
 
     def launch_controller( self, w, name, port, suite_dir ):
         # get suite logging directory

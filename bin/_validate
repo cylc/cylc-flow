@@ -23,6 +23,10 @@ parser.add_option( "-d", "--debug", help="print the "
         "exception traceback for validation errors.",
         action="store_true", default=False, dest="debug" )
 
+parser.add_option( "-c","--centraldb",
+        help="Print suite registrations from the central database.",
+        action="store_true", default=False, dest="central" )
+
 (options, args) = parser.parse_args()
 
 if len(args) != 1:
@@ -31,7 +35,7 @@ else:
     suite = args[0]
 
 try:
-    config = config( suite )
+    config = config( suite, central=options.central )
     config.load_tasks()
 except SuiteConfigError,x:
     if options.debug:
