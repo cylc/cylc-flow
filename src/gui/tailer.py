@@ -7,12 +7,13 @@ import tail
 #from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
-    def __init__( self, logview, log ):
+    def __init__( self, logview, log, tag=None ):
         super( tailer, self).__init__()
         self.logview = logview
         self.logbuffer = logview.get_buffer()
         self.logfile = log
         self.quit = False
+        self.tag = tag
         self.freeze = False
 
     def clear( self ):
@@ -41,6 +42,9 @@ class tailer(threading.Thread):
         ###print "Disconnecting from log viewer thread"
  
     def update_gui( self, line ):
-        self.logbuffer.insert( self.logbuffer.get_end_iter(), line )
+        if self.tag:
+            self.logbuffer.insert_with_tags( self.logbuffer.get_end_iter(), line, self.tag )
+        else:
+            self.logbuffer.insert( self.logbuffer.get_end_iter(), line )
         self.logview.scroll_to_iter( self.logbuffer.get_end_iter(), 0 )
         return False
