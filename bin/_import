@@ -5,14 +5,6 @@ from shutil import copytree
 from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 
-# NOTE:ABSPATH (see below)
-#   rdir = os.path.abspath( rdir )
-# On GPFS os.path.abspath() returns the full path with fileset
-# prefix which can make filenames (for files stored under the 
-# cylc suite directory) too long for hardwired limits in the
-# UM, which then core dumps. Manual use of $PWD to absolutize a relative
-# path, on GPFS, results in a shorter string ... so I use this for now.
-
 parser = OptionParser( usage = """cylc registration import [FILTER options] [DEST]
 
 Import suites from the central suite database to your local suite 
@@ -25,15 +17,7 @@ not specified the remote location will be registered as the suite
 definition directory. This is allowed because some suites, such as the
 cylc example suites, do all I/O under $HOME and $TMPDIR and so can be
 run directly by others (but you won't be able to modify the suite
-definitions without making a copy, of course).
-
-By default the central GROUPS and NAMES will be retained, but you can 
-use '-a,--as' or '-t,--to' to change this.
-
-See also:
-    cylc reg centraldb - view and unregister central suite registrations
-    cylc reg export    - export suites to the central suite database
-    cylc reg register  - manage your local suite registrations""" )
+definitions without making a copy, of course).""" )
 
 parser.add_option( "-o", "--owner",
         help="Owner filter Regular Expression.",
@@ -47,23 +31,10 @@ parser.add_option( "-n", "--name",
         help="Name filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="namefilt" )
 
-parser.add_option( "-a", "--as", metavar='SUITE',
-        help="import a single suite as local GROUP:NAME or NAME "
-        "(in the 'default' group)",
-        action="store", default=None, dest="import_as" )
-
-parser.add_option( "-t", "--to", metavar='GROUP',
-        help="import one or more suites into local GROUP "
-        "using the original NAMES.",
-        action="store", default=None, dest="import_to" )
-
 ( options, args ) = parser.parse_args()
 
 if len(args) > 1:
     parser.error('Wrong number of arguments')
-
-if options.import_as and options.import_to:
-    parser.error( 'Choose ONE of --as, --to' )
 
 # check for valid regular expressions:
 for filt in options.ownerfilt, options.groupfilt, options.namefilt:
@@ -72,13 +43,6 @@ for filt in options.ownerfilt, options.groupfilt, options.namefilt:
             re.compile( filt )
         except:
             raise SystemExit( 'Bad expression: ' + filt )
-
-#import pdb
-#pdb.set_trace()
-
-if options.import_as and not options.namefilt:
-    parser.error( '-a,--as can only be used when importing a single suite' )
-    suite = options.import_as
 
 gotdest = False
 if len(args) == 1:
@@ -96,59 +60,58 @@ central.load_from_file()
 
 # retrieve central registrations
 try:
-    centralsuites = central.get_list( ownerfilt=options.ownerfilt,
+    csuites = central.get_list( ownerfilt=options.ownerfilt,
             groupfilt=options.groupfilt, namefilt=options.namefilt )
 except RegistrationError, x:
     raise SystemExit(x)
 
-if options.import_as and len(centralsuites) != 1:
-    # should not happen!
-    raise SystemExit( 'ERROR: got more than one suite for a single suite match' )
-
-for csuite, cdir, cdescr in centralsuites:
-    cowner, cgroup, cname = regsplit( csuite ).get()
-    if options.import_as:
-        m = re.match( '^(\w+):(\w+)$', options.import_as )
-        if m:
-            group, name = m.groups()
-        elif re.match( '^(\w+)$', options.import_as ):
-            group = 'default'
-            name = options.import_as
-        else:
-            parser.error( 'Illegal argument to --as' ) 
-    elif options.import_to:
-        if re.match( '^(\w+)$', options.import_to ):
-            group = options.import_to
-            name = cname
-        else:
-            parser.error( 'Illegal argument to --to' ) 
+# organise into owner_group groups
+cgroups = {}
+for csuite, cdir, cdescr in csuites:
+    cowner, cgroup, cname = re.split( ':', csuite )
+    cowner_group = cowner + ':' + cgroup
+    if cowner_group not in cgroups:
+        cgroups[cowner_group] = [ ( cname, cdir, cdescr ) ]
     else:
-        group = cgroup
-        name = cname
- 
-    if gotdest:
-        newdir = os.path.join( dest, name )
-        if os.path.exists( newdir ):
-            raise SystemExit( 'ERROR, directory already exists: ' + newdir )
-    else:
-        newdir = cdir
+        cgroups[cowner_group].append( (cname, cdir, cdescr))
 
-    suite = group + ':' + name
-    # register locally
-    try:
-        local.lock()
-    except RegistrationError, x:
-        raise SystemExit(x)
-    local.load_from_file()
+# import to local
+changed = False
+try:
+    local.lock()
+except RegistrationError, x:
+    raise SystemExit(x)
+local.load_from_file()
  
-    try:
-        local.register( suite, newdir, cdescr )
-    except RegistrationError, x:
-        raise SystemExit(x)
+for cowner_group in cgroups:
+    cowner, cgroup = re.split(':', cowner_group )
+    lgroup = raw_input( "Import GROUP " + cgroup + " as (default: same)? " )
+    if lgroup == '':
+        lgroup = cgroup
+    for cname, cdir, cdescr in cgroups[cowner_group]:
+        lname = raw_input( "  Import NAME " + cname  + " as (default: same)? " ) 
+        if lname == '':
+            lname = cname
+
+        if gotdest:
+            newdir = os.path.join( dest, lname )
+            if os.path.exists( newdir ):
+                raise SystemExit( 'ERROR, directory already exists: ' + newdir )
+        else:
+            newdir = cdir
+
+        try:
+            local.register( lgroup + ':' + lname, newdir, cdescr )
+        except RegistrationError, x:
+            print x
+        else:
+            changed = True
+
+if changed:
     local.dump_to_file()
-    local.unlock()
+local.unlock()
 
-    if gotdest:
-        # do this only if registration succeeds
-        print 'Copying suite definition'
-        copytree( cdir, newdir )
+if gotdest:
+    # do this only if registration succeeds
+    print 'Copying suite definition'
+    copytree( cdir, newdir )

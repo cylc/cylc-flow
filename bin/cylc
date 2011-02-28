@@ -89,8 +89,8 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 categories = \
     [
-    'database',
-    'preparation',
+    'register',
+    'prepare',
     'discover',
     'control',
     'utility',
@@ -130,18 +130,17 @@ utility_commands = \
     'transfer',
     ]
 
-database_commands = \
+register_commands = \
     [
-    'register',
-    'import',
-    'export',
-    'print',
-    'copy',
+    'create',
     'delete',
-    'central',
+    'print',
+    'export',
+    'import',
+    'copy',
     ]
 
-preparation_commands = \
+prepare_commands = \
     [
     'edit',
     'inline',
@@ -169,7 +168,7 @@ task_commands = \
 
 # all commands; uniquify in case any appear in multiple categories:
 allcoms = OrderedDict()
-for command in database_commands + preparation_commands + \
+for command in register_commands + prepare_commands + \
     control_commands + discover_commands + utility_commands + task_commands:
     if command not in allcoms:
         allcoms[ command ] = True
@@ -185,8 +184,8 @@ USAGE:
 
 # topic summaries
 catsum = OrderedDict()
-catsum['database'    ] = "manage local and central suite registrations."
-catsum['preparation' ] = "editing, searching, and graphing suites."
+catsum['register'] = "manage local and central suite registrations."
+catsum['prepare' ] = "editing, searching, and graphing suites."
 catsum['discover'    ] = "finding out what suites are running."
 catsum['control'     ] = "running, controlling, and monitoring suites."
 catsum['task'        ] = "single-task submission, task wrapping, and messaging."
@@ -207,9 +206,9 @@ Version: """ + cylc_version + """
 The cylc command set is organised into categories to help elucidate
 available functionality. Categories can optionally be omitted in command
 invocation. Any unique abbreviation can be used for a COMMAND or CATEGORY: 
-  $ cylc help prep ............ (category: preparation)
-  $ cylc [datab] reg [ARGS] ... (category: database; command: register) 
-  $ cylc reg [ARGS] ........... (category: database; command: register) 
+  $ cylc help prep .......... (category: prepare)
+  $ cylc [reg] cre [ARGS] ... (category: register; command: create) 
+  $ cylc cre [ARGS] ......... (category: register; command: create) 
 
 Command CATEGORIES (which include lists of relevant COMMANDS):"""
 
@@ -220,11 +219,12 @@ if len(sys.argv) == 1:
 
 # command summaries
 comsum = OrderedDict()
-comsum[ 'register'   ] = 'Manage local suite registrations'
-comsum[ 'export'     ] = 'Export suites to the central database'
-comsum[ 'import'     ] = 'Import suites from the central database'
+comsum[ 'create'     ] = 'Create local suite registrations'
+comsum[ 'delete'     ] = 'Delete local or central suite registrations'
+comsum[ 'print'      ] = 'Print local or central suite registrations'
+comsum[ 'export'     ] = 'Export local registrations to the central database'
+comsum[ 'import'     ] = 'Import central registrations to your local database'
 comsum[ 'copy'       ] = 'Copy a suite or group of suites.'
-comsum[ 'central'    ] = 'Manage central database registrations'
 comsum[ 'edit'       ] = 'Edit a suite.rc file in $EDITOR, optionally inlined'
 comsum[ 'validate'   ] = 'Parse and validate a suite config (suite.rc) file'
 comsum[ 'graph'      ] = 'A dependency graph viewer that updates as you edit'
@@ -308,7 +308,8 @@ if len( sys.argv ) == 3 and \
         print 'CATEGORY: ' + category + ' - ' + catsum[ category ]
         print
         print 'USAGE: cylc [' + category + '] COMMAND help,--help'
-        print 'You can abbreviate "' + category + '" and COMMAND; "' + category + '" may be omitted.'
+        print '  You can abbreviate "' + category + '" and COMMAND.'
+        print '  The category "' + category + '" may be omitted.'
         print
         print 'COMMANDS:'
         commands = eval( category + '_commands')

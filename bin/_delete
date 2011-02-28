@@ -1,0 +1,97 @@
+#!/usr/bin/env python
+
+import os, re, sys
+from optparse import OptionParser
+from registration import localdb, centraldb, RegistrationError
+from config import config, SuiteConfigError
+
+parser = OptionParser( usage = """cylc register delete [options] [arguments]
+
+     $ cylc reg del                      # delete all!
+     $ cylc reg del [FILTER options]     # delete some
+
+Clean up invalid registrations: (missing directory or suite.rc):
+     $ cylc reg --clean
+ 
+Delete cylc suite registrations, which associate a suite name with a
+suite definition directory (stored in $HOME/.cylc/registrations). Cylc
+commands target a particular suite using its registered name.
+NOTE: deleting a suite registration does not delete the suite itself!
+
+FILTERING: 
+  (a) The filter patterns are Regular Expressions, not shell globs, so
+the general wildcard is '.*' (match zero or more of anything), NOT '*'.
+  (b) For our purposes there is an implicit wildcard at the end of each
+pattern ('foo' is the same as 'foo.*'); use the string end marker to
+stop this ('foo$' matches only literal 'foo').
+  (c) Omission of an item filter is taken to mean "match any of item".
+  (d) to single out entries in the default group you have to specify
+  the group name explicitly (-g default).
+
+If you accidentally delete the registration of a running suite, just
+reregister it under the same name to regain access to the suite.""" )
+
+parser.add_option( "-o", "--owner",
+        help="Owner filter Regular Expression.",
+        metavar="RE", action="store", default=os.environ['USER'],
+        dest="ownerfilt" )
+
+parser.add_option( "-g", "--group",
+        help="Group filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="groupfilt" )
+
+parser.add_option( "-n", "--name",
+        help="Name filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="namefilt" )
+
+parser.add_option( "-c","--centraldb",
+        help="Print suite registrations from the central database.",
+        action="store_true", default=False, dest="central" )
+
+parser.add_option( "--clean",
+        help="Delete any registrations that are not valid.",
+        action="store_true", default=False, dest="clean" )
+
+parser.add_option( "-v", "--verbose",
+        help="Turn on verbose output.",
+        action="store_true", default=False, dest="verbose" )
+
+( options, args ) = parser.parse_args()
+
+if options.central:
+    reg = centraldb()
+else:
+    reg = localdb()
+
+try:
+    reg.lock()
+except RegistrationError, x:
+    raise SystemExit(x)
+reg.load_from_file()
+
+changed = False
+
+if options.clean:
+    if reg.clean_all():
+        changed = True
+        reg.dump_to_file()
+    reg.unlock()
+    sys.exit(0)
+
+else:
+    # check for valid regular expressions:
+    for filt in options.groupfilt, options.namefilt:
+        if filt:
+            try:
+                re.compile( filt )
+            except:
+                raise SystemExit( 'Bad expression: ' + filt )
+
+    if reg.unregister_multi( ownerfilt=None,
+            groupfilt=options.groupfilt, namefilt=options.namefilt,
+            verbose=options.verbose ):
+        changed = True
+
+if changed:
+    reg.dump_to_file()
+reg.unlock()

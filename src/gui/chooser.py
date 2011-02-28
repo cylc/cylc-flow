@@ -121,9 +121,9 @@ class chooser(object):
         regd_treeview.set_model(self.regd_liststore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
-        self.db_button = gtk.Button( "Central DB" )
+        self.db_button = gtk.Button( "Switch to Central DB" )
         self.db_button.connect("clicked", self.switchdb, None, None )
-        self.main_label = gtk.Label( "Local Suite Registration Database" )
+        self.main_label = gtk.Label( "User Suite Registration Database" )
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
@@ -161,6 +161,8 @@ class chooser(object):
         filter_button = gtk.Button( "Filter" )
         filter_button.connect("clicked", self.filter_popup, None, None )
 
+        label = gtk.Label( " Right Click for Menu" )
+
         vbox = gtk.VBox()
         hbox = gtk.HBox()
         hbox.pack_start( self.main_label )
@@ -173,6 +175,7 @@ class chooser(object):
         hbox.pack_start( quit_all_button, False )
         hbox.pack_start( self.db_button, False )
         hbox.pack_start( filter_button, False )
+        hbox.pack_start( label, False )
 
         vbox.pack_start( hbox, False )
 
@@ -184,12 +187,12 @@ class chooser(object):
     def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
             db = centraldb()
-            self.db_button.set_label( "Local DB" )
+            self.db_button.set_label( "Switch to User DB" )
             self.main_label.set_text( "Central Suite Registration Database" )
         else:
             db = localdb()
-            self.db_button.set_label( "Central DB" )
-            self.main_label.set_text( "Local Suite Registration Database" )
+            self.db_button.set_label( "Switch to Central DB" )
+            self.main_label.set_text( "User Suite Registration Database" )
         if self.updater:
             self.updater.quit = True # does this take effect?
         self.updater = chooser_updater( self.owner, self.regd_liststore, 
@@ -284,9 +287,14 @@ class chooser(object):
 
 
     def on_suite_select( self, treeview, event ):
+        # DISPLAY MENU ON RIGHT CLICK ONLY
+        if event.button != 3:
+            return False
+
         # the following sets selection to the position at which the
         # right click was done (otherwise selection lags behind the
         # right click):
+
         x = int( event.x )
         y = int( event.y )
         time = event.time
@@ -307,23 +315,10 @@ class chooser(object):
         if m:
             port = m.groups()[0]
 
-        # HERE'S HOW TO DISPLAY MENU ONLY ON RIGHT CLICK
-        # (and show task log viewer otherwise):
-        #if event.button != 3:
-        #    self.show_log( task_id )
-        #    return False
-
         menu = gtk.Menu()
 
         menu_root = gtk.MenuItem( name )
         menu_root.set_submenu( menu )
-
-        ## make an insensitive item to display selected suite name
-        ## so that we can turn the ugly selection off already
-        #title_item = gtk.MenuItem( name )
-        #menu.append( title_item )
-        #title_item.set_sensitive(False)
-        #selection.unselect_iter( iter )
 
         val_item = gtk.MenuItem( 'Validate' )
         menu.append( val_item )
@@ -332,6 +327,10 @@ class chooser(object):
         graph_item = gtk.MenuItem( 'Graph' )
         menu.append( graph_item )
         graph_item.connect( 'activate', self.graph_suite_popup, name )
+
+        search_item = gtk.MenuItem( 'Search' )
+        menu.append( search_item )
+        search_item.connect( 'activate', self.search_suite_popup, name )
 
         edit_item = gtk.MenuItem( 'Edit' )
         menu.append( edit_item )
@@ -357,13 +356,24 @@ class chooser(object):
 
             exp_item = gtk.MenuItem( 'Export' )
             menu.append( exp_item )
-            exp_item.connect( 'activate', self.export_suite, name )
+            exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir )
+
+        del_item = gtk.MenuItem( 'Delete' )
+        menu.append( del_item )
+        del_item.connect( 'activate', self.delete_suite_popup, name, suite_dir )
+        if self.cdb:
+            owner, group, sname = re.split(':', name )
+            if owner != self.owner:
+                del_item.set_sensitive( False )
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
         # TO DO: POPUP MENU MUST BE DESTROY()ED AFTER EVERY USE AS
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
+
+    def delete_suite_popup( self ):
+        pass
 
     def import_suite( self, w, reg ):
         central = centraldb()
@@ -388,14 +398,44 @@ class chooser(object):
         local.unlock()
         local.dump_to_file()
 
-    def export_suite( self, w, reg ):
-        local = localdb()
-        local.load_from_file()
-        try:
-            dir,descr = local.get( reg )
-        except RegistrationError, x:
-            warning_dialog( str(x) ).warn()
-            return False
+    def export_suite_popup( self, w, name, dir ):
+        #local = localdb()
+        #local.load_from_file()
+        #try:
+        #    dir,descr = local.get( reg )
+        #except RegistrationError, x:
+        #    warning_dialog( str(x) ).warn()
+        #    return False
+
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Export '" + name + "' to central database")
+
+        vbox = gtk.VBox()
+        box = gtk.HBox()
+        label = gtk.Label( 'Owner' )
+        box.pack_start( label, True )
+        owner_entry = gtk.Entry()
+        if not self.cdb:
+            owner_entry.set_text( self.owner )
+            owner_entry.set_sensitive( False )
+        box.pack_start (owner_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Group' )
+        box.pack_start( label, True )
+        group_entry = gtk.Entry()
+        box.pack_start (group_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Name' )
+        box.pack_start( label, True )
+        name_entry = gtk.Entry()
+        box.pack_start (name_entry, True)
+        vbox.pack_start(box)
+
         central = centraldb() 
         try:
             central.lock()
@@ -410,6 +450,43 @@ class chooser(object):
             return False
         central.unlock()
         central.dump_to_file()
+
+
+    def search_suite_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Suite Search Options for '" + reg + "'")
+
+        vbox = gtk.VBox()
+
+        # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
+        nobin_cb = gtk.CheckButton( "Don't Search Suite bin Directory" )
+        vbox.pack_start (nobin_cb, True)
+
+        label = gtk.Label("Search Pattern" )
+        pattern_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(pattern_entry, True) 
+        vbox.pack_start( hbox )
+ 
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+        ok_button = gtk.Button( "Search" )
+        ok_button.connect("clicked", self.search_suite, reg, nobin_cb, pattern_entry )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
 
     def graph_suite_popup( self, w, reg ):
         try:
@@ -469,6 +546,21 @@ class chooser(object):
 
         window.add( vbox )
         window.show_all()
+
+    def search_suite( self, w, reg, nobin_cb, pattern_entry ):
+        pattern = pattern_entry.get_text()
+        options = ''
+        if nobin_cb.get_active():
+            options += ' -x '
+
+        if self.cdb:
+            options += ' -c '
+
+        # TO DO 1/ use non-shell non-blocking launch here?
+        # TO DO 2/ instead of external process make part of chooser app?
+        # Would have to launch in own thread as xdot is interactive?
+        # Probably not necessary ... same goes for controller actually?
+        call( 'capture "_grep ' + options + ' ' + pattern + ' ' + reg + ' ' + '" &', shell=True )
 
     def graph_suite( self, w, reg, warm_cb, outputfile_entry, start_entry, stop_entry ):
         start = start_entry.get_text()

@@ -4,14 +4,9 @@ import os, re, sys
 from optparse import OptionParser
 from registration import localdb, centraldb, unqualify, RegistrationError
 
-parser = OptionParser( usage = """cylc registration export [FILTER options]
+parser = OptionParser( usage = """cylc register export [FILTER options]
 
-Export your registered suites to the central suite database.
-
-See also:
-    cylc reg centraldb - view and delete central suite registrations
-    cylc reg import    - import suites from the central suite database
-    cylc reg register  - manage your local suite registrations""" )
+Export local suite registrations to the central database.""" )  
 
 parser.add_option( "-g", "--group",
         help="Group filter Regular Expression.",
@@ -42,27 +37,39 @@ suites = local.get_list( groupfilt=options.groupfilt, namefilt=options.namefilt 
 if len( suites ) == 0:
     raise SystemExit( "ERROR, No matching suites to export" )
 
+owner = os.environ['USER']
+# organise into groups
+groups = {}
+for suite, dir, descr in suites:
+    group, name = re.split( ':', suite )
+    if group not in groups:
+        groups[group] = [ ( name, dir, descr ) ]
+    else:
+        groups[group].append( (name, dir, descr))
+
 try:
     central.lock()
 except RegistrationError, x:
     raise SystemExit(x)
 central.load_from_file()
  
-for suite, dir, descr in suites:
-    # retrieve local registration
-    try:
-        dir,descr = local.get( suite )
-    except RegistrationError, x:
-        raise SystemExit(x)
+# export to central
+changed = False
+for group in groups:
+    cgroup = raw_input( "Export GROUP " + group + " as (default: same)? " )
+    if cgroup == '':
+        cgroup = group
+    for name, dir, descr in groups[group]:
+        cname = raw_input( "  Export NAME" + name  + " as (default: same)? " ) 
+        if cname == '':
+            cname = name
+        try:
+            central.register( cgroup + ':' + cname, dir, descr )
+        except RegistrationError, x:
+            print x
+        else:
+            changed = True
 
-    # export to central
-
-    try:
-        central.register( suite, dir, descr )
-    except RegistrationError, x:
-        raise SystemExit(x)
-
-central.dump_to_file()
+if changed:
+    central.dump_to_file()
 central.unlock()
-
-
