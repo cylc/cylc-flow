@@ -549,6 +549,56 @@ class chooser(object):
         central.unlock()
         central.dump_to_file()
 
+    def rename_suite_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Rename '" + reg + "'")
+
+        vbox = gtk.VBox()
+
+        label = gtk.Label("Group" )
+        group_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(group_entry, True) 
+        vbox.pack_start( hbox )
+ 
+        label = gtk.Label("Name" )
+        name_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(name_entry, True) 
+        vbox.pack_start( hbox )
+
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "Rename" )
+        ok_button.connect("clicked", self.rename_suite, window, reg, group_entry, name_entry )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def rename_suite( self, b, w, ffrom, g_e, n_e ):
+        w.destroy()
+        g = g_e.get_text()
+        n = n_e.get_text()
+        if g == '':
+            g = 'default'
+        tto = g + ':' + n
+        options = ''
+        if self.cdb:
+            options += ' -c '
+        call( 'capture "_rename ' + options + ' ' + ffrom + ' ' + tto + '" &', shell=True )
 
     def search_suite_popup( self, w, reg ):
         window = gtk.Window()
@@ -557,7 +607,6 @@ class chooser(object):
 
         vbox = gtk.VBox()
 
-        # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
         nobin_cb = gtk.CheckButton( "Don't Search Suite bin Directory" )
         vbox.pack_start (nobin_cb, True)
 
@@ -600,7 +649,6 @@ class chooser(object):
 
         vbox = gtk.VBox()
 
-        # TO DO: NOT RADIO BUTTONS (multiple choices should be allowed)
         warm_cb = gtk.CheckButton( "Warm Start" )
         #runtime_cb = gtk.CheckButton( "Runtime Graph" )
         vbox.pack_start (warm_cb, True)
