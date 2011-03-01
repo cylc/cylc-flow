@@ -400,6 +400,10 @@ class chooser(object):
         rename_item = gtk.MenuItem( 'Rename' )
         menu.append( rename_item )
         rename_item.connect( 'activate', self.rename_suite_popup, name )
+        if self.cdb:
+            owner, group, sname = re.split(':', name )
+            if owner != self.owner:
+                rename_item.set_sensitive( False )
 
         val_item = gtk.MenuItem( 'Validate' )
         menu.append( val_item )
