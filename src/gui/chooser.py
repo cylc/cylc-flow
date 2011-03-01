@@ -559,19 +559,19 @@ class chooser(object):
         box.pack_start (name_entry, True)
         vbox.pack_start(box)
 
-        box = gtk.HBox()
-        label = gtk.Label( 'Description' )
-        box.pack_start( label, True )
-        descr_entry = gtk.Entry()
-        descr_entry.set_text( descr )
-        box.pack_start (descr_entry, True)
-        vbox.pack_start(box)
+        #box = gtk.HBox()
+        #label = gtk.Label( 'Description' )
+        #box.pack_start( label, True )
+        #descr_entry = gtk.Entry()
+        #descr_entry.set_text( descr )
+        #box.pack_start (descr_entry, True)
+        #vbox.pack_start(box)
 
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "Export" )
-        ok_button.connect("clicked", self.export_suite, dir, group_entry, name_entry, descr_entry )
+        ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -585,27 +585,12 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def export_suite( self, w, dir, group_entry, name_entry, descr_entry ):
+    def export_suite( self, b, w, reg, group_entry, name_entry ):
         group = group_entry.get_text()
         name  = name_entry.get_text()
-        descr = descr_entry.get_text()
-        reg = self.owner + ':' + group + ':' + name
-
-        central = centraldb() 
-        try:
-            central.lock()
-        except RegistrationError, x:
-            warning_dialog( str(x) ).warn()
-            return False
-        central.load_from_file()
-        try:
-            central.register( reg, dir, descr )
-        except RegistrationError, x:
-            warning_dialog( str(x) ).warn()
-            return False
-        central.unlock()
-        central.dump_to_file()
-
+        call( 'capture "_export ' + reg + ' ' + group + ':' + name + '" &', shell=True )
+        w.destroy()
+ 
     def toggle_entry_sensitivity( self, w, entry ):
         if entry.get_property( 'sensitive' ) == 0:
             entry.set_sensitive( True )

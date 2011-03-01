@@ -4,9 +4,15 @@ import os, re, sys
 from optparse import OptionParser
 from registration import localdb, centraldb, unqualify, RegistrationError
 
-parser = OptionParser( usage = """cylc [register] export [FILTER options]
+parser = OptionParser( usage = """1/ cylc [register] export [FILTER options]
+Interactively export suites selected by filtering.
+    2/ cylc [register] export SOURCE
+Export one suite SOURCE (group:name) under its own group and name
 
-Export local suite registrations to the central database.""" )  
+    3/ cylc [register] export SOURCE TARGET
+Export one suite SOURCE (group:name) as TARGET (group:name)
+
+Exports local suite registrations to the central database.""" )  
 
 parser.add_option( "-g", "--group",
         help="Group filter Regular Expression.",
@@ -18,53 +24,78 @@ parser.add_option( "-n", "--name",
 
 ( options, args ) = parser.parse_args()
 
-if len(args) != 0:
+if len(args) > 2:
     parser.error('Commandline error')
 
 local = localdb()
 central = centraldb() 
-
-# check for valid regular expressions:
-for filt in options.groupfilt, options.namefilt:
-    if filt:
-        try:
-            re.compile( filt )
-        except:
-            raise SystemExit( 'Bad expression: ' + filt )
-
 local.load_from_file()
-suites = local.get_list( groupfilt=options.groupfilt, namefilt=options.namefilt )
-if len( suites ) == 0:
-    raise SystemExit( "ERROR, No matching suites to export" )
-
 owner = os.environ['USER']
-# organise into groups
-groups = {}
-for suite, dir, descr in suites:
-    group, name = re.split( ':', suite )
-    if group not in groups:
-        groups[group] = [ ( name, dir, descr ) ]
-    else:
-        groups[group].append( (name, dir, descr))
 
-try:
-    central.lock()
-except RegistrationError, x:
-    raise SystemExit(x)
-central.load_from_file()
+if len(args) == 0:
+    # interactive, filtered.
+
+    # check for valid regular expressions:
+    for filt in options.groupfilt, options.namefilt:
+        if filt:
+            try:
+                re.compile( filt )
+            except:
+                raise SystemExit( 'Bad expression: ' + filt )
+
+    suites = local.get_list( groupfilt=options.groupfilt, namefilt=options.namefilt )
+    if len( suites ) == 0:
+        raise SystemExit( "ERROR, No matching suites to export" )
+
+    # organise into groups
+    groups = {}
+    for suite, dir, descr in suites:
+        group, name = re.split( ':', suite )
+        if group not in groups:
+            groups[group] = [ ( name, dir, descr ) ]
+        else:
+            groups[group].append( (name, dir, descr))
+
+    try:
+        central.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    central.load_from_file()
  
-# export to central
-changed = False
-for group in groups:
-    cgroup = raw_input( "Export GROUP " + group + " as (default: same)? " )
-    if cgroup == '':
-        cgroup = group
-    for name, dir, descr in groups[group]:
-        cname = raw_input( "  Export NAME" + name  + " as (default: same)? " ) 
-        if cname == '':
-            cname = name
+    # export to central
+    changed = False
+    for group in groups:
+        cgroup = raw_input( "Export GROUP " + group + " as (default: same)? " )
+        if cgroup == '':
+            cgroup = group
+        for name, dir, descr in groups[group]:
+            cname = raw_input( "  Export NAME" + name  + " as (default: same)? " ) 
+            if cname == '':
+                cname = name
+            try:
+                central.register( cgroup + ':' + cname, dir, descr )
+            except RegistrationError, x:
+                print x
+            else:
+                changed = True
+
+else:
+    # single suite
+    source = args[0]
+    if len( args ) == 2:
+        target = args[1]
+    else:
+        target = source
+
+    try:
+        dir, descr = local.get( source )
+    except RegistrationError, x:
+        print x
+    else:
         try:
-            central.register( cgroup + ':' + cname, dir, descr )
+            central.lock()
+            central.load_from_file()
+            central.register( target, dir, descr )
         except RegistrationError, x:
             print x
         else:
