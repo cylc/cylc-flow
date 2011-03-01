@@ -121,8 +121,11 @@ class chooser(object):
         regd_treeview.set_model(self.regd_liststore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
+        newreg_button = gtk.Button( "New" )
+        newreg_button.connect("clicked", self.newreg_popup )
+
         self.db_button = gtk.Button( "Central DB" )
-        self.db_button.connect("clicked", self.switchdb, None, None )
+        self.db_button.connect("clicked", self.switchdb, newreg_button )
         self.main_label = gtk.Label( "Local Suite Registrations" )
 
         # Start updating the liststore now, as we need values in it
@@ -160,9 +163,6 @@ class chooser(object):
 
         filter_button = gtk.Button( "Filter" )
         filter_button.connect("clicked", self.filter_popup, None, None )
-
-        newreg_button = gtk.Button( "New Reg" )
-        newreg_button.connect("clicked", self.newreg_popup )
 
         label = gtk.Label( " Right Click for Menu" )
 
@@ -345,10 +345,14 @@ class chooser(object):
         self.filter_window.add( vbox )
         self.filter_window.show_all()
 
-    def switchdb( self, w, e, data=None ):
+    def switchdb( self, w, newreg ):
         if self.filter_window:
             self.filter_window.destroy()
         self.cdb = not self.cdb
+        if self.cdb:
+            newreg.set_sensitive( False )
+        else:
+            newreg.set_sensitive( True )
         self.start_updater()
 
     def delete_all_event( self, w, e, data=None ):
@@ -437,7 +441,7 @@ class chooser(object):
 
         del_item = gtk.MenuItem( 'Delete' )
         menu.append( del_item )
-        del_item.connect( 'activate', self.delete_suite_popup, name, suite_dir )
+        del_item.connect( 'activate', self.delete_suite, name )
         if self.cdb:
             owner, group, sname = re.split(':', name )
             if owner != self.owner:
@@ -449,8 +453,29 @@ class chooser(object):
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
 
-    def delete_suite_popup( self ):
-        pass
+    def delete_suite( self, w, reg ):
+        items = re.split(':', reg)
+        if len(items) == 3:
+            fo, fg, fn = items
+        elif len(items) == 2:
+            fg, fn = items
+            fo = self.owner
+        elif len(items) == 1:
+            fo = self.owner
+            fn = items[0]
+            fg = 'default'
+
+        options = ''
+        if self.cdb:
+            options += ' -c '
+
+        #options += "-o '^" + fo + "$'"
+        # (only owner can delete)
+        options += " -g '^" + fg + "$' "
+        options += " -n '^" + fn + "$' "
+
+        call( 'capture "_delete ' + options + '" &', shell=True )
+ 
 
     def import_suite( self, w, reg ):
         central = centraldb()
@@ -549,12 +574,21 @@ class chooser(object):
         central.unlock()
         central.dump_to_file()
 
+    def toggle_entry_sensitivity( self, w, entry ):
+        if entry.get_property( 'sensitive' ) == 0:
+            entry.set_sensitive( True )
+        else:
+            entry.set_sensitive( False )
+
     def rename_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Rename '" + reg + "'")
 
         vbox = gtk.VBox()
+
+        wholegroup_cb = gtk.CheckButton( "Rename the group" )
+        vbox.pack_start (wholegroup_cb, True)
 
         label = gtk.Label("Group" )
         group_entry = gtk.Entry()
@@ -570,11 +604,13 @@ class chooser(object):
         hbox.pack_start(name_entry, True) 
         vbox.pack_start( hbox )
 
-        cancel_button = gtk.Button( "Close" )
+        wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
+ 
+        cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "Rename" )
-        ok_button.connect("clicked", self.rename_suite, window, reg, group_entry, name_entry )
+        ok_button.connect("clicked", self.rename_suite, window, reg, group_entry, name_entry, wholegroup_cb )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -588,17 +624,33 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def rename_suite( self, b, w, ffrom, g_e, n_e ):
-        w.destroy()
+    def rename_suite( self, b, w, ffrom, g_e, n_e, wholegroup_cb ):
         g = g_e.get_text()
         n = n_e.get_text()
+        options = ''
+        ffroms = re.split(':', ffrom)
+        if len(ffroms) == 3:
+            fo, fg, fn = ffroms
+        elif len(ffroms) == 2:
+            fg, fn = ffroms
+            fo = self.owner
+        elif len(ffroms) == 1:
+            fn = ffroms
+            fg = 'default'
+
         if g == '':
             g = 'default'
-        tto = g + ':' + n
-        options = ''
+        if wholegroup_cb.get_active():
+            options += ' -g '
+            tto = g
+            ffrom = fg
+        else: 
+            tto = g + ':' + n
         if self.cdb:
             options += ' -c '
+
         call( 'capture "_rename ' + options + ' ' + ffrom + ' ' + tto + '" &', shell=True )
+        w.destroy()
 
     def search_suite_popup( self, w, reg ):
         window = gtk.Window()
