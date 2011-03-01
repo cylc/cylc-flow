@@ -7,13 +7,14 @@ import tail
 #from warning_dialog import warning_dialog
 
 class tailer(threading.Thread):
-    def __init__( self, logview, log, tag=None ):
+    def __init__( self, logview, log, proc=None, tag=None ):
         super( tailer, self).__init__()
         self.logview = logview
         self.logbuffer = logview.get_buffer()
         self.logfile = log
         self.quit = False
         self.tag = tag
+        self.proc = proc
         self.freeze = False
 
     def clear( self ):
@@ -39,6 +40,12 @@ class tailer(threading.Thread):
                 line = gen.next()
                 if line:
                     gobject.idle_add( self.update_gui, line )
+            # doesn't work:
+            #if self.proc != None:
+            #    if self.proc.poll() == None:
+            #        gobject.idle_add( self.update_gui, '(process completed)\n' )
+            #        #break
+        
         ###print "Disconnecting from log viewer thread"
  
     def update_gui( self, line ):

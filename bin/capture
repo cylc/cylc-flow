@@ -51,10 +51,10 @@ class info(object):
         proc = subprocess.Popen( command_list,
             stdout=stdout, stderr=stderr, shell=True )
 
-        self.stdout_updater = tailer( textview, stdout.name )
+        self.stdout_updater = tailer( textview, stdout.name, proc=proc )
         self.stdout_updater.start()
 
-        self.stderr_updater = tailer( textview, stderr.name, tag=red )
+        self.stderr_updater = tailer( textview, stderr.name, proc=proc, tag=red )
         self.stderr_updater.start()
 
 
