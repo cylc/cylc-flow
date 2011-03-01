@@ -27,9 +27,15 @@ class SuiteNotRegisteredError( RegistrationError ):
     def __init__( self, suite ):
         self.msg = "ERROR: Suite not found " + suite
 
-class groupNotFoundError( RegistrationError ):
+class GroupNotFoundError( RegistrationError ):
     def __init__( self, group, owner=None ):
         self.msg = "ERROR: group not found " + group
+        if owner:
+            self.msg += ' (' + owner + ')'
+
+class GroupAlreadyExistsError( RegistrationError ):
+    def __init__( self, group, owner=None ):
+        self.msg = "ERROR: group already exists " + group
         if owner:
             self.msg += ' (' + owner + ')'
 
@@ -204,6 +210,38 @@ class regdb(object):
         self.items[owner][group][name] = (dir, description)
         self.print_reg( suite, prefix='REGISTERED' )
 
+    def rename( self, suite_from, suite_to, verbose=False ):
+        # LOCKING HANDLED BY CALLERS
+        from_owner, from_group, from_name = regsplit(suite_from).get()
+        if from_owner != self.user:
+            #raise RegistrationError, 'You cannot rename another user\'s suite'
+            self.print_reg( suite_from )
+            print "(can't rename, wrong suite owner)"
+            return
+        to_owner, to_group, to_name = regsplit(suite_to).get()
+        if to_owner != self.user:
+            #raise RegistrationError, 'You cannot unregister as another user'
+            self.print_reg( suite_to )
+            print "(can't rename, wrong suite owner)"
+            return
+        dir, descr = self.get( suite_from )
+        self.unregister( suite_from )
+        self.register( suite_to, dir, descr )
+        return True
+
+    def rename_group( self, gfrom, gto, verbose=False ):
+        # bulk group rename, owner only
+        # LOCKING HANDLED BY CALLERS
+        owner = self.user
+        if gfrom not in self.items[owner]:
+            raise GroupNotFoundError, gfrom
+        if gto in self.items[owner]:
+            raise GroupAlreadyExistsError, gto
+
+        self.items[owner][gto] = self.items[owner][gfrom]
+        del self.items[owner][gfrom]
+        return True
+
     def unregister( self, suite, verbose=False ):
         # LOCKING HANDLED BY CALLERS
         owner, group, name = regsplit(suite).get()
@@ -232,7 +270,7 @@ class regdb(object):
         try:
             del self.items[owner][group]
         except KeyError:
-            raise groupNotFoundError( group, owner ) 
+            raise GroupNotFoundError( group, owner ) 
 
     def unregister_all( self, verbose=False ):
         my_suites = self.get_list( ownerfilt=self.user )

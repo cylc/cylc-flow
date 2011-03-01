@@ -132,6 +132,7 @@ utility_commands = \
 register_commands = \
     [
     'create',
+    'rename',
     'delete',
     'print',
     'export',
@@ -219,6 +220,7 @@ if len(sys.argv) == 1:
 # command summaries
 comsum = OrderedDict()
 comsum[ 'create'     ] = 'Create local suite registrations'
+comsum[ 'rename'     ] = 'Rename local or central suite registrations'
 comsum[ 'delete'     ] = 'Delete local or central suite registrations'
 comsum[ 'print'      ] = 'Print local or central suite registrations'
 comsum[ 'export'     ] = 'Export local registrations to the central database'

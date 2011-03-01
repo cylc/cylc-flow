@@ -45,7 +45,7 @@ parser.add_option( "-n", "--name",
         metavar="RE", action="store", default=None, dest="namefilt" )
 
 parser.add_option( "-c","--centraldb",
-        help="Print suite registrations from the central database.",
+        help="Delete registrations from the central database.",
         action="store_true", default=False, dest="central" )
 
 parser.add_option( "--clean",

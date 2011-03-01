@@ -161,8 +161,8 @@ class chooser(object):
         filter_button = gtk.Button( "Filter" )
         filter_button.connect("clicked", self.filter_popup, None, None )
 
-        filter_button = gtk.Button( "New Reg" )
-        filter_button.connect("clicked", self.newreg_popup )
+        newreg_button = gtk.Button( "New Reg" )
+        newreg_button.connect("clicked", self.newreg_popup )
 
         label = gtk.Label( " Right Click for Menu" )
 
@@ -178,6 +178,7 @@ class chooser(object):
         hbox.pack_start( quit_all_button, False )
         hbox.pack_start( self.db_button, False )
         hbox.pack_start( filter_button, False )
+        hbox.pack_start( newreg_button, False )
         hbox.pack_start( label, False )
 
         vbox.pack_start( hbox, False )
@@ -391,6 +392,10 @@ class chooser(object):
 
         menu_root = gtk.MenuItem( name )
         menu_root.set_submenu( menu )
+
+        rename_item = gtk.MenuItem( 'Rename' )
+        menu.append( rename_item )
+        rename_item.connect( 'activate', self.rename_suite_popup, name )
 
         val_item = gtk.MenuItem( 'Validate' )
         menu.append( val_item )
