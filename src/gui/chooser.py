@@ -485,7 +485,7 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def delete_suite( self, w, e, reg, wholegroup_cb ):
+    def delete_suite( self, b, w, reg, wholegroup_cb ):
         wholegroup = wholegroup_cb.get_active()
         items = re.split(':', reg)
         if len(items) == 3:
