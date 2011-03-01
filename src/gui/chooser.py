@@ -441,7 +441,7 @@ class chooser(object):
 
         del_item = gtk.MenuItem( 'Delete' )
         menu.append( del_item )
-        del_item.connect( 'activate', self.delete_suite, name )
+        del_item.connect( 'activate', self.delete_suite_popup, name )
         if self.cdb:
             owner, group, sname = re.split(':', name )
             if owner != self.owner:
@@ -453,7 +453,36 @@ class chooser(object):
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
 
-    def delete_suite( self, w, reg ):
+    def delete_suite_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Delete '" + reg + "'")
+
+        vbox = gtk.VBox()
+
+        wholegroup_cb = gtk.CheckButton( "Delete Parent Group" )
+        vbox.pack_start (wholegroup_cb, True)
+
+        cancel_button = gtk.Button( "Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "Delete" )
+        ok_button.connect("clicked", self.delete_suite, window, reg, wholegroup_cb )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def delete_suite( self, w, e, reg, wholegroup_cb ):
+        wholegroup = wholegroup_cb.get_active()
         items = re.split(':', reg)
         if len(items) == 3:
             fo, fg, fn = items
@@ -469,13 +498,12 @@ class chooser(object):
         if self.cdb:
             options += ' -c '
 
-        #options += "-o '^" + fo + "$'"
-        # (only owner can delete)
         options += " -g '^" + fg + "$' "
-        options += " -n '^" + fn + "$' "
+        if not wholegroup:
+            options += " -n '^" + fn + "$' "
 
         call( 'capture "_delete ' + options + '" &', shell=True )
- 
+        w.destroy()
 
     def import_suite( self, w, reg ):
         central = centraldb()
