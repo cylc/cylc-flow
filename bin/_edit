@@ -109,9 +109,9 @@ def backup(src):
     copy( src, bkp )
     backups[ src ] = bkp
 
-parser = OptionParser( """1/ cylc prep edit [-c] SUITE 
-       2/ cylc prep edit [-c] --cleanup SUITE
-       3/ cylc prep edit [-c] -i,--inline SUITE
+parser = OptionParser( """1/ cylc [prep] edit [-c] SUITE 
+       2/ cylc [prep] edit [-c] --cleanup SUITE
+       3/ cylc [prep] edit [-c] -i,--inline SUITE
 
 1/ Change to the suite definition directory and execute '$EDITOR suite.rc'.
 This is merely a convenience so that you can edit the suite without

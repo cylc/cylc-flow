@@ -7,7 +7,7 @@ from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 from CylcError import CylcError
 
-parser = PromptOptionParser( """cylc control reset [options] SUITE TASK
+parser = PromptOptionParser( """cylc [control] reset [options] SUITE TASK
 
 Force a task's state to:
  1/ 'ready' ...... all prerequisites satisfied (default) 

@@ -5,7 +5,7 @@ from shutil import copytree
 from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 
-parser = OptionParser( usage = """cylc registration import [FILTER options] [DEST]
+parser = OptionParser( usage = """cylc [register] import [FILTER options] [DEST]
 
 Import suites from the central suite database to your local suite 
 registration database, and optionally copy their suite definitions.

@@ -13,7 +13,7 @@ from registration import localdb, regsplit, RegistrationError
 # UM, which then core dumps. Manual use of $PWD to absolutize a relative
 # path, on GPFS, results in a shorter string ... so I use this for now.
 
-parser = OptionParser( usage = """cylc registration copy [FILTER options] DEST
+parser = OptionParser( usage = """cylc [register] copy [FILTER options] DEST
 
 1/ $ cylc reg copy [-g GROUP] -n NAME --as=[G:]N DEST
    Copy a single suite into DEST/N and register it as G:N

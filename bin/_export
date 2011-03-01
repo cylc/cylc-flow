@@ -4,7 +4,7 @@ import os, re, sys
 from optparse import OptionParser
 from registration import localdb, centraldb, unqualify, RegistrationError
 
-parser = OptionParser( usage = """cylc register export [FILTER options]
+parser = OptionParser( usage = """cylc [register] export [FILTER options]
 
 Export local suite registrations to the central database.""" )  
 

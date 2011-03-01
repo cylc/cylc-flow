@@ -62,7 +62,7 @@ def include_files( suitedir, inf, mark=False, single=False, label=False, level=N
             outf.append(level + line)
     return outf
 
-parser = OptionParser( """cylc preparation inline [options] SUITE 
+parser = OptionParser( """cylc [prep] inline [options] SUITE 
 
 View a temporary copy of a suite config (suite.rc) file in your $EDITOR
 exactly as the config file parser sees it: with include-files inlined

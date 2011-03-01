@@ -5,15 +5,6 @@
 # You must move to the top level of your cylc installation before
 # sourcing this script OR first set $CYLC_DIR to that directory.
 
-# THE FOLLOWING IS A PROBLEM IF WE NEED TO CONFIGURE CYLC ENV INSIDE A
-# SHELL FUNCTION (SHELL FUNCTIONS CAN'T BE NESTED) - e.g. OPS and VAR
-# WRAPPERS, AS CURRENTLY IMPLEMENTED.
-#function cycl {
-#    echo "TYPO ALERT: it's 'cylc' NOT 'cycl'!"
-#    cylc $@
-#    return 0
-#}
-
 if [[ -f bin/cylc ]]; then
     # we're in the top level of a cylc installation
     CYLC_DIR=$PWD
@@ -62,3 +53,7 @@ fi
 
 export PATH
 export PYTHONPATH
+
+# Python stdout buffering delays appearance of output when not directed
+# to a terminal.
+export PYTHONUNBUFFERED=true

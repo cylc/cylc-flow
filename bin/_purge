@@ -7,7 +7,7 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc control purge [options] SUITE TASK_ID STOP
+parser = PromptOptionParser( """cylc [control] purge [options] SUITE TASK_ID STOP
 
 Remove an entire tree of dependent tasks from a running suite. The root
 task will be forced to spawn and die, then so will every task that

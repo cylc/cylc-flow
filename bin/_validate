@@ -4,7 +4,7 @@ import os, sys
 from optparse import OptionParser
 from config import config, SuiteConfigError
 
-parser = OptionParser( """cylc preparation validate [options] SUITE
+parser = OptionParser( """cylc [prepare] validate [options] SUITE
 
 Parse and validate a suite config (suite.rc) file. This checks that
 entries in the file conform to $CYLC_DIR/conf/suiterc.spec, and that no

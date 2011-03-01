@@ -4,7 +4,7 @@ import sys
 from optparse import OptionParser
 from task_message import message
 
-usage = """cylc task-message [options]
+usage = """cylc [task] message [options]
 
 This is part of the cylc external task interface.
 

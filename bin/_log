@@ -8,7 +8,7 @@ import tempfile
 import subprocess
 from registration import unqualify, RegistrationError
  
-parser = OptionParser( """cylc control log [options] SUITE 
+parser = OptionParser( """cylc [control] log [options] SUITE 
 Print, or view in $EDITOR, local suite log files, with optional
 filtering. This command is a convenience: you don't need to
 know the log file location on disk.

@@ -9,7 +9,7 @@ import cylc_pyro_client
 from CylcOptionParsers import NoPromptOptionParser_u
 from port_scan import SuiteIdentificationError
 
-parser = NoPromptOptionParser_u( """cylc control dump [options] SUITE 
+parser = NoPromptOptionParser_u( """cylc [control] dump [options] SUITE 
 
 Print suite and task state information to stdout. All available
 information is printed by default. Output is designed to be

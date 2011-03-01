@@ -21,12 +21,9 @@ If the SUITE argument is supplied you will get a direct control app for
 the specified suite, bypassing the suite registration database chooser.
 
 WARNING: start important suites with:
-    $ export PYTHONUNBUFFERED=true  # (*)
     $ nohup gcylc [options] [SUITE] &
 The 'nohup' command detaches from the parent shell so that the suite
-won't be killed when you log out. (*) when using nohup, python stdout
-buffering prevents cylc stdout from appearing in nohup.out until the
-suite exits.
+won't be killed when you log out.
 
 [SUITE]                  Registered name of a suite to run.""")
 

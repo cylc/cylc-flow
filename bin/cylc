@@ -113,7 +113,6 @@ control_commands = \
     'reset',
     'dump',
     'show',
-    'list',
     'log',
     'tmon',
     'lockserver',

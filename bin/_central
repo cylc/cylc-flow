@@ -4,7 +4,7 @@ import os, re, sys
 from optparse import OptionParser
 from registration import centraldb, RegistrationError
 
-parser = OptionParser( usage = """cylc preparation central [options] [arguments]
+parser = OptionParser( usage = """cylc [preparation] central [options] [arguments]
 
 View or delete central suite database registrations. 
 

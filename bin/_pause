@@ -6,7 +6,7 @@ import cylc_pyro_client
 from CylcOptionParsers import PromptOptionParser
 from port_scan import SuiteIdentificationError
 
-parser = PromptOptionParser( """cylc control pause [options] SUITE [CYCLE]
+parser = PromptOptionParser( """cylc [control] pause [options] SUITE [CYCLE]
 
 Refrain from submitting any new tasks that are ready to run,
 immediately, or once each task passes a given cycle time.""",
