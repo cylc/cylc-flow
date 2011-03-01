@@ -23,6 +23,10 @@ stop this ('foo$' matches only literal 'foo').
   (d) to single out entries in the default group you have to specify
   the group name explicitly (-g default).""" )
 
+parser.add_option( "-o", "--owner",
+        help="Owner filter Regular Expression.",
+        metavar="RE", action="store", default=None, dest="ownerfilt" )
+
 parser.add_option( "-g", "--group",
         help="Group filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="groupfilt" )
@@ -54,6 +58,6 @@ if options.central:
 else:
     reg = localdb()
 reg.load_from_file()
-reg.print_multi( ownerfilt=None,
+reg.print_multi( ownerfilt=options.ownerfilt,
         groupfilt=options.groupfilt, namefilt=options.namefilt,
         verbose=options.verbose )

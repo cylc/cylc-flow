@@ -121,9 +121,9 @@ class chooser(object):
         regd_treeview.set_model(self.regd_liststore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
-        self.db_button = gtk.Button( "Switch to Central DB" )
+        self.db_button = gtk.Button( "Central DB" )
         self.db_button.connect("clicked", self.switchdb, None, None )
-        self.main_label = gtk.Label( "User Suite Registration Database" )
+        self.main_label = gtk.Label( "Local Suite Registrations" )
 
         # Start updating the liststore now, as we need values in it
         # immediately below (it may be possible to delay this till the
@@ -161,6 +161,9 @@ class chooser(object):
         filter_button = gtk.Button( "Filter" )
         filter_button.connect("clicked", self.filter_popup, None, None )
 
+        filter_button = gtk.Button( "New Reg" )
+        filter_button.connect("clicked", self.newreg_popup )
+
         label = gtk.Label( " Right Click for Menu" )
 
         vbox = gtk.VBox()
@@ -187,18 +190,86 @@ class chooser(object):
     def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
             db = centraldb()
-            self.db_button.set_label( "Switch to User DB" )
-            self.main_label.set_text( "Central Suite Registration Database" )
+            self.db_button.set_label( "Local DB" )
+            self.main_label.set_text( "Central Suite Registrations" )
         else:
             db = localdb()
-            self.db_button.set_label( "Switch to Central DB" )
-            self.main_label.set_text( "User Suite Registration Database" )
+            self.db_button.set_label( "Central DB" )
+            self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
         self.updater = chooser_updater( self.owner, self.regd_liststore, 
                 db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
         self.updater.update_liststore()
         self.updater.start()
+
+    def newreg_popup( self, w ):
+        dialog = gtk.FileChooserDialog(title='New Registration',
+                action=gtk.FILE_CHOOSER_ACTION_OPEN,
+                buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
+                    gtk.STOCK_OPEN,gtk.RESPONSE_OK))
+        filter = gtk.FileFilter()
+        filter.set_name("cylc suite definitions")
+        filter.add_pattern("suite\.rc")
+        dialog.add_filter( filter )
+
+        response = dialog.run()
+        if response != gtk.RESPONSE_OK:
+            dialog.destroy()
+            return False
+
+        suiterc = dialog.get_filename()
+        dialog.destroy()
+        dir = os.path.dirname( suiterc )
+        
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "New Registration" )
+
+        vbox = gtk.VBox()
+
+        label = gtk.Label( dir )
+        vbox.pack_start( label, True )
+        label = gtk.Label( 'Register As:' )
+        vbox.pack_start( label, True )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Group' )
+        box.pack_start( label, True )
+        group_entry = gtk.Entry()
+        box.pack_start (group_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Name' )
+        box.pack_start( label, True )
+        name_entry = gtk.Entry()
+        box.pack_start (name_entry, True)
+        vbox.pack_start(box)
+
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        apply_button = gtk.Button( "OK" )
+        apply_button.connect("clicked", self.new_reg, dir, group_entry, name_entry )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.filter_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( apply_button, False )
+        hbox.pack_start( cancel_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def new_reg( self, w, dir, group_e, name_e ):
+        group = group_e.get_text()
+        name = name_e.get_text()
+        reg = group + ':' + name
+        call( 'capture "_create ' + reg + ' ' + dir + '" &', shell=True )
 
     def filter(self, w, owner_e, group_e, name_e ):
         ownerfilt = owner_e.get_text()
