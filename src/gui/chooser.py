@@ -252,7 +252,7 @@ class chooser(object):
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         apply_button = gtk.Button( "OK" )
-        apply_button.connect("clicked", self.new_reg, dir, group_entry, name_entry )
+        apply_button.connect("clicked", self.new_reg, window, dir, group_entry, name_entry )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.filter_guide )
@@ -266,11 +266,12 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def new_reg( self, w, dir, group_e, name_e ):
+    def new_reg( self, b, w, dir, group_e, name_e ):
         group = group_e.get_text()
         name = name_e.get_text()
         reg = group + ':' + name
         call( 'capture "cylc create ' + reg + ' ' + dir + '" &', shell=True )
+        w.destroy()
 
     def filter(self, w, owner_e, group_e, name_e ):
         ownerfilt = owner_e.get_text()
@@ -902,7 +903,7 @@ class chooser(object):
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
-        call( 'capture "cylc grep ' + options + ' ' + pattern + ' ' + reg + ' ' + '" &', shell=True )
+        call( 'capture "cylc grep ' + options + ' ' + pattern + ' ' + reg + ' ' + '" --height=500 &', shell=True )
 
     def graph_suite( self, w, reg, warm_cb, outputfile_entry, start_entry, stop_entry ):
         start = start_entry.get_text()

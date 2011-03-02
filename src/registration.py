@@ -397,9 +397,13 @@ class regdb(object):
         owner, group, name = regsplit( suite ).get()
         dir,descr = self.get( suite )
         if not verbose:
-            print prefix, self.suiteid( owner,group,name ) + '    |' + descr + '|    ' + dir 
+            print prefix, self.suiteid( owner,group,name )
+            print '    ' + descr 
+            print '    ' + dir 
         else:
-            print prefix, '     NAME ' + name + '    |' + descr + '|    ' + dir 
+            print prefix, '     NAME '+ name + ':'
+            print '        ' + descr 
+            print '        ' + dir 
 
     def print_multi( self, ownerfilt=None, groupfilt=None, namefilt=None, verbose=False ):
         owners = self.items.keys()
