@@ -2,7 +2,7 @@
 
 import os, re, sys
 from optparse import OptionParser
-from registration import localdb, centraldb, unqualify, RegistrationError
+from registration import localdb, centraldb, regsplit, RegistrationError
 from regprompt import prompt
 
 parser = OptionParser( usage = """cylc [register] export [OPTIONS] [ARGUMENTS]
@@ -59,7 +59,7 @@ if len(args) == 0:
     print 'Matched:'
     for suite, dir, descr in suites:
         print '  ', suite
-        group, name = re.split( ':', suite )
+        owner, group, name = regsplit( suite ).get()
         if group not in groups:
             groups[group] = [ ( name, dir, descr ) ]
         else:

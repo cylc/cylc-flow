@@ -6,7 +6,7 @@ import time, os, re
 import threading
 from config import config, SuiteConfigError
 from port_scan import scan_my_suites
-from registration import localdb, centraldb, RegistrationError
+from registration import localdb, centraldb, regsplit, RegistrationError
 from gtkmonitor import monitor
 from color_rotator import rotator
 from warning_dialog import warning_dialog, info_dialog
@@ -577,7 +577,7 @@ class chooser(object):
         label = gtk.Label( 'Export ' + reg + ' as:' )
 
         owner = self.owner
-        group, name = re.split( ':', reg )
+        junk, group, name = regsplit( reg ).get()
 
         box = gtk.HBox()
         label = gtk.Label( 'Group' )
