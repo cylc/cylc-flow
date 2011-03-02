@@ -108,7 +108,7 @@ class chooser(object):
             self.window.set_title("Registered Suites (READONLY)" )
         else:
             self.window.set_title("Registered Suites" )
-        self.window.set_size_request(600, 200)
+        self.window.set_size_request(800, 200)
         self.window.set_border_width( 5 )
         self.window.connect("delete_event", self.delete_all_event)
 
@@ -121,7 +121,7 @@ class chooser(object):
         regd_treeview.set_model(self.regd_liststore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
-        newreg_button = gtk.Button( "New" )
+        newreg_button = gtk.Button( "New Registration" )
         newreg_button.connect("clicked", self.newreg_popup )
 
         self.db_button = gtk.Button( "Central DB" )
@@ -251,7 +251,7 @@ class chooser(object):
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        apply_button = gtk.Button( "OK" )
+        apply_button = gtk.Button( "Register" )
         apply_button.connect("clicked", self.new_reg, window, dir, group_entry, name_entry )
 
         #help_button = gtk.Button( "Help" )
