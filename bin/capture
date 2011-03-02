@@ -6,6 +6,7 @@ import gobject
 import tempfile
 from time import sleep
 import os, re, sys
+from optparse import OptionParser
 from warning_dialog import warning_dialog, info_dialog
 import subprocess
 import threading
@@ -17,7 +18,7 @@ stderr to display in a dialog. Examples:
 """
 
 class info(object):
-    def __init__( self, command_list, stdout, stderr, width=400, height=200 ):
+    def __init__( self, command_list, stdout, stderr, width=400, height=400 ):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
         window.set_border_width( 5 )
         window.set_title( 'command capture' )
@@ -63,11 +64,35 @@ class info(object):
         gtk.main_quit()
 
 if __name__ == '__main__':
-    command_list = sys.argv[1:]
+
+    parser = OptionParser( """capture [options] COMMAND
+
+Run a command as a subprocess and capture the resulting stdout and
+stderr to display in a dialog. Examples:
+    $ capture "echo foo" &
+
+Arguments:
+   COMMAND    - the command line to run""")
+
+    parser.add_option( "--width", 
+        help="dialog window width in pixels (default 400)", 
+        metavar='INT', action="store", 
+        default=400, dest="width" )
+
+    parser.add_option( "--height", 
+        help="dialog window height in pixels (default 200)", 
+        metavar='INT', action="store", 
+        default=200, dest="height" )
+
+    (options, args) = parser.parse_args()
+
+    command_list = args
+
     gobject.threads_init()
     tmp_stdout = tempfile.NamedTemporaryFile( dir = os.environ['TMPDIR'] )
     tmp_stderr = tempfile.NamedTemporaryFile( dir = os.environ['TMPDIR'] )
-    info( command_list, tmp_stdout, tmp_stderr )
+    info( command_list, tmp_stdout, tmp_stderr, 
+            width=int(options.width), height=int(options.height) )
     gtk.main()
 
 

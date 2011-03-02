@@ -132,12 +132,12 @@ utility_commands = \
 register_commands = \
     [
     'create',
+    'print',
+    'copy',
     'rename',
     'delete',
-    'print',
     'export',
     'import',
-    'copy',
     ]
 
 prepare_commands = \
