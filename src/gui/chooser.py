@@ -397,14 +397,6 @@ class chooser(object):
         menu_root = gtk.MenuItem( name )
         menu_root.set_submenu( menu )
 
-        rename_item = gtk.MenuItem( 'Rename' )
-        menu.append( rename_item )
-        rename_item.connect( 'activate', self.rename_suite_popup, name )
-        if self.cdb:
-            owner, group, sname = re.split(':', name )
-            if owner != self.owner:
-                rename_item.set_sensitive( False )
-
         val_item = gtk.MenuItem( 'Validate' )
         menu.append( val_item )
         val_item.connect( 'activate', self.validate_suite, name )
@@ -413,35 +405,39 @@ class chooser(object):
         menu.append( graph_item )
         graph_item.connect( 'activate', self.graph_suite_popup, name )
 
-        search_item = gtk.MenuItem( 'Search' )
-        menu.append( search_item )
-        search_item.connect( 'activate', self.search_suite_popup, name )
+        if not self.cdb:
+            #if state == 'dormant':
+            title = 'Control'
+            #else:
+            #    title = 'Connect'
+            con_item = gtk.MenuItem( title )
+            menu.append( con_item )
+            con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
+
+        menu.append( gtk.SeparatorMenuItem() )
 
         edit_item = gtk.MenuItem( 'Edit' )
         menu.append( edit_item )
         edit_item.connect( 'activate', self.edit_suite_popup, name )
 
-        edit_item = gtk.MenuItem( 'Inline' )
-        menu.append( edit_item )
-        edit_item.connect( 'activate', self.inline_suite_popup, name )
+        search_item = gtk.MenuItem( 'Search' )
+        menu.append( search_item )
+        search_item.connect( 'activate', self.search_suite_popup, name )
 
+        menu.append( gtk.SeparatorMenuItem() )
+
+        if not self.cdb:
+            copy_item = gtk.MenuItem( 'Copy' )
+            menu.append( copy_item )
+            copy_item.connect( 'activate', self.copy_suite_popup, name )
+
+        rename_item = gtk.MenuItem( 'Rename' )
+        menu.append( rename_item )
+        rename_item.connect( 'activate', self.rename_suite_popup, name )
         if self.cdb:
-            imp_item = gtk.MenuItem( 'Import' )
-            menu.append( imp_item )
-            imp_item.connect( 'activate', self.import_suite_popup, name, suite_dir, descr )
-        else:
-            if state == 'dormant':
-                title = 'Start'
-            else:
-                title = 'Connect'
-            title = 'Control'
-            con_item = gtk.MenuItem( title )
-            menu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
-
-            exp_item = gtk.MenuItem( 'Export' )
-            menu.append( exp_item )
-            exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir, descr )
+            owner, group, sname = re.split(':', name )
+            if owner != self.owner:
+                rename_item.set_sensitive( False )
 
         del_item = gtk.MenuItem( 'Delete' )
         menu.append( del_item )
@@ -450,6 +446,16 @@ class chooser(object):
             owner, group, sname = re.split(':', name )
             if owner != self.owner:
                 del_item.set_sensitive( False )
+
+        if self.cdb:
+            imp_item = gtk.MenuItem( 'Import' )
+            menu.append( imp_item )
+            imp_item.connect( 'activate', self.import_suite_popup, name, suite_dir, descr )
+        else:
+            exp_item = gtk.MenuItem( 'Export' )
+            menu.append( exp_item )
+            exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir, descr )
+
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
@@ -705,6 +711,65 @@ class chooser(object):
         call( 'capture "_rename ' + options + ' ' + ffrom + ' ' + tto + '" &', shell=True )
         w.destroy()
 
+    def copy_suite_popup( self, w, reg ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Copy '" + reg + "'")
+
+        vbox = gtk.VBox()
+
+        #wholegroup_cb = gtk.CheckButton( "Rename the group" )
+        #vbox.pack_start (wholegroup_cb, True)
+
+        label = gtk.Label("Group" )
+        group_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(group_entry, True) 
+        vbox.pack_start( hbox )
+ 
+        label = gtk.Label("Name" )
+        name_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(name_entry, True) 
+        vbox.pack_start( hbox )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'New Suite Definition Directory' )
+        box.pack_start( label, True )
+        def_entry = gtk.Entry()
+        box.pack_start (def_entry, True)
+        vbox.pack_start(box)
+
+        #wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
+ 
+        cancel_button = gtk.Button( "Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "Rename" )
+        #ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, wholegroup_cb )
+        ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, def_entry )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def copy_suite( self, b, w, reg, group_entry, name_entry, def_entry ):
+        group = group_entry.get_text()
+        name  = name_entry.get_text()
+        dir = def_entry.get_text()
+        call( 'capture "_copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+        w.destroy()
+ 
     def search_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
@@ -842,42 +907,8 @@ class chooser(object):
         # Probably not necessary ... same goes for controller actually?
         call( 'capture "_graph ' + options + ' ' + reg + ' ' + start + ' ' + stop + '" &', shell=True )
 
-    def inline_suite_popup( self, w, reg ):
-        window = gtk.Window()
-        window.set_border_width(5)
-        window.set_title( "Inlining Options for '" + reg + "'")
-
-        vbox = gtk.VBox()
-        box = gtk.HBox()
-
-        mark_cb = gtk.CheckButton( "Marked" )
-        label_cb = gtk.CheckButton( "Labeled" )
-        nojoin_cb = gtk.CheckButton( "Unjoined" )
-        single_cb = gtk.CheckButton( "Singled" )
-        
-        box.pack_start (mark_cb, True)
-        box.pack_start (label_cb, True)
-        box.pack_start (nojoin_cb, True)
-        box.pack_start (single_cb, True)
-        vbox.pack_start( box )
-
-        cancel_button = gtk.Button( "Close" )
-        cancel_button.connect("clicked", lambda x: window.destroy() )
-        ok_button = gtk.Button( "Launch Editor" )
-        ok_button.connect("clicked", self.inline_suite, reg,
-                mark_cb, label_cb, nojoin_cb, single_cb  )
-
-        #help_button = gtk.Button( "Help" )
-        #help_button.connect("clicked", self.stop_guide )
-
-        hbox = gtk.HBox()
-        hbox.pack_start( cancel_button, False )
-        hbox.pack_start( ok_button, False )
-        #hbox.pack_start( help_button, False )
-        vbox.pack_start( hbox )
-
-        window.add( vbox )
-        window.show_all()
+    def view_inlined_toggled( self, w, rb, cbs ):
+        cbs.set_sensitive( rb.get_active() )
 
     def edit_suite_popup( self, w, reg ):
         window = gtk.Window()
@@ -887,14 +918,35 @@ class chooser(object):
         vbox = gtk.VBox()
         box = gtk.HBox()
 
-        inlined_cb = gtk.CheckButton( "Inlined" )
-        box.pack_start (inlined_cb, True)
+        edit_rb = gtk.RadioButton( None, "Edit" )
+        box.pack_start (edit_rb, True)
+        edit_inlined_rb = gtk.RadioButton( edit_rb, "Edit Inlined" )
+        box.pack_start (edit_inlined_rb, True)
+        view_inlined_rb = gtk.RadioButton( edit_rb, "View Inlined" )
+        box.pack_start (view_inlined_rb, True)
+        edit_rb.set_active(True)
         vbox.pack_start( box )
+
+        hbox = gtk.HBox()
+        mark_cb = gtk.CheckButton( "Marked" )
+        label_cb = gtk.CheckButton( "Labeled" )
+        nojoin_cb = gtk.CheckButton( "Unjoined" )
+        single_cb = gtk.CheckButton( "Singled" )
+        
+        hbox.pack_start (mark_cb, True)
+        hbox.pack_start (label_cb, True)
+        hbox.pack_start (nojoin_cb, True)
+        hbox.pack_start (single_cb, True)
+        vbox.pack_start( hbox )
+        hbox.set_sensitive(False)
+
+        view_inlined_rb.connect( "toggled", self.view_inlined_toggled, view_inlined_rb, hbox )
 
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
         ok_button = gtk.Button( "Launch Editor" )
-        ok_button.connect("clicked", self.edit_suite, reg, inlined_cb  )
+        ok_button.connect("clicked", self.edit_suite, reg, edit_rb,
+                edit_inlined_rb, view_inlined_rb, mark_cb, label_cb, nojoin_cb, single_cb )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -908,31 +960,32 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def edit_suite( self, w, reg, inlined_cb ):
-        inlined = inlined_cb.get_active()
-        if inlined:
-            extra = '-i '
-        else:
+    def edit_suite( self, w, reg, edit_rb, edit_inlined_rb,
+            view_inlined_rb, markcb, lblcb, nojcb, sngcb ):
+
+        if view_inlined_rb.get_active():
             extra = ''
-        if self.cdb:
-            extra += '-c '
-        call( 'capture "_edit ' + extra + ' ' + reg + '" &', shell=True  )
+            if self.cdb:
+                extra += '-c '
+            if markcb.get_active():
+                extra += ' -m'
+            if nojcb.get_active():
+                extra += ' -n'
+            if lblcb.get_active():
+                extra += ' -l'
+            if sngcb.get_active():
+                extra += ' -s'
+            call( 'capture "_inline ' + extra + ' ' + reg + '" &', shell=True  )
+        else:
+            if edit_inlined_rb.get_active():
+                extra = '-i '
+            else:
+                extra = ''
+            if self.cdb:
+                extra += '-c '
+            call( 'capture "_edit ' + extra + ' ' + reg + '" &', shell=True  )
         return False
 
-    def inline_suite( self, w, reg, markcb, lblcb, nojcb, sngcb ):
-        extra = ''
-        if self.cdb:
-            extra += '-c '
-        if markcb.get_active():
-            extra += ' -m'
-        if nojcb.get_active():
-            extra += ' -n'
-        if lblcb.get_active():
-            extra += ' -l'
-        if sngcb.get_active():
-            extra += ' -s'
-        call( 'capture "_inline ' + extra + ' ' + reg + '" &', shell=True  )
-        return False
 
     def validate_suite( self, w, name ):
         # the following requires gui capture of stdout and stderr somehow:
