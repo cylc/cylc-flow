@@ -543,7 +543,7 @@ class chooser(object):
         vbox.pack_start(box)
 
         box = gtk.HBox()
-        label = gtk.Label( 'New Suite Definition Directory' )
+        label = gtk.Label( 'Directory' )
         box.pack_start( label, True )
         def_entry = gtk.Entry()
         box.pack_start (def_entry, True)
@@ -721,8 +721,8 @@ class chooser(object):
 
         vbox = gtk.VBox()
 
-        #wholegroup_cb = gtk.CheckButton( "Rename the group" )
-        #vbox.pack_start (wholegroup_cb, True)
+        wholegroup_cb = gtk.CheckButton( "Copy the whole group" )
+        vbox.pack_start (wholegroup_cb, True)
 
         label = gtk.Label("Group" )
         group_entry = gtk.Entry()
@@ -739,20 +739,19 @@ class chooser(object):
         vbox.pack_start( hbox )
 
         box = gtk.HBox()
-        label = gtk.Label( 'New Suite Definition Directory' )
+        label = gtk.Label( 'Directory' )
         box.pack_start( label, True )
         def_entry = gtk.Entry()
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
-        #wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
+        wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
  
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Rename" )
-        #ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, wholegroup_cb )
-        ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, def_entry )
+        ok_button = gtk.Button( "Copy" )
+        ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, def_entry, wholegroup_cb )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -766,11 +765,16 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def copy_suite( self, b, w, reg, group_entry, name_entry, def_entry ):
+    def copy_suite( self, b, w, reg, group_entry, name_entry, def_entry, wholegroup_cb ):
+        junk, reg_group, junk = regsplit( reg ).get() 
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
-        call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+        if wholegroup_cb.get_active():
+            call( 'capture "cylc copy --all ' + reg_group + ' ' + group + ' ' + dir + '" &', shell=True )
+        else:
+            call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+
         w.destroy()
  
     def search_suite_popup( self, w, reg ):

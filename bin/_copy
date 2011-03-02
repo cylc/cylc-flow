@@ -11,10 +11,13 @@ parser = OptionParser( usage = """cylc [register] copy [OPTIONS] [ARGUMENTS]
 
 Copy registered suites.
 
-1/ cylc [register] copy FROM TO DIR
+1/ cylc [reg] copy FROM TO DIR
 copy one suite registered as FROM to TO
 
-2/ cylc [register] copy [FILTER OPTIONS] TOPDIR
+2/ cylc [reg] copy -a,--all FROMGROUP TOGROUP TOPDIR
+copy all members of a registration group
+
+3/ cylc [reg] copy [FILTER OPTIONS] TOPDIR
 Interactively copy suites selected by filtering on group and name.
 
 Arguments:
@@ -29,6 +32,10 @@ parser.add_option( "-g", "--group",
 parser.add_option( "-n", "--name",
         help="Name filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="namefilt" )
+
+parser.add_option( "-a", "--all",
+        help="Copy all members of a group.",
+        action="store_true", default=False, dest="groupcopy" )
 
 ( options, args ) = parser.parse_args()
 
@@ -116,7 +123,7 @@ if len(args) == 1:
         local.dump_to_file()
     local.unlock()
 
-else:
+elif not options.groupcopy:
     # single suite
     creg = args[0]
     lreg = args[1]
@@ -150,3 +157,52 @@ else:
         print 'Copying suite definition'
         copytree( cdir, ldir )
 
+else:
+    # copy a whole group
+    fromgroup = args[0]
+    togroup = args[1]
+    topdir = args[2]
+
+    # retrieve registrations
+    local.load_from_file()
+    try:
+        csuites = local.get_list( groupfilt='^' + fromgroup + '$' )
+    except RegistrationError, x:
+        raise SystemExit(x)
+
+    cgroups = {}
+    print 'Matched:'
+    for csuite, cdir, cdescr in csuites:
+        cowner, cgroup, cname = regsplit( csuite ).get()
+        print '  ', cgroup + ':' + cname
+
+    # import to local
+    try:
+        local.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    local.load_from_file()
+    changed = False
+ 
+    for csuite, cdir, cdescr in csuites:
+        cowner, cgroup, cname = regsplit( csuite ).get()
+        lgroup = togroup
+        lname = cname
+
+        #ldir = os.path.join( topdir, lgroup, lname )
+        ldir = os.path.join( topdir, lname )
+        if os.path.exists( ldir ):
+            print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
+            continue
+        try:
+            local.register( lgroup + ':' + lname, ldir, cdescr )
+        except RegistrationError, x:
+            print >> sys.stderr, x
+        else:
+            changed = True
+            #print 'Copying suite definition'
+            copytree( cdir, ldir )
+
+    if changed:
+        local.dump_to_file()
+    local.unlock()
