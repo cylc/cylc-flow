@@ -270,7 +270,7 @@ class chooser(object):
         group = group_e.get_text()
         name = name_e.get_text()
         reg = group + ':' + name
-        call( 'capture "_create ' + reg + ' ' + dir + '" &', shell=True )
+        call( 'capture "cylc create ' + reg + ' ' + dir + '" &', shell=True )
 
     def filter(self, w, owner_e, group_e, name_e ):
         ownerfilt = owner_e.get_text()
@@ -512,7 +512,7 @@ class chooser(object):
         if not wholegroup:
             options += " -n '^" + fn + "$' "
 
-        call( 'capture "_delete ' + options + '" &', shell=True )
+        call( 'capture "cylc delete ' + options + '" &', shell=True )
         w.destroy()
 
     def import_suite_popup( self, w, reg, dir, descr ):
@@ -571,7 +571,10 @@ class chooser(object):
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
-        call( 'capture "_import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+        if dir == '':
+            warning_dialog('Suite Definition Directory required').warn()
+            return
+        call( 'capture "cylc import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
         w.destroy()
  
     def export_suite_popup( self, w, reg, dir, descr ):
@@ -630,7 +633,7 @@ class chooser(object):
     def export_suite( self, b, w, reg, group_entry, name_entry ):
         group = group_entry.get_text()
         name  = name_entry.get_text()
-        call( 'capture "_export ' + reg + ' ' + group + ':' + name + '" &', shell=True )
+        call( 'capture "cylc export ' + reg + ' ' + group + ':' + name + '" &', shell=True )
         w.destroy()
  
     def toggle_entry_sensitivity( self, w, entry ):
@@ -708,7 +711,7 @@ class chooser(object):
         if self.cdb:
             options += ' -c '
 
-        call( 'capture "_rename ' + options + ' ' + ffrom + ' ' + tto + '" &', shell=True )
+        call( 'capture "cylc rename ' + options + ' ' + ffrom + ' ' + tto + '" &', shell=True )
         w.destroy()
 
     def copy_suite_popup( self, w, reg ):
@@ -767,7 +770,7 @@ class chooser(object):
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
-        call( 'capture "_copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+        call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
         w.destroy()
  
     def search_suite_popup( self, w, reg ):
@@ -877,7 +880,7 @@ class chooser(object):
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
-        call( 'capture "_grep ' + options + ' ' + pattern + ' ' + reg + ' ' + '" &', shell=True )
+        call( 'capture "cylc grep ' + options + ' ' + pattern + ' ' + reg + ' ' + '" &', shell=True )
 
     def graph_suite( self, w, reg, warm_cb, outputfile_entry, start_entry, stop_entry ):
         start = start_entry.get_text()
@@ -905,7 +908,7 @@ class chooser(object):
         # TO DO 2/ instead of external process make part of chooser app?
         # Would have to launch in own thread as xdot is interactive?
         # Probably not necessary ... same goes for controller actually?
-        call( 'capture "_graph ' + options + ' ' + reg + ' ' + start + ' ' + stop + '" &', shell=True )
+        call( 'capture "cylc graph ' + options + ' ' + reg + ' ' + start + ' ' + stop + '" &', shell=True )
 
     def view_inlined_toggled( self, w, rb, cbs ):
         cbs.set_sensitive( rb.get_active() )
@@ -975,7 +978,7 @@ class chooser(object):
                 extra += ' -l'
             if sngcb.get_active():
                 extra += ' -s'
-            call( 'capture "_inline ' + extra + ' ' + reg + '" &', shell=True  )
+            call( 'capture "cylc inline ' + extra + ' ' + reg + '" &', shell=True  )
         else:
             if edit_inlined_rb.get_active():
                 extra = '-i '
@@ -983,7 +986,7 @@ class chooser(object):
                 extra = ''
             if self.cdb:
                 extra += '-c '
-            call( 'capture "_edit ' + extra + ' ' + reg + '" &', shell=True  )
+            call( 'capture "cylc edit ' + extra + ' ' + reg + '" &', shell=True  )
         return False
 
 
@@ -1004,7 +1007,7 @@ class chooser(object):
         options = ''
         if self.cdb:
             options += ' -c '
-        call( 'capture "_validate ' + options + name  + '" &', shell=True )
+        call( 'capture "cylc validate ' + options + name  + '" &', shell=True )
 
     def launch_controller( self, w, name, port, suite_dir ):
         # get suite logging directory

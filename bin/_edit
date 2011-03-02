@@ -292,7 +292,6 @@ h.close()
 # split it back into separate files
 split_file( lines, suiterc )
 
-
 print '(edited:', editfile, ')'
 print 'POST-EDIT FILES WRITTEN:'
 for file in newfiles:
