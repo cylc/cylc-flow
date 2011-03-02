@@ -17,13 +17,12 @@ stderr to display in a dialog. Examples:
 """
 
 class info(object):
-    def __init__( self, command_list, stdout, stderr ):
+    def __init__( self, command_list, stdout, stderr, width=400, height=200 ):
         window = gtk.Window(gtk.WINDOW_TOPLEVEL)
-        #window.set_size_request(200, 200)
         window.set_border_width( 5 )
         window.set_title( 'command capture' )
         window.connect("delete_event", self.quit)
-        window.set_size_request(600, 600)
+        window.set_size_request(width, height)
 
         sw = gtk.ScrolledWindow()
         sw.set_policy( gtk.POLICY_NEVER, gtk.POLICY_AUTOMATIC )
