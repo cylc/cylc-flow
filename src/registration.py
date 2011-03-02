@@ -455,8 +455,8 @@ class localdb( regdb ):
             self.dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            self.dir = os.path.join( os.environ['HOME'], '.cylc', 'LocalReg' )
-            self.file = os.path.join( self.dir, 'db' )
+            self.dir = os.path.join( os.environ['HOME'], '.cylc', 'LocalDB' )
+            self.file = os.path.join( self.dir, 'registrations' )
         regdb.__init__(self)
 
     def suiteid( self, owner, group, name ):
@@ -515,8 +515,8 @@ class centraldb( regdb ):
             self.dir = os.path.dirname( file )
         else:
             # file in which to store suite registrations
-            self.dir = os.path.join( os.environ['CYLC_DIR'], 'CentralReg' )
-            self.file = os.path.join( self.dir, 'db' )
+            self.dir = os.path.join( os.environ['CYLC_DIR'], 'CentralDB' )
+            self.file = os.path.join( self.dir, 'registrations' )
         regdb.__init__(self)
 
     def suiteid( self, owner, group, name ):
