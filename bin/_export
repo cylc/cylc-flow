@@ -4,15 +4,21 @@ import os, re, sys
 from optparse import OptionParser
 from registration import localdb, centraldb, unqualify, RegistrationError
 
-parser = OptionParser( usage = """1/ cylc [register] export [FILTER options]
-Interactively export suites selected by filtering.
-    2/ cylc [register] export SOURCE
-Export one suite SOURCE (group:name) under its own group and name
+parser = OptionParser( usage = """cylc [register] export [OPTIONS] [ARGUMENTS]
 
-    3/ cylc [register] export SOURCE TARGET
-Export one suite SOURCE (group:name) as TARGET (group:name)
+Export local suite registrations to the central database.
 
-Exports local suite registrations to the central database.""" )  
+1/ cylc [register] export SOURCE
+Export one suite under its own group and name.
+
+2/ cylc [register] export SOURCE TARGET
+Export one suite SOURCE (local) to TARGET (central).
+
+3/ cylc [register] export [FILTER-OPTIONS]
+Interactively export suites selected by filtering on group and name.
+
+Arguments:
+    SOURCE, TARGET   - registrations, GROUP:NAME or NAME (default group).""" )  
 
 parser.add_option( "-g", "--group",
         help="Group filter Regular Expression.",
@@ -25,11 +31,10 @@ parser.add_option( "-n", "--name",
 ( options, args ) = parser.parse_args()
 
 if len(args) > 2:
-    parser.error('Commandline error')
+    parser.error('Too many arguments')
 
 local = localdb()
 central = centraldb() 
-local.load_from_file()
 owner = os.environ['USER']
 
 if len(args) == 0:
@@ -43,6 +48,7 @@ if len(args) == 0:
             except:
                 raise SystemExit( 'Bad expression: ' + filt )
 
+    local.load_from_file()
     suites = local.get_list( groupfilt=options.groupfilt, namefilt=options.namefilt )
     if len( suites ) == 0:
         raise SystemExit( "ERROR, No matching suites to export" )
@@ -61,6 +67,7 @@ if len(args) == 0:
     except RegistrationError, x:
         raise SystemExit(x)
     central.load_from_file()
+    changed = False
  
     # export to central
     changed = False
@@ -81,6 +88,9 @@ if len(args) == 0:
 
 else:
     # single suite
+    if options.groupfilt or options.namefilt:
+        parser.error("Filtering does not apply to single suite export")
+
     source = args[0]
     if len( args ) == 2:
         target = args[1]
@@ -88,6 +98,7 @@ else:
         target = source
 
     try:
+        local.load_from_file()
         dir, descr = local.get( source )
     except RegistrationError, x:
         print x
@@ -97,6 +108,7 @@ else:
             central.load_from_file()
             central.register( target, dir, descr )
         except RegistrationError, x:
+            changed = False
             print x
         else:
             changed = True

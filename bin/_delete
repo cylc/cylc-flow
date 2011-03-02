@@ -5,17 +5,14 @@ from optparse import OptionParser
 from registration import localdb, centraldb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [register] delete [options] [arguments]
+parser = OptionParser( usage = """cylc [register] delete [OPTIONS] [ARGUMENTS]
 
-     $ cylc reg del                      # delete all!
-     $ cylc reg del [FILTER options]     # delete some
+Delete local or central cylc suite registrations.
 
-Clean up invalid registrations: (missing directory or suite.rc):
-     $ cylc reg --clean
+     $ cylc reg del [-c] SUITE                # delete one registration
+     $ cylc reg del [-c] [FILTER options]     # delete matching registrations
+     $ cylc reg --invalid [-c]                # delete invalid registrations
  
-Delete cylc suite registrations, which associate a suite name with a
-suite definition directory (stored in $HOME/.cylc/registrations). Cylc
-commands target a particular suite using its registered name.
 NOTE: deleting a suite registration does not delete the suite itself!
 
 FILTERING: 
@@ -48,7 +45,7 @@ parser.add_option( "-c","--centraldb",
         help="Delete registrations from the central database.",
         action="store_true", default=False, dest="central" )
 
-parser.add_option( "--clean",
+parser.add_option( "--invalid",
         help="Delete any registrations that are not valid.",
         action="store_true", default=False, dest="clean" )
 
@@ -57,6 +54,9 @@ parser.add_option( "-v", "--verbose",
         action="store_true", default=False, dest="verbose" )
 
 ( options, args ) = parser.parse_args()
+
+if len(args) > 1:
+    parser.error( "Too many arguments" )
 
 if options.central:
     reg = centraldb()
@@ -69,16 +69,27 @@ except RegistrationError, x:
     raise SystemExit(x)
 reg.load_from_file()
 
-changed = False
+if len(args) == 1:
+    # single suite
+    suite = args[0]
 
-if options.clean:
-    if reg.clean_all():
-        changed = True
+    try:
+        reg.unregister( suite, verbose=options.verbose )
+    except RegistrationError, x:
+        reg.unlock()
+        raise SystemExit(x)
+    else:
+        reg.dump_to_file()
+        reg.unlock()
+
+elif options.clean:
+    if reg.unregister_multi( verbose=options.verbose, invalid=True ):
         reg.dump_to_file()
     reg.unlock()
-    sys.exit(0)
 
 else:
+    # filtered
+    changed = False
     # check for valid regular expressions:
     for filt in options.groupfilt, options.namefilt:
         if filt:
@@ -92,6 +103,6 @@ else:
             verbose=options.verbose ):
         changed = True
 
-if changed:
-    reg.dump_to_file()
-reg.unlock()
+    if changed:
+        reg.dump_to_file()
+    reg.unlock()

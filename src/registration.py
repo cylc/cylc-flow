@@ -5,6 +5,14 @@ import datetime, time
 import os, sys, re
 # from time import sleep # use to testing locking
 
+# NOTE:ABSPATH (see below)
+#   dir = os.path.abspath( dir )
+# On GPFS os.path.abspath() returns the full path with fileset
+# prefix which can make filenames (for files stored under the 
+# cylc suite directory) too long for hardwired limits in the
+# UM, which then core dumps. Manual use of $PWD to absolutize a relative
+# path, on GPFS, results in a shorter string ... so I use this for now.
+
 # local and central suite registration
 
 class RegistrationError( Exception ):
@@ -184,6 +192,17 @@ class regdb(object):
         output.close()
 
     def register( self, suite, dir, description='(no description supplied)' ):
+        # remove trailing '/'
+        dir = dir.rstrip( '/' )
+        # remove leading './'
+        dir = re.sub( '^\.\/', '', dir )
+        # also strip / off name in case of registering same name as dir 
+        # whilst sitting one level up from the suite dir itself, using
+        # tab completion, and getting the args the wrong way around.
+        suite = suite.rstrip( '/' )
+        # make registered path absolute # see NOTE:ABSPATH above
+        if not re.search( '^/', dir ):
+            dir = os.path.join( os.environ['PWD'], dir )
         # sleep(20)
         owner, group, name = regsplit( suite ).get()
         if owner != self.user:
@@ -360,10 +379,6 @@ class regdb(object):
                     dir,descr = self.items[owner][group][name]
                     regs.append( (self.suiteid(owner,group,name), dir, descr) )
         return regs
-
-    def clean_all( self ):
-        # delete ANY invalid registrations owned by anyone
-        return self.unregister_multi( invalid=True )
 
     def check_valid( self, suite ):
         owner, group, name = regsplit( suite ).get()
