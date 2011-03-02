@@ -149,7 +149,7 @@ elif not options.groupcopy:
         raise SystemExit(x)
 
     if os.path.exists( ldir ):
-        raise SystemExit( 'not importing, directory already exists: ' + ldir )
+        raise SystemExit( 'ERROR, destination directory already exists: ' + ldir )
 
     # import to local
     try:
