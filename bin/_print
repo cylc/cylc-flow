@@ -5,9 +5,9 @@ from optparse import OptionParser
 from registration import localdb, centraldb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [register] print [options]
-     $ cylc reg pr                      # print all
-     $ cylc reg pr [FILTER options]     # print some
+parser = OptionParser( usage = """cylc [db] print [options]
+     $ cylc [db] pr                      # print all
+     $ cylc [db] pr [FILTER options]     # print some
 
 Print local or central suite registrations, which associate a suite name
 with a suite definition directory (stored in $HOME/.cylc/registrations).

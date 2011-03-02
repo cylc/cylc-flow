@@ -7,17 +7,17 @@ from optparse import OptionParser
 from registration import localdb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [register] copy [OPTIONS] [ARGUMENTS]
+parser = OptionParser( usage = """cylc [db] copy [OPTIONS] [ARGUMENTS]
 
 Copy registered suites.
 
-1/ cylc [reg] copy FROM TO DIR
+1/ cylc [db] copy FROM TO DIR
 copy one suite registered as FROM to TO
 
-2/ cylc [reg] copy -a,--all FROMGROUP TOGROUP TOPDIR
+2/ cylc [db] copy -a,--all FROMGROUP TOGROUP TOPDIR
 copy all members of a registration group
 
-3/ cylc [reg] copy [FILTER OPTIONS] TOPDIR
+3/ cylc [db] copy [FILTER OPTIONS] TOPDIR
 Interactively copy suites selected by filtering on group and name.
 
 Arguments:

@@ -269,7 +269,7 @@ class regdb(object):
             self.print_reg( suite )
             print "(can't unregister, wrong suite owner)"
             return
-        self.print_reg(suite, prefix='DELETING', verbose=verbose )
+        self.print_reg(suite, prefix='UNREGISTERING', verbose=verbose )
         # delete it
         del self.items[owner][group][name]
         # delete the group if it is empty
@@ -280,11 +280,11 @@ class regdb(object):
             del self.items[owner]
     
     def unregister_all_fast( self ):
-        print 'DELETING ALL REGISTRATIONS!'
+        print 'UNREGISTERING ALL REGISTRATIONS!'
         self.items = {}
  
     def unregister_group_fast( self, group ):
-        print 'DELETING registration group ', group
+        print 'UNREGISTERING group ', group
         owner = self.user
         try:
             del self.items[owner][group]

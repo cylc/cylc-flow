@@ -89,7 +89,7 @@ cylc_version = "THIS IS NOT A VERSIONED RELEASE"
 
 categories = \
     [
-    'register',
+    'db',
     'prepare',
     'discover',
     'control',
@@ -129,13 +129,13 @@ utility_commands = \
     'transfer',
     ]
 
-register_commands = \
+db_commands = \
     [
-    'create',
+    'register',
     'print',
     'copy',
     'rename',
-    'delete',
+    'unregister',
     'export',
     'import',
     ]
@@ -168,7 +168,7 @@ task_commands = \
 
 # all commands; uniquify in case any appear in multiple categories:
 allcoms = OrderedDict()
-for command in register_commands + prepare_commands + \
+for command in db_commands + prepare_commands + \
     control_commands + discover_commands + utility_commands + task_commands:
     if command not in allcoms:
         allcoms[ command ] = True
@@ -184,7 +184,7 @@ USAGE:
 
 # topic summaries
 catsum = OrderedDict()
-catsum['register'] = "manage local and central suite registrations."
+catsum['db'] = "manage local and central suite registrations."
 catsum['prepare' ] = "editing, searching, and graphing suites."
 catsum['discover'    ] = "finding out what suites are running."
 catsum['control'     ] = "running, controlling, and monitoring suites."
@@ -207,8 +207,8 @@ The cylc command set is organised into categories to help elucidate
 available functionality. Categories can optionally be omitted in command
 invocation. Any unique abbreviation can be used for a COMMAND or CATEGORY: 
   $ cylc help prep .......... (category: prepare)
-  $ cylc [reg] cre [ARGS] ... (category: register; command: create) 
-  $ cylc cre [ARGS] ......... (category: register; command: create) 
+  $ cylc [prep] ed [ARGS] ... (category: prepare; command: edit) 
+  $ cylc ed [ARGS] .......... (category: prepare; command: edit) 
 
 Command CATEGORIES (which include lists of relevant COMMANDS):"""
 
@@ -219,9 +219,9 @@ if len(sys.argv) == 1:
 
 # command summaries
 comsum = OrderedDict()
-comsum[ 'create'     ] = 'Create local suite registrations'
+comsum[ 'register'   ] = 'Registration a suite in your local database'
 comsum[ 'rename'     ] = 'Rename local or central suite registrations'
-comsum[ 'delete'     ] = 'Delete local or central suite registrations'
+comsum[ 'unregister' ] = 'Unregister suites from the local or central database'
 comsum[ 'print'      ] = 'Print local or central suite registrations'
 comsum[ 'export'     ] = 'Export local registrations to the central database'
 comsum[ 'import'     ] = 'Import central registrations to your local database'

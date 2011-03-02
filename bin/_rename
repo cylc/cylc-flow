@@ -5,7 +5,7 @@ from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, qualify, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [register] rename [options] FROM TO
+parser = OptionParser( usage = """cylc [db] rename [options] FROM TO
 
 rename individual suite registrations or registration groups.
 

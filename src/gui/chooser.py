@@ -121,7 +121,7 @@ class chooser(object):
         regd_treeview.set_model(self.regd_liststore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
-        newreg_button = gtk.Button( "New Registration" )
+        newreg_button = gtk.Button( "Add A Suite" )
         newreg_button.connect("clicked", self.newreg_popup )
 
         self.db_button = gtk.Button( "Central DB" )
@@ -205,12 +205,12 @@ class chooser(object):
         self.updater.start()
 
     def newreg_popup( self, w ):
-        dialog = gtk.FileChooserDialog(title='New Registration',
+        dialog = gtk.FileChooserDialog(title='Add A Suite',
                 action=gtk.FILE_CHOOSER_ACTION_OPEN,
                 buttons=(gtk.STOCK_CANCEL,gtk.RESPONSE_CANCEL,
                     gtk.STOCK_OPEN,gtk.RESPONSE_OK))
         filter = gtk.FileFilter()
-        filter.set_name("cylc suite definitions")
+        filter.set_name("cylc suite.rc files")
         filter.add_pattern("suite\.rc")
         dialog.add_filter( filter )
 
@@ -225,7 +225,7 @@ class chooser(object):
         
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "New Registration" )
+        window.set_title( "Add A Suite" )
 
         vbox = gtk.VBox()
 
@@ -270,7 +270,7 @@ class chooser(object):
         group = group_e.get_text()
         name = name_e.get_text()
         reg = group + ':' + name
-        call( 'capture "cylc create ' + reg + ' ' + dir + '" &', shell=True )
+        call( 'capture "cylc register ' + reg + ' ' + dir + '" &', shell=True )
         w.destroy()
 
     def filter(self, w, owner_e, group_e, name_e ):
@@ -398,14 +398,6 @@ class chooser(object):
         menu_root = gtk.MenuItem( name )
         menu_root.set_submenu( menu )
 
-        val_item = gtk.MenuItem( 'Validate' )
-        menu.append( val_item )
-        val_item.connect( 'activate', self.validate_suite, name )
-
-        graph_item = gtk.MenuItem( 'Graph' )
-        menu.append( graph_item )
-        graph_item.connect( 'activate', self.graph_suite_popup, name )
-
         if not self.cdb:
             #if state == 'dormant':
             title = 'Control'
@@ -417,6 +409,10 @@ class chooser(object):
 
         menu.append( gtk.SeparatorMenuItem() )
 
+        val_item = gtk.MenuItem( 'Validate' )
+        menu.append( val_item )
+        val_item.connect( 'activate', self.validate_suite, name )
+
         edit_item = gtk.MenuItem( 'Edit' )
         menu.append( edit_item )
         edit_item.connect( 'activate', self.edit_suite_popup, name )
@@ -424,6 +420,10 @@ class chooser(object):
         search_item = gtk.MenuItem( 'Search' )
         menu.append( search_item )
         search_item.connect( 'activate', self.search_suite_popup, name )
+
+        graph_item = gtk.MenuItem( 'Graph' )
+        menu.append( graph_item )
+        graph_item.connect( 'activate', self.graph_suite_popup, name )
 
         menu.append( gtk.SeparatorMenuItem() )
 
@@ -440,14 +440,6 @@ class chooser(object):
             if owner != self.owner:
                 rename_item.set_sensitive( False )
 
-        del_item = gtk.MenuItem( 'Delete' )
-        menu.append( del_item )
-        del_item.connect( 'activate', self.delete_suite_popup, name )
-        if self.cdb:
-            owner, group, sname = re.split(':', name )
-            if owner != self.owner:
-                del_item.set_sensitive( False )
-
         if self.cdb:
             imp_item = gtk.MenuItem( 'Import' )
             menu.append( imp_item )
@@ -457,6 +449,13 @@ class chooser(object):
             menu.append( exp_item )
             exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir, descr )
 
+        del_item = gtk.MenuItem( 'Unregister' )
+        menu.append( del_item )
+        del_item.connect( 'activate', self.delete_suite_popup, name )
+        if self.cdb:
+            owner, group, sname = re.split(':', name )
+            if owner != self.owner:
+                del_item.set_sensitive( False )
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
@@ -467,17 +466,17 @@ class chooser(object):
     def delete_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Delete '" + reg + "'")
+        window.set_title( "Unregister '" + reg + "'")
 
         vbox = gtk.VBox()
 
-        wholegroup_cb = gtk.CheckButton( "Delete Parent Group" )
+        wholegroup_cb = gtk.CheckButton( "Unregister Parent Group" )
         vbox.pack_start (wholegroup_cb, True)
 
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "Delete" )
+        ok_button = gtk.Button( "Unregister" )
         ok_button.connect("clicked", self.delete_suite, window, reg, wholegroup_cb )
 
         #help_button = gtk.Button( "Help" )
@@ -513,7 +512,7 @@ class chooser(object):
         if not wholegroup:
             options += " -n '^" + fn + "$' "
 
-        call( 'capture "cylc delete ' + options + '" &', shell=True )
+        call( 'capture "cylc unregister ' + options + '" &', shell=True )
         w.destroy()
 
     def import_suite_popup( self, w, reg, dir, descr ):

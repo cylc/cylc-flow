@@ -5,17 +5,17 @@ from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [register] export [OPTIONS] [ARGUMENTS]
+parser = OptionParser( usage = """cylc [db] export [OPTIONS] [ARGUMENTS]
 
 Export local suite registrations to the central database.
 
-1/ cylc [reg] export LOCAL [CENTRAL]
+1/ cylc [db] export LOCAL [CENTRAL]
 Export one suite under its own group and name, or as CENTRAL.
 
-2/ cylc [reg] export -a,--all LOCALGROUP [CENTRALGROUP]
+2/ cylc [db] export -a,--all LOCALGROUP [CENTRALGROUP]
 Export all members of group LOCALGROUP under its own name, or as CENTRALGROUP.
 
-3/ cylc [reg] export [FILTER-OPTIONS]
+3/ cylc [db] export [FILTER-OPTIONS]
 Interactively export suites selected by filtering on group and name.
 
 Arguments:

@@ -5,13 +5,13 @@ from optparse import OptionParser
 from registration import localdb, centraldb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [register] delete [OPTIONS] [ARGUMENTS]
+parser = OptionParser( usage = """cylc [db] unregister [OPTIONS] [ARGUMENTS]
 
 Delete local or central cylc suite registrations.
 
-     $ cylc reg del [-c] SUITE             # delete one registration
-     $ cylc reg del [-c] [FILTER options]  # delete matching registrations
-     $ cylc reg --invalid [-c]                # delete invalid registrations
+     $ cylc db unreg [-c] SUITE             # unregister one suite
+     $ cylc db unreg [-c] [FILTER options]  # unregister matching suites
+     $ cylc db --invalid [-c]               # unregister invalid suites
  
 NOTE: deleting a suite registration does not delete the suite itself!
 

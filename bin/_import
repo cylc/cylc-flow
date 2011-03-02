@@ -7,17 +7,17 @@ from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
 from regprompt import prompt
 
-parser = OptionParser( usage = """cylc [register] import [OPTIONS] [ARGUMENTS]
+parser = OptionParser( usage = """cylc [db] import [OPTIONS] [ARGUMENTS]
 
 Import suites from the central registration database.
 
-1/ cylc [reg] import CENTRAL [LOCAL] DIR
+1/ cylc [db] import CENTRAL [LOCAL] DIR
 Import one suite under the same group and name, or as LOCAL
 
-2/ cylc [reg] import -a,--all FROMGROUP [TOGROUP] TOPDIR
+2/ cylc [db] import -a,--all FROMGROUP [TOGROUP] TOPDIR
 Import all members of FROMGROUP, under same name or as TOGROUP
 
-3/ cylc [reg] import [FILTER OPTIONS] TOPDIR
+3/ cylc [db] import [FILTER OPTIONS] TOPDIR
 Interactively import suites selected by filtering on owner, group, and name.
 
 Arguments:

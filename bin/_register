@@ -5,9 +5,9 @@ from optparse import OptionParser
 from registration import localdb, RegistrationError
 from config import config, SuiteConfigError
 
-parser = OptionParser( usage = """cylc [register] create [options] SUITE PATH
+parser = OptionParser( usage = """cylc [db] register [options] SUITE PATH
 
-Create local cylc suite registrations, which associate a suite name with
+Add a new local cylc suite registration, which associates a suite name with
 a suite definition directory (stored in $HOME/.cylc/registrations). Cylc
 commands target a particular suite using its registered name.
 
