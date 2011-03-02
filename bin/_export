@@ -3,6 +3,7 @@
 import os, re, sys
 from optparse import OptionParser
 from registration import localdb, centraldb, unqualify, RegistrationError
+from regprompt import prompt
 
 parser = OptionParser( usage = """cylc [register] export [OPTIONS] [ARGUMENTS]
 
@@ -55,7 +56,9 @@ if len(args) == 0:
 
     # organise into groups
     groups = {}
+    print 'Matched:'
     for suite, dir, descr in suites:
+        print '  ', suite
         group, name = re.split( ':', suite )
         if group not in groups:
             groups[group] = [ ( name, dir, descr ) ]
@@ -72,20 +75,25 @@ if len(args) == 0:
     # export to central
     changed = False
     for group in groups:
-        cgroup = raw_input( "Export GROUP " + group + " as (default: same)? " )
-        if cgroup == '':
-            cgroup = group
+        cgroup = prompt( "Export GROUP " + group + " as what group?", group )
+        if cgroup == 'q':
+            central.unlock()
+            sys.exit(0)
+        if cgroup == 's':
+            continue
         for name, dir, descr in groups[group]:
-            cname = raw_input( "  Export NAME" + name  + " as (default: same)? " ) 
-            if cname == '':
-                cname = name
+            cname = prompt( "  Export " + group + ':' + name  + " as " + cgroup + ":WHAT?", name ) 
+            if cname == 'q':
+                central.unlock()
+                sys.exit(0)
+            if cname == 's':
+                continue
             try:
                 central.register( cgroup + ':' + cname, dir, descr )
             except RegistrationError, x:
                 print x
             else:
                 changed = True
-
 else:
     # single suite
     if options.groupfilt or options.namefilt:

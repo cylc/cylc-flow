@@ -9,8 +9,8 @@ parser = OptionParser( usage = """cylc [register] delete [OPTIONS] [ARGUMENTS]
 
 Delete local or central cylc suite registrations.
 
-     $ cylc reg del [-c] SUITE                # delete one registration
-     $ cylc reg del [-c] [FILTER options]     # delete matching registrations
+     $ cylc reg del [-c] SUITE             # delete one registration
+     $ cylc reg del [-c] [FILTER options]  # delete matching registrations
      $ cylc reg --invalid [-c]                # delete invalid registrations
  
 NOTE: deleting a suite registration does not delete the suite itself!
@@ -44,6 +44,11 @@ parser.add_option( "-n", "--name",
 parser.add_option( "-c","--centraldb",
         help="Delete registrations from the central database.",
         action="store_true", default=False, dest="central" )
+
+# TO DO?
+#parser.add_option( "-d", "--delete-def-dir",
+#        help="Delete the suite definition directory too (!DANGEROUS!).",
+#        action="store_true", default=False, dest="deldefdir" )
 
 parser.add_option( "--invalid",
         help="Delete any registrations that are not valid.",

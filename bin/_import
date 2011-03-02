@@ -5,6 +5,7 @@ import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
 from registration import localdb, centraldb, regsplit, RegistrationError
+from regprompt import prompt
 
 parser = OptionParser( usage = """cylc [register] import [OPTIONS] [ARGUMENTS]
 
@@ -75,7 +76,9 @@ if len(args) == 1:
 
     # organise into owner_group groups
     cgroups = {}
+    print 'Matched:'
     for csuite, cdir, cdescr in csuites:
+        print '  ', csuite
         cowner, cgroup, cname = re.split( ':', csuite )
         cowner_group = cowner + ':' + cgroup
         if cowner_group not in cgroups:
@@ -93,19 +96,21 @@ if len(args) == 1:
  
     for cowner_group in cgroups:
         cowner, cgroup = re.split(':', cowner_group )
-        lgroup = raw_input( "Import GROUP " + cgroup + " as (default: same)? " )
-        if lgroup == '':
-            lgroup = cgroup
+        lgroup = prompt( "Import " + cowner + ':' + cgroup + " as what group?", cgroup )
+        if lgroup == 'q':
+            local.unlock()
+            sys.exit(0)
+        if lgroup == 's':
+            continue
         for cname, cdir, cdescr in cgroups[cowner_group]:
-            lname = raw_input( "  Import NAME " + cname  + " as (default: same)? " ) 
-            if lname == '':
-                lname = cname
-
+            lname = prompt( "  Import " + cowner + ':' + cgroup + ':' + cname  + " as " + lgroup + ":WHAT?", cname ) 
+            if lname == 'q':
+                local.unlock()
+                sys.exit(0)
+            if lname == 's':
+                continue
             defldir = os.path.join( topdir, lgroup, lname )
-            ldir = raw_input( "  Import destination (default: " + defldir  + ")? " ) 
-            if ldir == '':
-                ldir = defldir
-
+            ldir = prompt( "  Copy Suite Definition to what directory?", defldir ) 
             if os.path.exists( ldir ):
                 print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
                 continue
@@ -116,7 +121,7 @@ if len(args) == 1:
             else:
                 changed = True
 
-            print 'Copying suite definition'
+            #print 'Copying suite definition'
             copytree( cdir, ldir )
 
     if changed:
