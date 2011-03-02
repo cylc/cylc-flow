@@ -117,14 +117,26 @@ if len(args) == 1:
             if os.path.exists( ldir ):
                 print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
                 continue
+            lreg = lgroup + ':' + lname
             try:
-                local.register( lgroup + ':' + lname, ldir, cdescr )
+                local.register( lreg, ldir, cdescr )
             except RegistrationError, x:
                 print >> sys.stderr, x
             else:
-                changed = True
-                #print 'Copying suite definition'
-                copytree( cdir, ldir )
+                print 'Copying suite definition'
+                try:
+                    mkdir_p( os.path.dirname(ldir))
+                except Exception,x:
+                    print >> sys.stderr, x
+                    local.unregister( lreg )
+                else:
+                    try:
+                        copytree( cdir, ldir )
+                    except OSError, x:
+                        print >> sys.stderr,x
+                        local.unregister( lreg )
+                    else:
+                        changed = True
 
     if changed:
         local.dump_to_file()
@@ -163,15 +175,23 @@ elif not options.groupimport:
         local.unlock()
         raise SystemExit(x)
     else:
-        local.dump_to_file()
-        local.unlock()
         print 'Copying suite definition'
         try:
             mkdir_p( os.path.dirname(ldir))
         except Exception,x:
-            print x
-        copytree( cdir, ldir )
-
+            print >> sys.stderr, x
+            local.unregister( lreg )
+            local.unlock()
+        else:
+            try:
+                copytree( cdir, ldir )
+            except OSError, x:
+                print >> sys.stderr,x
+                local.unregister( lreg )
+                local.unlock()
+            else:
+                local.dump_to_file()
+                local.unlock()
 else:
     # import a whole group
     m = re.match( '^(\w+):(\w+)$', args[0] )
@@ -218,19 +238,26 @@ else:
         if os.path.exists( ldir ):
             print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
             continue
+        lreg = lgroup + ':' + lname
         try:
-            local.register( lgroup + ':' + lname, ldir, cdescr )
+            local.register( lreg, ldir, cdescr )
         except RegistrationError, x:
             print >> sys.stderr, x
         else:
-            #print 'Copying suite definition'
+            print 'Copying suite definition'
             try:
                 mkdir_p( os.path.dirname(ldir))
             except Exception,x:
-                print x
+                print >> sys.stderr, x
+                local.unregister(lreg)
             else:
-                copytree( cdir, ldir )
-                changed = True
+                try:
+                    copytree( cdir, ldir )
+                except OSError, x:
+                    print >> sys.stderr,x
+                    local.unregister( lreg )
+                else:
+                    changed = True
 
     if changed:
         local.dump_to_file()

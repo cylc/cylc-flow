@@ -1,6 +1,8 @@
 _______
 GENERAL
 
+* in registration copy or import, unregister if the final copy fails.
+
 * suite db locking: document, and provide info via command response, 
   what to do in the unlikely event that a lock is in place when a
   transaction is attempted. Also, should trap Ctrl-C => unlock.

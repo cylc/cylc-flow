@@ -151,15 +151,20 @@ class regdb(object):
 
     def lock( self ):
         if os.path.exists( self.lockfile ):
-            print self.lockfile
-            raise DatabaseLockedError, 'Database is currently locked'
+            print "lock file:", self.lockfile
+            raise DatabaseLockedError, 'ERROR: ' + self.file + ' is locked'
+        print "Locking database " + self.file
         lockfile = open( self.lockfile, 'wb' )
         lockfile.write( self.user + '\n' )
         lockfile.write( str(datetime.datetime.now()))
         lockfile.close()
 
     def unlock( self ):
-        os.unlink( self.lockfile )
+        print "Unlocking database " + self.file
+        try:
+            os.unlink( self.lockfile )
+        except OSError, x:
+            print x
 
     def changed_on_disk( self ):
         # use to detect ONE change in database since we read it,

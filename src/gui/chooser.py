@@ -270,7 +270,7 @@ class chooser(object):
         group = group_e.get_text()
         name = name_e.get_text()
         reg = group + ':' + name
-        call( 'capture "cylc register ' + reg + ' ' + dir + '" &', shell=True )
+        call( 'capture "cylc register ' + reg + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
 
     def filter(self, w, owner_e, group_e, name_e ):
@@ -512,7 +512,7 @@ class chooser(object):
         if not wholegroup:
             options += " -n '^" + fn + "$' "
 
-        call( 'capture "cylc unregister ' + options + '" &', shell=True )
+        call( 'capture "cylc unregister ' + options + '" --width=600 &', shell=True )
         w.destroy()
 
     def import_suite_popup( self, w, reg, dir, descr ):
@@ -581,9 +581,9 @@ class chooser(object):
             warning_dialog('Suite Definition Directory required').warn()
             return
         if wholegroup_cb.get_active():
-            call( 'capture "cylc import --all ' + reg_owner + ':' + group + ' ' + dir + '" &', shell=True )
+            call( 'capture "cylc import --all ' + reg_owner + ':' + group + ' ' + dir + '" --width=600 &', shell=True )
         else:
-            call( 'capture "cylc import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+            call( 'capture "cylc import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
  
     def export_suite_popup( self, w, reg, dir, descr ):
@@ -649,9 +649,9 @@ class chooser(object):
         group = group_entry.get_text()
         name  = name_entry.get_text()
         if wholegroup_cb.get_active():
-            call( 'capture "cylc export --all ' + reg_group + ' ' + group + '" &', shell=True )
+            call( 'capture "cylc export --all ' + reg_group + ' ' + group + '" --width=600 &', shell=True )
         else:
-            call( 'capture "cylc export ' + reg + ' ' + group + ':' + name + '" &', shell=True )
+            call( 'capture "cylc export ' + reg + ' ' + group + ':' + name + '" --width=600 &', shell=True )
         w.destroy()
  
     def toggle_entry_sensitivity( self, w, entry ):
@@ -729,7 +729,7 @@ class chooser(object):
         if self.cdb:
             options += ' -c '
 
-        call( 'capture "cylc rename ' + options + ' ' + ffrom + ' ' + tto + '" &', shell=True )
+        call( 'capture "cylc rename ' + options + ' ' + ffrom + ' ' + tto + '" --width=600 &', shell=True )
         w.destroy()
 
     def copy_suite_popup( self, w, reg ):
@@ -789,9 +789,9 @@ class chooser(object):
         name  = name_entry.get_text()
         dir = def_entry.get_text()
         if wholegroup_cb.get_active():
-            call( 'capture "cylc copy --all ' + reg_group + ' ' + group + ' ' + dir + '" &', shell=True )
+            call( 'capture "cylc copy --all ' + reg_group + ' ' + group + ' ' + dir + '" --width=600 &', shell=True )
         else:
-            call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+            call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
 
         w.destroy()
  
