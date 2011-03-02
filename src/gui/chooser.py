@@ -1039,6 +1039,6 @@ class chooser(object):
         #    logging_dir, self.imagedir, self.readonly )
         #self.viewer_list.append( tv )
         #return False
-        call( 'capture "gcylc ' + name  + '" &', shell=True )
+        call( 'capture "gcylc ' + name  + '" --width=700 &', shell=True )
 
 

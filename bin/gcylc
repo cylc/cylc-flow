@@ -43,6 +43,11 @@ imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 host = socket.getfqdn()
 owner = os.environ["USER"]
 
+if len( args ) == 1:
+    if args[0] == 'help':
+        parser.print_help()
+        sys.exit(0)
+
 if len( args ) == 0:
     app = chooser( host, imagedir )
     gtk.main()
