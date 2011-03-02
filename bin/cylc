@@ -352,9 +352,16 @@ if len(arglist) > 0 and is_help( arglist[0] ):
         # commands only take '--help'; extend this to help,-h,...
         arglist[0] = '--help'
 
+notify=False
+if command not in ['cycletime', 'template']:
+    # notify => print 'DONE' when command is completed, which is 
+    # helpful for gui command capture windows. But some utilities return
+    # specific results by stdout, which we don't want to contaminate.
+    notify=True
+
 # construct command to execute
 command = '_' + command 
 commandlist = [ command ]
 for f in arglist:
     commandlist.append( f )
-execute( commandlist )
+execute( commandlist, notify=notify )

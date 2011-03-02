@@ -4,7 +4,7 @@ import sys, os
 
 # subprocess.call() - if shell=True, command is string, not list.
 
-def execute( command_list, ignore_output=False ):
+def execute( command_list, ignore_output=False, notify=False ):
 
     try:
         import subprocess
@@ -34,11 +34,11 @@ def execute( command_list, ignore_output=False ):
                 # the command returned non-zero exist status
                 print >> sys.stderr, ' '.join( command_list ), ' failed: ', retcode
                 sys.exit(1)
-            # can't do this as some command stdout has meaning (e.g.
-            # 'cylc util cycletime'):
-            #else:
-            #    print ' '.join( command_list ), ' succeeded'
-            #    sys.exit(0)
+            else:
+                if notify:
+                    #print ' '.join( command_list ), ' succeeded'
+                    print 'DONE'
+                sys.exit(0)
 
         except OSError:
             # the command was not invoked
