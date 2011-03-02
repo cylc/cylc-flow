@@ -37,6 +37,14 @@ won't be killed when you log out.
 if len(args) != 0 and len(args) != 1:
     parser.error( "Wrong number of arguments" )
 
+# this is required for extensive use of the capture command in gcylc:
+if 'TMPDIR' in os.environ:
+    tmpdir = os.environ['TMPDIR']
+elif 'SCRATCH' in os.environ:
+    tmpdir = os.environ['SCRATCH']
+else:
+    raise SystemExit( 'You must export $TMPDIR or $SCRATCH before running gcylc' )
+
 imagedir = os.environ[ 'CYLC_DIR' ] + '/images'
 
 #host = options.host
