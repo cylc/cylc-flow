@@ -88,9 +88,16 @@ Arguments:
 
     command_list = args
 
+    if 'TMPDIR' in os.environ:
+        tmpdir = os.environ['TMPDIR']
+    elif 'SCRATCH' in os.environ:
+        tmpdir = os.environ['SCRATCH']
+    else:
+        raise SystemExit( 'You must export $TMPDIR or $SCRATCH before running this command' )
+
     gobject.threads_init()
-    tmp_stdout = tempfile.NamedTemporaryFile( dir = os.environ['TMPDIR'] )
-    tmp_stderr = tempfile.NamedTemporaryFile( dir = os.environ['TMPDIR'] )
+    tmp_stdout = tempfile.NamedTemporaryFile( dir = tmpdir )
+    tmp_stderr = tempfile.NamedTemporaryFile( dir = tmpdir )
     info( command_list, tmp_stdout, tmp_stderr, 
             width=int(options.width), height=int(options.height) )
     gtk.main()
