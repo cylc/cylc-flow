@@ -192,7 +192,7 @@ else:
         #ldir = os.path.join( topdir, lgroup, lname )
         ldir = os.path.join( topdir, lname )
         if os.path.exists( ldir ):
-            print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
+            print >> sys.stderr, 'WARNING: skipping copy, directory already exists: ' + ldir
             continue
         try:
             local.register( lgroup + ':' + lname, ldir, cdescr )

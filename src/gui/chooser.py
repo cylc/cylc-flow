@@ -521,7 +521,10 @@ class chooser(object):
         window.set_title( "Import '" + reg + "' from central database")
 
         vbox = gtk.VBox()
-        label = gtk.Label( 'Import ' + reg + ' as:' )
+        #label = gtk.Label( 'Import ' + reg + ' as:' )
+
+        wholegroup_cb = gtk.CheckButton( "Import the whole group" )
+        vbox.pack_start (wholegroup_cb, True)
 
         owner = self.owner
         cowner, cgroup, cname = re.split( ':', reg )
@@ -549,11 +552,13 @@ class chooser(object):
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
+        wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
+ 
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "Import" )
-        ok_button.connect("clicked", self.import_suite, window, reg, def_entry, group_entry, name_entry )
+        ok_button.connect("clicked", self.import_suite, window, reg, group_entry, name_entry, def_entry, wholegroup_cb )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -567,14 +572,18 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def import_suite( self, b, w, reg, def_entry, group_entry, name_entry ):
+    def import_suite( self, b, w, reg, group_entry, name_entry, def_entry, wholegroup_cb ):
+        reg_owner, reg_group, junk = regsplit( reg ).get() 
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
         if dir == '':
             warning_dialog('Suite Definition Directory required').warn()
             return
-        call( 'capture "cylc import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+        if wholegroup_cb.get_active():
+            call( 'capture "cylc import --all ' + reg_owner + ':' + group + ' ' + dir + '" &', shell=True )
+        else:
+            call( 'capture "cylc import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
         w.destroy()
  
     def export_suite_popup( self, w, reg, dir, descr ):

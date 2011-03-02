@@ -11,17 +11,18 @@ parser = OptionParser( usage = """cylc [register] import [OPTIONS] [ARGUMENTS]
 
 Import suites from the central registration database.
 
-1/ cylc [register] import CENTRAL DIR
-Import one suite under its own group and name
+1/ cylc [reg] import CENTRAL [LOCAL] DIR
+Import one suite under the same group and name, or as LOCAL
 
-2/ cylc [register] import CENTRAL LOCAL DIR
-Import one suite CENTRAL to LOCAL
+2/ cylc [reg] import -a,--all FROMGROUP [TOGROUP] TOPDIR
+Import all members of FROMGROUP, under same name or as TOGROUP
 
-3/ cylc [register] import [FILTER OPTIONS] TOPDIR
+3/ cylc [reg] import [FILTER OPTIONS] TOPDIR
 Interactively import suites selected by filtering on owner, group, and name.
 
 Arguments:
-    CENTRAL, LOCAL   - registrations, GROUP:NAME or NAME (default group).
+    CENTRAL, FROMGROUP  - OWNER:GROUP:NAME, OWNER:GROUP.
+    LOCAL, TOGROUP      - GROUP:NAME or NAME (default group).
     DIR    - destination for the imported suite definition (must not exist).
     TOPDIR - top level directory for imported suite definitions.""" )
 
@@ -36,6 +37,10 @@ parser.add_option( "-g", "--group",
 parser.add_option( "-n", "--name",
         help="Name filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="namefilt" )
+
+parser.add_option( "-a", "--all",
+        help="Copy all members of a group.",
+        action="store_true", default=False, dest="groupimport" )
 
 ( options, args ) = parser.parse_args()
 
@@ -125,7 +130,7 @@ if len(args) == 1:
         local.dump_to_file()
     local.unlock()
 
-else:
+elif not options.groupimport:
     # single suite
     creg = args[0]
     if len(args) == 2:
@@ -163,3 +168,62 @@ else:
         print 'Copying suite definition'
         copytree( cdir, ldir )
 
+else:
+    # import a whole group
+    m = re.match( '^(\w+):(\w+)$', args[0] )
+    if m:
+        fromowner, fromgroup = m.groups()
+    else:
+        raise SystemExit( "FROMGROUP must be owner:group" )
+    
+    if len(args) == 2:
+        togroup = fromgroup
+        topdir = args[1]
+    else:
+        togroup = args[1]
+        topdir = args[2]
+
+    # retrieve registrations
+    central.load_from_file()
+    try:
+        csuites = central.get_list( ownerfilt='^' + fromowner + '$',
+                groupfilt='^' + fromgroup + '$' )
+    except RegistrationError, x:
+        raise SystemExit(x)
+
+    cgroups = {}
+    print 'Matched:'
+    for csuite, cdir, cdescr in csuites:
+        cowner, cgroup, cname = regsplit( csuite ).get()
+        print '  ', cowner + ':' + cgroup + ':' + cname
+
+    # import to local
+    try:
+        local.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    local.load_from_file()
+    changed = False
+ 
+    for csuite, cdir, cdescr in csuites:
+        cowner, cgroup, cname = regsplit( csuite ).get()
+        lgroup = togroup
+        lname = cname
+
+        #ldir = os.path.join( topdir, lgroup, lname )
+        ldir = os.path.join( topdir, lname )
+        if os.path.exists( ldir ):
+            print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
+            continue
+        try:
+            local.register( lgroup + ':' + lname, ldir, cdescr )
+        except RegistrationError, x:
+            print >> sys.stderr, x
+        else:
+            changed = True
+            #print 'Copying suite definition'
+            copytree( cdir, ldir )
+
+    if changed:
+        local.dump_to_file()
+    local.unlock()
