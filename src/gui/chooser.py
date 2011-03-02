@@ -407,23 +407,23 @@ class chooser(object):
             menu.append( con_item )
             con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
 
-        menu.append( gtk.SeparatorMenuItem() )
-
-        val_item = gtk.MenuItem( 'Validate' )
-        menu.append( val_item )
-        val_item.connect( 'activate', self.validate_suite, name )
+            menu.append( gtk.SeparatorMenuItem() )
 
         edit_item = gtk.MenuItem( 'Edit' )
         menu.append( edit_item )
         edit_item.connect( 'activate', self.edit_suite_popup, name )
 
+        graph_item = gtk.MenuItem( 'Graph' )
+        menu.append( graph_item )
+        graph_item.connect( 'activate', self.graph_suite_popup, name )
+
         search_item = gtk.MenuItem( 'Search' )
         menu.append( search_item )
         search_item.connect( 'activate', self.search_suite_popup, name )
 
-        graph_item = gtk.MenuItem( 'Graph' )
-        menu.append( graph_item )
-        graph_item.connect( 'activate', self.graph_suite_popup, name )
+        val_item = gtk.MenuItem( 'Validate' )
+        menu.append( val_item )
+        val_item.connect( 'activate', self.validate_suite, name )
 
         menu.append( gtk.SeparatorMenuItem() )
 
