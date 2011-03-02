@@ -1,41 +1,29 @@
 #!/usr/bin/env python
 
+from mkdir_p import mkdir_p
 import os, re, sys
 from shutil import copytree
 from optparse import OptionParser
 from registration import localdb, regsplit, RegistrationError
+from regprompt import prompt
 
-# NOTE:ABSPATH (see below)
-#   rdir = os.path.abspath( rdir )
-# On GPFS os.path.abspath() returns the full path with fileset
-# prefix which can make filenames (for files stored under the 
-# cylc suite directory) too long for hardwired limits in the
-# UM, which then core dumps. Manual use of $PWD to absolutize a relative
-# path, on GPFS, results in a shorter string ... so I use this for now.
+parser = OptionParser( usage = """cylc [register] copy [OPTIONS] [ARGUMENTS]
 
-parser = OptionParser( usage = """cylc [register] copy [FILTER options] DEST
+Copy registered suites.
 
-1/ $ cylc reg copy [-g GROUP] -n NAME --as=[G:]N DEST
-   Copy a single suite into DEST/N and register it as G:N
+1/ cylc [register] copy FROM DIR
+copy one suite under its own group and name
 
-2/ $ cylc reg copy -g GROUP --to=G DEST
-   Copy a whole group GROUP into DEST/G/N and register as 
+2/ cylc [register] copy FROM TO DIR
+copy one suite registered as FROM to TO
 
-Make a copy of a registered suite, or group of suites.  This is
-equivalent to copying the suite definition directory manually and 
-registering it under a new group:name.
+3/ cylc [register] copy [FILTER OPTIONS] TOPDIR
+Interactively copy suites selected by filtering on group and name.
 
 Arguments:
-    DEST - suites will be copied to sub-directories of DEST that must
-not exist yet.
-
-By default the source GROUP and NAME will be retained, but you can 
-use '-a,--as' or '-t,--to' to change this.
-
-See also:
-    cylc reg centraldb - view and unregister central suite registrations
-    cylc reg export    - export suites to the central suite database
-    cylc reg create    - manage your local suite registrations""" )
+    FROM, TO   - registrations, GROUP:NAME or NAME (default group).
+    DIR    - destination for the copied suite definition (must not exist).
+    TOPDIR - top level directory for copied suite definitions.""" )
 
 parser.add_option( "-g", "--group",
         help="Group filter Regular Expression.",
@@ -45,93 +33,113 @@ parser.add_option( "-n", "--name",
         help="Name filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="namefilt" )
 
-parser.add_option( "-a", "--as", metavar='SUITE',
-        help="copy a single suite to GROUP:NAME or NAME (in the "
-        "'default' group)",
-        action="store", default=None, dest="import_as" )
-
-parser.add_option( "-t", "--to", metavar='GROUP',
-        help="import one or more suites into local GROUP "
-        "using the original NAMES.",
-        action="store", default=None, dest="import_to" )
-
 ( options, args ) = parser.parse_args()
 
-if len(args) > 1:
-    parser.error('Wrong number of arguments')
-
-if options.import_as and options.import_to:
-    parser.error( 'Choose ONE of --as, --to' )
-
-# check for valid regular expressions:
-for filt in options.groupfilt, options.namefilt:
-    if filt:
-        try:
-            re.compile( filt )
-        except:
-            raise SystemExit( 'Bad expression: ' + filt )
-
-#import pdb
-#pdb.set_trace()
-
-if options.import_as and not options.namefilt:
-    parser.error( '-a,--as can only be used when importing a single suite' )
-    suite = options.import_as
-
-gotdest = False
-if len(args) == 1:
-    dest = args[0]
-    gotdest = True
-    # make registered path absolute # see NOTE:ABSPATH above
-    if not re.match( '^/', dest ):
-        dest = os.path.join( os.environ['PWD'], dest )
-    if not os.path.exists( dest ):
-        os.makedirs( dest )
+if len(args) == 0 or len(args) > 3:
+    parser.error('Illegal number of arguments')
 
 local = localdb()
-local.load_from_file()
 
-# retrieve registrations
-try:
-    suites = local.get_list( ownerfilt=options.ownerfilt,
-            groupfilt=options.groupfilt, namefilt=options.namefilt )
-except RegistrationError, x:
-    raise SystemExit(x)
+if len(args) == 1:
+    # interactive, filtered
+    if not options.groupfilt and not options.namefilt:
+        parser.error( "filtering options are required for single argument" )
 
-if options.import_as and len(suites) != 1:
-    # should not happen!
-    raise SystemExit( 'ERROR: got more than one suite for a single suite match' )
+    topdir = args[0]
+    try:
+        mkdir_p( topdir )
+    except Exception,x:
+        raise SystemExit(x)
 
-for suite, dir, descr in suites:
-    lowner, lgroup, lname = regsplit( lsuite ).get()
-    if options.import_as:
-        m = re.match( '^(\w+):(\w+)$', options.import_as )
-        if m:
-            group, name = m.groups()
-        elif re.match( '^(\w+)$', options.import_as ):
-            group = 'default'
-            name = options.import_as
+    # check for valid regular expressions:
+    for filt in options.groupfilt, options.namefilt:
+        if filt:
+            try:
+                re.compile( filt )
+            except:
+                raise SystemExit( 'Bad expression: ' + filt )
+
+    # retrieve registrations
+    local.load_from_file()
+    try:
+        csuites = local.get_list( groupfilt=options.groupfilt, namefilt=options.namefilt )
+    except RegistrationError, x:
+        raise SystemExit(x)
+
+    # organise into owner_group groups
+    cgroups = {}
+    print 'Matched:'
+    for csuite, cdir, cdescr in csuites:
+        cowner, cgroup, cname = regsplit( csuite ).get()
+        print '  ', cgroup + ':' + cname
+        cowner_group = cgroup
+        if cowner_group not in cgroups:
+            cgroups[cowner_group] = [ ( cname, cdir, cdescr ) ]
         else:
-            parser.error( 'Illegal argument to --as' ) 
-    elif options.import_to:
-        if re.match( '^(\w+)$', options.import_to ):
-            group = options.import_to
-            name = lname
-        else:
-            parser.error( 'Illegal argument to --to' ) 
-    else:
-        group = lgroup
-        name = lname
+            cgroups[cowner_group].append( (cname, cdir, cdescr))
+
+    # import to local
+    try:
+        local.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    local.load_from_file()
+    changed = False
  
-    if gotdest:
-        newdir = os.path.join( dest, name )
-        if os.path.exists( newdir ):
-            raise SystemExit( 'ERROR, directory already exists: ' + newdir )
-    else:
-        newdir = ldir
+    for cowner_group in cgroups:
+        cgroup = cowner_group
+        lgroup = prompt( "Copy " + cgroup + " as what group?", cgroup )
+        if lgroup == 'q':
+            local.unlock()
+            sys.exit(0)
+        if lgroup == 's':
+            continue
+        for cname, cdir, cdescr in cgroups[cowner_group]:
+            lname = prompt( "  Copy " + cgroup + ':' + cname  + " as " + lgroup + ":WHAT?", cname ) 
+            if lname == 'q':
+                local.unlock()
+                sys.exit(0)
+            if lname == 's':
+                continue
+            defldir = os.path.join( topdir, lgroup, lname )
+            ldir = prompt( "  Copy Suite Definition to what directory?", defldir ) 
+            if os.path.exists( ldir ):
+                print >> sys.stderr, 'WARNING: skipping import, directory already exists: ' + ldir
+                continue
+            try:
+                local.register( lgroup + ':' + lname, ldir, cdescr )
+            except RegistrationError, x:
+                print >> sys.stderr, x
+            else:
+                changed = True
+                #print 'Copying suite definition'
+                copytree( cdir, ldir )
 
-    suite = group + ':' + name
-    # register locally
+    if changed:
+        local.dump_to_file()
+    local.unlock()
+
+else:
+    # single suite
+    creg = args[0]
+    if len(args) == 2:
+        lreg = creg
+        ldir = args[1]
+    else:
+        lreg = args[1]
+        ldir = args[2]
+
+    # retrieve registration
+    local.load_from_file()
+    try:
+        cdir, cdescr = local.get( creg )
+    except RegistrationError, x:
+        raise SystemExit(x)
+
+    if os.path.exists( ldir ):
+        raise SystemExit( 'not importing, directory already exists: ' + ldir )
+
+    # import to local
     try:
         local.lock()
     except RegistrationError, x:
@@ -139,13 +147,13 @@ for suite, dir, descr in suites:
     local.load_from_file()
  
     try:
-        local.register( suite, newdir, ldescr )
+        local.register( lreg, ldir, cdescr )
     except RegistrationError, x:
+        local.unlock()
         raise SystemExit(x)
-    local.dump_to_file()
-    local.unlock()
-
-    if gotdest:
-        # do this only if registration succeeds
+    else:
+        local.dump_to_file()
+        local.unlock()
         print 'Copying suite definition'
-        copytree( ldir, newdir )
+        copytree( cdir, ldir )
+

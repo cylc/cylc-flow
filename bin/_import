@@ -118,9 +118,8 @@ if len(args) == 1:
                 print >> sys.stderr, x
             else:
                 changed = True
-
-            #print 'Copying suite definition'
-            copytree( cdir, ldir )
+                #print 'Copying suite definition'
+                copytree( cdir, ldir )
 
     if changed:
         local.dump_to_file()
