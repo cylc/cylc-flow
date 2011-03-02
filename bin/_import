@@ -11,19 +11,17 @@ parser = OptionParser( usage = """cylc [register] import [OPTIONS] [ARGUMENTS]
 
 Import suites from the central registration database.
 
-1/ cylc [register] import SOURCE DIR
+1/ cylc [register] import CENTRAL DIR
 Import one suite under its own group and name
 
-2/ cylc [register] import SOURCE TARGET DIR
-Import one suite SOURCE (central) to TARGET (local)
+2/ cylc [register] import CENTRAL LOCAL DIR
+Import one suite CENTRAL to LOCAL
 
 3/ cylc [register] import [FILTER OPTIONS] TOPDIR
 Interactively import suites selected by filtering on owner, group, and name.
 
 Arguments:
-
-Arguments:
-    SOURCE, TARGET   - registrations, GROUP:NAME or NAME (default group).
+    CENTRAL, LOCAL   - registrations, GROUP:NAME or NAME (default group).
     DIR    - destination for the imported suite definition (must not exist).
     TOPDIR - top level directory for imported suite definitions.""" )
 
@@ -130,18 +128,18 @@ if len(args) == 1:
 
 else:
     # single suite
-    source = args[0]
+    creg = args[0]
     if len(args) == 2:
-        target = source
-        dir = args[1]
+        lreg = creg
+        ldir = args[1]
     else:
-        target = args[1]
-        dir = args[2]
+        lreg = args[1]
+        ldir = args[2]
 
     # retrieve central registration
     central.load_from_file()
     try:
-        cdir, cdescr = central.get( source )
+        cdir, cdescr = central.get( creg )
     except RegistrationError, x:
         raise SystemExit(x)
 
@@ -156,12 +154,13 @@ else:
     local.load_from_file()
  
     try:
-        local.register( target, ldir, cdescr )
+        local.register( lreg, ldir, cdescr )
     except RegistrationError, x:
-        print >> sys.stderr, x
+        local.unlock()
+        raise SystemExit(x)
     else:
         local.dump_to_file()
+        local.unlock()
         print 'Copying suite definition'
         copytree( cdir, ldir )
 
-    local.unlock()

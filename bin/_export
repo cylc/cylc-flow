@@ -9,17 +9,17 @@ parser = OptionParser( usage = """cylc [register] export [OPTIONS] [ARGUMENTS]
 
 Export local suite registrations to the central database.
 
-1/ cylc [register] export SOURCE
+1/ cylc [register] export LOCAL
 Export one suite under its own group and name.
 
-2/ cylc [register] export SOURCE TARGET
-Export one suite SOURCE (local) to TARGET (central).
+2/ cylc [register] export LOCAL CENTRAL
+Export one suite LOCAL to CENTRAL.
 
 3/ cylc [register] export [FILTER-OPTIONS]
 Interactively export suites selected by filtering on group and name.
 
 Arguments:
-    SOURCE, TARGET   - registrations, GROUP:NAME or NAME (default group).""" )  
+    LOCAL, CENTRAL   - registrations, GROUP:NAME or NAME (default group).""" )  
 
 parser.add_option( "-g", "--group",
         help="Group filter Regular Expression.",

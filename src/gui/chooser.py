@@ -428,7 +428,7 @@ class chooser(object):
         if self.cdb:
             imp_item = gtk.MenuItem( 'Import' )
             menu.append( imp_item )
-            imp_item.connect( 'activate', self.import_suite, name )
+            imp_item.connect( 'activate', self.import_suite_popup, name, suite_dir, descr )
         else:
             if state == 'dormant':
                 title = 'Start'
@@ -509,29 +509,65 @@ class chooser(object):
         call( 'capture "_delete ' + options + '" &', shell=True )
         w.destroy()
 
-    def import_suite( self, w, reg ):
-        central = centraldb()
-        central.load_from_file()
-        try:
-            dir,descr = central.get( reg )
-        except RegistrationError, x:
-            warning_dialog( str(x) ).warn()
-            return False
-        local = localdb() 
-        try:
-            local.lock()
-        except RegistrationError, x:
-            warning_dialog( str(x) ).warn()
-            return False
-        local.load_from_file()
-        try:
-            local.register( reg, dir, descr )
-        except RegistrationError, x:
-            warning_dialog( str(x) ).warn()
-            return False
-        local.unlock()
-        local.dump_to_file()
+    def import_suite_popup( self, w, reg, dir, descr ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Import '" + reg + "' from central database")
 
+        vbox = gtk.VBox()
+        label = gtk.Label( 'Import ' + reg + ' as:' )
+
+        owner = self.owner
+        cowner, cgroup, cname = re.split( ':', reg )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Group' )
+        box.pack_start( label, True )
+        group_entry = gtk.Entry()
+        group_entry.set_text( cgroup )
+        box.pack_start (group_entry, True)
+        vbox.pack_start( box )
+
+        box = gtk.HBox()
+        label = gtk.Label( 'Name' )
+        box.pack_start( label, True )
+        name_entry = gtk.Entry()
+        name_entry.set_text( cname )
+        box.pack_start (name_entry, True)
+        vbox.pack_start(box)
+
+        box = gtk.HBox()
+        label = gtk.Label( 'New Suite Definition Directory' )
+        box.pack_start( label, True )
+        def_entry = gtk.Entry()
+        box.pack_start (def_entry, True)
+        vbox.pack_start(box)
+
+        cancel_button = gtk.Button( "Close" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "Import" )
+        ok_button.connect("clicked", self.import_suite, window, reg, def_entry, group_entry, name_entry )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def import_suite( self, b, w, reg, def_entry, group_entry, name_entry ):
+        group = group_entry.get_text()
+        name  = name_entry.get_text()
+        dir = def_entry.get_text()
+        call( 'capture "_import ' + reg + ' ' + group + ':' + name + ' ' + dir + '" &', shell=True )
+        w.destroy()
+ 
     def export_suite_popup( self, w, reg, dir, descr ):
         window = gtk.Window()
         window.set_border_width(5)
