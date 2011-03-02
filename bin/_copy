@@ -170,7 +170,6 @@ else:
     except RegistrationError, x:
         raise SystemExit(x)
 
-    cgroups = {}
     print 'Matched:'
     for csuite, cdir, cdescr in csuites:
         cowner, cgroup, cname = regsplit( csuite ).get()

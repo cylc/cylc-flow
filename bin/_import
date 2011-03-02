@@ -39,7 +39,7 @@ parser.add_option( "-n", "--name",
         metavar="RE", action="store", default=None, dest="namefilt" )
 
 parser.add_option( "-a", "--all",
-        help="Copy all members of a group.",
+        help="Import all members of a group.",
         action="store_true", default=False, dest="groupimport" )
 
 ( options, args ) = parser.parse_args()
@@ -191,7 +191,6 @@ else:
     except RegistrationError, x:
         raise SystemExit(x)
 
-    cgroups = {}
     print 'Matched:'
     for csuite, cdir, cdescr in csuites:
         cowner, cgroup, cname = regsplit( csuite ).get()

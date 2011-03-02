@@ -9,13 +9,13 @@ parser = OptionParser( usage = """cylc [register] export [OPTIONS] [ARGUMENTS]
 
 Export local suite registrations to the central database.
 
-1/ cylc [register] export LOCAL
-Export one suite under its own group and name.
+1/ cylc [reg] export LOCAL [CENTRAL]
+Export one suite under its own group and name, or as CENTRAL.
 
-2/ cylc [register] export LOCAL CENTRAL
-Export one suite LOCAL to CENTRAL.
+2/ cylc [reg] export -a,--all LOCALGROUP [CENTRALGROUP]
+Export all members of group LOCALGROUP under its own name, or as CENTRALGROUP.
 
-3/ cylc [register] export [FILTER-OPTIONS]
+3/ cylc [reg] export [FILTER-OPTIONS]
 Interactively export suites selected by filtering on group and name.
 
 Arguments:
@@ -28,6 +28,10 @@ parser.add_option( "-g", "--group",
 parser.add_option( "-n", "--name",
         help="Name filter Regular Expression.",
         metavar="RE", action="store", default=None, dest="namefilt" )
+
+parser.add_option( "-a", "--all",
+        help="Export all members of a group.",
+        action="store_true", default=False, dest="groupexport" )
 
 ( options, args ) = parser.parse_args()
 
@@ -94,7 +98,12 @@ if len(args) == 0:
                 print x
             else:
                 changed = True
-else:
+
+    if changed:
+        central.dump_to_file()
+    central.unlock()
+
+elif not options.groupexport:
     # single suite
     if options.groupfilt or options.namefilt:
         parser.error("Filtering does not apply to single suite export")
@@ -121,6 +130,50 @@ else:
         else:
             changed = True
 
-if changed:
-    central.dump_to_file()
-central.unlock()
+    if changed:
+        central.dump_to_file()
+    central.unlock()
+
+else:
+    # group export
+    fromgroup = args[0]
+    if len(args) == 1:
+        togroup = fromgroup
+    else:
+        togroup = args[1]
+
+    # retrieve registrations
+    local.load_from_file()
+    try:
+        csuites = local.get_list( groupfilt='^' + fromgroup + '$' )
+    except RegistrationError, x:
+        raise SystemExit(x)
+
+    print 'Matched:'
+    for csuite, cdir, cdescr in csuites:
+        cowner, cgroup, cname = regsplit( csuite ).get()
+        print '  ' + cgroup + ':' + cname
+
+    # export to central
+    try:
+        central.lock()
+    except RegistrationError, x:
+        raise SystemExit(x)
+    central.load_from_file()
+    changed = False
+ 
+    for csuite, cdir, cdescr in csuites:
+        cowner, cgroup, cname = regsplit( csuite ).get()
+        lgroup = togroup
+        lname = cname
+
+        try:
+            central.register( owner + ':' + lgroup + ':' + lname, cdir, cdescr )
+        except RegistrationError, x:
+            print >> sys.stderr, x
+        else:
+            changed = True
+
+    if changed:
+        central.dump_to_file()
+    central.unlock()

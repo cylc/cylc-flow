@@ -592,7 +592,10 @@ class chooser(object):
         window.set_title( "Export '" + reg + "' to central database")
 
         vbox = gtk.VBox()
-        label = gtk.Label( 'Export ' + reg + ' as:' )
+        #label = gtk.Label( 'Export ' + reg + ' as:' )
+
+        wholegroup_cb = gtk.CheckButton( "Export the whole group" )
+        vbox.pack_start (wholegroup_cb, True)
 
         owner = self.owner
         junk, group, name = regsplit( reg ).get()
@@ -621,11 +624,13 @@ class chooser(object):
         #box.pack_start (descr_entry, True)
         #vbox.pack_start(box)
 
+        wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
+ 
         cancel_button = gtk.Button( "Close" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "Export" )
-        ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry )
+        ok_button.connect("clicked", self.export_suite, window, reg, group_entry, name_entry, wholegroup_cb )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -639,10 +644,14 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def export_suite( self, b, w, reg, group_entry, name_entry ):
+    def export_suite( self, b, w, reg, group_entry, name_entry, wholegroup_cb ):
+        reg_owner, reg_group, junk = regsplit( reg ).get() 
         group = group_entry.get_text()
         name  = name_entry.get_text()
-        call( 'capture "cylc export ' + reg + ' ' + group + ':' + name + '" &', shell=True )
+        if wholegroup_cb.get_active():
+            call( 'capture "cylc export --all ' + reg_group + ' ' + group + '" &', shell=True )
+        else:
+            call( 'capture "cylc export ' + reg + ' ' + group + ':' + name + '" &', shell=True )
         w.destroy()
  
     def toggle_entry_sensitivity( self, w, entry ):
