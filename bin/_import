@@ -166,6 +166,10 @@ elif not options.groupimport:
         local.dump_to_file()
         local.unlock()
         print 'Copying suite definition'
+        try:
+            mkdir_p( os.path.dirname(ldir))
+        except Exception,x:
+            print x
         copytree( cdir, ldir )
 
 else:
@@ -219,9 +223,14 @@ else:
         except RegistrationError, x:
             print >> sys.stderr, x
         else:
-            changed = True
             #print 'Copying suite definition'
-            copytree( cdir, ldir )
+            try:
+                mkdir_p( os.path.dirname(ldir))
+            except Exception,x:
+                print x
+            else:
+                copytree( cdir, ldir )
+                changed = True
 
     if changed:
         local.dump_to_file()
