@@ -2,4 +2,5 @@
 
 # catch a common commandline typo: gcylc -> gcycl
 
+echo "SPELLING ERROR: 'gcylc' not 'gcycl'."
 gcylc $@

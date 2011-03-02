@@ -184,12 +184,12 @@ USAGE:
 
 # topic summaries
 catsum = OrderedDict()
-catsum['db'] = "manage local and central suite registrations."
-catsum['prepare' ] = "editing, searching, and graphing suites."
-catsum['discover'    ] = "finding out what suites are running."
-catsum['control'     ] = "running, controlling, and monitoring suites."
-catsum['task'        ] = "single-task submission, task wrapping, and messaging."
-catsum['utility'     ] = "cycle time arithmetic, filename templating, etc."
+catsum['db'       ] = "manage local and central suite registration databases."
+catsum['prepare'  ] = "validation, editing, searching, and graphing of suites."
+catsum['discover' ] = "discovering what suites are running at the moment."
+catsum['control'  ] = "running, monitoring, and controlling suites."
+catsum['task'     ] = "running single tasks, task wrapping and messaging."
+catsum['utility'  ] = "cycle time arithmetic, filename templating, etc."
 
 # was in help doc:
 ##Cylc suites are not artificially grouped by forecast cycle; tasks from

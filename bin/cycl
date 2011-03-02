@@ -2,4 +2,5 @@
 
 # catch a common commandline typo: cylc -> cycl
 
+echo "SPELLING ERROR: 'cylc' not 'cycl'."
 cylc $@
