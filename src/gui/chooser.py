@@ -14,7 +14,7 @@ from subprocess import call
 import helpwindow 
 
 class chooser_updater(threading.Thread):
-    def __init__(self, owner, regd_liststore, db, is_cdb, host, 
+    def __init__(self, owner, regd_treestore, db, is_cdb, host, 
             ownerfilt=None, groupfilt=None, namefilt=None ):
         self.ownerfilt = ownerfilt
         self.groupfilt = groupfilt
@@ -24,7 +24,7 @@ class chooser_updater(threading.Thread):
         self.owner = owner
         self.quit = False
         self.host = host
-        self.regd_liststore = regd_liststore
+        self.regd_treestore = regd_treestore
         super(chooser_updater, self).__init__()
         self.running_choices = []
         self.line_colors = rotator([ '#ccc', '#aaa' ])
@@ -74,23 +74,53 @@ class chooser_updater(threading.Thread):
             name, port = suite
             ports[ name ] = port
 
-        self.regd_liststore.clear()
+        # construct tree[owner][group][name] = [state, descr, dir ]
+        tree = {}
+        self.regd_treestore.clear()
         choices = self.regd_choices
         for reg in choices:
-            col = self.line_colors.get_color()
-            col_cdb = self.line_colors_cdb.get_color()
-            grn = '#2f2'
-            #red = '#ff1a45'
-            red = self.state_line_colors.get_color()
-            name, suite_dir, descr = reg
+            suite, suite_dir, descr = reg
             suite_dir = re.sub( os.environ['HOME'], '~', suite_dir )
-            if self.is_cdb:
-                self.regd_liststore.append( [name, col_cdb, '(cdb)', col_cdb, suite_dir, col_cdb, descr, col_cdb ] )
+            if suite in ports:
+                state = 'port ' + str(ports[name])
             else:
-                if name in ports:
-                    self.regd_liststore.append( [name, grn, 'port ' + str(ports[name]), '#19ae0a', suite_dir, grn, descr, grn ] )
-                else:
-                    self.regd_liststore.append( [name, col, 'dormant', red, suite_dir, col, descr, col ] )
+                state = 'dormant'
+            if self.is_cdb:
+                owner, group, name = re.split( ':', suite )
+            else:
+                owner = self.owner
+                group, name = re.split( ':', suite )
+            if owner not in tree:
+                tree[owner] = {}
+            if group not in tree[owner]:
+                tree[owner][group] = {}
+            if name not in tree[owner][group]:
+                tree[owner][group][name] = {}
+            tree[owner][group][name] = [ state, descr, suite_dir ]
+
+        #grn = '#2f2'
+        #grn2 = '#19ae0a'
+        #red = '#ff1a45'
+        #red = self.state_line_colors.get_color()
+ 
+        # construct treestore
+        if self.is_cdb:
+            for owner in tree:
+                o_iter = self.regd_treestore.append( None, [owner, None, None, None, 'white', 'white' ] )
+                for group in tree[owner]:
+                    g_iter = self.regd_treestore.append( o_iter, [ group, None, None, None, 'white', 'white' ] )
+                    for name in tree[owner][group]:
+                        col = self.line_colors_cdb.get_color()
+                        state, descr, dir = tree[owner][group][name]
+                        n_iter = self.regd_treestore.append( g_iter, [ name, state, descr, dir, col, col ] )
+        else:
+            owner = self.owner
+            for group in tree[owner]:
+                g_iter = self.regd_treestore.append( None, [ group, None, None, None, 'white', 'white' ] )
+                for name in tree[owner][group]:
+                    col = self.line_colors.get_color()
+                    state, descr, dir = tree[owner][group][name]
+                    n_iter = self.regd_treestore.append( g_iter, [ name, state, descr, dir, col, col ] )
 
 class chooser(object):
     def __init__(self, host, imagedir, readonly=False ):
@@ -117,9 +147,9 @@ class chooser(object):
         sw.set_policy( gtk.POLICY_AUTOMATIC, gtk.POLICY_AUTOMATIC )
 
         regd_treeview = gtk.TreeView()
-        # suite, state, title, colors...
-        self.regd_liststore = gtk.ListStore( str, str, str, str, str, str, str, str, )
-        regd_treeview.set_model(self.regd_liststore)
+        # [owner>]group>name, state, title, dir, color1, color2
+        self.regd_treestore = gtk.TreeStore( str, str, str, str, str, str, )
+        regd_treeview.set_model(self.regd_treestore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
         newreg_button = gtk.Button( "Register Another Suite" )
@@ -139,20 +169,27 @@ class chooser(object):
         regd_ts.set_mode( gtk.SELECTION_SINGLE )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, background=1 )
+        tvc = gtk.TreeViewColumn( 'Suite', cr, text=0, background=4 )
         regd_treeview.append_column( tvc )
 
+        #cr = gtk.CellRendererText()
+        #tvc = gtk.TreeViewColumn( 'Group', cr, text=1, background=6 )
+        #regd_treeview.append_column( tvc )
+
+        #cr = gtk.CellRendererText()
+        #tvc = gtk.TreeViewColumn( 'Name', cr, text=2, background=6)
+        #regd_treeview.append_column( tvc )
+
         cr = gtk.CellRendererText()
-        # use text from col 2, background color stored in col 3:
-        tvc = gtk.TreeViewColumn( 'State', cr, text=2, background=3 )
+        tvc = gtk.TreeViewColumn( 'State', cr, text=1, background=5 )
         regd_treeview.append_column( tvc ) 
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Title', cr, text=6, background=5 )
+        tvc = gtk.TreeViewColumn( 'Title', cr, text=2, background=4 )
         regd_treeview.append_column( tvc )
 
         cr = gtk.CellRendererText()
-        tvc = gtk.TreeViewColumn( 'Definition', cr, text=4, background=7 )
+        tvc = gtk.TreeViewColumn( 'Definition', cr, text=3, background=4 )
         regd_treeview.append_column( tvc )
 
         # NOTE THAT WE CANNOT LEAVE ANY SUITE CONTROL WINDOWS OPEN WHEN
@@ -165,6 +202,9 @@ class chooser(object):
         filter_button = gtk.Button( "Filter" )
         filter_button.connect("clicked", self.filter_popup, None, None )
 
+        expand_button = gtk.Button( "Expand/Collapse" )
+        expand_button.connect( 'clicked', self.toggle_expand, regd_treeview )
+    
         help_button = gtk.Button( "Help" )
         help_button.connect("clicked", helpwindow.main )
 
@@ -179,10 +219,11 @@ class chooser(object):
         hbox = gtk.HBox()
         hbox_l = gtk.HBox()
         hbox_r = gtk.HBox()
+        hbox_r.pack_start( self.db_button, False )
         hbox_r.pack_start( help_button, False )
         hbox_r.pack_start( quit_all_button, False )
-        hbox_l.pack_start( self.db_button, False )
         hbox_l.pack_start( filter_button, False )
+        hbox_l.pack_start( expand_button, False )
         hbox_l.pack_start( newreg_button, False )
         hbox.pack_start( hbox_l, False )
         hbox.pack_end( hbox_r, False )
@@ -193,6 +234,12 @@ class chooser(object):
         self.window.show_all()
 
         self.viewer_list = []
+
+    def toggle_expand( self, widget, view ):
+        if view.row_expanded(0):
+            view.collapse_all()
+        else:
+            view.expand_all()
 
     def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
@@ -205,7 +252,7 @@ class chooser(object):
             self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
-        self.updater = chooser_updater( self.owner, self.regd_liststore, 
+        self.updater = chooser_updater( self.owner, self.regd_treestore, 
                 db, self.cdb, self.host, ownerfilt, groupfilt, namefilt )
         self.updater.update_liststore()
         self.updater.start()
@@ -387,80 +434,141 @@ class chooser(object):
         path, col, cellx, celly = pth
         treeview.set_cursor( path, col, 0 )
         selection = treeview.get_selection()
-        model, iter = selection.get_selected()
-        name = model.get_value( iter, 0 )
-        suite_dir = model.get_value( iter, 1 )
-        state = model.get_value( iter, 2 ) 
-        descr = model.get_value( iter, 6 )
 
-        m = re.match( 'RUNNING \(port (\d+)\)', state )
-        port = None
-        if m:
-            port = m.groups()[0]
+        model, iter = selection.get_selected()
+
+        # assume right-click on lowest level
+        group_clicked = False
+
+        if self.cdb:
+            one = model.get_value( iter, 0 )
+            try:
+                iter2 = model.iter_parent( iter )
+                two = model.get_value( iter2, 0 )
+            except TypeError:
+                # no parent => clicked on owner; do nothing
+                return
+            else:
+                # parent exists => clicked on name or group
+                try:
+                    iter3 = model.iter_parent(iter2)
+                    three = model.get_value( iter3, 0 )
+                except TypeError:
+                    # no grandparent => clicked on group
+                    group_clicked = True
+                    group = one
+                    owner = two
+                else:
+                    # grandparent exists => clicked on name
+                    name = one
+                    group = two
+                    owner = three
+                    
+        else:
+            owner = self.owner
+            one = model.get_value( iter, 0 )
+            try:
+                iter2 = model.iter_parent( iter )
+                two = model.get_value( iter2, 0 )
+            except TypeError:
+                # no parent => clicked on group
+                group_clicked = True
+                group = one
+            else:
+                # parent exists => clicked on name
+                name = one
+                group = two
+ 
+        state = model.get_value( iter, 1 ) 
+        descr = model.get_value( iter, 2 )
+        suite_dir = model.get_value( iter, 3 )
 
         menu = gtk.Menu()
 
-        menu_root = gtk.MenuItem( name )
+        menu_root = gtk.MenuItem( 'foo' )
         menu_root.set_submenu( menu )
 
-        if not self.cdb:
-            #if state == 'dormant':
-            title = 'Control'
-            #else:
-            #    title = 'Connect'
-            con_item = gtk.MenuItem( title )
-            menu.append( con_item )
-            con_item.connect( 'activate', self.launch_controller, name, port, suite_dir )
+        if group_clicked:
+            # MENU OPTIONS FOR GROUPS
+            if not self.cdb:
+                copy_item = gtk.MenuItem( 'Copy Group' )
+                menu.append( copy_item )
+                copy_item.connect( 'activate', self.copy_group_popup, group )
 
-            menu.append( gtk.SeparatorMenuItem() )
+            rename_item = gtk.MenuItem( 'Rename Group' )
+            menu.append( rename_item )
+            rename_item.connect( 'activate', self.rename_group_popup, group)
+            if self.cdb:
+                if owner != self.owner:
+                    rename_item.set_sensitive( False )
 
-        edit_item = gtk.MenuItem( 'Edit' )
-        menu.append( edit_item )
-        edit_item.connect( 'activate', self.edit_suite_popup, name )
+            if self.cdb:
+                imp_item = gtk.MenuItem( 'Import Group' )
+                menu.append( imp_item )
+                imp_item.connect( 'activate', self.import_group_popup, group )
+            else:
+                exp_item = gtk.MenuItem( 'Export Group' )
+                menu.append( exp_item )
+                exp_item.connect( 'activate', self.export_group_popup, group )
 
-        graph_item = gtk.MenuItem( 'Graph' )
-        menu.append( graph_item )
-        graph_item.connect( 'activate', self.graph_suite_popup, name )
-
-        search_item = gtk.MenuItem( 'Search' )
-        menu.append( search_item )
-        search_item.connect( 'activate', self.search_suite_popup, name )
-
-        val_item = gtk.MenuItem( 'Validate' )
-        menu.append( val_item )
-        val_item.connect( 'activate', self.validate_suite, name )
-
-        menu.append( gtk.SeparatorMenuItem() )
-
-        if not self.cdb:
-            copy_item = gtk.MenuItem( 'Copy' )
-            menu.append( copy_item )
-            copy_item.connect( 'activate', self.copy_suite_popup, name )
-
-        rename_item = gtk.MenuItem( 'Rename' )
-        menu.append( rename_item )
-        rename_item.connect( 'activate', self.rename_suite_popup, name )
-        if self.cdb:
-            owner, group, sname = re.split(':', name )
-            if owner != self.owner:
-                rename_item.set_sensitive( False )
-
-        if self.cdb:
-            imp_item = gtk.MenuItem( 'Import' )
-            menu.append( imp_item )
-            imp_item.connect( 'activate', self.import_suite_popup, name, suite_dir, descr )
         else:
-            exp_item = gtk.MenuItem( 'Export' )
-            menu.append( exp_item )
-            exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir, descr )
+            # MENU OPTIONS FOR SUITES
+            if not self.cdb:
+                #if state == 'dormant':
+                title = 'Control'
+                #else:
+                #    title = 'Connect'
+                con_item = gtk.MenuItem( title )
+                menu.append( con_item )
+                con_item.connect( 'activate', self.launch_controller, name, state, suite_dir )
+    
+                menu.append( gtk.SeparatorMenuItem() )
+    
+            edit_item = gtk.MenuItem( 'Edit' )
+            menu.append( edit_item )
+            edit_item.connect( 'activate', self.edit_suite_popup, name )
+    
+            graph_item = gtk.MenuItem( 'Graph' )
+            menu.append( graph_item )
+            graph_item.connect( 'activate', self.graph_suite_popup, name )
+    
+            search_item = gtk.MenuItem( 'Search' )
+            menu.append( search_item )
+            search_item.connect( 'activate', self.search_suite_popup, name )
 
-        del_item = gtk.MenuItem( 'Unregister' )
-        menu.append( del_item )
-        del_item.connect( 'activate', self.delete_suite_popup, name )
-        if self.cdb:
-            owner, group, sname = re.split(':', name )
-            if owner != self.owner:
-                del_item.set_sensitive( False )
+            val_item = gtk.MenuItem( 'Validate' )
+            menu.append( val_item )
+            val_item.connect( 'activate', self.validate_suite, name )
+    
+            menu.append( gtk.SeparatorMenuItem() )
+    
+            if not self.cdb:
+                copy_item = gtk.MenuItem( 'Copy' )
+                menu.append( copy_item )
+                copy_item.connect( 'activate', self.copy_suite_popup, name )
+    
+            rename_item = gtk.MenuItem( 'Rename' )
+            menu.append( rename_item )
+            rename_item.connect( 'activate', self.rename_suite_popup, name )
+            if self.cdb:
+                if owner != self.owner:
+                    rename_item.set_sensitive( False )
+    
+            if self.cdb:
+                imp_item = gtk.MenuItem( 'Import' )
+                menu.append( imp_item )
+                imp_item.connect( 'activate', self.import_suite_popup, name, suite_dir, descr )
+            else:
+                exp_item = gtk.MenuItem( 'Export' )
+                menu.append( exp_item )
+                exp_item.connect( 'activate', self.export_suite_popup, name, suite_dir, descr )
+    
+            del_item = gtk.MenuItem( 'Unregister' )
+            menu.append( del_item )
+            del_item.connect( 'activate', self.delete_suite_popup, name )
+            if self.cdb:
+                if owner != self.owner:
+                    del_item.set_sensitive( False )
 
         menu.show_all()
         menu.popup( None, None, None, event.button, event.time )
@@ -737,15 +845,63 @@ class chooser(object):
         call( 'capture "cylc rename ' + options + ' ' + ffrom + ' ' + tto + '" --width=600 &', shell=True )
         w.destroy()
 
+    def rename_group_popup( self, w, group ):
+        pass
+    def import_group_popup( self, w, group ):
+        pass
+    def export_group_popup( self, w, group ):
+        pass
+    def copy_group_popup( self, w, group ):
+        window = gtk.Window()
+        window.set_border_width(5)
+        window.set_title( "Copy Group'" + group + "'")
+
+        vbox = gtk.VBox()
+
+        label = gtk.Label("To Group" )
+        group_entry = gtk.Entry()
+        hbox = gtk.HBox()
+        hbox.pack_start( label )
+        hbox.pack_start(group_entry, True) 
+        vbox.pack_start( hbox )
+ 
+        box = gtk.HBox()
+        label = gtk.Label( 'Directory' )
+        box.pack_start( label, True )
+        def_entry = gtk.Entry()
+        box.pack_start (def_entry, True)
+        vbox.pack_start(box)
+
+        cancel_button = gtk.Button( "Cancel" )
+        cancel_button.connect("clicked", lambda x: window.destroy() )
+
+        ok_button = gtk.Button( "Copy" )
+        ok_button.connect("clicked", self.copy_group, window, group, group_entry, def_entry )
+
+        #help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.stop_guide )
+
+        hbox = gtk.HBox()
+        hbox.pack_start( cancel_button, False )
+        hbox.pack_start( ok_button, False )
+        #hbox.pack_start( help_button, False )
+        vbox.pack_start( hbox )
+
+        window.add( vbox )
+        window.show_all()
+
+    def copy_group( self, b, w, g_from, g_to_entry, dir_entry ):
+        g_to = g_to_entry.get_text()
+        dir = dir_entry.get_text()
+        call( 'capture "cylc copy --all ' + g_from + ' ' + g_to + ' ' + dir + '" --width=600 &', shell=True )
+        w.destroy()
+
     def copy_suite_popup( self, w, reg ):
         window = gtk.Window()
         window.set_border_width(5)
         window.set_title( "Copy '" + reg + "'")
 
         vbox = gtk.VBox()
-
-        wholegroup_cb = gtk.CheckButton( "Copy the whole group" )
-        vbox.pack_start (wholegroup_cb, True)
 
         label = gtk.Label("Group" )
         group_entry = gtk.Entry()
@@ -768,13 +924,11 @@ class chooser(object):
         box.pack_start (def_entry, True)
         vbox.pack_start(box)
 
-        wholegroup_cb.connect( "toggled", self.toggle_entry_sensitivity, name_entry )
- 
         cancel_button = gtk.Button( "Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "Copy" )
-        ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, def_entry, wholegroup_cb )
+        ok_button.connect("clicked", self.copy_suite, window, reg, group_entry, name_entry, def_entry )
 
         #help_button = gtk.Button( "Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -788,16 +942,12 @@ class chooser(object):
         window.add( vbox )
         window.show_all()
 
-    def copy_suite( self, b, w, reg, group_entry, name_entry, def_entry, wholegroup_cb ):
+    def copy_suite( self, b, w, reg, group_entry, name_entry, def_entry ):
         junk, reg_group, junk = regsplit( reg ).get() 
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
-        if wholegroup_cb.get_active():
-            call( 'capture "cylc copy --all ' + reg_group + ' ' + group + ' ' + dir + '" --width=600 &', shell=True )
-        else:
-            call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
-
+        call( 'capture "cylc copy ' + reg + ' ' + group + ':' + name + ' ' + dir + '" --width=600 &', shell=True )
         w.destroy()
  
     def search_suite_popup( self, w, reg ):
@@ -1036,7 +1186,11 @@ class chooser(object):
             options += ' -c '
         call( 'capture "cylc validate ' + options + name  + '" &', shell=True )
 
-    def launch_controller( self, w, name, port, suite_dir ):
+    def launch_controller( self, w, name, state, suite_dir ):
+        m = re.match( 'RUNNING \(port (\d+)\)', state )
+        port = None
+        if m:
+            port = m.groups()[0]
         # get suite logging directory
         # logging_dir = os.path.join( config(name)['top level logging directory'], name ) 
         # TO LAUNCH A CONTROL GUI AS PART OF THIS APP:

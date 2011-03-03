@@ -32,31 +32,31 @@ class helpwindow( object ):
         self.window.add( vbox )
         self.tb = textview.get_buffer()
 
-        self.tag_grey = self.tb.create_tag( None, foreground = "grey" )
-        self.tag_red = self.tb.create_tag( None, foreground = "red" )
-        self.tag_blue = self.tb.create_tag( None, foreground = "blue" )
-        self.tag_green = self.tb.create_tag( None, foreground = "green" )
+        self.tag_text = self.tb.create_tag( None, foreground = "#222" )
+        self.tag_title = self.tb.create_tag( None, foreground = "blue" )
+        self.tag_heading = self.tb.create_tag( None, foreground = "red" )
+        self.tag_subheading = self.tb.create_tag( None, foreground = "#d73" )
         self.tag_bold = self.tb.create_tag( None, weight = pango.WEIGHT_BOLD )
 
         self.add_main_heading( title )
          
     def add_main_heading( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_bold, self.tag_red )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_bold, self.tag_title )
 
     def add_heading( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n\n' + text, self.tag_bold, self.tag_blue )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n\n' + text, self.tag_bold, self.tag_heading )
  
     def add_subheading( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n    ' + text, self.tag_bold, self.tag_green )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n    ' + text, self.tag_bold, self.tag_subheading )
 
     def add_text( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_grey )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_text )
  
     def add_text_bold( self, text ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_grey, self.tag_bold )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_text, self.tag_bold )
 
     def add_list_item( self, item ):
-        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n o ' + item, self.tag_grey )
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n o ' + item, self.tag_text )
 
     def show( self ):
         self.window.show_all()
