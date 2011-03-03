@@ -164,7 +164,8 @@ class chooser(object):
         filter_button = gtk.Button( "Filter" )
         filter_button.connect("clicked", self.filter_popup, None, None )
 
-        label = gtk.Label( " Right Click for Menu" )
+        help_button = gtk.Button( "Help" )
+        #help_button.connect("clicked", self.main_help_popup, None, None )
 
         vbox = gtk.VBox()
         hbox = gtk.HBox()
@@ -175,11 +176,15 @@ class chooser(object):
         vbox.pack_start( sw, True )
 
         hbox = gtk.HBox()
-        hbox.pack_start( quit_all_button, False )
-        hbox.pack_start( self.db_button, False )
-        hbox.pack_start( filter_button, False )
-        hbox.pack_start( newreg_button, False )
-        hbox.pack_start( label, False )
+        hbox_l = gtk.HBox()
+        hbox_r = gtk.HBox()
+        hbox_r.pack_start( help_button, False )
+        hbox_r.pack_start( quit_all_button, False )
+        hbox_l.pack_start( self.db_button, False )
+        hbox_l.pack_start( filter_button, False )
+        hbox_l.pack_start( newreg_button, False )
+        hbox.pack_start( hbox_l, False )
+        hbox.pack_end( hbox_r, False )
 
         vbox.pack_start( hbox, False )
 
