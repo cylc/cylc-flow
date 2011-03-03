@@ -55,6 +55,9 @@ class helpwindow( object ):
     def add_text_bold( self, text ):
         self.tb.insert_with_tags( self.tb.get_end_iter(), text, self.tag_grey, self.tag_bold )
 
+    def add_list_item( self, item ):
+        self.tb.insert_with_tags( self.tb.get_end_iter(), '\n o ' + item, self.tag_grey )
+
     def show( self ):
         self.window.show_all()
 
@@ -141,3 +144,17 @@ def main( b ):
             "definition directory).") 
     help.show()
 
+def filter( b ):
+    help = helpwindow( "Filter Window Help" )
+    help.add_heading( "\nOverview" )
+    help.add_text( 
+            "Change suite registration visibility by filtering on "
+            "group and/or name. Filter patterns can be plain strings "
+            "or Python-style regular expressions (not the general "
+            "regex wildcard is '.*' not '*'). Examples:")
+
+    help.add_list_item( "OUTPUT_DIR - literal string" )
+    help.add_list_item( "(?i)foo - case-insensitive (matches foo or Foo or FOO...)" )
+    help.add_list_item( "(foo|bar) - match 'foo' or 'bar'" )
+    help.show()
+ 

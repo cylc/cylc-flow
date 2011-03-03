@@ -303,7 +303,6 @@ class chooser(object):
         self.filter_window = gtk.Window()
         self.filter_window.set_border_width(5)
         self.filter_window.set_title( "Filter" )
-
         vbox = gtk.VBox()
 
         box = gtk.HBox()
@@ -339,14 +338,14 @@ class chooser(object):
         reset_button = gtk.Button( "Reset" )
         reset_button.connect("clicked", self.filter_reset, owner_entry, group_entry, name_entry )
 
-        #help_button = gtk.Button( "Help" )
-        #help_button.connect("clicked", self.filter_guide )
+        help_button = gtk.Button( "Help" )
+        help_button.connect("clicked", helpwindow.filter )
 
         hbox = gtk.HBox()
         hbox.pack_start( apply_button, False )
         hbox.pack_start( reset_button, False )
-        hbox.pack_start( cancel_button, False )
-        #hbox.pack_start( help_button, False )
+        hbox.pack_end( cancel_button, False )
+        hbox.pack_end( help_button, False )
         vbox.pack_start( hbox )
 
         self.filter_window.add( vbox )
