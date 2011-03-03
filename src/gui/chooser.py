@@ -11,6 +11,7 @@ from gtkmonitor import monitor
 from color_rotator import rotator
 from warning_dialog import warning_dialog, info_dialog
 from subprocess import call
+import helpwindow 
 
 class chooser_updater(threading.Thread):
     def __init__(self, owner, regd_liststore, db, is_cdb, host, 
@@ -121,10 +122,10 @@ class chooser(object):
         regd_treeview.set_model(self.regd_liststore)
         regd_treeview.connect( 'button_press_event', self.on_suite_select )
 
-        newreg_button = gtk.Button( "Add A Suite" )
+        newreg_button = gtk.Button( "Register Another Suite" )
         newreg_button.connect("clicked", self.newreg_popup )
 
-        self.db_button = gtk.Button( "Central DB" )
+        self.db_button = gtk.Button( "Switch to Central DB" )
         self.db_button.connect("clicked", self.switchdb, newreg_button )
         self.main_label = gtk.Label( "Local Suite Registrations" )
 
@@ -165,7 +166,7 @@ class chooser(object):
         filter_button.connect("clicked", self.filter_popup, None, None )
 
         help_button = gtk.Button( "Help" )
-        #help_button.connect("clicked", self.main_help_popup, None, None )
+        help_button.connect("clicked", helpwindow.main )
 
         vbox = gtk.VBox()
         hbox = gtk.HBox()
@@ -196,11 +197,11 @@ class chooser(object):
     def start_updater(self, ownerfilt=None, groupfilt=None, namefilt=None):
         if self.cdb:
             db = centraldb()
-            self.db_button.set_label( "Local DB" )
+            self.db_button.set_label( "Switch to Local DB" )
             self.main_label.set_text( "Central Suite Registrations" )
         else:
             db = localdb()
-            self.db_button.set_label( "Central DB" )
+            self.db_button.set_label( "Switch to Central DB" )
             self.main_label.set_text( "Local Suite Registrations" )
         if self.updater:
             self.updater.quit = True # does this take effect?
@@ -301,7 +302,7 @@ class chooser(object):
     def filter_popup(self, w, e, data=None):
         self.filter_window = gtk.Window()
         self.filter_window.set_border_width(5)
-        self.filter_window.set_title( "DB Filter" )
+        self.filter_window.set_title( "Filter" )
 
         vbox = gtk.VBox()
 
