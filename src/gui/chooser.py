@@ -870,10 +870,10 @@ class chooser(object):
 
     def rename_group( self, b, w, g_from, g_to_e ):
         g_to = g_to_e.get_text()
-        options = ' -g '
         if self.cdb:
-            options += ' -c '
-        call( 'capture "cylc rename ' + options + ' ' + g_from + ' ' + g_to + '" --width=600 &', shell=True )
+            g_from = self.owner + ':' + g_from
+            g_to = self.owner + ':' + g_to
+        call( 'capture "cylc rename ' + g_from + ': ' + g_to + ':" --width=600 &', shell=True )
         w.destroy()
 
     def import_group_popup( self, w, group ):
