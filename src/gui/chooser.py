@@ -511,7 +511,7 @@ class chooser(object):
 
             del_item = gtk.MenuItem( 'Unregister' )
             menu.append( del_item )
-            del_item.connect( 'activate', self.unregister_group_popup, group )
+            del_item.connect( 'activate', self.unregister_group_popup, owner, group )
             if self.cdb:
                 if owner != self.owner:
                     del_item.set_sensitive( False )
@@ -585,10 +585,10 @@ class chooser(object):
         # POPPING DOWN DOES NOT DO THIS (=> MEMORY LEAK?)
         return True
 
-    def unregister_group_popup( self, w, group ):
+    def unregister_group_popup( self, w, owner, group ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "Unregister '" + group + "'")
+        window.set_title( "Unregister '" + owner + ':' + group + "'")
 
         vbox = gtk.VBox()
 
@@ -596,7 +596,7 @@ class chooser(object):
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
         ok_button = gtk.Button( "_Unregister" )
-        ok_button.connect("clicked", self.unregister_group, window, group )
+        ok_button.connect("clicked", self.unregister_group, window, owner, group )
 
         #help_button = gtk.Button( "_Help" )
         #help_button.connect("clicked", self.stop_guide )
@@ -614,7 +614,9 @@ Note that this will not delete any suite definition directories.""" )
         window.add( vbox )
         window.show_all()
 
-    def unregister_group( self, b, w, group ):
+    def unregister_group( self, b, w, owner, group ):
+        if self.cdb:
+            group = owner + ':' + group
         call( 'capture "cylc unregister ' + group + ': " --width=600 &', shell=True )
         w.destroy()
 
@@ -875,7 +877,7 @@ Note that this will not delete the suite definition directory.""" )
     def reregister_group_popup( self, w, group ):
         window = gtk.Window()
         window.set_border_width(5)
-        window.set_title( "reregister Group'" + group + "'")
+        window.set_title( "Reregister Group'" + group + "'")
 
         vbox = gtk.VBox()
 
@@ -889,7 +891,7 @@ Note that this will not delete the suite definition directory.""" )
         cancel_button = gtk.Button( "_Cancel" )
         cancel_button.connect("clicked", lambda x: window.destroy() )
 
-        ok_button = gtk.Button( "_reregister" )
+        ok_button = gtk.Button( "_Reregister" )
         ok_button.connect("clicked", self.reregister_group, window, group, new_group_entry )
 
         #help_button = gtk.Button( "_Help" )
@@ -1006,8 +1008,11 @@ Note that this will not delete the suite definition directory.""" )
 
         vbox = gtk.VBox()
 
+        reg_owner, reg_group, reg_name = regsplit( reg ).get() 
+
         label = gtk.Label("Group" )
         group_entry = gtk.Entry()
+        group_entry.set_text( reg_group )
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(group_entry, True) 
@@ -1015,6 +1020,7 @@ Note that this will not delete the suite definition directory.""" )
  
         label = gtk.Label("Name" )
         name_entry = gtk.Entry()
+        name_entry.set_text( reg_name )
         hbox = gtk.HBox()
         hbox.pack_start( label )
         hbox.pack_start(name_entry, True) 
@@ -1046,7 +1052,6 @@ Note that this will not delete the suite definition directory.""" )
         window.show_all()
 
     def copy_suite( self, b, w, reg, group_entry, name_entry, def_entry ):
-        junk, reg_group, junk = regsplit( reg ).get() 
         group = group_entry.get_text()
         name  = name_entry.get_text()
         dir = def_entry.get_text()
